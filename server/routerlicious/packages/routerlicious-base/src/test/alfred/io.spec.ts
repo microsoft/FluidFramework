@@ -19,6 +19,7 @@ import {
     INackContent,
     NackErrorType,
     IClient,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
@@ -75,7 +76,7 @@ describe("Routerlicious", () => {
                 let testTenantManager: TestTenantManager;
                 let testClientManager: IClientManager;
 
-                const throttleLimit = 5;
+                const throttleLimit = 7;
 
                 beforeEach(() => {
                     const collectionNames = "test";
@@ -283,6 +284,26 @@ describe("Routerlicious", () => {
                         assert.deepEqual(lastMessage.operation, message);
                     });
 
+                    it("Can submit ops to the websocket server", async () => {
+                        const socket = webSocketServer.createConnection();
+                        const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
+
+                        const messageFactory = new MessageFactory(testId, connectMessage.clientId);
+                        let latestMessage = messageFactory.createDocumentMessage();
+
+                        const beforeCount = deliKafka.getRawMessages().length;
+                        socket.send("submitOp", connectMessage.clientId, [latestMessage]);
+                        assert.equal(deliKafka.getRawMessages().length, beforeCount + 1, `Incorrect message count after individual message.`);
+                        socket.send("submitOp", connectMessage.clientId, [(latestMessage = messageFactory.createDocumentMessage())]);
+                        assert.equal(deliKafka.getRawMessages().length, beforeCount + 1 + 1, `Incorrect message count after second individual message.`);
+                        socket.send("submitOp", connectMessage.clientId, [(latestMessage = messageFactory.createDocumentMessage()), (latestMessage = messageFactory.createDocumentMessage())]);
+                        assert.equal(deliKafka.getRawMessages().length, beforeCount + 1 + 1 + 2, `Incorrect message count after batch of individual messages.`);
+                        const lastMessage = deliKafka.getLastMessage();
+                        assert.equal(lastMessage.documentId, testId);
+                        assert.equal(lastMessage.type, RawOperationType);
+                        assert.deepEqual(lastMessage.operation, latestMessage);
+                    });
+
                     it("Should throttle excess submitOps for tenant", async () => {
                         const socket = webSocketServer.createConnection();
                         const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
@@ -315,6 +336,62 @@ describe("Routerlicious", () => {
                         const nackMessages = await deferredNack.promise;
 
                         const nackContent = nackMessages[0]?.content as INackContent;
+                        assert.strictEqual(nackContent.code, 429);
+                        assert.strictEqual(nackContent.type, NackErrorType.ThrottlingError);
+                        assert.strictEqual(nackContent.retryAfter, 1);
+                    });
+
+
+                    it("Should throttle excess submitOps (batched) for tenant", async () => {
+                        const socket = webSocketServer.createConnection();
+                        const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
+
+                        const messageFactory = new MessageFactory(testId, connectMessage.clientId);
+
+                        const deferredNack = new Deferred<INack[]>();
+                        socket.on("nack", (reason: string, nackMessages: INack[]) => {
+                            deferredNack.resolve(nackMessages);
+                        });
+                        // generate a batch of messages
+                        const generateMessageBatch = (size: number): IDocumentMessage[] => {
+                            const batch = [];
+                            for (let b = 0; b < size; b++) {
+                                const message = messageFactory.createDocumentMessage();
+                                batch.push(message);
+                            }
+                            return batch;
+                        };
+                        const batchSize = 2;
+                        for (let i = 0; i <= throttleLimit - batchSize; i += batchSize) {
+                            // Send batches until next batch would be throttled. Otherwise error will be thrown
+                            const messages = generateMessageBatch(batchSize);
+
+                            const beforeCount = deliKafka.getRawMessages().length;
+                            // submitOp accepts (IDocumentMessage | IDocumentMessage[])[] for message batch
+                            socket.send("submitOp", connectMessage.clientId, messages);
+
+                            const rawMessages = deliKafka.getRawMessages();
+                            assert.equal(rawMessages.length, beforeCount + batchSize, `Incorrect message count.
+
+Actual Messages: ${JSON.stringify(rawMessages.map((msg) => msg.value.operation), undefined, 2)}
+
+Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
+
+                            // assert last message is equivalent to last batch message
+                            const lastMessage = deliKafka.getLastMessage();
+                            const expectedLastBatch = messages[batchSize - 1];
+                            const expectedLastMessage = Array.isArray(expectedLastBatch) ? expectedLastBatch[batchSize - 1] : expectedLastBatch;
+                            assert.equal(lastMessage.documentId, testId);
+                            assert.equal(lastMessage.type, RawOperationType);
+                            assert.deepEqual(lastMessage.operation, expectedLastMessage);
+                        }
+
+                        const blockedMessageBatch = generateMessageBatch(batchSize);
+                        socket.send("submitOp", connectMessage.clientId, blockedMessageBatch);
+                        const nackMessages = await deferredNack.promise;
+
+                        const nackContent = nackMessages[0]?.content as INackContent;
+                        assert.strictEqual(nackMessages.length, 1, "Expected only 1 Nack Message");
                         assert.strictEqual(nackContent.code, 429);
                         assert.strictEqual(nackContent.type, NackErrorType.ThrottlingError);
                         assert.strictEqual(nackContent.retryAfter, 1);
@@ -481,7 +558,7 @@ describe("Routerlicious", () => {
                         socket.send("disconnect");
 
                         const usageData = await testThrottleAndUsageStorageManager.getUsageData(clientConnectivityStorageId);
-                        assert.equal(usageData.value, clientConnectionTime/60000);
+                        assert.equal(usageData.value, clientConnectionTime / 60000);
                         assert.equal(usageData.clientId, connectMessage.clientId);
                         assert.equal(usageData.tenantId, testTenantId);
                         assert.equal(usageData.documentId, testId);
@@ -499,13 +576,13 @@ describe("Routerlicious", () => {
                         for (; i < signalCount; i++) {
                             socket.send("submitSignal", connectMessage.clientId, [message]);
                         }
-                        Sinon.clock.tick(minThrottleCheckInterval+1);
+                        Sinon.clock.tick(minThrottleCheckInterval + 1);
                         socket.send("submitSignal", connectMessage.clientId, [message]);
                         // wait for throttler to be checked
                         await Sinon.clock.nextAsync();
 
                         const usageData = await testThrottleAndUsageStorageManager.getUsageData(signalUsageStorageId);
-                        assert.equal(usageData.value, signalCount+1);
+                        assert.equal(usageData.value, signalCount + 1);
                         assert.equal(usageData.clientId, connectMessage.clientId);
                         assert.equal(usageData.tenantId, testTenantId);
                         assert.equal(usageData.documentId, testId);

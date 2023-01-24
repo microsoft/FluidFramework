@@ -143,178 +143,196 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
     });
 
     describe("SharedMatrix", () => {
-        it("should reflect handle updates immediately in the next summary", async () => {
+        it("should reflect unreferenced data stores in the next summary", async () => {
             // Create a second data store (dataStore2).
             const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
 
-            // The request to use to load dataStore2.
+            // The request to use to load dataStore2. Set externalRequest to true so that unreferenced data stores
+            // are not returned.
             const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
 
             // Add the handle of dataStore2 to the matrix to mark it as referenced.
-            {
-                mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
-
-                // Wait for the summary that contains the above. Also, get this summary's version so that we can load
-                // a new container with it.
-                const summaryVersion = await waitForSummary();
-
-                // Since dataStore should be marked as referenced in the summary that container2 loaded with, requesting
-                // it with externalRequest header should succeed.
-                const container2 = await loadContainer(summaryVersion);
-                const response = await container2.request(request);
-                assert(response.status === 200, "dataStore2 should have successfully loaded");
-            }
+            mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
+            await provider.ensureSynchronized();
 
             // Remove the handle of dataStore2 from the matrix to mark it as unreferenced.
-            {
-                mainDataStore.matrix.removeCols(0, 1);
+            mainDataStore.matrix.removeCols(0, 1);
 
-                // Wait for the summary that contains the above. Also, get this summary's version so that we can load
-                // a new container with it.
-                const summaryVersion = await waitForSummary();
+            // Wait for the summary that will have data store 2 as unreferenced. Also, get this summary's version so
+            // that we can load a new container with it.
+            const summaryVersion = await waitForSummary();
 
-                // Since dataStore should be marked as unreferenced in the summary that container2 loaded with,
-                // requesting it with externalRequest header should fail.
-                const container2 = await loadContainer(summaryVersion);
-                const response = await container2.request(request);
-                assert(response.status === 404, "dataStore2 should have failed to load");
-            }
+            // Since dataStore should be marked as unreferenced in the summary that container2 loaded with,
+            // requesting it with externalRequest header should fail.
+            const container2 = await loadContainer(summaryVersion);
+            const response = await container2.request(request);
+            assert(response.status === 404, "dataStore2 should have failed to load");
         });
 
-        it("should reflect undo / redo of handle updates immediately in the next summary", async () => {
+        it("should reflect undo of unreferenced data stores in the next summary", async () => {
             // Create a second data store (dataStore2).
             const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
 
-            // The request to use to load dataStore2.
+            // The request to use to load dataStore2. Set externalRequest to true so that unreferenced data stores
+            // are not returned.
             const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
 
             // Add and then remove the handle of dataStore2 to the matrix to mark it as unreferenced.
-            {
-                mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
-                mainDataStore.undoRedoStackManager.closeCurrentOperation();
+            mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
+            mainDataStore.undoRedoStackManager.closeCurrentOperation();
 
-                // Wait for summary that contains the above.
-                await waitForSummary();
+            await provider.ensureSynchronized();
 
-                // Now delete the handle so that dataStore2 is marked as unreferenced.
-                mainDataStore.matrix.removeCols(0, 1);
-                mainDataStore.undoRedoStackManager.closeCurrentOperation();
+            // Now delete the handle so that dataStore2 is marked as unreferenced.
+            mainDataStore.matrix.removeCols(0, 1);
+            mainDataStore.undoRedoStackManager.closeCurrentOperation();
 
-                // Wait for the summary that contains the above. Also, get this summary's version so that we can load
-                // a new container with it.
-                const summaryVersion = await waitForSummary();
-
-                // Since dataStore should be marked as unreferenced in the summary that container2 loaded with,
-                // requesting it with externalRequest header should fail.
-                const container2 = await loadContainer(summaryVersion);
-                const response = await container2.request(request);
-                assert(response.status === 404, "dataStore2 should have failed to load");
-            }
+            // Wait for the summary that will have data store 2 has unreferenced.
+            await waitForSummary();
 
             // Undo the operation that removed the column so that dataStore2 is marked as referenced again.
-            {
-                mainDataStore.undoRedoStackManager.undoOperation();
+            mainDataStore.undoRedoStackManager.undoOperation();
 
-                // Wait for the summary that contains the above. Also, get this summary's version so that we can load
-                // a new container with it.
-                const summaryVersion = await waitForSummary();
+            // Wait for the summary that contains the above. Also, get this summary's version so that we can load
+            // a new container with it.
+            const summaryVersion = await waitForSummary();
 
-                // Since dataStore should be marked as referenced in the summary that container2 loaded with, requesting
-                // it with externalRequest header should succeed.
-                const container2 = await loadContainer(summaryVersion);
-                const response = await container2.request(request);
-                assert(response.status === 200, "dataStore2 should successfully load now");
-            }
+            // Since dataStore should be marked as referenced in the summary that container2 loaded with, requesting
+            // it with externalRequest header should succeed.
+            const container2 = await loadContainer(summaryVersion);
+            const response = await container2.request(request);
+            assert(response.status === 200, "dataStore2 should successfully load now");
+        });
+
+        it("should reflect redo of unreferenced data stores in the next summary", async () => {
+            // Create a second data store (dataStore2).
+            const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
+
+            // The request to use to load dataStore2. Set externalRequest to true so that unreferenced data stores
+            // are not returned.
+            const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
+
+            // Add and then remove the handle of dataStore2 to the matrix to mark it as unreferenced.
+            mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
+            mainDataStore.undoRedoStackManager.closeCurrentOperation();
+
+            await provider.ensureSynchronized();
+
+            // Now delete the handle so that dataStore2 is marked as unreferenced.
+            mainDataStore.matrix.removeCols(0, 1);
+            mainDataStore.undoRedoStackManager.closeCurrentOperation();
+
+            // Wait for the summary that will have data store 2 has unreferenced.
+            await waitForSummary();
+
+            // Undo the operation that removed the column so that dataStore2 is marked as referenced again.
+            mainDataStore.undoRedoStackManager.undoOperation();
+            await provider.ensureSynchronized();
 
             // Redo the operation that removed the column so that dataStore2 is marked as unreferenced again.
-            {
-                mainDataStore.undoRedoStackManager.redoOperation();
+            mainDataStore.undoRedoStackManager.redoOperation();
 
-                // Wait for the summary that contains the above. Also, get this summary's version so that we can load
-                // a new container with it.
-                const summaryVersion = await waitForSummary();
+            // Wait for the summary that contains the above. Also, get this summary's version so that we can load
+            // a new container with it.
+            const summaryVersion = await waitForSummary();
 
-                // Since dataStore should be marked as unreferenced in the summary that container2 loaded with,
-                // requesting it with externalRequest header should fail.
-                const container2 = await loadContainer(summaryVersion);
-                const response = await container2.request(request);
-                assert(response.status === 404, "dataStore2 should successfully load now");
-            }
+            // Since dataStore should be marked as unreferenced in the summary that container2 loaded with,
+            // requesting it with externalRequest header should fail.
+            const container2 = await loadContainer(summaryVersion);
+            const response = await container2.request(request);
+            assert(response.status === 404, "dataStore2 should successfully load now");
         });
     });
 
     describe("SharedString", () => {
-        it("should reflect handle updates immediately in the next summary", async () => {
+        it("should reflect unreferenced data stores in the next summary", async () => {
             // Create a second data store (dataStore2).
             const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
 
-            // The request to use to load dataStore2.
+            // The request to use to load dataStore2. Set externalRequest to true so that unreferenced data stores
+            // are not returned.
             const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
 
             // Add the handle of dataStore2 to the shared string to mark it as referenced.
-            {
-                mainDataStore.sharedString.insertText(0, "World");
-                mainDataStore.sharedString.insertMarker(
-                    0,
-                    ReferenceType.Simple,
-                    {
-                        [reservedMarkerIdKey]: "markerId",
-                        ["handle"]: dataStore2.handle,
-                    },
-                );
-
-                // Wait for the summary that contains the above. Also, get this summary's version so that we can load
-                // a new container with it.
-                const summaryVersion = await waitForSummary();
-
-                // Since dataStore should be marked as referenced in the summary that container2 loaded with, requesting
-                // it with externalRequest header should succeed.
-                const container2 = await loadContainer(summaryVersion);
-                const response = await container2.request(request);
-                assert(response.status === 200, "dataStore2 should have successfully loaded");
-            }
+            mainDataStore.sharedString.insertText(0, "World");
+            mainDataStore.sharedString.insertMarker(
+                0,
+                ReferenceType.Simple,
+                {
+                    [reservedMarkerIdKey]: "markerId",
+                    ["handle"]: dataStore2.handle,
+                },
+            );
+            await provider.ensureSynchronized();
 
             // Remove the handle of dataStore2 from the shared string to mark it as unreferenced.
-            {
-                const marker = mainDataStore.sharedString.getMarkerFromId("markerId") as Marker;
-                mainDataStore.sharedString.annotateMarker(
-                    marker,
-                    {
-                        ["handle"]: "",
-                    },
-                );
+            const marker = mainDataStore.sharedString.getMarkerFromId("markerId") as Marker;
+            mainDataStore.sharedString.annotateMarker(
+                marker,
+                {
+                    ["handle"]: "",
+                },
+            );
 
-                // Wait for the summary that contains the above. Also, get this summary's version so that we can load
-                // a new container with it.
-                const summaryVersion = await waitForSummary();
+            // Wait for the summary that will have data store 2 as unreferenced. Also, get this summary's version so
+            // that we can load a new container with it.
+            const summaryVersion = await waitForSummary();
 
-                // Since dataStore should be marked as unreferenced in the summary that container2 loaded with,
-                // requesting it with externalRequest header should fail.
-                const container2 = await loadContainer(summaryVersion);
-                const response = await container2.request(request);
-                assert(response.status === 404, "dataStore2 should have failed to load");
-            }
+            // Since dataStore should be marked as unreferenced in the summary that container2 loaded with,
+            // requesting it with externalRequest header should fail.
+            const container2 = await loadContainer(summaryVersion);
+            const response = await container2.request(request);
+            assert(response.status === 404, "dataStore2 should have failed to load");
+        });
+
+        it("should reflect undo of unreferenced data stores in the next summary", async () => {
+            // Create a second data store (dataStore2).
+            const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
+
+            // The request to use to load dataStore2. Set externalRequest to true so that unreferenced data stores
+            // are not returned.
+            const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
+
+            // Add the handle of dataStore2 to the shared string to mark it as referenced.
+            mainDataStore.sharedString.insertText(0, "World");
+            mainDataStore.sharedString.insertMarker(
+                0,
+                ReferenceType.Simple,
+                {
+                    [reservedMarkerIdKey]: "markerId",
+                    ["handle"]: dataStore2.handle,
+                },
+            );
+            await provider.ensureSynchronized();
+
+            // Remove the handle of dataStore2 from the shared string to mark it as unreferenced.
+            mainDataStore.sharedString.annotateMarker(
+                mainDataStore.sharedString.getMarkerFromId("markerId") as Marker,
+                {
+                    ["handle"]: "",
+                },
+            );
+
+            // Wait for the summary that will have data stores 2 as unreferenced.
+            await waitForSummary();
 
             // Add back the handle of dataStore2 to the shared string to mark it as referenced.
-            {
-                const marker = mainDataStore.sharedString.getMarkerFromId("markerId") as Marker;
-                mainDataStore.sharedString.annotateMarker(
-                    marker,
-                    {
-                        ["handle"]: dataStore2.handle,
-                    },
-                );
+            mainDataStore.sharedString.annotateMarker(
+                mainDataStore.sharedString.getMarkerFromId("markerId") as Marker,
+                {
+                    ["handle"]: dataStore2.handle,
+                },
+            );
 
-                // Wait for the summary that contains the above. Also, get this summary's version so that we can load
-                // a new container with it.
-                const summaryVersion = await waitForSummary();
+            // Wait for the summary that contains the above. Also, get this summary's version so that we can load
+            // a new container with it.
+            const summaryVersion = await waitForSummary();
 
-                // Since dataStore should be marked as referenced in the summary that container2 loaded with,
-                // requesting it with externalRequest header should succeed.
-                const container2 = await loadContainer(summaryVersion);
-                const response = await container2.request(request);
-                assert(response.status === 200, "dataStore2 should have successfully loaded");
-            }
+            // Since dataStore should be marked as referenced in the summary that container2 loaded with,
+            // requesting it with externalRequest header should succeed.
+            const container2 = await loadContainer(summaryVersion);
+            const response = await container2.request(request);
+            assert(response.status === 200, "dataStore2 should have successfully loaded");
         });
     });
 });

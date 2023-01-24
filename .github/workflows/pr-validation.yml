@@ -1,18 +1,93 @@
 name: "Fluid PR Validation"
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types:
+      - opened # PR is created
+      - synchronize # commits added to PR
+      - reopened # closed PR re-opened
+      - edited # title or body edited, or base branch changed
     branches:
       - main
+      - next
       - release/*
 
 jobs:
+  # This job determines what paths have changed in the PR and outputs a boolean. Using the paths filter in the
+  # pull_request event doesn't work. Per the GitHub docs, "If a workflow is skipped due to path filtering, branch
+  # filtering or a commit message, then checks associated with that workflow will remain in a 'Pending' state. A pull
+  # request that requires those checks to be successful will be blocked from merging." This means we can't make such
+  # jobs required for PRs to be merged, because the jobs just stay in the pending state.
+  changed-paths:
+    name: Determine changed paths
+    runs-on: ubuntu-latest
+    steps:
+      # For pull requests it's not necessary to checkout the code
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # ratchet:dorny/paths-filter@v2.11.1
+        id: filter
+        with:
+          filters: |
+            build-tools:
+              - 'build-tools/**'
+              - '.github/workflows/pr-validation.yml'
+    # Set job outputs to values from filter step
+    outputs:
+      build-tools: ${{ steps.filter.outputs.build-tools }}
+
   validate-codeowners:
     name: Validate CODEOWNERS
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
-      - uses: mszostok/codeowners-validator@2f6e3bb39aa6837d7dcf8eff2de5d6c046d0c9a9 # pin@v0.6.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          persist-credentials: false
+      - uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f # ratchet:mszostok/codeowners-validator@v0.7.4
         with:
           github_access_token: "${{ secrets.GITHUB_TOKEN }}"
           checks: "files,duppatterns,syntax"
+
+  # This job checks that PR template placeholder content has been removed from the PR body.
+  placeholder-content:
+    name: PR template placeholder content
+    runs-on: ubuntu-latest
+    if: |
+      github.event.action == 'edited' ||
+      github.event.action == 'opened' ||
+      github.event.action == 'reopened'
+    steps:
+      - uses: sitezen/pr-comment-checker@f1e956fac00c6d1163d15841886ae80b7ae58ecb # ratchet:sitezen/pr-comment-checker@v1.0.1
+        with:
+          pr_description_should_not_contain: |
+            Feel free to remove or alter parts of this template that do not offer value for your specific change
+          wrong_pr_description_message: |
+            Your PR description contains placeholder content from the PR template. Remove or replace the placeholder
+            content. More information at:
+            https://github.com/microsoft/FluidFramework/wiki/Commit-message-style#pr-template-content
+
+  # We've adopted conventional commits in the build-tools release group. The CI jobs below require the PR title and body
+  # to match our standards. More information can be found in the wiki:
+  # https://github.com/microsoft/FluidFramework/wiki/Commit-message-style
+  conventional-pr-title:
+    name: PR title matches conventional commit format
+    runs-on: ubuntu-latest
+    # Only runs if build-tools is changed
+    needs: changed-paths
+    if: |
+      needs.changed-paths.outputs.build-tools == 'true'
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2.2.4
+        with:
+          version: 7
+      - name: Install dependencies
+        working-directory: build-tools
+        run: |
+          # Only install the root dependencies since we don't need the whole workspace
+          pnpm config set recursive-install false
+          pnpm install --ignore-scripts
+      # Lints the PR title according to the settings file in the repo
+      - uses: JulienKode/pull-request-name-linter-action@8c05fb989d9f156ce61e33754f9802c9d3cffa58 # ratchet:JulienKode/pull-request-name-linter-action@v0.5.0
+        name: Lint PR title
+        with:
+          configuration-path: build-tools/commitlint.config.cjs

@@ -14,6 +14,17 @@ export {
     Opaque,
     ValueFromBranded,
 } from "./brand";
+export {
+    deleteFromNestedMap,
+    getOrAddInMap,
+    getOrAddInNestedMap,
+    getOrDefaultInNestedMap,
+    NestedMap,
+    SizedNestedMap,
+    setInNestedMap,
+    tryAddToNestedMap,
+    tryGetFromNestedMap,
+} from "./nestedMap";
 export { OffsetList, OffsetListFactory } from "./offsetList";
 export {
     areSafelyAssignable,
@@ -29,18 +40,23 @@ export {
     MakeNominal,
     requireFalse,
     requireTrue,
+    requireAssignableTo,
 } from "./typeCheck";
 export { StackyIterator } from "./stackyIterator";
 export {
     clone,
+    compareArrays,
     compareSets,
     fail,
     getOrAddEmptyToMap,
+    getOrCreate,
     isJsonObject,
+    isReadonlyArray,
     JsonCompatible,
     JsonCompatibleObject,
     JsonCompatibleReadOnly,
     makeArray,
+    Mutable,
     RecursiveReadonly,
     unreachableCase,
 } from "./utils";

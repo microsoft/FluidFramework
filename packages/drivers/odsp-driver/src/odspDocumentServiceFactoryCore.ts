@@ -31,7 +31,6 @@ import {
     ShareLinkTypes,
     ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions";
-import type { io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import {
     LocalPersistentCache,
@@ -42,8 +41,9 @@ import {
     ICacheAndTracker,
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
-import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher } from "./odspUtils";
+import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher, IExistingFileInfo, isNewFileInfo } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
+import { createNewContainerOnExistingFile } from "./createNewContainerOnExistingFile";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -80,6 +80,29 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             throw new Error("File path should be provided!!");
         }
 
+        let fileInfo: INewFileInfo | IExistingFileInfo;
+        let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+        if (odspResolvedUrl.itemId) {
+            fileInfo = {
+                type: 'Existing',
+                driveId: odspResolvedUrl.driveId,
+                siteUrl: odspResolvedUrl.siteUrl,
+                itemId: odspResolvedUrl.itemId
+            };
+        } else if (odspResolvedUrl.fileName) {
+            createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
+            fileInfo = {
+                type: 'New',
+                driveId: odspResolvedUrl.driveId,
+                siteUrl: odspResolvedUrl.siteUrl,
+                filePath,
+                filename: odspResolvedUrl.fileName,
+                createLinkType: createShareLinkParam,
+            };
+        } else {
+            throw new Error("A new or existing file must be specified to create container!");
+        }
+
         const protocolSummary = createNewSummary?.tree[".protocol"];
         if (protocolSummary) {
             const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary as ISummaryTree);
@@ -87,15 +110,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 throw new Error("Seq number in detached ODSP container should be 0");
             }
         }
-
-        const createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
-        const newFileInfo: INewFileInfo = {
-            driveId: odspResolvedUrl.driveId,
-            siteUrl: odspResolvedUrl.siteUrl,
-            filePath,
-            filename: odspResolvedUrl.fileName,
-            createLinkType: createShareLinkParam,
-        };
 
         const odspLogger = createOdspLogger(logger);
 
@@ -112,30 +126,43 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
-                createShareLinkParam: JSON.stringify(createShareLinkParam),
+                createShareLinkParam: createShareLinkParam ? JSON.stringify(createShareLinkParam) : undefined,
                 enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
                 enableSingleRequestForShareLinkWithCreate:
                     this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
             },
             async (event) => {
-                odspResolvedUrl = await createNewFluidFile(
-                    toInstrumentedOdspTokenFetcher(
-                        odspLogger,
-                        resolvedUrlData,
-                        this.getStorageToken,
-                        true /* throwOnNullToken */,
-                    ),
-                    newFileInfo,
+                const getStorageToken = toInstrumentedOdspTokenFetcher(
                     odspLogger,
-                    createNewSummary,
-                    cacheAndTracker.epochTracker,
-                    fileEntry,
-                    this.hostPolicy.cacheCreateNewSummary ?? true,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-                    odspResolvedUrl.isClpCompliantApp,
-                    this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-                    this.hostPolicy.enableShareLinkWithCreate,
+                    resolvedUrlData,
+                    this.getStorageToken,
+                    true /* throwOnNullToken */,
                 );
+                odspResolvedUrl = isNewFileInfo(fileInfo)
+                    ? await createNewFluidFile(
+                        getStorageToken,
+                        fileInfo,
+                        odspLogger,
+                        createNewSummary,
+                        cacheAndTracker.epochTracker,
+                        fileEntry,
+                        this.hostPolicy.cacheCreateNewSummary ?? true,
+                        !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                        odspResolvedUrl.isClpCompliantApp,
+                        this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+                        this.hostPolicy.enableShareLinkWithCreate
+                    )
+                    : await createNewContainerOnExistingFile(
+                        getStorageToken,
+                        fileInfo,
+                        odspLogger,
+                        createNewSummary,
+                        cacheAndTracker.epochTracker,
+                        fileEntry,
+                        this.hostPolicy.cacheCreateNewSummary ?? true,
+                        !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                        odspResolvedUrl.isClpCompliantApp,
+                    );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);
                 event.end({
@@ -158,7 +185,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(
         private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
         private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-        private readonly getSocketIOClient: () => Promise<typeof SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
@@ -222,7 +248,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             storageTokenFetcher,
             webSocketTokenFetcher,
             odspLogger,
-            this.getSocketIOClient,
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,

@@ -384,7 +384,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         return this._latestSummary;
     }
 
-    private readonly canReuseHandle: boolean;
+    protected readonly canReuseHandle: boolean;
 
     /**
      * Do not call constructor directly.

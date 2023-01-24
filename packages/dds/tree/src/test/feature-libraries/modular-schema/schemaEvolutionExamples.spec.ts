@@ -29,11 +29,14 @@ import {
     InMemoryStoredSchemaRepository,
     lookupGlobalFieldSchema,
     lookupTreeSchema,
-} from "../../../schema-stored";
-import { Adapters, Compatibility, TreeAdapter, FieldAdapter } from "../../../schema-view";
+    Adapters,
+    Compatibility,
+    TreeAdapter,
+    FieldAdapter,
+    rootFieldKey,
+} from "../../../core";
 import { brand } from "../../../util";
 import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-libraries";
-import { rootFieldKey } from "../../../tree";
 
 // Allow importing specific example files:
 /* eslint-disable-next-line import/no-internal-modules */

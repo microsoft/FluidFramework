@@ -88,6 +88,9 @@ export abstract class SynchronousCursor {
  * A simple general purpose ITreeCursorSynchronous implementation.
  *
  * As this is a generic implementation, it's ability to optimize is limited.
+ *
+ * Note that TNode can be `null` (and we should support `undefined` as well),
+ * so be careful using types like `TNode | undefined` and expressions like `TNode ??`.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
     /**
@@ -98,7 +101,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
      * does not include current level (which is stored in `siblings`).
      * Even levels in the stack (starting from 0) are sequences of nodes and odd levels
      * are for fields keys on a node.
-     * @param indexStack - Stack of indices into the corosponding levels in `siblingStack`.
+     * @param indexStack - Stack of indices into the corresponding levels in `siblingStack`.
      * @param siblings - Siblings at the current level (not included in `siblingStack`).
      * @param index - Index into `siblings`.
      */
@@ -238,6 +241,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
     }
 
     public firstField(): boolean {
+        // assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
         const fields = this.adapter.keysFromNode(this.getNode());
         if (fields.length === 0) {
             return false;
@@ -261,14 +265,15 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
     }
 
     public firstNode(): boolean {
-        const siblings = this.getField();
-        if (siblings.length === 0) {
+        // assert(this.mode === CursorLocationType.Fields, "firstNode only allowed in fields mode");
+        const nodes = this.getField();
+        if (nodes.length === 0) {
             return false;
         }
         this.siblingStack.push(this.siblings);
         this.indexStack.push(this.index);
         this.index = 0;
-        this.siblings = siblings;
+        this.siblings = nodes;
         return true;
     }
 
@@ -299,14 +304,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
         return (this.siblings as TNode[])[this.index];
     }
 
-    private getParent(): TNode | undefined {
-        // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
-        return this.getStackedNode(this.indexStack.length - 1);
-    }
-
     private getField(): readonly TNode[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
-        const parent = this.getParent() ?? fail("cannot getField when at root");
+        const parent = this.getStackedNode(this.indexStack.length - 1);
         const key: FieldKey = this.getFieldKey();
         const field = this.adapter.getFieldFromNode(parent, key);
         return field;

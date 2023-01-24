@@ -5,7 +5,6 @@
 import { strict as assert } from "assert";
 import { getRequestedRange, versionHasMovedSparsedMatrix } from "../versionUtils";
 
-/* eslint-disable max-len */
 describe("versionUtils", () => {
     it("Get the major version number above or below the baseVersion", () => {
         // assert for major bumps
@@ -62,6 +61,12 @@ describe("versionUtils", () => {
         assert.strictEqual(getRequestedRange("0.59.1002", -1), "^0.58.0-0");
         assert.strictEqual(getRequestedRange("1.1.0", -1), "^0.59.0-0");
         assert.strictEqual(getRequestedRange("2.4.5", -1), "^1.0.0-0");
+
+        // asserts for prereleases/dev versions
+        assert.strictEqual(getRequestedRange("2.0.0-dev.2.2.0.110039", -1), ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0");
+        assert.strictEqual(getRequestedRange("2.0.0-dev.2.2.0.110039", -2), "^1.0.0-0");
+        assert.strictEqual(getRequestedRange("2.0.0-dev.2.1.0.110039", -1), ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0");
+        assert.strictEqual(getRequestedRange("2.0.0-dev.2.1.0.110039", -2), "^1.0.0-0");
     });
 
     describe("versionHasMovedSparsedMatrix", () => {
@@ -83,4 +88,3 @@ describe("versionUtils", () => {
         });
     });
 });
-/* eslint-enable max-len */

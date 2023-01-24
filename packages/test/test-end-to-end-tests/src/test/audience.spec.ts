@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, timeoutPromise, ensureContainerConnected } from "@fluidframework/test-utils";
+import { ITestObjectProvider, timeoutPromise, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -94,7 +94,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
     it("should add clients in audience as expected", async () => {
         // Create a client - client1 and wait for it to be connected.
         const client1Container = await createContainer();
-        await ensureContainerConnected(client1Container);
+        await waitForContainerConnection(client1Container, true);
 
         // Validate that client1 is added to its own audience.
         assert(client1Container.clientId !== undefined, "client1 does not have clientId");
@@ -102,7 +102,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 
         // Load a second client - client2 and wait for it to be connected.
         const client2Container = await loadContainer();
-        await ensureContainerConnected(client2Container);
+        await waitForContainerConnection(client2Container, true);
 
         // Validate that client2 is added to its own audience.
         assert(client2Container.clientId !== undefined, "client2 does not have clientId");
@@ -129,8 +129,8 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
         client2DataStore._root.set("testKey2", "testValue2");
 
         // Ensure that the clients are connected and synchronized.
-        await ensureContainerConnected(client1Container);
-        await ensureContainerConnected(client2Container);
+        await waitForContainerConnection(client1Container, true);
+        await waitForContainerConnection(client2Container, true);
         await provider.ensureSynchronized();
 
         assert(client1Container.clientId !== undefined, "client1 does not have clientId");
@@ -148,11 +148,11 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
     it("should remove clients in audience as expected", async () => {
         // Create a client - client1 and wait for it to be connected.
         const client1Container = await createContainer();
-        await ensureContainerConnected(client1Container);
+        await waitForContainerConnection(client1Container, true);
 
         // Load a second client - client2 and wait for it to be connected.
         const client2Container = await loadContainer();
-        await ensureContainerConnected(client2Container);
+        await waitForContainerConnection(client2Container, true);
 
         assert(client1Container.clientId !== undefined, "client1 does not have clientId");
         assert(client2Container.clientId !== undefined, "client2 does not have clientId");

@@ -50,7 +50,8 @@ export const blobCountPropertyName = "BlobCount";
 export const channelsTreeName = ".channels";
 
 // @public (undocumented)
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
 
 // @public (undocumented)
 export type CreateChildSummarizerNodeParam = {
@@ -82,8 +83,17 @@ export enum FlushMode {
     TurnBased = 1
 }
 
-// @public (undocumented)
-export const gcBlobKey = "gc";
+// @public
+export const gcBlobPrefix = "__gc";
+
+// @public
+export const gcDeletedBlobKey = "__deletedNodes";
+
+// @public
+export const gcTombstoneBlobKey = "__tombstones";
+
+// @public
+export const gcTreeKey = "gc";
 
 // @public
 export interface IAttachMessage {
@@ -246,7 +256,6 @@ export interface IGarbageCollectionData {
 // @public
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
     usedRoutes?: string[];
 }
 
@@ -257,11 +266,28 @@ export interface IGarbageCollectionNodeData {
 }
 
 // @public
+export interface IGarbageCollectionSnapshotData {
+    // (undocumented)
+    deletedNodes: string[] | undefined;
+    // (undocumented)
+    gcState: IGarbageCollectionState;
+    // (undocumented)
+    tombstones: string[] | undefined;
+}
+
+// @public
 export interface IGarbageCollectionState {
     // (undocumented)
     gcNodes: {
         [id: string]: IGarbageCollectionNodeData;
     };
+}
+
+// @public @deprecated (undocumented)
+export interface IGarbageCollectionSummaryDetailsLegacy {
+    gcData?: IGarbageCollectionData;
+    unrefTimestamp?: number;
+    usedRoutes?: string[];
 }
 
 // @public
@@ -347,7 +373,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
-    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
+    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+    getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;

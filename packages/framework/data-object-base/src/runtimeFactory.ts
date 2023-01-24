@@ -32,9 +32,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
             (storeFactories.includes(defaultStoreFactory)
                 ? storeFactories
                 : storeFactories.concat(defaultStoreFactory)
-            ).map(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
+            ).map((factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
     }
 
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {

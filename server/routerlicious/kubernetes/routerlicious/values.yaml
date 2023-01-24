@@ -26,6 +26,7 @@ alfred:
         minThrottleIntervalInMs: 1000000
         maxInMemoryCacheSize: 1000
         maxInMemoryCacheAgeInMs: 60000
+        enableEnhancedTelemetry: false
     socketConnections:
         maxPerMs: 1000000
         maxBurst: 1000000
@@ -33,6 +34,7 @@ alfred:
         minThrottleIntervalInMs: 1000000
         maxInMemoryCacheSize: 1000
         maxInMemoryCacheAgeInMs: 60000
+        enableEnhancedTelemetry: false
     submitOps:
         maxPerMs: 1000000
         maxBurst: 1000000
@@ -40,6 +42,7 @@ alfred:
         minThrottleIntervalInMs: 1000000
         maxInMemoryCacheSize: 1000
         maxInMemoryCacheAgeInMs: 60000
+        enableEnhancedTelemetry: false
     submitSignal:
         maxPerMs: 1000000
         maxBurst: 1000000
@@ -47,6 +50,7 @@ alfred:
         minThrottleIntervalInMs: 1000000
         maxInMemoryCacheSize: 1000
         maxInMemoryCacheAgeInMs: 60000
+        enableEnhancedTelemetry: false
   socketIoAdapter:
     enableCustomSocketIoAdapter: true
     shouldDisableDefaultNamespace: false
@@ -71,6 +75,11 @@ scriptorium:
 scribe:
   name: scribe
   replicas: 8
+  checkpointHeuristics:
+    enable: false
+    idleTime: 10000
+    maxTime: 60000
+    maxMessages: 500
 
 foreman:
   name: foreman
@@ -124,6 +133,11 @@ redis2:
   tls: false
 
 redisForThrottling:
+  url: redis_url
+  port: 6379
+  tls: false
+
+redisForTenantCache:
   url: redis_url
   port: 6379
   tls: false

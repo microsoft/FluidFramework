@@ -63,7 +63,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         protected readonly id: string,
         protected readonly manager: GitManager,
         protected readonly logger: ITelemetryLogger,
-        public readonly policies: IDocumentStorageServicePolicies = {},
+        public readonly policies: IDocumentStorageServicePolicies,
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTreeVersion>,

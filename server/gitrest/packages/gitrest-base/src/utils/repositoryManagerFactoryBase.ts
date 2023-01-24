@@ -17,7 +17,7 @@ import {
     IStorageDirectoryConfig,
     Constants,
 } from "./definitions";
-import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
+import { BaseGitRestTelemetryProperties, GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 
 type RepoOperationType = "create" | "open";
 
@@ -45,13 +45,15 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         repo: TRepo,
         gitdir: string,
         externalStorageManager: IExternalStorageManager,
-        lumberjackBaseProperties: Record<string, any>): IRepositoryManager;
+        lumberjackBaseProperties: Record<string, any>,
+        enableRepositoryManagerMetrics: boolean): IRepositoryManager;
 
     constructor(
         private readonly storageDirectoryConfig: IStorageDirectoryConfig,
         private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
         private readonly externalStorageManager: IExternalStorageManager,
         repoPerDocEnabled: boolean,
+        private readonly enableRepositoryManagerMetrics: boolean = false,
     ) {
         this.internalHandler = repoPerDocEnabled
             ? this.repoPerDocInternalHandler.bind(this)
@@ -76,7 +78,13 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
                 });
         };
 
-        return this.internalHandler(params, onRepoNotExists, "create");
+        return this.enableRepositoryManagerMetrics
+            ? helpers.executeApiWithMetric(
+                async () => this.internalHandler(params, onRepoNotExists, "create"),
+                GitRestLumberEventName.CreateRepo,
+                helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
+            )
+            : this.internalHandler(params, onRepoNotExists, "create");
     }
 
     public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
@@ -96,7 +104,13 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
             throw new NetworkError(400, `Repo does not exist ${gitdir}`);
         };
 
-        return this.internalHandler(params, onRepoNotExists, "open");
+        return this.enableRepositoryManagerMetrics
+            ? helpers.executeApiWithMetric(
+                async () => this.internalHandler(params, onRepoNotExists, "open"),
+                GitRestLumberEventName.OpenRepo,
+                helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
+            )
+            : this.internalHandler(params, onRepoNotExists, "open");
     }
 
     private async repoPerDocInternalHandler(
@@ -206,7 +220,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
                 repository,
                 directoryPath,
                 this.externalStorageManager,
-                lumberjackBaseProperties);
+                lumberjackBaseProperties,
+                this.enableRepositoryManagerMetrics);
         };
 
         // RepoManagerFactories support 2 types of operations: "create repo" and "open repo". "Open repo"

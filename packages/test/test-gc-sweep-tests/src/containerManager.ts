@@ -41,7 +41,7 @@ export class ContainerManager {
         return container;
     }
 
-    private trackContainer(container: IContainer) {
+    private trackContainer(container: IContainer): void {
         container.on("closed", () => {
             const index = this.connectedContainers.indexOf(container);
             assert(index >= 0, "Expected container to have been added to connectedContainers");
@@ -51,7 +51,7 @@ export class ContainerManager {
         this.connectedContainers.push(container);
     }
 
-    public closeRandomContainer(random: IRandom) {
+    public closeRandomContainer(random: IRandom): void {
         assert(this.connectedContainers.length > 0, "Expected there to be connected containers!");
         random.pick(this.connectedContainers).close();
     }

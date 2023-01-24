@@ -3,22 +3,36 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { FieldKinds, singleTextCursor, getSchemaString } from "../../feature-libraries";
-import { brand } from "../../util";
 import {
+    FieldKinds,
+    singleTextCursor,
+    getSchemaString,
+    jsonableTreeFromCursor,
+    namedTreeSchema,
+} from "../../feature-libraries";
+import { brand } from "../../util";
+import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
+import { ISharedTree } from "../../shared-tree";
+import {
+    compareUpPaths,
+    FieldKey,
     JsonableTree,
+    mapCursorField,
     rootFieldKey,
     rootFieldKeySymbol,
     symbolFromKey,
     TreeValue,
+    UpPath,
     Value,
-} from "../../tree";
-import { moveToDetachedField } from "../../forest";
-import { SharedTreeTestFactory, TestTreeProvider } from "../utils";
-import { ISharedTree } from "../../shared-tree";
-import { TransactionResult } from "../../checkout";
-import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
+    moveToDetachedField,
+    TransactionResult,
+    fieldSchema,
+    GlobalFieldKey,
+    SchemaData,
+} from "../../core";
+import { SharedTreeCore } from "../../shared-tree-core";
 
+const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
 
@@ -70,7 +84,7 @@ describe("SharedTree", () => {
     });
 
     it("can summarize and load", async () => {
-        const provider = await TestTreeProvider.create(1, true);
+        const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
         const [summarizingTree] = provider.trees;
         const value = 42;
         initializeTestTreeWithValue(summarizingTree, value);
@@ -82,7 +96,7 @@ describe("SharedTree", () => {
     });
 
     it("can process ops after loading from summary", async () => {
-        const provider = await TestTreeProvider.create(1, true);
+        const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
         const tree1 = provider.trees[0];
         const tree2 = await provider.createTree();
         const tree3 = await provider.createTree();
@@ -118,7 +132,7 @@ describe("SharedTree", () => {
 
         // Ensure tree1 has a chance to receive the deletion of Z before putting out a summary
         await provider.opProcessingController.processIncoming(container1);
-        validateTree(tree1, ["A", "C"]);
+        validateRootField(tree1, ["A", "C"]);
 
         // Have tree1 make a summary
         // Summarized state: A C
@@ -145,16 +159,16 @@ describe("SharedTree", () => {
         // Trees 1 through 3 should get the correct end state (ABC) whether we include EditManager data
         // in summaries or not.
         const expectedValues = ["A", "B", "C"];
-        validateTree(tree1, expectedValues);
-        validateTree(tree2, expectedValues);
-        validateTree(tree3, expectedValues);
+        validateRootField(tree1, expectedValues);
+        validateRootField(tree2, expectedValues);
+        validateRootField(tree3, expectedValues);
         // tree4 should only get the correct end state if it was able to get the adequate
         // EditManager state from the summary. Specifically, in order to correctly rebase the insert
         // of B, tree4 needs to have a local copy of the edit that deleted Z, so it can
         // rebase the insertion of  B over that edit.
         // Without that, it will interpret the insertion of B based on the current state, yielding
         // the order ACB.
-        validateTree(tree4, expectedValues);
+        validateRootField(tree4, expectedValues);
     });
 
     it("can summarize local edits in the attach summary", async () => {
@@ -169,24 +183,51 @@ describe("SharedTree", () => {
             tree.storedSchema.update(schema);
             insert(tree, 0, "A");
             insert(tree, 1, "C");
-            validateTree(tree, ["A", "C"]);
+            validateRootField(tree, ["A", "C"]);
         };
         const provider = await TestTreeProvider.create(
             1,
-            true,
+            SummarizeType.onDemand,
             new SharedTreeTestFactory(onCreate),
         );
         const [tree1] = provider.trees;
-        validateTree(tree1, ["A", "C"]);
+        validateRootField(tree1, ["A", "C"]);
         const tree2 = await provider.createTree();
         // Check that the joining tree was initialized with data from the attach summary
-        validateTree(tree2, ["A", "C"]);
+        validateRootField(tree2, ["A", "C"]);
 
         // Check that further edits are interpreted properly
         insert(tree1, 1, "B");
         await provider.ensureSynchronized();
-        validateTree(tree1, ["A", "B", "C"]);
-        validateTree(tree2, ["A", "B", "C"]);
+        validateRootField(tree1, ["A", "B", "C"]);
+        validateRootField(tree2, ["A", "B", "C"]);
+    });
+
+    it("has bounded memory growth in EditManager", async () => {
+        const provider = await TestTreeProvider.create(2);
+        const [tree1, tree2] = provider.trees;
+
+        // Make some arbitrary number of edits
+        for (let i = 0; i < 10; ++i) {
+            insert(tree1, 0, "");
+        }
+
+        await provider.ensureSynchronized();
+
+        // These two edit will have ref numbers that correspond to the last of the above edits
+        insert(tree1, 0, "");
+        insert(tree2, 0, "");
+
+        // This synchronization point should ensure that both trees see the edits with the higher ref numbers.
+        await provider.ensureSynchronized();
+
+        // It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
+        // if we'll ever expose some memory stats in which the trunk length would be included.
+        // If we do then this test should be updated to use that code path.
+        const t1 = tree1 as unknown as SharedTreeCore<unknown, any, any>;
+        const t2 = tree2 as unknown as SharedTreeCore<unknown, any, any>;
+        assert(t1.editManager.getTrunk().length < 10);
+        assert(t2.editManager.getTrunk().length < 10);
     });
 
     describe("Editing", () => {
@@ -310,6 +351,72 @@ describe("SharedTree", () => {
             }
         });
 
+        it("can abandon a transaction", async () => {
+            const provider = await TestTreeProvider.create(2);
+            const [tree1] = provider.trees;
+
+            const initialState: JsonableTree = {
+                type: brand("Node"),
+                fields: {
+                    foo: [
+                        { type: brand("Number"), value: 0 },
+                        { type: brand("Number"), value: 1 },
+                        { type: brand("Number"), value: 2 },
+                    ],
+                },
+            };
+            initializeTestTree(tree1, initialState);
+            tree1.runTransaction((forest, editor) => {
+                const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
+                const root0Path = {
+                    parent: undefined,
+                    parentField: rootFieldKeySymbol,
+                    parentIndex: 0,
+                };
+                const root1Path = {
+                    parent: undefined,
+                    parentField: rootFieldKeySymbol,
+                    parentIndex: 1,
+                };
+                const foo0 = editor.sequenceField(root0Path, fooKey);
+                const foo1 = editor.sequenceField(root1Path, fooKey);
+                editor.setValue(
+                    {
+                        parent: root0Path,
+                        parentField: fooKey,
+                        parentIndex: 1,
+                    },
+                    41,
+                );
+                editor.setValue(
+                    {
+                        parent: root0Path,
+                        parentField: fooKey,
+                        parentIndex: 2,
+                    },
+                    42,
+                );
+                editor.setValue(root0Path, "RootValue1");
+                foo0.delete(0, 1);
+                rootField.insert(0, singleTextCursor({ type: brand("Test") }));
+                foo1.delete(0, 1);
+                editor.setValue(root1Path, "RootValue2");
+                foo1.insert(0, singleTextCursor({ type: brand("Test") }));
+                editor.setValue(
+                    {
+                        parent: root1Path,
+                        parentField: fooKey,
+                        parentIndex: 1,
+                    },
+                    82,
+                );
+                // Aborting the transaction should restore the forest
+                return TransactionResult.Abort;
+            });
+
+            validateTree(tree1, [initialState]);
+        });
+
         it("can insert multiple nodes", async () => {
             const provider = await TestTreeProvider.create(2);
             const [tree1, tree2] = provider.trees;
@@ -357,8 +464,47 @@ describe("SharedTree", () => {
             await provider.ensureSynchronized();
 
             const expected = ["x", "y", "a", "b", "c"];
-            validateTree(tree1, expected);
-            validateTree(tree2, expected);
+            validateRootField(tree1, expected);
+            validateRootField(tree2, expected);
+        });
+    });
+
+    describe("Anchors", () => {
+        it("Anchors can be created and dereferenced", async () => {
+            const provider = await TestTreeProvider.create(1);
+            const tree = provider.trees[0];
+
+            const initialState: JsonableTree = {
+                type: brand("Node"),
+                fields: {
+                    foo: [
+                        { type: brand("Number"), value: 0 },
+                        { type: brand("Number"), value: 1 },
+                        { type: brand("Number"), value: 2 },
+                    ],
+                },
+            };
+            initializeTestTree(tree, initialState);
+
+            const cursor = tree.forest.allocateCursor();
+            moveToDetachedField(tree.forest, cursor);
+            cursor.enterNode(0);
+            cursor.enterField(brand("foo"));
+            cursor.enterNode(0);
+            cursor.seekNodes(1);
+            const anchor = cursor.buildAnchor();
+            cursor.free();
+            const childPath = tree.locate(anchor);
+            const expected: UpPath = {
+                parent: {
+                    parent: undefined,
+                    parentField: rootFieldKeySymbol,
+                    parentIndex: 0,
+                },
+                parentField: brand("foo"),
+                parentIndex: 1,
+            };
+            assert(compareUpPaths(childPath, expected));
         });
     });
 });
@@ -453,7 +599,7 @@ function insert(tree: ISharedTree, index: number, ...values: string[]): void {
  * @param tree - The tree to verify.
  * @param expected - The expected values for the nodes in the root field of the tree.
  */
-function validateTree(tree: ISharedTree, expected: Value[]): void {
+function validateRootField(tree: ISharedTree, expected: Value[]): void {
     const readCursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, readCursor);
     let hasNode = readCursor.firstNode();
@@ -464,4 +610,12 @@ function validateTree(tree: ISharedTree, expected: Value[]): void {
     }
     assert.equal(hasNode, false);
     readCursor.free();
+}
+
+function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
+    const readCursor = tree.forest.allocateCursor();
+    moveToDetachedField(tree.forest, readCursor);
+    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+    readCursor.free();
+    assert.deepEqual(actual, expected);
 }

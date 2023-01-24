@@ -165,13 +165,14 @@ function checkThrottleAndUsage(
     tenantId: string,
     logger?: core.ILogger,
     usageStorageId?: string,
-    usageData?: core.IUsageData): core.ThrottlingError | undefined {
+    usageData?: core.IUsageData,
+    incrementWeight: number = 1): core.ThrottlingError | undefined {
     if (!throttler) {
         return;
     }
 
     try {
-        throttler.incrementCount(throttleId, 1, usageStorageId, usageData);
+        throttler.incrementCount(throttleId, incrementWeight, usageStorageId, usageData);
     } catch (error) {
         if (error instanceof core.ThrottlingError) {
             return error;
@@ -323,7 +324,6 @@ export function configureWebSocketServices(
             if (!version) {
                 throw new NetworkError(
                     400,
-                    // eslint-disable-next-line max-len
                     `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`,
                 );
             }
@@ -395,7 +395,6 @@ export function configureWebSocketServices(
                 connection.once("error", (error) => {
                     const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 
-                    // eslint-disable-next-line max-len
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     Lumberjack.error(
                         `Disconnecting socket on connection error`,
@@ -408,7 +407,6 @@ export function configureWebSocketServices(
 
                 connection.connect()
                     .catch(async (err) => {
-                        // eslint-disable-next-line max-len
                         const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
                         connectDocumentOrdererConnectionMetric.error("Failed to establish orderer connection", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
@@ -517,11 +515,21 @@ export function configureWebSocketServices(
 
                     socket.emit("nack", "", [nackMessage]);
                 } else {
+                    let messageCount = 0;
+                    for (const messageBatch of messageBatches) {
+                        // Count all messages in each batch for accurate throttling calculation.
+                        // Note: This is happening before message size checking. We won't process
+                        // messages that are too large, so it is inaccurate to increment throttle
+                        // counts for unprocessed messages.
+                        messageCount += (Array.isArray(messageBatch) ? messageBatch.length : 1);
+                    }
                     const throttleError = checkThrottleAndUsage(
                         submitOpThrottler,
                         getSubmitOpThrottleId(clientId, connection.tenantId),
                         connection.tenantId,
-                        logger);
+                        logger,
+                        undefined, undefined,
+                        messageCount /* incrementWeight */);
                     if (throttleError) {
                         const nackMessage = createNackMessage(
                             throttleError.code,
@@ -554,7 +562,7 @@ export function configureWebSocketServices(
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                         try {
                             const sanitized = messages
-                                .filter((message) => {
+                                .map((message) => {
                                     if (verifyMaxMessageSize === true) {
                                         // Local tests show `JSON.stringify` to be fast
                                         // - <1ms for JSONs <100kb
@@ -571,9 +579,6 @@ export function configureWebSocketServices(
                                         }
                                     }
 
-                                    return true;
-                                })
-                                .map((message) => {
                                     const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
                                     const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage,
                                         numberOfMessagesPerTrace, connection.clientId,
@@ -602,6 +607,11 @@ export function configureWebSocketServices(
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
                 } else {
+                    let messageCount = 0;
+                    for (const contentBatch of contentBatches) {
+                        // Count all messages in each batch for accurate throttling calculation.
+                        messageCount += (Array.isArray(contentBatch) ? contentBatch.length : 1);
+                    }
                     const signalUsageData: core.IUsageData = {
                         value: 0,
                         tenantId: room.tenantId,
@@ -614,7 +624,8 @@ export function configureWebSocketServices(
                         room.tenantId,
                         logger,
                         isSignalUsageCountingEnabled ? core.signalUsageStorageId : undefined,
-                        isSignalUsageCountingEnabled ? signalUsageData : undefined);
+                        isSignalUsageCountingEnabled ? signalUsageData : undefined,
+                        messageCount /* incrementWeight */);
                     if (throttleError) {
                         const nackMessage = createNackMessage(
                             throttleError.code,
@@ -624,8 +635,8 @@ export function configureWebSocketServices(
                         socket.emit("nack", "", [nackMessage]);
                         return;
                     }
-                    contentBatches.forEach((contentBatche) => {
-                        const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
+                    contentBatches.forEach((contentBatch) => {
+                        const contents = Array.isArray(contentBatch) ? contentBatch : [contentBatch];
 
                         for (const content of contents) {
                             const signalMessage: ISignalMessage = {

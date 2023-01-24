@@ -6,8 +6,10 @@ create, initialize, and then make use of the loader in under 200 lines of code.
 And does so in a literate programming-like style to provide more detail on each line of the code.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
-<!-- This section is automatically generated.
-To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 
@@ -18,6 +20,8 @@ You can run this example using the following steps:
       `npm run build:fast -- --nolint @fluid-internal/hosts-sample`
 1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
 1. Run `npm run start` from this directory (examples/hosts/hosts-sample) and open <http://localhost:8080> in a web browser to see the app running.
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 

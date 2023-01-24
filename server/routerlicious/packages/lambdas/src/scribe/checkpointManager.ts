@@ -7,6 +7,7 @@ import {
     ICollection,
     IContext,
     IDocument,
+    isRetryEnabled,
     IScribe,
     ISequencedOperationMessage,
     runWithRetry,
@@ -18,6 +19,7 @@ import { ICheckpointManager } from "./interfaces";
  * MongoDB specific implementation of ICheckpointManager
  */
 export class CheckpointManager implements ICheckpointManager {
+    private readonly clientFacadeRetryEnabled: boolean;
     constructor(
         protected readonly context: IContext,
          private readonly tenantId: string,
@@ -25,6 +27,7 @@ export class CheckpointManager implements ICheckpointManager {
          private readonly documentCollection: ICollection<IDocument>,
          private readonly opCollection: ICollection<ISequencedOperationMessage>,
     ) {
+        this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
      }
 
     /**
@@ -54,7 +57,9 @@ export class CheckpointManager implements ICheckpointManager {
                 3 /* maxRetries */,
                 1000 /* retryAfterMs */,
                 getLumberBaseProperties(this.documentId, this.tenantId),
-                (error) => error.code === 11000 /* shouldIgnoreError */);
+                (error) => error.code === 11000 /* shouldIgnoreError */,
+                (error) => !this.clientFacadeRetryEnabled, /* shouldRetry */
+            );
         }
 
         // Write out the full state first that we require

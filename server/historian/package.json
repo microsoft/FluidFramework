@@ -15,6 +15,7 @@
     "build:compile": "lerna run build:compile --stream",
     "build:genver": "lerna run build:genver --stream --parallel",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
+    "format": "lerna run format --no-sort --stream -- -- -- --color",
     "postinstall": "npm run postinstall:lerna",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
@@ -49,7 +50,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-tools": "^0.4.4000",
-    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.6.1",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",

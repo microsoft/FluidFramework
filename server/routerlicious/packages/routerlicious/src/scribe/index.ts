@@ -5,9 +5,11 @@
 
 import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
 import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
-import { createProducer, getDbFactory, TenantManager } from "@fluidframework/server-services";
+import { createProducer, getDbFactory, DeltaManager, TenantManager } from "@fluidframework/server-services";
+import * as core from "@fluidframework/server-services-core";
 import {
     DefaultServiceConfiguration,
+    ICheckpointHeuristicsServerConfiguration,
     IDb,
     IDocument,
     IPartitionLambdaFactory,
@@ -36,12 +38,19 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
     const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+    const internalAlfredUrl = config.get("worker:alfredUrl");
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
     const tenantManager = new TenantManager(authEndpoint, internalHistorianUrl);
 
+    const deltaManager = new DeltaManager(authEndpoint, internalAlfredUrl);
     const factory = await getDbFactory(config);
+
+    const checkpointHeuristics = config.get("scribe:checkpointHeuristics") as ICheckpointHeuristicsServerConfiguration;
+    if (checkpointHeuristics?.enable) {
+        core.DefaultServiceConfiguration.scribe.checkpointHeuristics = checkpointHeuristics;
+    }
 
     let globalDb;
     if (globalDbEnabled) {
@@ -105,6 +114,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         collection,
         scribeDeltas,
         producer,
+        deltaManager,
         tenantManager,
         serviceConfiguration,
         enableWholeSummaryUpload);

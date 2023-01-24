@@ -175,7 +175,7 @@ function getPartialLengths(
     seq: number,
     mergeTree: MergeTree,
     localSeq?: number,
-    mergeBlock = mergeTree.root,
+    mergeBlock: IMergeBlock = mergeTree.root,
 ) {
     const partialLen = mergeBlock.partialLengths?.getPartialLength(
         seq,
@@ -219,7 +219,7 @@ export function validatePartialLengths(
     mergeTree: MergeTree,
     expectedValues?: { seq: number; len: number; localSeq?: number; }[],
     localSeq?: number,
-    mergeBlock = mergeTree.root,
+    mergeBlock: IMergeBlock = mergeTree.root,
 ): void {
     mergeTree.computeLocalPartials(0);
     for (let i = mergeTree.collabWindow.minSeq + 1; i <= mergeTree.collabWindow.currentSeq; i++) {
@@ -227,6 +227,9 @@ export function validatePartialLengths(
             clientId, i, mergeTree, localSeq, mergeBlock,
         );
 
+        if (partialLen && partialLen < 0) {
+            assert.fail("Negative partial length returned");
+        }
         assert.equal(partialLen, actualLen);
     }
 

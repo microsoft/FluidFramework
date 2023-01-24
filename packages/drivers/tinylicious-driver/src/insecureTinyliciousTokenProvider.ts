@@ -56,7 +56,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
         ver: string = "1.0"
     ): string {
         // Current time in seconds
-        const now = Math.round(new Date().getTime() / 1000);
+        const now = Math.round(Date.now() / 1000);
         const user = { id: uuid(), name: getRandomName() };
 
         const claims: ITokenClaims = {
@@ -75,6 +75,8 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 
         const utf8Key = { utf8: "12345" };
         return jsrsasign.jws.JWS.sign(
+            // External API uses `null`
+            // eslint-disable-next-line unicorn/no-null
             null,
             JSON.stringify({ alg: "HS256", typ: "JWT" }),
             claims,

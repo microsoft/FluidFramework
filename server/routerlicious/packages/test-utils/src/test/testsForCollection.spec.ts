@@ -58,6 +58,22 @@ describe("Test for TestUtils", () => {
             assert.deepStrictEqual(found.value, expected);
             assert.strictEqual(found.existing, false);
         });
+        it("finds and updates, existing element", async () => {
+            const testCollection = new TestCollection([...items]);
+            const itemToCreate = { _id: 1, value: "uno", group: "odd" };
+            const expected = item1;
+            const found = await testCollection.findAndUpdate({ _id: 1 }, itemToCreate);
+            assert.deepStrictEqual(found.value, expected);
+            assert.strictEqual(found.existing, true);
+        });
+        it("not find, and do nothing, non-existing element", async () => {
+            const testCollection = new TestCollection([...items]);
+            const itemToCreate = { _id: 4, value: "four", group: "even" };
+            const expected = null;
+            const found = await testCollection.findAndUpdate({ _id: 4 }, itemToCreate);
+            assert.deepStrictEqual(found.value, expected);
+            assert.strictEqual(found.existing, false);
+        });
         it("inserts and finds multiple elements", async () => {
             const testCollection = new TestCollection([...items]);
             const newItems = [

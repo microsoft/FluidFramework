@@ -58,10 +58,15 @@ import {
     SummarizeInternalFn,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import {
+    addBlobToSummary,
+    convertSummaryTreeToITree,
+} from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
+    loggerToMonitoringContext,
     LoggingError,
+    MonitoringContext,
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
@@ -81,6 +86,9 @@ import {
     getAttributesFormatVersion,
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
+import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
     pkg: readonly string[],
@@ -200,6 +208,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     private _tombstoned = false;
     public get tombstoned() { return this._tombstoned; }
+    /** If true, throw an error when a tombstone data store is used. */
+    private readonly throwOnTombstoneUsage: boolean;
 
     public get attachState(): AttachState {
         return this._attachState;
@@ -243,7 +253,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
     private _isInMemoryRoot: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
-    private readonly subLogger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
@@ -297,8 +307,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async () => this.getBaseGCDetails(),
         );
 
-        this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
-        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
+        this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "FluidDataStoreContext"));
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.mc.logger);
+
+        // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
+        this.throwOnTombstoneUsage =
+            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+            this.clientDetails.type !== summarizerClientType;
     }
 
     public dispose(): void {
@@ -760,10 +775,22 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         if (checkTombstone && this.tombstoned) {
             const messageString = `Context is tombstoned! Call site [${callSite}]`;
-            throw new DataCorruptionError(messageString, {
-                errorMessage: messageString,
-                ...safeTelemetryProps,
-            });
+            const error = new DataCorruptionError(messageString, safeTelemetryProps);
+
+            sendGCTombstoneEvent(
+                this.mc,
+                {
+                    eventName: "GC_Tombstone_DataStore_Changed",
+                    category: this.throwOnTombstoneUsage ? "error" : "generic",
+                    isSummarizerClient: this.clientDetails.type === summarizerClientType,
+                    callSite,
+                },
+                this.pkg,
+                error,
+            );
+            if (this.throwOnTombstoneUsage) {
+                throw error;
+            }
         }
     }
 
@@ -771,7 +798,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-            getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+            getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
