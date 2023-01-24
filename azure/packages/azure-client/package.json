@@ -91,6 +91,14 @@
   "typeValidation": {
     "version": "1.2.0",
     "baselineRange": "^1.0.0",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_AzureClientProps": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_AzureUser": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }
