@@ -549,7 +549,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
             case Multiplicity.Optional: {
                 assert(
                     !Array.isArray(newContent),
-                    "It is invalid to replace the optional field using the array data.",
+                    0x4cd /* It is invalid to replace the optional field using the array data. */,
                 );
                 this.context.setOptionalField(path, fieldKey, newContent, !this.has(fieldKey));
                 break;
@@ -571,7 +571,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
             case Multiplicity.Value: {
                 assert(
                     !Array.isArray(newContent),
-                    "It is invalid to replace the value field using the array data.",
+                    0x4ce /* It is invalid to replace the value field using the array data. */,
                 );
                 this.context.setValueField(path, fieldKey, newContent);
                 break;
@@ -629,7 +629,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             if (target.has(fieldKey) && isPrimitiveValue(value)) {
                 assert(
                     multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
-                    "single value provided for an unsupported field",
+                    0x4cf /* single value provided for an unsupported field */,
                 );
                 const possibleTypes = getPossibleTypes(
                     target.context.schema,
@@ -917,14 +917,14 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         if (fieldKind.multiplicity !== Multiplicity.Sequence) {
             assert(
                 this.length <= 1 && (!Array.isArray(newContent) || newContent.length <= 1),
-                "A non-sequence field cannot have more than one node.",
+                0x4d0 /* A non-sequence field cannot have more than one node. */,
             );
         }
         assert(
             (this.length === 0 && index === 0) || keyIsValidIndex(index, this.length),
-            "Index must be less than length or, if the field is empty, be 0.",
+            0x4d1 /* Index must be less than length or, if the field is empty, be 0. */,
         );
-        if (count !== undefined) assert(count >= 0, "Count must be non-negative.");
+        if (count !== undefined) assert(count >= 0, 0x4d2 /* Count must be non-negative. */);
         const maxCount = this.length - index;
         const _count = count === undefined || count > maxCount ? maxCount : count;
         const fieldPath = this.cursor.getFieldPath();

@@ -7,6 +7,7 @@ import {
     AzureFunctionTokenProvider,
     AzureLocalConnectionConfig,
     AzureRemoteConnectionConfig,
+    IUser,
 } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
@@ -18,10 +19,14 @@ import { ContainerFactorySchema } from "./interface";
 
 export interface AzureClientConfig {
     connType: string;
-    connEndpoint: string;
+    connEndpoint?: string;
     userId?: string;
     userName?: string;
     logger?: TelemetryLogger;
+    tenantId?: string;
+    tenantKey?: string;
+    functionUrl?: string;
+    secureTokenProvider?: boolean; // defaults to Insecure
 }
 
 export const delay = async (timeMs: number): Promise<void> =>
@@ -52,43 +57,74 @@ export function createAzureTokenProvider(
     });
 }
 
+export function createInsecureTokenProvider(
+    tenantKey: string,
+    userID?: string,
+    userName?: string,
+): InsecureTokenProvider {
+    const user: IUser & { name: string } = {
+        id: userID ?? "foo",
+        name: userName ?? "bar",
+    };
+    return new InsecureTokenProvider(tenantKey, user);
+}
+
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
  */
 export async function createAzureClient(config: AzureClientConfig): Promise<AzureClient> {
     const useAzure = config.connType === "remote";
-    const configStr = process.env.fluid__scenario__runner;
 
-    let frsConfig;
-    if (useAzure) {
-        if (!configStr) {
-            throw new Error("Missing FRS env configuration.");
-        }
-
-        frsConfig = JSON.parse(configStr);
-        if (!frsConfig.tenantId) {
-            throw new Error("Missing FRS env configuration: Tenant ID.");
-        }
-        if (!frsConfig.fnUrl) {
-            throw new Error("Missing FRS env configuration: Secret.");
-        }
+    if (!config.connEndpoint) {
+        throw new Error("Missing FRS configuration: Relay Service Endpoint URL.");
     }
 
-    const tenantId = useAzure ? (frsConfig.tenantId as string) : "frs-client-tenant";
-    const fnUrl = useAzure ? (frsConfig.fnUrl as string) : "";
-    const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
-        ? {
-              tenantId,
-              tokenProvider: createAzureTokenProvider(fnUrl, config.userId, config.userName),
-              endpoint: config.connEndpoint,
-              type: "remote",
-          }
-        : {
-              tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-              endpoint: config.connEndpoint,
-              type: "local",
-          };
+    let connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
+
+    if (useAzure) {
+        if (!config.tenantId) {
+            throw new Error("Missing FRS configuration: Tenant ID.");
+        }
+
+        /* Insecure Token Provider */
+        if (!config.secureTokenProvider) {
+            if (!config.tenantKey) {
+                throw new Error("Missing FRS configuration: Tenant Primary Key.");
+            }
+            connectionProps = {
+                tenantId: config.tenantId,
+                tokenProvider: createInsecureTokenProvider(
+                    config.tenantKey,
+                    config.userId,
+                    config.userName,
+                ),
+                endpoint: config.connEndpoint,
+                type: "remote",
+            };
+        } else {
+            /* Secure Token Provider (Azure Function) */
+            if (!config.functionUrl) {
+                throw new Error("Missing FRS configuration: Function URL.");
+            }
+            connectionProps = {
+                tenantId: config.tenantId,
+                tokenProvider: createAzureTokenProvider(
+                    config.functionUrl,
+                    config.userId,
+                    config.userName,
+                ),
+                endpoint: config.connEndpoint,
+                type: "remote",
+            };
+        }
+    } else {
+        connectionProps = {
+            tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
+            endpoint: config.connEndpoint,
+            type: "local",
+        };
+    }
 
     return new AzureClient({ connection: connectionProps, logger: config.logger });
 }
