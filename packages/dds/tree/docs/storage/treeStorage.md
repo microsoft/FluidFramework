@@ -177,7 +177,7 @@ Both summary blobs and attachment blobs have lifetimes determined by their prese
 
 One possible alternative would be to provide a mode in which the server assumes each blob should be retained indefinitely until the DDS explicitly requests that it be deleted. This gives the DDS complete control over the lifetime of blobs; the DDS tells the server to create blobs and it tells the server when to delete blobs. This degree of freedom allows a DDS to manage its blobs in the most efficient way possible, providing clear lifetime guarantees for blobs that the DDS needs to retain and reducing the amount of storage space that might be otherwise wasted on blobs that the DDS no longer needs.
 
-Another approach better splitting lifetime management between the DDS and the runtime would be for the DDS to inform the runtime when a new summary no longer uses a particular blob. The runtime would wait for the preceding summary to be old enough (the summary containing the delete reaches the session timeout threshold, currently 30 days), then perform the delete if no future summaries recreated/reused that blob.
+A similar approach that balances lifetime management between the DDS and the runtime would be for the DDS to inform the runtime when a new summary no longer uses a particular blob. The runtime would wait for the preceding summary to be old enough (the summary containing the delete reaches the session timeout threshold, currently 30 days), then it would perform the delete if no future summaries recreated/reused that blob.
 
 ### Write Amplification
 
