@@ -187,7 +187,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
      * and it will throw in case share link fetcher props were not specified when instance was created.
      * @param resolvedUrl - The driver resolved URL
      * @param dataStorePath - The relative data store path URL.
-     * For requesting a driver URL, this value should always be '/'
+     * For requesting a driver URL, this value should always be '/'. If an empty string is passed, then dataStorePath
+     * will be extracted from the resolved url if present.
      * @param packageInfoSource - optional, represents container package information to be included in url.
      */
     public async getAbsoluteUrl(
@@ -199,6 +200,12 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
         const shareLinkUrl = new URL(shareLink);
+
+        let actualDataStorePath = dataStorePath;
+        // If the user has passed an empty dataStorePath, then extract it from the resolved url.
+        if (dataStorePath === "" && odspResolvedUrl.dataStorePath !== undefined) {
+            actualDataStorePath = odspResolvedUrl.dataStorePath;
+        }
 
         // back-compat: GitHub #9653
         const isFluidPackage = (pkg: any) =>
@@ -216,13 +223,13 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         }
         containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
-        const context = await this.getContext?.(odspResolvedUrl, dataStorePath);
+        const context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,
             driveId: odspResolvedUrl.driveId,
             itemId: odspResolvedUrl.itemId,
-            dataStorePath,
+            dataStorePath: actualDataStorePath,
             appName: this.appName,
             containerPackageName,
             fileVersion: odspResolvedUrl.fileVersion,
