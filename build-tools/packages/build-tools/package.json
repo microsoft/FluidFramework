@@ -54,8 +54,8 @@
   "dependencies": {
     "@fluid-tools/version-tools": "^0.8.0",
     "@fluidframework/bundle-size-tools": "^0.8.0",
-    "@rushstack/node-core-library": "^3.51.1",
     "@octokit/core": "^4.0.5",
+    "@rushstack/node-core-library": "^3.51.1",
     "async": "^3.2.2",
     "chalk": "^2.4.2",
     "commander": "^6.2.1",
