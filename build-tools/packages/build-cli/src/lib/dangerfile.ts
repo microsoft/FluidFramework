@@ -33,10 +33,7 @@ export async function dangerfile() {
         throw new Error("no env github api token provided");
     }
 
-    const adoConnection = getAzureDevopsApi(
-        process.env.ADO_API_TOKEN,
-        adoConstants.orgUrl,
-    );
+    const adoConnection = getAzureDevopsApi(process.env.ADO_API_TOKEN, adoConstants.orgUrl);
     const sizeComparator = new ADOSizeComparator(
         adoConstants,
         adoConnection,
