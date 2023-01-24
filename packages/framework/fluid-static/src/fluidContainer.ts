@@ -42,7 +42,7 @@ export interface IFluidContainerEvents extends IEvent {
      *
      * - {@link IFluidContainer.disconnect}
      */
-    (event: "disconnected", listener: (reason: string) => void): void;
+    (event: "disconnected", listener: (reason?: string) => void): void;
 
     /**
      * Emitted when all local changes/edits have been acknowledged by the service.
@@ -199,10 +199,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
-    private readonly disconnectedHandler = (reason: string) => {
-        console.log("disconnected from FluidContainer:", reason);
-        this.emit("disconnected", reason);
-    };
+    private readonly disconnectedHandler = (reason?: string) => this.emit("disconnected", reason);
     private readonly disposedHandler = (error?: ICriticalContainerError) => this.emit("disposed", error);
     private readonly savedHandler = () => this.emit("saved");
     private readonly dirtyHandler = () => this.emit("dirty");

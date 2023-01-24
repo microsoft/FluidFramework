@@ -375,15 +375,7 @@ describe("TinyliciousClient", () => {
         console.log("container attached");
         await timeoutPromise((resolve) => container.once("connected", resolve));
         console.log("container connected");
-        // await timeoutPromise((resolve) => setTimeout(resolve, 1000),
-        // {
-        //     durationMs: 2000,
-        //     errorMsg: "container connect() timeout",
-        // });
         console.log("disconnect");
         container.disconnect();
-        console.log("dispose");
-        container.dispose();
-        console.log("timeout");
     });
 });

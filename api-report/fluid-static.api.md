@@ -76,7 +76,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 // @public
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: () => void): void;
-    (event: "disconnected", listener: (reason: string) => void): void;
+    (event: "disconnected", listener: (reason?: string) => void): void;
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;

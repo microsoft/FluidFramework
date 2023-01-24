@@ -336,7 +336,6 @@ export class ConnectionManager implements IConnectionManager {
             : "Closing DeltaManager";
 
         // This raises "disconnect" event if we have active connection.
-        console.log("ConnectionManager: ", { disconnectReason });
         this.disconnectFromDeltaStream(disconnectReason);
 
         // Notify everyone we are in read-only state.

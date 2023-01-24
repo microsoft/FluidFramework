@@ -356,7 +356,6 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     }
 
     public receivedDisconnectEvent(reason: string) {
-        console.log(`disconnected from ConnectionStateHandler: ${reason}`);
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
@@ -471,7 +470,6 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         }
 
         // Report transition before we propagate event across layers
-        console.log(`474: ${this._connectionState === ConnectionState.Disconnected ? reason : this._connectionState}`);
         this.handler.connectionStateChanged(this._connectionState, oldState, reason);
     }
 
