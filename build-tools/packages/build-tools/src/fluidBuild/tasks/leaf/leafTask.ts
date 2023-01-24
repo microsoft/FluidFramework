@@ -112,7 +112,9 @@ export abstract class LeafTask extends Task {
 
         if (ret.error) {
             const codeStr = ret.error.code !== undefined ? ` (exit code ${ret.error.code})` : "";
-            console.error(`${this.node.pkg.nameColored}: error during command '${this.command}'`);
+            console.error(
+                `${this.node.pkg.nameColored}: error during command '${this.command}'${codeStr}`,
+            );
             console.error(this.getExecErrors(ret));
             return this.execDone(startTime, BuildResult.Failed);
         }

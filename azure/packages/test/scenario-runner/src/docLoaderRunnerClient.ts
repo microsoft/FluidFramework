@@ -76,6 +76,7 @@ async function main() {
         .option("-ti, --tenantId <tenantId>", "Tenant ID")
         .option("-tk, --tenantKey <tenantKey>", "Tenant Key")
         .option("-furl, --functionUrl <functionUrl>", "Azure Function URL")
+        .option("-st, --secureTokenProvider", "Enable use of secure token provider")
         .option(
             "-l, --log <filter>",
             "Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -94,6 +95,7 @@ async function main() {
         tenantKey: commander.tenantKey ?? process.env.azure__fluid__relay__service__tenantKey,
         functionUrl:
             commander.functionUrl ?? process.env.azure__fluid__relay__service__function__url,
+        secureTokenProvider: commander.secureTokenProvider,
     };
 
     if (commander.log !== undefined) {
@@ -118,6 +120,7 @@ async function main() {
         tenantId: config.tenantId,
         tenantKey: config.tenantKey,
         functionUrl: config.functionUrl,
+        secureTokenProvider: config.secureTokenProvider,
         logger,
     });
 
