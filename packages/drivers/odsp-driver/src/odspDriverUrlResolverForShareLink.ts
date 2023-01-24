@@ -187,7 +187,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
      * and it will throw in case share link fetcher props were not specified when instance was created.
      * @param resolvedUrl - The driver resolved URL
      * @param dataStorePath - The relative data store path URL.
-     * For requesting a driver URL, this value should always be '/'
+     * For requesting a driver URL, this value should always be '/'. If an empty string is passed, then dataStorePath
+     * will be extracted from the resolved url if present.
      * @param packageInfoSource - optional, represents container package information to be included in url.
      */
     public async getAbsoluteUrl(

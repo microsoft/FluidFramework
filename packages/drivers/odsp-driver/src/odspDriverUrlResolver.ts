@@ -159,6 +159,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         };
     }
 
+    /**
+     * Requests a driver + data store storage URL.
+     * @param resolvedUrl - The driver resolved URL.
+     * @param relativeUrl - The relative data store path URL.
+     * For requesting a driver URL, this value should always be '/'. If an empty string is passed, then dataStorePath
+     * will be extracted from the resolved url if present.
+     * @param packageInfoSource - optional, represents container package information to be included in url.
+     */
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
