@@ -370,6 +370,29 @@ export function prefixPath(
     return applyPrefix(prefix, path);
 }
 
+/**
+ * Apply `prefix` to `path`.
+ */
+export function prefixFieldPath(
+    prefix: PathRootPrefix | undefined,
+    path: FieldUpPath,
+): FieldUpPath {
+    if (prefix === undefined) {
+        return path;
+    }
+    if (
+        prefix.parent === undefined &&
+        prefix.rootFieldOverride === undefined &&
+        (prefix.indexOffset ?? 0) === 0
+    ) {
+        return path;
+    }
+    return {
+        field: path.parent === undefined ? prefix.rootFieldOverride ?? path.field : path.field,
+        parent: prefixPath(prefix, path.parent),
+    };
+}
+
 function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath | undefined {
     if (path === undefined) {
         return prefix.parent;

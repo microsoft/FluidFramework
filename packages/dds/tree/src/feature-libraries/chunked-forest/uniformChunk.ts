@@ -16,7 +16,7 @@ import {
     PathRootPrefix,
 } from "../../core";
 import { compareArrays, fail } from "../../util";
-import { prefixPath, SynchronousCursor } from "../treeCursorUtils";
+import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
 import { dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
@@ -397,17 +397,10 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
-        assert(
-            this.mode === CursorLocationType.Fields,
-            "tried to access cursor when in wrong mode",
-        );
-        return {
-            field:
-                this.nodePositionInfo?.parent === undefined
-                    ? prefix?.rootFieldOverride ?? this.getFieldKey()
-                    : this.getFieldKey(),
-            parent: prefixPath(prefix, this.nodePositionInfo),
-        };
+        return prefixFieldPath(prefix, {
+            field: this.getFieldKey(),
+            parent: this.nodePositionInfo,
+        });
     }
 
     getPath(prefix?: PathRootPrefix): UpPath | undefined {

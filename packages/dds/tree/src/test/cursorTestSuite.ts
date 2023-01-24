@@ -166,6 +166,7 @@ export interface SpecialCaseBuilder<TData> {
      * The content of the tree under these keys is arbitrary and up to the implementation.
      */
     withLocalKeys?(keys: LocalFieldKey[]): TData;
+
     /**
      * Build data for a tree which has the provided keys on its root node.
      * The content of the tree under these keys is arbitrary and up to the implementation.
@@ -264,7 +265,7 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
         });
 
         // Run test suite on each top level node from each test data.
-        testSpecializedCursor<[number, TData], TCursor>({
+        testTreeCursor<[number, TData], TCursor>({
             cursorName: config.cursorName,
             builders: {
                 withKeys:
@@ -286,6 +287,7 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
                 return cursor;
             },
             testData,
+            extraRoot: true,
         });
     });
 }
