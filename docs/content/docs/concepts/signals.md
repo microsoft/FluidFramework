@@ -1,7 +1,6 @@
 ---
 title: Signals and Signaler
 menuPosition: 6
-draft: true
 aliases:
   - "/docs/advanced/signals/"
   - "/docs/deep/signals/"
@@ -37,6 +36,7 @@ const { container, services } = await client.createContainer(containerSchema);
 
 const signaler = container.initialObjects.signaler as Signaler;
 ```
+
 `signaler` can then be directly used in your Fluid application!
 
 For more information on using `ContainerSchema` to create objects please see [Data modeling](https://fluidframework.com/docs/build/data-modeling/).

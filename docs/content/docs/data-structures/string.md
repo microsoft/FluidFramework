@@ -83,5 +83,3 @@ efficient spatial querying of the nearest Marker to a given position. -->
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
-
-[Sequences]: {{< relref "sequences.md" >}}

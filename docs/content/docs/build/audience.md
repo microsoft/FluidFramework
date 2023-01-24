@@ -104,7 +104,7 @@ One option is to use a `SharedMap` object with a `SharedCounter` object as the v
 
 Many presence scenarios involve data that are short-lived and do not need to be persisted. For example, consider a scenario where you want to display what each user has selected in the UI. Each user will need to tell other users their own information -- where they clicked -- but the past data are irrelevant.
 
-You can address this scenario using DDSes in the same way as with the persisted data scenario. However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients. [Signals]({{< relref signals.md >}}) are designed for sending transient data and would be more appropriate in this situation. Each user can broadcast a signal containing their selection data to all connected users, and those users can store the data locally. Newly connected users can request other connected users to send their selection data using another signal. When a user disconnects, the local data are discarded.
+You can address this scenario using DDSes in the same way as with the persisted data scenario. However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients. Signals are designed for sending transient data and would be more appropriate in this situation. Each user can broadcast a signal containing their selection data to all connected users, and those users can store the data locally. Newly connected users can request other connected users to send their selection data using another signal. When a user disconnects, the local data are discarded.
 
 #### Unshared data
 
@@ -125,7 +125,6 @@ In some cases, the user data could be generated locally or fetched from an exter
 
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
 
 <!-- API links -->

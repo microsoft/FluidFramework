@@ -346,8 +346,9 @@ The following npm scripts are supported in this directory:
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `linkcheck` | `npm run linkcheck:fast -- --external` |
+| `linkcheck` | `start-server-and-test start 1313 linkcheck:full` |
 | `linkcheck:fast` | `linkcheck http://localhost:1313 --skip-file skipped-urls.txt` |
+| `linkcheck:full` | `npm run linkcheck:fast -- --external` |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
