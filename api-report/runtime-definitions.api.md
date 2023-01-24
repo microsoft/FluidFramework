@@ -83,13 +83,16 @@ export enum FlushMode {
     TurnBased = 1
 }
 
-// @public (undocumented)
+// @public
 export const gcBlobPrefix = "__gc";
 
-// @public (undocumented)
+// @public
+export const gcDeletedBlobKey = "__deletedNodes";
+
+// @public
 export const gcTombstoneBlobKey = "__tombstones";
 
-// @public (undocumented)
+// @public
 export const gcTreeKey = "gc";
 
 // @public
@@ -266,6 +269,8 @@ export interface IGarbageCollectionNodeData {
 
 // @public
 export interface IGarbageCollectionSnapshotData {
+    // (undocumented)
+    deletedNodes: string[] | undefined;
     // (undocumented)
     gcState: IGarbageCollectionState;
     // (undocumented)

@@ -18,6 +18,7 @@ import {
     IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetailsLegacy,
     ISummarizeResult,
+    gcDeletedBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
     MockLogger,
@@ -25,7 +26,7 @@ import {
     TelemetryDataTag,
     ConfigTypes,
 } from "@fluidframework/telemetry-utils";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
     GarbageCollector,
@@ -90,11 +91,21 @@ describe("Garbage Collection Tests", () => {
     let clock: SinonFakeTimers;
 
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
-    const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
+    let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
+
+    // Returns a dummy snapshot tree to be built upon.
+    const getDummySnapshotTree = (): ISnapshotTree => {
+        return {
+            blobs: {},
+            trees: {},
+        };
+    };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const parseNothing: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
 
     function createGarbageCollector(
         createParams: Partial<IGarbageCollectorCreateParams> = {},
-        gcBlobsMap: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase> = new Map(),
+        gcBlobsMap: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase | string[]> = new Map(),
         closeFn: (error?: ICriticalContainerError) => void = () => {},
         isSummarizerClient: boolean = true,
     ) {
@@ -152,6 +163,7 @@ describe("Garbage Collection Tests", () => {
         clock.reset();
         mockLogger.clear();
         injectedSettings = {};
+        defaultGCData = { gcNodes: {} };
         gc?.dispose();
     });
 
@@ -297,7 +309,7 @@ describe("Garbage Collection Tests", () => {
                 injectedSettings[testOverrideSweepTimeoutKey] = 123;
                 injectedSettings[runSessionExpiryKey] = true;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-                assert(gc.sweepEnabled, "sweepEnabled incorrect");
+                assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs === 123, "sweepTimeoutMs incorrect");
             });
@@ -305,7 +317,7 @@ describe("Garbage Collection Tests", () => {
                 injectedSettings[testOverrideSweepTimeoutKey] = 123;
                 injectedSettings[runSessionExpiryKey] = false;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-                assert(gc.sweepEnabled, "sweepEnabled incorrect");
+                assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs === 123, "sweepTimeoutMs incorrect");
             });
@@ -567,14 +579,6 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodes[2]] = [nodes[3]];
             defaultGCData.gcNodes[nodes[3]] = [nodes[0]];
         });
-
-        // Returns a dummy snapshot tree to be built upon.
-        const getDummySnapshotTree = (): ISnapshotTree => {
-            return {
-                blobs: {},
-                trees: {},
-            };
-        };
 
         const summarizerContainerTests = (
             timeout: number,
@@ -1119,6 +1123,87 @@ describe("Garbage Collection Tests", () => {
         });
     });
 
+    describe("Deleted blobs in GC summary tree", () => {
+        beforeEach(() => {
+            injectedSettings["Fluid.GarbageCollection.TrackGCState"] = true;
+        });
+
+        it("correctly reads and write deleted blobs in summary", async () => {
+            // Set up the GC reference graph to have something to work with.
+            defaultGCData.gcNodes["/"] = [nodes[0]];
+
+            // Create a snapshot tree to be used as the GC snapshot tree.
+            const gcSnapshotTree = getDummySnapshotTree();
+            // Add a blob to the tree for deleted nodes.
+            const deletedNodesBlobId = "deletedNodes";
+            gcSnapshotTree.blobs[gcDeletedBlobKey] = deletedNodesBlobId;
+            const deletedNodeIds = [...nodes];
+            // Add deleted nodes list the blobs map that will service read and parse blob calls from GC.
+            const gcBlobsMap: Map<string, string[]> = new Map([[deletedNodesBlobId, deletedNodeIds]]);
+            // Create a base snapshot that contains the GC snapshot tree.
+            const baseSnapshot = getDummySnapshotTree();
+            baseSnapshot.trees[gcTreeKey] = gcSnapshotTree;
+
+            // Create and initialize garbage collector.
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobsMap);
+            await garbageCollector.initializeBaseState();
+
+            // The nodes in deletedNodeIds should be marked as deleted.
+            for (const nodeId of deletedNodeIds) {
+                assert(garbageCollector.isNodeDeleted(nodeId) === true, `${nodeId} should be marked deleted`);
+            }
+
+            await garbageCollector.collectGarbage({});
+            // Summarize with fullTree as true so that the deleted nodes are written as a blob and can be validated.
+            const summaryTree = garbageCollector.summarize(true /* fullTree */, true /* trackState */);
+            assert(summaryTree?.summary.type === SummaryType.Tree, "The summary should be a tree");
+
+            // Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
+            const deletedNodesBlob = summaryTree.summary.tree[gcDeletedBlobKey];
+            assert(deletedNodesBlob.type === SummaryType.Blob, "Deleted blob not present in summary");
+            const deletedNodeIdsInSummary = JSON.parse(deletedNodesBlob.content as string) as string[];
+            assert.deepStrictEqual(deletedNodeIdsInSummary, deletedNodeIds, "Unexpected deleted nodes in summary");
+        });
+
+        it("writes handle for deleted blobs when its unchanged", async () => {
+            // Set up the GC reference graph to have something to work with.
+            defaultGCData.gcNodes["/"] = [nodes[0]];
+
+            // Create a snapshot tree to be used as the GC snapshot tree.
+            const gcSnapshotTree = getDummySnapshotTree();
+            // Add a blob to the tree for deleted nodes.
+            const deletedNodesBlobId = "deletedNodes";
+            gcSnapshotTree.blobs[gcDeletedBlobKey] = deletedNodesBlobId;
+            const deletedNodeIds = [...nodes];
+            // Add deleted nodes list the blobs map that will service read and parse blob calls from GC.
+            const gcBlobsMap: Map<string, string[]> = new Map([[deletedNodesBlobId, deletedNodeIds]]);
+            // Create a base snapshot that contains the GC snapshot tree.
+            const baseSnapshot = getDummySnapshotTree();
+            baseSnapshot.trees[gcTreeKey] = gcSnapshotTree;
+
+            // Create and initialize garbage collector.
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobsMap);
+            await garbageCollector.initializeBaseState();
+
+            // Run GC and summarize. The summary should contain the deleted nodes.
+            await garbageCollector.collectGarbage({});
+            const gcSummary = garbageCollector.summarize(false /* fullTree */, true /* trackState */);
+            assert(gcSummary?.summary.type === SummaryType.Tree, "The summary should be a tree");
+
+            // Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
+            const deletedNodesBlob = gcSummary.summary.tree[gcDeletedBlobKey];
+            assert(deletedNodesBlob.type === SummaryType.Handle, "Deleted nodes state should be a handle");
+
+            const refreshSummaryResult: RefreshSummaryResult = { latestSummaryUpdated: true, wasSummaryTracked: true};
+            await garbageCollector.refreshLatestSummary(refreshSummaryResult, undefined, 0, parseNothing);
+
+            // Run GC and summarize again. The whole GC summary should now be a summary handle.
+            await garbageCollector.collectGarbage({});
+            const gcSummary2 = garbageCollector.summarize(false /* fullTree */, true /* trackState */);
+            assert(gcSummary2?.summary.type === SummaryType.Handle, "The summary should be a handle");
+        });
+    });
+
     describe("GC completed runs", () => {
         const gcEndEvent = "GarbageCollector:GarbageCollection_end";
 
@@ -1619,25 +1704,16 @@ describe("Garbage Collection Tests", () => {
     });
 
     describe("No changes to GC between summaries", () => {
-        const settings = { "Fluid.GarbageCollection.TrackGCState": "true" };
         const fullTree = false;
         const trackState = true;
         let garbageCollector: IGarbageCollector;
 
         beforeEach(() => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
+            injectedSettings["Fluid.GarbageCollection.TrackGCState"] = true;
             // Initialize nodes A & D.
             defaultGCData.gcNodes = {};
             defaultGCData.gcNodes["/"] = nodes;
         });
-
-        afterEach(() => {
-            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
-        });
-
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const parseNothing: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
 
         const checkGCSummaryType = (
             summary: ISummarizeResult | undefined,

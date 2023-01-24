@@ -43,7 +43,7 @@ import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { GCDataBuilder, unpackChildNodesGCDetails, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime } from "./containerRuntime";
+import { ContainerRuntime, defaultRuntimeHeaderData, RuntimeHeaderData, TombstoneResponseHeaderKey } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemoteFluidDataStoreContext,
@@ -430,8 +430,10 @@ export class DataStores implements IDisposable {
         );
     }
 
-    public async getDataStore(id: string, wait: boolean, viaHandle: boolean): Promise<FluidDataStoreContext> {
-        const context = await this.contexts.getBoundOrRemoted(id, wait);
+    public async getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<FluidDataStoreContext> {
+        const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+
+        const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
         const request = { url: id };
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
@@ -439,22 +441,28 @@ export class DataStores implements IDisposable {
         }
 
         if (context.tombstoned) {
+            const shouldFail = this.throwOnTombstoneLoad && !headerData.allowTombstone;
+
             // The requested data store is removed by gc. Create a 404 gc response exception.
-            const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
+            const error = responseToException(createResponseError(
+                404,
+                "DataStore was deleted",
+                request,
+                { [TombstoneResponseHeaderKey]: true },
+            ), request);
             sendGCTombstoneEvent(
                 this.mc,
                 {
                     eventName: "GC_Tombstone_DataStore_Requested",
-                    category: this.throwOnTombstoneLoad ? "error" : "generic",
+                    category: shouldFail ? "error" : "generic",
                     isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-                    viaHandle,  // Note: A consumer could easily spoof this header and confuse our telemetry
+                    headers: JSON.stringify(requestHeaderData),
                 },
                 context.isLoaded ? context.packagePath : undefined,
                 error,
             );
-            // Always log an error when tombstoned data store is used. However, throw an error only if
-            // throwOnTombstoneLoad is set.
-            if (this.throwOnTombstoneLoad) {
+
+            if (shouldFail) {
                 throw error;
             }
         }
