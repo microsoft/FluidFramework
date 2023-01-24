@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { Delta, FieldKey, MapTree, TreeSchemaIdentifier } from "../../core";
 import { mapFieldMarks, mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
-import { brand, brandOpaque, clone } from "../../util";
+import { brand, brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
