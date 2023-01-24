@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import { ADOPipelineLinks, InstructionalPrompt } from "../instructionalPromptWriter";
+import { InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter";
 import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
@@ -263,15 +263,6 @@ export const promptToRelease: StateHandlerFunction = async (
 
     const flag = isReleaseGroup(releaseGroup) ? "-g" : "-p";
 
-    const link =
-        releaseGroup === "client"
-            ? ADOPipelineLinks.CLIENT
-            : releaseGroup === "server"
-            ? ADOPipelineLinks.SERVER
-            : releaseGroup === "azure"
-            ? ADOPipelineLinks.AZURE
-            : ADOPipelineLinks.BUILDTOOLS;
-
     const prompt: InstructionalPrompt = {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         title: `READY TO RELEASE version ${chalk.bold(releaseVersion!)}!`,
@@ -283,7 +274,7 @@ export const promptToRelease: StateHandlerFunction = async (
                 )} build for the following release group in ADO for branch ${chalk.blue(
                     chalk.bold(context.originalBranchName),
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                )}:\n\n    ${chalk.green(chalk.bold(releaseGroup!))}`,
+                )}:\n\n    ${chalk.green(chalk.bold(releaseGroup!))}: ${mapADOLinks(releaseGroup)}`,
             },
             {
                 title: "NEXT",
