@@ -34,7 +34,11 @@ data:
             "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
             "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }},
             "enableRepositoryManagerMetrics": {{ .Values.gitrest.git.enableRepositoryManagerMetrics }},
+            {{- if eq (toString .Values.gitrest.git.enableLowIoWrite) "initial" }}
+            "enableLowIoWrite": "{{ .Values.gitrest.git.enableLowIoWrite }}",
+            {{- else }}
             "enableLowIoWrite": {{ .Values.gitrest.git.enableLowIoWrite }},
+            {{- end }}
             "enableOptimizedInitialSummary": {{ .Values.gitrest.git.enableOptimizedInitialSummary }},
             "enableSlimGitInit": {{ .Values.gitrest.git.enableSlimGitInit }}
         }
