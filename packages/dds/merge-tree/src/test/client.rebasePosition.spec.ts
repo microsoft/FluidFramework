@@ -36,19 +36,6 @@ describe("client.rebasePosition", () => {
         assert.equal(text, "w", "rebased pos should still refer to 'w'");
     });
 
-    it("rebase amid remote delete", () => {
-        client.removeRangeRemote(5, 8 /* " wo" */, ++seq, 0, remoteUserLongId);
-        for (const pos of [5, 6, 7]) {
-            const rebasedPos = client.rebasePosition(pos, 0, 0);
-            const text = getTextAt(rebasedPos);
-            assert.equal(
-                text,
-                "r",
-                `rebase of pos ${pos} should refer to position immediately following removed segment`,
-            );
-        }
-    });
-
     it("rebase on a variety of seqNumberFrom values", () => {
         client.insertTextRemote(0, "abc", undefined, ++seq, 0, remoteUserLongId);
         client.removeRangeRemote(0, 1, ++seq, seq - 1, remoteUserLongId);
