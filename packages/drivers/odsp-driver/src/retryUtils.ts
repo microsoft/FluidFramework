@@ -44,8 +44,10 @@ export async function runWithRetry<T>(
             const coherencyError = error?.[Odsp409Error] === true;
             const serviceReadonlyError = error?.errorType === OdspErrorType.serviceReadOnly;
 
-            // logging the first failed retry
-            if(attempts === 1){
+            // logging the first failed retry instead of every attempt. We want to avoid filling telemetry
+            // when we have tight loop of retrying in offline mode, but we also want to know what caused
+            // the failure in the first place
+            if(attempts === 1) {
                 logger.sendTelemetryEvent({
                         eventName: `${callName}_firstFailed`,
                         callName,
