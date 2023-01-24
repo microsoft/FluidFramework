@@ -98,7 +98,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     itExpects("A large op will close the container", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge", disposed: true },
+        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
     ], async () => {
         const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
         await setupContainers(testContainerConfig);
@@ -190,7 +190,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     itExpects("Large ops fail when compression is disabled and the content is over max op size", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge", disposed: true },
+        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
     ], async function() {
         const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
         await setupContainers(testContainerConfig); // Compression is disabled by default
@@ -203,7 +203,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     itExpects("Large ops fail when compression is disabled by feature gate and the content is over max op size", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge", disposed: true },
+        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
     ], async function() {
         const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
         await setupContainers({
@@ -223,7 +223,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     itExpects("Large ops fail when compression enabled and compressed content is over max op size", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge", disposed: true },
+        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
     ], async function() {
         const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
         await setupContainers({
@@ -277,7 +277,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
         itExpects("Large ops fail when compression chunking is disabled by feature gate", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge", disposed: true },
+            { eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
         ], async function() {
             const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
             await setupContainers(

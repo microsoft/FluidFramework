@@ -139,7 +139,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         "Load container unsuccessfully",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure", disposed: true },
+            { eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
             { eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError },
         ],
         async () => {
@@ -160,7 +160,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     [
         { eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception", error: "expectedFailure" },
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-        { eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure", disposed: true },
+        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
         { eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError },
     ],
     async () => {

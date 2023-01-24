@@ -336,9 +336,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                 error: "Received a system message during batch processing",
             },
             {
-                eventName: "fluid:telemetry:Container:ContainerClose",
+                eventName: "fluid:telemetry:Container:ContainerDispose",
                 error: "Received a system message during batch processing",
-                disposed: true,
             },
         ],
         async function() {

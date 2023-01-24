@@ -838,9 +838,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // This gives us a chance to know what errors happened on open vs. on fully loaded container.
                 this.mc.logger.sendTelemetryEvent(
                     {
-                        eventName: "ContainerClose",
+                        eventName: "ContainerDispose",
                         category: error === undefined ? "generic" : "error",
-                        disposed: true,
                     },
                     error,
                 );

@@ -293,9 +293,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         const events = [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage", disposed: true },
+            { eventName: "fluid:telemetry:Container:ContainerDispose", error: "malformedDataStoreAliasMessage" },
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage", disposed: true },
+            { eventName: "fluid:telemetry:Container:ContainerDispose", error: "malformedDataStoreAliasMessage" },
         ];
         itExpects("Receiving a bad alias message breaks the container", events, async function() {
             const dataCorruption = allDataCorruption([container1, container2]);
