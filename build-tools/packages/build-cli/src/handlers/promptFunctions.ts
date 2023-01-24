@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import type { InstructionalPrompt } from "../instructionalPromptWriter";
+import { ADOPipelineLinks, InstructionalPrompt } from "../instructionalPromptWriter";
 import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
@@ -262,6 +262,16 @@ export const promptToRelease: StateHandlerFunction = async (
     assert(context !== undefined, "Context is undefined.");
 
     const flag = isReleaseGroup(releaseGroup) ? "-g" : "-p";
+
+    const link =
+        releaseGroup === "client"
+            ? ADOPipelineLinks.CLIENT
+            : releaseGroup === "server"
+            ? ADOPipelineLinks.SERVER
+            : releaseGroup === "azure"
+            ? ADOPipelineLinks.AZURE
+            : ADOPipelineLinks.BUILDTOOLS;
+
     const prompt: InstructionalPrompt = {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         title: `READY TO RELEASE version ${chalk.bold(releaseVersion!)}!`,

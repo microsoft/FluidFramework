@@ -45,6 +45,17 @@ interface Section {
 }
 
 /**
+ * Links to ADO pipeline for all release group
+ */
+
+export enum ADOPipelineLinks {
+    CLIENT = "https://dev.azure.com/fluidframework/internal/_build?definitionId=12",
+    SERVER = "https://dev.azure.com/fluidframework/internal/_build?definitionId=30",
+    BUILDTOOLS = "https://dev.azure.com/fluidframework/internal/_build?definitionId=14",
+    AZURE = "https://dev.azure.com/fluidframework/internal/_build?definitionId=85",
+}
+
+/**
  * An abstract base class for classes that write {@link InstructionalPrompt}s to the terminal.
  */
 export abstract class InstructionalPromptWriter {
