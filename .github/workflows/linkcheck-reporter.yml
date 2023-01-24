@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download results
-        uses: dawidd6/action-download-artifact@b2abf1705491048a2d7074f7d90513044fd25d39 # pin@v2
+        uses: dawidd6/action-download-artifact@v2.24.3
         with:
           workflow: website-validation.yml
           # workflow_conclusion: completed
@@ -22,7 +22,7 @@ jobs:
         run: echo "::set-output name=pr::$(cat pr)"
         working-directory: ./results
       - name: Post report in comment
-        uses: marocchino/sticky-pull-request-comment@39c5b5dc7717447d0cba270cd115037d32d28443 # pin@v2
+        uses: marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: linkreport
           recreate: true

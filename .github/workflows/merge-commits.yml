@@ -86,7 +86,7 @@ jobs:
     steps:
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
-        uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           fetch-depth: "0"
@@ -174,7 +174,7 @@ jobs:
     needs: [pull-request]
     if: needs.pull-request.result == 'success'
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
         with:
           node-version: 14

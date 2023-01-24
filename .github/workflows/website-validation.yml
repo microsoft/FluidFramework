@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build site
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/checkout@v3
         with:
           submodules: false
       - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
@@ -39,7 +39,7 @@ jobs:
     name: 🔗 Broken Link Check
     needs: build_site
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/checkout@v3
         with:
           submodules: false
       - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
