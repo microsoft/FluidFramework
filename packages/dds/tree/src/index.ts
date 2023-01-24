@@ -182,6 +182,7 @@ export {
     namedTreeSchema,
 } from "./feature-libraries";
 
+// Export subset of FieldKinds in an API-Extractor compatible way:
 import { FieldKind, FieldKinds as FieldKindsOriginal } from "./feature-libraries";
 interface FieldKinds {
     value: FieldKind;

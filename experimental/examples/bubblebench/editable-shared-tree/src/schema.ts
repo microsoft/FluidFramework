@@ -24,7 +24,7 @@ export const numberSchema = namedTreeSchema({
     value: ValueSchema.Number,
 });
 
-export const iBubbleSchema = namedTreeSchema({
+export const bubbleSchema = namedTreeSchema({
     name: brand("Test:BubbleBenchAppStateiBubble-1.0.0"),
     localFields: {
         x: fieldSchema(FieldKinds.value, [numberSchema.name]),
@@ -35,19 +35,19 @@ export const iBubbleSchema = namedTreeSchema({
     },
 });
 
-export const iClientSchema = namedTreeSchema({
+export const clientSchema = namedTreeSchema({
     name: brand("Test:BubbleBenchAppStateiClient-1.0.0"),
     localFields: {
         clientId: fieldSchema(FieldKinds.value, [stringSchema.name]),
         color: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        bubbles: fieldSchema(FieldKinds.sequence, [iBubbleSchema.name]),
+        bubbles: fieldSchema(FieldKinds.sequence, [bubbleSchema.name]),
     },
 });
 
 export const AppStateSchema = namedTreeSchema({
     name: brand("Test:BubbleBenchAppState-1.0.0"),
     localFields: {
-        clients: fieldSchema(FieldKinds.sequence, [iClientSchema.name]),
+        clients: fieldSchema(FieldKinds.sequence, [clientSchema.name]),
     },
 });
 
@@ -78,8 +78,8 @@ export const AppStateSchemaData: SchemaData = {
     treeSchema: new Map([
         [stringSchema.name, stringSchema],
         [numberSchema.name, numberSchema],
-        [iBubbleSchema.name, iBubbleSchema],
-        [iClientSchema.name, iClientSchema],
+        [bubbleSchema.name, bubbleSchema],
+        [clientSchema.name, clientSchema],
         [AppStateSchema.name, AppStateSchema],
     ]),
     globalFieldSchema: new Map([
