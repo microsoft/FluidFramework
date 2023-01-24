@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -153,21 +153,14 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
      * @param runtime - The data store runtime to which the `SharedCell` belongs.
      * @param id - Unique identifier for the `SharedCell`.
      */
-    // eslint-disable-next-line @typescript-eslint/no-parameter-properties, @typescript-eslint/explicit-member-accessibility
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-parameter-properties
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, public options?: ICellOptions) {
         super(id, runtime, attributes, "fluid_cell_");
 
-        const cellOptions = {
-            ...runtime.options as ICellOptions
-        };
-
         const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean("Fluid.Attribution.EnableOnNewFile");
         if (configSetAttribution !== undefined) {
-            cellOptions.attribution ??= {};
-            cellOptions.attribution.track = configSetAttribution;
+            (this.options ?? (this.options = {})).attribution = { track: configSetAttribution };
         }
-
-        this.options ??= cellOptions;
     }
 
     /**
