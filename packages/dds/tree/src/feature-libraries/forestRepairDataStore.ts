@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+    castCursorToSynchronous,
     Delta,
     EmptyKey,
     FieldKey,
@@ -12,7 +13,6 @@ import {
     IForestSubscription,
     ITreeCursorSynchronous,
     keyAsDetachedField,
-    MapTree,
     moveToDetachedField,
     RepairDataStore,
     RevisionTag,
@@ -21,11 +21,11 @@ import {
     Value,
 } from "../core";
 import { unreachableCase } from "../util";
-import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
+import { chunkTree } from "./chunked-forest";
 
 interface RepairData {
     value?: Map<RevisionTag, Value>;
-    node?: Map<RevisionTag, MapTree>;
+    node?: Map<RevisionTag, ITreeCursorSynchronous>;
 }
 type RepairDataNode = SparseNode<RepairData | undefined>;
 
@@ -132,7 +132,8 @@ export class ForestRepairDataStore implements RepairDataStore {
                 const fork = cursor.fork();
                 const index = startIndex + i;
                 fork.enterNode(index);
-                const nodeData = mapTreeFromCursor(fork);
+                // TODO: remove reference
+                const nodeData = chunkTree(castCursorToSynchronous(fork)).cursor();
                 fork.free();
                 const child = parent.getOrCreateChild(key, index, repairDataFactory);
                 if (child.data === undefined) {
@@ -169,7 +170,7 @@ export class ForestRepairDataStore implements RepairDataStore {
         return sparseField.slice(sparseIndex, sparseIndex + count).map((node) => {
             const repair = node.data?.node?.get(revision);
             assert(repair !== undefined, 0x47d /* No repair data found */);
-            return singleMapTreeCursor(repair);
+            return repair;
         });
     }
 

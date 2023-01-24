@@ -298,3 +298,12 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
         f(cursor);
     }
 }
+
+/**
+ * Casts a cursor to an {@link ITreeCursorSynchronous}.
+ *
+ * TODO: #1404: Handle this properly for partial data loading support.
+ */
+export function castCursorToSynchronous(cursor: ITreeCursor): ITreeCursorSynchronous {
+    return cursor as ITreeCursorSynchronous;
+}
