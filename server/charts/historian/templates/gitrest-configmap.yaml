@@ -32,8 +32,10 @@ data:
                 "name": "{{ .Values.gitrest.git.lib.name }}"
             },
             "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
-            "enableLowIoWrite": {{ .Values.gitrest.git.enableLowIoWrite }},
             "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }},
-            "enableRepositoryManagerMetrics": {{ .Values.gitrest.git.enableRepositoryManagerMetrics }}
+            "enableRepositoryManagerMetrics": {{ .Values.gitrest.git.enableRepositoryManagerMetrics }},
+            "enableLowIoWrite": {{ .Values.gitrest.git.enableLowIoWrite }},
+            "enableOptimizedInitialSummary": {{ .Values.gitrest.git.enableOptimizedInitialSummary }},
+            "enableSlimGitInit": {{ .Values.gitrest.git.enableSlimGitInit }}
         }
     }

@@ -366,6 +366,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
         externalStorageManager: IExternalStorageManager,
         repoPerDocEnabled: boolean,
         enableRepositoryManagerMetrics: boolean = false,
+        private readonly enableSlimGitInit: boolean = false,
     ) {
         super(
             storageDirectoryConfig,
@@ -376,12 +377,13 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
     }
 
     protected async initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<void> {
-        // return isomorphicGit.init({
-        //     fs,
-        //     gitdir,
-        //     bare: true,
-        // });
-        return this.slimInit(fs, gitdir);
+        return this.enableSlimGitInit
+            ? this.slimInit(fs, gitdir)
+            : isomorphicGit.init({
+                fs,
+                gitdir,
+                bare: true,
+            });
     }
 
     protected async openGitRepo(gitdir: string): Promise<void> {

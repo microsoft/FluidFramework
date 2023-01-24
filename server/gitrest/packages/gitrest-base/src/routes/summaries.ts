@@ -239,6 +239,7 @@ export function create(
     const router: Router = Router();
     const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
     const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
+    const enableOptimizedInitialSummary: boolean = store.get("git:enableOptimizedInitialSummary") ?? false;
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     /**
@@ -292,7 +293,7 @@ export function create(
         const resultP = (async () => {
             // There are possible optimizations we can make throughout the summary write process
             // if we are using repoPerDoc model and it is the first summary for that document.
-            const optimizeForInitialSummary = isInitialSummary && repoPerDocEnabled;
+            const optimizeForInitialSummary = enableOptimizedInitialSummary && isInitialSummary && repoPerDocEnabled;
             // If creating a repo per document, we do not need to check for an existing repo on initial summary write.
             const repoManager = await getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled, optimizeForInitialSummary);
             const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
