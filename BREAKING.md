@@ -19,6 +19,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.2.4.0 Upcoming changes
 - [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
+- [Deprecate `AzureFunctionTokenProvider` in `@fluidframework/azure-clients`](#deprecate-`AzureFunctionTokenProvider`-in-fluidframeworkazure-client)
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 
@@ -31,6 +32,14 @@ This is overall a safer default because it ensures that unexpected errors which 
 immediately, instead of potentially being hidden by a timeout.
 It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
 preparation for this upcoming breaking change.
+
+### Deprecate `AzureFunctionTokenProvider` in `@fluidframework/azure-client`
+
+`AzureFunctionTokenProvider` is now deprecated.
+The @fluidframework/azure-client will no longer expose the AzureFunctionTokenProvider as it is not a
+production ready token provider implementation. Developers who are currently consuming this token provider
+should look to implement a [custom token provider](https://learn.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/azure-function-token-provider) as a replacement.
+
 
 # 2.0.0-internal.2.3.0
 

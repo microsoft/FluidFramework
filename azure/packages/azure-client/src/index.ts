@@ -11,7 +11,6 @@
 
 export { AzureAudience } from "./AzureAudience";
 export { AzureClient } from "./AzureClient";
-// @deprecated
 export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 export {
     AzureClientProps,

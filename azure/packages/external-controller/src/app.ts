@@ -8,8 +8,11 @@ import {
     AzureClient,
     AzureContainerServices,
     AzureLocalConnectionConfig,
+    AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+
+import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
 import { makeAppView } from "./view";
@@ -24,6 +27,9 @@ const userDetails: ICustomUserDetails = {
     email: "xyz@microsoft.com",
 };
 
+// Define the server we will be using and initialize Fluid
+const useAzure = process.env.FLUID_CLIENT === "azure";
+
 const user = generateTestUser();
 
 const azureUser = {
@@ -32,11 +38,18 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
-const connectionConfig: AzureLocalConnectionConfig = {
-    type: "local",
-    tokenProvider: new InsecureTokenProvider("fooBar", user),
-    endpoint: "http://localhost:7070",
-};
+const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
+    ? {
+          type: "remote",
+          tenantId: "",
+          tokenProvider: new AzureFunctionTokenProvider("", azureUser),
+          endpoint: "",
+      }
+    : {
+        type: "local",
+        tokenProvider: new InsecureTokenProvider("fooBar", user),
+        endpoint: "http://localhost:7070",
+    };
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created

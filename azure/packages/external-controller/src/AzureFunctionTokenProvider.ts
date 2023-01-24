@@ -6,16 +6,19 @@ import axios from "axios";
 
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 
-import { AzureMember } from "./interfaces";
+interface AzureMember<T = any> {
+    userName: string;
+    additionalDetails?: T;
+    userId: string;
+    connections: {
+        id: string;
+        mode: "write" | "read";
+    };
+}
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
  * Azure Fluid Relay token resolution.
- */
-/**
- * @deprecated 1.2.0, This API will be removed in 2.0.0
- * No replacement since it is not expected anyone will use this token provider as is
- * See https://github.com/microsoft/FluidFramework/issues/13693 for context
  */
 export class AzureFunctionTokenProvider implements ITokenProvider {
     /**
