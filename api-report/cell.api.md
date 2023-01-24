@@ -17,12 +17,28 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
+export interface AttributionKey {
+    seq: number;
+    type: "op";
+}
+
+// @public
+export interface ICellAttributionOptions {
+    // (undocumented)
+    track?: boolean;
+}
+
+// @public
+export interface ICellOptions {
+    // (undocumented)
+    attribution?: ICellAttributionOptions;
+}
+
+// @public
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
-    // Warning: (ae-forgotten-export) The symbol "AttributionKey" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     getAttribution(): AttributionKey | undefined;
     set(value: Serializable<T>): void;
@@ -50,8 +66,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
-    // Warning: (ae-forgotten-export) The symbol "ICellOptions" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     options?: ICellOptions | undefined;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;

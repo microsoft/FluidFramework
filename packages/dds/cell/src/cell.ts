@@ -57,33 +57,25 @@ interface ICellContent {
 }
 
 /**
- * {@inheritDoc ICellOptions}
- * @alpha
+ * Options related to attribution
  */
 export interface ICellOptions {
-    /**
-     * Options related to attribution
-     */
     attribution?: ICellAttributionOptions;
 }
 
 /**
- * {@inheritDoc ICellAttributionOptions}
- * @alpha
+ * This enables the cell to store the attribution information which can be accessed with the runtime
+ * (i.e. who creeated the content and when it was created)
+ *
+ * default: false
  */
 export interface ICellAttributionOptions {
-    /**
-     * This enables the cell to store the attribution information which can be accessed with the runtime
-     * (i.e. who creeated the content and when it was created)
-     *
-     * default: false
-     */
     track?: boolean;
 }
 
 /**
  * Can be indexed into the ContainerRuntime in order to retrieve attribution info.
- * @alpha
+ *
  */
 export interface AttributionKey {
     /**
@@ -244,7 +236,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
 
     /**
      * {@inheritDoc ISharedCell.setAttribution}
-     * @internal
      * @alpha
      */
     private setAttribution(message: ISequencedDocumentMessage): void {
