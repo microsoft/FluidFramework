@@ -98,6 +98,7 @@ export {
     JsonCompatibleReadOnly,
     JsonCompatible,
     JsonCompatibleObject,
+    NestedMap,
 } from "./util";
 
 export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";

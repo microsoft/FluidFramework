@@ -324,8 +324,6 @@ describe("PactMap", () => {
             pactMap2.connect(services2);
         });
 
-        // TODO: Consider if there's any value in distinctly testing these scenarios for acceptance via
-        // accept ops vs. via the last expected signoff disconnecting.
         it("Doesn't resubmit accept ops that were sent before offline", async () => {
             const targetKey = "key";
             pactMap1.set(targetKey, "expected");
@@ -390,8 +388,6 @@ describe("PactMap", () => {
         it("Sequenced proposals that were accepted during offline have correct state after reconnect", async () => {
             const targetKey = "key";
             pactMap1.set(targetKey, "expected");
-            // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
-            // Consider whether it's interesting for it to disconnect before processing any ops.
             containerRuntimeFactory.processOneMessage(); // pactMap1 "set"
             containerRuntime1.connected = false;
             containerRuntimeFactory.processAllMessages(); // Process the accept from client 2
@@ -404,8 +400,6 @@ describe("PactMap", () => {
         it("Sequenced proposals that remained pending during offline have correct state after reconnect", async () => {
             const targetKey = "key";
             pactMap1.set(targetKey, "expected");
-            // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
-            // Consider whether it's interesting for it to disconnect before processing any ops.
             containerRuntimeFactory.processOneMessage(); // pactMap1 "set"
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;

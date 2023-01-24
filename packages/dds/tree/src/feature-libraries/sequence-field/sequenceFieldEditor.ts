@@ -55,14 +55,16 @@ export const sequenceFieldEditor = {
         index: number,
         count: number,
         detachedBy: RevisionTag,
-        detachIndex: number,
+        detachIndex?: number,
         isIntention?: true,
     ): Changeset<never> => {
         const mark: Reattach<never> = {
             type: "Revive",
             count,
             detachedBy,
-            detachIndex,
+            // Revives are typically created to undo a delete from the prior revision.
+            // When that's the case, we know the content used to be at the index at which it is being revived.
+            detachIndex: detachIndex ?? index,
         };
         if (isIntention) {
             mark.isIntention = true;
@@ -107,7 +109,7 @@ export const sequenceFieldEditor = {
         count: number,
         destIndex: number,
         detachedBy: RevisionTag,
-        detachIndex: number,
+        detachIndex?: number,
     ): Changeset<never> {
         if (count === 0) {
             return [];
@@ -126,7 +128,9 @@ export const sequenceFieldEditor = {
             id,
             count,
             detachedBy,
-            detachIndex,
+            // Returns are typically created to undo a move from the prior revision.
+            // When that's the case, we know the content used to be at the index to which it is being returned.
+            detachIndex: detachIndex ?? destIndex,
         };
 
         const factory = new MarkListFactory<never>();

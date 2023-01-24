@@ -16,7 +16,7 @@ import {
 } from "../../core";
 import { fail } from "../../util";
 import { SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * General purpose one node chunk.
@@ -53,7 +53,7 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
     }
 
     public cursor(): ChunkedCursor {
-        return new BasicChunkCursor([], [], [], [], [this], 0, 0, 0);
+        return new BasicChunkCursor([this], [], [], [], [], [dummyRoot], 0, 0, 0);
     }
 
     protected dispose(): void {
@@ -85,8 +85,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
      *
      * @param siblingStack - Stack of collections of siblings along the path through the tree:
      * does not include current level (which is stored in `siblings`).
-     * Even levels in the stack (starting from 0) are sequences of nodes and odd levels
-     * are for fields keys on a node.
+     * Even levels in the stack (starting from 0) are keys and odd levels are sequences of nodes.
      * @param indexStack - Stack of indices into the corresponding levels in `siblingStack`.
      * @param indexOfChunkStack - Index of chunk in array of chunks. Only for Node levels.
      * @param indexWithinChunkStack - Index withing chunk selected by indexOfChunkStack. Only for Node levels.
@@ -96,6 +95,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
      * @param indexWithinChunk - Index withing chunk selected by indexOfChunkStack. Only for Nodes mode.
      */
     public constructor(
+        protected root: BasicChunk[],
         protected readonly siblingStack: SiblingsOrKey[],
         protected readonly indexStack: number[],
         protected readonly indexOfChunkStack: number[],
@@ -120,15 +120,15 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
         // Compute the number of nodes deep the current depth is.
         // We want the floor of the result, which can computed using a bitwise shift assuming the depth is less than 2^31, which seems safe.
         // eslint-disable-next-line no-bitwise
-        const halfHeight = this.siblingStack.length >> 1;
+        const halfHeight = (this.siblingStack.length + 1) >> 1;
         assert(this.indexOfChunkStack.length === halfHeight, "unexpected indexOfChunkStack");
         assert(
             this.indexWithinChunkStack.length === halfHeight,
             "unexpected indexWithinChunkStack",
         );
         return this.siblingStack.length % 2 === 0
-            ? CursorLocationType.Nodes
-            : CursorLocationType.Fields;
+            ? CursorLocationType.Fields
+            : CursorLocationType.Nodes;
     }
 
     public getFieldKey(): FieldKey {
@@ -137,12 +137,12 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
     }
 
     private getStackedFieldKey(height: number): FieldKey {
-        assert(height % 2 === 1, "must field height");
+        assert(height % 2 === 0, "must field height");
         return this.siblingStack[height][this.indexStack[height]] as FieldKey;
     }
 
     private getStackedNodeIndex(height: number): number {
-        assert(height % 2 === 0, "must be node height");
+        assert(height % 2 === 1, "must be node height");
         assert(height >= 0, "must not be above root");
         return this.indexStack[height];
     }
@@ -177,12 +177,12 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
     private getOffsetPath(offset: number): UpPath | undefined {
         const length = this.indexStack.length - offset;
-        if (length === 0) {
+        if (length === -1) {
             return undefined; // At root
         }
 
         assert(length > 0, "invalid offset to above root");
-        assert(length % 2 === 0, "offset path must point to node not field");
+        assert(length % 2 === 1, "offset path must point to node not field");
 
         // Perf Note:
         // This is O(depth) in tree.
@@ -194,7 +194,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
         let path: UpPath | undefined;
         // Skip top level, since root node in path is "undefined" and does not have a parent or index.
-        for (let height = 2; height < length; height += 2) {
+        for (let height = 1; height < length; height += 2) {
             const key = this.getStackedFieldKey(height - 1);
             path = {
                 parent: path,
@@ -341,6 +341,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
     }
 
     private getField(): readonly TreeChunk[] {
+        if (this.siblingStack.length === 0) {
+            return this.root;
+        }
         assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
         const parent = this.getStackedNode(this.indexStack.length - 1);
         const key: FieldKey = this.getFieldKey();
