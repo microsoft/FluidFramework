@@ -28,7 +28,7 @@ jobs:
           filters: |
             build-tools:
               - 'build-tools/**'
-              - '.github/workflows/commit-validation.yml'
+              - '.github/workflows/pr-validation.yml'
     # Set job outputs to values from filter step
     outputs:
       build-tools: ${{ steps.filter.outputs.build-tools }}
@@ -54,7 +54,10 @@ jobs:
   placeholder-content:
     name: PR template placeholder content
     runs-on: ubuntu-latest
-    if: github.event.action == 'edited'
+    if: |
+      github.event.action == 'edited' ||
+      github.event.action == 'opened' ||
+      github.event.action == 'reopened'
     steps:
       - uses: sitezen/pr-comment-checker@f1e956fac00c6d1163d15841886ae80b7ae58ecb # ratchet:sitezen/pr-comment-checker@v1.0.1
         with:
@@ -72,10 +75,9 @@ jobs:
     name: PR title matches conventional commit format
     runs-on: ubuntu-latest
     # Only runs if build-tools is changed
-    needs: changes
+    needs: changed-paths
     if: |
-      needs.changes.outputs.build-tools == 'true' &&
-      github.event.action == 'edited'
+      needs.changed-paths.outputs.build-tools == 'true'
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
