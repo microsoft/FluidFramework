@@ -7,7 +7,6 @@ import { AsyncLocalStorage } from "async_hooks";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
@@ -102,7 +101,7 @@ export function create(
                 : typeof request.query.initial === "boolean"
                     ? request.query.initial
                     : request.query.initial === "true";
-            Lumberjack.info("Writing summary", { initial, param: request.params.initial, params: request.params });
+
             const summaryP = createSummary(
                 request.params.tenantId,
                 request.get("Authorization"),
