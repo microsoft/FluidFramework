@@ -18,12 +18,7 @@ export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
 export { FluidRepo, VersionDetails } from "./common/fluidRepo";
 export { getResolvedFluidRoot } from "./common/fluidUtils";
-export {
-    defaultLogger,
-    type Logger,
-    ErrorLoggingFunction,
-    LoggingFunction,
-} from "./common/logging";
+export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
 export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
 export { Package } from "./common/npmPackage";
 export { LayerGraph } from "./layerCheck/layerGraph";
