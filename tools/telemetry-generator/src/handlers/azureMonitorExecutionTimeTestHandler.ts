@@ -18,19 +18,32 @@ module.exports = async function handler(fileData, logger) {
         //     marginOfError: testData.stats.marginOfError,
         // });
 
-        await logger.trackMetric({name: arithmeticMeanMetricName, value: testData.stats.arithmeticMean}, {
+        // await logger.trackMetric({name: arithmeticMeanMetricName, value: testData.stats.arithmeticMean}, {
+        //     category: "performance",
+        //     eventName: "Benchmark",
+        //     benchmarkType: "ExecutionTime",
+        //     suiteName: fileData.suiteName,
+        //     benchmarkName: testData.benchmarkName,
+        // });
+
+        const eventName = `performance_benchmark_executionTime_${fileData.suiteName}_${testData.benchmarkName}`;
+        await logger.trackEvent({
+            name: eventName,
             category: "performance",
             eventName: "Benchmark",
             benchmarkType: "ExecutionTime",
             suiteName: fileData.suiteName,
             benchmarkName: testData.benchmarkName,
+            arithmeticMean: testData.stats.arithmeticMean,
+            marginOfError: testData.stats.marginOfError,
         });
-        await logger.trackMetric({name: marginOfErrorMetricName, value: testData.stats.marginOfError}, {
-            category: "performance",
-            eventName: "Benchmark",
-            benchmarkType: "ExecutionTime",
-            suiteName: fileData.suiteName,
-            benchmarkName: testData.benchmarkName,
-        });
+        // await logger.trackMetric({name: marginOfErrorMetricName, value: testData.stats.marginOfError}, {
+        //     category: "performance",
+        //     eventName: "Benchmark",
+        //     benchmarkType: "ExecutionTime",
+        //     suiteName: fileData.suiteName,
+        //     benchmarkName: testData.benchmarkName,
+        // });
+
     });
 };
