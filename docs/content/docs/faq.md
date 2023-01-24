@@ -154,7 +154,7 @@ Microsoft has developed an M365-specific Fluid service designed to enable soluti
 ecosystem. There will be ways for Fluid Framework developers to operate in M365 but those integration points are
 not available yet.
 
-Microsoft has also announced [Azure Fluid Relay](https://azure.microsoft.com/en-us/services/fluid-relay/#overview), a fully managed Fluid service.
+Microsoft has also announced [Azure Fluid Relay](https://azure.microsoft.com/en-us/products/fluid-relay/), a fully managed Fluid service.
 
 ### Besides SharePoint, where else can we store .fluid files?
 

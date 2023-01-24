@@ -26,8 +26,9 @@
     "download": "npm run download:api && npm run build:api-documentation",
     "download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
     "hugo": "hugo",
-    "linkcheck": "npm run linkcheck:fast -- --external",
+    "linkcheck": "start-server-and-test start 1313 linkcheck:full",
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
+    "linkcheck:full": "npm run linkcheck:fast -- --external",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
     "start": "hugo server"
@@ -59,6 +60,7 @@
     "replace-in-file": "^6.2.0",
     "rimraf": "^2.6.2",
     "serve": "^14.1.2",
-    "shelljs": "^0.8.5"
+    "shelljs": "^0.8.5",
+    "start-server-and-test": "^1.11.7"
   }
 }
