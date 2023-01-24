@@ -111,6 +111,7 @@ Typical scenarios require the connected clients to "agree" on some course of act
 - Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
 - Upgrade a data schema. (All clients agree to simultaneously make the change.)
 
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 [SharedCounter]: {{< relref "counter.md" >}}
 [SharedMap]: {{< relref "map.md" >}}

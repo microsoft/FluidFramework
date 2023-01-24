@@ -69,7 +69,7 @@ The potential down-side to this approach is consistency; if another collaborator
 
 The DDSes will apply remote operations as they are made, and will always arrive at a consistent state.
 
-Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], and [SharedString][].
+Many of the most commonly used DDSes are optimistic, including [SharedMap][] and [SharedString][].
 
 ### Consensus-based data structures
 

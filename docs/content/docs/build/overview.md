@@ -67,3 +67,20 @@ For specifics about each service-specific client implementation see their corres
 - The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
 
 For more information see [Packages]({{< relref "packages.md" >}}).
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Classes and interfaces -->
+
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
