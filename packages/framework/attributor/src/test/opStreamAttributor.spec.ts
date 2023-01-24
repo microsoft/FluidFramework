@@ -17,6 +17,7 @@ class OpFactory {
     public makeOp({ timestamp, clientId }: { timestamp: number; clientId: string; }): ISequencedDocumentMessage {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return {
+            type: "op",
             timestamp,
             clientId,
             sequenceNumber: this.seq++,
