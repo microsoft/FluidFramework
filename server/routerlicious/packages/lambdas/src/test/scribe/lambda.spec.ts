@@ -7,7 +7,7 @@
 import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
 import { GitManager } from "@fluidframework/server-services-client";
 import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
-import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
+import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestDeltaManager, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
 import { ScribeLambda } from "../../scribe/lambda";
@@ -71,12 +71,14 @@ describe("Routerlicious", () => {
                 };
                 tree = await testGitManager.createGitTree(requestBody);
                 testGitManager.addTree(tree);
+                const testDeltaManager = new TestDeltaManager();
 
                 let factory = new ScribeLambdaFactory(
                     testMongoManager,
                     testDocumentCollection,
                     testMessageCollection,
                     testProducer,
+                    testDeltaManager,
                     testTenantManager,
                     DefaultServiceConfiguration,
                     false);

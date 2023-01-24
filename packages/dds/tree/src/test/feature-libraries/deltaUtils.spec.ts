@@ -87,6 +87,7 @@ describe("DeltaUtils", () => {
                         {
                             type: Delta.MarkType.MoveIn,
                             moveId,
+                            count: 1,
                         },
                         {
                             type: Delta.MarkType.MoveOut,
@@ -155,6 +156,7 @@ describe("DeltaUtils", () => {
                         {
                             type: Delta.MarkType.MoveIn,
                             moveId,
+                            count: 1,
                         },
                         {
                             type: Delta.MarkType.MoveOut,

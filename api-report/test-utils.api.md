@@ -153,6 +153,7 @@ export interface IProvideTestFluidObject {
 
 // @public (undocumented)
 export interface ITestContainerConfig {
+    enableAttribution?: boolean;
     fluidDataObjectType?: DataObjectFactoryType;
     loaderProps?: Partial<ILoaderProps>;
     registry?: ChannelFactoryRegistry;

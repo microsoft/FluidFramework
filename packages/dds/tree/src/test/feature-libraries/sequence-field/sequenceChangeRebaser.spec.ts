@@ -37,8 +37,8 @@ const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
     ["ConflictedRevive", (i) => Change.revive(2, 2, tag2, i, tag3)],
     ["MoveOut", (i) => Change.move(i, 2, 1)],
     ["MoveIn", (i) => Change.move(1, 2, i)],
-    ["ReturnFrom", (i) => Change.return(i, 2, 1, tag4, 0)],
-    ["ReturnTo", (i) => Change.return(1, 2, i, tag4, 0)],
+    ["ReturnFrom", (i) => Change.return(i, 2, 1, tag4)],
+    ["ReturnTo", (i) => Change.return(1, 2, i, tag4)],
 ];
 deepFreeze(testChanges);
 
@@ -297,7 +297,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
     it.skip("[Move ABC, Return ABC] ↷ Delete B", () => {
         const delB = tagChange(Change.delete(1, 1), brand(1));
         const movABC = tagChange(Change.move(0, 3, 1), brand(2));
-        const retABC = tagChange(Change.return(1, 3, 0, brand(2), 0), brand(3));
+        const retABC = tagChange(Change.return(1, 3, 0, brand(2)), brand(3));
         const movABC2 = rebaseTagged(movABC, delB);
         const invMovABC = SF.invert(movABC, TestChange.invert);
         const retABC2 = rebaseTagged(retABC, tagInverse(invMovABC, movABC2.revision));

@@ -20,16 +20,7 @@ import {
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
-import {
-    changeSrcMoveId,
-    modifyMoveSrc,
-    MoveEffectTable,
-    newMoveEffectTable,
-    removeMoveDest,
-    removeMoveSrc,
-    replaceMoveDest,
-    replaceMoveSrc,
-} from "./moveEffectTable";
+import { getOrAddEffect, MoveEffectTable, MoveEnd, newMoveEffectTable } from "./moveEffectTable";
 import {
     getInputLength,
     getOutputLength,
@@ -89,7 +80,7 @@ function composeMarkLists<TNodeChange>(
     genId: IdAllocator,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
-    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
     const queue = new ComposeQueue(
         undefined,
         baseMarkList,
@@ -97,8 +88,6 @@ function composeMarkLists<TNodeChange>(
         newMarkList,
         genId,
         moveEffects,
-        true,
-        true,
         (a, b) => composeChildChanges(a, b, newRev, composeChild),
     );
     while (!queue.isEmpty()) {
@@ -189,15 +178,17 @@ function composeMarks<TNodeChange>(
                 case "ReturnFrom":
                     // The insert has been moved by `newMark`.
                     // We can represent net effect of the two marks as an insert at the move destination.
-                    replaceMoveDest(
+                    getOrAddEffect(
                         moveEffects,
+                        MoveEnd.Dest,
+                        newMark.revision ?? newRev,
                         newMark.id,
-                        mergeInNewChildChanges(
-                            baseMark,
-                            newMark.changes,
-                            newMark.revision ?? newRev,
-                            composeChild,
-                        ),
+                        true,
+                    ).mark = mergeInNewChildChanges(
+                        baseMark,
+                        newMark.changes,
+                        newMark.revision ?? newRev,
+                        composeChild,
                     );
                     return 0;
                 case "Revive": {
@@ -236,24 +227,64 @@ function composeMarks<TNodeChange>(
         case "MoveIn": {
             switch (newType) {
                 case "Delete": {
-                    replaceMoveSrc(
+                    getOrAddEffect(
                         moveEffects,
+                        MoveEnd.Source,
+                        baseMark.revision,
                         baseMark.id,
-                        composeMark(newMark, newRev, composeChild),
-                    );
+                        true,
+                    ).mark = composeMark(newMark, newRev, composeChild);
                     return 0;
                 }
                 case "MoveOut": {
-                    changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                    getOrAddEffect(
+                        moveEffects,
+                        MoveEnd.Source,
+                        baseMark.revision,
+                        baseMark.id,
+                        true,
+                    ).mark = composeMark(newMark, newRev, composeChild);
+                    getOrAddEffect(
+                        moveEffects,
+                        MoveEnd.Dest,
+                        newMark.revision ?? newRev,
+                        newMark.id,
+                        true,
+                    );
                     return 0;
                 }
                 case "ReturnFrom": {
                     if (newMark.detachedBy === baseMark.revision) {
-                        removeMoveSrc(moveEffects, baseMark.id);
-                        removeMoveDest(moveEffects, newMark.id);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Source,
+                            baseMark.revision,
+                            baseMark.id,
+                            true,
+                        ).shouldRemove = true;
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        ).shouldRemove = true;
                         return 0;
                     } else {
-                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Source,
+                            baseMark.revision,
+                            baseMark.id,
+                            true,
+                        ).mark = composeMark(newMark, newRev, composeChild);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        );
                         return 0;
                     }
                 }
@@ -264,24 +295,57 @@ function composeMarks<TNodeChange>(
         case "ReturnTo": {
             switch (newType) {
                 case "Modify": {
-                    modifyMoveSrc(moveEffects, baseMark.id, newMark.changes);
+                    getOrAddEffect(
+                        moveEffects,
+                        MoveEnd.Source,
+                        baseMark.revision,
+                        baseMark.id,
+                        true,
+                    ).modifyAfter = newMark.changes;
                     return baseMark;
                 }
                 case "Delete": {
-                    replaceMoveSrc(
+                    getOrAddEffect(
                         moveEffects,
+                        MoveEnd.Source,
+                        baseMark.revision,
                         baseMark.id,
-                        composeMark(newMark, newRev, composeChild),
-                    );
+                        true,
+                    ).mark = composeMark(newMark, newRev, composeChild);
                     return 0;
                 }
                 case "MoveOut": {
                     if (baseMark.detachedBy === (newMark.revision ?? newRev)) {
-                        removeMoveSrc(moveEffects, baseMark.id);
-                        removeMoveDest(moveEffects, newMark.id);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Source,
+                            baseMark.revision,
+                            baseMark.id,
+                            true,
+                        ).shouldRemove = true;
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        ).shouldRemove = true;
                         return 0;
                     } else {
-                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Source,
+                            baseMark.revision,
+                            baseMark.id,
+                            true,
+                        ).mark = composeMark(newMark, newRev, composeChild);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        );
                         return 0;
                     }
                 }
@@ -290,14 +354,45 @@ function composeMarks<TNodeChange>(
                         baseMark.detachedBy === (newMark.revision ?? newRev) ||
                         newMark.detachedBy === baseMark.revision
                     ) {
-                        removeMoveSrc(moveEffects, baseMark.id);
-                        removeMoveDest(moveEffects, newMark.id);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Source,
+                            baseMark.revision,
+                            baseMark.id,
+                            true,
+                        ).shouldRemove = true;
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        ).shouldRemove = true;
                         return 0;
                     } else {
                         if (newMark.changes !== undefined) {
-                            modifyMoveSrc(moveEffects, baseMark.id, newMark.changes);
+                            getOrAddEffect(
+                                moveEffects,
+                                MoveEnd.Source,
+                                baseMark.revision,
+                                baseMark.id,
+                                true,
+                            ).modifyAfter = newMark.changes;
                         }
-                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Source,
+                            baseMark.revision,
+                            baseMark.id,
+                            true,
+                        ).mark = composeMark(newMark, newRev, composeChild);
+                        getOrAddEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        );
                         return 0;
                     }
                 }
@@ -406,14 +501,13 @@ function applyMoveEffects<TNodeChange>(
     composeChild: NodeChangeComposer<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
-    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
     const queue = new MarkQueue(
         marks,
         undefined,
         moveEffects,
+        true,
         () => fail("Should not generate IDs"),
-        false,
-        false,
         // TODO: Should pass in revision for new changes
         (a, b) => composeChildChanges(a, b, undefined, composeChild),
     );
@@ -438,8 +532,6 @@ export class ComposeQueue<T> {
         newMarks: Changeset<T>,
         genId: IdAllocator,
         moveEffects: MoveEffectTable<T>,
-        reassignNewMoveIds: boolean = true,
-        updatePairedMarkStatus: boolean = true,
         composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.baseIndex = new IndexTracker();
@@ -448,18 +540,16 @@ export class ComposeQueue<T> {
             baseMarks,
             baseRevision,
             moveEffects,
+            true,
             genId,
-            false,
-            false,
             composeChanges,
         );
         this.newMarks = new MarkQueue(
             newMarks,
             newRevision,
             moveEffects,
+            true,
             genId,
-            reassignNewMoveIds,
-            updatePairedMarkStatus,
             composeChanges,
         );
     }
@@ -480,8 +570,21 @@ export class ComposeQueue<T> {
     private popImpl(): ComposeMarks<T> {
         let baseMark = this.baseMarks.peek();
         let newMark = this.newMarks.peek();
-        if (baseMark === undefined || newMark === undefined) {
-            return { baseMark: this.baseMarks.tryDequeue(), newMark: this.newMarks.tryDequeue() };
+        if (baseMark === undefined && newMark === undefined) {
+            return {};
+        } else if (baseMark === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const length = getInputLength(newMark!);
+            return {
+                baseMark: length > 0 ? length : undefined,
+                newMark: this.newMarks.tryDequeue(),
+            };
+        } else if (newMark === undefined) {
+            const length = getOutputLength(baseMark);
+            return {
+                baseMark: this.baseMarks.tryDequeue(),
+                newMark: length > 0 ? length : undefined,
+            };
         } else if (isAttach(newMark)) {
             if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
                 const newRev = newMark.revision ?? this.newRevision;

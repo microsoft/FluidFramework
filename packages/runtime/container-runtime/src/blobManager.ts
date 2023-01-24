@@ -274,7 +274,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public async getBlob(blobId: string): Promise<ArrayBufferLike> {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
-            const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
+            const error = responseToException(createResponseError(404, "Blob was deleted", request), request);
             sendGCTombstoneEvent(
                 this.mc,
                 {

@@ -108,15 +108,15 @@ export interface IConnectionDetails {
     claims: ITokenClaims;
     // (undocumented)
     clientId: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     existing: boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     initialClients: ISignalClient[];
-    // (undocumented)
+    // @deprecated (undocumented)
     mode: ConnectionMode;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-    // (undocumented)
+    // @deprecated (undocumented)
     version: string;
 }
 
