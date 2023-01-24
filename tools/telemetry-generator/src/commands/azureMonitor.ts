@@ -58,6 +58,8 @@ export class EntryPoint extends Command {
         }
 
         console.log(`obtained connection string: ${flags.connectionString}`)
+        console.log(`build id env variable: `, process.env.BUILD_ID)
+        console.log(`branch name env variable: `, process.env.BRANCH_NAME)
 
         appInsight.setup(flags.connectionString)
         .start();

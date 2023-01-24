@@ -67,6 +67,9 @@ stages:
       - name: consolidatedTestsOutputFolder
         value: ${{ variables.testWorkspace }}/benchmarkOutput
         readonly: true
+    env:
+      BUILD_ID: $(Build.BuildId)
+      BRANCH_NAME: $(Build.SourceBranchName)
     jobs:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
