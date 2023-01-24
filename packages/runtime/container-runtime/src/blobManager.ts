@@ -22,10 +22,11 @@ import {
     ISummaryTreeWithStats,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { TombstoneResponseHeaderKey } from "./containerRuntime";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
 import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
-import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 
 /**
  * This class represents blob (long string)
@@ -173,10 +174,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
          * before any ops that reference the local ID, otherwise, an invalid handle could be added to the document.
          */
         private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void,
-        // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
-        // of the format `/<BlobManager.basePath>/<blobId>`.
+        // Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
+        // blobPath's format - `/<BlobManager.basePath>/<blobId>`.
         private readonly blobRequested: (blobPath: string) => void,
+        // Called when a reference is added to a blob. For instance, when creating a localId / storageId to storageId
+        // mapping in the redirect table.
+        // Node path formats - `/<BlobManager.basePath>/<blobId>`.
         private readonly addedBlobReference: (fromNodePath: string, toNodePath: string) => void,
+        // Called to check if a blob has been deleted by GC.
+        // blobPath's format - `/<BlobManager.basePath>/<blobId>`.
+        private readonly isBlobDeleted: (blobPath: string) => boolean,
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
     ) {
@@ -272,23 +279,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     }
 
     public async getBlob(blobId: string): Promise<ArrayBufferLike> {
-        const request = { url: blobId };
-        if (this.tombstonedBlobs.has(blobId) ) {
-            const error = responseToException(createResponseError(404, "Blob was deleted", request), request);
-            sendGCTombstoneEvent(
-                this.mc,
-                {
-                    eventName: "GC_Tombstone_Blob_Requested",
-                    category: this.throwOnTombstoneLoad ? "error" : "generic",
-                    isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-                },
-                [BlobManager.basePath],
-                error,
-            );
-            if (this.throwOnTombstoneLoad) {
-                throw error;
-            }
-        }
+        // Verify that the blob is valid, i.e., it has not been garbage collected. If it is, this will throw an error,
+        // failing the call.
+        this.verifyBlobValidity(blobId);
 
         const pending = this.pendingBlobs.get(blobId);
         if (pending) {
@@ -647,6 +640,53 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         // Mark blobs that are now tombstoned by adding them to the tombstone list.
         for (const blobId of tombstonedBlobsSet) {
             this.tombstonedBlobs.add(blobId);
+        }
+    }
+
+    /**
+     * Verifies that the blob with given id is valid, i.e., it has not been garbage collected. If the blob is GC'd,
+     * log an error and throw if necessary.
+     */
+    private verifyBlobValidity(blobId: string) {
+        /**
+         * A blob can be in one of the following states:
+         * 1. "deleted" - It has been deleted by garbage collection sweep phase.
+         * 2. "tombstoned" - It is ready for deletion but sweep phase isn't enabled and tombstone feature is enabled.
+         * 3. "valid" - It has not been deleted or tombstoned.
+         */
+        let state: "valid" | "tombstoned" | "deleted" = "valid";
+        if (this.isBlobDeleted(this.getBlobGCNodePath(blobId))) {
+            state = "deleted";
+        } else if (this.tombstonedBlobs.has(blobId) ) {
+            state = "tombstoned";
+        }
+
+        if (state === "valid") {
+            return;
+        }
+
+        // If the blob is deleted or throw on tombstone load is enabled, throw an error which will fail any attempt
+        // to load the blob.
+        const shouldFail = state === "deleted" || this.throwOnTombstoneLoad;
+        const request = { url: blobId };
+        const error = responseToException(createResponseError(
+            404,
+            "Blob was deleted",
+            request,
+            state === "tombstoned" ? { [TombstoneResponseHeaderKey]: true } : undefined,
+        ), request);
+        sendGCUnexpectedUsageEvent(
+            this.mc,
+            {
+                eventName: state === "tombstoned" ? "GC_Tombstone_Blob_Requested" : "GC_Deleted_Blob_Requested",
+                category: shouldFail ? "error" : "generic",
+                isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+            },
+            [BlobManager.basePath],
+            error,
+        )
+        if (shouldFail) {
+            throw error;
         }
     }
 
