@@ -33,7 +33,7 @@
             "opRatePerMin": 800,
             "progressIntervalMs": 5000,
             "numClients": 10,
-            "totalSendCount": 48000,
+            "totalSendCount": 36000,
             "optionOverrides":{
                 "tinylicious":{
                     "comment": "SessionExpiry: 15 mins. Inactive Timeout: 16 mins. Sweep Timeout: 17 mins.",
