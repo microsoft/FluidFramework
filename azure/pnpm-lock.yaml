@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.7.0
+      '@fluidframework/build-tools': ^0.8.0-123358
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.17.9
       '@microsoft/api-extractor': ^7.22.2
@@ -19,7 +19,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.7.0
+      '@fluidframework/build-tools': 0.8.0-123358
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.19.24
       '@microsoft/api-extractor': 7.33.6
@@ -38,7 +38,7 @@ importers:
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@1.0.0
       '@fluidframework/azure-local-service': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.4.4000
+      '@fluidframework/build-tools': ^0.8.0-123358
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.0.0
       '@fluidframework/container-definitions': ^1.4.0-121020
@@ -94,7 +94,7 @@ importers:
       '@fluidframework/azure-client-previous': /@fluidframework/azure-client/1.0.0
       '@fluidframework/azure-local-service': link:../azure-local-service
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.4.8000
+      '@fluidframework/build-tools': 0.8.0-123358
       '@fluidframework/counter': 1.4.0-121020
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-client-utils': 1.4.0-121020
@@ -152,7 +152,7 @@ importers:
     specifiers:
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@^1.0.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.7.0
+      '@fluidframework/build-tools': ^0.8.0-123358
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
@@ -175,7 +175,7 @@ importers:
     devDependencies:
       '@fluidframework/azure-service-utils-previous': 'link:'
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.7.0
+      '@fluidframework/build-tools': 0.8.0-123358
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -909,26 +909,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/version-tools/0.4.8000:
-    resolution: {integrity: sha512-HdcfcgtVP4gbuv7aSlR6qPf6d8govOwHCkPy+OOQ0WGPH2nOVWz5urhOkLgqd863fUqNGoO+jU1va4K8a/A2vA==}
-    engines: {node: '>=14.0.0'}
-    hasBin: true
-    dependencies:
-      '@oclif/core': 1.20.4
-      '@oclif/plugin-commands': 2.2.1
-      '@oclif/plugin-help': 5.1.18
-      '@oclif/plugin-not-found': 2.3.8
-      '@oclif/plugin-plugins': 2.1.7
-      '@oclif/test': 2.2.10
-      chalk: 2.4.2
-      semver: 7.3.8
-      table: 6.8.1
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /@fluid-tools/version-tools/0.7.0:
-    resolution: {integrity: sha512-BMovOIobnm1IiH2kp+lkbh3nkcT9kOjkozEKvYSqHpSwn8ooR9XmxcfBx69pZIpgmr4CKkhOnNe0Kg2FwHCgEQ==}
+  /@fluid-tools/version-tools/0.8.0-123358:
+    resolution: {integrity: sha512-EdR0u8b7n8YYxHdFwxCT/Lk6CRbx7f8r8LIInZUxdyq/pF/baFBFOD68y4EdSFIbiQXrRjL/sJ2HDXKP33dJ4w==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
@@ -1048,55 +1030,19 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.4.8000:
-    resolution: {integrity: sha512-oudYsTB0BT7rb/sfiXF8s+gRl7vKtQ0s1Ex9w9j/74DyO5/Qo6zmzid2Z1pZhqQyubatSekL7GWQ9WztnWeDBw==}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.4.8000
-      '@fluidframework/bundle-size-tools': 0.4.8000
-      async: 3.2.4
-      chalk: 2.4.2
-      commander: 6.2.1
-      danger: 10.9.0
-      date-fns: 2.29.3
-      debug: 4.3.4
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      ignore: 5.2.0
-      json5: 2.2.1
-      lodash.isequal: 4.5.0
-      lodash.merge: 4.6.2
-      minimatch: 3.1.2
-      npm-package-json-lint: 6.3.0
-      replace-in-file: 6.3.5
-      rimraf: 2.7.1
-      semver: 7.3.8
-      shelljs: 0.8.5
-      sort-package-json: 1.54.0
-      ts-morph: 7.3.0
-      yaml: 2.1.3
-    transitivePeerDependencies:
-      - '@octokit/core'
-      - '@swc/core'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/build-tools/0.7.0:
-    resolution: {integrity: sha512-9hR+3BH16Kai06aS/Sr+F/mKpDbBfzkujlG16sWAbcBrkmRz5PILaEXHEe1ln39O98zDkRQMh341qYpwhKKvJA==}
+  /@fluidframework/build-tools/0.8.0-123358:
+    resolution: {integrity: sha512-aq+ngChON59Z7zRjiyPZzHggyV5LUHDT1gv/PQKOpItVUO/AE6tEhftcHNwxoT5P6zx1fnhgDtdf6kjHzARVvQ==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.7.0
-      '@fluidframework/bundle-size-tools': 0.7.0
+      '@fluid-tools/version-tools': 0.8.0-123358
+      '@fluidframework/bundle-size-tools': 0.8.0-123358
+      '@octokit/core': 4.1.0
       '@rushstack/node-core-library': 3.53.2
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
-      danger: 10.9.0
+      danger: 10.9.0_@octokit+core@4.1.0
       date-fns: 2.29.3
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -1116,7 +1062,6 @@ packages:
       ts-morph: 7.3.0
       yaml: 2.1.3
     transitivePeerDependencies:
-      - '@octokit/core'
       - '@swc/core'
       - encoding
       - esbuild
@@ -1125,24 +1070,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.4.8000:
-    resolution: {integrity: sha512-eLsZUzqBBv8sPXxKlmqMQvdX6UGpjKZPxsFClaurq6PnwnZ1vuCG3pIDazncKWtr3WK9oj6UQXku4wdK/C6+Vw==}
-    dependencies:
-      azure-devops-node-api: 11.2.0
-      jszip: 3.10.1
-      msgpack-lite: 0.1.26
-      pako: 2.1.0
-      typescript: 4.5.5
-      webpack: 5.74.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/bundle-size-tools/0.7.0:
-    resolution: {integrity: sha512-XDKYtTd/n78p1aX5nGYfySVlinCdDKqhHnPhphULQ9yOjfr3BGbz8/968DNopLMaMTrYyEyQouxcBAmvH8blmQ==}
+  /@fluidframework/bundle-size-tools/0.8.0-123358:
+    resolution: {integrity: sha512-edQrBFRhtzMlZ8kjdaQu5FRPikBdXPdnudCyQrLE6RFhMLQYeROCGcNHtEHrSFb6gG+a0QW4SmEa19HUsTV2Ew==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -4183,12 +4112,6 @@ packages:
       '@octokit/types': 8.0.0
     dev: true
 
-  /@octokit/plugin-request-log/1.0.4:
-    resolution: {integrity: sha512-mLUsMkgP7K/cnFEw07kWqXGF5LKrOkD+lhCrKvPHXWDywAwuDUeDwWBpc69XK3pNX0uKiVt8g5z96PJ6z9xCFA==}
-    peerDependencies:
-      '@octokit/core': '>=3'
-    dev: true
-
   /@octokit/plugin-request-log/1.0.4_@octokit+core@4.1.0:
     resolution: {integrity: sha512-mLUsMkgP7K/cnFEw07kWqXGF5LKrOkD+lhCrKvPHXWDywAwuDUeDwWBpc69XK3pNX0uKiVt8g5z96PJ6z9xCFA==}
     peerDependencies:
@@ -4267,12 +4190,12 @@ packages:
       - encoding
     dev: true
 
-  /@octokit/rest/16.43.2:
+  /@octokit/rest/16.43.2_@octokit+core@4.1.0:
     resolution: {integrity: sha512-ngDBevLbBTFfrHZeiS7SAMAZ6ssuVmXuya+F/7RaVvlysgGa1JKJkKWY+jV6TCJYcW0OALfJ7nTIGXcBXzycfQ==}
     dependencies:
       '@octokit/auth-token': 2.5.0
       '@octokit/plugin-paginate-rest': 1.1.2
-      '@octokit/plugin-request-log': 1.0.4
+      '@octokit/plugin-request-log': 1.0.4_@octokit+core@4.1.0
       '@octokit/plugin-rest-endpoint-methods': 2.4.0
       '@octokit/request': 5.6.3
       '@octokit/request-error': 1.2.1
@@ -7204,12 +7127,12 @@ packages:
     engines: {node: '>=0.4.0'}
     dev: true
 
-  /danger/10.9.0:
+  /danger/10.9.0_@octokit+core@4.1.0:
     resolution: {integrity: sha512-eEWQAaIPfWSfzlQiFx+w9fWuP3jwq8VAV9W22EZRxfmCBnkdDa5aN0Akr7lzfCKudzy+4uEmIGUtxnYeFgTthQ==}
     hasBin: true
     dependencies:
       '@babel/polyfill': 7.12.1
-      '@octokit/rest': 16.43.2
+      '@octokit/rest': 16.43.2_@octokit+core@4.1.0
       async-retry: 1.2.3
       chalk: 2.4.2
       commander: 2.20.3
@@ -7229,7 +7152,7 @@ packages:
       lodash.keys: 4.2.0
       lodash.mapvalues: 4.6.0
       lodash.memoize: 4.1.2
-      memfs-or-file-map-to-github-branch: 1.2.1
+      memfs-or-file-map-to-github-branch: 1.2.1_@octokit+core@4.1.0
       micromatch: 4.0.5
       node-cleanup: 2.1.2
       node-fetch: 2.6.7
@@ -11847,10 +11770,10 @@ packages:
     resolution: {integrity: sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==}
     engines: {node: '>= 0.6'}
 
-  /memfs-or-file-map-to-github-branch/1.2.1:
+  /memfs-or-file-map-to-github-branch/1.2.1_@octokit+core@4.1.0:
     resolution: {integrity: sha512-I/hQzJ2a/pCGR8fkSQ9l5Yx+FQ4e7X6blNHyWBm2ojeFLT3GVzGkTj7xnyWpdclrr7Nq4dmx3xrvu70m3ypzAQ==}
     dependencies:
-      '@octokit/rest': 16.43.2
+      '@octokit/rest': 16.43.2_@octokit+core@4.1.0
     transitivePeerDependencies:
       - '@octokit/core'
       - encoding
