@@ -99,23 +99,31 @@ export interface ICreateContainerMetadata {
 
 export type GCVersion = number;
 export interface IGCMetadata {
-	/**
-	 * The version of the GC code that was run to generate the GC data that is written in the summary.
-	 * Also, used to determine whether GC is enabled for this container or not:
-	 * - A value of 0 or undefined means GC is disabled.
-	 * - A value greater than 0 means GC is enabled.
-	 */
-	readonly gcFeature?: GCVersion;
-	/**
-	 * Tells whether the GC sweep phase is enabled for this container.
-	 * - True means sweep phase is enabled.
-	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
-	 */
-	readonly sweepEnabled?: boolean;
-	/** If this is present, the session for this container will expire after this time and the container will close */
-	readonly sessionExpiryTimeoutMs?: number;
-	/** How long to wait after an object is unreferenced before deleting it via GC Sweep */
-	readonly sweepTimeoutMs?: number;
+    /**
+     * The version of the GC code that was run to generate the GC data that is written in the summary.
+     * If the persisted value doesn't match the current value in the code, saved GC data will be discarded and regenerated from scratch.
+     * Also, used to determine whether GC is enabled for this container or not:
+     * - A value of 0 or undefined means GC is disabled.
+     * - A value greater than 0 means GC is enabled.
+     */
+    readonly gcFeature?: GCVersion;
+    /**
+     * The "GC Container Generation" is provided by the container author to denote GC-impacting changes to the container's structure.
+     * The value provided at creation time is persisted, and compared with the value provided at each load.
+     * If the persisted value doesn't match the value provided on load, GC Sweep will be disabled to protect against dataloss in case
+     * containers with an older Generation were found to have GC-impacting bugs.
+     */
+    readonly gcContainerGeneration?: number;
+    /**
+     * Tells whether the GC sweep phase is enabled for this container.
+     * - True means sweep phase is enabled.
+     * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
+     */
+    readonly sweepEnabled?: boolean;
+    /** If this is present, the session for this container will expire after this time and the container will close */
+    readonly sessionExpiryTimeoutMs?: number;
+    /** How long to wait after an object is unreferenced before deleting it via GC Sweep */
+    readonly sweepTimeoutMs?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
