@@ -19,7 +19,7 @@ jobs:
           path: ./results
       - name: Load PR number
         id: load_pr
-        run: echo "::set-output name=pr::$(cat pr)"
+        run: echo "pr=$(cat pr)" >> $GITHUB_OUTPUT
         working-directory: ./results
       - name: Post report in comment
         uses: marocchino/sticky-pull-request-comment@39c5b5dc7717447d0cba270cd115037d32d28443 # pin@v2
