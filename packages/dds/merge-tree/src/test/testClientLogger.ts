@@ -90,6 +90,19 @@ export class TestClientLogger {
     // initialize to private instance, so first real edit will create a new line
     private lastDeltaArgs: IMergeTreeDeltaOpArgs | undefined;
 
+    private readonly disposeCallbacks: (() => void)[] = [];
+
+    /**
+     * Unsubscribes this logger from its clients' events. Consider using this for tests with client lifetime
+     * extending significantly past the logger's.
+     */
+    public dispose(): void {
+        for (const cb of this.disposeCallbacks) {
+            cb();
+        }
+        this.disposeCallbacks.length = 0;
+    }
+
     constructor(
         private readonly clients: readonly TestClient[],
         private readonly title?: string,
@@ -126,12 +139,18 @@ export class TestClientLogger {
                         this.localLine[clientLogIndex + 1].length,
                         this.paddings[clientLogIndex + 1]);
             };
-            c.mergeTreeDeltaCallback = callback;
-            c.mergeTreeMaintenanceCallback = (main, op) => {
+
+            const maintenanceCallback = (main, op) => {
                 if (main.operation === MergeTreeMaintenanceType.ACKNOWLEDGED) {
                     callback(op);
                 }
             };
+            c.on("delta", callback);
+            c.on("maintenance", maintenanceCallback);
+            this.disposeCallbacks.push(() => {
+                c.off("delta", callback);
+                c.off("maintenance", maintenanceCallback);
+            })
         });
         this.roundLogLines.push(logHeaders);
         this.roundLogLines[0].forEach((v) => this.paddings.push(v.length));
@@ -229,7 +248,10 @@ export class TestClientLogger {
     }
 
     static validate(clients: readonly TestClient[], title?: string) {
-        return new TestClientLogger(clients, title).validate();
+        const logger = new TestClientLogger(clients, title);
+        const result = logger.validate();
+        logger.dispose();
+        return result;
     }
 
     public toString(excludeHeader: boolean = false) {
@@ -280,10 +302,10 @@ export class TestClientLogger {
                         }
                         parent = node.parent;
                     }
-                    const text = 
-                        TextSegment.is(node) 
-                            ? node.text 
-                            : Marker.is(node) 
+                    const text =
+                        TextSegment.is(node)
+                            ? node.text
+                            : Marker.is(node)
                                 ? "¶"
                                 : undefined;
                     if(text !== undefined){
