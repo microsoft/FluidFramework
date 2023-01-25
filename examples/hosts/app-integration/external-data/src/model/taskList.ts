@@ -78,7 +78,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         this.incomingType = "change";
         this.incomingPriority = savedPriority;
     }
-    public acceptChange = (): void => {
+    public overwriteWithIncomingData = (): void => {
         this.incomingType = undefined;
         if (this.incomingPriority !== undefined) {
             this._priority.set(this.incomingPriority);
