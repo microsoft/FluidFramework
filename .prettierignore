@@ -16,3 +16,6 @@ common/lib/**/lib
 **/_api-extractor-temp/*
 **/api-report/*
 **/*.api.md
+
+# Generated type-tests
+**/*.generated.ts

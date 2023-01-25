@@ -2014,7 +2014,7 @@ export class MergeTree {
                 affectedSegments.insertAfter(lastLocalSegment, segmentToSlide.data);
             } else if (isRemoved(segmentToSlide.data)) {
                 assert(segmentToSlide.data.localRemovedSeq !== undefined,
-                    "Removed segment that hasnt had its removal acked should be locally removed");
+                    0x54d /* Removed segment that hasnt had its removal acked should be locally removed */);
                 // Slide each locally removed item past all segments that have localSeq > lremoveItem.localSeq
                 // but not past remotely removed segments;
                 let cur = segmentToSlide;
