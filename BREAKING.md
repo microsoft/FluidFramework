@@ -31,6 +31,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
 - [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+- [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
@@ -80,6 +81,9 @@ There will be no replacement for this property.'
 
 ### Remove Deprecated IFluidObject Interface
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove deprecated experimental get-container package
+The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
 
 # 2.0.0-internal.2.4.0
 

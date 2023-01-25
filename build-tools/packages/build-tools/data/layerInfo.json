@@ -77,10 +77,6 @@
         "dirs": ["packages/loader/"],
         "deps": ["Container-Definitions", "Driver-Utils", "Container-Utils"]
       },
-      "HostUtils": {
-        "dev": true,
-        "packages": ["@fluid-experimental/get-container"]
-      },
       "Runtime": {
         "dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
         "deps": ["Container-Definitions", "Driver-Utils", "Container-Utils"]
