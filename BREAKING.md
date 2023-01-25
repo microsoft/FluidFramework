@@ -29,8 +29,6 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 _FOR AWARENESS: This policy is required for drivers used in applications where Garbage Collection is enabled, otherwise **data loss may occur**._
 
 In a subsequent major release, this policy may become required, to ensure all drivers take note of this requirement and enforce this policy.
-It's also possible that instead, the driver API around fetching the latest snapshot may be adjusted to better encode semantics around caching,
-in which case this policy will be deprecated.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
