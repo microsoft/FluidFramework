@@ -18,6 +18,9 @@ module.exports = (env) => {
             },
             resolve: {
                 extensions: [".ts", ".tsx", ".js"],
+                fallback: {
+                    "assert": require.resolve("assert/"),
+                }
             },
             module: {
                 rules: [
