@@ -210,6 +210,15 @@ describe("Garbage Collection Tests", () => {
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
             });
+            it("gcContainerGeneration mismatch, sweepEnabled true", () => {
+                gc = createGcWithPrivateMembers({ gcContainerGeneration: 0, sweepEnabled: true }, { gcContainerGeneration: 1 });
+                assert(gc.gcEnabled, "gcEnabled incorrect");
+                assert(!gc.sweepEnabled, "sweepEnabled incorrect");
+            });
+            it("gcContainerGeneration matches", () => {
+                gc = createGcWithPrivateMembers({ gcContainerGeneration: 2, sweepEnabled: true }, { gcContainerGeneration: 2 });
+                assert(gc.sweepEnabled, "sweepEnabled incorrect");
+            });
             it("sweepEnabled false", () => {
                 gc = createGcWithPrivateMembers({ sweepEnabled: false });
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
@@ -227,10 +236,11 @@ describe("Garbage Collection Tests", () => {
                 const inputMetadata: IGCMetadata = {
                     sweepEnabled: true,
                     gcFeature: 1,
+                    gcContainerGeneration: 2,
                     sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
                     sweepTimeoutMs: 123,
                 };
-                gc = createGcWithPrivateMembers(inputMetadata);
+                gc = createGcWithPrivateMembers(inputMetadata, { gcContainerGeneration: 2 });
                 const outputMetadata = gc.getMetadata();
                 const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: stableGCVersion };
                 assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
@@ -240,10 +250,11 @@ describe("Garbage Collection Tests", () => {
                 const inputMetadata: IGCMetadata = {
                     sweepEnabled: true,
                     gcFeature: 1,
+                    gcContainerGeneration: 2,
                     sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
                     sweepTimeoutMs: 123,
                 };
-                gc = createGcWithPrivateMembers(inputMetadata);
+                gc = createGcWithPrivateMembers(inputMetadata, { gcContainerGeneration: 2 });
                 const outputMetadata = gc.getMetadata();
                 const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: currentGCVersion };
                 assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
@@ -326,10 +337,11 @@ describe("Garbage Collection Tests", () => {
                 const expectedMetadata: IGCMetadata = {
                     sweepEnabled: true,
                     gcFeature: 1,
+                    gcContainerGeneration: 2,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
                 };
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true, gcContainerGeneration: 2 });
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
             });
@@ -339,10 +351,11 @@ describe("Garbage Collection Tests", () => {
                 const expectedMetadata: IGCMetadata = {
                     sweepEnabled: true,
                     gcFeature: currentGCVersion,
+                    gcContainerGeneration: 2,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
                 };
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true, gcContainerGeneration: 2 });
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
             });

@@ -43,7 +43,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
     assert(remainingTimeUntilSweepMs < sweepTimeoutMs, "remainingTimeUntilSweepMs should be < sweepTimeoutMs");
     const settings = {};
 
-    const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
+    const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0, gcContainerGeneration: 2 };
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
             summaryOptions: {
@@ -52,6 +52,17 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 },
             },
             gcOptions,
+        },
+        loaderProps: { configProvider: mockConfigProvider(settings) },
+    };
+    const oldContainerConfig: ITestContainerConfig = {
+        runtimeOptions: {
+            summaryOptions: {
+                summaryConfigOverrides: {
+                    state: "disabled",
+                },
+            },
+            gcOptions: { ...gcOptions, gcContainerGeneration: 1 },
         },
         loaderProps: { configProvider: mockConfigProvider(settings) },
     };
@@ -81,6 +92,12 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         return container;
     };
 
+    const makeOldContainer = async () => {
+        const container = await provider.makeTestContainer(oldContainerConfig);
+        documentAbsoluteUrl = await container.getAbsoluteUrl("");
+        return container;
+    };
+
     const loadSummarizerAndContainer = async (summaryVersion?: string) => {
         return createSummarizerWithContainer(
             provider,
@@ -98,8 +115,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
     // This function creates an unreferenced datastore and returns the datastore's id and the summary version that
     // datastore was unreferenced in.
     const summarizationWithUnreferencedDataStoreAfterTime =
-        async (approximateUnreferenceTimestampMs: number) => {
-            const container = await makeContainer();
+        async (approximateUnreferenceTimestampMs: number, useOldGeneration: boolean = false) => {
+            const container = useOldGeneration ? await makeOldContainer() : await makeContainer();
             const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
             await waitForContainerConnection(container);
 
@@ -499,6 +516,32 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const summarizerResponse = await containerRuntime_resolveHandle(summarizingContainer, { url: unreferencedId });
             assert.equal(summarizerResponse.status, 200, "Should be able to retrieve a tombstoned datastore in summarizer clients");
             assert.notEqual(summarizerResponse.headers?.[TombstoneResponseHeaderKey], true, "DID NOT Expect tombstone header to be set on the response");
+        });
+
+        // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+        itExpects("Requesting tombstoned datastores succeeds if gcContainerGeneration doesn't match",
+        [
+            // Interactive client's request that succeeds
+            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", category: "generic", headers: expectedHeadersLogged.request_allowTombstone },
+            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
+        ],
+        async () => {
+            const {
+                unreferencedId,
+                summarizingContainer,
+                summarizer,
+            } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs, true /* useOldGeneration */);
+            await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+            // The datastore should be tombstoned now
+            const { summaryVersion } = await summarize(summarizer);
+            const container = await loadContainer(summaryVersion);
+            await sendOpToUpdateSummaryTimestampToNow(container);
+
+            // This request succeeds even though the datastore is tombstoned, on account of the mismatched gcContainerGeneration
+            const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, { url: unreferencedId });
+            assert.equal(tombstoneSuccessResponse.status, 200, "Should be able to retrieve a tombstoned datastore given the allowTombstone header");
+            assert.notEqual(tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey], true, "DID NOT Expect tombstone header to be set on the response");
         });
 
         // SKIPPED: This test is redundant with the previous one; SweepReady calculation/timers has coverage elsewhere
