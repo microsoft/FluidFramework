@@ -84,6 +84,17 @@ export async function runWithRetry<T>(
                 );
             }
 
+            // logging the first failed retry instead of every attempt. We want to avoid filling telemetry
+            // when we have tight loop of retrying in offline mode, but we also want to know what caused
+            // the failure in the first place
+            if(numRetries === 0) {
+                logger.sendTelemetryEvent({
+                    eventName: `${fetchCallName}_firstFailed`,
+                    duration: performance.now() - startTime,
+                    fetchCallName,
+                }, err);
+            }
+
             numRetries++;
             lastError = err;
             // If the error is throttling error, then wait for the specified time before retrying.
