@@ -199,7 +199,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
      * Set the attribution through the SequencedDocumentMessage
      */
     private setAttribution(message: ISequencedDocumentMessage): void {
-        this.attribution = { type: "op", seq: message.sequenceNumber };
+        if ((this.options?.attribution?.track) ?? false) {
+            this.attribution = { type: "op", seq: message.sequenceNumber };
+        }
     }
 
     /**
@@ -275,19 +277,15 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = cellOpMetadata.pendingMessageId;
                 // update the attributor
-                if ((this.options?.attribution?.track) ?? false) {
-                    this.setAttribution(message);
-                }
-
+                this.setAttribution(message);
             }
             return;
         }
 
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as ICellOperation;
-            if ((this.options?.attribution?.track) ?? false) {
-                this.setAttribution(message);
-            }
+            // update the attributor
+            this.setAttribution(message);
             this.applyInnerOp(op);
         }
     }
