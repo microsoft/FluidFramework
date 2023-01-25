@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonableTreeFromCursor, singleTextCursor } from "../feature-libraries";
+import {
+    jsonableTreeFromCursor,
+    singleTextCursor,
+    prefixPath,
+    prefixFieldPath,
+} from "../feature-libraries";
 import {
     GlobalFieldKey,
     LocalFieldKey,
@@ -22,6 +27,7 @@ import {
     compareFieldUpPaths,
     clonePath,
     FieldUpPath,
+    PathRootPrefix,
 } from "../core";
 import { brand } from "../util";
 
@@ -589,55 +595,39 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                     const data = withLocalKeys([]);
                     const cursor = cursorFactory(data);
                     expectEqualPaths(cursor.getPath(), parent);
-                    expectEqualPaths(cursor.getPath(undefined), parent);
-                    expectEqualPaths(cursor.getPath({}), parent);
 
                     const prefixParent: UpPath = {
                         parent: undefined,
                         parentField: brand("prefixParentField"),
                         parentIndex: 5,
                     };
-                    if (extraRoot) {
-                        // TODO
-                    } else {
-                        expectEqualPaths(
-                            cursor.getPath({ indexOffset: 10, rootFieldOverride: EmptyKey }),
-                            undefined,
-                        );
 
-                        assert.equal(cursor.getPath({ parent: prefixParent }), prefixParent);
-                        assert.equal(
-                            cursor.getPath({
-                                parent: prefixParent,
-                                indexOffset: 10,
-                                rootFieldOverride: EmptyKey,
-                            }),
-                            prefixParent,
-                        );
-                        cursor.enterField(brand("testField"));
+                    const prefixes: (PathRootPrefix | undefined)[] = [
+                        undefined,
+                        {},
+                        { indexOffset: 10, rootFieldOverride: EmptyKey },
+                        { parent: prefixParent },
+                    ];
+
+                    for (const prefix of prefixes) {
+                        // prefixPath has its own tests, so we can use it to test cursors here:
+                        expectEqualPaths(cursor.getPath(prefix), prefixPath(prefix, parent));
+                    }
+
+                    cursor.enterField(brand("testField"));
+                    assert(
+                        compareFieldUpPaths(cursor.getFieldPath(), {
+                            field: brand("testField"),
+                            parent,
+                        }),
+                    );
+
+                    for (const prefix of prefixes) {
                         assert(
-                            compareFieldUpPaths(cursor.getFieldPath(), {
-                                field: brand("testField"),
-                                parent: undefined,
-                            }),
-                        );
-                        assert(
-                            compareFieldUpPaths(cursor.getFieldPath({}), {
-                                field: brand("testField"),
-                                parent: undefined,
-                            }),
-                        );
-                        assert(
-                            compareFieldUpPaths(cursor.getFieldPath({ parent: prefixParent }), {
-                                field: brand("testField"),
-                                parent: prefixParent,
-                            }),
-                        );
-                        assert(
-                            compareFieldUpPaths(cursor.getFieldPath({ parent: prefixParent }), {
-                                field: brand("testField"),
-                                parent: prefixParent,
-                            }),
+                            compareFieldUpPaths(
+                                cursor.getFieldPath(prefix),
+                                prefixFieldPath(prefix, { field: brand("testField"), parent }),
+                            ),
                         );
                     }
                 });
