@@ -631,7 +631,6 @@ export function TestPack(verbose = true) {
             return;
         }
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
-        const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         const stats = getStats(client.mergeTree);
         const windowTime = stats.windowTime!;
         const packTime = stats.packTime;
@@ -648,9 +647,6 @@ export function TestPack(verbose = true) {
         }
         if (checkIncr) {
             aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
-        }
-        if (client.localOps > 0) {
-            log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
         log(`get text time: ${aveGetTextTime} incr: ${aveIncrGetTextTime} catch up ${aveCatchUpTime}`);
         log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
@@ -926,7 +922,7 @@ export function TestPack(verbose = true) {
                 reportTiming(clients[2]);
                 let totalTime = server.accumTime + server.accumWindowTime;
                 for (const client of clients) {
-                    totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
+                    totalTime += (client.accumTime + client.accumWindowTime);
                 }
                 if (verbose) {
                     log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);

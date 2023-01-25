@@ -84,7 +84,6 @@ export interface IDeltaSender {
 /**
  * Events emitted by {@link IDeltaManager}.
  */
-/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IDeltaManagerEvents extends IEvent {
     /**
      * @deprecated No replacement API recommended.
@@ -162,7 +161,6 @@ export interface IDeltaManagerEvents extends IEvent {
      */
     (event: "readonly", listener: (readonly: boolean) => void);
 }
-/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Manages the transmission of ops between the runtime and storage.
@@ -222,7 +220,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 /**
  * Events emitted by {@link IDeltaQueue}.
  */
-/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     /**
      * Emitted when a task is enqueued.
@@ -261,7 +258,6 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
      */
     (event: "idle", listener: (count: number, duration: number) => void);
 }
-/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Queue of ops to be sent to or processed from storage
