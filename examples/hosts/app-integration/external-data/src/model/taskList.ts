@@ -78,7 +78,7 @@ export class TaskList extends DataObject implements ITaskList {
      */
     private _draftData: SharedMap | undefined;
 
-    private _fluidSync:boolean = false;
+    private _fluidSync:boolean = true;
 
     private get savedData(): SharedMap {
         if (this._savedData === undefined) {
@@ -139,6 +139,9 @@ export class TaskList extends DataObject implements ITaskList {
         return [...this.tasks.values()];
     };
 
+    /**
+     * {@inheritDoc ITaskList.getSync}
+     */
     public readonly getSync =(): boolean => {
         return this._fluidSync;
     }
@@ -277,7 +280,7 @@ export class TaskList extends DataObject implements ITaskList {
         // sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
         // as what we do for summarization).
         const tasks = this.getTasks();
-        const formattedTasks:TaskData = {};
+        const formattedTasks: TaskData = {};
         for (const task of tasks) {
             formattedTasks[task.id] = {
                 name: task.name.getText(),

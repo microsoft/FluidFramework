@@ -97,7 +97,7 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
                     props.setUnsynchronizedChangesCount(0);
                 }
             } catch (error) {
-                console.error(`APP: An error was encountered while polling external data:\n${error}`);
+                console.error(`APP: An error was encountered while polling external data:`, error);
             }
         }
 
