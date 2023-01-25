@@ -221,7 +221,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
         const content = await readAndParse<ICellContent>(storage, snapshotFileName);
 
         this.data = this.decode({ value: content.value });
-        this.attribution = content.attribution as AttributionKey | undefined;
+        this.attribution = content.attribution;
     }
 
     /**
