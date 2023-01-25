@@ -95,7 +95,7 @@ export interface ITask extends IEventProvider<ITaskEvents> {
     /**
      * Save the proposed changes to SavedData.
      */
-    readonly acceptChange:() => void;
+    readonly overwriteWithIncomingData:() => void;
 }
 
 /**

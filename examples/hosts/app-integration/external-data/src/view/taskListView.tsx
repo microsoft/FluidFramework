@@ -103,7 +103,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
             <td style={{ visibility: showPriority, backgroundColor: diffColor }}>{ incomingPriority }</td>
             <td>
                 <button
-                    onClick={ task.acceptChange } style={{ visibility: showAcceptButton }}>Accept change</button>
+                    onClick={ task.overwriteWithIncomingData } style={{ visibility: showAcceptButton }}>Accept change</button>
             </td>
         </tr>
     );

@@ -18,5 +18,4 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
         container: IContainer) {
         super();
     }
-
 }

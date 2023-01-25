@@ -9,6 +9,35 @@ import type { TaskData } from "../model-interface";
 import { customerServicePort } from "../mock-service-interface";
 
 /**
+ * Helper function used in several of the views to fetch data form the external app
+ */
+async function pollForServiceUpdates(
+    externalData: Record<string, unknown>,
+    setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>): Promise<void> {
+    try {
+        const response = await fetch(
+            `http://localhost:${customerServicePort}/fetch-tasks`,
+            {
+                method: "GET",
+                headers: {
+                    "Access-Control-Allow-Origin": "*",
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        const responseBody = await response.json() as Record<string, unknown>;
+        const newData = responseBody.taskList as TaskData;
+        if(newData !== undefined && !isEqual(newData,externalData)) {
+            console.log("APP: External data has changed. Updating local state with:\n", newData)
+            setExternalData(newData);
+        }
+    } catch(error) {
+        console.error(`APP: An error was encountered while polling external data:\n${error}`);
+    }
+}
+
+/**
  * "Debug" view of external data source.
  *
  * @remarks
@@ -37,32 +66,9 @@ const ExternalDataView: React.FC = () => {
         // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
         // for changes coming into the model that way.
         // For now, poll the external service directly for any updates and apply as needed.
-        async function pollForServiceUpdates(): Promise<void> {
-            try {
-                const response = await fetch(
-                    `http://localhost:${customerServicePort}/fetch-tasks`,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Access-Control-Allow-Origin": "*",
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-
-                const responseBody = await response.json() as Record<string, unknown>;
-                const newData = responseBody.taskList as TaskData;
-                if(newData !== undefined && !isEqual(newData,externalData)) {
-                    console.log("APP: External data has changed. Updating local state with:\n", newData)
-                    setExternalData(newData);
-                }
-            } catch(error) {
-                console.error(`APP: An error was encountered while polling external data:\n${error}`);
-            }
-        }
 
         // Run once immediately to run without waiting.
-        pollForServiceUpdates().catch(console.error);
+        pollForServiceUpdates(externalData, setExternalData).catch(console.error);
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         const timer = setInterval(pollForServiceUpdates, 3000); // Poll every 3 seconds
@@ -197,35 +203,8 @@ class ExternalDataTask {
 export const TaskListView: React.FC = () => {
     const [externalData, setExternalData] = useState({});
     useEffect(() => {
-        // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
-        // for changes coming into the model that way.
-        // For now, poll the external service directly for any updates and apply as needed.
-        async function pollForServiceUpdates(): Promise<void> {
-            try {
-                const response = await fetch(
-                    `http://localhost:${customerServicePort}/fetch-tasks`,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Access-Control-Allow-Origin": "*",
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-
-                const responseBody = await response.json() as Record<string, unknown>;
-                const newData = responseBody.taskList as TaskData;
-                if(newData !== undefined && !isEqual(newData,externalData)) {
-                    console.log("APP: External data has changed. Updating local state with:\n", newData)
-                    setExternalData(newData);
-                }
-            } catch(error) {
-                console.error(`APP: An error was encountered while polling external data:\n${error}`);
-            }
-        }
-
-        // Run once immediately to run without waiting.
-        pollForServiceUpdates().catch(console.error);
+        // HACK: Populate the external view form with the data in the external server to start off with
+        pollForServiceUpdates(externalData, setExternalData).catch(console.error);
 
         return (): void => {}
     }, [externalData, setExternalData]);
