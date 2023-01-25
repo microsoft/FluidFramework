@@ -56,6 +56,8 @@ export class EntryPoint extends Command {
             exitWithError("Handler module does not have a function as its default export");
         }
 
+        console.log(`obtained connectionstring: ${flags.connectionString}`)
+
         appInsight.setup(flags.connectionString)
         .start();
         const logger = appInsight.defaultClient;
