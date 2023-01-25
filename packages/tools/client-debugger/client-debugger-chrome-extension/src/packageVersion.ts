@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-tools/client-debugger-chrome-extension";
-export const pkgVersion = "2.0.0-internal.2.4.0";
+export const pkgVersion = "2.0.0-internal.3.0.0";
