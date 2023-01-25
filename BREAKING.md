@@ -40,6 +40,7 @@ to ensure all drivers take note of this requirement and enforce this policy.
 - [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
+- [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
 - [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
 - [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
 
@@ -88,6 +89,28 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 ### Remove-ISummaryBaseConfigurationsummarizerClientElection
 `ISummaryBaseConfiguration.summarizerClientElection` was deprecated and is now being removed.
 There will be no replacement for this property.'
+
+### `InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`
+
+`InsecureTokenProvider` takes a field names `user` that previously was defined as type `IUser` but also expects
+the `name` field to be present. This is not a requirement of `IUser` and is not enforced by the `IUser` interface.
+To avoid confusion, `InsecureTokenProvider` now takes a new type `IInsecureUser` that extends `IUser` and requires
+the `name` field to be present.
+Previously you would use `InsecureTokenProvider` like this:
+
+```typescript
+const user: IUser & { name: string } = { id: "userId", name: "userName" };
+const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
+```
+
+Now you would either pass `{ id: "userId", name: "userName" }` inline to `InsecureTokenProvider` or:
+
+```typescript
+import { IInsecureUser, InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+
+const user: IInsecureUser = { id: "userId", name: "userName" };
+const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
+```
 
 ### Remove Deprecated IFluidObject Interface
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
