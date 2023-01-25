@@ -206,30 +206,14 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
     switch (contents.fuzzType) {
         case "insert":
             if (index !== undefined && nodeField !== undefined) {
-                try {
-                    tree.runTransaction((forest, editor) => {
-                        const field = editor.sequenceField(contents.path, nodeField);
-                        field.insert(
-                            index,
-                            singleTextCursor({ type: brand("Test"), value: contents.value }),
-                        );
-                        return TransactionResult.Abort;
-                    });
-                } catch (error) {
-                    const testPath = topDownPath(contents.path);
-                    const readCursor = tree.forest.allocateCursor();
-                    moveToDetachedField(tree.forest, readCursor);
-                    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                    const jsonData = JSON.stringify(actual);
-                    readCursor.free();
-                    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-                    const fs = require("fs");
-                    fs.writeFile("invalidInsert.txt", jsonData, (err: any) => {
-                        if (err) {
-                            console.log(err);
-                        }
-                    });
-                }
+                tree.runTransaction((forest, editor) => {
+                    const field = editor.sequenceField(contents.path, nodeField);
+                    field.insert(
+                        index,
+                        singleTextCursor({ type: brand("Test"), value: contents.value }),
+                    );
+                    return TransactionResult.Abort;
+                });
             }
             break;
         case "delete":
@@ -237,24 +221,16 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
                 const parent = contents.path?.parent;
                 const delField = contents.path?.parentField;
                 if (delField !== undefined && parent !== undefined) {
-                    try {
-                        const testPath = topDownPath(contents.path);
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                        tree.runTransaction((forest, editor) => {
-                            const field = editor.sequenceField(parent, delField);
-                            field.delete(index, 1); // set index to 0 for now for testing purposes.
-                            return TransactionResult.Abort;
-                        });
-                    } catch (error) {
-                        const testPath = topDownPath(contents.path);
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                    }
+                    const testPath = topDownPath(contents.path);
+                    const readCursor = tree.forest.allocateCursor();
+                    moveToDetachedField(tree.forest, readCursor);
+                    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+                    readCursor.free();
+                    tree.runTransaction((forest, editor) => {
+                        const field = editor.sequenceField(parent, delField);
+                        field.delete(index, 1); // set index to 0 for now for testing purposes.
+                        return TransactionResult.Abort;
+                    });
                 }
             }
             break;
@@ -262,27 +238,15 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
             if (index !== undefined && nodeField !== undefined) {
                 const path = contents.path;
                 if (path !== undefined) {
-                    try {
-                        const testPath = topDownPath(contents.path);
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                        tree.runTransaction((forest, editor) => {
-                            editor.setValue(path, contents.value);
-                            return TransactionResult.Abort;
-                        });
-                        const readCursor2 = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor2);
-                        const actual2 = mapCursorField(readCursor2, jsonableTreeFromCursor);
-                        readCursor2.free();
-                    } catch (error) {
-                        const testPath = topDownPath(contents.path);
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                    }
+                    const testPath = topDownPath(contents.path);
+                    const readCursor = tree.forest.allocateCursor();
+                    moveToDetachedField(tree.forest, readCursor);
+                    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+                    readCursor.free();
+                    tree.runTransaction((forest, editor) => {
+                        editor.setValue(path, contents.value);
+                        return TransactionResult.Abort;
+                    });
                 }
             }
             break;
@@ -297,42 +261,19 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
     switch (contents.fuzzType) {
         case "insert":
             if (index !== undefined && nodeField !== undefined) {
-                try {
-                    const testPath = topDownPath(contents.path);
-                    const readCursor = tree.forest.allocateCursor();
-                    moveToDetachedField(tree.forest, readCursor);
-                    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                    readCursor.free();
-                    tree.runTransaction((forest, editor) => {
-                        const field = editor.sequenceField(contents.path, nodeField);
-                        field.insert(
-                            index,
-                            singleTextCursor({ type: brand("Test"), value: contents.value }),
-                        );
-                        return TransactionResult.Apply;
-                    });
-                } catch (error) {
-                    const testPath = topDownPath(contents.path);
-                    const readCursor = tree.forest.allocateCursor();
-                    moveToDetachedField(tree.forest, readCursor);
-                    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                    const actualData = JSON.stringify(actual);
-                    const pathData = {
-                        path: testPath,
-                        field: nodeField,
+                const testPath = topDownPath(contents.path);
+                const readCursor = tree.forest.allocateCursor();
+                moveToDetachedField(tree.forest, readCursor);
+                const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+                readCursor.free();
+                tree.runTransaction((forest, editor) => {
+                    const field = editor.sequenceField(contents.path, nodeField);
+                    field.insert(
                         index,
-                    };
-                    const jsonData = JSON.stringify([pathData, actualData]);
-                    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-                    const fs = require("fs");
-                    fs.writeFile("invalidInsert.txt", jsonData, (err: any) => {
-                        if (err) {
-                            console.log(err);
-                        }
-                    });
-                    readCursor.free();
-                    throw error;
-                }
+                        singleTextCursor({ type: brand("Test"), value: contents.value }),
+                    );
+                    return TransactionResult.Apply;
+                });
             }
             break;
         case "delete":
@@ -341,28 +282,16 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
                 const delField = contents.path?.parentField;
                 const parentIndex = contents.path?.parentIndex;
                 if (delField !== undefined && parent !== undefined && parentIndex !== undefined) {
-                    try {
-                        const testPath = topDownPath(contents.path);
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                        tree.runTransaction((forest, editor) => {
-                            const field = editor.sequenceField(parent, delField);
-                            field.delete(parentIndex, 1); // set index to 0 for now for testing purposes.
-                            return TransactionResult.Apply;
-                        });
-                        const readCursor2 = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor2);
-                        const actual2 = mapCursorField(readCursor2, jsonableTreeFromCursor);
-                        readCursor2.free();
-                    } catch (error) {
-                        const testPath = topDownPath(contents.path);
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                    }
+                    const testPath = topDownPath(contents.path);
+                    const readCursor = tree.forest.allocateCursor();
+                    moveToDetachedField(tree.forest, readCursor);
+                    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+                    readCursor.free();
+                    tree.runTransaction((forest, editor) => {
+                        const field = editor.sequenceField(parent, delField);
+                        field.delete(parentIndex, 1); // set index to 0 for now for testing purposes.
+                        return TransactionResult.Apply;
+                    });
                 }
             }
             break;
@@ -370,27 +299,15 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
             if (index !== undefined && nodeField !== undefined) {
                 const path = contents.path;
                 if (path !== undefined) {
-                    try {
-                        const testPath = topDownPath(contents.path);
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                        tree.runTransaction((forest, editor) => {
-                            editor.setValue(path, contents.value);
-                            return TransactionResult.Apply;
-                        });
-                        const readCursor2 = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor2);
-                        const actual2 = mapCursorField(readCursor2, jsonableTreeFromCursor);
-                        readCursor2.free();
-                    } catch (error) {
-                        const testPath = topDownPath(contents.path);
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                    }
+                    const testPath = topDownPath(contents.path);
+                    const readCursor = tree.forest.allocateCursor();
+                    moveToDetachedField(tree.forest, readCursor);
+                    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+                    readCursor.free();
+                    tree.runTransaction((forest, editor) => {
+                        editor.setValue(path, contents.value);
+                        return TransactionResult.Apply;
+                    });
                 }
             }
             break;
