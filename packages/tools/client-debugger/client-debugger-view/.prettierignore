@@ -14,3 +14,6 @@ api-report/*
 # Test output
 coverage
 nyc
+
+# End-to-End Test
+**/*.generated.ts

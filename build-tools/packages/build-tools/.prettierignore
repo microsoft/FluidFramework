@@ -1,3 +1,4 @@
 /api-report
 /dist
 /lib
+**/*.generated.ts

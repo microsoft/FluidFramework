@@ -16,3 +16,6 @@ common/lib/**/lib
 **/_api-extractor-temp/*
 **/api-report/*
 **/*.api.md
+
+# End-to-End Test
+**/*.generated.ts

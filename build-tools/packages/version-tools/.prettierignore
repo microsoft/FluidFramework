@@ -5,3 +5,4 @@ _api-extractor-temp/
 nyc/
 oclif.manifest.json
 README.md
+**/*.generated.ts

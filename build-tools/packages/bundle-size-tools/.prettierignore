@@ -3,3 +3,4 @@
 /lib
 _api-extractor-temp/
 nyc/
+**/*.generated.ts
