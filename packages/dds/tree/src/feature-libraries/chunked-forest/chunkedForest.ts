@@ -90,7 +90,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
         let mutableChunk: BasicChunk | undefined = this.roots;
 
         const getParent = () => {
-            assert(mutableChunkStack.length > 0, "invalid access to root's parent");
+            assert(mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
             return mutableChunkStack[mutableChunkStack.length - 1];
         };
 
@@ -141,14 +141,14 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
                 const toAttach = moves.get(id) ?? fail("move in without move out");
                 moves.delete(id);
                 const countMoved = moveIn(index, toAttach);
-                assert(countMoved === count, "counts must match");
+                assert(countMoved === count, 0x533 /* counts must match */);
             },
             onSetValue: (value: Value): void => {
-                assert(mutableChunk !== undefined, "should be in node");
+                assert(mutableChunk !== undefined, 0x534 /* should be in node */);
                 mutableChunk.value = value;
             },
             enterNode: (index: number): void => {
-                assert(mutableChunk === undefined, "should be in field");
+                assert(mutableChunk === undefined, 0x535 /* should be in field */);
                 const parent = getParent();
                 const chunks =
                     parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
@@ -162,7 +162,10 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
                     }
                 }
                 const found = chunks[indexOfChunk];
-                assert(found instanceof BasicChunk, "mixed chunk support not yet implemented");
+                assert(
+                    found instanceof BasicChunk,
+                    0x536 /* mixed chunk support not yet implemented */,
+                );
                 if (found.isShared()) {
                     mutableChunk = chunks[indexOfChunk] = found.clone();
                     found.referenceRemoved();
@@ -171,17 +174,17 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
                 }
             },
             exitNode: (index: number): void => {
-                assert(mutableChunk !== undefined, "should be in node");
+                assert(mutableChunk !== undefined, 0x537 /* should be in node */);
                 mutableChunk = undefined;
             },
             enterField: (key: FieldKey): void => {
-                assert(mutableChunk !== undefined, "should be in node");
+                assert(mutableChunk !== undefined, 0x538 /* should be in node */);
                 mutableChunkStack.push({ key, mutableChunk });
                 mutableChunk = undefined;
             },
             exitField: (key: FieldKey): void => {
                 const top = mutableChunkStack.pop() ?? fail("should not be at root");
-                assert(mutableChunk === undefined, "should be in field");
+                assert(mutableChunk === undefined, 0x539 /* should be in field */);
                 mutableChunk = top.mutableChunk;
             },
         };
@@ -195,7 +198,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
         const field: DetachedField = brand(String(this.nextDetachedFieldIdentifier));
         assert(
             !this.roots.fields.has(detachedFieldAsKey(field)),
-            "new field must not already exist",
+            0x53a /* new field must not already exist */,
         );
         this.nextDetachedFieldIdentifier += 1;
         return field;
@@ -235,7 +238,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
     ): TreeNavigationResult {
         assert(
             cursorToMove instanceof Cursor,
-            "ChunkedForest must only be given its own Cursor type",
+            0x53b /* ChunkedForest must only be given its own Cursor type */,
         );
         if (destination.parent === undefined) {
             cursorToMove.setToDetachedSequence(destination.fieldKey);
@@ -258,9 +261,12 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
     moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void {
         assert(
             cursorToMove instanceof Cursor,
-            "ChunkedForest must only be given its own Cursor type",
+            0x53c /* ChunkedForest must only be given its own Cursor type */,
         );
-        assert(cursorToMove.forest === this, "ChunkedForest must only be given its own Cursor");
+        assert(
+            cursorToMove.forest === this,
+            0x53d /* ChunkedForest must only be given its own Cursor */,
+        );
 
         const indexStack: number[] = [];
         const keyStack: FieldKey[] = [];
