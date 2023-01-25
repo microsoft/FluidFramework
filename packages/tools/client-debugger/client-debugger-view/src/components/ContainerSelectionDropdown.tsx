@@ -16,7 +16,7 @@ import { HasClientDebuggers, HasContainerId } from "../CommonProps";
 export interface ContainerSelectionDropdownProps extends HasClientDebuggers, HasContainerId {
     /**
      * Take the selected container id to set as current viewed container id.
-     * @param containerId current selected container id.
+     * @param containerId - current selected container id.
      */
     onChangeSelection(containerId: string): void;
 }

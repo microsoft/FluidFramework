@@ -17,8 +17,7 @@ import {
 
 import { HasContainerId } from "./CommonProps";
 import { RenderOptions } from "./RendererOptions";
-import { ClientDebugView } from "./components";
-import { ContainerSelectionDropdown } from "./components/ContainerSelectionDropdown";
+import { ClientDebugView, ContainerSelectionDropdown } from "./components";
 
 /**
  * {@link FluidClientDebugger} input props.
@@ -57,7 +56,7 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
     >(selectedContainerId === undefined ? undefined : getFluidClientDebugger(selectedContainerId));
 
     const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
-        clientDebugger?.disposed ?? false,
+        selectedClientDebugger?.disposed ?? false,
     );
 
     const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
@@ -73,10 +72,10 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 
         debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
         debuggerRegistry.on("debuggerClosed", onDebuggerChanged);
-        clientDebugger?.on("disposed", onDebuggerDisposed);
+        selectedClientDebugger?.on("disposed", onDebuggerDisposed);
 
         return (): void => {
-            clientDebugger?.off("disposed", onDebuggerDisposed);
+            selectedClientDebugger?.off("disposed", onDebuggerDisposed);
             debuggerRegistry.off("debuggerRegistered", onDebuggerChanged);
             debuggerRegistry.off("debuggerClosed", onDebuggerChanged);
         };

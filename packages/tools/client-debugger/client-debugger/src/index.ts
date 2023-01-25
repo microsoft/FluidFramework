@@ -56,6 +56,7 @@ export {
 
 export {
     DebuggerRegistry,
+    DebuggerRegistryEvents,
     clearDebuggerRegistry,
     closeFluidClientDebugger,
     FluidClientDebuggerProps,

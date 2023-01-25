@@ -53,14 +53,14 @@ export interface FluidClientDebuggerProps {
  */
 export interface DebuggerRegistryEvents extends IEvent {
     /**
-     * Emitted when a {@link FluidClientDebugger | clientDebugger} is registered.
+     * Emitted when a {@link IFluidClientDebugger} is registered.
      *
      * @eventProperty
      */
     (event: "debuggerRegistered", listener: (containerId: string) => void): void;
 
     /**
-     * Emitted when a {@link FluidClientDebugger | clientDebugger} is closed.
+     * Emitted when a {@link IFluidClientDebugger} is closed.
      *
      * @eventProperty
      */
