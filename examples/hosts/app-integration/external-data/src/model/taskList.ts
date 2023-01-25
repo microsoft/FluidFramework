@@ -78,6 +78,8 @@ export class TaskList extends DataObject implements ITaskList {
      */
     private _draftData: SharedMap | undefined;
 
+    private _fluidSync:boolean = false;
+
     private get savedData(): SharedMap {
         if (this._savedData === undefined) {
             throw new Error("The savedData SharedMap has not yet been initialized.");
@@ -137,6 +139,10 @@ export class TaskList extends DataObject implements ITaskList {
         return [...this.tasks.values()];
     };
 
+    public readonly getSync =(): boolean => {
+        return this._fluidSync;
+    }
+
     public readonly getTask = (id: string): Task | undefined => {
         return this.tasks.get(id);
     };
@@ -157,12 +163,14 @@ export class TaskList extends DataObject implements ITaskList {
         }
         const newTask = new Task(id, nameSharedString, prioritySharedCell);
         this.tasks.set(id, newTask);
+        this._fluidSync = true;
         this.emit("taskAdded", newTask);
     };
 
     private readonly handleTaskDeleted = (id: string): void => {
         const deletedTask = this.tasks.get(id);
         this.tasks.delete(id);
+        this._fluidSync = true;
         // Here we might want to consider raising an event on the Task object so that anyone holding it can know
         // that it has been removed from its collection.  Not needed for this example though.
         this.emit("taskDeleted", deletedTask);
@@ -323,6 +331,7 @@ export class TaskList extends DataObject implements ITaskList {
         this._draftData = await draft.get();
 
         this._draftData.on("valueChanged", (changed) => {
+            this._fluidSync = false;
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
                 this.handleTaskAdded(changed.key).catch((error) => {

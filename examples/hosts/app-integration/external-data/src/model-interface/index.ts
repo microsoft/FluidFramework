@@ -98,6 +98,11 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
     readonly deleteTask: (id: string) => void;
 
     /**
+     * Get the sync status of the fluid container. True if synced.
+     */
+    readonly getSync: () => boolean;
+
+    /**
      * Get the full list of tasks.
      */
     readonly getTasks: () => ITask[];

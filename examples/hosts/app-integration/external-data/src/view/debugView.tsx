@@ -30,7 +30,8 @@ export interface IDebugViewProps {
  */
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     const [unsynchronizedChangesCount, setUnsynchronizedChangesCount] = useState(0);
-    const handleUnsynchronizedChangesCountUpdate = (count: number): void => {
+    const fluidSync = props.model.taskList.getSync();
+    const unsyncExternalChangesUpdate = (count: number): void => {
         setUnsynchronizedChangesCount(count);
     }
 
@@ -38,7 +39,9 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
         <div>
             <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
             <ExternalDataView unsynchronizedChangesCount={unsynchronizedChangesCount} setUnsynchronizedChangesCount={setUnsynchronizedChangesCount} />
-            <SyncStatusView unsynchronizedChangesCount={unsynchronizedChangesCount} handleCountUpdate={handleUnsynchronizedChangesCountUpdate} />
+            <SyncStatusView
+                fluidSync={fluidSync}
+                unsynchronizedChangesCount={unsynchronizedChangesCount} handleCountUpdate={unsyncExternalChangesUpdate} />
             <ControlsView model={props.model} />
         </div>
     );
@@ -142,18 +145,19 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface ISyncStatusViewProps {
+    fluidSync: boolean;
     unsynchronizedChangesCount: number;
     handleCountUpdate: (count: number) => void;
 }
 
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
-    useEffect(() => { }, [props.unsynchronizedChangesCount]);
+    useEffect(() => { }, [props.unsynchronizedChangesCount, props.fluidSync]);
     return (
         <div>
             <h3>Sync status</h3>
             <div style={{ margin: "10px 0" }}>
-                Fluid has [no] unsync'd changes (not implemented)<br />
+                Fluid has {props.fluidSync ? "some" : "no"} unsync'd changes.<br />
                 External data source has {props.unsynchronizedChangesCount} unsync'd changes.<br />
                 Current sync activity: [idle | fetching | writing | resolving conflicts?] (not implemented)<br />
             </div>
