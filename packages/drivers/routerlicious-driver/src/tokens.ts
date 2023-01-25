@@ -6,9 +6,13 @@
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 
 /**
- * The ITokenService abstracts the discovery of claims contained within a token
+ * Abstracts the discovery of claims contained within a token.
  */
 export interface ITokenService {
+    /**
+     * Extracts the {@link ITokenClaims | token claims} from the provided
+     * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} string representation.
+     */
     extractClaims(token: string): ITokenClaims;
 }
 
@@ -19,8 +23,9 @@ export interface ITokenResponse {
     jwt: string;
 
     /**
-     * Flag indicating whether token was obtained from local cache.
-     * Undefined indicates that the source of the token could not be determined.
+     * A flag indicating whether token was obtained from local cache.
+     *
+     * @remarks `undefined` indicates that the source of the token could not be determined.
      */
     fromCache?: boolean;
 }
@@ -32,21 +37,21 @@ export interface ITokenResponse {
 export interface ITokenProvider {
     /**
      * Fetches the orderer token from host.
+     *
      * @param tenantId - Tenant ID.
      * @param documentId - Optional. Document ID is only required for document-scoped requests.
      * @param refresh - Optional flag indicating whether token fetch must bypass local cache.
-     * @returns TokenResponse object representing token value along with flag indicating
-     * whether token came from cache.
+     * Default: `false`.
      */
     fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
 
     /**
      * Fetches the storage token from host.
+     *
      * @param tenantId - Tenant ID.
      * @param documentId - Document ID.
      * @param refresh - Optional flag indicating whether token fetch must bypass local cache.
-     * @returns TokenResponse object representing token value along with flag indicating
-     * whether token came from cache.
+     * Default: `false`.
      */
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 
@@ -56,7 +61,9 @@ export interface ITokenProvider {
      * created it.
      *
      * @remarks Notes:
+     *
      * * Using the callback may have performance impact on the document creation process.
+     *
      * * Any exceptions thrown in the callback would fail the creation workflow
      * (see {@link RouterliciousDocumentServiceFactory.createContainer} for more details).
      *
