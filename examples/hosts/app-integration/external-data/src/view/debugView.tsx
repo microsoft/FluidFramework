@@ -188,16 +188,15 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     );
 };
 
-class ExternalDataTask {
-    public id: string;
-    public name: string;
-    public priority: number;
-    public constructor(id: string, name: string, priority: number) {
-        this.id = id;
-        this.name = name;
-        this.priority = priority;
-    }
-}
+/**
+* Model for external task data
+*/
+export interface ExternalDataTask {
+    id: string;
+    name: string;
+    priority: number;
+};
+
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
@@ -210,10 +209,10 @@ export const TaskListView: React.FC = () => {
         return (): void => {}
     }, [externalData, setExternalData]);
     const parsedExternalData = Object.entries(externalData as TaskData);
-    const tasks: ExternalDataTask[] =  parsedExternalData.map(([key, {name, priority}]) => (
-        new ExternalDataTask(key, name, priority)
+    const tasks =  parsedExternalData.map(([id, {name, priority}]) => (
+        {id, name, priority}
     ));
-    const taskRows = tasks.map((task: ExternalDataTask) => (
+    const taskRows = tasks.map((task) => (
         <TaskRow key={task.id} task={ task } />
     ));
     const saveChanges = async (): Promise<void> => {
