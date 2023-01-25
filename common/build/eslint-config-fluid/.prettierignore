@@ -7,5 +7,5 @@ node_modules
 # Build output
 printed-configs
 
-# End-to-End Test
+# Generated type-tests
 **/*.generated.ts

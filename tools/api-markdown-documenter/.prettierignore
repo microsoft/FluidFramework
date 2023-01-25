@@ -17,5 +17,5 @@ api-report/*
 # Generated documentation
 generated-api-docs/*
 
-# End-to-End Test
+# Generated type-tests
 **/*.generated.ts

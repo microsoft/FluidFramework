@@ -11,5 +11,5 @@ node_modules/*
 coverage
 nyc
 
-# End-to-End Test
+# Generated type-tests
 **/*.generated.ts

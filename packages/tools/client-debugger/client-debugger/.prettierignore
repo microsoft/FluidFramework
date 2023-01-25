@@ -14,5 +14,5 @@ api-report/*
 # Test output
 nyc
 
-# End-to-End Test
+# Generated type-tests
 **/*.generated.ts

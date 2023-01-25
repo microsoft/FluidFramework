@@ -17,5 +17,5 @@ _api-extractor-temp/**
 # repository.
 package.json
 
-# End-to-End Test
+# Generated type-tests
 **/*.generated.ts
