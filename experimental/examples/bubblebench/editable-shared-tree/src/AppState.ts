@@ -7,8 +7,8 @@ import { brand, EditableField, FieldKey, JsonableTree, singleTextCursor } from "
 import { Client } from "./Client";
 import {
     AppStateTreeProxy,
-    iBubbleSchema,
-    iClientSchema,
+    bubbleSchema,
+    clientSchema,
     numberSchema,
     stringSchema,
 } from "./schema";
@@ -41,7 +41,7 @@ export class AppState implements IAppState {
 
     createClientInitialJsonTree(numBubbles: number): JsonableTree {
         const clientInitialJsonTree: JsonableTree = {
-            type: iClientSchema.name,
+            type: clientSchema.name,
             fields: {
                 clientId: [{ type: stringSchema.name, value: `${Math.random()}` }],
                 color: [{ type: stringSchema.name, value: randomColor() }],
@@ -54,7 +54,7 @@ export class AppState implements IAppState {
             const bubble = makeBubble(this._width, this._height);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientInitialJsonTree.fields!.bubbles.push({
-                type: iBubbleSchema.name,
+                type: bubbleSchema.name,
                 fields: {
                     x: [{ type: numberSchema.name, value: bubble.x }],
                     y: [{ type: numberSchema.name, value: bubble.y }],

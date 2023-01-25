@@ -6,7 +6,7 @@ import { ISharedTree, SharedTreeFactory, singleTextCursor } from "@fluid-interna
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./AppState";
-import { AppStateSchema, AppStateSchemaData, AppStateTreeProxy } from "./schema";
+import { appStateSchema, AppStateSchemaData, AppStateTreeProxy } from "./schema";
 
 export class Bubblebench extends DataObject {
     public static get Name() {
@@ -77,7 +77,7 @@ export class Bubblebench extends DataObject {
     initializeTree(tree: ISharedTree) {
         tree.storedSchema.update(AppStateSchemaData);
         const initialRootNodeJson = {
-            type: AppStateSchema.name,
+            type: appStateSchema.name,
             fields: {
                 clients: [],
             },

@@ -5,7 +5,7 @@
 import { IClient } from "@fluid-example/bubblebench-common";
 import { brand, EditableField, FieldKey, JsonableTree, singleTextCursor } from "@fluid-internal/tree";
 import { Bubble } from "./Bubble";
-import { ClientTreeProxy, iBubbleSchema, numberSchema } from "./schema";
+import { ClientTreeProxy, bubbleSchema, numberSchema } from "./schema";
 
 export class Client implements IClient {
     static bubblesFieldKey: FieldKey = brand("bubbles");
@@ -35,7 +35,7 @@ export class Client implements IClient {
 
     public increaseBubbles(bubble: { x: number; y: number; r: number; vx: number; vy: number; }) {
         const newBubbleJson: JsonableTree = {
-            type: iBubbleSchema.name,
+            type: bubbleSchema.name,
             fields: {
                 x: [{ type: numberSchema.name, value: bubble.x }],
                 y: [{ type: numberSchema.name, value: bubble.y }],
