@@ -15,6 +15,76 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.0.0
+
+## 2.0.0-internal.3.0.0 Upcoming changes
+- [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
+
+### Deprecated IPendingFlush
+`IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+
+## 2.0.0-internal.3.0.0 Breaking changes
+- [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
+- [Remove iframe-driver](#remove-iframe-driver)
+- [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
+- [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
+- [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
+- [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
+- [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+- [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
+
+### existing parameter is now required in IRuntimeFactory::instantiateRuntime
+The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
+and required in the `IRuntimeFactory.instantiateRuntime` function. This flag is used to determine whether the runtime should
+be created for the first time or from an existing context. Similarly, the `load` function in containerRuntime
+is being deprecated and replaced with `loadRuntime`, in which `existing` is a required parameter.
+
+### Remove iframe-driver
+The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
+
+### Remove Deprecated Fields from ISummaryRuntimeOptions
+The following fields are being removed from `ISummaryRuntimeOptions` as they became properties from `ISummaryConfiguration`:
+
+`ISummaryRuntimeOptions.disableSummaries`
+`ISummaryRuntimeOptions.maxOpsSinceLastSummary`
+`ISummaryRuntimeOptions.summarizerClientElection`
+`ISummaryRuntimeOptions.summarizerOptions`
+
+### Op reentry will no longer be supported
+Submitting an op while processing an op will no longer be supported as it can lead to inconsistencies in the document and to DDS change events observing out-of-order changes. An example scenario is changing a DDS inside the handler for the `valueChanged` event of a DDS.
+
+The functionality is currently disabled but it can be enabled using the `IContainerRuntimeOptions.enableOpReentryCheck` property, which will eventually become the default. If the option is enabled, the functionality can be disabled at runtime using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate.
+
+With the feature enabled, If the runtime detects an op which was submitted in this manner, an error will be thrown and the current container will close.
+
+```ts
+sharedMap.on("valueChanged", (changed) => {
+    if (changed.key !== "key2") {
+        sharedMap.set("key2", "2");
+    }
+});
+
+sharedMap.set("key1", "1"); // executing this statement will cause an exception to be thrown
+```
+
+Other clients will not be affected.
+
+**As we are planning to enable this feature by default, we are advising our partners to use the `IContainerRuntimeOptions.enableOpReentryCheck` option to identify existing code using this pattern and to let us know in case the proposed API behavior is problematic.**
+
+### Remove ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been removed. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+
+### Remove-ISummaryBaseConfigurationsummarizerClientElection
+`ISummaryBaseConfiguration.summarizerClientElection` was deprecated and is now being removed.
+There will be no replacement for this property.'
+
+### Remove Deprecated IFluidObject Interface
+IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove deprecated experimental get-container package
+The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
+
 # 2.0.0-internal.2.4.0
 
 ## 2.0.0-internal.2.4.0 Upcoming changes
