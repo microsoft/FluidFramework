@@ -14,6 +14,7 @@ import {
     RetryableError,
     NonRetryableError,
     OnlineStatus,
+    FluidInvalidSchemaError,
 } from "@fluidframework/driver-utils";
 import {
     OdspErrorType,
@@ -177,6 +178,10 @@ export function createOdspNetworkError(
 
     switch (statusCode) {
         case 400:
+            if (innerMostErrorCode === "fluidInvalidSchema") {
+                error = new FluidInvalidSchemaError(errorMessage, driverProps);
+                break;
+            }
             error = new NonRetryableError(
                 errorMessage, DriverErrorType.genericNetworkError, driverProps);
             break;
@@ -235,6 +240,12 @@ export function createOdspNetworkError(
             error = new NonRetryableError(
                 errorMessage, OdspErrorType.invalidFileNameError, driverProps);
             break;
+        case 423: // File locked
+            if (innerMostErrorCode === "resourceLocked") {
+                error = new NonRetryableError(
+                    errorMessage, DriverErrorType.fileIsLocked, driverProps);
+                break;
+            }
         case 500:
             error = new RetryableError(
                 errorMessage, DriverErrorType.genericNetworkError, driverProps);

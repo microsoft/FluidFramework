@@ -836,7 +836,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _disposed = false;
     private disposeCore(error?: ICriticalContainerError) {
-        assert(!this._disposed, "Container already disposed");
+        assert(!this._disposed, 0x54c /* Container already disposed */);
         this._disposed = true;
 
         try {
