@@ -44,13 +44,6 @@ interface ICellValue {
      * The actual value contained in the `Cell`, which needs to be wrapped to handle `undefined`.
      */
     value: unknown;
-}
-
-interface ICellContent {
-    /**
-     * The actual value contained in the `Cell`, which needs to be wrapped to handle `undefined`.
-     */
-    value: unknown;
     /**
      * The attribution key contained in the `Cell`.
      * @alpha
@@ -210,7 +203,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
      * @returns The summary of the current state of the Cell.
      */
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        const content: ICellContent = { value: this.data, attribution: this.attribution };
+        const content: ICellValue = { value: this.data, attribution: this.attribution };
         return createSingleBlobSummary(snapshotFileName, serializer.stringify(content, this.handle));
     }
 
@@ -218,9 +211,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<ICellContent>(storage, snapshotFileName);
+        const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-        this.data = this.decode({ value: content.value });
+        this.data = this.decode(content);
         this.attribution = content.attribution;
     }
 
