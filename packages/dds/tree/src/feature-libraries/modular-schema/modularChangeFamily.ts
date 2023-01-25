@@ -20,6 +20,7 @@ import {
     ReadonlyRepairDataStore,
     RevisionTag,
     tagChange,
+    makeAnonChange,
 } from "../../core";
 import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -688,6 +689,32 @@ export class ModularEditBuilder
         change: FieldChangeset,
         maxId: ChangesetLocalId = brand(-1),
     ): void {
+        const changeMap = this.buildChangeMap(path, field, fieldKind, change);
+        this.applyChange(makeModularChangeset(changeMap, maxId));
+    }
+
+    submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
+        const changeMaps = changes.map((change) =>
+            makeAnonChange(
+                makeModularChangeset(
+                    this.buildChangeMap(change.path, change.field, change.fieldKind, change.change),
+                    -1,
+                ),
+            ),
+        );
+        const composedChange = this.changeFamily.rebaser.compose(changeMaps);
+        if (maxId >= 0) {
+            composedChange.maxId = maxId;
+        }
+        this.applyChange(composedChange);
+    }
+
+    private buildChangeMap(
+        path: UpPath | undefined,
+        field: FieldKey,
+        fieldKind: FieldKindIdentifier,
+        change: FieldChangeset,
+    ): FieldChangeMap {
         let fieldChangeMap: FieldChangeMap = new Map([[field, { fieldKind, change }]]);
 
         let remainingPath = path;
@@ -706,7 +733,7 @@ export class ModularEditBuilder
             remainingPath = remainingPath.parent;
         }
 
-        this.applyChange(makeModularChangeset(fieldChangeMap, maxId));
+        return fieldChangeMap;
     }
 
     setValue(path: UpPath, value: Value): void {
@@ -723,4 +750,11 @@ export class ModularEditBuilder
             brand(fieldChange),
         );
     }
+}
+
+export interface EditDescription {
+    path: UpPath | undefined;
+    field: FieldKey;
+    fieldKind: FieldKindIdentifier;
+    change: FieldChangeset;
 }

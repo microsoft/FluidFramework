@@ -320,6 +320,18 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
 // @public (undocumented)
+export interface EditDescription {
+    // (undocumented)
+    change: FieldChangeset;
+    // (undocumented)
+    field: FieldKey;
+    // (undocumented)
+    fieldKind: FieldKindIdentifier;
+    // (undocumented)
+    path: UpPath | undefined;
+}
+
+// @public (undocumented)
 enum Effects {
     // (undocumented)
     All = "All",
@@ -567,6 +579,8 @@ export type IdAllocator = () => ChangesetLocalId;
 
 // @public
 export interface IDefaultEditBuilder {
+    // (undocumented)
+    move(sourcePath: UpPath, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath, destField: FieldKey, destIndex: number): void;
     // (undocumented)
     optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
     // (undocumented)
@@ -944,6 +958,8 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
+    // (undocumented)
+    submitChanges(changes: EditDescription[], maxId?: ChangesetLocalId): void;
 }
 
 // @public
@@ -1168,6 +1184,8 @@ export abstract class ProgressiveEditBuilderBase<TChange> implements Progressive
     constructor(changeFamily: ChangeFamily<unknown, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
     // @sealed
     protected applyChange(change: TChange): void;
+    // (undocumented)
+    protected readonly changeFamily: ChangeFamily<unknown, TChange>;
     // @sealed (undocumented)
     getChanges(): TChange[];
 }
@@ -1406,6 +1424,8 @@ interface SequenceFieldEditor extends FieldEditor<Changeset> {
     // (undocumented)
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
     // (undocumented)
+    move2(sourceIndex: number, count: number, destIndex: number): [Changeset<never>, Changeset<never>];
+    // (undocumented)
     return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex: number): Changeset<never>;
     // (undocumented)
     revive(index: number, count: number, detachedBy: RevisionTag, detachIndex: number, isIntention?: true): Changeset<never>;
@@ -1418,6 +1438,7 @@ const sequenceFieldEditor: {
     delete: (index: number, count: number) => Changeset<never>;
     revive: (index: number, count: number, detachedBy: RevisionTag, detachIndex?: number | undefined, isIntention?: true | undefined) => Changeset<never>;
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
+    move2(sourceIndex: number, count: number, destIndex: number): [Changeset<never>, Changeset<never>];
     return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex?: number | undefined): Changeset<never>;
 };
 

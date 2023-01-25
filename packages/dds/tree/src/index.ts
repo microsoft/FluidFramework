@@ -123,6 +123,7 @@ export {
     ModularChangeFamily,
     ModularChangeset,
     ModularEditBuilder,
+    EditDescription,
     FieldChangeHandler,
     FieldEditor,
     FieldChangeRebaser,

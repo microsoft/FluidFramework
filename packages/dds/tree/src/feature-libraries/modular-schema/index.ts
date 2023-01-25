@@ -46,6 +46,6 @@ export {
     GenericChangeset,
     genericFieldKind,
 } from "./genericFieldKind";
-export { ModularChangeFamily, ModularEditBuilder } from "./modularChangeFamily";
+export { ModularChangeFamily, ModularEditBuilder, EditDescription } from "./modularChangeFamily";
 export { typedTreeSchema, typedFieldSchema } from "./typedSchema";
 export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";

@@ -58,6 +58,7 @@ export {
     isNeverField,
     ModularChangeFamily,
     ModularEditBuilder,
+    EditDescription,
     FieldChangeHandler,
     FieldChangeRebaser,
     FieldChangeEncoder,

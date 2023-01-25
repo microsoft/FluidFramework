@@ -28,6 +28,11 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
      * @param destIndex - The index the nodes should be moved to, interpreted after removing the moving nodes
      */
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
+    move2(
+        sourceIndex: number,
+        count: number,
+        destIndex: number,
+    ): [Changeset<never>, Changeset<never>];
     return(
         sourceIndex: number,
         count: number,
@@ -102,6 +107,26 @@ export const sequenceFieldEditor = {
             factory.pushContent(moveOut);
         }
         return factory.list;
+    },
+
+    move2(
+        sourceIndex: number,
+        count: number,
+        destIndex: number,
+    ): [Changeset<never>, Changeset<never>] {
+        const moveOut: Mark<never> = {
+            type: "MoveOut",
+            id: brand(0),
+            count,
+        };
+
+        const moveIn: Mark<never> = {
+            type: "MoveIn",
+            id: brand(0),
+            count,
+        };
+
+        return [markAtIndex(sourceIndex, moveOut), markAtIndex(destIndex, moveIn)];
     },
 
     return(

@@ -100,6 +100,16 @@ export interface IDefaultEditBuilder {
      * is bounded by the lifetime of this edit builder.
      */
     sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder;
+
+    move(
+        sourcePath: UpPath,
+        sourceField: FieldKey,
+        sourceIndex: number,
+        count: number,
+        destPath: UpPath,
+        destField: FieldKey,
+        destIndex: number,
+    ): void;
 }
 
 /**
@@ -147,6 +157,35 @@ export class DefaultEditBuilder
                 this.modularBuilder.submitChange(parent, field, optional.identifier, change);
             },
         };
+    }
+
+    public move(
+        sourcePath: UpPath,
+        sourceField: FieldKey,
+        sourceIndex: number,
+        count: number,
+        destPath: UpPath,
+        destField: FieldKey,
+        destIndex: number,
+    ): void {
+        const changes = sequence.changeHandler.editor.move2(sourceIndex, count, destIndex);
+        this.modularBuilder.submitChanges(
+            [
+                {
+                    path: sourcePath,
+                    field: sourceField,
+                    fieldKind: sequence.identifier,
+                    change: brand(changes[0]),
+                },
+                {
+                    path: destPath,
+                    field: destField,
+                    fieldKind: sequence.identifier,
+                    change: brand(changes[1]),
+                },
+            ],
+            brand(0),
+        );
     }
 
     public sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder {
