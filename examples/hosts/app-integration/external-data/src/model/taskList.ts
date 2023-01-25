@@ -381,7 +381,7 @@ export class TaskList extends DataObject implements ITaskList {
             } else {
                 // Since all data modifications happen within the SharedString or SharedCell (task IDs are immutable),
                 // the root directory should never see anything except adds and deletes.
-                // console.error("Unexpected modification to task list");
+                console.error("Unexpected modification to task list");
             }
         });
 
