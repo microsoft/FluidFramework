@@ -27,7 +27,9 @@ export class GitrestResources implements core.IResources {
         public readonly port: string | number,
         public readonly fileSystemManagerFactory: IFileSystemManagerFactory,
         public readonly repositoryManagerFactory: IRepositoryManagerFactory,
-        public readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
+        public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+        public readonly enableOptimizedInitialSummary?: boolean,
+    ) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
 
@@ -45,6 +47,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
         const gitLibrary: string | undefined = config.get("git:lib:name");
         const repoPerDocEnabled: boolean = config.get("git:repoPerDocEnabled") ?? false;
         const enableRepositoryManagerMetrics: boolean = config.get("git:enableRepositoryManagerMetrics") ?? false;
+        const enableSlimGitInit: boolean = config.get("git:enableSlimGitInit") ?? false;
         const getRepositoryManagerFactory = () => {
             if (!gitLibrary || gitLibrary === "nodegit") {
                 return new NodegitRepositoryManagerFactory(
@@ -61,6 +64,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
                     externalStorageManager,
                     repoPerDocEnabled,
                     enableRepositoryManagerMetrics,
+                    enableSlimGitInit,
                 );
             }
             throw new Error("Invalid git library name.");
@@ -85,6 +89,7 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
             resources.port,
             resources.fileSystemManagerFactory,
             resources.repositoryManagerFactory,
-            resources.asyncLocalStorage);
+            resources.asyncLocalStorage,
+        );
     }
 }

@@ -1201,6 +1201,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (fromPath: string, toPath: string) => this.garbageCollector.addedOutboundReference(fromPath, toPath),
             this,
             pendingRuntimeState?.pendingAttachmentBlobs,
+            () => this.getCurrentReferenceTimestampMs(),
         );
 
         this.scheduleManager = new ScheduleManager(
