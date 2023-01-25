@@ -1359,7 +1359,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const { segment, offset } = this.client.getContainingSegment(pos, { referenceSequenceNumber: seqNumberFrom, clientId: this.client.getLongClientId(clientId) }, localSeq);
 
         // if segment is undefined, it slid off the string
-        assert(segment !== undefined, "No segment found");
+        assert(segment !== undefined, 0x54e /* No segment found */);
 
         const segoff = this.client.getSlideToSegment({ segment, offset }) ?? segment;
 
@@ -1368,14 +1368,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             return DetachedReferencePosition;
         }
 
-        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, "Invalid offset");
+        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x54f /* Invalid offset */);
         return this.client.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
     }
 
     private computeRebasedPositions(localSeq: number): ISerializedInterval | SerializedIntervalDelta {
-        assert(this.client !== undefined, "Client should be defined when computing rebased position");
+        assert(this.client !== undefined, 0x550 /* Client should be defined when computing rebased position */);
         const original = this.localSeqToSerializedInterval.get(localSeq);
-        assert(original !== undefined, "Failed to store pending serialized interval info for this localSeq.");
+        assert(original !== undefined, 0x551 /* Failed to store pending serialized interval info for this localSeq. */);
         const rebased = { ...original };
         const { start, end, sequenceNumber } = original;
         if (start !== undefined) {
@@ -1717,7 +1717,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
 
         if (local) {
-            assert(localOpMetadata !== undefined, "op metadata should be defined for local op");
+            assert(localOpMetadata !== undefined, 0x552 /* op metadata should be defined for local op */);
             this.localSeqToSerializedInterval.delete(localOpMetadata?.localSeq);
             // This is an ack from the server. Remove the pending change.
             this.removePendingChange(serializedInterval);
@@ -1970,7 +1970,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         localOpMetadata: IMapMessageLocalMetadata | undefined,
     ) {
         if (local) {
-            assert(localOpMetadata !== undefined, "op metadata should be defined for local op");
+            assert(localOpMetadata !== undefined, 0x553 /* op metadata should be defined for local op */);
             this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
             const id: string = serializedInterval.properties?.[reservedIntervalIdKey];
             const localInterval = this.getIntervalById(id);

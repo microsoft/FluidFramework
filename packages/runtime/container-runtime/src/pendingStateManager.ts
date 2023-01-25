@@ -351,7 +351,7 @@ export class PendingStateManager implements IDisposable {
              * either receive the whole batch ack or nothing at all.
              */
             if (pendingMessage.opMetadata?.batch) {
-                assert(pendingMessagesCount > 0, "Last pending message cannot be a batch begin");
+                assert(pendingMessagesCount > 0, 0x554 /* Last pending message cannot be a batch begin */);
 
                 this.stateHandler.orderSequentially(() => {
                     while (pendingMessagesCount >= 0) { // check is >= because batch end may be last pending message
@@ -364,13 +364,13 @@ export class PendingStateManager implements IDisposable {
                         if (pendingMessage.opMetadata?.batch === false) {
                             break;
                         }
-                        assert(pendingMessagesCount > 0, "No batch end found");
+                        assert(pendingMessagesCount > 0, 0x555 /* No batch end found */);
 
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         pendingMessage = this.pendingMessages.shift()!;
                         pendingMessagesCount--;
                         assert(pendingMessage.opMetadata?.batch !== true,
-                            "Batch start needs a corresponding batch end");
+                            0x556 /* Batch start needs a corresponding batch end */);
                     }
                 });
             } else {
