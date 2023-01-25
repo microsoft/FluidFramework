@@ -38,7 +38,7 @@ export const cases: {
     delete: createDeleteChangeset(1, 3),
     revive: createReviveChangeset(2, 2, tag, 0),
     move: createMoveChangeset(1, 2, 2),
-    return: createReturnChangeset(1, 3, 0, tag, 0),
+    return: createReturnChangeset(1, 3, 0, tag),
 };
 
 function createInsertChangeset(
@@ -61,7 +61,7 @@ function createReviveChangeset(
     startIndex: number,
     count: number,
     detachedBy: RevisionTag,
-    detachIndex: number,
+    detachIndex?: number,
     conflictsWith?: RevisionTag,
     linage?: SF.LineageEvent[],
     lastDetachedBy?: RevisionTag,
@@ -84,7 +84,7 @@ function createIntentionalReviveChangeset(
     startIndex: number,
     count: number,
     detachedBy: RevisionTag,
-    detachIndex: number,
+    detachIndex?: number,
     conflictsWith?: RevisionTag,
     linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
@@ -118,7 +118,7 @@ function createReturnChangeset(
     count: number,
     destIndex: number,
     detachedBy: RevisionTag,
-    detachIndex: number,
+    detachIndex?: number,
 ): SF.Changeset<never> {
     return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachedBy, detachIndex);
 }

@@ -136,6 +136,7 @@ export interface IContainerContext extends IDisposable {
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
+    readonly disposeFn?: (error?: ICriticalContainerError) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorumClients;
@@ -203,5 +204,5 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      * @param context - container context to be supplied to the runtime
      * @param existing - whether to instantiate for the first time or from an existing context
      */
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }

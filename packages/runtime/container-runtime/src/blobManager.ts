@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 /**
@@ -101,12 +101,17 @@ enum PendingBlobStatus {
     OfflinePendingOp,
 }
 
+type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
+
 interface PendingBlob {
     blob: ArrayBufferLike;
     status: PendingBlobStatus;
     storageId?: string;
     handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
     uploadP: Promise<ICreateBlobResponse>;
+    localUploadTime?: number;
+    serverUploadTime?: number;
+    minTTLInSeconds?: number;
 }
 
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
@@ -151,7 +156,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     ));
 
     /** If true, throw an error when a tombstone attachment blob is retrieved. */
-    private readonly throwOnTombstoneUsage: boolean;
+    private readonly throwOnTombstoneLoad: boolean;
     /**
      * This stores IDs of tombstoned blobs.
      * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
@@ -179,12 +184,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         private readonly addedBlobReference: (fromNodePath: string, toNodePath: string) => void,
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
+        private readonly getCurrentReferenceTimestampMs: () => number | undefined,
     ) {
         super();
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
         // Read the feature flag that tells whether to throw when a tombstone blob is requested.
-        this.throwOnTombstoneUsage =
-            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+        this.throwOnTombstoneLoad =
+            this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
             this.runtime.clientDetails.type !== summarizerClientType;
 
         this.runtime.on("disconnected", () => this.onDisconnected());
@@ -274,13 +280,18 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public async getBlob(blobId: string): Promise<ArrayBufferLike> {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
-            const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
-            const event = {
-                eventName: "GC_Tombstone_Blob_Requested",
-                url: request.url,
-            };
-            sendGCTombstoneEvent(this.mc, event, this.runtime.clientDetails.type === summarizerClientType, [BlobManager.basePath], error);
-            if (this.throwOnTombstoneUsage) {
+            const error = responseToException(createResponseError(404, "Blob was deleted", request), request);
+            sendGCTombstoneEvent(
+                this.mc,
+                {
+                    eventName: "GC_Tombstone_Blob_Requested",
+                    category: this.throwOnTombstoneLoad ? "error" : "generic",
+                    isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+                },
+                [BlobManager.basePath],
+                error,
+            );
+            if (this.throwOnTombstoneLoad) {
                 throw error;
             }
         }
@@ -393,12 +404,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         }
     }
 
-    private onUploadResolve(localId: string, response: ICreateBlobResponse) {
+    private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
             entry?.status === PendingBlobStatus.OfflinePendingUpload,
             0x386 /* Must have pending blob entry for uploaded blob */);
         entry.storageId = response.id;
+        entry.localUploadTime = Date.now();
+        entry.minTTLInSeconds = response.minTTLInSeconds;
+        entry.serverUploadTime = this.getCurrentReferenceTimestampMs();
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 // Send a blob attach op. This serves two purposes:
@@ -406,6 +420,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 //    until its storage ID is added to the next summary.
                 // 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
                 //    blob from the server via the storage ID.
+                this.logTimeInfo(entry, "sendBlobAttachResolveTTL");
                 this.sendBlobAttachOp(localId, response.id);
                 if (this.storageIds.has(response.id)) {
                     // The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
@@ -467,6 +482,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
          * is called on reconnection.
          */
         if (entry.status !== PendingBlobStatus.OnlinePendingOp) {
+            this.logTimeInfo(entry, "sendBlobAttachTransitionOfflineTTL");
             this.sendBlobAttachOp(localId, entry.storageId);
         }
 
@@ -485,15 +501,43 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public reSubmit(metadata: Record<string, unknown> | undefined) {
         assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
         const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
-        assert(localId !== undefined, "local ID not available on reSubmit");
+        assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
+        const pendingEntry = this.pendingBlobs.get(localId);
+        if (pendingEntry) {
+            this.logTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL");
+        }
         if (!blobId) {
             // We submitted this op while offline. The blob should have been uploaded by now.
-            const pendingEntry = this.pendingBlobs.get(localId);
             assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
                 !!pendingEntry?.storageId, 0x38d /* blob must be uploaded before resubmitting BlobAttach op */);
             return this.sendBlobAttachOp(localId, pendingEntry.storageId);
         }
         return this.sendBlobAttachOp(localId, blobId);
+    }
+
+    private logTimeInfo(pendingEntry: PendingBlob, eventName: string) {
+        let timeLapseSinceLocalUpload: number = 0;
+        let timeLapseSinceServerUpload: number = 0;
+        let expiredUsingLocalTime;
+        let expiredUsingServerTime;
+        if(pendingEntry.localUploadTime){
+            timeLapseSinceLocalUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
+            expiredUsingLocalTime = (pendingEntry.minTTLInSeconds?? 0) - timeLapseSinceLocalUpload < 0 ? true : false;
+        }
+        if(pendingEntry.serverUploadTime){
+            timeLapseSinceServerUpload = (Date.now() - pendingEntry.serverUploadTime) / 1000;
+            expiredUsingServerTime = (pendingEntry.minTTLInSeconds?? 0) - timeLapseSinceServerUpload < 0 ? true : false;
+        }
+        this.mc.logger.sendTelemetryEvent({
+            eventName,
+            entryStatus: pendingEntry.status,
+            timeLapseSinceLocalUpload,
+            timeLapseSinceServerUpload,
+            minTTLInSeconds: pendingEntry.minTTLInSeconds,
+            expiredUsingLocalTime,
+            expiredUsingServerTime,
+        });
+
     }
 
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
@@ -512,7 +556,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         this.setRedirection(blobId, blobId);
 
         if (local) {
-            assert(localId !== undefined, "local ID not present in blob attach message");
+            assert(localId !== undefined, 0x50e /* local ID not present in blob attach message */);
             const waitingBlobs = this.opsInFlight.get(blobId);
             if (waitingBlobs !== undefined) {
                 // For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
@@ -627,7 +671,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             const pathParts = route.split("/");
             assert(
                 pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-                "Invalid blob node id in tombstoned routes.",
+                0x50f /* Invalid blob node id in tombstoned routes. */,
             );
             tombstonedBlobsSet.add(pathParts[2]);
         }

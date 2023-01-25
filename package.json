@@ -119,8 +119,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.7.0",
-    "@fluidframework/build-tools": "^0.7.0",
+    "@fluid-tools/build-cli": "^0.8.0",
+    "@fluidframework/build-tools": "^0.8.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
@@ -193,8 +193,7 @@
       "main": "minor",
       "lts": "minor",
       "release/**": "patch",
-      "next": "major",
-      "*": "minor"
+      "next": "major"
     }
   }
 }

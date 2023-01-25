@@ -327,23 +327,11 @@ export interface SearchResult {
     pos: number;
 }
 
-export interface MergeTreeStats {
-    maxHeight: number;
-    nodeCount: number;
-    leafCount: number;
-    removedLeafCount: number;
-    liveCount: number;
-    histo: number[];
-    windowTime?: number;
-    packTime?: number;
-    ordTime?: number;
-    maxOrdTime?: number;
-}
-
 export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
     localSeq: number;
+    refSeq: number;
 }
 
 export class MergeNode implements IMergeNodeCommon {
@@ -553,10 +541,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
         LocalReferenceCollection.append(this, other);
         if (this.attribution) {
-            assert(other.attribution !== undefined, "attribution should be set on appendee");
+            assert(other.attribution !== undefined, 0x4bd /* attribution should be set on appendee */);
             this.attribution.append(other.attribution);
         } else {
-            assert(other.attribution === undefined, "attribution should not be set on appendee");
+            assert(other.attribution === undefined, 0x4be /* attribution should not be set on appendee */);
         }
 
         this.cachedLength += other.cachedLength;

@@ -191,6 +191,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime;
     }
 
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        return this._containerRuntime.ensureNoDataModelChanges(callback);
+    }
+
     public get isLoaded(): boolean {
         return this.loaded;
     }
@@ -299,7 +303,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
-            this.summarizeInternal(fullTree, trackState, telemetryContext);
+                this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
@@ -327,7 +331,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (this.channelDeferred) {
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
-            }).catch((error) => {});
+            }).catch((error) => { });
         }
     }
 
@@ -712,10 +716,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: {
-                    value: this.id,
-                    tag: TelemetryDataTag.CodeArtifact,
-                } },
+                {
+                    eventName: "BindRuntimeError", fluidDataStoreId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                },
                 error);
         }
     }
@@ -775,20 +781,19 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         if (checkTombstone && this.tombstoned) {
             const messageString = `Context is tombstoned! Call site [${callSite}]`;
-            const error = new DataCorruptionError(messageString, {
-                errorMessage: messageString,
-                ...safeTelemetryProps,
-            });
+            const error = new DataCorruptionError(messageString, safeTelemetryProps);
 
-            // Always log an error when tombstoned data store is used. However, throw an error only if
-            // throwOnTombstoneUsage is set.
-            const event = {
-                eventName: "GC_Tombstone_DataStore_Changed",
-                callSite,
-            };
-            sendGCTombstoneEvent(this.mc, event, this.clientDetails.type === summarizerClientType, this.pkg, error);
-            // Always log an error when tombstoned data store is used. However, throw an error only if
-            // throwOnTombstoneUsage is set and the client is not a summarizer.
+            sendGCTombstoneEvent(
+                this.mc,
+                {
+                    eventName: "GC_Tombstone_DataStore_Changed",
+                    category: this.throwOnTombstoneUsage ? "error" : "generic",
+                    isSummarizerClient: this.clientDetails.type === summarizerClientType,
+                    callSite,
+                },
+                this.pkg,
+                error,
+            );
             if (this.throwOnTombstoneUsage) {
                 throw error;
             }

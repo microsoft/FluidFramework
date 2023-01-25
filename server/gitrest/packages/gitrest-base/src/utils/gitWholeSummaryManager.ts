@@ -106,10 +106,16 @@ interface ISummaryWriteOptions {
      * "initial": First summary write for a document will use low I/O mode
      */
     enableLowIoWrite: "initial" | boolean;
+    /**
+     * When writing a summary, we can skip or alter certain aspects of the summary write process
+     * to avoid unnecessary storage operations. This can improve performance when creating a new document.
+     */
+    optimizeForInitialSummary: boolean;
 }
 
 const DefaultSummaryWriteOptions: ISummaryWriteOptions = {
     enableLowIoWrite: false,
+    optimizeForInitialSummary: false,
 };
 
 /**
@@ -427,11 +433,14 @@ export class GitWholeSummaryManager {
 
     public async writeSummary(
         payload: IWholeSummaryPayload,
+        isInitial?: boolean,
     ): Promise<IWriteSummaryInfo> {
         const writeSummaryMetric = Lumberjack.newLumberMetric(
             GitRestLumberEventName.WholeSummaryManagerWriteSummary,
             this.lumberjackProperties);
         writeSummaryMetric.setProperty("enableLowIoWrite", this.writeOptions.enableLowIoWrite);
+        writeSummaryMetric.setProperty("optimizeForInitialSummary", this.writeOptions.optimizeForInitialSummary);
+        writeSummaryMetric.setProperty("isInitial", isInitial);
         try {
             if (isChannelSummary(payload)) {
                 writeSummaryMetric.setProperty("summaryType", "channel");
@@ -447,7 +456,7 @@ export class GitWholeSummaryManager {
             }
             if (isContainerSummary(payload)) {
                 writeSummaryMetric.setProperty("summaryType", "container");
-                const writeSummaryInfo = await this.writeContainerSummary(payload);
+                const writeSummaryInfo = await this.writeContainerSummary(payload, isInitial);
                 writeSummaryMetric.setProperty("newDocument", writeSummaryInfo.isNew);
                 writeSummaryMetric.setProperty("commitSha", writeSummaryInfo.writeSummaryResponse.id);
                 writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing container summary");
@@ -484,8 +493,12 @@ export class GitWholeSummaryManager {
 
     private async writeContainerSummary(
         payload: IWholeSummaryPayload,
+        isInitial?: boolean,
     ): Promise<IWriteSummaryInfo> {
-        const existingRef = await this.getDocRef();
+        // Ref will not exist for an initial summary, so do not bother checking.
+        const existingRef = this.writeOptions.optimizeForInitialSummary && isInitial === true
+            ? undefined
+            : await this.getDocRef();
 
         const isNewDocument = !existingRef && payload.sequenceNumber === 0;
         const useLowIoWrite = this.writeOptions.enableLowIoWrite === true
@@ -529,6 +542,8 @@ export class GitWholeSummaryManager {
                 {
                     ref: `refs/heads/${this.documentId}`,
                     sha: commit.sha,
+                    // Bypass internal check for ref existance if possible, because we already know the ref does not exist.
+                    force: true,
                 },
                 { enabled: this.externalStorageEnabled },
             );

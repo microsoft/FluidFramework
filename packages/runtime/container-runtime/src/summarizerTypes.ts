@@ -94,11 +94,8 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
     /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
+    disposeFn?(): void;
     closeFn(): void;
-    /** @deprecated 1.0, please remove all implementations and usage */
-    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    /** @deprecated 1.0, please remove all implementations and usage */
-    removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
 /** Options affecting summarize behavior. */

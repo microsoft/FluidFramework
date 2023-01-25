@@ -43,7 +43,7 @@
   "dependencies": {},
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/build-tools": "^0.6.0-109663",
+    "@fluidframework/build-tools": "^0.7.0",
     "@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@0.20.1",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@microsoft/api-extractor": "^7.22.2",

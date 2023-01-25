@@ -41,7 +41,7 @@ import {
     ICacheAndTracker,
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
-import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher } from "./odspUtils";
+import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher, IExistingFileInfo, isNewFileInfo } from "./odspUtils";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -78,6 +78,29 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             throw new Error("File path should be provided!!");
         }
 
+        let fileInfo: INewFileInfo | IExistingFileInfo;
+        let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+        if (odspResolvedUrl.itemId) {
+            fileInfo = {
+                type: 'Existing',
+                driveId: odspResolvedUrl.driveId,
+                siteUrl: odspResolvedUrl.siteUrl,
+                itemId: odspResolvedUrl.itemId
+            };
+        } else if (odspResolvedUrl.fileName) {
+            createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
+            fileInfo = {
+                type: 'New',
+                driveId: odspResolvedUrl.driveId,
+                siteUrl: odspResolvedUrl.siteUrl,
+                filePath,
+                filename: odspResolvedUrl.fileName,
+                createLinkType: createShareLinkParam,
+            };
+        } else {
+            throw new Error("A new or existing file must be specified to create container!");
+        }
+
         const protocolSummary = createNewSummary?.tree[".protocol"];
         if (protocolSummary) {
             const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary as ISummaryTree);
@@ -85,16 +108,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 throw new Error("Seq number in detached ODSP container should be 0");
             }
         }
-
-        const createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
-        const newFileInfo: INewFileInfo = {
-            type: 'New',
-            driveId: odspResolvedUrl.driveId,
-            siteUrl: odspResolvedUrl.siteUrl,
-            filePath,
-            filename: odspResolvedUrl.fileName,
-            createLinkType: createShareLinkParam,
-        };
 
         const odspLogger = createOdspLogger(logger);
 
@@ -111,16 +124,22 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
-                createShareLinkParam: JSON.stringify(createShareLinkParam),
+                createShareLinkParam: createShareLinkParam ? JSON.stringify(createShareLinkParam) : undefined,
                 enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
                 enableSingleRequestForShareLinkWithCreate:
                     this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
             },
             async (event) => {
+                const getStorageToken = toInstrumentedOdspTokenFetcher(
+                    odspLogger,
+                    resolvedUrlData,
+                    this.getStorageToken,
+                    true /* throwOnNullToken */,
+                );
                 // We can delay load this module as this path will not be executed in load flows and create flow
                 // while only happens once in lifetime of a document happens in the background after creation of
                 // detached container.
-                const module = await import(/* webpackChunkName: "createNewModule" */ "./createFile")
+                const module = await import(/* webpackChunkName: "createNewModule" */ "./createNewModule")
                     .then((m) => {
                         odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded" });
                         return m;
@@ -129,24 +148,31 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                         odspLogger.sendErrorEvent( { eventName: "createNewModuleLoadFailed" }, error);
                         throw error;
                     });
-                odspResolvedUrl = await module.createNewFluidFile(
-                    toInstrumentedOdspTokenFetcher(
+                odspResolvedUrl = isNewFileInfo(fileInfo)
+                    ? await module.createNewFluidFile(
+                        getStorageToken,
+                        fileInfo,
                         odspLogger,
-                        resolvedUrlData,
-                        this.getStorageToken,
-                        true /* throwOnNullToken */,
-                    ),
-                    newFileInfo,
-                    odspLogger,
-                    createNewSummary,
-                    cacheAndTracker.epochTracker,
-                    fileEntry,
-                    this.hostPolicy.cacheCreateNewSummary ?? true,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-                    odspResolvedUrl.isClpCompliantApp,
-                    this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-                    this.hostPolicy.enableShareLinkWithCreate,
-                );
+                        createNewSummary,
+                        cacheAndTracker.epochTracker,
+                        fileEntry,
+                        this.hostPolicy.cacheCreateNewSummary ?? true,
+                        !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                        odspResolvedUrl.isClpCompliantApp,
+                        this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+                        this.hostPolicy.enableShareLinkWithCreate
+                    )
+                    : await module.createNewContainerOnExistingFile(
+                        getStorageToken,
+                        fileInfo,
+                        odspLogger,
+                        createNewSummary,
+                        cacheAndTracker.epochTracker,
+                        fileEntry,
+                        this.hostPolicy.cacheCreateNewSummary ?? true,
+                        !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                        odspResolvedUrl.isClpCompliantApp,
+                    );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);
                 event.end({

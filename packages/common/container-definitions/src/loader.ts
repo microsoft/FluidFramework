@@ -104,7 +104,6 @@ export interface ICodeAllowList {
 /**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
  */
-/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IContainerEvents extends IEvent {
     /**
      * Emitted when the readonly state of the container changes.
@@ -185,6 +184,17 @@ export interface IContainerEvents extends IEvent {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
 
     /**
+     * Emitted when the {@link IContainer} is disposed, which permanently disables it.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `error`: If the container was disposed due to error, this will contain details about the error that caused it.
+     *
+     * @see {@link IContainer.dispose}
+     */
+    (event: "disposed", listener: (error?: ICriticalContainerError) => void);
+
+    /**
      * Emitted when the container encounters a state which may lead to errors, which may be actionable by the consumer.
      *
      * @remarks
@@ -238,7 +248,6 @@ export interface IContainerEvents extends IEvent {
      */
     (event: "saved", listener: (dirty: boolean) => void);
 }
-/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Namespace for the different connection states a container can be in.
@@ -328,6 +337,15 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Whether or not there are any local changes that have not been saved.
      */
     readonly isDirty: boolean;
+
+    /**
+     * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
+     * The container is not expected to be used anymore once it is disposed.
+     *
+     * @param error - If the container is being disposed due to error, this provides details about the error that
+     * resulted in disposing it.
+     */
+    dispose?(error?: ICriticalContainerError): void;
 
     /**
      * Closes the container.
