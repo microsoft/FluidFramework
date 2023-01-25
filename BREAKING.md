@@ -19,9 +19,18 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 - [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
+- [IDocumentStorageServicePolicies.maximumCacheDurationMs policy may become required](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-may-become-required)
 
 ### Deprecated IPendingFlush
 `IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+
+### IDocumentStorageServicePolicies.maximumCacheDurationMs policy may become required
+
+_FOR AWARENESS: This policy is required for drivers used in applications where Garbage Collection is enabled, otherwise **data loss may occur**._
+
+In a subsequent major release, this policy may become required, to ensure all drivers take note of this requirement and enforce this policy.
+It's also possible that instead, the driver API around fetching the latest snapshot may be adjusted to better encode semantics around caching,
+in which case this policy will be deprecated.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
