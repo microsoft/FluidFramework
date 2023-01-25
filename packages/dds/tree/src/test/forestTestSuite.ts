@@ -281,7 +281,7 @@ export function testForest(config: ForestTestConfiguration): void {
             cursor.clear();
 
             const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+            const delta: Delta.Root = new Map([[rootFieldKeySymbol, { siblingChanges: [mark] }]]);
             forest.applyDelta(delta);
             forest.anchors.applyDelta(delta);
 
@@ -369,8 +369,16 @@ export function testForest(config: ForestTestConfiguration): void {
             initializeForest(forest, content.map(singleTextCursor));
 
             const clone = forest.clone(forest.schema, forest.anchors);
-            const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
-            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
+            const delta: Delta.Root = new Map([
+                [
+                    rootFieldKeySymbol,
+                    {
+                        nestedChanges: [
+                            [{ context: Delta.Context.Input, index: 0 }, { setValue: 2 }],
+                        ],
+                    },
+                ],
+            ]);
             clone.applyDelta(delta);
 
             // Check the clone has the new value
@@ -395,8 +403,16 @@ export function testForest(config: ForestTestConfiguration): void {
                     const cursor = forest.allocateCursor();
                     moveToDetachedField(forest, cursor);
 
-                    const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
-                    const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
+                    const delta: Delta.Root = new Map([
+                        [
+                            rootFieldKeySymbol,
+                            {
+                                nestedChanges: [
+                                    [{ context: Delta.Context.Input, index: 0 }, { setValue: 2 }],
+                                ],
+                            },
+                        ],
+                    ]);
                     assert.throws(() => forest.applyDelta(delta));
                 });
             }
@@ -406,8 +422,16 @@ export function testForest(config: ForestTestConfiguration): void {
                 const content: JsonableTree = { type: jsonNumber.name, value: 1 };
                 initializeForest(forest, [singleTextCursor(content)]);
 
-                const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
+                const delta: Delta.Root = new Map([
+                    [
+                        rootFieldKeySymbol,
+                        {
+                            nestedChanges: [
+                                [{ context: Delta.Context.Input, index: 0 }, { setValue: 2 }],
+                            ],
+                        },
+                    ],
+                ]);
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -422,8 +446,19 @@ export function testForest(config: ForestTestConfiguration): void {
                 const content: JsonableTree = { type: jsonNumber.name, value: 1 };
                 initializeForest(forest, [singleTextCursor(content)]);
 
-                const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: undefined };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
+                const delta: Delta.Root = new Map([
+                    [
+                        rootFieldKeySymbol,
+                        {
+                            nestedChanges: [
+                                [
+                                    { context: Delta.Context.Input, index: 0 },
+                                    { setValue: undefined },
+                                ],
+                            ],
+                        },
+                    ],
+                ]);
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -436,27 +471,35 @@ export function testForest(config: ForestTestConfiguration): void {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
                 initializeForest(forest, nestedContent.map(singleTextCursor));
 
-                const setField: Delta.Modify = {
-                    type: Delta.MarkType.Modify,
+                const setField: Delta.NodeChanges = {
                     fields: new Map([
                         [
                             xField,
-                            [
-                                { type: Delta.MarkType.Delete, count: 1 },
-                                {
-                                    type: Delta.MarkType.Insert,
-                                    content: [
-                                        singleTextCursor({
-                                            type: jsonBoolean.name,
-                                            value: true,
-                                        }),
-                                    ],
-                                },
-                            ],
+                            {
+                                siblingChanges: [
+                                    { type: Delta.MarkType.Delete, count: 1 },
+                                    {
+                                        type: Delta.MarkType.Insert,
+                                        content: [
+                                            singleTextCursor({
+                                                type: jsonBoolean.name,
+                                                value: true,
+                                            }),
+                                        ],
+                                    },
+                                ],
+                            },
                         ],
                     ]),
                 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setField]]]);
+                const delta: Delta.Root = new Map([
+                    [
+                        rootFieldKeySymbol,
+                        {
+                            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, setField]],
+                        },
+                    ],
+                ]);
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -476,7 +519,9 @@ export function testForest(config: ForestTestConfiguration): void {
                 initializeForest(forest, content.map(singleTextCursor));
 
                 const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [0, mark]]]);
+                const delta: Delta.Root = new Map([
+                    [rootFieldKeySymbol, { siblingChanges: [mark] }],
+                ]);
                 forest.applyDelta(delta);
 
                 // Inspect resulting tree: should just have `2`.
@@ -502,7 +547,9 @@ export function testForest(config: ForestTestConfiguration): void {
 
                 const skip: Delta.Skip = 1;
                 const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [skip, mark]]]);
+                const delta: Delta.Root = new Map([
+                    [rootFieldKeySymbol, { siblingChanges: [skip, mark] }],
+                ]);
                 forest.applyDelta(delta);
 
                 // Inspect resulting tree: should just have `1`.
@@ -524,7 +571,9 @@ export function testForest(config: ForestTestConfiguration): void {
                     type: Delta.MarkType.Insert,
                     content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
                 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                const delta: Delta.Root = new Map([
+                    [rootFieldKeySymbol, { siblingChanges: [mark] }],
+                ]);
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -553,14 +602,20 @@ export function testForest(config: ForestTestConfiguration): void {
                     count: 1,
                     moveId,
                 };
-                const modify: Delta.Modify = {
-                    type: Delta.MarkType.Modify,
+                const modify: Delta.NodeChanges = {
                     fields: new Map([
-                        [xField, [moveOut]],
-                        [yField, [1, moveIn]],
+                        [xField, { siblingChanges: [moveOut] }],
+                        [yField, { siblingChanges: [1, moveIn] }],
                     ]),
                 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [modify]]]);
+                const delta: Delta.Root = new Map([
+                    [
+                        rootFieldKeySymbol,
+                        {
+                            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, modify]],
+                        },
+                    ],
+                ]);
                 forest.applyDelta(delta);
                 const reader = forest.allocateCursor();
                 moveToDetachedField(forest, reader);
@@ -580,24 +635,36 @@ export function testForest(config: ForestTestConfiguration): void {
                 ];
                 initializeForest(forest, content.map(singleTextCursor));
 
-                const mark: Delta.InsertAndModify = {
-                    type: Delta.MarkType.InsertAndModify,
-                    content: singleTextCursor({ type: jsonNumber.name, value: 3 }),
+                const mark: Delta.Insert = {
+                    type: Delta.MarkType.Insert,
+                    content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
+                };
+                const modify: Delta.NodeChanges = {
                     fields: new Map([
                         [
                             brand("newField"),
-                            [
-                                {
-                                    type: Delta.MarkType.Insert,
-                                    content: [{ type: jsonNumber.name, value: 4 }].map(
-                                        singleTextCursor,
-                                    ),
-                                },
-                            ],
+                            {
+                                siblingChanges: [
+                                    {
+                                        type: Delta.MarkType.Insert,
+                                        content: [{ type: jsonNumber.name, value: 4 }].map(
+                                            singleTextCursor,
+                                        ),
+                                    },
+                                ],
+                            },
                         ],
                     ]),
                 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                const delta: Delta.Root = new Map([
+                    [
+                        rootFieldKeySymbol,
+                        {
+                            siblingChanges: [mark],
+                            nestedChanges: [[{ context: Delta.Context.Output, index: 0 }, modify]],
+                        },
+                    ],
+                ]);
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -621,14 +688,29 @@ export function testForest(config: ForestTestConfiguration): void {
                 initializeForest(forest, nestedContent.map(singleTextCursor));
 
                 const moveId = brandOpaque<Delta.MoveId>(0);
-                const mark: Delta.ModifyAndDelete = {
-                    type: Delta.MarkType.ModifyAndDelete,
+                const modify: Delta.NodeChanges = {
                     fields: new Map([
-                        [xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
+                        [
+                            xField,
+                            {
+                                siblingChanges: [
+                                    { type: Delta.MarkType.MoveOut, count: 1, moveId },
+                                ],
+                            },
+                        ],
                     ]),
                 };
                 const delta: Delta.Root = new Map([
-                    [rootFieldKeySymbol, [mark, { type: Delta.MarkType.MoveIn, count: 1, moveId }]],
+                    [
+                        rootFieldKeySymbol,
+                        {
+                            siblingChanges: [
+                                { type: Delta.MarkType.Delete, count: 1 },
+                                { type: Delta.MarkType.MoveIn, count: 1, moveId },
+                            ],
+                            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, modify]],
+                        },
+                    ],
                 ]);
                 forest.applyDelta(delta);
 
@@ -644,23 +726,39 @@ export function testForest(config: ForestTestConfiguration): void {
                 initializeForest(forest, nestedContent.map(singleTextCursor));
 
                 const moveId = brandOpaque<Delta.MoveId>(0);
-                const mark: Delta.Modify = {
-                    type: Delta.MarkType.Modify,
+                const modify: Delta.NodeChanges = {
                     fields: new Map([
                         [
                             xField,
-                            [
-                                {
-                                    type: Delta.MarkType.ModifyAndMoveOut,
-                                    setValue: 2,
-                                    moveId,
-                                },
-                            ],
+                            {
+                                siblingChanges: [
+                                    {
+                                        type: Delta.MarkType.MoveOut,
+                                        count: 1,
+                                        moveId,
+                                    },
+                                ],
+                                nestedChanges: [
+                                    [{ context: Delta.Context.Input, index: 0 }, { setValue: 2 }],
+                                ],
+                            },
                         ],
-                        [yField, [{ type: Delta.MarkType.MoveIn, count: 1, moveId }]],
+                        [
+                            yField,
+                            {
+                                siblingChanges: [{ type: Delta.MarkType.MoveIn, count: 1, moveId }],
+                            },
+                        ],
                     ]),
                 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                const delta: Delta.Root = new Map([
+                    [
+                        rootFieldKeySymbol,
+                        {
+                            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, modify]],
+                        },
+                    ],
+                ]);
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -673,61 +771,6 @@ export function testForest(config: ForestTestConfiguration): void {
                 assert(reader.firstNode());
                 assert.equal(reader.value, 2);
                 assert.equal(reader.nextNode(), true);
-            });
-
-            // TODO: Unskip once MoveInAndModify is properly supported.
-            // MoveInAndModify should support inner deltas e.g. Insert, MoveOut, etc.
-            it.skip("move in and modify", () => {
-                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-                initializeForest(forest, nestedContent.map(singleTextCursor));
-
-                const moveId = brandOpaque<Delta.MoveId>(0);
-                const newField: FieldKey = brand("newField");
-                const mark: Delta.Modify = {
-                    type: Delta.MarkType.Modify,
-                    fields: new Map([
-                        [xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
-                        [
-                            yField,
-                            [
-                                {
-                                    type: Delta.MarkType.MoveInAndModify,
-                                    moveId,
-                                    fields: new Map([
-                                        [
-                                            newField,
-                                            [
-                                                {
-                                                    type: Delta.MarkType.Insert,
-                                                    content: [
-                                                        { type: jsonNumber.name, value: 2 },
-                                                    ].map(singleTextCursor),
-                                                },
-                                            ],
-                                        ],
-                                    ]),
-                                },
-                            ],
-                        ],
-                    ]),
-                };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
-                forest.applyDelta(delta);
-
-                const reader = forest.allocateCursor();
-                moveToDetachedField(forest, reader);
-                assert(reader.firstNode());
-                reader.enterField(xField);
-                assert.equal(reader.getFieldLength(), 0);
-                reader.exitField();
-                reader.enterField(yField);
-                assert.equal(reader.getFieldLength(), 2);
-                assert(reader.firstNode());
-                assert.equal(reader.value, 0);
-                reader.enterField(newField);
-                assert.equal(reader.getFieldLength(), 1);
-                assert(reader.firstNode());
-                assert.equal(reader.value, 2);
             });
         });
 
@@ -742,7 +785,9 @@ export function testForest(config: ForestTestConfiguration): void {
                     type: Delta.MarkType.Insert,
                     content: content.map(singleTextCursor),
                 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [insert]]]);
+                const delta: Delta.Root = new Map([
+                    [rootFieldKeySymbol, { siblingChanges: [insert] }],
+                ]);
 
                 assert.deepEqual(dependent.tokens, []);
                 forest.applyDelta(delta);

@@ -18,7 +18,11 @@ export interface FieldChangeHandler<
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
     editor: TEditor;
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
+    intoDelta(
+        change: TChangeset,
+        deltaFromChild: ToDelta,
+        reviver: NodeReviver,
+    ): Delta.FieldChanges;
 }
 export interface FieldChangeRebaser<TChangeset> {
     /**
@@ -104,7 +108,7 @@ export interface FieldEditor<TChangeset> {
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  */
-export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.NodeChanges;
 
 export type NodeReviver = (
     revision: RevisionTag,

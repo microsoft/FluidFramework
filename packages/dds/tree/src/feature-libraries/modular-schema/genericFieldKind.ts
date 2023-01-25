@@ -165,19 +165,15 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             return [{ index, nodeChange: change }];
         },
     },
-    intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): Delta.MarkList => {
-        let nodeIndex = 0;
-        const delta: Delta.Mark[] = [];
+    intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): Delta.FieldChanges => {
+        const nestedChanges: Delta.NestedChange[] = [];
         for (const { index, nodeChange } of change) {
-            if (nodeIndex < index) {
-                const offset = index - nodeIndex;
-                delta.push(offset);
-                nodeIndex = index;
-            }
-            delta.push(deltaFromChild(nodeChange, index));
-            nodeIndex += 1;
+            nestedChanges.push([
+                { context: Delta.Context.Input, index },
+                deltaFromChild(nodeChange, index),
+            ]);
         }
-        return delta;
+        return { nestedChanges };
     },
 };
 

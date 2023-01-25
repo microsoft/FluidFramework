@@ -50,8 +50,8 @@ function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
     assert.strictEqual(callIndex, expected.length);
 }
 
-function testTreeVisit(marks: Delta.MarkList, expected: Readonly<VisitScript>): void {
-    testVisit(new Map([[rootKey, marks]]), [
+function testTreeVisit(delta: Delta.FieldChanges, expected: Readonly<VisitScript>): void {
+    testVisit(new Map([[rootKey, delta]]), [
         ["enterField", rootKey],
         ...expected,
         ["exitField", rootKey],
@@ -66,33 +66,45 @@ const content = [singleTextCursor(nodeX)];
 
 describe("visit", () => {
     it("empty delta", () => {
-        testTreeVisit([], []);
+        const delta = {};
+        testTreeVisit(delta, []);
     });
 
     it("set root value", () => {
-        const mark: Delta.Modify = {
-            type: Delta.MarkType.Modify,
-            setValue: 1,
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, { setValue: 1 }]],
         };
         const expected: VisitScript = [
             ["enterNode", 0],
             ["onSetValue", 1],
             ["exitNode", 0],
         ];
-        testTreeVisit([mark], expected);
+        testTreeVisit(delta, expected);
     });
 
     it("set child value", () => {
-        const mark: Delta.Modify = {
-            type: Delta.MarkType.Modify,
-            setValue: 1,
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [
+                [
+                    { context: Delta.Context.Input, index: 0 },
+                    {
+                        fields: new Map([
+                            [
+                                fooKey,
+                                {
+                                    nestedChanges: [
+                                        [
+                                            { context: Delta.Context.Input, index: 42 },
+                                            { setValue: 1 },
+                                        ],
+                                    ],
+                                },
+                            ],
+                        ]),
+                    },
+                ],
+            ],
         };
-        const delta: Delta.MarkList = [
-            {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [42, mark]]]),
-            },
-        ];
         const expected: VisitScript = [
             ["enterNode", 0],
             ["enterField", fooKey],
@@ -110,7 +122,10 @@ describe("visit", () => {
             type: Delta.MarkType.Insert,
             content,
         };
-        testTreeVisit([mark], [["onInsert", 0, content]]);
+        const delta: Delta.FieldChanges = {
+            siblingChanges: [mark],
+        };
+        testTreeVisit(delta, [["onInsert", 0, content]]);
     });
 
     it("insert child", () => {
@@ -118,12 +133,19 @@ describe("visit", () => {
             type: Delta.MarkType.Insert,
             content,
         };
-        const delta: Delta.MarkList = [
-            {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [42, mark]]]),
-            },
-        ];
+        const node: Delta.NodeChanges = {
+            fields: new Map([
+                [
+                    fooKey,
+                    {
+                        siblingChanges: [mark],
+                    },
+                ],
+            ]),
+        };
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, node]],
+        };
         const expected: VisitScript = [
             ["enterNode", 0],
             ["enterField", fooKey],
@@ -139,7 +161,10 @@ describe("visit", () => {
             type: Delta.MarkType.Delete,
             count: 10,
         };
-        testTreeVisit([mark], [["onDelete", 0, 10]]);
+        const delta: Delta.FieldChanges = {
+            siblingChanges: [mark],
+        };
+        testTreeVisit(delta, [["onDelete", 0, 10]]);
     });
 
     it("delete child", () => {
@@ -147,12 +172,9 @@ describe("visit", () => {
             type: Delta.MarkType.Delete,
             count: 10,
         };
-        const delta: Delta.MarkList = [
-            {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [42, mark]]]),
-            },
-        ];
+        const node: Delta.NodeChanges = {
+            fields: new Map([[fooKey, { siblingChanges: [42, mark] }]]),
+        };
         const expected: VisitScript = [
             ["enterNode", 0],
             ["enterField", fooKey],
@@ -160,6 +182,9 @@ describe("visit", () => {
             ["exitField", fooKey],
             ["exitNode", 0],
         ];
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, node]],
+        };
         testTreeVisit(delta, expected);
     });
 
@@ -172,16 +197,23 @@ describe("visit", () => {
             type: Delta.MarkType.Insert,
             content,
         };
-        const set: Delta.Modify = {
-            type: Delta.MarkType.Modify,
+        const set: Delta.NodeChanges = {
             setValue: 1,
         };
-        const delta: Delta.MarkList = [
-            {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [del, 3, ins, 1, set]]]),
-            },
-        ];
+        const nodeChanges: Delta.NodeChanges = {
+            fields: new Map([
+                [
+                    fooKey,
+                    {
+                        siblingChanges: [del, 3, ins],
+                        nestedChanges: [[{ context: Delta.Context.Input, index: 14 }, set]],
+                    },
+                ],
+            ]),
+        };
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+        };
         const expected: VisitScript = [
             ["enterNode", 0],
             ["enterField", fooKey],
@@ -210,20 +242,32 @@ describe("visit", () => {
             moveId,
         };
 
-        const delta: Delta.Root = new Map([
-            [
-                rootKey,
+        const nodeChanges: Delta.NodeChanges = {
+            fields: new Map([
                 [
+                    rootKey,
                     {
-                        type: Delta.MarkType.Modify,
-                        fields: new Map([[fooKey, [2, moveOut, 3, moveIn]]]),
+                        nestedChanges: [
+                            [
+                                { context: Delta.Context.Input, index: 0 },
+                                {
+                                    fields: new Map([
+                                        [fooKey, { siblingChanges: [2, moveOut, 3, moveIn] }],
+                                    ]),
+                                },
+                            ],
+                        ],
                     },
                 ],
-            ],
-        ]);
+            ]),
+        };
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+        };
 
         const expected: VisitScript = [
-            ["enterField", rootKey],
+            // Added by testTreeVisit
+            // ["enterField", rootKey],
             ["enterNode", 0],
             ["enterField", fooKey],
             ["onMoveOut", 2, 2, moveId],
@@ -236,10 +280,11 @@ describe("visit", () => {
             ["onMoveIn", 5, 2, moveId],
             ["exitField", fooKey],
             ["exitNode", 0],
-            ["exitField", rootKey],
+            // Added by testTreeVisit
+            // ["exitField", rootKey],
         ];
 
-        testVisit(delta, expected);
+        testTreeVisit(delta, expected);
     });
 
     it("move children to the left", () => {
@@ -256,20 +301,32 @@ describe("visit", () => {
             moveId,
         };
 
-        const delta: Delta.Root = new Map([
-            [
-                rootKey,
+        const nodeChanges: Delta.NodeChanges = {
+            fields: new Map([
                 [
+                    rootKey,
                     {
-                        type: Delta.MarkType.Modify,
-                        fields: new Map([[fooKey, [2, moveIn, 3, moveOut]]]),
+                        nestedChanges: [
+                            [
+                                { context: Delta.Context.Input, index: 0 },
+                                {
+                                    fields: new Map([
+                                        [fooKey, { siblingChanges: [2, moveIn, 3, moveOut] }],
+                                    ]),
+                                },
+                            ],
+                        ],
                     },
                 ],
-            ],
-        ]);
+            ]),
+        };
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+        };
 
         const expected: VisitScript = [
-            ["enterField", rootKey],
+            // Added by testTreeVisit
+            // ["enterField", rootKey],
             ["enterNode", 0],
             ["enterField", fooKey],
             ["onMoveOut", 5, 2, moveId],
@@ -282,10 +339,11 @@ describe("visit", () => {
             ["onMoveIn", 2, 2, moveId],
             ["exitField", fooKey],
             ["exitNode", 0],
-            ["exitField", rootKey],
+            // Added by testTreeVisit
+            // ["exitField", rootKey],
         ];
 
-        testVisit(delta, expected);
+        testTreeVisit(delta, expected);
     });
 
     it("move cousins", () => {
@@ -302,23 +360,19 @@ describe("visit", () => {
             moveId,
         };
 
-        const delta: Delta.Root = new Map([
-            [
-                rootKey,
-                [
-                    {
-                        type: Delta.MarkType.Modify,
-                        fields: new Map([
-                            [fooKey, [moveIn]],
-                            [barKey, [moveOut]],
-                        ]),
-                    },
-                ],
-            ],
-        ]);
+        const nodeChanges: Delta.NodeChanges = {
+            fields: new Map([
+                [fooKey, { siblingChanges: [moveIn] }],
+                [barKey, { siblingChanges: [moveOut] }],
+            ]),
+        };
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+        };
 
         const expected: VisitScript = [
-            ["enterField", rootKey],
+            // Added by testTreeVisit
+            // ["enterField", rootKey],
             ["enterNode", 0],
             ["enterField", fooKey],
             ["exitField", fooKey],
@@ -335,9 +389,10 @@ describe("visit", () => {
             ["enterField", barKey],
             ["exitField", barKey],
             ["exitNode", 0],
-            ["exitField", rootKey],
+            // Added by testTreeVisit
+            // ["exitField", rootKey],
         ];
 
-        testVisit(delta, expected);
+        testTreeVisit(delta, expected);
     });
 });

@@ -66,10 +66,9 @@ import * as Delta from "./delta";
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
-    const props = { visitor, hasMoves: false };
-    const containsMoves = visitFieldMarks(delta, props, firstPass);
+    const containsMoves = visitFieldMarks(delta, visitor, firstPass);
     if (containsMoves) {
-        visitFieldMarks(delta, props, secondPass);
+        visitFieldMarks(delta, visitor, secondPass);
     }
 }
 
@@ -89,36 +88,32 @@ export interface DeltaVisitor {
     exitField(key: FieldKey): void;
 }
 
-interface PassProps {
-    /**
-     * Can be omitted if equal to zero.
-     */
-    startIndex?: number;
-    visitor: DeltaVisitor;
-}
-
-type Pass = (delta: Delta.MarkList, props: PassProps) => boolean;
+type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor) => boolean;
 
 interface ModifyLike {
     setValue?: Value;
-    fields?: Delta.FieldMarks;
+    fields?: Delta.FieldChangeMap;
 }
 
-function visitFieldMarks(fields: Delta.FieldMarks, props: PassProps, func: Pass): boolean {
+function visitFieldMarks(fields: Delta.FieldChangeMap, visitor: DeltaVisitor, func: Pass): boolean {
     let containsMoves = false;
     for (const [key, field] of fields) {
-        props.visitor.enterField(key);
-        const result = func(field, { ...props, startIndex: 0 });
+        visitor.enterField(key);
+        const result = func(field, visitor);
         containsMoves ||= result;
-        props.visitor.exitField(key);
+        visitor.exitField(key);
     }
     return containsMoves;
 }
 
-function visitModify(modify: ModifyLike, props: PassProps, func: Pass): boolean {
+function visitModify(
+    index: number,
+    modify: ModifyLike,
+    visitor: DeltaVisitor,
+    func: Pass,
+): boolean {
     let containsMoves = false;
-    const { startIndex, visitor } = props;
-    visitor.enterNode(startIndex ?? 0);
+    visitor.enterNode(index);
     // Note that the `in` operator return true for properties that are present on the object even if they
     // are set to `undefined. This is leveraged here to represent the fact that the value should be set to
     // `undefined` as opposed to leaving the value untouched.
@@ -126,111 +121,134 @@ function visitModify(modify: ModifyLike, props: PassProps, func: Pass): boolean 
         visitor.onSetValue(modify.setValue);
     }
     if (modify.fields !== undefined) {
-        const result = visitFieldMarks(modify.fields, props, func);
+        const result = visitFieldMarks(modify.fields, visitor, func);
         containsMoves ||= result;
     }
-    visitor.exitNode(startIndex ?? 0);
+    visitor.exitNode(index);
     return containsMoves;
 }
 
-function firstPass(delta: Delta.MarkList, props: PassProps): boolean {
-    const { startIndex, visitor } = props;
+function firstPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
     let containsMoves = false;
-    let index = startIndex ?? 0;
-    for (const mark of delta) {
+
+    const nestedChanges = delta.nestedChanges ?? [];
+    for (const [nodeIndex, nodeChange] of nestedChanges) {
+        if (nodeIndex.context === Delta.Context.Input) {
+            const result = visitModify(nodeIndex.index, nodeChange, visitor, firstPass);
+            containsMoves ||= result;
+        }
+    }
+
+    const moveInGaps: { readonly index: number; readonly cumulCount: number }[] = [];
+    const siblingChanges = delta.siblingChanges ?? [];
+    let index = 0;
+    for (const mark of siblingChanges) {
         if (typeof mark === "number") {
             // Untouched nodes
             index += mark;
         } else {
-            let result = false;
             // Inline into `switch(mark.type)` once we upgrade to TS 4.7
             const type = mark.type;
             switch (type) {
-                case Delta.MarkType.ModifyAndDelete:
-                    result = visitModify(mark, { ...props, startIndex: index }, firstPass);
-                    visitor.onDelete(index, 1);
-                    break;
                 case Delta.MarkType.Delete:
                     visitor.onDelete(index, mark.count);
                     break;
-                case Delta.MarkType.ModifyAndMoveOut: {
-                    result = visitModify(mark, { ...props, startIndex: index }, firstPass);
-                    visitor.onMoveOut(index, 1, mark.moveId);
-                    break;
-                }
                 case Delta.MarkType.MoveOut:
                     visitor.onMoveOut(index, mark.count, mark.moveId);
-                    break;
-                case Delta.MarkType.Modify:
-                    result = visitModify(mark, { ...props, startIndex: index }, firstPass);
-                    index += 1;
                     break;
                 case Delta.MarkType.Insert:
                     visitor.onInsert(index, mark.content);
                     index += mark.content.length;
                     break;
-                case Delta.MarkType.InsertAndModify:
-                    visitor.onInsert(index, [mark.content]);
-                    result = visitModify(mark, { ...props, startIndex: index }, firstPass);
-                    index += 1;
-                    break;
-                case Delta.MarkType.MoveIn:
-                case Delta.MarkType.MoveInAndModify:
+                case Delta.MarkType.MoveIn: {
                     // Handled in the second pass
-                    result = true;
+                    containsMoves = true;
+                    const prevCount =
+                        moveInGaps.length === 0 ? 0 : moveInGaps[moveInGaps.length - 1].cumulCount;
+                    moveInGaps.push({
+                        index: index + prevCount,
+                        cumulCount: prevCount + mark.count,
+                    });
                     break;
+                }
                 default:
                     unreachableCase(type);
             }
+        }
+    }
+
+    let iMoveInGap = 0;
+    let missingMoveIns = 0;
+    for (const [nodeIndex, nodeChange] of nestedChanges) {
+        if (nodeIndex.context === Delta.Context.Output) {
+            while (
+                iMoveInGap < moveInGaps.length &&
+                nodeIndex.index > moveInGaps[iMoveInGap].index
+            ) {
+                missingMoveIns = moveInGaps[iMoveInGap].cumulCount;
+                iMoveInGap += 1;
+            }
+            const result = visitModify(
+                nodeIndex.index - missingMoveIns,
+                nodeChange,
+                visitor,
+                firstPass,
+            );
             containsMoves ||= result;
         }
     }
     return containsMoves;
 }
 
-function secondPass(delta: Delta.MarkList, props: PassProps): boolean {
-    const { startIndex, visitor } = props;
-    let index = startIndex ?? 0;
-    for (const mark of delta) {
+function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
+    const nestedChanges = delta.nestedChanges ?? [];
+    const inputNested: Delta.NestedChange[] = [];
+    const outputNested: Delta.NestedChange[] = [];
+    for (const nested of nestedChanges) {
+        (nested[0].context === Delta.Context.Input ? inputNested : outputNested).push(nested);
+    }
+    let iNested = 0;
+    let inputContextIndex = 0;
+    let index = 0;
+    const siblingChanges = delta.siblingChanges ?? [];
+    for (const mark of siblingChanges) {
         if (typeof mark === "number") {
             // Untouched nodes
             index += mark;
+            inputContextIndex += mark;
+            while (
+                iNested < inputNested.length &&
+                inputNested[iNested][0].index < inputContextIndex
+            ) {
+                const adjustedIndex = index - (inputContextIndex - inputNested[iNested][0].index);
+                visitModify(adjustedIndex, inputNested[iNested][1], visitor, secondPass);
+                iNested += 1;
+            }
         } else {
             // Inline into the `switch(...)` once we upgrade to TS 4.7
             const type = mark.type;
             switch (type) {
-                case Delta.MarkType.ModifyAndDelete:
-                case Delta.MarkType.ModifyAndMoveOut:
                 case Delta.MarkType.Delete:
                 case Delta.MarkType.MoveOut:
                     // Handled in the first pass
-                    break;
-                case Delta.MarkType.Modify:
-                    visitModify(mark, { ...props, startIndex: index }, secondPass);
-                    index += 1;
+                    inputContextIndex += mark.count;
                     break;
                 case Delta.MarkType.Insert:
                     // Handled in the first pass
                     index += mark.content.length;
-                    break;
-                case Delta.MarkType.InsertAndModify:
-                    // Handled in the first pass
-                    index += 1;
                     break;
                 case Delta.MarkType.MoveIn: {
                     visitor.onMoveIn(index, mark.count, mark.moveId);
                     index += mark.count;
                     break;
                 }
-                case Delta.MarkType.MoveInAndModify:
-                    visitor.onMoveIn(index, 1, mark.moveId);
-                    visitModify(mark, { ...props, startIndex: index }, secondPass);
-                    index += 1;
-                    break;
                 default:
                     unreachableCase(type);
             }
         }
+    }
+    for (const [nodeIndex, nodeChange] of outputNested) {
+        visitModify(nodeIndex.index, nodeChange, visitor, secondPass);
     }
     return false;
 }

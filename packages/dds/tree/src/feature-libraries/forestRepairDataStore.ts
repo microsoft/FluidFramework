@@ -45,7 +45,7 @@ export class ForestRepairDataStore implements RepairDataStore {
         const forest = this.forestProvider(revision);
         const cursor = forest.allocateCursor();
 
-        const visitFieldMarks = (fields: Delta.FieldMarks, parent: RepairDataNode): void => {
+        const visitFields = (fields: Delta.FieldChangeMap, parent: RepairDataNode): void => {
             for (const [key, field] of fields) {
                 if (parent !== this.root) {
                     cursor.enterField(key);
@@ -59,7 +59,34 @@ export class ForestRepairDataStore implements RepairDataStore {
             }
         };
 
-        function visitField(delta: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
+        function visitField(
+            delta: Delta.FieldChanges,
+            parent: RepairDataNode,
+            key: FieldKey,
+        ): void {
+            if (delta.siblingChanges !== undefined) {
+                visitFieldMarks(delta.siblingChanges, parent, key);
+            }
+            if (delta.nestedChanges !== undefined) {
+                for (const nested of delta.nestedChanges) {
+                    assert(
+                        nested[0].context === Delta.Context.Input,
+                        "TODO: support storage of deleted content from inserted trees",
+                    );
+                    const index = nested[0].index;
+                    cursor.enterNode(index);
+                    const child = parent.getOrCreateChild(key, index, undefinedFactory);
+                    visitModify(nested[1], child);
+                    cursor.exitNode();
+                }
+            }
+        }
+
+        function visitFieldMarks(
+            delta: Delta.MarkList,
+            parent: RepairDataNode,
+            key: FieldKey,
+        ): void {
             let index = 0;
             for (const mark of delta) {
                 if (typeof mark === "number") {
@@ -69,32 +96,14 @@ export class ForestRepairDataStore implements RepairDataStore {
                     // Inline into `switch(mark.type)` once we upgrade to TS 4.7
                     const type = mark.type;
                     switch (type) {
-                        case Delta.MarkType.ModifyAndMoveOut:
-                        case Delta.MarkType.ModifyAndDelete: {
-                            const child = parent.getOrCreateChild(key, index, repairDataFactory);
-                            visitModify(mark, child);
-                            onDelete(parent, key, index, 1);
-                            index += 1;
-                            break;
-                        }
                         case Delta.MarkType.MoveOut:
                         case Delta.MarkType.Delete: {
                             onDelete(parent, key, index, mark.count);
                             index += mark.count;
                             break;
                         }
-                        case Delta.MarkType.Modify: {
-                            cursor.enterNode(index);
-                            const child = parent.getOrCreateChild(key, index, undefinedFactory);
-                            visitModify(mark, child);
-                            cursor.exitNode();
-                            index += 1;
-                            break;
-                        }
                         case Delta.MarkType.Insert:
-                        case Delta.MarkType.InsertAndModify:
                         case Delta.MarkType.MoveIn:
-                        case Delta.MarkType.MoveInAndModify:
                             break;
                         default:
                             unreachableCase(type);
@@ -118,7 +127,7 @@ export class ForestRepairDataStore implements RepairDataStore {
                 node.data.value.set(revision, value);
             }
             if (modify.fields !== undefined) {
-                visitFieldMarks(modify.fields, node);
+                visitFields(modify.fields, node);
             }
         }
 
@@ -145,7 +154,7 @@ export class ForestRepairDataStore implements RepairDataStore {
             }
         }
 
-        visitFieldMarks(change, this.root);
+        visitFields(change, this.root);
         cursor.free();
     }
 
@@ -183,5 +192,5 @@ export class ForestRepairDataStore implements RepairDataStore {
 
 interface ModifyLike {
     setValue?: Value;
-    fields?: Delta.FieldMarks;
+    fields?: Delta.FieldChangeMap;
 }
