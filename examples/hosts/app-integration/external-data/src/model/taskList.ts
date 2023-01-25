@@ -260,6 +260,8 @@ export class TaskList extends DataObject implements ITaskList {
         const updateTaskPs = updatedExternalData.map(async ([id, { name, priority }]) => {
             // Write external data into savedData map.
             const currentTask = this.savedData.get<PersistedTask>(id);
+            let incomingNameDiffersFromSavedName = false;
+            let incomingPriorityDiffersFromSavedPriority = false;
             // Create a new task because it doesn't exist already
             if (currentTask === undefined) {
                 const savedNameString = SharedString.create(this.runtime);
@@ -278,6 +280,12 @@ export class TaskList extends DataObject implements ITaskList {
                     currentTask.name.get(),
                     currentTask.priority.get(),
                 ]);
+                if (savedNameString.getText() !== name) {
+                    incomingNameDiffersFromSavedName = true;
+                }
+                if (savedPriorityCell.get() !== priority) {
+                    incomingPriorityDiffersFromSavedPriority = true;
+                }
                 savedNameString.insertText(0, name);
                 savedPriorityCell.set(priority);
             }
@@ -289,10 +297,12 @@ export class TaskList extends DataObject implements ITaskList {
                 this.addTask(id, name, priority);
                 return;
             }
-            if (task.name.getText() !== name) {
+            // External change has come in AND local change has happened, so there is some conflict to resolve
+            if (incomingNameDiffersFromSavedName && task.name.getText() !== name) {
                 task.incomingNameChanged(name);
             }
-            if (task.priority !== priority) {
+            // External change has come in AND local change has happened, so there is some conflict to resolve
+            if (incomingPriorityDiffersFromSavedPriority && task.priority !== priority) {
                 task.incomingPriorityChanged(priority);
             }
         });
