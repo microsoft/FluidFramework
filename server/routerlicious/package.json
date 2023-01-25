@@ -83,7 +83,7 @@
     "concurrently": "^7.5.0",
     "copyfiles": "^2.4.1",
     "lerna": "^4.0.0",
-    "node-rdkafka": "^2.14.0",
+    "node-rdkafka": "^2.14.5",
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
     "run-script-os": "^1.1.5",

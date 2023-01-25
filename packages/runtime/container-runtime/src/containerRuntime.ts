@@ -143,7 +143,6 @@ import {
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
-    ISummarizerOptions,
     ISummarizerRuntime,
     IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
@@ -204,13 +203,6 @@ export interface ISummaryBaseConfiguration {
      * Delay before first attempt to spawn summarizing container.
      */
     initialSummarizerDelayMs: number;
-
-    /**
-     * @deprecated
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     * This defaults to false (disabled) and must be explicitly set to true to enable.
-     */
-    summarizerClientElection: boolean;
 
     /**
      * Defines the maximum allowed time to wait for a pending summary ack.
@@ -317,8 +309,6 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     initialSummarizerDelayMs: 5 * 1000, // 5 secs.
 
-    summarizerClientElection: false,
-
     nonRuntimeOpWeight: 0.1,
 
     runtimeOpWeight: 1.0,
@@ -386,40 +376,6 @@ export interface ISummaryRuntimeOptions {
      * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
      */
     initialSummarizerDelayMs?: number;
-
-    /**
-     * Flag that disables summaries if it is set to true.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryConfigurationDisableSummarizer.state} instead.
-     */
-    disableSummaries?: boolean;
-
-    /**
-     * @defaultValue 7000 operations (ops)
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.maxOpsSinceLastSummary} instead.
-     */
-    maxOpsSinceLastSummary?: number;
-
-    /**
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     *
-     * @defaultValue `false` (disabled) and must be explicitly set to true to enable.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.summarizerClientElection} instead.
-     */
-    summarizerClientElection?: boolean;
-
-    /**
-     * Options that control the running summarizer behavior.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * `{@link ISummaryConfiguration.state} = "DisableHeuristics"` instead.
-     * */
-    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 
 /**
@@ -491,9 +447,10 @@ export interface IContainerRuntimeOptions {
      */
     readonly chunkSizeInBytes?: number;
     /**
-     * If enabled, the runtime will block all attempts to send an op with a different reference sequence number
-     * from the previous ops submitted in the same JS turn. This happens when ops are reentrant (an op is created as a
-     * response to another op, likely from an event handler).
+     * If enabled, the runtime will block all attempts to send an op inside the
+     * {@link ContainerRuntime#ensureNoDataModelChanges} callback. The callback is used by
+     * {@link @fluidframework/shared-object-base#SharedObjectCore} for event handlers so enabling this
+     * will disallow modifying DDSes while handling DDS events.
      *
      * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
      * can be used to disable it at runtime.
@@ -663,6 +620,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IFluidRouter() { return this; }
 
     /**
+     * @deprecated - use loadRuntime instead.
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registryEntries - Mapping to the stores.
@@ -681,6 +639,54 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing?: boolean,
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime
     ): Promise<ContainerRuntime> {
+        let existingFlag = true;
+        if (!existing) {
+            existingFlag = false;
+        }
+        return this.loadRuntime({
+            context,
+            registryEntries,
+            existing: existingFlag,
+            requestHandler,
+            runtimeOptions,
+            containerScope,
+            containerRuntimeCtor,
+        });
+    }
+
+    /**
+     * Load the stores from a snapshot and returns the runtime.
+     * @param params - An object housing the runtime properties:
+     * - context - Context of the container.
+     * - registryEntries - Mapping to the stores.
+     * - existing - When loading from an existing snapshot
+     * - requestHandler - Request handlers for the container runtime
+     * - runtimeOptions - Additional options to be passed to the runtime
+     * - containerScope - runtime services provided with context
+     * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
+     * This allows mixin classes to leverage this method to define their own async initializer.
+     */
+    public static async loadRuntime(
+        params: {
+            context: IContainerContext;
+            registryEntries: NamedFluidDataStoreRegistryEntries;
+            existing: boolean;
+            requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+            runtimeOptions?: IContainerRuntimeOptions;
+            containerScope?: FluidObject;
+            containerRuntimeCtor?: typeof ContainerRuntime;
+        },
+    ): Promise<ContainerRuntime> {
+        const {
+            context,
+            registryEntries,
+            existing,
+            requestHandler,
+            runtimeOptions = {},
+            containerScope = {},
+            containerRuntimeCtor = ContainerRuntime
+        } = params;
+
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
         const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
@@ -762,7 +768,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (loadSequenceNumberVerification === "log") {
                     logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
                 } else {
-                    // Call both close and dispose as close implementation will no longer dispose runtime in future (2.0.0-internal.3.0.0)
+                    // Call both close and dispose as closeFn implementation will no longer dispose runtime in future
                     context.closeFn(error);
                     context.disposeFn?.(error);
                 }
@@ -905,6 +911,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private delayConnectClientId?: string;
 
+    private ensureNoDataModelChangesCalls = 0;
+
+    /**
+     * Tracks the number of detected reentrant ops to report,
+     * in order to self-throttle the telemetry events.
+     *
+     * This should be removed as part of ADO:2322
+     */
+    private opReentryCallsToReport = 5;
+
+    /**
+     * Invokes the given callback and expects that no ops are submitted
+     * until execution finishes. If an op is submitted, an error will be raised.
+     *
+     * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     *
+     * @param callback - the callback to be invoked
+     */
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        this.ensureNoDataModelChangesCalls++;
+        try {
+            return callback();
+        } finally {
+            this.ensureNoDataModelChangesCalls--;
+        }
+    }
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -955,45 +988,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summariesDisabled: boolean;
     private isSummariesDisabled(): boolean {
-        // back-compat: disableSummaries was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.disableSummaries === true) {
-            return true;
-        }
         return this.summaryConfiguration.state === "disabled";
     }
 
     private readonly heuristicsDisabled: boolean;
     private isHeuristicsDisabled(): boolean {
-        // back-compat: disableHeuristics was moved from ISummarizerOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.summarizerOptions?.disableHeuristics === true) {
-            return true;
-        }
         return this.summaryConfiguration.state === "disableHeuristics";
     }
 
-    private readonly summarizerClientElectionEnabled: boolean;
-    private isSummarizerClientElectionEnabled(): boolean {
-        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")) {
-            return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ?? true;
-        }
-        // back-compat: summarizerClientElection was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
-            return true;
-        }
-        return this.summaryConfiguration.state !== "disabled"
-            ? this.summaryConfiguration.summarizerClientElection === true
-            : false;
-    }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
-        // back-compat: maxOpsSinceLastSummary was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
-            return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
-        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.maxOpsSinceLastSummary
             : 0;
@@ -1091,7 +1095,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
-        this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
@@ -1214,7 +1217,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientId: () => this.clientId,
                 close: this.closeFn,
                 connected: () => this.connected,
-                flush: this.flush.bind(this),
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
                 orderSequentially: this.orderSequentially.bind(this),
@@ -1273,7 +1275,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.summaryCollection,
                 orderedClientElectionForSummarizer,
                 this.maxOpsSinceLastSummary,
-                this.summarizerClientElectionEnabled,
             );
 
             if (this.context.clientDetails.type === summarizerClientType) {
@@ -1946,7 +1947,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls--;
         }
 
-        if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
+        // We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
+        if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
             this.flush();
         }
         return result;
@@ -2631,6 +2633,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         metadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
+        this.verifyCanSubmitOps();
 
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
@@ -2721,6 +2724,36 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Runtime is closed");
+        }
+    }
+
+    private verifyCanSubmitOps() {
+        if (this.ensureNoDataModelChangesCalls > 0) {
+            const errorMessage = "Op was submitted from within a `ensureNoDataModelChanges` callback";
+            if (this.opReentryCallsToReport > 0) {
+                this.mc.logger.sendTelemetryEvent(
+                    { eventName: "OpReentry" },
+                    // We need to capture the call stack in order to inspect the source of this usage pattern
+                    new UsageError(errorMessage),
+                );
+                this.opReentryCallsToReport--;
+            }
+
+            // Creating ops while processing ops can lead
+            // to undefined behavior and events observed in the wrong order.
+            // For example, we have two callbacks registered for a DDS, A and B.
+            // Then if on change #1 callback A creates change #2, the invocation flow will be:
+            //
+            // A because of #1
+            // A because of #2
+            // B because of #2
+            // B because of #1
+            //
+            // The runtime must enforce op coherence by not allowing ops to be submitted
+            // while ops are being processed.
+            if (this.enableOpReentryCheck) {
+                throw new UsageError(errorMessage);
+            }
         }
     }
 
@@ -2959,14 +2992,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw new UsageError("can't get state when offline load disabled");
         }
 
+        if (this._orderSequentiallyCalls !== 0) {
+            throw new UsageError("can't get state during orderSequentially");
+        }
         // Flush pending batch.
         // getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
         // to close current batch.
         this.flush();
-
-        if (this._orderSequentiallyCalls !== 0) {
-            throw new UsageError("can't get state during orderSequentially");
-        }
 
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {

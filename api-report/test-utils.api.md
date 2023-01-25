@@ -91,7 +91,7 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
         instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
         preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & IContainerRuntime>;
         readonly IRuntimeFactory: any;
-        instantiateRuntime(context: IContainerContext, existing?: boolean | undefined): Promise<IRuntime>;
+        instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
         hasInitialized(_runtime: IContainerRuntime): Promise<void>;
     };
 };
@@ -257,7 +257,7 @@ export const TestContainerRuntimeFactory: {
         instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
         preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & IContainerRuntime>;
         readonly IRuntimeFactory: any;
-        instantiateRuntime(context: IContainerContext, existing?: boolean | undefined): Promise<IRuntime>;
+        instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
         hasInitialized(_runtime: IContainerRuntime): Promise<void>;
     };
 };
@@ -348,7 +348,6 @@ export function timeoutPromise<T = void>(executor: (resolve: (value: T | Promise
 
 // @public (undocumented)
 export interface TimeoutWithError {
-    // (undocumented)
     durationMs?: number;
     // (undocumented)
     errorMsg?: string;
@@ -358,7 +357,6 @@ export interface TimeoutWithError {
 
 // @public (undocumented)
 export interface TimeoutWithValue<T = void> {
-    // (undocumented)
     durationMs?: number;
     // (undocumented)
     reject: false;
