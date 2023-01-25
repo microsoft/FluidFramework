@@ -4,6 +4,10 @@
  */
 
 export {
+	AttributionInfo,
+	AttributionKey,
+} from "./attribution";
+export {
 	AliasResult,
 	BindState,
 	CreateChildSummarizerNodeFn,

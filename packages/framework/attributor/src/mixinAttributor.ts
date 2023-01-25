@@ -6,7 +6,13 @@ import { IDocumentMessage, ISequencedDocumentMessage, ISnapshotTree } from "@flu
 import { IAudience, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { ISummaryTreeWithStats, ITelemetryContext, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import {
+    AttributionInfo,
+    AttributionKey,
+    ISummaryTreeWithStats,
+    ITelemetryContext,
+    NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions";
 import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
@@ -15,7 +21,7 @@ import { UsageError } from "@fluidframework/container-utils";
 import {
     loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { AttributionInfo, AttributionKey, Attributor, IAttributor, OpStreamAttributor } from "./attributor";
+import { Attributor, IAttributor, OpStreamAttributor } from "./attributor";
 import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
 

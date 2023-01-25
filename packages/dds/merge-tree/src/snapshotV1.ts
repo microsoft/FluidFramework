@@ -9,11 +9,10 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { assert, bufferToString } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { UnassignedSequenceNumber } from "./constants";
 import {
-    AttributionKey,
     ISegment,
 } from "./mergeTreeNodes";
 import {
