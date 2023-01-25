@@ -70,8 +70,9 @@ const ExternalDataView: React.FC = () => {
         // Run once immediately to run without waiting.
         pollForServiceUpdates(externalData, setExternalData).catch(console.error);
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        const timer = setInterval(pollForServiceUpdates, 3000); // Poll every 3 seconds
+        const timer = setInterval(
+            ()=>{pollForServiceUpdates(externalData, setExternalData).catch(console.error)},
+            3000); // Poll every 3 seconds
         return (): void => {
             clearInterval(timer);
         }
