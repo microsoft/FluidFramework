@@ -23,8 +23,8 @@
     "eslint": "eslint src",
     "eslint:fix": "eslint src --fix",
     "format": "npm run prettier:fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1"
