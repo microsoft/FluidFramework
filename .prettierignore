@@ -17,5 +17,5 @@ common/lib/**/lib
 **/api-report/*
 **/*.api.md
 
-# End-to-End Test
+# Generated type-tests
 **/*.generated.ts
