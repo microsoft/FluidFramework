@@ -9,7 +9,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import type { ITask, ITaskList } from "../model-interface";
 
-import { DEFAULT_DIFF_PRIORITY, DEFAULT_DIFF_NAME } from "../model-interface";
+import { NONE_INCOMING_NAME, NONE_INCOMING_PRIORITY, NONE_INCOMING_TYPE } from "../model-interface";
 
 interface ITaskRowProps {
     readonly task: ITask;
@@ -22,46 +22,46 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const { task, deleteTask } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
-    const [savedName, setSavedName] =  useState<string>(task.diffName);
-    const [savedPriority, setSavedPriority] = useState<number>(task.diffPriority);
-    const [savedDiffType, setSavedDiffType] = useState<string>(task.diffType);
+    const [incomingName, setIncomingName] =  useState<string>(task.incomingName);
+    const [incomingPriority, setIncomingPriority] = useState<number>(task.incomingPriority);
+    const [incomingType, setIncomingType] = useState<string>(task.incomingType);
     useEffect(() => {
         const updateFromRemotePriority = (): void => {
             if (priorityRef.current !== null) {
                 priorityRef.current.value = task.priority.toString();
             }
         };
-        const showSavedPriority = (): void => {
-            setSavedPriority(task.diffPriority);
-            setSavedDiffType(task.diffType);
+        const showIncomingPriority = (): void => {
+            setIncomingPriority(task.incomingPriority);
+            setIncomingType(task.incomingType);
         }
         const showSavedName = (): void => {
-            setSavedName(task.diffName);
-            setSavedDiffType(task.diffType);
+            setIncomingName(task.incomingName);
+            setIncomingType(task.incomingType);
         }
         task.on("priorityChanged", updateFromRemotePriority);
-        task.on("externalPriorityChanged", showSavedPriority);
-        task.on("externalNameChanged", showSavedName);
+        task.on("incomingPriorityChanged", showIncomingPriority);
+        task.on("incomingNameChanged", showSavedName);
         updateFromRemotePriority();
         return (): void => {
             task.off("priorityChanged", updateFromRemotePriority);
-            task.off("externalPriorityChanged", showSavedPriority);
-            task.off("externalNameChanged", showSavedName);
+            task.off("incomingPriorityChanged", showIncomingPriority);
+            task.off("incomingNameChanged", showSavedName);
         };
-    }, [task, savedName, savedPriority, savedDiffType]);
+    }, [task, incomingName, incomingPriority, incomingType]);
 
     const inputHandler = (e: React.FormEvent): void => {
         const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
         task.priority = newValue;
     };
 
-    const diffVisible = savedDiffType === "none";
-    const showPriority = !diffVisible && savedPriority !== DEFAULT_DIFF_PRIORITY ? "visible" : "hidden";
-    const showName = !diffVisible && savedName !== DEFAULT_DIFF_NAME ? "visible" : "hidden";
+    const diffVisible = incomingType === NONE_INCOMING_TYPE;
+    const showPriority = !diffVisible && incomingPriority !== NONE_INCOMING_PRIORITY ? "visible" : "hidden";
+    const showName = !diffVisible && incomingName !== NONE_INCOMING_NAME ? "visible" : "hidden";
     const showAcceptButton = diffVisible ? "hidden" : "visible";
 
     let diffColor: string = "white";
-    switch(savedDiffType) {
+    switch(incomingType) {
         case "add": {
            diffColor = "green";
            break;
@@ -101,8 +101,8 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                     ❌
                 </button>
             </td>
-            <td style={{ visibility: showName, backgroundColor: diffColor }}>{ savedName }</td>
-            <td style={{ visibility: showPriority, backgroundColor: diffColor }}>{ savedPriority }</td>
+            <td style={{ visibility: showName, backgroundColor: diffColor }}>{ incomingName }</td>
+            <td style={{ visibility: showPriority, backgroundColor: diffColor }}>{ incomingPriority }</td>
             <td>
                 <button
                     onClick={ task.acceptChange } style={{ visibility: showAcceptButton }}>Accept change</button>

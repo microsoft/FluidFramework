@@ -12,7 +12,7 @@ import { SharedMap } from "@fluidframework/map";
 
 import { customerServicePort } from "../mock-service-interface";
 import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
-import { DEFAULT_DIFF_NAME, DEFAULT_DIFF_PRIORITY, DEFAULT_DIFF_TYPE } from "../model-interface";
+import { NONE_INCOMING_NAME, NONE_INCOMING_PRIORITY, NONE_INCOMING_TYPE } from "../model-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id(): string {
@@ -36,9 +36,9 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         private readonly _id: string,
         private readonly _name: SharedString,
         private readonly _priority: ISharedCell<number>,
-        public diffName: string = DEFAULT_DIFF_NAME,
-        public diffPriority: number = DEFAULT_DIFF_PRIORITY,
-        public diffType: string = DEFAULT_DIFF_TYPE,
+        public incomingName: string = NONE_INCOMING_NAME,
+        public incomingPriority: number = NONE_INCOMING_PRIORITY,
+        public incomingType: string = NONE_INCOMING_TYPE,
     ) {
         super();
         this._name.on("sequenceDelta", () => {
@@ -48,36 +48,36 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
             this.emit("priorityChanged");
         });
     }
-    private readonly resetDiffProperties = (): void => {
-        this.diffPriority = DEFAULT_DIFF_PRIORITY;
-        this.diffType = "none";
-        this.emit('externalPriorityChanged');
-        this.diffName = '';
-        this.diffType = "none";
-        this.emit('externalNameChanged');
+    public incomingNameChanged = (savedName: string): void => {
+        this.incomingName = savedName;
+        this.incomingType = "change";
+        this.emit('incomingNameChanged');
     }
-    public externalNameChanged = (savedName: string): void => {
-        this.diffName = savedName;
-        this.diffType = "change";
-        this.emit('externalNameChanged');
-    }
-    public externalPriorityChanged = (savedPriority: number): void => {
-        this.diffPriority = savedPriority;
-        this.diffType = "change";
-        this.emit('externalPriorityChanged');
+    public incomingPriorityChanged = (savedPriority: number): void => {
+        this.incomingPriority = savedPriority;
+        this.incomingType = "change";
+        this.emit('incomingPriorityChanged');
     }
     public acceptChange = (): void => {
-        if (this.diffPriority !== DEFAULT_DIFF_PRIORITY) {
-            this._priority.set(this.diffPriority);
+        this.incomingType = NONE_INCOMING_TYPE;
+        if (this.incomingPriority !== NONE_INCOMING_PRIORITY) {
+            this._priority.set(this.incomingPriority);
+            this.incomingPriority = NONE_INCOMING_PRIORITY;
+            this.emit('incomingPriorityChanged');
         }
-        if (this.diffName !== '') {
+        if (this.incomingName !== '') {
             const oldString = this._name.getText()
-            this._name.replaceText(0, oldString.length, this.diffName);
+            this._name.replaceText(0, oldString.length, this.incomingName);
+            this.incomingName = NONE_INCOMING_NAME;
+            this.emit('incomingNameChanged');
         }
-        this.resetDiffProperties();
     }
     public ignoreChange = (): void => {
-        this.resetDiffProperties();
+        this.incomingType = NONE_INCOMING_TYPE;
+        this.incomingName = NONE_INCOMING_NAME;
+        this.emit('incomingNameChanged');
+        this.incomingPriority = NONE_INCOMING_PRIORITY;
+        this.emit('incomingPriorityChanged');
     }
 }
 
@@ -279,10 +279,10 @@ export class TaskList extends DataObject implements ITaskList {
                 return;
             }
             if (task.name.getText() !== name) {
-                await task.externalNameChanged(name);
+                await task.incomingNameChanged(name);
             }
             if (task.priority !== priority) {
-                await task.externalPriorityChanged(priority);
+                await task.incomingPriorityChanged(priority);
             }
         });
         await Promise.all(updateTaskPs);

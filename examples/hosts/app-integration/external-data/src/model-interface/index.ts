@@ -41,23 +41,23 @@ export interface ITaskEvents extends IEvent {
      */
     (event: "nameChanged", listener: () => void);
     /**
-     * Emitted when the priority has changed.
+     * Emitted when the priority has changed to either the incoming value or to the NONE default value.
      */
     (event: "priorityChanged", listener: () => void);
     /**
-     * Emitted when the externalName has changed.
+     * Emitted when the incomingName has to either the incoming value or to the NONE default value.
      */
-    (event: "externalNameChanged", listener: () => void);
+    (event: "incomingNameChanged", listener: () => void);
 
     /**
-     * Emitted when extneralPriority has changed.
+     * Emitted when incomingPriority has changed to either the incoming value or to the NONE default value.
      */
-    (event: "externalPriorityChanged", listener: () => void);
+    (event: "incomingPriorityChanged", listener: () => void);
 }
 
-export const DEFAULT_DIFF_PRIORITY: number = Number.POSITIVE_INFINITY;
-export const DEFAULT_DIFF_NAME: string = "BLANK_NAME";
-export const DEFAULT_DIFF_TYPE: string = "none";
+export const NONE_INCOMING_PRIORITY: number = Number.POSITIVE_INFINITY;
+export const NONE_INCOMING_NAME: string = "BLANK_NAME";
+export const NONE_INCOMING_TYPE: string = "none";
 
 /**
  * A single task, with functionality to inspect and modify its data.  Changes to this object will update the state
@@ -79,23 +79,23 @@ export interface ITask extends IEventProvider<ITaskEvents> {
     /**
      * The task name coming in from the external server.
      */
-    diffName: string;
+    incomingName: string;
     /**
      * The task priority coming in from the external server.
      */
-    diffPriority: number;
+    incomingPriority: number;
     /**
      * The type of change to the task coming in from the external server.
      */
-    diffType: string;
+    incomingType: string;
     /**
      * Trigger event to render change to UI.
      */
-    readonly externalNameChanged:(name: string) => void;
+    readonly incomingNameChanged:(name: string) => void;
     /**
      * Trigger event to render change to UI.
      */
-    readonly externalPriorityChanged:(priority: number) => void;
+    readonly incomingPriorityChanged:(priority: number) => void;
     /**
      * Save the proposed changes to SavedData.
      */
