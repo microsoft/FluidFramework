@@ -55,7 +55,7 @@ interface ICellContent {
      * The attribution key contained in the `Cell`.
      * @alpha
      */
-    attribution: unknown;
+    attribution?: AttributionKey;
 }
 
 const snapshotFileName = "header";
