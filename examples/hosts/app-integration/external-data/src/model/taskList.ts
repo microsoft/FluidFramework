@@ -90,11 +90,6 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
             this.incomingName = undefined;
         }
     }
-    public ignoreChange = (): void => {
-        this.incomingType = undefined;
-        this.incomingName = undefined;
-        this.incomingPriority = undefined;
-    }
 }
 
 /**
