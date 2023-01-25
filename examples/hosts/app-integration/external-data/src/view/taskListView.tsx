@@ -9,8 +9,6 @@ import React, { useEffect, useRef, useState } from "react";
 
 import type { ITask, ITaskList } from "../model-interface";
 
-import { NONE_INCOMING_NAME, NONE_INCOMING_PRIORITY, NONE_INCOMING_TYPE } from "../model-interface";
-
 interface ITaskRowProps {
     readonly task: ITask;
     readonly deleteTask: () => void;
@@ -22,9 +20,9 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const { task, deleteTask } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
-    const [incomingName, setIncomingName] =  useState<string>(task.incomingName);
-    const [incomingPriority, setIncomingPriority] = useState<number>(task.incomingPriority);
-    const [incomingType, setIncomingType] = useState<string>(task.incomingType);
+    const [incomingName, setIncomingName] =  useState<string | undefined>(task.incomingName);
+    const [incomingPriority, setIncomingPriority] = useState<number | undefined>(task.incomingPriority);
+    const [incomingType, setIncomingType] = useState<string | undefined>(task.incomingType);
     useEffect(() => {
         const updateFromRemotePriority = (): void => {
             if (priorityRef.current !== null) {
@@ -55,9 +53,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
         task.priority = newValue;
     };
 
-    const diffVisible = incomingType === NONE_INCOMING_TYPE;
-    const showPriority = !diffVisible && incomingPriority !== NONE_INCOMING_PRIORITY ? "visible" : "hidden";
-    const showName = !diffVisible && incomingName !== NONE_INCOMING_NAME ? "visible" : "hidden";
+    const diffVisible = incomingType === undefined;
+    const showPriority = !diffVisible && incomingPriority !== undefined ? "visible" : "hidden";
+    const showName = !diffVisible && incomingName !== undefined ? "visible" : "hidden";
     const showAcceptButton = diffVisible ? "hidden" : "visible";
 
     let diffColor: string = "white";

@@ -64,7 +64,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
         runtime.on("signal", (message) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (message?.content?.type === SignalType.ExternalDataChanged) {        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                taskList.importExternalData();
+                taskList.importExternalData().catch(console.error);
             }
         });
         return new AppModel(taskList, container);

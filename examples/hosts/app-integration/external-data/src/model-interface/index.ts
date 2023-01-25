@@ -55,10 +55,6 @@ export interface ITaskEvents extends IEvent {
     (event: "incomingPriorityChanged", listener: () => void);
 }
 
-export const NONE_INCOMING_PRIORITY: number = Number.POSITIVE_INFINITY;
-export const NONE_INCOMING_NAME: string = "BLANK_NAME";
-export const NONE_INCOMING_TYPE: string = "none";
-
 /**
  * A single task, with functionality to inspect and modify its data.  Changes to this object will update the state
  * of the Fluid object, but will not automatically update the external data source.
@@ -79,15 +75,15 @@ export interface ITask extends IEventProvider<ITaskEvents> {
     /**
      * The task name coming in from the external server.
      */
-    incomingName: string;
+    readonly incomingName: string | undefined;
     /**
      * The task priority coming in from the external server.
      */
-    incomingPriority: number;
+    readonly incomingPriority: number | undefined;
     /**
      * The type of change to the task coming in from the external server.
      */
-    incomingType: string;
+    readonly incomingType: string | undefined;
     /**
      * Trigger event to render change to UI.
      */

@@ -12,7 +12,6 @@ import { SharedMap } from "@fluidframework/map";
 
 import { customerServicePort } from "../mock-service-interface";
 import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
-import { NONE_INCOMING_NAME, NONE_INCOMING_PRIORITY, NONE_INCOMING_TYPE } from "../model-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id(): string {
@@ -32,13 +31,33 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public set priority(newValue: number) {
         this._priority.set(newValue);
     }
+    public get incomingName(): string | undefined {
+        return this._incomingName;
+    }
+    public set incomingName(newValue: string | undefined) {
+        this._incomingName = newValue;
+        this.emit('incomingNameChanged');
+    }
+    public get incomingType(): string | undefined {
+        return this._incomingType;
+    }
+    public set incomingType(newValue: string | undefined) {
+        this._incomingType = newValue;
+    }
+    public get incomingPriority(): number | undefined {
+        return this._incomingPriority;
+    }
+    public set incomingPriority(newValue: number | undefined) {
+        this._incomingPriority = newValue;
+        this.emit('incomingPriorityChanged');
+    }
     public constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
         private readonly _priority: ISharedCell<number>,
-        public incomingName: string = NONE_INCOMING_NAME,
-        public incomingPriority: number = NONE_INCOMING_PRIORITY,
-        public incomingType: string = NONE_INCOMING_TYPE,
+        private _incomingName: string | undefined,
+        private _incomingPriority: number | undefined,
+        private _incomingType: string | undefined,
     ) {
         super();
         this._name.on("sequenceDelta", () => {
@@ -47,37 +66,34 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         this._priority.on("valueChanged", () => {
             this.emit("priorityChanged");
         });
+        this.incomingName = undefined;
+        this.incomingPriority = undefined;
+        this.incomingType = undefined;
     }
     public incomingNameChanged = (savedName: string): void => {
-        this.incomingName = savedName;
         this.incomingType = "change";
-        this.emit('incomingNameChanged');
+        this.incomingName = savedName;
     }
     public incomingPriorityChanged = (savedPriority: number): void => {
-        this.incomingPriority = savedPriority;
         this.incomingType = "change";
-        this.emit('incomingPriorityChanged');
+        this.incomingPriority = savedPriority;
     }
     public acceptChange = (): void => {
-        this.incomingType = NONE_INCOMING_TYPE;
-        if (this.incomingPriority !== NONE_INCOMING_PRIORITY) {
+        this.incomingType = undefined;
+        if (this.incomingPriority !== undefined) {
             this._priority.set(this.incomingPriority);
-            this.incomingPriority = NONE_INCOMING_PRIORITY;
-            this.emit('incomingPriorityChanged');
+            this.incomingPriority = undefined;
         }
-        if (this.incomingName !== '') {
+        if (this.incomingName !== undefined) {
             const oldString = this._name.getText()
             this._name.replaceText(0, oldString.length, this.incomingName);
-            this.incomingName = NONE_INCOMING_NAME;
-            this.emit('incomingNameChanged');
+            this.incomingName = undefined;
         }
     }
     public ignoreChange = (): void => {
-        this.incomingType = NONE_INCOMING_TYPE;
-        this.incomingName = NONE_INCOMING_NAME;
-        this.emit('incomingNameChanged');
-        this.incomingPriority = NONE_INCOMING_PRIORITY;
-        this.emit('incomingPriorityChanged');
+        this.incomingType = undefined;
+        this.incomingName = undefined;
+        this.incomingPriority = undefined;
     }
 }
 
@@ -179,7 +195,7 @@ export class TaskList extends DataObject implements ITaskList {
         if (this._draftData?.get(id) === undefined) {
             return;
         }
-        const newTask = new Task(id, nameSharedString, prioritySharedCell);
+        const newTask = new Task(id, nameSharedString, prioritySharedCell, undefined, undefined, undefined);
         this.tasks.set(id, newTask);
         this.emit("taskAdded", newTask);
     };
@@ -279,10 +295,10 @@ export class TaskList extends DataObject implements ITaskList {
                 return;
             }
             if (task.name.getText() !== name) {
-                await task.incomingNameChanged(name);
+                task.incomingNameChanged(name);
             }
             if (task.priority !== priority) {
-                await task.incomingPriorityChanged(priority);
+                task.incomingPriorityChanged(priority);
             }
         });
         await Promise.all(updateTaskPs);
@@ -380,7 +396,7 @@ export class TaskList extends DataObject implements ITaskList {
                 typedTaskData.name.get(),
                 typedTaskData.priority.get(),
             ]);
-            this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell));
+            this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell, undefined, undefined, undefined));
         }
     }
 }
