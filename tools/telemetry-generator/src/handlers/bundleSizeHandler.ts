@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/**
- * This is a template for how to define a handler file that can be passed to this tool to process
- * arbitrary JSON files.
- */
 module.exports = function handler(fileData, logger) {
     // - fileData is a JSON object obtained by calling JSON.parse() on the contents of a file.
     // - logger is an ITelemetryBufferedLogger. Call its send() method to write the output telemetry
@@ -16,7 +12,7 @@ module.exports = function handler(fileData, logger) {
         }
 
         for (const asset of fileData.assets) {
-            if (asset.size > 0 ) {
+            if (asset.size >= 0 ) {
                 logger.send({
                     category: "performance",
                     eventName: "Benchmark",

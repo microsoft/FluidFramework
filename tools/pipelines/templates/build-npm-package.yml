@@ -112,7 +112,7 @@ variables:
   - name: testWorkspace
     value: $(Pipeline.Workspace)/test
   - name: toolAbsolutePath
-    value:  ${{parameters.buildDirectory }}/tools/telemetry-generator
+    value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
 
 stages:
@@ -435,7 +435,7 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
 
-          - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), ne(variables['System.TeamProject'], 'public')) }}:
+          - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
             - task: Bash@3
               displayName: Create test directory for uploading telemetry
               inputs:
