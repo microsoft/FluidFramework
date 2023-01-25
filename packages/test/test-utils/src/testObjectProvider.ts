@@ -88,6 +88,9 @@ export interface ITestContainerConfig {
     /** Container runtime options for the container instance */
     runtimeOptions?: IContainerRuntimeOptions;
 
+    /** Whether this runtime should be instantiated using a mixed-in attributor class */
+    enableAttribution?: boolean;
+
     /** Loader options for the loader used to create containers */
     loaderProps?: Partial<ILoaderProps>;
 }
