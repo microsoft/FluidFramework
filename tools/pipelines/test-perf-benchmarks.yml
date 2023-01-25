@@ -188,25 +188,25 @@ stages:
                 echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
                 rm -rf ${{ testPackage }};
 
-        # - task: Bash@3
-        #   displayName: Write measurements to Aria/Kusto
-        #   inputs:
-        #     targetType: 'inline'
-        #     workingDirectory: $(toolAbsolutePath)
-        #     script: |
-        #       echo "Write the following benchmark output to Aria/Kusto"
-        #       ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-        #       node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
-
         - task: Bash@3
-          displayName: Get azure monitor variable and send measurment to app insights
+          displayName: Write measurements to Aria/Kusto
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo $(app-insights-connection-string)
+              echo "Write the following benchmark output to Aria/Kusto"
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run azureMonitor --handlerModule $(toolAbsolutePath)/dist/handlers/azureMonitorExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(app-insights-connection-string)';
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+
+        - task: Bash@3
+          displayName: Send Perf Benchmark Measurments to Azure App insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -357,6 +357,19 @@ stages:
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
+        - task: Bash@3
+          displayName: Send Perf Benchmark Measurments to Azure App insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
+
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Perf tests output - memory usage
           inputs:
@@ -498,6 +511,32 @@ stages:
               echo "Writing the following performance tests results to Aria/Kusto"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+
+        - task: Bash@3
+          displayName: Send Excecution Time Perf Benchmark Measurments to Azure App insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing memory usage performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.executionTimeTestOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
+
+        - task: Bash@3
+          displayName: Send Memory Usage Perf Benchmark Measurments to Azure App insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing execution time performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - execution time

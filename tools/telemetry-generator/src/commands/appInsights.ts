@@ -6,7 +6,6 @@
 import fs from "fs";
 import path from "path";
 import { Command, Flags } from "@oclif/core";
-// import { ApplicationInsights } from '@microsoft/applicationinsights-web'
 import * as appInsight from 'applicationinsights';
 
 export class EntryPoint extends Command {
@@ -57,20 +56,13 @@ export class EntryPoint extends Command {
             exitWithError("Handler module does not have a function as its default export");
         }
 
-        console.log(`obtained connection string: ${flags.connectionString}`)
-        console.log(`build id env variable: `, process.env.BUILD_ID)
-        console.log(`branch name env variable: `, process.env.BRANCH_NAME)
+        // console.log(`obtained connection string: ${flags.connectionString}`)
+        // console.log(`build id env variable: `, process.env.BUILD_ID)
+        // console.log(`branch name env variable: `, process.env.BRANCH_NAME)
 
         appInsight.setup(flags.connectionString)
         .start();
         const logger = appInsight.defaultClient;
-
-        // const appInsights = new ApplicationInsights({
-        //     config: {
-        //         connectionString: flags.connectionString
-        //     }
-        // })
-        // const logger = appInsights.defaultClient;
 
         const dirs = [...flags.dir]
         const filesToProcess: string[] = [];

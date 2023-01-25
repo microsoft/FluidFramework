@@ -3,18 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This handler uses the TemeletryClient as its logger which is from the 'applicationinsights' Azure package.
+ */
 module.exports = async function handler(fileData, logger) {
     fileData.benchmarks.forEach(async (testData) => {
-        // logger.send({
-        //     category: "performance",
-        //     eventName: "Benchmark",
-        //     benchmarkType: "ExecutionTime",
-        //     suiteName: fileData.suiteName,
-        //     benchmarkName: testData.benchmarkName,
-        //     arithmeticMean: testData.stats.arithmeticMean,
-        //     marginOfError: testData.stats.marginOfError,
-        // });
-
         const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
         await logger.trackMetric({
             name: arithmeticMeanMetricName,
