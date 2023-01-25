@@ -58,7 +58,9 @@ describe("non-collab", () => {
 
         function insertText(offset: number, text: string): void {
             let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            client.on("delta", (opArgs, delta) => {
+                deltaArgs = delta;
+            });
             const op = client.insertTextLocal(offset, text);
 
             assert(deltaArgs);
@@ -102,7 +104,9 @@ describe("non-collab", () => {
 
         function removeText(start: number, end: number): void {
             let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            client.on("delta", (opArgs, delta) => {
+                deltaArgs = delta;
+            });
             const op = client.removeRangeLocal(start, end);
 
             assert(deltaArgs);
@@ -173,7 +177,9 @@ describe("non-collab", () => {
             newProps: PropertySet,
             expected: IExpectedSegmentInfo[]): void {
             let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            client.on("delta", (opArgs, delta) => {
+                deltaArgs = delta;
+            });
             const op = client.annotateRangeLocal(start, end, newProps, undefined);
 
             assert(deltaArgs);
@@ -229,9 +235,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(localInsertPos, localInsertText),
@@ -278,9 +284,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(localInsertPos, localInsertText),
@@ -327,9 +333,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(localInsertPos, localInsertText),
@@ -377,9 +383,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(localInsertPos, localInsertText),
@@ -428,9 +434,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(localInsertPos, localInsertText),
@@ -477,9 +483,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(localInsertPos, localInsertText),
@@ -531,9 +537,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(localInsertPos, localInsertText),
@@ -602,9 +608,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage1 = client.makeOpMessage(
                 client.insertTextLocal(localInsertPos1, localInsertText1),
@@ -676,9 +682,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -724,9 +730,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -772,9 +778,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             const events: SequenceDeltaEvent[] = [];
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -815,9 +821,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             const events: SequenceDeltaEvent[] = [];
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -858,9 +864,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             const events: SequenceDeltaEvent[] = [];
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -901,10 +907,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             const events: SequenceDeltaEvent[] = [];
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
-            };
-
+            });
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
                 currentSeqNumber + 2,
@@ -945,9 +950,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -999,9 +1004,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -1053,9 +1058,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -1107,9 +1112,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -1160,9 +1165,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -1212,9 +1217,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(localRemovePosStart, localRemovePosEnd),
@@ -1272,9 +1277,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage = client.makeOpMessage(
                 client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }, undefined),
@@ -1327,9 +1332,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage = client.makeOpMessage(
                 client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }, undefined),
@@ -1381,9 +1386,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage = client.makeOpMessage(
                 client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }, undefined),
@@ -1436,9 +1441,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage = client.makeOpMessage(
                 client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }, undefined),
@@ -1490,9 +1495,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage = client.makeOpMessage(
                 client.annotateRangeLocal(localPosStart, localPosEnd, { foo1: "bar1" }, undefined),
@@ -1545,9 +1550,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage = client.makeOpMessage(
                 client.annotateRangeLocal(localPosStart, localPosEnd, { foo1: "bar1" }, undefined),
@@ -1627,9 +1632,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage1 = client.makeOpMessage(
                 client.annotateRangeLocal(secondWordStart, secondWordEnd, { foo1: "bar1" }, undefined),
@@ -1695,9 +1700,9 @@ describe("collab", () => {
 
         function step1(seqnum: number, refseqnum: number) {
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const remoteMessage = client.makeOpMessage(
                 createAnnotateRangeOp(firstWordStart, fourthWordEnd, { foo: "bar" }, undefined),
@@ -1758,9 +1763,9 @@ describe("collab", () => {
 
         function step2(seqnum: number, refseqnum: number) {
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage = client.makeOpMessage(
                 client.annotateRangeLocal(firstWordStart, secondWordEnd, { foo: "bar1" }, undefined),
@@ -1793,9 +1798,9 @@ describe("collab", () => {
 
         function step3(seqnum: number, refseqnum: number) {
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const remoteMessage = client.makeOpMessage(
                 createAnnotateRangeOp(thirdWordStart, fourthWordEnd, { foo: "bar2" }, undefined),
@@ -1835,9 +1840,9 @@ describe("collab", () => {
 
         function step4(seqnum: number, refseqnum: number) {
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localMessage = client.makeOpMessage(
                 client.annotateRangeLocal(secondWordStart, fourthWordEnd, { foo: "bar3" }, undefined),
@@ -1943,9 +1948,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -1993,9 +1998,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2043,9 +2048,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2093,9 +2098,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2143,9 +2148,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2193,9 +2198,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2243,9 +2248,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2294,9 +2299,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2345,9 +2350,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2394,9 +2399,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2444,9 +2449,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2494,9 +2499,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2544,9 +2549,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2594,9 +2599,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2644,9 +2649,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2695,9 +2700,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2746,9 +2751,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2805,9 +2810,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localInsertMessage = client.makeOpMessage(
                 client.insertTextLocal(insertPos, insertText),
@@ -2865,9 +2870,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2915,9 +2920,9 @@ describe("collab", () => {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
 
             const localRemoveMessage = client.makeOpMessage(
                 client.removeRangeLocal(deleteRangeStart, deleteRangeEnd),
@@ -2970,7 +2975,9 @@ describe("SequenceDeltaEvent", () => {
         it("single segment", () => {
             const insertText = "text";
             let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            client.on("delta", (opArgs, delta) => {
+                deltaArgs = delta;
+            });
             const op = client.insertTextLocal(0, insertText);
 
             assert(deltaArgs);
@@ -2994,7 +3001,9 @@ describe("SequenceDeltaEvent", () => {
             }
 
             let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            client.on("delta", (opArgs, delta) => {
+                deltaArgs = delta;
+            });
             const op = client.annotateRangeLocal(
                 insertText.length,
                 client.getLength() - insertText.length,
@@ -3039,9 +3048,9 @@ describe("SequenceDeltaEvent", () => {
             }
 
             let event: SequenceDeltaEvent | undefined;
-            client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
+            client.on("delta", (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
-            };
+            });
             client.applyMsg(remoteRemoveMessage);
 
             assert(event);

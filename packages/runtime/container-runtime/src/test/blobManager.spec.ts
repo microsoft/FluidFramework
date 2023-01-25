@@ -55,6 +55,8 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
             () => undefined,
             () => undefined,
             this,
+            undefined,
+            () => undefined,
         );
     }
 
