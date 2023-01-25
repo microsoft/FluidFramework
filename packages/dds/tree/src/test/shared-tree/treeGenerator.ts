@@ -13,7 +13,11 @@ export interface NodeLocation {
     onlyRootNode: boolean;
 }
 
-export function getRandomNodePosition(tree: ISharedTree, random: IRandom, existingPath = false): NodeLocation {
+export function getRandomNodePosition(
+    tree: ISharedTree,
+    random: IRandom,
+    existingPath = false,
+): NodeLocation {
     const moves = {
         field: ["enterNode", "nextField"],
         nodes: ["stop", "firstField"],
@@ -30,7 +34,7 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom, existi
 
     let currentMove = "firstField";
     const testerKey: FieldKey = brand("Test");
-    assert(cursor.mode === CursorLocationType.Nodes)
+    assert(cursor.mode === CursorLocationType.Nodes);
 
     while (currentMove !== "stop") {
         switch (currentMove) {
@@ -40,8 +44,7 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom, existi
                     // assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
                     cursor.enterNode(nodeIndex);
                     path = cursor.getPath();
-                    // nodeField = cursor.getFieldKey();
-                    if (typeof(nodeField) === 'object') {
+                    if (typeof nodeField === "object") {
                         const readCursor = tree.forest.allocateCursor();
                         moveToDetachedField(tree.forest, readCursor);
                         const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
@@ -66,8 +69,13 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom, existi
                     }
                 } else {
                     // This means no
-                    cursor.free()
-                    return { path:undefined, nodeField:undefined, nodeIndex:undefined, onlyRootNode: firstPath === path}
+                    cursor.free();
+                    return {
+                        path: undefined,
+                        nodeField: undefined,
+                        nodeIndex: undefined,
+                        onlyRootNode: firstPath === path,
+                    };
                     currentMove = random.pick(moves.nodes);
                 }
                 break;
@@ -93,7 +101,6 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom, existi
             case "nextField":
                 if (cursor.nextField()) {
                     currentMove = random.pick(moves.field);
-                    // assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
                     fieldNodes = cursor.getFieldLength();
                     nodeField = cursor.getFieldKey();
                 } else {
@@ -109,5 +116,5 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom, existi
         }
     }
     cursor.free();
-    return { path, nodeField, nodeIndex, onlyRootNode: firstPath === path};
+    return { path, nodeField, nodeIndex, onlyRootNode: firstPath === path };
 }

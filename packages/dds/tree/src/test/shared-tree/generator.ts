@@ -42,14 +42,14 @@ export interface FuzzSetPayload {
     path: UpPath | undefined;
     field: FieldKey | undefined;
     index: number | undefined;
-    value: number
+    value: number;
     treeIndex: number;
 }
 
 export type FuzzChange = FuzzInsert | FuzzDelete | FuzzSetPayload;
 
 export interface Synchronize {
-	type: 'synchronize';
+    type: "synchronize";
 }
 
 export interface FuzzTestState extends BaseFuzzTestState {
@@ -59,7 +59,7 @@ export interface FuzzTestState extends BaseFuzzTestState {
 }
 
 export interface TreeContext {
-	treeIndex: number;
+    treeIndex: number;
 }
 
 export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> => {
@@ -70,12 +70,8 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         const tree = trees[state.treeIndex];
 
         // generate edit for that specific tree
-        const {
-            path,
-            nodeField,
-            nodeIndex,
-        } = getRandomNodePosition(tree, state.random);
-        assert(typeof(nodeField) !== 'object')
+        const { path, nodeField, nodeIndex } = getRandomNodePosition(tree, state.random);
+        assert(typeof nodeField !== "object");
         const insert: FuzzInsert = {
             fuzzType: "insert",
             path,
@@ -93,25 +89,26 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         const tree = trees[state.treeIndex];
 
         // generate edit for that specific tree
-        const {
-            path,
-            nodeField,
-            nodeIndex,
-            onlyRootNode
-        } = getRandomNodePosition(tree, state.random, true);
-        return onlyRootNode ? {
-                fuzzType: "delete",
-                path: undefined,
-                field: undefined,
-                index: undefined,
-                treeIndex: state.treeIndex,
-            } : {
-                fuzzType: "delete",
-                path,
-                field: nodeField,
-                index: nodeIndex,
-                treeIndex: state.treeIndex,
-            };
+        const { path, nodeField, nodeIndex, onlyRootNode } = getRandomNodePosition(
+            tree,
+            state.random,
+            true,
+        );
+        return onlyRootNode
+            ? {
+                  fuzzType: "delete",
+                  path: undefined,
+                  field: undefined,
+                  index: undefined,
+                  treeIndex: state.treeIndex,
+              }
+            : {
+                  fuzzType: "delete",
+                  path,
+                  field: nodeField,
+                  index: nodeIndex,
+                  treeIndex: state.treeIndex,
+              };
     }
 
     async function setPayloadGenerator(state: EditState): Promise<FuzzSetPayload> {
@@ -120,13 +117,9 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         const tree = trees[state.treeIndex];
 
         // generate edit for that specific tree
-        const {
-            path,
-            nodeField,
-            nodeIndex,
-        } = getRandomNodePosition(tree, state.random, true);
+        const { path, nodeField, nodeIndex } = getRandomNodePosition(tree, state.random, true);
         const fuzzSetPayload: FuzzSetPayload = {
-            fuzzType: 'setPayload',
+            fuzzType: "setPayload",
             path,
             field: nodeField,
             index: nodeIndex,
@@ -144,7 +137,7 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
     const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
         [insertGenerator, 5, (state: EditState) => state.numberOfEdits < 3000],
         [deleteGenerator, 1, (state: EditState) => state.numberOfEdits < 3000],
-        [setPayloadGenerator, 1, (state: EditState) => state.numberOfEdits < 3000]
+        [setPayloadGenerator, 1, (state: EditState) => state.numberOfEdits < 3000],
     ]);
 
     return async (state: FuzzTestState): Promise<Operation | typeof done> => {
@@ -156,18 +149,18 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         });
         state.numberOfEdits += 1;
         if (contents === done) {
-			return done;
-		}
+            return done;
+        }
         return { type: "edit", contents, index: treeIndex };
     };
 };
 
 export function makeOpGenerator(): AsyncGenerator<Operation, FuzzTestState> {
     const maximumEdits: AcceptanceCondition<FuzzTestState> = ({ numberOfEdits }) =>
-		numberOfEdits < 4000;
-	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
-		[makeEditGenerator(), 3, maximumEdits],
-        [{ type: 'synchronize' }, 1, maximumEdits]
-	];
-	return createWeightedAsyncGenerator(opWeights);
+        numberOfEdits < 4000;
+    const opWeights: AsyncWeights<Operation, FuzzTestState> = [
+        [makeEditGenerator(), 3, maximumEdits],
+        [{ type: "synchronize" }, 1, maximumEdits],
+    ];
+    return createWeightedAsyncGenerator(opWeights);
 }

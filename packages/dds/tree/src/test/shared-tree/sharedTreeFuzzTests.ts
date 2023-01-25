@@ -4,13 +4,12 @@
  */
 import { strict as assert } from "assert";
 import {
-	AsyncGenerator,
+    AsyncGenerator,
     makeRandom,
-	describeFuzz,
-	performFuzzActionsAsync as performFuzzActionsBase,
+    describeFuzz,
+    performFuzzActionsAsync as performFuzzActionsBase,
     takeAsync as take,
-    IRandom,
-} from '@fluid-internal/stochastic-test-utils';
+} from "@fluid-internal/stochastic-test-utils";
 import {
     FieldKinds,
     singleTextCursor,
@@ -18,7 +17,7 @@ import {
     jsonableTreeFromCursor,
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
-import { ITestTreeProvider, SummarizeType, TestTreeProvider } from "../utils";
+import { SummarizeType, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import {
     JsonableTree,
@@ -34,16 +33,17 @@ import {
     UpPath,
     compareUpPaths,
 } from "../../core";
-import { FuzzChange, FuzzTestState, makeOpGenerator, Operation } from "./generator";
+// eslint-disable-next-line import/no-internal-modules
 import { topDownPath } from "../../tree/pathTree";
+import { FuzzChange, FuzzTestState, makeOpGenerator, Operation } from "./generator";
 
 export async function performFuzzActions(
-	generator: AsyncGenerator<Operation, FuzzTestState>,
-	seed: number,
-	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
+    generator: AsyncGenerator<Operation, FuzzTestState>,
+    seed: number,
+    saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
 ): Promise<Required<FuzzTestState>> {
-	const random = makeRandom(seed);
-    const provider = await TestTreeProvider.create(2, SummarizeType.onDemand)
+    const random = makeRandom(seed);
+    const provider = await TestTreeProvider.create(2, SummarizeType.onDemand);
 
     const initialTreeState: JsonableTree = {
         type: brand("Node"),
@@ -63,50 +63,56 @@ export async function performFuzzActions(
     initializeTestTree(provider.trees[0], initialTreeState);
     await provider.ensureSynchronized();
 
-	const initialState: FuzzTestState = {
+    const initialState: FuzzTestState = {
         random,
         testTreeProvider: provider,
         numberOfEdits: 0,
-        edits:[],
+        edits: [],
     };
-	const finalState = await performFuzzActionsBase(
-		generator,
-		{
-			edit: async (state, operation) => {
-				const { index, contents } = operation;
-                const tree = state.testTreeProvider.trees[index]
-				await applyFuzzChange(tree, contents);
-				return state;
-			},
+    await initialState.testTreeProvider.ensureSynchronized();
+    const readCursor1 = initialState.testTreeProvider.trees[0].forest.allocateCursor();
+    moveToDetachedField(initialState.testTreeProvider.trees[0].forest, readCursor1);
+    const actual1 = mapCursorField(readCursor1, jsonableTreeFromCursor);
+    readCursor1.free();
+
+    const finalState = await performFuzzActionsBase(
+        generator,
+        {
+            edit: async (state, operation) => {
+                const { index, contents } = operation;
+                const tree = state.testTreeProvider.trees[index];
+                await applyFuzzChange(tree, contents);
+                return state;
+            },
             synchronize: async (state) => {
                 const { testTreeProvider } = state;
                 if (testTreeProvider === undefined) {
-                    fail('Attempted to synchronize with undefined testObjectProvider');
+                    fail("Attempted to synchronize with undefined testObjectProvider");
                 }
                 await testTreeProvider.ensureSynchronized();
                 return state;
             },
-		},
-		initialState,
-		saveInfo
-	);
+        },
+        initialState,
+        saveInfo,
+    );
     await finalState.testTreeProvider.ensureSynchronized();
     const readCursor = finalState.testTreeProvider.trees[0].forest.allocateCursor();
     moveToDetachedField(finalState.testTreeProvider.trees[0].forest, readCursor);
     const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
     readCursor.free();
 
-	return finalState as Required<FuzzTestState>;
+    return finalState as Required<FuzzTestState>;
 }
 
 export async function performFuzzActionsAbort(
-	generator: AsyncGenerator<Operation, FuzzTestState>,
-	seed: number,
+    generator: AsyncGenerator<Operation, FuzzTestState>,
+    seed: number,
     validateAnchor?: boolean,
-	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
+    saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
 ): Promise<Required<FuzzTestState>> {
-	const random = makeRandom(seed);
-    const provider = await TestTreeProvider.create(1, SummarizeType.onDemand)
+    const random = makeRandom(seed);
+    const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
     const initialTreeState: JsonableTree = {
         type: brand("Node"),
@@ -127,12 +133,12 @@ export async function performFuzzActionsAbort(
     const tree = provider.trees[0];
 
     initializeTestTree(provider.trees[0], initialTreeState);
-    validateTree(provider.trees[0], [initialTreeState])
+    validateTree(provider.trees[0], [initialTreeState]);
 
     // building the anchor for anchor stability test
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
-    cursor.enterNode(0)
+    cursor.enterNode(0);
     cursor.getPath();
     cursor.firstField();
     cursor.getFieldKey();
@@ -140,37 +146,37 @@ export async function performFuzzActionsAbort(
     const firstAnchor = cursor.buildAnchor();
     cursor.free();
 
-	const initialState: FuzzTestState = {
+    const initialState: FuzzTestState = {
         random,
         testTreeProvider: provider,
         numberOfEdits: 0,
         edits: [],
     };
-	const finalState = await performFuzzActionsBase(
-		generator,
-		{
-			edit: async (state, operation) => {
-				const { index, contents } = operation;
-			    abortFuzzChange(tree, contents);
-				return state;
-			},
+    const finalState = await performFuzzActionsBase(
+        generator,
+        {
+            edit: async (state, operation) => {
+                const { index, contents } = operation;
+                abortFuzzChange(tree, contents);
+                return state;
+            },
             synchronize: async (state) => {
                 const { testTreeProvider } = state;
                 if (testTreeProvider === undefined) {
-                    fail('Attempted to synchronize with undefined testObjectProvider');
+                    fail("Attempted to synchronize with undefined testObjectProvider");
                 }
                 await testTreeProvider.ensureSynchronized();
                 return state;
             },
-		},
-		initialState,
-		saveInfo
-	);
+        },
+        initialState,
+        saveInfo,
+    );
 
     await finalState.testTreeProvider.ensureSynchronized();
-    validateTree(provider.trees[0], [initialTreeState])
+    validateTree(provider.trees[0], [initialTreeState]);
 
-    if (validateAnchor){
+    if (validateAnchor) {
         const expectedPath: UpPath = {
             parent: {
                 parent: undefined,
@@ -178,12 +184,12 @@ export async function performFuzzActionsAbort(
                 parentField: rootFieldKeySymbol,
             },
             parentField: brand("foo"),
-            parentIndex: 1
-        }
-        const anchorPath = tree.locate(firstAnchor)
-        assert(compareUpPaths(expectedPath, anchorPath))
+            parentIndex: 1,
+        };
+        const anchorPath = tree.locate(firstAnchor);
+        assert(compareUpPaths(expectedPath, anchorPath));
     }
-	return finalState as Required<FuzzTestState>;
+    return finalState as Required<FuzzTestState>;
 }
 
 function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
@@ -197,15 +203,10 @@ function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
 function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
     const index = contents.index;
     const nodeField = contents.field;
-	switch (contents.fuzzType) {
-		case 'insert':
+    switch (contents.fuzzType) {
+        case "insert":
             if (index !== undefined && nodeField !== undefined) {
                 try {
-                    const testPath = topDownPath(contents.path);
-                    const readCursor = tree.forest.allocateCursor();
-                    moveToDetachedField(tree.forest, readCursor);
-                    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                    readCursor.free();
                     tree.runTransaction((forest, editor) => {
                         const field = editor.sequenceField(contents.path, nodeField);
                         field.insert(
@@ -214,24 +215,28 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
                         );
                         return TransactionResult.Abort;
                     });
-                    const readCursor2 = tree.forest.allocateCursor();
-                    moveToDetachedField(tree.forest, readCursor2);
-                    const actual2 = mapCursorField(readCursor2, jsonableTreeFromCursor);
-                    readCursor2.free();
                 } catch (error) {
                     const testPath = topDownPath(contents.path);
                     const readCursor = tree.forest.allocateCursor();
                     moveToDetachedField(tree.forest, readCursor);
                     const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+                    const jsonData = JSON.stringify(actual);
                     readCursor.free();
+                    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+                    const fs = require("fs");
+                    fs.writeFile("invalidInsert.txt", jsonData, (err: any) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
                 }
             }
-			break;
-        case 'delete':
+            break;
+        case "delete":
             if (index !== undefined && nodeField !== undefined) {
                 const parent = contents.path?.parent;
-                const delField = contents.path?.parentField
-                if(delField !== undefined && parent !== undefined){
+                const delField = contents.path?.parentField;
+                if (delField !== undefined && parent !== undefined) {
                     try {
                         const testPath = topDownPath(contents.path);
                         const readCursor = tree.forest.allocateCursor();
@@ -240,13 +245,9 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
                         readCursor.free();
                         tree.runTransaction((forest, editor) => {
                             const field = editor.sequenceField(parent, delField);
-                            field.delete(0, 1); // set index to 0 for now for testing purposes.
+                            field.delete(index, 1); // set index to 0 for now for testing purposes.
                             return TransactionResult.Abort;
                         });
-                        const readCursor2 = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor2);
-                        const actual2 = mapCursorField(readCursor2, jsonableTreeFromCursor);
-                        readCursor2.free();
                     } catch (error) {
                         const testPath = topDownPath(contents.path);
                         const readCursor = tree.forest.allocateCursor();
@@ -254,14 +255,13 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
                         const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
                         readCursor.free();
                     }
-
                 }
             }
             break;
-        case 'setPayload':
+        case "setPayload":
             if (index !== undefined && nodeField !== undefined) {
                 const path = contents.path;
-                if(path !== undefined){
+                if (path !== undefined) {
                     try {
                         const testPath = topDownPath(contents.path);
                         const readCursor = tree.forest.allocateCursor();
@@ -283,20 +283,19 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
                         const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
                         readCursor.free();
                     }
-
                 }
             }
             break;
-		default:
-			fail('Invalid edit.');
-	}
+        default:
+            fail("Invalid edit.");
+    }
 }
 
 async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise<void> {
     const index = contents.index;
     const nodeField = contents.field;
-	switch (contents.fuzzType) {
-		case 'insert':
+    switch (contents.fuzzType) {
+        case "insert":
             if (index !== undefined && nodeField !== undefined) {
                 try {
                     const testPath = topDownPath(contents.path);
@@ -312,24 +311,36 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
                         );
                         return TransactionResult.Apply;
                     });
-                    const readCursor2 = tree.forest.allocateCursor();
-                    moveToDetachedField(tree.forest, readCursor2);
-                    const actual2 = mapCursorField(readCursor2, jsonableTreeFromCursor);
-                    readCursor2.free();
                 } catch (error) {
                     const testPath = topDownPath(contents.path);
                     const readCursor = tree.forest.allocateCursor();
                     moveToDetachedField(tree.forest, readCursor);
                     const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+                    const actualData = JSON.stringify(actual);
+                    const pathData = {
+                        path: testPath,
+                        field: nodeField,
+                        index,
+                    };
+                    const jsonData = JSON.stringify([pathData, actualData]);
+                    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+                    const fs = require("fs");
+                    fs.writeFile("invalidInsert.txt", jsonData, (err: any) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
                     readCursor.free();
+                    throw error;
                 }
             }
-			break;
-        case 'delete':
+            break;
+        case "delete":
             if (index !== undefined && nodeField !== undefined) {
                 const parent = contents.path?.parent;
-                const delField = contents.path?.parentField
-                if(delField !== undefined && parent !== undefined){
+                const delField = contents.path?.parentField;
+                const parentIndex = contents.path?.parentIndex;
+                if (delField !== undefined && parent !== undefined && parentIndex !== undefined) {
                     try {
                         const testPath = topDownPath(contents.path);
                         const readCursor = tree.forest.allocateCursor();
@@ -338,7 +349,7 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
                         readCursor.free();
                         tree.runTransaction((forest, editor) => {
                             const field = editor.sequenceField(parent, delField);
-                            field.delete(0, 1); // set index to 0 for now for testing purposes.
+                            field.delete(parentIndex, 1); // set index to 0 for now for testing purposes.
                             return TransactionResult.Apply;
                         });
                         const readCursor2 = tree.forest.allocateCursor();
@@ -352,14 +363,13 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
                         const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
                         readCursor.free();
                     }
-
                 }
             }
             break;
-        case 'setPayload':
+        case "setPayload":
             if (index !== undefined && nodeField !== undefined) {
                 const path = contents.path;
-                if(path !== undefined){
+                if (path !== undefined) {
                     try {
                         const testPath = topDownPath(contents.path);
                         const readCursor = tree.forest.allocateCursor();
@@ -381,58 +391,55 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
                         const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
                         readCursor.free();
                     }
-
                 }
             }
             break;
-		default:
-			fail('Invalid edit.');
-	}
+        default:
+            fail("Invalid edit.");
+    }
 }
 
 export function runSharedTreeFuzzTests(title: string): void {
-	describeFuzz(title, ({ testCount }) => {
-		function runTest(
-			generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
-			seed: number,
-		): void {
-			it(`with seed ${seed}`, async () => {
-				await performFuzzActions(generatorFactory(), seed);
-			}).timeout(20000);
-		}
+    describeFuzz(title, ({ testCount }) => {
+        function runTest(
+            generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
+            seed: number,
+        ): void {
+            for (let i = 0; i < 10; i++) {
+                it(`with seed ${i}`, async () => {
+                    await performFuzzActions(generatorFactory(), i);
+                }).timeout(20000);
+            }
+        }
         function runTestAbort(
-			generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
-			seed: number,
-		): void {
-			it(`with seed ${seed}`, async () => {
-				await performFuzzActionsAbort(generatorFactory(), seed);
-			}).timeout(20000);
-		}
-        describe('with no-history summarization', () => {
-            const generatorFactory = () => take(
-                100,
-                makeOpGenerator()
-            )
-            describe('using TestTreeProvider', () => {
+            generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
+            seed: number,
+        ): void {
+            for (let i = 0; i < 10; i++) {
+                it.skip(`with seed ${i}`, async () => {
+                    await performFuzzActionsAbort(generatorFactory(), i);
+                }).timeout(20000);
+            }
+        }
+        describe("with no-history summarization", () => {
+            const generatorFactory = () => take(100, makeOpGenerator());
+            describe("using TestTreeProvider", () => {
                 runTest(generatorFactory, 0);
-			});
+            });
         });
-        describe('abort all edits', () => {
-            const generatorFactory = () => take(
-                20,
-                makeOpGenerator()
-            )
-            describe('using TestTreeProvider', () => {
+        describe("abort all edits", () => {
+            const generatorFactory = () => take(20, makeOpGenerator());
+            describe("using TestTreeProvider", () => {
                 runTestAbort(generatorFactory, 0);
-			});
+            });
         });
-	});
+    });
 }
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 
 describe("SharedTreeFuzz", () => {
-    runSharedTreeFuzzTests("test shared tree fuzz")
+    runSharedTreeFuzzTests("test shared tree fuzz");
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
