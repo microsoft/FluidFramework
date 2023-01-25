@@ -109,12 +109,12 @@ interface ISyncStatusViewProps { }
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
     return (
         <div>
-            {/* <h3>Sync status</h3>
+            <h3>Sync status</h3>
             <div style={{ margin: "10px 0" }}>
                 Fluid has [no] unsync'd changes (not implemented)<br />
                 External data source has [no] unsync'd changes (not implemented)<br />
                 Current sync activity: [idle | fetching | writing | resolving conflicts?] (not implemented)<br />
-            </div> */}
+            </div>
         </div>
     );
 };
