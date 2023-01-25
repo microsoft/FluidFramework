@@ -19,9 +19,19 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 - [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
+- [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
 
 ### Deprecated IPendingFlush
 `IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+
+### For Driver Authors: Document Storage Service policy may become required
+
+_AWARENESS: The policy `IDocumentStorageServicePolicies.maximumCacheDurationMs` MUST be set and enforced by drivers
+used in applications where [Garbage Collection](packages/runtime/container-runtime/garbageCollection.md) is enabled, otherwise **data loss may occur**._
+
+In a subsequent major release, the policy `IDocumentStorageServicePolicies.maximumCacheDurationMs`
+(and likewise `IDocumentStorageService.policies` itself) may become required,
+to ensure all drivers take note of this requirement and enforce this policy.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
