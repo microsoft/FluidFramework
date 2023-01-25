@@ -9,5 +9,5 @@
  * @packageDocumentation
  */
 
-export { SharedCell, AttributionKey, ICellOptions, ICellAttributionOptions } from "./cell";
-export { ISharedCell, ISharedCellEvents } from "./interfaces";
+export { SharedCell } from "./cell";
+export { ISharedCell, ISharedCellEvents, AttributionKey, ICellOptions, ICellAttributionOptions } from "./interfaces";

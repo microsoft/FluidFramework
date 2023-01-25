@@ -13,9 +13,9 @@ import {
     MockStorage,
     MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
-import { ICellOptions, SharedCell } from "../cell";
+import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
-import { ISharedCell } from "../interfaces";
+import { ISharedCell, ICellOptions } from "../interfaces";
 
 function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory, options?: ICellOptions): ISharedCell {
     // Create and connect a second SharedCell.

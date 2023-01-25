@@ -16,19 +16,19 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public
+// @alpha
 export interface AttributionKey {
     seq: number;
     type: "op";
 }
 
-// @public
+// @alpha
 export interface ICellAttributionOptions {
     // (undocumented)
     track?: boolean;
 }
 
-// @public
+// @alpha
 export interface ICellOptions {
     // (undocumented)
     attribution?: ICellAttributionOptions;
@@ -39,7 +39,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
-    // (undocumented)
+    // @alpha (undocumented)
     getAttribution(): AttributionKey | undefined;
     set(value: Serializable<T>): void;
 }
@@ -52,7 +52,8 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 
 // @public
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options?: ICellOptions | undefined);
+    // @alpha
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options?: ICellOptions);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;
@@ -66,8 +67,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
-    // (undocumented)
-    options?: ICellOptions | undefined;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
     set(value: Serializable<T>): void;

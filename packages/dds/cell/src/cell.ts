@@ -21,6 +21,8 @@ import {
     ISharedCell,
     ISharedCellEvents,
     ICellLocalOpMetadata,
+    AttributionKey,
+    ICellOptions
 } from "./interfaces";
 
 /**
@@ -54,46 +56,6 @@ interface ICellContent {
      * @alpha
      */
     attribution: unknown;
-}
-
-/**
- * Options related to attribution
- */
-export interface ICellOptions {
-    attribution?: ICellAttributionOptions;
-}
-
-/**
- * This enables the cell to store the attribution information which can be accessed with the runtime
- * (i.e. who creeated the content and when it was created)
- *
- * default: false
- */
-export interface ICellAttributionOptions {
-    track?: boolean;
-}
-
-/**
- * Can be indexed into the ContainerRuntime in order to retrieve attribution info.
- *
- */
-export interface AttributionKey {
-    /**
-     * The type of attribution this key corresponds to.
-     *
-     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
-     * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
-     *
-     * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
-     * AttributionKey a discriminated union on the 'type' field. This would empower
-     * consumers with the ability to implement different attribution policies.
-    */
-    type: "op";
-
-	/**
-	 * The sequenceNumber of the op this attribution key is for.
-	 */
-    seq: number;
 }
 
 const snapshotFileName = "header";
@@ -146,16 +108,22 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
 
     private attribution: AttributionKey | undefined;
 
+    private readonly options: ICellOptions | undefined;
+
     /**
      * Constructs a new `SharedCell`.
      * If the object is non-local an id and service interfaces will be provided.
      *
+     * @alpha
+     *
      * @param runtime - The data store runtime to which the `SharedCell` belongs.
      * @param id - Unique identifier for the `SharedCell`.
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-parameter-properties
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, public options?: ICellOptions) {
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options?: ICellOptions) {
         super(id, runtime, attributes, "fluid_cell_");
+
+        this.options ??= options;
 
         const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean("Fluid.Attribution.EnableOnNewFile");
         if (configSetAttribution !== undefined) {
@@ -228,8 +196,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     }
 
     /**
-     * {@inheritDoc ISharedCell.setAttribution}
-     * @alpha
+     * Set the attribution through the SequencedDocumentMessage
      */
     private setAttribution(message: ISequencedDocumentMessage): void {
         this.attribution = { type: "op", seq: message.sequenceNumber };
