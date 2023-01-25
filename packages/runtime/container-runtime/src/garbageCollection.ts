@@ -122,11 +122,13 @@ export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
     updateUsedRoutes(usedRoutes: string[]): void;
-    /** After GC has run, called to notify the runtime of routes that are unused in it. */
+    /**
+     * After GC has run, called to notify the runtime of routes that are unused in it. The runtime is responsible
+     * for telling the garbage collector the routes it has deleted
+    */
     updateUnusedRoutes(unusedRoutes: string[]): string[];
     /** Called to notify the runtime of routes that are tombstones. */
     updateTombstonedRoutes(tombstoneRoutes: string[]): void;
-    /** Called to notify the runtime of datastore routes to be swept. */
     /** Returns a referenced timestamp to be used to track unreferenced nodes. */
     getCurrentReferenceTimestampMs(): number | undefined;
     /** Returns the type of the GC node. */

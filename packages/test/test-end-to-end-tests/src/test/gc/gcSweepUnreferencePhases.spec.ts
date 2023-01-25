@@ -86,7 +86,9 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         const dataStore = await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
         const dataStoreHandle = dataStore.entryPoint;
         assert(dataStoreHandle !== undefined, "Expected a handle when creating a datastore");
-        const dataStoreId = (await dataStoreHandle.get() as ITestDataObject)._context.id;
+        const dataObject = await dataStoreHandle.get() as ITestDataObject;
+        const dataStoreId = dataObject._context.id;
+        const ddsHandle = dataObject._root.handle;
         const blobContents = "Blob contents";
         const blobHandle = await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
 
@@ -145,7 +147,8 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         const sweepState = getGCSweepStateFromSummary(summaryTree3);
         assert(sweepState !== undefined, "Should have sweep state");
         assert(sweepState.includes(dataStoreHandle.absolutePath), "Data Store should be swept");
-        // assert(sweepState.includes(blobHandle.absolutePath), "Blob should be tombstoned");
+        assert(sweepState.includes(ddsHandle.absolutePath), "DDS should be swept");
+        assert(sweepState.length === 2, "Nothing else should have been swept");
         // Summary check
         assert(!(await isDataStoreInSummaryTree(summaryTree3, dataStoreId)), "Data Store should not be in the summary!");
 

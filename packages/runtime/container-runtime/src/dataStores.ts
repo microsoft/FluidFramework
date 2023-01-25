@@ -696,9 +696,8 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            if(this.contexts.has(dataStoreId)) {
-                tombstonedDataStoresSet.add(dataStoreId);
-            }
+            assert(this.contexts.has(dataStoreId), 0x510 /* No data store with specified id */);
+            tombstonedDataStoresSet.add(dataStoreId);
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
