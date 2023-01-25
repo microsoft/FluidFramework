@@ -504,8 +504,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                 return m;
             })
             .catch((error) => {
-                // Setting undefined in case someone tries to recover from module failure by calling again.
-                this.summaryModuleP = undefined;
                 this.odspSummaryModuleLoaded = false;
                 throw error;
             });
