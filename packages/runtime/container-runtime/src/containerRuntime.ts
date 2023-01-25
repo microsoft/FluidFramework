@@ -2241,7 +2241,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public updateUnusedRoutes(unusedRoutes: string[]): string[] {
         const { blobManagerRoutes, dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
         const sweptRoutes: string[] = [];
-        this.updateTombstonedRoutes(unusedRoutes);
         this.blobManager.updateUnusedRoutes(blobManagerRoutes);
         if (this.mc.config.getBoolean(sweepDatastoresKey) === true) {
             const sweptDataStoreRoutes = this.dataStores.updateUnusedRoutes(dataStoreRoutes);

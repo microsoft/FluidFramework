@@ -211,6 +211,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     /** If true, throw an error when a tombstone data store is used. */
     private readonly throwOnTombstoneUsage: boolean;
 
+    /** A context should only be marked as deleted when its a remote context */
+    private deleted: boolean = false;
+
     public get attachState(): AttachState {
         return this._attachState;
     }
@@ -253,7 +256,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
     private _isInMemoryRoot: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
-    private readonly mc: MonitoringContext;
+    protected readonly mc: MonitoringContext;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
@@ -329,6 +332,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 runtime.dispose();
             }).catch((error) => {});
         }
+    }
+
+    public abstract delete(): void;
+
+    protected deleteCore(): void {
+        this.deleted = true;
     }
 
     public setTombstone(tombstone: boolean) {
@@ -769,6 +778,21 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private verifyNotClosed(callSite: string, checkTombstone = true, safeTelemetryProps: ITelemetryProperties = {}) {
+        if (this.deleted) {
+            const messageString = `Context is deleted! Call site [${callSite}]`;
+            const error = new DataCorruptionError(messageString, safeTelemetryProps);
+            this.mc.logger.sendErrorEvent(
+                {
+                    eventName: "GC_Sweep_DataStore_Changed",
+                    isSummarizerClient: this.clientDetails.type === summarizerClientType,
+                    callSite,
+                },
+                error,
+            );
+
+            throw error;
+        }
+
         if (this._disposed) {
             throw new Error(`Context is closed! Call site [${callSite}]`);
         }
@@ -888,6 +912,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
+    public delete() {
+        this.deleteCore();
+    }
+
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         return this.baseGCDetailsP;
     }
@@ -999,6 +1027,19 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         // Local data store does not have initial summary.
         return {};
+    }
+
+    public delete() {
+        sendGCTombstoneEvent(
+            this.mc,
+            {
+                eventName: "GC_Deleted_DataStore_Unexpected_Delete",
+                category: "error",
+                isSummarizerClient: this.containerRuntime.clientDetails.type === summarizerClientType,
+            },
+            this.pkg,
+        )
+        this.deleteCore();
     }
 }
 

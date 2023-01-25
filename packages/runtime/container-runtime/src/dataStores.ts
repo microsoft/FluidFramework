@@ -669,7 +669,9 @@ export class DataStores implements IDisposable {
                 continue;
             }
 
-            assert(this.contexts.has(dataStoreId), "Attempting to delete unknown dataStore");
+            const dataStore = this.contexts.get(dataStoreId);
+            assert(dataStore !== undefined, "Attempting to delete unknown dataStore");
+            dataStore.delete();
 
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
