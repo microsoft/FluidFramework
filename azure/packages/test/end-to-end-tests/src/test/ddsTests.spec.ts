@@ -4,14 +4,14 @@
  */
 import { strict as assert } from "node:assert";
 
+import { AzureClient } from "@fluidframework/azure-client";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { AzureClient } from "@fluidframework/azure-client";
 
 import { createAzureClient } from "./AzureClientFactory";
-import { TestDataObject, CounterTestDataObject } from "./TestDataObject";
+import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
 import { mapWait } from "./utils";
 
 describe("Fluid data updates", () => {
