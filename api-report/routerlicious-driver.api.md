@@ -58,7 +58,6 @@ export interface ITokenResponse {
 
 // @public
 export interface ITokenService {
-    // (undocumented)
     extractClaims(token: string): ITokenClaims;
 }
 
