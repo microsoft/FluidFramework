@@ -103,6 +103,7 @@ import {
     seqFromTree,
     calculateStats,
     TelemetryContext,
+    createResponseError,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
@@ -172,6 +173,7 @@ import {
     OpSplitter,
     RemoteMessageProcessor,
 } from "./opLifecycle";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -1497,6 +1499,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
         }
 
+        if (this.garbageCollector.isNodeDeleted(id)) {
+            // The requested data store is removed by gc. Create a 404 gc response exception.
+            const error = responseToException(createResponseError(
+                404,
+                "DataStore was deleted",
+                request,
+            ), request);
+            sendGCTombstoneEvent(
+                this.mc,
+                {
+                    eventName: "GC_Deleted_DataStore_Requested",
+                    category: "error",
+                    isSummarizerClient: this.clientDetails.type === summarizerClientType,
+                    headers: JSON.stringify(headerData),
+                },
+                undefined, /** packagePath */
+                error,
+            );
+            throw responseToException(create404Response(request), request);
+        }
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
