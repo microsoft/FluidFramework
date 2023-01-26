@@ -199,14 +199,14 @@ stages:
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
         - task: Bash@3
-          displayName: Send Perf Benchmark Measurments to Azure App insights
+          displayName: Send Execution time Performance Benchmark Measurments to Azure App insights
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
               echo "Writing performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString $(fluid-app-insights-connection-string);
+              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -365,7 +365,7 @@ stages:
             script: |
               echo "Writing performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString $(fluid-app-insights-connection-string);
+              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -520,7 +520,7 @@ stages:
             script: |
               echo "Writing memory usage performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString $(fluid-app-insights-connection-string);
+              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -533,7 +533,7 @@ stages:
             script: |
               echo "Writing execution time performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString $(fluid-app-insights-connection-string);
+              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
