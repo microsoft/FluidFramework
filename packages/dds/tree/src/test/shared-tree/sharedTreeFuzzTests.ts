@@ -14,10 +14,9 @@ import {
     FieldKinds,
     singleTextCursor,
     namedTreeSchema,
-    jsonableTreeFromCursor,
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
-import { SummarizeType, TestTreeProvider } from "../utils";
+import { SummarizeType, TestTreeProvider, validateTree } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import {
     JsonableTree,
@@ -28,7 +27,6 @@ import {
     fieldSchema,
     GlobalFieldKey,
     SchemaData,
-    mapCursorField,
     UpPath,
     compareUpPaths,
 } from "../../core";
@@ -160,14 +158,6 @@ export async function performFuzzActionsAbort(
         assert(compareUpPaths(expectedPath, anchorPath));
     }
     return finalState as Required<FuzzTestState>;
-}
-
-function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
-    const readCursor = tree.forest.allocateCursor();
-    moveToDetachedField(tree.forest, readCursor);
-    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-    readCursor.free();
-    assert.deepEqual(actual, expected);
 }
 
 function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {

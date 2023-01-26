@@ -26,12 +26,13 @@ import {
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 import {
+    jsonableTreeFromCursor,
     mapFieldMarks,
     mapMarkList,
     mapTreeFromCursor,
     singleTextCursor,
 } from "../feature-libraries";
-import { RevisionTag, Delta, InvalidationToken, SimpleObservingDependent } from "../core";
+import { RevisionTag, Delta, InvalidationToken, SimpleObservingDependent, moveToDetachedField, mapCursorField, JsonableTree } from "../core";
 import { brand, makeArray } from "../util";
 
 // Testing utilities
@@ -344,4 +345,12 @@ export function fakeRepair(
     count: number,
 ): Delta.ProtoNode[] {
     return makeArray(count, () => singleTextCursor({ type: brand("FakeRepairedNode") }));
+}
+
+export function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
+    const readCursor = tree.forest.allocateCursor();
+    moveToDetachedField(tree.forest, readCursor);
+    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+    readCursor.free();
+    assert.deepEqual(actual, expected);
 }
