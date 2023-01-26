@@ -301,7 +301,7 @@ export function runSharedTreeFuzzTests(title: string): void {
                 }).timeout(20000);
             }
         }
-        describe("with no-history summarization", () => {
+        describe("basic convergence", () => {
             const generatorFactory = () => take(200, makeOpGenerator());
             describe("using TestTreeProvider", () => {
                 runTest(generatorFactory, 0);
