@@ -155,6 +155,7 @@ export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
+export const idCompressorBlobName = ".idCompressor"
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;

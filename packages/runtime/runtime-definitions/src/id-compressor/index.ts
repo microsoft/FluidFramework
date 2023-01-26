@@ -22,3 +22,15 @@ export {
     IIdCompressorCore,
     IIdCompressor
 } from "./idCompressor";
+
+export {
+    SessionSpaceCompressedId,
+    OpSpaceCompressedId,
+    SessionId,
+    FinalCompressedId,
+    StableId,
+    UuidString,
+    CompressedId,
+    SessionUnique,
+    LocalCompressedId
+} from "./identifiers";

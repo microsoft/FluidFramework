@@ -89,7 +89,9 @@ import {
     IDataStore,
     ITelemetryContext,
     SerializedIdCompressorWithOngoingSession,
-    SerializedIdCompressorWithNoSession
+    SerializedIdCompressorWithNoSession,
+    IIdCompressor,
+    IIdCompressorCore
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -131,6 +133,7 @@ import {
     extractSummaryMetadataMessage,
     IContainerRuntimeMetadata,
     ICreateContainerMetadata,
+    idCompressorBlobName,
     ISummaryMetadataMessage,
     metadataBlobName,
     wrapSummaryInChannelsTree,
@@ -741,7 +744,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
             tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
             tryFetchBlob<[string, string][]>(aliasBlobName),
-            tryFetchBlob<any>(".idCompressor"),
+            tryFetchBlob<any>(idCompressorBlobName),
         ]);
 
         const loadExisting = existing === true || context.existing === true;
@@ -880,10 +883,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    public get idCompressor(): IdCompressor | undefined {
-        return this._idCompressor;
-    }
-    private readonly _idCompressor?: IdCompressor;
+    public readonly idCompressor: IIdCompressor & IIdCompressorCore | undefined;
 
     public get IFluidHandleContext(): IFluidHandleContext {
         return this.handleContext;
@@ -1116,9 +1116,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
         if (this.runtimeOptions.enableRuntimeIdCompressor) {
             if (idCompressorSnapshot !== undefined) {
-                this._idCompressor = hasOngoingSession(idCompressorSnapshot) ? IdCompressor.deserialize(idCompressorSnapshot) : IdCompressor.deserialize(idCompressorSnapshot, createSessionId())
+                this.idCompressor = hasOngoingSession(idCompressorSnapshot) ? IdCompressor.deserialize(idCompressorSnapshot) : IdCompressor.deserialize(idCompressorSnapshot, createSessionId())
             } else {
-                this._idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
+                this.idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
             }
         }
 
@@ -1583,7 +1583,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.runtimeOptions.enableRuntimeIdCompressor && this.idCompressor !== undefined) {
             const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
-            addBlobToSummary(summaryTree, '.idCompressor', idCompressorState);
+            addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
         }
 
         if (this.remoteMessageProcessor.partialMessages.size > 0) {

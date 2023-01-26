@@ -49,6 +49,9 @@ export const blobCountPropertyName = "BlobCount";
 // @public (undocumented)
 export const channelsTreeName = ".channels";
 
+// @public
+export type CompressedId = FinalCompressedId | LocalCompressedId;
+
 // @public (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -73,6 +76,12 @@ export enum CreateSummarizerNodeSource {
     // (undocumented)
     Local = 2
 }
+
+// @public
+export type FinalCompressedId = number & {
+    readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
+    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+};
 
 // @public
 export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
@@ -138,6 +147,35 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 export interface IDataStore extends IFluidRouter {
     readonly entryPoint?: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
+}
+
+// @public
+export interface IdCreationRange {
+    // (undocumented)
+    readonly ids?: IdCreationRange.Ids;
+    // (undocumented)
+    readonly sessionId: SessionId;
+}
+
+// @public (undocumented)
+export namespace IdCreationRange {
+    // (undocumented)
+    export interface HasOverrides {
+        // (undocumented)
+        readonly overrides: Overrides;
+    }
+    // (undocumented)
+    export type Ids = {
+        readonly first: UnackedLocalId;
+        readonly last: UnackedLocalId;
+    } | ({
+        readonly first?: UnackedLocalId;
+        readonly last?: UnackedLocalId;
+    } & HasOverrides);
+    // (undocumented)
+    export type Override = readonly [id: UnackedLocalId, override: string];
+    // (undocumented)
+    export type Overrides = readonly [Override, ...Override[]];
 }
 
 // @public
@@ -297,14 +335,9 @@ export interface IIdCompressor {
     // (undocumented)
     generateCompressedId(): number;
     getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>;
-    // Warning: (ae-forgotten-export) The symbol "SessionSpaceCompressedId" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "OpSpaceCompressedId" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
-    // Warning: (ae-forgotten-export) The symbol "SessionId" needs to be exported by the entry point index.d.ts
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
-    // Warning: (ae-forgotten-export) The symbol "FinalCompressedId" needs to be exported by the entry point index.d.ts
     normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
     // (undocumented)
     normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId;
@@ -313,14 +346,12 @@ export interface IIdCompressor {
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
     // (undocumented)
     serialize(withSession: boolean): SerializedIdCompressor;
-    // Warning: (ae-forgotten-export) The symbol "StableId" needs to be exported by the entry point index.d.ts
     tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
     tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
 }
 
 // @public (undocumented)
 export interface IIdCompressorCore {
-    // Warning: (ae-forgotten-export) The symbol "IdCreationRange" needs to be exported by the entry point index.d.ts
     finalizeCreationRange(range: IdCreationRange): void;
     takeNextCreationRange(): IdCreationRange;
 }
@@ -446,20 +477,41 @@ export interface ITelemetryContext {
 }
 
 // @public
+export type LocalCompressedId = number & {
+    readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
+} & SessionUnique;
+
+// @public
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
 // @public
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
-// Warning: (ae-forgotten-export) The symbol "VersionedSerializedIdCompressor" needs to be exported by the entry point index.d.ts
-//
+// @public
+export type OpSpaceCompressedId = CompressedId & {
+    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+};
+
+// @public
+export type SerializedCluster = readonly [
+sessionIndex: number,
+capacity: number,
+countOrOverrides?: number | SerializedClusterOverrides,
+overrides?: SerializedClusterOverrides
+];
+
+// @public (undocumented)
+export type SerializedClusterOverrides = readonly [
+overriddenFinalIndex: number,
+override: string,
+overriddenId?: FinalCompressedId
+][];
+
 // @public
 export interface SerializedIdCompressor extends VersionedSerializedIdCompressor {
     readonly clusterCapacity: number;
-    // Warning: (ae-forgotten-export) The symbol "SerializedCluster" needs to be exported by the entry point index.d.ts
     readonly clusters: readonly SerializedCluster[];
     readonly reservedIdCount: number;
-    // Warning: (ae-forgotten-export) The symbol "SerializedSessionData" needs to be exported by the entry point index.d.ts
     readonly sessions: readonly SerializedSessionData[];
 }
 
@@ -474,15 +526,81 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
     // (undocumented)
     readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
     readonly localSessionIndex: number;
-    // Warning: (ae-forgotten-export) The symbol "SerializedLocalState" needs to be exported by the entry point index.d.ts
     readonly localState?: SerializedLocalState;
 }
+
+// @public (undocumented)
+export type SerializedLocalOverrides = readonly (readonly [LocalCompressedId, string])[];
+
+// @public (undocumented)
+export interface SerializedLocalState {
+    readonly lastTakenLocalId: LocalCompressedId | undefined;
+    readonly localIdCount: number;
+    readonly overrides?: SerializedLocalOverrides;
+    readonly sessionNormalizer: SerializedSessionIdNormalizer;
+}
+
+// @public
+export type SerializedSessionData = readonly [
+sessionId: SessionId
+];
+
+// @public
+export interface SerializedSessionIdNormalizer {
+    // (undocumented)
+    readonly localRanges: readonly (readonly [
+    firstLocal: LocalCompressedId,
+    lastLocal: LocalCompressedId,
+    finalRanges?: readonly (readonly [
+    alignedLocal: LocalCompressedId,
+    firstFinal: FinalCompressedId,
+    lastFinal: FinalCompressedId
+    ])[]
+    ])[];
+    // (undocumented)
+    readonly nextLocalId: LocalCompressedId;
+}
+
+// @public
+export type SessionId = StableId & {
+    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
+};
+
+// @public
+export type SessionSpaceCompressedId = CompressedId & SessionUnique;
+
+// @public
+export interface SessionUnique {
+    // (undocumented)
+    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+}
+
+// @public
+export type StableId = UuidString & {
+    readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
+};
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;
 
 // @public (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";
+
+// @public (undocumented)
+export type UnackedLocalId = LocalCompressedId & OpSpaceCompressedId;
+
+// @public
+export type UuidString = string & {
+    readonly UuidString: "9d40d0ae-90d9-44b1-9482-9f55d59d5465";
+};
+
+// @public
+export interface VersionedSerializedIdCompressor {
+    // (undocumented)
+    readonly version: string;
+    // (undocumented)
+    readonly _versionedSerializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
+}
 
 // @public
 const VisibilityState_2: {

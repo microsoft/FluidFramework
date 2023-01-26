@@ -284,15 +284,13 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor{
 
     /**
      * The size of each newly created ID cluster.
+     * Must only be set with a value upon which consensus has been reached. Value must be greater than zero and less than
+     * `IdCompressor.maxClusterSize`.
      */
     public get clusterCapacity(): number {
         return this.newClusterCapacity;
     }
 
-    /**
-     * Must only be set with a value upon which consensus has been reached. Value must be greater than zero and less than
-     * `IdCompressor.maxClusterSize`.
-     */
     public set clusterCapacity(value: number) {
         assert(value > 0, 0x481 /* Clusters must have a positive capacity */);
         assert(
@@ -378,7 +376,7 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor{
      * The reserved ID count for a given session must be constant for any compressor that contains IDs from that session
      * (i.e. any DDS that uses the ID compressor must have the same reservedIdCount forever). Compressors with different
      * reserved ID counts will fail to synchronize their IDs.
-     * {@link isUuidString} or generated via {@link generateStableId}.
+     * {@link generateStableId}.
      */
     public constructor(
         public readonly localSessionId: SessionId,
