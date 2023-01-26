@@ -27,8 +27,8 @@ You can run this example using the following steps:
 
 Table View uses the following distributed data structures:
 
-- SharedDirectory - root
+-   SharedDirectory - root
 
 Table View creates the following Fluid objects:
 
-- `@fluid-example/table-document`
+-   `@fluid-example/table-document`

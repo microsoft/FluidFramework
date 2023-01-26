@@ -26,8 +26,8 @@ You can run this example using the following steps:
 
 ProseMirror uses the following distributed data structures:
 
-- SharedDirectory - root
-- SharedString - storing ProseMirror text
+-   SharedDirectory - root
+-   SharedString - storing ProseMirror text
 
 ## Known Issues
 

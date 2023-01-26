@@ -25,5 +25,5 @@ You can run this example using the following steps:
 
 Canvas uses the following distributed data structures:
 
-- SharedDirectory - root
-- Ink - Append only stream designed for ink scenarios
+-   SharedDirectory - root
+-   Ink - Append only stream designed for ink scenarios

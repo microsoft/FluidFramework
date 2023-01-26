@@ -5,7 +5,6 @@
 
 // import { Coordinate } from "..";
 
-describe("Coordinate", function() {
-    it("Runs this test", function() {
-    });
+describe("Coordinate", function () {
+    it("Runs this test", function () {});
 });

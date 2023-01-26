@@ -24,4 +24,4 @@ You can run this example using the following steps:
 
 ## Data objects
 
-The data-object-grid package pulls in a collection of outside data objects into a registry that enables creation and constructing views.  This isolates the knowledge of how to create and render the data objects away from the core application, and makes it extensible to further data object types.
+The data-object-grid package pulls in a collection of outside data objects into a registry that enables creation and constructing views. This isolates the knowledge of how to create and render the data objects away from the core application, and makes it extensible to further data object types.
