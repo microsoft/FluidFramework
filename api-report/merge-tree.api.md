@@ -5,12 +5,14 @@
 ```ts
 
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import type { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
@@ -91,17 +93,11 @@ export interface BlockUpdateActions {
     child: (block: IMergeBlock, index: number) => void;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IClientEvents" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export class Client {
+export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLogger, options?: PropertySet);
-    // (undocumented)
-    accumOps: number;
-    // (undocumented)
-    accumTime: number;
-    // (undocumented)
-    accumWindow: number;
-    // (undocumented)
-    accumWindowTime: number;
     // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
@@ -120,7 +116,7 @@ export class Client {
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
-    protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
+    findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
@@ -131,7 +127,7 @@ export class Client {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number): {
+    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -172,31 +168,15 @@ export class Client {
     load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, serializer: IFluidSerializer): Promise<{
         catchupOpsP: Promise<ISequencedDocumentMessage[]>;
     }>;
-    // (undocumented)
-    localOps: number;
     localReferencePositionToPosition(lref: ReferencePosition): number;
-    // (undocumented)
-    localTime: number;
     // (undocumented)
     localTransaction(groupOp: IMergeTreeGroupMsg): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
     longClientId: string | undefined;
-    // (undocumented)
-    maxWindowTime: number;
-    // (undocumented)
-    measureOps: boolean;
-    // (undocumented)
-    get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined;
-    set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback | undefined);
-    // (undocumented)
-    get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined;
-    set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
-    rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
-    rebasePositionWithoutSegmentSlide(pos: number, seqNumberFrom: number, localSeq: number): number | undefined;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
@@ -918,30 +898,6 @@ export interface MergeTreeRevertibleDriver {
 }
 
 // @public (undocumented)
-export interface MergeTreeStats {
-    // (undocumented)
-    histo: number[];
-    // (undocumented)
-    leafCount: number;
-    // (undocumented)
-    liveCount: number;
-    // (undocumented)
-    maxHeight: number;
-    // (undocumented)
-    maxOrdTime?: number;
-    // (undocumented)
-    nodeCount: number;
-    // (undocumented)
-    ordTime?: number;
-    // (undocumented)
-    packTime?: number;
-    // (undocumented)
-    removedLeafCount: number;
-    // (undocumented)
-    windowTime?: number;
-}
-
-// @public (undocumented)
 export interface MinListener {
     // (undocumented)
     minRequired: number;
@@ -1193,6 +1149,8 @@ export interface SegmentGroup {
     localSeq: number;
     // (undocumented)
     previousProps?: PropertySet[];
+    // (undocumented)
+    refSeq: number;
     // (undocumented)
     segments: ISegment[];
 }

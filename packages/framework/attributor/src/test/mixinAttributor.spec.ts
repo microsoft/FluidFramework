@@ -91,6 +91,7 @@ describe("mixinAttributor", () => {
         const runtimeAttribution = maybeProvidesAttributor.IRuntimeAttributor;
 
         const op: Partial<ISequencedDocumentMessage> = {
+            type: "op",
             sequenceNumber: 7,
             clientId,
             timestamp: 1006
@@ -116,6 +117,7 @@ describe("mixinAttributor", () => {
         );
 
         const op: Partial<ISequencedDocumentMessage> = {
+            type: "op",
             sequenceNumber: 7,
             clientId,
             timestamp: 1006
