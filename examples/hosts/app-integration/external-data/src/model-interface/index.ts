@@ -32,9 +32,8 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
     readonly taskList: ITaskList;
 
     /**
-    * Send custom signals to the server which will cause the server to respond
-    * with the (currently experimental) RuntimeMessage Signal to communicate
-    * an external data change and and possibly the changed data as well
+    * Send custom signal to simulate being the RuntimeMessage signal
+    * from alfred while that signal is in prototype state on the dev branch.
     */
     readonly sendCustomDebugSignal: () => void;
 }

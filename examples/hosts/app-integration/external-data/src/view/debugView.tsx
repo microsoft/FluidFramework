@@ -261,7 +261,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 
             // TODO: display error status to user?
         }
-
+        // Send signal to simulate RuntimeSignal that will get sent from alfred in the dev branch
         model.sendCustomDebugSignal();
     }
 
