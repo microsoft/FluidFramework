@@ -27,8 +27,8 @@
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prepack": "npm run webpack",
-    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+    "prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
     "webpack": "webpack --env production",
     "webpack:dev": "webpack --env development"
   },
