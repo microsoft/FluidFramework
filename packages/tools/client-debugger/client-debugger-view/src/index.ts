@@ -29,7 +29,10 @@ export {
 
 export { AudienceMember } from "./Audience";
 export { HasClientDebugger, HasContainerId } from "./CommonProps";
-export { FluidClientDebuggers as FluidClientDebugger, FluidClientDebuggersProps as FluidClientDebuggerProps } from "./Debugger";
+export {
+    FluidClientDebuggers as FluidClientDebugger,
+    FluidClientDebuggersProps as FluidClientDebuggerProps,
+} from "./Debugger";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {
     defaultRenderOptions,

@@ -29,7 +29,6 @@ export interface FluidClientDebuggersProps {
     renderOptions?: RenderOptions;
 }
 
-
 // Drop down + single container view
 /**
  * Renders the debug view for an active debugger session registered using
@@ -53,7 +52,9 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
     );
 
     function getDebuggerFromContainerId(containerId: string): IFluidClientDebugger {
-        const match = clientDebuggers.find((clientDebugger) => clientDebugger.containerId === containerId);
+        const match = clientDebuggers.find(
+            (clientDebugger) => clientDebugger.containerId === containerId,
+        );
         if (match === undefined) {
             throw new Error(`No debugger found associated with Container ID "${containerId}".`);
         }
@@ -80,7 +81,8 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
         };
     }, [getDefaultDebuggerSelectionId, selectedContainerId, debuggerRegistry, setClientDebuggers]);
 
-    const view = selectedContainerId === undefined ? (
+    const view =
+        selectedContainerId === undefined ? (
             <NoDebuggerInstance
                 onRetryDebugger={(): void => {
                     const newDebuggerList = getFluidClientDebuggers();
@@ -89,7 +91,12 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
                     setSelectedContainerId(newDefaultId);
                 }}
             />
-        ) : <ClientDebugView clientDebugger={getDebuggerFromContainerId(selectedContainerId)} renderOptions={props.renderOptions} />;
+        ) : (
+            <ClientDebugView
+                clientDebugger={getDebuggerFromContainerId(selectedContainerId)}
+                renderOptions={props.renderOptions}
+            />
+        );
 
     const slectionView: React.ReactElement =
         clientDebuggers.length > 1 ? (

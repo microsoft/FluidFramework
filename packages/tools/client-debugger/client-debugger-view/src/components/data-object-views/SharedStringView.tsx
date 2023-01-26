@@ -21,7 +21,7 @@ export interface SharedStringViewProps {
  * Default {@link @fluidframework/sequence#SharedString} viewer.
  */
 export function SharedStringView(props: SharedStringViewProps): React.ReactElement {
-    const {sharedString} = props;
+    const { sharedString } = props;
 
     const [text, setText] = React.useState<SharedString>(sharedString);
 

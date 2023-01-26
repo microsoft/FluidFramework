@@ -91,8 +91,12 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * React hook for asynchronously creating / loading the Fluid Container.
  */
 function useContainerInfo(): (ContainerInfo | undefined)[] {
-    const [sharedContainerInfo, setSharedContainerInfo] = React.useState<ContainerInfo | undefined>();
-    const [privateContainerInfo, setPrivateContainerInfo] = React.useState<ContainerInfo | undefined>();
+    const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
+        ContainerInfo | undefined
+    >();
+    const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
+        ContainerInfo | undefined
+    >();
 
     // Get the Fluid Data data on app startup and store in the state
     React.useEffect(() => {
@@ -132,19 +136,18 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
         async function getPrivateContainerData(): Promise<ContainerInfo> {
             // Always create a new container for the private view.
             // This isn't shared with other collaborators.
-            return createFluidContainer(
-                    containerSchema,
-                    populateRootMap,
-                );
+            return createFluidContainer(containerSchema, populateRootMap);
         }
 
         getPrivateContainerData().then(
             (data) => {
                 initializeFluidClientDebugger(data);
                 setPrivateContainerInfo(data);
-            }, (error) => {
+            },
+            (error) => {
                 console.error(error);
-            });
+            },
+        );
 
         return (): void => {
             if (sharedContainerInfo !== undefined) {
@@ -205,25 +208,36 @@ export function App(): React.ReactElement {
     // Load the collaborative SharedString object
     const containers = useContainerInfo();
 
-    if(containers.length !== 2) {
-        console.error(`Initialization created an unexpected number of containers: ${containers.length}`);
+    if (containers.length !== 2) {
+        console.error(
+            `Initialization created an unexpected number of containers: ${containers.length}`,
+        );
     }
 
-    const view = <Stack horizontal>
-        <StackItem>
-            {containers[0] === undefined ? (<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-                <Spinner />
-                <div>Loading Fluid container...</div>
-            </Stack>) : <AppView containerInfo={containers[0]} />}
-        </StackItem>
-        <StackItem>
-        {containers[1] === undefined ? (<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-                <Spinner />
-                <div>Loading Fluid container...</div>
-            </Stack>) : <AppView containerInfo={containers[1]} />}
-        </StackItem>
-
-    </Stack>
+    const view = (
+        <Stack horizontal>
+            <StackItem>
+                {containers[0] === undefined ? (
+                    <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+                        <Spinner />
+                        <div>Loading Fluid container...</div>
+                    </Stack>
+                ) : (
+                    <AppView containerInfo={containers[0]} />
+                )}
+            </StackItem>
+            <StackItem>
+                {containers[1] === undefined ? (
+                    <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+                        <Spinner />
+                        <div>Loading Fluid container...</div>
+                    </Stack>
+                ) : (
+                    <AppView containerInfo={containers[1]} />
+                )}
+            </StackItem>
+        </Stack>
+    );
 
     // TODO: separate loading spinner for each container as it is async loaded
     // const view =
