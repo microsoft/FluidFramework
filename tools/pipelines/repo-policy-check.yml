@@ -24,9 +24,9 @@ variables:
 
 steps:
 - task: UseNode@1
-  displayName: Use Node 14.x
+  displayName: Use Node 16.x
   inputs:
-    version: 14.x
+    version: 16.x
 
 - task: Bash@3
   displayName: Install root dependencies
