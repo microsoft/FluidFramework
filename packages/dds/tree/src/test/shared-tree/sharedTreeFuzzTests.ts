@@ -98,8 +98,7 @@ export async function performFuzzActions(
         saveInfo,
     );
     await finalState.testTreeProvider.ensureSynchronized();
-
-    return finalState as Required<FuzzTestState>;
+    return finalState;
 }
 
 export async function performFuzzActionsAbort(
@@ -107,7 +106,7 @@ export async function performFuzzActionsAbort(
     seed: number,
     validateAnchor?: boolean,
     saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
-): Promise<Required<FuzzTestState>> {
+): Promise<FuzzTestState> {
     const random = makeRandom(seed);
     const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
     const tree = provider.trees[0];
@@ -168,7 +167,7 @@ export async function performFuzzActionsAbort(
         const anchorPath = tree.locate(firstAnchor);
         assert(compareUpPaths(expectedPath, anchorPath));
     }
-    return finalState as Required<FuzzTestState>;
+    return finalState;
 }
 
 function applyFuzzChange(tree: ISharedTree, contents: FuzzChange, transactionResult:TransactionResult): void {
@@ -217,38 +216,63 @@ function applyFuzzChange(tree: ISharedTree, contents: FuzzChange, transactionRes
     }
 }
 
+enum FuzzTestType {
+    Basic = 0,
+    Abort = 1,
+    AnchorStability = 2,
+}
+
 export function runSharedTreeFuzzTests(title: string): void {
+    const random = makeRandom(0)
+    const testBatchSize = 3;
     describeFuzz(title, ({ testCount }) => {
-        function runTest(
-            generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
-            seed: number,
+        function runFuzzTest (
+            opGenerator: () => AsyncGenerator<Operation, FuzzTestState>,
+            fuzzTestType: FuzzTestType,
+            stepSize: number,
+            batchSize: number
         ): void {
-            for (let i = 0; i < 10; i++) {
-                it(`with seed ${i}`, async () => {
-                    await performFuzzActions(generatorFactory(), i);
-                }).timeout(20000);
-            }
-        }
-        function runTestAbort(
-            generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
-            seed: number,
-        ): void {
-            for (let i = 0; i < 10; i++) {
-                it.skip(`with seed ${i}`, async () => {
-                    await performFuzzActionsAbort(generatorFactory(), i);
-                }).timeout(20000);
+            const seed = random.integer(1, 1000000);
+            for (let i = 0; i < batchSize; i++) {
+                const innerRandom = makeRandom(seed);
+                const generatorFactory = () => take(stepSize, opGenerator());
+                switch (fuzzTestType) {
+                    case FuzzTestType.Basic:
+                        it(`with seed ${i}`, async () => {
+                            await performFuzzActions(generatorFactory(), innerRandom.integer(1, 1000000));
+                        }).timeout(20000);
+                        break;
+                    case FuzzTestType.Abort:
+                        it.skip(`with seed ${i}`, async () => {
+                            await performFuzzActionsAbort(generatorFactory(), innerRandom.integer(1, 1000000));
+                        }).timeout(20000);
+                        break;
+                    case FuzzTestType.AnchorStability:
+                        it.skip(`with seed ${i}`, async () => {
+                            await performFuzzActionsAbort(generatorFactory(), innerRandom.integer(1, 1000000), true);
+                        }).timeout(20000);
+                        break;
+                    default:
+                        fail("Invalid FuzzTestType.");
+                }
             }
         }
         describe("basic convergence", () => {
-            const generatorFactory = () => take(200, makeOpGenerator());
             describe("using TestTreeProvider", () => {
-                runTest(generatorFactory, 0);
+                for (let stepSize = 0; stepSize < 1000; stepSize += 100){
+                    describe(`with stepSize ${stepSize}`, () => {
+                        runFuzzTest(makeOpGenerator, FuzzTestType.Basic, stepSize, testBatchSize);
+                    });
+                }
             });
         });
         describe("abort all edits", () => {
-            const generatorFactory = () => take(200, makeOpGenerator());
             describe("using TestTreeProvider", () => {
-                runTestAbort(generatorFactory, 0);
+                for (let stepSize = 100; stepSize < 1000; stepSize+=100) {
+                    describe(`with stepSize ${stepSize}`, () => {
+                        runFuzzTest(makeOpGenerator, FuzzTestType.Abort, stepSize, testBatchSize);
+                    });
+                }
             });
         });
     });
