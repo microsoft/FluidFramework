@@ -38,7 +38,7 @@ export async function performFuzzActions(
     generator: AsyncGenerator<Operation, FuzzTestState>,
     seed: number,
     saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
-): Promise<Required<FuzzTestState>> {
+): Promise<FuzzTestState> {
     const random = makeRandom(seed);
     const provider = await TestTreeProvider.create(2, SummarizeType.onDemand);
 
