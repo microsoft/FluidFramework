@@ -123,14 +123,13 @@ The move operation is also not yet available.
 
 > Complete
 
-In most scenarios, the Shared Tree will include an in-memory JavaScript representation.
+In most scenarios, the Shared Tree will construct an in-memory JavaScript representation of the tree.
 This milestone makes it possible to read and write data to the Shared Tree without creating (reifing) that in-memory JavaScript representation.
-This is particularly useful in scenarios where the client maintains a copy of the data on the other side of an interop boundary (e.g., WASM, C++).
+This is particularly useful in scenarios where the client has memory constraints or wants to maintains a copy of the data on the other side of an interop boundary (e.g., WASM, C++).
 It also allows clients/microservices to check permissions without loading the document and inspect changes without caring about the entire tree.
 
 To accomplish this, the underlying Shared Tree layer is built on a [cursor API](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/core/tree/cursor.ts) that allows navigation of the tree by moving from node to node via explicit directional calls.
-This cursor API is intended to be an expert API as working with it is very cumbersome compared with the much more ergonomic APIs exposed in future milestones.
-Built on top of cursors is the [Forest API](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree/src/feature-libraries/chunked-forest), a minimal interface that exposes the tree without reification.
+This cursor API is intended to be an expert API as working with it is more cumbersome compared with the more ergonomic APIs exposed in future milestones.
 
 ## Synchronous non-overlapping transactions
 
