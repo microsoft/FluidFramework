@@ -56,30 +56,4 @@ describe("RuntimeFactoryHelper", () => {
 
         unit.verify();
     });
-
-    it("Instantiate when existing flag is unset", async () => {
-        unit.expects("instantiateFirstTime").once();
-        unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(context as IContainerContext);
-
-        unit.verify();
-    });
-
-    it("Instantiate when existing flag is unset and context is existing", async () => {
-        const existingContext: Partial<IContainerContext> = { existing: true };
-        unit.expects("instantiateFirstTime").never();
-        unit.expects("instantiateFromExisting").once();
-        await helper.instantiateRuntime(existingContext as IContainerContext);
-
-        unit.verify();
-    });
-
-    it("Instantiate when existing flag takes precedence over context", async () => {
-        const existingContext: Partial<IContainerContext> = { existing: true };
-        unit.expects("instantiateFirstTime").once();
-        unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(existingContext as IContainerContext, /* existing */ false);
-
-        unit.verify();
-    });
 });

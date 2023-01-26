@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import {
-    AttributionCollection,
+    AttributionCollection as NewAttributionCollection,
     IAttributionCollection,
     SerializedAttributionCollection,
 } from "../attributionCollection";
@@ -15,7 +15,7 @@ import { AttributionKey, compareNumbers, ISegment } from "../mergeTreeNodes";
 import { RedBlackTree } from "../collections";
 
 interface IAttributionCollectionCtor {
-    new (seq: number, length: number): IAttributionCollection<AttributionKey>;
+    new (key: AttributionKey, length: number): IAttributionCollection<AttributionKey>;
 
     serializeAttributionCollections(
         segments: Iterable<{ attribution?: IAttributionCollection<AttributionKey>; cachedLength: number; }>
@@ -35,14 +35,14 @@ function getCollectionSizes(
     collection: IAttributionCollection<AttributionKey>;
     type: BenchmarkType;
 }[] {
-    const singleKeyCollection = new ctor(5, 42);
-    const tenKeyCollection = new ctor(0, 2);
+    const singleKeyCollection = new ctor({ type: "op", seq: 5 }, 42);
+    const tenKeyCollection = new ctor({ type: "op", seq: 0 }, 2);
     for (let i = 1; i < 10; i++) {
-        tenKeyCollection.append(new ctor(i, i * 3));
+        tenKeyCollection.append(new ctor({ type: "op", seq: i }, i * 3));
     }
-    const maxSizeCollection = new ctor(0, 1);
+    const maxSizeCollection = new ctor({ type: "op", seq: 0 }, 1);
     for (let i = 1; i < TextSegmentGranularity; i++) {
-        maxSizeCollection.append(new ctor(i, 1));
+        maxSizeCollection.append(new ctor({ type: "op", seq: i }, 1));
     }
     return [
         { name: "one key", collection: singleKeyCollection, type: BenchmarkType.Diagnostic },
@@ -99,7 +99,7 @@ function runAttributionCollectionSuite(ctor: IAttributionCollectionCtor, suiteBa
 
     benchmark({
         title: "construction",
-        benchmarkFn: () => new ctor(5, 42),
+        benchmarkFn: () => new ctor({ type: "op", seq: 5 }, 42),
         type: suiteBaseType
     });
 
@@ -131,8 +131,8 @@ function runAttributionCollectionSuite(ctor: IAttributionCollectionCtor, suiteBa
 export class TreeAttributionCollection implements IAttributionCollection<AttributionKey> {
     private readonly entries: RedBlackTree<number, number> = new RedBlackTree(compareNumbers);
 
-    public constructor(baseEntry: number, private _length: number) {
-        this.entries.put(0, baseEntry);
+    public constructor({ seq }: AttributionKey, private _length: number) {
+        this.entries.put(0, seq);
     }
 
     public getAtOffset(offset: number): AttributionKey {
@@ -151,7 +151,7 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
      */
     public splitAt(pos: number): TreeAttributionCollection {
         const splitBaseEntry = this.getAtOffset(pos);
-        const splitCollection = new TreeAttributionCollection(splitBaseEntry.seq, this.length - pos);
+        const splitCollection = new TreeAttributionCollection(splitBaseEntry, this.length - pos);
         for (let current = this.entries.ceil(pos); current !== undefined; current = this.entries.ceil(pos)) {
             // If there happened to be an attribution change at exactly pos, it's already set in the base entry
             if (current.key !== pos) {
@@ -184,7 +184,7 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
     }
 
     public clone(): TreeAttributionCollection {
-        const copy = new TreeAttributionCollection(this.getAtOffset(0).seq, this.length);
+        const copy = new TreeAttributionCollection(this.getAtOffset(0), this.length);
         this.entries.map(({ key, data }) => {
             copy.entries.put(key, data);
             return true;
@@ -208,7 +208,7 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
         let currentInfo = seqs[curIndex];
 
         for (const segment of segments) {
-            const attribution = new TreeAttributionCollection(currentInfo, segment.cachedLength);
+            const attribution = new TreeAttributionCollection({ type: "op", seq: currentInfo }, segment.cachedLength);
             while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
                 currentInfo = seqs[curIndex];
                 attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo);
@@ -264,6 +264,6 @@ describe("IAttributionCollection perf", () => {
     });
 
     describe("list-based implementation", () => {
-        runAttributionCollectionSuite(AttributionCollection, BenchmarkType.Measurement);
+        runAttributionCollectionSuite(NewAttributionCollection, BenchmarkType.Measurement);
     });
 });
