@@ -62,7 +62,6 @@ export interface Synchronize {
 export interface FuzzTestState extends BaseFuzzTestState {
     testTreeProvider: ITestTreeProvider;
     numberOfEdits: number;
-    edits: Operation[];
 }
 
 export interface TreeContext {

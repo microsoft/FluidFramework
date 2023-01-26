@@ -64,7 +64,6 @@ export async function performFuzzActions(
         random,
         testTreeProvider: provider,
         numberOfEdits: 0,
-        edits: [],
     };
     await initialState.testTreeProvider.ensureSynchronized();
 
@@ -139,7 +138,6 @@ export async function performFuzzActionsAbort(
         random,
         testTreeProvider: provider,
         numberOfEdits: 0,
-        edits: [],
     };
     const finalState = await performFuzzActionsBase(
         generator,
