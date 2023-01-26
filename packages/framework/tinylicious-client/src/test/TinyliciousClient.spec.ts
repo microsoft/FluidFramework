@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState, ContainerErrorType, IErrorBase } from "@fluidframework/container-definitions";
+import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import {
     ContainerMessageType,
 } from "@fluidframework/container-runtime";
@@ -361,21 +361,29 @@ describe("TinyliciousClient", () => {
     });
 
     /**
-     * Scenario: Test if TinyliciousClient disconnects with a reason.
-     *
-     * Expected behavior: TinyliciousClient should disconnects with a reason.
-     */
-     it.only("disconnects with a reason", async () => {
-        const { container } = await tinyliciousClient.createContainer(schema);
-        container.on("disconnected", (reason?: string) =>
-            console.log(`disconnected ${(reason !== undefined) ? `with reason ${reason}` : "without reason"}`));
-        container.on("disposed", (reason?: IErrorBase) =>
-            console.log(`disposed ${(reason !== undefined) ? `with reason ${reason}` : "without reason"}`));
-        await container.attach();
-        console.log("container attached");
-        await timeoutPromise((resolve) => container.once("connected", resolve));
-        console.log("container connected");
-        console.log("disconnect");
-        container.disconnect();
-    });
+	 * Scenario: Test if TinyliciousClient disconnects with a reason.
+	 *
+	 * Expected behavior: TinyliciousClient should disconnect with a reason.
+	 */
+	it.only("disconnects with a reason", async () => {
+		const { container } = await tinyliciousClient.createContainer(schema);
+
+		// attach event listener on disconnected event and verify its a string before finishing test
+		container.on("disconnected", (reason?: string) => {
+            assert.strictEqual(
+                typeof reason,
+                "string",
+                "reason should be type string, not undefined1",
+            );
+            assert.notStrictEqual(
+                typeof reason,
+                "undefined",
+                "reason should be type string, not undefined2",
+            );
+        });
+
+		await container.attach();
+		await timeoutPromise((resolve) => container.once("connected", resolve));
+		container.disconnect();
+	});
 });
