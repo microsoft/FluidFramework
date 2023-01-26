@@ -67,7 +67,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         public readonly id: string = uuid(),
         public readonly existing: boolean = false,
         public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreContext"),
-    ) {}
+    ) { }
 
     on(event: string | symbol, listener: (...args: any[]) => void): this {
         switch (event) {
@@ -85,6 +85,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
     off(event: string | symbol, listener: (...args: any[]) => void): this {
         throw new Error("Method not implemented.");
+    }
+
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        return callback();
     }
 
     public getQuorum(): IQuorumClients {

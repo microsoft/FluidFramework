@@ -23,6 +23,7 @@ declare function get_old_InterfaceDeclaration_ISharedCell():
 declare function use_current_InterfaceDeclaration_ISharedCell(
     use: TypeOnly<current.ISharedCell>);
 use_current_InterfaceDeclaration_ISharedCell(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedCell());
 
 /*

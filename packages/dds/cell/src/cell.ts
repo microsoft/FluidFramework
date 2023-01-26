@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -20,6 +21,8 @@ import {
     ISharedCell,
     ISharedCellEvents,
     ICellLocalOpMetadata,
+    AttributionKey,
+    ICellOptions
 } from "./interfaces";
 
 /**
@@ -41,6 +44,11 @@ interface ICellValue {
      * The actual value contained in the `Cell`, which needs to be wrapped to handle `undefined`.
      */
     value: unknown;
+    /**
+     * The attribution key contained in the `Cell`.
+     * @alpha
+     */
+    attribution?: AttributionKey;
 }
 
 const snapshotFileName = "header";
@@ -91,15 +99,29 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
 
     private readonly pendingMessageIds: number[] = [];
 
+    private attribution: AttributionKey | undefined;
+
+    private readonly options: ICellOptions | undefined;
+
     /**
      * Constructs a new `SharedCell`.
      * If the object is non-local an id and service interfaces will be provided.
      *
+     * @alpha
+     *
      * @param runtime - The data store runtime to which the `SharedCell` belongs.
      * @param id - Unique identifier for the `SharedCell`.
      */
-    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options?: ICellOptions) {
         super(id, runtime, attributes, "fluid_cell_");
+
+        this.options ??= options;
+
+        const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean("Fluid.Attribution.EnableOnNewFile");
+        if (configSetAttribution !== undefined) {
+            (this.options ?? (this.options = {})).attribution = { track: configSetAttribution };
+        }
     }
 
     /**
@@ -159,12 +181,29 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     }
 
     /**
+     * {@inheritDoc ISharedCell.getAttribution}
+     * @alpha
+     */
+    public getAttribution(): AttributionKey | undefined {
+        return this.attribution;
+    }
+
+    /**
+     * Set the attribution through the SequencedDocumentMessage
+     */
+    private setAttribution(message: ISequencedDocumentMessage): void {
+        if ((this.options?.attribution?.track) ?? false) {
+            this.attribution = { type: "op", seq: message.sequenceNumber };
+        }
+    }
+
+    /**
      * Creates a summary for the Cell.
      *
      * @returns The summary of the current state of the Cell.
      */
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        const content: ICellValue = { value: this.data };
+        const content: ICellValue = { value: this.data, attribution: this.attribution };
         return createSingleBlobSummary(snapshotFileName, serializer.stringify(content, this.handle));
     }
 
@@ -175,6 +214,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
         const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
         this.data = this.decode(content);
+        this.attribution = content.attribution;
     }
 
     /**
@@ -229,12 +269,16 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
                 this.pendingMessageIds.shift();
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = cellOpMetadata.pendingMessageId;
+                // update the attributor
+                this.setAttribution(message);
             }
             return;
         }
 
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as ICellOperation;
+            // update the attributor
+            this.setAttribution(message);
             this.applyInnerOp(op);
         }
     }

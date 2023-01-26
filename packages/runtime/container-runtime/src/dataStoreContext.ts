@@ -193,6 +193,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime;
     }
 
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        return this._containerRuntime.ensureNoDataModelChanges(callback);
+    }
+
     public get isLoaded(): boolean {
         return this.loaded;
     }
@@ -305,7 +309,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
-            this.summarizeInternal(fullTree, trackState, telemetryContext);
+                this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
@@ -333,7 +337,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (this.channelDeferred) {
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
-            }).catch((error) => {});
+            }).catch((error) => { });
         }
     }
 
@@ -718,10 +722,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: {
-                    value: this.id,
-                    tag: TelemetryDataTag.CodeArtifact,
-                } },
+                {
+                    eventName: "BindRuntimeError", fluidDataStoreId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                },
                 error);
         }
     }

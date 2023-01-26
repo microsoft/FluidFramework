@@ -43,6 +43,19 @@ export async function runWithRetry<T>(
 
             const coherencyError = error?.[Odsp409Error] === true;
             const serviceReadonlyError = error?.errorType === OdspErrorType.serviceReadOnly;
+
+            // logging the first failed retry instead of every attempt. We want to avoid filling telemetry
+            // when we have tight loop of retrying in offline mode, but we also want to know what caused
+            // the failure in the first place
+            if(attempts === 1) {
+                logger.sendTelemetryEvent({
+                        eventName: `${callName}_firstFailed`,
+                        callName,
+                        attempts,
+                        duration: performance.now() - start, // record total wait time.
+                    }, error);
+            }
+
             // Retry for retriable 409 coherency errors or serviceReadOnly errors. These errors are always retriable
             // unless someone specifically set canRetry = false on the error like in fetchSnapshot() flow. So in
             // that case don't retry.
