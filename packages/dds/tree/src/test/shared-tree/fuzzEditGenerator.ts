@@ -4,7 +4,6 @@
  */
 import { strict as assert } from "assert";
 import {
-    AcceptanceCondition,
     AsyncGenerator,
     AsyncWeights,
     BaseFuzzTestState,
@@ -138,9 +137,9 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
      * TODO: create helper function to get number of nodes in tree and use that to set acceptance condition
      * */
     const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
-        [insertGenerator, 5, (state: EditState) => state.numberOfEdits < 3000],
-        [deleteGenerator, 1, (state: EditState) => state.numberOfEdits < 3000],
-        [setPayloadGenerator, 1, (state: EditState) => state.numberOfEdits < 3000],
+        [insertGenerator, 5],
+        [deleteGenerator, 1],
+        [setPayloadGenerator, 1],
     ]);
 
     return async (state: FuzzTestState): Promise<Operation | typeof done> => {
@@ -159,11 +158,9 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 };
 
 export function makeOpGenerator(): AsyncGenerator<Operation, FuzzTestState> {
-    const maximumEdits: AcceptanceCondition<FuzzTestState> = ({ numberOfEdits }) =>
-        numberOfEdits < 4000;
     const opWeights: AsyncWeights<Operation, FuzzTestState> = [
-        [makeEditGenerator(), 3, maximumEdits],
-        [{ type: "synchronize" }, 1, maximumEdits],
+        [makeEditGenerator(), 3],
+        [{ type: "synchronize" }, 1],
     ];
     return createWeightedAsyncGenerator(opWeights);
 }
