@@ -82,7 +82,7 @@ export async function performFuzzActions(
             edit: async (state, operation) => {
                 const { index, contents } = operation;
                 const tree = state.testTreeProvider.trees[index];
-                await applyFuzzChange(tree, contents);
+                applyFuzzChange(tree, contents, TransactionResult.Apply);
                 return state;
             },
             synchronize: async (state) => {
@@ -136,7 +136,7 @@ export async function performFuzzActionsAbort(
         {
             edit: async (state, operation) => {
                 const { index, contents } = operation;
-                abortFuzzChange(tree, contents);
+                applyFuzzChange(tree, contents, TransactionResult.Abort);
                 return state;
             },
             synchronize: async (state) => {
@@ -171,7 +171,7 @@ export async function performFuzzActionsAbort(
     return finalState as Required<FuzzTestState>;
 }
 
-function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
+function applyFuzzChange(tree: ISharedTree, contents: FuzzChange, transactionResult:TransactionResult): void {
     const index = contents.index;
     const nodeField = contents.field;
     switch (contents.fuzzType) {
@@ -183,7 +183,7 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
                         index,
                         singleTextCursor({ type: brand("Test"), value: contents.value }),
                     );
-                    return TransactionResult.Abort;
+                    return transactionResult;
                 });
             }
             break;
@@ -196,7 +196,7 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
                     tree.runTransaction((forest, editor) => {
                         const field = editor.sequenceField(parent, delField);
                         field.delete(parentIndex, 1);
-                        return TransactionResult.Abort;
+                        return transactionResult;
                     });
                 }
             }
@@ -207,53 +207,7 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
                 if (path !== undefined) {
                     tree.runTransaction((forest, editor) => {
                         editor.setValue(path, contents.value);
-                        return TransactionResult.Abort;
-                    });
-                }
-            }
-            break;
-        default:
-            fail("Invalid edit.");
-    }
-}
-
-async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise<void> {
-    const index = contents.index;
-    const nodeField = contents.field;
-    switch (contents.fuzzType) {
-        case "insert":
-            if (index !== undefined && nodeField !== undefined) {
-                tree.runTransaction((forest, editor) => {
-                    const field = editor.sequenceField(contents.parent, nodeField);
-                    field.insert(
-                        index,
-                        singleTextCursor({ type: brand("Test"), value: contents.value }),
-                    );
-                    return TransactionResult.Apply;
-                });
-            }
-            break;
-        case "delete":
-            if (index !== undefined && nodeField !== undefined) {
-                const parent = contents.parent?.parent;
-                const delField = contents.parent?.parentField;
-                const parentIndex = contents.parent?.parentIndex;
-                if (delField !== undefined && parent !== undefined && parentIndex !== undefined) {
-                    tree.runTransaction((forest, editor) => {
-                        const field = editor.sequenceField(parent, delField);
-                        field.delete(parentIndex, 1);
-                        return TransactionResult.Apply;
-                    });
-                }
-            }
-            break;
-        case "setPayload":
-            if (index !== undefined && nodeField !== undefined) {
-                const path = contents.parent;
-                if (path !== undefined) {
-                    tree.runTransaction((forest, editor) => {
-                        editor.setValue(path, contents.value);
-                        return TransactionResult.Apply;
+                        return transactionResult;
                     });
                 }
             }
