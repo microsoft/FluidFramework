@@ -267,6 +267,8 @@ In the table above, a flush happens every five edits. A client that joins a sess
 > -   The frequency of summaries cannot be controlled by a DDS. Ideally, a DDS has control over how often it flushes its chunks in order to optimize for best performance. Summaries currently happen across an entire Fluid container all at once, so even if an API were exposed to allow a DDS to provide hints for summary frequency, a DDS would still risk fighting over policy with other DDSes in the container.
 > -   There is only ever one summary client at a time that is responsible for uploading summaries. However, with a document that is too large to fit in a single client's memory all at once, the flush might exceed the summarization timeout as that client pages parts of the tree in and out in order to generate the summary.
 
+> It is interesting to compare this to filesystem implementations. Modern copy on write file systems (for example [ZFS](https://en.wikipedia.org/wiki/ZFS)) often use this same approach: updates are accumulated in memory ("transaction groups" for ZFS), and periodically flushed to disk if they grow too large or too old, just like Fluid summaries. Also edits (ops) are recorded as they come in into a write ahead log ("Intent Log" in ZFS) with lower latency to minimize data loss from crashes/disconnects/power-loss.
+
 There are many different options for how the log might be stored. Here are two:
 
 1. The log can be stored in memory in a data structure that supports efficient appending of new values and efficient eviction of old values. New incoming edits are appended to the log. When a flush occurs, all edits from before the flush are evicted from the log. The log can be serialized to and loaded from the Fluid summary by a normal summary client.
@@ -290,9 +292,17 @@ After a flush completes, all clients are notified of the flush and the new chunk
 
 ## Random Reads
 
-The performance of cold reads is analogous to that of flushes. Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine).
+Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine).
 
 However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the [path](#glossary) from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a [random read](#glossary): a read that has no necessary relationship to any read before it. For a practical example of a random read, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Or, note that the first read of a partial checkout can be a random read if it doesn't care about its ancestry. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. However, such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. A client could easily implement a "random" read function itself that simply walks down the tree. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations detailed in [Appendix A](#appendix-a-chunk-data-structure-implementations) which reduce the cost of a random read, especially in deep trees.
+
+## Non-Random Access
+
+An application might read all the data in a given subtree, or it might read some small data out of each subtree in a sequence (like the names of files in a directory).
+It is also likely to edit in non-random ways, for example do many consecutive edits in one area of the tree.
+Optimizing these cases is important, and mostly comes down to putting data that is accessed together close together in the tree (i.e. in the same blob or in nearby blobs)
+This allows for more effective amortizing of writes, reduced memory use and bandwidth, and faster read times.
+See [Appendix A](#appendix-a-chunk-data-structure-implementations) for more information.
 
 ## Tree Shapes
 
@@ -790,6 +800,7 @@ Drawbacks:
 -   [Copy-on-write](https://en.wikipedia.org/wiki/Copy-on-write): a data structure which is immutable and therefore must be copied to produce modifications, but which does so efficiently by sharing unmodified state with previous versions.
 -   Deepest Tree: a tree with N nodes and depth O(N), i.e. a tree with a branching factor of 1, essentially a linked list.
 -   Edit: an atomic change or collection of changes applied to a tree. An edit always produces a new revision of the tree.
+-   Flush: writing a batch of changes out to storage. Fluid Framework's summarization can be though of as one example of flushing: where all the changes from the ops are flushed into the summary storage.
 -   Handle: a serializable reference to a blob. In the case of Fluid handles, currently cannot be created until a blob is uploaded.
 -   History: the sequence of changes that have been made to a tree over time. A given document may or may not care about its tree's history. If it does desire the history, then the history must be recorded as part of its summary, since the Fluid service will only deliver ops that occur after the most recent summary.
 -   Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.

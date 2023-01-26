@@ -31,7 +31,7 @@
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
-    "format": "lerna run format --no-sort --stream -- -- -- --color",
+    "format": "lerna run format --parallel --stream",
     "postinstall": "npm run postinstall:lerna",
     "layer-check": "fluid-layer-check --info ../build-tools/packages/build-tools/data/layerInfo.json",
     "lerna": "lerna",
