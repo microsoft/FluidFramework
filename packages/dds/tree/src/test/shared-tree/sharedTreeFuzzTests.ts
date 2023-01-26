@@ -67,10 +67,6 @@ export async function performFuzzActions(
         edits: [],
     };
     await initialState.testTreeProvider.ensureSynchronized();
-    const readCursor1 = initialState.testTreeProvider.trees[0].forest.allocateCursor();
-    moveToDetachedField(initialState.testTreeProvider.trees[0].forest, readCursor1);
-    const actual1 = mapCursorField(readCursor1, jsonableTreeFromCursor);
-    readCursor1.free();
 
     const finalState = await performFuzzActionsBase(
         generator,
@@ -94,10 +90,6 @@ export async function performFuzzActions(
         saveInfo,
     );
     await finalState.testTreeProvider.ensureSynchronized();
-    const readCursor = finalState.testTreeProvider.trees[0].forest.allocateCursor();
-    moveToDetachedField(finalState.testTreeProvider.trees[0].forest, readCursor);
-    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-    readCursor.free();
 
     return finalState as Required<FuzzTestState>;
 }
