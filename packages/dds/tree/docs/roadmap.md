@@ -20,26 +20,26 @@ Shared Tree is a DDS designed to keep hierarchical data synchronized between cli
 Its development is being driven by significant feedback from developers looking for Fluid data structures that map more closely to their application data models.
 This document lays out the goals for Shared Tree development and the motivation behind those goals. Here is a list of the key scenarios described in this document:
 
-- [Read and write data to the Shared Tree without an in-memory JavaScript representation](#tree-reading-and-writing-without-reification)
-- [Apply sets of related changes atomically with no interleaved changes (transactions)](#synchronous-non-overlapping-transactions)
-- [Use an API that represents tree data as JavaScript objects](#tree-reading-and-writing-with-js-object-style-api)
-- [Undo changes made locally without unduly impacting concurrent remote changes](#undoredo)
-- [Move data within the Shared Tree without risk of duplication or data invalidation](#move)
-- [Assign durable identifiers to nodes to enable URL-like links and graph-like references](#strong-node-identifiers-and-lookup-index)
-- [Manage multiple transactions asynchronously](#asynchronous-transactions-and-snapshot-isolation)
-- [Embed collections such as sets and maps within the tree](#embedded-collections-eg-sets-maps)
-- [Apply constraints to transactions so that if a condition isn't met, the transaction is rejected](#constraints)
-- [Define schema for the tree that is enforced when data is merged](#schema-and-schema-enforcement)
-- [Import and export JSON data into the tree losslessly](#lossless-json-roundtripping)
-- [Include text that supports real-time collaboration in the tree](#large-sequence--collaborative-text-support)
-- [Improve performance of large data sets through incremental commits and virtualization on load](#storage-performance-incrementality-and-virtualization)
-- [Use Schema defined TypeScript types](#type-safe-schema-api)
-- [Undo changes made locally in a way that preserves the intent of concurrent changes](#retroactive-undoredo)
-- [Provide access to the state of the data in the past](#history)
-- [Create, change, and merge branched data in a similar manner to source control](#branching-and-merging)
-- [Improve performance by building indexes](#indexes)
-- [Allow higher-level semantics in edits to the tree](#high-level-commands)
-- [Support for data sets larger than client memory/storage](#partial-checkout)
+-   [Read and write data to the Shared Tree without an in-memory JavaScript representation](#tree-reading-and-writing-without-reification)
+-   [Apply sets of related changes atomically with no interleaved changes (transactions)](#synchronous-non-overlapping-transactions)
+-   [Use an API that represents tree data as JavaScript objects](#tree-reading-and-writing-with-js-object-style-api)
+-   [Undo changes made locally without unduly impacting concurrent remote changes](#undoredo)
+-   [Move data within the Shared Tree without risk of duplication or data invalidation](#move)
+-   [Assign durable identifiers to nodes to enable URL-like links and graph-like references](#strong-node-identifiers-and-lookup-index)
+-   [Manage multiple transactions asynchronously](#asynchronous-transactions-and-snapshot-isolation)
+-   [Embed collections such as sets and maps within the tree](#embedded-collections-eg-sets-maps)
+-   [Apply constraints to transactions so that if a condition isn't met, the transaction is rejected](#constraints)
+-   [Define schema for the tree that is enforced when data is merged](#schema-and-schema-enforcement)
+-   [Import and export JSON data into the tree losslessly](#lossless-json-roundtripping)
+-   [Include text that supports real-time collaboration in the tree](#large-sequence--collaborative-text-support)
+-   [Improve performance of large data sets through incremental commits and virtualization on load](#storage-performance-incrementality-and-virtualization)
+-   [Use Schema defined TypeScript types](#type-safe-schema-api)
+-   [Undo changes made locally in a way that preserves the intent of concurrent changes](#retroactive-undoredo)
+-   [Provide access to the state of the data in the past](#history)
+-   [Create, change, and merge branched data in a similar manner to source control](#branching-and-merging)
+-   [Improve performance by building indexes](#indexes)
+-   [Allow higher-level semantics in edits to the tree](#high-level-commands)
+-   [Support for data sets larger than client memory/storage](#partial-checkout)
 
 Read the [Shared Tree github readme](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree) for a more technical overview.
 
@@ -50,17 +50,17 @@ It was designed from the ground up to minimize latency introduced by servers by 
 That said, taking full advantage of this architecture is the top priority for Shared Tree.
 These are the near-term performance goals:
 
-- Equivalent or better performance as compared with the experimental Shared Tree DDS
-- Include granular performance benchmarks for each Shared Tree component including reading and writing of the in-memory tree and merging changes
-- Build a benchmarking stress test app to set baselines and measure improvements
-- Architect the tree such that the lowest layers provide the best performance at the cost of ergonomics; build more friendly (but potentially slower) APIs on top, enabling applications to choose their preferred layer
+-   Equivalent or better performance as compared with the experimental Shared Tree DDS
+-   Include granular performance benchmarks for each Shared Tree component including reading and writing of the in-memory tree and merging changes
+-   Build a benchmarking stress test app to set baselines and measure improvements
+-   Architect the tree such that the lowest layers provide the best performance at the cost of ergonomics; build more friendly (but potentially slower) APIs on top, enabling applications to choose their preferred layer
 
 As the Shared Tree feature set grows, the performance goals will also evolve to include the following:
 
-- Tree reading will be a reasonable constant factor as compared with reading a JS object tree as the tree grows in size and complexity
-- Collections within the tree such as long sequences, maps, and sets will be optimized
-- Summarization performance will scale with the scale of the data being changed – currently summarization performance is determined by the size of the complete data set
-- Boot performance can be optimized by loading only the data required through virtualization
+-   Tree reading will be a reasonable constant factor as compared with reading a JS object tree as the tree grows in size and complexity
+-   Collections within the tree such as long sequences, maps, and sets will be optimized
+-   Summarization performance will scale with the scale of the data being changed – currently summarization performance is determined by the size of the complete data set
+-   Boot performance can be optimized by loading only the data required through virtualization
 
 # Stability
 
@@ -68,13 +68,13 @@ Shared Tree is a complex DDS aimed at supporting a broad range of data types and
 As such, it is critical that Shared Tree investments include significant focus on reliability.
 The following goals and investments will ensure Shared Tree is reliable and remains stable as it evolves:
 
-- Roughly 90% unit test coverage
+-   Roughly 90% unit test coverage
 
-- Fuzz testing of all major components
+-   Fuzz testing of all major components
 
-- Two or more test apps built on Shared Tree that are used to validate every significant update
-- Code for types and persisting state is isolated and policies are in place to ensure stable migrations between versions
-- Forwards and backwards compatibility tests
+-   Two or more test apps built on Shared Tree that are used to validate every significant update
+-   Code for types and persisting state is isolated and policies are in place to ensure stable migrations between versions
+-   Forwards and backwards compatibility tests
 
 # Roadmap
 
@@ -141,9 +141,9 @@ While this is an important architectural milestone to build in early, the benefi
 Developers often want to group changes to the Shared Tree into logical units.
 Reasons for doing so include:
 
-- Atomicity: a set of changes should be applied without any other changes (local or remote) being interleaved with them.
-- App semantics: a set of changes represents a logical edit in the application model that must be applied atomically, and tree-level operations (such as undo/redo or history) should never result in an intermediate state being exposed.
-- Dependencies between changes: changes within a grouping depend on some invariant (e.g., an insert should be applied only if none of the other changes in its group fail to apply due to concurrent edits).
+-   Atomicity: a set of changes should be applied without any other changes (local or remote) being interleaved with them.
+-   App semantics: a set of changes represents a logical edit in the application model that must be applied atomically, and tree-level operations (such as undo/redo or history) should never result in an intermediate state being exposed.
+-   Dependencies between changes: changes within a grouping depend on some invariant (e.g., an insert should be applied only if none of the other changes in its group fail to apply due to concurrent edits).
 
 This milestone enables the creation of a single synchronous transaction per Shared Tree and guarantees atomicity (including for remote recipients of the edit).
 The other requirements will be satisfied by future milestones such as _Undo/redo_ and _Constraints_.
@@ -215,14 +215,14 @@ This milestone marks the point at which the Shared Tree is at parity (a superset
 At this stage, developers using the legacy tree DDS can (and should) switch to Shared Tree.
 To make this transition as painless as possible, the following will be true:
 
-- Developers will have access to a data migration system.
-This mechanism can be used to safely and losslessly migrate data from the legacy tree to the Shared Tree. The migration is performed client-side and can be run on demand (at load time, in response to a user action, etc.).
-- The persisted format is stable and backward compatibility is guaranteed.
-This means that all versions of data (ops and summaries) ever written by the new Shared Tree are supported for reading (loading) forever.
-- As the Shared Tree data format evolves, there will—for every new data version released—always exist a Shared Tree package that supports writing both the latest major version and the one just prior.
-This allows staged rollouts of the new version on the application side.
-For example, the release of version 2.0 will include the ability to write format 2.0 but will default to writing format 1.0; an adopting application with ship the 2.0 package in this state, wait until some satisfactorily high adoption rate is reached (e.g., 99.9% of clients are on the new version) and then enable the writing of version 2.0.
-This is safe to do, as all clients (even the ones who are still defaulting to writing version 1.0) can read the new version.
+-   Developers will have access to a data migration system.
+    This mechanism can be used to safely and losslessly migrate data from the legacy tree to the Shared Tree. The migration is performed client-side and can be run on demand (at load time, in response to a user action, etc.).
+-   The persisted format is stable and backward compatibility is guaranteed.
+    This means that all versions of data (ops and summaries) ever written by the new Shared Tree are supported for reading (loading) forever.
+-   As the Shared Tree data format evolves, there will—for every new data version released—always exist a Shared Tree package that supports writing both the latest major version and the one just prior.
+    This allows staged rollouts of the new version on the application side.
+    For example, the release of version 2.0 will include the ability to write format 2.0 but will default to writing format 1.0; an adopting application with ship the 2.0 package in this state, wait until some satisfactorily high adoption rate is reached (e.g., 99.9% of clients are on the new version) and then enable the writing of version 2.0.
+    This is safe to do, as all clients (even the ones who are still defaulting to writing version 1.0) can read the new version.
 
 ## Embedded collections (e.g., sets, maps)
 
@@ -266,9 +266,9 @@ Many customer scenarios include the need to migrate existing data into the Share
 Due to its ubiquity, JSON data is the focus of this milestone.
 The Shared Tree provides two mechanisms to import and export JSON data losslessly:
 
-- A [JSON domain](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/domains/json/jsonDomainSchema.ts) (schema) that defines the mapping between the Shared Tree data model and JSON.
-This includes a [low-level cursor](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/domains/json/jsonCursor.ts) to navigate the data as though it were native JSON.
-- APIs to ingest JSON data into a subtree typed as JSON as well as export a JSON-typed tree to raw JSON.
+-   A [JSON domain](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/domains/json/jsonDomainSchema.ts) (schema) that defines the mapping between the Shared Tree data model and JSON.
+    This includes a [low-level cursor](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/domains/json/jsonCursor.ts) to navigate the data as though it were native JSON.
+-   APIs to ingest JSON data into a subtree typed as JSON as well as export a JSON-typed tree to raw JSON.
 
 These APIs are as lossless as JavaScript's own JSON API, so the same [caveats](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON) apply.
 
@@ -348,10 +348,10 @@ This milestone introduces the ability for developers to create branches from par
 Developers often need to make complex queries about the tree that may not align with the hierarchy/structure of their data model.
 Some examples of this type of query include:
 
-- Searching for all entities within a 2D plane that intersect some bounding box
-- Searching for all graph-like references that point to nodes of a particular type
-- Finding all nodes holding an integer with an odd value
-- Finding the best cached image for a sub-plane (i.e. tiling)
+-   Searching for all entities within a 2D plane that intersect some bounding box
+-   Searching for all graph-like references that point to nodes of a particular type
+-   Finding all nodes holding an integer with an odd value
+-   Finding the best cached image for a sub-plane (i.e. tiling)
 
 With small documents, it may be reasonable to compute an answer by navigating the tree directly (and perhaps exhaustively).
 As datasets scale, developers will likely need to accelerate these read operations in order to keep them performant.
@@ -392,8 +392,8 @@ Further, there is continuous discussion amongst Fluid Framework contributors foc
 
 To offer some insight into these discussions, here are some of those topics:
 
-- Extensible embedded data types would allow developers to extend Shared Tree types and merge semantics in very powerful ways
-- How could clients that do not run the Fluid Runtime consume and update Fluid data?
-- How might Fluid support service level features such as indexed queries and fine-grained, fully secure access control?
+-   Extensible embedded data types would allow developers to extend Shared Tree types and merge semantics in very powerful ways
+-   How could clients that do not run the Fluid Runtime consume and update Fluid data?
+-   How might Fluid support service level features such as indexed queries and fine-grained, fully secure access control?
 
 This is not a complete catalog of future looking work, and everyone interested in Fluid should feel empowered to bring their own voice to the conversation.
