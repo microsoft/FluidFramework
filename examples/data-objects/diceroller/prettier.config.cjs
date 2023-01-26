@@ -5,5 +5,4 @@
 
 module.exports = {
     ...require("@fluidframework/build-common/prettier.config.cjs"),
-    useTabs: false, // changed from false to true
 };
