@@ -124,7 +124,7 @@ The move operation is also not yet available.
 > Complete
 
 In most scenarios, the Shared Tree will construct an in-memory JavaScript representation of the tree.
-This milestone makes it possible to read and write data to the Shared Tree without creating (reifing) that in-memory JavaScript representation.
+This milestone makes it possible to read and write data to the Shared Tree without creating (reifying) that in-memory JavaScript representation.
 This is particularly useful in scenarios where the client has memory constraints or wants to maintains a copy of the data on the other side of an interop boundary (e.g., WASM, C++).
 It also allows clients/microservices to check permissions without loading the document and inspect changes without caring about the entire tree.
 
@@ -134,7 +134,7 @@ This cursor API is intended to be an expert API as working with it is more cumbe
 
 While this is an important architectural milestone to build in early, the benefits around reification will not be fully realized until the _Storage performance: incrementality and virtualization_ milestone, as downloading the entire tree on load is currently required.
 
-## Synchronous non-overlapping transactions
+## Isolation of synchronous non-overlapping transaction
 
 > Complete
 
@@ -145,12 +145,15 @@ Reasons for doing so include:
 -   App semantics: a set of changes represents a logical edit in the application model that must be applied atomically, and tree-level operations (such as undo/redo or history) should never result in an intermediate state being exposed.
 -   Dependencies between changes: changes within a grouping depend on some invariant (e.g., an insert should be applied only if none of the other changes in its group fail to apply due to concurrent edits).
 
-This milestone enables the creation of a single synchronous transaction per Shared Tree and guarantees atomicity (including for remote recipients of the edit).
-The other requirements will be satisfied by future milestones such as _Undo/redo_ and _Constraints_.
+This milestone enables the creation of a single synchronous transaction per Shared Tree and guarantees the changes bundled in the transaction will be applied without interleaving of other changes.
+This is true for transactions made locally, as well as transaction received from peers.
+
+This milestone does not include support for atomicity of transactions (see _Constraints_).
+See also _Undo/redo_.
 
 ## Tree reading and writing with JS object style API
 
-> Complete
+> In progress
 
 A key objective of Shared Tree is that it be intuitive and easy for developers to use.
 To enable this, Shared Tree will include a high-level API that presents the tree as if it were composed of JavaScript objects.
@@ -179,8 +182,8 @@ However, without proper semantics (and thus rebasing), concurrent changes can re
 The move operation preserves the identity of the nodes being moved and ensures that the outcome matches the developer's expectations.
 
 Shared Tree will support two types of move operation.
-One is a **set** move where the nodes in the range when it is defined are the only nodes that move.
-The other is a **slice** move where any nodes inserted in the range during the move are also moved.
+One is a **node range** move where the nodes in the range when the edit is first issued are the only nodes that move.
+The other is a **slice range** move where the nodes in the range when the edit is applied are the nodes that move.
 
 ## Strong node identifiers and lookup index
 
@@ -221,7 +224,7 @@ To make this transition as painless as possible, the following will be true:
     This means that all versions of data (ops and summaries) ever written by the new Shared Tree are supported for reading (loading) forever.
 -   As the Shared Tree data format evolves, there will—for every new data version released—always exist a Shared Tree package that supports writing both the latest major version and the one just prior.
     This allows staged rollouts of the new version on the application side.
-    For example, the release of version 2.0 will include the ability to write format 2.0 but will default to writing format 1.0; an adopting application with ship the 2.0 package in this state, wait until some satisfactorily high adoption rate is reached (e.g., 99.9% of clients are on the new version) and then enable the writing of version 2.0.
+    For example, the release of version 2.0 will include the ability to write format 2.0 but will default to writing format 1.0; an adopting application will ship the 2.0 package in this state, wait until some satisfactorily high adoption rate is reached (e.g., 99.9% of clients are on the new version) and then enable the writing of version 2.0.
     This is safe to do, as all clients (even the ones who are still defaulting to writing version 1.0) can read the new version.
 
 ## Embedded collections (e.g., sets, maps)
@@ -329,7 +332,7 @@ There are many scenarios where developers need the ability to present data as it
 This is particularly valuable in cases where that data is being changed by multiple users, often concurrently.
 Developers need to be able to answer the question: what happened here?
 
-This milestone introduces the History feature which will provide a way for developers to view an immutable view of the tree as it appeared in the past.
+This milestone introduces the History feature which will provide a way for developers to access an immutable view of the tree as it appeared in the past.
 The feature will be scoped to the entire tree initially but will eventually be refined so that developers can show history for specific areas of the tree.
 
 ## Branching and Merging
