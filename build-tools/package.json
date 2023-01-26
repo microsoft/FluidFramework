@@ -30,7 +30,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "commit": "git-cz",
-    "format": "lerna run format --parallel --no-sort --stream",
+    "format": "lerna run format --parallel --stream",
     "preinstall": "npx only-allow pnpm",
     "postinstall": "npm run build:compile",
     "install:commitlint": "npm install --global @commitlint/config-conventional",
