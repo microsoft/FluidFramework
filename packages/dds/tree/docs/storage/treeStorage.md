@@ -298,9 +298,9 @@ However, a client wanting to read a particular node might not have any interest 
 
 ## Non-Random Access
 
-An application might read all the data in a given subtree, or it might read some small data out of each subtree in a sequence (like the names of files in a directory.).
-It is also likely to edit in non-random ways, for example do a bunch of in one area of the tree.
-Optimizing these cases is important, and mostly comes down to putting data that is accessed together close together, meaning in the same blob, or in nearby blobs.
+An application might read all the data in a given subtree, or it might read some small data out of each subtree in a sequence (like the names of files in a directory).
+It is also likely to edit in non-random ways, for example do many consecutive edits in one area of the tree.
+Optimizing these cases is important, and mostly comes down to putting data that is accessed together close together in the tree (i.e. in the same blob or in nearby blobs)
 This allows for more effective amortizing of writes, reduced memory use and bandwidth, and faster read times.
 See [Appendix A](#appendix-a-chunk-data-structure-implementations) for more information.
 
