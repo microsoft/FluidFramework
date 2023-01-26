@@ -65,7 +65,7 @@ import {
     stableGCVersion,
     trackGCStateKey
 } from "./garbageCollectionConstants";
-import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
@@ -1304,7 +1304,7 @@ export class GarbageCollector implements IGarbageCollector {
                 eventName = "GC_Tombstone_Blob_Revived";
             }
 
-            sendGCTombstoneEvent(
+            sendGCUnexpectedUsageEvent(
                 this.mc,
                 {
                     eventName,
