@@ -10,7 +10,7 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
  */
 export interface ITokenService {
     /**
-     * Extracts the {@link ITokenClaims | token claims} from the provided
+     * Extracts the {@link @fluidframework/protocol-definitions#ITokenClaims | token claims} from the provided
      * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} string representation.
      */
     extractClaims(token: string): ITokenClaims;
