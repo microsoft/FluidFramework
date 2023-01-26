@@ -25,7 +25,6 @@ import {
     moveToDetachedField,
     TransactionResult,
     fieldSchema,
-    GlobalFieldKey,
     SchemaData,
     UpPath,
     compareUpPaths,
@@ -300,8 +299,6 @@ export function runSharedTreeFuzzTests(title: string): void {
         });
     });
 }
-
-const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 
 describe("SharedTreeFuzz", () => {
     runSharedTreeFuzzTests("test shared tree fuzz");
