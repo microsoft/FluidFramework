@@ -29,6 +29,7 @@
 		"dev": "npm run tsc && concurrently 'npm run tsc -- --watch' 'npm run build:test -- --watch'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../../../.prettierignore",

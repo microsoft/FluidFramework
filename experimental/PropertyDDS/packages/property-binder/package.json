@@ -32,6 +32,7 @@
 		"doc": "cross-var appfw-typedoc $npm_package_name",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
 		"gen:tscdef": "tsc -p tsconfig.json --outDir dist -d",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
