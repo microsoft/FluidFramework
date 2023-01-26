@@ -564,8 +564,8 @@ export function textTokenToItems(
 	}
 }
 
-// eslint-disable-next-line no-bitwise
 export const isEndBox = (marker: MergeTree.Marker) =>
+    // eslint-disable-next-line no-bitwise
 	marker.refType & MergeTree.ReferenceType.NestEnd && refHasRangeLabel(marker, "box");
 
 export const referenceProperty = "ref";

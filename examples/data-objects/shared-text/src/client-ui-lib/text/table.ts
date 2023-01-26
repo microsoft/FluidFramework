@@ -966,12 +966,12 @@ export function parseTable(
 	return table;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const rowIsMoribund = (rowMarker: IRowMarker) =>
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	rowMarker.properties && rowMarker.properties.moribund;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const cellIsMoribund = (cellMarker: ICellMarker) =>
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	cellMarker.properties && cellMarker.properties.moribund;
 
 /* eslint-enable @typescript-eslint/no-non-null-assertion */
