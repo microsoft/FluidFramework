@@ -55,10 +55,10 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 export interface AttributionKey {
     /**
      * The type of attribution this key corresponds to.
-     * 
+     *
      * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
      * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
-     * 
+     *
      * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
      * AttributionKey a discriminated union on the 'type' field. This would empower
      * consumers with the ability to implement different attribution policies.
@@ -171,13 +171,13 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
      * Pending segments (i.e. ones that only exist locally and haven't been acked by the server) also have
      * `attribution === undefined` until ack.
-     * 
+     *
      * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
-     * 
+     *
      * @alpha
-     * 
+     *
      * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
-     * 
+     *
      * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
      * content but keeping the old attribution information).
      * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
@@ -431,7 +431,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         if (!this.properties) {
             this.properties = createMap<any>();
         }
-        return this.propertyManager.addProperties(
+        const result =  this.propertyManager.addProperties(
             this.properties,
             newProps,
             op,
@@ -439,6 +439,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             collabWindow && collabWindow.collaborating,
             rollback,
         );
+
+        if (Object.entries(this.properties).length === 0) {
+            this.properties = undefined;
+        }
+
+        return result;
     }
 
     public hasProperty(key: string): boolean {
@@ -479,6 +485,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             case MergeTreeDeltaType.ANNOTATE:
                 assert(!!this.propertyManager, 0x044 /* "On annotate ack, missing segment property manager!" */);
                 this.propertyManager.ackPendingProperties(opArgs.op);
+                if (!this.propertyManager.hasPendingProperties() && this.properties?.length === 0) {
+                    this.propertyManager = undefined;
+                }
                 return true;
 
             case MergeTreeDeltaType.INSERT:
