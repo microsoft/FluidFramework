@@ -44,9 +44,21 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
  */
 export interface ITaskEvents extends IEvent {
     /**
-     * Emitted when the name or priority have changed respectively.
-     */
-    (event: "nameChanged" | "priorityChanged", listener: () => void);
+    * Emitted when the name has changed.
+    */
+   (event: "nameChanged", listener: () => void);
+   /**
+    * Emitted when the priority has changed to either the incoming value or to the NONE default value.
+    */
+   (event: "priorityChanged", listener: () => void);
+   /**
+    * Emitted when the incomingName has to either the incoming value or to the NONE default value.
+    */
+   (event: "incomingNameChanged", listener: () => void);
+   /**
+    * Emitted when incomingPriority has changed to either the incoming value or to the NONE default value.
+    */
+   (event: "incomingPriorityChanged", listener: () => void);
 }
 
 /**
@@ -66,6 +78,30 @@ export interface ITask extends IEventProvider<ITaskEvents> {
      * The task priority.  Modifications are persisted in Fluid and shared amongst collaborators.
      */
     priority: number;
+    /**
+     * The task name coming in from the external server.
+     */
+    readonly incomingName: string | undefined;
+    /**
+     * The task priority coming in from the external server.
+     */
+    readonly incomingPriority: number | undefined;
+    /**
+     * The type of change to the task coming in from the external server.
+     */
+    readonly incomingType: string | undefined;
+    /**
+     * Trigger event to render change to UI.
+     */
+    readonly incomingNameChanged:(name: string) => void;
+    /**
+     * Trigger event to render change to UI.
+     */
+    readonly incomingPriorityChanged:(priority: number) => void;
+    /**
+     * Save the proposed changes to SavedData.
+     */
+    readonly overwriteWithIncomingData:() => void;
 }
 
 /**

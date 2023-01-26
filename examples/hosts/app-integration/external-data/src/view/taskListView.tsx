@@ -20,23 +20,59 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const { task, deleteTask } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
+    const [incomingName, setIncomingName] =  useState<string | undefined>(task.incomingName);
+    const [incomingPriority, setIncomingPriority] = useState<number | undefined>(task.incomingPriority);
+    const [incomingType, setIncomingType] = useState<string | undefined>(task.incomingType);
     useEffect(() => {
         const updateFromRemotePriority = (): void => {
             if (priorityRef.current !== null) {
                 priorityRef.current.value = task.priority.toString();
             }
         };
+        const showIncomingPriority = (): void => {
+            setIncomingPriority(task.incomingPriority);
+            setIncomingType(task.incomingType);
+        }
+        const showIncomingName = (): void => {
+            setIncomingName(task.incomingName);
+            setIncomingType(task.incomingType);
+        }
         task.on("priorityChanged", updateFromRemotePriority);
+        task.on("incomingPriorityChanged", showIncomingPriority);
+        task.on("incomingNameChanged", showIncomingName);
         updateFromRemotePriority();
         return (): void => {
             task.off("priorityChanged", updateFromRemotePriority);
+            task.off("incomingPriorityChanged", showIncomingPriority);
+            task.off("incomingNameChanged", showIncomingName);
         };
-    }, [task]);
+    }, [task, incomingName, incomingPriority, incomingType]);
 
     const inputHandler = (e: React.FormEvent): void => {
         const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
         task.priority = newValue;
     };
+
+    const diffVisible = incomingType === undefined;
+    const showPriority = !diffVisible && incomingPriority !== undefined ? "visible" : "hidden";
+    const showName = !diffVisible && incomingName !== undefined ? "visible" : "hidden";
+    const showAcceptButton = diffVisible ? "hidden" : "visible";
+
+    let diffColor: string = "white";
+    switch(incomingType) {
+        case "add": {
+           diffColor = "green";
+           break;
+        }
+        case "delete": {
+            diffColor = "red";
+           break;
+        }
+        default: {
+            diffColor = "orange";
+           break;
+        }
+    }
 
     return (
         <tr>
@@ -62,6 +98,12 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                 >
                     ❌
                 </button>
+            </td>
+            <td style={{ visibility: showName, backgroundColor: diffColor }}>{ incomingName }</td>
+            <td style={{ visibility: showPriority, backgroundColor: diffColor }}>{ incomingPriority }</td>
+            <td>
+                <button
+                    onClick={ task.overwriteWithIncomingData } style={{ visibility: showAcceptButton }}>Accept change</button>
             </td>
         </tr>
     );
@@ -94,7 +136,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         };
     }, [taskList]);
 
-    const taskRows = tasks.map((task) => (
+    const taskRows = tasks.map((task: ITask) => (
         <TaskRow
             key={ task.id }
             task={ task }
@@ -106,6 +148,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         // TODO: Gray button if not "authenticated" via debug controls
         // TODO: Conflict UI
         <div>
+            <h2 style={{ textDecoration: "underline" }}>Client App</h2>
             <table>
                 <thead>
                     <tr>
