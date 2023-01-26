@@ -11,7 +11,6 @@ import { HasClientDebuggers, HasContainerId } from "../CommonProps";
 /**
  * {@link ContainerSelectionDropdownProps} input props.
  *
- * @internal
  */
 export interface ContainerSelectionDropdownProps extends HasClientDebuggers, HasContainerId {
     /**
@@ -22,7 +21,7 @@ export interface ContainerSelectionDropdownProps extends HasClientDebuggers, Has
 }
 
 /**
- * A dropdown that displays all registered containers.
+ * A dropdown menu for selecting the Fluid Container to display debug information about.
  *
  */
 export function ContainerSelectionDropdown(
@@ -40,13 +39,13 @@ export function ContainerSelectionDropdown(
 
     function renewContainerOptions(debuggers: IFluidClientDebugger[]): IDropdownOption[] {
         const options: IDropdownOption[] = [];
-        for (const x of debuggers) {
-            if (x.containerId === containerId) {
-                selectedKey = x.containerNickname ?? x.containerId;
+        for (const each_debugger of debuggers) {
+            if (each_debugger.containerId === containerId) {
+                selectedKey = each_debugger.containerNickname ?? each_debugger.containerId;
             }
             options.push({
-                key: x.containerId,
-                text: x.containerNickname ?? x.containerId,
+                key: each_debugger.containerId,
+                text: each_debugger.containerNickname ?? each_debugger.containerId,
             });
         }
         return options;
@@ -59,8 +58,8 @@ export function ContainerSelectionDropdown(
         option?: IDropdownOption,
     ): void => {
         if (option) {
-            const selectedDebugger = clientDebuggers.find((c) => {
-                return c.containerId === (option.key as string);
+            const selectedDebugger = clientDebuggers.find((clientDebugger) => {
+                return clientDebugger.containerId === (option.key as string);
             }) as IFluidClientDebugger;
             props.onChangeSelection(selectedDebugger.containerId);
         }
