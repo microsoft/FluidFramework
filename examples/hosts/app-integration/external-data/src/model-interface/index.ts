@@ -36,7 +36,7 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
     * with the (currently experimental) RuntimeMessage Signal to communicate
     * an external data change and and possibly the changed data as well
     */
-    readonly debugSendCustomSignal: () => void;
+    readonly sendCustomDebugSignal: () => void;
 }
 
 /**

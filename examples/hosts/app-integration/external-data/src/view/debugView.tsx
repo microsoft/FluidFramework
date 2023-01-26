@@ -169,7 +169,6 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
             <h3>Debug controls</h3>
             <div style={{ margin: "10px 0" }}>
                 <button onClick={ debugResetExternalData }>Reset external data</button><br />
-                <button onClick={ props.model.debugSendCustomSignal }>Trigger external data change signal</button><br />
             </div>
         </div>
     );
@@ -263,7 +262,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
             // TODO: display error status to user?
         }
 
-        model.debugSendCustomSignal();
+        model.sendCustomDebugSignal();
     }
 
     return (
