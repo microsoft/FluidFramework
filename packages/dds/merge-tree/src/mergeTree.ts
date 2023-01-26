@@ -1150,15 +1150,13 @@ export class MergeTree {
                     segment: pendingSegment,
                 });
             });
-            if (this.mergeTreeMaintenanceCallback) {
-                this.mergeTreeMaintenanceCallback(
-                    {
-                        deltaSegments,
-                        operation: MergeTreeMaintenanceType.ACKNOWLEDGED,
-                    },
-                    opArgs,
-                );
-            }
+            this.mergeTreeMaintenanceCallback?.(
+                {
+                    deltaSegments,
+                    operation: MergeTreeMaintenanceType.ACKNOWLEDGED,
+                },
+                opArgs,
+            );
             const clientId = this.collabWindow.clientId;
             for (const node of nodesToUpdate) {
                 this.blockUpdatePathLengths(node, seq, clientId, overwrite);
@@ -1246,8 +1244,8 @@ export class MergeTree {
         this.blockInsert(pos, refSeq, clientId, seq, localSeq, segments);
 
         // opArgs == undefined => loading snapshot or test code
-        if (this.mergeTreeDeltaCallback && opArgs !== undefined) {
-            this.mergeTreeDeltaCallback(
+        if (opArgs !== undefined) {
+            this.mergeTreeDeltaCallback?.(
                 opArgs,
                 {
                     operation: MergeTreeDeltaType.INSERT,
@@ -1361,14 +1359,12 @@ export class MergeTree {
 
         rebalanceTree(insertSegment);
 
-        if (this.mergeTreeDeltaCallback) {
-            this.mergeTreeDeltaCallback(
-                opArgs,
-                {
-                    deltaSegments: [{ segment: insertSegment }],
-                    operation: MergeTreeDeltaType.INSERT,
-                });
-        }
+        this.mergeTreeDeltaCallback?.(
+            opArgs,
+            {
+                deltaSegments: [{ segment: insertSegment }],
+                operation: MergeTreeDeltaType.INSERT,
+            });
 
         if (this.collabWindow.collaborating) {
             this.addToPendingList(insertSegment, undefined, insertSegment.localSeq);
@@ -1523,13 +1519,12 @@ export class MergeTree {
         }
 
         const next = segment.splitAt(pos)!;
-        if (this.mergeTreeMaintenanceCallback) {
-            this.mergeTreeMaintenanceCallback({
+        this.mergeTreeMaintenanceCallback?.({
                 operation: MergeTreeMaintenanceType.SPLIT,
                 deltaSegments: [{ segment }, { segment: next }],
             },
-                undefined);
-        }
+            undefined
+        );
 
         return { next };
     };
@@ -1729,8 +1724,8 @@ export class MergeTree {
         this.nodeMap(refSeq, clientId, annotateSegment, undefined, undefined, start, end);
 
         // OpArgs == undefined => test code
-        if (this.mergeTreeDeltaCallback && deltaSegments.length > 0) {
-            this.mergeTreeDeltaCallback(
+        if (deltaSegments.length > 0) {
+            this.mergeTreeDeltaCallback?.(
                 opArgs,
                 {
                     operation: MergeTreeDeltaType.ANNOTATE,
@@ -1814,8 +1809,8 @@ export class MergeTree {
             (s) => this.slideAckedRemovedSegmentReferences(s),
         );
         // opArgs == undefined => test code
-        if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
-            this.mergeTreeDeltaCallback(
+        if (removedSegments.length > 0) {
+            this.mergeTreeDeltaCallback?.(
                 opArgs,
                 {
                     operation: MergeTreeDeltaType.REMOVE,
