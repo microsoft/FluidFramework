@@ -70,7 +70,11 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         const tree = trees[state.treeIndex];
 
         // generate edit for that specific tree
-        const { parent: path, field: nodeField, index: nodeIndex } = getRandomNodePosition(tree, state.random);
+        const {
+            parent: path,
+            field: nodeField,
+            index: nodeIndex,
+        } = getRandomNodePosition(tree, state.random);
         assert(typeof nodeField !== "object");
         const insert: FuzzInsert = {
             fuzzType: "insert",
@@ -87,11 +91,12 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         const tree = trees[state.treeIndex];
 
         // generate edit for that specific tree
-        const { parent: path, field: nodeField, index: nodeIndex, onlyRootNode } = getRandomNodePosition(
-            tree,
-            state.random,
-            true,
-        );
+        const {
+            parent: path,
+            field: nodeField,
+            index: nodeIndex,
+            onlyRootNode,
+        } = getRandomNodePosition(tree, state.random, true);
         return onlyRootNode
             ? {
                   fuzzType: "delete",
@@ -112,7 +117,11 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         const tree = trees[state.treeIndex];
 
         // generate edit for that specific tree
-        const { parent: path, field: nodeField, index: nodeIndex } = getRandomNodePosition(tree, state.random, true);
+        const {
+            parent: path,
+            field: nodeField,
+            index: nodeIndex,
+        } = getRandomNodePosition(tree, state.random, true);
         const fuzzSetPayload: FuzzSetPayload = {
             fuzzType: "setPayload",
             parent: path,
@@ -203,7 +212,12 @@ export function getRandomNodePosition(
                             nodeField = cursor.getFieldKey();
                             nodeIndex = fieldNodes !== 0 ? random.integer(0, fieldNodes - 1) : 0;
                             cursor.free();
-                            return { parent: path, field: nodeField, index: nodeIndex, onlyRootNode: firstPath === path };
+                            return {
+                                parent: path,
+                                field: nodeField,
+                                index: nodeIndex,
+                                onlyRootNode: firstPath === path,
+                            };
                         } else {
                             if (!existingPath) {
                                 nodeField = testerKey;
@@ -238,7 +252,12 @@ export function getRandomNodePosition(
                     break;
                 } catch (error) {
                     cursor.free();
-                    return { parent: path, field: nodeField, index: nodeIndex, onlyRootNode: firstPath === path };
+                    return {
+                        parent: path,
+                        field: nodeField,
+                        index: nodeIndex,
+                        onlyRootNode: firstPath === path,
+                    };
                 }
 
             case "nextField":

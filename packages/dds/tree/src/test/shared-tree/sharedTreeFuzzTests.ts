@@ -10,11 +10,7 @@ import {
     performFuzzActionsAsync as performFuzzActionsBase,
     takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import {
-    FieldKinds,
-    singleTextCursor,
-    namedTreeSchema,
-} from "../../feature-libraries";
+import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { brand, fail } from "../../util";
 import { initializeTestTree, SummarizeType, TestTreeProvider, validateTree } from "../utils";
 import { ISharedTree } from "../../shared-tree";
@@ -54,9 +50,7 @@ const rootNodeSchema = namedTreeSchema({
 });
 const testSchema: SchemaData = {
     treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-    globalFieldSchema: new Map([
-        [rootFieldKey, rootFieldSchema],
-    ]),
+    globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
 };
 
 export async function performFuzzActions(
@@ -170,7 +164,11 @@ export async function performFuzzActionsAbort(
     return finalState;
 }
 
-function applyFuzzChange(tree: ISharedTree, contents: FuzzChange, transactionResult:TransactionResult): void {
+function applyFuzzChange(
+    tree: ISharedTree,
+    contents: FuzzChange,
+    transactionResult: TransactionResult,
+): void {
     const index = contents.index;
     const nodeField = contents.field;
     switch (contents.fuzzType) {
@@ -223,14 +221,14 @@ enum FuzzTestType {
 }
 
 export function runSharedTreeFuzzTests(title: string): void {
-    const random = makeRandom(0)
+    const random = makeRandom(0);
     const testBatchSize = 3;
     describeFuzz(title, ({ testCount }) => {
-        function runFuzzTest (
+        function runFuzzTest(
             opGenerator: () => AsyncGenerator<Operation, FuzzTestState>,
             fuzzTestType: FuzzTestType,
             stepSize: number,
-            batchSize: number
+            batchSize: number,
         ): void {
             const seed = random.integer(1, 1000000);
             for (let i = 0; i < batchSize; i++) {
@@ -239,17 +237,27 @@ export function runSharedTreeFuzzTests(title: string): void {
                 switch (fuzzTestType) {
                     case FuzzTestType.Basic:
                         it(`with seed ${i}`, async () => {
-                            await performFuzzActions(generatorFactory(), innerRandom.integer(1, 1000000));
+                            await performFuzzActions(
+                                generatorFactory(),
+                                innerRandom.integer(1, 1000000),
+                            );
                         }).timeout(20000);
                         break;
                     case FuzzTestType.Abort:
                         it.skip(`with seed ${i}`, async () => {
-                            await performFuzzActionsAbort(generatorFactory(), innerRandom.integer(1, 1000000));
+                            await performFuzzActionsAbort(
+                                generatorFactory(),
+                                innerRandom.integer(1, 1000000),
+                            );
                         }).timeout(20000);
                         break;
                     case FuzzTestType.AnchorStability:
                         it.skip(`with seed ${i}`, async () => {
-                            await performFuzzActionsAbort(generatorFactory(), innerRandom.integer(1, 1000000), true);
+                            await performFuzzActionsAbort(
+                                generatorFactory(),
+                                innerRandom.integer(1, 1000000),
+                                true,
+                            );
                         }).timeout(20000);
                         break;
                     default:
@@ -259,7 +267,7 @@ export function runSharedTreeFuzzTests(title: string): void {
         }
         describe("basic convergence", () => {
             describe("using TestTreeProvider", () => {
-                for (let stepSize = 0; stepSize < 1000; stepSize += 100){
+                for (let stepSize = 0; stepSize < 1000; stepSize += 100) {
                     describe(`with stepSize ${stepSize}`, () => {
                         runFuzzTest(makeOpGenerator, FuzzTestType.Basic, stepSize, testBatchSize);
                     });
@@ -268,7 +276,7 @@ export function runSharedTreeFuzzTests(title: string): void {
         });
         describe("abort all edits", () => {
             describe("using TestTreeProvider", () => {
-                for (let stepSize = 100; stepSize < 1000; stepSize+=100) {
+                for (let stepSize = 100; stepSize < 1000; stepSize += 100) {
                     describe(`with stepSize ${stepSize}`, () => {
                         runFuzzTest(makeOpGenerator, FuzzTestType.Abort, stepSize, testBatchSize);
                     });
@@ -281,7 +289,3 @@ export function runSharedTreeFuzzTests(title: string): void {
 describe("SharedTreeFuzz", () => {
     runSharedTreeFuzzTests("test shared tree fuzz");
 });
-
-
-
-

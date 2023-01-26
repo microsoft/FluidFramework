@@ -34,7 +34,21 @@ import {
     namedTreeSchema,
     singleTextCursor,
 } from "../feature-libraries";
-import { RevisionTag, Delta, InvalidationToken, SimpleObservingDependent, moveToDetachedField, mapCursorField, JsonableTree, SchemaData, fieldSchema, GlobalFieldKey, rootFieldKey, rootFieldKeySymbol, TransactionResult } from "../core";
+import {
+    RevisionTag,
+    Delta,
+    InvalidationToken,
+    SimpleObservingDependent,
+    moveToDetachedField,
+    mapCursorField,
+    JsonableTree,
+    SchemaData,
+    fieldSchema,
+    GlobalFieldKey,
+    rootFieldKey,
+    rootFieldKeySymbol,
+    TransactionResult,
+} from "../core";
 import { brand, makeArray } from "../util";
 
 // Testing utilities
