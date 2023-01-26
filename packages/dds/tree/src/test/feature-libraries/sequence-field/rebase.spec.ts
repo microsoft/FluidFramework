@@ -158,7 +158,7 @@ describe("SequenceField - Rebase", () => {
             // Overlapping revive is no longer conflicted
             Change.revive(1, 1, tag2, 1),
             // Later revive is unaffected
-            Change.revive(2, 1, tag1, 3, tag2, [{ revision: tag2, offset: 1 }]),
+            Change.revive(2, 1, tag1, 3, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -173,7 +173,7 @@ describe("SequenceField - Rebase", () => {
             // Overlapping revive is now blocked
             Change.revive(1, 1, tag1, 1, tag2, undefined, tag3),
             // Later revive gets linage
-            Change.revive(1, 1, tag1, 3, tag2, [{ revision: tag3, offset: 1 }]),
+            Change.revive(1, 1, tag1, 3, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -203,8 +203,8 @@ describe("SequenceField - Rebase", () => {
             // Overlapping revive is no longer conflicted.
             // It now references the target node to revive using the latest delete.
             Change.intentionalRevive(1, 1, tag2, 1),
-            // Later revive is unaffected aside from lineage
-            Change.intentionalRevive(2, 1, tag1, 3, tag2, [{ revision: tag2, offset: 1 }]),
+            // Later revive is unaffected
+            Change.intentionalRevive(2, 1, tag1, 3, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -220,7 +220,7 @@ describe("SequenceField - Rebase", () => {
             // It now references the target node to revive using the latest delete.
             Change.intentionalRevive(1, 1, tag3, 1),
             // Later revive gets linage
-            Change.intentionalRevive(2, 1, tag1, 3, tag2, [{ revision: tag3, offset: 1 }]),
+            Change.intentionalRevive(2, 1, tag1, 3, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -576,18 +576,10 @@ describe("SequenceField - Rebase", () => {
     });
 
     it("return ↷ related revive ", () => {
-        const revive = Change.revive(2, 1, tag1, 0);
-        const ret = Change.return(0, 1, 1, tag1, 0);
+        const revive = Change.revive(0, 1, tag1, 0);
+        const ret = Change.return(10, 1, 0, tag1);
         const actual = rebase(ret, revive, tag2);
         const expected: SF.Changeset<never> = [
-            {
-                type: "ReturnFrom",
-                count: 1,
-                id: brand(0),
-                detachedBy: tag1,
-                isDstConflicted: true,
-            },
-            1,
             {
                 type: "ReturnTo",
                 count: 1,
@@ -595,6 +587,14 @@ describe("SequenceField - Rebase", () => {
                 detachedBy: tag1,
                 detachIndex: 0,
                 conflictsWith: tag2,
+            },
+            10,
+            {
+                type: "ReturnFrom",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag1,
+                isDstConflicted: true,
             },
         ];
         normalizeMoveIds(actual);
@@ -616,11 +616,11 @@ describe("SequenceField - Rebase", () => {
                 count: 1,
                 id: brand(0),
                 detachedBy: tag1,
-                detachIndex: 0,
+                detachIndex: 1,
                 conflictsWith: tag2,
             },
         ];
-        const ret2 = Change.return(0, 1, 10, tag3, 0);
+        const ret2 = Change.return(0, 1, 10, tag3);
         const actual = rebase(ret2, ret1, brand(1));
         normalizeMoveIds(actual);
         assert.deepEqual(actual, ret2);

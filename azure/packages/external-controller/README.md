@@ -63,20 +63,20 @@ to generate and sign the token such that the service will accept it.
 
 ```typescript
 const connectionConfig: AzureConnectionConfig = useAzure
-    ? {
-          type: "remote",
-          tenantId: "YOUR-TENANT-ID-HERE",
-          tokenProvider: new AzureFunctionTokenProvider(
-              "AZURE-FUNCTION-URL" + "/api/GetAzureToken",
-              { userId: "test-user", userName: "Test User" },
-          ),
-          endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
-      }
-    : {
-          type: "local",
-          tokenProvider: new InsecureTokenProvider("fooBar", user),
-          endpoint: "http://localhost:7070",
-      };
+	? {
+			type: "remote",
+			tenantId: "YOUR-TENANT-ID-HERE",
+			tokenProvider: new AzureFunctionTokenProvider(
+				"AZURE-FUNCTION-URL" + "/api/GetAzureToken",
+				{ userId: "test-user", userName: "Test User" },
+			),
+			endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
+	  }
+	: {
+			type: "local",
+			tokenProvider: new InsecureTokenProvider("fooBar", user),
+			endpoint: "http://localhost:7070",
+	  };
 ```
 
 In this way, we can toggle between remote and local mode using the same config format. We make use of

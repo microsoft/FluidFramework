@@ -54,7 +54,10 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
             (localId: string, blobId?: string) => this.sendBlobAttachOp(localId, blobId),
             () => undefined,
             () => undefined,
+            (blobPath: string) => this.isBlobDeleted(blobPath),
             this,
+            undefined,
+            () => undefined,
         );
     }
 
@@ -100,6 +103,12 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         return P;
     }
 
+    public async getBlob(blobHandle: IFluidHandle<ArrayBufferLike>) {
+        const pathParts = blobHandle.absolutePath.split("/");
+        const blobId = pathParts[2];
+        return this.blobManager.getBlob(blobId);
+    }
+
     public blobManager: BlobManager;
     public connected = false;
     public attachState: AttachState;
@@ -111,6 +120,7 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
     private processBlobsP = new Deferred<void>();
     private blobPs: Promise<any>[] = [];
     private handlePs: Promise<any>[] = [];
+    private readonly deletedBlobs: string[] = [];
 
     public processOps() {
         assert(this.connected || this.ops.length === 0);
@@ -187,6 +197,14 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         const op = { metadata: { localId: uuid(), blobId: response.id } };
         this.blobManager.processBlobAttachOp(op as ISequencedDocumentMessage, false);
         return op;
+    }
+
+    public deleteBlob(blobHandle: IFluidHandle<ArrayBufferLike>) {
+        this.deletedBlobs.push(blobHandle.absolutePath);
+    }
+
+    public isBlobDeleted(blobPath: string): boolean {
+        return this.deletedBlobs.includes(blobPath);
     }
 }
 
@@ -533,5 +551,48 @@ describe("BlobManager", () => {
         const summaryData = await runtime.attach();
         assert.strictEqual(summaryData?.ids.length, 3);
         assert.strictEqual(summaryData?.redirectTable.size, 3);
+    });
+
+    it("fetching deleted blob fails", async () => {
+        await runtime.attach();
+        await runtime.connect();
+        const blob1Contents = IsoBuffer.from("blob1", "utf8");
+        const blob2Contents = IsoBuffer.from("blob2", "utf8");
+        const handle1P = runtime.createBlob(blob1Contents);
+        const handle2P = runtime.createBlob(blob2Contents);
+        await runtime.processAll();
+
+        const blob1Handle = await handle1P;
+        const blob2Handle = await handle2P;
+
+        // Validate that the blobs can be retrieved.
+        assert.strictEqual(await runtime.getBlob(blob1Handle), blob1Contents);
+        assert.strictEqual(await runtime.getBlob(blob2Handle), blob2Contents);
+
+        // Delete blob1. Retrieving it should result in an error.
+        runtime.deleteBlob(blob1Handle);
+        await assert.rejects(
+            async () => runtime.getBlob(blob1Handle),
+            (error) => {
+                const blob1Id = blob1Handle.absolutePath.split("/")[2];
+                const correctErrorType = error.code === 404;
+                const correctErrorMessage = error.message === `Blob was deleted: ${blob1Id}`;
+                return correctErrorType && correctErrorMessage;
+            },
+            "Deleted blob2 fetch should have failed"
+        );
+
+        // Delete blob2. Retrieving it should result in an error.
+        runtime.deleteBlob(blob2Handle);
+        await assert.rejects(
+            async () => runtime.getBlob(blob2Handle),
+            (error) => {
+                const blob2Id = blob2Handle.absolutePath.split("/")[2];
+                const correctErrorType = error.code === 404;
+                const correctErrorMessage = error.message === `Blob was deleted: ${blob2Id}`;
+                return correctErrorType && correctErrorMessage;
+            },
+            "Deleted blob2 fetch should have failed"
+        );
     });
 });

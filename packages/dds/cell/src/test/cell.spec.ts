@@ -15,9 +15,9 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
-import { ISharedCell } from "../interfaces";
+import { ISharedCell, ICellOptions } from "../interfaces";
 
-function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory): ISharedCell {
+function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory, options?: ICellOptions): ISharedCell {
     // Create and connect a second SharedCell.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -26,13 +26,13 @@ function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFac
         objectStorage: new MockStorage(),
     };
 
-    const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
+    const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes, options);
     cell.connect(services);
     return cell;
 }
 
-function createLocalCell(id: string): ISharedCell {
-    const subCell = new SharedCell("cell", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
+function createLocalCell(id: string, options?: ICellOptions): ISharedCell {
+    const subCell = new SharedCell(id, new MockFluidDataStoreRuntime(), CellFactory.Attributes, options);
     return subCell;
 }
 
@@ -141,6 +141,23 @@ describe("Cell", () => {
                 assert.equal(cell2.get(), newValue, "The second cell did not get the new value");
             });
         });
+
+        describe("Summarization of the Attribution", () => {
+            it("should not retrive attribution in local state", async () => {
+                // overwrite the cell with attribution tracking enabled
+                const options: ICellOptions = { attribution: { track: true } };
+                cell = createLocalCell("cell", options);
+                cell.set("value");
+                assert.equal(cell.getAttribution(), undefined, "the first cell should not have valid attribution");
+
+                // load a cell from the snapshot
+                const services = MockSharedObjectServices.createFromSummary(cell.getAttachSummary().summary);
+                const cell2 = new SharedCell("cell2", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
+                await cell2.load(services);
+
+                assert.equal(cell2.getAttribution(), undefined, "the second cell should not have valid attribution");
+            });
+        });
     });
 
     describe("Connected state", () => {
@@ -210,6 +227,39 @@ describe("Cell", () => {
                 assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
                 assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
             });
+        });
+
+        describe("Attributor", () => {
+            beforeEach(() => {
+                const options: ICellOptions = { attribution: { track: true } };
+                containerRuntimeFactory = new MockContainerRuntimeFactory();
+                // Connect the first SharedCell with attribution enabled.
+                cell1 = createConnectedCell("cell1", containerRuntimeFactory, options);
+                // Create a second SharedCell with attribution enabled.
+                cell2 = createConnectedCell("cell2", containerRuntimeFactory, options);
+            });
+
+            it("Retrive proper attribution information in connected state", () => {
+                const value1 = "value1";
+                const value2 = "value2";
+                cell1.set(value1);
+                cell2.set(value2);
+                cell2.delete();
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the attributon is not undefined
+                assert.notEqual(cell1.getAttribution(), undefined, "the first cell does not have valid attribution");
+                // Verify the attribution of SharedCell with 1 pending message
+                assert.notEqual(cell1.getAttribution()?.seq, cell2.getAttribution()?.seq, "the attribution key should not be consistent");
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the attributon is not undefined
+                assert.notEqual(cell2.getAttribution(), undefined, "the second cell does not have valid attribution");
+                // Verify the attribution of SharedCell with all pending messages processed
+                assert.equal(cell1.getAttribution()?.seq, cell2.getAttribution()?.seq, "the attribution key should be consistent");
+            })
         });
     });
 

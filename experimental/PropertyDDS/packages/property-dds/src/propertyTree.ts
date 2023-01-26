@@ -73,6 +73,7 @@ export interface ISnapshotSummary {
 	remoteTipView?: SerializedChangeSet;
 	remoteChanges?: IPropertyTreeMessage[];
 	unrebasedRemoteChanges?: Record<string, IRemotePropertyTreeMessage>;
+	remoteHeadGuid: string;
 }
 
 export interface SharedPropertyTreeOptions {
@@ -193,14 +194,14 @@ export class SharedPropertyTree extends SharedObject {
 		// for the serialization of the data structure
 		if (this.listenerCount("localModification") > 0) {
 			const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
-            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+			this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 			const _changeSet = new ChangeSet(changes);
 			if (!isEmpty(_changeSet.getSerializedChangeSet())) {
 				this.emit("localModification", _changeSet);
 			}
 		} else {
-            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
-        }
+			this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+		}
 	}
 
 	public get changeSet(): SerializedChangeSet {
@@ -210,8 +211,8 @@ export class SharedPropertyTree extends SharedObject {
 
 	public get activeCommit(): IPropertyTreeMessage {
 		return this.localChanges.length > 0
-            ? this.localChanges[this.localChanges.length - 1]
-            : this.remoteChanges[this.remoteChanges.length - 1];
+			? this.localChanges[this.localChanges.length - 1]
+			: this.remoteChanges[this.remoteChanges.length - 1];
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;
@@ -244,7 +245,7 @@ export class SharedPropertyTree extends SharedObject {
 	/**
  	 * This method decodes message from the transfer form.
 	 * @param transferChange - The message to be decoded.
-     	 */
+	 	 */
 	private decodeMessage(transferChange: IPropertyTreeMessage): IPropertyTreeMessage {
 		return this.propertyTreeConfig.encDec.messageEncoder.decode(transferChange);
 	}
@@ -253,18 +254,18 @@ export class SharedPropertyTree extends SharedObject {
 		const _changeSet = new ChangeSet(changeSet);
 		_changeSet._toReversibleChangeSet(this.tipView);
 
-		const remoteHeadGuid =
-			this.remoteChanges.length > 0
-				? this.remoteChanges[this.remoteChanges.length - 1].guid
-				: this.headCommitGuid;
+		this.updateRemoteHeadGuid();
+
 		const change = {
 			op: OpKind.ChangeSet,
 			changeSet,
 			metadata,
 			guid: uuidv4(),
-			remoteHeadGuid,
+			remoteHeadGuid: this.headCommitGuid,
 			referenceGuid:
-				this.localChanges.length > 0 ? this.localChanges[this.localChanges.length - 1].guid : remoteHeadGuid,
+				this.localChanges.length > 0
+				? this.localChanges[this.localChanges.length - 1].guid
+				: this.headCommitGuid,
 			localBranchStart: this.localChanges.length > 0 ? this.localChanges[0].guid : undefined,
 			useMH: this.useMH,
 		};
@@ -335,6 +336,18 @@ export class SharedPropertyTree extends SharedObject {
 					break;
 			}
 		}
+	}
+
+	private addRemoteChange(change: IPropertyTreeMessage) {
+		this.remoteChanges.push(change);
+		this.updateRemoteHeadGuid();
+	}
+
+
+	private updateRemoteHeadGuid() {
+		this.headCommitGuid = this.remoteChanges.length > 0
+				? this.remoteChanges[this.remoteChanges.length - 1].guid
+				: this.headCommitGuid;
 	}
 
 	public static prune(
@@ -494,8 +507,10 @@ export class SharedPropertyTree extends SharedObject {
 			const summary: ISnapshotSummary = {
 				remoteTipView: this.remoteTipView,
 				remoteChanges: this.remoteChanges,
+				remoteHeadGuid: this.headCommitGuid,
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
+
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
 			let totalBlobsSize = 0;
 			const serializedSummary = this.encodeSummary(summary);
@@ -547,10 +562,26 @@ export class SharedPropertyTree extends SharedObject {
 					throw new Error("Invalid Snapshot.");
 				}
 
+				if (snapshotSummary.remoteHeadGuid === undefined) {
+					// The summary does not contain a remoteHeadGuid. This means the summary has
+					// been created by an old version of PropertyDDS, that did not yet have this patch.
+					snapshotSummary.remoteHeadGuid = (snapshotSummary.remoteChanges.length > 0) ?
+							// If there are remote changes in the
+							// summary we can deduce the head GUID from these changes.
+							snapshotSummary.remoteChanges[snapshotSummary.remoteChanges.length - 1].guid :
+
+							// If no remote head GUID is available, we will fall back to the old behaviour,
+							// where the head GUID was set to an empty string. However, this could lead to
+							// divergence between the clients, if there is still a client in the session
+							// that is using a version of this library without this patch and which
+							// has started the session at a different summary.
+							"";
+				}
+
 				this.remoteTipView = snapshotSummary.remoteTipView;
 				this.remoteChanges = snapshotSummary.remoteChanges;
 				this.unrebasedRemoteChanges = snapshotSummary.unrebasedRemoteChanges;
-
+				this.headCommitGuid = snapshotSummary.remoteHeadGuid;
 				const isPartialCheckoutActive = !!(this.options.clientFiltering && this.options.paths);
 				if (isPartialCheckoutActive && this.options.paths) {
 					this.remoteTipView = ChangeSetUtils.getFilteredChangeSetByPaths(
@@ -612,7 +643,7 @@ export class SharedPropertyTree extends SharedObject {
 									this.options.paths,
 								);
 							}
-							this.remoteChanges.push(remoteChange);
+							this.addRemoteChange(remoteChange);
 						}
 					} else {
 						this.processCore(missingDeltas[i], false, {});
@@ -661,8 +692,7 @@ export class SharedPropertyTree extends SharedObject {
 			);
 		}
 
-		this.remoteChanges.push(change);
-
+		this.addRemoteChange(change);
 		// Apply the remote change set to the remote tip view
 		const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView);
 		remoteChangeSetWrapper.applyChangeSet(change.changeSet);

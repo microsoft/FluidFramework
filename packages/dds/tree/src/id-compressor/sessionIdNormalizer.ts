@@ -345,7 +345,7 @@ export class SessionIdNormalizer<TRangeObject> {
         }
         assert(
             unalignedLocalCount > 0,
-            "Final ID block should not be registered without an existing local range.",
+            0x51b /* Final ID block should not be registered without an existing local range. */,
         );
         const lastFinal = (firstFinalInBlock +
             Math.min(unalignedLocalCount, count) -
