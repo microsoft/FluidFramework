@@ -40,7 +40,7 @@ export async function performFuzzActions(
     saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
 ): Promise<FuzzTestState> {
     const random = makeRandom(seed);
-    const provider = await TestTreeProvider.create(2, SummarizeType.onDemand);
+    const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
 
     const initialTreeState: JsonableTree = {
         type: brand("Node"),
@@ -100,7 +100,7 @@ export async function performFuzzActionsAbort(
     saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
 ): Promise<Required<FuzzTestState>> {
     const random = makeRandom(seed);
-    const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+    const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
 
     const initialTreeState: JsonableTree = {
         type: brand("Node"),

@@ -136,7 +136,8 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 
     return async (state: FuzzTestState): Promise<Operation | typeof done> => {
         const trees = state.testTreeProvider.trees;
-        const treeIndex = state.random.integer(0, trees.length - 1);
+        // does not include last tree, as we want a passive client
+        const treeIndex = state.random.integer(0, trees.length - 2);
         const contents = await baseEditGenerator({
             ...state,
             treeIndex,
