@@ -21,11 +21,11 @@ import {
     Value,
 } from "../core";
 import { unreachableCase } from "../util";
-import { chunkTree } from "./chunked-forest";
+import { chunkTree, TreeChunk } from "./chunked-forest";
 
 interface RepairData {
     value?: Map<RevisionTag, Value>;
-    node?: Map<RevisionTag, ITreeCursorSynchronous>;
+    node?: Map<RevisionTag, TreeChunk>;
 }
 type RepairDataNode = SparseNode<RepairData | undefined>;
 
@@ -133,7 +133,7 @@ export class ForestRepairDataStore implements RepairDataStore {
                 const index = startIndex + i;
                 fork.enterNode(index);
                 // TODO: remove reference
-                const nodeData = chunkTree(castCursorToSynchronous(fork)).cursor();
+                const nodeData = chunkTree(castCursorToSynchronous(fork));
                 fork.free();
                 const child = parent.getOrCreateChild(key, index, repairDataFactory);
                 if (child.data === undefined) {
@@ -170,7 +170,7 @@ export class ForestRepairDataStore implements RepairDataStore {
         return sparseField.slice(sparseIndex, sparseIndex + count).map((node) => {
             const repair = node.data?.node?.get(revision);
             assert(repair !== undefined, 0x47d /* No repair data found */);
-            return repair;
+            return repair.cursor();
         });
     }
 
