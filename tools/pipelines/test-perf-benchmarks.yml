@@ -199,7 +199,7 @@ stages:
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
         - task: Bash@3
-          displayName: Send Execution time Performance Benchmark Measurments to Azure App insights
+          displayName: Send Execution Time Performance Benchmark Measurments to Azure App Insights
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
@@ -358,7 +358,7 @@ stages:
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
         - task: Bash@3
-          displayName: Send Perf Benchmark Measurments to Azure App insights
+          displayName: Send Memory Usage Performance Benchmark Measurments to Azure App Insights
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
@@ -513,7 +513,7 @@ stages:
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
 
         - task: Bash@3
-          displayName: Send Excecution Time Perf Benchmark Measurments to Azure App insights
+          displayName: Send Excecution Time Perf Benchmark Measurments to Azure App Insights
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
@@ -526,7 +526,7 @@ stages:
             BRANCH_NAME: $(Build.SourceBranchName)
 
         - task: Bash@3
-          displayName: Send Memory Usage Perf Benchmark Measurments to Azure App insights
+          displayName: Send Memory Usage Perf Benchmark Measurments to Azure App Insights
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
