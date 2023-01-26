@@ -107,6 +107,7 @@ import {
     ProtocolHandler,
     ProtocolHandlerBuilder,
 } from "./protocol";
+import { VirtualDeltaManager } from "./virtualDeltaManager";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1506,7 +1507,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private createDeltaManager() {
         const serviceProvider = () => this.service;
-        const deltaManager = new DeltaManager<ConnectionManager>(
+        const deltaManager = new VirtualDeltaManager<ConnectionManager>(
             serviceProvider,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             () => this.activeConnection(),
