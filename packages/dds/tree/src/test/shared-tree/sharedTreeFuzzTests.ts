@@ -194,7 +194,7 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
         case "insert":
             if (index !== undefined && nodeField !== undefined) {
                 tree.runTransaction((forest, editor) => {
-                    const field = editor.sequenceField(contents.path, nodeField);
+                    const field = editor.sequenceField(contents.parent, nodeField);
                     field.insert(
                         index,
                         singleTextCursor({ type: brand("Test"), value: contents.value }),
@@ -205,9 +205,9 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
             break;
         case "delete":
             if (index !== undefined && nodeField !== undefined) {
-                const parent = contents.path?.parent;
-                const delField = contents.path?.parentField;
-                const parentIndex = contents.path?.parentIndex;
+                const parent = contents.parent?.parent;
+                const delField = contents.parent?.parentField;
+                const parentIndex = contents.parent?.parentIndex;
                 if (delField !== undefined && parent !== undefined && parentIndex !== undefined) {
                     tree.runTransaction((forest, editor) => {
                         const field = editor.sequenceField(parent, delField);
@@ -219,7 +219,7 @@ function abortFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
             break;
         case "setPayload":
             if (index !== undefined && nodeField !== undefined) {
-                const path = contents.path;
+                const path = contents.parent;
                 if (path !== undefined) {
                     tree.runTransaction((forest, editor) => {
                         editor.setValue(path, contents.value);
@@ -240,7 +240,7 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
         case "insert":
             if (index !== undefined && nodeField !== undefined) {
                 tree.runTransaction((forest, editor) => {
-                    const field = editor.sequenceField(contents.path, nodeField);
+                    const field = editor.sequenceField(contents.parent, nodeField);
                     field.insert(
                         index,
                         singleTextCursor({ type: brand("Test"), value: contents.value }),
@@ -251,9 +251,9 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
             break;
         case "delete":
             if (index !== undefined && nodeField !== undefined) {
-                const parent = contents.path?.parent;
-                const delField = contents.path?.parentField;
-                const parentIndex = contents.path?.parentIndex;
+                const parent = contents.parent?.parent;
+                const delField = contents.parent?.parentField;
+                const parentIndex = contents.parent?.parentIndex;
                 if (delField !== undefined && parent !== undefined && parentIndex !== undefined) {
                     tree.runTransaction((forest, editor) => {
                         const field = editor.sequenceField(parent, delField);
@@ -265,7 +265,7 @@ async function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): Promise
             break;
         case "setPayload":
             if (index !== undefined && nodeField !== undefined) {
-                const path = contents.path;
+                const path = contents.parent;
                 if (path !== undefined) {
                     tree.runTransaction((forest, editor) => {
                         editor.setValue(path, contents.value);
