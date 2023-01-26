@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import type { IdCreationRange, UnackedLocalId } from "./persisted-types";
+import type { IdCreationRange, UnackedLocalId } from "@fluidframework/runtime-definitions";
 
 export function getIds(
     range: IdCreationRange,

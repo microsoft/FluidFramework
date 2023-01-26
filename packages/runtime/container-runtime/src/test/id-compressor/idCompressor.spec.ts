@@ -9,16 +9,21 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { take } from "@fluid-internal/stochastic-test-utils";
 import {
+    IdCreationRange,
+    UnackedLocalId,
+    FinalCompressedId,
+    LocalCompressedId,
+    OpSpaceCompressedId,
+    SessionId,
+    SessionSpaceCompressedId,
+    StableId
+} from "@fluidframework/runtime-definitions";
+import {
     IdCompressor,
     isFinalId,
     isLocalId,
     hasOngoingSession,
     legacySharedTreeInitialTreeId,
-    LocalCompressedId,
-    FinalCompressedId,
-    SessionSpaceCompressedId,
-    OpSpaceCompressedId,
-    SessionId,
     createSessionId,
     incrementUuid,
     numericUuidFromStableId,
@@ -26,10 +31,8 @@ import {
     getIds,
     assertIsStableId,
     isStableId,
-    StableId,
     fail
 } from "../../id-compressor";
-import type { IdCreationRange, UnackedLocalId } from "../../id-compressor";
 import {
     createCompressor,
     performFuzzActions,

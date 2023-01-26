@@ -8,6 +8,7 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { StableId } from "@fluidframework/runtime-definitions";
 import {
     numericUuidEquals,
     createSessionId,
@@ -16,7 +17,6 @@ import {
     numericUuidFromStableId,
     stableIdFromNumericUuid,
     ensureSessionUuid,
-    StableId,
     assertIsStableId,
     isStableId,
     compareStrings,

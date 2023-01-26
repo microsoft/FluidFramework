@@ -18,12 +18,14 @@ import {
     makeRandom,
 } from "@fluid-internal/stochastic-test-utils";
 import {
-    isFinalId,
-    isLocalId,
-    SessionIdNormalizer,
     FinalCompressedId,
     LocalCompressedId,
     SessionSpaceCompressedId,
+} from "@fluidframework/runtime-definitions";
+import {
+    isFinalId,
+    isLocalId,
+    SessionIdNormalizer,
     fail
 } from "../../id-compressor";
 

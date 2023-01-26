@@ -7,7 +7,29 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/runtime-definitions";
+import {
+    IIdCompressor,
+    IIdCompressorCore,
+    LocalCompressedId,
+    FinalCompressedId,
+    SessionSpaceCompressedId,
+    StableId,
+    OpSpaceCompressedId,
+    SessionId,
+    CompressedId
+} from "@fluidframework/runtime-definitions";
+import type {
+    IdCreationRange,
+    SerializedCluster,
+    SerializedClusterOverrides,
+    SerializedIdCompressor,
+    SerializedIdCompressorWithNoSession,
+    SerializedIdCompressorWithOngoingSession,
+    SerializedLocalState,
+    SerializedSessionData,
+    UnackedLocalId,
+    VersionedSerializedIdCompressor,
+} from "@fluidframework/runtime-definitions";
 import BTree from "sorted-btree";
 import {
     hasAtLeastLength,
@@ -19,15 +41,6 @@ import {
     Mutable,
     setPropertyIfDefined,
 } from "./utils";
-import {
-    LocalCompressedId,
-    FinalCompressedId,
-    SessionSpaceCompressedId,
-    StableId,
-    OpSpaceCompressedId,
-    SessionId,
-    CompressedId,
-} from "./identifiers";
 import { assertIsStableId, isStableId } from "./uuidUtilities";
 import { AppendOnlySortedMap } from "./appendOnlySortedMap";
 import { getIds } from "./idRange";
@@ -40,18 +53,6 @@ import {
     stableIdFromNumericUuid,
     ensureSessionUuid,
 } from "./numericUuid";
-import type {
-    IdCreationRange,
-    SerializedCluster,
-    SerializedClusterOverrides,
-    SerializedIdCompressor,
-    SerializedIdCompressorWithNoSession,
-    SerializedIdCompressorWithOngoingSession,
-    SerializedLocalState,
-    SerializedSessionData,
-    UnackedLocalId,
-    VersionedSerializedIdCompressor,
-} from "./persisted-types";
 import { SessionIdNormalizer } from "./sessionIdNormalizer";
 
 /**

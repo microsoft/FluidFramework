@@ -6,10 +6,9 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
 import { assert } from "@fluidframework/common-utils";
+import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId, SerializedSessionIdNormalizer } from "@fluidframework/runtime-definitions";
 import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from "./utils";
-import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from "./identifiers";
 import { AppendOnlyDoublySortedMap } from "./appendOnlySortedMap";
-import { SerializedSessionIdNormalizer } from "./persisted-types";
 
 /**
  * Maps IDs created by a session between their local and final forms (i.e. normalization). These IDs are in a contiguous range.

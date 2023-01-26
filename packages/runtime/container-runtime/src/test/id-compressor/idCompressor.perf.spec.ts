@@ -5,6 +5,16 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import {
+    IdCreationRange,
+    UnackedLocalId,
+    SerializedIdCompressorWithNoSession,
+    CompressedId,
+    FinalCompressedId,
+    LocalCompressedId,
+    OpSpaceCompressedId,
+    SessionId
+} from "@fluidframework/runtime-definitions";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { take } from "@fluid-internal/stochastic-test-utils";
 import {
@@ -12,17 +22,9 @@ import {
     IdCompressor,
     isFinalId,
     isLocalId,
-    IdCreationRange,
-    UnackedLocalId,
-    SerializedIdCompressorWithNoSession,
     createSessionId,
     numericUuidFromStableId,
     stableIdFromNumericUuid,
-    CompressedId,
-    FinalCompressedId,
-    LocalCompressedId,
-    OpSpaceCompressedId,
-    SessionId,
     fail,
     Mutable,
 } from "../../id-compressor";

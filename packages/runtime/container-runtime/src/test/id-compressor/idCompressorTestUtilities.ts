@@ -19,6 +19,18 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FinalCompressedId,
+    SessionId,
+    StableId,
+    SessionSpaceCompressedId,
+    OpSpaceCompressedId,
+} from "@fluidframework/runtime-definitions";
+import type {
+    IdCreationRange,
+    SerializedIdCompressorWithOngoingSession,
+    SerializedIdCompressorWithNoSession,
+} from "@fluidframework/runtime-definitions";
+import {
     IdCompressor,
     isLocalId,
     createSessionId,
@@ -26,20 +38,10 @@ import {
     NumericUuid,
     numericUuidFromStableId,
     stableIdFromNumericUuid,
-    FinalCompressedId,
-    SessionId,
-    StableId,
-    SessionSpaceCompressedId,
-    OpSpaceCompressedId,
     getIds,
     assertIsStableId,
     getOrCreate,
     fail,
-} from "../../id-compressor";
-import type {
-    IdCreationRange,
-    SerializedIdCompressorWithOngoingSession,
-    SerializedIdCompressorWithNoSession,
 } from "../../id-compressor";
 
 /**

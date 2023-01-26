@@ -7,8 +7,8 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import { assert } from "@fluidframework/common-utils";
+import { SessionId, StableId } from "@fluidframework/runtime-definitions";
 import { fail } from "./utils";
-import { SessionId, StableId } from "./identifiers";
 import { generateStableId } from "./uuidUtilities";
 
 /**

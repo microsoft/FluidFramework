@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { StableId, UuidString } from "@fluidframework/runtime-definitions";
 import { v4, NIL } from "uuid";
-import { StableId, UuidString } from "./identifiers";
 
 const hexadecimalCharCodes = Array.from("09afAF").map((c) => c.charCodeAt(0)) as [
     zero: number,
