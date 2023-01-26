@@ -392,7 +392,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             "connect",
             connection,
             checkpointSequenceNumber !== undefined ?
-                this.lastObservedSeqNumber - this.lastSequenceNumber : undefined);
+                this.lastObservedSeqNumber - this.lastProcessedSequenceNumber : undefined);
 
         // If we got some initial ops, then we know the gap and call above fetched ops to fill it.
         // Same is true for "write" mode even if we have no ops - we will get "join" own op very very soon.
