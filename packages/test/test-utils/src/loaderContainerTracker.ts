@@ -241,9 +241,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				}
 			} else {
 				// Wait for all the containers to be saved
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				debugWait(
 					`Waiting container to be saved ${dirtyContainers.map(
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						(c) => this.containers.get(c)!.index,
 					)}`,
 				);
