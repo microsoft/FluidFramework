@@ -48,9 +48,10 @@ describe("mixinAttributor", () => {
 			quorum: new MockQuorumClients(),
 			taggedLogger: new MockLogger(),
 			clientDetails: { capabilities: { interactive: true } },
-			// eslint-disable-next-line @typescript-eslint/no-throw-literal
+
 			closeFn: (error?: ICriticalContainerError): void => {
 				if (error) {
+                    // eslint-disable-next-line @typescript-eslint/no-throw-literal
 					throw error;
 				}
 			},
