@@ -1853,15 +1853,14 @@ export class MergeTree {
                 segment.removedSeq = undefined;
                 segment.localRemovedSeq = undefined;
 
-                if (this.mergeTreeDeltaCallback) {
-                    const insertOp = createInsertSegmentOp(this.findRollbackPosition(segment), segment);
-                    this.mergeTreeDeltaCallback(
-                        { op: insertOp },
-                        {
-                            operation: MergeTreeDeltaType.INSERT,
-                            deltaSegments: [{ segment }],
-                        });
-                }
+                // Note: optional chaining short-circuits:
+                // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
+                this.mergeTreeDeltaCallback?.(
+                    { op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
+                    {
+                        operation: MergeTreeDeltaType.INSERT,
+                        deltaSegments: [{ segment }],
+                    });
 
                 for (let updateNode = segment.parent; updateNode !== undefined; updateNode = updateNode.parent) {
                     this.blockUpdateLength(updateNode, UnassignedSequenceNumber, this.collabWindow.clientId);
