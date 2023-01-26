@@ -22,10 +22,11 @@ import {
     ISummaryTreeWithStats,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { TombstoneResponseHeaderKey } from "./containerRuntime";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
 import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
-import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 
 /**
  * This class represents blob (long string)
@@ -101,12 +102,17 @@ enum PendingBlobStatus {
     OfflinePendingOp,
 }
 
+type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
+
 interface PendingBlob {
     blob: ArrayBufferLike;
     status: PendingBlobStatus;
     storageId?: string;
     handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
     uploadP: Promise<ICreateBlobResponse>;
+    localUploadTime?: number;
+    serverUploadTime?: number;
+    minTTLInSeconds?: number;
 }
 
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
@@ -173,12 +179,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
          * before any ops that reference the local ID, otherwise, an invalid handle could be added to the document.
          */
         private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void,
-        // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
-        // of the format `/<BlobManager.basePath>/<blobId>`.
+        // Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
+        // blobPath's format - `/<BlobManager.basePath>/<blobId>`.
         private readonly blobRequested: (blobPath: string) => void,
+        // Called when a reference is added to a blob. For instance, when creating a localId / storageId to storageId
+        // mapping in the redirect table.
+        // Node path formats - `/<BlobManager.basePath>/<blobId>`.
         private readonly addedBlobReference: (fromNodePath: string, toNodePath: string) => void,
+        // Called to check if a blob has been deleted by GC.
+        // blobPath's format - `/<BlobManager.basePath>/<blobId>`.
+        private readonly isBlobDeleted: (blobPath: string) => boolean,
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
+        private readonly getCurrentReferenceTimestampMs: () => number | undefined,
     ) {
         super();
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
@@ -272,23 +285,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     }
 
     public async getBlob(blobId: string): Promise<ArrayBufferLike> {
-        const request = { url: blobId };
-        if (this.tombstonedBlobs.has(blobId) ) {
-            const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
-            sendGCTombstoneEvent(
-                this.mc,
-                {
-                    eventName: "GC_Tombstone_Blob_Requested",
-                    category: this.throwOnTombstoneLoad ? "error" : "generic",
-                    isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-                },
-                [BlobManager.basePath],
-                error,
-            );
-            if (this.throwOnTombstoneLoad) {
-                throw error;
-            }
-        }
+        // Verify that the blob is valid, i.e., it has not been garbage collected. If it is, this will throw an error,
+        // failing the call.
+        this.verifyBlobValidity(blobId);
 
         const pending = this.pendingBlobs.get(blobId);
         if (pending) {
@@ -398,12 +397,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         }
     }
 
-    private onUploadResolve(localId: string, response: ICreateBlobResponse) {
+    private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
             entry?.status === PendingBlobStatus.OfflinePendingUpload,
             0x386 /* Must have pending blob entry for uploaded blob */);
         entry.storageId = response.id;
+        entry.localUploadTime = Date.now();
+        entry.minTTLInSeconds = response.minTTLInSeconds;
+        entry.serverUploadTime = this.getCurrentReferenceTimestampMs();
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 // Send a blob attach op. This serves two purposes:
@@ -411,6 +413,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 //    until its storage ID is added to the next summary.
                 // 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
                 //    blob from the server via the storage ID.
+                this.logTimeInfo(entry, "sendBlobAttachResolveTTL");
                 this.sendBlobAttachOp(localId, response.id);
                 if (this.storageIds.has(response.id)) {
                     // The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
@@ -472,6 +475,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
          * is called on reconnection.
          */
         if (entry.status !== PendingBlobStatus.OnlinePendingOp) {
+            this.logTimeInfo(entry, "sendBlobAttachTransitionOfflineTTL");
             this.sendBlobAttachOp(localId, entry.storageId);
         }
 
@@ -491,14 +495,42 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
         const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
         assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
+        const pendingEntry = this.pendingBlobs.get(localId);
+        if (pendingEntry) {
+            this.logTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL");
+        }
         if (!blobId) {
             // We submitted this op while offline. The blob should have been uploaded by now.
-            const pendingEntry = this.pendingBlobs.get(localId);
             assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
                 !!pendingEntry?.storageId, 0x38d /* blob must be uploaded before resubmitting BlobAttach op */);
             return this.sendBlobAttachOp(localId, pendingEntry.storageId);
         }
         return this.sendBlobAttachOp(localId, blobId);
+    }
+
+    private logTimeInfo(pendingEntry: PendingBlob, eventName: string) {
+        let timeLapseSinceLocalUpload: number = 0;
+        let timeLapseSinceServerUpload: number = 0;
+        let expiredUsingLocalTime;
+        let expiredUsingServerTime;
+        if(pendingEntry.localUploadTime){
+            timeLapseSinceLocalUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
+            expiredUsingLocalTime = (pendingEntry.minTTLInSeconds?? 0) - timeLapseSinceLocalUpload < 0 ? true : false;
+        }
+        if(pendingEntry.serverUploadTime){
+            timeLapseSinceServerUpload = (Date.now() - pendingEntry.serverUploadTime) / 1000;
+            expiredUsingServerTime = (pendingEntry.minTTLInSeconds?? 0) - timeLapseSinceServerUpload < 0 ? true : false;
+        }
+        this.mc.logger.sendTelemetryEvent({
+            eventName,
+            entryStatus: pendingEntry.status,
+            timeLapseSinceLocalUpload,
+            timeLapseSinceServerUpload,
+            minTTLInSeconds: pendingEntry.minTTLInSeconds,
+            expiredUsingLocalTime,
+            expiredUsingServerTime,
+        });
+
     }
 
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
@@ -647,6 +679,53 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         // Mark blobs that are now tombstoned by adding them to the tombstone list.
         for (const blobId of tombstonedBlobsSet) {
             this.tombstonedBlobs.add(blobId);
+        }
+    }
+
+    /**
+     * Verifies that the blob with given id is valid, i.e., it has not been garbage collected. If the blob is GC'd,
+     * log an error and throw if necessary.
+     */
+    private verifyBlobValidity(blobId: string) {
+        /**
+         * A blob can be in one of the following states:
+         * 1. "deleted" - It has been deleted by garbage collection sweep phase.
+         * 2. "tombstoned" - It is ready for deletion but sweep phase isn't enabled and tombstone feature is enabled.
+         * 3. "valid" - It has not been deleted or tombstoned.
+         */
+        let state: "valid" | "tombstoned" | "deleted" = "valid";
+        if (this.isBlobDeleted(this.getBlobGCNodePath(blobId))) {
+            state = "deleted";
+        } else if (this.tombstonedBlobs.has(blobId) ) {
+            state = "tombstoned";
+        }
+
+        if (state === "valid") {
+            return;
+        }
+
+        // If the blob is deleted or throw on tombstone load is enabled, throw an error which will fail any attempt
+        // to load the blob.
+        const shouldFail = state === "deleted" || this.throwOnTombstoneLoad;
+        const request = { url: blobId };
+        const error = responseToException(createResponseError(
+            404,
+            "Blob was deleted",
+            request,
+            state === "tombstoned" ? { [TombstoneResponseHeaderKey]: true } : undefined,
+        ), request);
+        sendGCUnexpectedUsageEvent(
+            this.mc,
+            {
+                eventName: state === "tombstoned" ? "GC_Tombstone_Blob_Requested" : "GC_Deleted_Blob_Requested",
+                category: shouldFail ? "error" : "generic",
+                isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+            },
+            [BlobManager.basePath],
+            error,
+        )
+        if (shouldFail) {
+            throw error;
         }
     }
 

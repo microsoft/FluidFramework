@@ -88,6 +88,9 @@ export interface ITestContainerConfig {
     /** Container runtime options for the container instance */
     runtimeOptions?: IContainerRuntimeOptions;
 
+    /** Whether this runtime should be instantiated using a mixed-in attributor class */
+    enableAttribution?: boolean;
+
     /** Loader options for the loader used to create containers */
     loaderProps?: Partial<ILoaderProps>;
 }
@@ -146,7 +149,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
     private readonly expectedEvents: ({ index: number; event: ITelemetryGenericEvent | undefined; } | undefined)[] = [];
     private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
-    public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]) {
+    public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]) {
         if (this.expectedEvents.length !== 0) {
             // we don't have to error here. just no reason not to. given the events must be
             // ordered it could be tricky to figure out problems around multiple registrations.
@@ -154,7 +157,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
                 "Expected events already registered.\n"
                 + "Call reportAndClearTrackedEvents to clear them before registering more");
         }
-        this.expectedEvents.push(... orderedExpectedEvents.map((event, index) => ({ index, event })));
+        this.expectedEvents.push(...orderedExpectedEvents.map((event, index) => ({ index, event })));
     }
 
     send(event: ITelemetryBaseEvent): void {
@@ -229,14 +232,14 @@ export class TestObjectProvider implements ITestObjectProvider {
         if (this._logger === undefined) {
             this._logger = new EventAndErrorTrackingLogger(
                 ChildLogger.create(getTestLogger?.(), undefined,
-                {
-                    all: {
-                        driverType: this.driver.type,
-                        driverEndpointName: this.driver.endpointName,
-                        driverTenantName: this.driver.tenantName,
-                        driverUserIndex: this.driver.userIndex,
-                    },
-                }));
+                    {
+                        all: {
+                            driverType: this.driver.type,
+                            driverEndpointName: this.driver.endpointName,
+                            driverTenantName: this.driver.tenantName,
+                            driverUserIndex: this.driver.userIndex,
+                        },
+                    }));
         }
         return this._logger;
     }
@@ -290,7 +293,7 @@ export class TestObjectProvider implements ITestObjectProvider {
         }
 
         const loader = new this.LoaderConstructor({
-            ... loaderProps,
+            ...loaderProps,
             logger: multiSinkLogger,
             codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
             urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
@@ -404,10 +407,9 @@ export class TestObjectProvider implements ITestObjectProvider {
     }
 
     public async ensureSynchronized(timeoutDuration?: number): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return !timeoutDuration
-            ? this._loaderContainerTracker.ensureSynchronized()
-            : this._loaderContainerTracker.ensureSynchronizedWithTimeout?.(timeoutDuration);
+        return this._loaderContainerTracker.ensureSynchronizedWithTimeout
+            ? this._loaderContainerTracker.ensureSynchronizedWithTimeout(timeoutDuration)
+            : this._loaderContainerTracker.ensureSynchronized();
     }
 
     public async waitContainerToCatchUp(container: IContainer) {

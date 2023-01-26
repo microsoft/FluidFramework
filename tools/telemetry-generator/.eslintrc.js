@@ -4,17 +4,15 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"
-    ],
-    "parserOptions": {
-        project: ["./tsconfig.json"],
-    },
-    "rules": {
-        "@typescript-eslint/ban-ts-comment": "off",
-        "@typescript-eslint/no-non-null-assertion": "off",
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json"],
+	},
+	rules: {
+		"@typescript-eslint/ban-ts-comment": "off",
+		"@typescript-eslint/no-non-null-assertion": "off",
 
-        // This package is exclusively used in a Node.js context
-        "import/no-nodejs-modules": "off",
-    }
+		// This package is exclusively used in a Node.js context
+		"import/no-nodejs-modules": "off",
+	},
 };

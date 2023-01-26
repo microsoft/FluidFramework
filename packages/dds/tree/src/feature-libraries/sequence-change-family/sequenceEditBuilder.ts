@@ -80,8 +80,8 @@ export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChan
                         const id2 = this.opId++;
                         marks.push(
                             { type: "MoveOut", id, count: gap },
-                            { type: "MoveIn", id, count: count - gap },
-                            { type: "MoveIn", id: id2, count: gap },
+                            { type: "MoveIn", id, count: gap },
+                            { type: "MoveIn", id: id2, count: count - gap },
                             { type: "MoveOut", id: id2, count: count - gap },
                         );
                     } else {
