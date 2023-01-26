@@ -21,7 +21,7 @@ Its development is being driven by significant feedback from developers looking 
 This document lays out the goals for Shared Tree development and the motivation behind those goals. Here is a list of the key scenarios described in this document:
 
 -   [Read and write data to the Shared Tree without an in-memory JavaScript representation](#tree-reading-and-writing-without-reification)
--   [Apply sets of related changes atomically with no interleaved changes (transactions)](#synchronous-non-overlapping-transactions)
+-   [Apply sets of related changes atomically with no interleaved changes (transactions)](#isolation-of-synchronous-non-overlapping-transaction)
 -   [Use an API that represents tree data as JavaScript objects](#tree-reading-and-writing-with-js-object-style-api)
 -   [Undo changes made locally without unduly impacting concurrent remote changes](#undoredo)
 -   [Move data within the Shared Tree without risk of duplication or data invalidation](#move)
