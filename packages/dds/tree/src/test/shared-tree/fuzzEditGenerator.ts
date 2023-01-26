@@ -71,7 +71,6 @@ export interface TreeContext {
 export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> => {
     type EditState = FuzzTestState & TreeContext;
     async function insertGenerator(state: EditState): Promise<FuzzInsert> {
-        // randomly select a tree in the testTreeProvider
         const trees = state.testTreeProvider.trees;
         const tree = trees[state.treeIndex];
 
@@ -90,7 +89,6 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
     }
 
     async function deleteGenerator(state: EditState): Promise<FuzzDelete> {
-        // randomly select a tree in the testTreeProvider
         const trees = state.testTreeProvider.trees;
         const tree = trees[state.treeIndex];
 
@@ -118,7 +116,6 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
     }
 
     async function setPayloadGenerator(state: EditState): Promise<FuzzSetPayload> {
-        // randomly select a tree in the testTreeProvider
         const trees = state.testTreeProvider.trees;
         const tree = trees[state.treeIndex];
 
