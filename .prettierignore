@@ -16,3 +16,7 @@ common/lib/**/lib
 **/_api-extractor-temp/*
 **/api-report/*
 **/*.api.md
+
+# Test json
+packages/dds/merge-tree/src/test/results/*.json
+packages/dds/merge-tree/src/test/literature/*.txt
