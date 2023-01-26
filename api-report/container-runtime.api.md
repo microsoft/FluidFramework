@@ -117,6 +117,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
+    deleteUnusedNodes(deletableRoutes: string[]): string[];
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -202,7 +203,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: string[]): void;
-    updateUnusedRoutes(unusedRoutes: string[]): string[];
+    updateUnusedRoutes(unusedRoutes: string[]): void;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;

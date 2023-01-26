@@ -12,8 +12,9 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { ITestContainerConfig, ITestObjectProvider, mockConfigProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import { ITestContainerConfig, ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
+    describeFullCompat,
     describeNoCompat,
     ITestDataObject,
     TestDataObjectType,
@@ -176,7 +177,7 @@ async function validateDataStoreReferenceState(
 /**
  * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
  */
-describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
+describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => {
     // If deleteContent is true, GC is run in test mode where content that is not referenced is
     // deleted after each GC run.
     const tests = (deleteContent: boolean = false) => {
@@ -189,7 +190,6 @@ describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
             if (provider.driver.type !== "local") {
                 this.skip();
             }
-            const settings = {};
             const testContainerConfig: ITestContainerConfig = {
                 ...defaultGCConfig,
                 runtimeOptions: {
@@ -199,9 +199,7 @@ describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
                         runGCInTestMode: deleteContent,
                     },
                 },
-                loaderProps: { configProvider: mockConfigProvider(settings) },
             };
-            settings["Fluid.GarbageCollection.SweepDataStores"] = deleteContent;
             const container = await provider.makeTestContainer(testContainerConfig);
             mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
             containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
@@ -228,13 +226,7 @@ describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
             // Remove its handle and verify its marked as unreferenced.
             mainDataStore._root.delete("nonRootDS");
             await validateDataStoreReferenceState(
-                provider,
-                containerRuntime,
-                deleteContent,
-                dataStore._context.id,
-                false /* referenced */,
-                deleteContent ? true : false /* deletedFromGCState */,
-            );
+                provider, containerRuntime, deleteContent, dataStore._context.id, false /* referenced */);
 
             // Add data store's handle back in root component. If deleteContent is true, the data store
             // should get deleted and should remain unreferenced. Otherwise, it should be referenced back.
@@ -271,13 +263,7 @@ describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
             // dataStore2 as unreferenced.
             mainDataStore._root.delete("nonRootDS1");
             await validateDataStoreReferenceState(
-                provider,
-                containerRuntime,
-                deleteContent,
-                dataStore2._context.id,
-                false /* referenced */,
-                deleteContent ? true : false /* deletedFromGCState */,
-            );
+                provider, containerRuntime, deleteContent, dataStore2._context.id, false /* referenced */);
         });
     };
 

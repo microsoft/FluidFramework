@@ -173,7 +173,6 @@ import {
     OpSplitter,
     RemoteMessageProcessor,
 } from "./opLifecycle";
-import { sweepDatastoresKey } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -2234,20 +2233,30 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
+     * This is called to delete objects from the runtime
+     * @param deletableRoutes - object routes and sub routes that can be deleted
+     * @returns - routes of objects deleted from the runtime
+     */
+    public deleteUnusedNodes(deletableRoutes: string[]): string[] {
+        const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(deletableRoutes);
+        const deletedRoutes: string[] = [];
+
+        const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
+        deletedRoutes.push(...deletedDataStoreRoutes);
+
+        return deletedRoutes;
+    }
+
+    /**
      * This is called to update objects whose routes are unused.
      * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
-     * @returns - routes deleted from the runtime
      */
-    public updateUnusedRoutes(unusedRoutes: string[]): string[] {
+    public updateUnusedRoutes(unusedRoutes: string[]) {
         const { blobManagerRoutes, dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-        const sweptRoutes: string[] = [];
         this.blobManager.updateUnusedRoutes(blobManagerRoutes);
-        if (this.mc.config.getBoolean(sweepDatastoresKey) === true) {
-            const sweptDataStoreRoutes = this.dataStores.updateUnusedRoutes(dataStoreRoutes);
-            sweptRoutes.push(...sweptDataStoreRoutes);
-        }
-        return sweptRoutes;
+        this.dataStores.updateUnusedRoutes(dataStoreRoutes);
     }
+
 
     /**
      * This is called to update objects that are tombstones.

@@ -211,7 +211,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     /** If true, throw an error when a tombstone data store is used. */
     private readonly throwOnTombstoneUsage: boolean;
 
-    /** A context should only be marked as deleted when its a remote context */
+    /** If true, this means that this data store context and its children have been removed from the runtime */
     private deleted: boolean = false;
 
     public get attachState(): AttachState {
@@ -334,9 +334,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public abstract delete(): void;
-
-    protected deleteCore(): void {
+    public delete() {
         this.deleted = true;
     }
 
@@ -912,10 +910,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
-    public delete() {
-        this.deleteCore();
-    }
-
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         return this.baseGCDetailsP;
     }
@@ -1029,6 +1023,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         return {};
     }
 
+    /** A context should only be marked as deleted when its a remote context */
     public delete() {
         sendGCTombstoneEvent(
             this.mc,
@@ -1039,7 +1034,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             },
             this.pkg,
         )
-        this.deleteCore();
+        super.delete();
     }
 }
 

@@ -54,7 +54,7 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType } from "./garbageCollection";
-import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
+import { sweepDatastoresKey, throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
@@ -649,22 +649,44 @@ export class DataStores implements IDisposable {
      * This is called to update objects whose routes are unused. The unused objects are deleted.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
-    public updateUnusedRoutes(unusedRoutes: string[]): string[] {
+    public updateUnusedRoutes(unusedRoutes: string[]) {
+        for (const route of unusedRoutes) {
+            const pathParts = route.split("/");
+            // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
+            // store based on its DDS being unused.
+            if (pathParts.length > 2) {
+                continue;
+            }
+            const dataStoreId = pathParts[1];
+            assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
+            // Delete the contexts of unused data stores.
+            this.contexts.delete(dataStoreId);
+            // Delete the summarizer node of the unused data stores.
+            this.deleteChildSummarizerNodeFn(dataStoreId);
+        }
+    }
+
+    /**
+     * This is called to delete unused nodes.
+     * @param deletableRoutes - The routes of data stores and DDSes that should be deleted
+     * @returns - routes of deleted nodes
+     */
+    public deleteUnusedNodes(deletableRoutes: string[]): string[] {
+        if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
+            return [];
+        }
         const deletedRoutes = new Set<string>();
 
-        for (const route of unusedRoutes) {
+        for (const route of deletableRoutes) {
             const pathParts = route.split("/");
             const dataStoreId = pathParts[1];
 
-            // Skip any routes already deleted
-            if (deletedRoutes.has(route)) {
-                continue;
-            }
+            // TODO: GC:Validation - Skip any routes already deleted
 
             // Push all deleted DataStore (/datastoreId) and sub DataStore (/datastoreId/...) routes to deleted routes
             deletedRoutes.add(route);
 
-            // Don't delete duplicate a datastore twice and don't delete a dataStore if just deleting its sub datastore
+            // Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only need to delete the data store.
             if (pathParts.length > 2) {
                 continue;
             }

@@ -53,7 +53,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
         if (provider.driver.type !== "local") {
             this.skip();
         }
-        settings["Fluid.GarbageCollection.SweepDataStores"] = true;
+        settings["Fluid.GarbageCollection.Test.SweepDataStores"] = true;
         settings["Fluid.GarbageCollection.RunSweep"] = true;
         settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
         settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
