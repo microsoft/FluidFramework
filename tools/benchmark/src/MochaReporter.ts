@@ -21,7 +21,7 @@ import { red, getName, getSuiteName } from "./ReporterUtilities";
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 module.exports = class {
-    public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions; }) {
+    public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions }) {
         const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportDir);
         const data: Map<Test, BenchmarkData> = new Map();
         runner
@@ -54,8 +54,7 @@ module.exports = class {
                     // This is an error, so report it as such.
                     console.error(
                         red(
-                            `Test ${test.title} in ${suite} completed with status '${
-                                test.state}' without reporting any data.`,
+                            `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`,
                         ),
                     );
                     benchmarkReporter.recordTestResult(suite, getName(test.title), failedData);
@@ -66,8 +65,7 @@ module.exports = class {
                     // This may indicate the benchmark did not measure what was intended, so mark as aborted.
                     console.error(
                         red(
-                            `Test ${test.title} in ${suite} completed with status '${
-                                test.state}' after reporting data.`,
+                            `Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`,
                         ),
                     );
                     benchmark.aborted = true;
