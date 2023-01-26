@@ -6,15 +6,15 @@ This document covers motivation, spec, and design for the upcoming "obliterate" 
 
 A concise description of merge-tree's current merge conflict resolution strategy is as follows:
 
-- Insertion of a text segment only conflicts with other insertions at the same location.
-  The conflict is resolved by inserting the segment added later nearer in the string.
-  For example, from an initial state of "abc", if the operations [insert "hi " at 0] from client 1
-  and [insert "bye " at 0] from client 2 are sequenced in that order, the resulting state is "bye hi abc".
-- Range operations (delete, annotate) apply to the range at the time the operation was issued.
-  Specifically, insertion of a segment into a range that is concurrently deleted or annotated
-  will not result in that inserted segment being deleted or annotated. For example, from an initial state "012",
-  the operations [delete the range [1, 3)] from client 1 and [insert "hi" at index 2 (i.e. between "1" and "2")] from client 2,
-  the resulting text is "0hi".
+-   Insertion of a text segment only conflicts with other insertions at the same location.
+    The conflict is resolved by inserting the segment added later nearer in the string.
+    For example, from an initial state of "abc", if the operations [insert "hi " at 0] from client 1
+    and [insert "bye " at 0] from client 2 are sequenced in that order, the resulting state is "bye hi abc".
+-   Range operations (delete, annotate) apply to the range at the time the operation was issued.
+    Specifically, insertion of a segment into a range that is concurrently deleted or annotated
+    will not result in that inserted segment being deleted or annotated. For example, from an initial state "012",
+    the operations [delete the range [1, 3)] from client 1 and [insert "hi" at index 2 (i.e. between "1" and "2")] from client 2,
+    the resulting text is "0hi".
 
 The merge outcomes for ranges are easy to understand, but not always desirable.
 Oftentimes, when consumers want to work with ranges, they may want their operation to apply to concurrently inserted segments.
@@ -37,8 +37,9 @@ In the example above, these semantics would look like so:
 A `SharedString` feature request for a removal operation with these semantics dubbed them "obliterate".
 
 At an implementation level, these semantics can be viewed in two parts:
-- The range specification is resolved at the time the op is sequenced
-- Any subsequent segments inserted into that range concurrently should also be removed
+
+-   The range specification is resolved at the time the op is sequenced
+-   Any subsequent segments inserted into that range concurrently should also be removed
 
 The first clause handles concurrent inserts before the removal is sequenced, and the second clause handles concurrent inserts after the removal is sequenced.
 
@@ -79,12 +80,12 @@ So new properties added to segment will unnecessarily copy undefined values.
 
 There are a few aspects of merge tree's bookkeeping and general feature set that require consideration when designing new op semantics:
 
-- Any changes to direct fields of tree nodes themselves (either new data or changes to bookkeeping of existing data)
-- How the feature interacts with an increasing collab window and zamboni
-- Impact on the partial lengths scheme
-- Bookkeeping and handling of overlapping removals (note some may be obliterates and some may not be)
-- Reconnection
-- Snapshotting impact
+-   Any changes to direct fields of tree nodes themselves (either new data or changes to bookkeeping of existing data)
+-   How the feature interacts with an increasing collab window and zamboni
+-   Impact on the partial lengths scheme
+-   Bookkeeping and handling of overlapping removals (note some may be obliterates and some may not be)
+-   Reconnection
+-   Snapshotting impact
 
 We'll first present an overview of a potential scheme for implementing the obliterate op, then comment on these aspects.
 
@@ -104,30 +105,30 @@ This may look as follows:
  * The moved "X" tombstone segment would have the following IMoveInfo: `{ movedSeq: 30, moveDst: <reference to living "X" segment>}`
  */
 export interface IMoveInfo {
-    /**
-     * Local seq at which this segment was moved if the move is yet-to-be acked. Only set on the tombstone "source" segment of the move.
-     */
-    localMovedSeq?: number;
-    /**
-     * Seq at which this segment was moved. Only set on the tombstone "source" segment of the move.
-     */
-    movedSeq: number;
-    /**
-     * A reference to the inserted destination segment corresponding to this segment's move.
-     * If undefined, the move was an obliterate.
-     */
-    moveDst?: ReferencePosition;
+	/**
+	 * Local seq at which this segment was moved if the move is yet-to-be acked. Only set on the tombstone "source" segment of the move.
+	 */
+	localMovedSeq?: number;
+	/**
+	 * Seq at which this segment was moved. Only set on the tombstone "source" segment of the move.
+	 */
+	movedSeq: number;
+	/**
+	 * A reference to the inserted destination segment corresponding to this segment's move.
+	 * If undefined, the move was an obliterate.
+	 */
+	moveDst?: ReferencePosition;
 
-    /**
-     * List of client IDs that have moved this segment.
-     * The client that actually moved the segment (i.e. whose move op was sequenced first) is stored as the first
-     * client in this list. Other clients in the list have all issued concurrent ops to move the segment.
-     */
-    movedClientIds: number[];
+	/**
+	 * List of client IDs that have moved this segment.
+	 * The client that actually moved the segment (i.e. whose move op was sequenced first) is stored as the first
+	 * client in this list. Other clients in the list have all issued concurrent ops to move the segment.
+	 */
+	movedClientIds: number[];
 }
 
 export interface ISegment extends Partial<IRemovalInfo>, Partial<IMoveInfo> {
-  // ...
+	// ...
 }
 ```
 
@@ -197,7 +198,7 @@ and use some endpoint resolution strategy.
 
 The guarantee we get for a removed segment isn't quite as good: we only know that the move must have come either before
 the segment was inserted or after it was removed (since move doesn't impact segments that are removed before its application).
-We *could* track this as part of our excursion by maintaining a range of disjoint intervals at which an obliterate "might have happened"
+We _could_ track this as part of our excursion by maintaining a range of disjoint intervals at which an obliterate "might have happened"
 and exiting as soon as we know no obliterate is possible, but this is probably more effort than required: only decreasing our upper bound
 for removed segments if our existing upper bound is below when the segment was removed is a reasonable intermediate approach that uses
 less bookkeeping overhead.
@@ -206,48 +207,47 @@ All-in-all, the insert logic modification might look something like this:
 
 ```typescript
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
-  return seg.removedSeq !== UnassignedSequenceNumber && seg.removedSeq > seq;
+	return seg.removedSeq !== UnassignedSequenceNumber && seg.removedSeq > seq;
 }
 
 function insertingWalk(args /* mostly omitted */, op) {
-  /* regular insert logic goes here */
+	/* regular insert logic goes here */
 
-  let moveUpperBound = Number.POSITIVE_INFINITY;
-  let movedSegment: ISegment | undefined = undefined;
-  const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
-  const findAdjacedMovedSegment = (seg) => {
-    if (seg.movedSeq && seg.movedSeq > op.referenceSequenceNumber) {
-      movedSegment = seg;
-      return false;
-    }
+	let moveUpperBound = Number.POSITIVE_INFINITY;
+	let movedSegment: ISegment | undefined = undefined;
+	const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
+	const findAdjacedMovedSegment = (seg) => {
+		if (seg.movedSeq && seg.movedSeq > op.referenceSequenceNumber) {
+			movedSegment = seg;
+			return false;
+		}
 
-    if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
-      moveUpperBound = Math.min(moveUpperBound, seg.seq);
-    }
-    // If we've reached a segment that existed before any of our in-collab-window move ops
-    // happened, no need to continue.
-    return moveUpperBound > smallestSeqMoveOp;
-  }
-  forwardExcursion(insertSegment, findAdjacedMovedSegment);
-  const furtherMovedSegment = movedSegment;
-  currentMin = Number.POSITIVE_INFINITY;
-  movedSeg = undefined;
-  backwardExcursion(insertSegment, findAdjacedMovedSegment);
-  const nearerMovedSegment = movedSegment;
-  if (
-    (nearerMovedSegment && breakEndpointTie(nearerMovedSegment, insertSegment, op)) ||
-    (furtherMovedSegment && breakEndpointTie(insertSegment, furtherMovedSegment, op))
-  ) {
-    // These objects will be analogous to return from `toRemovalInfo`.
-    const nearMoveInfo = toMoveInfo(nearerMovedSegment);
-    const farMoveInfo = toMoveInfo(furtherMovedSegment);
-    // The inserted segment could potentially be adjacent to two different moved regions.
-    // We mark it as moved using the info from the earlier such operation.
-    const moveInfo = min(nearMoveInfo, farMoveInfo);
-    markSegmentMoved(insertSegment, moveInfo, op)
-  }
+		if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
+			moveUpperBound = Math.min(moveUpperBound, seg.seq);
+		}
+		// If we've reached a segment that existed before any of our in-collab-window move ops
+		// happened, no need to continue.
+		return moveUpperBound > smallestSeqMoveOp;
+	};
+	forwardExcursion(insertSegment, findAdjacedMovedSegment);
+	const furtherMovedSegment = movedSegment;
+	currentMin = Number.POSITIVE_INFINITY;
+	movedSeg = undefined;
+	backwardExcursion(insertSegment, findAdjacedMovedSegment);
+	const nearerMovedSegment = movedSegment;
+	if (
+		(nearerMovedSegment && breakEndpointTie(nearerMovedSegment, insertSegment, op)) ||
+		(furtherMovedSegment && breakEndpointTie(insertSegment, furtherMovedSegment, op))
+	) {
+		// These objects will be analogous to return from `toRemovalInfo`.
+		const nearMoveInfo = toMoveInfo(nearerMovedSegment);
+		const farMoveInfo = toMoveInfo(furtherMovedSegment);
+		// The inserted segment could potentially be adjacent to two different moved regions.
+		// We mark it as moved using the info from the earlier such operation.
+		const moveInfo = min(nearMoveInfo, farMoveInfo);
+		markSegmentMoved(insertSegment, moveInfo, op);
+	}
 }
-
 ```
 
 In reality it will be a bit more complicated: this does not properly handle inserting walks performed for local edits (which should never be immediately obliterated),
@@ -270,20 +270,22 @@ While a move op is in flight, any non-local insertions into a locally moved rang
 This can be accomplished by tweaking the `findAdjacentMovedSegment` function above to account for `localMovedSeq`:
 
 ```typescript
-  const findAdjacentMovedSegment = (seg) => {
-    if ((seg.movedSeq && seg.movedSeq > op.referenceSequenceNumber) ||
-        seg.localMovedSeq !== undefined) {
-      movedSegment = seg;
-      return false;
-    }
+const findAdjacentMovedSegment = (seg) => {
+	if (
+		(seg.movedSeq && seg.movedSeq > op.referenceSequenceNumber) ||
+		seg.localMovedSeq !== undefined
+	) {
+		movedSegment = seg;
+		return false;
+	}
 
-    if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
-      moveUpperBound = Math.min(moveUpperBound, seg.seq);
-    }
-    // If we've reached a segment that existed before any of our in-collab-window move ops
-    // happened, no need to continue.
-    return moveUpperBound > smallestSeqMoveOp;
-  }
+	if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
+		moveUpperBound = Math.min(moveUpperBound, seg.seq);
+	}
+	// If we've reached a segment that existed before any of our in-collab-window move ops
+	// happened, no need to continue.
+	return moveUpperBound > smallestSeqMoveOp;
+};
 ```
 
 We don't need to worry about the analogous problem of extending the excursion as a result of segments between the insert location and a local move
@@ -328,7 +330,7 @@ then leveraging those structures in an efficient tree walk.
 Adding additional tree operations that any client can undertake means that all other clients must be able to reason about their peers' current states.
 For example, `movedSeq` and `localMovedSeq` will need to be considered when calculating the length of a node/range from a given perspective.
 If the duplicated segment that's inserted as the result of a move is given the `clientId` of the moving client (as opposed to the originating client)
-and `seq` of the move operation, generally existing partial lengths logic will work correctly for non-concurrently inserted segments if 
+and `seq` of the move operation, generally existing partial lengths logic will work correctly for non-concurrently inserted segments if
 `movedSeq` and `localMovedSeq` on the tombstoned segment are interpreted analogously to `removedSeq` and `localRemovedSeq`.
 Note that this would require updating the description of the `clientId` field, and for attribution purposes we may want to track the clientId that originally
 created the segment separately from the clientId that most recently caused the segment to be where it is (via move).
@@ -350,6 +352,7 @@ Suppose:
 ```
 
 The desired final state in this case would be "56hello789". After seq 2, client 0 (an observer) has segments that look like so (clientIds that aren't relevant are omitted):
+
 ```
 [
   { seq: 0, movedSeq: 1, text: "01", movedClientIds: [1] },
@@ -420,13 +423,13 @@ This strategy is also consistent with the existing strategy for overlapping dele
 
 ```typescript
 if (partialLength.overlapRemoveClients) {
-    partialLength.overlapRemoveClients.map((oc: Property<number, IOverlapClient>) => {
-        // Original client entry was handled above
-        if (partialLength.clientId !== oc.data.clientId) {
-            this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
-        }
-        return true;
-    });
+	partialLength.overlapRemoveClients.map((oc: Property<number, IOverlapClient>) => {
+		// Original client entry was handled above
+		if (partialLength.clientId !== oc.data.clientId) {
+			this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
+		}
+		return true;
+	});
 }
 ```
 
@@ -458,7 +461,7 @@ Before processing, its merge tree segment state would look like so:
   { seq: 0, removedSeq: 1, removedClientIds: [1, 2], text: "01234" },
   { seq: 0, text: "56789" }
 ]
-````
+```
 
 The constructed partial lengths object for the root of the merge tree would then be:
 
@@ -475,12 +478,17 @@ Note that client 2's delta applies from seq 1 onward rather than seq 2, since it
 Client 0 would determine where to insert the op with seq 3 by:
 
 1. Asking the root for its length at `{ clientId: 2, refSeq: 0 }`
-  - This calculation is based on (length at min seq) + (any deltas between minSeq and refSeq) + (any deltas for ops submitted by client 2) - (deltas submitted by client 2 before refSeq)
-  - From the above bookkeeping, it would compute 10 + 0 + (-5) - 0 = 5
+
+-   This calculation is based on (length at min seq) + (any deltas between minSeq and refSeq) + (any deltas for ops submitted by client 2) - (deltas submitted by client 2 before refSeq)
+-   From the above bookkeeping, it would compute 10 + 0 + (-5) - 0 = 5
+
 2. Asking for the length of the first child at `{ clientId: 2, refSeq: 0 }`
-  - Conditionals here are a bit tedious, but we'd see that clientId 2 is in the segment's removedClientId list, so it has length 0
+
+-   Conditionals here are a bit tedious, but we'd see that clientId 2 is in the segment's removedClientId list, so it has length 0
+
 3. Asking for the length of the second child `{ clientId: 2, refSeq: 0 }`
-  - The segment is inserted and not removed, so it has length 5.
+
+-   The segment is inserted and not removed, so it has length 5.
     Since the search is looking for an accumulated position of 2, it determines that the correct insertion point is amidst this segment.
 
 ##### Overlapping obliterate
@@ -514,11 +522,11 @@ The segment state of some observing client after seq 3 is essentially the same a
 
 From the observing client perspective, the interpretation of each client's text if they were to submit an op with refSeq 0 through 3 is as follows:
 
-| refSeq | client 1 | client 2 | client 3     |
-| 0      | 56789    | 56789    | 01hi23456789 |
-| 1      | 56789    | 56789    | 56789        |
-| 1      | 56789    | 56789    | 56789        |
-| 1      | 56789    | 56789    | 56789        |
+| refSeq | client 1 | client 2 | client 3 |
+| 0 | 56789 | 56789 | 01hi23456789 |
+| 1 | 56789 | 56789 | 56789 |
+| 1 | 56789 | 56789 | 56789 |
+| 1 | 56789 | 56789 | 56789 |
 
 The corresponding lengths table is exactly what's achieved by combining the overlapping remove strategy with the strategy for bookkeeping concurrently inserted segments:
 
@@ -555,7 +563,7 @@ The public API of sequence will need to be updated for users to leverage the obl
 
 ```typescript
 class SharedSegmentSequence<TInterval extends IInterval> {
-  public obliterateRange(start: number, end: number)
+	public obliterateRange(start: number, end: number);
 }
 ```
 
@@ -575,7 +583,7 @@ that we can later extend if applications request.
 
 There are a few primitive concepts that all of the merge outcomes depend on.
 
-First, a sequence of length `N` is conceptualized as an interleaving set of `N+1` *gaps* and `N` nodes.
+First, a sequence of length `N` is conceptualized as an interleaving set of `N+1` _gaps_ and `N` nodes.
 Nodes in the sequence may move, but the gaps between the nodes do not.
 
 Insertion into the sequence is performed by specifying a gap to insert in as well as a direction that the inserted content prefers to tend toward
@@ -584,9 +592,9 @@ in case other content is inserted/moved concurrently into the same gap.
 > Merge-tree already conceptualizes insert locations similarly: it names the gaps `0` through `N`. It does not permit app-level specification of concurrent merges,
 > but that degree of freedom doesn't need to be exposed.
 
-Next, there are two types of range specifications: *set ranges* and *slice ranges*.
+Next, there are two types of range specifications: _set ranges_ and _slice ranges_.
 
-A *set range* targets exactly the objects in a given range at the time it was specified. In merge-tree terms, the segments that the range affects are
+A _set range_ targets exactly the objects in a given range at the time it was specified. In merge-tree terms, the segments that the range affects are
 resolved from the perspective of the submitting client at its refSeq, and only those segments undergo whatever operation applies (move, annotate, remove).
 
 > Merge-tree's `remove` operation has set range semantics, since it doesn't cause removal of any concurrently inserted segments.
@@ -594,8 +602,8 @@ resolved from the perspective of the submitting client at its refSeq, and only t
 > E.g., if the set range "CDE" inside a string "ABCDEF" was moved to the end of the string, and someone concurrently moved "B" and "C" to the start,
 > the string may end up "BAFCDE" or "BCAFDE" depending on the sequencing order of the moves.
 
-Finally, a *slice range* specifies a start location and an end location, where a location has the same object shape as an insert destination: a gap plus a merge direction.
-The range of nodes that the operation affects is interpreted at the time the operation applies, and any concurrent insertions/moves of content *into* that range
+Finally, a _slice range_ specifies a start location and an end location, where a location has the same object shape as an insert destination: a gap plus a merge direction.
+The range of nodes that the operation affects is interpreted at the time the operation applies, and any concurrent insertions/moves of content _into_ that range
 are also affected. The merge direction should be interpreted as relative to a "phantom segment" in the gap specifying the slice endpoint.
 For example, in the string "ABCDE", the slice range
 `[{ pos: 0, merge: <concurrent segments merge nearer> }, { pos: 3, merge: <concurrent segments merge further> })` referring to "ABC" would
