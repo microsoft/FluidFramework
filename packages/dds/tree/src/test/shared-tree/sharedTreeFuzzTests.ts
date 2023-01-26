@@ -34,6 +34,22 @@ import {
 } from "../../core";
 import { FuzzChange, FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerator";
 
+const initialTreeState: JsonableTree = {
+    type: brand("Node"),
+    fields: {
+        foo: [
+            { type: brand("Number"), value: 0 },
+            { type: brand("Number"), value: 1 },
+            { type: brand("Number"), value: 2 },
+        ],
+        foo2: [
+            { type: brand("Number"), value: 0 },
+            { type: brand("Number"), value: 1 },
+            { type: brand("Number"), value: 2 },
+        ],
+    },
+};
+
 export async function performFuzzActions(
     generator: AsyncGenerator<Operation, FuzzTestState>,
     seed: number,
@@ -41,22 +57,6 @@ export async function performFuzzActions(
 ): Promise<FuzzTestState> {
     const random = makeRandom(seed);
     const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-
-    const initialTreeState: JsonableTree = {
-        type: brand("Node"),
-        fields: {
-            foo: [
-                { type: brand("Number"), value: 0 },
-                { type: brand("Number"), value: 1 },
-                { type: brand("Number"), value: 2 },
-            ],
-            foo2: [
-                { type: brand("Number"), value: 0 },
-                { type: brand("Number"), value: 1 },
-                { type: brand("Number"), value: 2 },
-            ],
-        },
-    };
     initializeTestTree(provider.trees[0], initialTreeState);
     await provider.ensureSynchronized();
 
@@ -101,23 +101,6 @@ export async function performFuzzActionsAbort(
 ): Promise<Required<FuzzTestState>> {
     const random = makeRandom(seed);
     const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-
-    const initialTreeState: JsonableTree = {
-        type: brand("Node"),
-        fields: {
-            foo: [
-                { type: brand("Number"), value: 0 },
-                { type: brand("Number"), value: 1 },
-                { type: brand("Number"), value: 2 },
-            ],
-            foo2: [
-                { type: brand("Number"), value: 0 },
-                { type: brand("Number"), value: 1 },
-                { type: brand("Number"), value: 2 },
-            ],
-        },
-    };
-
     const tree = provider.trees[0];
 
     initializeTestTree(provider.trees[0], initialTreeState);
