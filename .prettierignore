@@ -20,3 +20,6 @@ common/lib/**/lib
 # Test json
 packages/dds/merge-tree/src/test/results/*.json
 packages/dds/merge-tree/src/test/literature/*.txt
+
+# Generated type-tests
+**/*.generated.ts
