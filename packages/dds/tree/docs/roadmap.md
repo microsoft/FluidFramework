@@ -41,7 +41,7 @@ This document lays out the goals for Shared Tree development and the motivation 
 -   [Allow higher-level semantics in edits to the tree](#high-level-commands)
 -   [Support for data sets larger than client memory/storage](#partial-checkout)
 
-Read the [Shared Tree github readme](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree) for a more technical overview.
+Read the [Shared Tree github readme](../README.md) for a more technical overview.
 
 # Performance
 
@@ -89,7 +89,7 @@ In Shared Tree, the core algorithms for processing edits to the tree have the du
 The scaling requirement means that these algorithms should be able to operate without reifying (loading/reading) the tree data and should be a function only of the operations themselves.
 The intention preservation requirement dictates that all editing operations should have an intuitive effect on the tree even during concurrency.
 
-The mechanism in Shared Tree responsible for satisfying these criteria is called the Rebaser. Some of the resulting design documents can be found [here](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree/docs). The operations available in the editing API (e.g., insert, delete) are rolled out incrementally in future milestones.
+The mechanism in Shared Tree responsible for satisfying these criteria is called the Rebaser. Some of the resulting design documents can be found [here](../docs). The operations available in the editing API (e.g., insert, delete) are rolled out incrementally in future milestones.
 
 ## UUID Compression Scheme
 
@@ -98,7 +98,7 @@ The mechanism in Shared Tree responsible for satisfying these criteria is called
 Supporting larger-than-memory data sets in the tree requires efficiently handling trees that contain large numbers of strong identifiers (UUIDs).
 To meet this requirement, Shared Tree leverages a novel distributed compression scheme that reduces the average storage cost of the identifiers to that of a small integer.
 This enables better scaling in scenarios where large numbers of these compressed IDs are needed (e.g., graph-like references).
-The documentation for this scheme can be found [here](https://github.com/microsoft/FluidFramework/blob/7301e1c742f0cdb0e02466918af1af06a969c3c3/packages/dds/tree/src/id-compressor/idCompressor.ts#L272).
+The documentation for this scheme can be found [here](../src/id-compressor/idCompressor.ts#L272).
 
 ## Data model specification
 
@@ -107,7 +107,7 @@ The documentation for this scheme can be found [here](https://github.com/microso
 Shared Tree has a number of requirements that have a direct impact on the tree data model.
 These include schema annotations on nodes, strong identifiers, references in the tree, and JSON interoperability.
 The team designed a low-level data model that accommodates them; it is JSON-like, but with a few key divergences.
-The specification can be found [here](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree/docs/data-model).
+The specification can be found [here](../docs/data-model/README.md).
 
 ## Basic data synchronization
 
@@ -128,7 +128,7 @@ This milestone makes it possible to read and write data to the Shared Tree witho
 This is particularly useful in scenarios where the client has memory constraints or wants to maintains a copy of the data on the other side of an interop boundary (e.g., WASM, C++).
 It also allows clients/microservices to check permissions without loading the document and inspect changes without caring about the entire tree.
 
-To accomplish this, the underlying Shared Tree layer is built on a [cursor API](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/core/tree/cursor.ts) that allows navigation of the tree by moving from node to node via explicit directional calls.
+To accomplish this, the underlying Shared Tree layer is built on a [cursor API](../src/core/tree/cursor.ts) that allows navigation of the tree by moving from node to node via explicit directional calls.
 Layers built on cursors are also able to remain agnostic to the structure of the tree it is navigating, allowing for flexible/multiple implementations.
 This cursor API is intended to be an expert API as working with it is more cumbersome compared with the more ergonomic APIs exposed in future milestones.
 
@@ -157,7 +157,7 @@ To enable this, Shared Tree will include a high-level API that presents the tree
 This is ideally suited for developers who prioritize familiarity and speed of development over low-level performance.
 Note that this API is a wrapper that uses JavaScript proxies and does not impose any schema. Schema will be supported but not as part of this milestone.
 
-This API is called the Editable Tree API and is [here](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree/src/feature-libraries/editable-tree).
+This API is called the Editable Tree API and is [here](../src/feature-libraries/editable-tree/README.md).
 
 ## Undo/redo
 
@@ -166,9 +166,9 @@ This API is called the Editable Tree API and is [here](https://github.com/micros
 The ability to undo and redo changes is table stakes for a collaborative editing system.
 However, there are a variety of possible specifications with varying levels of complexity.
 
-For this milestone, Shared Tree offers an [undo/redo mechanism](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/wip/inverse-changes/README.md#undo-semantics) that generates the inverse of a given edit (most frequently the most recent local change group but not necessarily) and applies it to the document.
+For this milestone, Shared Tree offers an [undo/redo mechanism](../docs/wip/inverse-changes/README.md#undo-semantics) that generates the inverse of a given edit (most frequently the most recent local change group but not necessarily) and applies it to the document.
 This simple implementation is easy to reason about but can lead to cases where concurrent changes can render the inverse edit inconsistent with the user's intent (e.g., conflicted or unapplied).
-In a future milestone, [alternative designs](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree/docs/undo) are explored that better handle these cases.
+In a future milestone, [alternative designs](../docs/undo) are explored that better handle these cases.
 
 ## Move
 
@@ -254,7 +254,7 @@ The constraints delivered in this milestone include specifying that a given node
 
 Schema determines how the data in the Shared Tree is structured and modified based on user-defined rules. Nodes in the tree include a _type_ field;
 these types are associated with rules that govern the shape of the data (e.g., which types are allowed in which fields).
-This metadata is stored in the tree ([schema specification](https://github.com/microsoft/FluidFramework/tree/main/packages/dds/tree/src/core/schema-stored)) and the Shared Tree uses it to guarantee that data conforms to the schema even in the face of concurrent editing.
+This metadata is stored in the tree ([schema specification](../src/core/schema-stored/README.md)) and the Shared Tree uses it to guarantee that data conforms to the schema even in the face of concurrent editing.
 This milestone exposes the ability to author a schema, create schematized data, and guarantees that edits will never violate that schema.
 It does not provide a type-safe way to view the data—that is enabled by the _Type-safe schema API_ milestone.
 
@@ -266,8 +266,8 @@ Many customer scenarios include the need to migrate existing data into the Share
 Due to its ubiquity, JSON data is the focus of this milestone.
 The Shared Tree provides two mechanisms to import and export JSON data losslessly:
 
--   A [JSON domain](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/domains/json/jsonDomainSchema.ts) (schema) that defines the mapping between the Shared Tree data model and JSON.
-    This includes a [low-level cursor](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/domains/json/jsonCursor.ts) to navigate the data as though it were native JSON.
+-   A [JSON domain](../src/domains/json/jsonDomainSchema.ts) (schema) that defines the mapping between the Shared Tree data model and JSON.
+    This includes a [low-level cursor](../src/domains/json/jsonCursor.ts) to navigate the data as though it were native JSON.
 -   APIs to ingest JSON data into a subtree typed as JSON as well as export a JSON-typed tree to raw JSON.
 
 These APIs are as lossless as JavaScript's own JSON API, so the same [caveats](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON) apply.
@@ -296,7 +296,7 @@ Virtualization allows the client to download portions of the tree on demand rath
 This will dramatically improve load performance and is another precursor to supporting larger than memory datasets.
 
 This milestone enables both for the tree.
-A long-form design proposal for these features exists [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/storage/treeStorage.md).
+A long-form design proposal for these features exists [here](../docs/storage/treeStorage.md).
 
 ## Type-safe schema API
 
