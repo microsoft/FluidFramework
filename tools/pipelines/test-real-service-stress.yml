@@ -126,7 +126,7 @@ stages:
 
   # stress tests large payloads odsp
   - stage:
-    displayName:  Stress tests with large payloads - Odsp
+    displayName: Stress tests with large payloads - Odsp
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
     variables:
