@@ -31,7 +31,6 @@ export interface FuzzInsert {
     field: FieldKey | undefined;
     index: number | undefined;
     value: number | undefined;
-    treeIndex: number;
 }
 
 export interface FuzzDelete {
@@ -39,7 +38,6 @@ export interface FuzzDelete {
     parent: UpPath | undefined;
     field: FieldKey | undefined;
     index: number | undefined;
-    treeIndex: number;
 }
 
 export interface FuzzSetPayload {
@@ -48,7 +46,6 @@ export interface FuzzSetPayload {
     field: FieldKey | undefined;
     index: number | undefined;
     value: number;
-    treeIndex: number;
 }
 
 export type FuzzChange = FuzzInsert | FuzzDelete | FuzzSetPayload;
@@ -81,7 +78,6 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
             field: nodeField,
             index: nodeIndex,
             value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER),
-            treeIndex: state.treeIndex,
         };
         return insert;
     }
@@ -102,14 +98,12 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
                   parent: undefined,
                   field: undefined,
                   index: undefined,
-                  treeIndex: state.treeIndex,
               }
             : {
                   fuzzType: "delete",
                   parent: path,
                   field: nodeField,
                   index: nodeIndex,
-                  treeIndex: state.treeIndex,
               };
     }
 
@@ -125,7 +119,6 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
             field: nodeField,
             index: nodeIndex,
             value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-            treeIndex: state.treeIndex,
         };
         return fuzzSetPayload;
     }
