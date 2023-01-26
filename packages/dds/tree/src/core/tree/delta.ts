@@ -223,6 +223,7 @@ export interface ModifyAndMoveOut<TTree = ProtoNode> {
  */
 export interface MoveIn {
     readonly type: typeof MarkType.MoveIn;
+    readonly count: number;
     /**
      * The delta should carry exactly one `MoveOut` mark with the same move ID.
      */

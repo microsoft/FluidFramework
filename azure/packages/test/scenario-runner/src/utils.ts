@@ -7,6 +7,7 @@ import {
     AzureFunctionTokenProvider,
     AzureLocalConnectionConfig,
     AzureRemoteConnectionConfig,
+    IUser,
 } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
@@ -56,6 +57,18 @@ export function createAzureTokenProvider(
     });
 }
 
+export function createInsecureTokenProvider(
+    tenantKey: string,
+    userID?: string,
+    userName?: string,
+): InsecureTokenProvider {
+    const user: IUser & { name: string } = {
+        id: userID ?? "foo",
+        name: userName ?? "bar",
+    };
+    return new InsecureTokenProvider(tenantKey, user);
+}
+
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
@@ -73,23 +86,38 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
         if (!config.tenantId) {
             throw new Error("Missing FRS configuration: Tenant ID.");
         }
-        if (!config.functionUrl) {
-            throw new Error("Missing FRS configuration: Function URL.");
-        }
 
-        if (!config.functionUrl) {
-            throw new Error("Missing FRS configuration: Function URL.");
+        /* Insecure Token Provider */
+        if (!config.secureTokenProvider) {
+            if (!config.tenantKey) {
+                throw new Error("Missing FRS configuration: Tenant Primary Key.");
+            }
+            connectionProps = {
+                tenantId: config.tenantId,
+                tokenProvider: createInsecureTokenProvider(
+                    config.tenantKey,
+                    config.userId,
+                    config.userName,
+                ),
+                endpoint: config.connEndpoint,
+                type: "remote",
+            };
+        } else {
+            /* Secure Token Provider (Azure Function) */
+            if (!config.functionUrl) {
+                throw new Error("Missing FRS configuration: Function URL.");
+            }
+            connectionProps = {
+                tenantId: config.tenantId,
+                tokenProvider: createAzureTokenProvider(
+                    config.functionUrl,
+                    config.userId,
+                    config.userName,
+                ),
+                endpoint: config.connEndpoint,
+                type: "remote",
+            };
         }
-        connectionProps = {
-            tenantId: config.tenantId,
-            tokenProvider: createAzureTokenProvider(
-                config.functionUrl,
-                config.userId,
-                config.userName,
-            ),
-            endpoint: config.connEndpoint,
-            type: "remote",
-        };
     } else {
         connectionProps = {
             tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),

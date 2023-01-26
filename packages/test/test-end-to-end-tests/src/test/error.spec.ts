@@ -80,6 +80,12 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
                 error: "Injected error",
                 fatalConnectError: true,
             },
+            {
+                eventName: "fluid:telemetry:Container:ContainerDispose",
+                errorType: ContainerErrorType.genericError,
+                error: "Injected error",
+                fatalConnectError: true,
+            },
         ],
         async () => {
             try {

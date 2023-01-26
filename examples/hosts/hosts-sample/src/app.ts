@@ -4,11 +4,8 @@
  */
 import { IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import {
-    IUser,
-} from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { IInsecureUser, InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { InsecureUrlResolver, ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { setupUI } from "./codeDetailsView";
@@ -34,10 +31,10 @@ const bearerSecret = "";
 // to be derived from. The API only requires a field named 'id' but you can create your own fields on it as well. For
 // example we defined a 'name' field.
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const user = {
+const user: IInsecureUser = {
     id: "test", // Required value
-    name: "Test User", // Optional value that we included
-} as IUser;
+    name: "Test User", // Required value that we included
+};
 
 // Create or load the Fluid container using specified document info and render the root component.
 // The method parses the browser URL and retrieves the container ID.
