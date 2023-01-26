@@ -16,7 +16,7 @@ import {
     namedTreeSchema,
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
-import { SummarizeType, TestTreeProvider, validateTree } from "../utils";
+import { initializeTestTree, SummarizeType, TestTreeProvider, validateTree } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import {
     JsonableTree,
@@ -48,6 +48,18 @@ const initialTreeState: JsonableTree = {
     },
 };
 
+const rootFieldSchema = fieldSchema(FieldKinds.value);
+const rootNodeSchema = namedTreeSchema({
+    name: brand("TestValue"),
+    extraLocalFields: fieldSchema(FieldKinds.sequence),
+});
+const testSchema: SchemaData = {
+    treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+    globalFieldSchema: new Map([
+        [rootFieldKey, rootFieldSchema],
+    ]),
+};
+
 export async function performFuzzActions(
     generator: AsyncGenerator<Operation, FuzzTestState>,
     seed: number,
@@ -55,7 +67,7 @@ export async function performFuzzActions(
 ): Promise<FuzzTestState> {
     const random = makeRandom(seed);
     const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-    initializeTestTree(provider.trees[0], initialTreeState);
+    initializeTestTree(provider.trees[0], initialTreeState, testSchema);
     await provider.ensureSynchronized();
 
     const initialState: FuzzTestState = {
@@ -101,7 +113,7 @@ export async function performFuzzActionsAbort(
     const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
     const tree = provider.trees[0];
 
-    initializeTestTree(provider.trees[0], initialTreeState);
+    initializeTestTree(provider.trees[0], initialTreeState, testSchema);
     validateTree(provider.trees[0], [initialTreeState]);
 
     // building the anchor for anchor stability test
@@ -295,40 +307,6 @@ describe("SharedTreeFuzz", () => {
     runSharedTreeFuzzTests("test shared tree fuzz");
 });
 
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-    name: brand("TestValue"),
-    localFields: {
-        optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
-    },
-    extraLocalFields: fieldSchema(FieldKinds.sequence),
-    globalFields: [globalFieldKey],
-});
-const testSchema: SchemaData = {
-    treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-    globalFieldSchema: new Map([
-        [rootFieldKey, rootFieldSchema],
-        [globalFieldKey, globalFieldSchema],
-    ]),
-};
 
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
-function initializeTestTree(
-    tree: ISharedTree,
-    state: JsonableTree,
-    schema: SchemaData = testSchema,
-): void {
-    tree.storedSchema.update(schema);
 
-    // Apply an edit to the tree which inserts a node with a value
-    tree.runTransaction((forest, editor) => {
-        const writeCursor = singleTextCursor(state);
-        const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-        field.insert(0, writeCursor);
 
-        return TransactionResult.Apply;
-    });
-}
