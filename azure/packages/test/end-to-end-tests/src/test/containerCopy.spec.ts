@@ -4,11 +4,11 @@
  */
 import { strict as assert } from "node:assert";
 
+import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { AzureClient } from "@fluidframework/azure-client";
 
 import { createAzureClient } from "./AzureClientFactory";
 import { mapWait } from "./utils";
