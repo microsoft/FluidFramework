@@ -129,7 +129,10 @@ This is particularly useful in scenarios where the client has memory constraints
 It also allows clients/microservices to check permissions without loading the document and inspect changes without caring about the entire tree.
 
 To accomplish this, the underlying Shared Tree layer is built on a [cursor API](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/core/tree/cursor.ts) that allows navigation of the tree by moving from node to node via explicit directional calls.
+Layers built on cursors are also able to remain agnostic to the structure of the tree it is navigating, allowing for flexible/multiple implementations.
 This cursor API is intended to be an expert API as working with it is more cumbersome compared with the more ergonomic APIs exposed in future milestones.
+
+While this is an important architectural milestone to build in early, the benefits around reification will not be fully realized until the _Storage performance: incrementality and virtualization_ milestone, as downloading the entire tree on load is currently required.
 
 ## Synchronous non-overlapping transactions
 
