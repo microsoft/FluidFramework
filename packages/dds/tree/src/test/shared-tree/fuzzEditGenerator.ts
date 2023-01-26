@@ -164,15 +164,16 @@ export interface NodeLocation {
     onlyRootNode: boolean;
 }
 
+const moves = {
+    field: ["enterNode", "nextField"],
+    nodes: ["stop", "firstField"],
+};
+
 export function getRandomNodePosition(
     tree: ISharedTree,
     random: IRandom,
     existingPath = false,
 ): NodeLocation {
-    const moves = {
-        field: ["enterNode", "nextField"],
-        nodes: ["stop", "firstField"],
-    };
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
     const firstNode = cursor.firstNode();
