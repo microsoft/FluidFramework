@@ -193,7 +193,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
             if (segment.attribution) {
                 segmentsWithAttribution++;
                 for (const { offset, key } of segment.attribution?.getAll() ?? []) {
-                    if (mostRecentAttributionKey && !areEqualAttributionKeys(key, mostRecentAttributionKey)) {
+                    if (!mostRecentAttributionKey || !areEqualAttributionKeys(key, mostRecentAttributionKey)) {
                         posBreakpoints.push(offset + cumulativePos);
                         seqs.push(key.seq);
                     }
