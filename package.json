@@ -128,8 +128,8 @@
     "typescript": "~4.5.5"
   },
   "engines": {
-    "node": ">=14.13.0",
-    "npm": "^6"
+    "node": ">=16",
+    "npm": ">=6"
   },
   "fluidBuild": {
     "repoPackages": {
