@@ -56,7 +56,7 @@ import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType } from "./garbageCollection";
 import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
-import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -450,7 +450,7 @@ export class DataStores implements IDisposable {
                 request,
                 { [TombstoneResponseHeaderKey]: true },
             ), request);
-            sendGCTombstoneEvent(
+            sendGCUnexpectedUsageEvent(
                 this.mc,
                 {
                     eventName: "GC_Tombstone_DataStore_Requested",
