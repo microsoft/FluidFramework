@@ -1130,7 +1130,7 @@ export class MergeTree {
                 // here for now should reduce future breaking changes.
                 if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) {
                     pendingSegment.attribution = new AttributionCollection(
-                        seq,
+                        { type: "op", seq },
                         pendingSegment.cachedLength
                     );
                 }
@@ -1487,7 +1487,7 @@ export class MergeTree {
                 newSegment.clientId = clientId;
                 if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
                     newSegment.attribution ??= new AttributionCollection(
-                        newSegment.seq,
+                        { type: "op", seq },
                         newSegment.cachedLength
                     );
                 }
