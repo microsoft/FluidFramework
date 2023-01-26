@@ -12,7 +12,8 @@ module.exports = function handler(fileData, logger) {
         }
 
         for (const asset of fileData.assets) {
-            if (asset.size >= 0 ) {
+            // we only need .js files
+            if (asset.size >= 0 && asset.name !== undefined && asset.name.toLowerCase().indexOf(".js", asset.name.length - ".js".length) !== -1) {
                 logger.send({
                     category: "performance",
                     eventName: "Benchmark",
