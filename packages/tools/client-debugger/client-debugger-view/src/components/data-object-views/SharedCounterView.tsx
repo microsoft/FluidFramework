@@ -47,6 +47,7 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
         }
 
         sharedCounter.on("incremented", updateValue);
+        setValue(sharedCounter.value);
 
         return (): void => {
             sharedCounter.off("incremented", updateValue);

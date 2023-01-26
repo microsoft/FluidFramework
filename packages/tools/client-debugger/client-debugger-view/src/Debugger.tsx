@@ -11,18 +11,16 @@ import {
     DebuggerRegistry,
     IFluidClientDebugger,
     getFluidClientDebuggers,
-    getFluidClientDebugger,
     getDebuggerRegistry,
 } from "@fluid-tools/client-debugger";
 
-import { HasContainerId } from "./CommonProps";
 import { RenderOptions } from "./RendererOptions";
 import { ClientDebugView, ContainerSelectionDropdown } from "./components";
 
 /**
- * {@link FluidClientDebugger} input props.
+ * {@link FluidClientDebuggers} input props.
  */
-export interface FluidClientDebuggerProps {
+export interface FluidClientDebuggersProps {
     /**
      * Rendering policies for different kinds of Fluid client and object data.
      *
@@ -31,87 +29,67 @@ export interface FluidClientDebuggerProps {
     renderOptions?: RenderOptions;
 }
 
+
+// Drop down + single container view
 /**
  * Renders the debug view for an active debugger session registered using
  * {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
  *
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
-export function FluidClientDebugger(props: FluidClientDebuggerProps): React.ReactElement {
-    function getFirstDebugger(): IFluidClientDebugger | undefined {
-        const debuggers = getFluidClientDebuggers();
-        return debuggers.length === 0 ? undefined : debuggers[0];
-    }
+export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.ReactElement {
+    const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
 
     const [clientDebuggers, setClientDebuggers] = React.useState<IFluidClientDebugger[]>(
         getFluidClientDebuggers(),
     );
 
+    function getDefaultDebuggerSelectionId(options: IFluidClientDebugger[]): string | undefined {
+        return options.length === 0 ? undefined : options[0].containerId;
+    }
+
     const [selectedContainerId, setSelectedContainerId] = React.useState<string | undefined>(
-        getFirstDebugger()?.containerId ?? undefined,
+        getDefaultDebuggerSelectionId(clientDebuggers) ?? undefined,
     );
 
-    const [selectedClientDebugger, setClientDebugger] = React.useState<
-        IFluidClientDebugger | undefined
-    >(selectedContainerId === undefined ? undefined : getFluidClientDebugger(selectedContainerId));
-
-    const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
-        selectedClientDebugger?.disposed ?? false,
-    );
-
-    const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
+    function getDebuggerFromContainerId(containerId: string): IFluidClientDebugger {
+        const match = clientDebuggers.find((clientDebugger) => clientDebugger.containerId === containerId);
+        if (match === undefined) {
+            throw new Error(`No debugger found associated with Container ID "${containerId}".`);
+        }
+        return match;
+    }
 
     React.useEffect(() => {
-        function onDebuggerDisposed(): void {
-            setIsContainerDisposed(true);
-        }
-
         function onDebuggerChanged(): void {
-            setClientDebuggers(getFluidClientDebuggers());
+            const newDebuggerList = getFluidClientDebuggers();
+            setClientDebuggers(newDebuggerList);
+            if (selectedContainerId === undefined) {
+                const newSelection = getDefaultDebuggerSelectionId(newDebuggerList);
+                console.log(`Updating selection to container ID "${newSelection}".`);
+                setSelectedContainerId(newSelection);
+            }
         }
 
         debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
         debuggerRegistry.on("debuggerClosed", onDebuggerChanged);
-        selectedClientDebugger?.on("disposed", onDebuggerDisposed);
 
         return (): void => {
-            selectedClientDebugger?.off("disposed", onDebuggerDisposed);
             debuggerRegistry.off("debuggerRegistered", onDebuggerChanged);
             debuggerRegistry.off("debuggerClosed", onDebuggerChanged);
         };
-    }, [selectedClientDebugger, debuggerRegistry, setIsContainerDisposed, setClientDebuggers]);
+    }, [getDefaultDebuggerSelectionId, selectedContainerId, debuggerRegistry, setClientDebuggers]);
 
-    let view: React.ReactElement;
-    if (selectedClientDebugger === undefined) {
-        view = (
+    const view = selectedContainerId === undefined ? (
             <NoDebuggerInstance
-                containerId={"No container found"}
                 onRetryDebugger={(): void => {
-                    setClientDebuggers(getFluidClientDebuggers());
-                    setClientDebugger(getFirstDebugger());
-                    setSelectedContainerId(getFirstDebugger()?.containerId ?? "");
+                    const newDebuggerList = getFluidClientDebuggers();
+                    setClientDebuggers(newDebuggerList);
+                    const newDefaultId = getDefaultDebuggerSelectionId(newDebuggerList);
+                    setSelectedContainerId(newDefaultId);
                 }}
             />
-        );
-    } else if (isContainerDisposed) {
-        view = (
-            <DebuggerDisposed
-                containerId={selectedClientDebugger.containerId}
-                onRetryDebugger={(): void => {
-                    setClientDebuggers(getFluidClientDebuggers());
-                    setClientDebugger(getFirstDebugger());
-                    setSelectedContainerId(selectedClientDebugger?.containerId);
-                }}
-            />
-        );
-    } else {
-        view = (
-            <ClientDebugView
-                containerId={selectedClientDebugger.containerId}
-                clientDebugger={selectedClientDebugger}
-            />
-        );
-    }
+        ) : <ClientDebugView clientDebugger={getDebuggerFromContainerId(selectedContainerId)} renderOptions={props.renderOptions} />;
 
     const slectionView: React.ReactElement =
         clientDebuggers.length > 1 ? (
@@ -124,6 +102,7 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
             <></>
         );
 
+    console.log(debuggerRegistry);
     return (
         <Resizable
             style={{
@@ -158,10 +137,10 @@ interface CanLookForDebugger {
 /**
  * {@link NoDebuggerInstance} input props.
  */
-interface NoDebuggerInstanceProps extends HasContainerId, CanLookForDebugger {}
+type NoDebuggerInstanceProps = CanLookForDebugger;
 
 function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement {
-    const { containerId, onRetryDebugger } = props;
+    const { onRetryDebugger } = props;
 
     const retryButtonTooltipId = useId("retry-button-tooltip");
 
@@ -169,7 +148,7 @@ function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement 
     return (
         <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
             <StackItem>
-                <div>No debugger has been initialized for container ID "{containerId}".</div>
+                <div>No Fluid Client debuggers found.</div>
             </StackItem>
             <StackItem>
                 <TooltipHost content="Look again" id={retryButtonTooltipId}>
@@ -184,32 +163,21 @@ function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement 
     );
 }
 
-/**
- * {@link DebuggerDisposed} input props.
- */
-interface DebuggerDisposedProps extends HasContainerId, CanLookForDebugger {}
+// /**
+//  * {@link DebuggerDisposed} input props.
+//  */
+// type DebuggerDisposedProps = HasContainerId;
 
-function DebuggerDisposed(props: DebuggerDisposedProps): React.ReactElement {
-    const { containerId, onRetryDebugger } = props;
+// function DebuggerDisposed(props: DebuggerDisposedProps): React.ReactElement {
+//     const { containerId } = props;
 
-    const retryButtonTooltipId = useId("retry-button-tooltip");
-
-    return (
-        <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-            <StackItem>
-                <div>
-                    The debugger associated with container ID "{containerId}" has been disposed.
-                </div>
-            </StackItem>
-            <StackItem>
-                <TooltipHost content="Look again" id={retryButtonTooltipId}>
-                    <IconButton
-                        onClick={onRetryDebugger}
-                        menuIconProps={{ iconName: "Refresh" }}
-                        aria-describedby={retryButtonTooltipId}
-                    />
-                </TooltipHost>
-            </StackItem>
-        </Stack>
-    );
-}
+//     return (
+//         <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+//             <StackItem>
+//                 <div>
+//                     The debugger associated with container ID "{containerId}" has been disposed.
+//                 </div>
+//             </StackItem>
+//         </Stack>
+//     );
+// }

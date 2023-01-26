@@ -92,6 +92,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
         }
 
         const clientDebugger = new FluidClientDebugger(props);
+        console.log(`Add new debugger${clientDebugger.containerId}`);
         this.registeredDebuggers.set(containerId, clientDebugger);
         this.emit("debuggerRegistered", containerId, clientDebugger);
     }

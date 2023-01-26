@@ -21,12 +21,18 @@ export interface SharedStringViewProps {
  * Default {@link @fluidframework/sequence#SharedString} viewer.
  */
 export function SharedStringView(props: SharedStringViewProps): React.ReactElement {
-    const { sharedString } = props;
+    const {sharedString} = props;
+
+    const [text, setText] = React.useState<SharedString>(sharedString);
+
+    React.useEffect(() => {
+        setText(sharedString);
+    }, [sharedString, setText]);
 
     return (
         <CollaborativeTextArea
             style={{ height: 30, width: 200 }}
-            sharedStringHelper={new SharedStringHelper(sharedString)}
+            sharedStringHelper={new SharedStringHelper(text)}
         />
     );
 }
