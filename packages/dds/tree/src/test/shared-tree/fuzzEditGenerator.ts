@@ -11,11 +11,10 @@ import {
     done,
     IRandom,
 } from "@fluid-internal/stochastic-test-utils";
-import { jsonableTreeFromCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
 import { brand, fail } from "../../util";
 import { ITestTreeProvider } from "../utils";
-import { CursorLocationType, FieldKey, mapCursorField, moveToDetachedField, UpPath } from "../../core";
+import { CursorLocationType, FieldKey, moveToDetachedField, UpPath } from "../../core";
 
 export type Operation = TreeEdit | Synchronize;
 
@@ -202,12 +201,6 @@ export function getRandomNodePosition(
                     nodeIndex = random.integer(0, fieldNodes - 1);
                     cursor.enterNode(nodeIndex);
                     path = cursor.getPath();
-                    if (typeof nodeField === "object") {
-                        const readCursor = tree.forest.allocateCursor();
-                        moveToDetachedField(tree.forest, readCursor);
-                        const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-                        readCursor.free();
-                    }
                     currentMove = random.pick(moves.nodes);
                     if (currentMove === "stop") {
                         if (cursor.firstField()) {
