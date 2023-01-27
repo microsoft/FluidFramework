@@ -6,9 +6,9 @@
 export const IFluidTokenProvider: keyof IProvideFluidTokenProvider = "IFluidTokenProvider";
 
 export interface IProvideFluidTokenProvider {
-    readonly IFluidTokenProvider: IFluidTokenProvider;
+	readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
 export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    intelligence: { [service: string]: any; };
+	intelligence: { [service: string]: any };
 }

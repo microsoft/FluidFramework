@@ -22,109 +22,113 @@ export type SubscriberUrl = string;
  * Must be JSON-serializable.
  */
 export class MockWebhook<TData = unknown> implements IDisposable {
-    /**
-     * Set of active subscribers.
-     * Values are the URLs that will be notified of changes.
-     */
-    private readonly _subscribers: Set<SubscriberUrl>;
+	/**
+	 * Set of active subscribers.
+	 * Values are the URLs that will be notified of changes.
+	 */
+	private readonly _subscribers: Set<SubscriberUrl>;
 
-    /**
-     * {@inheritDoc MockWebhook.disposed}
-     */
-    private _disposed: boolean;
+	/**
+	 * {@inheritDoc MockWebhook.disposed}
+	 */
+	private _disposed: boolean;
 
-    public constructor() {
-        this._subscribers = new Set<SubscriberUrl>();
-        this._disposed = false;
-    }
+	public constructor() {
+		this._subscribers = new Set<SubscriberUrl>();
+		this._disposed = false;
+	}
 
-    /**
-     * Gets the current list of subscriber URLs.
-     */
-    public get subscribers(): readonly SubscriberUrl[] {
-        if (this.disposed) {
-            throw new UsageError("Webhook has been disposed.");
-        }
+	/**
+	 * Gets the current list of subscriber URLs.
+	 */
+	public get subscribers(): readonly SubscriberUrl[] {
+		if (this.disposed) {
+			throw new UsageError("Webhook has been disposed.");
+		}
 
-        return [...this._subscribers.values()];
-    }
+		return [...this._subscribers.values()];
+	}
 
-    /**
-     * Registers a subscriber for external data updates.
-     */
-    public registerSubscriber(subscriber: SubscriberUrl): void {
-        if (this.disposed) {
-            throw new UsageError("Webhook has been disposed.");
-        }
+	/**
+	 * Registers a subscriber for external data updates.
+	 */
+	public registerSubscriber(subscriber: SubscriberUrl): void {
+		if (this.disposed) {
+			throw new UsageError("Webhook has been disposed.");
+		}
 
-        if(this._subscribers.has(subscriber)) {
-            console.warn(`WEBHOOK: URL "${subscriber}" has already been registered for data notifications.`);
-        } else {
-            this._subscribers.add(subscriber);
-        }
-    }
+		if (this._subscribers.has(subscriber)) {
+			console.warn(
+				`WEBHOOK: URL "${subscriber}" has already been registered for data notifications.`,
+			);
+		} else {
+			this._subscribers.add(subscriber);
+		}
+	}
 
-    /**
-     * De-registers the provided subscriber URL from future notifications.
-     */
-    public removeSubscriber(subscriber: SubscriberUrl): void {
-        if (this.disposed) {
-            throw new UsageError("Webhook has been disposed.");
-        }
+	/**
+	 * De-registers the provided subscriber URL from future notifications.
+	 */
+	public removeSubscriber(subscriber: SubscriberUrl): void {
+		if (this.disposed) {
+			throw new UsageError("Webhook has been disposed.");
+		}
 
-        if (this._subscribers.has(subscriber)) {
-            this._subscribers.delete(subscriber);
-        } else {
-            console.warn(`WEBHOOK: URL "${subscriber}" is not registered for data notifications.`);
-        }
-    }
+		if (this._subscribers.has(subscriber)) {
+			this._subscribers.delete(subscriber);
+		} else {
+			console.warn(`WEBHOOK: URL "${subscriber}" is not registered for data notifications.`);
+		}
+	}
 
-    /**
-     * Submits notifications of changes to webhook subscribers.
-     *
-     * @remarks
-     *
-     * For now, we simply send a notification that data has changed.
-     * Consumers are expected to query for the actual data updates.
-     * This could be updated in the future to send the new data / just the delta as a part of the webhook payload.
-     */
-    public notifySubscribers(data: TData): void {
-        if (this.disposed) {
-            throw new UsageError("Webhook has been disposed.");
-        }
+	/**
+	 * Submits notifications of changes to webhook subscribers.
+	 *
+	 * @remarks
+	 *
+	 * For now, we simply send a notification that data has changed.
+	 * Consumers are expected to query for the actual data updates.
+	 * This could be updated in the future to send the new data / just the delta as a part of the webhook payload.
+	 */
+	public notifySubscribers(data: TData): void {
+		if (this.disposed) {
+			throw new UsageError("Webhook has been disposed.");
+		}
 
-        console.log(`WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`);
+		console.log(
+			`WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`,
+		);
 
-        for (const subscriberUrl of this._subscribers) {
-            fetch(subscriberUrl, {
-                method: 'POST',
-                headers: {
-                    "Access-Control-Allow-Origin": "*",
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ data }),
-            }).catch(error => {
-                console.error("WEBHOOK: Encountered an error while notifying subscribers:", error);
-            });
-        }
-    }
+		for (const subscriberUrl of this._subscribers) {
+			fetch(subscriberUrl, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ data }),
+			}).catch((error) => {
+				console.error("WEBHOOK: Encountered an error while notifying subscribers:", error);
+			});
+		}
+	}
 
-    /**
-     * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
-     */
-    public dispose(error?: Error | undefined): void {
-        if (this.disposed) {
-            throw new UsageError("Webhook was already disposed.");
-        }
+	/**
+	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+	 */
+	public dispose(error?: Error | undefined): void {
+		if (this.disposed) {
+			throw new UsageError("Webhook was already disposed.");
+		}
 
-        this._subscribers.clear();
-        this._disposed = true;
-    }
+		this._subscribers.clear();
+		this._disposed = true;
+	}
 
-    /**
-     * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
-     */
-    public get disposed(): boolean {
-        return this._disposed;
-    }
+	/**
+	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
+	}
 }

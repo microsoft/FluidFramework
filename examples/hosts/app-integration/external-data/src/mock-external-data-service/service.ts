@@ -3,31 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { Server } from 'http';
+import { Server } from "http";
 
 import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskData, TaskData } from '../model-interface';
-import { MockWebhook } from '../utilities';
-import { ExternalDataSource } from './externalDataSource';
+import { assertValidTaskData, TaskData } from "../model-interface";
+import { MockWebhook } from "../utilities";
+import { ExternalDataSource } from "./externalDataSource";
 
 /**
  * {@link initializeExternalDataService} input properties.
  */
 export interface ServiceProps {
-    /**
-     * Port to listen on.
-     */
-    port: number | string;
+	/**
+	 * Port to listen on.
+	 */
+	port: number | string;
 
-    /**
-     * External data source backing this service.
-     *
-     * @defaultValue A new data source will be initialized.
-     */
-    externalDataSource?: ExternalDataSource;
+	/**
+	 * External data source backing this service.
+	 *
+	 * @defaultValue A new data source will be initialized.
+	 */
+	externalDataSource?: ExternalDataSource;
 }
 
 /**
@@ -36,167 +36,186 @@ export interface ServiceProps {
  * @remarks Consumers are required to manually dispose of the returned `Server` object.
  */
 export async function initializeExternalDataService(props: ServiceProps): Promise<Server> {
-    const { port } = props;
-    const externalDataSource: ExternalDataSource = props.externalDataSource ?? new ExternalDataSource();
+	const { port } = props;
+	const externalDataSource: ExternalDataSource =
+		props.externalDataSource ?? new ExternalDataSource();
 
-    /**
-     * Helper function to prepend service-specific metadata to messages logged by this service.
-     */
-    function formatLogMessage(message: string): string {
-        return `EXTERNAL DATA SERVICE (${port}): ${message}`;
-    }
+	/**
+	 * Helper function to prepend service-specific metadata to messages logged by this service.
+	 */
+	function formatLogMessage(message: string): string {
+		return `EXTERNAL DATA SERVICE (${port}): ${message}`;
+	}
 
-    /**
-     * Mock webhook for notifying subscibers to changes in external data.
-     */
-    const webhook = new MockWebhook<TaskData>();
+	/**
+	 * Mock webhook for notifying subscibers to changes in external data.
+	 */
+	const webhook = new MockWebhook<TaskData>();
 
-    function notifyWebhookSubscribers(newData: TaskData): void {
-        console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
-        webhook.notifySubscribers(newData);
-    }
+	function notifyWebhookSubscribers(newData: TaskData): void {
+		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
+		webhook.notifySubscribers(newData);
+	}
 
-    externalDataSource.on("debugDataWritten", notifyWebhookSubscribers)
+	externalDataSource.on("debugDataWritten", notifyWebhookSubscribers);
 
-    const expressApp = express();
-    expressApp.use(express.json());
-    expressApp.use(cors());
+	const expressApp = express();
+	expressApp.use(express.json());
+	expressApp.use(cors());
 
-    expressApp.get("/", (_, result) => {
-        result.send();
-    });
+	expressApp.get("/", (_, result) => {
+		result.send();
+	});
 
-    /**
-     * Register's the sender's URL to receive notifications when the external task-list data changes.
-     *
-     * Expected input data format:
-     *
-     * ```json
-     * {
-     *  url: string // The target URL to receive change notification
-     * }
-     * ```
-     *
-     * Notifications sent to subscribers will contain the updated task-list data in the form of:
-     *
-     * ```json
-     * {
-     *  taskList: {
-     *      [id: string]: {
-     *          name: string,
-     *          priority: number
-     *      }
-     *  }
-     * }
-     * ```
-     */
-    expressApp.post("/register-for-webhook", (request, result) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const subscriberUrl = request.body.url as string;
-        if (subscriberUrl === undefined) {
-            const errorMessage = 'Caller failed to provide URL for subscription. Must provide "subcriberUrl" parameter.';
-            console.log(formatLogMessage(errorMessage));
-            result.status(400).json({ message: errorMessage });
-        } else if (isWebUri(subscriberUrl) === undefined) {
-            const errorMessage = "Provided subscription URL is invalid.";
-            console.log(formatLogMessage(errorMessage));
-            result.status(400).json({message: errorMessage});
-        } else {
-            webhook.registerSubscriber(subscriberUrl);
-            console.log(formatLogMessage(`Registered for webhook notifications at URL: "${subscriberUrl}".`));
-            result.send();
-        }
-    });
+	/**
+	 * Register's the sender's URL to receive notifications when the external task-list data changes.
+	 *
+	 * Expected input data format:
+	 *
+	 * ```json
+	 * {
+	 *  url: string // The target URL to receive change notification
+	 * }
+	 * ```
+	 *
+	 * Notifications sent to subscribers will contain the updated task-list data in the form of:
+	 *
+	 * ```json
+	 * {
+	 *  taskList: {
+	 *      [id: string]: {
+	 *          name: string,
+	 *          priority: number
+	 *      }
+	 *  }
+	 * }
+	 * ```
+	 */
+	expressApp.post("/register-for-webhook", (request, result) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const subscriberUrl = request.body.url as string;
+		if (subscriberUrl === undefined) {
+			const errorMessage =
+				'Caller failed to provide URL for subscription. Must provide "subcriberUrl" parameter.';
+			console.log(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+		} else if (isWebUri(subscriberUrl) === undefined) {
+			const errorMessage = "Provided subscription URL is invalid.";
+			console.log(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+		} else {
+			webhook.registerSubscriber(subscriberUrl);
+			console.log(
+				formatLogMessage(
+					`Registered for webhook notifications at URL: "${subscriberUrl}".`,
+				),
+			);
+			result.send();
+		}
+	});
 
-    /**
-     * Fetches the task list from the external data store.
-     *
-     * Returned data format:
-     *
-     * ```json
-     * {
-     *  taskList: {
-     *      [id: string]: {
-     *          name: string,
-     *          priority: number
-     *      }
-     *  }
-     * }
-     * ```
-     */
-    expressApp.get("/fetch-tasks", (_, result) => {
-        externalDataSource.fetchData().then(
-            (response) => {
-                const responseBody = JSON.parse(response.body.toString()) as Record<string | number | symbol, unknown>;
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                const taskList = assertValidTaskData((responseBody as any).taskList);
+	/**
+	 * Fetches the task list from the external data store.
+	 *
+	 * Returned data format:
+	 *
+	 * ```json
+	 * {
+	 *  taskList: {
+	 *      [id: string]: {
+	 *          name: string,
+	 *          priority: number
+	 *      }
+	 *  }
+	 * }
+	 * ```
+	 */
+	expressApp.get("/fetch-tasks", (_, result) => {
+		externalDataSource.fetchData().then(
+			(response) => {
+				const responseBody = JSON.parse(response.body.toString()) as Record<
+					string | number | symbol,
+					unknown
+				>;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				const taskList = assertValidTaskData((responseBody as any).taskList);
 
-                console.log(formatLogMessage("Returning current task list:"), taskList);
+				console.log(formatLogMessage("Returning current task list:"), taskList);
 
-                result.send({ taskList });
-            },
-            (error) => {
-                console.error(formatLogMessage(`Encountered an error while reading from mock external data source.`), error);
-                result.status(500).json({ message: "Failed to fetch task data due to an error." });
-            }
-        );
-    });
+				result.send({ taskList });
+			},
+			(error) => {
+				console.error(
+					formatLogMessage(
+						`Encountered an error while reading from mock external data source.`,
+					),
+					error,
+				);
+				result.status(500).json({ message: "Failed to fetch task data due to an error." });
+			},
+		);
+	});
 
-    /**
-     * Updates external data store with new tasks list (complete override).
-     *
-     * Expected input data format: {@link TaskData}.
-     */
-    expressApp.post("/set-tasks", (request, result) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-        const maybeTaskData = request.body.taskList;
-        if (maybeTaskData === undefined) {
-            const errorMessage = 'Caller failed to provide task list to set. Must provide "taskList" parameter.';
-            console.error(formatLogMessage(errorMessage));
-            result.status(400).json({ message: errorMessage });
-        } else {
-            let taskData: TaskData;
-            try{
-                taskData = assertValidTaskData(maybeTaskData);
-            } catch (error) {
-                const errorMessage = "Input task list data was malformed.";
-                console.error(errorMessage, error);
-                result.status(400).json({ message: errorMessage });
-                return;
-            }
-            externalDataSource.writeData(taskData).then(
-                () => {
-                    console.log(formatLogMessage("Data set request completed!"));
-                    result.send();
-                },
-                (error) => {
-                    console.error(
-                        formatLogMessage(`Encountered an error while writing to mock external data source.`),
-                        error
-                    );
-                    result.status(500).json({ message: "Failed to set task data due to an error." });
-                }
-            );
-        }
-    });
+	/**
+	 * Updates external data store with new tasks list (complete override).
+	 *
+	 * Expected input data format: {@link TaskData}.
+	 */
+	expressApp.post("/set-tasks", (request, result) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+		const maybeTaskData = request.body.taskList;
+		if (maybeTaskData === undefined) {
+			const errorMessage =
+				'Caller failed to provide task list to set. Must provide "taskList" parameter.';
+			console.error(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+		} else {
+			let taskData: TaskData;
+			try {
+				taskData = assertValidTaskData(maybeTaskData);
+			} catch (error) {
+				const errorMessage = "Input task list data was malformed.";
+				console.error(errorMessage, error);
+				result.status(400).json({ message: errorMessage });
+				return;
+			}
+			externalDataSource.writeData(taskData).then(
+				() => {
+					console.log(formatLogMessage("Data set request completed!"));
+					result.send();
+				},
+				(error) => {
+					console.error(
+						formatLogMessage(
+							`Encountered an error while writing to mock external data source.`,
+						),
+						error,
+					);
+					result
+						.status(500)
+						.json({ message: "Failed to set task data due to an error." });
+				},
+			);
+		}
+	});
 
-    /**
-     * Resets the external data to its original contents.
-     */
-    expressApp.post("/debug-reset-task-list", (_, result) => {
-        externalDataSource.debugResetData();
-        console.log(formatLogMessage("(DEBUG) External data reset!"));
-        result.send();
-    });
+	/**
+	 * Resets the external data to its original contents.
+	 */
+	expressApp.post("/debug-reset-task-list", (_, result) => {
+		externalDataSource.debugResetData();
+		console.log(formatLogMessage("(DEBUG) External data reset!"));
+		result.send();
+	});
 
-    const server = expressApp.listen(port.toString());
+	const server = expressApp.listen(port.toString());
 
-    server.on("close", () => {
-        externalDataSource.off("debugDataWritten", notifyWebhookSubscribers);
-        webhook?.dispose();
-        console.log(formatLogMessage("Service was closed."));
-    });
+	server.on("close", () => {
+		externalDataSource.off("debugDataWritten", notifyWebhookSubscribers);
+		webhook?.dispose();
+		console.log(formatLogMessage("Service was closed."));
+	});
 
-    console.log(formatLogMessage(`Now running on port ${port}.`));
-    return server;
+	console.log(formatLogMessage(`Now running on port ${port}.`));
+	return server;
 }

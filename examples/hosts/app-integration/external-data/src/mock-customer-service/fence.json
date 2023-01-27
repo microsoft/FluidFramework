@@ -1,10 +1,10 @@
 {
-    "tags": ["mock-customer-service"],
-    "exports": ["index"],
-    "imports": [
-        "mock-customer-service-interface",
-        "mock-external-data-service-interface",
-        "model-interface",
-        "utilities"
-    ]
-  }
+	"tags": ["mock-customer-service"],
+	"exports": ["index"],
+	"imports": [
+		"mock-customer-service-interface",
+		"mock-external-data-service-interface",
+		"model-interface",
+		"utilities"
+	]
+}
