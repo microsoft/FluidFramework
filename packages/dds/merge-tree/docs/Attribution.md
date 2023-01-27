@@ -17,11 +17,12 @@ straightforward to conceptualize a scheme where each time a client submits an op
 ack and uses the timestamp on that op to submit an additional op that annotates the edited segments with attribution information.
 
 Besides unnecessarily complicating client code, this has several drawbacks:
-- It is noisy on the wire
-- Attribution information can be lost in various cases if the submitting client disconnects
-- In-memory and snapshot size for the SharedString is more bloated than it should be; without binning the timestamps this strategy
-  entirely invalidated the zamboni scheme, and even if the timestamps are binned this will unnecessarily include the same user info
-  many times on different segments
+
+-   It is noisy on the wire
+-   Attribution information can be lost in various cases if the submitting client disconnects
+-   In-memory and snapshot size for the SharedString is more bloated than it should be; without binning the timestamps this strategy
+    entirely invalidated the zamboni scheme, and even if the timestamps are binned this will unnecessarily include the same user info
+    many times on different segments
 
 Rather than force this burden on consumers, it makes more sense to bake some attribution capability into the Fluid Framework in an opt-in way.
 Though this document will cover an approach for doing so in merge-tree (primarily targeted at support for attribution in SharedString),
@@ -38,8 +39,9 @@ and use the client id to look up user information.
 
 All of this information is knowable from the Fluid runtime perspective, though not all of it is persisted indefinitely.
 Notably:
-- Access to the entire op stream is an unreasonable assumption due to the summarization process
-- User information is only accessible for connected clients
+
+-   Access to the entire op stream is an unreasonable assumption due to the summarization process
+-   User information is only accessible for connected clients
 
 However, this conceptualization of attribution does suggest a reasonable split of concerns that can be individually assessed:
 none of the association between sequence numbers, timestamps, clientIds, and user information is specific to any given DDS.
@@ -70,25 +72,23 @@ not referenced.
 There are a few general models that could work:
 
 1. Assume that the runtime controls authoring of references to attribution information. It could stamp such information with a unique symbol such that it could
-    later be recognized in serialization to determine if the info was still referenced.
-    This approach is not far off from how `IFluidHandle`s work.
-    Reference counting the created objects could also work, but would likely be messier (responsibility of cleanup will likely end up extending past where we want it).
+   later be recognized in serialization to determine if the info was still referenced.
+   This approach is not far off from how `IFluidHandle`s work.
+   Reference counting the created objects could also work, but would likely be messier (responsibility of cleanup will likely end up extending past where we want it).
 2. Demand objects that store attribution information implement a function that exposes all sequence numbers they reference.
 
 Option 1 might look something like
 
 ```typescript
+const attributionHandle = Symbol("attribution handle");
 
-const attributionHandle = Symbol('attribution handle');
-
-class /*Container/DataStore/etc. (TBD)*/Runtime {
-
-  public createAttributionHandle(sequenceNumber: number) {
-    return {
-      [attributionHandle]: true,
-      sequenceNumber
-    };
-  }
+class /*Container/DataStore/etc. (TBD)*/ Runtime {
+	public createAttributionHandle(sequenceNumber: number) {
+		return {
+			[attributionHandle]: true,
+			sequenceNumber,
+		};
+	}
 }
 
 // Serialization logic in ISerializer would need to look for attributionHandle symbol usages
@@ -110,22 +110,21 @@ This would risk attribution information getting GC'd too early.
 Option 2 would look closer to this:
 
 ```typescript
-
 interface IReferenceAttributionInfo {
-  /**
-   * @returns an iterable over all sequence numbers for which this object references attribution information.
-   */
-  getReferencedSeqs(): Iterable<number>;
+	/**
+	 * @returns an iterable over all sequence numbers for which this object references attribution information.
+	 */
+	getReferencedSeqs(): Iterable<number>;
 }
 
 class MergeTree implements IReferenceAttributionInfo {
-  public getReferencedSeqs() {
-    const seqs = new Set();
-    this.walkAllSegments(this.root, (seg) => {
-      seqs.add(seg.seq)
-    });
-    return seqs;
-  }
+	public getReferencedSeqs() {
+		const seqs = new Set();
+		this.walkAllSegments(this.root, (seg) => {
+			seqs.add(seg.seq);
+		});
+		return seqs;
+	}
 }
 ```
 
@@ -145,12 +144,12 @@ This suggests a few strategies for keeping a compact format (either only on seri
 2. Intern attribution objects
 3. If a range of sequence numbers all have the same attribution information, store it as such
 4. Allow "equivalent timestamp" policy injection: it's unlikely any app needs millisecond or better accuracy on the server ack timestamp for attribution purposes.
-  There should be a configurable policy for how timestamps get binned. Basic implementations could bin on a fixed cadence, but for even more compact files a dynamic bin size policy with larger bins for less recent data could also give a reasonable user experience
+   There should be a configurable policy for how timestamps get binned. Basic implementations could bin on a fixed cadence, but for even more compact files a dynamic bin size policy with larger bins for less recent data could also give a reasonable user experience
 
 Optimizations 1 through 3 are all things that standard compression algorithms can detect: interning objects is essentially
 [dictionary compression](https://en.wikipedia.org/wiki/Dictionary_coder) and compressing adjacent ranges is
 [run-length encoding](https://en.wikipedia.org/wiki/Run-length_encoding), so before going through the trouble of writing bespoke compression code
-we should experiment with things like [LZ4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)) and [DEFLATE](https://en.wikipedia.org/wiki/Deflate).
+we should experiment with things like [LZ4](<https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)>) and [DEFLATE](https://en.wikipedia.org/wiki/Deflate).
 For the purposes of illustration, the following sections will outline how the bespoke code might look.
 
 #### Interning
@@ -164,33 +163,33 @@ Interfaces might look like this, with exported properties being those visible to
 
 ```typescript
 export interface AttributionInfo {
-  user: IUser;
-  timestamp: number;
+	user: IUser;
+	timestamp: number;
 }
 
 export interface IAttributor {
-  getAttributionInfo(seq: number): AttributionInfo;
+	getAttributionInfo(seq: number): AttributionInfo;
 }
 
-type InternedRef = number & { readonly InternedRef: 'e86840d8-8384-450c-b0e3-9a2855ba2d21'};
+type InternedRef = number & { readonly InternedRef: "e86840d8-8384-450c-b0e3-9a2855ba2d21" };
 
 interface ObjectInterner {
-  getOrCreateRef(obj: Jsonable): InternedRef;
-  getObject(id: InternedRef): Jsonable;
-  getSerializable(): Jsonable;
+	getOrCreateRef(obj: Jsonable): InternedRef;
+	getObject(id: InternedRef): Jsonable;
+	getSerializable(): Jsonable;
 }
 
 interface CompactAttributionInfo {
-  userRef: InternedRef;
-  timestamp: number;
+	userRef: InternedRef;
+	timestamp: number;
 }
 
 // Concrete types for a particular `Attributor` implementation
 interface SerializedAttributor {
-  interner: Jsonable /* result of calling getSerializable() on an ObjectInterner */
-  lookup: {
-    [seq: number]: InternedRef /* to CompactAttributionInfo */ | CompactAttributionInfo
-  }
+	interner: Jsonable /* result of calling getSerializable() on an ObjectInterner */;
+	lookup: {
+		[seq: number]: InternedRef /* to CompactAttributionInfo */ | CompactAttributionInfo;
+	};
 }
 ```
 
@@ -228,18 +227,18 @@ Since objects are distinguishable from numbers, single-number ranges could just 
 
 ```typescript
 interface AttributionEntry {
-  /**
-   * Either a single `seq` number for this attribution entry, or a consecutive range `[start, end]` (inclusive)
-   * of `seq` numbers which all have the same attribution information.
-   */
-  k: number | [number, number];
-  v: InternedRef | CompactAttributionInfo;
+	/**
+	 * Either a single `seq` number for this attribution entry, or a consecutive range `[start, end]` (inclusive)
+	 * of `seq` numbers which all have the same attribution information.
+	 */
+	k: number | [number, number];
+	v: InternedRef | CompactAttributionInfo;
 }
 
 // Concrete types for a particular `Attributor` implementation
 interface SerializedAttributor {
-  interner: Jsonable; /* result of calling getSerializable() on an ObjectInterner */
-  lookup: AttributionEntry[];
+	interner: Jsonable /* result of calling getSerializable() on an ObjectInterner */;
+	lookup: AttributionEntry[];
 }
 ```
 
@@ -259,9 +258,10 @@ We should apply this optimization last, and only if we need it. It's possible st
 ### In-memory attribution structure
 
 Attributor bookkeeping needs to efficiently support:
-- Lookup of attribution information at a `seq`
-- Adding attribution information for a newly sequenced op
-- Merging consecutive attribution entries that should now be coalesced (depending on other design choices, this one is less important)
+
+-   Lookup of attribution information at a `seq`
+-   Adding attribution information for a newly sequenced op
+-   Merging consecutive attribution entries that should now be coalesced (depending on other design choices, this one is less important)
 
 One candidate implementation would be to expand the serialized format entirely and use a `Map`. This implementation is viable, but uses
 `O(attributed seq#s)` memory. It would provide `O(1)` lookup.
@@ -342,14 +342,13 @@ class Attributor implements IAttributor {
 
 ```
 
-
 ### Bookkeeping Placement Considerations
 
 There are several levels that the framework could choose to conceptually store "sequence number to attribution" information:
 
-- Container Runtime
-- Data store runtime
-- DDS
+-   Container Runtime
+-   Data store runtime
+-   DDS
 
 The initial attributor implementation will likely be hooked up to only `SharedString` due to current feature asks of partner teams.
 However, it's worth calling out that depending on which layer the runtime places the information, there are consequences with respect
@@ -357,13 +356,13 @@ to GC and how well information compacts.
 
 For GC:
 
-- Determining whether sequence numbers are referenced by any attribution information gets complicated slightly by incremental summarization if
-  information is stored on container runtime
+-   Determining whether sequence numbers are referenced by any attribution information gets complicated slightly by incremental summarization if
+    information is stored on container runtime
 
 For compaction:
 
-- Compaction schemes potentially get worse for sequences of ops that alter different data stores if attribution information is stored at a
-  fine-grained level (e.g. DDS, Data store runtime).
+-   Compaction schemes potentially get worse for sequences of ops that alter different data stores if attribution information is stored at a
+    fine-grained level (e.g. DDS, Data store runtime).
 
 ## Merge-Tree Attribution API
 

@@ -19,7 +19,7 @@ import { GlobalFieldKeySymbol, symbolFromKey } from "./globalFieldKeySymbol";
 export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
 
 export function isLocalKey(key: FieldKey): key is LocalFieldKey {
-    return typeof key === "string";
+	return typeof key === "string";
 }
 
 export type TreeType = TreeSchemaIdentifier;
@@ -53,15 +53,15 @@ export const rootField = keyAsDetachedField(rootFieldKeySymbol);
  * @public
  */
 export interface ChildLocation {
-    readonly container: ChildCollection;
-    readonly index: number;
+	readonly container: ChildCollection;
+	readonly index: number;
 }
 
 /**
  * Wrapper around DetachedField that can be detected at runtime.
  */
 export interface RootField {
-    readonly key: DetachedField;
+	readonly key: DetachedField;
 }
 
 /**
@@ -94,10 +94,10 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * @returns `field` as a {@link FieldKey} usable on a special root node serving as a parent of detached fields.
  */
 export function detachedFieldAsKey(field: DetachedField): FieldKey {
-    if (field === rootField) {
-        return rootFieldKeySymbol;
-    }
-    return brand(extractFromOpaque(field));
+	if (field === rootField) {
+		return rootFieldKeySymbol;
+	}
+	return brand(extractFromOpaque(field));
 }
 
 /**
@@ -106,18 +106,18 @@ export function detachedFieldAsKey(field: DetachedField): FieldKey {
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
-    if (isLocalKey(key)) {
-        assert(
-            key !== (rootFieldKey as string),
-            0x3be /* Root is field key must be a global field key */,
-        );
-        return brand(key);
-    }
-    assert(
-        key === rootFieldKeySymbol,
-        0x3bf /* Root is only allowed global field key as detached field */,
-    );
-    return brand(rootFieldKey);
+	if (isLocalKey(key)) {
+		assert(
+			key !== (rootFieldKey as string),
+			0x3be /* Root is field key must be a global field key */,
+		);
+		return brand(key);
+	}
+	assert(
+		key === rootFieldKeySymbol,
+		0x3bf /* Root is only allowed global field key as detached field */,
+	);
+	return brand(rootFieldKey);
 }
 
 /**
@@ -126,10 +126,10 @@ export function keyAsDetachedField(key: FieldKey): DetachedField {
  * TODO: factor ChangeRebaser implementations to support adding new field kinds.
  */
 export interface FieldKind {
-    readonly name: string;
-    readonly description: string;
-    readonly minimumChildren: number;
-    readonly maximumChildren: number;
+	readonly name: string;
+	readonly description: string;
+	readonly minimumChildren: number;
+	readonly maximumChildren: number;
 }
 
 /**
@@ -154,19 +154,19 @@ export type Value = undefined | TreeValue;
  * @public
  */
 export interface NodeData {
-    /**
-     * A payload of arbitrary serializable data.
-     *
-     * TODO: clarify rules for mutating this value.
-     * For now, avoid mutating the TreeValue itself.
-     * For example, if its an object, make a modified copy of the object instead of mutating it.
-     */
-    value?: TreeValue;
+	/**
+	 * A payload of arbitrary serializable data.
+	 *
+	 * TODO: clarify rules for mutating this value.
+	 * For now, avoid mutating the TreeValue itself.
+	 * For example, if its an object, make a modified copy of the object instead of mutating it.
+	 */
+	value?: TreeValue;
 
-    /**
-     * The meaning of this node.
-     * Provides contexts/semantics for this node and its content.
-     * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
-     */
-    readonly type: TreeSchemaIdentifier;
+	/**
+	 * The meaning of this node.
+	 * Provides contexts/semantics for this node and its content.
+	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+	 */
+	readonly type: TreeSchemaIdentifier;
 }

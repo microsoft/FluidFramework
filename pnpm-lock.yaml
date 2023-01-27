@@ -369,6 +369,7 @@ importers:
       fs-extra: ^9.1.0
       nconf: ^0.12.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
@@ -406,6 +407,7 @@ importers:
       eslint: 8.6.0
       fs-extra: 9.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       source-map-loader: 2.0.2_webpack@5.74.0
       style-loader: 1.3.0_webpack@5.74.0
@@ -3793,6 +3795,7 @@ importers:
       mocha: ^10.0.0
       nock: ^10.0.1
       nyc: ^15.0.0
+      prettier: ~2.6.2
       semver: ^7.3.4
       sinon: ^7.4.2
       traverse: 0.6.6
@@ -3817,6 +3820,7 @@ importers:
       mocha: 10.1.0
       nock: 10.0.6
       nyc: 15.1.0
+      prettier: 2.6.2
       sinon: 7.5.0
 
   experimental/PropertyDDS/services/property-query-service:
@@ -3866,6 +3870,7 @@ importers:
       nconf: ^0.12.0
       npm-run-all: 4.1.5
       nyc: ^15.0.0
+      prettier: ~2.6.2
       promisify: 0.0.3
       qs: 6.7.0
       request: ^2.88.0
@@ -3931,6 +3936,7 @@ importers:
       mochawesome: 3.1.2_mocha@10.1.0
       npm-run-all: 4.1.5
       nyc: 15.1.0
+      prettier: 2.6.2
       promisify: 0.0.3
       request: 2.88.2
       request-promise-native: 1.0.7_request@2.88.2
