@@ -99,6 +99,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         this._mergeTree.mergeTreeMaintenanceCallback = (args, opArgs) => {
             this.emit("maintenance", args, opArgs, this);
         };
+
+        // TODO: evaluate purpose of this prop
+        if (options?.attribution?.track) {
+            const impl = this._mergeTree?.attributionImpl;
+            assert(impl !== undefined, "Attribution tracking was enabled but no implementation injected.");
+            impl.attach(this);
+        }
     }
 
     /**

@@ -24,7 +24,6 @@ import {
 import { SnapshotV1 } from "./snapshotV1";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
-import { AttributionCollection } from "./attributionCollection";
 
 export class SnapshotLoader {
     private readonly logger: ITelemetryLogger;
@@ -249,9 +248,30 @@ export class SnapshotLoader {
         this.mergeTree.options ??= {};
         this.mergeTree.options.attribution ??= {};
         if (chunk.attribution) {
-            this.mergeTree.options.attribution.track = true;
-            AttributionCollection.populateAttributionCollections(segments, chunk.attribution);
+            const { attribution } = this.mergeTree.options;
+            // TODO: evaluate what attribution.track is even doing.
+            attribution.track = true;
+
+            const { attributionImpl } = this.mergeTree;
+            assert(
+                attributionImpl !== undefined,
+                "Attempted to open a file containing attribution information without injected AttributionCollection implementation"
+            );
+            const { isAttached, attach, serializer } = attributionImpl;
+            if (!isAttached) {
+                attach(this.client);
+            }
+            // TODO: unify validation strategy and make sure asserts vs. exceptions makes sense.
+            // also update documentation on attributor
+            serializer.populateAttributionCollections(segments, chunk.attribution);
         } else {
+            const { attribution } = this.mergeTree.options;
+            attribution.track = true;
+
+            const { attributionImpl } = this.mergeTree;
+            if (attributionImpl?.isAttached) {
+                attributionImpl?.detach();
+            }
             this.mergeTree.options.attribution.track = false;
         }
     }

@@ -433,6 +433,10 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 
 // @public (undocumented)
 export interface IMergeTreeAttributionOptions {
+    // Warning: (ae-forgotten-export) The symbol "MergeTreeAttribution" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    impl?: () => MergeTreeAttribution;
     track?: boolean;
 }
 

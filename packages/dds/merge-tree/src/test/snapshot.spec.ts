@@ -12,6 +12,7 @@ import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
+import { createAttributionImpl } from "../attributionCollection";
 import { TestSerializer } from "./testSerializer";
 import { ISegment, TestClient } from ".";
 
@@ -136,7 +137,7 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
     afterEach(async () => {
         // Paranoid check that ensures `str` roundtrips through snapshot/load.  This helps to catch
         // bugs that might be missed if the test case forgets to call/await `str.expect()`.
-        await str.checkSnapshot();
+        await str.checkSnapshot({ attribution: { impl: createAttributionImpl }});
     });
 
     it("excludes un-acked segments", async () => {
@@ -144,7 +145,7 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 
         // Invoke `load/getSnapshot()` directly instead of `str.expect()` to avoid ACKing the
         // pending insert op.
-        const client2 = await loadSnapshot(str.getSummary());
+        const client2 = await loadSnapshot(str.getSummary(), options);
 
         // Original client has inserted text, but the one loaded from the snapshot should be empty.
         // This is because un-ACKed ops are not included in snapshots.  Instead, these ops are
@@ -224,7 +225,7 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 
 describe("snapshot", () => {
     describe("with attribution", () => {
-        makeSnapshotSuite({ attribution: { track: true } });
+        makeSnapshotSuite({ attribution: { track: true, impl: createAttributionImpl } });
     });
 
     describe("without attribution", () => {
@@ -232,9 +233,9 @@ describe("snapshot", () => {
     });
 
     it("presence of attribution overrides merge-tree initialization value", async () => {
-        const str = new TestString("id", { attribution: { track: true } });
+        const str = new TestString("id", { attribution: { track: true, impl: createAttributionImpl } });
         str.append("hello world", /* increaseMsn: */ true);
-        await str.checkSnapshot({ attribution: { track: false } });
+        await str.checkSnapshot({ attribution: { track: false, impl: createAttributionImpl } });
         str.insert(0, "should have attribution", false);
         str.applyPendingOps();
         assert(str.getSegment(0).attribution !== undefined, "Attribution should be created on new segments");
@@ -243,7 +244,7 @@ describe("snapshot", () => {
     it("lack of attribution overrides merge-tree initialization", async () => {
         const str = new TestString("id", { attribution: { track: false } });
         str.append("hello world", /* increaseMsn: */ true);
-        await str.checkSnapshot({ attribution: { track: true } });
+        await str.checkSnapshot({ attribution: { track: true, impl: createAttributionImpl } });
         str.insert(0, "should not have attribution", false);
         str.applyPendingOps();
         assert(str.getSegment(0).attribution === undefined, "No attribution should be created on new segments");

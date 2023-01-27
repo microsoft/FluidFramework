@@ -11,7 +11,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import {
-    AttributionCollection,
+    IAttributionCollectionSerializer,
 } from "./attributionCollection";
 import {
     Comparer,
@@ -97,6 +97,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
+import { Client } from ".";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -436,6 +437,15 @@ export interface IMergeTreeAttributionOptions {
      * default: false
      */
     track?: boolean;
+
+    impl?: () => MergeTreeAttribution
+}
+
+interface MergeTreeAttribution {
+    attach: (client: Client) => void;
+    detach: () => void;
+    isAttached: boolean; 
+    serializer: IAttributionCollectionSerializer;
 }
 
 /**
@@ -482,6 +492,8 @@ export class MergeTree {
         return this.segmentsToScour;
     }
 
+    public readonly attributionImpl: MergeTreeAttribution | undefined;
+
     /**
      * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
      * This information is only necessary on reconnect, and otherwise costly to bookkeep.
@@ -499,6 +511,7 @@ export class MergeTree {
     public constructor(public options?: IMergeTreeOptions) {
         this._root = this.makeBlock(0);
         this._root.mergeTree = this;
+        this.attributionImpl = options?.attribution?.impl?.();
     }
 
     private _root: IRootMergeBlock;
@@ -1125,17 +1138,6 @@ export class MergeTree {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
-                // TODO: This work should likely be done as part of the above `ack` call. However the exact format
-                // of the argument to pass isn't obvious given some planned extensibility points around customizing
-                // what types of operations are attributed and how. Since `ack` is in the public API, leaving it
-                // here for now should reduce future breaking changes.
-                if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) {
-                    pendingSegment.attribution = new AttributionCollection(
-                        seq,
-                        pendingSegment.cachedLength
-                    );
-                }
-
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
@@ -1482,13 +1484,6 @@ export class MergeTree {
                 newSegment.seq = seq;
                 newSegment.localSeq = localSeq;
                 newSegment.clientId = clientId;
-                if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
-                    newSegment.attribution ??= new AttributionCollection(
-                        newSegment.seq,
-                        newSegment.cachedLength
-                    );
-                }
-
                 if (Marker.is(newSegment)) {
                     const markerId = newSegment.getId();
                     if (markerId) {

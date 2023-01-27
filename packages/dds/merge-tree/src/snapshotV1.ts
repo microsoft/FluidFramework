@@ -31,7 +31,7 @@ import {
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { AttributionCollection, IAttributionCollection } from "./attributionCollection";
+import { IAttributionCollection } from "./attributionCollection";
 
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -97,6 +97,13 @@ export class SnapshotV1 {
             }
             segmentCount++;
         }
+
+        const attributionSerializer = this.mergeTree.attributionImpl?.serializer;
+        assert(
+            !hasAttribution || attributionSerializer !== undefined,
+            "attribution serializer must be provided when there are segments with attribution."
+        );
+
         return {
             version: "1",
             segmentCount,
@@ -104,7 +111,7 @@ export class SnapshotV1 {
             segments,
             startIndex,
             headerMetadata: undefined,
-            attribution: hasAttribution ? AttributionCollection.serializeAttributionCollections(collections) : undefined
+            attribution: hasAttribution ? attributionSerializer?.serializeAttributionCollections(collections) : undefined
         };
     }
 

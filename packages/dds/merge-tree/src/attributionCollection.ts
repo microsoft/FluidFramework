@@ -4,7 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { Client } from "./client";
+import { UnassignedSequenceNumber } from "./constants";
+import { MergeTreeDeltaCallback, MergeTreeMaintenanceCallback, MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback";
 import { AttributionKey, ISegment } from "./mergeTreeNodes";
+import { MergeTreeDeltaType } from "./ops";
 
 export interface SerializedAttributionCollection {
     /**
@@ -17,6 +21,29 @@ export interface SerializedAttributionCollection {
     posBreakpoints: number[];
     /* Total length; only necessary for validation */
     length: number;
+}
+
+/**
+ * TODO: based on injection feasibility, might be able to mark this internal as well
+ * @alpha
+ * @sealed
+ */
+export interface IAttributionCollectionSerializer {
+    /**
+     * @internal
+     */
+    serializeAttributionCollections(
+        segments: Iterable<{ attribution?: IAttributionCollection<AttributionKey>; cachedLength: number; }>
+    ): SerializedAttributionCollection;
+
+    /**
+     * Populates attribution information on segments using the provided summary.
+     * @internal
+     */
+    populateAttributionCollections(
+        segments: Iterable<ISegment>,
+        summary: SerializedAttributionCollection,
+    ): void;
 }
 
 /**
@@ -198,5 +225,66 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
         const blobContents: SerializedAttributionCollection = { seqs, posBreakpoints, length: cumulativePos };
         return blobContents;
+    }
+}
+
+export function createAttributionImpl(): {
+    attach: (client: Client) => void;
+    detach: () => void;
+    isAttached: boolean; 
+    serializer: IAttributionCollectionSerializer;
+} {
+    let unsubscribe: undefined | (() => void);
+    return {
+        attach: (client: Client) => {
+            assert(unsubscribe === undefined, "cannot attach to multiple clients at once");
+            const deltaCallback: MergeTreeDeltaCallback = (opArgs, { deltaSegments, operation }) => {
+                if (operation !== MergeTreeDeltaType.INSERT) {
+                    return;
+                }
+
+                for (const { segment } of deltaSegments) {
+                    if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
+                        segment.attribution ??= new AttributionCollection(
+                            segment.seq,
+                            segment.cachedLength
+                        );
+                    }
+                }
+            };
+
+            const maintenanceCallback: MergeTreeMaintenanceCallback = ({ deltaSegments, operation }, opArgs) => {
+                if (
+                    operation !== MergeTreeMaintenanceType.ACKNOWLEDGED ||
+                    opArgs === undefined ||
+                    opArgs.op.type !== MergeTreeDeltaType.INSERT
+                ) {
+                    return;
+                }
+                for (const { segment } of deltaSegments) {
+                    assert(segment.seq !== undefined, "segment.seq should be set after ack.");
+                    segment.attribution = new AttributionCollection(
+                        segment.seq,
+                        segment.cachedLength
+                    );
+                }
+            }
+
+            client.on("delta", deltaCallback);
+            client.on("maintenance", maintenanceCallback);
+
+            unsubscribe = () => {
+                client.off("delta", deltaCallback);
+                client.off("maintenance", maintenanceCallback);
+            }
+        },
+        detach: () => {
+            unsubscribe?.();
+            unsubscribe = undefined;
+        },
+        get isAttached() {
+            return unsubscribe !== undefined;
+        },
+        serializer: AttributionCollection
     }
 }
