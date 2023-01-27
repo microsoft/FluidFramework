@@ -13,9 +13,10 @@ import {
     UpPath,
     TreeValue,
     Value,
+    PathRootPrefix,
 } from "../../core";
 import { compareArrays, fail } from "../../util";
-import { SynchronousCursor } from "../treeCursorUtils";
+import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
 import { dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
@@ -398,15 +399,15 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
     }
 
-    getFieldPath(): FieldUpPath {
-        return {
+    getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
+        return prefixFieldPath(prefix, {
             field: this.getFieldKey(),
             parent: this.nodePositionInfo,
-        };
+        });
     }
 
-    getPath(): UpPath | undefined {
-        return this.nodeInfo(CursorLocationType.Nodes);
+    getPath(prefix?: PathRootPrefix): UpPath | undefined {
+        return prefixPath(prefix, this.nodeInfo(CursorLocationType.Nodes));
     }
 
     get fieldIndex(): number {

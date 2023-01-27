@@ -6,57 +6,60 @@
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
-    FileMode,
-    ISnapshotTree,
-    ITreeEntry,
-    TreeEntry,
+	FileMode,
+	ISnapshotTree,
+	ITreeEntry,
+	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import { v4 as uuid } from "uuid";
 
 function flattenCore(
-    path: string,
-    treeEntries: ITreeEntry[],
-    blobMap: Map<string, ArrayBufferLike>,
+	path: string,
+	treeEntries: ITreeEntry[],
+	blobMap: Map<string, ArrayBufferLike>,
 ): git.ITreeEntry[] {
-    const entries: git.ITreeEntry[] = [];
-    for (const treeEntry of treeEntries) {
-        const subPath = `${path}${treeEntry.path}`;
+	const entries: git.ITreeEntry[] = [];
+	for (const treeEntry of treeEntries) {
+		const subPath = `${path}${treeEntry.path}`;
 
-        if (treeEntry.type === TreeEntry.Blob) {
-            const blob = treeEntry.value;
-            const buffer = stringToBuffer(blob.contents, blob.encoding);
-            const id = uuid();
-            blobMap.set(id, buffer);
+		if (treeEntry.type === TreeEntry.Blob) {
+			const blob = treeEntry.value;
+			const buffer = stringToBuffer(blob.contents, blob.encoding);
+			const id = uuid();
+			blobMap.set(id, buffer);
 
-            const entry: git.ITreeEntry = {
-                mode: FileMode[treeEntry.mode],
-                path: subPath,
-                sha: id,
-                size: 0,
-                type: "blob",
-                url: "",
-            };
-            entries.push(entry);
-        } else if (treeEntry.type === TreeEntry.Tree) {
-            assert(treeEntry.type === TreeEntry.Tree, 0x101 /* "Unexpected tree entry type on flatten!" */);
-            const t = treeEntry.value;
-            const entry: git.ITreeEntry = {
-                mode: FileMode[treeEntry.mode],
-                path: subPath,
-                sha: "",
-                size: -1,
-                type: "tree",
-                url: "",
-            };
-            entries.push(entry);
+			const entry: git.ITreeEntry = {
+				mode: FileMode[treeEntry.mode],
+				path: subPath,
+				sha: id,
+				size: 0,
+				type: "blob",
+				url: "",
+			};
+			entries.push(entry);
+		} else if (treeEntry.type === TreeEntry.Tree) {
+			assert(
+				treeEntry.type === TreeEntry.Tree,
+				0x101 /* "Unexpected tree entry type on flatten!" */,
+			);
+			const t = treeEntry.value;
+			const entry: git.ITreeEntry = {
+				mode: FileMode[treeEntry.mode],
+				path: subPath,
+				sha: "",
+				size: -1,
+				type: "tree",
+				url: "",
+			};
+			entries.push(entry);
 
-            const subTreeEntries = flattenCore(`${subPath}/`, t.entries, blobMap);
-            entries.push(...subTreeEntries);
-        }
-    }
+			const subTreeEntries = flattenCore(`${subPath}/`, t.entries, blobMap);
+			entries.push(...subTreeEntries);
+		}
+	}
 
-    return entries;
+	return entries;
 }
 
 /**
@@ -67,12 +70,12 @@ function flattenCore(
  * @returns A flatten with of the ITreeEntry
  */
 function flatten(tree: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): git.ITree {
-    const entries = flattenCore("", tree, blobMap);
-    return {
-        sha: "",
-        tree: entries,
-        url: "",
-    };
+	const entries = flattenCore("", tree, blobMap);
+	return {
+		sha: "",
+		tree: entries,
+		url: "",
+	};
 }
 
 /**
@@ -84,9 +87,9 @@ function flatten(tree: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): git
  * @returns the hierarchical tree
  */
 export function buildSnapshotTree(
-    entries: ITreeEntry[],
-    blobMap: Map<string, ArrayBufferLike>,
+	entries: ITreeEntry[],
+	blobMap: Map<string, ArrayBufferLike>,
 ): ISnapshotTree {
-    const flattened = flatten(entries, blobMap);
-    return buildHierarchy(flattened);
+	const flattened = flatten(entries, blobMap);
+	return buildHierarchy(flattened);
 }
