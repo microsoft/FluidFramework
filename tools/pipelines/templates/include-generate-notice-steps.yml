@@ -16,7 +16,7 @@ steps:
       command: 'custom'
       customCommand: 'ci --ignore-scripts'
       customRegistry: 'useNpmrc'
-      workingDir: ${{ parameters.parameters.buildDirectory }}
+      workingDir: ${{ parameters.buildDirectory }}
 
   - bash: |
       # Generate the package/package lock for the lerna project so we would scan it.
@@ -24,7 +24,7 @@ steps:
       cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
       cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
     displayName: 'Generate Mono repo package json'
-    workingDirectory: ${{ parameters.parameters.buildDirectory }}
+    workingDirectory: ${{ parameters.buildDirectory }}
 
 - task: ComponentGovernanceComponentDetection@0
   displayName: Component Detection
