@@ -35,14 +35,9 @@ export function ContainerSelectionDropdown(
 
     const { clientDebuggers, containerId } = props;
 
-    let selectedKey = containerId;
-
     function renewContainerOptions(debuggers: IFluidClientDebugger[]): IDropdownOption[] {
         const options: IDropdownOption[] = [];
         for (const each_debugger of debuggers) {
-            if (each_debugger.containerId === containerId) {
-                selectedKey = each_debugger.containerNickname ?? each_debugger.containerId;
-            }
             options.push({
                 key: each_debugger.containerId,
                 text: each_debugger.containerNickname ?? each_debugger.containerId,
@@ -57,10 +52,16 @@ export function ContainerSelectionDropdown(
         event: React.FormEvent<HTMLDivElement>,
         option?: IDropdownOption,
     ): void => {
-        if (option) {
+        if (option !== undefined) {
             const selectedDebugger = clientDebuggers.find((clientDebugger) => {
                 return clientDebugger.containerId === (option.key as string);
-            }) as IFluidClientDebugger;
+            });
+
+            if (selectedDebugger === undefined) {
+                throw new Error(
+                    `Could not find a debugger associated with Container ID "${option.key}". This likely indicates an internal state issue.`,
+                );
+            }
             props.onChangeSelection(selectedDebugger.containerId);
         }
     };
@@ -69,7 +70,7 @@ export function ContainerSelectionDropdown(
         <Stack tokens={stackTokens}>
             <Dropdown
                 placeholder="Select an option"
-                selectedKey={selectedKey}
+                selectedKey={containerId}
                 options={clientDebuggerOptions}
                 styles={dropdownStyles}
                 onChange={_onClientDebuggerDropdownChange}

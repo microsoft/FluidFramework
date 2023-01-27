@@ -65,10 +65,12 @@ describe("ClientDebugger unit tests", () => {
     });
 
     it("Closing debugger removes it from global (window) registry and disposes it.", () => {
-        let clientDebugger = initializeDebugger(containerId, container!);
+        const clientDebugger = initializeDebugger(containerId, container!);
+        const otherClientDebugger = initializeDebugger(otherContainerId, otherContainer!);
 
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(clientDebugger.disposed).to.be.false;
+        expect(otherClientDebugger.disposed).to.be.false;
 
         let debuggers = getFluidClientDebuggers();
         expect(debuggers.length).to.equal(2);
@@ -77,11 +79,9 @@ describe("ClientDebugger unit tests", () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(clientDebugger.disposed).to.be.true;
 
-        clientDebugger = initializeDebugger(otherContainerId, otherContainer!);
-
         closeFluidClientDebugger(otherContainerId);
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        expect(clientDebugger.disposed).to.be.true;
+        expect(otherClientDebugger.disposed).to.be.true;
 
         debuggers = getFluidClientDebuggers();
         expect(debuggers.length).to.equal(0);

@@ -18,7 +18,7 @@ import { RenderOptions } from "./RendererOptions";
 import { ClientDebugView, ContainerSelectionDropdown } from "./components";
 
 /**
- * {@link FluidClientDebugger} input props.
+ * {@link FluidClientDebuggers} input props.
  */
 export interface FluidClientDebuggersProps {
     /**
@@ -29,7 +29,7 @@ export interface FluidClientDebuggersProps {
     renderOptions?: RenderOptions;
 }
 
-// Drop down + single container view
+// Drop down to show 2+ containers and manage the selected container in debugger view.
 /**
  * Renders the debug view for an active debugger session registered using
  * {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.

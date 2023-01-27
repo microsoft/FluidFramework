@@ -239,20 +239,6 @@ export function App(): React.ReactElement {
         </Stack>
     );
 
-    // TODO: separate loading spinner for each container as it is async loaded
-    // const view =
-    //     containers !== undefined ? (
-    //         <Stack horizontal >
-    //             <AppView containerInfo={containers[0]} />
-    //             <AppView containerInfo={containers[1]} />
-    //         </Stack>
-    //     ) : (
-    //         <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-    //             <Spinner />
-    //             <div>Loading Fluid container...</div>
-    //         </Stack>
-    //     );
-
     return <ThemeProvider theme={appTheme}>{view}</ThemeProvider>;
 }
 
