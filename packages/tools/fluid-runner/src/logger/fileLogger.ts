@@ -10,18 +10,18 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
  * @internal
  */
 export interface IFileLogger extends ITelemetryBaseLogger {
-    /**
-     * This method acts as a "dispose" and should be explicitly called at the end of execution
-     */
-    close(): Promise<void>;
+	/**
+	 * This method acts as a "dispose" and should be explicitly called at the end of execution
+	 */
+	close(): Promise<void>;
 }
 
 /**
  * Desired output format for the telemetry
  */
 export enum OutputFormat {
-    JSON,
-    CSV,
+	JSON,
+	CSV,
 }
 
 /* eslint-disable tsdoc/syntax */
@@ -30,16 +30,16 @@ export enum OutputFormat {
  * @internal
  */
 export interface ITelemetryOptions {
-    /** Desired output format used to create a specific IFileLogger implementation */
-    outputFormat?: OutputFormat;
+	/** Desired output format used to create a specific IFileLogger implementation */
+	outputFormat?: OutputFormat;
 
-    /**
-     * Properties that should be added to every telemetry event
-     * Example: { "prop1": "value1", "prop2": 10.0 }
-     */
-    defaultProps?: Record<string, string | number>;
+	/**
+	 * Properties that should be added to every telemetry event
+	 * Example: { "prop1": "value1", "prop2": 10.0 }
+	 */
+	defaultProps?: Record<string, string | number>;
 
-    /** Number of telemetry events per flush to telemetry file */
-    eventsPerFlush?: number;
+	/** Number of telemetry events per flush to telemetry file */
+	eventsPerFlush?: number;
 }
 /* eslint-enable tsdoc/syntax */

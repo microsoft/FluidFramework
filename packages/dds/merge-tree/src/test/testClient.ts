@@ -9,12 +9,13 @@ import { ISequencedDocumentMessage, ISummaryTree, ITree, MessageType } from "@fl
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import random from "random-js";
+import { Trace } from "@fluidframework/common-utils";
 import { Client } from "../client";
 import {
     List,
 } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { IMergeBlock, ISegment, Marker, MaxNodesInBlock, MergeTreeStats } from "../mergeTreeNodes";
+import { IMergeBlock, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
@@ -26,6 +27,7 @@ import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { LocalReferencePosition } from "../localReference";
 import { InternalRevertDriver } from "../revertibles";
+import { DetachedReferencePosition } from "../referencePositions";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -49,6 +51,12 @@ mt.seedWithArray([0xDEADBEEF, 0xFEEDBED]);
 export class TestClient extends Client {
     public static searchChunkSize = 256;
     public static readonly serializer = new TestSerializer();
+    public measureOps = false;
+    public accumTime = 0;
+    public accumWindowTime = 0;
+    public accumWindow = 0;
+    public accumOps = 0;
+    public maxWindowTime = 0;
 
     /**
      * Used for in-memory testing.  This will queue a reference string for each client message.
@@ -116,14 +124,14 @@ export class TestClient extends Client {
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
         // Validate by default
-        this.mergeTree.mergeTreeDeltaCallback = (o, d) => {
+        this.on("delta", (o, d) => {
             // assert.notEqual(d.deltaSegments.length, 0);
             d.deltaSegments.forEach((s) => {
                 if (d.operation === MergeTreeDeltaType.INSERT) {
                     assert.notEqual(s.segment.parent, undefined);
                 }
             });
-        };
+        });
     }
 
     /**
@@ -322,17 +330,12 @@ export class TestClient extends Client {
             });
     }
 
-    private findReconnectionPositionSegment?: ISegment;
-
     /**
-     * client.ts has accelerated versions of these methods which leverage the merge-tree's structure.
-     * To help verify their correctness, we additionally perform slow-path computations of the same values
-     * (which involve linear walks of the tree) and assert they match.
+     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
+     * of the current sequence number. This is desirable when rebasing operations for reconnection. Perform
+     * slow-path computations in this function without leveraging the merge-tree's structure
      */
     public rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number {
-        const fastPathResult = super.rebasePosition(pos, seqNumberFrom, localSeq);
-        const fastPathSegment = this.findReconnectionPositionSegment;
-        this.findReconnectionPositionSegment = undefined;
 
         let segment: ISegment | undefined;
         let posAccumulated = 0;
@@ -361,21 +364,15 @@ export class TestClient extends Client {
         });
 
         assert(segment !== undefined, "No segment found");
-
         const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
+        if (segoff.segment === undefined || segoff.offset === undefined) {
+            return DetachedReferencePosition;
+        }
 
-        const slowPathResult =
-            segoff.segment !== undefined
-            && segoff.offset !== undefined
-            && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
-
-        assert.equal(fastPathSegment, segoff.segment ?? undefined, "Unequal rebasePosition computed segments");
-        assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
-        return fastPathResult;
+        return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
     }
 
-    protected findReconnectionPosition(segment: ISegment, localSeq: number): number {
-        this.findReconnectionPositionSegment = segment;
+    public findReconnectionPosition(segment: ISegment, localSeq: number): number {
         const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 
         let segmentPosition = 0;
@@ -436,6 +433,49 @@ export class TestClient extends Client {
         assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
         return segmentsWithAttribution !== 0 ? seqs : undefined;
     }
+
+    /**
+     * Override and add some test only metrics
+     */
+    public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
+        let traceStart: Trace | undefined;
+        if (this.measureOps) {
+            traceStart = Trace.start();
+        }
+
+        super.applyMsg(msg, local);
+
+        if (traceStart) {
+            this.accumTime += elapsedMicroseconds(traceStart);
+            this.accumOps++;
+            this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
+        }
+        
+    }
+
+    /**
+     * Override and add some test only metrics
+     */
+    updateMinSeq(minSeq: number) {
+        let trace: Trace | undefined;
+        if (this.measureOps) {
+            trace = Trace.start();
+        }
+
+        super.updateMinSeq(minSeq);
+        if (trace) {
+            const elapsed = elapsedMicroseconds(trace);
+            this.accumWindowTime += elapsed;
+            if (elapsed > this.maxWindowTime) {
+                this.maxWindowTime = elapsed;
+            }
+        }
+
+    }
+}
+
+function elapsedMicroseconds(trace: Trace) {
+    return trace.trace().duration * 1000;
 }
 
 // the client doesn't submit ops, so this adds a callback to capture them
@@ -472,6 +512,20 @@ export const createRevertDriver =
 
     };
 };
+
+export interface MergeTreeStats {
+    maxHeight: number;
+    nodeCount: number;
+    leafCount: number;
+    removedLeafCount: number;
+    liveCount: number;
+    histo: number[];
+    windowTime?: number;
+    packTime?: number;
+    ordTime?: number;
+    maxOrdTime?: number;
+}
+
 
 export function getStats(tree: MergeTree) {
     const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {

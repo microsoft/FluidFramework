@@ -13,3 +13,6 @@ api-report/*
 
 # Test output
 nyc
+
+# Generated type-tests
+**/*.generated.ts
