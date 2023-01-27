@@ -13,19 +13,21 @@ import { IContainer } from "@fluidframework/container-definitions";
  *
  * @param container - Container you're attempting to get the object from
  */
-export async function getDefaultObjectFromContainer<T = FluidObject>(container: IContainer): Promise<T> {
-    const url = "/";
-    const response = await container.request({ url });
+export async function getDefaultObjectFromContainer<T = FluidObject>(
+	container: IContainer,
+): Promise<T> {
+	const url = "/";
+	const response = await container.request({ url });
 
-    // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve Fluid object at URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${url}"`);
-    }
+	// Verify the response
+	if (response.status !== 200 || response.mimeType !== "fluid/object") {
+		throw new Error(`Unable to retrieve Fluid object at URL: "${url}"`);
+	} else if (response.value === undefined) {
+		throw new Error(`Empty response from URL: "${url}"`);
+	}
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return response.value;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return response.value;
 }
 
 /**
@@ -38,19 +40,21 @@ export async function getDefaultObjectFromContainer<T = FluidObject>(container: 
  * @param container - Container you're attempting to get the object from
  */
 export async function getObjectWithIdFromContainer<T = FluidObject>(
-    id: string, container: IContainer): Promise<T> {
-    const url = `/${id}`;
-    const response = await container.request({ url });
+	id: string,
+	container: IContainer,
+): Promise<T> {
+	const url = `/${id}`;
+	const response = await container.request({ url });
 
-    // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve Fluid object with ID: "${id}" from URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response for ID: "${id}" from URL: "${url}"`);
-    }
+	// Verify the response
+	if (response.status !== 200 || response.mimeType !== "fluid/object") {
+		throw new Error(`Unable to retrieve Fluid object with ID: "${id}" from URL: "${url}"`);
+	} else if (response.value === undefined) {
+		throw new Error(`Empty response for ID: "${id}" from URL: "${url}"`);
+	}
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return response.value;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return response.value;
 }
 
 /**
@@ -63,15 +67,17 @@ export async function getObjectWithIdFromContainer<T = FluidObject>(
  * @param container - Container you're attempting to get the object from
  */
 export async function getObjectFromContainer<T = FluidObject>(
-    path: string, container: IContainer): Promise<T> {
-    const response = await container.request({ url: path });
+	path: string,
+	container: IContainer,
+): Promise<T> {
+	const response = await container.request({ url: path });
 
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve Fluid object with from URL: "${path}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response for from URL: "${path}"`);
-    }
+	if (response.status !== 200 || response.mimeType !== "fluid/object") {
+		throw new Error(`Unable to retrieve Fluid object with from URL: "${path}"`);
+	} else if (response.value === undefined) {
+		throw new Error(`Empty response for from URL: "${path}"`);
+	}
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return response.value;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return response.value;
 }

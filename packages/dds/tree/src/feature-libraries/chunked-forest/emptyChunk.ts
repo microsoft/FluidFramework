@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, CursorLocationType, FieldUpPath, UpPath } from "../../core";
+import { FieldKey, CursorLocationType, FieldUpPath, UpPath, PathRootPrefix } from "../../core";
 import { fail } from "../../util";
+import { prefixFieldPath } from "../treeCursorUtils";
 import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
 
 /**
@@ -60,8 +61,8 @@ export const emptyCursor: ChunkedCursor = {
     enterNode(childIndex: number): void {
         fail("empty cursor has no nodes");
     },
-    getFieldPath(): FieldUpPath {
-        return emptyPath;
+    getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
+        return prefixFieldPath(prefix, emptyPath);
     },
     getPath(): UpPath | undefined {
         fail("empty cursor has no nodes");

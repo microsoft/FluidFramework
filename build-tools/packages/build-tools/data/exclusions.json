@@ -3,5 +3,8 @@
   "docs/themes/thxvscode/assets/",
   "docs/themes/thxvscode/layouts/",
   "docs/themes/thxvscode/static/assets/",
-  "docs/tutorials/.*\\.tsx?"
+  "docs/tutorials/.*\\.tsx?",
+  "azure/packages/azure-local-service/src/index.ts",
+  "experimental/PropertyDDS/packages/property-query/test/get_config.js",
+  "experimental/PropertyDDS/services/property-query-service/test/get_config.js"
 ]
