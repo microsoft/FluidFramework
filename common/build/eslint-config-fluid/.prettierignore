@@ -6,3 +6,6 @@ node_modules
 
 # Build output
 printed-configs
+
+# Generated type-tests
+**/*.generated.ts

@@ -30,10 +30,10 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "commit": "git-cz",
-    "format": "lerna run format --no-sort --stream",
+    "format": "lerna run format --parallel --stream",
     "preinstall": "npx only-allow pnpm",
     "postinstall": "npm run build:compile",
-    "install:root": "pnpm install --ignore-scripts",
+    "install:commitlint": "npm install --global @commitlint/config-conventional",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
     "policy-check": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json",
@@ -99,5 +99,12 @@
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
   },
-  "packageManager": "pnpm@7.14.2"
+  "packageManager": "pnpm@7.14.2",
+  "pnpm": {
+      "peerDependencyRules": {
+        "allowedVersions": {
+          "eslint": "8.6.0"
+        }
+      }
+    }
 }

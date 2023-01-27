@@ -77,6 +77,7 @@ export {
     ReadonlyRepairDataStore,
     SchemaEvents,
     ForestEvents,
+    PathRootPrefix,
 } from "./core";
 
 export {
@@ -97,6 +98,7 @@ export {
     JsonCompatibleReadOnly,
     JsonCompatible,
     JsonCompatibleObject,
+    NestedMap,
 } from "./util";
 
 export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
@@ -173,7 +175,8 @@ export {
     ValueFieldEditBuilder,
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
-    SequenceField,
+    prefixPath,
+    prefixFieldPath,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

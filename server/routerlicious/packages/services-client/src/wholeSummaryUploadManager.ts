@@ -14,7 +14,7 @@ import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
 /**
  * Converts summary to snapshot tree and uploads with single snaphot tree payload.
  */
- export class WholeSummaryUploadManager implements ISummaryUploadManager {
+export class WholeSummaryUploadManager implements ISummaryUploadManager {
     constructor(
         private readonly manager: IGitManager,
     ) {
@@ -24,9 +24,10 @@ import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
         summaryTree: ISummaryTree,
         parentHandle: string | undefined,
         summaryType: IWholeSummaryPayloadType,
-        sequenceNumber?: number,
+        sequenceNumber: number = 0,
+        initial: boolean = false,
     ): Promise<string> {
-        const id = await this.writeSummaryTreeCore(parentHandle, summaryTree, summaryType, sequenceNumber ?? 0);
+        const id = await this.writeSummaryTreeCore(parentHandle, summaryTree, summaryType, sequenceNumber, initial);
         if (!id) {
             throw new Error(`Failed to write summary tree`);
         }
@@ -38,6 +39,7 @@ import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
         tree: ISummaryTree,
         type: IWholeSummaryPayloadType,
         sequenceNumber: number,
+        initial: boolean,
     ): Promise<string> {
         const snapshotTree = convertSummaryTreeToWholeSummaryTree(
             parentHandle,
@@ -52,6 +54,6 @@ import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
             type,
         };
 
-        return this.manager.createSummary(snapshotPayload).then((response) => response.id);
+        return this.manager.createSummary(snapshotPayload, initial).then((response) => response.id);
     }
 }

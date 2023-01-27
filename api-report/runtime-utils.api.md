@@ -70,7 +70,9 @@ export const create404Response: (request: IRequest) => IResponse;
 export function createDataStoreFactory(type: string, factory: Factory | Promise<Factory>): IFluidDataStoreFactory & IFluidDataStoreRegistry;
 
 // @public (undocumented)
-export function createResponseError(status: number, value: string, request: IRequest): IResponse;
+export function createResponseError(status: number, value: string, request: IRequest, headers?: {
+    [key: string]: any;
+}): IResponse;
 
 // @public
 export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
@@ -180,7 +182,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     // (undocumented)
     instantiateFromExisting(_runtime: T): Promise<void>;
     // (undocumented)
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
     // (undocumented)
     get IRuntimeFactory(): this;
     // (undocumented)
