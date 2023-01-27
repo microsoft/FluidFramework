@@ -69,9 +69,7 @@ As such, it is critical that Shared Tree investments include significant focus o
 The following goals and investments will ensure Shared Tree is reliable and remains stable as it evolves:
 
 -   Roughly 90% unit test coverage
-
 -   Fuzz testing of all major components
-
 -   Two or more test apps built on Shared Tree that are used to validate every significant update
 -   Code for types and persisting state is isolated and policies are in place to ensure stable migrations between versions
 -   Forwards and backwards compatibility tests
