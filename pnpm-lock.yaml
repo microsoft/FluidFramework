@@ -3791,6 +3791,7 @@ importers:
       mocha: ^10.0.0
       nock: ^10.0.1
       nyc: ^15.0.0
+      prettier: ~2.6.2
       semver: ^7.3.4
       sinon: ^7.4.2
       traverse: 0.6.6
@@ -3815,6 +3816,7 @@ importers:
       mocha: 10.1.0
       nock: 10.0.6
       nyc: 15.1.0
+      prettier: 2.6.2
       sinon: 7.5.0
 
   experimental/PropertyDDS/services/property-query-service:
@@ -3864,6 +3866,7 @@ importers:
       nconf: ^0.12.0
       npm-run-all: 4.1.5
       nyc: ^15.0.0
+      prettier: ~2.6.2
       promisify: 0.0.3
       qs: 6.7.0
       request: ^2.88.0
@@ -3928,6 +3931,7 @@ importers:
       mochawesome: 3.1.2_mocha@10.1.0
       npm-run-all: 4.1.5
       nyc: 15.1.0
+      prettier: 2.6.2
       promisify: 0.0.3
       request: 2.88.2
       request-promise-native: 1.0.7_request@2.88.2
@@ -4894,8 +4898,8 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
       '@fluidframework/shared-object-base': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1

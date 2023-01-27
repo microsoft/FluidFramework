@@ -1,9 +1,9 @@
 [
-  "docs/layouts/",
-  "docs/themes/thxvscode/assets/",
-  "docs/themes/thxvscode/layouts/",
-  "docs/themes/thxvscode/static/assets/",
-  "docs/tutorials/.*\\.tsx?",
-
-  "azure/packages/azure-local-service/src/index.ts"
+    "docs/layouts/",
+    "docs/themes/thxvscode/assets/",
+    "docs/themes/thxvscode/layouts/",
+    "docs/themes/thxvscode/static/assets/",
+    "docs/tutorials/.*\\.tsx?",
+    "azure/packages/azure-local-service/src/index.ts",
+    "experimental/PropertyDDS/packages/property-query/test/get_config.js"
 ]
