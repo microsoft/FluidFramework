@@ -70,6 +70,7 @@ describe("ClientDebugger unit tests", () => {
 
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(clientDebugger.disposed).to.be.false;
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(otherClientDebugger.disposed).to.be.false;
 
         let debuggers = getFluidClientDebuggers();

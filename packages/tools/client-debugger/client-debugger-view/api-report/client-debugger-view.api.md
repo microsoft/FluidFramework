@@ -40,12 +40,12 @@ export const defaultRenderOptions: Required<RenderOptions>;
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 
 // @public
-export function FluidClientDebugger(props: FluidClientDebuggerProps): React_2.ReactElement;
-
-// @public
 export interface FluidClientDebuggerProps {
     renderOptions?: RenderOptions;
 }
+
+// @public
+export function FluidClientDebuggers(props: FluidClientDebuggerProps): React_2.ReactElement;
 
 // @internal
 export interface HasClientDebugger {
