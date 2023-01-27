@@ -1,6 +1,6 @@
 # @fluid-example/task-selection
 
-The task selection example demonstrates a couple different ways to pick a single client amongst the connected clients to perform a task (in this case, rolling a dice once per second).  This builds upon the external-views sample as a base.
+The task selection example demonstrates a couple different ways to pick a single client amongst the connected clients to perform a task (in this case, rolling a dice once per second). This builds upon the external-views sample as a base.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 

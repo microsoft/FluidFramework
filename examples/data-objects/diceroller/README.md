@@ -44,4 +44,4 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 
 Dice Roller uses the following distributed data structures:
 
-- SharedDirectory - root
+-   SharedDirectory - root

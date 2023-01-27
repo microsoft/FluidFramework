@@ -8,15 +8,12 @@ import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IntervalType, SequenceDeltaEvent } from "@fluidframework/sequence";
 import {
-    IntervalType,
-    SequenceDeltaEvent,
-} from "@fluidframework/sequence";
-import {
-    positionToRowCol,
-    rowColToPosition,
-    SparseMatrix,
-    SharedNumberSequence,
+	positionToRowCol,
+	rowColToPosition,
+	SparseMatrix,
+	SharedNumberSequence,
 } from "@fluid-experimental/sequence-deprecated";
 import { CellRange } from "./cellrange";
 import { TableDocumentType } from "./componentTypes";
@@ -26,146 +23,181 @@ import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
 
 export interface ITableDocumentEvents extends IEvent {
-    (event: "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: SharedNumberSequence | SparseMatrix) => void);
-    (event: "sequenceDelta",
-        listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
+	(
+		event: "op",
+		listener: (
+			op: ISequencedDocumentMessage,
+			local: boolean,
+			target: SharedNumberSequence | SparseMatrix,
+		) => void,
+	);
+	(
+		event: "sequenceDelta",
+		listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void,
+	);
 }
 
 /**
  * @deprecated `TableDocument` is an abandoned prototype.
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
  */
-export class TableDocument extends DataObject<{ Events: ITableDocumentEvents; }> implements ITable {
-    public static getFactory() { return TableDocument.factory; }
+export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
+	public static getFactory() {
+		return TableDocument.factory;
+	}
 
-    private static readonly factory = new DataObjectFactory(
-        TableDocumentType,
-        TableDocument,
-        [
-            SparseMatrix.getFactory(),
-            SharedNumberSequence.getFactory(),
-        ],
-        {},
-        [
-            TableSlice.getFactory().registryEntry,
-        ],
-    );
+	private static readonly factory = new DataObjectFactory(
+		TableDocumentType,
+		TableDocument,
+		[SparseMatrix.getFactory(), SharedNumberSequence.getFactory()],
+		{},
+		[TableSlice.getFactory().registryEntry],
+	);
 
-    public get numCols() { return this.cols.getLength(); }
-    public get numRows() { return this.matrix.numRows; }
+	public get numCols() {
+		return this.cols.getLength();
+	}
+	public get numRows() {
+		return this.matrix.numRows;
+	}
 
-    private rows: SharedNumberSequence;
-    private cols: SharedNumberSequence;
-    private matrix: SparseMatrix;
+	private rows: SharedNumberSequence;
+	private cols: SharedNumberSequence;
+	private matrix: SparseMatrix;
 
-    public getCellValue(row: number, col: number): TableDocumentItem {
-        return this.matrix.getItem(row, col);
-    }
+	public getCellValue(row: number, col: number): TableDocumentItem {
+		return this.matrix.getItem(row, col);
+	}
 
-    public setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet) {
-        this.matrix.setItems(row, col, [value], properties);
-    }
+	public setCellValue(
+		row: number,
+		col: number,
+		value: TableDocumentItem,
+		properties?: PropertySet,
+	) {
+		this.matrix.setItems(row, col, [value], properties);
+	}
 
-    public async getRange(label: string) {
-        const intervals = this.matrix.getIntervalCollection(label);
-        const interval = intervals.nextInterval(0);
-        return new CellRange(interval, this.localRefToRowCol);
-    }
+	public async getRange(label: string) {
+		const intervals = this.matrix.getIntervalCollection(label);
+		const interval = intervals.nextInterval(0);
+		return new CellRange(interval, this.localRefToRowCol);
+	}
 
-    public async createSlice(
-        sliceId: string,
-        name: string,
-        minRow: number,
-        minCol: number,
-        maxRow: number,
-        maxCol: number): Promise<ITable> {
-        const component = await TableSlice.getFactory().createChildInstance(
-            this.context,
-            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
-        );
-        this.root.set(sliceId, component.handle);
-        return component;
-    }
+	public async createSlice(
+		sliceId: string,
+		name: string,
+		minRow: number,
+		minCol: number,
+		maxRow: number,
+		maxCol: number,
+	): Promise<ITable> {
+		const component = await TableSlice.getFactory().createChildInstance(this.context, {
+			docId: this.runtime.id,
+			name,
+			minRow,
+			minCol,
+			maxRow,
+			maxCol,
+		});
+		this.root.set(sliceId, component.handle);
+		return component;
+	}
 
-    public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {
-        this.rows.annotateRange(startRow, endRow, properties, op);
-    }
+	public annotateRows(
+		startRow: number,
+		endRow: number,
+		properties: PropertySet,
+		op?: ICombiningOp,
+	) {
+		this.rows.annotateRange(startRow, endRow, properties, op);
+	}
 
-    public getRowProperties(row: number): PropertySet {
-        return this.rows.getPropertiesAtPosition(row);
-    }
+	public getRowProperties(row: number): PropertySet {
+		return this.rows.getPropertiesAtPosition(row);
+	}
 
-    public annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp) {
-        this.cols.annotateRange(startCol, endCol, properties, op);
-    }
+	public annotateCols(
+		startCol: number,
+		endCol: number,
+		properties: PropertySet,
+		op?: ICombiningOp,
+	) {
+		this.cols.annotateRange(startCol, endCol, properties, op);
+	}
 
-    public getColProperties(col: number): PropertySet {
-        return this.cols.getPropertiesAtPosition(col);
-    }
+	public getColProperties(col: number): PropertySet {
+		return this.cols.getPropertiesAtPosition(col);
+	}
 
-    public annotateCell(row: number, col: number, properties: PropertySet) {
-        this.matrix.annotatePosition(row, col, properties);
-    }
+	public annotateCell(row: number, col: number, properties: PropertySet) {
+		this.matrix.annotatePosition(row, col, properties);
+	}
 
-    public getCellProperties(row: number, col: number): PropertySet {
-        return this.matrix.getPositionProperties(row, col);
-    }
+	public getCellProperties(row: number, col: number): PropertySet {
+		return this.matrix.getPositionProperties(row, col);
+	}
 
-    // For internal use by TableSlice: Please do not use.
-    public createInterval(label: string, minRow: number, minCol: number, maxRow: number, maxCol: number) {
-        debug(`createInterval(${label}, ${minRow}:${minCol}..${maxRow}:${maxCol})`);
-        const start = rowColToPosition(minRow, minCol);
-        const end = rowColToPosition(maxRow, maxCol);
-        const intervals = this.matrix.getIntervalCollection(label);
-        intervals.add(start, end, IntervalType.SlideOnRemove);
-    }
+	// For internal use by TableSlice: Please do not use.
+	public createInterval(
+		label: string,
+		minRow: number,
+		minCol: number,
+		maxRow: number,
+		maxCol: number,
+	) {
+		debug(`createInterval(${label}, ${minRow}:${minCol}..${maxRow}:${maxCol})`);
+		const start = rowColToPosition(minRow, minCol);
+		const end = rowColToPosition(maxRow, maxCol);
+		const intervals = this.matrix.getIntervalCollection(label);
+		intervals.add(start, end, IntervalType.SlideOnRemove);
+	}
 
-    public insertRows(startRow: number, numRows: number) {
-        this.matrix.insertRows(startRow, numRows);
-        this.rows.insert(startRow, new Array(numRows).fill(0));
-    }
+	public insertRows(startRow: number, numRows: number) {
+		this.matrix.insertRows(startRow, numRows);
+		this.rows.insert(startRow, new Array(numRows).fill(0));
+	}
 
-    public removeRows(startRow: number, numRows: number) {
-        this.matrix.removeRows(startRow, numRows);
-        this.rows.remove(startRow, startRow + numRows);
-    }
+	public removeRows(startRow: number, numRows: number) {
+		this.matrix.removeRows(startRow, numRows);
+		this.rows.remove(startRow, startRow + numRows);
+	}
 
-    public insertCols(startCol: number, numCols: number) {
-        this.matrix.insertCols(startCol, numCols);
-        this.cols.insert(startCol, new Array(numCols).fill(0));
-    }
+	public insertCols(startCol: number, numCols: number) {
+		this.matrix.insertCols(startCol, numCols);
+		this.cols.insert(startCol, new Array(numCols).fill(0));
+	}
 
-    public removeCols(startCol: number, numCols: number) {
-        this.matrix.removeCols(startCol, numCols);
-        this.cols.remove(startCol, startCol + numCols);
-    }
+	public removeCols(startCol: number, numCols: number) {
+		this.matrix.removeCols(startCol, numCols);
+		this.cols.remove(startCol, startCol + numCols);
+	}
 
-    protected async initializingFirstTime() {
-        const rows = SharedNumberSequence.create(this.runtime, "rows");
-        this.root.set("rows", rows.handle);
+	protected async initializingFirstTime() {
+		const rows = SharedNumberSequence.create(this.runtime, "rows");
+		this.root.set("rows", rows.handle);
 
-        const cols = SharedNumberSequence.create(this.runtime, "cols");
-        this.root.set("cols", cols.handle);
+		const cols = SharedNumberSequence.create(this.runtime, "cols");
+		this.root.set("cols", cols.handle);
 
-        const matrix = SparseMatrix.create(this.runtime, "matrix");
-        this.root.set("matrix", matrix.handle);
+		const matrix = SparseMatrix.create(this.runtime, "matrix");
+		this.root.set("matrix", matrix.handle);
 
-        this.root.set(ConfigKey.docId, this.runtime.id);
-    }
+		this.root.set(ConfigKey.docId, this.runtime.id);
+	}
 
-    protected async hasInitialized() {
-        this.matrix = await this.root.get<IFluidHandle<SparseMatrix>>("matrix").get();
-        this.rows = await this.root.get<IFluidHandle<SharedNumberSequence>>("rows").get();
-        this.cols = await this.root.get<IFluidHandle<SharedNumberSequence>>("cols").get();
+	protected async hasInitialized() {
+		this.matrix = await this.root.get<IFluidHandle<SparseMatrix>>("matrix").get();
+		this.rows = await this.root.get<IFluidHandle<SharedNumberSequence>>("rows").get();
+		this.cols = await this.root.get<IFluidHandle<SharedNumberSequence>>("cols").get();
 
-        this.forwardEvent(this.cols, "op", "sequenceDelta");
-        this.forwardEvent(this.rows, "op", "sequenceDelta");
-        this.forwardEvent(this.matrix, "op", "sequenceDelta");
-    }
+		this.forwardEvent(this.cols, "op", "sequenceDelta");
+		this.forwardEvent(this.rows, "op", "sequenceDelta");
+		this.forwardEvent(this.matrix, "op", "sequenceDelta");
+	}
 
-    private readonly localRefToRowCol = (localRef: ReferencePosition) => {
-        const position = this.matrix.localReferencePositionToPosition(localRef);
-        return positionToRowCol(position);
-    };
+	private readonly localRefToRowCol = (localRef: ReferencePosition) => {
+		const position = this.matrix.localReferencePositionToPosition(localRef);
+		return positionToRowCol(position);
+	};
 }
