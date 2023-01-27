@@ -262,7 +262,6 @@ export class SnapshotLoader {
 			const { attributionPolicy } = this.mergeTree;
 			// TODO: unify validation strategy and make sure asserts vs. exceptions makes sense.
 			// (this one should potentially be a usage error)
-			// also update documentation on attributor
 			assert(
 				attributionPolicy !== undefined,
 				"Attempted to open a file containing attribution information without injected attribution policy",

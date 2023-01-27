@@ -408,8 +408,22 @@ Using the interval collection API has two main benefits:
 
 SharedString supports storing information attributing each character position to the user who inserted it and the time at which that insertion happened.
 This functionality is off by default.
-Enable it by setting `{ attribution: { track: true } }` on the `IFluidDataStoreRuntime` options used to initialize the SharedString.
-If the config flag `"Fluid.Attribution.EnableOnNewFile"` is set, its value will override the runtime options one.
+Enable it by setting the following options used while initializing the SharedString.
+
+```typescript
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+// Use these options in the IContainerContext used to instantiate your container runtime.
+const options: ILoaderOptions = {
+    attribution: {
+        // Beware: production applications should roll out and saturate code with "track: false"
+        // before enabling it to avoid compatability concerns.
+        track: true,
+        policyFactory: createInsertOnlyAttributionPolicy
+    }
+}
+```
+
+If the config flag `"Fluid.Attribution.EnableOnNewFile"` is set, its value will override the value of `track` in these options.
 
 Attribution information is stored on the `attribution` field of the SharedString's segments.
 

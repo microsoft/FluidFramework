@@ -117,7 +117,12 @@ describe("snapshot", () => {
 		const clients = createClientsAtInitialState(
 			{
 				initialState: "",
-				options: { attribution: { track: true } },
+				options: {
+					attribution: {
+						track: true,
+						policyFactory: createInsertOnlyAttributionPolicy,
+					},
+				},
 			},
 			"A",
 			"B",
@@ -129,61 +134,45 @@ describe("snapshot", () => {
 
 		ops.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1));
 
-		it("preserves attribution information", async () => {
-			const clients = createClientsAtInitialState(
-				{
-					initialState: "",
-					options: {
-						attribution: {
-							track: true,
-							policyFactory: createInsertOnlyAttributionPolicy,
-						},
+		applyAllOps();
+
+		ops.push(
+			clients.B.makeOpMessage(
+				clients.B.insertTextLocal(6, "new "),
+				/* seq */ 2,
+				/* refSeq */ 1,
+			),
+		);
+
+		applyAllOps();
+
+		// "hello " has key 1 (i.e. seq 1), "new " has key 2 (i.e. seq 2), "world" has key 1.
+		const expectedAttribution = [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1];
+		await assertAttributionKeysMatch(clients.A, expectedAttribution);
+	});
+
+	it("doesn't include attribution information when attribution tracking is false on doc creation", async () => {
+		const clients = createClientsAtInitialState(
+			{
+				initialState: "",
+				options: {
+					attribution: {
+						track: false,
+						policyFactory: createInsertOnlyAttributionPolicy,
 					},
 				},
-				"A",
-				"B",
-			);
+			},
+			"A",
+		);
 
-			ops.push(
-				clients.B.makeOpMessage(
-					clients.B.insertTextLocal(6, "new "),
-					/* seq */ 2,
-					/* refSeq */ 1,
-				),
-			);
+		const ops: ISequencedDocumentMessage[] = [];
+		const applyAllOps = () =>
+			ops.splice(0).forEach((op) => clients.all.map((client) => client.applyMsg(op)));
 
-			applyAllOps();
+		ops.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1));
 
-			// "hello " has key 1 (i.e. seq 1), "new " has key 2 (i.e. seq 2), "world" has key 1.
-			const expectedAttribution = [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1];
-			await assertAttributionKeysMatch(clients.A, expectedAttribution);
-		});
+		applyAllOps();
 
-		it("doesn't include attribution information when attribution tracking is false on doc creation", async () => {
-			const clients = createClientsAtInitialState(
-				{
-					initialState: "",
-					options: {
-						attribution: {
-							track: false,
-							policyFactory: createInsertOnlyAttributionPolicy,
-						},
-					},
-				},
-				"A",
-			);
-
-			const ops: ISequencedDocumentMessage[] = [];
-			const applyAllOps = () =>
-				ops.splice(0).forEach((op) => clients.all.map((client) => client.applyMsg(op)));
-
-			ops.push(
-				clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
-			);
-
-			applyAllOps();
-
-			await assertAttributionKeysMatch(clients.A, undefined);
-		});
+		await assertAttributionKeysMatch(clients.A, undefined);
 	});
 });
