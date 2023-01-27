@@ -10,21 +10,19 @@ import { ITokenProvider, ITokenResponse } from "./tokens";
  */
 
 export class DefaultTokenProvider implements ITokenProvider {
-    constructor(private readonly jwt: string) {
+	constructor(private readonly jwt: string) {}
 
-    }
+	public async fetchOrdererToken(): Promise<ITokenResponse> {
+		return {
+			fromCache: true,
+			jwt: this.jwt,
+		};
+	}
 
-    public async fetchOrdererToken(): Promise<ITokenResponse> {
-        return {
-            fromCache: true,
-            jwt: this.jwt,
-        };
-    }
-
-    public async fetchStorageToken(): Promise<ITokenResponse> {
-        return {
-            fromCache: true,
-            jwt: this.jwt,
-        };
-    }
+	public async fetchStorageToken(): Promise<ITokenResponse> {
+		return {
+			fromCache: true,
+			jwt: this.jwt,
+		};
+	}
 }

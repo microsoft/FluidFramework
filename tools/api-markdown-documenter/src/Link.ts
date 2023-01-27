@@ -7,13 +7,13 @@
  * Represents a link to some documentation element.
  */
 export interface Link {
-    /**
-     * Link text to be rendered.
-     */
-    text: string;
+	/**
+	 * Link text to be rendered.
+	 */
+	text: string;
 
-    /**
-     * Link target URL.
-     */
-    url: string;
+	/**
+	 * Link target URL.
+	 */
+	url: string;
 }

@@ -50,35 +50,41 @@ import { IInsecureUser } from "./insecureUsers";
  * Default: `1.0`.
  */
 export function generateToken(
-    tenantId: string,
-    key: string,
-    scopes: ScopeType[],
-    documentId?: string,
-    user?: IInsecureUser,
-    lifetime: number = 60 * 60,
-    ver: string = "1.0"): string {
-    let userClaim = (user) ? user : generateUser();
-    if (userClaim.id === "" || userClaim.id === undefined) {
-        userClaim = generateUser();
-    }
+	tenantId: string,
+	key: string,
+	scopes: ScopeType[],
+	documentId?: string,
+	user?: IInsecureUser,
+	lifetime: number = 60 * 60,
+	ver: string = "1.0",
+): string {
+	let userClaim = user ? user : generateUser();
+	if (userClaim.id === "" || userClaim.id === undefined) {
+		userClaim = generateUser();
+	}
 
-    // Current time in seconds
-    const now = Math.round(Date.now() / 1000);
-    const docId = documentId ?? "";
+	// Current time in seconds
+	const now = Math.round(Date.now() / 1000);
+	const docId = documentId ?? "";
 
-    const claims: ITokenClaims & { jti: string; } = {
-        documentId: docId,
-        scopes,
-        tenantId,
-        user: userClaim,
-        iat: now,
-        exp: now + lifetime,
-        ver,
-        jti: uuid(),
-    };
+	const claims: ITokenClaims & { jti: string } = {
+		documentId: docId,
+		scopes,
+		tenantId,
+		user: userClaim,
+		iat: now,
+		exp: now + lifetime,
+		ver,
+		jti: uuid(),
+	};
 
-    const utf8Key = { utf8: key };
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
+	const utf8Key = { utf8: key };
+	return jsrsasign.jws.JWS.sign(
+		null,
+		JSON.stringify({ alg: "HS256", typ: "JWT" }),
+		claims,
+		utf8Key,
+	);
 }
 
 /**
@@ -87,10 +93,10 @@ export function generateToken(
  * and {@link @fluidframework/test-client-utils#IInsecureUser.name} properties.
  */
 export function generateUser(): IInsecureUser {
-    const randomUser = {
-        id: uuid(),
-        name: uuid(),
-    };
+	const randomUser = {
+		id: uuid(),
+		name: uuid(),
+	};
 
-    return randomUser;
+	return randomUser;
 }

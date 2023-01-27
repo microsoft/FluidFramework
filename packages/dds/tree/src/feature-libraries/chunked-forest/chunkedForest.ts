@@ -366,10 +366,6 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
         return this.forest.anchors.track(this.getPath());
     }
 
-    public getPath(): UpPath {
-        return super.getPath() ?? fail("no path when at root");
-    }
-
     public clear(): void {
         this.state = ITreeSubscriptionCursorState.Cleared;
         this.setToDetachedSequence(rootFieldKeySymbol);
