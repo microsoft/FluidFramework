@@ -32,7 +32,14 @@ import { v4 as uuid } from "uuid";
 import { LocalPersistentCache, NonPersistentCache } from "./odspCache";
 import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
-import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher, IExistingFileInfo, isNewFileInfo } from "./odspUtils";
+import {
+	INewFileInfo,
+	getOdspResolvedUrl,
+	createOdspLogger,
+	toInstrumentedOdspTokenFetcher,
+	IExistingFileInfo,
+	isNewFileInfo,
+} from "./odspUtils";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -116,68 +123,82 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 			clientIsSummarizer,
 		);
 
-        return PerformanceEvent.timedExecAsync(
-            odspLogger,
-            {
-                eventName: "CreateNew",
-                isWithSummaryUpload: true,
-                createShareLinkParam: createShareLinkParam ? JSON.stringify(createShareLinkParam) : undefined,
-                enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
-                enableSingleRequestForShareLinkWithCreate:
-                    this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-            },
-            async (event) => {
-                const getStorageToken = toInstrumentedOdspTokenFetcher(
-                    odspLogger,
-                    resolvedUrlData,
-                    this.getStorageToken,
-                    true /* throwOnNullToken */,
-                );
-                // We can delay load this module as this path will not be executed in load flows and create flow
-                // while only happens once in lifetime of a document happens in the background after creation of
-                // detached container.
-                const module = await import(/* webpackChunkName: "createNewModule" */ "./createNewModule")
-                    .then((m) => {
-                        odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded" });
-                        return m;
-                    })
-                    .catch((error) => {
-                        odspLogger.sendErrorEvent( { eventName: "createNewModuleLoadFailed" }, error);
-                        throw error;
-                    });
-                odspResolvedUrl = isNewFileInfo(fileInfo)
-                    ? await module.createNewFluidFile(
-                        getStorageToken,
-                        fileInfo,
-                        odspLogger,
-                        createNewSummary,
-                        cacheAndTracker.epochTracker,
-                        fileEntry,
-                        this.hostPolicy.cacheCreateNewSummary ?? true,
-                        !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-                        odspResolvedUrl.isClpCompliantApp,
-                        this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-                        this.hostPolicy.enableShareLinkWithCreate
-                    )
-                    : await module.createNewContainerOnExistingFile(
-                        getStorageToken,
-                        fileInfo,
-                        odspLogger,
-                        createNewSummary,
-                        cacheAndTracker.epochTracker,
-                        fileEntry,
-                        this.hostPolicy.cacheCreateNewSummary ?? true,
-                        !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-                        odspResolvedUrl.isClpCompliantApp,
-                    );
-                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
-                    cacheAndTracker, clientIsSummarizer);
-                event.end({
-                    docId: odspResolvedUrl.hashedDocumentId,
-                });
-                return docService;
-            });
-    }
+		return PerformanceEvent.timedExecAsync(
+			odspLogger,
+			{
+				eventName: "CreateNew",
+				isWithSummaryUpload: true,
+				createShareLinkParam: createShareLinkParam
+					? JSON.stringify(createShareLinkParam)
+					: undefined,
+				enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
+				enableSingleRequestForShareLinkWithCreate:
+					this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+			},
+			async (event) => {
+				const getStorageToken = toInstrumentedOdspTokenFetcher(
+					odspLogger,
+					resolvedUrlData,
+					this.getStorageToken,
+					true /* throwOnNullToken */,
+				);
+				// We can delay load this module as this path will not be executed in load flows and create flow
+				// while only happens once in lifetime of a document happens in the background after creation of
+				// detached container.
+				const module = await import(
+					/* webpackChunkName: "createNewModule" */ "./createNewModule"
+				)
+					.then((m) => {
+						odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded" });
+						return m;
+					})
+					.catch((error) => {
+						odspLogger.sendErrorEvent(
+							{ eventName: "createNewModuleLoadFailed" },
+							error,
+						);
+						throw error;
+					});
+				odspResolvedUrl = isNewFileInfo(fileInfo)
+					? await module.createNewFluidFile(
+							getStorageToken,
+							fileInfo,
+							odspLogger,
+							createNewSummary,
+							cacheAndTracker.epochTracker,
+							fileEntry,
+							this.hostPolicy.cacheCreateNewSummary ?? true,
+							!!this.hostPolicy.sessionOptions
+								?.forceAccessTokenViaAuthorizationHeader,
+							odspResolvedUrl.isClpCompliantApp,
+							this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+							this.hostPolicy.enableShareLinkWithCreate,
+					  )
+					: await module.createNewContainerOnExistingFile(
+							getStorageToken,
+							fileInfo,
+							odspLogger,
+							createNewSummary,
+							cacheAndTracker.epochTracker,
+							fileEntry,
+							this.hostPolicy.cacheCreateNewSummary ?? true,
+							!!this.hostPolicy.sessionOptions
+								?.forceAccessTokenViaAuthorizationHeader,
+							odspResolvedUrl.isClpCompliantApp,
+					  );
+				const docService = this.createDocumentServiceCore(
+					odspResolvedUrl,
+					odspLogger,
+					cacheAndTracker,
+					clientIsSummarizer,
+				);
+				event.end({
+					docId: odspResolvedUrl.hashedDocumentId,
+				});
+				return docService;
+			},
+		);
+	}
 
 	/**
 	 * @param getStorageToken - function that can provide the storage token for a given site. This is
