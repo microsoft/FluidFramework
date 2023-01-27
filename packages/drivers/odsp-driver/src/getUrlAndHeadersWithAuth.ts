@@ -5,7 +5,7 @@
 
 export function getUrlAndHeadersWithAuth(
 	url: string,
-    // eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @rushstack/no-new-null
 	token: string | null,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): { url: string; headers: { [index: string]: string } } {

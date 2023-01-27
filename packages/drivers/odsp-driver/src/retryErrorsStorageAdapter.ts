@@ -41,7 +41,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		return this.internalStorageService.repositoryUrl;
 	}
 
-    // eslint-disable-next-line @rushstack/no-new-null
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
 			async () => this.internalStorageService.getSnapshotTree(version),
@@ -57,7 +57,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	}
 
 	public async getVersions(
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,

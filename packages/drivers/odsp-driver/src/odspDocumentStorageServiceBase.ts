@@ -188,7 +188,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	public async getSnapshotTree(
 		version?: api.IVersion,
 		scenarioName?: string,
-    // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		let id: string;
 		if (!version || !version.id) {
@@ -222,7 +222,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	}
 
 	public abstract getVersions(
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,

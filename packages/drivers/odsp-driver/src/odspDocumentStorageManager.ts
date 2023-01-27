@@ -201,7 +201,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	public async getVersions(
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,
