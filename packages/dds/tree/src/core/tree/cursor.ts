@@ -222,7 +222,7 @@ export interface ITreeCursor {
 }
 
 /**
- * Prefix to apply to the as the root of a {@link UpPath} or {@link FieldUpPath}.
+ * Prefix to apply as the root of a {@link UpPath} or {@link FieldUpPath}.
  *
  * @remarks This can be used to take a path relative to a subtree, and make it relative to a larger containing tree.
  * For example, if a node is being inserted in the 5th position in a field "Foo", you can update a path in that node's subtree to its new path by prefixing it with
