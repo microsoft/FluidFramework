@@ -10,7 +10,7 @@ import { FieldKey, TreeType, Value } from "./types";
 /**
  * A stateful low-level interface for reading tree data.
  *
- * @remarks Cursors exist so that specialized implementations can be written against different data abstractions.
+ * @remarks Cursor exists so that specialized data formats can be viewed through a common abstraction.
  * This allows performance optimizations to be done based on a data.
  */
 export interface ITreeCursor {
