@@ -18,10 +18,11 @@ There is another experimental implementation of Clicker using a WiP Fluid React 
 
 You can run this example using the following steps:
 
-1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
+1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/clicker`
-1. Run `npm run start` from this directory (examples/data-objects/clicker) and open <http://localhost:8080> in a web browser to see the app running.
+1. Run `npm start` from this directory (examples/data-objects/clicker) and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 
