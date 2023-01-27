@@ -29,7 +29,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactEleme
 export const clientDebugViewClassName = "fluid-client-debugger-view";
 
 // @internal
-export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
+export interface ClientDebugViewProps extends HasClientDebugger {
     renderOptions?: RenderOptions;
 }
 

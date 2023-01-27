@@ -18,7 +18,7 @@ import { RenderOptions } from "./RendererOptions";
 import { ClientDebugView, ContainerSelectionDropdown } from "./components";
 
 /**
- * {@link FluidClientDebuggers} input props.
+ * {@link FluidClientDebugger} input props.
  */
 export interface FluidClientDebuggersProps {
     /**
@@ -169,22 +169,3 @@ function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement 
         </Stack>
     );
 }
-
-// /**
-//  * {@link DebuggerDisposed} input props.
-//  */
-// type DebuggerDisposedProps = HasContainerId;
-
-// function DebuggerDisposed(props: DebuggerDisposedProps): React.ReactElement {
-//     const { containerId } = props;
-
-//     return (
-//         <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-//             <StackItem>
-//                 <div>
-//                     The debugger associated with container ID "{containerId}" has been disposed.
-//                 </div>
-//             </StackItem>
-//         </Stack>
-//     );
-// }
