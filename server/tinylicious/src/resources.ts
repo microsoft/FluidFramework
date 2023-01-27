@@ -15,9 +15,8 @@ export class TinyliciousResources implements core.IResources {
         public storage: core.IDocumentStorage,
         public mongoManager: core.MongoManager,
         public port: any,
-        public webServerFactory: core.IWebServerFactory,
-    ) {
-    }
+        public webServerFactory: core.IWebServerFactory
+    ) {}
 
     public async dispose(): Promise<void> {
         await this.mongoManager.close();

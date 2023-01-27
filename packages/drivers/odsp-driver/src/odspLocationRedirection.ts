@@ -13,11 +13,14 @@ import { getOdspResolvedUrl } from "./odspUtils";
  * @param redirectLocation - Url at which the network call has to be made. It contains new site info.
  * @returns - Resolved url after patching the correct siteUrl.
  */
-export function patchOdspResolvedUrl(resolvedUrl: IFluidResolvedUrl, redirectLocation: string): IOdspResolvedUrl {
-    const odspResolvedUrl = { ...getOdspResolvedUrl(resolvedUrl) };
-    // Generate the new SiteUrl from the redirection location.
-    const newSiteDomain = new URL(redirectLocation).origin;
-    const newSiteUrl = `${newSiteDomain}${new URL(odspResolvedUrl.siteUrl).pathname}`;
-    odspResolvedUrl.siteUrl = newSiteUrl;
-    return odspResolvedUrl;
+export function patchOdspResolvedUrl(
+	resolvedUrl: IFluidResolvedUrl,
+	redirectLocation: string,
+): IOdspResolvedUrl {
+	const odspResolvedUrl = { ...getOdspResolvedUrl(resolvedUrl) };
+	// Generate the new SiteUrl from the redirection location.
+	const newSiteDomain = new URL(redirectLocation).origin;
+	const newSiteUrl = `${newSiteDomain}${new URL(odspResolvedUrl.siteUrl).pathname}`;
+	odspResolvedUrl.siteUrl = newSiteUrl;
+	return odspResolvedUrl;
 }

@@ -5,11 +5,13 @@ This package provides factory methods to create a wrapper around some of the bas
 ## Shared String With Interception
 
 It provides `createSharedStringWithInterception` that accepts a SharedString, the data store context and a callback, and returns a SharedString object:
+
 ```typescript
 function createSharedStringWithInterception(
-    sharedString: SharedString,
-    context: IFluidDataStoreContext,
-    propertyInterceptionCallback: (props?: MergeTree.PropertySet) => MergeTree.PropertySet): SharedString;
+	sharedString: SharedString,
+	context: IFluidDataStoreContext,
+	propertyInterceptionCallback: (props?: MergeTree.PropertySet) => MergeTree.PropertySet,
+): SharedString;
 ```
 
 When a function is called that modifies the SharedString (for example, insertText), it calls propertyInterceptionCallback with the provided properties. The callback function can then provide the new set of properties that it wants to set. The operation in the called function and any operations in the callback are batched, i.e., they are guaranteed to be in order and will be applied together.
@@ -19,11 +21,13 @@ For example, to support a feature like simple user attribution, the app can appe
 ## Shared Map With Interception
 
 It provides `createSharedMapWithInterception` that accepts a SharedMap, the data store context and a callback, and returns a SharedMap object:
+
 ```typescript
 function createSharedMapWithInterception(
-    sharedMap: SharedMap,
-    context: IFluidDataStoreContext,
-    setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void): SharedMap;
+	sharedMap: SharedMap,
+	context: IFluidDataStoreContext,
+	setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void,
+): SharedMap;
 ```
 
 When set is called on the SharedMap, it calls setInterceptionCallback with the underlying SharedMap, the key and value that the set was called with. The callback function can then perform operations on either the underlying SharedMap or any other DDS. The original set operation and any operations in the callback are batched, i.e., they are guaranteed to be in order and will be applied together.
@@ -33,17 +37,26 @@ Example: To support a feature like simple user attribution, in the callback, the
 ## Shared Directory / Sub Directory With Interception
 
 It provides `createdDirectoryWithInterception` that accepts an IDirectory object, the data store context and a callback, and returns an IDirectory object:
+
 ```typescript
 function createDirectoryWithInterception<T extends IDirectory>(
-    baseDirectory: T,
-    context: IFluidDataStoreContext,
-    setInterceptionCallback: (baseDirectory: IDirectory, subDirectory: IDirectory, key: string, value: any) => void): T;
+	baseDirectory: T,
+	context: IFluidDataStoreContext,
+	setInterceptionCallback: (
+		baseDirectory: IDirectory,
+		subDirectory: IDirectory,
+		key: string,
+		value: any,
+	) => void,
+): T;
 ```
+
 It can be used to wrap a SharedDirectory or one of it's subdirectories to get an interception callback when set is called on the object. The callback function is passed the following:
-- baseDirectory: This is the outermost directory in this directory structure that was wrapped. For example, when a SharedDirectory (say 'root') is wrapped, then a set on it or any of its sub directories will be passed 'root' as the baseDirectory.
-- subDirectory: This is the directory that the set is called on and which calls the callback.
-- key: They key that set was called with.
-- value: They value that set was called with.
+
+-   baseDirectory: This is the outermost directory in this directory structure that was wrapped. For example, when a SharedDirectory (say 'root') is wrapped, then a set on it or any of its sub directories will be passed 'root' as the baseDirectory.
+-   subDirectory: This is the directory that the set is called on and which calls the callback.
+-   key: They key that set was called with.
+-   value: They value that set was called with.
 
 The original set operation and any operations in the callback function are batched, i.e., they are guaranteed to in order and will be applied together.
 
