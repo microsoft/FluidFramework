@@ -2,107 +2,106 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    FluidObject,
-    IFluidHandle,
-    IFluidHandleContext,
-    IFluidRouter,
-    IRequest,
-    IResponse,
+	ITelemetryBaseLogger,
+	ITelemetryGenericEvent,
+	ITelemetryLogger,
+} from "@fluidframework/common-definitions";
+import {
+	FluidObject,
+	IFluidHandle,
+	IFluidHandleContext,
+	IFluidRouter,
+	IRequest,
+	IResponse,
 } from "@fluidframework/core-interfaces";
 import {
-    IAudience,
-    IFluidTokenProvider,
-    IContainerContext,
-    IDeltaManager,
-    IRuntime,
-    ICriticalContainerError,
-    AttachState,
-    ILoaderOptions,
-    LoaderHeader,
-    ISnapshotTreeWithBlobContents,
+	IAudience,
+	IFluidTokenProvider,
+	IContainerContext,
+	IDeltaManager,
+	IRuntime,
+	ICriticalContainerError,
+	AttachState,
+	ILoaderOptions,
+	LoaderHeader,
+	ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
 import {
-    IContainerRuntime,
-    IContainerRuntimeEvents,
+	IContainerRuntime,
+	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
+import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import {
-    assert,
-    Trace,
-    TypedEventEmitter,
-    unreachableCase,
-} from "@fluidframework/common-utils";
-import {
-    ChildLogger,
-    raiseConnectedEvent,
-    PerformanceEvent,
-    TaggedLoggerAdapter,
-    MonitoringContext,
-    loggerToMonitoringContext,
-    wrapError,
+	ChildLogger,
+	raiseConnectedEvent,
+	PerformanceEvent,
+	TaggedLoggerAdapter,
+	MonitoringContext,
+	loggerToMonitoringContext,
+	wrapError,
 } from "@fluidframework/telemetry-utils";
 import {
-    DriverHeader,
-    FetchSource,
-    IDocumentStorageService,
-    ISummaryContext,
+	DriverHeader,
+	FetchSource,
+	IDocumentStorageService,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
-    DataCorruptionError,
-    DataProcessingError,
-    GenericError,
-    UsageError,
+	DataCorruptionError,
+	DataProcessingError,
+	GenericError,
+	UsageError,
 } from "@fluidframework/container-utils";
 import {
-    IClientDetails,
-    IDocumentMessage,
-    IQuorumClients,
-    ISequencedDocumentMessage,
-    ISignalMessage,
-    ISnapshotTree,
-    ISummaryContent,
-    ISummaryTree,
-    MessageType,
-    SummaryType,
+	IClientDetails,
+	IDocumentMessage,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+	ISnapshotTree,
+	ISummaryContent,
+	ISummaryTree,
+	MessageType,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-    FlushMode,
-    gcTreeKey,
-    InboundAttachMessage,
-    IFluidDataStoreContextDetached,
-    IFluidDataStoreRegistry,
-    IFluidDataStoreChannel,
-    IGarbageCollectionData,
-    IGarbageCollectionDetailsBase,
-    IEnvelope,
-    IInboundSignalMessage,
-    ISignalEnvelope,
-    NamedFluidDataStoreRegistryEntries,
-    ISummaryTreeWithStats,
-    ISummarizeInternalResult,
-    CreateChildSummarizerNodeParam,
-    SummarizeInternalFn,
-    channelsTreeName,
-    IAttachMessage,
-    IDataStore,
-    ITelemetryContext,
+	FlushMode,
+	gcTreeKey,
+	InboundAttachMessage,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreRegistry,
+	IFluidDataStoreChannel,
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+	IEnvelope,
+	IInboundSignalMessage,
+	ISignalEnvelope,
+	NamedFluidDataStoreRegistryEntries,
+	ISummaryTreeWithStats,
+	ISummarizeInternalResult,
+	CreateChildSummarizerNodeParam,
+	SummarizeInternalFn,
+	channelsTreeName,
+	IAttachMessage,
+	IDataStore,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
-    addBlobToSummary,
-    addSummarizeResultToSummary,
-    addTreeToSummary,
-    createRootSummarizerNodeWithGC,
-    IRootSummarizerNodeWithGC,
-    RequestParser,
-    create404Response,
-    exceptionToResponse,
-    requestFluidObject,
-    responseToException,
-    seqFromTree,
-    calculateStats,
-    TelemetryContext,
+	addBlobToSummary,
+	addSummarizeResultToSummary,
+	addTreeToSummary,
+	createRootSummarizerNodeWithGC,
+	IRootSummarizerNodeWithGC,
+	RequestParser,
+	create404Response,
+	exceptionToResponse,
+	requestFluidObject,
+	responseToException,
+	seqFromTree,
+	calculateStats,
+	TelemetryContext,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
@@ -110,271 +109,264 @@ import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
-import {
-    ReportOpPerfTelemetry,
-    IPerfSignalReport,
-} from "./connectionTelemetry";
-import {
-    IPendingLocalState,
-    PendingStateManager,
-} from "./pendingStateManager";
+import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
+import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
-    aliasBlobName,
-    blobsTreeName,
-    chunksBlobName,
-    electedSummarizerBlobName,
-    extractSummaryMetadataMessage,
-    IContainerRuntimeMetadata,
-    ICreateContainerMetadata,
-    ISummaryMetadataMessage,
-    metadataBlobName,
-    wrapSummaryInChannelsTree,
+	aliasBlobName,
+	blobsTreeName,
+	chunksBlobName,
+	electedSummarizerBlobName,
+	extractSummaryMetadataMessage,
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
+	ISummaryMetadataMessage,
+	metadataBlobName,
+	wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
-import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
+import {
+	ISerializedElection,
+	OrderedClientCollection,
+	OrderedClientElection,
+} from "./orderedClientElection";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
-    SubmitSummaryResult,
-    IConnectableRuntime,
-    IGeneratedSummaryStats,
-    ISubmitSummaryOptions,
-    ISummarizer,
-    ISummarizerInternalsProvider,
-    ISummarizerRuntime,
-    IRefreshSummaryAckOptions,
+	SubmitSummaryResult,
+	IConnectableRuntime,
+	IGeneratedSummaryStats,
+	ISubmitSummaryOptions,
+	ISummarizer,
+	ISummarizerInternalsProvider,
+	ISummarizerRuntime,
+	IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
-    GarbageCollector,
-    GCNodeType,
-    IGarbageCollectionRuntime,
-    IGarbageCollector,
-    IGCStats,
+	GarbageCollector,
+	GCNodeType,
+	IGarbageCollectionRuntime,
+	IGarbageCollector,
+	IGCStats,
 } from "./garbageCollection";
-import {
-    channelToDataStore,
-    IDataStoreAliasMessage,
-    isDataStoreAliasMessage,
-} from "./dataStore";
+import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import { ScheduleManager } from "./scheduleManager";
 import {
-    BatchMessage,
-    IBatchCheckpoint,
-    OpCompressor,
-    OpDecompressor,
-    Outbox,
-    OpSplitter,
-    RemoteMessageProcessor,
+	BatchMessage,
+	IBatchCheckpoint,
+	OpCompressor,
+	OpDecompressor,
+	Outbox,
+	OpSplitter,
+	RemoteMessageProcessor,
 } from "./opLifecycle";
 
 export enum ContainerMessageType {
-    // An op to be delivered to store
-    FluidDataStoreOp = "component",
+	// An op to be delivered to store
+	FluidDataStoreOp = "component",
 
-    // Creates a new store
-    Attach = "attach",
+	// Creates a new store
+	Attach = "attach",
 
-    // Chunked operation.
-    ChunkedOp = "chunkedOp",
+	// Chunked operation.
+	ChunkedOp = "chunkedOp",
 
-    // Signifies that a blob has been attached and should not be garbage collected by storage
-    BlobAttach = "blobAttach",
+	// Signifies that a blob has been attached and should not be garbage collected by storage
+	BlobAttach = "blobAttach",
 
-    // Ties our new clientId to our old one on reconnect
-    Rejoin = "rejoin",
+	// Ties our new clientId to our old one on reconnect
+	Rejoin = "rejoin",
 
-    // Sets the alias of a root data store
-    Alias = "alias",
+	// Sets the alias of a root data store
+	Alias = "alias",
 }
 
 export interface ContainerRuntimeMessage {
-    contents: any;
-    type: ContainerMessageType;
+	contents: any;
+	type: ContainerMessageType;
 }
 
 export interface ISummaryBaseConfiguration {
-    /**
-     * Delay before first attempt to spawn summarizing container.
-     */
-    initialSummarizerDelayMs: number;
+	/**
+	 * Delay before first attempt to spawn summarizing container.
+	 */
+	initialSummarizerDelayMs: number;
 
-    /**
-     * Defines the maximum allowed time to wait for a pending summary ack.
-     * The maximum amount of time client will wait for a summarize is the minimum of
-     * maxSummarizeAckWaitTime (currently 10 * 60 * 1000) and maxAckWaitTime.
-     */
-    maxAckWaitTime: number;
-    /**
-     * Defines the maximum number of Ops in between Summaries that can be
-     * allowed before forcibly electing a new summarizer client.
-     */
-    maxOpsSinceLastSummary: number;
+	/**
+	 * Defines the maximum allowed time to wait for a pending summary ack.
+	 * The maximum amount of time client will wait for a summarize is the minimum of
+	 * maxSummarizeAckWaitTime (currently 10 * 60 * 1000) and maxAckWaitTime.
+	 */
+	maxAckWaitTime: number;
+	/**
+	 * Defines the maximum number of Ops in between Summaries that can be
+	 * allowed before forcibly electing a new summarizer client.
+	 */
+	maxOpsSinceLastSummary: number;
 }
 
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-    state: "enabled";
-    /**
-     * Defines the maximum allowed time, since the last received Ack, before running the summary
-     * with reason maxTime.
-     * For example, say we receive ops one by one just before the idle time is triggered.
-     * In this case, we still want to run a summary since it's been a while since the last summary.
-     */
-    maxTime: number;
-    /**
-     * Defines the maximum number of Ops, since the last received Ack, that can be allowed
-     * before running the summary with reason maxOps.
-     */
-    maxOps: number;
-    /**
-     * Defines the minimum number of Ops, since the last received Ack, that can be allowed
-     * before running the last summary.
-     */
-    minOpsForLastSummaryAttempt: number;
-    /**
-     * Defines the lower boundary for the allowed time in between summarizations.
-     * Pairs with maxIdleTime to form a range.
-     * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
-     * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
-     * linearly depending on the number of ops we receive.
-     */
-    minIdleTime: number;
-    /**
-     * Defines the upper boundary for the allowed time in between summarizations.
-     * Pairs with minIdleTime to form a range.
-     * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
-     * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
-     * linearly depending on the number of ops we receive.
-     */
-    maxIdleTime: number;
-    /**
-     * Runtime op weight to use in heuristic summarizing.
-     * This number is a multiplier on the number of runtime ops we process when running summarize heuristics.
-     * For example: (multiplier) * (number of runtime ops) = weighted number of runtime ops
-     */
-    runtimeOpWeight: number;
-    /**
-     * Non-runtime op weight to use in heuristic summarizing
-     * This number is a multiplier on the number of non-runtime ops we process when running summarize heuristics.
-     * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
-     */
-    nonRuntimeOpWeight: number;
+	state: "enabled";
+	/**
+	 * Defines the maximum allowed time, since the last received Ack, before running the summary
+	 * with reason maxTime.
+	 * For example, say we receive ops one by one just before the idle time is triggered.
+	 * In this case, we still want to run a summary since it's been a while since the last summary.
+	 */
+	maxTime: number;
+	/**
+	 * Defines the maximum number of Ops, since the last received Ack, that can be allowed
+	 * before running the summary with reason maxOps.
+	 */
+	maxOps: number;
+	/**
+	 * Defines the minimum number of Ops, since the last received Ack, that can be allowed
+	 * before running the last summary.
+	 */
+	minOpsForLastSummaryAttempt: number;
+	/**
+	 * Defines the lower boundary for the allowed time in between summarizations.
+	 * Pairs with maxIdleTime to form a range.
+	 * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
+	 * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
+	 * linearly depending on the number of ops we receive.
+	 */
+	minIdleTime: number;
+	/**
+	 * Defines the upper boundary for the allowed time in between summarizations.
+	 * Pairs with minIdleTime to form a range.
+	 * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
+	 * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
+	 * linearly depending on the number of ops we receive.
+	 */
+	maxIdleTime: number;
+	/**
+	 * Runtime op weight to use in heuristic summarizing.
+	 * This number is a multiplier on the number of runtime ops we process when running summarize heuristics.
+	 * For example: (multiplier) * (number of runtime ops) = weighted number of runtime ops
+	 */
+	runtimeOpWeight: number;
+	/**
+	 * Non-runtime op weight to use in heuristic summarizing
+	 * This number is a multiplier on the number of non-runtime ops we process when running summarize heuristics.
+	 * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
+	 */
+	nonRuntimeOpWeight: number;
 
-    /**
-     * Number of ops since last summary needed before a non-runtime op can trigger running summary heuristics.
-     *
-     * Note: Any runtime ops sent before the threshold is reached will trigger heuristics normally.
-     * This threshold ONLY applies to non-runtime ops triggering summaries.
-     *
-     * For example: Say the threshold is 20. Sending 19 non-runtime ops will not trigger any heuristic checks.
-     * Sending the 20th non-runtime op will trigger the heuristic checks for summarizing.
-     */
-    nonRuntimeHeuristicThreshold?: number;
+	/**
+	 * Number of ops since last summary needed before a non-runtime op can trigger running summary heuristics.
+	 *
+	 * Note: Any runtime ops sent before the threshold is reached will trigger heuristics normally.
+	 * This threshold ONLY applies to non-runtime ops triggering summaries.
+	 *
+	 * For example: Say the threshold is 20. Sending 19 non-runtime ops will not trigger any heuristic checks.
+	 * Sending the 20th non-runtime op will trigger the heuristic checks for summarizing.
+	 */
+	nonRuntimeHeuristicThreshold?: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
-    state: "disabled";
+	state: "disabled";
 }
 
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
-    state: "disableHeuristics";
+	state: "disableHeuristics";
 }
 
 export type ISummaryConfiguration =
-    | ISummaryConfigurationDisableSummarizer
-    | ISummaryConfigurationDisableHeuristics
-    | ISummaryConfigurationHeuristics;
+	| ISummaryConfigurationDisableSummarizer
+	| ISummaryConfigurationDisableHeuristics
+	| ISummaryConfigurationHeuristics;
 
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
-    state: "enabled",
+	state: "enabled",
 
-    minIdleTime: 0,
+	minIdleTime: 0,
 
-    maxIdleTime: 30 * 1000, // 30 secs.
+	maxIdleTime: 30 * 1000, // 30 secs.
 
-    maxTime: 60 * 1000, // 1 min.
+	maxTime: 60 * 1000, // 1 min.
 
-    maxOps: 100, // Summarize if 100 weighted ops received since last snapshot.
+	maxOps: 100, // Summarize if 100 weighted ops received since last snapshot.
 
-    minOpsForLastSummaryAttempt: 10,
+	minOpsForLastSummaryAttempt: 10,
 
-    maxAckWaitTime: 10 * 60 * 1000, // 10 mins.
+	maxAckWaitTime: 10 * 60 * 1000, // 10 mins.
 
-    maxOpsSinceLastSummary: 7000,
+	maxOpsSinceLastSummary: 7000,
 
-    initialSummarizerDelayMs: 5 * 1000, // 5 secs.
+	initialSummarizerDelayMs: 5 * 1000, // 5 secs.
 
-    nonRuntimeOpWeight: 0.1,
+	nonRuntimeOpWeight: 0.1,
 
-    runtimeOpWeight: 1.0,
+	runtimeOpWeight: 1.0,
 
-    nonRuntimeHeuristicThreshold: 20,
+	nonRuntimeHeuristicThreshold: 20,
 };
 
 export interface IGCRuntimeOptions {
-    /**
-     * Flag that if true, will enable running garbage collection (GC) for a new container.
-     *
-     * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
-     * and marked as such in the summary. This option enables the mark phase.
-     * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-     * Sweep phase can be enabled via the "sweepAllowed" option.
-     *
-     * Note: This setting is persisted in the container's summary and cannot be changed.
-     */
-    gcAllowed?: boolean;
+	/**
+	 * Flag that if true, will enable running garbage collection (GC) for a new container.
+	 *
+	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
+	 * and marked as such in the summary. This option enables the mark phase.
+	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
+	 * Sweep phase can be enabled via the "sweepAllowed" option.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	gcAllowed?: boolean;
 
-    /**
-     * Flag that if true, enables GC's sweep phase for a new container.
-     *
-     * This will allow GC to eventually delete unreferenced objects from the container.
-     * This flag should only be set to true if "gcAllowed" is true.
-     *
-     * Note: This setting is persisted in the container's summary and cannot be changed.
-     */
-    sweepAllowed?: boolean;
+	/**
+	 * Flag that if true, enables GC's sweep phase for a new container.
+	 *
+	 * This will allow GC to eventually delete unreferenced objects from the container.
+	 * This flag should only be set to true if "gcAllowed" is true.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	sweepAllowed?: boolean;
 
-    /**
-     * Flag that if true, will disable garbage collection for the session.
-     * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-     */
-    disableGC?: boolean;
+	/**
+	 * Flag that if true, will disable garbage collection for the session.
+	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
+	 */
+	disableGC?: boolean;
 
-    /**
-     * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
-     * changed or not.
-     */
-    runFullGC?: boolean;
+	/**
+	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
+	 * changed or not.
+	 */
+	runFullGC?: boolean;
 
-    /**
-     * Maximum session duration for a new container. If not present, a default value will be used.
-     *
-     * Note: This setting is persisted in the container's summary and cannot be changed.
-     */
-    sessionExpiryTimeoutMs?: number;
+	/**
+	 * Maximum session duration for a new container. If not present, a default value will be used.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	sessionExpiryTimeoutMs?: number;
 
-    /**
-     * Allows additional GC options to be passed.
-     */
-    [key: string]: any;
+	/**
+	 * Allows additional GC options to be passed.
+	 */
+	[key: string]: any;
 }
 
 export interface ISummaryRuntimeOptions {
+	/** Override summary configurations set by the server. */
+	summaryConfigOverrides?: ISummaryConfiguration;
 
-    /** Override summary configurations set by the server. */
-    summaryConfigOverrides?: ISummaryConfiguration;
-
-    /**
-     * Delay before first attempt to spawn summarizing container.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
-     */
-    initialSummarizerDelayMs?: number;
+	/**
+	 * Delay before first attempt to spawn summarizing container.
+	 *
+	 * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+	 * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
+	 */
+	initialSummarizerDelayMs?: number;
 }
 
 /**
@@ -382,15 +374,15 @@ export interface ISummaryRuntimeOptions {
  * @experimental - Not ready for use
  */
 export interface ICompressionRuntimeOptions {
-    /**
-     * The minimum size the batch's payload must exceed before the batch's contents will be compressed.
-     */
-    readonly minimumBatchSizeInBytes: number;
+	/**
+	 * The minimum size the batch's payload must exceed before the batch's contents will be compressed.
+	 */
+	readonly minimumBatchSizeInBytes: number;
 
-    /**
-     * The compression algorithm that will be used to compress the op.
-     */
-    readonly compressionAlgorithm: CompressionAlgorithms;
+	/**
+	 * The compression algorithm that will be used to compress the op.
+	 */
+	readonly compressionAlgorithm: CompressionAlgorithms;
 }
 
 /**
@@ -457,54 +449,54 @@ export interface IContainerRuntimeOptions {
  * The summary tree returned by the root node. It adds state relevant to the root of the tree.
  */
 export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
-    /** The garbage collection stats if GC ran, undefined otherwise. */
-    gcStats?: IGCStats;
+	/** The garbage collection stats if GC ran, undefined otherwise. */
+	gcStats?: IGCStats;
 }
 
 /**
  * Accepted header keys for requests coming to the runtime.
  */
 export enum RuntimeHeaders {
-    /** True to wait for a data store to be created and loaded before returning it. */
-    wait = "wait",
-    /**
-     * True if the request is from an external app. Used for GC to handle scenarios where a data store
-     * is deleted and requested via an external app.
-     */
-    externalRequest = "externalRequest",
-    /** True if the request is coming from an IFluidHandle. */
-    viaHandle = "viaHandle",
+	/** True to wait for a data store to be created and loaded before returning it. */
+	wait = "wait",
+	/**
+	 * True if the request is from an external app. Used for GC to handle scenarios where a data store
+	 * is deleted and requested via an external app.
+	 */
+	externalRequest = "externalRequest",
+	/** True if the request is coming from an IFluidHandle. */
+	viaHandle = "viaHandle",
 }
 
 /** True if a tombstoned object should be returned without erroring */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 
 /** Tombstone error responses will have this header set to true */
-export const TombstoneResponseHeaderKey = "isTombstoned"
+export const TombstoneResponseHeaderKey = "isTombstoned";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
  */
 export interface RuntimeHeaderData {
-    wait?: boolean;
-    externalRequest?: boolean;
-    viaHandle?: boolean;
-    allowTombstone?: boolean;
+	wait?: boolean;
+	externalRequest?: boolean;
+	viaHandle?: boolean;
+	allowTombstone?: boolean;
 }
 
 /** Default values for Runtime Headers */
 export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
-    wait: true,
-    externalRequest: false,
-    viaHandle: false,
-    allowTombstone: false,
-}
+	wait: true,
+	externalRequest: false,
+	viaHandle: false,
+	allowTombstone: false,
+};
 
 /**
  * Available compression algorithms for op compression.
  */
 export enum CompressionAlgorithms {
-    lz4 = "lz4",
+	lz4 = "lz4",
 }
 
 /**
@@ -514,8 +506,8 @@ export enum CompressionAlgorithms {
  * its usage is removed from TaggedLoggerAdapter fallback.
  */
 interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedLogger"> {
-    logger: ITelemetryBaseLogger;
-    taggedLogger: undefined;
+	logger: ITelemetryBaseLogger;
+	taggedLogger: undefined;
 }
 
 /**
@@ -548,20 +540,20 @@ const defaultMaxBatchSizeInBytes = 950 * 1024;
  * @deprecated - use ContainerRuntimeMessage instead
  */
 export enum RuntimeMessage {
-    FluidDataStoreOp = "component",
-    Attach = "attach",
-    ChunkedOp = "chunkedOp",
-    BlobAttach = "blobAttach",
-    Rejoin = "rejoin",
-    Alias = "alias",
-    Operation = "op",
+	FluidDataStoreOp = "component",
+	Attach = "attach",
+	ChunkedOp = "chunkedOp",
+	BlobAttach = "blobAttach",
+	Rejoin = "rejoin",
+	Alias = "alias",
+	Operation = "op",
 }
 
 /**
  * @deprecated - please use version in driver-utils
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    return (Object.values(RuntimeMessage) as string[]).includes(message.type);
+	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
 }
 
 /**
@@ -573,16 +565,15 @@ export const agentSchedulerId = "_scheduler";
 
 // safely check navigator and get the hardware spec value
 export function getDeviceSpec() {
-    try {
-        if (typeof navigator === "object" && navigator !== null) {
-            return {
-                deviceMemory: (navigator as any).deviceMemory,
-                hardwareConcurrency: navigator.hardwareConcurrency,
-            };
-        }
-    } catch {
-    }
-    return {};
+	try {
+		if (typeof navigator === "object" && navigator !== null) {
+			return {
+				deviceMemory: (navigator as any).deviceMemory,
+				hardwareConcurrency: navigator.hardwareConcurrency,
+			};
+		}
+	} catch {}
+	return {};
 }
 
 /**
@@ -3033,23 +3024,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
  * or reject if closed.
  */
 const waitForSeq = async (
-    deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
-    targetSeq: number,
-): Promise<void> => new Promise<void>((resolve, reject) => {
-    // TODO: remove cast to any when actual event is determined
-    deltaManager.on("closed" as any, reject);
-    deltaManager.on("disposed" as any, reject);
+	deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
+	targetSeq: number,
+): Promise<void> =>
+	new Promise<void>((resolve, reject) => {
+		// TODO: remove cast to any when actual event is determined
+		deltaManager.on("closed" as any, reject);
+		deltaManager.on("disposed" as any, reject);
 
-    // If we already reached target sequence number, simply resolve the promise.
-    if (deltaManager.lastSequenceNumber >= targetSeq) {
-        resolve();
-    } else {
-        const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
-            if (message.sequenceNumber >= targetSeq) {
-                resolve();
-                deltaManager.off("op", handleOp);
-            }
-        };
-        deltaManager.on("op", handleOp);
-    }
-});
+		// If we already reached target sequence number, simply resolve the promise.
+		if (deltaManager.lastSequenceNumber >= targetSeq) {
+			resolve();
+		} else {
+			const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
+				if (message.sequenceNumber >= targetSeq) {
+					resolve();
+					deltaManager.off("op", handleOp);
+				}
+			};
+			deltaManager.on("op", handleOp);
+		}
+	});
