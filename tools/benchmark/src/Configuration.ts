@@ -23,47 +23,47 @@ import { assert } from "chai";
  * @public
  */
 export enum BenchmarkType {
-	/**
-	 * Tests which exist to be compared to other tests to reason about cost/overhead of features.
-	 */
-	Perspective,
+    /**
+     * Tests which exist to be compared to other tests to reason about cost/overhead of features.
+     */
+    Perspective,
 
-	/**
-	 * Tests that measure the actual performance of features.
-	 * These tests are the ones that should be optimized for to improve actual user experience, and thus
+    /**
+     * Tests that measure the actual performance of features.
+     * These tests are the ones that should be optimized for to improve actual user experience, and thus
      * should be used to compare across versions to look for regressions and improvements.
-	 */
-	Measurement,
+     */
+    Measurement,
 
-	/**
-	 * Tests that provide extra details which typically aren't useful unless looking into some specific area.
-	 *
-	 * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are
+    /**
+     * Tests that provide extra details which typically aren't useful unless looking into some specific area.
+     *
+     * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are
      * measuring what they claim accurately.
-	 *
-	 * Diagnostic tests can also be used when a particular feature/area has enough Measurement tests to detect changes,
-	 * but some extra tests would be helpful for understanding the changes when they occur. Extra tests,
-	 * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running
+     *
+     * Diagnostic tests can also be used when a particular feature/area has enough Measurement tests to detect changes,
+     * but some extra tests would be helpful for understanding the changes when they occur. Extra tests,
+     * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running
      * generally, can be marked as Diagnostic to enable skipping them unless they are specifically needed.
-	 */
-	Diagnostic,
+     */
+    Diagnostic,
 
-	/**
-	 * Tests which verify correctness of the `benchmark` helper library. Generally not useful for any other scenario.
-	 */
-	OwnCorrectness,
+    /**
+     * Tests which verify correctness of the `benchmark` helper library. Generally not useful for any other scenario.
+     */
+    OwnCorrectness,
 }
 
 export enum TestType {
-	/**
-	 * Tests that measure execution time
-	 */
-	ExecutionTime,
+    /**
+     * Tests that measure execution time
+     */
+    ExecutionTime,
 
-	/**
-	 * Tests that measure memory usage
-	 */
-	MemoryUsage,
+    /**
+     * Tests that measure memory usage
+     */
+    MemoryUsage,
 }
 
 /**
@@ -72,21 +72,21 @@ export enum TestType {
 export const benchmarkTypes: string[] = [];
 
 for (const type of Object.values(BenchmarkType)) {
-	if (typeof type === "string") {
-		benchmarkTypes.push(type);
-	}
+    if (typeof type === "string") {
+        benchmarkTypes.push(type);
+    }
 }
 
 /**
  * Names of all TestTypes.
  */
- export const testTypes: string[] = [];
+export const testTypes: string[] = [];
 
- for (const type of Object.values(TestType)) {
-     if (typeof type === "string") {
-         testTypes.push(type);
-     }
- }
+for (const type of Object.values(TestType)) {
+    if (typeof type === "string") {
+        testTypes.push(type);
+    }
+}
 
 /**
  * Arguments to `benchmark`
@@ -99,15 +99,15 @@ export type BenchmarkArguments = BenchmarkSyncArguments | BenchmarkAsyncArgument
  * @public
  */
 export interface BenchmarkSyncArguments extends BenchmarkOptions {
-	/**
-	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-	 */
-	title: string;
+    /**
+     * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+     */
+    title: string;
 
-	/**
-	 * The (synchronous) function to benchmark.
-	 */
-	benchmarkFn: () => void;
+    /**
+     * The (synchronous) function to benchmark.
+     */
+    benchmarkFn: () => void;
 }
 
 /**
@@ -115,18 +115,18 @@ export interface BenchmarkSyncArguments extends BenchmarkOptions {
  * @public
  */
 export interface BenchmarkAsyncArguments extends BenchmarkOptions {
-	/**
-	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-	 */
-	title: string;
+    /**
+     * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+     */
+    title: string;
 
-	/**
-	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
+    /**
+     * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
      * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
      * in the body will always take at least 4ms per operation due to timeout throttling:
-	 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
-	 */
-	benchmarkFnAsync: () => Promise<unknown>;
+     * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
+     */
+    benchmarkFnAsync: () => Promise<unknown>;
 }
 
 /**
@@ -135,33 +135,33 @@ export interface BenchmarkAsyncArguments extends BenchmarkOptions {
  * @public
  */
 export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
-	/**
-	 * The max time in seconds to run the benchmark.
-	 */
-	maxBenchmarkDurationSeconds?: number;
-
-	/**
-	 * The min sample count to reach.
-	 * @remarks This takes precedence over {@link BenchmarkOptions.maxBenchmarkDurationSeconds}.
-	 */
-	minSampleCount?: number;
-
-	/**
-	 * The minimum time in seconds to run an individual sample.
-	 */
-	minSampleDurationSeconds?: number;
-
-	/**
-	 * The kind of benchmark.
-	 */
-	type?: BenchmarkType;
+    /**
+     * The max time in seconds to run the benchmark.
+     */
+    maxBenchmarkDurationSeconds?: number;
 
     /**
-	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
+     * The min sample count to reach.
+     * @remarks This takes precedence over {@link BenchmarkOptions.maxBenchmarkDurationSeconds}.
+     */
+    minSampleCount?: number;
+
+    /**
+     * The minimum time in seconds to run an individual sample.
+     */
+    minSampleDurationSeconds?: number;
+
+    /**
+     * The kind of benchmark.
+     */
+    type?: BenchmarkType;
+
+    /**
+     * A free-form field to add a category to the test. This gets added to an internal version of the test name
      * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
      * only execute specific tests.
-	 */
-	category?: string;
+     */
+    category?: string;
 }
 
 /**
@@ -170,10 +170,10 @@ export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
  * @public
  */
 export interface MochaExclusiveOptions {
-	/**
-	 * When true, `mocha`-provided functions should use their `.only` counterparts (so as to aid individual test runs)
-	 */
-	only?: boolean;
+    /**
+     * When true, `mocha`-provided functions should use their `.only` counterparts (so as to aid individual test runs)
+     */
+    only?: boolean;
 }
 
 /**
@@ -190,8 +190,8 @@ export type HookFunction = () => void | Promise<unknown>;
  * @public
  */
 export interface HookArguments {
-	before?: HookFunction;
-	after?: HookFunction;
+    before?: HookFunction;
+    after?: HookFunction;
 }
 
 /**
@@ -199,17 +199,22 @@ export interface HookArguments {
  * @public
  */
 export function validateBenchmarkArguments(
-	args: BenchmarkArguments,
-): { isAsync: true; benchmarkFn: () => Promise<unknown>; } | { isAsync: false; benchmarkFn: () => void; } {
-	const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
-	const isSync = intersection.benchmarkFn !== undefined;
-	const isAsync = intersection.benchmarkFnAsync !== undefined;
-	assert(isSync !== isAsync, "Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.");
-	if (isSync) {
-		return { isAsync: false, benchmarkFn: intersection.benchmarkFn };
-	}
+    args: BenchmarkArguments,
+):
+    | { isAsync: true; benchmarkFn: () => Promise<unknown> }
+    | { isAsync: false; benchmarkFn: () => void } {
+    const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
+    const isSync = intersection.benchmarkFn !== undefined;
+    const isAsync = intersection.benchmarkFnAsync !== undefined;
+    assert(
+        isSync !== isAsync,
+        "Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.",
+    );
+    if (isSync) {
+        return { isAsync: false, benchmarkFn: intersection.benchmarkFn };
+    }
 
-	return { isAsync: true, benchmarkFn: intersection.benchmarkFnAsync };
+    return { isAsync: true, benchmarkFn: intersection.benchmarkFnAsync };
 }
 
 /**

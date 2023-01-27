@@ -4,7 +4,11 @@
  */
 
 import fs from "fs";
-import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
+import {
+    IBlob,
+    ICreateBlobParams,
+    ICreateBlobResponse,
+} from "@fluidframework/gitresources";
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { Router } from "express";
 import * as git from "isomorphic-git";
@@ -15,7 +19,7 @@ export async function createBlob(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    body: ICreateBlobParams,
+    body: ICreateBlobParams
 ): Promise<ICreateBlobResponse> {
     const buffer = Buffer.from(body.content, body.encoding);
 
@@ -36,9 +40,13 @@ export async function getBlob(
     tenantId: string,
     authorization: string,
     sha: string,
-    useCache: boolean,
+    useCache: boolean
 ): Promise<IBlob> {
-    const gitObj = await git.readBlob({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+    const gitObj = await git.readBlob({
+        fs,
+        dir: utils.getGitDir(store, tenantId),
+        oid: sha,
+    });
     const buffer = gitObj.blob as Buffer;
 
     const result: IBlob = {
@@ -55,21 +63,16 @@ export async function getBlob(
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
-    router.post(
-        "/repos/:ignored?/:tenantId/git/blobs",
-        (request, response) => {
-            const blobP = createBlob(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.body);
+    router.post("/repos/:ignored?/:tenantId/git/blobs", (request, response) => {
+        const blobP = createBlob(
+            store,
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.body
+        );
 
-            utils.handleResponse(
-                blobP,
-                response,
-                false,
-                201);
-        });
+        utils.handleResponse(blobP, response, false, 201);
+    });
 
     /**
      * Retrieves the given blob from the repository
@@ -83,13 +86,12 @@ export function create(store: nconf.Provider): Router {
                 request.params.tenantId,
                 request.get("Authorization"),
                 request.params.sha,
-                useCache);
+                useCache
+            );
 
-            utils.handleResponse(
-                blobP,
-                response,
-                useCache);
-        });
+            utils.handleResponse(blobP, response, useCache);
+        }
+    );
 
     /**
      * Retrieves the given blob as an image
@@ -104,18 +106,29 @@ export function create(store: nconf.Provider): Router {
                 request.params.tenantId,
                 request.get("Authorization"),
                 request.params.sha,
-                useCache);
+                useCache
+            );
 
-            blobP.then((blob) => {
-                if (useCache) {
-                    response.setHeader("Cache-Control", "public, max-age=31536000");
+            blobP.then(
+                (blob) => {
+                    if (useCache) {
+                        response.setHeader(
+                            "Cache-Control",
+                            "public, max-age=31536000"
+                        );
+                    }
+                    response
+                        .status(200)
+                        .write(Buffer.from(blob.content, "base64"), () =>
+                            response.end()
+                        );
+                },
+                (error) => {
+                    response.status(400).json(error);
                 }
-                response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
-        });
+            );
+        }
+    );
 
     return router;
 }
