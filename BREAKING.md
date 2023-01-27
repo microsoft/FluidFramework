@@ -26,6 +26,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 `ensureContainerConnected()` is now deprecated.
 Use `waitForContainerConnection()` from the same package instead.
 
+
 **NOTE**: the default value for the `failOnContainerClose` parameter of `waitForContainerConnection()` is currently set
 to `false` for backwards compatibility but will change to `true` in a future release.
 This is overall a safer default because it ensures that unexpected errors which cause the Container to close are surfaced
