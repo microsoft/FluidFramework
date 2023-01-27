@@ -10,7 +10,9 @@ import { UsageError } from "@fluidframework/container-utils";
  * original string.
  * @public
  */
-export type InternedStringId = number & { readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c"; };
+export type InternedStringId = number & {
+	readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
+};
 
 /**
  * Interns strings as integers.

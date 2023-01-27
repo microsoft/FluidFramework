@@ -9,12 +9,12 @@
 
 module.exports = {
 	extends: ["@fluidframework/eslint-config-fluid"],
-    "parserOptions": {
-        "project": ["./tsconfig.json"]
-    },
+	parserOptions: {
+		project: ["./tsconfig.json"],
+	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-        "unicorn/filename-case": "off",
-        "import/no-default-export": "off",
+		"unicorn/filename-case": "off",
+		"import/no-default-export": "off",
 	},
 };
