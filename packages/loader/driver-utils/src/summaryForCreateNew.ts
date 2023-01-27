@@ -4,11 +4,11 @@
  */
 
 import {
-    ISummaryTree,
-    SummaryType,
-    ISummaryBlob,
-    ICommittedProposal,
-    IDocumentAttributes,
+	ISummaryTree,
+	SummaryType,
+	ISummaryBlob,
+	ICommittedProposal,
+	IDocumentAttributes,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -17,17 +17,17 @@ import {
  * @param protocolSummary - Summary of the protocol.
  */
 export function combineAppAndProtocolSummary(
-    appSummary: ISummaryTree,
-    protocolSummary: ISummaryTree,
+	appSummary: ISummaryTree,
+	protocolSummary: ISummaryTree,
 ): ISummaryTree {
-    const createNewSummary: ISummaryTree = {
-        type: SummaryType.Tree,
-        tree: {
-            ".protocol": protocolSummary,
-            ".app": appSummary,
-        },
-    };
-    return createNewSummary;
+	const createNewSummary: ISummaryTree = {
+		type: SummaryType.Tree,
+		tree: {
+			".protocol": protocolSummary,
+			".app": appSummary,
+		},
+	};
+	return createNewSummary;
 }
 
 /**
@@ -35,12 +35,12 @@ export function combineAppAndProtocolSummary(
  * @param protocolSummary - protocol summary from which the values are to be extracted.
  */
 export function getDocAttributesFromProtocolSummary(
-    protocolSummary: ISummaryTree,
+	protocolSummary: ISummaryTree,
 ): IDocumentAttributes {
-    const attributesBlob = protocolSummary.tree.attributes as ISummaryBlob;
-    const documentAttributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
-    documentAttributes.term = documentAttributes.term ?? 1;
-    return documentAttributes;
+	const attributesBlob = protocolSummary.tree.attributes as ISummaryBlob;
+	const documentAttributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
+	documentAttributes.term = documentAttributes.term ?? 1;
+	return documentAttributes;
 }
 
 /**
@@ -48,9 +48,12 @@ export function getDocAttributesFromProtocolSummary(
  * @param protocolSummary - protocol summary from which the values are to be extracted.
  */
 export function getQuorumValuesFromProtocolSummary(
-    protocolSummary: ISummaryTree,
+	protocolSummary: ISummaryTree,
 ): [string, ICommittedProposal][] {
-    const quorumValuesBlob = protocolSummary.tree.quorumValues as ISummaryBlob;
-    const quorumValues = JSON.parse(quorumValuesBlob.content as string) as [string, ICommittedProposal][];
-    return quorumValues;
+	const quorumValuesBlob = protocolSummary.tree.quorumValues as ISummaryBlob;
+	const quorumValues = JSON.parse(quorumValuesBlob.content as string) as [
+		string,
+		ICommittedProposal,
+	][];
+	return quorumValues;
 }
