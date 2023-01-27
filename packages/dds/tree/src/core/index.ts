@@ -70,6 +70,7 @@ export {
     compareFieldUpPaths,
     forEachNode,
     forEachField,
+    PathRootPrefix,
 } from "./tree";
 
 export {

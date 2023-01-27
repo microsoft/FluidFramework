@@ -549,10 +549,8 @@ export interface ITreeCursor {
     getFieldKey(): FieldKey;
     // (undocumented)
     getFieldLength(): number;
-    // (undocumented)
-    getFieldPath(): FieldUpPath;
-    // (undocumented)
-    getPath(): UpPath | undefined;
+    getFieldPath(prefix?: PathRootPrefix): FieldUpPath;
+    getPath(prefix?: PathRootPrefix): UpPath | undefined;
     readonly mode: CursorLocationType;
     nextField(): boolean;
     nextNode(): boolean;
@@ -849,6 +847,19 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueTy
 export interface OptionalFieldEditBuilder {
     set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
 }
+
+// @public
+export interface PathRootPrefix {
+    indexOffset?: number;
+    parent?: UpPath | undefined;
+    rootFieldOverride?: FieldKey;
+}
+
+// @public
+export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldUpPath): FieldUpPath;
+
+// @public
+export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
 // @public (undocumented)
 export type PrimitiveValue = string | boolean | number;
