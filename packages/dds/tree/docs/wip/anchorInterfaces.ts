@@ -8,73 +8,73 @@
  */
 
 interface NodeAnchor {
-    nodeId: NodeId;
-    drilldown?: DrilldownKey[];
+	nodeId: NodeId;
+	drilldown?: DrilldownKey[];
 }
 
 interface DrilldownKey {
-    label: TraitLabel;
-    index: number;
+	label: TraitLabel;
+	index: number;
 }
 
 type PlaceAnchor = SiblingBasedPlaceAnchor | ParentBasedPlaceAnchor;
 
 interface SiblingBasedPlaceAnchor {
-    side: Side;
-    sibling: NodeId;
-    tiebreak: Tiebreak;
-    commutativity: Commutativity;
+	side: Side;
+	sibling: NodeId;
+	tiebreak: Tiebreak;
+	commutativity: Commutativity;
 }
 
 interface ParentBasedPlaceAnchor {
-    extremity: Extremity;
-    parent: NodeAnchor;
-    label: TraitLabel;
-    tiebreak: Tiebreak;
+	extremity: Extremity;
+	parent: NodeAnchor;
+	label: TraitLabel;
+	tiebreak: Tiebreak;
 }
 
 type RangeAnchor = SetLikeRangeAnchor | SliceLikeRangeAnchor;
 
 interface SetLikeRangeAnchor {
-    first: NodeId;
-    last?: NodeId;
+	first: NodeId;
+	last?: NodeId;
 }
 
 interface SliceLikeRangeAnchor {
-    parent: NodeAnchor;
-    trait: TraitLabel;
-    start: RangeBoundary;
-    end: RangeBoundary;
+	parent: NodeAnchor;
+	trait: TraitLabel;
+	start: RangeBoundary;
+	end: RangeBoundary;
 }
 
 type RangeBoundary =
-    | {
-          side: Side;
-          sibling: NodeId;
-          tiebreak: Tiebreak;
-      }
-    | {
-          extremity: Extremity;
-          tiebreak: Tiebreak;
-      };
+	| {
+			side: Side;
+			sibling: NodeId;
+			tiebreak: Tiebreak;
+	  }
+	| {
+			extremity: Extremity;
+			tiebreak: Tiebreak;
+	  };
 
 enum Extremity {
-    Start,
-    End,
+	Start,
+	End,
 }
 enum Side {
-    Before,
-    After,
+	Before,
+	After,
 }
 enum Tiebreak {
-    LastToFirst,
-    FirstToLast,
+	LastToFirst,
+	FirstToLast,
 }
 enum Commutativity {
-    Full,
-    MoveOnly,
-    DeleteOnly,
-    None,
+	Full,
+	MoveOnly,
+	DeleteOnly,
+	None,
 }
 
 type NodeId = number;
