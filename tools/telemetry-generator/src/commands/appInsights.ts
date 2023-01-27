@@ -99,7 +99,7 @@ export class EntryPoint extends Command {
             }
         });
 
-        // await logger.flush();
+        logger.flush();
     }
 }
 
