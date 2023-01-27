@@ -9,8 +9,8 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-util
  * Generates a config provider that returns feature flag information.
  * @param settings - Feature flags to set.
  */
-export const mockConfigProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
-    return {
-        getRawConfig: (name: string): ConfigTypes => settings[name],
-    };
-});
+export const mockConfigProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	};
+};

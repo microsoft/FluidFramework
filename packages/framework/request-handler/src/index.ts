@@ -9,4 +9,7 @@ export {
 	rootDataStoreRequestHandler,
 	RuntimeRequestHandler,
 } from "./requestHandlers";
-export { buildRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
+export {
+	buildRuntimeRequestHandler,
+	RuntimeRequestHandlerBuilder,
+} from "./runtimeRequestHandlerBuilder";

@@ -181,9 +181,8 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
-// @public (undocumented)
+// @public
 export interface IDocumentStorageServicePolicies {
-    // (undocumented)
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;

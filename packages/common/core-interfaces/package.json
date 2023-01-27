@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/core-interfaces",
-  "version": "2.0.0-internal.2.4.0",
+  "version": "2.0.0-internal.3.0.0",
   "description": "Fluid object interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -16,11 +16,13 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:build": "npm run build:compile",
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "ci:test": "echo No test for this package",
@@ -29,8 +31,8 @@
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "tsc": "tsc",
@@ -39,9 +41,9 @@
     "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.8.0-121856",
+    "@fluid-tools/build-cli": "^0.8.0",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "^0.8.0-121856",
+    "@fluidframework/build-tools": "^0.8.0",
     "@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-internal.2.2.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -55,9 +57,14 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.3.0",
-    "baselineRange": ">=2.0.0-internal.2.2.0 <2.0.0-internal.2.3.0",
-    "baselineVersion": "2.0.0-internal.2.2.0",
-    "broken": {}
+    "version": "2.0.0-internal.3.0.0",
+    "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
+    "baselineVersion": "2.0.0-internal.2.1.1",
+    "broken": {
+      "InterfaceDeclaration_IFluidObject": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }
