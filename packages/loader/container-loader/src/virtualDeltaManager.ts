@@ -18,7 +18,7 @@ class VirtualDeltaQueueProxy<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> 
 
     constructor(
         private readonly _queue: IDeltaQueue<T>,
-        private readonly _virtualizeValue: (value: T, storeValue?: boolean) => T,
+        private readonly _virtualizeValue: (value: T, storeValue?: boolean) => T[],
     ) {
         super();
 
@@ -29,7 +29,9 @@ class VirtualDeltaQueueProxy<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> 
 
                 // eslint-disable-next-line unicorn/prefer-ternary
                 if (event === "push" || event === "op") {
-                    listener = (task: T) => { this.emit(event, this._virtualizeValue(task, true /* storeValue */)); }
+                    listener = (task: T) => {
+                        this._virtualizeValue(task, true /* storeValue */).forEach((it) => this.emit(event, it));
+                    }
                 } else {
                     listener = (...args: any[]) => { this.emit(event, ...args); };
                 }
@@ -54,11 +56,19 @@ class VirtualDeltaQueueProxy<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> 
 
     public peek(): T | undefined {
         const value = this._queue.peek();
-        return value !== undefined ? this._virtualizeValue(value) : undefined;
+        if (value === undefined) {
+            return undefined;
+        }
+        const valueArr = this._virtualizeValue(value);
+        return valueArr[valueArr.length - 1];
     }
 
     public toArray(): T[] {
-        return this._queue.toArray().map((it) => this._virtualizeValue(it));
+        const virtualizedArr: T[] = [];
+        this._queue.toArray().forEach((value) => {
+            this._virtualizeValue(value).forEach((it) => virtualizedArr.push(it));
+        })
+        return virtualizedArr;
     }
 
     public dispose(error?: Error | undefined): void {
@@ -140,13 +150,11 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
         this._virtualizedOutbound = new VirtualDeltaQueueProxy(
             this.connectionManager.outbound,
             (messages: IDocumentMessage[], _storeValue?: boolean) => {
-                return messages.map((message) => {
-                    return {
-                        ...message,
-                        referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
-                        clientSequenceNumber: this.virtualizeClientSequenceNumber(message.clientSequenceNumber),
-                    }
-                });
+                const virtualizedMessages: IDocumentMessage[] = [];
+                for (const message of messages) {
+                    this.virtualizeDocumentMessage(message).forEach((it) => virtualizedMessages.push(it));
+                }
+                return [virtualizedMessages];
             });
     }
 
@@ -189,28 +197,8 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     protected processMessage(message: ISequencedDocumentMessage, startTime: number): void {
-        if (message.type === GroupedBatchOpType) {
-            const messages = message.contents as IDocumentMessage[];
-            let groupSequenceNumber = this.virtualizeSequenceNumber(message.sequenceNumber) - messages.length + 1;
-
-            for (const subMessage of messages) {
-                super.processMessage({
-                    ...message, // This will override the property difference between ISequencedDocumentMessage and IDocumentMessage
-                    ...subMessage,
-                    sequenceNumber: groupSequenceNumber++,
-                    clientSequenceNumber: subMessage.clientSequenceNumber, // This number is already virtualized
-                    referenceSequenceNumber: this.virtualizeSequenceNumber(subMessage.referenceSequenceNumber),
-                    minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
-                }, startTime);
-            }
-        } else {
-            super.processMessage({
-                ...message,
-                sequenceNumber: this.virtualizeSequenceNumber(message.sequenceNumber),
-                clientSequenceNumber: this.connectionManager.clientId === message.clientId ? this.virtualizeClientSequenceNumber(message.clientSequenceNumber) : message.clientSequenceNumber,
-                referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
-                minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
-            }, startTime);
+        for (const subMessage of this.virtualizeSequencedMessage(message)) {
+            super.processMessage(subMessage, startTime);
         }
     }
 
@@ -229,12 +217,16 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
             return clientSequenceNumber;
         }
         const virtualizedClientSequenceNumber = this._clientSequenceNumberMap.get(clientSequenceNumber);
-        assert(virtualizedClientSequenceNumber !== undefined, "clientSequenceNumber not found");
+
+        // TODO: remove "if" (for debugging)
+        if (virtualizedClientSequenceNumber === undefined) {
+            assert(virtualizedClientSequenceNumber !== undefined, "clientSequenceNumber not found");
+        }
 
         return virtualizedClientSequenceNumber;
     }
 
-    private virtualizeSequencedMessage(message: ISequencedDocumentMessage, storeValue: boolean = false): ISequencedDocumentMessage {
+    private virtualizeSequencedMessage(message: ISequencedDocumentMessage, storeValue: boolean = false): ISequencedDocumentMessage[] {
         if (storeValue) {
             if (message.type === GroupedBatchOpType) {
                 this._virtualSequenceNumber += (message.contents as IDocumentMessage[]).length;
@@ -243,13 +235,49 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
                 this._sequenceNumberMap.set(message.sequenceNumber, ++this._virtualSequenceNumber);
             }
         }
-        return {
-            ...message,
-            sequenceNumber: this.virtualizeSequenceNumber(message.sequenceNumber),
-            referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
-            minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
-            clientSequenceNumber: this.connectionManager.clientId === message.clientId ? this.virtualizeClientSequenceNumber(message.clientSequenceNumber) : message.clientSequenceNumber,
-        };
+
+        if (message.type === GroupedBatchOpType) {
+            const messages = message.contents as IDocumentMessage[];
+            let groupSequenceNumber = this.virtualizeSequenceNumber(message.sequenceNumber) - messages.length + 1;
+
+            return messages.map((subMessage) => {
+                return {
+                    ...message, // This will override the property difference between ISequencedDocumentMessage and IDocumentMessage
+                    ...subMessage,
+                    sequenceNumber: groupSequenceNumber++,
+                    clientSequenceNumber: subMessage.clientSequenceNumber, // This number is already virtualized
+                    referenceSequenceNumber: this.virtualizeSequenceNumber(subMessage.referenceSequenceNumber),
+                    minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
+                }
+            });
+        } else {
+            return [{
+                ...message,
+                sequenceNumber: this.virtualizeSequenceNumber(message.sequenceNumber),
+                clientSequenceNumber: this.connectionManager.clientId === message.clientId ? this.virtualizeClientSequenceNumber(message.clientSequenceNumber) : message.clientSequenceNumber,
+                referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
+                minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
+            }];
+        }
+    }
+
+    private virtualizeDocumentMessage(message: IDocumentMessage): IDocumentMessage[] {
+        if (message.type === GroupedBatchOpType) {
+            const messages = message.contents as IDocumentMessage[];
+
+            return messages.map((subMessage) => {
+                return {
+                    ...subMessage,
+                    referenceSequenceNumber: this.virtualizeSequenceNumber(subMessage.referenceSequenceNumber),
+                };
+            });
+        } else {
+            return [{
+                ...message,
+                referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
+                clientSequenceNumber: this.virtualizeClientSequenceNumber(message.clientSequenceNumber),
+            }];
+        }
     }
 
     // TODO: need to review how these numbers are being used in other layers
@@ -265,7 +293,11 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     public get lastMessage() {
-        return this.lastProcessedMessage !== undefined ? this.virtualizeSequencedMessage(this.lastProcessedMessage) : undefined;
+        if (this.lastProcessedMessage === undefined) {
+            return undefined;
+        }
+        const messages = this.virtualizeSequencedMessage(this.lastProcessedMessage);
+        return messages[messages.length - 1];
     }
 
     public get lastKnownSeqNumber() {
