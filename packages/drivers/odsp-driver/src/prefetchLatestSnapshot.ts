@@ -8,21 +8,25 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
-    IOdspResolvedUrl,
-    IPersistedCache,
-    ISnapshotOptions,
-    OdspResourceTokenFetchOptions,
-    TokenFetcher,
-    IOdspUrlParts,
+	IOdspResolvedUrl,
+	IPersistedCache,
+	ISnapshotOptions,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
+	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    createCacheSnapshotKey,
-    createOdspLogger,
-    getOdspResolvedUrl,
-    toInstrumentedOdspTokenFetcher,
+	createCacheSnapshotKey,
+	createOdspLogger,
+	getOdspResolvedUrl,
+	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { downloadSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
+import {
+	downloadSnapshot,
+	fetchSnapshotWithRedeem,
+	SnapshotFormatSupportType,
+} from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
 
 /**
@@ -46,67 +50,71 @@ import { IVersionedValueWithEpoch } from "./contracts";
  * @returns - True if the snapshot is cached, false otherwise.
  */
 export async function prefetchLatestSnapshot(
-    resolvedUrl: IResolvedUrl,
-    getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-    persistedCache: IPersistedCache,
-    forceAccessTokenViaAuthorizationHeader: boolean,
-    logger: ITelemetryBaseLogger,
-    hostSnapshotFetchOptions: ISnapshotOptions | undefined,
-    enableRedeemFallback: boolean = true,
-    fetchBinarySnapshotFormat?: boolean,
-    snapshotFormatFetchType?: SnapshotFormatSupportType,
+	resolvedUrl: IResolvedUrl,
+	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	persistedCache: IPersistedCache,
+	forceAccessTokenViaAuthorizationHeader: boolean,
+	logger: ITelemetryBaseLogger,
+	hostSnapshotFetchOptions: ISnapshotOptions | undefined,
+	enableRedeemFallback: boolean = true,
+	fetchBinarySnapshotFormat?: boolean,
+	snapshotFormatFetchType?: SnapshotFormatSupportType,
 ): Promise<boolean> {
-    const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
-    const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+	const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
+	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
-    const resolvedUrlData: IOdspUrlParts = {
-        siteUrl: odspResolvedUrl.siteUrl,
-        driveId: odspResolvedUrl.driveId,
-        itemId: odspResolvedUrl.itemId,
-    };
-    const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
-        odspLogger,
-        resolvedUrlData,
-        getStorageToken,
-        true /* throwOnNullToken */,
-    );
+	const resolvedUrlData: IOdspUrlParts = {
+		siteUrl: odspResolvedUrl.siteUrl,
+		driveId: odspResolvedUrl.driveId,
+		itemId: odspResolvedUrl.itemId,
+	};
+	const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+		odspLogger,
+		resolvedUrlData,
+		getStorageToken,
+		true /* throwOnNullToken */,
+	);
 
-    const snapshotDownloader = async (
-        finalOdspResolvedUrl: IOdspResolvedUrl,
-        storageToken: string,
-        snapshotOptions: ISnapshotOptions | undefined,
-        controller?: AbortController,
-    ) => {
-        return downloadSnapshot(
-            finalOdspResolvedUrl, storageToken, odspLogger, snapshotOptions, snapshotFormatFetchType, controller);
-    };
-    const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
-    let cacheP: Promise<void> | undefined;
-    const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
-        cacheP = persistedCache.put(
-            snapshotKey,
-            valueWithEpoch,
-        );
-        return cacheP;
-    };
-    const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
-    return PerformanceEvent.timedExecAsync(
-        odspLogger,
-        { eventName: "PrefetchLatestSnapshot" },
-        async () => {
-            await fetchSnapshotWithRedeem(
-                    odspResolvedUrl,
-                    storageTokenFetcher,
-                    hostSnapshotFetchOptions,
-                    forceAccessTokenViaAuthorizationHeader,
-                    odspLogger,
-                    snapshotDownloader,
-                    putInCache,
-                    removeEntries,
-                    enableRedeemFallback,
-                );
-            assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
-            await cacheP;
-            return true;
-    }).catch(async (error) => false);
+	const snapshotDownloader = async (
+		finalOdspResolvedUrl: IOdspResolvedUrl,
+		storageToken: string,
+		snapshotOptions: ISnapshotOptions | undefined,
+		controller?: AbortController,
+	) => {
+		return downloadSnapshot(
+			finalOdspResolvedUrl,
+			storageToken,
+			odspLogger,
+			snapshotOptions,
+			snapshotFormatFetchType,
+			controller,
+		);
+	};
+	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
+	let cacheP: Promise<void> | undefined;
+	const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
+		cacheP = persistedCache.put(snapshotKey, valueWithEpoch);
+		return cacheP;
+	};
+	const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
+	return PerformanceEvent.timedExecAsync(
+		odspLogger,
+		{ eventName: "PrefetchLatestSnapshot" },
+		async () => {
+			await fetchSnapshotWithRedeem(
+				odspResolvedUrl,
+				storageTokenFetcher,
+				hostSnapshotFetchOptions,
+				forceAccessTokenViaAuthorizationHeader,
+				odspLogger,
+				snapshotDownloader,
+				putInCache,
+				removeEntries,
+				enableRedeemFallback,
+			);
+			assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
+			await cacheP;
+			return true;
+		},
+	).catch(async (error) => false);
 }
