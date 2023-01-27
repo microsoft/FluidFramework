@@ -174,7 +174,6 @@ export {
     ValueFieldEditBuilder,
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
-    SequenceField,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";
