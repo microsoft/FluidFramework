@@ -11,17 +11,20 @@ steps:
 # special case server/routerlicious
 - ${{ if eq(parameters.buildDirectory, 'server/routerlicious') }}:
   - task: Npm@1
-    displayName: npm ci
+    displayName: Install deps
     inputs:
       command: 'custom'
       customCommand: 'ci --ignore-scripts'
       customRegistry: 'useNpmrc'
+      workingDir: ${{ parameters.parameters.buildDirectory }}
+
   - bash: |
       # Generate the package/package lock for the lerna project so we would scan it.
       node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --server
       cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
       cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
     displayName: 'Generate Mono repo package json'
+    workingDirectory: ${{ parameters.parameters.buildDirectory }}
 
 - task: ComponentGovernanceComponentDetection@0
   displayName: Component Detection
