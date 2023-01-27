@@ -251,8 +251,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		if (!this.gcDisabled) {
 			const summaryNode = this.pendingSummaries.get(proposalHandle);
 			if (summaryNode !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const summaryNodeWithGC = new SummaryNodeWithGC(
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					wipSerializedUsedRoutes!,
 					summaryNode,
 				);
