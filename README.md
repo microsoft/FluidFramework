@@ -195,6 +195,8 @@ Right now, this is implemented on a per-package basis, with a [shared base confi
 
 To run `prettier` on your code, run `npm run format` from the appropriate package or release group.
 
+* To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the script argument (e.g. `fluid-build -s format`).
+
 To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
 
 #### VSCode Options
