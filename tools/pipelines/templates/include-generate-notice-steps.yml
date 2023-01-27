@@ -10,13 +10,10 @@ parameters:
 steps:
 # special case server/routerlicious
 - ${{ if eq(parameters.buildDirectory, 'server/routerlicious') }}:
-  - task: Npm@1
-    displayName: Install deps
-    inputs:
-      command: 'custom'
-      customCommand: 'ci --ignore-scripts'
-      customRegistry: 'useNpmrc'
-      workingDir: ${{ parameters.buildDirectory }}
+  - bash: |
+      npm i -g pnpm
+      pnpm i --frozen-lockfile
+    displayName: 'Install deps'
 
   - bash: |
       # Generate the package/package lock for the lerna project so we would scan it.
@@ -24,7 +21,6 @@ steps:
       cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
       cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
     displayName: 'Generate Mono repo package json'
-    workingDirectory: ${{ parameters.buildDirectory }}
 
 - task: ComponentGovernanceComponentDetection@0
   displayName: Component Detection
