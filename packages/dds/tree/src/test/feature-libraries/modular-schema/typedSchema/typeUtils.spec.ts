@@ -5,11 +5,11 @@
 
 import { Named } from "../../../../core";
 import {
-    AsNames,
-    ListToKeys,
-    WithDefault,
-    // Allow importing from this specific file which is being tested:
-    /* eslint-disable-next-line import/no-internal-modules */
+	AsNames,
+	ListToKeys,
+	WithDefault,
+	// Allow importing from this specific file which is being tested:
+	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema/typeUtils";
 import { areSafelyAssignable, requireTrue } from "../../../../util";
 

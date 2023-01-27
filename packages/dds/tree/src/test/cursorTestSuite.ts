@@ -5,122 +5,122 @@
 
 import { strict as assert } from "assert";
 import {
-    jsonableTreeFromCursor,
-    singleTextCursor,
-    prefixPath,
-    prefixFieldPath,
+	jsonableTreeFromCursor,
+	singleTextCursor,
+	prefixPath,
+	prefixFieldPath,
 } from "../feature-libraries";
 import {
-    GlobalFieldKey,
-    LocalFieldKey,
-    EmptyKey,
-    FieldKey,
-    JsonableTree,
-    ITreeCursor,
-    CursorLocationType,
-    rootFieldKeySymbol,
-    symbolFromKey,
-    setGenericTreeField,
-    isLocalKey,
-    UpPath,
-    compareUpPaths,
-    compareFieldUpPaths,
-    clonePath,
-    FieldUpPath,
-    PathRootPrefix,
+	GlobalFieldKey,
+	LocalFieldKey,
+	EmptyKey,
+	FieldKey,
+	JsonableTree,
+	ITreeCursor,
+	CursorLocationType,
+	rootFieldKeySymbol,
+	symbolFromKey,
+	setGenericTreeField,
+	isLocalKey,
+	UpPath,
+	compareUpPaths,
+	compareFieldUpPaths,
+	clonePath,
+	FieldUpPath,
+	PathRootPrefix,
 } from "../core";
 import { brand } from "../util";
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
-    ["minimal", { type: brand("Foo") }],
-    ["true boolean", { type: brand("Foo"), value: true }],
-    ["false boolean", { type: brand("Foo"), value: false }],
-    ["integer", { type: brand("Foo"), value: Number.MIN_SAFE_INTEGER - 1 }],
-    ["string", { type: brand("Foo"), value: "test" }],
-    ["string with escaped characters", { type: brand("Foo"), value: '\\"\b\f\n\r\t' }],
-    ["string with emoticon", { type: brand("Foo"), value: "😀" }],
-    [
-        "local field",
-        {
-            type: brand("Foo"),
-            fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] },
-        },
-    ],
-    [
-        "global field",
-        {
-            type: brand("Foo"),
-            globalFields: { x: [{ type: brand("Bar") }] },
-        },
-    ],
-    [
-        "multiple local fields",
-        {
-            type: brand("Foo"),
-            fields: {
-                a: [{ type: brand("Bar") }],
-                b: [{ type: brand("Baz") }],
-            },
-        },
-    ],
-    [
-        "global and local fields",
-        {
-            type: brand("Foo"),
-            fields: {
-                a: [{ type: brand("Bar") }],
-            },
-            globalFields: { a: [{ type: brand("Baz") }] },
-        },
-    ],
-    [
-        "double nested",
-        {
-            type: brand("Foo"),
-            fields: {
-                a: [
-                    {
-                        type: brand("Bar"),
-                        fields: { b: [{ type: brand("Baz") }] },
-                    },
-                ],
-            },
-        },
-    ],
-    [
-        "complex",
-        {
-            type: brand("Foo"),
-            fields: {
-                a: [{ type: brand("Bar") }],
-                b: [
-                    {
-                        type: brand("Bar"),
-                        fields: {
-                            c: [{ type: brand("Bar"), value: 6 }],
-                        },
-                    },
-                ],
-            },
-        },
-    ],
-    [
-        "siblings restored on up",
-        {
-            type: brand("Foo"),
-            fields: {
-                X: [
-                    {
-                        type: brand("a"),
-                        // Inner node so that when navigating up from it,
-                        // The cursor's siblings value needs to be restored.
-                        fields: { q: [{ type: brand("b") }] },
-                    },
-                    { type: brand("c") },
-                ],
-            },
-        },
-    ],
+	["minimal", { type: brand("Foo") }],
+	["true boolean", { type: brand("Foo"), value: true }],
+	["false boolean", { type: brand("Foo"), value: false }],
+	["integer", { type: brand("Foo"), value: Number.MIN_SAFE_INTEGER - 1 }],
+	["string", { type: brand("Foo"), value: "test" }],
+	["string with escaped characters", { type: brand("Foo"), value: '\\"\b\f\n\r\t' }],
+	["string with emoticon", { type: brand("Foo"), value: "😀" }],
+	[
+		"local field",
+		{
+			type: brand("Foo"),
+			fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] },
+		},
+	],
+	[
+		"global field",
+		{
+			type: brand("Foo"),
+			globalFields: { x: [{ type: brand("Bar") }] },
+		},
+	],
+	[
+		"multiple local fields",
+		{
+			type: brand("Foo"),
+			fields: {
+				a: [{ type: brand("Bar") }],
+				b: [{ type: brand("Baz") }],
+			},
+		},
+	],
+	[
+		"global and local fields",
+		{
+			type: brand("Foo"),
+			fields: {
+				a: [{ type: brand("Bar") }],
+			},
+			globalFields: { a: [{ type: brand("Baz") }] },
+		},
+	],
+	[
+		"double nested",
+		{
+			type: brand("Foo"),
+			fields: {
+				a: [
+					{
+						type: brand("Bar"),
+						fields: { b: [{ type: brand("Baz") }] },
+					},
+				],
+			},
+		},
+	],
+	[
+		"complex",
+		{
+			type: brand("Foo"),
+			fields: {
+				a: [{ type: brand("Bar") }],
+				b: [
+					{
+						type: brand("Bar"),
+						fields: {
+							c: [{ type: brand("Bar"), value: 6 }],
+						},
+					},
+				],
+			},
+		},
+	],
+	[
+		"siblings restored on up",
+		{
+			type: brand("Foo"),
+			fields: {
+				X: [
+					{
+						type: brand("a"),
+						// Inner node so that when navigating up from it,
+						// The cursor's siblings value needs to be restored.
+						fields: { q: [{ type: brand("b") }] },
+					},
+					{ type: brand("c") },
+				],
+			},
+		},
+	],
 ];
 
 /**
@@ -139,59 +139,59 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
  * @typeParam TCursor - Type of the cursor being tested.
  */
 export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>(
-    cursorName: string,
-    cursorFactory: (data: TData) => TCursor,
-    dataFromCursor: (cursor: ITreeCursor) => TData,
-    extraRoot?: true,
+	cursorName: string,
+	cursorFactory: (data: TData) => TCursor,
+	dataFromCursor: (cursor: ITreeCursor) => TData,
+	extraRoot?: true,
 ): void {
-    function dataFromJsonableTree(data: JsonableTree): TData {
-        // Use text cursor to provide input data
-        return dataFromCursor(singleTextCursor(data));
-    }
+	function dataFromJsonableTree(data: JsonableTree): TData {
+		// Use text cursor to provide input data
+		return dataFromCursor(singleTextCursor(data));
+	}
 
-    testTreeCursor<TData, TCursor>({
-        cursorName,
-        cursorFactory,
-        builders: dataFromJsonableTree,
-        dataFromCursor,
-        testData: testTrees.map(([name, data]) => ({
-            name,
-            dataFactory: () => dataFromJsonableTree(data),
-            expected: data,
-        })),
-        extraRoot,
-    });
+	testTreeCursor<TData, TCursor>({
+		cursorName,
+		cursorFactory,
+		builders: dataFromJsonableTree,
+		dataFromCursor,
+		testData: testTrees.map(([name, data]) => ({
+			name,
+			dataFactory: () => dataFromJsonableTree(data),
+			expected: data,
+		})),
+		extraRoot,
+	});
 }
 
 /**
  * Collection of builders for special cases.
  */
 export interface SpecialCaseBuilder<TData> {
-    /**
-     * Build data for a tree which has the provided keys on its root node.
-     * The content of the tree under these keys is arbitrary and up to the implementation.
-     */
-    withLocalKeys?(keys: LocalFieldKey[]): TData;
+	/**
+	 * Build data for a tree which has the provided keys on its root node.
+	 * The content of the tree under these keys is arbitrary and up to the implementation.
+	 */
+	withLocalKeys?(keys: LocalFieldKey[]): TData;
 
-    /**
-     * Build data for a tree which has the provided keys on its root node.
-     * The content of the tree under these keys is arbitrary and up to the implementation.
-     */
-    withKeys?(keys: FieldKey[]): TData;
+	/**
+	 * Build data for a tree which has the provided keys on its root node.
+	 * The content of the tree under these keys is arbitrary and up to the implementation.
+	 */
+	withKeys?(keys: FieldKey[]): TData;
 }
 
 export interface TestTree<TData> {
-    readonly name: string;
-    readonly dataFactory: () => TData;
-    readonly reference?: JsonableTree;
-    readonly path?: UpPath;
+	readonly name: string;
+	readonly dataFactory: () => TData;
+	readonly reference?: JsonableTree;
+	readonly path?: UpPath;
 }
 
 export interface TestField<TData> {
-    readonly name: string;
-    readonly dataFactory: () => TData;
-    readonly reference: JsonableTree[];
-    readonly path: FieldUpPath;
+	readonly name: string;
+	readonly dataFactory: () => TData;
+	readonly reference: JsonableTree[];
+	readonly path: FieldUpPath;
 }
 
 /**
@@ -210,13 +210,13 @@ export interface TestField<TData> {
  * @typeParam TCursor - Type of the cursor being tested.
  */
 export function testSpecializedCursor<TData, TCursor extends ITreeCursor>(config: {
-    cursorName: string;
-    builders: SpecialCaseBuilder<TData>;
-    cursorFactory: (data: TData) => TCursor;
-    dataFromCursor?: (cursor: ITreeCursor) => TData;
-    testData: readonly TestTree<TData>[];
+	cursorName: string;
+	builders: SpecialCaseBuilder<TData>;
+	cursorFactory: (data: TData) => TCursor;
+	dataFromCursor?: (cursor: ITreeCursor) => TData;
+	testData: readonly TestTree<TData>[];
 }): Mocha.Suite {
-    return testTreeCursor(config);
+	return testTreeCursor(config);
 }
 
 /**
@@ -235,86 +235,86 @@ export function testSpecializedCursor<TData, TCursor extends ITreeCursor>(config
  * @typeParam TCursor - Type of the cursor being tested.
  */
 export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(config: {
-    cursorName: string;
-    builders: SpecialCaseBuilder<TData>;
-    cursorFactory: (data: TData) => TCursor;
-    dataFromCursor?: (cursor: ITreeCursor) => TData;
-    testData: readonly TestField<TData>[];
+	cursorName: string;
+	builders: SpecialCaseBuilder<TData>;
+	cursorFactory: (data: TData) => TCursor;
+	dataFromCursor?: (cursor: ITreeCursor) => TData;
+	testData: readonly TestField<TData>[];
 }): Mocha.Suite {
-    // testing is per node, and our data can have multiple nodes at the root, so split tests as needed:
-    const testData: TestTree<[number, TData]>[] = config.testData.flatMap(
-        ({ name, dataFactory, reference, path }) => {
-            const out: TestTree<[number, TData]>[] = [];
-            for (let index = 0; index < reference.length; index++) {
-                out.push({
-                    name: reference.length > 1 ? `${name} part ${index + 1}` : name,
-                    dataFactory: () => [index, dataFactory()],
-                    reference: reference[index],
-                    path: { parent: path.parent, parentIndex: index, parentField: path.field },
-                });
-            }
-            return out;
-        },
-    );
+	// testing is per node, and our data can have multiple nodes at the root, so split tests as needed:
+	const testData: TestTree<[number, TData]>[] = config.testData.flatMap(
+		({ name, dataFactory, reference, path }) => {
+			const out: TestTree<[number, TData]>[] = [];
+			for (let index = 0; index < reference.length; index++) {
+				out.push({
+					name: reference.length > 1 ? `${name} part ${index + 1}` : name,
+					dataFactory: () => [index, dataFactory()],
+					reference: reference[index],
+					path: { parent: path.parent, parentIndex: index, parentField: path.field },
+				});
+			}
+			return out;
+		},
+	);
 
-    return describe(`${config.cursorName} testSpecializedFieldCursor suite`, () => {
-        // Add tests which validate top level field itself.
-        describe("with root field", () => {
-            for (const data of config.testData) {
-                it(data.name, () => {
-                    const cursor = config.cursorFactory(data.dataFactory());
-                    assert.equal(cursor.mode, CursorLocationType.Fields);
-                    assert.equal(cursor.getFieldLength(), data.reference.length);
-                    checkFieldTraversal(cursor, data.path);
-                });
-            }
-        });
+	return describe(`${config.cursorName} testSpecializedFieldCursor suite`, () => {
+		// Add tests which validate top level field itself.
+		describe("with root field", () => {
+			for (const data of config.testData) {
+				it(data.name, () => {
+					const cursor = config.cursorFactory(data.dataFactory());
+					assert.equal(cursor.mode, CursorLocationType.Fields);
+					assert.equal(cursor.getFieldLength(), data.reference.length);
+					checkFieldTraversal(cursor, data.path);
+				});
+			}
+		});
 
-        // Run test suite on each top level node from each test data.
-        testTreeCursor<[number, TData], TCursor>({
-            cursorName: config.cursorName,
-            builders: {
-                withKeys:
-                    config.builders.withKeys !== undefined
-                        ? // This is known to be non-null from check above, but typescript can't infer it.
-                          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                          (keys) => [0, config.builders.withKeys!(keys)]
-                        : undefined,
-                withLocalKeys:
-                    config.builders.withLocalKeys !== undefined
-                        ? // This is known to be non-null from check above, but typescript can't infer it.
-                          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                          (keys) => [0, config.builders.withLocalKeys!(keys)]
-                        : undefined,
-            },
-            cursorFactory: (data: [number, TData]): TCursor => {
-                const cursor = config.cursorFactory(data[1]);
-                cursor.enterNode(data[0]);
-                return cursor;
-            },
-            testData,
-            extraRoot: true,
-        });
-    });
+		// Run test suite on each top level node from each test data.
+		testTreeCursor<[number, TData], TCursor>({
+			cursorName: config.cursorName,
+			builders: {
+				withKeys:
+					config.builders.withKeys !== undefined
+						? // This is known to be non-null from check above, but typescript can't infer it.
+						  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						  (keys) => [0, config.builders.withKeys!(keys)]
+						: undefined,
+				withLocalKeys:
+					config.builders.withLocalKeys !== undefined
+						? // This is known to be non-null from check above, but typescript can't infer it.
+						  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						  (keys) => [0, config.builders.withLocalKeys!(keys)]
+						: undefined,
+			},
+			cursorFactory: (data: [number, TData]): TCursor => {
+				const cursor = config.cursorFactory(data[1]);
+				cursor.enterNode(data[0]);
+				return cursor;
+			},
+			testData,
+			extraRoot: true,
+		});
+	});
 }
 
 const unusedKey: FieldKey = symbolFromKey(brand("unusedKey"));
 const testGlobalKey = symbolFromKey(brand("testGlobalKey"));
 const testKeys: readonly FieldKey[] = [
-    // keys likely to cause issues due to JS object non-own keys
-    brand("__proto__"),
-    brand("toString"),
-    brand("toFixed"),
-    brand("hasOwnProperty"),
-    // numeric keys, which can be problematic for array like node and/or due to implicit conversions.
-    brand("0"),
-    brand("-1"),
-    brand("0.0"),
-    // Misc test keys
-    EmptyKey,
-    testGlobalKey,
-    rootFieldKeySymbol,
-    unusedKey,
+	// keys likely to cause issues due to JS object non-own keys
+	brand("__proto__"),
+	brand("toString"),
+	brand("toFixed"),
+	brand("hasOwnProperty"),
+	// numeric keys, which can be problematic for array like node and/or due to implicit conversions.
+	brand("0"),
+	brand("-1"),
+	brand("0.0"),
+	// Misc test keys
+	EmptyKey,
+	testGlobalKey,
+	rootFieldKeySymbol,
+	unusedKey,
 ];
 
 /**
@@ -337,312 +337,312 @@ const testKeys: readonly FieldKey[] = [
  * @typeParam TCursor - Type of the cursor being tested.
  */
 function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
-    cursorName: string;
-    builders: SpecialCaseBuilder<TData> | ((data: JsonableTree) => TData);
-    cursorFactory: (data: TData) => TCursor;
-    dataFromCursor?: (cursor: TCursor) => TData;
-    testData: readonly TestTree<TData>[];
-    extraRoot?: true;
+	cursorName: string;
+	builders: SpecialCaseBuilder<TData> | ((data: JsonableTree) => TData);
+	cursorFactory: (data: TData) => TCursor;
+	dataFromCursor?: (cursor: TCursor) => TData;
+	testData: readonly TestTree<TData>[];
+	extraRoot?: true;
 }): Mocha.Suite {
-    const {
-        cursorName,
-        cursorFactory,
-        dataFromCursor,
-        testData,
-        extraRoot,
-        builders: builder,
-    } = config;
+	const {
+		cursorName,
+		cursorFactory,
+		dataFromCursor,
+		testData,
+		extraRoot,
+		builders: builder,
+	} = config;
 
-    const dataFromJsonableTree = typeof builder === "object" ? undefined : builder;
-    const withKeys: undefined | ((keys: FieldKey[]) => TData) =
-        typeof builder === "object"
-            ? builder.withKeys === undefined
-                ? undefined
-                : builder.withKeys.bind(builder.withKeys)
-            : (keys: FieldKey[]) => {
-                  const root: JsonableTree = {
-                      type: brand("Foo"),
-                  };
-                  for (const key of keys) {
-                      const child: JsonableTree = {
-                          type: brand("Foo"),
-                      };
-                      setGenericTreeField(root, key, [child]);
-                  }
-                  return builder(root);
-              };
-    const withLocalKeys =
-        withKeys ?? (typeof builder === "object" ? builder.withLocalKeys : undefined);
+	const dataFromJsonableTree = typeof builder === "object" ? undefined : builder;
+	const withKeys: undefined | ((keys: FieldKey[]) => TData) =
+		typeof builder === "object"
+			? builder.withKeys === undefined
+				? undefined
+				: builder.withKeys.bind(builder.withKeys)
+			: (keys: FieldKey[]) => {
+					const root: JsonableTree = {
+						type: brand("Foo"),
+					};
+					for (const key of keys) {
+						const child: JsonableTree = {
+							type: brand("Foo"),
+						};
+						setGenericTreeField(root, key, [child]);
+					}
+					return builder(root);
+			  };
+	const withLocalKeys =
+		withKeys ?? (typeof builder === "object" ? builder.withLocalKeys : undefined);
 
-    const parent = !extraRoot
-        ? undefined
-        : {
-              parent: undefined,
-              parentField: rootFieldKeySymbol,
-              parentIndex: 0,
-          };
+	const parent = !extraRoot
+		? undefined
+		: {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+		  };
 
-    return describe(`${cursorName} cursor implementation`, () => {
-        describe("test trees", () => {
-            for (const { name, dataFactory, reference, path } of testData) {
-                describe(name, () => {
-                    let data: TData;
-                    before(() => {
-                        data = dataFactory();
-                    });
-                    it("jsonableTreeFromCursor", () => {
-                        const cursor = cursorFactory(data);
-                        const jsonableClone = jsonableTreeFromCursor(cursor);
-                        // Check jsonable objects are actually json compatible
-                        const text = JSON.stringify(jsonableClone);
-                        const parsed = JSON.parse(text);
-                        assert.deepEqual(parsed, jsonableClone);
-                    });
+	return describe(`${cursorName} cursor implementation`, () => {
+		describe("test trees", () => {
+			for (const { name, dataFactory, reference, path } of testData) {
+				describe(name, () => {
+					let data: TData;
+					before(() => {
+						data = dataFactory();
+					});
+					it("jsonableTreeFromCursor", () => {
+						const cursor = cursorFactory(data);
+						const jsonableClone = jsonableTreeFromCursor(cursor);
+						// Check jsonable objects are actually json compatible
+						const text = JSON.stringify(jsonableClone);
+						const parsed = JSON.parse(text);
+						assert.deepEqual(parsed, jsonableClone);
+					});
 
-                    it("traversal", () => {
-                        checkTraversal(cursorFactory(data), path ?? parent);
-                    });
+					it("traversal", () => {
+						checkTraversal(cursorFactory(data), path ?? parent);
+					});
 
-                    if (reference !== undefined) {
-                        it("equals reference", () => {
-                            if (dataFromJsonableTree !== undefined) {
-                                const dataClone = dataFromJsonableTree(reference);
-                                // This assumes `TData` works with deepEqual.
-                                assert.deepEqual(data, dataClone);
-                            }
+					if (reference !== undefined) {
+						it("equals reference", () => {
+							if (dataFromJsonableTree !== undefined) {
+								const dataClone = dataFromJsonableTree(reference);
+								// This assumes `TData` works with deepEqual.
+								assert.deepEqual(data, dataClone);
+							}
 
-                            const clone = jsonableTreeFromCursor(cursorFactory(data));
-                            assert.deepEqual(clone, reference);
-                        });
-                    }
+							const clone = jsonableTreeFromCursor(cursorFactory(data));
+							assert.deepEqual(clone, reference);
+						});
+					}
 
-                    if (dataFromCursor !== undefined) {
-                        it("roundtrip with dataFromCursor", () => {
-                            const cursor = cursorFactory(data);
-                            const cursorClonedData = dataFromCursor(cursor);
-                            // This assumes `T` works with deepEqual.
-                            assert.deepEqual(cursorClonedData, data);
-                        });
-                    }
+					if (dataFromCursor !== undefined) {
+						it("roundtrip with dataFromCursor", () => {
+							const cursor = cursorFactory(data);
+							const cursorClonedData = dataFromCursor(cursor);
+							// This assumes `T` works with deepEqual.
+							assert.deepEqual(cursorClonedData, data);
+						});
+					}
 
-                    if (dataFromJsonableTree !== undefined) {
-                        it("roundtrip with dataFromJsonableTree", () => {
-                            const cursor = cursorFactory(data);
-                            const jsonableClone = jsonableTreeFromCursor(cursor);
-                            const dataClone = dataFromJsonableTree(jsonableClone);
-                            assert.deepEqual(data, dataClone);
-                        });
-                    }
-                });
-            }
-        });
+					if (dataFromJsonableTree !== undefined) {
+						it("roundtrip with dataFromJsonableTree", () => {
+							const cursor = cursorFactory(data);
+							const jsonableClone = jsonableTreeFromCursor(cursor);
+							const dataClone = dataFromJsonableTree(jsonableClone);
+							assert.deepEqual(data, dataClone);
+						});
+					}
+				});
+			}
+		});
 
-        // TODO: replace some of these tests with ones that do not require dataFromJsonableTree
-        if (dataFromJsonableTree !== undefined) {
-            const factory = (data: JsonableTree): ITreeCursor => {
-                return cursorFactory(dataFromJsonableTree(data));
-            };
+		// TODO: replace some of these tests with ones that do not require dataFromJsonableTree
+		if (dataFromJsonableTree !== undefined) {
+			const factory = (data: JsonableTree): ITreeCursor => {
+				return cursorFactory(dataFromJsonableTree(data));
+			};
 
-            // TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
-            if (!extraRoot) {
-                it("up from root", () => {
-                    const cursor = factory({ type: brand("Foo") });
-                    assert.throws(() => {
-                        cursor.exitNode();
-                    });
-                });
-            }
-            describe("getPath() and getFieldPath()", () => {
-                it("at root", () => {
-                    const cursor = factory({
-                        type: brand("Foo"),
-                    });
-                    assert.deepEqual(cursor.getPath(), parent);
-                });
+			// TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
+			if (!extraRoot) {
+				it("up from root", () => {
+					const cursor = factory({ type: brand("Foo") });
+					assert.throws(() => {
+						cursor.exitNode();
+					});
+				});
+			}
+			describe("getPath() and getFieldPath()", () => {
+				it("at root", () => {
+					const cursor = factory({
+						type: brand("Foo"),
+					});
+					assert.deepEqual(cursor.getPath(), parent);
+				});
 
-                it("getFieldPath in root field", () => {
-                    const cursor = factory({
-                        type: brand("Foo"),
-                    });
-                    cursor.enterField(brand("key"));
-                    assert.deepEqual(cursor.getFieldPath(), {
-                        parent,
-                        field: "key",
-                    });
-                });
+				it("getFieldPath in root field", () => {
+					const cursor = factory({
+						type: brand("Foo"),
+					});
+					cursor.enterField(brand("key"));
+					assert.deepEqual(cursor.getFieldPath(), {
+						parent,
+						field: "key",
+					});
+				});
 
-                it("first node in a root field", () => {
-                    const cursor = factory({
-                        type: brand("Foo"),
-                        fields: { key: [{ type: brand("Bar"), value: 0 }] },
-                    });
-                    cursor.enterField(brand("key"));
-                    cursor.firstNode();
-                    assert.deepEqual(cursor.getPath(), {
-                        parent,
-                        parentField: brand<FieldKey>("key"),
-                        parentIndex: 0,
-                    });
-                });
+				it("first node in a root field", () => {
+					const cursor = factory({
+						type: brand("Foo"),
+						fields: { key: [{ type: brand("Bar"), value: 0 }] },
+					});
+					cursor.enterField(brand("key"));
+					cursor.firstNode();
+					assert.deepEqual(cursor.getPath(), {
+						parent,
+						parentField: brand<FieldKey>("key"),
+						parentIndex: 0,
+					});
+				});
 
-                it("node in a root field", () => {
-                    const cursor = factory({
-                        type: brand("Foo"),
-                        fields: {
-                            key: [
-                                { type: brand("Bar"), value: 0 },
-                                { type: brand("Bar"), value: 1 },
-                            ],
-                        },
-                    });
-                    cursor.enterField(brand("key"));
-                    cursor.enterNode(1);
-                    assert.deepEqual(cursor.getPath(), {
-                        parent,
-                        parentField: brand<FieldKey>("key"),
-                        parentIndex: 1,
-                    });
-                });
+				it("node in a root field", () => {
+					const cursor = factory({
+						type: brand("Foo"),
+						fields: {
+							key: [
+								{ type: brand("Bar"), value: 0 },
+								{ type: brand("Bar"), value: 1 },
+							],
+						},
+					});
+					cursor.enterField(brand("key"));
+					cursor.enterNode(1);
+					assert.deepEqual(cursor.getPath(), {
+						parent,
+						parentField: brand<FieldKey>("key"),
+						parentIndex: 1,
+					});
+				});
 
-                it("in a nested field", () => {
-                    const cursor = factory({
-                        type: brand("Foo"),
-                        fields: {
-                            a: [
-                                {
-                                    type: brand("Bar"),
-                                    fields: { [EmptyKey]: [{ type: brand("Baz") }] },
-                                },
-                                {
-                                    type: brand("Bar"),
-                                    fields: { [EmptyKey]: [{ type: brand("Baz") }] },
-                                },
-                            ],
-                        },
-                    });
-                    cursor.enterField(brand("a"));
-                    cursor.enterNode(1);
-                    cursor.enterField(EmptyKey);
-                    const initialPath = {
-                        parent,
-                        parentField: "a",
-                        parentIndex: 1,
-                    };
-                    assert.deepEqual(cursor.getFieldPath(), {
-                        parent: initialPath,
-                        field: EmptyKey,
-                    });
-                    cursor.enterNode(0);
-                    assert.deepEqual(cursor.getPath(), {
-                        parent: initialPath,
-                        parentField: EmptyKey,
-                        parentIndex: 0,
-                    });
-                });
-            });
-        }
-        if (withLocalKeys !== undefined) {
-            describe("key tests", () => {
-                const unrelatedKey: LocalFieldKey = brand("unrelated");
-                const unrelatedGlobalKey: GlobalFieldKey = brand("unrelatedGlobal");
-                for (const key of testKeys) {
-                    it(`returns no values for key: ${key.toString()}`, () => {
-                        // Test an empty tree, and one with unrelated fields
-                        const trees: TData[] = [withLocalKeys([]), withLocalKeys([unrelatedKey])];
-                        // If we have a builder for global keys, use to make a tree with unrelatedGlobalKey.
-                        if (withKeys !== undefined) {
-                            trees.push(withKeys([unrelatedKey, symbolFromKey(unrelatedGlobalKey)]));
-                        }
+				it("in a nested field", () => {
+					const cursor = factory({
+						type: brand("Foo"),
+						fields: {
+							a: [
+								{
+									type: brand("Bar"),
+									fields: { [EmptyKey]: [{ type: brand("Baz") }] },
+								},
+								{
+									type: brand("Bar"),
+									fields: { [EmptyKey]: [{ type: brand("Baz") }] },
+								},
+							],
+						},
+					});
+					cursor.enterField(brand("a"));
+					cursor.enterNode(1);
+					cursor.enterField(EmptyKey);
+					const initialPath = {
+						parent,
+						parentField: "a",
+						parentIndex: 1,
+					};
+					assert.deepEqual(cursor.getFieldPath(), {
+						parent: initialPath,
+						field: EmptyKey,
+					});
+					cursor.enterNode(0);
+					assert.deepEqual(cursor.getPath(), {
+						parent: initialPath,
+						parentField: EmptyKey,
+						parentIndex: 0,
+					});
+				});
+			});
+		}
+		if (withLocalKeys !== undefined) {
+			describe("key tests", () => {
+				const unrelatedKey: LocalFieldKey = brand("unrelated");
+				const unrelatedGlobalKey: GlobalFieldKey = brand("unrelatedGlobal");
+				for (const key of testKeys) {
+					it(`returns no values for key: ${key.toString()}`, () => {
+						// Test an empty tree, and one with unrelated fields
+						const trees: TData[] = [withLocalKeys([]), withLocalKeys([unrelatedKey])];
+						// If we have a builder for global keys, use to make a tree with unrelatedGlobalKey.
+						if (withKeys !== undefined) {
+							trees.push(withKeys([unrelatedKey, symbolFromKey(unrelatedGlobalKey)]));
+						}
 
-                        for (const data of trees) {
-                            const cursor = cursorFactory(data);
-                            cursor.enterField(key);
-                            assert.equal(cursor.getFieldLength(), 0);
-                        }
-                    });
+						for (const data of trees) {
+							const cursor = cursorFactory(data);
+							cursor.enterField(key);
+							assert.equal(cursor.getFieldLength(), 0);
+						}
+					});
 
-                    const dataFactory = isLocalKey(key)
-                        ? () => withLocalKeys([key])
-                        : withKeys !== undefined
-                        ? () => withKeys([key])
-                        : undefined;
-                    if (dataFactory !== undefined) {
-                        it(`handles values for key: ${key.toString()}`, () => {
-                            const dataWithKey = dataFactory();
-                            const cursor = cursorFactory(dataWithKey);
-                            cursor.enterField(key);
-                            assert.equal(cursor.getFieldLength(), 1);
-                            cursor.enterNode(0);
-                        });
+					const dataFactory = isLocalKey(key)
+						? () => withLocalKeys([key])
+						: withKeys !== undefined
+						? () => withKeys([key])
+						: undefined;
+					if (dataFactory !== undefined) {
+						it(`handles values for key: ${key.toString()}`, () => {
+							const dataWithKey = dataFactory();
+							const cursor = cursorFactory(dataWithKey);
+							cursor.enterField(key);
+							assert.equal(cursor.getFieldLength(), 1);
+							cursor.enterNode(0);
+						});
 
-                        it(`traversal with key: ${key.toString()}`, () => {
-                            const dataWithKey = dataFactory();
-                            const cursor = cursorFactory(dataWithKey);
-                            checkTraversal(cursor, parent);
-                        });
-                    }
-                }
-            });
+						it(`traversal with key: ${key.toString()}`, () => {
+							const dataWithKey = dataFactory();
+							const cursor = cursorFactory(dataWithKey);
+							checkTraversal(cursor, parent);
+						});
+					}
+				}
+			});
 
-            it("traverse with no keys", () => {
-                const data = withLocalKeys([]);
-                const cursor = cursorFactory(data);
-                checkTraversal(cursor, parent);
-            });
+			it("traverse with no keys", () => {
+				const data = withLocalKeys([]);
+				const cursor = cursorFactory(data);
+				checkTraversal(cursor, parent);
+			});
 
-            describe("cursor prefix tests", () => {
-                it("at root", () => {
-                    const data = withLocalKeys([]);
-                    const cursor = cursorFactory(data);
-                    expectEqualPaths(cursor.getPath(), parent);
+			describe("cursor prefix tests", () => {
+				it("at root", () => {
+					const data = withLocalKeys([]);
+					const cursor = cursorFactory(data);
+					expectEqualPaths(cursor.getPath(), parent);
 
-                    const prefixParent: UpPath = {
-                        parent: undefined,
-                        parentField: brand("prefixParentField"),
-                        parentIndex: 5,
-                    };
+					const prefixParent: UpPath = {
+						parent: undefined,
+						parentField: brand("prefixParentField"),
+						parentIndex: 5,
+					};
 
-                    const prefixes: (PathRootPrefix | undefined)[] = [
-                        undefined,
-                        {},
-                        { indexOffset: 10, rootFieldOverride: EmptyKey },
-                        { parent: prefixParent },
-                    ];
+					const prefixes: (PathRootPrefix | undefined)[] = [
+						undefined,
+						{},
+						{ indexOffset: 10, rootFieldOverride: EmptyKey },
+						{ parent: prefixParent },
+					];
 
-                    for (const prefix of prefixes) {
-                        // prefixPath has its own tests, so we can use it to test cursors here:
-                        expectEqualPaths(cursor.getPath(prefix), prefixPath(prefix, parent));
-                    }
+					for (const prefix of prefixes) {
+						// prefixPath has its own tests, so we can use it to test cursors here:
+						expectEqualPaths(cursor.getPath(prefix), prefixPath(prefix, parent));
+					}
 
-                    cursor.enterField(brand("testField"));
-                    assert(
-                        compareFieldUpPaths(cursor.getFieldPath(), {
-                            field: brand("testField"),
-                            parent,
-                        }),
-                    );
+					cursor.enterField(brand("testField"));
+					assert(
+						compareFieldUpPaths(cursor.getFieldPath(), {
+							field: brand("testField"),
+							parent,
+						}),
+					);
 
-                    for (const prefix of prefixes) {
-                        assert(
-                            compareFieldUpPaths(
-                                cursor.getFieldPath(prefix),
-                                prefixFieldPath(prefix, { field: brand("testField"), parent }),
-                            ),
-                        );
-                    }
-                });
-            });
-        }
-    });
+					for (const prefix of prefixes) {
+						assert(
+							compareFieldUpPaths(
+								cursor.getFieldPath(prefix),
+								prefixFieldPath(prefix, { field: brand("testField"), parent }),
+							),
+						);
+					}
+				});
+			});
+		}
+	});
 }
 
 function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
-    if (!compareUpPaths(path, expectedPath)) {
-        // This is slower than above compare, so only do it in the error case.
-        // Make a nice error message:
-        assert.deepEqual(clonePath(path), clonePath(expectedPath));
-        assert.fail("unequal paths, but clones compared equal");
-    }
+	if (!compareUpPaths(path, expectedPath)) {
+		// This is slower than above compare, so only do it in the error case.
+		// Make a nice error message:
+		assert.deepEqual(clonePath(path), clonePath(expectedPath));
+		assert.fail("unequal paths, but clones compared equal");
+	}
 }
 
 /**
@@ -651,55 +651,55 @@ function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undef
  * it simply checks that the traversal APIs function, and that a few aspects of them conform with the spec.
  */
 function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
-    assert.equal(cursor.mode, CursorLocationType.Nodes);
-    assert.equal(cursor.pending, false);
-    // Keep track of current node properties to check it during ascent
-    const originalNodeValue = cursor.value;
-    const originalNodeType = cursor.type;
+	assert.equal(cursor.mode, CursorLocationType.Nodes);
+	assert.equal(cursor.pending, false);
+	// Keep track of current node properties to check it during ascent
+	const originalNodeValue = cursor.value;
+	const originalNodeType = cursor.type;
 
-    const path = cursor.getPath();
-    expectEqualPaths(path, expectedPath);
+	const path = cursor.getPath();
+	expectEqualPaths(path, expectedPath);
 
-    const fieldLengths: Map<FieldKey, number> = new Map();
+	const fieldLengths: Map<FieldKey, number> = new Map();
 
-    for (let inField: boolean = cursor.firstField(); inField; inField = cursor.nextField()) {
-        const expectedFieldLength = cursor.getFieldLength();
-        const key = cursor.getFieldKey();
-        assert(!fieldLengths.has(key), "no duplicate keys");
-        fieldLengths.set(cursor.getFieldKey(), expectedFieldLength);
-        assert(expectedFieldLength > 0, "only non empty fields should show up in field iteration");
-        checkFieldTraversal(cursor, { parent: path, field: key });
-    }
+	for (let inField: boolean = cursor.firstField(); inField; inField = cursor.nextField()) {
+		const expectedFieldLength = cursor.getFieldLength();
+		const key = cursor.getFieldKey();
+		assert(!fieldLengths.has(key), "no duplicate keys");
+		fieldLengths.set(cursor.getFieldKey(), expectedFieldLength);
+		assert(expectedFieldLength > 0, "only non empty fields should show up in field iteration");
+		checkFieldTraversal(cursor, { parent: path, field: key });
+	}
 
-    // Add some fields which should be empty to check:
-    for (const key of testKeys) {
-        if (!fieldLengths.has(key)) {
-            fieldLengths.set(key, 0);
-        }
-    }
+	// Add some fields which should be empty to check:
+	for (const key of testKeys) {
+		if (!fieldLengths.has(key)) {
+			fieldLengths.set(key, 0);
+		}
+	}
 
-    // Cheek field access by key
-    for (const [key, length] of fieldLengths) {
-        assert.equal(cursor.mode, CursorLocationType.Nodes);
-        cursor.enterField(key);
-        assert.equal(cursor.mode, CursorLocationType.Fields);
-        assert.equal(cursor.getFieldLength(), length);
-        assert.equal(cursor.getFieldKey(), key);
-        cursor.exitField();
+	// Cheek field access by key
+	for (const [key, length] of fieldLengths) {
+		assert.equal(cursor.mode, CursorLocationType.Nodes);
+		cursor.enterField(key);
+		assert.equal(cursor.mode, CursorLocationType.Fields);
+		assert.equal(cursor.getFieldLength(), length);
+		assert.equal(cursor.getFieldKey(), key);
+		cursor.exitField();
 
-        // nextField should work after enterField (though might just exit since order is not stable):
-        cursor.enterField(key);
-        if (cursor.nextField()) {
-            const newKey = cursor.getFieldKey();
-            assert(newKey !== key);
-            assert(fieldLengths.get(newKey) ?? 0 > 0);
-            cursor.exitField();
-        }
-    }
+		// nextField should work after enterField (though might just exit since order is not stable):
+		cursor.enterField(key);
+		if (cursor.nextField()) {
+			const newKey = cursor.getFieldKey();
+			assert(newKey !== key);
+			assert(fieldLengths.get(newKey) ?? 0 > 0);
+			cursor.exitField();
+		}
+	}
 
-    assert.equal(cursor.mode, CursorLocationType.Nodes);
-    assert.equal(cursor.value, originalNodeValue);
-    assert.equal(cursor.type, originalNodeType);
+	assert.equal(cursor.mode, CursorLocationType.Nodes);
+	assert.equal(cursor.value, originalNodeValue);
+	assert.equal(cursor.type, originalNodeType);
 }
 
 /**
@@ -709,93 +709,93 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
  * it simply checks that the traversal APIs function, and that a few aspects of them conform with the spec.
  */
 function checkFieldTraversal(cursor: ITreeCursor, expectedPath: FieldUpPath): void {
-    assert.equal(cursor.mode, CursorLocationType.Fields);
-    assert.equal(cursor.pending, false);
-    const expectedFieldLength = cursor.getFieldLength();
-    const key = cursor.getFieldKey();
-    assert(compareFieldUpPaths(cursor.getFieldPath(), expectedPath));
+	assert.equal(cursor.mode, CursorLocationType.Fields);
+	assert.equal(cursor.pending, false);
+	const expectedFieldLength = cursor.getFieldLength();
+	const key = cursor.getFieldKey();
+	assert(compareFieldUpPaths(cursor.getFieldPath(), expectedPath));
 
-    // Check that iterating nodes of this field works as expected.
-    let actualChildNodesTraversed = 0;
-    for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
-        assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
-        assert(cursor.chunkStart <= actualChildNodesTraversed);
-        assert(cursor.chunkLength > actualChildNodesTraversed - cursor.chunkStart);
-        assert(cursor.chunkLength + cursor.chunkStart <= expectedFieldLength);
+	// Check that iterating nodes of this field works as expected.
+	let actualChildNodesTraversed = 0;
+	for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+		assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+		assert(cursor.chunkStart <= actualChildNodesTraversed);
+		assert(cursor.chunkLength > actualChildNodesTraversed - cursor.chunkStart);
+		assert(cursor.chunkLength + cursor.chunkStart <= expectedFieldLength);
 
-        // Make sure down+up navigation gets back to where it started.
-        // Testing this explicitly here before recursing makes debugging issues with this easier.
-        assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
-        cursor.enterField(EmptyKey);
-        cursor.exitField();
-        assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
-        if (cursor.firstField()) {
-            cursor.enterNode(0);
-            cursor.exitNode();
-            cursor.exitField();
-        }
-        assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
-        actualChildNodesTraversed++;
-    }
+		// Make sure down+up navigation gets back to where it started.
+		// Testing this explicitly here before recursing makes debugging issues with this easier.
+		assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+		cursor.enterField(EmptyKey);
+		cursor.exitField();
+		assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+		if (cursor.firstField()) {
+			cursor.enterNode(0);
+			cursor.exitNode();
+			cursor.exitField();
+		}
+		assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+		actualChildNodesTraversed++;
+	}
 
-    assert.equal(
-        actualChildNodesTraversed,
-        expectedFieldLength,
-        "Did not traverse expected number of children",
-    );
+	assert.equal(
+		actualChildNodesTraversed,
+		expectedFieldLength,
+		"Did not traverse expected number of children",
+	);
 
-    // Check node access by index
-    for (let index = 0; index < expectedFieldLength; index++) {
-        assert.equal(cursor.mode, CursorLocationType.Fields);
-        cursor.enterNode(index);
-        assert.equal(cursor.mode, CursorLocationType.Nodes);
-        assert(cursor.seekNodes(0));
-        assert.equal(cursor.fieldIndex, index);
-        cursor.exitNode();
-        assert.equal(cursor.mode, CursorLocationType.Fields);
+	// Check node access by index
+	for (let index = 0; index < expectedFieldLength; index++) {
+		assert.equal(cursor.mode, CursorLocationType.Fields);
+		cursor.enterNode(index);
+		assert.equal(cursor.mode, CursorLocationType.Nodes);
+		assert(cursor.seekNodes(0));
+		assert.equal(cursor.fieldIndex, index);
+		cursor.exitNode();
+		assert.equal(cursor.mode, CursorLocationType.Fields);
 
-        // Seek to node should work:
-        cursor.enterNode(0);
-        cursor.seekNodes(index);
-        assert.equal(cursor.fieldIndex, index);
-        // Seek backwards should be supported
-        if (index > 0) {
-            assert(cursor.seekNodes(-1));
-            assert.equal(cursor.fieldIndex, index - 1);
-            // Seek should mix with nextNode
-            assert(cursor.nextNode());
-            assert.equal(cursor.fieldIndex, index);
-        }
-        cursor.exitNode();
-        assert.equal(cursor.mode, CursorLocationType.Fields);
+		// Seek to node should work:
+		cursor.enterNode(0);
+		cursor.seekNodes(index);
+		assert.equal(cursor.fieldIndex, index);
+		// Seek backwards should be supported
+		if (index > 0) {
+			assert(cursor.seekNodes(-1));
+			assert.equal(cursor.fieldIndex, index - 1);
+			// Seek should mix with nextNode
+			assert(cursor.nextNode());
+			assert.equal(cursor.fieldIndex, index);
+		}
+		cursor.exitNode();
+		assert.equal(cursor.mode, CursorLocationType.Fields);
 
-        // Seek past end should exit
-        cursor.enterNode(index);
-        assert(!cursor.seekNodes(expectedFieldLength - index));
-        cursor.enterNode(index);
-        assert(!cursor.seekNodes(Number.POSITIVE_INFINITY));
+		// Seek past end should exit
+		cursor.enterNode(index);
+		assert(!cursor.seekNodes(expectedFieldLength - index));
+		cursor.enterNode(index);
+		assert(!cursor.seekNodes(Number.POSITIVE_INFINITY));
 
-        // Seek before beginning should exit
-        cursor.enterNode(index);
-        assert(!cursor.seekNodes(-(index + 1)));
-        cursor.enterNode(index);
-        assert(!cursor.seekNodes(Number.NEGATIVE_INFINITY));
-    }
+		// Seek before beginning should exit
+		cursor.enterNode(index);
+		assert(!cursor.seekNodes(-(index + 1)));
+		cursor.enterNode(index);
+		assert(!cursor.seekNodes(Number.NEGATIVE_INFINITY));
+	}
 
-    // skipPendingFields should have no effect since not pending
-    assert(cursor.skipPendingFields());
-    assert.equal(cursor.getFieldKey(), key);
+	// skipPendingFields should have no effect since not pending
+	assert(cursor.skipPendingFields());
+	assert.equal(cursor.getFieldKey(), key);
 
-    // Recursively validate.
-    actualChildNodesTraversed = 0;
-    for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
-        assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
-        checkTraversal(cursor, {
-            parent: expectedPath.parent,
-            parentField: expectedPath.field,
-            parentIndex: actualChildNodesTraversed,
-        });
-        assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
-        actualChildNodesTraversed++;
-    }
+	// Recursively validate.
+	actualChildNodesTraversed = 0;
+	for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+		assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+		checkTraversal(cursor, {
+			parent: expectedPath.parent,
+			parentField: expectedPath.field,
+			parentIndex: actualChildNodesTraversed,
+		});
+		assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+		actualChildNodesTraversed++;
+	}
 }
