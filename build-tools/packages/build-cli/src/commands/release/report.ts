@@ -678,6 +678,6 @@ async function writeReport(
 	log?.info(`${kind} report written to ${reportPath}`);
 	const reportOutput = toReportKind(report, kind);
 
-    await writeJson(reportPath, reportOutput, { spaces: 2 });
-    sortJson.overwrite(reportPath);
+	await writeJson(reportPath, reportOutput, { spaces: 2 });
+	sortJson.overwrite(reportPath);
 }
