@@ -92,7 +92,7 @@ describe("TinyliciousClient", () => {
 	/**
 	 * Scenario: test if TinyliciousClient can get a non-exiting container.
 	 *
-	 * Expected behavior: an error should be thrown when trying to get a non-exisitent container.
+	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
 	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
 		const containerAndServicesP = tinyliciousClient.getContainer("containerConfig", schema);
@@ -179,7 +179,7 @@ describe("TinyliciousClient", () => {
 	it("can change initialObjects value", async () => {
 		const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
 		const containerId = await containerCreate.attach();
-		await new Promise<void>((resolve, reject) => {
+		await timeoutPromise((resolve, reject) => {
 			containerCreate.on("connected", () => {
 				resolve();
 			});
@@ -189,8 +189,23 @@ describe("TinyliciousClient", () => {
 		const map1Create = initialObjectsCreate.map1 as SharedMap;
 		map1Create.set("new-key", "new-value");
 		const valueCreate = await map1Create.get("new-key");
+		// Make sure the op round tripped
+		await timeoutPromise((resolve, reject) => {
+			if (!containerCreate.isDirty) {
+				resolve();
+			}
+			containerCreate.on("saved", () => {
+				resolve();
+			});
+		});
 
 		const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
+		// Make sure the container get the changed state
+		await timeoutPromise((resolve, reject) => {
+			containerGet.on("connected", () => {
+				resolve();
+			});
+		});
 		const map1Get = containerGet.initialObjects.map1 as SharedMap;
 		const valueGet = await map1Get.get("new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
