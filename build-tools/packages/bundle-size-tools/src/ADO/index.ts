@@ -4,18 +4,18 @@
  */
 
 export {
-    getBundleBuddyConfigFileFromZip,
-    getBundlePathsFromZipObject,
-    getStatsFileFromZip,
-    getZipObjectFromArtifact,
+	getBundleBuddyConfigFileFromZip,
+	getBundlePathsFromZipObject,
+	getStatsFileFromZip,
+	getZipObjectFromArtifact,
 } from "./AdoArtifactFileProvider";
 export { ADOSizeComparator } from "./AdoSizeComparator";
 export { IADOConstants, totalSizeMetricName } from "./Constants";
 export { DefaultStatsProcessors } from "./DefaultStatsProcessors";
 export {
-    getBundleBuddyConfigFromFileSystem,
-    getBundlePathsFromFileSystem,
-    getStatsFileFromFileSystem,
+	getBundleBuddyConfigFromFileSystem,
+	getBundlePathsFromFileSystem,
+	getStatsFileFromFileSystem,
 } from "./FileSystemBundleFileProvider";
 export { getAzureDevopsApi } from "./getAzureDevopsApi";
 export { getBuildTagForCommit } from "./getBuildTagForCommit";
