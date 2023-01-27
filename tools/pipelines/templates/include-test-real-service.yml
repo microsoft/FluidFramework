@@ -345,6 +345,7 @@ jobs:
           testResultsFiles: '**/*junit-report.xml'
           searchFolder: ${{ variables.testPackageDir }}
           mergeTestResults: false
+          failTaskOnFailedTests: true
         condition: succeededOrFailed()
 
       - ${{ parameters.additionalSteps }}
