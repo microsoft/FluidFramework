@@ -27,5 +27,5 @@ You can run this example using the following steps:
 
 SimpleMDE uses the following distributed data structures:
 
-- SharedMap - root
-- SharedString - storing SimpleMDE text
+-   SharedMap - root
+-   SharedString - storing SimpleMDE text

@@ -10,16 +10,13 @@ export {
     waitContainerToCatchUp,
 } from "./container";
 export {
-    ICodeDetailsLoader,
-    IDetachedBlobStorage,
-    IFluidModuleWithDetails,
-    ILoaderOptions,
-    ILoaderProps,
-    ILoaderServices,
-    Loader,
-    RelativeLoader,
+	ICodeDetailsLoader,
+	IDetachedBlobStorage,
+	IFluidModuleWithDetails,
+	ILoaderOptions,
+	ILoaderProps,
+	ILoaderServices,
+	Loader,
+	RelativeLoader,
 } from "./loader";
-export {
-    IProtocolHandler,
-    ProtocolHandlerBuilder,
-} from "./protocol";
+export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";

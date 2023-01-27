@@ -27,5 +27,5 @@ You can run this example using the following steps:
 
 Monaco uses the following distributed data structures:
 
-- SharedDirectory - root
-- SharedString - storing Monaco text
+-   SharedDirectory - root
+-   SharedString - storing Monaco text

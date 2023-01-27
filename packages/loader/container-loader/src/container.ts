@@ -7,50 +7,43 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    ITelemetryLogger,
-    ITelemetryProperties,
-    TelemetryEventCategory,
+	ITelemetryLogger,
+	ITelemetryProperties,
+	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
+import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
-    IRequest,
-    IResponse,
-    IFluidRouter,
-} from "@fluidframework/core-interfaces";
-import {
-    IAudience,
-    IConnectionDetails,
-    IContainer,
-    IContainerEvents,
-    IDeltaManager,
-    ICriticalContainerError,
-    ContainerWarning,
-    AttachState,
-    IThrottlingWarning,
-    ReadOnlyInfo,
-    IContainerLoadMode,
-    IFluidCodeDetails,
-    isFluidCodeDetails,
-    IBatchMessage,
+	IAudience,
+	IConnectionDetails,
+	IContainer,
+	IContainerEvents,
+	IDeltaManager,
+	ICriticalContainerError,
+	ContainerWarning,
+	AttachState,
+	IThrottlingWarning,
+	ReadOnlyInfo,
+	IContainerLoadMode,
+	IFluidCodeDetails,
+	isFluidCodeDetails,
+	IBatchMessage,
 } from "@fluidframework/container-definitions";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
-    GenericError,
-    UsageError,
-} from "@fluidframework/container-utils";
-import {
-    IDocumentService,
-    IDocumentStorageService,
-    IFluidResolvedUrl,
-    IResolvedUrl,
+	IDocumentService,
+	IDocumentStorageService,
+	IFluidResolvedUrl,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
-    readAndParse,
-    OnlineStatus,
-    isOnline,
-    ensureFluidResolvedUrl,
-    combineAppAndProtocolSummary,
-    runWithRetry,
-    isFluidResolvedUrl,
+	readAndParse,
+	OnlineStatus,
+	isOnline,
+	ensureFluidResolvedUrl,
+	combineAppAndProtocolSummary,
+	runWithRetry,
+	isFluidResolvedUrl,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -74,17 +67,17 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-    ChildLogger,
-    EventEmitterWithErrorHandling,
-    PerformanceEvent,
-    raiseConnectedEvent,
-    TelemetryLogger,
-    connectedEventName,
-    disconnectedEventName,
-    normalizeError,
-    MonitoringContext,
-    loggerToMonitoringContext,
-    wrapError,
+	ChildLogger,
+	EventEmitterWithErrorHandling,
+	PerformanceEvent,
+	raiseConnectedEvent,
+	TelemetryLogger,
+	connectedEventName,
+	disconnectedEventName,
+	normalizeError,
+	MonitoringContext,
+	loggerToMonitoringContext,
+	wrapError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -104,15 +97,15 @@ import {
     createConnectionStateHandler,
 } from "./connectionStateHandler";
 import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
-import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, QuorumProxy } from "./quorum";
+import {
+	initQuorumValuesFromCodeDetails,
+	getCodeDetailsFromQuorumValues,
+	QuorumProxy,
+} from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
-import {
-    IProtocolHandler,
-    ProtocolHandler,
-    ProtocolHandlerBuilder,
-} from "./protocol";
+import { IProtocolHandler, ProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -120,23 +113,23 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 export interface IContainerLoadOptions {
-    /**
-     * Disables the Container from reconnecting if false, allows reconnect otherwise.
-     */
-    canReconnect?: boolean;
-    /**
-     * Client details provided in the override will be merged over the default client.
-     */
-    clientDetailsOverride?: IClientDetails;
-    resolvedUrl: IFluidResolvedUrl;
-    /**
-     * Control which snapshot version to load from.  See IParsedUrl for detailed information.
-     */
-    version: string | undefined;
-    /**
-     * Loads the Container in paused state if true, unpaused otherwise.
-     */
-    loadMode?: IContainerLoadMode;
+	/**
+	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
+	 */
+	canReconnect?: boolean;
+	/**
+	 * Client details provided in the override will be merged over the default client.
+	 */
+	clientDetailsOverride?: IClientDetails;
+	resolvedUrl: IFluidResolvedUrl;
+	/**
+	 * Control which snapshot version to load from.  See IParsedUrl for detailed information.
+	 */
+	version: string | undefined;
+	/**
+	 * Loads the Container in paused state if true, unpaused otherwise.
+	 */
+	loadMode?: IContainerLoadMode;
 }
 
 interface IContainerConfig {
@@ -169,77 +162,84 @@ interface IContainerConfig {
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
  */
 export async function waitContainerToCatchUp(container: IContainer) {
-    // Make sure we stop waiting if container is closed.
-    if (container.closed) {
-        throw new UsageError("waitContainerToCatchUp: Container closed");
-    }
+	// Make sure we stop waiting if container is closed.
+	if (container.closed) {
+		throw new UsageError("waitContainerToCatchUp: Container closed");
+	}
 
-    return new Promise<boolean>((resolve, reject) => {
-        const deltaManager = container.deltaManager;
+	return new Promise<boolean>((resolve, reject) => {
+		const deltaManager = container.deltaManager;
 
-        const closedCallback = (err?: ICriticalContainerError | undefined) => {
-            container.off("closed", closedCallback);
-            const baseMessage = "Container closed while waiting to catch up";
-            reject(
-                err !== undefined
-                    ? wrapError(err, (innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`))
-                    : new GenericError(baseMessage),
-            );
-        };
-        container.on("closed", closedCallback);
+		const closedCallback = (err?: ICriticalContainerError | undefined) => {
+			container.off("closed", closedCallback);
+			const baseMessage = "Container closed while waiting to catch up";
+			reject(
+				err !== undefined
+					? wrapError(
+							err,
+							(innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`),
+					  )
+					: new GenericError(baseMessage),
+			);
+		};
+		container.on("closed", closedCallback);
 
-        // Depending on config, transition to "connected" state may include the guarantee
-        // that all known ops have been processed.  If so, we may introduce additional wait here.
-        // Waiting for "connected" state in either case gets us at least to our own Join op
-        // which is a reasonable approximation of "caught up"
-        const waitForOps = () => {
-            assert(container.connectionState === ConnectionState.CatchingUp
-                || container.connectionState === ConnectionState.Connected,
-                0x0cd /* "Container disconnected while waiting for ops!" */);
-            const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
+		// Depending on config, transition to "connected" state may include the guarantee
+		// that all known ops have been processed.  If so, we may introduce additional wait here.
+		// Waiting for "connected" state in either case gets us at least to our own Join op
+		// which is a reasonable approximation of "caught up"
+		const waitForOps = () => {
+			assert(
+				container.connectionState === ConnectionState.CatchingUp ||
+					container.connectionState === ConnectionState.Connected,
+				0x0cd /* "Container disconnected while waiting for ops!" */,
+			);
+			const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
-            const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
-            assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
-                0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
-            if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
-                container.off("closed", closedCallback);
-                resolve(hasCheckpointSequenceNumber);
-                return;
-            }
-            const callbackOps = (message: ISequencedDocumentMessage) => {
-                if (connectionOpSeqNumber <= message.sequenceNumber) {
-                    container.off("closed", closedCallback);
-                    resolve(hasCheckpointSequenceNumber);
-                    deltaManager.off("op", callbackOps);
-                }
-            };
-            deltaManager.on("op", callbackOps);
-        };
+			const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
+			assert(
+				deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
+				0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */,
+			);
+			if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
+				container.off("closed", closedCallback);
+				resolve(hasCheckpointSequenceNumber);
+				return;
+			}
+			const callbackOps = (message: ISequencedDocumentMessage) => {
+				if (connectionOpSeqNumber <= message.sequenceNumber) {
+					container.off("closed", closedCallback);
+					resolve(hasCheckpointSequenceNumber);
+					deltaManager.off("op", callbackOps);
+				}
+			};
+			deltaManager.on("op", callbackOps);
+		};
 
-        // We can leverage DeltaManager's "connect" event here and test for ConnectionState.Disconnected
-        // But that works only if service provides us checkPointSequenceNumber
-        // Our internal testing is based on R11S that does not, but almost all tests connect as "write" and
-        // use this function to catch up, so leveraging our own join op as a fence/barrier
-        if (container.connectionState === ConnectionState.Connected) {
-            waitForOps();
-            return;
-        }
+		// We can leverage DeltaManager's "connect" event here and test for ConnectionState.Disconnected
+		// But that works only if service provides us checkPointSequenceNumber
+		// Our internal testing is based on R11S that does not, but almost all tests connect as "write" and
+		// use this function to catch up, so leveraging our own join op as a fence/barrier
+		if (container.connectionState === ConnectionState.Connected) {
+			waitForOps();
+			return;
+		}
 
-        const callback = () => {
-            container.off(connectedEventName, callback);
-            waitForOps();
-        };
-        container.on(connectedEventName, callback);
+		const callback = () => {
+			container.off(connectedEventName, callback);
+			waitForOps();
+		};
+		container.on(connectedEventName, callback);
 
-        if (container.connectionState === ConnectionState.Disconnected) {
-            container.connect();
-        }
-    });
+		if (container.connectionState === ConnectionState.Disconnected) {
+			container.connect();
+		}
+	});
 }
 
 const getCodeProposal =
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	(quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
  * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
@@ -248,15 +248,15 @@ const getCodeProposal =
  * @param action - functor to call and measure
  */
 export async function ReportIfTooLong(
-    logger: ITelemetryLogger,
-    eventName: string,
-    action: () => Promise<ITelemetryProperties>,
+	logger: ITelemetryLogger,
+	eventName: string,
+	action: () => Promise<ITelemetryProperties>,
 ) {
-    const event = PerformanceEvent.start(logger, { eventName });
-    const props = await action();
-    if (event.duration > 200) {
-        event.end(props);
-    }
+	const event = PerformanceEvent.start(logger, { eventName });
+	const props = await action();
+	if (event.duration > 200) {
+		event.end(props);
+	}
 }
 
 /**

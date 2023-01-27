@@ -9,10 +9,10 @@ import { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/ma
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import {
-    ReferenceType,
-    reservedMarkerIdKey,
-    reservedMarkerSimpleTypeKey,
-    reservedTileLabelsKey,
+	ReferenceType,
+	reservedMarkerIdKey,
+	reservedMarkerSimpleTypeKey,
+	reservedTileLabelsKey,
 } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { getTextAndMarkers, SharedString } from "@fluidframework/sequence";
@@ -40,11 +40,12 @@ const cellId = "cellKey";
 const counterId = "counterKey";
 const directoryId = "directoryKey";
 const registry: ChannelFactoryRegistry = [
-    [mapId, SharedMap.getFactory()],
-    [stringId, SharedString.getFactory()],
-    [cellId, SharedCell.getFactory()],
-    [counterId, SharedCounter.getFactory()],
-    [directoryId, SharedDirectory.getFactory()]];
+	[mapId, SharedMap.getFactory()],
+	[stringId, SharedString.getFactory()],
+	[cellId, SharedCell.getFactory()],
+	[counterId, SharedCounter.getFactory()],
+	[directoryId, SharedDirectory.getFactory()],
+];
 
 const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
     getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -78,69 +79,81 @@ const testValue = "test value";
 const testIncrementValue = 5;
 
 const getPendingStateWithoutClose = (container: IContainer): string => {
-    const containerClose = container.close;
-    container.close = (message) => assert(message === undefined);
-    const pendingState = container.closeAndGetPendingLocalState();
-    assert(typeof pendingState === "string");
-    container.close = containerClose;
-    return pendingState;
+	const containerClose = container.close;
+	container.close = (message) => assert(message === undefined);
+	const pendingState = container.closeAndGetPendingLocalState();
+	assert(typeof pendingState === "string");
+	container.close = containerClose;
+	return pendingState;
 };
 
-type SharedObjCallback = (container: IContainer, dataStore: ITestFluidObject) => void | Promise<void>;
+type SharedObjCallback = (
+	container: IContainer,
+	dataStore: ITestFluidObject,
+) => void | Promise<void>;
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
-const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: SharedObjCallback = () => undefined) => {
-    const container = await args.loadTestContainer(testContainerConfig);
-    await waitForContainerConnection(container, true);
-    const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+const getPendingOps = async (
+	args: ITestObjectProvider,
+	send: boolean,
+	cb: SharedObjCallback = () => undefined,
+) => {
+	const container = await args.loadTestContainer(testContainerConfig);
+	await waitForContainerConnection(container, true);
+	const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 
-    [...Array(lots).keys()].map((i) => dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i));
+	[...Array(lots).keys()].map((i) =>
+		dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
+	);
 
-    await args.ensureSynchronized();
-    await args.opProcessingController.pauseProcessing(container);
-    assert(dataStore.runtime.deltaManager.outbound.paused);
+	await args.ensureSynchronized();
+	await args.opProcessingController.pauseProcessing(container);
+	assert(dataStore.runtime.deltaManager.outbound.paused);
 
-    await cb(container, dataStore);
+	await cb(container, dataStore);
 
-    let pendingState: string;
-    if (send) {
-        pendingState = getPendingStateWithoutClose(container);
-        await args.ensureSynchronized();
-        container.close();
-    } else {
-        pendingState = container.closeAndGetPendingLocalState();
-    }
+	let pendingState: string;
+	if (send) {
+		pendingState = getPendingStateWithoutClose(container);
+		await args.ensureSynchronized();
+		container.close();
+	} else {
+		pendingState = container.closeAndGetPendingLocalState();
+	}
 
-    args.opProcessingController.resumeProcessing();
+	args.opProcessingController.resumeProcessing();
 
-    assert.ok(pendingState);
-    return pendingState;
+	assert.ok(pendingState);
+	return pendingState;
 };
 
-async function loadOffline(provider: ITestObjectProvider, request: IRequest, pendingLocalState?: string):
-    Promise<{ container: IContainer; connect: () => void; }> {
-    const p = new Deferred();
-    const documentServiceFactory = provider.driver.createDocumentServiceFactory();
+async function loadOffline(
+	provider: ITestObjectProvider,
+	request: IRequest,
+	pendingLocalState?: string,
+): Promise<{ container: IContainer; connect: () => void }> {
+	const p = new Deferred();
+	const documentServiceFactory = provider.driver.createDocumentServiceFactory();
 
-    // patch document service methods to simulate offline by not resolving until we choose to
-    const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
-    documentServiceFactory.createDocumentService = async (...args) => {
-        const docServ = await boundFn(...args);
-        const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
-        docServ.connectToDeltaStream = async (...args2) => {
-            await p.promise;
-            return boundCTDStream(...args2);
-        };
-        const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
-        docServ.connectToDeltaStorage = async (...args2) => {
-            await p.promise;
-            return boundCTDStorage(...args2);
-        };
-        const boundCTStorage = docServ.connectToStorage.bind(docServ);
-        docServ.connectToStorage = async (...args2) => {
-            await p.promise;
-            return boundCTStorage(...args2);
-        };
+	// patch document service methods to simulate offline by not resolving until we choose to
+	const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
+	documentServiceFactory.createDocumentService = async (...args) => {
+		const docServ = await boundFn(...args);
+		const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
+		docServ.connectToDeltaStream = async (...args2) => {
+			await p.promise;
+			return boundCTDStream(...args2);
+		};
+		const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
+		docServ.connectToDeltaStorage = async (...args2) => {
+			await p.promise;
+			return boundCTDStorage(...args2);
+		};
+		const boundCTStorage = docServ.connectToStorage.bind(docServ);
+		docServ.connectToStorage = async (...args2) => {
+			await p.promise;
+			return boundCTStorage(...args2);
+		};
 
         return docServ;
     };

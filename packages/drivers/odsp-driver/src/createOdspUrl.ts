@@ -13,18 +13,16 @@ import { OdspFluidDataStoreLocator } from "./contractsPublic";
  * Encodes ODC/SPO information into a URL format that can be handled by the Loader
  * @param l -The property bag of necessary properties to locate a Fluid data store and craft a url for it
  */
-export function createOdspUrl(
-    l: OdspFluidDataStoreLocator,
-): string {
-    let odspUrl = `${l.siteUrl}?driveId=${encodeURIComponent(l.driveId)}&itemId=${encodeURIComponent(
-        l.itemId,
-    )}&path=${encodeURIComponent(l.dataStorePath)}`;
-    if (l.containerPackageName) {
-        odspUrl += `&containerPackageName=${encodeURIComponent(l.containerPackageName)}`;
-    }
-    if (l.fileVersion) {
-        odspUrl += `&fileVersion=${encodeURIComponent(l.fileVersion)}`;
-    }
+export function createOdspUrl(l: OdspFluidDataStoreLocator): string {
+	let odspUrl = `${l.siteUrl}?driveId=${encodeURIComponent(
+		l.driveId,
+	)}&itemId=${encodeURIComponent(l.itemId)}&path=${encodeURIComponent(l.dataStorePath)}`;
+	if (l.containerPackageName) {
+		odspUrl += `&containerPackageName=${encodeURIComponent(l.containerPackageName)}`;
+	}
+	if (l.fileVersion) {
+		odspUrl += `&fileVersion=${encodeURIComponent(l.fileVersion)}`;
+	}
 
-    return odspUrl;
+	return odspUrl;
 }

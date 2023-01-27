@@ -5,76 +5,90 @@
 
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
-import { CompressionAlgorithms,
-         ContainerMessageType,
-         IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+	CompressionAlgorithms,
+	ContainerMessageType,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-    timeoutPromise,
-    ITestObjectProvider,
-    ITestContainerConfig,
-    DataObjectFactoryType,
+	ITestFluidObject,
+	ChannelFactoryRegistry,
+	timeoutPromise,
+	ITestObjectProvider,
+	ITestContainerConfig,
+	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
 const registry: ChannelFactoryRegistry = [
-    [map1Id, SharedMap.getFactory()],
-    [map2Id, SharedMap.getFactory()],
+	[map1Id, SharedMap.getFactory()],
+	[map2Id, SharedMap.getFactory()],
 ];
 const testContainerConfig: ITestContainerConfig = {
-    fluidDataObjectType: DataObjectFactoryType.Test,
-    registry,
+	fluidDataObjectType: DataObjectFactoryType.Test,
+	registry,
 };
 
 // Function to yield a turn in the Javascript event loop.
 async function yieldJSTurn(): Promise<void> {
-    await new Promise<void>((resolve) => {
-        setTimeout(resolve);
-    });
+	await new Promise<void>((resolve) => {
+		setTimeout(resolve);
+	});
 }
 
-function setupBatchMessageListener(dataStore: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
-    dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
-        if (runtimeMessage !== false) {
-            receivedMessages.push(message);
-        }
-    });
+function setupBatchMessageListener(
+	dataStore: ITestFluidObject,
+	receivedMessages: ISequencedDocumentMessage[],
+) {
+	dataStore.context.containerRuntime.on(
+		"op",
+		(message: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+			if (runtimeMessage !== false) {
+				receivedMessages.push(message);
+			}
+		},
+	);
 }
 
 function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
-    const batchCount = batchMessages.length;
-    assert(batchCount !== 0, "No messages in the batch");
+	const batchCount = batchMessages.length;
+	assert(batchCount !== 0, "No messages in the batch");
 
-    const batchBeginMetadata = batchMessages[0].metadata?.batch;
-    const batchEndMetadata = batchMessages[batchCount - 1].metadata?.batch;
-    if (batchCount === 1) {
-        assert.equal(batchBeginMetadata, undefined, "Batch with one message should not have batch metadata");
-        return;
-    }
+	const batchBeginMetadata = batchMessages[0].metadata?.batch;
+	const batchEndMetadata = batchMessages[batchCount - 1].metadata?.batch;
+	if (batchCount === 1) {
+		assert.equal(
+			batchBeginMetadata,
+			undefined,
+			"Batch with one message should not have batch metadata",
+		);
+		return;
+	}
 
-    assert.equal(batchBeginMetadata, true, "Batch begin metadata not found");
-    assert.equal(batchEndMetadata, false, "Batch end metadata not found");
+	assert.equal(batchBeginMetadata, true, "Batch begin metadata not found");
+	assert.equal(batchEndMetadata, false, "Batch end metadata not found");
 }
 
 const filterDatastoreOps = (messages: ISequencedDocumentMessage[]) => {
-    return messages.filter((m) => m.type === ContainerMessageType.FluidDataStoreOp);
+	return messages.filter((m) => m.type === ContainerMessageType.FluidDataStoreOp);
 };
 
 async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
-    return Promise.all(dataStores.map(async (dataStore) => {
-        const runtime = dataStore.context.containerRuntime as IContainerRuntime;
-        while (runtime.isDirty) {
-            await timeoutPromise((resolve) => runtime.once("batchEnd", resolve));
-        }
-    }));
+	return Promise.all(
+		dataStores.map(async (dataStore) => {
+			const runtime = dataStore.context.containerRuntime as IContainerRuntime;
+			while (runtime.isDirty) {
+				await timeoutPromise((resolve) => runtime.once("batchEnd", resolve));
+			}
+		}),
+	);
 }
 
 describeNoCompat("Flushing ops", (getTestObjectProvider) => {
@@ -651,64 +665,64 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
                 // Yield a turn so that the ops are flushed.
                 await yieldJSTurn();
 
-                // Verify that the document dirty state is cleaned after the ops are processed.
-                await provider.ensureSynchronized();
-                verifyDocumentDirtyState(dataObject1, false);
-            });
+				// Verify that the document dirty state is cleaned after the ops are processed.
+				await provider.ensureSynchronized();
+				verifyDocumentDirtyState(dataObject1, false);
+			});
 
-            it("should clean document dirty state after consecutive batches are flushed", async () => {
-                dataObject1map1.set("key1", "value1");
+			it("should clean document dirty state after consecutive batches are flushed", async () => {
+				dataObject1map1.set("key1", "value1");
 
-                // Verify that the document is correctly set to dirty.
-                verifyDocumentDirtyState(dataObject1, true);
+				// Verify that the document is correctly set to dirty.
+				verifyDocumentDirtyState(dataObject1, true);
 
-                // Yield a turn so that the op is flushed.
-                await yieldJSTurn();
+				// Yield a turn so that the op is flushed.
+				await yieldJSTurn();
 
-                dataObject1map2.set("key2", "value2");
-                dataObject1map1.set("key3", "value3");
-                dataObject1map2.set("key4", "value4");
+				dataObject1map2.set("key2", "value2");
+				dataObject1map1.set("key3", "value3");
+				dataObject1map2.set("key4", "value4");
 
-                // Verify that the document is correctly set to dirty.
-                verifyDocumentDirtyState(dataObject1, true);
+				// Verify that the document is correctly set to dirty.
+				verifyDocumentDirtyState(dataObject1, true);
 
-                // Yield a turn so that the ops are flushed.
-                await yieldJSTurn();
+				// Yield a turn so that the ops are flushed.
+				await yieldJSTurn();
 
-                // Check that the document dirty state is cleaned after the ops are processed.
-                // Verify that the document dirty state is cleaned after the ops are processed.
-                await provider.ensureSynchronized();
-                verifyDocumentDirtyState(dataObject1, false);
-            });
+				// Check that the document dirty state is cleaned after the ops are processed.
+				// Verify that the document dirty state is cleaned after the ops are processed.
+				await provider.ensureSynchronized();
+				verifyDocumentDirtyState(dataObject1, false);
+			});
 
-            it("should clean document dirty state after batch and non-batch messages are flushed", async () => {
-                // Send a single message and yield a turn so that it is flushed.
-                dataObject1map1.set("key1", "value1");
-                await yieldJSTurn();
+			it("should clean document dirty state after batch and non-batch messages are flushed", async () => {
+				// Send a single message and yield a turn so that it is flushed.
+				dataObject1map1.set("key1", "value1");
+				await yieldJSTurn();
 
-                // Flush a couple of batches consecutively and yield a turn so that they are flushed.
-                dataObject1map2.set("key2", "value2");
-                dataObject1map1.set("key3", "value3");
-                dataObject1map2.set("key4", "value4");
-                await yieldJSTurn();
+				// Flush a couple of batches consecutively and yield a turn so that they are flushed.
+				dataObject1map2.set("key2", "value2");
+				dataObject1map1.set("key3", "value3");
+				dataObject1map2.set("key4", "value4");
+				await yieldJSTurn();
 
-                // Send a single message and yield a turn so that it is flushed.
-                dataObject1map1.set("key5", "value5");
-                await yieldJSTurn();
+				// Send a single message and yield a turn so that it is flushed.
+				dataObject1map1.set("key5", "value5");
+				await yieldJSTurn();
 
-                // Send a single message.
-                dataObject1map1.set("key5", "value5");
+				// Send a single message.
+				dataObject1map1.set("key5", "value5");
 
-                // Verify that the document is correctly set to dirty.
-                verifyDocumentDirtyState(dataObject1, true);
+				// Verify that the document is correctly set to dirty.
+				verifyDocumentDirtyState(dataObject1, true);
 
-                // Yield a turn so that the ops are flushed.
-                await yieldJSTurn();
+				// Yield a turn so that the ops are flushed.
+				await yieldJSTurn();
 
-                // Verify that the document dirty state is cleaned after the ops are processed.
-                await provider.ensureSynchronized();
-                verifyDocumentDirtyState(dataObject1, false);
-            });
-        });
-    });
+				// Verify that the document dirty state is cleaned after the ops are processed.
+				await provider.ensureSynchronized();
+				verifyDocumentDirtyState(dataObject1, false);
+			});
+		});
+	});
 });

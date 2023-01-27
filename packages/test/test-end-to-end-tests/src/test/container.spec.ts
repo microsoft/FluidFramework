@@ -6,23 +6,23 @@
 import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
-    IPendingLocalState,
-    ContainerErrorType,
-    LoaderHeader,
-    IFluidCodeDetails,
+	IPendingLocalState,
+	ContainerErrorType,
+	LoaderHeader,
+	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
-    Container,
-    ConnectionState,
-    Loader,
-    ILoaderProps,
-    waitContainerToCatchUp,
+	Container,
+	ConnectionState,
+	Loader,
+	ILoaderProps,
+	waitContainerToCatchUp,
 } from "@fluidframework/container-loader";
 import {
-    DriverErrorType,
-    FiveDaysMs,
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
+	DriverErrorType,
+	FiveDaysMs,
+	IDocumentServiceFactory,
+	IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
 import {
@@ -39,11 +39,11 @@ import {
 import { ensureFluidResolvedUrl, IAnyDriverError } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    getDataStoreFactory,
-    ITestDataObject,
-    TestDataObjectType,
-    describeNoCompat,
-    itExpects,
+	getDataStoreFactory,
+	ITestDataObject,
+	TestDataObjectType,
+	describeNoCompat,
+	itExpects,
 } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -596,11 +596,11 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 });
 
 describeNoCompat("Driver", (getTestObjectProvider) => {
-    it("Driver Storage Policy Values", async () => {
-        const provider = getTestObjectProvider();
-        const fiveDaysMs: FiveDaysMs = 432_000_000;
+	it("Driver Storage Policy Values", async () => {
+		const provider = getTestObjectProvider();
+		const fiveDaysMs: FiveDaysMs = 432_000_000;
 
-        const container = await provider.makeTestContainer() as Container;
-        assert.equal(container.storage.policies?.maximumCacheDurationMs, fiveDaysMs);
-    });
+		const container = (await provider.makeTestContainer()) as Container;
+		assert.equal(container.storage.policies?.maximumCacheDurationMs, fiveDaysMs);
+	});
 });
