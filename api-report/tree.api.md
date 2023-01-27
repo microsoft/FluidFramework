@@ -678,9 +678,7 @@ export interface ITreeCursor {
     getFieldKey(): FieldKey;
     // (undocumented)
     getFieldLength(): number;
-    // (undocumented)
     getFieldPath(prefix?: PathRootPrefix): FieldUpPath;
-    // (undocumented)
     getPath(prefix?: PathRootPrefix): UpPath | undefined;
     readonly mode: CursorLocationType;
     nextField(): boolean;
@@ -1103,6 +1101,12 @@ export interface PathRootPrefix {
     parent?: UpPath | undefined;
     rootFieldOverride?: FieldKey;
 }
+
+// @public
+export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldUpPath): FieldUpPath;
+
+// @public
+export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
 // @public (undocumented)
 export type PrimitiveValue = string | boolean | number;

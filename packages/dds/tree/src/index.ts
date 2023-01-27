@@ -176,6 +176,8 @@ export {
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
     SequenceField,
+    prefixPath,
+    prefixFieldPath,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

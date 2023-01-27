@@ -97,7 +97,7 @@ export interface ITreeCursor {
     enterNode(childIndex: number): void;
 
     /**
-     * @returns a path to the current field. See {@link FieldUpPath}.
+     * Returns a path to the current field. See {@link FieldUpPath}.
      *
      * Only valid when `mode` is `Fields`.
      *
@@ -105,13 +105,19 @@ export interface ITreeCursor {
      * If the cursor is not rooted at such a node, the `prefix` should be used to ensure the path has the correct root.
      * This requirement exists because {@link FieldUpPath}s are absolute paths
      * and thus must be rooted in a detached sequence.
+     *
+     * @param prefix - optional overrides to apply to the root of the returned path.
+     * See {@link PathRootPrefix}.
+     * This adjusts the path as if the tree data accessible to this cursor is part of a larger tree.
+     *
+     * @returns a path to the current field.
      */
     getFieldPath(prefix?: PathRootPrefix): FieldUpPath;
 
     // ********** APIs for when mode = Nodes ********** //
 
     /**
-     * @returns a path to the current node. See {@link UpPath}.
+     * Returns a path to the current node. See {@link UpPath}.
      *
      * Only valid when `mode` is `Nodes`.
      *
@@ -119,6 +125,12 @@ export interface ITreeCursor {
      * If the cursor is not rooted at such a node, the `prefix` should be used to ensure the path has the correct root.
      * This requirement exists because {@link UpPath}s are absolute paths
      * and thus must be rooted in a detached sequence.
+     *
+     * @param prefix - optional overrides to apply to the root of the returned path.
+     * See {@link PathRootPrefix}.
+     * This adjusts the path as if the tree data accessible to this cursor is part of a larger tree.
+     *
+     * @returns a path to the current node.
      */
     getPath(prefix?: PathRootPrefix): UpPath | undefined;
 
@@ -210,28 +222,31 @@ export interface ITreeCursor {
 }
 
 /**
- * Prefix to use as the root of a path.
+ * Prefix to apply to the as the root of a {@link UpPath} or {@link FieldUpPath}.
  *
- * This describes a location that the content accessible through the cursor could be parented,
- * and is used to adjust the paths to be as if the content were parented there.
- *
- * Typically this is used to make trees appear to be part of a forest when getting their path.
+ * @remarks This can be used to take a path relative to a subtree, and make it relative to a larger containing tree.
+ * For example, if a node is being inserted in the 5th position in a field "Foo", you can update a path in that node's subtree to its new path by prefixing it with
+ * `{ parent: theNodeAboveTheMovedNode, rootFieldOverride: Foo, indexOffset: 5 }`.
+ * See {@link prefixPath} and {@link prefixFieldPath} for how to apply the prefix to the paths.
  */
 export interface PathRootPrefix {
     /**
-     * The parent, replacing "undefined" at the root of the prefixed path.
+     * The new parent to place above root of the path which is being prefixed.
+     * This replaces the `undefined` at the root of the path.
+     *
+     * @remarks specifying `undefined` here results in no change to the path.
      */
     parent?: UpPath | undefined;
 
     /**
-     * Overrides `parentField` for the top most {@link UpPath} in the path.
-     * This has no effect if the whole path is just `undefined`.
+     * The field of `parent` that the original path will be included under.
+     *
+     * If `undefined` the root field key from the original path will be used.
      */
     rootFieldOverride?: FieldKey;
 
     /**
-     * Added to `parentIndex` of the top most {@link UpPath} in the path.
-     * This has no effect if the whole path is just `undefined`.
+     * Offset to add to the uppermost `parentIndex` in the original path.
      */
     indexOffset?: number;
 }
