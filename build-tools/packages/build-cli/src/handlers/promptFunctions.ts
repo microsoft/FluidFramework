@@ -336,7 +336,7 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
             prompt.sections.push({
                 title: "FIRST",
                 message: `Release these packages first:\n\n${chalk.blue(packageSection)}`,
-                cmd: `flub bump deps ${packageSection} --updateType latest`,
+                cmd: `flub release -p ${packageSection}`,
             });
         }
 
@@ -349,7 +349,7 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
             prompt.sections.push({
                 title: "NEXT",
                 message: `Release these release groups:\n\n${chalk.blue(packageSection)}`,
-                cmd: `flub bump deps ${packageSection} --updateType latest`,
+                cmd: `flub release -g ${packageSection}`,
             });
         }
     }
