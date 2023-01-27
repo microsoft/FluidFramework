@@ -967,11 +967,11 @@ export function parseTable(
 }
 
 export const rowIsMoribund = (rowMarker: IRowMarker) =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	rowMarker.properties && rowMarker.properties.moribund;
 
 export const cellIsMoribund = (cellMarker: ICellMarker) =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	cellMarker.properties && cellMarker.properties.moribund;
 
 /* eslint-enable @typescript-eslint/no-non-null-assertion */

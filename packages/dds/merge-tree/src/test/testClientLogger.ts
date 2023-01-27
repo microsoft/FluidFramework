@@ -22,10 +22,10 @@ function getOpString(msg: ISequencedDocumentMessage | undefined) {
 	const op = msg.contents as IMergeTreeOp;
 	const opType = op.type.toString();
 	const opPos =
-        // eslint-disable-next-line @typescript-eslint/dot-notation
+		// eslint-disable-next-line @typescript-eslint/dot-notation
 		op?.["pos1"] !== undefined
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-			? `@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}`
+			? // eslint-disable-next-line @typescript-eslint/dot-notation
+			  `@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}`
 			: "";
 
 	const seq =

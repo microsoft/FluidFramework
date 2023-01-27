@@ -149,7 +149,7 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 				} else {
 					if (segment.seq! <= mergeTree.collabWindow.minSeq) {
 						const canAppend =
-                            // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+							// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 							prevSegment &&
 							prevSegment.canAppend(segment) &&
 							matchProperties(prevSegment.properties, segment.properties) &&
