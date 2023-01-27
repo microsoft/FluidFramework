@@ -10,7 +10,6 @@ import { HasClientDebuggers, HasContainerId } from "../CommonProps";
 
 /**
  * {@link ContainerSelectionDropdownProps} input props.
- *
  */
 export interface ContainerSelectionDropdownProps extends HasClientDebuggers, HasContainerId {
     /**
