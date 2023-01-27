@@ -20,7 +20,7 @@ const taskListId = "task-list";
  * fetching the new data. This is an enum as there may be more signals that need to be created.
  */
 const SignalType = {
-    ExternalDataChanged: "ExternalDataChange"
+	ExternalDataChanged: "ExternalDataChange",
 };
 
 /**
@@ -52,21 +52,24 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 		});
 	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-     */
-    protected async createModel(runtime: IContainerRuntime, container: IContainer): Promise<AppModel> {
-        const taskList = await requestFluidObject<ITaskList>(
-            await runtime.getRootDataStore(taskListId),
-            "",
-        );
-        // Register listener only once the model is fully loaded and ready
-        runtime.on("signal", (message) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            if (message?.content?.type === SignalType.ExternalDataChanged) {
-                taskList.importExternalData().catch(console.error);
-            }
-        });
-        return new AppModel(taskList, container, runtime);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+	 */
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<AppModel> {
+		const taskList = await requestFluidObject<ITaskList>(
+			await runtime.getRootDataStore(taskListId),
+			"",
+		);
+		// Register listener only once the model is fully loaded and ready
+		runtime.on("signal", (message) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			if (message?.content?.type === SignalType.ExternalDataChanged) {
+				taskList.importExternalData().catch(console.error);
+			}
+		});
+		return new AppModel(taskList, container, runtime);
+	}
 }

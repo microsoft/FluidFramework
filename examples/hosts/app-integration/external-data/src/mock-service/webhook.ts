@@ -49,7 +49,7 @@ export class MockWebhook implements IDisposable {
 				method: "POST",
 				headers: {
 					"Access-Control-Allow-Origin": "*",
-                    "Content-Type": "application/json",
+					"Content-Type": "application/json",
 				},
 				// TODO: body: New data / data change?
 			}).catch((error) => {

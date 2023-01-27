@@ -22,10 +22,10 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 		super();
 	}
 
-    /**
-     * {@inheritDoc IAppModel.sendCustomDebugSignal}
-     */
-    public readonly sendCustomDebugSignal = (): void => {
-        this.runtime.submitSignal("debugSignal", {type: "ExternalDataChange" });
-    }
+	/**
+	 * {@inheritDoc IAppModel.sendCustomDebugSignal}
+	 */
+	public readonly sendCustomDebugSignal = (): void => {
+		this.runtime.submitSignal("debugSignal", { type: "ExternalDataChange" });
+	};
 }
