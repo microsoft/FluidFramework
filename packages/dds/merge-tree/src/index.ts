@@ -6,7 +6,7 @@
 export {
 	IAttributionCollection,
 	IAttributionCollectionSerializer,
-	createInsertOnlyAttributionPolicy
+	createInsertOnlyAttributionPolicy,
 } from "./attributionCollection";
 export { IIntegerRange } from "./base";
 export { Client } from "./client";
@@ -38,11 +38,7 @@ export {
 	LocalReferenceCollection,
 	LocalReferencePosition,
 } from "./localReference";
-export {
-	AttributionPolicy,
-	IMergeTreeAttributionOptions,
-	IMergeTreeOptions,
-} from "./mergeTree";
+export { AttributionPolicy, IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
 export {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,

@@ -67,47 +67,53 @@ export class SnapshotV1 {
 		this.attributionCollections = [];
 	}
 
-    private getSeqLengthSegs(
-        allSegments: JsonSegmentSpecs[],
-        allLengths: number[],
-        attributionCollections: IAttributionCollection<AttributionKey>[],
-        approxSequenceLength: number,
-        startIndex = 0): MergeTreeChunkV1 {
-        const segments: JsonSegmentSpecs[] = [];
-        const collections: { attribution: IAttributionCollection<AttributionKey>; cachedLength: number; }[] = [];
-        let length = 0;
-        let segmentCount = 0;
-        let hasAttribution = false;
-        while ((length < approxSequenceLength) && ((startIndex + segmentCount) < allSegments.length)) {
-            const pseg = allSegments[startIndex + segmentCount];
-            segments.push(pseg);
-            length += allLengths[startIndex + segmentCount];
-            if (attributionCollections[startIndex + segmentCount]) {
-                hasAttribution = true;
-                collections.push({
-                    attribution: attributionCollections[startIndex + segmentCount],
-                    cachedLength: allLengths[startIndex + segmentCount],
-                });
-            }
-            segmentCount++;
-        }
+	private getSeqLengthSegs(
+		allSegments: JsonSegmentSpecs[],
+		allLengths: number[],
+		attributionCollections: IAttributionCollection<AttributionKey>[],
+		approxSequenceLength: number,
+		startIndex = 0,
+	): MergeTreeChunkV1 {
+		const segments: JsonSegmentSpecs[] = [];
+		const collections: {
+			attribution: IAttributionCollection<AttributionKey>;
+			cachedLength: number;
+		}[] = [];
+		let length = 0;
+		let segmentCount = 0;
+		let hasAttribution = false;
+		while (length < approxSequenceLength && startIndex + segmentCount < allSegments.length) {
+			const pseg = allSegments[startIndex + segmentCount];
+			segments.push(pseg);
+			length += allLengths[startIndex + segmentCount];
+			if (attributionCollections[startIndex + segmentCount]) {
+				hasAttribution = true;
+				collections.push({
+					attribution: attributionCollections[startIndex + segmentCount],
+					cachedLength: allLengths[startIndex + segmentCount],
+				});
+			}
+			segmentCount++;
+		}
 
-        const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
-        assert(
-            !hasAttribution || attributionSerializer !== undefined,
-            "attribution serializer must be provided when there are segments with attribution."
-        );
+		const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
+		assert(
+			!hasAttribution || attributionSerializer !== undefined,
+			"attribution serializer must be provided when there are segments with attribution.",
+		);
 
-        return {
-            version: "1",
-            segmentCount,
-            length,
-            segments,
-            startIndex,
-            headerMetadata: undefined,
-            attribution: hasAttribution ? attributionSerializer?.serializeAttributionCollections(collections) : undefined
-        };
-    }
+		return {
+			version: "1",
+			segmentCount,
+			length,
+			segments,
+			startIndex,
+			headerMetadata: undefined,
+			attribution: hasAttribution
+				? attributionSerializer?.serializeAttributionCollections(collections)
+				: undefined,
+		};
+	}
 
 	/**
 	 * Emits the snapshot to an ISummarizeResult. If provided the optional IFluidSerializer will be used when

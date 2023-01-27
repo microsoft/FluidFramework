@@ -94,24 +94,26 @@ export class SnapshotLegacy {
 			0x4bf /* all or no segments should have attribution */,
 		);
 
-        const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
-        assert(
-            segsWithAttribution === 0 || attributionSerializer !== undefined,
-            "attribution serializer must be provided when there are segments with attribution."
-        );
-        return {
-            version: undefined,
-            chunkStartSegmentIndex: startIndex,
-            chunkSegmentCount: segCount,
-            chunkLengthChars: sequenceLength,
-            totalLengthChars: this.header!.segmentsTotalLength,
-            totalSegmentCount: allSegments.length,
-            chunkSequenceNumber: this.header!.seq,
-            segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
-            attribution: segsWithAttribution > 0 ?
-                attributionSerializer?.serializeAttributionCollections(segs) : undefined
-        };
-    }
+		const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
+		assert(
+			segsWithAttribution === 0 || attributionSerializer !== undefined,
+			"attribution serializer must be provided when there are segments with attribution.",
+		);
+		return {
+			version: undefined,
+			chunkStartSegmentIndex: startIndex,
+			chunkSegmentCount: segCount,
+			chunkLengthChars: sequenceLength,
+			totalLengthChars: this.header!.segmentsTotalLength,
+			totalSegmentCount: allSegments.length,
+			chunkSequenceNumber: this.header!.seq,
+			segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
+			attribution:
+				segsWithAttribution > 0
+					? attributionSerializer?.serializeAttributionCollections(segs)
+					: undefined,
+		};
+	}
 
 	/**
 	 * Emits the snapshot to an ISummarizeResult. If provided the optional IFluidSerializer will be used when

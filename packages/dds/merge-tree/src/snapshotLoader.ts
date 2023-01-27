@@ -255,30 +255,30 @@ export class SnapshotLoader {
 		flushBatch();
 	}
 
-    private extractAttribution(segments: Iterable<ISegment>, chunk: MergeTreeChunkV1): void {
-        this.mergeTree.options ??= {};
-        this.mergeTree.options.attribution ??= {};
-        if (chunk.attribution) {
-            const { attributionPolicy } = this.mergeTree;
-            // TODO: unify validation strategy and make sure asserts vs. exceptions makes sense.
-            // (this one should potentially be a usage error)
-            // also update documentation on attributor
-            assert(
-                attributionPolicy !== undefined,
-                "Attempted to open a file containing attribution information without injected attribution policy"
-            );
-            const { isAttached, attach, serializer } = attributionPolicy;
-            if (!isAttached) {
-                attach(this.client);
-            }
-            serializer.populateAttributionCollections(segments, chunk.attribution);
-        } else {
-            const { attributionPolicy } = this.mergeTree;
-            if (attributionPolicy?.isAttached) {
-                attributionPolicy?.detach();
-            }
-        }
-    }
+	private extractAttribution(segments: Iterable<ISegment>, chunk: MergeTreeChunkV1): void {
+		this.mergeTree.options ??= {};
+		this.mergeTree.options.attribution ??= {};
+		if (chunk.attribution) {
+			const { attributionPolicy } = this.mergeTree;
+			// TODO: unify validation strategy and make sure asserts vs. exceptions makes sense.
+			// (this one should potentially be a usage error)
+			// also update documentation on attributor
+			assert(
+				attributionPolicy !== undefined,
+				"Attempted to open a file containing attribution information without injected attribution policy",
+			);
+			const { isAttached, attach, serializer } = attributionPolicy;
+			if (!isAttached) {
+				attach(this.client);
+			}
+			serializer.populateAttributionCollections(segments, chunk.attribution);
+		} else {
+			const { attributionPolicy } = this.mergeTree;
+			if (attributionPolicy?.isAttached) {
+				attributionPolicy?.detach();
+			}
+		}
+	}
 
 	/**
 	 * If loading from a snapshot, get the catchup messages.

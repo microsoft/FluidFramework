@@ -41,10 +41,10 @@ class TestString {
 	private seq = 0;
 	private minSeq = 0;
 
-    constructor(id: string, private readonly options?: IMergeTreeOptions) {
-        this.client = new TestClient(options);
-        this.client.startOrUpdateCollaboration(id);
-    }
+	constructor(id: string, private readonly options?: IMergeTreeOptions) {
+		this.client = new TestClient(options);
+		this.client.startOrUpdateCollaboration(id);
+	}
 
 	public insert(pos: number, text: string, increaseMsn: boolean) {
 		this.queue(
@@ -74,12 +74,12 @@ class TestString {
 		await this.checkSnapshot();
 	}
 
-    // Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
-    public async checkSnapshot(options?: IMergeTreeOptions) {
-        this.applyPendingOps();
-        const expectedAttributionKeys = this.client.getAllAttributionSeqs();
-        const summary = this.getSummary();
-        const client2 = await loadSnapshot(summary, options ?? this.options);
+	// Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
+	public async checkSnapshot(options?: IMergeTreeOptions) {
+		this.applyPendingOps();
+		const expectedAttributionKeys = this.client.getAllAttributionSeqs();
+		const summary = this.getSummary();
+		const client2 = await loadSnapshot(summary, options ?? this.options);
 
 		assert.equal(
 			this.client.getText(),
@@ -154,18 +154,20 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 		str = new TestString("fakeId", options);
 	});
 
-    afterEach(async () => {
-        // Paranoid check that ensures `str` roundtrips through snapshot/load.  This helps to catch
-        // bugs that might be missed if the test case forgets to call/await `str.expect()`.
-        await str.checkSnapshot({ attribution: { policyFactory: createInsertOnlyAttributionPolicy }});
-    });
+	afterEach(async () => {
+		// Paranoid check that ensures `str` roundtrips through snapshot/load.  This helps to catch
+		// bugs that might be missed if the test case forgets to call/await `str.expect()`.
+		await str.checkSnapshot({
+			attribution: { policyFactory: createInsertOnlyAttributionPolicy },
+		});
+	});
 
 	it("excludes un-acked segments", async () => {
 		str.append("0", /* increaseMsn: */ false);
 
-        // Invoke `load/getSnapshot()` directly instead of `str.expect()` to avoid ACKing the
-        // pending insert op.
-        const client2 = await loadSnapshot(str.getSummary(), options);
+		// Invoke `load/getSnapshot()` directly instead of `str.expect()` to avoid ACKing the
+		// pending insert op.
+		const client2 = await loadSnapshot(str.getSummary(), options);
 
 		// Original client has inserted text, but the one loaded from the snapshot should be empty.
 		// This is because un-ACKed ops are not included in snapshots.  Instead, these ops are
@@ -244,29 +246,43 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 }
 
 describe("snapshot", () => {
-    describe("with attribution", () => {
-        makeSnapshotSuite({ attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy } });
-    });
+	describe("with attribution", () => {
+		makeSnapshotSuite({
+			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+		});
+	});
 
 	describe("without attribution", () => {
 		makeSnapshotSuite({ attribution: { track: false } });
 	});
 
-    it("presence of attribution overrides merge-tree initialization value", async () => {
-        const str = new TestString("id", { attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy } });
-        str.append("hello world", /* increaseMsn: */ true);
-        await str.checkSnapshot({ attribution: { track: false, policyFactory: createInsertOnlyAttributionPolicy } });
-        str.insert(0, "should have attribution", false);
-        str.applyPendingOps();
-        assert(str.getSegment(0).attribution !== undefined, "Attribution should be created on new segments");
-    });
+	it("presence of attribution overrides merge-tree initialization value", async () => {
+		const str = new TestString("id", {
+			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+		});
+		str.append("hello world", /* increaseMsn: */ true);
+		await str.checkSnapshot({
+			attribution: { track: false, policyFactory: createInsertOnlyAttributionPolicy },
+		});
+		str.insert(0, "should have attribution", false);
+		str.applyPendingOps();
+		assert(
+			str.getSegment(0).attribution !== undefined,
+			"Attribution should be created on new segments",
+		);
+	});
 
-    it("lack of attribution overrides merge-tree initialization", async () => {
-        const str = new TestString("id", { attribution: { track: false } });
-        str.append("hello world", /* increaseMsn: */ true);
-        await str.checkSnapshot({ attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy } });
-        str.insert(0, "should not have attribution", false);
-        str.applyPendingOps();
-        assert(str.getSegment(0).attribution === undefined, "No attribution should be created on new segments");
-    });
+	it("lack of attribution overrides merge-tree initialization", async () => {
+		const str = new TestString("id", { attribution: { track: false } });
+		str.append("hello world", /* increaseMsn: */ true);
+		await str.checkSnapshot({
+			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+		});
+		str.insert(0, "should not have attribution", false);
+		str.applyPendingOps();
+		assert(
+			str.getSegment(0).attribution === undefined,
+			"No attribution should be created on new segments",
+		);
+	});
 });
