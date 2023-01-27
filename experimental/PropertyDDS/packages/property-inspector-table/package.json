@@ -57,6 +57,7 @@
     "react-virtualized-auto-sizer": "^1.0.6"
   },
   "devDependencies": {
+    "@babel/core": "^7.13.0",
     "@fluid-experimental/property-binder": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-experimental/property-changeset": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-experimental/property-dds": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
