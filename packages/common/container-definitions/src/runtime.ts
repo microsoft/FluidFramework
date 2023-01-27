@@ -92,27 +92,22 @@ export interface IRuntime extends IDisposable {
 	 */
 	getPendingLocalState(): unknown;
 
-    /**
-     * Get pending local state in a serializable format to be given back to a newly loaded container
-     */
-    getPendingLocalState(): unknown;
+	/**
+	 * Notify runtime that container is moving to "Attaching" state
+	 * @param snapshot - snapshot created at attach time
+	 */
+	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 
-    /**
-     * Notify runtime that container is moving to "Attaching" state
-     * @param snapshot - snapshot created at attach time
-     */
-    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
-
-    /**
-     * Exposes the entryPoint for the container runtime.
-     * Use this as the primary way of getting access to the user-defined logic within the container runtime.
-     *
-     * @see {@link IContainer.getEntryPoint}
-     *
-     * @remarks The plan is that eventually IRuntime will no longer have a request() method, this property will no
-     * longer be optional, and it will become the only way to access the entryPoint for the runtime.
-     */
-    readonly entryPoint?: Promise<FluidObject | undefined>;
+	/**
+	 * Exposes the entryPoint for the container runtime.
+	 * Use this as the primary way of getting access to the user-defined logic within the container runtime.
+	 *
+	 * @see {@link IContainer.getEntryPoint}
+	 *
+	 * @remarks The plan is that eventually IRuntime will no longer have a request() method, this property will no
+	 * longer be optional, and it will become the only way to access the entryPoint for the runtime.
+	 */
+	readonly entryPoint?: Promise<FluidObject | undefined>;
 }
 
 /**
@@ -186,20 +181,20 @@ export interface IContainerContext extends IDisposable {
 
 	getLoadedFromVersion(): IVersion | undefined;
 
-    updateDirtyContainerState(dirty: boolean): void;
-    /**
-     * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
-     * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
-     * and scenarios which can change in the future.
-     */
-    readonly id: string;
+	updateDirtyContainerState(dirty: boolean): void;
+	/**
+	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
+	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
+	 * and scenarios which can change in the future.
+	 */
+	readonly id: string;
 
-    /**
-     * Proxy for {@link IRuntime.entryPoint}, the entryPoint defined in the container's runtime.
-     *
-     * @see {@link IContainer.getEntryPoint}
-     */
-    readonly entryPoint?: Promise<FluidObject | undefined>;
+	/**
+	 * Proxy for {@link IRuntime.entryPoint}, the entryPoint defined in the container's runtime.
+	 *
+	 * @see {@link IContainer.getEntryPoint}
+	 */
+	readonly entryPoint?: Promise<FluidObject | undefined>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

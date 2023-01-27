@@ -28,12 +28,13 @@ import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
 export interface ReplayToolContainerEntryPoint {
-    readonly containerRuntime: ContainerRuntime,
-    readonly ReplayToolContainerEntryPoint: ReplayToolContainerEntryPoint
+	readonly containerRuntime: ContainerRuntime;
+	readonly ReplayToolContainerEntryPoint: ReplayToolContainerEntryPoint;
 }
 
-const normalizeOpts: ISnapshotNormalizerConfig =
-    { excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type) };
+const normalizeOpts: ISnapshotNormalizerConfig = {
+	excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type),
+};
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
@@ -104,11 +105,11 @@ export function compareWithReferenceSnapshot(
 }
 
 export async function loadContainer(
-    documentServiceFactory: IDocumentServiceFactory,
-    documentName: string,
-    strictChannels: boolean,
-    logger?: TelemetryLogger,
-    loaderOptions?: ILoaderOptions,
+	documentServiceFactory: IDocumentServiceFactory,
+	documentName: string,
+	strictChannels: boolean,
+	logger?: TelemetryLogger,
+	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
 	const resolved: IFluidResolvedUrl = {
 		endpoints: {
@@ -152,18 +153,18 @@ export async function loadContainer(
 		["OneNoteRootComponentType", Promise.resolve(dataStoreFactory)],
 	]);
 
-    // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
-    // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
-    const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: {
-            summaryConfigOverrides: {
-                state: "disabled",
-            },
-        },
-    };
-    const codeLoader = new ReplayCodeLoader(
-        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries),
-    );
+	// Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
+	// ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
+	const runtimeOptions: IContainerRuntimeOptions = {
+		summaryOptions: {
+			summaryConfigOverrides: {
+				state: "disabled",
+			},
+		},
+	};
+	const codeLoader = new ReplayCodeLoader(
+		new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries),
+	);
 
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
@@ -180,17 +181,17 @@ export async function loadContainer(
 }
 
 export async function uploadSummary(container: IContainer) {
-    const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
-    const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
-    assert(runtime !== undefined, "ContainerRuntime entryPoint was not initialized");
-    const summaryResult = await runtime.summarize({
-        fullTree: true,
-        trackState: false,
-        fullGC: true,
-    });
-    return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {
-        referenceSequenceNumber: 0,
-        proposalHandle: undefined,
-        ackHandle: undefined,
-    });
+	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
+	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
+	assert(runtime !== undefined, "ContainerRuntime entryPoint was not initialized");
+	const summaryResult = await runtime.summarize({
+		fullTree: true,
+		trackState: false,
+		fullGC: true,
+	});
+	return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {
+		referenceSequenceNumber: 0,
+		proposalHandle: undefined,
+		ackHandle: undefined,
+	});
 }

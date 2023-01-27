@@ -172,65 +172,73 @@ export class ContainerContext implements IContainerContext {
 
 	private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
-    /**
-     * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
-     */
-    public getEntryPoint?(): Promise<FluidObject | undefined> | undefined {
-        if (this._disposed) {
-            throw new UsageError("The context is already disposed");
-        }
-        return this._runtime !== undefined
-            ? this._runtime.entryPoint
-            : new Promise<FluidObject | undefined>((resolve, reject) => {
-                const runtimeInstantiatedHandler = () => {
-                    assert(this._runtime !== undefined, "runtimeInstantiated fired but runtime is still undefined");
-                    resolve(this._runtime.entryPoint);
-                    this.lifecycleEvents.off("disposed", disposedHandler);
-                };
-                const disposedHandler = () => {
-                    reject(new Error("ContainerContext was disposed"));
-                    this.lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
-                };
-                this.lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
-                this.lifecycleEvents.once("disposed", disposedHandler);
-            });
-    }
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
+	 */
+	public getEntryPoint?(): Promise<FluidObject | undefined> | undefined {
+		if (this._disposed) {
+			throw new UsageError("The context is already disposed");
+		}
+		return this._runtime !== undefined
+			? this._runtime.entryPoint
+			: new Promise<FluidObject | undefined>((resolve, reject) => {
+					const runtimeInstantiatedHandler = () => {
+						assert(
+							this._runtime !== undefined,
+							"runtimeInstantiated fired but runtime is still undefined",
+						);
+						resolve(this._runtime.entryPoint);
+						this.lifecycleEvents.off("disposed", disposedHandler);
+					};
+					const disposedHandler = () => {
+						reject(new Error("ContainerContext was disposed"));
+						this.lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
+					};
+					this.lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
+					this.lifecycleEvents.once("disposed", disposedHandler);
+			  });
+	}
 
-    /**
-     * Emits events about the container context's lifecycle.
-     * Use it to coordinate things inside the ContainerContext class.
-     */
-    private readonly lifecycleEvents = new EventEmitter();
+	/**
+	 * Emits events about the container context's lifecycle.
+	 * Use it to coordinate things inside the ContainerContext class.
+	 */
+	private readonly lifecycleEvents = new EventEmitter();
 
-    constructor(
-        private readonly container: Container,
-        public readonly scope: FluidObject,
-        private readonly codeLoader: ICodeDetailsLoader,
-        private readonly _codeDetails: IFluidCodeDetails,
-        private _baseSnapshot: ISnapshotTree | undefined,
-        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        quorum: IQuorum,
-        public readonly loader: ILoader,
-        public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
-        public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
-        /** @returns clientSequenceNumber of last message in a batch */
-        public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
-        public readonly submitSignalFn: (contents: any) => void,
-        public readonly disposeFn: (error?: ICriticalContainerError) => void,
-        public readonly closeFn: (error?: ICriticalContainerError) => void,
-        public readonly version: string,
-        public readonly updateDirtyContainerState: (dirty: boolean) => void,
-        public readonly existing: boolean,
-        public readonly pendingLocalState?: unknown,
-    ) {
-        this._connected = this.container.connected;
-        this._quorum = quorum;
-        this.taggedLogger = container.subLogger;
-        this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
-            async () => this.loadCodeModule(_codeDetails),
-        );
-        this.attachListener();
-    }
+	constructor(
+		private readonly container: Container,
+		public readonly scope: FluidObject,
+		private readonly codeLoader: ICodeDetailsLoader,
+		private readonly _codeDetails: IFluidCodeDetails,
+		private _baseSnapshot: ISnapshotTree | undefined,
+		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		quorum: IQuorum,
+		public readonly loader: ILoader,
+		public readonly submitFn: (
+			type: MessageType,
+			contents: any,
+			batch: boolean,
+			appData: any,
+		) => number,
+		public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
+		/** @returns clientSequenceNumber of last message in a batch */
+		public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
+		public readonly submitSignalFn: (contents: any) => void,
+		public readonly disposeFn: (error?: ICriticalContainerError) => void,
+		public readonly closeFn: (error?: ICriticalContainerError) => void,
+		public readonly version: string,
+		public readonly updateDirtyContainerState: (dirty: boolean) => void,
+		public readonly existing: boolean,
+		public readonly pendingLocalState?: unknown,
+	) {
+		this._connected = this.container.connected;
+		this._quorum = quorum;
+		this.taggedLogger = container.subLogger;
+		this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(async () =>
+			this.loadCodeModule(_codeDetails),
+		);
+		this.attachListener();
+	}
 
 	/**
 	 * @deprecated Temporary migratory API, to be removed when customers no longer need it.
@@ -250,11 +258,11 @@ export class ContainerContext implements IContainerContext {
 		}
 		this._disposed = true;
 
-        this.lifecycleEvents.emit("disposed");
-        this.runtime.dispose(error);
-        this._quorum.dispose();
-        this.deltaManager.dispose();
-    }
+		this.lifecycleEvents.emit("disposed");
+		this.runtime.dispose(error);
+		this._quorum.dispose();
+		this.deltaManager.dispose();
+	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
 		return this.container.loadedFromVersion;
@@ -361,14 +369,15 @@ export class ContainerContext implements IContainerContext {
 		return runtimeFactory;
 	}
 
-    private async instantiateRuntime(existing: boolean) {
-        const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await PerformanceEvent.timedExecAsync(
-            this.taggedLogger,
-            { eventName: "InstantiateRuntime" },
-            async () => runtimeFactory.instantiateRuntime(this, existing));
-        this.lifecycleEvents.emit("runtimeInstantiated")
-    }
+	private async instantiateRuntime(existing: boolean) {
+		const runtimeFactory = await this.getRuntimeFactory();
+		this._runtime = await PerformanceEvent.timedExecAsync(
+			this.taggedLogger,
+			{ eventName: "InstantiateRuntime" },
+			async () => runtimeFactory.instantiateRuntime(this, existing),
+		);
+		this.lifecycleEvents.emit("runtimeInstantiated");
+	}
 
 	private attachListener() {
 		this.container.once("attached", () => {

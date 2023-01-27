@@ -13,19 +13,15 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
-    FluidDataStoreRegistryEntry,
-    IFluidDataStoreContext,
-    IFluidDataStoreFactory,
-    IFluidDataStoreRegistry,
-    NamedFluidDataStoreRegistryEntries,
+	FluidDataStoreRegistryEntry,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import {
-    SharedIntervalCollection,
-    SharedString,
-} from "@fluidframework/sequence";
+import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import {
 	SharedNumberSequence,
@@ -38,40 +34,41 @@ import { ReplayToolContainerEntryPoint } from "./helpers";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
-    constructor(
-        private readonly runtimeOptions: IContainerRuntimeOptions,
-        private readonly registries: NamedFluidDataStoreRegistryEntries) {
-        super();
-    }
+	constructor(
+		private readonly runtimeOptions: IContainerRuntimeOptions,
+		private readonly registries: NamedFluidDataStoreRegistryEntries,
+	) {
+		super();
+	}
 
-    public async preInitialize(
-        context: IContainerContext,
-        existing: boolean,
-    ): Promise<ContainerRuntime> {
-        return ContainerRuntime.newLoad(
-            context,
-            undefined,
-            async (containerRuntime :IContainerRuntime) => {
-                // For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool
-                // can use it. This is an anti-pattern, and is *not* what an actual application should do (it should
-                // expose an object with a defined API that allows hosts that consume the container to interact with it).
-                // In our tests and internal tools it might sometimes be ok to use this anti-pattern for simplicity,
-                // where we might need to use/validate internal bits. In this case the replay tool reaches into our
-                // implementation of the container runtime to trigger summarization (see uploadSummary() in helpers.ts).
-                const entryPoint: ReplayToolContainerEntryPoint = {
-                    containerRuntime: containerRuntime as ContainerRuntime,
-                    get ReplayToolContainerEntryPoint() {
-                        return this as ReplayToolContainerEntryPoint;
-                    }
-                };
-                return entryPoint;
-            },
-            existing,
-            this.runtimeOptions,
-            this.registries,
-            undefined, // containerScope
-        );
-    }
+	public async preInitialize(
+		context: IContainerContext,
+		existing: boolean,
+	): Promise<ContainerRuntime> {
+		return ContainerRuntime.newLoad(
+			context,
+			undefined,
+			async (containerRuntime: IContainerRuntime) => {
+				// For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool
+				// can use it. This is an anti-pattern, and is *not* what an actual application should do (it should
+				// expose an object with a defined API that allows hosts that consume the container to interact with it).
+				// In our tests and internal tools it might sometimes be ok to use this anti-pattern for simplicity,
+				// where we might need to use/validate internal bits. In this case the replay tool reaches into our
+				// implementation of the container runtime to trigger summarization (see uploadSummary() in helpers.ts).
+				const entryPoint: ReplayToolContainerEntryPoint = {
+					containerRuntime: containerRuntime as ContainerRuntime,
+					get ReplayToolContainerEntryPoint() {
+						return this as ReplayToolContainerEntryPoint;
+					},
+				};
+				return entryPoint;
+			},
+			existing,
+			this.runtimeOptions,
+			this.registries,
+			undefined, // containerScope
+		);
+	}
 }
 // these dds don't have deterministic content, or the
 // factories are unavailable to us. they will be excluded

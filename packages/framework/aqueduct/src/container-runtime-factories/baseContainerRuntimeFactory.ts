@@ -83,32 +83,32 @@ export class BaseContainerRuntimeFactory
 			existing,
 		);
 
-        // const runtime: ContainerRuntime = await ContainerRuntime.newLoad(
-        //     context,
-        //     undefined,
-        //     async (containerRuntime :IContainerRuntime) => {
-        //         const requestHandlers = this.requestHandlers;
-        //         // For now, entryPoint is an IFluidRouter for backwards compat
-        //         const entryPoint: IFluidRouter = {
-        //             async request(request: IRequest): Promise<IResponse> {
-        //                 const requestHandler = buildRuntimeRequestHandler(
-        //                     ...requestHandlers);
-        //                 return requestHandler(request, containerRuntime);
-        //             },
-        //             get IFluidRouter() {
-        //                 return this;
-        //             }
-        //         };
-        //         return entryPoint;
-        //     },
-        //     existing,
-        //     this.runtimeOptions,
-        //     this.registryEntries,
-        //     scope,
-        // );
+		// const runtime: ContainerRuntime = await ContainerRuntime.newLoad(
+		//     context,
+		//     undefined,
+		//     async (containerRuntime :IContainerRuntime) => {
+		//         const requestHandlers = this.requestHandlers;
+		//         // For now, entryPoint is an IFluidRouter for backwards compat
+		//         const entryPoint: IFluidRouter = {
+		//             async request(request: IRequest): Promise<IResponse> {
+		//                 const requestHandler = buildRuntimeRequestHandler(
+		//                     ...requestHandlers);
+		//                 return requestHandler(request, containerRuntime);
+		//             },
+		//             get IFluidRouter() {
+		//                 return this;
+		//             }
+		//         };
+		//         return entryPoint;
+		//     },
+		//     existing,
+		//     this.runtimeOptions,
+		//     this.registryEntries,
+		//     scope,
+		// );
 
-        // we register the runtime so developers of providers can use it in the factory pattern.
-        dc.register(IContainerRuntime, runtime);
+		// we register the runtime so developers of providers can use it in the factory pattern.
+		dc.register(IContainerRuntime, runtime);
 
 		return runtime;
 	}

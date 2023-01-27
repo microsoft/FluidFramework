@@ -3,20 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
-    IRequest,
-    IResponse,
-    IFluidRouter,
-    FluidObject,
-} from "@fluidframework/core-interfaces";
-import {
-    IClientDetails,
-    IDocumentMessage,
-    IQuorumClients,
-    ISequencedDocumentMessage,
-    ISequencedProposal,
-    ISnapshotTree,
+	IClientDetails,
+	IDocumentMessage,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISequencedProposal,
+	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -454,42 +448,25 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 */
 	readonly readOnlyInfo: ReadOnlyInfo;
 
-    /**
-     * Tells if container is in read-only mode.
-     *
-     * @remarks
-     *
-     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
-     * Readonly state can be because of no storage write permission,
-     * or due to host forcing readonly mode for container.
-     *
-     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
-     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
-     *
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     */
-    readonly readOnlyInfo: ReadOnlyInfo;
+	/**
+	 * Allows the host to have the container force to be in read-only mode
+	 * @param readonly - Boolean that toggles if read-only policies will be enforced
+	 * @alpha
+	 */
+	forceReadonly?(readonly: boolean);
 
-    /**
-     * Allows the host to have the container force to be in read-only mode
-     * @param readonly - Boolean that toggles if read-only policies will be enforced
-     * @alpha
-     */
-    forceReadonly?(readonly: boolean);
-
-    /**
-     * Exposes the entryPoint for the container.
-     * Use this as the primary way of getting access to the user-defined logic within the container.
-     * If the method is undefined or the returned promise returns undefined (meaning that exposing the entryPoint
-     * hasn't been implemented in a particular scenario) fall back to the current approach of requesting the default
-     * object of the container through the request pattern.
-     *
-     * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
-     * request() method), this method will no longer be optional, and it will become the only way to access
-     * the entryPoint for the container.
-     */
-    getEntryPoint?(): Promise<FluidObject | undefined>;
+	/**
+	 * Exposes the entryPoint for the container.
+	 * Use this as the primary way of getting access to the user-defined logic within the container.
+	 * If the method is undefined or the returned promise returns undefined (meaning that exposing the entryPoint
+	 * hasn't been implemented in a particular scenario) fall back to the current approach of requesting the default
+	 * object of the container through the request pattern.
+	 *
+	 * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
+	 * request() method), this method will no longer be optional, and it will become the only way to access
+	 * the entryPoint for the container.
+	 */
+	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 /**
