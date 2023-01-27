@@ -97,32 +97,42 @@ export interface ITreeCursor {
     enterNode(childIndex: number): void;
 
     /**
-     * @returns a path to the current field. See {@link FieldUpPath}.
+     * Returns a path to the current field. See {@link FieldUpPath}.
      *
      * Only valid when `mode` is `Fields`.
-     * Assumes this cursor has a root node where its field keys are actually detached sequences.
-     * If the cursor is not rooted at such a node,
-     * calling this function is invalid, and the returned FieldUpPath (if any) may not be meaningful.
+     *
+     * If no prefix is provided, assumes this cursor is treated as if it has a root node where its field keys are actually detached sequences.
+     * If the cursor is not rooted at such a node, the `prefix` should be used to ensure the path has the correct root.
      * This requirement exists because {@link FieldUpPath}s are absolute paths
      * and thus must be rooted in a detached sequence.
-     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
+     *
+     * @param prefix - optional overrides to apply to the root of the returned path.
+     * See {@link PathRootPrefix}.
+     * This adjusts the path as if the tree data accessible to this cursor is part of a larger tree.
+     *
+     * @returns a path to the current field.
      */
-    getFieldPath(): FieldUpPath;
+    getFieldPath(prefix?: PathRootPrefix): FieldUpPath;
 
     // ********** APIs for when mode = Nodes ********** //
 
     /**
-     * @returns a path to the current node. See {@link UpPath}.
+     * Returns a path to the current node. See {@link UpPath}.
      *
      * Only valid when `mode` is `Nodes`.
-     * Assumes this cursor has a root node where its field keys are actually detached sequences.
-     * If the cursor is not rooted at such a node,
-     * calling this function is invalid, and the returned UpPath (if any) may not be meaningful.
+     *
+     * If no prefix is provided, assumes this cursor is treated as if it has a root node where its field keys are actually detached sequences.
+     * If the cursor is not rooted at such a node, the `prefix` should be used to ensure the path has the correct root.
      * This requirement exists because {@link UpPath}s are absolute paths
      * and thus must be rooted in a detached sequence.
-     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
+     *
+     * @param prefix - optional overrides to apply to the root of the returned path.
+     * See {@link PathRootPrefix}.
+     * This adjusts the path as if the tree data accessible to this cursor is part of a larger tree.
+     *
+     * @returns a path to the current node.
      */
-    getPath(): UpPath | undefined;
+    getPath(prefix?: PathRootPrefix): UpPath | undefined;
 
     /**
      * Index (within its parent field) of the current node.
@@ -209,6 +219,36 @@ export interface ITreeCursor {
      * Only valid when `mode` is `Nodes`, and not `pending`.
      */
     readonly value: Value;
+}
+
+/**
+ * Prefix to apply as the root of a {@link UpPath} or {@link FieldUpPath}.
+ *
+ * @remarks This can be used to take a path relative to a subtree, and make it relative to a larger containing tree.
+ * For example, if a node is being inserted in the 5th position in a field "Foo", you can update a path in that node's subtree to its new path by prefixing it with
+ * `{ parent: theNodeAboveTheMovedNode, rootFieldOverride: Foo, indexOffset: 5 }`.
+ * See {@link prefixPath} and {@link prefixFieldPath} for how to apply the prefix to the paths.
+ */
+export interface PathRootPrefix {
+    /**
+     * The new parent to place above root of the path which is being prefixed.
+     * This replaces the `undefined` at the root of the path.
+     *
+     * @remarks specifying `undefined` here results in no change to the path.
+     */
+    parent?: UpPath | undefined;
+
+    /**
+     * The field of `parent` that the original path will be included under.
+     *
+     * If `undefined` the root field key from the original path will be used.
+     */
+    rootFieldOverride?: FieldKey;
+
+    /**
+     * Offset to add to the uppermost `parentIndex` in the original path.
+     */
+    indexOffset?: number;
 }
 
 export const enum CursorLocationType {

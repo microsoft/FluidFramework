@@ -44,7 +44,12 @@ export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
-export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
+export {
+    singleStackTreeCursor,
+    CursorAdapter,
+    prefixPath,
+    prefixFieldPath,
+} from "./treeCursorUtils";
 export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
@@ -104,4 +109,4 @@ export { dummyRepairDataStore } from "./fakeRepairDataStore";
 export { runSynchronousTransaction } from "./defaultTransaction";
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
-export { TreeChunk, chunkTree } from "./chunked-forest";
+export { TreeChunk, chunkTree, buildChunkedForest } from "./chunked-forest";

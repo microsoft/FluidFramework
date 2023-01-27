@@ -13,9 +13,10 @@ import {
     UpPath,
     TreeValue,
     Value,
+    PathRootPrefix,
 } from "../../core";
 import { compareArrays, fail } from "../../util";
-import { SynchronousCursor } from "../treeCursorUtils";
+import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
 import { dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
@@ -295,7 +296,10 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
      */
     private nodeInfo(requiredMode: CursorLocationType): NodePositionInfo {
         assert(this.mode === requiredMode, 0x4c8 /* tried to access cursor when in wrong mode */);
-        assert(this.nodePositionInfo !== undefined, "can not access nodeInfo in root field");
+        assert(
+            this.nodePositionInfo !== undefined,
+            0x53e /* can not access nodeInfo in root field */,
+        );
         return this.nodePositionInfo;
     }
 
@@ -323,7 +327,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     getFieldLength(): number {
         assert(
             this.mode === CursorLocationType.Fields,
-            "tried to access cursor when in wrong mode",
+            0x53f /* tried to access cursor when in wrong mode */,
         );
         if (this.nodePositionInfo === undefined) {
             return this.shape.topLevelLength;
@@ -338,7 +342,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     firstNode(): boolean {
         assert(
             this.mode === CursorLocationType.Fields,
-            "tried to access cursor when in wrong mode",
+            0x540 /* tried to access cursor when in wrong mode */,
         );
 
         if (this.nodePositionInfo === undefined) {
@@ -353,13 +357,13 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     enterNode(childIndex: number): void {
         assert(
             this.mode === CursorLocationType.Fields,
-            "tried to access cursor when in wrong mode",
+            0x541 /* tried to access cursor when in wrong mode */,
         );
         assert(childIndex >= 0, 0x4ca /* index must be positive */);
         if (this.nodePositionInfo === undefined) {
             assert(
                 childIndex < this.shape.topLevelLength,
-                "index must not be past the end of the field",
+                0x542 /* index must not be past the end of the field */,
             );
             this.enterRootNodeInner(childIndex);
         } else {
@@ -392,18 +396,18 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.mode = CursorLocationType.Nodes;
         // 1 for the "undefined" at the beginning of the positions array, then stride by top level tree shape.
         this.moveToPosition(1 + childIndex * this.shape.treeShape.positions.length);
-        assert(this.fieldIndex === childIndex, "should be at selected child");
+        assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
     }
 
-    getFieldPath(): FieldUpPath {
-        return {
+    getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
+        return prefixFieldPath(prefix, {
             field: this.getFieldKey(),
             parent: this.nodePositionInfo,
-        };
+        });
     }
 
-    getPath(): UpPath | undefined {
-        return this.nodeInfo(CursorLocationType.Nodes);
+    getPath(prefix?: PathRootPrefix): UpPath | undefined {
+        return prefixPath(prefix, this.nodeInfo(CursorLocationType.Nodes));
     }
 
     get fieldIndex(): number {

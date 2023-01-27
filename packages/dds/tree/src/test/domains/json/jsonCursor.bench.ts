@@ -21,6 +21,8 @@ import {
     mapTreeFromCursor,
     singleMapTreeCursor,
     singleTextCursor,
+    buildChunkedForest,
+    chunkTree,
 } from "../../../feature-libraries";
 import {
     initializeForest,
@@ -120,6 +122,27 @@ function bench(
                         return cursor;
                     },
                 ],
+                [
+                    "BasicChunkCursor",
+                    () => {
+                        const input = singleTextCursor(encodedTree);
+                        const chunk = chunkTree(input);
+                        const cursor = chunk.cursor();
+                        cursor.enterNode(0);
+                        return cursor;
+                    },
+                ],
+                [
+                    "chunked-forest Cursor",
+                    () => {
+                        const forest = buildChunkedForest(schema);
+                        initializeForest(forest, [singleTextCursor(encodedTree)]);
+                        const cursor = forest.allocateCursor();
+                        moveToDetachedField(forest, cursor);
+                        assert(cursor.firstNode());
+                        return cursor;
+                    },
+                ],
             ];
 
             const consumers: [
@@ -140,24 +163,26 @@ function bench(
                 ["averageTwoValues", averageTwoValues],
             ];
 
-            for (const [consumerName, consumer] of consumers) {
-                for (const [factoryName, factory] of cursorFactories) {
-                    let cursor: ITreeCursor;
-                    benchmark({
-                        type: BenchmarkType.Measurement,
-                        title: `${consumerName}(${factoryName})`,
-                        before: () => {
-                            cursor = factory();
-                            // TODO: validate behavior
-                            // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-                            // assert.deepEqual(
-                            //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
-                        },
-                        benchmarkFn: () => {
-                            consumer(cursor, dataConsumer);
-                        },
-                    });
-                }
+            for (const [factoryName, factory] of cursorFactories) {
+                describe(factoryName, () => {
+                    for (const [consumerName, consumer] of consumers) {
+                        let cursor: ITreeCursor;
+                        benchmark({
+                            type: BenchmarkType.Measurement,
+                            title: `${consumerName}(${factoryName})`,
+                            before: () => {
+                                cursor = factory();
+                                // TODO: validate behavior
+                                // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+                                // assert.deepEqual(
+                                //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                            },
+                            benchmarkFn: () => {
+                                consumer(cursor, dataConsumer);
+                            },
+                        });
+                    }
+                });
             }
         });
     }

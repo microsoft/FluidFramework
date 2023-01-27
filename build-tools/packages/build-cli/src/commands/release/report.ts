@@ -679,6 +679,5 @@ async function writeReport(
     const reportOutput = toReportKind(report, kind);
 
     await writeJson(reportPath, reportOutput, { spaces: 2 });
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return sortJson.overwrite(reportPath);
+    sortJson.overwrite(reportPath);
 }
