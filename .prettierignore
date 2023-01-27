@@ -8,6 +8,7 @@
 !common/lib/*
 common/lib/**/lib
 **/src/**/test/types/*
+**/src/packageVersion.ts
 
 # Dependencies
 **/node_modules/*
@@ -18,11 +19,14 @@ common/lib/**/lib
 **/*.api.md
 
 # Test json
-packages/dds/merge-tree/src/test/results/*.json
 packages/dds/merge-tree/src/test/literature/*.txt
+packages/dds/merge-tree/src/test/results/*.json
 packages/dds/sequence/src/test/snapshots/**/*.json
 packages/drivers/odsp-driver/src/test/**/*.json
 packages/framework/attributor/src/test/attribution/documents/**/*.json
+packages/test/snapshots/content/
+packages/tools/fluid-runner/src/test/localOdspSnapshots/
+packages/tools/fluid-runner/src/test/telemetryExpectedOutputs/
 
 # Generated type-tests
 **/*.generated.ts
