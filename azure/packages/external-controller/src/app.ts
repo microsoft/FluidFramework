@@ -38,16 +38,16 @@ const azureUser = {
 
 const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
     ? {
-          type: "remote",
-          tenantId: "",
-          tokenProvider: new AzureFunctionTokenProvider("", azureUser),
-          endpoint: "",
+        type: "remote",
+        tenantId: "",
+        tokenProvider: new AzureFunctionTokenProvider("", azureUser),
+        endpoint: "",
       }
     : {
         type: "local",
         tokenProvider: new InsecureTokenProvider("fooBar", user),
         endpoint: "http://localhost:7070",
-    };
+      };
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
