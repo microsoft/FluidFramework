@@ -369,7 +369,6 @@ importers:
       fs-extra: ^9.1.0
       nconf: ^0.12.0
       nyc: ^15.0.0
-      prettier: ~2.6.2
       rimraf: ^2.6.2
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
@@ -407,7 +406,6 @@ importers:
       eslint: 8.6.0
       fs-extra: 9.1.0
       nyc: 15.1.0
-      prettier: 2.6.2
       rimraf: 2.7.1
       source-map-loader: 2.0.2_webpack@5.74.0
       style-loader: 1.3.0_webpack@5.74.0
