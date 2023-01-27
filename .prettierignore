@@ -26,3 +26,6 @@ packages/framework/attributor/src/test/attribution/documents/**/*.json
 
 # Generated type-tests
 **/*.generated.ts
+
+# es5 build output
+packages/framework/data-object-base/es5
