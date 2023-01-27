@@ -33,7 +33,7 @@ import { IOdspCache } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
-import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
+import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase";
@@ -57,7 +57,9 @@ interface GetVersionsTelemetryProps {
 }
 
 export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
-	private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
+    private odspSummaryModuleLoaded: boolean = false;
+    private summaryModuleP: Promise<OdspSummaryUploadManager> | undefined;
+    private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
 
 	private firstVersionCall = true;
 
@@ -91,20 +93,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	) {
 		super(loggerToMonitoringContext(logger).config);
 
-		this.documentId = this.odspResolvedUrl.hashedDocumentId;
-		this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
-		this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
-		this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
-
-		this.odspSummaryUploadManager = new OdspSummaryUploadManager(
-			this.snapshotUrl,
-			getStorageToken,
-			logger,
-			epochTracker,
-			!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-			this.relayServiceTenantAndSessionId,
-		);
-	}
+        this.documentId = this.odspResolvedUrl.hashedDocumentId;
+        this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
+        this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
+        this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
+    }
 
 	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
 		this.checkAttachmentPOSTUrl();
@@ -523,15 +516,20 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	): Promise<string> {
 		this.checkSnapshotUrl();
 
-		// Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
-		if (".protocol" in summary.tree && context.ackHandle !== undefined) {
-			let retry = 1;
-			for (;;) {
-				const result = await this.flushCallback();
-				const seq = result.lastPersistedSequenceNumber;
-				if (seq !== undefined && seq >= context.referenceSequenceNumber) {
-					break;
-				}
+        // Set the module promise right away, so as to not call it twice.
+        if (this.summaryModuleP === undefined) {
+            this.summaryModuleP = this.getDelayLoadedSummaryManager();
+        }
+
+        // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
+        if (".protocol" in summary.tree && context.ackHandle !== undefined) {
+            let retry = 1;
+            for (;;) {
+                const result = await this.flushCallback();
+                const seq = result.lastPersistedSequenceNumber;
+                if (seq !== undefined && seq >= context.referenceSequenceNumber) {
+                    break;
+                }
 
 				if (retry > 3) {
 					this.logger.sendErrorEvent({
@@ -555,19 +553,53 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 		}
 
-		const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
-		return id;
-	}
+        if (!this.odspSummaryUploadManager) {
+            this.odspSummaryUploadManager = await this.summaryModuleP
+            .then(async (m) => {
+                this.odspSummaryModuleLoaded = true;
+                return m;
+            })
+            .catch((error) => {
+                this.odspSummaryModuleLoaded = false;
+                throw error;
+            });
+        }
 
-	private checkSnapshotUrl() {
-		if (!this.snapshotUrl) {
-			throw new NonRetryableError(
-				"Method failed because no snapshot url was available",
-				DriverErrorType.genericError,
-				{ driverVersion },
-			);
-		}
-	}
+        assert(this.odspSummaryUploadManager !== undefined, "summary upload manager should have been initialized");
+        const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
+        return id;
+    }
+
+    private async getDelayLoadedSummaryManager() {
+        assert(this.odspSummaryModuleLoaded === false, "Should be loaded only once");
+        const module = await import(/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager")
+            .then((m) => {
+                this.logger.sendTelemetryEvent({ eventName: "SummaryModuleLoaded" });
+                return m;
+            })
+            .catch((error) => {
+                this.logger.sendErrorEvent( { eventName: "SummaryModuleLoadFailed" }, error);
+                throw error;
+            });
+        this.odspSummaryUploadManager = new module.OdspSummaryUploadManager(
+                this.odspResolvedUrl.endpoints.snapshotStorageUrl,
+                this.getStorageToken,
+                this.logger,
+                this.epochTracker,
+                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                this.relayServiceTenantAndSessionId,
+        );
+        return this.odspSummaryUploadManager;
+    }
+
+    private checkSnapshotUrl() {
+        if (!this.snapshotUrl) {
+            throw new NonRetryableError(
+                "Method failed because no snapshot url was available",
+                DriverErrorType.genericError,
+                { driverVersion });
+        }
+    }
 
 	private checkAttachmentPOSTUrl() {
 		if (!this.attachmentPOSTUrl) {
