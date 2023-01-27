@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-
 class MinimalSettings {
     constructor(settings) {
-        this._settings = settings
+        this._settings = settings;
     }
 
     get(key) {
@@ -18,14 +17,13 @@ class MinimalSettings {
                 return setting;
             }
         }*/
-        return this._settings[key]['default'];
+        return this._settings[key]["default"];
     }
 
     set(key, value) {
         this._settings[key] = this._settings[key] || {};
-        this._settings[key]['default'] = value;
+        this._settings[key]["default"] = value;
     }
-
 }
 
 module.exports = MinimalSettings;

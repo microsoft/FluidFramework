@@ -12,16 +12,13 @@ describe("Attributor", () => {
 		const timestamp = 50;
 		const user: IUser = { id: "user foo" };
 		const attributor = new Attributor([[key, { user, timestamp }]]);
-		assert.deepEqual(
-			attributor.getAttributionInfo(key),
-			{ user, timestamp },
-		);
+		assert.deepEqual(attributor.getAttributionInfo(key), { user, timestamp });
 	});
 
 	it(".entries() retrieves all user information", () => {
 		const entries: Iterable<[number, AttributionInfo]> = [
 			[50, { user: { id: "a" }, timestamp: 30 }],
-			[51, { user: { id: "b" }, timestamp: 60 }]
+			[51, { user: { id: "b" }, timestamp: 60 }],
 		];
 		const attributor = new Attributor(entries);
 		assert.deepEqual(Array.from(attributor.entries()), entries);
