@@ -431,39 +431,28 @@ describe("Quorum", () => {
                     .catch(() => { proposal3.rejected = true; });
 
                 quorum.addProposal(proposal1.key, proposal1.value, proposal1.sequenceNumber, true, 1);
-                quorum.updateMinimumSequenceNumber(messageApproving1);
                 quorum.addProposal(proposal2.key, proposal2.value, proposal2.sequenceNumber, true, 2);
+                quorum.updateMinimumSequenceNumber(messageApproving1);
 
                 const snapshot = quorum.snapshot();
 
-                assert.strictEqual(snapshot.proposals.length, 1, "Should be exactly one proposal in the snapshot");
-                assert.strictEqual(snapshot.values.length, 1, "Should be exactly one value in the snapshot");
-                assert.strictEqual(snapshot.proposals[0][1].value, "dos", "Proposed value should be 'dos'");
-                assert.strictEqual(snapshot.values[0][1].value, "uno", "Accepted value should be 'uno'");
+                const verifyExpectedSnapshot = () => {
+                    assert.strictEqual(snapshot.proposals.length, 1, "Should be exactly one proposal in the snapshot");
+                    assert.strictEqual(snapshot.values.length, 1, "Should be exactly one value in the snapshot");
+                    assert.strictEqual(snapshot.proposals[0][1].value, "dos", "Proposed value should be 'dos'");
+                    assert.strictEqual(snapshot.values[0][1].value, "uno", "Accepted value should be 'uno'");
+                };
 
+                // Verify initial state of snapshot
+                verifyExpectedSnapshot();
+
+                // The snapshot we took should never change after we take it
                 quorum.updateMinimumSequenceNumber(messageApproving2);
-
-                // The snapshot we already took should not change after we take it.
-                assert.strictEqual(snapshot.proposals.length, 1, "Should be exactly one proposal in the snapshot");
-                assert.strictEqual(snapshot.values.length, 1, "Should be exactly one value in the snapshot");
-                assert.strictEqual(snapshot.proposals[0][1].value, "dos", "Proposed value should be 'dos'");
-                assert.strictEqual(snapshot.values[0][1].value, "uno", "Accepted value should be 'uno'");
-
+                verifyExpectedSnapshot();
                 quorum.addProposal(proposal3.key, proposal3.value, proposal3.sequenceNumber, true, 3);
-
-                // The snapshot we already took should not change after we take it.
-                assert.strictEqual(snapshot.proposals.length, 1, "Should be exactly one proposal in the snapshot");
-                assert.strictEqual(snapshot.values.length, 1, "Should be exactly one value in the snapshot");
-                assert.strictEqual(snapshot.proposals[0][1].value, "dos", "Proposed value should be 'dos'");
-                assert.strictEqual(snapshot.values[0][1].value, "uno", "Accepted value should be 'uno'");
-
+                verifyExpectedSnapshot();
                 quorum.updateMinimumSequenceNumber(messageApproving3);
-
-                // The snapshot we already took should not change after we take it.
-                assert.strictEqual(snapshot.proposals.length, 1, "Should be exactly one proposal in the snapshot");
-                assert.strictEqual(snapshot.values.length, 1, "Should be exactly one value in the snapshot");
-                assert.strictEqual(snapshot.proposals[0][1].value, "dos", "Proposed value should be 'dos'");
-                assert.strictEqual(snapshot.values[0][1].value, "uno", "Accepted value should be 'uno'");
+                verifyExpectedSnapshot();
 
                 // Backstop to ensure the promises are settled.
                 await Promise.all([proposal1P, proposal2P, proposal3P]);
@@ -542,18 +531,19 @@ describe("Quorum", () => {
 
             const snapshot = quorum.snapshot();
 
-            assert.strictEqual(snapshot.members.length, 1, "Should be exactly 1 member in the snapshot");
-            assert.strictEqual(snapshot.members[0][0], client1Info.clientId, "Expecting client 1");
+            const verifyExpectedSnapshot = () => {
+                assert.strictEqual(snapshot.members.length, 1, "Should be exactly 1 member in the snapshot");
+                assert.strictEqual(snapshot.members[0][0], client1Info.clientId, "Expecting client 1");
+            }
 
+            // Verify initial state of snapshot
+            verifyExpectedSnapshot();
+
+            // The snapshot we took should never change after we take it
             quorum.addMember(client2Info.clientId, client2Info.details);
-
-            assert.strictEqual(snapshot.members.length, 1, "Should be exactly 1 member in the snapshot");
-            assert.strictEqual(snapshot.members[0][0], client1Info.clientId, "Expecting client 1");
-
+            verifyExpectedSnapshot();
             quorum.removeMember(client1Info.clientId);
-
-            assert.strictEqual(snapshot.members.length, 1, "Should be exactly 1 member in the snapshot");
-            assert.strictEqual(snapshot.members[0][0], client1Info.clientId, "Expecting client 1");
+            verifyExpectedSnapshot();
         });
     });
 });
