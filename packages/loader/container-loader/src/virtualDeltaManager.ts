@@ -166,7 +166,9 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     protected connectHandler(connection: IConnectionDetails) {
-        // TODO: do we need to do tracking here?
+        // TODO: what else do we need to track here?
+        this._clientSequenceNumberMap.clear();
+        this._clientSequenceNumber = 0;
         super.connectHandler(connection);
     }
 
@@ -205,7 +207,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
             super.processMessage({
                 ...message,
                 sequenceNumber: this.virtualizeSequenceNumber(message.sequenceNumber),
-                clientSequenceNumber: this.virtualizeClientSequenceNumber(message.clientSequenceNumber),
+                clientSequenceNumber: this.connectionManager.clientId === message.clientId ? this.virtualizeClientSequenceNumber(message.clientSequenceNumber) : message.clientSequenceNumber,
                 referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
                 minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
             }, startTime);
@@ -228,7 +230,6 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
         }
         const virtualizedClientSequenceNumber = this._clientSequenceNumberMap.get(clientSequenceNumber);
         assert(virtualizedClientSequenceNumber !== undefined, "clientSequenceNumber not found");
-        this._clientSequenceNumberMap.delete(clientSequenceNumber);
 
         return virtualizedClientSequenceNumber;
     }
@@ -247,7 +248,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
             sequenceNumber: this.virtualizeSequenceNumber(message.sequenceNumber),
             referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
             minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
-            clientSequenceNumber: this.virtualizeClientSequenceNumber(message.clientSequenceNumber),
+            clientSequenceNumber: this.connectionManager.clientId === message.clientId ? this.virtualizeClientSequenceNumber(message.clientSequenceNumber) : message.clientSequenceNumber,
         };
     }
 
