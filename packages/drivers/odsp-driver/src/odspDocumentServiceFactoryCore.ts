@@ -42,8 +42,6 @@ import {
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher, IExistingFileInfo, isNewFileInfo } from "./odspUtils";
-import { createNewFluidFile } from "./createFile";
-import { createNewContainerOnExistingFile } from "./createNewContainerOnExistingFile";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -138,8 +136,20 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     this.getStorageToken,
                     true /* throwOnNullToken */,
                 );
+                // We can delay load this module as this path will not be executed in load flows and create flow
+                // while only happens once in lifetime of a document happens in the background after creation of
+                // detached container.
+                const module = await import(/* webpackChunkName: "createNewModule" */ "./createNewModule")
+                    .then((m) => {
+                        odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded" });
+                        return m;
+                    })
+                    .catch((error) => {
+                        odspLogger.sendErrorEvent( { eventName: "createNewModuleLoadFailed" }, error);
+                        throw error;
+                    });
                 odspResolvedUrl = isNewFileInfo(fileInfo)
-                    ? await createNewFluidFile(
+                    ? await module.createNewFluidFile(
                         getStorageToken,
                         fileInfo,
                         odspLogger,
@@ -152,7 +162,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                         this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
                         this.hostPolicy.enableShareLinkWithCreate
                     )
-                    : await createNewContainerOnExistingFile(
+                    : await module.createNewContainerOnExistingFile(
                         getStorageToken,
                         fileInfo,
                         odspLogger,
