@@ -173,18 +173,29 @@ export class TaskList extends DataObject implements ITaskList {
     private readonly handleTaskAdded = async (id: string): Promise<void> => {
         const taskData = this._draftData?.get(id) as PersistedTask;
         if (taskData === undefined) {
-            throw new Error("Newly added task is missing from map.");
+            throw new Error("Newly added task is missing from draft map.");
+        }
+
+        const savedTaskData = this._savedData?.get(id) as PersistedTask;
+        if (savedTaskData === undefined) {
+            throw new Error("Newly added task is missing from saved map.");
         }
 
         const [nameSharedString, prioritySharedCell] = await Promise.all([
             taskData.name.get(),
             taskData.priority.get(),
         ]);
+
+        const [savedNameSharedString, savedPrioritySharedCell] = await Promise.all([
+            savedTaskData.name.get(),
+            savedTaskData.priority.get(),
+        ]);
+
         // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
         if (this._draftData?.get(id) === undefined) {
             return;
         }
-        const newTask = new Task(id, nameSharedString, prioritySharedCell, undefined, undefined, undefined);
+        const newTask = new Task(id, nameSharedString, prioritySharedCell, savedNameSharedString.getText(), savedPrioritySharedCell.get(), "add");
         this.tasks.set(id, newTask);
         this.emit("taskAdded", newTask);
     };
