@@ -198,7 +198,7 @@
             },
             "useRandomContent": true,
             "useVariableOpSize": true,
-            "opSizeinBytes": 1572864
+            "opSizeinBytes": 1172864
         }
     }
 }
