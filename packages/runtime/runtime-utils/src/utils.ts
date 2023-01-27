@@ -14,11 +14,11 @@ export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
  * @param readAndParseBlob - function to read blob contents from storage
  * and parse the result from JSON.
  */
- export async function seqFromTree(
-    tree: ISnapshotTree,
-    readAndParseBlob: ReadAndParseBlob,
+export async function seqFromTree(
+	tree: ISnapshotTree,
+	readAndParseBlob: ReadAndParseBlob,
 ): Promise<number> {
-    const attributesHash = tree.trees[".protocol"].blobs.attributes;
-    const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
-    return attrib.sequenceNumber;
+	const attributesHash = tree.trees[".protocol"].blobs.attributes;
+	const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
+	return attrib.sequenceNumber;
 }

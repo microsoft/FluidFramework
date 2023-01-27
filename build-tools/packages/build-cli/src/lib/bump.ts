@@ -7,13 +7,13 @@ import * as semver from "semver";
 import { Context, MonoRepo, Package, VersionBag, exec } from "@fluidframework/build-tools";
 
 import {
-    VersionChangeType,
-    VersionScheme,
-    bumpRange,
-    bumpVersionScheme,
-    getVersionRange,
-    isVersionBumpType,
-    isVersionBumpTypeExtended,
+	VersionChangeType,
+	VersionScheme,
+	bumpRange,
+	bumpVersionScheme,
+	getVersionRange,
+	isVersionBumpType,
+	isVersionBumpTypeExtended,
 } from "@fluid-tools/version-tools";
 
 /**
@@ -21,12 +21,12 @@ import {
  * npm-check-updates uses for its `target` argument.
  */
 export type DependencyUpdateType =
-    | "latest"
-    | "newest"
-    | "greatest"
-    | "minor"
-    | "patch"
-    | `@${string}`;
+	| "latest"
+	| "newest"
+	| "greatest"
+	| "minor"
+	| "patch"
+	| `@${string}`;
 
 /**
  * A type guard used to determine if a string is a DependencyUpdateType.
@@ -34,15 +34,15 @@ export type DependencyUpdateType =
  * @internal
  */
 export function isDependencyUpdateType(str: string | undefined): str is DependencyUpdateType {
-    if (str === undefined) {
-        return false;
-    }
+	if (str === undefined) {
+		return false;
+	}
 
-    if (["latest", "newest", "greatest", "minor", "patch"].includes(str)) {
-        return true;
-    }
+	if (["latest", "newest", "greatest", "minor", "patch"].includes(str)) {
+		return true;
+	}
 
-    return str.startsWith("@");
+	return str.startsWith("@");
 }
 
 /**
@@ -51,8 +51,8 @@ export function isDependencyUpdateType(str: string | undefined): str is Dependen
  * @internal
  */
 export interface PackageWithRangeSpec {
-    pkg: Package;
-    rangeOrBumpType: string;
+	pkg: Package;
+	rangeOrBumpType: string;
 }
 
 /**
@@ -83,55 +83,55 @@ export interface PackageWithRangeSpec {
  */
 // eslint-disable-next-line max-params
 export async function bumpPackageDependencies(
-    pkg: Package,
-    bumpPackageMap: Map<string, PackageWithRangeSpec>,
-    prerelease: boolean,
-    onlyBumpPrerelease: boolean,
-    // eslint-disable-next-line default-param-last
-    updateWithinSameReleaseGroup = false,
-    changedVersions?: VersionBag,
+	pkg: Package,
+	bumpPackageMap: Map<string, PackageWithRangeSpec>,
+	prerelease: boolean,
+	onlyBumpPrerelease: boolean,
+	// eslint-disable-next-line default-param-last
+	updateWithinSameReleaseGroup = false,
+	changedVersions?: VersionBag,
 ) {
-    let changed = false;
-    let newRangeString: string;
-    for (const { name, dev } of pkg.combinedDependencies) {
-        const dep = bumpPackageMap.get(name);
-        if (dep !== undefined) {
-            const isSameReleaseGroup = MonoRepo.isSame(dep?.pkg.monoRepo, pkg.monoRepo);
-            if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
-                const dependencies = dev
-                    ? pkg.packageJson.devDependencies
-                    : pkg.packageJson.dependencies;
-                const verString = dependencies[name];
-                const depIsPrerelease = (semver.minVersion(verString)?.prerelease?.length ?? 0) > 0;
+	let changed = false;
+	let newRangeString: string;
+	for (const { name, dev } of pkg.combinedDependencies) {
+		const dep = bumpPackageMap.get(name);
+		if (dep !== undefined) {
+			const isSameReleaseGroup = MonoRepo.isSame(dep?.pkg.monoRepo, pkg.monoRepo);
+			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
+				const dependencies = dev
+					? pkg.packageJson.devDependencies
+					: pkg.packageJson.dependencies;
+				const verString = dependencies[name];
+				const depIsPrerelease = (semver.minVersion(verString)?.prerelease?.length ?? 0) > 0;
 
-                const depNewRangeOrBumpType = dep.rangeOrBumpType;
-                // eslint-disable-next-line unicorn/prefer-ternary
-                if (isVersionBumpTypeExtended(depNewRangeOrBumpType)) {
-                    // bump the current range string
-                    newRangeString = bumpRange(verString, depNewRangeOrBumpType, prerelease);
-                } else {
-                    newRangeString = depNewRangeOrBumpType;
-                }
+				const depNewRangeOrBumpType = dep.rangeOrBumpType;
+				// eslint-disable-next-line unicorn/prefer-ternary
+				if (isVersionBumpTypeExtended(depNewRangeOrBumpType)) {
+					// bump the current range string
+					newRangeString = bumpRange(verString, depNewRangeOrBumpType, prerelease);
+				} else {
+					newRangeString = depNewRangeOrBumpType;
+				}
 
-                // If we're only bumping prereleases, check if the dep is a pre-release. Otherwise bump all packages
-                // whose range doesn't match the current value.
-                if (
-                    (onlyBumpPrerelease && depIsPrerelease) ||
-                    dependencies[name] !== newRangeString
-                ) {
-                    changed = true;
-                    dependencies[name] = newRangeString;
-                    changedVersions?.add(dep.pkg, newRangeString);
-                }
-            }
-        }
-    }
+				// If we're only bumping prereleases, check if the dep is a pre-release. Otherwise bump all packages
+				// whose range doesn't match the current value.
+				if (
+					(onlyBumpPrerelease && depIsPrerelease) ||
+					dependencies[name] !== newRangeString
+				) {
+					changed = true;
+					dependencies[name] = newRangeString;
+					changedVersions?.add(dep.pkg, newRangeString);
+				}
+			}
+		}
+	}
 
-    if (changed) {
-        await pkg.savePackageJson();
-    }
+	if (changed) {
+		await pkg.savePackageJson();
+	}
 
-    return changed;
+	return changed;
 }
 
 /**
@@ -145,58 +145,58 @@ export async function bumpPackageDependencies(
  * @internal
  */
 export async function bumpReleaseGroup(
-    context: Context,
-    bumpType: VersionChangeType,
-    releaseGroupOrPackage: MonoRepo | Package,
-    scheme?: VersionScheme,
+	context: Context,
+	bumpType: VersionChangeType,
+	releaseGroupOrPackage: MonoRepo | Package,
+	scheme?: VersionScheme,
 ) {
-    const translatedVersion = isVersionBumpType(bumpType)
-        ? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
-        : bumpType;
+	const translatedVersion = isVersionBumpType(bumpType)
+		? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
+		: bumpType;
 
-    let name: string;
-    let cmd: string;
-    let workingDir: string;
+	let name: string;
+	let cmd: string;
+	let workingDir: string;
 
-    if (releaseGroupOrPackage instanceof MonoRepo) {
-        workingDir = releaseGroupOrPackage.repoPath;
-        name = releaseGroupOrPackage.kind;
-        cmd = `npx lerna version ${translatedVersion.version} --no-push --no-git-tag-version -y && npm run build:genver`;
-    } else {
-        workingDir = releaseGroupOrPackage.directory;
-        name = releaseGroupOrPackage.name;
-        cmd = `npm version ${translatedVersion.version}`;
-        if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
-            cmd += " && npm run build:genver";
-        }
-    }
+	if (releaseGroupOrPackage instanceof MonoRepo) {
+		workingDir = releaseGroupOrPackage.repoPath;
+		name = releaseGroupOrPackage.kind;
+		cmd = `npx lerna version ${translatedVersion.version} --no-push --no-git-tag-version -y && npm run build:genver`;
+	} else {
+		workingDir = releaseGroupOrPackage.directory;
+		name = releaseGroupOrPackage.name;
+		cmd = `npm version ${translatedVersion.version}`;
+		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
+			cmd += " && npm run build:genver";
+		}
+	}
 
-    const results = await exec(cmd, workingDir, `Error bumping ${name}`);
-    context.repo.reload();
+	const results = await exec(cmd, workingDir, `Error bumping ${name}`);
+	context.repo.reload();
 
-    // the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
-    // for the internal version scheme, the range needs to be a >= < range.
-    if (scheme === "internal" || scheme === "internalPrerelease") {
-        const range = getVersionRange(translatedVersion, "^");
-        if (releaseGroupOrPackage instanceof MonoRepo) {
-            const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
-            const packageNewVersionMap = new Map<string, PackageWithRangeSpec>();
-            for (const pkg of packagesToCheckAndUpdate) {
-                packageNewVersionMap.set(pkg.name, { pkg, rangeOrBumpType: range });
-            }
+	// the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
+	// for the internal version scheme, the range needs to be a >= < range.
+	if (scheme === "internal" || scheme === "internalPrerelease") {
+		const range = getVersionRange(translatedVersion, "^");
+		if (releaseGroupOrPackage instanceof MonoRepo) {
+			const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
+			const packageNewVersionMap = new Map<string, PackageWithRangeSpec>();
+			for (const pkg of packagesToCheckAndUpdate) {
+				packageNewVersionMap.set(pkg.name, { pkg, rangeOrBumpType: range });
+			}
 
-            for (const pkg of packagesToCheckAndUpdate) {
-                // eslint-disable-next-line no-await-in-loop
-                await bumpPackageDependencies(
-                    pkg,
-                    packageNewVersionMap,
-                    /* prerelease */ false,
-                    /* onlyBumpPrerelease */ false,
-                    /* updateWithinSameReleaseGroup */ true,
-                );
-            }
-        }
-    }
+			for (const pkg of packagesToCheckAndUpdate) {
+				// eslint-disable-next-line no-await-in-loop
+				await bumpPackageDependencies(
+					pkg,
+					packageNewVersionMap,
+					/* prerelease */ false,
+					/* onlyBumpPrerelease */ false,
+					/* updateWithinSameReleaseGroup */ true,
+				);
+			}
+		}
+	}
 
-    return results;
+	return results;
 }

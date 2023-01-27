@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const basicAuthMiddleware = require('basicauth-middleware');
-const authenticateFactory = require('./authenticate');
-const getCredentialFactory = require('./get_credentials');
+const basicAuthMiddleware = require("basicauth-middleware");
+const authenticateFactory = require("./authenticate");
+const getCredentialFactory = require("./get_credentials");
 
 /**
  * @function
@@ -16,20 +16,19 @@ const getCredentialFactory = require('./get_credentials');
  * @return {function} middleware
  */
 module.exports = {
+    getCredentialFactory: getCredentialFactory,
 
-  getCredentialFactory: getCredentialFactory,
+    middlewareFactory: (username, passwords) => {
+        const getCredential = getCredentialFactory(username, passwords);
+        const authenticate = authenticateFactory(basicAuthMiddleware);
 
-  middlewareFactory: (username, passwords) => {
-    const getCredential = getCredentialFactory(username, passwords);
-    const authenticate = authenticateFactory(basicAuthMiddleware);
-
-    return (req, res, next) => {
-      try {
-        const credentials = getCredential();
-        authenticate(credentials, req, res, next);
-      } catch (err) {
-        next(err);
-      }
-    };
-  }
+        return (req, res, next) => {
+            try {
+                const credentials = getCredential();
+                authenticate(credentials, req, res, next);
+            } catch (err) {
+                next(err);
+            }
+        };
+    },
 };

@@ -40,14 +40,28 @@ export class PropertyTreeFactory implements IChannelFactory {
 	): Promise<SharedPropertyTree> {
 		const options = {};
 		// default object
-		const instance = new SharedPropertyTree(id, runtime, attributes, options as SharedPropertyTreeOptions);
+		const instance = new SharedPropertyTree(
+			id,
+			runtime,
+			attributes,
+			options as SharedPropertyTreeOptions,
+		);
 		await instance.load(services);
 		return instance;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string, requestUrl?: string): SharedPropertyTree {
+	public create(
+		document: IFluidDataStoreRuntime,
+		id: string,
+		requestUrl?: string,
+	): SharedPropertyTree {
 		const options = {};
-		const cell = new SharedPropertyTree(id, document, this.attributes, options as SharedPropertyTreeOptions);
+		const cell = new SharedPropertyTree(
+			id,
+			document,
+			this.attributes,
+			options as SharedPropertyTreeOptions,
+		);
 
 		cell.initializeLocal();
 		return cell;
