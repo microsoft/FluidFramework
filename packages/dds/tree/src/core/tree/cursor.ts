@@ -9,21 +9,28 @@ import { FieldKey, TreeType, Value } from "./types";
 
 /**
  * A stateful low-level interface for reading tree data.
+ *
+ * @remarks Cursors exist so that specialized implementations can be written against different data abstractions.
+ * This allows performance optimizations to be done based on a data.
  */
 export interface ITreeCursor {
     /**
      * What kind of place the cursor is at.
      * Determines which operations are allowed.
      *
-     * @remarks Cursers of cursors frequently need to refer to places in trees, both fields and nodes.
+     * @remarks Users of cursors frequently need to refer to places in trees, both fields and nodes.
      * Approaches other than having the cursor have separate modes for these cases had issues even worse than having the two modes.
-     * For example modeling fields as parent+key has issues when there is no parent, and doesn't provide a great way to do iteration over
-     * fields that has a nice API and makes it easy for the implementation to track state while traversing (like its current location inside
-     * a sequence tree of fields) without having to allocate some state management for that. Another approach, of using arrays of cursors
-     * for fields (like we currently do for inserting content) is very inefficent and better addressed by a duel mode cursor.
-     * Another approach, of using the first node in a field when refering to the field gets confusing since its unclear if a given cursor
-     * means that node, or that node, and the ones after it, and in the second case its hard to restor the cursor back to the right state
-     * when returning: also it doeesn't work for empty fields. Overall there just didn't seem to be a way that sucked less than the duel mode API.
+     *
+     * For example, modeling fields as parent + key has issues when there is no parent, and doesn't provide a great way to do iteration over
+     * fields while also having a nice API and making it easy for the implementation to track state (like its current
+     * location inside a sequence tree of fields) while traversing without having to allocate some state management for that.
+     *
+     * Another approach, of using arrays of cursors for fields (like we currently do for inserting content) is very inefficent and
+     * better addressed by a duel mode cursor.
+     *
+     * Another approach, of using the first node in a field when refering to the field gets confusing since it's unclear if a given cursor
+     * means that node, or that node, and the ones after it, and in the second case, it's hard to restore the cursor back to the right state
+     * when returning. It also doeesn't work for empty fields. Overal,l there just didn't seem to be a way that sucked less than the duel mode API.
      */
     readonly mode: CursorLocationType;
 
