@@ -31,11 +31,11 @@ packages/tools/fluid-runner/src/test/telemetryExpectedOutputs/
 # Generated type-tests
 **/*.generated.ts
 
-# es5 build output
-packages/framework/data-object-base/es5
-
 # Generated bundle analysis files
 **/bundleAnalysis/**
+
+# es5 build output
+packages/framework/data-object-base/es5
 
 # TODO: Temporarily ignore package.json files while we figure out why CI fails
 **/package.json
