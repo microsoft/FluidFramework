@@ -44,5 +44,5 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 
 Collaborative TextArea uses the following distributed data structures:
 
-- SharedDirectory - root
-- SharedString - stores the text
+-   SharedDirectory - root
+-   SharedString - stores the text

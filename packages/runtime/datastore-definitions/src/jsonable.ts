@@ -41,14 +41,17 @@
  *      function foo<T>(value: Jsonable<T>) { ... }
  * ```
  */
-export type Jsonable<T = any, TReplaced = void> =
-    T extends undefined | null | boolean | number | string | TReplaced
-        ? T
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        : Extract<T, Function> extends never
-            ? {
-                [K in keyof T]: Extract<K, symbol> extends never
-                    ? Jsonable<T[K], TReplaced>
-                    : never
-            }
-            : never;
+export type Jsonable<T = any, TReplaced = void> = T extends
+	| undefined
+	| null
+	| boolean
+	| number
+	| string
+	| TReplaced
+	? T
+	: // eslint-disable-next-line @typescript-eslint/ban-types
+	Extract<T, Function> extends never
+	? {
+			[K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
+	  }
+	: never;

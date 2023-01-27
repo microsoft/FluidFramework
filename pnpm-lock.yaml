@@ -7908,6 +7908,7 @@ importers:
       lz4js: ^0.2.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       sinon: ^7.4.2
       typescript: ~4.5.5
@@ -7953,6 +7954,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       sinon: 7.5.0
       typescript: 4.5.5

@@ -27,8 +27,8 @@ You can run this example using the following steps:
 
 CodeMirror uses the following distributed data structures:
 
-- SharedDirectory - root
-- SharedString - storing codemirror text
+-   SharedDirectory - root
+-   SharedString - storing codemirror text
 
 ## Known issues
 
