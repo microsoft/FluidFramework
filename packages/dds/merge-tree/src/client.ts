@@ -8,7 +8,10 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
+import {
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import type { IEventThisPlaceHolder, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
@@ -18,34 +21,37 @@ import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition } from "./localReference";
 import {
-    CollaborationWindow,
-    compareStrings,
-    IConsensusInfo,
-    ISegment,
-    ISegmentAction,
-    Marker,
-    SegmentGroup,
+	CollaborationWindow,
+	compareStrings,
+	IConsensusInfo,
+	ISegment,
+	ISegmentAction,
+	Marker,
+	SegmentGroup,
 } from "./mergeTreeNodes";
-import { IMergeTreeDeltaCallbackArgs, IMergeTreeMaintenanceCallbackArgs } from "./mergeTreeDeltaCallback";
 import {
-    createAnnotateMarkerOp,
-    createAnnotateRangeOp,
-    createGroupOp,
-    createInsertSegmentOp,
-    createRemoveRangeOp,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+} from "./mergeTreeDeltaCallback";
+import {
+	createAnnotateMarkerOp,
+	createAnnotateRangeOp,
+	createGroupOp,
+	createInsertSegmentOp,
+	createRemoveRangeOp,
 } from "./opBuilder";
 import {
-    ICombiningOp,
-    IJSONSegment,
-    IMergeTreeAnnotateMsg,
-    IMergeTreeDeltaOp,
-    IMergeTreeGroupMsg,
-    IMergeTreeInsertMsg,
-    IMergeTreeRemoveMsg,
-    IMergeTreeOp,
-    IRelativePosition,
-    MergeTreeDeltaType,
-    ReferenceType,
+	ICombiningOp,
+	IJSONSegment,
+	IMergeTreeAnnotateMsg,
+	IMergeTreeDeltaOp,
+	IMergeTreeGroupMsg,
+	IMergeTreeInsertMsg,
+	IMergeTreeRemoveMsg,
+	IMergeTreeOp,
+	IRelativePosition,
+	MergeTreeDeltaType,
+	ReferenceType,
 } from "./ops";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
@@ -56,12 +62,10 @@ import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./r
 import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import {
-    IMergeTreeClientSequenceArgs,
-    IMergeTreeDeltaOpArgs
-} from "./index";
+import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
 
-type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs,"sequencedMessage"> & Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
+type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
+	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
 
 /**
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
@@ -71,9 +75,23 @@ type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs,"sequencedMessage"
  * @internal
  */
 export interface IClientEvents {
-    (event: "normalize", listener: (target: IEventThisPlaceHolder) => void);
-    (event: "delta", listener: (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, target: IEventThisPlaceHolder) => void);
-    (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void);
+	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void);
+	(
+		event: "delta",
+		listener: (
+			opArgs: IMergeTreeDeltaOpArgs,
+			deltaArgs: IMergeTreeDeltaCallbackArgs,
+			target: IEventThisPlaceHolder,
+		) => void,
+	);
+	(
+		event: "maintenance",
+		listener: (
+			args: IMergeTreeMaintenanceCallbackArgs,
+			deltaArgs: IMergeTreeDeltaOpArgs | undefined,
+			target: IEventThisPlaceHolder,
+		) => void,
+	);
 }
 
 export class Client extends TypedEventEmitter<IClientEvents> {
