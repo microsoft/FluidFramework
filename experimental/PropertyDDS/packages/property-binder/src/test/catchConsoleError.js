@@ -7,47 +7,47 @@
 
 let firstError = undefined;
 
-const hadConsoleError = function() {
-  return firstError !== undefined;
+const hadConsoleError = function () {
+	return firstError !== undefined;
 };
 
-const clearConsoleError = function() {
-  firstError = undefined;
+const clearConsoleError = function () {
+	firstError = undefined;
 };
 
-const catchConsoleErrors = function() {
-  let oldConsoleError, oldConsoleAssert;
+const catchConsoleErrors = function () {
+	let oldConsoleError, oldConsoleAssert;
 
-  beforeEach(function() {
-    clearConsoleError();
-    oldConsoleError = console.error;
-    oldConsoleAssert = console.assert;
-    console.error = function(e) {
-      if (!firstError) {
-        if (typeof e === Error) {
-          firstError = e.stack;
-        } else {
-          firstError = e;
-        }
-      }
-      oldConsoleError(e);
-    };
-    console.assert = function(expression, text) {
-      oldConsoleAssert(expression, text);
-      if (!firstError && !expression) {
-        firstError = expression;
-      }
-    };
-  });
+	beforeEach(function () {
+		clearConsoleError();
+		oldConsoleError = console.error;
+		oldConsoleAssert = console.assert;
+		console.error = function (e) {
+			if (!firstError) {
+				if (typeof e === Error) {
+					firstError = e.stack;
+				} else {
+					firstError = e;
+				}
+			}
+			oldConsoleError(e);
+		};
+		console.assert = function (expression, text) {
+			oldConsoleAssert(expression, text);
+			if (!firstError && !expression) {
+				firstError = expression;
+			}
+		};
+	});
 
-  afterEach(function() {
-    console.error = oldConsoleError;
-    console.assert = oldConsoleAssert;
-    if (firstError) {
-      should.fail(true, false, firstError);
-      clearConsoleError();
-    }
-  });
+	afterEach(function () {
+		console.error = oldConsoleError;
+		console.assert = oldConsoleAssert;
+		if (firstError) {
+			should.fail(true, false, firstError);
+			clearConsoleError();
+		}
+	});
 };
 
 const oldConsoles = {};
@@ -58,13 +58,13 @@ const numConsoleMessages = {};
  *
  * @param {string} category warn, info, error...
  */
-const countConsoleMessages = function(category) {
-  oldConsoles[category] = console[category];
+const countConsoleMessages = function (category) {
+	oldConsoles[category] = console[category];
 
-  numConsoleMessages[category] = 0;
-  console[category] = function() {
-    numConsoleMessages[category]++;
-  };
+	numConsoleMessages[category] = 0;
+	console[category] = function () {
+		numConsoleMessages[category]++;
+	};
 };
 
 /**
@@ -73,9 +73,15 @@ const countConsoleMessages = function(category) {
  * @param {string} category warn, info, error...
  * @return {Number} the number of category in this category
  */
-const endCountConsoleMessages = function(category) {
-  console[category] = oldConsoles[category];
-  return numConsoleMessages[category];
+const endCountConsoleMessages = function (category) {
+	console[category] = oldConsoles[category];
+	return numConsoleMessages[category];
 };
 
-export { catchConsoleErrors, hadConsoleError, clearConsoleError, countConsoleMessages, endCountConsoleMessages };
+export {
+	catchConsoleErrors,
+	hadConsoleError,
+	clearConsoleError,
+	countConsoleMessages,
+	endCountConsoleMessages,
+};

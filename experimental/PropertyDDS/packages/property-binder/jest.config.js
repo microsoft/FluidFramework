@@ -4,13 +4,11 @@
  */
 // jest.config.js
 module.exports = {
-  // The glob patterns Jest uses to detect test files
-  testMatch: [
-    "/**/dist/test/*.spec.js"
-  ],
+	// The glob patterns Jest uses to detect test files
+	testMatch: ["/**/dist/test/*.spec.js"],
 
-  testEnvironment: "jsdom",
+	testEnvironment: "jsdom",
 
-  // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
-  testPathIgnorePatterns: ['/node_modules/']
+	// An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
+	testPathIgnorePatterns: ["/node_modules/"],
 };
