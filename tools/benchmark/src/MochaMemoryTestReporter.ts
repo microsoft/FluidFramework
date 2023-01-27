@@ -15,7 +15,6 @@ import {
     pad,
     prettyNumber,
     red,
-    getArrayStatistics,
     getName,
     getSuiteName,
 } from "./ReporterUtilities";
@@ -35,11 +34,12 @@ class MochaMemoryTestReporter {
     private readonly inProgressSuites: Map<string, [string, MemoryBenchmarkStats][]> = new Map();
     private readonly outputDirectory: string;
 
-    public constructor(runner: Runner, options?: { reporterOptions?: { reportDir?: string; }; }) {
+    public constructor(runner: Runner, options?: { reporterOptions?: { reportDir?: string } }) {
         // If changing this or the result file logic in general,
         // be sure to update the glob used to look for output files in the perf pipeline.
         const reportDir = options?.reporterOptions?.reportDir ?? "";
-        this.outputDirectory = reportDir !== "" ? path.resolve(reportDir) : path.join(__dirname, ".output");
+        this.outputDirectory =
+            reportDir !== "" ? path.resolve(reportDir) : path.join(__dirname, ".output");
         if (!fs.existsSync(this.outputDirectory)) {
             fs.mkdirSync(this.outputDirectory, { recursive: true });
         }
@@ -75,8 +75,7 @@ class MochaMemoryTestReporter {
                     // Mocha test complected with out reporting data. This is an error, so report it as such.
                     console.error(
                         red(
-                            `Test ${test.title} in ${suite} completed with status '${
-                                test.state}' without reporting any data.`,
+                            `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`,
                         ),
                     );
                     return;
@@ -86,8 +85,7 @@ class MochaMemoryTestReporter {
                     // This may indicate the benchmark did not measure what was intended, so mark as aborted.
                     console.info(
                         red(
-                            `Test ${test.title} in ${suite} completed with status '${
-                                test.state}' after reporting data.`,
+                            `Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`,
                         ),
                     );
                     memoryTestStats.aborted = true;
@@ -125,24 +123,42 @@ class MochaMemoryTestReporter {
                         }
                         table.cell("name", italicize(testName));
                         if (!testData.aborted) {
-                            const heapUsedArray: number[] = [];
-                            for (let i = 0; i < testData.samples.before.memoryUsage.length; i++) {
-                                heapUsedArray.push(testData.samples.after.memoryUsage[i].heapUsed
-                                                   - testData.samples.before.memoryUsage[i].heapUsed);
-                            }
-                            const heapUsedStats = getArrayStatistics(heapUsedArray);
-                            table.cell("Heap Used Avg", prettyNumber(heapUsedStats.mean, 2), Table.padLeft);
-                            table.cell("Heap Used StdDev", prettyNumber(heapUsedStats.deviation, 2), Table.padLeft);
-                            table.cell("Margin of Error", `±${prettyNumber(heapUsedStats.moe, 2)}`, Table.padLeft);
-                            table.cell("Relative Margin of Error",
-                                `±${prettyNumber(heapUsedStats.rme, 2)}%`, Table.padLeft);
-                            table.cell("Samples", testData.runs.toString(), Table.padLeft);
+                            table.cell(
+                                "Heap Used Avg",
+                                prettyNumber(testData.stats.mean, 2),
+                                Table.padLeft,
+                            );
+                            table.cell(
+                                "Heap Used StdDev",
+                                prettyNumber(testData.stats.deviation, 2),
+                                Table.padLeft,
+                            );
+                            table.cell(
+                                "Margin of Error",
+                                `±${prettyNumber(testData.stats.moe, 2)}`,
+                                Table.padLeft,
+                            );
+                            table.cell(
+                                "Relative Margin of Error",
+                                `±${prettyNumber(testData.stats.rme, 2)}%`,
+                                Table.padLeft,
+                            );
+
+                            table.cell("Iterations", testData.runs.toString(), Table.padLeft);
+                            table.cell(
+                                "Samples used",
+                                testData.stats.sample.length.toString(),
+                                Table.padLeft,
+                            );
                         }
                         table.newRow();
                     });
                     console.log(`${table.toString()}`);
                     if (failedTests.length > 0) {
-                        console.log("------------------------------------------------------", `\n${red("ERRORS:")}`);
+                        console.log(
+                            "------------------------------------------------------",
+                            `\n${red("ERRORS:")}`,
+                        );
                         failedTests.forEach(([testName, testData]) => {
                             console.log(`\n${red(testName)}`, "\n", testData.error);
                         });
@@ -151,7 +167,7 @@ class MochaMemoryTestReporter {
                     this.inProgressSuites.delete(suiteName);
                 }
             })
-            .once(Runner.constants.EVENT_RUN_END, () => { });
+            .once(Runner.constants.EVENT_RUN_END, () => {});
     }
 
     private writeCompletedBenchmarks(suiteName: string): string {

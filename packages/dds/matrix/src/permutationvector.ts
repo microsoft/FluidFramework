@@ -10,7 +10,6 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
     ISegment,
-    LocalReferenceCollection,
     Client,
     IMergeTreeDeltaOpArgs,
     IMergeTreeDeltaCallbackArgs,
@@ -114,14 +113,6 @@ export class PermutationSegment extends BaseSegment {
             : asPerm.start === this.start + this.cachedLength;
     }
 
-    public append(segment: ISegment) {
-        // Note: Must call 'LocalReferenceCollection.append(..)' before modifying this segment's length as
-        //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        LocalReferenceCollection.append(this, segment);
-
-        this.cachedLength += segment.cachedLength;
-    }
-
     protected createSplitSegmentAt(pos: number) {
         assert(0 < pos && pos < this.cachedLength, 0x026 /* "Trying to split segment at out-of-bounds position!" */);
 
@@ -162,8 +153,8 @@ export class PermutationVector extends Client {
             newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
         });                                     // (See https://github.com/microsoft/FluidFramework/issues/84)
 
-        this.mergeTreeDeltaCallback = this.onDelta;
-        this.mergeTreeMaintenanceCallback = this.onMaintenance;
+        this.on("delta", this.onDelta);
+        this.on("maintenance", this.onMaintenance);
     }
 
     public insert(start: number, length: number) {
@@ -216,7 +207,7 @@ export class PermutationVector extends Client {
     }
 
     public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
-        const { segment, offset } = this.getContainingSegment(pos, op);
+        const { segment, offset } = this.getContainingSegment(pos, { referenceSequenceNumber: op.referenceSequenceNumber, clientId: op.clientId });
 
         // Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
         // a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles

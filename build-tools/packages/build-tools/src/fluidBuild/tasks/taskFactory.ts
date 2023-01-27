@@ -56,6 +56,7 @@ const executableToLeafTask: {
     "gen-version": GenVerTask,
     "api-extractor": ApiExtractorTask,
     "fluid-type-validator": TypeValidationTask,
+    "flub generate typetests": TypeValidationTask,
 };
 
 export class TaskFactory {

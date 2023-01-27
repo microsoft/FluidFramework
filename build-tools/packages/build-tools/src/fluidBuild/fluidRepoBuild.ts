@@ -22,6 +22,7 @@ export interface IPackageMatchedOptions {
     all: boolean;
     server: boolean;
     azure: boolean;
+    buildTools: boolean;
     dirs: string[];
 }
 
@@ -101,7 +102,10 @@ export class FluidRepoBuild extends FluidRepo {
         if (options.server) {
             monoReposToConsider.push(MonoRepoKind.Server);
         }
-        if (!options.azure && !options.server) {
+        if (options.buildTools) {
+            monoReposToConsider.push(MonoRepoKind.BuildTools);
+        }
+        if (!options.azure && !options.server && !options.buildTools) {
             monoReposToConsider.push(MonoRepoKind.Client);
         }
 

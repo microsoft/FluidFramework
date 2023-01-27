@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { forEachNode, forEachField, ITreeCursor } from "../../../tree";
+import { Jsonable } from "@fluidframework/datastore-definitions";
+import { forEachNode, forEachField, ITreeCursor } from "../../../core";
 
 export function sum(cursor: ITreeCursor): number {
     let total = 0;
@@ -37,9 +38,21 @@ export function sumMap(cursor: ITreeCursor): number {
     return total;
 }
 
+export function sumDirect(jsonObj: Jsonable): number {
+    let total = 0;
+    for (const value of Object.values(jsonObj)) {
+        if (typeof value === "object" && value !== null) {
+            total += sumDirect(value);
+        } else if (typeof value === "number") {
+            total += value;
+        }
+    }
+    return total;
+}
+
 /**
- * Benchmarking "consumer" that caculates two averages of two values, it takes a callback which enables this benchmark
- * to be used with any shape of tree since the callback defines the tree nagivation.
+ * Benchmarking "consumer" that calculates two averages of two values, it takes a callback which enables this benchmark
+ * to be used with any shape of tree since the callback defines the tree navigation.
  * @param cursor - a Shared Tree cursor
  * @param dataConsumer - Function that should use the given cursor to retrieve data and call calculate().
  * @returns a set of two average values.

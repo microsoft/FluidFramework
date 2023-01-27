@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -48,6 +49,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
+import { MockHandle } from "./mockHandle";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -374,10 +376,17 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
     implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
-    constructor(overrides?: { clientId?: string; }) {
+    constructor(
+        overrides?: {
+            clientId?: string;
+            entryPoint?: IFluidHandle<FluidObject>;
+        }) {
         super();
         this.clientId = overrides?.clientId ?? uuid();
+        this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
     }
+
+    public readonly entryPoint?: IFluidHandle<FluidObject>;
 
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }
@@ -397,6 +406,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly loader: ILoader = undefined as any;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public quorum = new MockQuorumClients();
+
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        return callback();
+    }
 
     public get absolutePath() {
         return `/${this.id}`;
@@ -507,7 +520,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null as any as IResponse;
     }
 
-    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
+    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void { }
 
     public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
@@ -527,7 +540,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         };
     }
 
-    public updateUsedRoutes(usedRoutes: string[]) {}
+    public updateUsedRoutes(usedRoutes: string[]) { }
 
     public getAttachSnapshot(): ITreeEntry[] {
         return [];

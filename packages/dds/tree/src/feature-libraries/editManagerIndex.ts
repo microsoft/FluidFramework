@@ -24,15 +24,17 @@ import {
     Commit,
     EditManager,
     ICachedValue,
-    Index,
     MutableSummaryData,
     ReadonlySummaryData,
     recordDependency,
     SessionId,
+} from "../core";
+import {
+    Index,
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,
-} from "../core";
+} from "../shared-tree-core";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
@@ -49,7 +51,7 @@ const stringKey = "String";
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
 export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>>
-    implements Index<TChangeset>, SummaryElement
+    implements Index, SummaryElement
 {
     public readonly summaryElement?: SummaryElement = this;
     public readonly key = "EditManager";
@@ -116,7 +118,10 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
             const handle = parse(handleString) as IFluidHandle<ArrayBufferLike>;
             schemaBuffer = await handle.get();
         } else {
-            assert(await services.contains(stringKey), "EditManager data is required in summary");
+            assert(
+                await services.contains(stringKey),
+                0x42b /* EditManager data is required in summary */,
+            );
             schemaBuffer = await services.readBlob(stringKey);
         }
 
@@ -125,7 +130,7 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         // invalid means and is about to be overwritten.
         assert(
             this.editManager.isEmpty(),
-            "There should not already be stored EditManager data when loading from summary",
+            0x42c /* There should not already be stored EditManager data when loading from summary */,
         );
 
         const dataString = bufferToString(schemaBuffer, "utf-8");

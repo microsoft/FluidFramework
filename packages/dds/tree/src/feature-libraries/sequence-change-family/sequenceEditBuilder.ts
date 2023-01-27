@@ -9,7 +9,6 @@ import {
     AnchorSet,
     UpPath,
     Value,
-    Delta,
     getDepth,
 } from "../../core";
 import { fail } from "../../util";
@@ -21,8 +20,8 @@ import { SequenceChangeset } from "./sequenceChangeset";
 export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChangeset> {
     private opId: number = 0;
 
-    constructor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet) {
-        super(sequenceChangeFamily, deltaReceiver, anchorSet);
+    constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {
+        super(sequenceChangeFamily, changeReceiver, anchorSet);
     }
 
     public setValue(node: NodePath, value: Value) {
@@ -81,8 +80,8 @@ export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChan
                         const id2 = this.opId++;
                         marks.push(
                             { type: "MoveOut", id, count: gap },
-                            { type: "MoveIn", id, count: count - gap },
-                            { type: "MoveIn", id: id2, count: gap },
+                            { type: "MoveIn", id, count: gap },
+                            { type: "MoveIn", id: id2, count: count - gap },
                             { type: "MoveOut", id: id2, count: count - gap },
                         );
                     } else {

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 import {
     IContainer,
@@ -130,7 +128,9 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
     itExpects("Code Proposal",
     [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "Existing context does not satisfy incoming proposal" },
+        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "Existing context does not satisfy incoming proposal" },
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "Existing context does not satisfy incoming proposal" },
+        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "Existing context does not satisfy incoming proposal" },
     ],
     async () => {
         const proposal: IFluidCodeDetails = { package: packageV2 };

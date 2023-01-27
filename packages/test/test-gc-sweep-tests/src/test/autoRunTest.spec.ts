@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
 import { assert } from "console";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import {
@@ -29,15 +28,14 @@ describeNoCompat("GC InactiveObjectX tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     const summaryOptions = DefaultSummaryConfiguration as ISummaryConfigurationHeuristics;
-    summaryOptions.summarizerClientElection = true;
     // Summaries should run automatically
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions,
+        ...summaryOptions,
         gcOptions: {
             gcAllowed: true,
         },
     };
-    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase): Promise<IResponse> =>
         runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         rootDataObjectWithChildDataObjectFactory,

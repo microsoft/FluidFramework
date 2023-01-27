@@ -58,10 +58,15 @@ import {
     SummarizeInternalFn,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import {
+    addBlobToSummary,
+    convertSummaryTreeToITree,
+} from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
+    loggerToMonitoringContext,
     LoggingError,
+    MonitoringContext,
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
@@ -81,6 +86,9 @@ import {
     getAttributesFormatVersion,
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
+import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
+import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
     pkg: readonly string[],
@@ -183,6 +191,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime;
     }
 
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        return this._containerRuntime.ensureNoDataModelChanges(callback);
+    }
+
     public get isLoaded(): boolean {
         return this.loaded;
     }
@@ -200,6 +212,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     private _tombstoned = false;
     public get tombstoned() { return this._tombstoned; }
+    /** If true, throw an error when a tombstone data store is used. */
+    private readonly throwOnTombstoneUsage: boolean;
 
     public get attachState(): AttachState {
         return this._attachState;
@@ -243,7 +257,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
     private _isInMemoryRoot: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
-    private readonly subLogger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
@@ -289,7 +303,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
-            this.summarizeInternal(fullTree, trackState, telemetryContext);
+                this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
@@ -297,8 +311,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async () => this.getBaseGCDetails(),
         );
 
-        this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
-        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
+        this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "FluidDataStoreContext"));
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.mc.logger);
+
+        // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
+        this.throwOnTombstoneUsage =
+            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+            this.clientDetails.type !== summarizerClientType;
     }
 
     public dispose(): void {
@@ -312,16 +331,16 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (this.channelDeferred) {
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
-            }).catch((error) => {});
+            }).catch((error) => { });
         }
     }
 
-    public tombstone() {
-        if (this.tombstoned) {
+    public setTombstone(tombstone: boolean) {
+        if (this.tombstoned === tombstone) {
             return;
         }
 
-        this._tombstoned = true;
+        this._tombstoned = tombstone;
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
@@ -697,10 +716,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: {
-                    value: this.id,
-                    tag: TelemetryDataTag.CodeArtifact,
-                } },
+                {
+                    eventName: "BindRuntimeError", fluidDataStoreId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                },
                 error);
         }
     }
@@ -755,15 +776,27 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     private verifyNotClosed(callSite: string, checkTombstone = true, safeTelemetryProps: ITelemetryProperties = {}) {
         if (this._disposed) {
-            throw new Error(`Context is closed: Call site - ${callSite}!`);
+            throw new Error(`Context is closed! Call site [${callSite}]`);
         }
 
         if (checkTombstone && this.tombstoned) {
-            const messageString = `Context is tombstoned: Call site -  ${callSite}!`;
-            throw new DataCorruptionError(messageString, {
-                errorMessage: messageString,
-                ...safeTelemetryProps,
-            });
+            const messageString = `Context is tombstoned! Call site [${callSite}]`;
+            const error = new DataCorruptionError(messageString, safeTelemetryProps);
+
+            sendGCUnexpectedUsageEvent(
+                this.mc,
+                {
+                    eventName: "GC_Tombstone_DataStore_Changed",
+                    category: this.throwOnTombstoneUsage ? "error" : "generic",
+                    isSummarizerClient: this.clientDetails.type === summarizerClientType,
+                    callSite,
+                },
+                this.pkg,
+                error,
+            );
+            if (this.throwOnTombstoneUsage) {
+                throw error;
+            }
         }
     }
 
@@ -771,7 +804,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-            getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+            getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -1019,6 +1052,15 @@ export class LocalDetachedFluidDataStoreContext
         this.registry = entry.registry;
 
         super.bindRuntime(dataStoreChannel);
+
+        // Load the handle to the data store's entryPoint to make sure that for a detached data store, the entryPoint
+        // initialization function is called before the data store gets attached and potentially connected to the
+        // delta stream, so it gets a chance to do things while the data store is still "purely local".
+        // This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
+        // of data store factories tends to construct the data object (at least kick off an async method that returns
+        // it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
+        // before the data store is attached.
+        await dataStoreChannel.entryPoint?.get();
 
         if (await this.isRoot()) {
             dataStoreChannel.makeVisibleAndAttachGraph();

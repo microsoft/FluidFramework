@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -62,6 +63,7 @@ import {
     create404Response,
     createResponseError,
     exceptionToResponse,
+    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -79,6 +81,7 @@ import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext, LocalChannelContextBase, RehydratedLocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
+import { FluidObjectHandle } from "./fluidHandle";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -96,9 +99,11 @@ export interface ISharedObjectRegistry {
  * Base data store class
  */
 export class FluidDataStoreRuntime extends
-TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
-IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+    TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
+    IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
+     * @deprecated - Instantiate the class using its constructor instead.
+     *
      * Loads the data store runtime
      * @param context - The data store context
      * @param sharedObjectRegistry - The registry of shared objects used by this data store
@@ -109,8 +114,17 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ): FluidDataStoreRuntime {
-        return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing);
+        return new FluidDataStoreRuntime(
+            context,
+            sharedObjectRegistry,
+            existing,
+            async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/"));
     }
+
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
+     */
+    public readonly entryPoint?: IFluidHandle<FluidObject>;
 
     public get IFluidRouter() { return this; }
 
@@ -176,10 +190,37 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // channel contexts.
     private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
+    /**
+     * Invokes the given callback and expects that no ops are submitted
+     * until execution finishes. If an op is submitted, an error will be raised.
+     *
+     * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     *
+     * @param callback - the callback to be invoked
+     */
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        // back-compat ADO:2309
+        return this.dataStoreContext.ensureNoDataModelChanges === undefined ?
+            callback() :
+            this.dataStoreContext.ensureNoDataModelChanges(callback);
+    }
+
+     /**
+     * Create an instance of a DataStore runtime.
+     *
+     * @param dataStoreContext - Context object for the runtime.
+     * @param sharedObjectRegistry - The registry of shared objects that this data store will be able to instantiate.
+     * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
+     * @param initializeEntryPoint - Function to initialize the entryPoint object for the data store runtime. The
+     * handle to this data store runtime will point to the object returned by this function. If this function is not
+     * provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen
+     * and the primary way of interacting with some Fluid objects, and should be used if possible.
+     */
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
+        initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -262,6 +303,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 this.contexts.set(path, channelContext);
                 this.contextsDeferred.set(path, deferred);
             });
+        }
+
+        if (initializeEntryPoint) {
+            const promise = new LazyPromise(async () => initializeEntryPoint(this));
+            this.entryPoint = new FluidObjectHandle<FluidObject>(promise, "", this.objectsRoutingContext);
         }
 
         this.attachListener();
@@ -397,7 +443,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public bindChannel(channel: IChannel): void {
         assert(this.notBoundedChannelContextSet.has(channel.id),
-        0x17b /* "Channel to be binded should be in not bounded set" */);
+            0x17b /* "Channel to be binded should be in not bounded set" */);
         this.notBoundedChannelContextSet.delete(channel.id);
         // If our data store is attached, then attach the channel.
         if (this.isAttached) {
@@ -518,7 +564,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this.pendingAttach.delete(id);
                     } else {
                         assert(!this.contexts.has(id),
-                        0x17d, /* `Unexpected attach channel OP,
+                            0x17d, /* `Unexpected attach channel OP,
                             is in pendingAttach set: ${this.pendingAttach.has(id)},
                             is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContextBase}` */);
 
@@ -985,14 +1031,14 @@ export const mixinRequestHandler = (
     requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithRequestHandler extends Base {
-        public async request(request: IRequest) {
-            const response = await super.request(request);
-            if (response.status === 404) {
-                return requestHandler(request, this);
-            }
-            return response;
+    public async request(request: IRequest) {
+        const response = await super.request(request);
+        if (response.status === 404) {
+            return requestHandler(request, this);
         }
-    } as typeof FluidDataStoreRuntime;
+        return response;
+    }
+} as typeof FluidDataStoreRuntime;
 
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
@@ -1001,38 +1047,38 @@ export const mixinRequestHandler = (
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string; } | undefined >,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string; } | undefined>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
-        private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
-            const firstName = path.shift();
-            if (firstName === undefined) {
-                throw new LoggingError("Path can't be empty");
-            }
+    private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
+        const firstName = path.shift();
+        if (firstName === undefined) {
+            throw new LoggingError("Path can't be empty");
+        }
 
-            let blob: ISummaryTree | ISummaryBlob = {
-                type: SummaryType.Blob,
-                content,
+        let blob: ISummaryTree | ISummaryBlob = {
+            type: SummaryType.Blob,
+            content,
+        };
+        summary.stats.blobNodeCount++;
+        summary.stats.totalBlobSize += content.length;
+
+        for (const name of path.reverse()) {
+            blob = {
+                type: SummaryType.Tree,
+                tree: { [name]: blob },
             };
-            summary.stats.blobNodeCount++;
-            summary.stats.totalBlobSize += content.length;
-
-            for (const name of path.reverse()) {
-                blob = {
-                    type: SummaryType.Tree,
-                    tree: { [name]: blob },
-                };
-                summary.stats.treeNodeCount++;
-            }
-            summary.summary.tree[firstName] = blob;
+            summary.stats.treeNodeCount++;
         }
+        summary.summary.tree[firstName] = blob;
+    }
 
-        async summarize(...args: any[]) {
-            const summary = await super.summarize(...args);
-            const content = await handler(this);
-            if (content !== undefined) {
-                this.addBlob(summary, content.path, content.content);
-            }
-            return summary;
+    async summarize(...args: any[]) {
+        const summary = await super.summarize(...args);
+        const content = await handler(this);
+        if (content !== undefined) {
+            this.addBlob(summary, content.path, content.content);
         }
-    } as typeof FluidDataStoreRuntime;
+        return summary;
+    }
+} as typeof FluidDataStoreRuntime;

@@ -34,7 +34,7 @@ import {
     LocalCodeLoader,
     SupportedExportInterfaces,
     TestFluidObjectFactory,
-    ensureContainerConnected,
+    waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
@@ -174,7 +174,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         // Attach the container and validate that the DDS is attached.
         await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
         assert(mapClient1.isAttached(), "The map should be attached after the container attaches.");
-        await ensureContainerConnected(container as Container);
+        await waitForContainerConnection(container, true);
         provider.updateDocumentId(container.resolvedUrl);
         const url: any = await container.getAbsoluteUrl("");
         // Load a second container and validate it can load the DDS.
@@ -655,6 +655,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 
     itExpects("Container should be closed on failed attach with non retryable error", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" },
+        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "Test Error" },
     ], async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
 import * as yargs from "yargs";
 import { exportFile } from "./exportFile";
 import { IFluidFileConverter } from "./codeLoaderBundle";
@@ -96,11 +95,9 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                     console.error(`${result.eventName}: ${result.errorMessage}`);
                     process.exit(1);
                 }
+                process.exit(0);
             },
         )
         .help()
         .demandCommand().argv;
 }
-
-fluidRunner();
-/* eslint-enable max-len */

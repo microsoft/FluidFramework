@@ -4,14 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { Delta, FieldKey, MapTree } from "../../tree";
+import { Delta, FieldKey, MapTree, TreeSchemaIdentifier } from "../../core";
 import {
     applyModifyToTree as applyModifyToTreeImpl,
     mapFieldMarks,
     mapTreeFromCursor,
     singleMapTreeCursor,
 } from "../../feature-libraries";
-import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand, brandOpaque, clone } from "../../util";
 import { deepFreeze } from "../utils";
 
@@ -88,6 +87,7 @@ describe("DeltaUtils", () => {
                         {
                             type: Delta.MarkType.MoveIn,
                             moveId,
+                            count: 1,
                         },
                         {
                             type: Delta.MarkType.MoveOut,
@@ -156,6 +156,7 @@ describe("DeltaUtils", () => {
                         {
                             type: Delta.MarkType.MoveIn,
                             moveId,
+                            count: 1,
                         },
                         {
                             type: Delta.MarkType.MoveOut,
@@ -165,6 +166,7 @@ describe("DeltaUtils", () => {
                     ],
                 ],
             ]);
+            deepFreeze(expected);
             assert.deepEqual(actual, expected);
         });
     });
@@ -201,7 +203,7 @@ describe("DeltaUtils", () => {
                                 type,
                                 value: "Y",
                                 fields: new Map([
-                                    [fooField, [{ type, value: "Z", fields: emptyMap }]],
+                                    [fooField, [{ type, value: "Z", fields: new Map() }]],
                                 ]),
                             },
                         ],

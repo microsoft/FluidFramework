@@ -9,12 +9,63 @@
  * @packageDocumentation
  */
 
-export * from "./audience";
-export * from "./browserPackage";
-export * from "./deltas";
-export * from "./error";
-export * from "./loader";
-export * from "./fluidModule";
-export * from "./fluidPackage";
-export * from "./runtime";
-export * from "./tokenProvider";
+export { IAudience, IAudienceOwner } from "./audience";
+export { IFluidBrowserPackage, IFluidBrowserPackageEnvironment, isFluidBrowserPackage } from "./browserPackage";
+export {
+    IConnectionDetails,
+    IDeltaHandlerStrategy,
+    IDeltaManager,
+    IDeltaManagerEvents,
+    IDeltaSender,
+    IDeltaQueue,
+    IDeltaQueueEvents,
+    ReadOnlyInfo,
+} from "./deltas";
+export {
+    ContainerErrorType,
+    ContainerWarning,
+    ICriticalContainerError,
+    IErrorBase,
+    IGenericError,
+    IUsageError,
+    IThrottlingWarning,
+} from "./error";
+export {
+    ConnectionState,
+    ICodeAllowList,
+    ICodeDetailsLoader,
+    IContainer,
+    IContainerEvents,
+    IContainerLoadMode,
+    IFluidCodeResolver,
+    IFluidModuleWithDetails,
+    IHostLoader,
+    ILoader,
+    ILoaderHeader,
+    ILoaderOptions,
+    IPendingLocalState,
+    IProvideLoader,
+    IResolvedFluidCodeDetails,
+    ISnapshotTreeWithBlobContents,
+    LoaderHeader,
+} from "./loader";
+export { IFluidModule } from "./fluidModule";
+export {
+    IFluidPackage,
+    IFluidPackageEnvironment,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+    IFluidCodeDetailsConfig,
+    IProvideFluidCodeDetailsComparer,
+    isFluidPackage,
+    isFluidCodeDetails,
+} from "./fluidPackage";
+export {
+    AttachState,
+    IBatchMessage,
+    IContainerContext,
+    IProvideRuntimeFactory,
+    IRuntime,
+    IRuntimeFactory,
+} from "./runtime";
+export { IFluidTokenProvider, IProvideFluidTokenProvider } from "./tokenProvider";

@@ -1,0 +1,83 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-conditionally-run-stress-tests
+# Runs DDS stress tests in a set of packages as defined by the parameter object. For each package,
+# tests will only be executed if the commit associated with this pipeline touched some of the files
+# in the 'affectedPaths' subparameter.
+
+parameters:
+# Expected form:
+# name: string
+# affectedPaths: string[]
+# testFileTarName: string
+# testCommand: string
+- name: packages
+  type: object
+
+- name: testWorkspace
+  type: string
+
+- name: pool
+  type: object
+  default: Small
+
+# Id of the run of the 'Build - client packages' pipeline which contains the artifacts to download.
+# Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
+# incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
+- name: artifactBuildId
+  type: string
+
+stages:
+  - stage: CheckAffectedPaths
+    displayName: Determine changed packages
+    jobs:
+    - job: Job
+      displayName: Check for DDS package changes
+      steps:
+      - ${{ each package in parameters.packages }}:
+        - task: PowerShell@2
+          inputs:
+            targetType: 'inline'
+            script: |
+              $filesWereChanged = 0
+              foreach ($path in $env:AFFECTED_PATHS.Split(";")) {
+                $pathsChanged = git diff --name-only HEAD~1 $path
+                if ($pathsChanged -ne $null) {
+                  Write-Host "Found the following files changed in ${path}:"
+                  Write-Host $pathsChanged
+                  $filesWereChanged = 1
+                } else {
+                  Write-Host "No files changed in $path"
+                }
+              }
+              If ($filesWereChanged)  {
+                echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
+              }
+          displayName: 'Check if files affecting ${{ package.name }} tests were modified'
+          name: Check${{ replace(package.testFileTarName, '-', '' ) }}
+          env:
+            AFFECTED_PATHS: ${{ join(';', package.affectedPaths) }}
+
+  - ${{ each package in parameters.packages }}:
+    - stage:
+      dependsOn: CheckAffectedPaths
+      displayName: Run ${{ package.name }} stress tests
+      jobs:
+        - template: include-test-real-service.yml
+          parameters:
+            # Ideally this would be a condition on the stage rather than the job, but it doesn't seem like that is supported (and ADO UI gives very little debug information
+            # as to what might be going wrong). This only impacts the "stage" view of the pipeline, in that packages with skipped tests will show up as successful stages
+            # rather than skipped stages. Clicking on a skipped stage still shows that the corresponding test job wasn't run.
+            condition: eq(stageDependencies.CheckAffectedPaths.Job.outputs['Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
+            poolBuild: ${{ parameters.pool }}
+            loggerPackage: ''
+            artifactBuildId: ${{ parameters.artifactBuildId }}
+            testPackage: ${{ package.name }}
+            testWorkspace: ${{ parameters.testWorkspace }}
+            timeoutInMinutes: 120
+            testFileTarName: ${{ package.testFileTarName }}
+            testCommand: ${{ package.testCommand }}
+            env:
+              FUZZ_STRESS_RUN: true
+              FLUID_TEST_REPORT: 1

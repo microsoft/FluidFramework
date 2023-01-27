@@ -15,9 +15,9 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
-import { ISharedCell } from "../interfaces";
+import { ISharedCell, ICellOptions } from "../interfaces";
 
-function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory, options?: ICellOptions): ISharedCell {
     // Create and connect a second SharedCell.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -26,17 +26,20 @@ function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFac
         objectStorage: new MockStorage(),
     };
 
-    const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
+    const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes, options);
     cell.connect(services);
     return cell;
 }
 
-function createLocalCell(id: string) {
-    const subCell = new SharedCell("cell", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
+function createLocalCell(id: string, options?: ICellOptions): ISharedCell {
+    const subCell = new SharedCell(id, new MockFluidDataStoreRuntime(), CellFactory.Attributes, options);
     return subCell;
 }
 
-function createCellForReconnection(id: string, runtimeFactory: MockContainerRuntimeFactoryForReconnection) {
+function createCellForReconnection(
+    id: string,
+    runtimeFactory: MockContainerRuntimeFactoryForReconnection
+): { cell: ISharedCell, containerRuntime: MockContainerRuntimeForReconnection } {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
     const services = {
@@ -51,7 +54,7 @@ function createCellForReconnection(id: string, runtimeFactory: MockContainerRunt
 
 describe("Cell", () => {
     describe("Local state", () => {
-        let cell: SharedCell;
+        let cell: ISharedCell;
 
         beforeEach(() => {
             cell = createLocalCell("cell");
@@ -138,6 +141,23 @@ describe("Cell", () => {
                 assert.equal(cell2.get(), newValue, "The second cell did not get the new value");
             });
         });
+
+        describe("Summarization of the Attribution", () => {
+            it("should not retrive attribution in local state", async () => {
+                // overwrite the cell with attribution tracking enabled
+                const options: ICellOptions = { attribution: { track: true } };
+                cell = createLocalCell("cell", options);
+                cell.set("value");
+                assert.equal(cell.getAttribution(), undefined, "the first cell should not have valid attribution");
+
+                // load a cell from the snapshot
+                const services = MockSharedObjectServices.createFromSummary(cell.getAttachSummary().summary);
+                const cell2 = new SharedCell("cell2", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
+                await cell2.load(services);
+
+                assert.equal(cell2.getAttribution(), undefined, "the second cell should not have valid attribution");
+            });
+        });
     });
 
     describe("Connected state", () => {
@@ -178,6 +198,68 @@ describe("Cell", () => {
                 assert.equal(cell1.get(), undefined, "Could not delete cell value");
                 assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
             });
+
+            it("Shouldn't overwrite value if there is pending set", () => {
+                const value1 = "value1";
+                const pending1 = "pending1";
+                const pending2 = "pending2";
+                cell1.set(value1);
+                cell2.set(pending1);
+                cell2.set(pending2);
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedCell with processed message
+                assert.equal(cell1.empty(), false, "could not find the set value");
+                assert.equal(cell1.get(), value1, "could not get the set value");
+
+                // Verify the SharedCell with 2 pending messages
+                assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
+                assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedCell gets updated from remote
+                assert.equal(cell1.empty(), false, "could not find the set value");
+                assert.equal(cell1.get(), pending1, "could not get the set value");
+
+                // Verify the SharedCell with 1 pending message
+                assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
+                assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
+            });
+        });
+
+        describe("Attributor", () => {
+            beforeEach(() => {
+                const options: ICellOptions = { attribution: { track: true } };
+                containerRuntimeFactory = new MockContainerRuntimeFactory();
+                // Connect the first SharedCell with attribution enabled.
+                cell1 = createConnectedCell("cell1", containerRuntimeFactory, options);
+                // Create a second SharedCell with attribution enabled.
+                cell2 = createConnectedCell("cell2", containerRuntimeFactory, options);
+            });
+
+            it("Retrive proper attribution information in connected state", () => {
+                const value1 = "value1";
+                const value2 = "value2";
+                cell1.set(value1);
+                cell2.set(value2);
+                cell2.delete();
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the attributon is not undefined
+                assert.notEqual(cell1.getAttribution(), undefined, "the first cell does not have valid attribution");
+                // Verify the attribution of SharedCell with 1 pending message
+                assert.notEqual(cell1.getAttribution()?.seq, cell2.getAttribution()?.seq, "the attribution key should not be consistent");
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the attributon is not undefined
+                assert.notEqual(cell2.getAttribution(), undefined, "the second cell does not have valid attribution");
+                // Verify the attribution of SharedCell with all pending messages processed
+                assert.equal(cell1.getAttribution()?.seq, cell2.getAttribution()?.seq, "the attribution key should be consistent");
+            })
         });
     });
 
@@ -279,35 +361,50 @@ describe("Cell", () => {
             private readonly cell2: ISharedCell;
             private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
-            constructor() {
+            public constructor() {
                 this.containerRuntimeFactory = new MockContainerRuntimeFactory();
                 this.cell1 = createConnectedCell("cell1", this.containerRuntimeFactory);
                 this.cell2 = createConnectedCell("cell2", this.containerRuntimeFactory);
             }
 
-            public get sharedObject() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+             */
+            public get sharedObject(): ISharedCell {
                 // Return the remote SharedCell because we want to verify its summary data.
                 return this.cell2;
             }
 
-            public get expectedOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+             */
+            public get expectedOutboundRoutes(): string[] {
                 return this._expectedRoutes;
             }
 
-            public async addOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+             */
+            public async addOutboundRoutes(): Promise<void> {
                 const newSubCell = createLocalCell(`subCell-${++this.subCellCount}`);
                 this.cell1.set(newSubCell.handle);
                 this._expectedRoutes = [newSubCell.handle.absolutePath];
                 this.containerRuntimeFactory.processAllMessages();
             }
 
-            public async deleteOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+             */
+            public async deleteOutboundRoutes(): Promise<void> {
                 this.cell2.delete();
                 this._expectedRoutes = [];
                 this.containerRuntimeFactory.processAllMessages();
             }
 
-            public async addNestedHandles() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+             */
+            public async addNestedHandles(): Promise<void> {
                 const newSubCell = createLocalCell(`subCell-${++this.subCellCount}`);
                 const newSubCell2 = createLocalCell(`subCell-${++this.subCellCount}`);
                 const containingObject = {

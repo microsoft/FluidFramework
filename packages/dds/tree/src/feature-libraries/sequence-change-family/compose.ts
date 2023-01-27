@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
     getInputLength,
@@ -32,13 +33,13 @@ import { SequenceChangeset } from "./sequenceChangeset";
  * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
-export function compose(changes: SequenceChangeset[]): SequenceChangeset {
+export function compose(changes: TaggedChange<SequenceChangeset>[]): SequenceChangeset {
     if (changes.length === 1) {
-        return changes[0];
+        return changes[0].change;
     }
     let composedFieldMarks: T.FieldMarks = {};
     for (const change of changes) {
-        composedFieldMarks = composeFieldMarks(composedFieldMarks, change.marks);
+        composedFieldMarks = composeFieldMarks(composedFieldMarks, change.change.marks);
     }
     return {
         marks: composedFieldMarks,

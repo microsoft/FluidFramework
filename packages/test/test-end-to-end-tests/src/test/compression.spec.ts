@@ -13,17 +13,19 @@ import {
     ITestFluidObject,
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 
 const testContainerConfig: ITestContainerConfig = {
     registry: [["mapKey", SharedMap.getFactory()]],
     runtimeOptions: {
-        compressionOptions: { minimumSize: 1 },
+        compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
     },
     fluidDataObjectType: DataObjectFactoryType.Test,
 };
 
-describeFullCompat("Op Compression", (getTestObjectProvider) => {
+// Reenable full compat ADO:2942
+describeNoCompat("Op Compression", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container: Container;
     let dataObject: ITestFluidObject;
@@ -47,12 +49,12 @@ describeFullCompat("Op Compression", (getTestObjectProvider) => {
     });
 
     it("Can compress and process compressed op", async () => {
-		// The value is such that the compressed value is longer than the uncompressed value
-		// If it wasn't, it wouldn't get compressed
+        // The value is such that the compressed value is longer than the uncompressed value
+        // If it wasn't, it wouldn't get compressed
         map.set("testKey", "///////////////////////////////////");
         await provider.ensureSynchronized();
-		const value = map.get("testKey");
-		assert.strictEqual(value, "///////////////////////////////////");
+        const value = map.get("testKey");
+        assert.strictEqual(value, "///////////////////////////////////");
     });
 
     it("Processes ops that weren't worth compressing", async () => {

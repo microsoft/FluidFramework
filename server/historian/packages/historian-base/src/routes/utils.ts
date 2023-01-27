@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { RequestHandler, Response } from "express";
-import * as jwt from "jsonwebtoken";
+import { decode } from "jsonwebtoken";
 import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
@@ -16,12 +16,12 @@ import { containsPathTraversal, parseToken } from "../utils";
 /**
  * Helper function to handle a promise that should be returned to the user.
  * TODO: Replace with handleResponse from services-shared.
- * @param resultP Promise whose resolved value or rejected error will send with appropriate status codes.
- * @param response Express Response used for writing response body, headers, and status.
- * @param allowClientCache sends Cache-Control header with maximum age set to 1 yr if true or no store if false.
- * @param errorStatus Overrides any error status code; leave undefined for pass-through error codes or 400 default.
- * @param successStatus Status to send when result is successful. Default: 200
- * @param onSuccess Additional callback fired when response is successful before sending response.
+ * @param resultP - Promise whose resolved value or rejected error will send with appropriate status codes.
+ * @param response - Express Response used for writing response body, headers, and status.
+ * @param allowClientCache - sends Cache-Control header with maximum age set to 1 yr if true or no store if false.
+ * @param errorStatus - Overrides any error status code; leave undefined for pass-through error codes or 400 default.
+ * @param successStatus - Status to send when result is successful. Default: 200
+ * @param onSuccess - Additional callback fired when response is successful before sending response.
  */
 export function handleResponse<T>(
     resultP: Promise<T>,
@@ -72,7 +72,7 @@ export async function createGitService(
     const customData: ITenantCustomDataExternal = details.customData;
     const writeToExternalStorage = !!customData?.externalStorageData;
     const storageName = customData?.storageName;
-    const decoded = jwt.decode(token) as ITokenClaims;
+    const decoded = decode(token) as ITokenClaims;
     const storageUrl = config.get("storageUrl") as string | undefined;
     if (containsPathTraversal(decoded.documentId)) {
         // Prevent attempted directory traversal.

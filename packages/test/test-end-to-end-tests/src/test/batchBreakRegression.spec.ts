@@ -11,7 +11,11 @@ import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidfram
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
+} from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 
 /**
@@ -91,7 +95,8 @@ async function runAndValidateBatch(
         const loader = provider.createLoader(
             [[
                 provider.defaultCodeDetails,
-                provider.createFluidEntryPoint({ runtimeOptions: { summaryOptions: { disableSummaries: true } } }),
+                provider.createFluidEntryPoint({ runtimeOptions: { summaryOptions: {
+                    summaryConfigOverrides: { state: "disabled" } } } }),
             ]],
             {
                 documentServiceFactory: proxyDsf,
@@ -123,7 +128,7 @@ async function runAndValidateBatch(
     }
 }
 
-describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
+describeNoCompat("Batching failures", (getTestObjectProvider) => {
     it("working proxy",
     async function() {
         const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -142,11 +147,42 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
             });
         await runAndValidateBatch(provider, proxyDsf, this.timeout());
     });
-    it("working batch",
-    async function() {
+
+    it("working batch", async function() {
         const provider = getTestObjectProvider({ resetAfterEach: true });
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
+
+    it("contains batch metadata", async function() {
+        const provider = getTestObjectProvider({ resetAfterEach: true });
+        let batchesSent = 0;
+        const sentMessages: IDocumentMessage[][] = [];
+
+        const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+            provider.documentServiceFactory,
+            {
+                createDocumentService: {
+                    connectToDeltaStream: {
+                        submit: (ds) => (messages) => {
+                            sentMessages.push([...messages]);
+                            batchesSent++;
+                            ds.submit(messages);
+                        },
+                    },
+                },
+            });
+
+        await runAndValidateBatch(provider, proxyDsf, this.timeout());
+        assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
+
+        {
+            const batch = sentMessages[0];
+            assert.strictEqual(batch.length, 11, "expected 11 messages");
+            assert.strictEqual(batch[0].metadata?.batch, true, "first message should contain batch metadata");
+            assert.strictEqual(batch[10].metadata?.batch, false, "last message should contain batch metadata");
+        }
+    });
+
     describe("client sends invalid batches ", () => {
         itExpects.skip("Batch end without start",
         [
@@ -299,6 +335,10 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Received a system message during batch processing",
             },
+            {
+                eventName: "fluid:telemetry:Container:ContainerDispose",
+                error: "Received a system message during batch processing",
+            },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -317,7 +357,6 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                                     && args.length >= 2
                                     && Array.isArray(args[1])) {
                                         // this code adds a join message in the middle of a batch
-                                        // eslint-disable-next-line max-len
                                         const newMessages: (ISequencedDocumentMessage | ISequencedDocumentSystemMessage)[]
                                             = [...args[1]];
                                         const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
@@ -332,7 +371,6 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                                                     contents: null,
                                                     referenceSequenceNumber: -1,
                                                     type: "join",
-                                                    // eslint-disable-next-line max-len
                                                     data: "{\"clientId\":\"fake_client\",\"detail\":{\"user\":{\"id\":\"fake_user\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true}},\"mode\":\"write\"}}",
 
                                                 })

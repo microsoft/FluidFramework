@@ -74,7 +74,7 @@ $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/0.5.0
+@fluid-tools/version-tools/0.8.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
@@ -85,9 +85,39 @@ USAGE
 # Commands
 
 <!-- commands -->
+* [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
 * [`fluv help [COMMAND]`](#fluv-help-command)
 * [`fluv version VERSION`](#fluv-version-version)
 * [`fluv version latest`](#fluv-version-latest)
+
+## `fluv autocomplete [SHELL]`
+
+display autocomplete installation instructions
+
+```
+USAGE
+  $ fluv autocomplete [SHELL] [-r]
+
+ARGUMENTS
+  SHELL  shell type
+
+FLAGS
+  -r, --refresh-cache  Refresh cache (ignores displaying instructions)
+
+DESCRIPTION
+  display autocomplete installation instructions
+
+EXAMPLES
+  $ fluv autocomplete
+
+  $ fluv autocomplete bash
+
+  $ fluv autocomplete zsh
+
+  $ fluv autocomplete --refresh-cache
+```
+
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v1.3.6/src/commands/autocomplete/index.ts)_
 
 ## `fluv help [COMMAND]`
 
@@ -107,7 +137,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.12/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.14/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 

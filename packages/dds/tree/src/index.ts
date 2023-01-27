@@ -34,6 +34,8 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
+    symbolIsFieldKey,
+    isGlobalFieldKey,
     ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
@@ -71,6 +73,10 @@ export {
     FieldAnchor,
     RevisionTag,
     TaggedChange,
+    RepairDataStore,
+    ReadonlyRepairDataStore,
+    SchemaEvents,
+    ForestEvents,
 } from "./core";
 
 export {
@@ -91,7 +97,10 @@ export {
     JsonCompatibleReadOnly,
     JsonCompatible,
     JsonCompatibleObject,
+    NestedMap,
 } from "./util";
+
+export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
 
 export {
     cursorToJsonObject,
@@ -107,9 +116,12 @@ export {
 
 export {
     buildForest,
+    ChangesetLocalId,
     emptyField,
+    IdAllocator,
     neverTree,
     ModularChangeFamily,
+    ModularChangeset,
     ModularEditBuilder,
     FieldChangeHandler,
     FieldEditor,
@@ -121,6 +133,7 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
+    NodeReviver,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -140,9 +153,20 @@ export {
     EditableField,
     isPrimitiveValue,
     isPrimitive,
-    getTypeSymbol,
+    getPrimaryField,
+    typeSymbol,
+    typeNameSymbol,
     valueSymbol,
+    indexSymbol,
     proxyTargetSymbol,
+    getField,
+    createField,
+    replaceField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
     defaultSchemaPolicy,
     jsonableTreeFromCursor,
     PrimitiveValue,

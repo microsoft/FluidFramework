@@ -62,7 +62,7 @@ export function create(
                 false,
                 undefined,
                 201);
-    });
+        });
 
     router.get("/repos/:ignored?/:tenantId/git/tags/*",
         utils.validateRequestParams("tenantId", 0),
@@ -73,7 +73,7 @@ export function create(
                 tagP,
                 response,
                 false);
-    });
+        });
 
     return router;
 }

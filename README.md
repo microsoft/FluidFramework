@@ -44,6 +44,8 @@ Here's the list of Lerna managed release groups:
     -   [Packages](./server/gitrest/packages) (Published in the `@fluidframework/` namespace)
 -   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/lerna.json](./server/historian/lerna.json))
     -   [Packages](./server/historian/packages) (Published in the `@fluidframework/` namespace)
+-   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/lerna.json](./build-tools/lerna.json))
+    -   [Packages](./build-tools/packages) (Published in a mix of `@fluidframework/` and `@fluid-tools/` namespaces)
 
 Here's a list of other sets of other packages (each package within these groups is versioned independently,
 forming its own release group):
@@ -69,6 +71,20 @@ Note: we recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-w
 [MacOS/Linux](https://github.com/nvm-sh/nvm)) or [fnm](https://github.com/Schniz/fnm) to install Node.js, in case you find yourself needing to install different
 versions of Node.js side-by-side.
 
+Because of a transitive dependency on a native addon module, you'll also need to ensure that you have the prerequisites for `node-gyp`. Depending on your operating system, you'll have slightly different installation requirements (these are largely copied from `node-gyp`'s [documentation](https://github.com/nodejs/node-gyp#readme)):
+
+### On Windows
+The node installer should ask if you want to install "Tools for Native Modules." If you check the box for this nothing further should be needed. Otherwise, you can follow the steps listed [here](https://github.com/Microsoft/nodejs-guidelines/blob/master/windows-environment.md#prerequisites)
+### On Unix
+1. Python v3.7, v3.8, v3.9, or v3.10
+2. `make`
+3. A C/C++ toolchain (like [GCC](https://gcc.gnu.org/))
+### On MacOS
+If you've *upgraded* your Mac to Catalina or higher, you may need to follow [these](https://github.com/nodejs/node-gyp/blob/main/macOS_Catalina.md) instructions.
+1. Python v3.7, v3.8, v3.9, or v3.10
+2. `XCode Command Line Tools`, which will install `make`, `clang`, and `clang++`
+    - You can install these by running `xcode-select --install` from a command line.
+
 Clone a copy of the repo and change to the repo root directory:
 
 ```shell
@@ -79,7 +95,8 @@ cd FluidFramework
 Run the following to build the client packages:
 
 ```shell
-npm install
+npm i -g pnpm
+pnpm install
 npm run build:fast
 ```
 
@@ -171,6 +188,12 @@ Then:
 
 ## Contributing
 
+<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=FALSE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 
 -   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
@@ -178,14 +201,15 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the
-[Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact
-[opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these
-trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks). Use of
-Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft
-sponsorship.
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

@@ -19,23 +19,17 @@ import {
     NodeTypes,
     TreeBuilder,
 } from "./zipItDataRepresentationUtils";
+import { measure } from "./odspUtils";
 
 export const snapshotMinReadVersion = "1.0";
 export const currentReadVersion = "1.0";
-
-interface ISnapshotSection {
-    snapshotTree: ISnapshotTree;
-    sequenceNumber: number;
-    slowTreeStructureCount: number;
-}
 
 /**
  * The parsing is significantly faster if the position of props is well known instead of dynamic. So these variables
  * represents how many times slower parsing path is executed. This will be then logged into telemetry.
  */
 export interface ISnapshotContentsWithProps extends ISnapshotContents {
-    slowBlobStructureCount?: number;
-    slowTreeStructureCount?: number;
+    telemetryProps: Record<string, number>;
 }
 
 /**
@@ -186,7 +180,7 @@ function readTreeSection(node: NodeCore) {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readSnapshotSection(node: NodeTypes): ISnapshotSection {
+function readSnapshotSection(node: NodeTypes) {
     assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
     const records = getNodeProps(node);
 
@@ -211,7 +205,7 @@ export function parseCompactSnapshotResponse(
     buffer: Uint8Array,
     logger: ITelemetryLogger,
 ): ISnapshotContentsWithProps {
-    const builder = TreeBuilder.load(new ReadBuffer(buffer), logger);
+    const { builder, telemetryProps } = TreeBuilder.load(new ReadBuffer(buffer), logger);
     assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
 
@@ -230,10 +224,20 @@ export function parseCompactSnapshotResponse(
     assert(currentReadVersion === cv,
         0x2c2 /* "Create Version should be equal to currentReadVersion" */);
 
+    const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(records.snapshot));
+    const [blobs, durationBlobs] = measure(() => readBlobSection(records.blobs));
+
     return {
-        ...readSnapshotSection(records.snapshot),
-        ...readBlobSection(records.blobs),
+        ...snapshot,
+        ...blobs,
         ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
         latestSequenceNumber: records.lsn,
+        telemetryProps: {
+            ...telemetryProps,
+            durationSnapshotTree,
+            durationBlobs,
+            slowTreeStructureCount: snapshot.slowTreeStructureCount,
+            slowBlobStructureCount: blobs.slowBlobStructureCount,
+        },
     };
 }

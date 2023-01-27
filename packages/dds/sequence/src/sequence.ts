@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     ISequencedDocumentMessage,
     MessageType,
@@ -25,6 +25,7 @@ import {
     IMergeTreeDeltaOp,
     IMergeTreeGroupMsg,
     IMergeTreeOp,
+    IMergeTreeOptions,
     IMergeTreeRemoveMsg,
     IRelativePosition,
     ISegment,
@@ -184,45 +185,27 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
         });
 
+        const mergeTreeOptions = {
+            ...dataStoreRuntime.options as IMergeTreeOptions
+        };
+
+        const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean("Fluid.Attribution.EnableOnNewFile");
+        if (configSetAttribution !== undefined) {
+            mergeTreeOptions.attribution ??= {};
+            mergeTreeOptions.attribution.track = configSetAttribution;
+        }
+
         this.client = new Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
-            dataStoreRuntime.options);
+            mergeTreeOptions);
 
-        super.on("newListener", (event) => {
-            switch (event) {
-                case "sequenceDelta":
-                    if (!this.client.mergeTreeDeltaCallback) {
-                        this.client.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
-                            this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, deltaArgs, this.client), this);
-                        };
-                    }
-                    break;
-                case "maintenance":
-                    if (!this.client.mergeTreeMaintenanceCallback) {
-                        this.client.mergeTreeMaintenanceCallback = (args, opArgs) => {
-                            this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
-                        };
-                    }
-                    break;
-                default:
-            }
+        this.client.on("delta", (opArgs, deltaArgs) => {
+            this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, deltaArgs, this.client), this);
         });
-        super.on("removeListener", (event: string | symbol) => {
-            switch (event) {
-                case "sequenceDelta":
-                    if (super.listenerCount(event) === 0) {
-                        this.client.mergeTreeDeltaCallback = undefined;
-                    }
-                    break;
-                case "maintenance":
-                    if (super.listenerCount(event) === 0) {
-                        this.client.mergeTreeMaintenanceCallback = undefined;
-                    }
-                    break;
-                default:
-                    break;
-            }
+
+        this.client.on("maintenance", (args, opArgs) => {
+            this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
         });
 
         this.intervalCollections = new DefaultMap(

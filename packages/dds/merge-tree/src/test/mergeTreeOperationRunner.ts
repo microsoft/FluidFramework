@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import random from "random-js";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
@@ -17,7 +17,7 @@ import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
 export type TestOperation =
-    (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => (IMergeTreeOp | undefined);
+    (client: TestClient, opStart: number, opEnd: number, random: IRandom) => (IMergeTreeOp | undefined);
 
 export const removeRange: TestOperation =
     (client: TestClient, opStart: number, opEnd: number) => client.removeRangeLocal(opStart, opEnd);
@@ -27,7 +27,7 @@ export const annotateRange: TestOperation =
         client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
 
 export const insertAtRefPos: TestOperation =
-    (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
+    (client: TestClient, opStart: number, opEnd: number, random: IRandom) => {
         const segs: ISegment[] = [];
         // gather all the segments at the pos, including removed segments
         walkAllChildSegments(client.mergeTree.root, (seg) => {
@@ -42,23 +42,33 @@ export const insertAtRefPos: TestOperation =
             return true;
         });
         if (segs.length > 0) {
-            const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
-            const seg = random.pick(mt, segs);
+            const text = client.longClientId!.repeat(random.integer(1, 3));
+            const seg = random.pick(segs);
             const lref = client.createLocalReferencePosition(
                 seg,
-                toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1)(mt),
+                toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1),
                 toRemovalInfo(seg)
                     ? ReferenceType.SlideOnRemove
-                    : random.pick(mt, [ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]),
+                    : random.pick([ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]),
                 undefined);
 
             return client.insertAtReferencePositionLocal(lref, TextSegment.make(text));
         }
     };
 
+export const insert: TestOperation =
+    (client: TestClient, _start: number, _end: number, random: IRandom) => {
+        // Note: the _start param is generated using exclusive range. This provides more coverage by allowing
+        // insertion at the end.
+        const start = random.integer(0, client.getLength());
+        const text = client.longClientId!.repeat(random.integer(1, 3));
+        return client.insertTextLocal(start, text);
+};
+
 export interface IConfigRange {
     min: number;
     max: number;
+    growthFunc?: (input: number) => number;
 }
 
 export function doOverRange(
@@ -77,6 +87,67 @@ export function doOverRange(
         lastCurrent = current;
         doAction(current);
     }
+}
+
+export function resolveRange(range: IConfigRange, defaultGrowthFunc: (input: number) => number): number[] {
+    const results: number[] = [];
+    doOverRange(range, range.growthFunc ?? defaultGrowthFunc, (num) => { results.push(num); })
+    return results;
+}
+
+export function resolveRanges<T extends object>(ranges: T, defaultGrowthFunc: (input: number) => number): ResolvedRanges<T> {
+    return Object.entries(ranges)
+        .filter(([_, value]) => isConfigRange(value))
+        .map(([key, value]) => [key, resolveRange(value, defaultGrowthFunc)] as const)
+        .reduce((prev, [key, resolvedRange]) => { prev[key] = resolvedRange; return prev; }, {}) as ResolvedRanges<T>;
+}
+
+function isConfigRange(t: any): t is IConfigRange { 
+    return typeof t === 'object' && typeof t.min === 'number' && typeof t.max === 'number';
+}
+
+type ReplaceRangeWith<T, TReplace> = T extends { min: number; max: number } ? TReplace : never;
+
+type RangePropertyNames<T> = { [K in keyof T]-?: T[K] extends IConfigRange ? K : never }[keyof T]
+
+type PickFromRanges<T> = {
+    [K in RangePropertyNames<T>]: ReplaceRangeWith<T[K], number>
+}
+
+type ResolvedRanges<T> = {
+    [K in RangePropertyNames<T>]: ReplaceRangeWith<T[K], number[]>
+}
+
+interface ProvidesGrowthFunc {
+    growthFunc: (input: number) => number;
+}
+
+export function doOverRanges<T extends ProvidesGrowthFunc>(
+    ranges: T,
+    doAction: (selection: PickFromRanges<T>, description: string) => void
+) {
+    const rangeEntries: [string, IConfigRange][] = Object.entries(ranges)
+        .filter(([_, value]) => isConfigRange(value));
+
+    const doOverRangesHelper = (selections: [string, number][]) => {
+        if (selections.length === rangeEntries.length) {
+            const selectionsObj = {};
+            for (const [key, value] of selections) {
+                selections[key] = value;
+            }
+            const description = selections.map(([key, value]) => `${key}:${value}`).join('_');
+            doAction(selectionsObj as PickFromRanges<T>, description);
+        } else {
+            const [key, value] = rangeEntries[selections.length];
+            doOverRange(value, value.growthFunc ?? ranges.growthFunc, (selection) => {
+                selections.push([key, selection]);
+                doOverRangesHelper(selections)
+                selections.pop();
+            });
+        }
+    }
+
+    doOverRangesHelper([]);
 }
 
 export interface IMergeTreeOperationRunnerConfig {
@@ -98,12 +169,12 @@ export interface ReplayGroup{
 export const replayResultsPath = `${__dirname}/../../src/test/results`;
 
 export function runMergeTreeOperationRunner(
-    mt: random.Engine,
+    random: IRandom,
     startingSeq: number,
     clients: readonly TestClient[],
     minLength: number,
     config: IMergeTreeOperationRunnerConfig,
-    apply = applyMessages) {
+    apply: ApplyMessagesFn = applyMessages) {
     let seq = startingSeq;
     const results: ReplayGroup[] = [];
 
@@ -117,7 +188,7 @@ export function runMergeTreeOperationRunner(
                 clients,
                 `Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round}`);
             const messageData = generateOperationMessagesForClients(
-                mt,
+                random,
                 seq,
                 clients,
                 logger,
@@ -126,7 +197,7 @@ export function runMergeTreeOperationRunner(
                 config.operations,
             );
             const msgs = messageData.map((md) => md[0]);
-            seq = apply(seq, messageData, clients, logger);
+            seq = apply(seq, messageData, clients, logger, random);
             const resultText = logger.validate();
             results.push({
                 initialText,
@@ -134,6 +205,7 @@ export function runMergeTreeOperationRunner(
                 msgs,
                 seq,
             });
+            logger.dispose();
         }
     });
 
@@ -147,7 +219,7 @@ export function runMergeTreeOperationRunner(
 }
 
 export function generateOperationMessagesForClients(
-    mt: random.Engine,
+    random: IRandom,
     startingSeq: number,
     clients: readonly TestClient[],
     logger: TestClientLogger,
@@ -161,22 +233,22 @@ export function generateOperationMessagesForClients(
     for (let i = 0; i < opsPerRound; i++) {
         // pick a client greater than 0, client 0 only applies remote ops
         // and is our baseline
-        const client = clients[random.integer(1, clients.length - 1)(mt)];
+        const client = clients[random.integer(1, clients.length - 1)];
         const len = client.getLength();
         const sg = client.peekPendingSegmentGroups();
         let op: IMergeTreeOp | undefined;
         if (len === 0 || len < minLength) {
-            const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
+            const text = client.longClientId!.repeat(random.integer(1, 3));
             op = client.insertTextLocal(
-                random.integer(0, len)(mt),
+                random.integer(0, len),
                 text);
         } else {
-            let opIndex = random.integer(0, operations.length - 1)(mt);
-            const start = random.integer(0, len - 1)(mt);
-            const end = random.integer(start + 1, len)(mt);
+            let opIndex = random.integer(0, operations.length - 1);
+            const start = random.integer(0, len - 1);
+            const end = random.integer(start + 1, len);
 
             for (let y = 0; y < operations.length && op === undefined; y++) {
-                op = operations[opIndex](client, start, end, mt);
+                op = operations[opIndex](client, start, end, random);
                 opIndex++;
                 opIndex %= operations.length;
             }
@@ -214,6 +286,14 @@ export function generateClientNames(): string[] {
     return clientNames;
 }
 
+type ApplyMessagesFn = (
+    startingSeq: number,
+    messageData: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
+    clients: readonly TestClient[],
+    logger: TestClientLogger,
+    random: IRandom
+) => number;
+
 export function applyMessages(
     startingSeq: number,
     messageData: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
@@ -223,8 +303,9 @@ export function applyMessages(
     let seq = startingSeq;
     try {
         // log and apply all the ops created in the round
-        while (messageData.length > 0) {
-            const [message] = messageData.shift()!;
+        // eslint-disable-next-line @typescript-eslint/prefer-for-of
+        for (let i = 0; i < messageData.length; i++) {
+            const [message] = messageData[i];
             message.sequenceNumber = ++seq;
             clients.forEach((c) => c.applyMsg(message));
         }

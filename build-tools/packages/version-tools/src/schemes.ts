@@ -49,7 +49,7 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
         return "internal";
     }
 
-    if (isInternalVersionScheme(rangeOrVersion, true)) {
+    if (isInternalVersionScheme(rangeOrVersion, true, true)) {
         return "internalPrerelease";
     }
 

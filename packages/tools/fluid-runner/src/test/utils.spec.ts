@@ -32,7 +32,7 @@ describe("utils", () => {
     describe("validateCommandLineArgs", () => {
         describe("codeLoader and fluidFileConverter", () => {
             it("disallow providing both", async () => {
-                const result = validateCommandLineArgs("value", await fluidExport);
+                const result = validateCommandLineArgs("value", fluidExport);
                 assert.notStrictEqual(result, undefined, "expected an error");
             });
 
@@ -53,11 +53,11 @@ describe("utils", () => {
                     assert.strictEqual(result, undefined, `unexpected error [${result}]`);
                 }
                 {
-                    const result = validateCommandLineArgs(undefined, await fluidExport);
+                    const result = validateCommandLineArgs(undefined, fluidExport);
                     assert.strictEqual(result, undefined, `unexpected error [${result}]`);
                 }
                 {
-                    const result = validateCommandLineArgs("", await fluidExport);
+                    const result = validateCommandLineArgs("", fluidExport);
                     assert.strictEqual(result, undefined, `unexpected error [${result}]`);
                 }
             });

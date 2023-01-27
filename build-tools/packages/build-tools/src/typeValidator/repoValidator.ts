@@ -6,7 +6,7 @@ import minimatch from "minimatch";
 import path from "path";
 
 import { IFluidRepoPackageEntry } from "../common/fluidRepo";
-import { getPackageManifest } from "../common/fluidUtils";
+import { getFluidBuildConfig } from "../common/fluidUtils";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { FluidRepoBuild } from "../fluidBuild/fluidRepoBuild";
 import { getPackageDetails } from "./packageJson";
@@ -43,7 +43,7 @@ export interface IValidationOptions {
 export type RepoValidationResult = Map<string, { level: BreakingIncrement; group?: string }>;
 
 function buildPackageGroups(repoRoot: string): PackageGroup[] {
-    const manifest = getPackageManifest(repoRoot);
+    const manifest = getFluidBuildConfig(repoRoot);
     const groups: PackageGroup[] = [];
     const repoPackages = manifest.repoPackages ?? [];
     const addGroup = (name: string, entry: IFluidRepoPackageEntry) => {
@@ -177,11 +177,11 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
                         groupBreaks,
                     );
 
-                    if (breakResult.has(packageData.pkg.name)) {
+                    if (breakResult.has(packageData.json.name)) {
                         throw new Error("Encountered duplicated package name");
                     }
 
-                    breakResult.set(packageData.pkg.name, { level: increment, group: groupName });
+                    breakResult.set(packageData.json.name, { level: increment, group: groupName });
                 }
 
                 packages.delete(pkgName);

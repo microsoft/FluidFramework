@@ -31,7 +31,7 @@ describe("exportFile", () => {
         describe(`Export using snapshot [${snapshotFileName}]`, () => {
             it("Output file is correct", async () => {
                 const exportFileResult = await exportFile(
-                    await fluidExport,
+                    fluidExport,
                     path.join(snapshotFolder, snapshotFileName),
                     outputFilePath,
                     telemetryFile,
@@ -48,7 +48,7 @@ describe("exportFile", () => {
             it("Execution result is correct", async () => {
                 const result = await createContainerAndExecute(
                     getSnapshotFileContent(path.join(snapshotFolder, snapshotFileName)),
-                    await fluidExport,
+                    fluidExport,
                     new MockLogger(),
                 );
                 assert.deepStrictEqual(result, executeResult, "result objects do not match");
@@ -61,7 +61,7 @@ describe("exportFile", () => {
 
         it("input file", async () => {
             const result = await exportFile(
-                await fluidExport,
+                fluidExport,
                 "nonExistentFile.json",
                 outputFilePath,
                 telemetryFile,
@@ -74,7 +74,7 @@ describe("exportFile", () => {
 
         it("output file", async () => {
             const result = await exportFile(
-                await fluidExport,
+                fluidExport,
                 snapshotFilePath,
                 snapshotFilePath, // output file already exists
                 telemetryFile,

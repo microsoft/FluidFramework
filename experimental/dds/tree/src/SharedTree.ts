@@ -106,14 +106,36 @@ export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat:
 export type SharedTreeOptions<
 	WF extends WriteFormat,
 	HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'
-> = Omit<
-	WF extends WriteFormat.v0_0_2
-		? SharedTreeOptions_0_0_2
-		: WF extends WriteFormat.v0_1_1
-		? SharedTreeOptions_0_1_1
-		: never,
-	HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never
->;
+> = SharedTreeBaseOptions &
+	Omit<
+		WF extends WriteFormat.v0_0_2
+			? SharedTreeOptions_0_0_2
+			: WF extends WriteFormat.v0_1_1
+			? SharedTreeOptions_0_1_1
+			: never,
+		HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never
+	>;
+
+/**
+ * Configuration options for SharedTree that are independent of write format versions.
+ * @public
+ */
+export interface SharedTreeBaseOptions {
+	/**
+	 * The target number of sequenced edits that the tree will try to store in memory.
+	 * Depending on eviction frequency and the collaboration window, there can be more edits in memory at a given time.
+	 * Edits in the collaboration window are not evicted.
+	 *
+	 * The size is set to infinity by default, meaning that all edits in session are kept within memory.
+	 */
+	inMemoryHistorySize?: number;
+	/**
+	 * The rate at which edits are evicted from memory. This is a factor of the inMemoryHistorySize.
+	 * For example, with the default frequency of inMemoryHistorySize * 2 and a size of 10, the log will evict once it reaches 20 sequenced edits
+	 * down to 10 edits, also keeping any that are still in the collaboration window.
+	 */
+	editEvictionFrequency?: number;
+}
 
 /**
  * Configuration options for a SharedTree with write format 0.0.2
@@ -430,6 +452,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * The log of completed edits for this SharedTree.
 	 */
 	private editLog: EditLog<ChangeInternal>;
+	private readonly editLogSize?: number;
+	private readonly editEvictionFrequency?: number;
 
 	/**
 	 * As an implementation detail, SharedTree uses a log viewer that caches views of different revisions.
@@ -522,6 +546,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
 		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, this.logger);
+		this.editLogSize = options.inMemoryHistorySize;
+		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
 			{
 				editChunks: [],
@@ -587,7 +613,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns the current view of the tree.
 	 */
 	public get currentView(): RevisionView {
-		return this.logViewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		return this.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 	}
 
 	/**
@@ -869,34 +895,30 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// Dispose the current log viewer if it exists. This ensures that re-used EditAddedHandlers below don't retain references to old
 		// log viewers.
 		this.cachingLogViewer?.detachFromEditLog();
-		const indexOfFirstEditInSession =
-			version === WriteFormat.v0_0_2 || (editHistory?.editIds.length === 1 && version === WriteFormat.v0_1_1)
-				? 0
-				: editHistory?.editIds.length;
 
 		// Use previously registered EditAddedHandlers if there is an existing EditLog.
 		const editLog = new EditLog(
 			editHistory,
 			this.logger,
 			this.editLog?.editAddedHandlers,
-			indexOfFirstEditInSession
+			this.editLogSize,
+			this.editEvictionFrequency
 		);
 
 		editLog.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
 			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
 		});
 
-		let knownRevisions: [number, EditCacheEntry][] | undefined;
+		let initialRevision: [number, EditCacheEntry] | undefined;
 		if (currentTree !== undefined) {
 			const currentView = RevisionView.fromTree(currentTree);
-			// TODO:#47830: Store multiple checkpoints in summary.
-			knownRevisions = [[editLog.length, { view: currentView }]];
+			initialRevision = [editLog.length, { view: currentView }];
 		}
 
 		const logViewer = new CachingLogViewer(
 			editLog,
 			RevisionView.fromTree(initialTree, this),
-			knownRevisions,
+			initialRevision,
 			editStatusCallback,
 			sequencedEditResultCallback,
 			0
@@ -1113,7 +1135,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		const unifyHistoricalIds = (context: NodeIdContext): void => {
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				const edit = this.editLog.getEditInSessionAtIndex(i);
+				const edit = this.editLog.tryGetEditAtIndex(i) ?? fail('edit not found');
 				convertEditIds(edit, (id) => context.generateNodeId(this.convertToStableNodeId(id)));
 			}
 		};
@@ -1126,13 +1148,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			unifyHistoricalIds(ghostContext);
 			// The same logic applies to string interning, so intern all the strings in the history (superset of those in the current view)
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				this.internStringsFromEdit(this.editLog.getEditInSessionAtIndex(i));
+				this.internStringsFromEdit(this.editLog.tryGetEditAtIndex(i) ?? fail('edit not found'));
 			}
 		} else {
 			// Clients do not have the full history, but all share the same current view (sequenced). They can all finalize the same final
 			// IDs for every ID in the view via the ghost compressor.
 			// The same logic applies for the string interner.
-			for (const node of this.logViewer.getRevisionViewInSession(this.editLog.numberOfSequencedEdits)) {
+			for (const node of this.logViewer.getRevisionViewInMemory(this.editLog.numberOfSequencedEdits)) {
 				ghostContext.generateNodeId(this.convertToStableNodeId(node.identifier));
 				this.interner.getOrCreateInternedId(node.definition);
 				for (const label of [...node.traits.keys()].sort()) {
@@ -1311,8 +1333,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
-		const edit = this.edits.getEditInSessionAtIndex(index);
-		const before = this.logViewer.getRevisionViewInSession(index);
+		const edit = this.edits.tryGetEditAtIndex(index) ?? fail('edit not found');
+		const before = this.logViewer.getRevisionViewInMemory(index);
 		const changes = this.revertChanges(edit.changes, before);
 		if (changes === undefined) {
 			return undefined;

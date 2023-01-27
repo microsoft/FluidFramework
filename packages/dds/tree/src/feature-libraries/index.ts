@@ -13,26 +13,36 @@ export {
     SequenceFieldEditBuilder,
 } from "./defaultChangeFamily";
 export {
-    anchorSymbol,
     EditableField,
     EditableTree,
     EditableTreeContext,
     EditableTreeOrPrimitive,
     getEditableTreeContext,
-    getTypeSymbol,
+    typeSymbol,
+    typeNameSymbol,
+    indexSymbol,
     isEditableField,
     isPrimitive,
     isPrimitiveValue,
+    getPrimaryField,
     isUnwrappedNode,
     PrimitiveValue,
     proxyTargetSymbol,
     UnwrappedEditableField,
     UnwrappedEditableTree,
     valueSymbol,
+    getField,
+    createField,
+    replaceField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
-export { buildForest, ObjectForest } from "./object-forest";
+export { buildForest } from "./object-forest";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
 export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
 export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
@@ -44,6 +54,7 @@ export { SequenceField };
 export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
 
 export {
+    ChangesetLocalId,
     isNeverField,
     ModularChangeFamily,
     ModularEditBuilder,
@@ -57,6 +68,8 @@ export {
     FieldChange,
     FieldChangeset,
     ToDelta,
+    ModularChangeset,
+    IdAllocator,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -68,6 +81,7 @@ export {
     allowsRepoSuperset,
     GenericChangeset,
     genericFieldKind,
+    NodeReviver,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
@@ -83,3 +97,11 @@ export {
     parseSummary as loadSummary,
     stringifySummary as encodeSummary,
 } from "./editManagerIndex";
+
+export { ForestRepairDataStore } from "./forestRepairDataStore";
+export { dummyRepairDataStore } from "./fakeRepairDataStore";
+
+export { runSynchronousTransaction } from "./defaultTransaction";
+export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
+
+export { TreeChunk, chunkTree, buildChunkedForest } from "./chunked-forest";

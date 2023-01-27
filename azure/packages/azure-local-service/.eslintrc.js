@@ -3,15 +3,10 @@
  * Licensed under the MIT License.
  */
 
- module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
-    ],
-    "parserOptions": {
-        "project": ["./tsconfig.json"]
-    },
-    "rules": {
-        "import/no-unassigned-import": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off"
-    }
-}
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	plugins: ["eslint-plugin-jsdoc"],
+	parserOptions: {
+		project: ["./tsconfig.json"],
+	},
+};

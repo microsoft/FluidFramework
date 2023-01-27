@@ -62,19 +62,16 @@ export class RestGitService {
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
         private readonly storageName?: string,
         private readonly storageUrl?: string) {
-        let defaultHeaders: AxiosRequestHeaders;
-        if (storageName !== undefined) {
-            defaultHeaders = {
+        const defaultHeaders: AxiosRequestHeaders = storageName !== undefined
+            ? {
                 "User-Agent": userAgent,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
-            };
-        } else {
-            defaultHeaders = {
+            }
+            : {
                 "User-Agent": userAgent,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
             };
-        }
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
@@ -210,10 +207,11 @@ export class RestGitService {
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
     }
 
-    public async createSummary(summaryParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+    public async createSummary(summaryParams: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse> {
         const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
-             summaryParams);
+            summaryParams,
+            initial !== undefined ? { initial } : undefined);
         if (summaryParams.type === "container" && (summaryResponse as IWholeFlatSummary).trees !== undefined) {
             // Cache the written summary for future retrieval. If this fails, next summary retrieval
             // will receive an older version, but that is OK. Client will catch up with ops.
@@ -418,8 +416,8 @@ export class RestGitService {
             .catch(getRequestErrorTranslator(url, "GET", this.lumberProperties));
     }
 
-    private async post<T>(url: string, requestBody: any): Promise<T> {
-        return this.restWrapper.post<T>(url, requestBody, undefined, {
+    private async post<T>(url: string, requestBody: any, query?: Record<string, unknown>): Promise<T> {
+        return this.restWrapper.post<T>(url, requestBody, query, {
             "Content-Type": "application/json",
         }).catch(getRequestErrorTranslator(url, "POST", this.lumberProperties));
     }
@@ -481,8 +479,8 @@ export class RestGitService {
     }
 
     private async resolve<T>(key: string,
-                             fetch: () => Promise<T>,
-                             useCache: boolean): Promise<T> {
+        fetch: () => Promise<T>,
+        useCache: boolean): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {

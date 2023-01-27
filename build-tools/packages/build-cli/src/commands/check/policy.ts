@@ -35,14 +35,16 @@ const readStdin: () => Promise<string | undefined> = async () => {
 type policyAction = "handle" | "resolve" | "final";
 
 /**
- * This tool enforces polices across the code base via a series of handlers.
- * This command supports piping. The flag is modified from s to stdin
+ * This tool enforces policies across the code base via a series of handlers.
+ *
+ * This command supports piping.
+ *
  * i.e. `git ls-files -co --exclude-standard --full-name | flub check policy --stdin --verbose`
  *
  * @remarks
  *
  * This command is equivalent to `fluid-repo-policy-check`.
- * fluid-repo-policy-check -s is equivalent to flub check policy --stdin
+ * `fluid-repo-policy-check -s` is equivalent to `flub check policy --stdin`
  */
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
@@ -94,8 +96,14 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static pathToGitRoot = "";
 
     async run() {
-        const handlersToRun: Handler[] = policyHandlers.filter((h) => {
-            const shouldRun = !this.processedFlags.excludeHandler?.includes(h.name);
+        let handlersToRun: Handler[] = policyHandlers.filter((h) => {
+            if (
+                this.processedFlags.excludeHandler === undefined ||
+                this.processedFlags.excludeHandler.length === 0
+            ) {
+                return true;
+            }
+            const shouldRun = this.processedFlags.excludeHandler?.includes(h.name) === false;
             if (!shouldRun) {
                 this.info(`Excluding handler: ${h.name}`);
             }
@@ -115,18 +123,15 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             this.exit(0);
         }
 
-        const handlerRegex: RegExp =
-            this.processedFlags.handler === undefined
-                ? /.?/
-                : new RegExp(this.processedFlags.handler, "i");
-
         const pathRegex: RegExp =
             this.processedFlags.path === undefined
                 ? /.?/
                 : new RegExp(this.processedFlags.path, "i");
 
         if (this.processedFlags.handler !== undefined) {
+            const handlerRegex: RegExp = new RegExp(this.processedFlags.handler, "i");
             this.info(`Filtering handlers by regex: ${handlerRegex}`);
+            handlersToRun = handlersToRun.filter((h) => handlerRegex.test(h.name));
         }
 
         if (this.processedFlags.path !== undefined) {
@@ -158,13 +163,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                     pipeString
                         .split("\n")
                         .map((line: string) =>
-                            this.handleLine(
-                                line,
-                                handlerRegex,
-                                pathRegex,
-                                exclusions,
-                                handlersToRun,
-                            ),
+                            this.handleLine(line, pathRegex, exclusions, handlersToRun),
                         );
                 } finally {
                     try {
@@ -198,7 +197,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                 scriptOutput
                     .split("\n")
                     .map((line: string) =>
-                        this.handleLine(line, handlerRegex, pathRegex, exclusions, handlersToRun),
+                        this.handleLine(line, pathRegex, exclusions, handlersToRun),
                     );
             } finally {
                 try {
@@ -212,9 +211,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     // route files to their handlers by regex testing their full paths
     // synchronize output, exit code, and resolve decision for all handlers
-    routeToHandlers(file: string, handlerRegex: RegExp, handlers: Handler[]): void {
+    routeToHandlers(file: string, handlers: Handler[]): void {
         handlers
-            .filter((handler) => handler.match.test(file) && handlerRegex.test(handler.name))
+            .filter((handler) => handler.match.test(file))
             // eslint-disable-next-line unicorn/no-array-for-each
             .forEach((handler) => {
                 const result = runWithPerf(handler.name, "handle", () =>
@@ -263,13 +262,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
     }
 
-    handleLine(
-        line: string,
-        handlerRegex: RegExp,
-        pathRegex: RegExp,
-        exclusions: RegExp[],
-        handlers: Handler[],
-    ) {
+    handleLine(line: string, pathRegex: RegExp, exclusions: RegExp[], handlers: Handler[]) {
         const filePath = path.join(CheckPolicy.pathToGitRoot, line).trim().replace(/\\/g, "/");
 
         if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
@@ -283,9 +276,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
 
         try {
-            this.routeToHandlers(filePath, handlerRegex, handlers);
-        } catch {
-            throw new Error("Line error");
+            this.routeToHandlers(filePath, handlers);
+        } catch (error: any) {
+            throw new Error(`Line error: ${error}`);
         }
 
         CheckPolicy.processed++;

@@ -22,8 +22,9 @@ import { IMapSetOperation,
          IMapClearLocalOpMetadata,
          MapLocalOpMetadata } from "../../internalInterfaces";
 import { MapFactory, SharedMap } from "../../map";
+import { IMapOperation } from "../../mapKernel";
 
-function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): SharedMap {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
     const services = {
@@ -35,13 +36,13 @@ function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFact
     return map;
 }
 
-function createLocalMap(id: string) {
+function createLocalMap(id: string): SharedMap {
     const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
     return map;
 }
 
 class TestSharedMap extends SharedMap {
-    public testApplyStashedOp(content: any): MapLocalOpMetadata {
+    public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
         return this.applyStashedOp(content) as MapLocalOpMetadata;
     }
 }
@@ -70,7 +71,7 @@ describe("Map", () => {
                 const dummyMap = map;
                 let valueChangedExpected = true;
                 let clearExpected = false;
-                let previousValue: any;
+                let previousValue: unknown;
 
                 dummyMap.on("op", (arg1, arg2, arg3) => {
                     assert.fail("shouldn't receive an op event");
@@ -120,10 +121,11 @@ describe("Map", () => {
 
             it("Should reject undefined and null key sets", () => {
                 assert.throws(() => {
-                    map.set(undefined as any, "one");
+                    map.set(undefined as unknown as string, "one");
                 }, "Should throw for key of undefined");
                 assert.throws(() => {
-                    map.set(null as any, "two");
+                    // eslint-disable-next-line unicorn/no-null
+                    map.set(null as unknown as string, "two");
                 }, "Should throw for key of null");
             });
         });
@@ -138,7 +140,6 @@ describe("Map", () => {
 
                 const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 const subMapHandleUrl = subMap.handle.absolutePath;
-                // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
             });
 
@@ -152,7 +153,6 @@ describe("Map", () => {
 
                 const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 const subMapHandleUrl = subMap.handle.absolutePath;
-                // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
             });
 
@@ -170,7 +170,6 @@ describe("Map", () => {
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 const subMap2HandleUrl = subMap2.handle.absolutePath;
                 const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
-                // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`);
             });
 
@@ -459,11 +458,15 @@ describe("Map", () => {
 
                     containerRuntimeFactory.processAllMessages();
 
+                    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
                     const retrieved = map1.get("object");
-                    const retrievedSubMap = await retrieved.subMapHandle.get();
+                    const retrievedSubMap: unknown = await retrieved.subMapHandle.get();
                     assert.equal(retrievedSubMap, subMap, "could not get nested map 1");
-                    const retrievedSubMap2 = await retrieved.nestedObj.subMap2Handle.get();
+                    const retrievedSubMap2: unknown = await retrieved.nestedObj.subMap2Handle.get();
                     assert.equal(retrievedSubMap2, subMap2, "could not get nested map 2");
+
+                    /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
                 });
 
                 it("Shouldn't clear value if there is pending set", () => {
@@ -631,19 +634,19 @@ describe("Map", () => {
                     containerRuntimeFactory.processAllMessages();
 
                     // Verify the local SharedMap
-                    map1.forEach((value, key) => {
+                    for (const [key, value] of map1.entries()) {
                         assert.ok(set.has(key), "the key should be present in the set");
                         assert.equal(key, value, "the value should match the set value");
                         assert.equal(map1.get(key), value, "could not get key");
-                    });
+                    }
 
                     // Verify the remote SharedMap
-                    map2.forEach((value, key) => {
+                    for (const [key, value] of map2.entries()) {
                         assert.ok(set.has(key), "the key in remote map should be present in the set");
                         assert.equal(key, value, "the value should match the set value in the remote map");
                         assert.equal(map2.get(key), value, "could not get key in the remote map");
                         set.delete(key);
-                    });
+                    }
 
                     assert.equal(set.size, 0);
                 });
@@ -659,22 +662,31 @@ describe("Map", () => {
             private readonly map2: SharedMap;
             private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
-            constructor() {
+            public constructor() {
                 this.containerRuntimeFactory = new MockContainerRuntimeFactory();
                 this.map1 = createConnectedMap("map1", this.containerRuntimeFactory);
                 this.map2 = createConnectedMap("map2", this.containerRuntimeFactory);
             }
 
-            public get sharedObject() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+             */
+            public get sharedObject(): SharedMap {
                 // Return the remote SharedMap because we want to verify its summary data.
                 return this.map2;
             }
 
-            public get expectedOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+             */
+            public get expectedOutboundRoutes(): string[] {
                 return this._expectedRoutes;
             }
 
-            public async addOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+             */
+            public async addOutboundRoutes(): Promise<void> {
                 const newSubMapId = `subMap-${++this.subMapCount}`;
                 const subMap = createLocalMap(newSubMapId);
                 this.map1.set(newSubMapId, subMap.handle);
@@ -682,7 +694,10 @@ describe("Map", () => {
                 this.containerRuntimeFactory.processAllMessages();
             }
 
-            public async deleteOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+             */
+            public async deleteOutboundRoutes(): Promise<void> {
                 // Delete the last handle that was added.
                 const subMapId = `subMap-${this.subMapCount}`;
                 const deletedHandle = this.map1.get<IFluidHandle>(subMapId);
@@ -694,7 +709,10 @@ describe("Map", () => {
                 this.containerRuntimeFactory.processAllMessages();
             }
 
-            public async addNestedHandles() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+             */
+            public async addNestedHandles(): Promise<void> {
                 const subMapId1 = `subMap-${++this.subMapCount}`;
                 const subMapId2 = `subMap-${++this.subMapCount}`;
                 const subMap = createLocalMap(subMapId1);

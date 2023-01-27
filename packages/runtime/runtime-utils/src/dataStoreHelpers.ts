@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
     FluidObject,
@@ -15,13 +16,14 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
+import { generateErrorWithStack, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {
     errorFromRequestFluidObject: true;
     message: string;
     code: number;
     stack?: string;
+    underlyingResponseHeaders?: { [key: string]: any; };
 }
 
 export function exceptionToResponse(err: any): IResponse {
@@ -33,6 +35,7 @@ export function exceptionToResponse(err: any): IResponse {
             status: responseErr.code,
             value: responseErr.message,
             get stack() { return responseErr.stack; },
+            headers: responseErr.underlyingResponseHeaders,
         };
     }
 
@@ -56,9 +59,19 @@ export function responseToException(response: IResponse, request: IRequest): Err
         name: "Error",
         code: response.status,
         get stack() { return response.stack ?? errWithStack.stack; },
+        underlyingResponseHeaders: response.headers,
     };
 
     return responseErr;
+}
+
+/**
+ * Takes a set of packages and joins them pkg1/pkg2... etc. Tags the field as a code artifact
+ */
+export function packagePathToTelemetryProperty(
+    packagePath: readonly string[] | undefined,
+): ITaggedTelemetryPropertyType | undefined {
+    return packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined;
 }
 
 export async function requestFluidObject<T = FluidObject>(
@@ -76,7 +89,7 @@ export async function requestFluidObject<T = FluidObject>(
 
 export const create404Response = (request: IRequest) => createResponseError(404, "not found", request);
 
-export function createResponseError(status: number, value: string, request: IRequest): IResponse {
+export function createResponseError(status: number, value: string, request: IRequest, headers?: { [key: string]: any }): IResponse {
     assert(status !== 200, 0x19b /* "Cannot not create response error on 200 status" */);
     // Omit query string which could contain personal data (aka "PII")
     const urlNoQuery = request.url?.split("?")[0];
@@ -89,6 +102,7 @@ export function createResponseError(status: number, value: string, request: IReq
         status,
         value: urlNoQuery === undefined ? value : `${value}: ${urlNoQuery}`,
         get stack() { return errWithStack.stack; },
+        headers,
     };
 }
 

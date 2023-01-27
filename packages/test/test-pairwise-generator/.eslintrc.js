@@ -5,6 +5,6 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid/minimal", "prettier"
     ]
 }

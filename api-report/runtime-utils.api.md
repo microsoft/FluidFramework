@@ -30,6 +30,7 @@ import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -69,7 +70,9 @@ export const create404Response: (request: IRequest) => IResponse;
 export function createDataStoreFactory(type: string, factory: Factory | Promise<Factory>): IFluidDataStoreFactory & IFluidDataStoreRegistry;
 
 // @public (undocumented)
-export function createResponseError(status: number, value: string, request: IRequest): IResponse;
+export function createResponseError(status: number, value: string, request: IRequest, headers?: {
+    [key: string]: any;
+}): IResponse;
 
 // @public
 export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
@@ -130,6 +133,9 @@ export class ObjectStoragePartition implements IChannelStorageService {
 }
 
 // @public
+export function packagePathToTelemetryProperty(packagePath: readonly string[] | undefined): ITaggedTelemetryPropertyType | undefined;
+
+// @public
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
 // @public
@@ -176,7 +182,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     // (undocumented)
     instantiateFromExisting(_runtime: T): Promise<void>;
     // (undocumented)
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
     // (undocumented)
     get IRuntimeFactory(): this;
     // (undocumented)

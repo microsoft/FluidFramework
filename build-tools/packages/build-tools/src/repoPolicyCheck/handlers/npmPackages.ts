@@ -13,6 +13,9 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
+import { IFluidBuildConfig } from "../../common/fluidRepo";
+import { getFluidBuildConfig } from "../../common/fluidUtils";
+import { PackageJson } from "../../common/npmPackage";
 import { Handler, readFile, writeFile } from "../common";
 
 const licenseId = "MIT";
@@ -26,6 +29,18 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 `;
+
+/**
+ * An array of dependencies that should always use tilde dependency ranges instead of caret.
+ */
+let _tildeDependencies: string[] | undefined;
+
+const getTildeDependencies = (manifest: IFluidBuildConfig | undefined) => {
+    if (_tildeDependencies === undefined) {
+        _tildeDependencies = manifest?.policy?.dependencies?.requireTilde ?? [];
+    }
+    return _tildeDependencies;
+};
 
 // Some of our package scopes definitely should publish, and others should never publish.  If they should never
 // publish, we want to add the "private": true flag to their package.json to prevent publishing, and conversely if
@@ -481,9 +496,9 @@ export const handlers: Handler[] = [
     {
         name: "npm-package-json-lint",
         match,
-        handler: (file) => {
+        handler: (file, root) => {
             let jsonStr: string;
-            let json;
+            let json: PackageJson;
             try {
                 jsonStr = readFile(file);
                 json = JSON.parse(jsonStr);
@@ -492,6 +507,25 @@ export const handlers: Handler[] = [
             }
 
             const ret: string[] = [];
+
+            const { dependencies, devDependencies } = json;
+            const manifest = getFluidBuildConfig(root);
+            const tildeDependencies = getTildeDependencies(manifest);
+            if (dependencies !== undefined) {
+                for (const [dep, ver] of Object.entries(json.dependencies)) {
+                    if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
+                        ret.push(`Dependencies on ${dep} must use tilde (~) dependencies.`);
+                    }
+                }
+            }
+
+            if (devDependencies !== undefined) {
+                for (const [dep, ver] of Object.entries(json.devDependencies)) {
+                    if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
+                        ret.push(`devDependencies on ${dep} must use tilde (~) dependencies.`);
+                    }
+                }
+            }
 
             const { valid, validationResults } = runNpmJsonLint(json, file);
 
@@ -551,7 +585,110 @@ export const handlers: Handler[] = [
             return { resolved: resolved };
         },
     },
+    {
+        name: "npm-package-json-prettier",
+        match,
+        handler: (file) => {
+            let json;
+
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return "Error parsing JSON file: " + file;
+            }
+
+            const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+            const missingScripts: string[] = [];
+
+            if (hasScriptsField) {
+                const hasPrettierScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "prettier",
+                );
+                const hasPrettierFixScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "prettier:fix",
+                );
+                const hasFormatScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "format",
+                );
+                const isLernaFormat = json["scripts"]["format"]?.includes("lerna");
+
+                if (!isLernaFormat) {
+                    if (hasPrettierScript || hasPrettierFixScript || hasFormatScript) {
+                        if (!hasPrettierScript) {
+                            missingScripts.push(`prettier`);
+                        }
+
+                        if (!hasPrettierFixScript) {
+                            missingScripts.push(`prettier:fix`);
+                        }
+
+                        if (!hasFormatScript) {
+                            missingScripts.push(`format`);
+                        }
+                    }
+                }
+            }
+
+            return missingScripts.length > 0
+                ? `${file} is missing the following scripts: ${missingScripts.join("\n\t")}`
+                : undefined;
+        },
+        resolver: (file) => {
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return { resolved: false, message: "Error parsing JSON file: " + file };
+            }
+
+            const resolved = true;
+
+            const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+
+            if (hasScriptsField) {
+                addPrettier(json);
+                writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
+            }
+
+            return { resolved: resolved };
+        },
+    },
 ];
+
+function addPrettier(json: Record<string, any>) {
+    const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
+
+    const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
+        json.scripts,
+        "prettier",
+    );
+
+    const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
+        json.scripts,
+        "prettier:fix",
+    );
+
+    if (hasFormatScriptResolver || hasPrettierScriptResolver || hasPrettierFixScriptResolver) {
+        const formatScript = json["scripts"]["format"]?.includes("lerna");
+        const prettierScript = json["scripts"]["prettier"]?.includes("--ignore-path");
+        const prettierFixScript = json["scripts"]["prettier:fix"]?.includes("--ignore-path");
+
+        if (!formatScript) {
+            json["scripts"]["format"] = "npm run prettier:fix";
+
+            if (!prettierScript) {
+                json["scripts"]["prettier"] = "prettier --check .";
+            }
+
+            if (!prettierFixScript) {
+                json["scripts"]["prettier:fix"] = "prettier --write .";
+            }
+        }
+    }
+}
 
 function runNpmJsonLint(json: any, file: string) {
     const lintConfig = getLintConfig(file);

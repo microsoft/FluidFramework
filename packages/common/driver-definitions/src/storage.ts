@@ -92,10 +92,20 @@ export interface IDocumentDeltaStorageService {
     ): IStream<ISequencedDocumentMessage[]>;
 }
 
-// DO NOT INCREASE THIS TYPE'S VALUE - If a driver started using a larger value, GC would likely start closing sessions
-export type FiveDaysMs = 432000000; /* 5 days in milliseconds */
+// DO NOT INCREASE THIS TYPE'S VALUE
+// If a driver started using a larger value,
+// internal assumptions of the Runtime's GC feature will be violated
+// DO NOT INCREASE THIS TYPE'S VALUE
+export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
+/**
+ * Policies describing attributes or characteristics of the driver's storage service,
+ * to direct how other components interact with the driver
+ */
 export interface IDocumentStorageServicePolicies {
+    /**
+     * Should the Loader implement any sort of pre-fetching or caching mechanism?
+     */
     readonly caching?: LoaderCachingPolicy;
 
     /**
@@ -105,10 +115,12 @@ export interface IDocumentStorageServicePolicies {
     readonly minBlobSize?: number;
 
     /**
+     * IMPORTANT: This policy MUST be set to 5 days and PROPERLY ENFORCED for drivers that are used
+     * in applications where Garbage Collection is enabled. Otherwise data loss may occur.
+     *
+     * This policy pertains to requests for the latest snapshot from the service.
+     * If set, it means that the driver guarantees not to use a cached value that was fetched more than 5 days ago.
      * If undefined, the driver makes no guarantees about the age of snapshots used for loading.
-     * Otherwise, the driver will not use snapshots that were added to the cache more than 5 days ago (per client clock)
-     * The value MUST be 5 days if defined. This fixed upper bound is necessary for the Garbage Collection feature
-     * in the Runtime layer to reliably compute when an object will never be referenced again and can be deleted.
      */
     readonly maximumCacheDurationMs?: FiveDaysMs;
 }
@@ -130,6 +142,8 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
      * in debugging purposes to see why this call was made.
      */
+    // TODO: use `undefined` instead.
+    // eslint-disable-next-line @rushstack/no-new-null
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
     /**
@@ -144,6 +158,8 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * from storage.
      */
     getVersions(
+        // TODO: use `undefined` instead.
+        // eslint-disable-next-line @rushstack/no-new-null
         versionId: string | null,
         count: number,
         scenarioName?: string,
@@ -181,6 +197,8 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
     (event: "signal", listener: (message: ISignalMessage) => void);
     (event: "pong", listener: (latency: number) => void);
+    // TODO: Use something other than `any`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (event: "error", listener: (error: any) => void);
 }
 
@@ -255,6 +273,8 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     /**
      * Submit a new signal to the server
      */
+    // TODO: Use something other than `any`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submitSignal(message: any): void;
 }
 
@@ -311,6 +331,8 @@ export interface IDocumentService {
      * in storage, but client having stale local cache.
      * If driver implements any kind of local caching, such caches needs to be cleared on on critical errors.
      */
+    // TODO: Use something other than `any`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dispose(error?: any): void;
 }
 

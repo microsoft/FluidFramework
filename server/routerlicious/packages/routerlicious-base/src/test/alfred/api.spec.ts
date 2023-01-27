@@ -421,7 +421,7 @@ describe("Routerlicious", () => {
                                     historianUrl: defaultProvider.get("worker:blobStorageUrl"),
                                     deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
                                     isSessionAlive: false,
-                                    isSessionActive: false
+                                    isSessionActive: true
                                 })
                             });
                     });

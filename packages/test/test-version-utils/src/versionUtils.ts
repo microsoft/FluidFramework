@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileS
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
 import { pkgVersion } from "./packageVersion";
+import { InstalledPackage } from "./testApi";
 
 // Assuming this file is in dist\test, so go to ..\node_modules\.legacy as the install location
 const baseModulePath = path.join(__dirname, "..", "node_modules", ".legacy");
@@ -101,7 +102,7 @@ export function resolveVersion(requested: string, installed: boolean) {
     }
 
     if (installed) {
-        // Check the install directory instad of asking NPM for it.
+        // Check the install directory instead of asking NPM for it.
         const files = readdirSync(baseModulePath, { withFileTypes: true });
         let found: string | undefined;
         files.map((dirent) => {
@@ -114,7 +115,7 @@ export function resolveVersion(requested: string, installed: boolean) {
         if (found) {
             return found;
         }
-        throw new Error(`No matching version found in ${baseModulePath}`);
+        throw new Error(`No matching version found in ${baseModulePath} (requested: ${requested})`);
     } else {
         const result = execSync(
             `npm v @fluidframework/container-loader@"${requested}" version --json`,
@@ -125,21 +126,24 @@ export function resolveVersion(requested: string, installed: boolean) {
         }
 
         try {
-            const versions: string | string[] = JSON.parse(result);
+            const versions: string | string[] = result !== "" ? JSON.parse(result) : "";
             const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
-            if (!version) { throw new Error(`No version found for ${requested}`); }
-            resolutionCache.set(requested, version);
-            return version;
+            if (version) {
+                resolutionCache.set(requested, version);
+                return version;
+            }
         } catch (e) {
             throw new Error(`Error parsing versions for ${requested}`);
         }
+
+        throw new Error(`No version found for ${requested}`);
     }
 }
 
 async function ensureModulePath(version: string, modulePath: string) {
     const release = await lock(baseModulePath, { retries: { forever: true } });
     try {
-        console.log(`Installing version ${version}`);
+        console.log(`Installing version ${version} at ${modulePath}`);
         if (!existsSync(modulePath)) {
             // Create the under the baseModulePath lock
             mkdirSync(modulePath, { recursive: true });
@@ -149,7 +153,11 @@ async function ensureModulePath(version: string, modulePath: string) {
     }
 }
 
-export async function ensureInstalled(requested: string, packageList: string[], force: boolean) {
+export async function ensureInstalled(
+    requested: string,
+    packageList: string[],
+    force: boolean,
+): Promise<InstalledPackage | undefined> {
     if (requested === pkgVersion) { return; }
     const version = resolveVersion(requested, false);
     const modulePath = getModulePath(version);
@@ -218,7 +226,7 @@ export function checkInstalled(requested: string) {
         // assume it is valid if it exists
         return { version, modulePath };
     }
-    throw new Error(`Requested version ${requested} resolved to ${version} is not installed`);
+    throw new Error(`Requested version ${requested} resolved to ${version} is not installed at ${modulePath}`);
 }
 
 export const loadPackage = (modulePath: string, pkg: string) =>
@@ -237,10 +245,18 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
     if (typeof requested === "string") { return requested; }
 
     const isInternal = baseVersion.includes("internal");
+    const isDev = baseVersion.includes("dev");
 
+    // if the baseVersion passed is an internal version
     if (isInternal) {
         const internalVersions = baseVersion.split("-internal.");
         return internalSchema(internalVersions[0], internalVersions[1], requested);
+    }
+
+    // if the baseVersion passed is a pre-released version
+    if(isDev) {
+        const devVersions = baseVersion.split("-dev.");
+        return internalSchema(devVersions[0], devVersions[1].split(".", 3).join("."), requested);
     }
 
     let version;
@@ -300,7 +316,6 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
         throw new Error(err as string);
     }
 
-    // eslint-disable-next-line max-len
     return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${parsedVersion.major}.0.0`;
 }
 

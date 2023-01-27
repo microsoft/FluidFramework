@@ -16,6 +16,19 @@ import type { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfa
 // that contract -- the container author provides a ModelMakerCallback that will produce the model given a container
 // runtime and container, and this helper will appropriately translate to/from the request/response format.
 
+const modelUrl = "model";
+
+interface IModelRequest extends IRequest {
+    url: typeof modelUrl;
+    headers: {
+        containerRef: IContainer;
+    };
+}
+
+const isModelRequest = (request: IRequest): request is IModelRequest =>
+    request.url === modelUrl && request.headers?.containerRef !== undefined;
+
+
 /**
  * A helper function for container authors, which generates the request handler they need to align with the
  * ModelLoader contract.
@@ -26,7 +39,7 @@ export const makeModelRequestHandler = <ModelType>(modelMakerCallback: ModelMake
     return async (request: IRequest, runtime: IContainerRuntime): Promise<IResponse> => {
         // The model request format is for an empty path (i.e. "") and passing a reference to the container in the
         // header as containerRef.
-        if (request.url === "" && request.headers?.containerRef !== undefined) {
+        if (isModelRequest(request)) {
             const container: IContainer = request.headers.containerRef;
             const model = await modelMakerCallback(runtime, container);
             return { status: 200, mimeType: "fluid/object", value: model };
@@ -40,13 +53,14 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     private readonly generateCreateNewRequest: () => IRequest;
 
     // TODO: See if there's a nicer way to parameterize the createNew request.
+    // Here we specifically pick just the loader props we know we need to keep API exposure low.  Fine to add more
+    // here if we determine they're needed, but they should be picked explicitly (e.g. avoid "scope").
     public constructor(
-        props: ILoaderProps
+        props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader">
         & {
             generateCreateNewRequest: () => IRequest;
         },
     ) {
-        // TODO: Also probably pass through other loader props, they just don't matter for this demo.
         this.loader = new Loader({
             urlResolver: props.urlResolver,
             documentServiceFactory: props.documentServiceFactory,
@@ -74,9 +88,13 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
      * loader that separately fetches model code and wraps the container from the outside.
      */
     private async getModelFromContainer(container: IContainer) {
+        const request: IModelRequest = {
+            url: modelUrl,
+            headers: { containerRef: container },
+        };
         return requestFluidObject<ModelType>(
             container,
-            { url: "", headers: { containerRef: container } },
+            request,
         );
     }
 
@@ -98,7 +116,18 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     }
 
     public async loadExisting(id: string): Promise<ModelType> {
-        const container = await this.loader.resolve({ url: id });
+        const container = await this.loader.resolve({
+            url: id,
+            headers: {
+                loadMode: {
+                    // Here we use "all" to ensure we are caught up before returning.  This is particularly important
+                    // for direct-link scenarios, where the user might have a direct link to a data object that was
+                    // just attached (i.e. the "attach" op and the "set" of the handle into some map is in the
+                    // trailing ops).  If we don't fully process those ops, the expected object won't be found.
+                    opsBeforeReturn: "all",
+                },
+            },
+        });
         const model = await this.getModelFromContainer(container);
         return model;
     }

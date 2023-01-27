@@ -11,7 +11,7 @@ import { CachingLogViewer } from './LogViewer';
 import { TreeView } from './TreeView';
 import { RevisionView } from './RevisionView';
 import { EditCommittedHandler, SharedTree } from './SharedTree';
-import { GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal';
+import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { SharedTreeEvent } from './EventTypes';
 import { newEditId } from './EditUtilities';
@@ -163,7 +163,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Ends the ongoing edit operation and commits it to the history.
 	 *
 	 * Malformed edits are considered an error, and will assert:
-	 * All named detached sequences must have been used or theEdit is malformed.
+	 * All named detached sequences must have been used or the Edit is malformed.
 	 *
 	 * @returns the `id` of the committed edit
 	 */
@@ -171,40 +171,56 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		const { currentEdit } = this;
 		assert(currentEdit !== undefined, 'An edit is not open.');
 		this.currentEdit = undefined;
-		const editingResult = currentEdit.close();
-		if (editingResult.status !== EditStatus.Applied) {
-			const { failure } = editingResult;
-			const additionalProps: ITelemetryProperties = {};
-			switch (failure.kind) {
-				case TransactionInternal.FailureKind.BadPlace:
-					additionalProps.placeFailure = failure.placeFailure;
-					break;
-				case TransactionInternal.FailureKind.BadRange: {
-					const { rangeFailure } = failure;
-					if (typeof rangeFailure === 'string') {
-						additionalProps.rangeFailure = rangeFailure;
-					} else {
-						additionalProps.rangeFailure = rangeFailure.kind;
-						additionalProps.rangeEndpointFailure = rangeFailure.placeFailure;
-					}
-					break;
-				}
-				default:
-					break;
-			}
-
-			this.logger.sendErrorEvent({
-				eventName: 'FailedLocalEdit',
-				status: editingResult.status === 0 ? 'Malformed' : 'Invalid',
-				failureKind: editingResult.failure.kind,
-				...additionalProps,
-			});
-			fail('Locally constructed edits must be well-formed and valid');
+		if (currentEdit.failure !== undefined) {
+			fail('Cannot close a transaction that has already failed. Use abortEdit instead.');
 		}
 
+		const editingResult = currentEdit.close();
+		this.validateChangesApplied(editingResult);
 		const id: EditId = newEditId();
 		this.handleNewEdit(id, editingResult);
 		return id;
+	}
+
+	private validateChangesApplied(result: EditingResult): asserts result is ValidEditingResult;
+	private validateChangesApplied(result: {
+		status: EditStatus;
+		failure: TransactionInternal.Failure | undefined;
+	}): asserts result is { status: EditStatus.Applied; failure: undefined };
+	private validateChangesApplied(
+		result: EditingResult | { status: EditStatus; failure: TransactionInternal.Failure | undefined }
+	) {
+		if (result.status === EditStatus.Applied) {
+			return;
+		}
+
+		const { failure } = result as { failure: TransactionInternal.Failure };
+		const additionalProps: ITelemetryProperties = {};
+		switch (failure.kind) {
+			case TransactionInternal.FailureKind.BadPlace:
+				additionalProps.placeFailure = failure.placeFailure;
+				break;
+			case TransactionInternal.FailureKind.BadRange: {
+				const { rangeFailure } = failure;
+				if (typeof rangeFailure === 'string') {
+					additionalProps.rangeFailure = rangeFailure;
+				} else {
+					additionalProps.rangeFailure = rangeFailure.kind;
+					additionalProps.rangeEndpointFailure = rangeFailure.placeFailure;
+				}
+				break;
+			}
+			default:
+				break;
+		}
+
+		this.logger.sendErrorEvent({
+			eventName: 'FailedLocalEdit',
+			status: result.status === 0 ? 'Malformed' : 'Invalid',
+			failureKind: failure.kind,
+			...additionalProps,
+		});
+		fail('Locally constructed edits must be well-formed and valid.');
 	}
 
 	/**
@@ -244,7 +260,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
 		const changeArray = unwrapRestOrArray(changes);
 		const { status } = this.currentEdit.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
-		assert(status === EditStatus.Applied, 'Locally constructed edits must be well-formed and valid.');
+		this.validateChangesApplied({ status, failure: this.currentEdit.failure });
 		this.emitChange();
 	}
 
@@ -365,8 +381,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	public revert(editId: EditId): void {
 		assert(this.currentEdit !== undefined);
 		const index = this.tree.edits.getIndexOfId(editId);
-		const edit = this.tree.edits.getEditInSessionAtIndex(index);
-		const before = this.tree.logViewer.getRevisionViewInSession(index);
+		const edit =
+			this.tree.edits.tryGetEditAtIndex(index) ?? fail('Edit with the specified ID does not exist in memory');
+		const before = this.tree.logViewer.getRevisionViewInMemory(index);
 		const changes = this.tree.revertChanges(edit.changes, before);
 		if (changes !== undefined) {
 			this.tryApplyChangesInternal(changes);

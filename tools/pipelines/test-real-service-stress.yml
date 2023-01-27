@@ -12,6 +12,7 @@ resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
     source: Build - client packages
+    branch: main # Default branch for manual/scheduled triggers if none is selected
     trigger:
       branches:
       - release/*
@@ -23,18 +24,26 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
+- name: testPackage
+  value: "@fluid-internal/test-service-load"
+  readonly: true
 
+lockBehavior: sequential
 stages:
-    # stress tests odsp
+  # stress tests odsp
   - stage:
     displayName:  Stress tests - Odsp
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-odsp-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
-        testPackage: "@fluid-internal/test-service-load"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:odsp
         env:
@@ -43,16 +52,20 @@ stages:
           login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-    # stress tests odsp dogfood
+  # stress tests odsp dogfood
   - stage:
     displayName:  Stress tests - Odspdf
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-odspdf-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
-        testPackage: "@fluid-internal/test-service-load"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:odspdf
         env:
@@ -69,23 +82,42 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
-        testPackage: "@fluid-internal/test-service-load"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:t9s
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          # Disable colorization for tinylicious logs (not useful when printing to a file)
+          logger__colorize: false
+          logger__morganFormat: tiny
+        additionalSteps:
+
+        # Publish the tinylicious log
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Tinylicious Log
+          inputs:
+            # NOTE: this depends on knowledge of what the template does and where it puts things.
+            # If the template changes its logic, we might need to adjust this path.
+            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/tinylicious.log'
+            artifactName: 'tinyliciousLog'
+            publishLocation: 'pipeline'
 
   # stress tests frs
   - stage:
     displayName: Stress tests - frs
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-frs-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
-        testPackage: "@fluid-internal/test-service-load"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:frs
         env:
