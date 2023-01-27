@@ -92,16 +92,16 @@ export interface IRuntime extends IDisposable {
 	 */
 	getPendingLocalState(): unknown;
 
-    /**
-     * Get pending local state in a serializable format to be given back to a newly loaded container
-     */
-    getPendingLocalState(): unknown;
+	/**
+	 * Get pending local state in a serializable format to be given back to a newly loaded container
+	 */
+	getPendingLocalState(): unknown;
 
-    /**
-     * Notify runtime that we have processed a saved message, so that it can do async work (applying
-     * stashed ops) after having processed it.
-     */
-    notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
+	/**
+	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
+	 * stashed ops) after having processed it.
+	 */
+	notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
 }
 
 /**

@@ -6,22 +6,22 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { LazyPromise } from "@fluidframework/common-utils";
 import {
-    IAudience,
-    IContainerContext,
-    IDeltaManager,
-    ILoader,
-    IRuntime,
-    ICriticalContainerError,
-    AttachState,
-    ILoaderOptions,
-    IRuntimeFactory,
-    IProvideRuntimeFactory,
-    IFluidCodeDetails,
-    IFluidCodeDetailsComparer,
-    IProvideFluidCodeDetailsComparer,
-    ICodeDetailsLoader,
-    IFluidModuleWithDetails,
-    IBatchMessage,
+	IAudience,
+	IContainerContext,
+	IDeltaManager,
+	ILoader,
+	IRuntime,
+	ICriticalContainerError,
+	AttachState,
+	ILoaderOptions,
+	IRuntimeFactory,
+	IProvideRuntimeFactory,
+	IFluidCodeDetails,
+	IFluidCodeDetailsComparer,
+	IProvideFluidCodeDetailsComparer,
+	ICodeDetailsLoader,
+	IFluidModuleWithDetails,
+	IBatchMessage,
 } from "@fluidframework/container-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -169,35 +169,40 @@ export class ContainerContext implements IContainerContext {
 
 	private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
-    constructor(
-        private readonly container: Container,
-        public readonly scope: FluidObject,
-        private readonly codeLoader: ICodeDetailsLoader,
-        private readonly _codeDetails: IFluidCodeDetails,
-        private readonly _baseSnapshot: ISnapshotTree | undefined,
-        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        quorum: IQuorum,
-        public readonly loader: ILoader,
-        public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
-        public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
-        /** @returns clientSequenceNumber of last message in a batch */
-        public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
-        public readonly submitSignalFn: (contents: any) => void,
-        public readonly disposeFn: (error?: ICriticalContainerError) => void,
-        public readonly closeFn: (error?: ICriticalContainerError) => void,
-        public readonly version: string,
-        public readonly updateDirtyContainerState: (dirty: boolean) => void,
-        public readonly existing: boolean,
-        public readonly pendingLocalState?: unknown,
-    ) {
-        this._connected = this.container.connected;
-        this._quorum = quorum;
-        this.taggedLogger = container.subLogger;
-        this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
-            async () => this.loadCodeModule(_codeDetails),
-        );
-        this.attachListener();
-    }
+	constructor(
+		private readonly container: Container,
+		public readonly scope: FluidObject,
+		private readonly codeLoader: ICodeDetailsLoader,
+		private readonly _codeDetails: IFluidCodeDetails,
+		private readonly _baseSnapshot: ISnapshotTree | undefined,
+		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		quorum: IQuorum,
+		public readonly loader: ILoader,
+		public readonly submitFn: (
+			type: MessageType,
+			contents: any,
+			batch: boolean,
+			appData: any,
+		) => number,
+		public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
+		/** @returns clientSequenceNumber of last message in a batch */
+		public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
+		public readonly submitSignalFn: (contents: any) => void,
+		public readonly disposeFn: (error?: ICriticalContainerError) => void,
+		public readonly closeFn: (error?: ICriticalContainerError) => void,
+		public readonly version: string,
+		public readonly updateDirtyContainerState: (dirty: boolean) => void,
+		public readonly existing: boolean,
+		public readonly pendingLocalState?: unknown,
+	) {
+		this._connected = this.container.connected;
+		this._quorum = quorum;
+		this.taggedLogger = container.subLogger;
+		this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(async () =>
+			this.loadCodeModule(_codeDetails),
+		);
+		this.attachListener();
+	}
 
 	/**
 	 * @deprecated Temporary migratory API, to be removed when customers no longer need it.
@@ -307,11 +312,11 @@ export class ContainerContext implements IContainerContext {
 		return true;
 	}
 
-    public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
-        // TODO: add to IRuntime
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return (this.runtime as any).notifyOpReplay(message);
-    }
+	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
+		// TODO: add to IRuntime
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return (this.runtime as any).notifyOpReplay(message);
+	}
 
 	// #region private
 
@@ -336,14 +341,14 @@ export class ContainerContext implements IContainerContext {
 		);
 	}
 
-    private attachListener() {
-        this.container.once("attaching", () => {
-            this.runtime.setAttachState(AttachState.Attaching);
-        });
-        this.container.once("attached", () => {
-            this.runtime.setAttachState(AttachState.Attached);
-        });
-    }
+	private attachListener() {
+		this.container.once("attaching", () => {
+			this.runtime.setAttachState(AttachState.Attaching);
+		});
+		this.container.once("attached", () => {
+			this.runtime.setAttachState(AttachState.Attached);
+		});
+	}
 
 	private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const loadCodeResult = await PerformanceEvent.timedExecAsync(

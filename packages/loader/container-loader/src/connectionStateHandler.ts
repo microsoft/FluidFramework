@@ -374,36 +374,36 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-    private receivedAddMemberEvent(clientId: string) {
-        // This is the only one that requires the pending client ID
-        if (clientId === this.pendingClientId) {
-            if (this.joinOpTimer.hasTimer) {
-                this.stopJoinOpTimer();
-            } else if (this.shouldWaitForJoinSignal()) {
-                // timer has already fired, meaning it took too long to get join op/signal.
-                // Record how long it actually took to recover.
-                // This is generic event, as it by itself is not an error.
-                // We also have a case where NoJoinOp happens during container boot (we do not report it as error in such case),
-                // if this log statement happens after boot - we do not want to consider it error case.
-                this.handler.logConnectionIssue("ReceivedJoinOp", "generic");
-            }
-            // Start the event in case we are waiting for leave or timeout.
-            if (this.waitingForLeaveOp) {
-                this.waitEvent = PerformanceEvent.start(this.handler.logger, {
-                    eventName: "WaitBeforeClientLeave",
-                    details: JSON.stringify({
-                        waitOnClientId: this._clientId,
-                        hadOutstandingOps: this.handler.shouldClientJoinWrite(),
-                    }),
-                });
-            }
-            this.applyForConnectedState("addMemberEvent");
-        } else if (clientId === this.clientId) {
-            // If we see our clientId and it's not also our pending ID, it must (?) be our join op
-            // being replayed, so start the timer in case our previous client is still in quorum
-            this.prevClientLeftTimer.restart();
-        }
-    }
+	private receivedAddMemberEvent(clientId: string) {
+		// This is the only one that requires the pending client ID
+		if (clientId === this.pendingClientId) {
+			if (this.joinOpTimer.hasTimer) {
+				this.stopJoinOpTimer();
+			} else if (this.shouldWaitForJoinSignal()) {
+				// timer has already fired, meaning it took too long to get join op/signal.
+				// Record how long it actually took to recover.
+				// This is generic event, as it by itself is not an error.
+				// We also have a case where NoJoinOp happens during container boot (we do not report it as error in such case),
+				// if this log statement happens after boot - we do not want to consider it error case.
+				this.handler.logConnectionIssue("ReceivedJoinOp", "generic");
+			}
+			// Start the event in case we are waiting for leave or timeout.
+			if (this.waitingForLeaveOp) {
+				this.waitEvent = PerformanceEvent.start(this.handler.logger, {
+					eventName: "WaitBeforeClientLeave",
+					details: JSON.stringify({
+						waitOnClientId: this._clientId,
+						hadOutstandingOps: this.handler.shouldClientJoinWrite(),
+					}),
+				});
+			}
+			this.applyForConnectedState("addMemberEvent");
+		} else if (clientId === this.clientId) {
+			// If we see our clientId and it's not also our pending ID, it must (?) be our join op
+			// being replayed, so start the timer in case our previous client is still in quorum
+			this.prevClientLeftTimer.restart();
+		}
+	}
 
 	private applyForConnectedState(
 		source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved",

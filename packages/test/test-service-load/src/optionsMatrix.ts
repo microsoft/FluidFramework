@@ -84,16 +84,18 @@ export function generateRuntimeOptions(
 		seed,
 	);
 
-    const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
-        gcOptions: [undefined, ...gcOptions],
-        summaryOptions: [undefined, ...summaryOptions],
-        loadSequenceNumberVerification: [undefined],
-        flushMode: [undefined],
-        compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
-        maxBatchSizeInBytes: [undefined],
-        enableOpReentryCheck: [true],
-        chunkSizeInBytes: [undefined],
-    };
+	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
+		gcOptions: [undefined, ...gcOptions],
+		summaryOptions: [undefined, ...summaryOptions],
+		loadSequenceNumberVerification: [undefined],
+		flushMode: [undefined],
+		compressionOptions: [
+			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
+		],
+		maxBatchSizeInBytes: [undefined],
+		enableOpReentryCheck: [true],
+		chunkSizeInBytes: [undefined],
+	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(
 		applyOverrides(runtimeOptionsMatrix, {

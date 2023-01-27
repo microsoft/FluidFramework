@@ -28,26 +28,28 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 /**
  * Stringified blobs from a summary/snapshot tree.
  */
-export interface ISerializableBlobContents { [id: string]: string; }
+export interface ISerializableBlobContents {
+	[id: string]: string;
+}
 
 /**
  * This class wraps the actual storage and make sure no wrong apis are called according to
  * container attach state.
  */
 export class ContainerStorageAdapter implements IDocumentStorageService, IDisposable {
-    private _storageService: IDocumentStorageService & Partial<IDisposable>;
+	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
-    constructor(
-        detachedBlobStorage: IDetachedBlobStorage | undefined,
-        private readonly logger: ITelemetryLogger,
-        /**
-         * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
-         */
-        private readonly blobContents: { [id: string]: ArrayBufferLike | string; } = {},
-        private readonly captureProtocolSummary?: () => ISummaryTree,
-    ) {
-        this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
-    }
+	constructor(
+		detachedBlobStorage: IDetachedBlobStorage | undefined,
+		private readonly logger: ITelemetryLogger,
+		/**
+		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
+		 */
+		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
+		private readonly captureProtocolSummary?: () => ISummaryTree,
+	) {
+		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
+	}
 
 	disposed: boolean = false;
 	dispose(error?: Error): void {
@@ -114,17 +116,17 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return this._storageService.getSnapshotTree(version, scenarioName);
 	}
 
-    public async readBlob(id: string): Promise<ArrayBufferLike> {
-        const maybeBlob = this.blobContents[id];
-        if (maybeBlob !== undefined) {
-            if (typeof maybeBlob === "string") {
-                const blob = stringToBuffer(maybeBlob, "utf8");
-                return blob;
-            }
-            return maybeBlob;
-        }
-        return this._storageService.readBlob(id);
-    }
+	public async readBlob(id: string): Promise<ArrayBufferLike> {
+		const maybeBlob = this.blobContents[id];
+		if (maybeBlob !== undefined) {
+			if (typeof maybeBlob === "string") {
+				const blob = stringToBuffer(maybeBlob, "utf8");
+				return blob;
+			}
+			return maybeBlob;
+		}
+		return this._storageService.readBlob(id);
+	}
 
 	public async getVersions(
 		versionId: string | null,
@@ -214,59 +216,59 @@ const blobsTreeName = ".blobs";
  * Get blob contents of a snapshot tree from storage (or, ideally, cache)
  */
 export async function getBlobContentsFromTree(
-    snapshot: ISnapshotTree,
-    storage: IDocumentStorageService,
+	snapshot: ISnapshotTree,
+	storage: IDocumentStorageService,
 ): Promise<ISerializableBlobContents> {
-    const blobs = {};
-    await getBlobContentsFromTreeCore(snapshot, blobs, storage);
-    return blobs;
+	const blobs = {};
+	await getBlobContentsFromTreeCore(snapshot, blobs, storage);
+	return blobs;
 }
 
 async function getBlobContentsFromTreeCore(
-    tree: ISnapshotTree,
-    blobs: ISerializableBlobContents,
-    storage: IDocumentStorageService,
-    root = true,
+	tree: ISnapshotTree,
+	blobs: ISerializableBlobContents,
+	storage: IDocumentStorageService,
+	root = true,
 ) {
-    const treePs: Promise<any>[] = [];
-    for (const [key, subTree] of Object.entries(tree.trees)) {
-        if (!root || key !== blobsTreeName) {
-            treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
-        }
-    }
-    for (const id of Object.values(tree.blobs)) {
-        const blob = await storage.readBlob(id);
-        // ArrayBufferLike will not survive JSON.stringify()
-        blobs[id] = bufferToString(blob, "utf8");
-    }
-    return Promise.all(treePs);
+	const treePs: Promise<any>[] = [];
+	for (const [key, subTree] of Object.entries(tree.trees)) {
+		if (!root || key !== blobsTreeName) {
+			treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
+		}
+	}
+	for (const id of Object.values(tree.blobs)) {
+		const blob = await storage.readBlob(id);
+		// ArrayBufferLike will not survive JSON.stringify()
+		blobs[id] = bufferToString(blob, "utf8");
+	}
+	return Promise.all(treePs);
 }
 
 /**
  * Extract blob contents from a snapshot tree with blob contents
  */
 export function getBlobContentsFromTreeWithBlobContents(
-    snapshot: ISnapshotTreeWithBlobContents,
+	snapshot: ISnapshotTreeWithBlobContents,
 ): ISerializableBlobContents {
-    const blobs = {};
-    getBlobContentsFromTreeWithBlobContentsCore(snapshot, blobs);
-    return blobs;
+	const blobs = {};
+	getBlobContentsFromTreeWithBlobContentsCore(snapshot, blobs);
+	return blobs;
 }
 
 function getBlobContentsFromTreeWithBlobContentsCore(
-    tree: ISnapshotTreeWithBlobContents,
-    blobs: ISerializableBlobContents,
-    root = true,
+	tree: ISnapshotTreeWithBlobContents,
+	blobs: ISerializableBlobContents,
+	root = true,
 ) {
-    for (const [key, subTree] of Object.entries(tree.trees)) {
-        if (!root || key !== blobsTreeName) {
-            getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs, false);
-        }
-    }
-    for (const id of Object.values(tree.blobs)) {
-        const blob = tree.blobsContents[id];
-        assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
-        // ArrayBufferLike will not survive JSON.stringify()
-        blobs[id] = bufferToString(blob, "utf8");
-    }
+	for (const [key, subTree] of Object.entries(tree.trees)) {
+		if (!root || key !== blobsTreeName) {
+			getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs, false);
+		}
+	}
+	for (const id of Object.values(tree.blobs)) {
+		const blob = tree.blobsContents[id];
+		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
+		// ArrayBufferLike will not survive JSON.stringify()
+		blobs[id] = bufferToString(blob, "utf8");
+	}
 }

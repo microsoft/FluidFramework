@@ -125,17 +125,20 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
 
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer =
-    (detachedContainerSnapshot: ISummaryTree): ISnapshotTreeWithBlobContents => {
-    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
-    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
-    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
-        0x1e0 /* "Protocol and App summary trees should be present" */);
-    const snapshotTreeWithBlobContents = convertProtocolAndAppSummaryToSnapshotTree(
-        protocolSummaryTree,
-        appSummaryTree,
-    );
-    return snapshotTreeWithBlobContents;
+export const getSnapshotTreeFromSerializedContainer = (
+	detachedContainerSnapshot: ISummaryTree,
+): ISnapshotTreeWithBlobContents => {
+	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
+	const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
+	assert(
+		protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+		0x1e0 /* "Protocol and App summary trees should be present" */,
+	);
+	const snapshotTreeWithBlobContents = convertProtocolAndAppSummaryToSnapshotTree(
+		protocolSummaryTree,
+		appSummaryTree,
+	);
+	return snapshotTreeWithBlobContents;
 };
 
 export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree {
