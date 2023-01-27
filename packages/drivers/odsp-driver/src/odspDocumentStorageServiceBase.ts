@@ -185,6 +185,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
         return this.readBlobCore(blobId);
     }
 
+    // eslint-disable-next-line @rushstack/no-new-null
     public async getSnapshotTree(version?: api.IVersion, scenarioName?: string): Promise<api.ISnapshotTree | null> {
         let id: string;
         if (!version || !version.id) {
@@ -217,6 +218,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
         return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
     }
 
+    // eslint-disable-next-line @rushstack/no-new-null
     public abstract getVersions(blobid: string | null, count: number, scenarioName?: string): Promise<api.IVersion[]>;
 
     public abstract uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;

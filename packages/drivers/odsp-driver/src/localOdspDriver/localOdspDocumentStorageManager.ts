@@ -31,6 +31,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 
     private calledGetVersions = false;
 
+    // eslint-disable-next-line @rushstack/no-new-null
     public async getVersions(blobid: string | null, count: number, _scenarioName?: string): Promise<api.IVersion[]> {
         assert(blobid === null, 0x342 /* Invalid usage. "blobid" should always be null */);
         assert(count === 1, 0x343 /* Invalid usage. "count" should always be 1 */);

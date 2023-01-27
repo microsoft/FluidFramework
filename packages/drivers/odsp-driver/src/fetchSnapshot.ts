@@ -56,6 +56,7 @@ export enum SnapshotFormatSupportType {
  */
 export async function fetchSnapshot(
     snapshotUrl: string,
+    // eslint-disable-next-line @rushstack/no-new-null
     token: string | null,
     versionId: string,
     fetchFullSnapshot: boolean,

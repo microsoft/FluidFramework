@@ -70,6 +70,7 @@ export class OdspDocumentService implements IDocumentService {
     public static async create(
         resolvedUrl: IResolvedUrl,
         getStorageToken: InstrumentedStorageTokenFetcher,
+        // eslint-disable-next-line @rushstack/no-new-null
         getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         cache: IOdspCache,

@@ -199,6 +199,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         return blob;
     }
 
+    // eslint-disable-next-line @rushstack/no-new-null
     public async getSnapshotTree(version?: api.IVersion, scenarioName?: string): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
@@ -206,6 +207,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         return super.getSnapshotTree(version, scenarioName);
     }
 
+    // eslint-disable-next-line @rushstack/no-new-null
     public async getVersions(blobid: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid !== this.documentId && blobid) {
