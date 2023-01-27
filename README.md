@@ -186,6 +186,26 @@ Then:
 -   `npm run start:tinylicious`
 -   Browse to <http://localhost:8080,> copy the full URL you're redirected to, and open in a second window to collaborate
 
+## Tools
+
+### Prettier
+
+This repository uses [prettier](https://prettier.io/) as its code formatter.
+Right now, this is implemented on a per-package basis, with a [shared base configuration](./common/build/build-common/prettier.config.cjs).
+
+To run `prettier` on your code, run `npm run format` from the appropriate package or release group.
+
+To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
+
+#### VSCode Options
+
+Our [workspace configuration](./.vscode/settings.json) specifies `prettier` as the default formatter.
+Please do not change this.
+
+It is not configured to do any formatting automatically, however.
+This is intentional, to ensure that each developer can work formatting into their workflow as they see fit.
+If you wish to configure your setup to format on save/paste/etc., please feel free to update your [user preferences](https://code.visualstudio.com/docs/getstarted/settings) to do so.
+
 ## Contributing
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=FALSE) -->
