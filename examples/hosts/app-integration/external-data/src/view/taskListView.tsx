@@ -10,8 +10,8 @@ import React, { useEffect, useRef, useState } from "react";
 import type { ITask, ITaskList } from "../model-interface";
 
 interface ITaskRowProps {
-    readonly task: ITask;
-    readonly deleteTask: () => void;
+	readonly task: ITask;
+	readonly deleteTask: () => void;
 }
 
 /**
@@ -48,10 +48,10 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
         };
     }, [task, incomingName, incomingPriority, incomingType]);
 
-    const inputHandler = (e: React.FormEvent): void => {
-        const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
-        task.priority = newValue;
-    };
+	const inputHandler = (e: React.FormEvent): void => {
+		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
+		task.priority = newValue;
+	};
 
     const diffVisible = incomingType === undefined;
     const showPriority = !diffVisible && incomingPriority !== undefined ? "visible" : "hidden";
@@ -113,28 +113,28 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
  * {@link TaskListView} input props.
  */
 export interface ITaskListViewProps {
-    readonly taskList: ITaskList;
+	readonly taskList: ITaskList;
 }
 
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-    const { taskList } = props;
+	const { taskList } = props;
 
-    const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
-    useEffect(() => {
-        const updateTasks = (): void => {
-            setTasks(taskList.getTasks());
-        };
-        taskList.on("taskAdded", updateTasks);
-        taskList.on("taskDeleted", updateTasks);
+	const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
+	useEffect(() => {
+		const updateTasks = (): void => {
+			setTasks(taskList.getTasks());
+		};
+		taskList.on("taskAdded", updateTasks);
+		taskList.on("taskDeleted", updateTasks);
 
-        return (): void => {
-            taskList.off("taskAdded", updateTasks);
-            taskList.off("taskDeleted", updateTasks);
-        };
-    }, [taskList]);
+		return (): void => {
+			taskList.off("taskAdded", updateTasks);
+			taskList.off("taskDeleted", updateTasks);
+		};
+	}, [taskList]);
 
     const taskRows = tasks.map((task: ITask) => (
         <TaskRow

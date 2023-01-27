@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import isEqual from 'lodash.isequal'
+import isEqual from "lodash.isequal";
 import type { IAppModel, TaskData } from "../model-interface";
 import { customerServicePort } from "../mock-service-interface";
 
@@ -41,10 +41,10 @@ async function pollForServiceUpdates(
  * {@link DebugView} input props.
  */
 export interface IDebugViewProps {
-    /**
-     * The Task List app model to be visualized.
-     */
-    model: IAppModel;
+	/**
+	 * The Task List app model to be visualized.
+	 */
+	model: IAppModel;
 }
 
 /**
@@ -68,7 +68,6 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
         </div>
     );
 };
-
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IExternalDataViewProps {}
@@ -122,42 +121,43 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface ISyncStatusViewProps { }
+interface ISyncStatusViewProps {}
 
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
-    return (
-        <div>
-            <h3>Sync status</h3>
-            <div style={{ margin: "10px 0" }}>
-                Fluid has [no] unsync'd changes (not implemented)<br />
-                External data source has [no] unsync'd changes (not implemented)<br />
-                Current sync activity: [idle | fetching | writing | resolving conflicts?] (not implemented)<br />
-            </div>
-        </div>
-    );
+	return (
+		<div>
+			<h3>Sync status</h3>
+			<div style={{ margin: "10px 0" }}>
+				Fluid has [no] unsync'd changes (not implemented)
+				<br />
+				External data source has [no] unsync'd changes (not implemented)
+				<br />
+				Current sync activity: [idle | fetching | writing | resolving conflicts?] (not
+				implemented)
+				<br />
+			</div>
+		</div>
+	);
 };
 
 interface IControlsViewProps {
-    model: IAppModel;
+	model: IAppModel;
 }
 
 /**
  * Invoke service function to reset the external data source to its original contents.
  */
 function debugResetExternalData(): void {
-    console.log("APP (DEBUG): Resetting external data...")
-    fetch(
-        `http://localhost:${customerServicePort}/debug-reset-task-list`,
-        {
-            method: "POST",
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-            },
-        }
-    ).catch(error => {
-        console.error(`APP: Encountered an error resetting external data:\n${error}`);
-    })
+	console.log("APP (DEBUG): Resetting external data...");
+	fetch(`http://localhost:${customerServicePort}/debug-reset-task-list`, {
+		method: "POST",
+		headers: {
+			"Access-Control-Allow-Origin": "*",
+		},
+	}).catch((error) => {
+		console.error(`APP: Encountered an error resetting external data:\n${error}`);
+	});
 }
 
 // TODO: Implement simulation of an external data change.  Maybe include UI for the debug user to edit the data

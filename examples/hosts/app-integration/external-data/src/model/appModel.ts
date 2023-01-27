@@ -14,12 +14,13 @@ import type { IAppModel, IAppModelEvents, ITaskList } from "../model-interface";
  * responsibilities and functionality.
  */
 export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
-    public constructor(
-        public readonly taskList: ITaskList,
-        container: IContainer,
-        private readonly runtime: IContainerRuntime ) {
-        super();
-    }
+	public constructor(
+		public readonly taskList: ITaskList,
+		container: IContainer,
+		private readonly runtime: IContainerRuntime,
+	) {
+		super();
+	}
 
     /**
      * {@inheritDoc IAppModel.sendCustomDebugSignal}
