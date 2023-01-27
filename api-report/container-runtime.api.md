@@ -417,8 +417,6 @@ export interface IPendingLocalState {
 // @public
 export interface IPendingMessage {
     // (undocumented)
-    clientSequenceNumber: number;
-    // (undocumented)
     content: any;
     // (undocumented)
     localOpMetadata: unknown;

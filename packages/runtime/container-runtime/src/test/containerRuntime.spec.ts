@@ -446,7 +446,7 @@ describe("Runtime", () => {
             };
 
             const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-                pendingStateManager.onSubmitMessage(ContainerMessageType.FluidDataStoreOp, 0, 0, "", "", undefined);
+                pendingStateManager.onSubmitMessage(ContainerMessageType.FluidDataStoreOp, 0, "", "", undefined);
 
             it(`No progress for ${maxReconnects} connection state changes and pending state will ` +
                 "close the container", async () => {

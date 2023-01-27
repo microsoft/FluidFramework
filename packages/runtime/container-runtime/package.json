@@ -126,6 +126,15 @@
       },
       "ClassDeclaration_ContainerRuntime": {
         "forwardCompat": false
+      },
+      "InterfaceDeclaration_IPendingLocalState": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IPendingState": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IPendingMessage": {
+        "backCompat": false
       }
     }
   }

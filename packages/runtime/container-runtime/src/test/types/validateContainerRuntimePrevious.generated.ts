@@ -720,6 +720,7 @@ declare function get_current_InterfaceDeclaration_IPendingLocalState():
 declare function use_old_InterfaceDeclaration_IPendingLocalState(
     use: TypeOnly<old.IPendingLocalState>);
 use_old_InterfaceDeclaration_IPendingLocalState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPendingLocalState());
 
 /*
@@ -744,6 +745,7 @@ declare function get_current_InterfaceDeclaration_IPendingMessage():
 declare function use_old_InterfaceDeclaration_IPendingMessage(
     use: TypeOnly<old.IPendingMessage>);
 use_old_InterfaceDeclaration_IPendingMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPendingMessage());
 
 /*
@@ -768,6 +770,7 @@ declare function get_current_TypeAliasDeclaration_IPendingState():
 declare function use_old_TypeAliasDeclaration_IPendingState(
     use: TypeOnly<old.IPendingState>);
 use_old_TypeAliasDeclaration_IPendingState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IPendingState());
 
 /*

@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { IConnectionDetails, IDeltaHandlerStrategy, IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
 import { IDocumentService } from "@fluidframework/driver-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaManager } from "./deltaManager";
 
@@ -137,12 +137,6 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
     private _clientSequenceNumber = 0;
 
     /**
-     * Key: real client sequence number
-     * Value: virtual client sequence number
-     */
-    private readonly _clientSequenceNumberMap = new Map<number, number>();
-
-    /**
      * TODO: removal of entries based on minimumSequenceNumber?
      * Key: real sequence number
      * Value: virtual sequence number
@@ -204,7 +198,6 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
 
     protected connectHandler(connection: IConnectionDetails) {
         // TODO: what else do we need to track here?
-        this._clientSequenceNumberMap.clear();
         this._clientSequenceNumber = 0;
         super.connectHandler(connection);
     }
@@ -222,8 +215,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
             }]);
         } else {
             super.sendMessageToConnectionManager(messages.map((it: IDocumentMessage) => {
-                this._clientSequenceNumberMap.set(++this._clientSequenceNumber, it.clientSequenceNumber);
-                return {...it, clientSequenceNumber: this._clientSequenceNumber};
+                return {...it, clientSequenceNumber: ++this._clientSequenceNumber};
             }));
         }
     }
@@ -248,19 +240,6 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     /**
-     * Provided "real" client sequence number (one sent over the wire), return its "virtual" counter-part for use by other consumers
-     */
-    private virtualizeClientSequenceNumber(clientSequenceNumber: number): number {
-        if (clientSequenceNumber < 0) {
-            return clientSequenceNumber;
-        }
-        const virtualizedClientSequenceNumber = this._clientSequenceNumberMap.get(clientSequenceNumber);
-        assert(virtualizedClientSequenceNumber !== undefined, "clientSequenceNumber not found");
-
-        return virtualizedClientSequenceNumber;
-    }
-
-    /**
      * Works on messages that are "inbound"
      * Will ungroup any "groupedBatch" SEQUENCED messages into their separate messages
      * Will virtualize all sequenceNumber properties as appropriate
@@ -275,7 +254,6 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
                     ...message, // This will override the property difference between ISequencedDocumentMessage and IDocumentMessage
                     ...subMessage,
                     sequenceNumber: groupSequenceNumber++,
-                    clientSequenceNumber: subMessage.clientSequenceNumber, // This number is already virtualized
                     referenceSequenceNumber: this.virtualizeSequenceNumber(subMessage.referenceSequenceNumber),
                     minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
                 }
@@ -284,7 +262,6 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
             return [{
                 ...message,
                 sequenceNumber: this.virtualizeSequenceNumber(message.sequenceNumber),
-                clientSequenceNumber: this.connectionManager.clientId === message.clientId ? this.virtualizeClientSequenceNumber(message.clientSequenceNumber) : message.clientSequenceNumber,
                 referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
                 minimumSequenceNumber: this.virtualizeSequenceNumber(message.minimumSequenceNumber),
             }];
@@ -310,7 +287,6 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
             return [{
                 ...message,
                 referenceSequenceNumber: this.virtualizeSequenceNumber(message.referenceSequenceNumber),
-                clientSequenceNumber: this.virtualizeClientSequenceNumber(message.clientSequenceNumber),
             }];
         }
     }
