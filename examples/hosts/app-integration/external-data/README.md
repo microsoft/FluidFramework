@@ -1,8 +1,8 @@
 # @fluid-example/app-integration-external-data
 
-This example demonstrates how data from an external data source (e.g. a work tracking system) might be integrated with Fluid to enable more-real-time collaboration.  For example, to allow collaborators to see proposed changes updating live before committing them back to the database.
+This example demonstrates how data from an external data source (e.g. a work tracking system) might be integrated with Fluid to enable more-real-time collaboration. For example, to allow collaborators to see proposed changes updating live before committing them back to the database.
 
-Please note that the ideas explored here are experimental and under development.  They are not yet recommended for broad use in production.
+Please note that the ideas explored here are experimental and under development. They are not yet recommended for broad use in production.
 
 ## Scenario
 
