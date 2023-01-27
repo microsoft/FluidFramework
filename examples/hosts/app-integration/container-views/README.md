@@ -2,7 +2,7 @@
 
 **Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists the value in the root SharedDirectory.
 
-This implementation demonstrates plugging the container into a standalone application, rather than using the webpack-fluid-loader environment that most of our packages use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We expect the container to respond with a mountable view that we can use for rendering.
+This implementation demonstrates plugging the container into a standalone application, rather than using the webpack-fluid-loader environment that most of our packages use. This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We expect the container to respond with a mountable view that we can use for rendering.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 
@@ -45,4 +45,4 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 
 Dice Roller uses the following distributed data structures:
 
-- SharedDirectory - root
+-   SharedDirectory - root

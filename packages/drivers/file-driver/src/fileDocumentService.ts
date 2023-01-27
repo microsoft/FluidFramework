@@ -13,36 +13,35 @@ import { FileDeltaStorageService } from "./fileDeltaStorageService";
  */
 // eslint-disable-next-line import/namespace
 export class FileDocumentService implements api.IDocumentService {
-    constructor(
-        private readonly storage: api.IDocumentStorageService,
-        private readonly deltaStorage: FileDeltaStorageService,
-        private readonly deltaConnection: api.IDocumentDeltaConnection) {
-    }
+	constructor(
+		private readonly storage: api.IDocumentStorageService,
+		private readonly deltaStorage: FileDeltaStorageService,
+		private readonly deltaConnection: api.IDocumentDeltaConnection,
+	) {}
 
-    public dispose() {}
+	public dispose() {}
 
-    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
-    public get resolvedUrl(): api.IResolvedUrl {
-        throw new Error("Not implemented");
-    }
+	// TODO: Issue-2109 Implement detach container api or put appropriate comment.
+	public get resolvedUrl(): api.IResolvedUrl {
+		throw new Error("Not implemented");
+	}
 
-    public async connectToStorage(): Promise<api.IDocumentStorageService> {
-        return this.storage;
-    }
+	public async connectToStorage(): Promise<api.IDocumentStorageService> {
+		return this.storage;
+	}
 
-    public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        return this.deltaStorage;
-    }
+	public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+		return this.deltaStorage;
+	}
 
-    /**
-     * Connects to a delta storage endpoint of provided documentService to get ops and then replaying
-     * them so as to mimic a delta stream endpoint.
-     *
-     * @param client - Client that connects to socket.
-     * @returns returns the delta stream service.
-     */
-    public async connectToDeltaStream(
-        client: IClient): Promise<api.IDocumentDeltaConnection> {
-        return this.deltaConnection;
-    }
+	/**
+	 * Connects to a delta storage endpoint of provided documentService to get ops and then replaying
+	 * them so as to mimic a delta stream endpoint.
+	 *
+	 * @param client - Client that connects to socket.
+	 * @returns returns the delta stream service.
+	 */
+	public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+		return this.deltaConnection;
+	}
 }
