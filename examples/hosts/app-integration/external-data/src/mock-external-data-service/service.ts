@@ -130,7 +130,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
                 const responseBody = JSON.parse(response.body.toString()) as Record<string | number | symbol, unknown>;
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
                 const taskList = assertValidTaskData((responseBody as any).taskList);
-                console.log(formatLogMessage(`Returning current task list:\n"${taskList}".`));
+
+                console.log(formatLogMessage("Returning current task list:"), taskList);
+
                 result.send({ taskList });
             },
             (error) => {
