@@ -21,7 +21,6 @@ export interface ContainerSelectionDropdownProps extends HasClientDebuggers, Has
 
 /**
  * A dropdown menu for selecting the Fluid Container to display debug information about.
- *
  */
 export function ContainerSelectionDropdown(
     props: ContainerSelectionDropdownProps,
