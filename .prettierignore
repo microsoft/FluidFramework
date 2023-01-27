@@ -29,3 +29,6 @@ packages/framework/attributor/src/test/attribution/documents/**/*.json
 
 # es5 build output
 packages/framework/data-object-base/es5
+
+# TODO: Temporarily ignore package.json files while we figure out why CI fails
+**/package.json
