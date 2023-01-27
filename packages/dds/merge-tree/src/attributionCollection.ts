@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import { UnassignedSequenceNumber } from "./constants";
 import { MergeTreeDeltaCallback, MergeTreeMaintenanceCallback, MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback";
@@ -79,19 +79,32 @@ export interface IAttributionCollection<T> {
     clone(): IAttributionCollection<T>;
 }
 
+function areEqualAttributionKeys(a: AttributionKey, b: AttributionKey): boolean {
+    if (a.type !== b.type) {
+        return false;
+    }
+
+    switch (a.type) {
+        case "op":
+            return a.seq === b.seq;
+        default:
+            unreachableCase(a.type, "Unhandled AttributionKey type");
+    }
+}
+
 
 export class AttributionCollection implements IAttributionCollection<AttributionKey> {
     private offsets: number[];
-    private seqs: number[];
+    private keys: AttributionKey[];
 
-    public constructor(baseEntry: number, private _length: number) {
+    public constructor(baseEntry: AttributionKey, private _length: number) {
         this.offsets = [0];
-        this.seqs = [baseEntry];
+        this.keys = [baseEntry];
     }
 
     public getAtOffset(offset: number): AttributionKey {
         assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
-        return { type: "op", seq: this.seqs[this.findIndex(offset)] };
+        return this.keys[this.findIndex(offset)];
     }
 
     private findIndex(offset: number): number {
@@ -114,42 +127,42 @@ export class AttributionCollection implements IAttributionCollection<Attribution
      */
     public splitAt(pos: number): AttributionCollection {
         const splitIndex = this.findIndex(pos);
-        const splitBaseEntry = this.seqs[splitIndex];
+        const splitBaseEntry = this.keys[splitIndex];
         const splitCollection = new AttributionCollection(splitBaseEntry, this.length - pos);
-        for (let i = splitIndex + 1; i < this.seqs.length; i++) {
+        for (let i = splitIndex + 1; i < this.keys.length; i++) {
             splitCollection.offsets.push(this.offsets[i] - pos);
-            splitCollection.seqs.push(this.seqs[i]);
+            splitCollection.keys.push(this.keys[i]);
         }
 
         const spliceIndex = this.offsets[splitIndex] === pos ? splitIndex : splitIndex + 1
-        this.seqs.splice(spliceIndex);
+        this.keys.splice(spliceIndex);
         this.offsets.splice(spliceIndex);
         this._length = pos;
         return splitCollection;
     }
 
     public append(other: AttributionCollection): void {
-        const lastEntry = this.seqs[this.seqs.length - 1];
-        for (let i = 0; i < other.seqs.length; i++) {
-            if (i !== 0 || lastEntry !== other.seqs[i]) {
+        const lastEntry = this.keys[this.keys.length - 1];
+        for (let i = 0; i < other.keys.length; i++) {
+            if (i !== 0 || !areEqualAttributionKeys(lastEntry, other.keys[i])) {
                 this.offsets.push(other.offsets[i] + this.length);
-                this.seqs.push(other.seqs[i]);
+                this.keys.push(other.keys[i]);
             }
         }
         this._length += other.length;
     }
 
     public getAll(): { offset: number; key: AttributionKey; }[] {
-        const results: { offset: number; key: AttributionKey }[] = new Array(this.seqs.length);
-        for (let i = 0; i < this.seqs.length; i++) {
-            results[i] = { offset: this.offsets[i], key: { type: "op", seq: this.seqs[i] }};
+        const results: { offset: number; key: AttributionKey }[] = new Array(this.keys.length);
+        for (let i = 0; i < this.keys.length; i++) {
+            results[i] = { offset: this.offsets[i], key: this.keys[i] };
         }
         return results;
     }
 
     public clone(): AttributionCollection {
-        const copy = new AttributionCollection(0, this.length);
-        copy.seqs = this.seqs.slice();
+        const copy = new AttributionCollection(this.keys[0], this.length);
+        copy.keys = this.keys.slice();
         copy.offsets = this.offsets.slice();
         return copy;
     }
@@ -170,13 +183,13 @@ export class AttributionCollection implements IAttributionCollection<Attribution
         let cumulativeSegPos = 0;
         
         for (const segment of segments) {
-            const attribution = new AttributionCollection(currentInfo, segment.cachedLength);
+            const attribution = new AttributionCollection({ type: "op", seq: currentInfo }, segment.cachedLength);
             while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
                 currentInfo = seqs[curIndex];
                 const nextOffset = posBreakpoints[curIndex] - cumulativeSegPos;
                 if (attribution.offsets[attribution.offsets.length - 1] !== nextOffset) {
                     attribution.offsets.push(nextOffset);
-                    attribution.seqs.push(currentInfo);
+                    attribution.keys.push({ type: "op", seq: currentInfo });
                 }
                 curIndex++;
             }
@@ -198,7 +211,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
     ): SerializedAttributionCollection {
         const posBreakpoints: number[] = [];
         const seqs: number[] = [];
-        let mostRecentAttributionKey: number | undefined;
+        let mostRecentAttributionKey: AttributionKey | undefined;
         let cumulativePos = 0;
 
         let segmentsWithAttribution = 0;
@@ -206,12 +219,12 @@ export class AttributionCollection implements IAttributionCollection<Attribution
         for (const segment of segments) {
             if (segment.attribution) {
                 segmentsWithAttribution++;
-                for (const { offset, key: info } of segment.attribution?.getAll() ?? []) {
-                    if (info.seq !== mostRecentAttributionKey) {
+                for (const { offset, key } of segment.attribution?.getAll() ?? []) {
+                    if (!mostRecentAttributionKey || !areEqualAttributionKeys(key, mostRecentAttributionKey)) {
                         posBreakpoints.push(offset + cumulativePos);
-                        seqs.push(info.seq);
+                        seqs.push(key.seq);
                     }
-                    mostRecentAttributionKey = info.seq;
+                    mostRecentAttributionKey = key;
                 }
             } else {
                 segmentsWithoutAttribution++;
@@ -246,7 +259,7 @@ export function createAttributionImpl(): {
                 for (const { segment } of deltaSegments) {
                     if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
                         segment.attribution ??= new AttributionCollection(
-                            segment.seq,
+                            { type: "op", seq: segment.seq },
                             segment.cachedLength
                         );
                     }
@@ -264,7 +277,7 @@ export function createAttributionImpl(): {
                 for (const { segment } of deltaSegments) {
                     assert(segment.seq !== undefined, "segment.seq should be set after ack.");
                     segment.attribution = new AttributionCollection(
-                        segment.seq,
+                        { type: "op", seq: segment.seq },
                         segment.cachedLength
                     );
                 }
