@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { IAttributionCollection } from "./attributionCollection";
+export {
+	IAttributionCollection,
+	IAttributionCollectionSerializer,
+	createInsertOnlyAttributionPolicy
+} from "./attributionCollection";
 export { IIntegerRange } from "./base";
 export { Client } from "./client";
 export 	{
@@ -35,8 +39,9 @@ export {
     LocalReferencePosition,
 } from "./localReference";
 export {
+	AttributionPolicy,
 	IMergeTreeAttributionOptions,
-	IMergeTreeOptions
+	IMergeTreeOptions,
 } from "./mergeTree";
 export {
 	IMergeTreeClientSequenceArgs,

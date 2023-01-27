@@ -248,31 +248,24 @@ export class SnapshotLoader {
         this.mergeTree.options ??= {};
         this.mergeTree.options.attribution ??= {};
         if (chunk.attribution) {
-            const { attribution } = this.mergeTree.options;
-            // TODO: evaluate what attribution.track is even doing.
-            attribution.track = true;
-
-            const { attributionImpl } = this.mergeTree;
+            const { attributionPolicy } = this.mergeTree;
+            // TODO: unify validation strategy and make sure asserts vs. exceptions makes sense.
+            // (this one should potentially be a usage error)
+            // also update documentation on attributor
             assert(
-                attributionImpl !== undefined,
-                "Attempted to open a file containing attribution information without injected AttributionCollection implementation"
+                attributionPolicy !== undefined,
+                "Attempted to open a file containing attribution information without injected attribution policy"
             );
-            const { isAttached, attach, serializer } = attributionImpl;
+            const { isAttached, attach, serializer } = attributionPolicy;
             if (!isAttached) {
                 attach(this.client);
             }
-            // TODO: unify validation strategy and make sure asserts vs. exceptions makes sense.
-            // also update documentation on attributor
             serializer.populateAttributionCollections(segments, chunk.attribution);
         } else {
-            const { attribution } = this.mergeTree.options;
-            attribution.track = true;
-
-            const { attributionImpl } = this.mergeTree;
-            if (attributionImpl?.isAttached) {
-                attributionImpl?.detach();
+            const { attributionPolicy } = this.mergeTree;
+            if (attributionPolicy?.isAttached) {
+                attributionPolicy?.detach();
             }
-            this.mergeTree.options.attribution.track = false;
         }
     }
 

@@ -27,6 +27,18 @@ export interface AttributionKey {
     type: "op";
 }
 
+// @alpha @sealed
+export interface AttributionPolicy {
+    // @internal
+    attach: (client: Client) => void;
+    // @internal
+    detach: () => void;
+    // @internal (undocumented)
+    isAttached: boolean;
+    // @internal
+    serializer: IAttributionCollectionSerializer;
+}
+
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
@@ -249,6 +261,9 @@ export function createDetachedLocalReferencePosition(refType?: ReferenceType): L
 // @public (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
+// @alpha (undocumented)
+export function createInsertOnlyAttributionPolicy(): AttributionPolicy;
+
 // @public (undocumented)
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg;
 
@@ -303,6 +318,18 @@ export interface IAttributionCollection<T> {
     readonly length: number;
     // @internal (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;
+}
+
+// @internal @sealed (undocumented)
+export interface IAttributionCollectionSerializer {
+    populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
+    // Warning: (ae-forgotten-export) The symbol "SerializedAttributionCollection" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    serializeAttributionCollections(segments: Iterable<{
+        attribution?: IAttributionCollection<AttributionKey>;
+        cachedLength: number;
+    }>): SerializedAttributionCollection;
 }
 
 // @public (undocumented)
@@ -433,10 +460,9 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 
 // @public (undocumented)
 export interface IMergeTreeAttributionOptions {
-    // Warning: (ae-forgotten-export) The symbol "MergeTreeAttribution" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    impl?: () => MergeTreeAttribution;
+    // @alpha
+    policyFactory?: () => AttributionPolicy;
+    // @alpha
     track?: boolean;
 }
 

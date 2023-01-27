@@ -83,7 +83,7 @@ export class SnapshotLegacy {
         assert(segsWithAttribution === 0 || segsWithAttribution === segCount,
             0x4bf /* all or no segments should have attribution */);
 
-        const attributionSerializer = this.mergeTree.attributionImpl?.serializer;
+        const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
         assert(
             segsWithAttribution === 0 || attributionSerializer !== undefined,
             "attribution serializer must be provided when there are segments with attribution."

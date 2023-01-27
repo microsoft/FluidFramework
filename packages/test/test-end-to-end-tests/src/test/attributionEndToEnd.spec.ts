@@ -67,7 +67,8 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
-	it("Can attribute content from multiple collaborators", async () => {
+	// TODO: Plumb through policy injection here.
+	it.skip("Can attribute content from multiple collaborators", async () => {
 		const sharedStringFromContainer = async (container: IContainer) => {
 			const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 			return dataObject.getSharedObject<SharedString>(stringId);

@@ -9,7 +9,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SnapshotLegacy } from "../snapshotlegacy";
-import { createAttributionImpl } from "../attributionCollection";
+import { createInsertOnlyAttributionPolicy } from "../attributionCollection";
 import { TestSerializer } from "./testSerializer";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from ".";
@@ -106,7 +106,7 @@ describe("snapshot", () => {
     it("preserves attribution information", async () => {
         const clients = createClientsAtInitialState({
             initialState: "",
-            options: { attribution: { track: true, impl: createAttributionImpl } }
+            options: { attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy } }
         }, "A", "B");
 
         const ops: ISequencedDocumentMessage[] = [];
@@ -140,7 +140,7 @@ describe("snapshot", () => {
     it("doesn't include attribution information when attribution tracking is false on doc creation", async () => {
         const clients = createClientsAtInitialState({
             initialState: "",
-            options: { attribution: { track: false, impl: createAttributionImpl } }
+            options: { attribution: { track: false, policyFactory: createInsertOnlyAttributionPolicy } }
         }, "A");
 
         const ops: ISequencedDocumentMessage[] = [];

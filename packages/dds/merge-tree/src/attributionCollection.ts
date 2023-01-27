@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { AttributionPolicy } from "./mergeTree";
 import { Client } from "./client";
 import { UnassignedSequenceNumber } from "./constants";
 import { MergeTreeDeltaCallback, MergeTreeMaintenanceCallback, MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback";
@@ -24,8 +25,7 @@ export interface SerializedAttributionCollection {
 }
 
 /**
- * TODO: based on injection feasibility, might be able to mark this internal as well
- * @alpha
+ * @internal
  * @sealed
  */
 export interface IAttributionCollectionSerializer {
@@ -241,12 +241,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
     }
 }
 
-export function createAttributionImpl(): {
-    attach: (client: Client) => void;
-    detach: () => void;
-    isAttached: boolean; 
-    serializer: IAttributionCollectionSerializer;
-} {
+/**
+ * @alpha
+ * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ */
+export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
     let unsubscribe: undefined | (() => void);
     return {
         attach: (client: Client) => {

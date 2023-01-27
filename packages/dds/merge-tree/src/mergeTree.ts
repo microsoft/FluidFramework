@@ -435,16 +435,48 @@ export interface IMergeTreeAttributionOptions {
      * are tracked is determined by the presence of existing attribution keys in the snapshot.
      *
      * default: false
+     * @alpha
      */
     track?: boolean;
 
-    impl?: () => MergeTreeAttribution
+    /**
+     * Provides a policy for how to track attribution data on segments.
+     * This option must be provided if either:
+     * - `track` is set to true
+     * - a document containing existing attribution information is loaded
+     * @alpha
+     */
+    policyFactory?: () => AttributionPolicy
 }
 
-interface MergeTreeAttribution {
+/**
+ * Implements policy dictating which kinds of operations should be attributed and how.
+ * @alpha
+ * @sealed
+ */
+export interface AttributionPolicy {
+    /**
+     * Enables tracking attribution information for operations on this merge-tree.
+     * This function is expected to subscribe to appropriate change events in order
+     * to manage any attribution data it stores on segments.
+     * 
+     * This must be done in an eventually consistent fashion.
+     * @internal
+     */
     attach: (client: Client) => void;
+    /**
+     * Disables tracking attribution information on segments.
+     * @internal
+     */
     detach: () => void;
-    isAttached: boolean; 
+    /**
+     * @internal
+     */
+    isAttached: boolean;
+    /**
+     * Serializer capable of serializing any attribution data this policy stores on segments.
+     * @internal
+     */
     serializer: IAttributionCollectionSerializer;
 }
 
@@ -492,7 +524,7 @@ export class MergeTree {
         return this.segmentsToScour;
     }
 
-    public readonly attributionImpl: MergeTreeAttribution | undefined;
+    public readonly attributionPolicy: AttributionPolicy | undefined;
 
     /**
      * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -511,7 +543,7 @@ export class MergeTree {
     public constructor(public options?: IMergeTreeOptions) {
         this._root = this.makeBlock(0);
         this._root.mergeTree = this;
-        this.attributionImpl = options?.attribution?.impl?.();
+        this.attributionPolicy = options?.attribution?.policyFactory?.();
     }
 
     private _root: IRootMergeBlock;
