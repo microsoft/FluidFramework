@@ -175,7 +175,6 @@ export {
     ValueFieldEditBuilder,
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
-    SequenceField,
     prefixPath,
     prefixFieldPath,
 } from "./feature-libraries";
