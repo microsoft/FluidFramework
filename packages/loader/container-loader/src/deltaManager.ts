@@ -630,6 +630,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.disposeInternal(error);
         } else {
             this.emit("closed", error);
+            this.disposeInternal(error); // ! TODO: remove this call when Container close no longer disposes
         }
     }
 

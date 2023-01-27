@@ -13,12 +13,12 @@ import {
     take,
 } from "@fluid-internal/stochastic-test-utils";
 import { AttributionCollection, SerializedAttributionCollection } from "../attributionCollection";
-import { BaseSegment, ISegment } from "../mergeTreeNodes";
+import { AttributionKey, BaseSegment, ISegment } from "../mergeTreeNodes";
 
 describe("AttributionCollection", () => {
     describe(".getAtOffset", () => {
         describe("on a collection with a single entry", () => {
-            const collection = new AttributionCollection(100, 5);
+            const collection = new AttributionCollection({ type: "op", seq: 100 }, 5);
 
             it("returns the entry for offsets within the length range", () => {
                 for (let i = 0; i < 5; i++) {
@@ -33,8 +33,8 @@ describe("AttributionCollection", () => {
         });
 
         describe("on a collection with multiple entries", () => {
-            const collection = new AttributionCollection(100, 3);
-            collection.append(new AttributionCollection(101, 5));
+            const collection = new AttributionCollection({ type: "op", seq: 100 }, 3);
+            collection.append(new AttributionCollection({ type: "op", seq: 101 }, 5));
             it("returns the correct entries", () => {
                 for (let i = 0; i < 3; i++) {
                     assert.deepEqual(collection.getAtOffset(i), { type: "op", seq: 100 });
@@ -51,9 +51,9 @@ describe("AttributionCollection", () => {
         describe("on a collection with 3 entries", () => {
             let collection: AttributionCollection;
             beforeEach(() => {
-                collection = new AttributionCollection(100, 3);
-                collection.append(new AttributionCollection(101, 2));
-                collection.append(new AttributionCollection(102, 1));
+                collection = new AttributionCollection({ type: "op", seq: 100 }, 3);
+                collection.append(new AttributionCollection({ type: "op", seq: 101 }, 2));
+                collection.append(new AttributionCollection({ type: "op", seq: 102 }, 1));
             });
 
             it("can split on non-breakpoints", () => {
@@ -85,7 +85,7 @@ describe("AttributionCollection", () => {
         });
 
         it("can split collection with a single value", () => {
-            const collection = new AttributionCollection(100, 5);
+            const collection = new AttributionCollection({ type: "op", seq: 100 }, 5);
             const splitCollection = collection.splitAt(3);
             assert.equal(collection.length, 3);
             assert.equal(splitCollection.length, 2);
@@ -96,9 +96,9 @@ describe("AttributionCollection", () => {
 
     describe(".append", () => {
         it("modifies the receiving collection", () => {
-            const collection = new AttributionCollection(100, 2);
+            const collection = new AttributionCollection({ type: "op", seq: 100 }, 2);
             assert.deepEqual(collection.getAll(), [{ offset: 0, key: { type: "op", seq: 100 } }]);
-            collection.append(new AttributionCollection(101, 1));
+            collection.append(new AttributionCollection({ type: "op", seq: 101 }, 1));
             assert.deepEqual(collection.getAll(), [
                 { offset: 0, key: { type: "op", seq: 100 } },
                 { offset: 2, key: { type: "op", seq: 101 } }
@@ -106,16 +106,16 @@ describe("AttributionCollection", () => {
         });
 
         it("does not modify the argument collection", () => {
-            const collection = new AttributionCollection(100, 2);
-            const appendedCollection = new AttributionCollection(101, 1);
+            const collection = new AttributionCollection({ type: "op", seq: 100 }, 2);
+            const appendedCollection = new AttributionCollection({ type: "op", seq: 101 }, 1);
             assert.deepEqual(appendedCollection.getAll(), [{ offset: 0, key: { type: "op", seq: 101 } }]);
             collection.append(appendedCollection);
             assert.deepEqual(appendedCollection.getAll(), [{ offset: 0, key: { type: "op", seq: 101 } }]);
         });
 
         it("coalesces referentially equal values at the join point", () => {
-            const collection = new AttributionCollection(100, 2);
-            collection.append(new AttributionCollection(100, 7));
+            const collection = new AttributionCollection({ type: "op", seq: 100 }, 2);
+            collection.append(new AttributionCollection({ type: "op", seq: 100 }, 7));
             assert.deepEqual(collection.getAll(), [{ offset: 0, key: { type: "op", seq: 100 } }]);
             assert.equal(collection.length, 9);
         });
@@ -171,8 +171,8 @@ describe("AttributionCollection", () => {
     describe("serializeAttributionCollections", () => {
         it("combines equal values on endpoints", () => {
             const segments = [
-                { attribution: new AttributionCollection(0, 4), cachedLength: 4 },
-                { attribution: new AttributionCollection(0, 5), cachedLength: 5 },
+                { attribution: new AttributionCollection({ type: "op", seq: 0 }, 4), cachedLength: 4 },
+                { attribution: new AttributionCollection({ type: "op", seq: 0 }, 5), cachedLength: 5 },
             ] as unknown as ISegment[];
             const blob = AttributionCollection.serializeAttributionCollections(segments);
             assert.deepEqual(blob, {
@@ -184,7 +184,7 @@ describe("AttributionCollection", () => {
 
         it("validates either all segments or no segments have attribution tracking", () => {
             const segments = [
-                { attribution: new AttributionCollection(0, 4), cachedLength: 4 },
+                { attribution: new AttributionCollection({ type: "op", seq: 0 }, 4), cachedLength: 4 },
                 { cachedLength: 5 },
             ] as ISegment[];
             assert.throws(() => AttributionCollection.serializeAttributionCollections(segments));
@@ -246,8 +246,8 @@ describe("AttributionCollection", () => {
 
     describe(".clone", () => {
         it("copies the original collection", () => {
-            const collection = new AttributionCollection(100, 2);
-            const appendedCollection = new AttributionCollection(101, 1);
+            const collection = new AttributionCollection({ type: "op", seq: 100 }, 2);
+            const appendedCollection = new AttributionCollection({ type: "op", seq: 101 }, 1);
             const copy = collection.clone();
             collection.append(appendedCollection);
             assert.deepEqual(collection.getAll(), [
@@ -267,7 +267,7 @@ describe("AttributionCollection", () => {
         interface InsertAction {
             type: "insert";
             length: number;
-            attributionKey: number;
+            attributionKey: AttributionKey;
         }
 
         interface SplitAction {
@@ -313,7 +313,7 @@ describe("AttributionCollection", () => {
                 const insertGenerator: Generator<InsertAction, State> = take(segmentCount, ({ random }) => ({
                     type: "insert",
                     length: random.integer(1, 20),
-                    attributionKey: random.integer(0, 10),
+                    attributionKey: { type: "op", seq: random.integer(0, 10) },
                 }));
 
                 const initialState = performFuzzActions<InsertAction, State>(

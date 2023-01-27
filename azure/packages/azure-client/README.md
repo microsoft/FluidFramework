@@ -35,11 +35,11 @@ import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
 const clientProps = {
-    connection: {
-        type: "local",
-        tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
-        endpoint: "http://localhost:7070",
-    },
+	connection: {
+		type: "local",
+		tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
+		endpoint: "http://localhost:7070",
+	},
 };
 const azureClient = new AzureClient(clientProps);
 ```
@@ -52,15 +52,15 @@ When running against a live Azure Fluid Relay instance, we can use the same inte
 import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
 
 const clientProps = {
-    connection: {
-        type: "remote",
-        tenantId: "YOUR-TENANT-ID-HERE",
-        tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL" + "/api/GetAzureToken", {
-            userId: "test-user",
-            userName: "Test User",
-        }),
-        endpoint: "ENTER-SERVICE-DISCOVERY-URL-HERE",
-    },
+	connection: {
+		type: "remote",
+		tenantId: "YOUR-TENANT-ID-HERE",
+		tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL" + "/api/GetAzureToken", {
+			userId: "test-user",
+			userName: "Test User",
+		}),
+		endpoint: "ENTER-SERVICE-DISCOVERY-URL-HERE",
+	},
 };
 const azureClient = new AzureClient(clientProps);
 ```
@@ -79,12 +79,12 @@ See [`ContainerSchema`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) fo
 
 ```typescript
 const schema = {
-    initialObjects: {
-        /* ... */
-    },
-    dynamicObjectTypes: [
-        /*...*/
-    ],
+	initialObjects: {
+		/* ... */
+	},
+	dynamicObjectTypes: [
+		/*...*/
+	],
 };
 const azureClient = new AzureClient(props);
 const { container, services } = await azureClient.createContainer(schema);
@@ -117,10 +117,10 @@ The most common way to use Fluid is through initial collaborative objects that a
 // Define the keys and types of the initial list of collaborative objects.
 // Here, we are using a SharedMap DDS on key "map1" and a SharedString on key "text1".
 const schema = {
-    initialObjects: {
-        map1: SharedMap,
-        text1: SharedString,
-    },
+	initialObjects: {
+		map1: SharedMap,
+		text1: SharedString,
+	},
 };
 
 // Fetch back the container that had been created earlier with the same ID and schema
