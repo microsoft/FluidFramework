@@ -170,7 +170,10 @@ export class ForestRepairDataStore implements RepairDataStore {
         return sparseField.slice(sparseIndex, sparseIndex + count).map((node) => {
             const repair = node.data?.node?.get(revision);
             assert(repair !== undefined, 0x47d /* No repair data found */);
-            return repair.cursor();
+            const cursor = repair.cursor();
+            assert(cursor.getFieldLength() === 1, "only one node should have been chunked");
+            cursor.firstNode();
+            return cursor;
         });
     }
 
