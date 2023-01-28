@@ -10,7 +10,6 @@
 	},
 	"messages": {
 		"extractorMessageReporting": {
-			// A type signature should not reference another types whose release tag is less visible.
 			"ae-missing-release-tag": {
 				"logLevel": "error",
 				"addToApiReportFile": false
