@@ -414,13 +414,13 @@ Enable it by setting the following options used while initializing the SharedStr
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
 // Use these options in the IContainerContext used to instantiate your container runtime.
 const options: ILoaderOptions = {
-    attribution: {
-        // Beware: production applications should roll out and saturate code with "track: false"
-        // before enabling it to avoid compatability concerns.
-        track: true,
-        policyFactory: createInsertOnlyAttributionPolicy
-    }
-}
+	attribution: {
+		// Beware: production applications should roll out and saturate code with "track: false"
+		// before enabling it to avoid compatability concerns.
+		track: true,
+		policyFactory: createInsertOnlyAttributionPolicy,
+	},
+};
 ```
 
 If the config flag `"Fluid.Attribution.EnableOnNewFile"` is set, its value will override the value of `track` in these options.

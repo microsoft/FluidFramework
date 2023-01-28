@@ -119,13 +119,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		};
 
 		if (options?.attribution?.track) {
-			const impl = this._mergeTree?.attributionPolicy;
+			const policy = this._mergeTree?.attributionPolicy;
 			// TODO: Depending on who's expected to configure, this should potentially be a UsageError instead.
 			assert(
-				impl !== undefined,
+				policy !== undefined,
 				"Attribution tracking was enabled but no implementation injected.",
 			);
-			impl.attach(this);
+			policy.attach(this);
 		}
 	}
 

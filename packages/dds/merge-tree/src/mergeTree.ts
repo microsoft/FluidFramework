@@ -10,8 +10,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { AttributionCollection } from "./attributionCollection";
-import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
