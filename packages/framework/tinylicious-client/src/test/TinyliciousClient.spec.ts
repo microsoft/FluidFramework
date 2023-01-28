@@ -365,25 +365,66 @@ describe("TinyliciousClient", () => {
 	 *
 	 * Expected behavior: TinyliciousClient should disconnect with a reason.
 	 */
-	it.only("disconnects with a reason", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema);
+	// it("disconnects with a reason", async () => {
+	// 	const { container } = await tinyliciousClient.createContainer(schema);
+    //     const waitForEvent = async (): Promise<string> => {
+    //         return new Promise((resolve, reject) => {
+    //             container.on('disconnected', resolve);
+    //             container.on('disposed', reject);
+    //         });
+    //     };
 
-		// attach event listener on disconnected event and verify its a string before finishing test
-		container.on("disconnected", (reason?: string) => {
-            assert.strictEqual(
-                typeof reason,
-                "string",
-                "reason should be type string, not undefined1",
-            );
-            assert.notStrictEqual(
-                typeof reason,
-                "undefined",
-                "reason should be type string, not undefined2",
-            );
+	// 	await container.attach();
+	// 	await timeoutPromise((resolve) => container.once("connected", resolve));
+    //     console.log("disconnect");
+	// 	container.disconnect();
+
+    //     // attach event listener on disconnected event and verify its a string before finishing test
+    //     const reason = await waitForEvent();
+    //     console.log("reason", reason);
+    //     assert.strictEqual(
+    //         typeof reason,
+    //         "string",
+    //         "reason should be type string, not undefined1",
+    //     );
+    //     assert.notStrictEqual(
+    //         typeof reason,
+    //         "undefined",
+    //         "reason should be type string, not undefined2",
+    //     );
+	// 	container.connect();
+	// });
+
+    /**
+     * Gross test to ensure that we can disconnect with a reason but without async/await
+     */
+    it("disconnects with a reason callback", (done) => {
+		tinyliciousClient.createContainer(schema).then(({ container }) => {
+            // attach event listener on disconnected event and verify its a string before finishing test
+            container.on("disconnected", (reason?: string) => {
+                assert.strictEqual(
+                    typeof reason,
+                    "string",
+                    "reason should be type string",
+                );
+                assert.notStrictEqual(
+                    typeof reason,
+                    "undefined",
+                    "reason should not be undefined",
+                );
+                return done();
+            });
+
+            container.attach().then(() => {
+                container.once("connected", () => {
+                    container.disconnect();
+                    container.connect();
+                });
+            }).catch((err) => {
+                throw err;
+            });
+        }).catch((err) => {
+            throw err;
         });
-
-		await container.attach();
-		await timeoutPromise((resolve) => container.once("connected", resolve));
-		container.disconnect();
 	});
 });

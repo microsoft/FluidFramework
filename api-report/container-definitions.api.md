@@ -209,9 +209,8 @@ export interface IContainerEvents extends IEvent {
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void): any;
     // @deprecated (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
-    (event: "attached", listener: () => void): any;
     (event: "disconnected", listener: (reason?: string) => void): any;
-    // (undocumented)
+    (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "warning", listener: (error: ContainerWarning) => void): any;
