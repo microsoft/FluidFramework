@@ -933,7 +933,7 @@ describe("Runtime", () => {
 
 				// The entryPoint should be defined with our default logic so it should be the runtime itself.
 				// Since IProvideContainerRuntime is deprecated, we check it implements IFluidRouter.
-				const actualEntryPoint = await containerRuntime.entryPoint;
+				const actualEntryPoint = await containerRuntime.getEntryPoint();
 				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				const maybeFluidRouter: FluidObject<IProvideFluidRouter> = actualEntryPoint;
 				if (maybeFluidRouter.IFluidRouter?.request === undefined) {
@@ -981,7 +981,7 @@ describe("Runtime", () => {
 				);
 
 				// The entryPoint should come from the provided initialization function.
-				const actualEntryPoint = await containerRuntime.entryPoint;
+				const actualEntryPoint = await containerRuntime.getEntryPoint();
 				assert.notStrictEqual(
 					actualEntryPoint,
 					undefined,
@@ -1006,7 +1006,7 @@ describe("Runtime", () => {
 				});
 
 				// The entryPoint should come from the provided initialization function.
-				const actualEntryPoint = await containerRuntime.entryPoint;
+				const actualEntryPoint = await containerRuntime.getEntryPoint();
 				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				assert.deepEqual(
 					actualEntryPoint,

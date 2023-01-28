@@ -175,28 +175,33 @@ export class ContainerContext implements IContainerContext {
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
 	 */
-	public getEntryPoint?(): Promise<FluidObject | undefined> | undefined {
+	public getEntryPoint?(): Promise<FluidObject | undefined> {
 		if (this._disposed) {
 			throw new UsageError("The context is already disposed");
 		}
-		return this._runtime !== undefined
-			? this._runtime.entryPoint
-			: new Promise<FluidObject | undefined>((resolve, reject) => {
-					const runtimeInstantiatedHandler = () => {
-						assert(
-							this._runtime !== undefined,
-							"runtimeInstantiated fired but runtime is still undefined",
-						);
-						resolve(this._runtime.entryPoint);
-						this.lifecycleEvents.off("disposed", disposedHandler);
-					};
-					const disposedHandler = () => {
-						reject(new Error("ContainerContext was disposed"));
-						this.lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
-					};
-					this.lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
-					this.lifecycleEvents.once("disposed", disposedHandler);
-			  });
+		if (this._runtime !== undefined) {
+			// TODO: I don't get why this line complains about unsafe return, this._runtime.getEntryPoint has a return type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return this._runtime?.getEntryPoint !== undefined
+				? this._runtime.getEntryPoint()
+				: Promise.resolve(undefined);
+		}
+		return new Promise<FluidObject | undefined>((resolve, reject) => {
+			const runtimeInstantiatedHandler = () => {
+				assert(
+					this._runtime !== undefined,
+					"runtimeInstantiated fired but runtime is still undefined",
+				);
+				resolve(this._runtime.getEntryPoint?.());
+				this.lifecycleEvents.off("disposed", disposedHandler);
+			};
+			const disposedHandler = () => {
+				reject(new Error("ContainerContext was disposed"));
+				this.lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
+			};
+			this.lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
+			this.lifecycleEvents.once("disposed", disposedHandler);
+		});
 	}
 
 	/**

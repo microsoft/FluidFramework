@@ -1537,15 +1537,15 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.entrypoint}
+	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
 	 */
-	public get entryPoint(): Promise<FluidObject> | undefined {
+	public async getEntryPoint(): Promise<FluidObject | undefined> {
 		if (this._entryPoint === undefined && this.initializeEntryPoint !== undefined) {
-			this._entryPoint = this.initializeEntryPoint?.(this);
+			this._entryPoint = await this.initializeEntryPoint?.(this);
 		}
 		return this._entryPoint;
 	}
-	private _entryPoint: Promise<FluidObject> | undefined;
+	private _entryPoint: FluidObject | undefined;
 
 	private internalId(maybeAlias: string): string {
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;

@@ -104,10 +104,10 @@ export interface IRuntime extends IDisposable {
 	 *
 	 * @see {@link IContainer.getEntryPoint}
 	 *
-	 * @remarks The plan is that eventually IRuntime will no longer have a request() method, this property will no
+	 * @remarks The plan is that eventually IRuntime will no longer have a request() method, this method will no
 	 * longer be optional, and it will become the only way to access the entryPoint for the runtime.
 	 */
-	readonly entryPoint?: Promise<FluidObject | undefined>;
+	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 /**
@@ -190,11 +190,11 @@ export interface IContainerContext extends IDisposable {
 	readonly id: string;
 
 	/**
-	 * Proxy for {@link IRuntime.entryPoint}, the entryPoint defined in the container's runtime.
+	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
 	 *
 	 * @see {@link IContainer.getEntryPoint}
 	 */
-	readonly entryPoint?: Promise<FluidObject | undefined>;
+	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
