@@ -40,6 +40,30 @@ use_old_VariableDeclaration_agentSchedulerId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_CompressionAlgorithms": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_CompressionAlgorithms():
+    TypeOnly<old.CompressionAlgorithms>;
+declare function use_current_EnumDeclaration_CompressionAlgorithms(
+    use: TypeOnly<current.CompressionAlgorithms>);
+use_current_EnumDeclaration_CompressionAlgorithms(
+    get_old_EnumDeclaration_CompressionAlgorithms());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_CompressionAlgorithms": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_CompressionAlgorithms():
+    TypeOnly<current.CompressionAlgorithms>;
+declare function use_old_EnumDeclaration_CompressionAlgorithms(
+    use: TypeOnly<old.CompressionAlgorithms>);
+use_old_EnumDeclaration_CompressionAlgorithms(
+    get_current_EnumDeclaration_CompressionAlgorithms());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ContainerMessageType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ContainerMessageType():

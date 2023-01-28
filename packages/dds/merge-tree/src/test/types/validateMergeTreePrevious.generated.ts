@@ -2130,28 +2130,14 @@ use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_MergeTreeStats": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_MergeTreeStats": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_MergeTreeStats():
-    TypeOnly<old.MergeTreeStats>;
-declare function use_current_InterfaceDeclaration_MergeTreeStats(
-    // @ts-expect-error removed
-    use: TypeOnly<current.MergeTreeStats>);
-use_current_InterfaceDeclaration_MergeTreeStats(
-    get_old_InterfaceDeclaration_MergeTreeStats());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_MergeTreeStats": {"backCompat": false}
+* "RemovedInterfaceDeclaration_MergeTreeStats": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_MergeTreeStats():
-    // @ts-expect-error removed
-    TypeOnly<current.MergeTreeStats>;
-declare function use_old_InterfaceDeclaration_MergeTreeStats(
-    use: TypeOnly<old.MergeTreeStats>);
-use_old_InterfaceDeclaration_MergeTreeStats(
-    get_current_InterfaceDeclaration_MergeTreeStats());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -122,6 +122,10 @@
       "InterfaceDeclaration_MergeTreeStats": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_MergeTreeStats": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

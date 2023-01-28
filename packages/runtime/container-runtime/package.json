@@ -122,7 +122,8 @@
         "backCompat": false
       },
       "RemovedVariableDeclaration_gcTreeKey": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "VariableDeclaration_DefaultSummaryConfiguration": {
         "backCompat": false
@@ -144,9 +145,6 @@
       },
       "InterfaceDeclaration_ISummarizerRuntime": {
         "backCompat": false
-      },
-      "ClassDeclaration_ContainerRuntime": {
-        "forwardCompat": false
       }
     }
   }
