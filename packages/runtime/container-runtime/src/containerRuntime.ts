@@ -751,6 +751,8 @@ export class ContainerRuntime
 			tryFetchBlob<[string, string][]>(aliasBlobName),
 		]);
 
+		const loadExisting = existing === true || context.existing === true;
+
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await BlobManager.load(
 			baseSnapshot?.trees[blobsTreeName],
@@ -812,7 +814,7 @@ export class ContainerRuntime
 			},
 			containerScope,
 			logger,
-			existing,
+			loadExisting,
 			blobManagerSnapshot,
 			storage,
 			requestHandler,
