@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonableTreeFromCursor, singleTextCursor } from "../feature-libraries";
+import {
+    jsonableTreeFromCursor,
+    singleTextCursor,
+    prefixPath,
+    prefixFieldPath,
+} from "../feature-libraries";
 import {
     GlobalFieldKey,
     LocalFieldKey,
@@ -22,6 +27,7 @@ import {
     compareFieldUpPaths,
     clonePath,
     FieldUpPath,
+    PathRootPrefix,
 } from "../core";
 import { brand } from "../util";
 
@@ -166,6 +172,7 @@ export interface SpecialCaseBuilder<TData> {
      * The content of the tree under these keys is arbitrary and up to the implementation.
      */
     withLocalKeys?(keys: LocalFieldKey[]): TData;
+
     /**
      * Build data for a tree which has the provided keys on its root node.
      * The content of the tree under these keys is arbitrary and up to the implementation.
@@ -264,7 +271,7 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
         });
 
         // Run test suite on each top level node from each test data.
-        testSpecializedCursor<[number, TData], TCursor>({
+        testTreeCursor<[number, TData], TCursor>({
             cursorName: config.cursorName,
             builders: {
                 withKeys:
@@ -286,6 +293,7 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
                 return cursor;
             },
             testData,
+            extraRoot: true,
         });
     });
 }
@@ -566,11 +574,75 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                             assert.equal(cursor.getFieldLength(), 1);
                             cursor.enterNode(0);
                         });
+
+                        it(`traversal with key: ${key.toString()}`, () => {
+                            const dataWithKey = dataFactory();
+                            const cursor = cursorFactory(dataWithKey);
+                            checkTraversal(cursor, parent);
+                        });
                     }
                 }
             });
+
+            it("traverse with no keys", () => {
+                const data = withLocalKeys([]);
+                const cursor = cursorFactory(data);
+                checkTraversal(cursor, parent);
+            });
+
+            describe("cursor prefix tests", () => {
+                it("at root", () => {
+                    const data = withLocalKeys([]);
+                    const cursor = cursorFactory(data);
+                    expectEqualPaths(cursor.getPath(), parent);
+
+                    const prefixParent: UpPath = {
+                        parent: undefined,
+                        parentField: brand("prefixParentField"),
+                        parentIndex: 5,
+                    };
+
+                    const prefixes: (PathRootPrefix | undefined)[] = [
+                        undefined,
+                        {},
+                        { indexOffset: 10, rootFieldOverride: EmptyKey },
+                        { parent: prefixParent },
+                    ];
+
+                    for (const prefix of prefixes) {
+                        // prefixPath has its own tests, so we can use it to test cursors here:
+                        expectEqualPaths(cursor.getPath(prefix), prefixPath(prefix, parent));
+                    }
+
+                    cursor.enterField(brand("testField"));
+                    assert(
+                        compareFieldUpPaths(cursor.getFieldPath(), {
+                            field: brand("testField"),
+                            parent,
+                        }),
+                    );
+
+                    for (const prefix of prefixes) {
+                        assert(
+                            compareFieldUpPaths(
+                                cursor.getFieldPath(prefix),
+                                prefixFieldPath(prefix, { field: brand("testField"), parent }),
+                            ),
+                        );
+                    }
+                });
+            });
         }
     });
+}
+
+function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
+    if (!compareUpPaths(path, expectedPath)) {
+        // This is slower than above compare, so only do it in the error case.
+        // Make a nice error message:
+        assert.deepEqual(clonePath(path), clonePath(expectedPath));
+        assert.fail("unequal paths, but clones compared equal");
+    }
 }
 
 /**
@@ -586,12 +658,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
     const originalNodeType = cursor.type;
 
     const path = cursor.getPath();
-    if (!compareUpPaths(path, expectedPath)) {
-        // This is slower than above compare, so only do it in the error case.
-        // Make a nice error message:
-        assert.deepEqual(clonePath(path), clonePath(expectedPath));
-        assert.fail("unequal paths, but clones compared equal");
-    }
+    expectEqualPaths(path, expectedPath);
 
     const fieldLengths: Map<FieldKey, number> = new Map();
 

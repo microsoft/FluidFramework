@@ -19,11 +19,11 @@ export const minRowWidth: number = 0.125;
 /**
  * An object containing data messages with related errors.
  */
-export const InspectorMessages: { [key: string]: string; } = {
-  CONSTANT_PROPERTY: "This property is a constant. It and its children can't be modified.",
-  EMPTY_WORKSPACE: "To get started, add some data to this document.",
-  NO_DATA: "To get started, create a new document or connect to an existing one.",
-  NO_WORKSPACE: "To get started, insert this property into a valid document.",
+export const InspectorMessages: { [key: string]: string } = {
+	CONSTANT_PROPERTY: "This property is a constant. It and its children can't be modified.",
+	EMPTY_WORKSPACE: "To get started, add some data to this document.",
+	NO_DATA: "To get started, create a new document or connect to an existing one.",
+	NO_WORKSPACE: "To get started, insert this property into a valid document.",
 };
 
 export const icon24 = "24px";

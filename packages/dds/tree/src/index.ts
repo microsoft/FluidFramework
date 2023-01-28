@@ -77,6 +77,7 @@ export {
     ReadonlyRepairDataStore,
     SchemaEvents,
     ForestEvents,
+    PathRootPrefix,
 } from "./core";
 
 export {
@@ -174,7 +175,8 @@ export {
     ValueFieldEditBuilder,
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
-    SequenceField,
+    prefixPath,
+    prefixFieldPath,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

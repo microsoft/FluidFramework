@@ -1555,7 +1555,6 @@ export class ContainerRuntime
 				}
 				return create404Response(request);
 			}
-
 			if (this.requestHandler !== undefined) {
 				return this.requestHandler(parser, this);
 			}
