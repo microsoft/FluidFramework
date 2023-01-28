@@ -14,28 +14,28 @@ import { BundleBuddyConfig, BundleMetricSet, WebpackStatsProcessor } from "../Bu
  * @param statsProcessors  - The set of processors to run on this bundle
  */
 export function runProcessorsOnStatsFile(
-    bundleName: string,
-    stats: Webpack.StatsCompilation,
-    config: BundleBuddyConfig | undefined,
-    statsProcessors: WebpackStatsProcessor[],
+	bundleName: string,
+	stats: Webpack.StatsCompilation,
+	config: BundleBuddyConfig | undefined,
+	statsProcessors: WebpackStatsProcessor[],
 ): BundleMetricSet {
-    const result: BundleMetricSet = new Map();
+	const result: BundleMetricSet = new Map();
 
-    statsProcessors.forEach((processor) => {
-        const localMetrics = processor(stats, config);
+	statsProcessors.forEach((processor) => {
+		const localMetrics = processor(stats, config);
 
-        if (localMetrics) {
-            localMetrics.forEach((value, key) => {
-                if (result.has(key)) {
-                    throw new Error(
-                        `Multiple stats processors tried to write a metric with the same name: ${key} for bundle: ${bundleName}`,
-                    );
-                }
+		if (localMetrics) {
+			localMetrics.forEach((value, key) => {
+				if (result.has(key)) {
+					throw new Error(
+						`Multiple stats processors tried to write a metric with the same name: ${key} for bundle: ${bundleName}`,
+					);
+				}
 
-                result.set(key, value);
-            });
-        }
-    });
+				result.set(key, value);
+			});
+		}
+	});
 
-    return result;
+	return result;
 }
