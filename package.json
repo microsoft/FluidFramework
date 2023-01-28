@@ -21,8 +21,8 @@
     "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root .",
-    "bundle-analysis:collect": "npm run webpack:profile && fluid-collect-bundle-analyses",
-    "bundle-analysis:run": "fluid-run-bundle-analyses",
+    "bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
+    "bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
     "ci:build:docs": "lerna run ci:build:docs --stream --parallel",
     "ci:test:jest": "npm run test:jest:report",
@@ -39,21 +39,15 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
-    "postinstall": "npm run postinstall:lerna",
+    "format": "lerna run format --parallel --stream",
+    "preinstall": "npx only-allow pnpm",
     "layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
     "lerna": "lerna",
-    "lint": "lerna run lint --no-sort --stream -- -- -- --color",
-    "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
+    "lint": "lerna run lint --no-sort --stream",
+    "lint:fix": "lerna run lint:fix --no-sort --stream",
     "policy-check": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json",
     "policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
     "policy-check:fix": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --excludeHandler assert-short-codes --fix",
-    "post-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json lerna-package-lock.json; [ -f package-lock.json.bak ] && mv package-lock.json.bak package-lock.json; exit 0",
-    "post-lerna-install:win32": "if exist package-lock.json move package-lock.json lerna-package-lock.json && if exist package-lock.json.bak move package-lock.json.bak package-lock.json",
-    "postinstall:lerna": "run-script-os",
-    "postinstall:lerna:default": "npm run pre-lerna-install:default && { lerna bootstrap --strict --hoist;t1=$?;npm run post-lerna-install:default;exit $t1;}",
-    "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
-    "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
-    "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
     "restart": "cd server/routerlicious && npm run restart",
     "start:docker": "docker-compose -f server/docker-compose.yml up",
     "stop:docker": "docker-compose -f server/docker-compose.yml down",
@@ -119,8 +113,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.8.0-121856",
-    "@fluidframework/build-tools": "^0.8.0-121856",
+    "@fluid-tools/build-cli": "^0.8.0",
+    "@fluidframework/build-tools": "^0.8.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
@@ -128,6 +122,7 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "lerna": "^5.1.8",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
@@ -194,6 +189,11 @@
       "lts": "minor",
       "release/**": "patch",
       "next": "major"
+    }
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/node": "^14.18.36"
     }
   }
 }

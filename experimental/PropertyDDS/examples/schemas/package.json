@@ -1,54 +1,54 @@
 {
-  "name": "@fluid-experimental/schemas",
-  "version": "2.0.0-internal.2.4.0",
-  "description": "Centralized package for storing schemas used by the samples.",
-  "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "experimental/PropertyDDS/examples/schemas"
-  },
-  "license": "MIT",
-  "author": "Microsoft and contributors",
-  "main": "dist/index.js",
-  "module": "lib/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc",
-    "build:full": "npm run build",
-    "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist *.tsbuildinfo *.build.log",
-    "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-    "format": "npm run prettier:fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "tsc": "tsc"
-  },
-  "devDependencies": {
-    "@fluidframework/build-common": "^1.1.0",
-    "@rushstack/eslint-config": "^2.5.1",
-    "concurrently": "^6.2.0",
-    "eslint": "~8.6.0",
-    "eslint-plugin-editorconfig": "~3.2.0",
-    "eslint-plugin-eslint-comments": "~3.2.0",
-    "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-jsdoc": "~39.3.0",
-    "eslint-plugin-prefer-arrow": "~1.2.2",
-    "eslint-plugin-react": "~7.28.0",
-    "eslint-plugin-unicorn": "~40.0.0",
-    "eslint-plugin-unused-imports": "~2.0.0",
-    "prettier": "~2.6.2",
-    "rimraf": "^2.6.2",
-    "typescript": "~4.5.5"
-  },
-  "typeValidation": {
-    "disabled": true,
-    "version": "2.0.0-internal.2.1.0",
-    "broken": {}
-  }
+	"name": "@fluid-experimental/schemas",
+	"version": "2.0.0-internal.3.0.0",
+	"description": "Centralized package for storing schemas used by the samples.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "experimental/PropertyDDS/examples/schemas"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "dist/index.js",
+	"module": "lib/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "concurrently npm:build:compile npm:lint",
+		"build:compile": "npm run tsc",
+		"build:full": "npm run build",
+		"build:full:compile": "npm run build:compile",
+		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"tsc": "tsc"
+	},
+	"devDependencies": {
+		"@fluidframework/build-common": "^1.1.0",
+		"@rushstack/eslint-config": "^2.5.1",
+		"concurrently": "^6.2.0",
+		"eslint": "~8.6.0",
+		"eslint-plugin-editorconfig": "~3.2.0",
+		"eslint-plugin-eslint-comments": "~3.2.0",
+		"eslint-plugin-import": "~2.25.4",
+		"eslint-plugin-jsdoc": "~39.3.0",
+		"eslint-plugin-prefer-arrow": "~1.2.2",
+		"eslint-plugin-react": "~7.28.0",
+		"eslint-plugin-unicorn": "~40.0.0",
+		"eslint-plugin-unused-imports": "~2.0.0",
+		"prettier": "~2.6.2",
+		"rimraf": "^2.6.2",
+		"typescript": "~4.5.5"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"version": "2.0.0-internal.2.1.0",
+		"broken": {}
+	}
 }

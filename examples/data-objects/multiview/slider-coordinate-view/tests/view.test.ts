@@ -5,7 +5,6 @@
 
 // import { SliderCoordinateView } from "..";
 
-describe("SliderCoordinateView", function() {
-    it("Runs this test", function() {
-    });
+describe("SliderCoordinateView", function () {
+    it("Runs this test", function () {});
 });

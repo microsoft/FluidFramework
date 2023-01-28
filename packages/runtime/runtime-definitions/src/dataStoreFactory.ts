@@ -8,7 +8,7 @@ import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreConte
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
 
 export interface IProvideFluidDataStoreFactory {
-    readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
+	readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
 }
 
 /**
@@ -16,15 +16,18 @@ export interface IProvideFluidDataStoreFactory {
  * and usually provided to consumers using this mapping through a data store registry.
  */
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
-    /**
-     * String that uniquely identifies the type of data store created by this factory.
-     */
-    type: string;
+	/**
+	 * String that uniquely identifies the type of data store created by this factory.
+	 */
+	type: string;
 
-    /**
-     * Generates runtime for the data store from the data store context. Once created should be bound to the context.
-     * @param context - Context for the data store.
-     * @param existing - If instantiating from an existing file.
-     */
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
+	/**
+	 * Generates runtime for the data store from the data store context. Once created should be bound to the context.
+	 * @param context - Context for the data store.
+	 * @param existing - If instantiating from an existing file.
+	 */
+	instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel>;
 }

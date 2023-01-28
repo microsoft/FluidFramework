@@ -21,8 +21,7 @@ class SocketIoSocket implements IWebSocket {
         return this.socket.id;
     }
 
-    constructor(private readonly socket: Socket) {
-    }
+    constructor(private readonly socket: Socket) {}
 
     public on(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
@@ -67,8 +66,7 @@ class SocketIoServer extends EventEmitter implements IWebSocketServer {
 }
 
 export class WebServerFactory implements IWebServerFactory {
-    constructor(private readonly io: Server) {
-    }
+    constructor(private readonly io: Server) {}
 
     public create(requestListener: RequestListener): IWebServer {
         // Create the base HTTP server and register the provided request listener

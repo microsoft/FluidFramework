@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-proxy",
-  "version": "2.0.0-internal.2.4.0",
+  "version": "2.0.0-internal.3.0.0",
   "description": "Proxify PropertyTree to interact with them in a JavaScript like manner",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -29,18 +29,18 @@
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
     "test": "npm run test:jest",
     "test:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
     "test:jest": "jest",
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
-    "@fluid-experimental/property-properties": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0"
+    "@fluid-experimental/property-changeset": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluid-experimental/property-properties": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

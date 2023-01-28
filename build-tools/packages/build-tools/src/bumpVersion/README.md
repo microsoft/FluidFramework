@@ -1,4 +1,4 @@
-# Bump Version tool
+# Bump Version tool (deprecated)
 
 A tool to help automate release version bumps, and dependencies version bumps.
 

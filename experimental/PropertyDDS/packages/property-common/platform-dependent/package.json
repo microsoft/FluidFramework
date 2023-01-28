@@ -1,16 +1,16 @@
 {
-  "name": "@fluid-internal/platform-dependent",
-  "version": "2.0.0-internal.2.4.0",
-  "private": true,
-  "description": "Helper package that separates code for browser and server.",
-  "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "experimental/PropertyDDS/packages/property-common/platform-dependent"
-  },
-  "license": "MIT",
-  "author": "Microsoft and contributors",
-  "main": "server.js",
-  "browser": "browser.js"
+	"name": "@fluid-internal/platform-dependent",
+	"version": "2.0.0-internal.3.0.0",
+	"private": true,
+	"description": "Helper package that separates code for browser and server.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "experimental/PropertyDDS/packages/property-common/platform-dependent"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "server.js",
+	"browser": "browser.js"
 }

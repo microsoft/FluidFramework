@@ -12,11 +12,11 @@ import { debuggerPanelId } from "./Constants";
  * @internal
  */
 export async function closeDebuggerPanel(): Promise<boolean> {
-    const debuggerPanelElement = document.querySelector(`#${debuggerPanelId}`);
-    if (debuggerPanelElement === null) {
-        return false;
-    } else {
-        debuggerPanelElement.remove();
-        return true;
-    }
+	const debuggerPanelElement = document.querySelector(`#${debuggerPanelId}`);
+	if (debuggerPanelElement === null) {
+		return false;
+	} else {
+		debuggerPanelElement.remove();
+		return true;
+	}
 }
