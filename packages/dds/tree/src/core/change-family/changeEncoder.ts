@@ -13,6 +13,7 @@ import { JsonCompatibleReadOnly } from "../../util";
  * any format for encoding that was ever actually used should be supported for decoding for all future versions.
  *
  * TODO: Nothing in here is specific to changes. Maybe make this interface more general.
+ * @alpha
  */
 export abstract class ChangeEncoder<TChange> {
 	/**

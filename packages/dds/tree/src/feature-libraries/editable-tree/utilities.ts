@@ -37,6 +37,7 @@ import { typeNameSymbol, valueSymbol } from "./editableTree";
  * since EditableTree avoids ever unwrapping primitives that are objects
  * so users checking for primitives by type won't be broken.
  * Checking for this object case is done elsewhere.
+ * @alpha
  */
 export function isPrimitive(schema: TreeSchema): boolean {
 	// TODO: use a separate `TreeViewSchema` type, with metadata that determines if the type is primitive.
@@ -48,8 +49,14 @@ export function isPrimitive(schema: TreeSchema): boolean {
 	);
 }
 
+/**
+ * @alpha
+ */
 export type PrimitiveValue = string | boolean | number;
 
+/**
+ * @alpha
+ */
 export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue {
 	return nodeValue !== undefined && typeof nodeValue !== "object";
 }
@@ -98,6 +105,7 @@ export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): 
  * @returns the key and the schema of the primary field out of the given tree schema.
  *
  * See note on {@link EmptyKey} for what is a primary field.
+ * @alpha
  */
 export function getPrimaryField(
 	schema: TreeSchema,
@@ -205,11 +213,13 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
 
 /**
  * A symbol used to define a {@link MarkedArrayLike} interface.
+ * @alpha
  */
 export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
 
 /**
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
+ * @alpha
  */
 export interface MarkedArrayLike<T> extends ArrayLike<T> {
 	/**
@@ -226,6 +236,7 @@ export interface MarkedArrayLike<T> extends ArrayLike<T> {
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
+ * @alpha
  */
 export type ContextuallyTypedNodeData =
 	| ContextuallyTypedNodeDataObject
@@ -244,6 +255,7 @@ export function isArrayLike(
 
 /**
  * Checks the type of a `ContextuallyTypedNodeData`.
+ * @alpha
  */
 export function isWritableArrayLike(
 	data: ContextuallyTypedNodeData | undefined,
@@ -259,6 +271,7 @@ export function isWritableArrayLike(
 
 /**
  * Checks the type of a `ContextuallyTypedNodeData`.
+ * @alpha
  */
 export function isContextuallyTypedNodeDataObject(
 	data: ContextuallyTypedNodeData | undefined,
@@ -268,6 +281,7 @@ export function isContextuallyTypedNodeDataObject(
 
 /**
  * Object case of {@link ContextuallyTypedNodeData}.
+ * @alpha
  */
 export interface ContextuallyTypedNodeDataObject {
 	/**

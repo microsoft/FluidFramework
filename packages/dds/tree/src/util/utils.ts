@@ -174,6 +174,7 @@ export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatible =
 	| string
@@ -189,6 +190,7 @@ export type JsonCompatible =
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatibleObject = { [P in string]: JsonCompatible };
 
@@ -197,6 +199,7 @@ export type JsonCompatibleObject = { [P in string]: JsonCompatible };
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatibleReadOnly =
 	| string

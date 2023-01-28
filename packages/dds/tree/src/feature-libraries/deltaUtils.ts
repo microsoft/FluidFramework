@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Delta, FieldKey, getMapTreeField, MapTree } from "../core";
+import { Delta, FieldKey, getMapTreeField, MapTree, isSkipMark } from "../core";
 import { fail, OffsetListFactory } from "../util";
 import { mapTreeFromCursor } from "./mapTreeCursor";
 
@@ -60,7 +60,7 @@ export function mapMark<TIn, TOut>(
 	mark: Delta.Mark<TIn>,
 	func: (tree: TIn) => TOut,
 ): Delta.Mark<TOut> {
-	if (Delta.isSkipMark(mark)) {
+	if (isSkipMark(mark)) {
 		return mark;
 	}
 	const type = mark.type;
@@ -161,7 +161,7 @@ export function applyModifyToTree(
 			let index = 0;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (const mark of modifyFields.get(key)!) {
-				if (Delta.isSkipMark(mark)) {
+				if (isSkipMark(mark)) {
 					index += mark;
 					outMarks.pushOffset(mark);
 				} else {
