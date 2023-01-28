@@ -158,6 +158,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
+    // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime, initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>): Promise<ContainerRuntime>;
     static loadRuntime(params: {
         context: IContainerContext;
@@ -171,7 +172,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    static newLoad(context: IContainerContext, containerRuntimeCtor: typeof ContainerRuntime | undefined, initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, existing: boolean | undefined, runtimeOptions: IContainerRuntimeOptions | undefined, registryEntries: NamedFluidDataStoreRegistryEntries, containerScope?: FluidObject): Promise<ContainerRuntime>;
     // (undocumented)
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)

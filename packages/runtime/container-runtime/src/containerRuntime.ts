@@ -620,57 +620,19 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * @deprecated - use loadRuntime instead.
-	 * Load the stores from a snapshot and returns the runtime.
-	 * @param context - Context of the container.
-	 * @param containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
-	 * @see {@link ContainerRuntime.load} and {@link ContainerRuntime.newLoad} for more details.
-	 * @param initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
-	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
-	 * @param existing - Pass 'true' if loading from an existing snapshot.
-	 * @param registryEntries - Mapping from data store types to their corresponding factories,
-	 * @param containerScop - Scope
-	 * @param requestHandler - (optional) Request handler for the request() method of the container runtime.
-	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main
-	 * pattern.
-	 */
-	private static async privateLoad(
-		context: IContainerContext,
-		containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
-		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		existing: boolean = false,
-		runtimeOptions: IContainerRuntimeOptions = {},
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		containerScope: FluidObject = context.scope,
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-	): Promise<ContainerRuntime> {
-		let existingFlag = true;
-		if (!existing) {
-			existingFlag = false;
-		}
-		return this.loadRuntime({
-			context,
-			registryEntries,
-			existing: existingFlag,
-			requestHandler,
-			runtimeOptions,
-			containerScope,
-			containerRuntimeCtor,
-			initializeEntryPoint,
-		});
-	}
-
-	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
 	 * - context - Context of the container.
-	 * - registryEntries - Mapping to the stores.
-	 * - existing - When loading from an existing snapshot
-	 * - requestHandler - Request handlers for the container runtime
+	 * - registryEntries - Mapping from data store types to their corresponding factories.
+	 * - existing - Pass 'true' if loading from an existing snapshot.
+	 * - requestHandler - (optional) Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
 	 * - runtimeOptions - Additional options to be passed to the runtime
 	 * - containerScope - runtime services provided with context
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
+	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
 		context: IContainerContext;
@@ -690,7 +652,7 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint,
+			initializeEntryPoint = async (containerRuntime) => containerRuntime,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -830,39 +792,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Load the stores from a snapshot and returns the runtime.
-	 * @param context - Context of the container.
-	 * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance.
-	 * This allows mixin classes to leverage this method to define their own async initializer.
-	 * @param initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
-	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
-	 * @param existing - Pass 'true' if loading from an existing snapshot.
-	 * @param registryEntries - Mapping from data store types to their corresponding factories,
-	 * @param containerScop - Scope
-	 */
-	public static async newLoad(
-		context: IContainerContext,
-		containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
-		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		existing: boolean = false,
-		runtimeOptions: IContainerRuntimeOptions = {},
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		containerScope: FluidObject = context.scope,
-	): Promise<ContainerRuntime> {
-		// Disabling lint rule for the sake of more complete stack traces
-		// eslint-disable-next-line no-return-await
-		return await ContainerRuntime.privateLoad(
-			context,
-			containerRuntimeCtor,
-			initializeEntryPoint,
-			existing,
-			runtimeOptions,
-			registryEntries,
-			containerScope,
-		);
-	}
-
-	/**
+	 * @deprecated - use loadRuntime instead.
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param context - Context of the container.
 	 * @param registryEntries - Mapping to the stores.
@@ -886,19 +816,20 @@ export class ContainerRuntime
 		containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
 		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	): Promise<ContainerRuntime> {
-		// Disabling lint rule for the sake of more complete stack traces
-		// eslint-disable-next-line no-return-await
-		return await ContainerRuntime.privateLoad(
+		let existingFlag = true;
+		if (!existing) {
+			existingFlag = false;
+		}
+		return this.loadRuntime({
 			context,
-			containerRuntimeCtor,
-			initializeEntryPoint ??
-				(async (containerRuntime: IContainerRuntime) => containerRuntime),
-			existing ?? context.existing ?? false,
-			runtimeOptions,
 			registryEntries,
-			containerScope,
+			existing: existingFlag,
 			requestHandler,
-		);
+			runtimeOptions,
+			containerScope,
+			containerRuntimeCtor,
+			initializeEntryPoint,
+		});
 	}
 
 	public get options(): ILoaderOptions {

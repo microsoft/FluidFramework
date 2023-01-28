@@ -858,26 +858,23 @@ describe("Runtime", () => {
 					methodReturn: T,
 				) =>
 					class MixinContainerRuntime extends Base {
-						public static async newLoad(
-							context: IContainerContext,
-							containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
+						public static async loadRuntime(params: {
+							context: IContainerContext;
+							containerRuntimeCtor?: typeof ContainerRuntime;
 							initializeEntryPoint: (
 								containerRuntime: IContainerRuntime,
-							) => Promise<FluidObject>,
-							existing: boolean,
-							runtimeOptions: IContainerRuntimeOptions = {},
-							registryEntries: NamedFluidDataStoreRegistryEntries,
-							containerScope: FluidObject = context.scope,
-						): Promise<ContainerRuntime> {
-							return Base.newLoad(
-								context,
-								containerRuntimeCtor,
-								initializeEntryPoint,
-								existing,
-								runtimeOptions,
-								registryEntries,
-								containerScope,
-							);
+							) => Promise<FluidObject>;
+							existing: boolean;
+							runtimeOptions: IContainerRuntimeOptions;
+							registryEntries: NamedFluidDataStoreRegistryEntries;
+							containerScope: FluidObject;
+						}): Promise<ContainerRuntime> {
+							// Note: we're mutating the parameter object here, normally a no-no, but shouldn't be
+							// an issue in our tests.
+							params.containerRuntimeCtor =
+								params.containerRuntimeCtor ?? MixinContainerRuntime;
+							params.containerScope = params.containerScope ?? params.context.scope;
+							return Base.loadRuntime(params);
 						}
 
 						public [methodName](): T {
@@ -893,15 +890,12 @@ describe("Runtime", () => {
 					makeMixin(ContainerRuntime, "method1", "mixed in return"),
 					"method2",
 					42,
-				).newLoad(
-					getMockContext() as IContainerContext,
-					undefined, // containerRuntimeCtor
-					async (containerRuntime) => myEntryPoint,
-					false, // existing
-					{}, // runtimeOptions
-					[], // registryEntries
-					undefined, // containerScope
-				);
+				).loadRuntime({
+					context: getMockContext() as IContainerContext,
+					initializeEntryPoint: async (containerRuntime) => myEntryPoint,
+					existing: false,
+					registryEntries: [],
+				});
 
 				assert.equal(
 					(runtime as unknown as { method1: () => any }).method1(),
@@ -1004,15 +998,12 @@ describe("Runtime", () => {
 				const myEntryPoint: FluidObject = {
 					myProp: "myValue",
 				};
-				const containerRuntime = await ContainerRuntime.newLoad(
-					getMockContext() as IContainerContext,
-					undefined, // containerRuntimeCtor
-					async (ctrRuntime) => myEntryPoint,
-					false, // existing
-					{}, // runtimeOptions
-					[], // registryEntries
-					undefined, // containerScope
-				);
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					initializeEntryPoint: async (ctrRuntime) => myEntryPoint,
+					existing: false,
+					registryEntries: [],
+				});
 
 				// The entryPoint should come from the provided initialization function.
 				const actualEntryPoint = await containerRuntime.entryPoint;
