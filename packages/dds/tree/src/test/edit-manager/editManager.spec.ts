@@ -38,7 +38,9 @@ type TestEditManager = EditManager<TestChange, TestChangeFamily>;
  * `ChangeFamily.intoDelta` with the expected change.
  */
 function asDelta(intentions: number[]): Delta.Root {
-    return intentions.length === 0 ? Delta.empty : new Map([[rootKey, intentions]]);
+    return intentions.length === 0
+        ? Delta.empty
+        : new Map([[rootKey, { siblingChanges: intentions }]]);
 }
 
 function changeFamilyFactory(

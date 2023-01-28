@@ -625,6 +625,10 @@ export function testForest(config: ForestTestConfiguration): void {
                 reader.exitField();
                 reader.enterField(yField);
                 assert.equal(reader.getFieldLength(), 2);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 1);
+                assert(reader.nextNode());
+                assert.equal(reader.value, 0);
             });
 
             it("insert and modify", () => {

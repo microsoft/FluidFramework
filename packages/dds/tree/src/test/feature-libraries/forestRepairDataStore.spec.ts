@@ -63,49 +63,61 @@ describe("ForestRepairDataStore", () => {
             },
         };
         initializeForest(forest, [singleTextCursor(data)]);
-        const delta1 = new Map([
+        const delta1: Delta.Root = new Map([
             [
                 rootFieldKeySymbol,
-                [
-                    {
-                        type: Delta.MarkType.Modify,
-                        fields: new Map([
-                            [
-                                fooKey,
-                                [
-                                    1,
-                                    {
-                                        type: Delta.MarkType.Delete,
-                                        count: 2,
-                                    },
-                                ],
-                            ],
-                        ]),
-                    },
-                ],
+                {
+                    nestedChanges: [
+                        [
+                            { context: Delta.Context.Input, index: 0 },
+                            {
+                                fields: new Map([
+                                    [
+                                        fooKey,
+                                        {
+                                            siblingChanges: [
+                                                1,
+                                                {
+                                                    type: Delta.MarkType.Delete,
+                                                    count: 2,
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                ]),
+                            },
+                        ],
+                    ],
+                },
             ],
         ]);
         store.capture(delta1, revision1);
         forest.applyDelta(delta1);
-        const delta2 = new Map([
+        const delta2: Delta.Root = new Map([
             [
                 rootFieldKeySymbol,
-                [
-                    {
-                        type: Delta.MarkType.Modify,
-                        fields: new Map([
-                            [
-                                fooKey,
-                                [
-                                    {
-                                        type: Delta.MarkType.Delete,
-                                        count: 2,
-                                    },
-                                ],
-                            ],
-                        ]),
-                    },
-                ],
+                {
+                    nestedChanges: [
+                        [
+                            { context: Delta.Context.Input, index: 0 },
+                            {
+                                fields: new Map([
+                                    [
+                                        fooKey,
+                                        {
+                                            siblingChanges: [
+                                                {
+                                                    type: Delta.MarkType.Delete,
+                                                    count: 2,
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                ]),
+                            },
+                        ],
+                    ],
+                },
             ],
         ]);
         store.capture(delta2, revision2);
@@ -136,39 +148,42 @@ describe("ForestRepairDataStore", () => {
             },
         };
         initializeForest(forest, [singleTextCursor(data)]);
-        store.capture(
-            new Map([
-                [
-                    rootFieldKeySymbol,
-                    [
-                        {
-                            type: Delta.MarkType.Modify,
-                            fields: new Map([
-                                [
-                                    fooKey,
+        const delta: Delta.Root = new Map([
+            [
+                rootFieldKeySymbol,
+                {
+                    nestedChanges: [
+                        [
+                            { context: Delta.Context.Input, index: 0 },
+                            {
+                                fields: new Map([
                                     [
+                                        fooKey,
                                         {
-                                            type: Delta.MarkType.Modify,
-                                            setValue: 40,
-                                        },
-                                        1,
-                                        {
-                                            type: Delta.MarkType.Modify,
-                                            setValue: 42,
-                                        },
-                                        {
-                                            type: Delta.MarkType.Modify,
-                                            setValue: undefined,
+                                            nestedChanges: [
+                                                [
+                                                    { context: Delta.Context.Input, index: 0 },
+                                                    { setValue: 40 },
+                                                ],
+                                                [
+                                                    { context: Delta.Context.Input, index: 2 },
+                                                    { setValue: 42 },
+                                                ],
+                                                [
+                                                    { context: Delta.Context.Input, index: 3 },
+                                                    { setValue: undefined },
+                                                ],
+                                            ],
                                         },
                                     ],
-                                ],
-                            ]),
-                        },
+                                ]),
+                            },
+                        ],
                     ],
-                ],
-            ]),
-            revision1,
-        );
+                },
+            ],
+        ]);
+        store.capture(delta, revision1);
         const value0 = store.getValue(revision1, {
             parent: root,
             parentField: fooKey,

@@ -35,11 +35,13 @@ const visitorMethods: (keyof DeltaVisitor)[] = [
 ];
 
 function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
+    const actual: VisitScript = [];
     let callIndex = 0;
     const makeChecker =
         (name: string) =>
         (...args: unknown[]) => {
-            assert.deepStrictEqual([name, ...args], expected[callIndex]);
+            actual.push([name, ...args] as VisitCall);
+            // assert.deepStrictEqual([name, ...args], expected[callIndex]);
             callIndex += 1;
         };
     const visitor: DeltaVisitor = {} as any;
@@ -47,7 +49,8 @@ function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
         visitor[methodName] = makeChecker(methodName);
     }
     visit(delta, visitor);
-    assert.strictEqual(callIndex, expected.length);
+    assert.deepEqual(actual, expected);
+    // assert.strictEqual(callIndex, expected.length);
 }
 
 function testTreeVisit(delta: Delta.FieldChanges, expected: Readonly<VisitScript>): void {
@@ -138,7 +141,7 @@ describe("visit", () => {
                 [
                     fooKey,
                     {
-                        siblingChanges: [mark],
+                        siblingChanges: [42, mark],
                     },
                 ],
             ]),
@@ -217,11 +220,11 @@ describe("visit", () => {
         const expected: VisitScript = [
             ["enterNode", 0],
             ["enterField", fooKey],
+            ["enterNode", 14],
+            ["onSetValue", 1],
+            ["exitNode", 14],
             ["onDelete", 0, 10],
             ["onInsert", 3, content],
-            ["enterNode", 5],
-            ["onSetValue", 1],
-            ["exitNode", 5],
             ["exitField", fooKey],
             ["exitNode", 0],
         ];
@@ -243,23 +246,7 @@ describe("visit", () => {
         };
 
         const nodeChanges: Delta.NodeChanges = {
-            fields: new Map([
-                [
-                    rootKey,
-                    {
-                        nestedChanges: [
-                            [
-                                { context: Delta.Context.Input, index: 0 },
-                                {
-                                    fields: new Map([
-                                        [fooKey, { siblingChanges: [2, moveOut, 3, moveIn] }],
-                                    ]),
-                                },
-                            ],
-                        ],
-                    },
-                ],
-            ]),
+            fields: new Map([[fooKey, { siblingChanges: [2, moveOut, 3, moveIn] }]]),
         };
         const delta: Delta.FieldChanges = {
             nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],

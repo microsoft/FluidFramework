@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { Delta, FieldKey, MapTree, TreeSchemaIdentifier } from "../../core";
 import { mapFieldMarks, mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
 import { brand, brandOpaque } from "../../util";
-import { deepFreeze } from "../utils";
+import { assertDeltaEqual, deepFreeze } from "../utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const emptyMap = new Map();
@@ -52,7 +52,6 @@ describe("DeltaUtils", () => {
                             {
                                 type: Delta.MarkType.Delete,
                                 count: 1,
-                                fields: nestedCursorInsert,
                             },
                             {
                                 type: Delta.MarkType.Insert,
@@ -134,7 +133,6 @@ describe("DeltaUtils", () => {
                             {
                                 type: Delta.MarkType.Delete,
                                 count: 1,
-                                fields: nestedMapTreeInsert,
                             },
                             {
                                 type: Delta.MarkType.Insert,

@@ -660,6 +660,17 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
                     });
                 }
             }
+            if (siblingChanges.length > 0) {
+                fieldChanges.siblingChanges = siblingChanges;
+            }
+            if (change.childChange !== undefined) {
+                // TODO: the changeset should be able to represent changes to both the subtree present before
+                // the change and the subtree present after the change.
+                const context = update === undefined ? Delta.Context.Input : Delta.Context.Output;
+                fieldChanges.nestedChanges = [
+                    [{ context, index: 0 }, deltaFromChild(change.childChange, 0)],
+                ];
+            }
             return fieldChanges;
         },
     },
