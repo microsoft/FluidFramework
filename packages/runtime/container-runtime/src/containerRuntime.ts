@@ -620,6 +620,47 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * @deprecated - use loadRuntime instead.
+	 * Load the stores from a snapshot and returns the runtime.
+	 * @param context - Context of the container.
+	 * @param registryEntries - Mapping to the stores.
+	 * @param requestHandler - Request handlers for the container runtime
+	 * @param runtimeOptions - Additional options to be passed to the runtime
+	 * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
+	 * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
+	 * allows mixin classes to leverage this method to define their own async initializer.
+	 * @param initializeEntryPoint - (optional) Promise that resolves to an object which will act as entryPoint for
+	 * the Container.
+	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+	 * If not provided, the entryPoint will be set to the container runtime itself.
+	 */
+	public static async load(
+		context: IContainerContext,
+		registryEntries: NamedFluidDataStoreRegistryEntries,
+		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+		runtimeOptions: IContainerRuntimeOptions = {},
+		containerScope: FluidObject = context.scope,
+		existing?: boolean,
+		containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
+	): Promise<ContainerRuntime> {
+		let existingFlag = true;
+		if (!existing) {
+			existingFlag = false;
+		}
+		return this.loadRuntime({
+			context,
+			registryEntries,
+			existing: existingFlag,
+			requestHandler,
+			runtimeOptions,
+			containerScope,
+			containerRuntimeCtor,
+			initializeEntryPoint,
+		});
+	}
+
+	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
 	 * - context - Context of the container.
@@ -789,47 +830,6 @@ export class ContainerRuntime
 		await runtime.initializeBaseState();
 
 		return runtime;
-	}
-
-	/**
-	 * @deprecated - use loadRuntime instead.
-	 * Load the stores from a snapshot and returns the runtime.
-	 * @param context - Context of the container.
-	 * @param registryEntries - Mapping to the stores.
-	 * @param requestHandler - Request handlers for the container runtime
-	 * @param runtimeOptions - Additional options to be passed to the runtime
-	 * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
-	 * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
-	 * allows mixin classes to leverage this method to define their own async initializer.
-	 * @param initializeEntryPoint - (optional) Promise that resolves to an object which will act as entryPoint for
-	 * the Container.
-	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
-	 * If not provided, the entryPoint will be set to the container runtime itself.
-	 */
-	public static async load(
-		context: IContainerContext,
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-		runtimeOptions: IContainerRuntimeOptions = {},
-		containerScope: FluidObject = context.scope,
-		existing?: boolean,
-		containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-	): Promise<ContainerRuntime> {
-		let existingFlag = true;
-		if (!existing) {
-			existingFlag = false;
-		}
-		return this.loadRuntime({
-			context,
-			registryEntries,
-			existing: existingFlag,
-			requestHandler,
-			runtimeOptions,
-			containerScope,
-			containerRuntimeCtor,
-			initializeEntryPoint,
-		});
 	}
 
 	public get options(): ILoaderOptions {
