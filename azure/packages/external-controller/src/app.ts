@@ -5,10 +5,10 @@
 import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
 
 import {
-    AzureClient,
-    AzureContainerServices,
-    AzureLocalConnectionConfig,
-    AzureRemoteConnectionConfig,
+	AzureClient,
+	AzureContainerServices,
+	AzureLocalConnectionConfig,
+	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";

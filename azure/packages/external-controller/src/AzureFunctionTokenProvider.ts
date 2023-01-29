@@ -7,13 +7,13 @@ import axios from "axios";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 
 interface AzureMember<T = any> {
-    userName: string;
-    additionalDetails?: T;
-    userId: string;
-    connections: {
-        id: string;
-        mode: "write" | "read";
-    };
+	userName: string;
+	additionalDetails?: T;
+	userId: string;
+	connections: {
+		id: string;
+		mode: "write" | "read";
+	};
 }
 
 /**
@@ -21,38 +21,38 @@ interface AzureMember<T = any> {
  * Azure Fluid Relay token resolution.
  */
 export class AzureFunctionTokenProvider implements ITokenProvider {
-    /**
-     * Creates a new instance using configuration parameters.
-     * @param azFunctionUrl - URL to Azure Function endpoint
-     * @param user - User object
-     */
-    public constructor(
-        private readonly azFunctionUrl: string,
-        private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
-    ) {}
+	/**
+	 * Creates a new instance using configuration parameters.
+	 * @param azFunctionUrl - URL to Azure Function endpoint
+	 * @param user - User object
+	 */
+	public constructor(
+		private readonly azFunctionUrl: string,
+		private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
+	) {}
 
-    public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
-        return {
-            jwt: await this.getToken(tenantId, documentId),
-        };
-    }
+	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
+		return {
+			jwt: await this.getToken(tenantId, documentId),
+		};
+	}
 
-    public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
-        return {
-            jwt: await this.getToken(tenantId, documentId),
-        };
-    }
+	public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
+		return {
+			jwt: await this.getToken(tenantId, documentId),
+		};
+	}
 
-    private async getToken(tenantId: string, documentId?: string): Promise<string> {
-        const response = await axios.get(this.azFunctionUrl, {
-            params: {
-                tenantId,
-                documentId,
-                userId: this.user?.userId,
-                userName: this.user?.userName,
-                additionalDetails: this.user?.additionalDetails as unknown,
-            },
-        });
-        return response.data as string;
-    }
+	private async getToken(tenantId: string, documentId?: string): Promise<string> {
+		const response = await axios.get(this.azFunctionUrl, {
+			params: {
+				tenantId,
+				documentId,
+				userId: this.user?.userId,
+				userName: this.user?.userName,
+				additionalDetails: this.user?.additionalDetails as unknown,
+			},
+		});
+		return response.data as string;
+	}
 }
