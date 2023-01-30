@@ -15,15 +15,124 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.0.0
+
+## 2.0.0-internal.3.0.0 Upcoming changes
+- [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
+- [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
+
+### Deprecated IPendingFlush
+`IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+
+### For Driver Authors: Document Storage Service policy may become required
+
+_AWARENESS: The policy `IDocumentStorageServicePolicies.maximumCacheDurationMs` MUST be set and enforced by drivers
+used in applications where [Garbage Collection](packages/runtime/container-runtime/garbageCollection.md) is enabled, otherwise **data loss may occur**._
+
+In a subsequent major release, the policy `IDocumentStorageServicePolicies.maximumCacheDurationMs`
+(and likewise `IDocumentStorageService.policies` itself) may become required,
+to ensure all drivers take note of this requirement and enforce this policy.
+
+## 2.0.0-internal.3.0.0 Breaking changes
+- [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
+- [Remove iframe-driver](#remove-iframe-driver)
+- [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
+- [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
+- [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
+- [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
+- [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
+- [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+- [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
+
+### existing parameter is now required in IRuntimeFactory::instantiateRuntime
+The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
+and required in the `IRuntimeFactory.instantiateRuntime` function. This flag is used to determine whether the runtime should
+be created for the first time or from an existing context. Similarly, the `load` function in containerRuntime
+is being deprecated and replaced with `loadRuntime`, in which `existing` is a required parameter.
+
+### Remove iframe-driver
+The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
+
+### Remove Deprecated Fields from ISummaryRuntimeOptions
+The following fields are being removed from `ISummaryRuntimeOptions` as they became properties from `ISummaryConfiguration`:
+
+`ISummaryRuntimeOptions.disableSummaries`
+`ISummaryRuntimeOptions.maxOpsSinceLastSummary`
+`ISummaryRuntimeOptions.summarizerClientElection`
+`ISummaryRuntimeOptions.summarizerOptions`
+
+### Op reentry will no longer be supported
+Submitting an op while processing an op will no longer be supported as it can lead to inconsistencies in the document and to DDS change events observing out-of-order changes. An example scenario is changing a DDS inside the handler for the `valueChanged` event of a DDS.
+
+The functionality is currently disabled but it can be enabled using the `IContainerRuntimeOptions.enableOpReentryCheck` property, which will eventually become the default. If the option is enabled, the functionality can be disabled at runtime using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate.
+
+With the feature enabled, If the runtime detects an op which was submitted in this manner, an error will be thrown and the current container will close.
+
+```ts
+sharedMap.on("valueChanged", (changed) => {
+    if (changed.key !== "key2") {
+        sharedMap.set("key2", "2");
+    }
+});
+
+sharedMap.set("key1", "1"); // executing this statement will cause an exception to be thrown
+```
+
+Other clients will not be affected.
+
+**As we are planning to enable this feature by default, we are advising our partners to use the `IContainerRuntimeOptions.enableOpReentryCheck` option to identify existing code using this pattern and to let us know in case the proposed API behavior is problematic.**
+
+### Remove ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been removed. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+
+### Remove-ISummaryBaseConfigurationsummarizerClientElection
+`ISummaryBaseConfiguration.summarizerClientElection` was deprecated and is now being removed.
+There will be no replacement for this property.'
+
+### `InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`
+
+`InsecureTokenProvider` takes a field names `user` that previously was defined as type `IUser` but also expects
+the `name` field to be present. This is not a requirement of `IUser` and is not enforced by the `IUser` interface.
+To avoid confusion, `InsecureTokenProvider` now takes a new type `IInsecureUser` that extends `IUser` and requires
+the `name` field to be present.
+Previously you would use `InsecureTokenProvider` like this:
+
+```typescript
+const user: IUser & { name: string } = { id: "userId", name: "userName" };
+const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
+```
+
+Now you would either pass `{ id: "userId", name: "userName" }` inline to `InsecureTokenProvider` or:
+
+```typescript
+import { IInsecureUser, InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+
+const user: IInsecureUser = { id: "userId", name: "userName" };
+const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
+```
+
+### Remove Deprecated IFluidObject Interface
+IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove deprecated experimental get-container package
+The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
+
 # 2.0.0-internal.2.4.0
 
 ## 2.0.0-internal.2.4.0 Upcoming changes
+- [Support for passing empty string in `IUrlResolver.getAbsoluteUrl` relativeUrl argument in OdspDriverUrlResolverForShareLink and OdspDriverUrlResolver](#Support-for-passing-empty-string-in-IUrlResolver.getAbsoluteUrl-relativeUrl-argument-in-OdspDriverUrlResolverForShareLink-and-OdspDriverUrlResolver)
 - [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
+- [Deprecate internal connection details from `IConnectionDetails`](#deprecate-internal-connection-details-from-IConnectionDetails)
+
+### Support for passing empty string in `IUrlResolver.getAbsoluteUrl` relativeUrl argument in OdspDriverUrlResolverForShareLink and OdspDriverUrlResolver
+Now if an empty string is passed, then the relativeUrl or data store path will be derived from the resolved url if possible.
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 
 `ensureContainerConnected()` is now deprecated.
 Use `waitForContainerConnection()` from the same package instead.
+
 
 **NOTE**: the default value for the `failOnContainerClose` parameter of `waitForContainerConnection()` is currently set
 to `false` for backwards compatibility but will change to `true` in a future release.
@@ -31,6 +140,14 @@ This is overall a safer default because it ensures that unexpected errors which 
 immediately, instead of potentially being hidden by a timeout.
 It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
 preparation for this upcoming breaking change.
+
+
+### Deprecate internal connection details from `IConnectionDetails`
+
+Deprecating `existing`, `mode`, `version` and `initialClients` in `IConnectionDetails`, no longer exposing these to runtime. No replacement API recommended. Reasons for deprecation:
+- `existing` : this will always be true, which no longer provides useful information
+- `mode` : this is implementation detail of connection
+- `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
 
 # 2.0.0-internal.2.3.0
 
@@ -49,6 +166,8 @@ Please see the [Closure](packages/loader/container-loader/README.md#Closure) sec
 # 2.0.0-internal.2.2.0
 
 ## 2.0.0-internal.2.2.0 Upcoming changes
+- [Deprecated events and event parameters on IContainer and IDeltaManager](#deprecated-events-and-event-parameters-on-icontainer-and-ideltamanager)
+- [Added fileIsLocked errorType to DriverErrorType enum](#Added-fileIsLocked-errorType-to-DriverErrorType-enum)
 
 ### Deprecated events and event parameters on IContainer and IDeltaManager
 
@@ -78,6 +197,12 @@ The following legacy events and event parameters have been marked as deprecated 
     - "pong": Event deprecated in its entirety.
         - This event has been unused and unsupported for some time.
           No replacement API recommended.
+
+
+### Added `fileIsLocked` errorType to DriverErrorType enum
+Added `fileIsLocked` errorType in DriverErrorType enum. This error happens when file is locked for read/write by storage, e.g. whole collection is locked and access is denied, or file is locked for editing.
+
+This is not breaking change yet. But if application uses dynamic driver loading, current version of application may start receiving these errors from future versions of driver.
 
 # 2.0.0-internal.2.1.0
 

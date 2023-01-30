@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const HttpStatus = require('http-status-codes');
-const sanitize = require('sanitize');
-const { ModuleLogger } = require('@fluid-experimental/property-query')
-const BasicAuthController = require('./basic_auth_controller');
-const LoggerSanitizer = require('./logger_sanitizer');
+const HttpStatus = require("http-status-codes");
+const sanitize = require("sanitize");
+const { ModuleLogger } = require("@fluid-experimental/property-query");
+const BasicAuthController = require("./basic_auth_controller");
+const LoggerSanitizer = require("./logger_sanitizer");
 
 /**
  * The LoggerController exposes an endpoint authenticated `/logger` route used to change the
@@ -31,11 +31,11 @@ class LoggerController extends BasicAuthController {
 
         this.setupRoutes({
             get: {
-                '/logger': this.getLogLevel.bind(this)
+                "/logger": this.getLogLevel.bind(this),
             },
             post: {
-                '/logger': this.setLogLevel.bind(this)
-            }
+                "/logger": this.setLogLevel.bind(this),
+            },
         });
 
         this._loggerSanitizer = sanitize(LoggerSanitizer);
@@ -49,7 +49,7 @@ class LoggerController extends BasicAuthController {
      * @param {Object} res The response.
      */
     getLogLevel(req, res) {
-        var name = this._loggerSanitizer.value(req.query.name, 'moduleName');
+        var name = this._loggerSanitizer.value(req.query.name, "moduleName");
         if (!name) {
             if (req.query.name && req.query.name.length > 0) {
                 res.writeHead(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -60,10 +60,12 @@ class LoggerController extends BasicAuthController {
                 res.write(JSON.stringify(ModuleLogger.loggers));
             }
         } else {
-            this._logger.debug('GET /logger [' + name + ']');
+            this._logger.debug("GET /logger [" + name + "]");
             var logger = ModuleLogger.getLogger(name);
             res.writeHead(HttpStatus.OK);
-            res.write(JSON.stringify({ module: name, level: logger.level.levelStr }));
+            res.write(
+                JSON.stringify({ module: name, level: logger.level.levelStr })
+            );
         }
 
         res.end();
@@ -78,8 +80,8 @@ class LoggerController extends BasicAuthController {
      * @param {Object} res The response contains the module's logging level after it's set.
      */
     setLogLevel(req, res) {
-        var name = this._loggerSanitizer.value(req.query.name, 'moduleName');
-        var level = this._loggerSanitizer.value(req.query.level, 'logLevel');
+        var name = this._loggerSanitizer.value(req.query.name, "moduleName");
+        var level = this._loggerSanitizer.value(req.query.level, "logLevel");
 
         if (!name) {
             res.writeHead(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -88,12 +90,16 @@ class LoggerController extends BasicAuthController {
             res.writeHead(HttpStatus.UNPROCESSABLE_ENTITY);
             res.write("Missing or invalid parameter: 'level'");
         } else {
-            this._logger.debug('POST /logger [' + name + '], level: [' + level + ']');
+            this._logger.debug(
+                "POST /logger [" + name + "], level: [" + level + "]"
+            );
 
             const logger = ModuleLogger.getLogger(name);
             logger.setLevel(level);
             res.writeHead(HttpStatus.OK);
-            res.write(JSON.stringify({ module: name, level: logger.level.levelStr }));
+            res.write(
+                JSON.stringify({ module: name, level: logger.level.levelStr })
+            );
         }
 
         res.end();

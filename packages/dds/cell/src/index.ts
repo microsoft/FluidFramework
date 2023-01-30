@@ -10,4 +10,10 @@
  */
 
 export { SharedCell } from "./cell";
-export { ISharedCell, ISharedCellEvents } from "./interfaces";
+export {
+	ISharedCell,
+	ISharedCellEvents,
+	AttributionKey,
+	ICellOptions,
+	ICellAttributionOptions,
+} from "./interfaces";

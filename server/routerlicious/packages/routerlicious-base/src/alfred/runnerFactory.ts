@@ -240,6 +240,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             minThrottleIntervalInMs: number;
             maxInMemoryCacheSize: number;
             maxInMemoryCacheAgeInMs: number;
+            enableEnhancedTelemetry?: boolean;
         }
         const configureThrottler = (throttleConfig: Partial<IThrottleConfig>): core.IThrottler => {
             const throttlerHelper = new services.ThrottlerHelper(
@@ -254,6 +255,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 winston,
                 throttleConfig.maxInMemoryCacheSize,
                 throttleConfig.maxInMemoryCacheAgeInMs,
+                throttleConfig.enableEnhancedTelemetry,
             );
         };
 

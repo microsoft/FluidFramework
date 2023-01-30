@@ -17,7 +17,7 @@ jobs:
     steps:
       - run: npm install @octokit/core
       - name: Check PR exists using octokit
-        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # ratchet:actions/github-script@v6
         id: check-pr-exists
         with:
           token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
@@ -46,7 +46,7 @@ jobs:
     if: needs.check-pr.outputs.EXISTS == 'false'
     steps:
       - run: npm install @azure/storage-queue
-      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+      - uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # ratchet:actions/github-script@v6
         id: dequeue-message
         with:
           script: |
@@ -86,7 +86,7 @@ jobs:
     steps:
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
-        uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
           token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           fetch-depth: "0"
@@ -111,7 +111,7 @@ jobs:
     steps:
       - run: npm install @octokit/core
       - name: Create PR using octokit
-        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # ratchet:actions/github-script@v6
         with:
           token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           script: |
@@ -174,13 +174,13 @@ jobs:
     needs: [pull-request]
     if: needs.pull-request.result == 'success'
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
-      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
         with:
           node-version: 14
       - run: npm ci
       - run: npm install @azure/storage-queue
-      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+      - uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # ratchet:actions/github-script@v6
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')

@@ -16,6 +16,30 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IInsecureUser": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IInsecureUser():
+    TypeOnly<old.IInsecureUser>;
+declare function use_current_InterfaceDeclaration_IInsecureUser(
+    use: TypeOnly<current.IInsecureUser>);
+use_current_InterfaceDeclaration_IInsecureUser(
+    get_old_InterfaceDeclaration_IInsecureUser());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IInsecureUser": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IInsecureUser():
+    TypeOnly<current.IInsecureUser>;
+declare function use_old_InterfaceDeclaration_IInsecureUser(
+    use: TypeOnly<old.IInsecureUser>);
+use_old_InterfaceDeclaration_IInsecureUser(
+    get_current_InterfaceDeclaration_IInsecureUser());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IMockContainerRuntimePendingMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage():

@@ -2,29 +2,28 @@
 
 **Topics covered below:**
 
-- [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
-  - [Fluid Loader](#fluid-loader)
-  - [Expectations from host implementers](#expectations-from-host-implementers)
-  - [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
-  - [Container Lifetime](#container-lifetime)
-    - [Loading](#loading)
-    - [Connectivity](#connectivity)
-    - [Closure](#closure)
-  - [Audience](#audience)
-  - [ClientID and client identification](#clientid-and-client-identification)
-  - [Error handling](#error-handling)
-  - [Connectivity events](#connectivity-events)
-  - [Readonly states](#readonly-states)
-    - [`readonly`](#readonly)
-    - [`permissions`](#permissions)
-    - [`forced`](#forced)
-    - [`storageOnly`](#storageonly)
-  - [Dirty events](#dirty-events)
+-   [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
+    -   [Fluid Loader](#fluid-loader)
+    -   [Expectations from host implementers](#expectations-from-host-implementers)
+    -   [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
+    -   [Container Lifetime](#container-lifetime)
+        -   [Loading](#loading)
+        -   [Connectivity](#connectivity)
+        -   [Closure](#closure)
+    -   [Audience](#audience)
+    -   [ClientID and client identification](#clientid-and-client-identification)
+    -   [Error handling](#error-handling)
+    -   [Connectivity events](#connectivity-events)
+    -   [Readonly states](#readonly-states)
+        -   [`readonly`](#readonly)
+        -   [`permissions`](#permissions)
+        -   [`forced`](#forced)
+        -   [`storageOnly`](#storageonly)
+    -   [Dirty events](#dirty-events)
 
 **Related topics covered elsewhere:**
 
-- [Quorum and Proposals](../../../server/routerlicious/packages/protocol-base/README.md)
-
+-   [Quorum and Proposals](../../../server/routerlicious/packages/protocol-base/README.md)
 
 ## Fluid Loader
 
@@ -64,7 +63,7 @@ Container is returned as result of Loader.resolve() call. Loader can cache conta
 
 ### Connectivity
 
-Usually container is returned when state of container (and data stores) is rehydrated from snapshot. Unless `IRequest.headers.pause` is specified, connection to ordering service will be established at some point (asynchronously) and latest Ops would be processed, allowing local changes to flow form client to server. `Container.connectionState` indicates whether connection to ordering service is established, and  [Connectivity events](#Connectivity-events) are notifying about connectivity changes. While it's highly recommended for listeners to check initial state at the moment they register for connectivity events, new listeners are called on registration to propagate current state. That is, if a container is disconnected when both "connected" and "disconnected" listeners are installed, newly installed listeners for "disconnected" event will be called on registration.
+Usually container is returned when state of container (and data stores) is rehydrated from snapshot. Unless `IRequest.headers.pause` is specified, connection to ordering service will be established at some point (asynchronously) and latest Ops would be processed, allowing local changes to flow form client to server. `Container.connectionState` indicates whether connection to ordering service is established, and [Connectivity events](#Connectivity-events) are notifying about connectivity changes. While it's highly recommended for listeners to check initial state at the moment they register for connectivity events, new listeners are called on registration to propagate current state. That is, if a container is disconnected when both "connected" and "disconnected" listeners are installed, newly installed listeners for "disconnected" event will be called on registration.
 
 ### Closure
 
@@ -82,7 +81,7 @@ When container is closed, the following is true (in no particular order):
 
 1. Container.closed property is set to true
 2. "closed" event fires on container with optional error object (indicating reason for closure; if missing - closure was due to host closing container)
-3. "readonly" event fires on DeltaManager & Container (and Container.readonly property is set to true)  indicating to all data stores that container is read-only, and data stores should not allow local edits, as they are not going to make it.
+3. "readonly" event fires on DeltaManager & Container (and Container.readonly property is set to true) indicating to all data stores that container is read-only, and data stores should not allow local edits, as they are not going to make it.
 4. "disconnected" event fires, if connection was active at the moment of container closure.
 
 `"closed"` event is available on Container for hosts. `"disposed"` event is delivered to container runtime when container is closed. But container runtime can be also disposed when new code proposal is made and new version of the code (and container runtime) is loaded in accordance with it.
@@ -104,17 +103,17 @@ When container is disposed, the following is true (in no particular order):
 
 `Container.audience` exposes an object that tracks all connected clients to same container.
 
-- `getMembers()` can be used to retrieve current set of users
-- `getMember()` can be used to get IClient information about particular client (returns undefined if such client is not connected)
-- `"addMember"` event is raised when new member joins
-- `"removeMember"` event is raised when an earlier connected member leaves (disconnects from container)
+-   `getMembers()` can be used to retrieve current set of users
+-   `getMember()` can be used to get IClient information about particular client (returns undefined if such client is not connected)
+-   `"addMember"` event is raised when new member joins
+-   `"removeMember"` event is raised when an earlier connected member leaves (disconnects from container)
 
 `getMembers()` and `"addMember"` event provide _IClient_ interface that describes type of connection, permissions and user information:
 
-- clientId is the key - it is unique ID for a session. Please see [ClientID and client identification](#ClientId-and-client-identification) for more details on it, as well as how to properly differentiate human vs. agent clients and difference between client ID & user ID.
-- IClient.mode in particular describes connectivity mode of a client:
-  - "write" means client has read/write connection, can change container contents, and participates in Quorum
-  - "read" indicates client as read connection. Such clients can't modify container and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" container (any read-write connection generates join & leave messages that modify container and change "last edited by" property)
+-   clientId is the key - it is unique ID for a session. Please see [ClientID and client identification](#ClientId-and-client-identification) for more details on it, as well as how to properly differentiate human vs. agent clients and difference between client ID & user ID.
+-   IClient.mode in particular describes connectivity mode of a client:
+    -   "write" means client has read/write connection, can change container contents, and participates in Quorum
+    -   "read" indicates client as read connection. Such clients can't modify container and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" container (any read-write connection generates join & leave messages that modify container and change "last edited by" property)
 
 Please note that if this client losses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to container. For more details, please see [Connectivity events](#Connectivity-events) section
 
@@ -157,18 +156,18 @@ When container is closed, it is no longer connected to ordering service. It is a
 
 Container raises two events to notify hosting application about connectivity issues and connectivity status.
 
-- `"connected"` event is raised when container is connected and is up-to-date, i.e. changes are flowing between client and server.
-- `"disconnected"` event is raised when container lost connectivity (for any reason).
+-   `"connected"` event is raised when container is connected and is up-to-date, i.e. changes are flowing between client and server.
+-   `"disconnected"` event is raised when container lost connectivity (for any reason).
 
 Container also exposes `Container.connectionState` property to indicate current state.
 
-In normal circumstances, container will attempt to reconnect back to ordering service as quickly as possible. But it will scale down retries if computer is offline.  That said, if IThrottlingWarning is raised through `"warning"` handler, then container is following storage throttling policy and will attempt to reconnect after some amount of time (`IThrottlingWarning.retryAfterSeconds`).
+In normal circumstances, container will attempt to reconnect back to ordering service as quickly as possible. But it will scale down retries if computer is offline. That said, if IThrottlingWarning is raised through `"warning"` handler, then container is following storage throttling policy and will attempt to reconnect after some amount of time (`IThrottlingWarning.retryAfterSeconds`).
 
 Container will also not attempt to reconnect on lost connection if `Container.disconnect()` was called prior to loss of connection. This can be useful if the hosting application implements "user away" type of experience to reduce cost on both client and server of maintaining connection while user is away. Calling `Container.connect()` will reenable automatic reconnections, but the host might need to allow extra time for reconnection as it likely involves token fetch and processing of a lot of Ops generated by other clients while it was not connected.
 
 Data stores should almost never listen to these events (see more on [Readonly states](#Readonly-states)), and should use consensus DDSes if they need to synchronize activity across clients. DDSes listen for these events to know when to resubmit pending Ops.
 
-Hosting application can use these events in order to indicate to user when user changes are not propagating through the system, and thus can be lost (on browser tab being closed). It's advised to use some delay (like 5 seconds) before showing such UI, as network connectivity might be intermittent.  Also if container was offline for very long period of time due to `Container.disconnect()` being called, it might take a while to get connected and current.
+Hosting application can use these events in order to indicate to user when user changes are not propagating through the system, and thus can be lost (on browser tab being closed). It's advised to use some delay (like 5 seconds) before showing such UI, as network connectivity might be intermittent. Also if container was offline for very long period of time due to `Container.disconnect()` being called, it might take a while to get connected and current.
 
 Please note that hosts can implement various strategies on how to handle disconnections. Some may decide to show some UX letting user know about potential loss of data if container is closed while disconnected. Others can force container to disallow user edits while offline (see [Readonly states](#Readonly-states)).
 
@@ -187,9 +186,9 @@ It contains the following properties:
 
 One of the following:
 
-- `true`: Container is read-only. One or more of the additional properties listed below will be `true`.
-- `undefined`: Runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
-- `false`: Container.forceReadonly() was never called or last call was with false, plus it's known that user has write permissions to a file.
+-   `true`: Container is read-only. One or more of the additional properties listed below will be `true`.
+-   `undefined`: Runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
+-   `false`: Container.forceReadonly() was never called or last call was with false, plus it's known that user has write permissions to a file.
 
 ### `permissions`
 
@@ -203,8 +202,8 @@ There are two cases when it's `true`:
 `true` if the Container is in read-only mode due to the host calling `Container.forceReadonly(true)`.
 This can be useful in scenarios like:
 
-- Loss of connectivity, in scenarios where host chooses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container.
-- Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
+-   Loss of connectivity, in scenarios where host chooses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container.
+-   Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
 ### `storageOnly`
 

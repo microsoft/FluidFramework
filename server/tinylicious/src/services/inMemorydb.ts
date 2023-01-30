@@ -4,7 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
+import {
+    ICollection,
+    IDb,
+    IDbFactory,
+} from "@fluidframework/server-services-core";
 import { Collection } from "./inMemorycollection";
 
 export class InMemoryDb extends EventEmitter implements IDb {
