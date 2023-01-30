@@ -274,6 +274,7 @@ export class FaultInjectionDocumentDeltaConnection
 
 	public goOffline() {
 		this.online = false;
+		this.injectDisconnect();
 	}
 
 	public goOnline() {
