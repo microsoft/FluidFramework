@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { TelemetryClient } from "applicationinsights";
+
 /**
  * This handler emits metrics to the Azure App Insights instance configured by the telemetryClient provided to this handler.
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
-module.exports = async function handler(fileData, telemetryClient) {
-    fileData.tests.forEach(async (testData) => {
+module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
+    fileData.tests.forEach((testData) => {
         const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;
         try {
             console.log(`emitting metric ${heapUsedAvgMetricName} with value ${testData.testData.stats.mean}`);
-            await telemetryClient.trackMetric({
+            telemetryClient.trackMetric({
                 name: heapUsedAvgMetricName,
                 value: testData.testData.stats.mean,
                 namespace: 'performance_benchmark_memoryUsage',
@@ -33,7 +35,7 @@ module.exports = async function handler(fileData, telemetryClient) {
         const heapUsedStdDevMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedStdDev`;
         try {
             console.log(`emitting metric ${heapUsedStdDevMetricName} with value ${testData.testData.stats.deviation}`)
-            await telemetryClient.trackMetric({
+            telemetryClient.trackMetric({
                 name: heapUsedStdDevMetricName,
                 value: testData.testData.stats.deviation,
                 namespace: 'performance_benchmark_memoryUsage',
@@ -50,5 +52,7 @@ module.exports = async function handler(fileData, telemetryClient) {
         } catch (error) {
             console.error(`failed to emit metric ${heapUsedStdDevMetricName}`, error);
         }
+
+        telemetryClient.flush();
     });
 };
