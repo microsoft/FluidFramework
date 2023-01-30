@@ -107,7 +107,7 @@ describe("toDelta", () => {
             content: contentCursor,
         };
         const expected: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            shallowChanges: [mark],
         };
         const actual = toTreeDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -127,7 +127,7 @@ describe("toDelta", () => {
             content: contentCursor,
         };
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [42, mark],
+            shallowChanges: [42, mark],
         };
         const expected: Delta.FieldChanges = {
             nestedChanges: [
@@ -154,7 +154,7 @@ describe("toDelta", () => {
             count: 10,
         };
         const expected: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            shallowChanges: [mark],
         };
         const actual = toTreeDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -181,7 +181,7 @@ describe("toDelta", () => {
             count: 10,
         };
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [42, mark],
+            shallowChanges: [42, mark],
         };
         const expected: Delta.FieldChanges = {
             nestedChanges: [
@@ -228,7 +228,7 @@ describe("toDelta", () => {
             count: 10,
         };
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [42, moveOut, 8, moveIn],
+            shallowChanges: [42, moveOut, 8, moveIn],
         };
         const expected: Delta.FieldChanges = {
             nestedChanges: [
@@ -277,10 +277,10 @@ describe("toDelta", () => {
             count: 10,
         };
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [42, moveOut],
+            shallowChanges: [42, moveOut],
         };
         const barDelta: Delta.FieldChanges = {
-            siblingChanges: [8, moveIn],
+            shallowChanges: [8, moveIn],
         };
         const expected: Delta.FieldChanges = {
             nestedChanges: [
@@ -338,10 +338,10 @@ describe("toDelta", () => {
             count: 10,
         };
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [42, moveOut],
+            shallowChanges: [42, moveOut],
         };
         const detachedDelta: Delta.FieldChanges = {
-            siblingChanges: [8, moveIn],
+            shallowChanges: [8, moveIn],
         };
         const rootDelta: Delta.FieldChanges = {
             nestedChanges: [
@@ -394,7 +394,7 @@ describe("toDelta", () => {
             content: contentCursor,
         };
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [del, 3, ins],
+            shallowChanges: [del, 3, ins],
             nestedChanges: [[{ context: Delta.Context.Input, index: 14 }, { setValue: 1 }]],
         };
         const expected: Delta.FieldChanges = {
@@ -435,7 +435,7 @@ describe("toDelta", () => {
                 nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, { setValue: 4343 }]],
             };
             const expected: Delta.FieldChanges = {
-                siblingChanges: [mark],
+                shallowChanges: [mark],
                 nestedChanges: [
                     [
                         { context: Delta.Context.Output, index: 0 },
@@ -478,7 +478,7 @@ describe("toDelta", () => {
                 content: contentCursor,
             };
             const fooDelta: Delta.FieldChanges = {
-                siblingChanges: [
+                shallowChanges: [
                     {
                         type: Delta.MarkType.Insert,
                         content: [singleTextCursor({ type, value: 44 })],
@@ -491,7 +491,7 @@ describe("toDelta", () => {
                 ],
             };
             const expected: Delta.FieldChanges = {
-                siblingChanges: [mark],
+                shallowChanges: [mark],
                 nestedChanges: [
                     [
                         { context: Delta.Context.Output, index: 0 },
@@ -529,7 +529,7 @@ describe("toDelta", () => {
                 content: contentCursor,
             };
             const fooDelta: Delta.FieldChanges = {
-                siblingChanges: [
+                shallowChanges: [
                     1,
                     {
                         type: Delta.MarkType.Insert,
@@ -546,7 +546,7 @@ describe("toDelta", () => {
                 ],
             };
             const expected: Delta.FieldChanges = {
-                siblingChanges: [mark],
+                shallowChanges: [mark],
                 nestedChanges: [
                     [
                         { context: Delta.Context.Output, index: 0 },
@@ -582,7 +582,7 @@ describe("toDelta", () => {
                 content: contentCursor,
             };
             const fooDelta: Delta.FieldChanges = {
-                siblingChanges: [
+                shallowChanges: [
                     {
                         type: Delta.MarkType.Delete,
                         count: 1,
@@ -590,7 +590,7 @@ describe("toDelta", () => {
                 ],
             };
             const expected: Delta.FieldChanges = {
-                siblingChanges: [mark],
+                shallowChanges: [mark],
                 nestedChanges: [
                     [
                         { context: Delta.Context.Output, index: 0 },

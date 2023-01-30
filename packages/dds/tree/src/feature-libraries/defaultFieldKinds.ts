@@ -400,7 +400,7 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
             } else {
                 newValue = singleTextCursor(change.value.set);
             }
-            fieldChanges.siblingChanges = [
+            fieldChanges.shallowChanges = [
                 { type: Delta.MarkType.Delete, count: 1 },
                 {
                     type: Delta.MarkType.Insert,
@@ -641,13 +641,13 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
         intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
             const fieldChanges: Mutable<Delta.FieldChanges> = {};
             const update = change.fieldChange?.newContent;
-            const siblingChanges = [];
+            const shallowChanges = [];
             if (change.fieldChange !== undefined && !change.fieldChange.wasEmpty) {
-                siblingChanges.push({ type: Delta.MarkType.Delete, count: 1 });
+                shallowChanges.push({ type: Delta.MarkType.Delete, count: 1 });
             }
             if (update !== undefined) {
                 if ("set" in update) {
-                    siblingChanges.push({
+                    shallowChanges.push({
                         type: Delta.MarkType.Insert,
                         content: [singleTextCursor(update.set)],
                     });
@@ -658,14 +658,14 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
                         0x478 /* Unable to revert to undefined revision */,
                     );
                     const content = reviver(revision, 0, 1);
-                    siblingChanges.push({
+                    shallowChanges.push({
                         type: Delta.MarkType.Insert,
                         content,
                     });
                 }
             }
-            if (siblingChanges.length > 0) {
-                fieldChanges.siblingChanges = siblingChanges;
+            if (shallowChanges.length > 0) {
+                fieldChanges.shallowChanges = shallowChanges;
             }
             if (change.childChange !== undefined) {
                 // TODO: the changeset should be able to represent changes to both the subtree present before

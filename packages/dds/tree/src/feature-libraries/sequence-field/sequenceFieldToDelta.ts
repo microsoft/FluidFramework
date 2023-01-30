@@ -144,7 +144,7 @@ export function sequenceFieldToDelta<TNodeChange>(
     }
     const fieldChanges: Mutable<Delta.FieldChanges> = {};
     if (markList.list.length) {
-        fieldChanges.siblingChanges = markList.list;
+        fieldChanges.shallowChanges = markList.list;
     }
     if (modList.length) {
         fieldChanges.nestedChanges = modList;

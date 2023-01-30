@@ -173,7 +173,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                 nestedChanges.push([{ context: Delta.Context.Input, index }, childDelta]);
             }
         }
-        return { nestedChanges };
+        return { nestedChanges: nestedChanges };
     },
 };
 

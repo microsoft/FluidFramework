@@ -64,8 +64,8 @@ export class ForestRepairDataStore implements RepairDataStore {
             parent: RepairDataNode,
             key: FieldKey,
         ): void {
-            if (delta.siblingChanges !== undefined) {
-                visitFieldMarks(delta.siblingChanges, parent, key);
+            if (delta.shallowChanges !== undefined) {
+                visitFieldMarks(delta.shallowChanges, parent, key);
             }
             if (delta.nestedChanges !== undefined) {
                 for (const nested of delta.nestedChanges) {

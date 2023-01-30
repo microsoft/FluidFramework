@@ -126,7 +126,7 @@ describe("visit", () => {
             content,
         };
         const delta: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            shallowChanges: [mark],
         };
         testTreeVisit(delta, [["onInsert", 0, content]]);
     });
@@ -141,7 +141,7 @@ describe("visit", () => {
                 [
                     fooKey,
                     {
-                        siblingChanges: [42, mark],
+                        shallowChanges: [42, mark],
                     },
                 ],
             ]),
@@ -165,7 +165,7 @@ describe("visit", () => {
             count: 10,
         };
         const delta: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            shallowChanges: [mark],
         };
         testTreeVisit(delta, [["onDelete", 0, 10]]);
     });
@@ -176,7 +176,7 @@ describe("visit", () => {
             count: 10,
         };
         const node: Delta.NodeChanges = {
-            fields: new Map([[fooKey, { siblingChanges: [42, mark] }]]),
+            fields: new Map([[fooKey, { shallowChanges: [42, mark] }]]),
         };
         const expected: VisitScript = [
             ["enterNode", 0],
@@ -208,7 +208,7 @@ describe("visit", () => {
                 [
                     fooKey,
                     {
-                        siblingChanges: [del, 3, ins],
+                        shallowChanges: [del, 3, ins],
                         nestedChanges: [[{ context: Delta.Context.Input, index: 14 }, set]],
                     },
                 ],
@@ -246,7 +246,7 @@ describe("visit", () => {
         };
 
         const nodeChanges: Delta.NodeChanges = {
-            fields: new Map([[fooKey, { siblingChanges: [2, moveOut, 3, moveIn] }]]),
+            fields: new Map([[fooKey, { shallowChanges: [2, moveOut, 3, moveIn] }]]),
         };
         const delta: Delta.FieldChanges = {
             nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
@@ -289,7 +289,7 @@ describe("visit", () => {
         };
 
         const nodeChanges: Delta.NodeChanges = {
-            fields: new Map([[fooKey, { siblingChanges: [2, moveIn, 3, moveOut] }]]),
+            fields: new Map([[fooKey, { shallowChanges: [2, moveIn, 3, moveOut] }]]),
         };
         const delta: Delta.FieldChanges = {
             nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
@@ -336,7 +336,7 @@ describe("visit", () => {
                 [
                     fooKey,
                     {
-                        siblingChanges: [2, moveIn, 3, moveOut],
+                        shallowChanges: [2, moveIn, 3, moveOut],
                         nestedChanges: [
                             [{ context: Delta.Context.Input, index: 6 }, { setValue: 42 }],
                         ],
@@ -389,8 +389,8 @@ describe("visit", () => {
 
         const nodeChanges: Delta.NodeChanges = {
             fields: new Map([
-                [fooKey, { siblingChanges: [moveIn] }],
-                [barKey, { siblingChanges: [moveOut] }],
+                [fooKey, { shallowChanges: [moveIn] }],
+                [barKey, { shallowChanges: [moveOut] }],
             ]),
         };
         const delta: Delta.FieldChanges = {

@@ -140,9 +140,9 @@ function firstPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
     }
 
     const moveInGaps: { readonly index: number; readonly cumulCount: number }[] = [];
-    const siblingChanges = delta.siblingChanges ?? [];
+    const shallowChanges = delta.shallowChanges ?? [];
     let index = 0;
-    for (const mark of siblingChanges) {
+    for (const mark of shallowChanges) {
         if (typeof mark === "number") {
             // Untouched nodes
             index += mark;
@@ -210,8 +210,8 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
     let iNested = 0;
     let inputContextIndex = 0;
     let index = 0;
-    const siblingChanges = delta.siblingChanges ?? [];
-    for (const mark of siblingChanges) {
+    const shallowChanges = delta.shallowChanges ?? [];
+    for (const mark of shallowChanges) {
         if (typeof mark === "number") {
             // Untouched nodes
             index += mark;

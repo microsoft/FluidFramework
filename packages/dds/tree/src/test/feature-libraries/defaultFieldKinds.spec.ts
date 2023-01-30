@@ -185,7 +185,7 @@ describe("Value field changesets", () => {
 
     it("can be converted to a delta when overwriting content", () => {
         const expected: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 { type: Delta.MarkType.Delete, count: 1 },
                 { type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
             ],
@@ -198,7 +198,7 @@ describe("Value field changesets", () => {
 
     it("can be converted to a delta when restoring content", () => {
         const expected: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 { type: Delta.MarkType.Delete, count: 1 },
                 { type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
             ],
@@ -341,7 +341,7 @@ describe("Optional field changesets", () => {
 
     it("can be converted to a delta when field was empty", () => {
         const expected: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 {
                     type: Delta.MarkType.Insert,
                     content: [singleTextCursor(tree1)],
@@ -358,7 +358,7 @@ describe("Optional field changesets", () => {
 
     it("can be converted to a delta when replacing content", () => {
         const expected: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 { type: Delta.MarkType.Delete, count: 1 },
                 { type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
             ],
@@ -372,7 +372,7 @@ describe("Optional field changesets", () => {
 
     it("can be converted to a delta when restoring content", () => {
         const expected: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 { type: Delta.MarkType.Delete, count: 1 },
                 { type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
             ],

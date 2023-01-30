@@ -85,7 +85,7 @@ describe("SequenceField - toDelta", () => {
             content: contentCursor,
         };
         const expected: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            shallowChanges: [mark],
         };
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -101,7 +101,7 @@ describe("SequenceField - toDelta", () => {
         }
         const actual = toDelta(changeset, reviver);
         const expected: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 {
                     type: Delta.MarkType.Insert,
                     content: contentCursor,
@@ -118,7 +118,7 @@ describe("SequenceField - toDelta", () => {
         ]);
         const actual = toDelta(changeset);
         const expected: Delta.FieldChanges = {
-            siblingChanges: [1, { type: Delta.MarkType.Delete, count: 1 }],
+            shallowChanges: [1, { type: Delta.MarkType.Delete, count: 1 }],
         };
         assertFieldChangesEqual(actual, expected);
     });
@@ -130,7 +130,7 @@ describe("SequenceField - toDelta", () => {
         ]);
         const actual = toDelta(changeset);
         const expected: Delta.FieldChanges = {
-            siblingChanges: [1, { type: Delta.MarkType.Delete, count: 1 }],
+            shallowChanges: [1, { type: Delta.MarkType.Delete, count: 1 }],
         };
         assertFieldChangesEqual(actual, expected);
     });
@@ -153,7 +153,7 @@ describe("SequenceField - toDelta", () => {
         }
         const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, reviver);
         const expected: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 {
                     type: Delta.MarkType.Insert,
                     content: contentCursor,
@@ -171,7 +171,7 @@ describe("SequenceField - toDelta", () => {
             count: 10,
         };
         const expected: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            shallowChanges: [mark],
         };
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -203,7 +203,7 @@ describe("SequenceField - toDelta", () => {
             count: 10,
         };
         const expected: Delta.FieldChanges = {
-            siblingChanges: [42, moveOut, 8, moveIn],
+            shallowChanges: [42, moveOut, 8, moveIn],
         };
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -231,7 +231,7 @@ describe("SequenceField - toDelta", () => {
             setValue: "1",
         };
         const expected: Delta.FieldChanges = {
-            siblingChanges: [del, 3, ins],
+            shallowChanges: [del, 3, ins],
             nestedChanges: [[{ context: Delta.Context.Input, index: 14 }, set]],
         };
         const actual = toDelta(changeset);
@@ -254,7 +254,7 @@ describe("SequenceField - toDelta", () => {
             ],
         };
         const expected: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            shallowChanges: [mark],
             nestedChanges: [[{ context: Delta.Context.Output, index: 0 }, { setValue: "1" }]],
         };
         const actual = toDelta(changeset);
@@ -272,7 +272,7 @@ describe("SequenceField - toDelta", () => {
             count: 1,
         };
         const expected: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            shallowChanges: [mark],
         };
         const actual = toDelta(changeset);
         assertFieldChangesEqual(actual, expected);

@@ -106,14 +106,14 @@ describe("AnchorSet", () => {
                 [
                     fieldBar,
                     {
-                        siblingChanges: [3, moveIn],
+                        shallowChanges: [3, moveIn],
                     },
                 ],
             ]),
         };
 
         const fooChanges: Delta.FieldChanges = {
-            siblingChanges: [3, moveOut],
+            shallowChanges: [3, moveOut],
             nestedChanges: [[{ context: Delta.Context.Input, index: 5 }, modify]],
         };
         const delta = new Map([[fieldFoo, fooChanges]]);
@@ -156,7 +156,7 @@ function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined)
 
 function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
     const fields: Delta.FieldChangeMap = new Map([
-        [path.parentField, { siblingChanges: [path.parentIndex, mark] }],
+        [path.parentField, { shallowChanges: [path.parentIndex, mark] }],
     ]);
 
     if (path.parent === undefined) {

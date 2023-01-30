@@ -166,7 +166,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
     }
     const fieldChanges: Mutable<Delta.FieldChanges> = {};
     if (markList.list.length > 0) {
-        fieldChanges.siblingChanges = markList.list;
+        fieldChanges.shallowChanges = markList.list;
     }
     if (modList.length > 0) {
         fieldChanges.nestedChanges = modList;

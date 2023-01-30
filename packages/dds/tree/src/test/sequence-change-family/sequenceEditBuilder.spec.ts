@@ -175,7 +175,7 @@ describe("SequenceEditBuilder", () => {
             [
                 rootKey,
                 {
-                    siblingChanges: [
+                    shallowChanges: [
                         {
                             type: Delta.MarkType.Insert,
                             content: [nodeXCursor],
@@ -191,7 +191,7 @@ describe("SequenceEditBuilder", () => {
     it("Can insert a child node", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const innerFooDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 5,
                 {
                     type: Delta.MarkType.Insert,
@@ -236,7 +236,7 @@ describe("SequenceEditBuilder", () => {
             [
                 rootKey,
                 {
-                    siblingChanges: [
+                    shallowChanges: [
                         {
                             type: Delta.MarkType.Delete,
                             count: 1,
@@ -252,7 +252,7 @@ describe("SequenceEditBuilder", () => {
     it("Can delete child nodes", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const innerFooDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 5,
                 {
                     type: Delta.MarkType.Delete,
@@ -294,7 +294,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to the right within a field", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 2,
                 {
                     type: Delta.MarkType.MoveOut,
@@ -330,7 +330,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to the left within a field", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 2,
                 {
                     type: Delta.MarkType.MoveIn,
@@ -366,7 +366,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes into their own midst", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 2,
                 {
                     type: Delta.MarkType.MoveOut,
@@ -411,7 +411,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes across fields of the same parent", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 2,
                 {
                     type: Delta.MarkType.MoveOut,
@@ -421,7 +421,7 @@ describe("SequenceEditBuilder", () => {
             ],
         };
         const barDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 2,
                 {
                     type: Delta.MarkType.MoveIn,
@@ -454,7 +454,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to the right across subtrees of the same field", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const innerFooDeltaSrc: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 5,
                 {
                     type: Delta.MarkType.MoveOut,
@@ -464,7 +464,7 @@ describe("SequenceEditBuilder", () => {
             ],
         };
         const innerFooDeltaDst: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 5,
                 {
                     type: Delta.MarkType.MoveIn,
@@ -516,7 +516,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to the left across subtrees of the same field", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const innerFooDeltaSrc: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 5,
                 {
                     type: Delta.MarkType.MoveOut,
@@ -526,7 +526,7 @@ describe("SequenceEditBuilder", () => {
             ],
         };
         const innerFooDeltaDst: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 5,
                 {
                     type: Delta.MarkType.MoveIn,
@@ -578,7 +578,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes across subtrees of different fields", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const innerFooDeltaSrc: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 5,
                 {
                     type: Delta.MarkType.MoveOut,
@@ -588,7 +588,7 @@ describe("SequenceEditBuilder", () => {
             ],
         };
         const innerBarDeltaDst: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 5,
                 {
                     type: Delta.MarkType.MoveIn,
@@ -647,7 +647,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes across deep subtrees of different fields", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const innerFooDeltaSrc: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 7,
                 {
                     type: Delta.MarkType.MoveOut,
@@ -657,7 +657,7 @@ describe("SequenceEditBuilder", () => {
             ],
         };
         const innerBarDeltaDst: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 7,
                 {
                     type: Delta.MarkType.MoveIn,
@@ -742,7 +742,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to a detached tree", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 2,
                 {
                     type: Delta.MarkType.MoveOut,
@@ -752,7 +752,7 @@ describe("SequenceEditBuilder", () => {
             ],
         };
         const detachedDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 {
                     type: Delta.MarkType.MoveIn,
                     moveId,
@@ -784,7 +784,7 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes from a detached tree", () => {
         const { builder, deltas } = makeBuilderToDeltas();
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 2,
                 {
                     type: Delta.MarkType.MoveIn,
@@ -794,7 +794,7 @@ describe("SequenceEditBuilder", () => {
             ],
         };
         const detachedDelta: Delta.FieldChanges = {
-            siblingChanges: [
+            shallowChanges: [
                 {
                     type: Delta.MarkType.MoveOut,
                     moveId,

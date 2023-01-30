@@ -208,7 +208,7 @@ export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 export type FieldChangeMap<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
 export interface FieldChanges<TTree = ProtoNode> {
-    readonly siblingChanges?: MarkList<TTree>;
+    readonly shallowChanges?: MarkList<TTree>;
     readonly nestedChanges?: readonly NestedChange<TTree>[];
 }
 

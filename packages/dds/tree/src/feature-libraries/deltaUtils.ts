@@ -43,8 +43,8 @@ export function mapFieldChanges<TIn, TOut>(
     func: (tree: TIn) => TOut,
 ): Delta.FieldChanges<TOut> {
     const field: Mutable<Delta.FieldChanges<TOut>> = {};
-    if (changes.siblingChanges) {
-        field.siblingChanges = mapMarkList(changes.siblingChanges, func);
+    if (changes.shallowChanges) {
+        field.shallowChanges = mapMarkList(changes.shallowChanges, func);
     }
     if (changes.nestedChanges) {
         field.nestedChanges = changes.nestedChanges.map((nested) => [

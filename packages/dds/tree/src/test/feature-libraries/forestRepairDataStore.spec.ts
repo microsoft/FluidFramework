@@ -75,7 +75,7 @@ describe("ForestRepairDataStore", () => {
                                     [
                                         fooKey,
                                         {
-                                            siblingChanges: [
+                                            shallowChanges: [
                                                 1,
                                                 {
                                                     type: Delta.MarkType.Delete,
@@ -105,7 +105,7 @@ describe("ForestRepairDataStore", () => {
                                     [
                                         fooKey,
                                         {
-                                            siblingChanges: [
+                                            shallowChanges: [
                                                 {
                                                     type: Delta.MarkType.Delete,
                                                     count: 2,

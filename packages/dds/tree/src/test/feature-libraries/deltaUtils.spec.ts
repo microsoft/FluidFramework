@@ -23,7 +23,7 @@ describe("DeltaUtils", () => {
                 [
                     fooField,
                     {
-                        siblingChanges: [
+                        shallowChanges: [
                             42,
                             {
                                 type: Delta.MarkType.Insert,
@@ -37,7 +37,7 @@ describe("DeltaUtils", () => {
                 [
                     fooField,
                     {
-                        siblingChanges: [
+                        shallowChanges: [
                             2,
                             {
                                 type: Delta.MarkType.MoveOut,
@@ -104,7 +104,7 @@ describe("DeltaUtils", () => {
                 [
                     fooField,
                     {
-                        siblingChanges: [
+                        shallowChanges: [
                             42,
                             {
                                 type: Delta.MarkType.Insert,
@@ -118,7 +118,7 @@ describe("DeltaUtils", () => {
                 [
                     fooField,
                     {
-                        siblingChanges: [
+                        shallowChanges: [
                             2,
                             {
                                 type: Delta.MarkType.MoveOut,
