@@ -11,6 +11,7 @@ import {
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
 import { makeAppView } from "./view";
