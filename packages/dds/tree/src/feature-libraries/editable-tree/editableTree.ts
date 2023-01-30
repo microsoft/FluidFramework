@@ -52,16 +52,19 @@ import { ProxyContext } from "./editableTreeContext";
 /**
  * A symbol for extracting target from {@link EditableTree} proxies.
  * Useful for debugging and testing, but not part of the public API.
+ * @alpha
  */
 export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarget");
 
 /**
  * A symbol to get the type of {@link EditableTree} in contexts where string keys are already in use for fields.
+ * @alpha
  */
 export const typeSymbol: unique symbol = Symbol("editable-tree:type");
 
 /**
  * A symbol to get the type name of {@link EditableTree} in contexts where string keys are already in use for fields.
+ * @alpha
  */
 export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 
@@ -70,30 +73,35 @@ export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
  *
  * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
  * Concurrently setting the value will follow the "last-write-wins" semantics.
+ * @alpha
  */
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
 /**
  * A symbol to get the index of {@link EditableTree} within its parent field
  * in contexts where string keys are already in use for fields.
+ * @alpha
  */
 export const indexSymbol: unique symbol = Symbol("editable-tree:index");
 
 /**
  * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
  * in contexts where string keys are already in use for fields.
+ * @alpha
  */
 export const getField: unique symbol = Symbol("editable-tree:getField()");
 
 /**
  * A symbol to get the function, which creates a new field of {@link EditableTree},
  * in contexts where string keys are already in use for fields.
+ * @alpha
  */
 export const createField: unique symbol = Symbol("editable-tree:createField()");
 
 /**
  * A symbol to get the function, which replaces a field of {@link EditableTree},
  * in contexts where string keys are already in use for fields.
+ * @alpha
  */
 export const replaceField: unique symbol = Symbol("editable-tree:replaceField()");
 
@@ -114,6 +122,7 @@ export const replaceField: unique symbol = Symbol("editable-tree:replaceField()"
  *
  * The tree can be edited either by using its symbol-based "toolbox" (e.g. {@link createField})
  * or using a simple assignment operator (see `EditableTreeContext.unwrappedRoot` for more details).
+ * @alpha
  */
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
 	/**
@@ -221,6 +230,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 /**
  * EditableTree,
  * but with any type that `isPrimitive` unwrapped into the value if that value is a {@link PrimitiveValue}.
+ * @alpha
  */
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
@@ -229,6 +239,7 @@ export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
  * - primitives are unwrapped. See {@link EditableTreeOrPrimitive}.
  * - nodes with PrimaryField (see `getPrimaryField`) are unwrapped to {@link EditableField}s.
  * - fields are unwrapped based on their schema's multiplicity. See {@link UnwrappedEditableField}.
+ * @alpha
  */
 export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
@@ -237,6 +248,7 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
  * Sequence multiplicities are handled with {@link EditableField}.
  * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
+ * @alpha
  */
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
@@ -253,6 +265,7 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  * children of the tree starting from its root.
  *
  * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
+ * @alpha
  */
 export interface EditableField
 	// Here, the `UnwrappedEditableTree | ContextuallyTypedNodeData` union is used
@@ -1169,6 +1182,7 @@ export function proxifyField(
 
 /**
  * Checks the type of an UnwrappedEditableField.
+ * @alpha
  */
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree {
 	return (
@@ -1179,6 +1193,7 @@ export function isUnwrappedNode(field: UnwrappedEditableField): field is Editabl
 
 /**
  * Checks the type of an UnwrappedEditableField.
+ * @alpha
  */
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
 	return (

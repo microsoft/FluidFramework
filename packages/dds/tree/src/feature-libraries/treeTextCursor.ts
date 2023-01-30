@@ -55,6 +55,7 @@ const adapter: CursorAdapter<JsonableTree> = {
 
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
+ * @alpha
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);

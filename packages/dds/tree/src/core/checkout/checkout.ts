@@ -5,6 +5,9 @@
 
 import { IForestSubscription } from "../forest";
 
+/**
+ * @alpha
+ */
 export interface ICheckout<TEditBuilder> {
 	/**
 	 * Current contents.
@@ -27,6 +30,9 @@ export interface ICheckout<TEditBuilder> {
 	): TransactionResult;
 }
 
+/**
+ * @alpha
+ */
 export enum TransactionResult {
 	Abort,
 	Apply,

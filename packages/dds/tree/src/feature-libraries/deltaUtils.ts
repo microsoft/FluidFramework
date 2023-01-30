@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Delta, FieldKey } from "../core";
+import { Delta, FieldKey, isSkipMark } from "../core";
 import { Mutable } from "../util";
 
 /**
@@ -59,7 +59,7 @@ export function mapMark<TIn, TOut>(
 	mark: Delta.Mark<TIn>,
 	func: (tree: TIn) => TOut,
 ): Delta.Mark<TOut> {
-	if (Delta.isSkipMark(mark)) {
+	if (isSkipMark(mark)) {
 		return mark;
 	}
 	const type = mark.type;

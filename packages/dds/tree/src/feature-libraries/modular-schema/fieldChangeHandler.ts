@@ -9,6 +9,7 @@ import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
+ * @alpha
  */
 export interface FieldChangeHandler<
 	TChangeset,
@@ -20,6 +21,10 @@ export interface FieldChangeHandler<
 	editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
 }
+
+/**
+ * @alpha
+ */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
@@ -73,6 +78,9 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	};
 }
 
+/**
+ * @alpha
+ */
 export interface FieldChangeEncoder<TChangeset> {
 	/**
 	 * Encodes `change` into a JSON compatible object.
@@ -93,6 +101,9 @@ export interface FieldChangeEncoder<TChangeset> {
 	): TChangeset;
 }
 
+/**
+ * @alpha
+ */
 export interface FieldEditor<TChangeset> {
 	/**
 	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
@@ -103,41 +114,69 @@ export interface FieldEditor<TChangeset> {
 /**
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
+ * @alpha
  */
 export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
 
+/**
+ * @alpha
+ */
 export type NodeReviver = (
 	revision: RevisionTag,
 	index: number,
 	count: number,
 ) => Delta.ProtoNode[];
 
+/**
+ * @alpha
+ */
 export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
+/**
+ * @alpha
+ */
 export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
 
+/**
+ * @alpha
+ */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
+/**
+ * @alpha
+ */
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
+
+/**
+ * @alpha
+ */
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
+/**
+ * @alpha
+ */
 export type IdAllocator = () => ChangesetLocalId;
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
  * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
  * but they are unique when qualified by the revision of the change they are used in.
+ * @alpha
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
  * Changeset for a subtree rooted at a specific node.
+ * @alpha
  */
 export interface NodeChangeset {
 	fieldChanges?: FieldChangeMap;
 	valueChange?: ValueChange;
 }
 
+/**
+ * @alpha
+ */
 export type ValueChange =
 	| {
 			/**
@@ -167,6 +206,9 @@ export type ValueChange =
 			revert: RevisionTag | undefined;
 	  };
 
+/**
+ * @alpha
+ */
 export interface ModularChangeset {
 	/**
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
@@ -176,8 +218,14 @@ export interface ModularChangeset {
 	changes: FieldChangeMap;
 }
 
+/**
+ * @alpha
+ */
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
+/**
+ * @alpha
+ */
 export interface FieldChange {
 	fieldKind: FieldKindIdentifier;
 
@@ -192,4 +240,7 @@ export interface FieldChange {
 	change: FieldChangeset;
 }
 
+/**
+ * @alpha
+ */
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;
