@@ -16,20 +16,20 @@ import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
  * Useful for when a chunk or cursor is needed for an empty field or detached sequence.
  */
 export const emptyChunk: TreeChunk = {
-    topLevelLength: 0,
-    cursor(): ChunkedCursor {
-        return emptyCursor;
-    },
-    referenceAdded(): void {},
-    referenceRemoved(): void {},
-    isShared(): boolean {
-        return false; // Immutable, so sharing does not matter.
-    },
+	topLevelLength: 0,
+	cursor(): ChunkedCursor {
+		return emptyCursor;
+	},
+	referenceAdded(): void {},
+	referenceRemoved(): void {},
+	isShared(): boolean {
+		return false; // Immutable, so sharing does not matter.
+	},
 };
 
 const emptyPath: FieldUpPath = {
-    parent: undefined,
-    field: dummyRoot,
+	parent: undefined,
+	field: dummyRoot,
 };
 
 /**
@@ -37,64 +37,64 @@ const emptyPath: FieldUpPath = {
  * Contains no nodes and is stateless.
  */
 export const emptyCursor: ChunkedCursor = {
-    pending: false,
-    mode: CursorLocationType.Fields,
-    [cursorChunk]: emptyChunk,
-    nextField(): boolean {
-        fail("cannot navigate above root");
-    },
-    exitField(): void {
-        fail("cannot navigate above root");
-    },
-    skipPendingFields(): boolean {
-        return true;
-    },
-    getFieldKey(): FieldKey {
-        return emptyPath.field;
-    },
-    getFieldLength(): number {
-        return 0;
-    },
-    firstNode(): boolean {
-        return false;
-    },
-    enterNode(childIndex: number): void {
-        fail("empty cursor has no nodes");
-    },
-    getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
-        return prefixFieldPath(prefix, emptyPath);
-    },
-    getPath(): UpPath | undefined {
-        fail("empty cursor has no nodes");
-    },
-    get fieldIndex(): never {
-        return fail("empty cursor has no nodes");
-    },
-    get chunkStart(): never {
-        return fail("empty cursor has no nodes");
-    },
-    get chunkLength(): never {
-        return fail("empty cursor has no nodes");
-    },
-    seekNodes(offset: number): boolean {
-        fail("empty cursor has no nodes");
-    },
-    nextNode(): boolean {
-        fail("empty cursor has no nodes");
-    },
-    exitNode(): void {
-        fail("empty cursor has no nodes");
-    },
-    firstField(): boolean {
-        fail("empty cursor has no nodes");
-    },
-    enterField(key: FieldKey): void {
-        fail("empty cursor has no nodes");
-    },
-    get type(): never {
-        return fail("empty cursor has no nodes");
-    },
-    get value(): never {
-        return fail("empty cursor has no nodes");
-    },
+	pending: false,
+	mode: CursorLocationType.Fields,
+	[cursorChunk]: emptyChunk,
+	nextField(): boolean {
+		fail("cannot navigate above root");
+	},
+	exitField(): void {
+		fail("cannot navigate above root");
+	},
+	skipPendingFields(): boolean {
+		return true;
+	},
+	getFieldKey(): FieldKey {
+		return emptyPath.field;
+	},
+	getFieldLength(): number {
+		return 0;
+	},
+	firstNode(): boolean {
+		return false;
+	},
+	enterNode(childIndex: number): void {
+		fail("empty cursor has no nodes");
+	},
+	getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
+		return prefixFieldPath(prefix, emptyPath);
+	},
+	getPath(): UpPath | undefined {
+		fail("empty cursor has no nodes");
+	},
+	get fieldIndex(): never {
+		return fail("empty cursor has no nodes");
+	},
+	get chunkStart(): never {
+		return fail("empty cursor has no nodes");
+	},
+	get chunkLength(): never {
+		return fail("empty cursor has no nodes");
+	},
+	seekNodes(offset: number): boolean {
+		fail("empty cursor has no nodes");
+	},
+	nextNode(): boolean {
+		fail("empty cursor has no nodes");
+	},
+	exitNode(): void {
+		fail("empty cursor has no nodes");
+	},
+	firstField(): boolean {
+		fail("empty cursor has no nodes");
+	},
+	enterField(key: FieldKey): void {
+		fail("empty cursor has no nodes");
+	},
+	get type(): never {
+		return fail("empty cursor has no nodes");
+	},
+	get value(): never {
+		return fail("empty cursor has no nodes");
+	},
 };

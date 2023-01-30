@@ -11,10 +11,10 @@ import { fail, getOrCreate } from "../util";
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
  */
 export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
-    k: infer U,
+	k: infer U,
 ) => unknown
-    ? U
-    : never;
+	? U
+	: never;
 
 /**
  * `true` iff the given type is an acceptable shape for an event
@@ -34,7 +34,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
  * type will be included.
  */
 export type Events<E> = {
-    [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
+	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
 
 /**
@@ -55,10 +55,10 @@ export type Events<E> = {
  * ```
  */
 export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent> = {
-    [P in keyof Events<E>]: (event: P, listener: E[P]) => void;
+	[P in keyof Events<E>]: (event: P, listener: E[P]) => void;
 } extends Record<any, infer Z>
-    ? UnionToIntersection<Z> & Target
-    : never;
+	? UnionToIntersection<Z> & Target
+	: never;
 
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
@@ -75,26 +75,26 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  * ```
  */
 export interface ISubscribable<E extends Events<E>> {
-    /**
-     * Register an event listener.
-     * @param eventName - the name of the event
-     * @param listener - the handler to run when the event is fired by the emitter
-     * @returns a function which will deregister the listener when run. This function has undefined behavior
-     * if called more than once.
-     */
-    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+	/**
+	 * Register an event listener.
+	 * @param eventName - the name of the event
+	 * @param listener - the handler to run when the event is fired by the emitter
+	 * @returns a function which will deregister the listener when run. This function has undefined behavior
+	 * if called more than once.
+	 */
+	on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
 }
 
 /**
  * An object which can emit events to subscribed listeners.
  */
 export interface IEmitter<E extends Events<E>> {
-    /**
-     * Fire the given event, notifying all subscribers by calling their registered listener functions.
-     * @param eventName - the name of the event to fire
-     * @param args - the arguments passed to the event listener functions
-     */
-    emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+	/**
+	 * Fire the given event, notifying all subscribers by calling their registered listener functions.
+	 * @param eventName - the name of the event to fire
+	 * @param args - the arguments passed to the event listener functions
+	 */
+	emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
 }
 
 /**
@@ -104,7 +104,7 @@ export interface IEmitter<E extends Events<E>> {
  * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
  */
 export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitter<E> {
-    return new ComposableEventEmitter<E>();
+	return new ComposableEventEmitter<E>();
 }
 
 /**
@@ -139,57 +139,57 @@ export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitte
  * ```
  */
 export class EventEmitter<E extends Events<E>> implements ISubscribable<E> {
-    private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => void>>();
+	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => void>>();
 
-    // Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
-    // Instead, use the static `create` function to get an instance which allows emitting events.
-    protected constructor() {}
+	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
+	// Instead, use the static `create` function to get an instance which allows emitting events.
+	protected constructor() {}
 
-    protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
-        const listeners = this.listeners.get(eventName);
-        if (listeners !== undefined) {
-            const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
-            for (const listener of listeners.values()) {
-                listener(...argArray);
-            }
-        }
-    }
+	protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
+		const listeners = this.listeners.get(eventName);
+		if (listeners !== undefined) {
+			const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
+			for (const listener of listeners.values()) {
+				listener(...argArray);
+			}
+		}
+	}
 
-    /**
-     * Register an event listener.
-     * @param eventName - the name of the event
-     * @param listener - the handler to run when the event is fired by the emitter
-     * @returns a function which will deregister the listener when run.
-     * This function will error if called more than once.
-     */
-    public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
-        getOrCreate(this.listeners, eventName, () => new Set()).add(listener);
-        return () => this.off(eventName, listener);
-    }
+	/**
+	 * Register an event listener.
+	 * @param eventName - the name of the event
+	 * @param listener - the handler to run when the event is fired by the emitter
+	 * @returns a function which will deregister the listener when run.
+	 * This function will error if called more than once.
+	 */
+	public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
+		getOrCreate(this.listeners, eventName, () => new Set()).add(listener);
+		return () => this.off(eventName, listener);
+	}
 
-    private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
-        const listeners =
-            this.listeners.get(eventName) ??
-            fail(
-                "Event has no listeners. Event deregistration functions may only be invoked once.",
-            );
-        assert(
-            listeners.delete(listener),
-            0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
-        );
-        if (listeners.size === 0) {
-            this.listeners.delete(eventName);
-        }
-    }
+	private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
+		const listeners =
+			this.listeners.get(eventName) ??
+			fail(
+				"Event has no listeners. Event deregistration functions may only be invoked once.",
+			);
+		assert(
+			listeners.delete(listener),
+			0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
+		);
+		if (listeners.size === 0) {
+			this.listeners.delete(eventName);
+		}
+	}
 }
 
 // This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
 class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implements IEmitter<E> {
-    public constructor() {
-        super();
-    }
+	public constructor() {
+		super();
+	}
 
-    public emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
-        return super.emit(eventName, ...args);
-    }
+	public emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
+		return super.emit(eventName, ...args);
+	}
 }

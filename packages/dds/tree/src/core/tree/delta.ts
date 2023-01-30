@@ -142,16 +142,16 @@ export type ProtoNode = ITreeCursorSynchronous;
  * Represents a change being made to a part of the tree.
  */
 export type Mark<TTree = ProtoNode> =
-    | Skip
-    | Modify<TTree>
-    | Delete
-    | MoveOut
-    | MoveIn
-    | Insert<TTree>
-    | ModifyAndDelete<TTree>
-    | ModifyAndMoveOut<TTree>
-    | MoveInAndModify<TTree>
-    | InsertAndModify<TTree>;
+	| Skip
+	| Modify<TTree>
+	| Delete
+	| MoveOut
+	| MoveIn
+	| Insert<TTree>
+	| ModifyAndDelete<TTree>
+	| ModifyAndMoveOut<TTree>
+	| MoveInAndModify<TTree>
+	| InsertAndModify<TTree>;
 
 /**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
@@ -170,17 +170,17 @@ export type Skip = number;
  * Describes modifications made to a subtree.
  */
 export interface Modify<TTree = ProtoNode> {
-    readonly type: typeof MarkType.Modify;
-    readonly setValue?: Value;
-    readonly fields?: FieldMarks<TTree>;
+	readonly type: typeof MarkType.Modify;
+	readonly setValue?: Value;
+	readonly fields?: FieldMarks<TTree>;
 }
 
 /**
  * Describes the deletion of a contiguous range of node.
  */
 export interface Delete {
-    readonly type: typeof MarkType.Delete;
-    readonly count: number;
+	readonly type: typeof MarkType.Delete;
+	readonly count: number;
 }
 
 /**
@@ -188,20 +188,20 @@ export interface Delete {
  * Includes descriptions of the modifications the node.
  */
 export interface ModifyAndDelete<TTree = ProtoNode> {
-    readonly type: typeof MarkType.ModifyAndDelete;
-    readonly fields: FieldMarks<TTree>;
+	readonly type: typeof MarkType.ModifyAndDelete;
+	readonly fields: FieldMarks<TTree>;
 }
 
 /**
  * Describes the moving out of a contiguous range of node.
  */
 export interface MoveOut {
-    readonly type: typeof MarkType.MoveOut;
-    readonly count: number;
-    /**
-     * The delta should carry exactly one `MoveIn` mark with the same move ID.
-     */
-    readonly moveId: MoveId;
+	readonly type: typeof MarkType.MoveOut;
+	readonly count: number;
+	/**
+	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
+	 */
+	readonly moveId: MoveId;
 }
 
 /**
@@ -209,25 +209,25 @@ export interface MoveOut {
  * Includes descriptions of the modifications made to the node.
  */
 export interface ModifyAndMoveOut<TTree = ProtoNode> {
-    readonly type: typeof MarkType.ModifyAndMoveOut;
-    /**
-     * The delta should carry exactly one `MoveIn` mark with the same move ID.
-     */
-    readonly moveId: MoveId;
-    readonly setValue?: Value;
-    readonly fields?: FieldMarks<TTree>;
+	readonly type: typeof MarkType.ModifyAndMoveOut;
+	/**
+	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
+	 */
+	readonly moveId: MoveId;
+	readonly setValue?: Value;
+	readonly fields?: FieldMarks<TTree>;
 }
 
 /**
  * Describes the moving in of a contiguous range of node.
  */
 export interface MoveIn {
-    readonly type: typeof MarkType.MoveIn;
-    readonly count: number;
-    /**
-     * The delta should carry exactly one `MoveOut` mark with the same move ID.
-     */
-    readonly moveId: MoveId;
+	readonly type: typeof MarkType.MoveIn;
+	readonly count: number;
+	/**
+	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
+	 */
+	readonly moveId: MoveId;
 }
 
 /**
@@ -235,21 +235,21 @@ export interface MoveIn {
  * Includes descriptions of the modifications made to the node.
  */
 export interface MoveInAndModify<TTree = ProtoNode> {
-    readonly type: typeof MarkType.MoveInAndModify;
-    /**
-     * The delta should carry exactly one `MoveOut` mark with the same move ID.
-     */
-    readonly moveId: MoveId;
-    readonly fields: FieldMarks<TTree>;
+	readonly type: typeof MarkType.MoveInAndModify;
+	/**
+	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
+	 */
+	readonly moveId: MoveId;
+	readonly fields: FieldMarks<TTree>;
 }
 
 /**
  * Describes the insertion of a contiguous range of node.
  */
 export interface Insert<TTree = ProtoNode> {
-    readonly type: typeof MarkType.Insert;
-    // TODO: use a single cursor with multiple nodes instead of array of cursors.
-    readonly content: readonly TTree[];
+	readonly type: typeof MarkType.Insert;
+	// TODO: use a single cursor with multiple nodes instead of array of cursors.
+	readonly content: readonly TTree[];
 }
 
 /**
@@ -257,9 +257,9 @@ export interface Insert<TTree = ProtoNode> {
  * Includes descriptions of the modifications made to the nodes.
  */
 export interface InsertAndModify<TTree = ProtoNode> {
-    readonly type: typeof MarkType.InsertAndModify;
-    readonly content: TTree;
-    readonly fields: FieldMarks<TTree>;
+	readonly type: typeof MarkType.InsertAndModify;
+	readonly content: TTree;
+	readonly fields: FieldMarks<TTree>;
 }
 
 /**
@@ -273,44 +273,44 @@ export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 export const MarkType = {
-    Modify: 0,
-    Insert: 1,
-    InsertAndModify: 2,
-    MoveIn: 3,
-    MoveInAndModify: 4,
-    Delete: 5,
-    ModifyAndDelete: 6,
-    MoveOut: 7,
-    ModifyAndMoveOut: 8,
+	Modify: 0,
+	Insert: 1,
+	InsertAndModify: 2,
+	MoveIn: 3,
+	MoveInAndModify: 4,
+	Delete: 5,
+	ModifyAndDelete: 6,
+	MoveOut: 7,
+	ModifyAndMoveOut: 8,
 } as const;
 
 /**
  * Returns the number of nodes in the input tree that the mark affects or skips.
  */
 export function inputLength(mark: Mark<unknown>): number {
-    if (isSkipMark(mark)) {
-        return mark;
-    }
-    // Inline into `switch(mark.type)` once we upgrade to TS 4.7
-    const type = mark.type;
-    switch (type) {
-        case MarkType.Delete:
-        case MarkType.MoveOut:
-            return mark.count;
-        case MarkType.Modify:
-        case MarkType.ModifyAndDelete:
-        case MarkType.ModifyAndMoveOut:
-            return 1;
-        case MarkType.Insert:
-        case MarkType.InsertAndModify:
-        case MarkType.MoveIn:
-        case MarkType.MoveInAndModify:
-            return 0;
-        default:
-            unreachableCase(type);
-    }
+	if (isSkipMark(mark)) {
+		return mark;
+	}
+	// Inline into `switch(mark.type)` once we upgrade to TS 4.7
+	const type = mark.type;
+	switch (type) {
+		case MarkType.Delete:
+		case MarkType.MoveOut:
+			return mark.count;
+		case MarkType.Modify:
+		case MarkType.ModifyAndDelete:
+		case MarkType.ModifyAndMoveOut:
+			return 1;
+		case MarkType.Insert:
+		case MarkType.InsertAndModify:
+		case MarkType.MoveIn:
+		case MarkType.MoveInAndModify:
+			return 0;
+		default:
+			unreachableCase(type);
+	}
 }
 
 export function isSkipMark(mark: Mark<unknown>): mark is Skip {
-    return typeof mark === "number";
+	return typeof mark === "number";
 }

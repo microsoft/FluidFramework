@@ -11,35 +11,35 @@ import { Dependee, Dependent, InvalidationToken } from "./dependencies";
  * @public
  */
 export class SimpleDependee implements Dependee {
-    private readonly dependents = new Set<Dependent>();
+	private readonly dependents = new Set<Dependent>();
 
-    public constructor(public readonly computationName = "SimpleDependee") {}
+	public constructor(public readonly computationName = "SimpleDependee") {}
 
-    public registerDependent(dependent: Dependent): boolean {
-        if (this.dependents.has(dependent)) {
-            return false;
-        }
-        this.dependents.add(dependent);
-        return true;
-    }
+	public registerDependent(dependent: Dependent): boolean {
+		if (this.dependents.has(dependent)) {
+			return false;
+		}
+		this.dependents.add(dependent);
+		return true;
+	}
 
-    public removeDependent(dependent: Dependent): void {
-        this.dependents.delete(dependent);
-    }
+	public removeDependent(dependent: Dependent): void {
+		this.dependents.delete(dependent);
+	}
 
-    /**
-     * Invalidates the dependents that have are dependent on this data.
-     */
-    public invalidateDependents(token?: InvalidationToken): void {
-        for (const dependent of this.dependents) {
-            dependent.markInvalid(token);
-        }
-    }
+	/**
+	 * Invalidates the dependents that have are dependent on this data.
+	 */
+	public invalidateDependents(token?: InvalidationToken): void {
+		for (const dependent of this.dependents) {
+			dependent.markInvalid(token);
+		}
+	}
 
-    /**
-     * @sealed
-     */
-    public listDependents() {
-        return this.dependents;
-    }
+	/**
+	 * @sealed
+	 */
+	public listDependents() {
+		return this.dependents;
+	}
 }

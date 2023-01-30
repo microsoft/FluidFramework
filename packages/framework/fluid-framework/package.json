@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "2.0.0-internal.3.0.0",
+  "version": "2.0.0-internal.3.1.0",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -37,12 +37,12 @@
     "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/container-loader": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/fluid-static": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/map": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/sequence": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0"
+    "@fluidframework/container-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/container-loader": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/fluid-static": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/map": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/sequence": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0"
   },
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.8.0",
