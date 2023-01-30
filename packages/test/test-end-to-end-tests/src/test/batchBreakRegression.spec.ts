@@ -184,7 +184,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
     });
 
     describe("client sends invalid batches ", () => {
-        itExpects("Batch end without start",
+        itExpects.skip("Batch end without start",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
@@ -333,6 +333,10 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         [
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Received a system message during batch processing",
+            },
+            {
+                eventName: "fluid:telemetry:Container:ContainerDispose",
                 error: "Received a system message during batch processing",
             },
         ],

@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitter } from 'events';
@@ -56,6 +54,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export const agentSchedulerId = "_scheduler";
+
+// @public
+export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @public
 export enum CompressionAlgorithms {
@@ -122,6 +123,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     dispose(error?: Error): void;
     // (undocumented)
     get disposed(): boolean;
+    // (undocumented)
+    get disposeFn(): (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     ensureNoDataModelChanges<T>(callback: () => T): T;
@@ -526,6 +529,8 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
     // (undocumented)
+    disposeFn?(): void;
+    // (undocumented)
     readonly logger: ITelemetryLogger;
     readonly summarizerClientId: string | undefined;
 }
@@ -753,6 +758,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitFlushed(): Promise<IAckedSummary | undefined>;
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
+
+// @public
+export const TombstoneResponseHeaderKey = "isTombstoned";
 
 // @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;

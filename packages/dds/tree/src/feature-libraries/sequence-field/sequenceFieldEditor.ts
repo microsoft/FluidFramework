@@ -7,7 +7,7 @@ import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
 import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
-import { Changeset, Mark, MoveId, NodeChangeType } from "./format";
+import { Changeset, Mark, MoveId, NodeChangeType, Reattach } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
@@ -16,8 +16,9 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
     revive(
         index: number,
         count: number,
+        detachedBy: RevisionTag,
         detachIndex: number,
-        revision: RevisionTag,
+        isIntention?: true,
     ): Changeset<never>;
 
     /**
@@ -53,17 +54,23 @@ export const sequenceFieldEditor = {
     revive: (
         index: number,
         count: number,
-        detachIndex: number,
-        revision: RevisionTag,
-    ): Changeset<never> =>
-        count === 0
-            ? []
-            : markAtIndex(index, {
-                  type: "Revive",
-                  count,
-                  detachedBy: revision,
-                  detachIndex,
-              }),
+        detachedBy: RevisionTag,
+        detachIndex?: number,
+        isIntention?: true,
+    ): Changeset<never> => {
+        const mark: Reattach<never> = {
+            type: "Revive",
+            count,
+            detachedBy,
+            // Revives are typically created to undo a delete from the prior revision.
+            // When that's the case, we know the content used to be at the index at which it is being revived.
+            detachIndex: detachIndex ?? index,
+        };
+        if (isIntention) {
+            mark.isIntention = true;
+        }
+        return count === 0 ? [] : markAtIndex(index, mark);
+    },
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never> {
         if (count === 0 || sourceIndex === destIndex) {
             // TODO: Should we allow creating a move which has no observable effect?
@@ -102,7 +109,7 @@ export const sequenceFieldEditor = {
         count: number,
         destIndex: number,
         detachedBy: RevisionTag,
-        detachIndex: number,
+        detachIndex?: number,
     ): Changeset<never> {
         if (count === 0) {
             return [];
@@ -121,7 +128,9 @@ export const sequenceFieldEditor = {
             id,
             count,
             detachedBy,
-            detachIndex,
+            // Returns are typically created to undo a move from the prior revision.
+            // When that's the case, we know the content used to be at the index to which it is being returned.
+            detachIndex: detachIndex ?? destIndex,
         };
 
         const factory = new MarkListFactory<never>();

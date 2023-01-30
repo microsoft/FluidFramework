@@ -9,7 +9,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IMergeTreeDeltaOp } from "../ops";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk";
 import { Client } from "..";
-import { PartialSequenceLengths } from "../partialLengths";
+import { PartialSequenceLengths, verify } from "../partialLengths";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
@@ -119,11 +119,11 @@ class ReconnectTestHelper {
 
 describe("obliterate", () => {
     beforeEach(() => {
-        PartialSequenceLengths.options.verify = true;
+        PartialSequenceLengths.options.verifier = verify;
     });
 
     afterEach(() => {
-        PartialSequenceLengths.options.verify = false;
+        PartialSequenceLengths.options.verifier = undefined;
     });
 
     it("obliterate does not expand during rebase", () => {

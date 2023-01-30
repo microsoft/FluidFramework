@@ -26,6 +26,7 @@ import {
     getIds,
     assertIsStableId,
     isStableId,
+    StableId,
 } from "../../id-compressor";
 import type { IdCreationRange, UnackedLocalId } from "../../id-compressor";
 import { fail } from "../../util";
@@ -449,6 +450,23 @@ describe("IdCompressor", () => {
             );
         });
 
+        it("can finalize ranges into clusters of varying sizes", () => {
+            for (let i = 1; i < 5; i++) {
+                for (let j = 0; j <= i; j++) {
+                    const compressor = createCompressor(Client.Client1, i);
+                    const ids = new Set<SessionSpaceCompressedId>();
+                    for (let k = 0; k <= j; k++) {
+                        ids.add(compressor.generateCompressedId());
+                    }
+                    compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                    const opIds = new Set<OpSpaceCompressedId>();
+                    ids.forEach((id) => opIds.add(compressor.normalizeToOpSpace(id)));
+                    assert.equal(ids.size, opIds.size);
+                    opIds.forEach((id) => assert.equal(isFinalId(id), true));
+                }
+            }
+        });
+
         it("prevents finalizing unacceptably enormous amounts of ID allocation", () => {
             const compressor1 = createCompressor(Client.Client1);
             const integerLargerThanHalfMax = Math.round((Number.MAX_SAFE_INTEGER / 3) * 2);
@@ -741,6 +759,464 @@ describe("IdCompressor", () => {
                 compressor2.localSessionId,
             );
             assert.equal(normalizedToClient1SessionSpace, id);
+        });
+    });
+
+    describe("Telemetry", () => {
+        it("emits first cluster and new cluster telemetry events", () => {
+            const mockLogger = new MockLogger();
+            const compressor = createCompressor(Client.Client1, 5, mockLogger);
+            const localId1 = compressor.generateCompressedId();
+            assert(isLocalId(localId1));
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+            mockLogger.assertMatch([
+                {
+                    eventName: "RuntimeIdCompressor:FirstCluster",
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                },
+                {
+                    eventName: "RuntimeIdCompressor:NewCluster",
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                    clusterCapacity: 5,
+                    clusterCount: 1,
+                },
+                {
+                    eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                    eagerFinalIdCount: 0,
+                    overridesCount: 0,
+                    localIdCount: 1,
+                },
+            ]);
+        });
+
+        it("emits new cluster event on second cluster", () => {
+            // Fill the first cluster
+            const mockLogger = new MockLogger();
+            const compressor = createCompressor(Client.Client1, 5, mockLogger);
+            for (let i = 0; i < 5; i++) {
+                compressor.generateCompressedId();
+            }
+            const range = compressor.takeNextCreationRange();
+            compressor.finalizeCreationRange(range);
+
+            // Create another cluster with a different client so that expansion doesn't happen
+            const mockLogger2 = new MockLogger();
+            const compressor2 = createCompressor(Client.Client2, 5, mockLogger2);
+            compressor2.finalizeCreationRange(range);
+            compressor2.generateCompressedId();
+            const range2 = compressor2.takeNextCreationRange();
+            compressor2.finalizeCreationRange(range2);
+            compressor.finalizeCreationRange(range2);
+            // Make sure we emitted the FirstCluster event
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:FirstCluster",
+                },
+            ]);
+            mockLogger.clear();
+
+            // Trigger a new cluster creation and make sure FirstCluster isn't emitted
+            compressor.generateCompressedId();
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:NewCluster",
+                },
+            ]);
+            mockLogger.assertMatchNone([
+                {
+                    eventName: "RuntimeIdCompressor:FirstCluster",
+                },
+            ]);
+        });
+
+        it("correctly logs telemetry events for eager final id allocations", () => {
+            const mockLogger = new MockLogger();
+            const compressor = createCompressor(Client.Client1, 5, mockLogger);
+            const localId1 = compressor.generateCompressedId();
+            assert(isLocalId(localId1));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                    eagerFinalIdCount: 0,
+                    localIdCount: 1,
+                    overridesCount: 0,
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                },
+            ]);
+            mockLogger.clear();
+            const finalId1 = compressor.generateCompressedId();
+            const finalId2 = compressor.generateCompressedId();
+            assert(isFinalId(finalId1));
+            assert(isFinalId(finalId2));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                    eagerFinalIdCount: 2,
+                    localIdCount: 0,
+                    overridesCount: 0,
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                },
+            ]);
+        });
+
+        it("correctly logs telemetry events for expansion case", () => {
+            const mockLogger = new MockLogger();
+            const compressor = createCompressor(Client.Client1, 5, mockLogger);
+            const localId1 = compressor.generateCompressedId();
+            assert(isLocalId(localId1));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                    eagerFinalIdCount: 0,
+                    localIdCount: 1,
+                    overridesCount: 0,
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                },
+            ]);
+            mockLogger.clear();
+
+            for (let i = 0; i < 4; i++) {
+                const id = compressor.generateCompressedId();
+                assert(isFinalId(id));
+            }
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                    eagerFinalIdCount: 4,
+                    localIdCount: 0,
+                    overridesCount: 0,
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                },
+            ]);
+            mockLogger.clear();
+
+            const expansionId1 = compressor.generateCompressedId();
+            const expansionId2 = compressor.generateCompressedId();
+            assert(isLocalId(expansionId1));
+            assert(isLocalId(expansionId2));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            mockLogger.assertMatch([
+                {
+                    eventName: "RuntimeIdCompressor:ClusterExpansion",
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                    previousCapacity: 5,
+                    newCapacity: 12,
+                    overflow: 2,
+                },
+                {
+                    eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                    eagerFinalIdCount: 2,
+                    localIdCount: 0,
+                    overridesCount: 0,
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                },
+            ]);
+        });
+
+        it("emits correct telemetry status with overrides", () => {
+            const mockLogger = new MockLogger();
+            const compressor = createCompressor(Client.Client1, 5, mockLogger);
+            const localId1 = compressor.generateCompressedId();
+            assert(isLocalId(localId1));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                    eagerFinalIdCount: 0,
+                    localIdCount: 1,
+                    overridesCount: 0,
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                },
+            ]);
+            mockLogger.clear();
+
+            const finalId2 = compressor.generateCompressedId();
+            const overrideId3 = compressor.generateCompressedId("override");
+            assert(isFinalId(finalId2));
+            assert(isLocalId(overrideId3));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                    eagerFinalIdCount: 1,
+                    localIdCount: 1,
+                    overridesCount: 1,
+                    sessionId: "88888888-8888-4888-b088-888888888888",
+                },
+            ]);
+        });
+
+        it("emits telemetry when serialized", () => {
+            const mockLogger = new MockLogger();
+            const compressor = createCompressor(Client.Client1, 5, mockLogger);
+            const localId1 = compressor.generateCompressedId();
+            assert(isLocalId(localId1));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            compressor.serialize(false);
+
+            mockLogger.assertMatchAny([
+                {
+                    eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+                    size: 137,
+                    clusterCount: 1,
+                    sessionCount: 1,
+                },
+            ]);
+        });
+    });
+
+    describe("Eager final ID allocation", () => {
+        it("eagerly allocates final IDs when cluster creation has been finalized", () => {
+            const compressor = createCompressor(Client.Client1, 5);
+            const localId1 = compressor.generateCompressedId();
+            assert(isLocalId(localId1));
+            const localId2 = compressor.generateCompressedId();
+            assert(isLocalId(localId2));
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+            const finalId3 = compressor.generateCompressedId();
+            assert(isFinalId(finalId3));
+            const finalId4 = compressor.generateCompressedId();
+            assert(isFinalId(finalId4));
+            const finalId5 = compressor.generateCompressedId();
+            assert(isFinalId(finalId5));
+            const localId6 = compressor.generateCompressedId();
+            assert(isLocalId(localId6));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+            const opSpaceId1 = compressor.normalizeToOpSpace(localId1);
+            const opSpaceId2 = compressor.normalizeToOpSpace(localId2);
+            const opSpaceId3 = compressor.normalizeToOpSpace(finalId3);
+            const opSpaceId4 = compressor.normalizeToOpSpace(finalId4);
+            const opSpaceId5 = compressor.normalizeToOpSpace(finalId5);
+            const opSpaceId6 = compressor.normalizeToOpSpace(localId6);
+
+            assert(isFinalId(opSpaceId1));
+            assert(isFinalId(opSpaceId2));
+            assert(isFinalId(opSpaceId3) && opSpaceId3 === finalId3);
+            assert(isFinalId(opSpaceId4) && opSpaceId4 === finalId4);
+            assert(isFinalId(opSpaceId5) && opSpaceId5 === finalId5);
+            assert(isFinalId(opSpaceId6));
+
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId1), localId1);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId2), localId2);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId3), finalId3);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId4), finalId4);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId5), finalId5);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId6), localId6);
+        });
+
+        it("does not eagerly allocate final IDs for IDs with overrides", () => {
+            const compressor = createCompressor(Client.Client1, 5);
+            const localId1 = compressor.generateCompressedId();
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+            const override1 = compressor.generateCompressedId("override1");
+            assert(isLocalId(override1));
+            const finalId1 = compressor.generateCompressedId();
+            assert(isFinalId(finalId1));
+
+            generateCompressedIds(compressor, 5);
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+            const override2 = compressor.generateCompressedId("override2");
+            assert(isLocalId(override2));
+            const finalId2 = compressor.generateCompressedId();
+            assert(isFinalId(finalId2));
+
+            compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+            const opSpaceId1 = compressor.normalizeToOpSpace(localId1);
+            const opSpaceId2 = compressor.normalizeToOpSpace(override1);
+            const opSpaceId3 = compressor.normalizeToOpSpace(finalId1);
+            const opSpaceId4 = compressor.normalizeToOpSpace(override2);
+            const opSpaceId5 = compressor.normalizeToOpSpace(finalId2);
+
+            assert(isFinalId(opSpaceId1));
+            assert(isFinalId(opSpaceId2));
+            assert(isFinalId(opSpaceId3) && opSpaceId3 === finalId1);
+            assert(isFinalId(opSpaceId4));
+            assert(isFinalId(opSpaceId5) && opSpaceId5 === finalId2);
+
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId1), localId1);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId2), override1);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId3), finalId1);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId4), override2);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId5), finalId2);
+        });
+
+        it("correctly normalizes eagerly allocated final IDs", () => {
+            const compressor = createCompressor(Client.Client1, 5);
+            const localId1 = compressor.generateCompressedId();
+            const range1 = compressor.takeNextCreationRange();
+            const localId2 = compressor.generateCompressedId();
+            const range2 = compressor.takeNextCreationRange();
+            assert(isLocalId(localId1));
+            assert(isLocalId(localId2));
+
+            compressor.finalizeCreationRange(range1);
+            compressor.finalizeCreationRange(range2);
+
+            const opSpaceId1 = compressor.normalizeToOpSpace(localId1);
+            const opSpaceId2 = compressor.normalizeToOpSpace(localId2);
+
+            assert(isFinalId(opSpaceId1));
+            assert(isFinalId(opSpaceId2));
+
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId1), localId1);
+            assert.equal(compressor.normalizeToSessionSpace(opSpaceId2), localId2);
+        });
+
+        it("generates correct eager finals when there are outstanding locals after cluster expansion", () => {
+            const compressor = createCompressor(Client.Client1, 2);
+
+            // Before cluster expansion
+            assert(isLocalId(compressor.generateCompressedId()));
+            const rangeA = compressor.takeNextCreationRange();
+            compressor.finalizeCreationRange(rangeA);
+            assert(isFinalId(compressor.generateCompressedId()));
+
+            // After cluster expansion
+            assert(isLocalId(compressor.generateCompressedId()));
+            const rangeB = compressor.takeNextCreationRange();
+            const localId = compressor.generateCompressedId();
+            assert(isLocalId(localId));
+
+            // Take a range that won't be finalized in this test; the finalizing of range B should associate this range with finals
+            const rangeC = compressor.takeNextCreationRange();
+
+            compressor.finalizeCreationRange(rangeB);
+            const eagerId = compressor.generateCompressedId();
+            assert(isFinalId(eagerId));
+
+            assert.equal(compressor.recompress(compressor.decompress(localId)), localId);
+            assert.equal(compressor.recompress(compressor.decompress(eagerId)), eagerId);
+
+            compressor.finalizeCreationRange(rangeC);
+
+            assert.equal(compressor.recompress(compressor.decompress(localId)), localId);
+            assert.equal(compressor.recompress(compressor.decompress(eagerId)), eagerId);
+        });
+
+        it("generates unique eager finals when multiple outstanding creation ranges during finalizing", () => {
+            const compressor = createCompressor(
+                Client.Client1,
+                10 /* must be 10 for the test to make sense */,
+            );
+
+            // Make a first outstanding range
+            const id1_1 = compressor.generateCompressedId();
+            const id1_2 = compressor.generateCompressedId();
+            assert(isLocalId(id1_1));
+            assert(isLocalId(id1_2));
+            const range1 = compressor.takeNextCreationRange();
+
+            // Make a second outstanding range
+            const id2_1 = compressor.generateCompressedId();
+            const id2_2 = compressor.generateCompressedId();
+            assert(isLocalId(id2_1));
+            assert(isLocalId(id2_2));
+            const range2 = compressor.takeNextCreationRange();
+
+            // Finalize just the first one, which should create finals that align with both outstanding ranges
+            compressor.finalizeCreationRange(range1);
+
+            // Make a third range. This one should be composed of eager finals that align after the two ranges above.
+            const id3_1 = compressor.generateCompressedId();
+            const id3_2 = compressor.generateCompressedId();
+            assert(isFinalId(id3_1));
+            assert(isFinalId(id3_2));
+            const range3 = compressor.takeNextCreationRange();
+
+            // Finalize both initial ranges.
+            compressor.finalizeCreationRange(range2);
+            compressor.finalizeCreationRange(range3);
+
+            // Make some more eager finals that should be aligned correctly.
+            const id4_1 = compressor.generateCompressedId();
+            const id4_2 = compressor.generateCompressedId();
+            assert(isFinalId(id4_1));
+            assert(isFinalId(id4_2));
+
+            // Assert everything is unique and consistent.
+            const ids = new Set<SessionSpaceCompressedId>();
+            const uuids = new Set<StableId | string>();
+            [id1_1, id1_2, id2_1, id2_2, id3_1, id3_2, id4_1, id4_2].forEach((id) => {
+                ids.add(id);
+                uuids.add(compressor.decompress(id));
+            });
+            assert.equal(ids.size, 8);
+            assert.equal(uuids.size, 8);
+        });
+
+        it("generates unique eager finals when there are still outstanding locals after a cluster is expanded", () => {
+            // const compressor = createCompressor(Client.Client1, 4 /* must be 4 for the test to make sense */);
+
+            const compressor = new IdCompressor(sessionIds.get(Client.Client1), 0);
+            compressor.clusterCapacity = 4;
+
+            // Make locals to fill half the future cluster
+            const id1_1 = compressor.generateCompressedId();
+            const id1_2 = compressor.generateCompressedId();
+            assert(isLocalId(id1_1));
+            assert(isLocalId(id1_2));
+            const range1 = compressor.takeNextCreationRange();
+
+            // Make locals to overflow the future cluster
+            const id2_1 = compressor.generateCompressedId();
+            const id2_2 = compressor.generateCompressedId();
+            const id2_3 = compressor.generateCompressedId();
+            assert(isLocalId(id2_1));
+            assert(isLocalId(id2_2));
+            assert(isLocalId(id2_3));
+            const range2 = compressor.takeNextCreationRange();
+
+            // Finalize the first range. This should align the first four locals (i.e. all of range1, and 2/3 of range2)
+            compressor.finalizeCreationRange(range1);
+
+            // Make a single range that should still be overflowing the initial cluster (i.e. be local)
+            const id3_1 = compressor.generateCompressedId();
+            assert(isLocalId(id3_1));
+            const range3 = compressor.takeNextCreationRange();
+
+            // First finalize should expand the cluster and align all outstanding ranges.
+            compressor.finalizeCreationRange(range2);
+
+            // All generated IDs should have aligned finals (even though range3 has not been finalized)
+            const allIds: SessionSpaceCompressedId[] = [id1_1, id1_2, id2_1, id2_2, id2_3, id3_1];
+            allIds.forEach((id) => assert(isFinalId(compressor.normalizeToOpSpace(id))));
+
+            compressor.finalizeCreationRange(range3);
+
+            // Make one eager final
+            const id4_1 = compressor.generateCompressedId();
+            allIds.push(id4_1);
+            assert(isFinalId(id4_1));
+
+            // Assert everything is unique and consistent.
+            const ids = new Set<SessionSpaceCompressedId>();
+            const uuids = new Set<StableId | string>();
+            allIds.forEach((id) => {
+                ids.add(id);
+                uuids.add(compressor.decompress(id));
+            });
+            assert.equal(ids.size, 7);
+            assert.equal(uuids.size, 7);
         });
     });
 
@@ -1142,7 +1618,7 @@ describe("IdCompressor", () => {
         });
 
         itNetwork("produces consistent IDs with large fuzz input", (network) => {
-            const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
+            const generator = take(2000, makeOpGenerator({ includeOverrides: true }));
             performFuzzActions(generator, network, 1984, undefined, true, (n) =>
                 n.assertNetworkState(),
             );
@@ -1194,358 +1670,6 @@ describe("IdCompressor", () => {
                 (e) =>
                     validateAssertionError(e, "Compressed ID was not generated by this compressor"),
             );
-        });
-
-        describe("Telemetry", () => {
-            it("emits first cluster and new cluster telemetry events", () => {
-                const mockLogger = new MockLogger();
-                const compressor = createCompressor(Client.Client1, 5, mockLogger);
-                const localId1 = compressor.generateCompressedId();
-                assert(isLocalId(localId1));
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-
-                mockLogger.assertMatch([
-                    {
-                        eventName: "RuntimeIdCompressor:FirstCluster",
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                    },
-                    {
-                        eventName: "RuntimeIdCompressor:NewCluster",
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                        clusterCapacity: 5,
-                        clusterCount: 1,
-                    },
-                    {
-                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                        eagerFinalIdCount: 0,
-                        overridesCount: 0,
-                        localIdCount: 1,
-                    },
-                ]);
-            });
-
-            it("emits new cluster event on second cluster", () => {
-                // Fill the first cluster
-                const mockLogger = new MockLogger();
-                const compressor = createCompressor(Client.Client1, 5, mockLogger);
-                for (let i = 0; i < 5; i++) {
-                    compressor.generateCompressedId();
-                }
-                const range = compressor.takeNextCreationRange();
-                compressor.finalizeCreationRange(range);
-
-                // Create another cluster with a different client so that expansion doesn't happen
-                const mockLogger2 = new MockLogger();
-                const compressor2 = createCompressor(Client.Client2, 5, mockLogger2);
-                compressor2.finalizeCreationRange(range);
-                compressor2.generateCompressedId();
-                const range2 = compressor2.takeNextCreationRange();
-                compressor2.finalizeCreationRange(range2);
-                compressor.finalizeCreationRange(range2);
-                // Make sure we emitted the FirstCluster event
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:FirstCluster",
-                    },
-                ]);
-                mockLogger.clear();
-
-                // Trigger a new cluster creation and make sure FirstCluster isn't emitted
-                compressor.generateCompressedId();
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:NewCluster",
-                    },
-                ]);
-                mockLogger.assertMatchNone([
-                    {
-                        eventName: "RuntimeIdCompressor:FirstCluster",
-                    },
-                ]);
-            });
-
-            it("correctly logs telemetry events for eager final id allocations", () => {
-                const mockLogger = new MockLogger();
-                const compressor = createCompressor(Client.Client1, 5, mockLogger);
-                const localId1 = compressor.generateCompressedId();
-                assert(isLocalId(localId1));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
-                        eagerFinalIdCount: 0,
-                        localIdCount: 1,
-                        overridesCount: 0,
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                    },
-                ]);
-                mockLogger.clear();
-                const finalId1 = compressor.generateCompressedId();
-                const finalId2 = compressor.generateCompressedId();
-                assert(isFinalId(finalId1));
-                assert(isFinalId(finalId2));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
-                        eagerFinalIdCount: 2,
-                        localIdCount: 0,
-                        overridesCount: 0,
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                    },
-                ]);
-            });
-
-            it("correctly logs telemetry events for expansion case", () => {
-                const mockLogger = new MockLogger();
-                const compressor = createCompressor(Client.Client1, 5, mockLogger);
-                const localId1 = compressor.generateCompressedId();
-                assert(isLocalId(localId1));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
-                        eagerFinalIdCount: 0,
-                        localIdCount: 1,
-                        overridesCount: 0,
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                    },
-                ]);
-                mockLogger.clear();
-
-                for (let i = 0; i < 4; i++) {
-                    const id = compressor.generateCompressedId();
-                    assert(isFinalId(id));
-                }
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
-                        eagerFinalIdCount: 4,
-                        localIdCount: 0,
-                        overridesCount: 0,
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                    },
-                ]);
-                mockLogger.clear();
-
-                const expansionId1 = compressor.generateCompressedId();
-                const expansionId2 = compressor.generateCompressedId();
-                assert(isLocalId(expansionId1));
-                assert(isLocalId(expansionId2));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                mockLogger.assertMatch([
-                    {
-                        eventName: "RuntimeIdCompressor:ClusterExpansion",
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                        previousCapacity: 5,
-                        newCapacity: 12,
-                        overflow: 2,
-                    },
-                    {
-                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
-                        eagerFinalIdCount: 2,
-                        localIdCount: 0,
-                        overridesCount: 0,
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                    },
-                ]);
-            });
-
-            it("emits correct telemetry status with overrides", () => {
-                const mockLogger = new MockLogger();
-                const compressor = createCompressor(Client.Client1, 5, mockLogger);
-                const localId1 = compressor.generateCompressedId();
-                assert(isLocalId(localId1));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
-                        eagerFinalIdCount: 0,
-                        localIdCount: 1,
-                        overridesCount: 0,
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                    },
-                ]);
-                mockLogger.clear();
-
-                const finalId2 = compressor.generateCompressedId();
-                const overrideId3 = compressor.generateCompressedId("override");
-                assert(isFinalId(finalId2));
-                assert(isLocalId(overrideId3));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
-                        eagerFinalIdCount: 1,
-                        localIdCount: 1,
-                        overridesCount: 1,
-                        sessionId: "88888888-8888-4888-b088-888888888888",
-                    },
-                ]);
-            });
-
-            it("emits telemetry when serialized", () => {
-                const mockLogger = new MockLogger();
-                const compressor = createCompressor(Client.Client1, 5, mockLogger);
-                const localId1 = compressor.generateCompressedId();
-                assert(isLocalId(localId1));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                compressor.serialize(false);
-
-                mockLogger.assertMatchAny([
-                    {
-                        eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
-                        size: 137,
-                        clusterCount: 1,
-                        sessionCount: 1,
-                    },
-                ]);
-            });
-        });
-
-        describe("Eager final ID allocation", () => {
-            it("eagerly allocates final IDs when cluster creation has been finalized", () => {
-                const compressor = createCompressor(Client.Client1, 5);
-                const localId1 = compressor.generateCompressedId();
-                assert(isLocalId(localId1));
-                const localId2 = compressor.generateCompressedId();
-                assert(isLocalId(localId2));
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-                const finalId3 = compressor.generateCompressedId();
-                assert(isFinalId(finalId3));
-                const finalId4 = compressor.generateCompressedId();
-                assert(isFinalId(finalId4));
-                const finalId5 = compressor.generateCompressedId();
-                assert(isFinalId(finalId5));
-                const localId6 = compressor.generateCompressedId();
-                assert(isLocalId(localId6));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-
-                const opSpaceId1 = compressor.normalizeToOpSpace(localId1);
-                const opSpaceId2 = compressor.normalizeToOpSpace(localId2);
-                const opSpaceId3 = compressor.normalizeToOpSpace(finalId3);
-                const opSpaceId4 = compressor.normalizeToOpSpace(finalId4);
-                const opSpaceId5 = compressor.normalizeToOpSpace(finalId5);
-                const opSpaceId6 = compressor.normalizeToOpSpace(localId6);
-
-                assert(isFinalId(opSpaceId1));
-                assert(isFinalId(opSpaceId2));
-                assert(isFinalId(opSpaceId3) && opSpaceId3 === finalId3);
-                assert(isFinalId(opSpaceId4) && opSpaceId4 === finalId4);
-                assert(isFinalId(opSpaceId5) && opSpaceId5 === finalId5);
-                assert(isFinalId(opSpaceId6));
-
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId1), localId1);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId2), localId2);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId3), finalId3);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId4), finalId4);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId5), finalId5);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId6), localId6);
-            });
-
-            it("does not eagerly allocate final IDs for IDs with overrides", () => {
-                const compressor = createCompressor(Client.Client1, 5);
-                const localId1 = compressor.generateCompressedId();
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-
-                const override1 = compressor.generateCompressedId("override1");
-                assert(isLocalId(override1));
-                const finalId1 = compressor.generateCompressedId();
-                assert(isFinalId(finalId1));
-
-                generateCompressedIds(compressor, 5);
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-
-                const override2 = compressor.generateCompressedId("override2");
-                assert(isLocalId(override2));
-                const finalId2 = compressor.generateCompressedId();
-                assert(isFinalId(finalId2));
-
-                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-
-                const opSpaceId1 = compressor.normalizeToOpSpace(localId1);
-                const opSpaceId2 = compressor.normalizeToOpSpace(override1);
-                const opSpaceId3 = compressor.normalizeToOpSpace(finalId1);
-                const opSpaceId4 = compressor.normalizeToOpSpace(override2);
-                const opSpaceId5 = compressor.normalizeToOpSpace(finalId2);
-
-                assert(isFinalId(opSpaceId1));
-                assert(isFinalId(opSpaceId2));
-                assert(isFinalId(opSpaceId3) && opSpaceId3 === finalId1);
-                assert(isFinalId(opSpaceId4));
-                assert(isFinalId(opSpaceId5) && opSpaceId5 === finalId2);
-
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId1), localId1);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId2), override1);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId3), finalId1);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId4), override2);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId5), finalId2);
-            });
-
-            it("correctly normalizes eagerly allocated final IDs", () => {
-                const compressor = createCompressor(Client.Client1, 5);
-                const localId1 = compressor.generateCompressedId();
-                const range1 = compressor.takeNextCreationRange();
-                const localId2 = compressor.generateCompressedId();
-                const range2 = compressor.takeNextCreationRange();
-                assert(isLocalId(localId1));
-                assert(isLocalId(localId2));
-
-                compressor.finalizeCreationRange(range1);
-                compressor.finalizeCreationRange(range2);
-
-                const opSpaceId1 = compressor.normalizeToOpSpace(localId1);
-                const opSpaceId2 = compressor.normalizeToOpSpace(localId2);
-
-                assert(isFinalId(opSpaceId1));
-                assert(isFinalId(opSpaceId2));
-
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId1), localId1);
-                assert.equal(compressor.normalizeToSessionSpace(opSpaceId2), localId2);
-            });
-
-            it("generates correct eager finals when there are outstanding locals after cluster expansion", () => {
-                const compressor = createCompressor(Client.Client1, 2);
-
-                // Before cluster expansion
-                assert(isLocalId(compressor.generateCompressedId()));
-                const rangeA = compressor.takeNextCreationRange();
-                compressor.finalizeCreationRange(rangeA);
-                assert(isFinalId(compressor.generateCompressedId()));
-
-                // After cluster expansion
-                assert(isLocalId(compressor.generateCompressedId()));
-                const rangeB = compressor.takeNextCreationRange();
-                const localId = compressor.generateCompressedId();
-                assert(isLocalId(localId));
-
-                // Take a range that won't be finalized in this test; the finalizing of range B should associate this range with finals
-                const rangeC = compressor.takeNextCreationRange();
-
-                compressor.finalizeCreationRange(rangeB);
-                const eagerId = compressor.generateCompressedId();
-                assert(isFinalId(eagerId));
-
-                assert.equal(compressor.recompress(compressor.decompress(localId)), localId);
-                assert.equal(compressor.recompress(compressor.decompress(eagerId)), eagerId);
-
-                compressor.finalizeCreationRange(rangeC);
-
-                assert.equal(compressor.recompress(compressor.decompress(localId)), localId);
-                assert.equal(compressor.recompress(compressor.decompress(eagerId)), eagerId);
-            });
         });
 
         describe("Finalizing", () => {
@@ -1722,7 +1846,7 @@ describe("IdCompressor", () => {
             );
 
             itNetwork("can serialize after a large fuzz input", 3, (network) => {
-                const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
+                const generator = take(2000, makeOpGenerator({ includeOverrides: true }));
                 performFuzzActions(generator, network, Math.PI, undefined, true, (n) => {
                     // Periodically check that everyone in the network has the same serialized state
                     n.deliverOperations(DestinationClient.All);

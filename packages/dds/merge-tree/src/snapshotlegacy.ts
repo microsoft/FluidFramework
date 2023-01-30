@@ -82,7 +82,7 @@ export class SnapshotLegacy {
         }
 
         assert(segsWithAttribution === 0 || segsWithAttribution === segCount,
-            "all or no segments should have attribution");
+            0x4bf /* all or no segments should have attribution */);
 
         return {
             version: undefined,
@@ -151,7 +151,7 @@ export class SnapshotLegacy {
     }
 
     extractSync() {
-        const collabWindow = this.mergeTree.getCollabWindow();
+        const collabWindow = this.mergeTree.collabWindow ;
         this.seq = collabWindow.minSeq;
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,

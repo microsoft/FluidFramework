@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MergeTreeDeltaType } from "../ops";
-import { PartialSequenceLengths } from "../partialLengths";
+import { PartialSequenceLengths, verify } from "../partialLengths";
 import { TestClient } from "./testClient";
 import { insertText, validatePartialLengths } from "./testUtils";
 
@@ -16,7 +16,7 @@ describe("obliterate partial lengths", () => {
     const remoteClientId = 18;
 
     beforeEach(() => {
-        PartialSequenceLengths.options.verify = true;
+        PartialSequenceLengths.options.verifier = verify;
         client = new TestClient();
         client.startOrUpdateCollaboration("local");
         for (const char of "hello world") {
@@ -32,7 +32,7 @@ describe("obliterate partial lengths", () => {
     });
 
     afterEach(() => {
-        PartialSequenceLengths.options.verify = false;
+        PartialSequenceLengths.options.verifier = undefined;
     });
 
     it("removes text", () => {

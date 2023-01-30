@@ -221,7 +221,12 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
 export async function getRepoManagerFromWriteAPI(
     repoManagerFactory: IRepositoryManagerFactory,
     repoManagerParams: IRepoManagerParams,
-    repoPerDocEnabled: boolean) {
+    repoPerDocEnabled: boolean,
+    optimizeForInitialSummary?: boolean,
+) {
+    if (optimizeForInitialSummary) {
+        return repoManagerFactory.create({ ...repoManagerParams, optimizeForInitialSummary });
+    }
     try {
         return await repoManagerFactory.open(repoManagerParams);
     } catch (error: any) {
@@ -254,12 +259,43 @@ export async function checkSoftDeleted(
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
     };
+    const metric = Lumberjack.newLumberMetric(
+        GitRestLumberEventName.CheckSoftDeleted,
+        lumberjackProperties);
     const softDeletedMarkerPath = getSoftDeletedMarkerPath(repoPath);
-    const softDeleteBlobExists = await exists(fileSystemManager, softDeletedMarkerPath);
-    const softDeleted = softDeleteBlobExists !== false && softDeleteBlobExists.isFile();
+
+    let softDeleted = false;
+    try {
+        const softDeleteBlobExists = await exists(fileSystemManager, softDeletedMarkerPath);
+        softDeleted = softDeleteBlobExists !== false && softDeleteBlobExists.isFile();
+        metric.setProperties({ softDeleted });
+        metric.success("Checked if document is soft-deleted.");
+    } catch (e) {
+        metric.error("Failed to check if document is soft-deleted.", e);
+        throw e;
+    }
+
     if (softDeleted) {
         const error = new NetworkError(410, "The requested resource has been deleted.");
         Lumberjack.error("Attempted to retrieve soft-deleted document.", lumberjackProperties, error);
+        throw error;
+    }
+}
+
+export async function executeApiWithMetric<U>(
+    api: () => Promise<U>,
+    apiName: string,
+    telemetryProperties: Record<string, any>,
+): Promise<U> {
+    const metric = Lumberjack.newLumberMetric(
+        apiName,
+        telemetryProperties);
+    try {
+        const result = await api();
+        metric.success(`RepositoryManager: ${apiName} success`);
+        return result;
+    } catch (error: any) {
+        metric.error(`RepositoryManager: ${apiName} error`, error);
         throw error;
     }
 }

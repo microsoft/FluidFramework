@@ -14,7 +14,7 @@ import {
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-    ensureContainerConnected,
+    waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -53,7 +53,7 @@ describeNoCompat("Flush mode validation", (getTestObjectProvider) => {
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
         // Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
         dataObject1map1.set("key", "value");
-        await ensureContainerConnected(container1);
+        await waitForContainerConnection(container1, true);
         await provider.ensureSynchronized();
     }
 

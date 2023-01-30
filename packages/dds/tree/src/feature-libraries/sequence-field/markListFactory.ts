@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { RevisionTag } from "../../core";
 import { Mark, MarkList, ObjectMark, Skip } from "./format";
-import { isObjMark, isSkipMark, MoveEffectTable, tryExtendMark } from "./utils";
+import { MoveEffectTable } from "./moveEffectTable";
+import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -17,7 +19,12 @@ export class MarkListFactory<TNodeChange> {
     private offset = 0;
     public readonly list: MarkList<TNodeChange> = [];
 
-    public constructor(private readonly moveEffects?: MoveEffectTable<TNodeChange>) {}
+    public constructor(
+        // TODO: Is there a usage of MarkListFactory where we need a non-undefined revision?
+        private readonly revision?: RevisionTag | undefined,
+        private readonly moveEffects?: MoveEffectTable<TNodeChange>,
+        private readonly recordMerges: boolean = false,
+    ) {}
 
     public push(...marks: Mark<TNodeChange>[]): void {
         for (const item of marks) {
@@ -40,7 +47,7 @@ export class MarkListFactory<TNodeChange> {
         }
         const prev = this.list[this.list.length - 1];
         if (isObjMark(prev) && prev.type === mark.type) {
-            if (tryExtendMark(prev, mark, this.moveEffects)) {
+            if (tryExtendMark(prev, mark, this.revision, this.moveEffects, this.recordMerges)) {
                 return;
             }
         }

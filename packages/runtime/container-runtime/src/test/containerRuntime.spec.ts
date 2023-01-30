@@ -319,7 +319,8 @@ describe("Runtime", () => {
 
                 // We expect only 5 events
                 mockLogger.assertMatchStrict(Array.from(Array(5).keys()).map(() => ({
-                    eventName: "ContainerRuntime:Op reentry detected",
+                    eventName: "ContainerRuntime:OpReentry",
+                    error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
                 })));
             });
         });

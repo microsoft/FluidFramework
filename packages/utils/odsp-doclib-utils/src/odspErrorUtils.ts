@@ -240,6 +240,12 @@ export function createOdspNetworkError(
             error = new NonRetryableError(
                 errorMessage, OdspErrorType.invalidFileNameError, driverProps);
             break;
+        case 423: // File locked
+            if (innerMostErrorCode === "resourceLocked") {
+                error = new NonRetryableError(
+                    errorMessage, DriverErrorType.fileIsLocked, driverProps);
+                break;
+            }
         case 500:
             error = new RetryableError(
                 errorMessage, DriverErrorType.genericNetworkError, driverProps);

@@ -48,10 +48,14 @@ const testContainerConfig: ITestContainerConfig = {
 
 const usageErrorMessage = "Empty file summary creation isn't supported in this driver.";
 
+const containerCloseAndDisposeUsageErrors = [
+    { eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
+    { eventName: "fluid:telemetry:Container:ContainerDispose", error: usageErrorMessage },
+];
 const ContainerCloseUsageError: ExpectedEvents = {
-    local: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
-    routerlicious: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
-    tinylicious: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
+    local: containerCloseAndDisposeUsageErrors,
+    routerlicious: containerCloseAndDisposeUsageErrors,
+    tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
 describeFullCompat("blobs", (getTestObjectProvider) => {
@@ -66,30 +70,6 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
     it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
-
-        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-
-        const blobOpP = new Promise<void>((resolve, reject) => dataStore._context.containerRuntime.on("op", (op) => {
-            if (op.type === ContainerMessageType.BlobAttach) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
-            }
-        }));
-
-        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
-
-        dataStore._root.set("my blob", blob);
-
-        await blobOpP;
-    });
-
-    it("attach sends an op with compression enabled", async function() {
-        const container = await provider.makeTestContainer({ ...testContainerConfig, runtimeOptions:
-            { ...testContainerConfig.runtimeOptions, compressionOptions: {
-                minimumBatchSizeInBytes: 1,
-                compressionAlgorithm: CompressionAlgorithms.lz4
-        } } });
-
 
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
@@ -432,5 +412,35 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const uploadP = Promise.all([dataStore1._runtime.uploadBlob(blob), dataStore2._runtime.uploadBlob(blob)]);
         provider.opProcessingController.resumeProcessing();
         await uploadP;
+    });
+
+    // Add this test to full compat ADO: 2942
+    it("attach sends an op with compression enabled", async function() {
+        // ADO:3113
+        if (provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+
+        const container = await provider.makeTestContainer({
+            ...testContainerConfig, runtimeOptions:
+            {
+                ...testContainerConfig.runtimeOptions, compressionOptions: {
+                    minimumBatchSizeInBytes: 1,
+                    compressionAlgorithm: CompressionAlgorithms.lz4
+                }
+            }
+        });
+
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blobOpP = new Promise<void>((resolve, reject) => dataStore._context.containerRuntime.on("op", (op) => {
+            if (op.type === ContainerMessageType.BlobAttach) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+            }
+        }));
+
+        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
+        dataStore._root.set("my blob", blob);
+        await blobOpP;
     });
 });

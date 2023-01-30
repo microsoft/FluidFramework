@@ -2145,6 +2145,7 @@ use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
 declare function get_old_InterfaceDeclaration_MergeTreeStats():
     TypeOnly<old.MergeTreeStats>;
 declare function use_current_InterfaceDeclaration_MergeTreeStats(
+    // @ts-expect-error removed
     use: TypeOnly<current.MergeTreeStats>);
 use_current_InterfaceDeclaration_MergeTreeStats(
     get_old_InterfaceDeclaration_MergeTreeStats());
@@ -2155,6 +2156,7 @@ use_current_InterfaceDeclaration_MergeTreeStats(
 * "InterfaceDeclaration_MergeTreeStats": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_MergeTreeStats():
+    // @ts-expect-error removed
     TypeOnly<current.MergeTreeStats>;
 declare function use_old_InterfaceDeclaration_MergeTreeStats(
     use: TypeOnly<old.MergeTreeStats>);
