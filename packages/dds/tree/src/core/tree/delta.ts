@@ -160,8 +160,8 @@ export type Skip = number;
  * Describes modifications made to a subtree.
  */
 export interface NodeChanges<TTree = ProtoNode> {
-	readonly fields?: FieldChangeMap<TTree>;
 	readonly setValue?: Value;
+	readonly fields?: FieldChangeMap<TTree>;
 }
 
 /**
@@ -223,25 +223,25 @@ export interface FieldChanges<TTree = ProtoNode> {
 export type NestedChange<TTree = ProtoNode> = readonly [ChildIndex, NodeChanges<TTree>];
 
 export interface ChildIndex {
-	context: Context;
-	index: number;
+	readonly context: typeof Context[keyof typeof Context];
+	readonly index: number;
 }
 
 /**
  * The context in which a `ChildIndex` must be interpreted.
  */
-export enum Context {
+export const Context = {
 	/**
 	 * The owning `ChildIndex.index` must be used within the input context of the Delta,
 	 * meaning before any of the shallow changes are applied to the field.
 	 */
-	Input,
+	Input: 0,
 	/**
 	 * The owning `ChildIndex.index` must be used within the output context of the Delta,
 	 * meaning after all of the shallow changes are applied to the field.
 	 */
-	Output,
-}
+	Output: 1,
+} as const;
 
 export const MarkType = {
 	Insert: 0,
