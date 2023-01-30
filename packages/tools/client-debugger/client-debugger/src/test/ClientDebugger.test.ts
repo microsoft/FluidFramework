@@ -20,8 +20,8 @@ import { createMockContainer } from "./Utilities";
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("ClientDebugger unit tests", () => {
-    const containerId = "test-container-id";
-    let container: IContainer | undefined;
+	const containerId = "test-container-id";
+	let container: IContainer | undefined;
 
     const otherContainerId = "test-container-id-other";
     let otherContainer: IContainer | undefined;
@@ -31,9 +31,9 @@ describe("ClientDebugger unit tests", () => {
         otherContainer = createMockContainer();
     });
 
-    afterEach(() => {
-        clearDebuggerRegistry();
-    });
+	afterEach(() => {
+		clearDebuggerRegistry();
+	});
 
     function initializeDebugger(
         _containerId: string,

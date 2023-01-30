@@ -25,10 +25,10 @@ export interface HasClientDebuggers {
  * @internal
  */
 export interface HasClientDebugger {
-    /**
-     * Debugger object that is collecting session data to be displayed.
-     */
-    clientDebugger: IFluidClientDebugger;
+	/**
+	 * Debugger object that is collecting session data to be displayed.
+	 */
+	clientDebugger: IFluidClientDebugger;
 }
 
 /**
@@ -37,18 +37,18 @@ export interface HasClientDebugger {
  * @internal
  */
 export interface HasContainerId {
-    /**
-     * The unique ID of the Fliud Container with which the debugger is associated.
-     */
-    containerId: string;
+	/**
+	 * The unique ID of the Fliud Container with which the debugger is associated.
+	 */
+	containerId: string;
 }
 
 /**
  * Base interface for component props that include a session client ID.
  */
 export interface HasClientId {
-    /**
-     * The unique ID of the session client.
-     */
-    clientId: string;
+	/**
+	 * The unique ID of the session client.
+	 */
+	clientId: string;
 }

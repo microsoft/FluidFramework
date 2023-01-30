@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 import {
-    IOverflowSetItemProps,
-    IconButton,
-    Link,
-    OverflowSet,
-    Stack,
-    initializeIcons,
+	IOverflowSetItemProps,
+	IconButton,
+	Link,
+	OverflowSet,
+	Stack,
+	initializeIcons,
 } from "@fluentui/react";
 import React from "react";
 
@@ -145,88 +145,88 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
  * Root view options for the container visualizer.
  */
 enum RootView {
-    /**
-     * Corresponds with {@link ContainerDataView}.
-     */
-    Container = "Container",
+	/**
+	 * Corresponds with {@link ContainerDataView}.
+	 */
+	Container = "Container",
 
-    /**
-     * Corresponds with {@link DataObjectsView}.
-     */
-    Data = "Data",
+	/**
+	 * Corresponds with {@link DataObjectsView}.
+	 */
+	Data = "Data",
 
-    /**
-     * Corresponds with {@link AudienceView}.
-     */
-    Audience = "Audience",
+	/**
+	 * Corresponds with {@link AudienceView}.
+	 */
+	Audience = "Audience",
 }
 
 /**
  * {@link ViewSelectionMenu} input props.
  */
 interface ViewSelectionMenuProps {
-    /**
-     * The currently-selected inner app view.
-     */
-    currentSelection: RootView;
+	/**
+	 * The currently-selected inner app view.
+	 */
+	currentSelection: RootView;
 
-    /**
-     * Updates the inner app view to the one specified.
-     */
-    updateSelection(newSelection: RootView): void;
+	/**
+	 * Updates the inner app view to the one specified.
+	 */
+	updateSelection(newSelection: RootView): void;
 }
 
 /**
  * Menu for selecting the inner app view to be displayed.
  */
 function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
-    const { currentSelection, updateSelection } = props;
+	const { currentSelection, updateSelection } = props;
 
-    const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([_, flag]) => ({
-        key: flag,
-    }));
+	const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([_, flag]) => ({
+		key: flag,
+	}));
 
-    /**
-     * Specifies how to render an individual menu option.
-     */
-    function onRenderItem(item: IOverflowSetItemProps): React.ReactElement {
-        return (
-            <Link
-                aria-label={item.key}
-                styles={{ root: { marginRight: 10 } }}
-                disabled={item.key === currentSelection}
-                onClick={(): void => updateSelection(item.key as RootView)}
-            >
-                {item.key}
-            </Link>
-        );
-    }
+	/**
+	 * Specifies how to render an individual menu option.
+	 */
+	function onRenderItem(item: IOverflowSetItemProps): React.ReactElement {
+		return (
+			<Link
+				aria-label={item.key}
+				styles={{ root: { marginRight: 10 } }}
+				disabled={item.key === currentSelection}
+				onClick={(): void => updateSelection(item.key as RootView)}
+			>
+				{item.key}
+			</Link>
+		);
+	}
 
-    /**
-     * Specifies how to render any overflow options in the menu.
-     */
-    function onRenderOverflowButton(
-        overflowItems: IOverflowSetItemProps[] | undefined,
-    ): React.ReactElement {
-        return overflowItems === undefined ? (
-            <></>
-        ) : (
-            <IconButton
-                title="More options"
-                menuIconProps={{ iconName: "More" }}
-                menuProps={{ items: overflowItems }}
-            />
-        );
-    }
+	/**
+	 * Specifies how to render any overflow options in the menu.
+	 */
+	function onRenderOverflowButton(
+		overflowItems: IOverflowSetItemProps[] | undefined,
+	): React.ReactElement {
+		return overflowItems === undefined ? (
+			<></>
+		) : (
+			<IconButton
+				title="More options"
+				menuIconProps={{ iconName: "More" }}
+				menuProps={{ items: overflowItems }}
+			/>
+		);
+	}
 
-    return (
-        <OverflowSet
-            aria-label="Debug root view selection"
-            items={options}
-            // TODO: We can add additional menu options here. Reserved for less-frequently used views items.
-            // overflowItems={}
-            onRenderItem={onRenderItem}
-            onRenderOverflowButton={onRenderOverflowButton}
-        />
-    );
+	return (
+		<OverflowSet
+			aria-label="Debug root view selection"
+			items={options}
+			// TODO: We can add additional menu options here. Reserved for less-frequently used views items.
+			// overflowItems={}
+			onRenderItem={onRenderItem}
+			onRenderOverflowButton={onRenderOverflowButton}
+		/>
+	);
 }

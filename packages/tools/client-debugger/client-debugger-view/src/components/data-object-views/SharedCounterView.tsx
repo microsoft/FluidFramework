@@ -26,10 +26,10 @@ const inputFieldTooltipId = "change-counter-input";
  * {@link SharedCounterView} input props.
  */
 export interface SharedCounterViewProps {
-    /**
-     * {@link @fluidframework/map#SharedMap} whose data will be displayed.
-     */
-    sharedCounter: SharedCounter;
+	/**
+	 * {@link @fluidframework/map#SharedMap} whose data will be displayed.
+	 */
+	sharedCounter: SharedCounter;
 }
 
 /**

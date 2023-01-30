@@ -16,16 +16,16 @@ import { FluidClientDebuggers } from "./Debugger";
  * @returns `true` if the debug view was succesfully rendered, otherwise `false`.
  */
 export async function renderClientDebuggerView(
-    // eslint-disable-next-line @rushstack/no-new-null
-    targetElement: HTMLElement | null,
+	// eslint-disable-next-line @rushstack/no-new-null
+	targetElement: HTMLElement | null,
 ): Promise<boolean> {
-    if (targetElement === null) {
-        console.log("Provided null targetElement.");
-        return false;
-    }
+	if (targetElement === null) {
+		console.log("Provided null targetElement.");
+		return false;
+	}
 
-    const debuggerElement = document.createElement("debugger");
-    targetElement.append(debuggerElement);
+	const debuggerElement = document.createElement("debugger");
+	targetElement.append(debuggerElement);
 
     return new Promise<boolean>((resolve) => {
         try {

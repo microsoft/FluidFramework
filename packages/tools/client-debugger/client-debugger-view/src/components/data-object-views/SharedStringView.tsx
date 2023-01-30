@@ -11,17 +11,17 @@ import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/r
  * {@link SharedStringView} input props.
  */
 export interface SharedStringViewProps {
-    /**
-     * {@link @fluidframework/sequence#SharedString} whose data will be displayed.
-     */
-    sharedString: SharedString;
+	/**
+	 * {@link @fluidframework/sequence#SharedString} whose data will be displayed.
+	 */
+	sharedString: SharedString;
 }
 
 /**
  * Default {@link @fluidframework/sequence#SharedString} viewer.
  */
 export function SharedStringView(props: SharedStringViewProps): React.ReactElement {
-    const { sharedString } = props;
+	const { sharedString } = props;
 
     const [text, setText] = React.useState<SharedString>(sharedString);
 

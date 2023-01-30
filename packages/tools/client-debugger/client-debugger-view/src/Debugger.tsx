@@ -135,10 +135,10 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
  * associated with some Container ID.
  */
 interface CanLookForDebugger {
-    /**
-     * Retry looking for the debugger instance.
-     */
-    onRetryDebugger(): void;
+	/**
+	 * Retry looking for the debugger instance.
+	 */
+	onRetryDebugger(): void;
 }
 
 /**

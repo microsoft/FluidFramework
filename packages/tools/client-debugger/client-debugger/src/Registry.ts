@@ -16,35 +16,35 @@ import { IFluidClientDebugger } from "./IFluidClientDebugger";
  * @public
  */
 export interface FluidClientDebuggerProps {
-    /**
-     * The Container with which the debugger will be associated.
-     */
-    container: IContainer;
+	/**
+	 * The Container with which the debugger will be associated.
+	 */
+	container: IContainer;
 
-    /**
-     * The ID of {@link FluidClientDebuggerProps.container | the Container}.
-     */
-    containerId: string;
+	/**
+	 * The ID of {@link FluidClientDebuggerProps.container | the Container}.
+	 */
+	containerId: string;
 
-    /**
-     * Optional: Data belonging to {@link FluidClientDebuggerProps.container | the Container}.
-     *
-     * @remarks The debugger will not mutate this data.
-     */
-    containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+	/**
+	 * Optional: Data belonging to {@link FluidClientDebuggerProps.container | the Container}.
+	 *
+	 * @remarks The debugger will not mutate this data.
+	 */
+	containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
 
-    /**
-     * Optional: Nickname for {@link FluidClientDebuggerProps.container | the Container} / debugger instance.
-     *
-     * @remarks
-     *
-     * Associated tooling may take advantage of this to differentiate between debugger instances using
-     * semantically meaningful information.
-     *
-     * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
-     * debugger instances.
-     */
-    containerNickname?: string;
+	/**
+	 * Optional: Nickname for {@link FluidClientDebuggerProps.container | the Container} / debugger instance.
+	 *
+	 * @remarks
+	 *
+	 * Associated tooling may take advantage of this to differentiate between debugger instances using
+	 * semantically meaningful information.
+	 *
+	 * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
+	 * debugger instances.
+	 */
+	containerNickname?: string;
 }
 
 /**
@@ -169,14 +169,14 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
  * @internal
  */
 export function getFluidClientDebuggers(): IFluidClientDebugger[] {
-    const debuggerRegistry = getDebuggerRegistry();
+	const debuggerRegistry = getDebuggerRegistry();
 
     const clientDebuggers: IFluidClientDebugger[] = [];
     for (const [, clientDebugger] of debuggerRegistry.getRegisteredDebuggers()) {
         clientDebuggers.push(clientDebugger);
     }
 
-    return clientDebuggers;
+	return clientDebuggers;
 }
 
 /**
@@ -194,11 +194,11 @@ export function getDebuggerRegistry(): DebuggerRegistry {
 
     const debuggerRegistry = globalThis.fluidClientDebuggersRegistry as DebuggerRegistry;
 
-    if (debuggerRegistry === undefined) {
-        throw new Error("Fluid Client debugger registry initialization failed.");
-    }
+	if (debuggerRegistry === undefined) {
+		throw new Error("Fluid Client debugger registry initialization failed.");
+	}
 
-    return debuggerRegistry;
+	return debuggerRegistry;
 }
 
 /**
@@ -207,16 +207,16 @@ export function getDebuggerRegistry(): DebuggerRegistry {
  * @internal
  */
 export function clearDebuggerRegistry(): void {
-    const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
-    if (debuggerRegistry !== undefined) {
-        for (const [, clientDebugger] of debuggerRegistry) {
-            if (clientDebugger.disposed) {
-                console.warn(`Fluid Client debugger has already been disposed.`);
-            } else {
-                clientDebugger.dispose();
-            }
-        }
-    }
+	const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
+	if (debuggerRegistry !== undefined) {
+		for (const [, clientDebugger] of debuggerRegistry) {
+			if (clientDebugger.disposed) {
+				console.warn(`Fluid Client debugger has already been disposed.`);
+			} else {
+				clientDebugger.dispose();
+			}
+		}
+	}
 
-    globalThis.fluidClientDebuggers = undefined;
+	globalThis.fluidClientDebuggers = undefined;
 }

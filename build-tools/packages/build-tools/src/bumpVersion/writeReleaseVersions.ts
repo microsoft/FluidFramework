@@ -20,30 +20,30 @@ import { Context } from "./context";
  * @param context the repo context
  */
 export async function writeReleaseVersions(context: Context) {
-    const depVersions = await context.collectVersionInfo(MonoRepoKind.Client);
+	const depVersions = await context.collectVersionInfo(MonoRepoKind.Client);
 
-    const packageVersions: { [packageName: string]: string } = {};
-    for (const [name] of depVersions.repoVersions) {
-        const version = depVersions.get(name);
-        if (version !== undefined) {
-            packageVersions[name] = version;
-        }
-    }
+	const packageVersions: { [packageName: string]: string } = {};
+	for (const [name] of depVersions.repoVersions) {
+		const version = depVersions.get(name);
+		if (version !== undefined) {
+			packageVersions[name] = version;
+		}
+	}
 
-    // Replace release groups (e.g. "Client" and "Server") with their constituent packages
-    for (const pkg of context.repo.packages.packages) {
-        if (isMonoRepoKind(pkg.group)) {
-            packageVersions[pkg.name] = packageVersions[pkg.group];
-        }
-    }
+	// Replace release groups (e.g. "Client" and "Server") with their constituent packages
+	for (const pkg of context.repo.packages.packages) {
+		if (isMonoRepoKind(pkg.group)) {
+			packageVersions[pkg.name] = packageVersions[pkg.group];
+		}
+	}
 
-    for (const repo of supportedMonoRepoValues()) {
-        delete packageVersions[repo];
-    }
+	for (const repo of supportedMonoRepoValues()) {
+		delete packageVersions[repo];
+	}
 
-    // write out to versions.json in the current folder
-    fs.writeFileSync(
-        path.join(await getResolvedFluidRoot(), "versions.json"),
-        JSON.stringify(packageVersions, undefined, 4),
-    );
+	// write out to versions.json in the current folder
+	fs.writeFileSync(
+		path.join(await getResolvedFluidRoot(), "versions.json"),
+		JSON.stringify(packageVersions, undefined, 4),
+	);
 }
