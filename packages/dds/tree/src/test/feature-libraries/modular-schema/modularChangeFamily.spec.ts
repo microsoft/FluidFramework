@@ -81,9 +81,14 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
     rebaser: singleNodeRebaser,
     encoder: singleNodeEncoder,
     editor: singleNodeEditor,
-    intoDelta: (change, deltaFromChild): Delta.FieldChanges => ({
-        nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, deltaFromChild(change, 0)]],
-    }),
+    intoDelta: (change, deltaFromChild): Delta.FieldChanges => {
+        const childDelta = deltaFromChild(change, 0);
+        return childDelta !== undefined
+            ? {
+                  nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, childDelta]],
+              }
+            : {};
+    },
 };
 
 const singleNodeField = new FieldKind(

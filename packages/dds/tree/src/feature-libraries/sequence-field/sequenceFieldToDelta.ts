@@ -14,7 +14,7 @@ import { getInputLength, getOutputLength, isSkipMark } from "./utils";
 export type ToDelta<TNodeChange> = (
     child: TNodeChange,
     index: number | undefined,
-) => Delta.NodeChanges;
+) => Delta.NodeChanges | undefined;
 
 const ERR_NO_REVISION_ON_REVIVE =
     "Unable to get convert revive mark to delta due to missing revision tag";
@@ -42,10 +42,13 @@ export function sequenceFieldToDelta<TNodeChange>(
                     };
                     markList.pushContent(insertMark);
                     if (mark.changes !== undefined) {
-                        modList.push([
-                            { context: Delta.Context.Output, index: outputIndex },
-                            deltaFromChild(mark.changes, undefined),
-                        ]);
+                        const childDelta = deltaFromChild(mark.changes, undefined);
+                        if (childDelta !== undefined) {
+                            modList.push([
+                                { context: Delta.Context.Output, index: outputIndex },
+                                childDelta,
+                            ]);
+                        }
                     }
                     break;
                 }
@@ -60,10 +63,13 @@ export function sequenceFieldToDelta<TNodeChange>(
                     break;
                 }
                 case "Modify": {
-                    modList.push([
-                        { context: Delta.Context.Input, index: inputIndex },
-                        deltaFromChild(mark.changes, inputIndex),
-                    ]);
+                    const childDelta = deltaFromChild(mark.changes, inputIndex);
+                    if (childDelta !== undefined) {
+                        modList.push([
+                            { context: Delta.Context.Input, index: inputIndex },
+                            childDelta,
+                        ]);
+                    }
                     break;
                 }
                 case "Delete": {
@@ -73,10 +79,13 @@ export function sequenceFieldToDelta<TNodeChange>(
                     };
                     markList.pushContent(deleteMark);
                     if (mark.changes !== undefined) {
-                        modList.push([
-                            { context: Delta.Context.Input, index: inputIndex },
-                            deltaFromChild(mark.changes, inputIndex),
-                        ]);
+                        const childDelta = deltaFromChild(mark.changes, inputIndex);
+                        if (childDelta !== undefined) {
+                            modList.push([
+                                { context: Delta.Context.Input, index: inputIndex },
+                                childDelta,
+                            ]);
+                        }
                     }
                     break;
                 }
@@ -89,10 +98,13 @@ export function sequenceFieldToDelta<TNodeChange>(
                     };
                     markList.pushContent(moveMark);
                     if (mark.changes !== undefined) {
-                        modList.push([
-                            { context: Delta.Context.Input, index: inputIndex },
-                            deltaFromChild(mark.changes, inputIndex),
-                        ]);
+                        const childDelta = deltaFromChild(mark.changes, inputIndex);
+                        if (childDelta !== undefined) {
+                            modList.push([
+                                { context: Delta.Context.Input, index: inputIndex },
+                                childDelta,
+                            ]);
+                        }
                     }
                     break;
                 }
@@ -113,10 +125,13 @@ export function sequenceFieldToDelta<TNodeChange>(
                         markList.pushOffset(mark.count);
                     }
                     if (mark.changes !== undefined) {
-                        modList.push([
-                            { context: Delta.Context.Output, index: outputIndex },
-                            deltaFromChild(mark.changes, outputIndex),
-                        ]);
+                        const childDelta = deltaFromChild(mark.changes, outputIndex);
+                        if (childDelta !== undefined) {
+                            modList.push([
+                                { context: Delta.Context.Output, index: outputIndex },
+                                childDelta,
+                            ]);
+                        }
                     }
                     break;
                 }

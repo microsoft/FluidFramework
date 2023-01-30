@@ -168,10 +168,10 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
     intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): Delta.FieldChanges => {
         const nestedChanges: Delta.NestedChange[] = [];
         for (const { index, nodeChange } of change) {
-            nestedChanges.push([
-                { context: Delta.Context.Input, index },
-                deltaFromChild(nodeChange, index),
-            ]);
+            const childDelta = deltaFromChild(nodeChange, index);
+            if (childDelta) {
+                nestedChanges.push([{ context: Delta.Context.Input, index }, childDelta]);
+            }
         }
         return { nestedChanges };
     },

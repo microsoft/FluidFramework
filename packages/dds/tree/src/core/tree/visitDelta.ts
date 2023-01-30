@@ -232,6 +232,12 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
                 case Delta.MarkType.MoveOut:
                     // Handled in the first pass
                     inputContextIndex += mark.count;
+                    while (
+                        iNested < inputNested.length &&
+                        inputNested[iNested][0].index < inputContextIndex
+                    ) {
+                        iNested += 1;
+                    }
                     break;
                 case Delta.MarkType.Insert:
                     // Handled in the first pass
@@ -246,6 +252,11 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
                     unreachableCase(type);
             }
         }
+    }
+    while (iNested < inputNested.length) {
+        const adjustedIndex = index - (inputContextIndex - inputNested[iNested][0].index);
+        visitModify(adjustedIndex, inputNested[iNested][1], visitor, secondPass);
+        iNested += 1;
     }
     for (const [nodeIndex, nodeChange] of outputNested) {
         visitModify(nodeIndex.index, nodeChange, visitor, secondPass);

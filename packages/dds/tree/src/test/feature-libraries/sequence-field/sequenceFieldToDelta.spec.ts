@@ -8,7 +8,6 @@ import {
     makeAnonChange,
     RevisionTag,
     Delta,
-    FieldKey,
     ITreeCursorSynchronous,
     TreeSchemaIdentifier,
 } from "../../../core";
@@ -34,7 +33,6 @@ const tag: RevisionTag = brand(41);
 const tag2: RevisionTag = brand(42);
 const tag3: RevisionTag = brand(43);
 const deltaMoveId = brandOpaque<Delta.MoveId>(moveId);
-const fooField = brand<FieldKey>("foo");
 
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
 
@@ -57,12 +55,13 @@ function toDeltaShallow(change: TestChangeset): Delta.FieldChanges {
 }
 
 const childChange1 = TestChange.mint([0], 1);
-const childChange1Delta = TestChange.toDelta(childChange1);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const childChange1Delta = TestChange.toDelta(childChange1)!;
 
 describe("SequenceField - toDelta", () => {
     it("empty mark list", () => {
         const actual = toDeltaShallow([]);
-        assert.deepEqual(actual, []);
+        assert.deepEqual(actual, {});
     });
 
     it("child change", () => {
@@ -229,7 +228,7 @@ describe("SequenceField - toDelta", () => {
             content: contentCursor,
         };
         const set: Delta.NodeChanges = {
-            setValue: 1,
+            setValue: "1",
         };
         const expected: Delta.FieldChanges = {
             siblingChanges: [del, 3, ins],

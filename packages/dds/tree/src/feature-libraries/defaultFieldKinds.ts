@@ -410,7 +410,11 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
         }
         if (change.changes !== undefined) {
             const modify = deltaFromChild(change.changes, 0);
-            fieldChanges.nestedChanges = [[{ context: Delta.Context.Output, index: 0 }, modify]];
+            if (modify) {
+                fieldChanges.nestedChanges = [
+                    [{ context: Delta.Context.Output, index: 0 }, modify],
+                ];
+            }
         }
         return fieldChanges;
     },
@@ -667,9 +671,10 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
                 // TODO: the changeset should be able to represent changes to both the subtree present before
                 // the change and the subtree present after the change.
                 const context = update === undefined ? Delta.Context.Input : Delta.Context.Output;
-                fieldChanges.nestedChanges = [
-                    [{ context, index: 0 }, deltaFromChild(change.childChange, 0)],
-                ];
+                const childDelta = deltaFromChild(change.childChange, 0);
+                if (childDelta) {
+                    fieldChanges.nestedChanges = [[{ context, index: 0 }, childDelta]];
+                }
             }
             return fieldChanges;
         },

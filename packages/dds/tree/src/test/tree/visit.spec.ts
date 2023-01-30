@@ -289,19 +289,56 @@ describe("visit", () => {
         };
 
         const nodeChanges: Delta.NodeChanges = {
+            fields: new Map([[fooKey, { siblingChanges: [2, moveIn, 3, moveOut] }]]),
+        };
+        const delta: Delta.FieldChanges = {
+            nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+        };
+
+        const expected: VisitScript = [
+            // Added by testTreeVisit
+            // ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveOut", 5, 2, moveId],
+            ["exitField", fooKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveIn", 2, 2, moveId],
+            ["exitField", fooKey],
+            ["exitNode", 0],
+            // Added by testTreeVisit
+            // ["exitField", rootKey],
+        ];
+
+        testTreeVisit(delta, expected);
+    });
+
+    it("modify and move children", () => {
+        const moveId: Delta.MoveId = brand(1);
+        const moveOut: Delta.MoveOut = {
+            type: Delta.MarkType.MoveOut,
+            count: 2,
+            moveId,
+        };
+
+        const moveIn: Delta.MoveIn = {
+            type: Delta.MarkType.MoveIn,
+            count: 2,
+            moveId,
+        };
+
+        const nodeChanges: Delta.NodeChanges = {
             fields: new Map([
                 [
-                    rootKey,
+                    fooKey,
                     {
+                        siblingChanges: [2, moveIn, 3, moveOut],
                         nestedChanges: [
-                            [
-                                { context: Delta.Context.Input, index: 0 },
-                                {
-                                    fields: new Map([
-                                        [fooKey, { siblingChanges: [2, moveIn, 3, moveOut] }],
-                                    ]),
-                                },
-                            ],
+                            [{ context: Delta.Context.Input, index: 6 }, { setValue: 42 }],
                         ],
                     },
                 ],
@@ -316,6 +353,9 @@ describe("visit", () => {
             // ["enterField", rootKey],
             ["enterNode", 0],
             ["enterField", fooKey],
+            ["enterNode", 6],
+            ["onSetValue", 42],
+            ["exitNode", 6],
             ["onMoveOut", 5, 2, moveId],
             ["exitField", fooKey],
             ["exitNode", 0],

@@ -51,7 +51,7 @@ const moveId = brandOpaque<Delta.MoveId>(opId);
 
 describe("toDelta", () => {
     it("empty changeset", () => {
-        const expected: Delta.MarkList = [];
+        const expected: Delta.FieldChanges = {};
         const actual = toTreeDelta([]);
         assert.deepStrictEqual(actual, expected);
     });
@@ -181,7 +181,7 @@ describe("toDelta", () => {
             count: 10,
         };
         const fooDelta: Delta.FieldChanges = {
-            siblingChanges: [mark],
+            siblingChanges: [42, mark],
         };
         const expected: Delta.FieldChanges = {
             nestedChanges: [
@@ -432,7 +432,7 @@ describe("toDelta", () => {
                 content: contentCursor,
             };
             const fooDelta: Delta.FieldChanges = {
-                nestedChanges: [[{ context: Delta.Context.Input, index: 42 }, { setValue: 4343 }]],
+                nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, { setValue: 4343 }]],
             };
             const expected: Delta.FieldChanges = {
                 siblingChanges: [mark],
@@ -579,14 +579,27 @@ describe("toDelta", () => {
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
-                content: [
-                    singleTextCursor({
-                        type,
-                        value: 42,
-                    }),
+                content: contentCursor,
+            };
+            const fooDelta: Delta.FieldChanges = {
+                siblingChanges: [
+                    {
+                        type: Delta.MarkType.Delete,
+                        count: 1,
+                    },
                 ],
             };
-            const expected: Delta.MarkList = [mark];
+            const expected: Delta.FieldChanges = {
+                siblingChanges: [mark],
+                nestedChanges: [
+                    [
+                        { context: Delta.Context.Output, index: 0 },
+                        {
+                            fields: new Map([[fooKey, fooDelta]]),
+                        },
+                    ],
+                ],
+            };
             const actual = toTreeDelta(changeset);
             assert.deepStrictEqual(actual, expected);
         });

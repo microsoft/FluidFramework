@@ -349,7 +349,7 @@ export class ModularChangeFamily
         for (const [field, fieldChange] of change) {
             const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
-                (childChange, index): Delta.NodeChanges =>
+                (childChange, index): Delta.NodeChanges | undefined =>
                     this.deltaFromNodeChange(
                         childChange,
                         repairStore,
@@ -373,7 +373,7 @@ export class ModularChangeFamily
         change: NodeChangeset,
         repairStore: ReadonlyRepairDataStore,
         path?: UpPath,
-    ): Delta.NodeChanges {
+    ): Delta.NodeChanges | undefined {
         const modify: Mutable<Delta.NodeChanges> = {};
 
         const valueChange = change.valueChange;
@@ -395,6 +395,8 @@ export class ModularChangeFamily
 
         if (change.fieldChanges !== undefined) {
             modify.fields = this.intoDeltaImpl(change.fieldChanges, repairStore, path);
+        } else if (!Object.prototype.hasOwnProperty.call(modify, "setValue")) {
+            return undefined;
         }
 
         return modify;

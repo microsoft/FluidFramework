@@ -78,7 +78,7 @@ describe("TestChange", () => {
         };
 
         assert.deepEqual(delta, expected);
-        assert.deepEqual(TestChange.toDelta(TestChange.mint([0, 1], [])), {});
+        assert.deepEqual(TestChange.toDelta(TestChange.mint([0, 1], [])), undefined);
     });
 
     it("can be encoded in JSON", () => {
