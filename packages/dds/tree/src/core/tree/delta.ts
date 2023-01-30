@@ -131,7 +131,7 @@ import { FieldKey, Value } from "./types";
  * Immutable, therefore safe to retain for async processing.
  */
 export type Root<TTree = ProtoNode> = FieldChangeMap<TTree>;
-export const empty: Root<any> = new Map();
+export const empty: Root<never> = new Map();
 
 /**
  * The default representation for inserted content.
