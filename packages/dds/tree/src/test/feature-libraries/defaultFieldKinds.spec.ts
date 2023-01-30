@@ -186,7 +186,11 @@ describe("Value field changesets", () => {
 	it("can be converted to a delta when overwriting content", () => {
 		const expected: Delta.MarkList = [
 			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree3)] },
+			{
+				type: Delta.MarkType.InsertAndModify,
+				content: singleTextCursor(tree1),
+				setValue: "value3",
+			},
 		];
 
 		const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1, noRepair);
@@ -337,8 +341,9 @@ describe("Optional field changesets", () => {
 	it("can be converted to a delta when field was empty", () => {
 		const expected: Delta.MarkList = [
 			{
-				type: Delta.MarkType.Insert,
-				content: [singleTextCursor(tree3)],
+				type: Delta.MarkType.InsertAndModify,
+				content: singleTextCursor(tree1),
+				setValue: "value3",
 			},
 		];
 
