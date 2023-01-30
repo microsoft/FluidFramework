@@ -70,31 +70,6 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 }
 
 /**
- * Compare two arrays and return true if their elements are equivalent and in the same order.
- * @param arrayA - The first array to compare
- * @param arrayB - The second array to compare
- * @param elementComparator - The function used to check if two `T`s are equivalent.
- * Defaults to `Object.is()` equality (a shallow compare)
- */
-export function compareArrays<T>(
-	arrayA: readonly T[],
-	arrayB: readonly T[],
-	elementComparator: (a: T, b: T) => boolean = Object.is,
-): boolean {
-	if (arrayA.length !== arrayB.length) {
-		return false;
-	}
-
-	for (let i = 0; i < arrayA.length; i++) {
-		if (!elementComparator(arrayA[i], arrayB[i])) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-/**
  * Compares two sets using callbacks.
  * Early returns on first false comparison.
  *

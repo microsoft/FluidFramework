@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { compareArrays } from './Common';
+import { compareArrays } from '@fluidframework/core-utils';
 import { Payload } from './persisted-types';
 
 /**
