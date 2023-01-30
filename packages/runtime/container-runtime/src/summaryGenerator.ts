@@ -195,7 +195,7 @@ export class SummaryGenerator {
 		resultsBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
         this.logger.sendTelemetryEvent({
-            eventName: "Summarize",
+            eventName: "Summarize_start",
             ...summarizeProps,
         });
 		this.summarizeCore(summarizeProps, options, resultsBuilder, cancellationToken).catch(
