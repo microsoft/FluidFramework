@@ -440,9 +440,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             rollback,
         );
 
-        if (Object.entries(this.properties).length === 0) {
-            this.properties = undefined;
-        }
+        // if (Object.entries(this.properties).length === 0) {
+        //     this.properties = undefined;
+        // }
 
         return result;
     }

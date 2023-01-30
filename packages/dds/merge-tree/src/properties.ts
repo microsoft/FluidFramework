@@ -64,8 +64,8 @@ export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue
 }
 
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
-    if (a) {
-        if (!b) {
+    if (a && Object.entries(a).length > 0) {
+        if (!b || Object.entries(b).length === 0) {
             return false;
         } else {
             // For now, straightforward; later use hashing
@@ -91,7 +91,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
             }
         }
     } else {
-        if (b) {
+        if (b && Object.entries(b).length > 0) {
             return false;
         }
     }
