@@ -98,4 +98,5 @@ extends:
     - ci:test:realsvc:local
     - ci:test:realsvc:tinylicious
     - ci:test:stress:tinylicious
+    - webpack
     - test:copyresults
