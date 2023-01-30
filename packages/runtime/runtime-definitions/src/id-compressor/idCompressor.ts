@@ -6,6 +6,10 @@
 import { SessionSpaceCompressedId, OpSpaceCompressedId, SessionId, FinalCompressedId, StableId } from "./identifiers";
 import { IdCreationRange, SerializedIdCompressor, SerializedIdCompressorWithNoSession, SerializedIdCompressorWithOngoingSession } from "./persisted-types";
 
+/**
+ * This is the set of functions on an IdCompressor that a DDS author shouldn't be concerned with.
+ * Operations here are automatically handled at the SharedObject level.
+ */
 export interface IIdCompressorCore {
     /**
      * Finalizes the supplied range of IDs (which may be from either a remote or local session).
@@ -20,8 +24,39 @@ export interface IIdCompressorCore {
      * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
      */
     takeNextCreationRange(): IdCreationRange
+
+    /**
+	 * Returns an iterable of all IDs created by this compressor.
+	 */
+	getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>
+
+        /**
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
+	 */
+	serialize(
+		withSession: boolean
+	): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
+
+	/**
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
+	 */
+	serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
+
+	/**
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * This only includes finalized state and is therefore suitable for use in summaries.
+	 */
+	serialize(withSession: false): SerializedIdCompressorWithNoSession;
+	serialize(withSession: boolean): SerializedIdCompressor
 }
 
+/**
+ * This is the set of operations on an IdCompressor that DDS author
+ * would leverage. These functions allow for the generation of Ids and
+ * translation between different Id spaces.
+ */
 export interface IIdCompressor {
     generateCompressedId(): number;
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId
@@ -57,30 +92,4 @@ export interface IIdCompressor {
 	 * @returns the `CompressedId` associated with `uncompressed` or undefined if it has not been previously compressed by this compressor.
 	 */
 	tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined
-
-    /**
-	 * Returns an iterable of all IDs created by this compressor.
-	 */
-	getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>
-
-    /**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
-	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
-	 */
-	serialize(
-		withSession: boolean
-	): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
-
-	/**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
-	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
-	 */
-	serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-
-	/**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
-	 * This only includes finalized state and is therefore suitable for use in summaries.
-	 */
-	serialize(withSession: false): SerializedIdCompressorWithNoSession;
-	serialize(withSession: boolean): SerializedIdCompressor
 }

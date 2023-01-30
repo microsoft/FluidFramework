@@ -433,7 +433,24 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 	}
 
+	/**
+	 * This is SharedTree's internal IdCompressor that predates the one in the runtime. If access
+	 * to the IdCompressor is needed, this is the one that should be used.
+	 */
 	private _idCompressor: IdCompressor;
+
+	/**
+	 * SharedTree has its own IdCompressor that predates the one in the runtime. The runtime compressor
+	 * doesn't support some of the same features that the internal one does, so the internal one (prefixed with an underscore)
+	 * should be used instead.
+	 */
+	public get idCompressor() {
+		fail(
+			'Experimental SharedTree uses its own internal IdCompressor and the runtime compressor should not be used.'
+		);
+		return undefined;
+	}
+
 	private readonly idNormalizer: NodeIdNormalizer<OpSpaceNodeId> & { tree: SharedTree } = {
 		tree: this,
 		get localSessionId() {

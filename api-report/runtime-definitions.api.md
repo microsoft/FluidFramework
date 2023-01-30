@@ -331,29 +331,29 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
     usedRoutes?: string[];
 }
 
-// @public (undocumented)
+// @public
 export interface IIdCompressor {
     // (undocumented)
     generateCompressedId(): number;
-    getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>;
     // (undocumented)
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
     normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
     // (undocumented)
     normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId;
+    tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
+    tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
+}
+
+// @public
+export interface IIdCompressorCore {
+    finalizeCreationRange(range: IdCreationRange): void;
+    getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>;
     serialize(withSession: boolean): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
     // (undocumented)
     serialize(withSession: boolean): SerializedIdCompressor;
-    tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
-    tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
-}
-
-// @public (undocumented)
-export interface IIdCompressorCore {
-    finalizeCreationRange(range: IdCreationRange): void;
     takeNextCreationRange(): IdCreationRange;
 }
 
