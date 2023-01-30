@@ -36,9 +36,6 @@ parameters:
   type: string
   default: client
 
-variables:
-  - template: include-vars.yml
-
 jobs:
   # Job - Build
   - job: build
