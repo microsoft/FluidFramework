@@ -152,7 +152,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
-    readonly idCompressor: IIdCompressor & IIdCompressorCore | undefined;
+    readonly idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)

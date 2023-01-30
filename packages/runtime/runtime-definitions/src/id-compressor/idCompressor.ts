@@ -3,39 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { SessionSpaceCompressedId, OpSpaceCompressedId, SessionId, FinalCompressedId, StableId } from "./identifiers";
-import { IdCreationRange, SerializedIdCompressor, SerializedIdCompressorWithNoSession, SerializedIdCompressorWithOngoingSession } from "./persisted-types";
+import {
+	SessionSpaceCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+	FinalCompressedId,
+	StableId,
+} from "./identifiers";
+import {
+	IdCreationRange,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+} from "./persisted-types";
 
 /**
  * This is the set of functions on an IdCompressor that a DDS author shouldn't be concerned with.
  * Operations here are automatically handled at the SharedObject level.
  */
 export interface IIdCompressorCore {
-    /**
-     * Finalizes the supplied range of IDs (which may be from either a remote or local session).
-     * @param range - the range of session-local IDs to finalize.
-     */
-    finalizeCreationRange(range: IdCreationRange): void
+	/**
+	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).
+	 * @param range - the range of session-local IDs to finalize.
+	 */
+	finalizeCreationRange(range: IdCreationRange): void;
 
-    /**
-     * Returns a range of local IDs created by this session in a format for sending to the server for finalizing.
-     * The range will include all local IDs generated via calls to `generateCompressedId` since the last time this method was called.
-     * @returns the range of session-local IDs, which may be empty. This range must be sent to the server for ordering before
-     * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
-     */
-    takeNextCreationRange(): IdCreationRange
+	/**
+	 * Returns a range of local IDs created by this session in a format for sending to the server for finalizing.
+	 * The range will include all local IDs generated via calls to `generateCompressedId` since the last time this method was called.
+	 * @returns the range of session-local IDs, which may be empty. This range must be sent to the server for ordering before
+	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
+	 */
+	takeNextCreationRange(): IdCreationRange;
 
-    /**
+	/**
 	 * Returns an iterable of all IDs created by this compressor.
 	 */
-	getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>
+	getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>;
 
-        /**
+	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
 	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
 	 */
 	serialize(
-		withSession: boolean
+		withSession: boolean,
 	): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
 
 	/**
@@ -49,7 +60,7 @@ export interface IIdCompressorCore {
 	 * This only includes finalized state and is therefore suitable for use in summaries.
 	 */
 	serialize(withSession: false): SerializedIdCompressorWithNoSession;
-	serialize(withSession: boolean): SerializedIdCompressor
+	serialize(withSession: boolean): SerializedIdCompressor;
 }
 
 /**
@@ -58,9 +69,9 @@ export interface IIdCompressorCore {
  * translation between different Id spaces.
  */
 export interface IIdCompressor {
-    generateCompressedId(): number;
-    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId
-    /**
+	generateCompressedId(): number;
+	normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
+	/**
 	 * Normalizes an ID into session space.
 	 * @param id - the ID to normalize. If it is a local ID, it is assumed to have been created by the session corresponding
 	 * to `sessionId`.
@@ -69,7 +80,10 @@ export interface IIdCompressor {
 	 * finalized it. This can occur when a client references an ID during the window of time in which it is waiting to receive the ordered
 	 * range that contained it from the server.
 	 */
-	normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
+	normalizeToSessionSpace(
+		id: OpSpaceCompressedId,
+		originSessionId: SessionId,
+	): SessionSpaceCompressedId;
 
 	/**
 	 * Normalizes a final ID into session space.
@@ -77,19 +91,22 @@ export interface IIdCompressor {
 	 * @returns the session-space ID corresponding to `id`.
 	 */
 	normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
-	normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId
+	normalizeToSessionSpace(
+		id: OpSpaceCompressedId,
+		sessionIdIfLocal?: SessionId,
+	): SessionSpaceCompressedId;
 
-    /**
+	/**
 	 * Attempts to decompress a previously compressed ID into a UUID or override string.
 	 * @param id - the compressed ID to be decompressed.
 	 * @returns the UUID or override string associated with the compressed ID, or undefined if the ID was not generated by this compressor.
 	 */
-	tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined
+	tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
 
-    /**
+	/**
 	 * Attempts to recompresses a decompressed ID, which could be a UUID or an override string.
 	 * @param uncompressed - the UUID or override string to recompress,
 	 * @returns the `CompressedId` associated with `uncompressed` or undefined if it has not been previously compressed by this compressor.
 	 */
-	tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined
+	tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
 }

@@ -14,14 +14,14 @@ export type CompressedId = FinalCompressedId | LocalCompressedId;
  * @public
  */
 export type InternedStringId = number & {
-    readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
+	readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
 };
 
 /**
  * A brand for identity types that are unique within a particular session (SharedTree instance).
  */
 export interface SessionUnique {
-    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+	readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
 }
 
 /**
@@ -38,7 +38,7 @@ export type SessionSpaceCompressedId = CompressedId & SessionUnique;
  * received by a remote client due to the fact that op space for a given compressor is session space for all other compressors.
  */
 export type OpSpaceCompressedId = CompressedId & {
-    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+	readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
 };
 
 /**
@@ -48,10 +48,10 @@ export type OpSpaceCompressedId = CompressedId & {
  * @public
  */
 export type FinalCompressedId = number & {
-    readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
+	readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
 
-    // Same brand as OpNormalizedCompressedId, as final IDs are always finally normalized
-    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+	// Same brand as OpNormalizedCompressedId, as final IDs are always finally normalized
+	readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
 };
 
 /**
@@ -61,11 +61,11 @@ export type FinalCompressedId = number & {
  * @public
  */
 export type LocalCompressedId = number & {
-    readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
+	readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
 } & SessionUnique; // Same brand as CompressedId, as local IDs are always locally normalized
 
 export interface NodeIdBrand {
-    readonly NodeId: "e53e7d6b-c8b9-431a-8805-4843fc639342";
+	readonly NodeId: "e53e7d6b-c8b9-431a-8805-4843fc639342";
 }
 
 /**
