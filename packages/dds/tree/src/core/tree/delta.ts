@@ -259,7 +259,8 @@ export interface Insert<TTree = ProtoNode> {
 export interface InsertAndModify<TTree = ProtoNode> {
 	readonly type: typeof MarkType.InsertAndModify;
 	readonly content: TTree;
-	readonly fields: FieldMarks<TTree>;
+	readonly setValue?: Value;
+	readonly fields?: FieldMarks<TTree>;
 }
 
 /**

@@ -1045,13 +1045,11 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     walkExactMatchesForward(compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: number) => boolean, continueRightFn: (number: number) => boolean): void;
 }
 
-// @public (undocumented)
+// @public
 export interface ReferencePosition {
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
-    // (undocumented)
     getOffset(): number;
-    // (undocumented)
     getSegment(): ISegment | undefined;
     // (undocumented)
     isLeaf(): this is ISegment;
