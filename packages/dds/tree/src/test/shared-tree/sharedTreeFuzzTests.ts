@@ -225,20 +225,20 @@ function runBatch(
 ): void {
     const seed = random.integer(1, 1000000);
     for (let i = 0; i < batchSize; i++) {
-        const innerRandom = makeRandom(seed);
+        const runSeed = seed + i;
         const generatorFactory = () => take(opsPerRun, opGenerator());
         if (skipTests) {
             it.skip(`with seed ${i}`, async () => {
                 await fuzzActions(
                     generatorFactory(),
-                    innerRandom.integer(1, 1000000),
+                    runSeed,
                 );
             }).timeout(20000);
         } else {
             it(`with seed ${i}`, async () => {
                 await fuzzActions(
                     generatorFactory(),
-                    innerRandom.integer(1, 1000000),
+                    runSeed,
                 );
             }).timeout(20000);
         }
