@@ -140,12 +140,6 @@ export function makeOpGenerator(): AsyncGenerator<Operation, FuzzTestState> {
     return createWeightedAsyncGenerator(opWeights);
 }
 
-export interface NodeLocation {
-    parent: UpPath | undefined;
-    field: FieldKey;
-    index: number;
-}
-
 const moves = {
     field: ["enterNode", "nextField"],
     nodes: ["stop", "firstField"],
