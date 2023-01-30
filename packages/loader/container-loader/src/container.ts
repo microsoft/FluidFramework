@@ -7,6 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
+	ITelemetryBaseLogger,
 	ITelemetryLogger,
 	ITelemetryProperties,
 	TelemetryEventCategory,
@@ -123,6 +124,7 @@ export interface IContainerLoadOptions {
 	 * Loads the Container in paused state if true, unpaused otherwise.
 	 */
 	loadMode?: IContainerLoadMode;
+	loggerOverride?: ITelemetryBaseLogger;
 }
 
 export interface IContainerConfig {
@@ -136,6 +138,7 @@ export interface IContainerConfig {
 	 * Serialized state from a previous instance of this container
 	 */
 	serializedContainerState?: IPendingContainerState;
+	loggerOverride?: ITelemetryBaseLogger;
 }
 
 /**
@@ -288,6 +291,7 @@ export class Container
 				resolvedUrl: loadOptions.resolvedUrl,
 				canReconnect: loadOptions.canReconnect,
 				serializedContainerState: pendingLocalState,
+				loggerOverride: loadOptions.loggerOverride,
 			},
 			protocolHandlerBuilder,
 		);
@@ -625,35 +629,39 @@ export class Container
 		}`;
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
-		this.subLogger = ChildLogger.create(loader.services.subLogger, undefined, {
-			all: {
-				clientType, // Differentiating summarizer container from main container
-				containerId: uuid(),
-				docId: () => this._resolvedUrl?.id ?? undefined,
-				containerAttachState: () => this._attachState,
-				containerLifecycleState: () => this._lifecycleState,
-				containerConnectionState: () => ConnectionState[this.connectionState],
-				serializedContainer: config.serializedContainerState !== undefined,
+		this.subLogger = ChildLogger.create(
+			config.loggerOverride ?? loader.services.subLogger,
+			undefined,
+			{
+				all: {
+					clientType, // Differentiating summarizer container from main container
+					containerId: uuid(),
+					docId: () => this._resolvedUrl?.id ?? undefined,
+					containerAttachState: () => this._attachState,
+					containerLifecycleState: () => this._lifecycleState,
+					containerConnectionState: () => ConnectionState[this.connectionState],
+					serializedContainer: config.serializedContainerState !== undefined,
+				},
+				// we need to be judicious with our logging here to avoid generating too much data
+				// all data logged here should be broadly applicable, and not specific to a
+				// specific error or class of errors
+				error: {
+					// load information to associate errors with the specific load point
+					dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+					dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
+					dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
+					containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
+					containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
+					// message information to associate errors with the specific execution state
+					// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
+					dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
+					dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
+					dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+					connectionStateDuration: () =>
+						performance.now() - this.connectionTransitionTimes[this.connectionState],
+				},
 			},
-			// we need to be judicious with our logging here to avoid generating too much data
-			// all data logged here should be broadly applicable, and not specific to a
-			// specific error or class of errors
-			error: {
-				// load information to associate errors with the specific load point
-				dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
-				dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
-				dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
-				containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
-				containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
-				// message information to associate errors with the specific execution state
-				// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
-				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
-				dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
-				dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
-				connectionStateDuration: () =>
-					performance.now() - this.connectionTransitionTimes[this.connectionState],
-			},
-		});
+		);
 
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
@@ -878,22 +886,12 @@ export class Container
 
 	private _disposed = false;
 	private disposeCore(error?: ICriticalContainerError) {
-		assert(!this._disposed, 0x54c /* Container already disposed */);
+		assert(!this._disposed, "Container already disposed");
 		this._disposed = true;
 
 		try {
 			// Ensure that we raise all key events even if one of these throws
 			try {
-				// Raise event first, to ensure we capture _lifecycleState before transition.
-				// This gives us a chance to know what errors happened on open vs. on fully loaded container.
-				this.mc.logger.sendTelemetryEvent(
-					{
-						eventName: "ContainerDispose",
-						category: error === undefined ? "generic" : "error",
-					},
-					error,
-				);
-
 				// ! Progressing from "closed" to "disposing" is not allowed
 				if (this._lifecycleState !== "closed") {
 					this._lifecycleState = "disposing";

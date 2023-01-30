@@ -495,6 +495,7 @@ export class Loader implements IHostLoader {
 				resolvedUrl: resolved,
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
+				loggerOverride: request.headers?.["fluid-logger-override"],
 			},
 			pendingLocalState,
 			this.protocolHandlerBuilder,

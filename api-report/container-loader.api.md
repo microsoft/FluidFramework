@@ -131,6 +131,8 @@ export interface IContainerConfig {
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
+    loggerOverride?: ITelemetryBaseLogger;
+    // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
     serializedContainerState?: IPendingContainerState;
 }
@@ -140,6 +142,8 @@ export interface IContainerLoadOptions {
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
     loadMode?: IContainerLoadMode;
+    // (undocumented)
+    loggerOverride?: ITelemetryBaseLogger;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
     version: string | undefined;
