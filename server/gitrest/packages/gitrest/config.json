@@ -20,6 +20,10 @@
             "name": "nodegit"
         },
         "persistLatestFullSummary": false,
-        "repoPerDocEnabled": false
+        "repoPerDocEnabled": false,
+        "enableRepositoryManagerMetrics": false,
+        "enableLowIoWrite": false,
+        "enableOptimizedInitialSummary": false,
+        "enableSlimGitInit": false
     }
 }

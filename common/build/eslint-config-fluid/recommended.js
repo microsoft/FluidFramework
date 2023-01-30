@@ -3,116 +3,135 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * "Recommended" eslint configuration.
+ *
+ * This is the fluid-framework repository's default configuration.
+ * Recommended for use production packages whose APIs we do not expect the majority of our customers to use directly.
+ *
+ * For packages whose APIs are intended for wide use, the "Strict" configuration should be used instead.
+ */
 module.exports = {
-    extends: ["./minimal.js", "plugin:unicorn/recommended", "plugin:editorconfig/all"],
-    plugins: ["editorconfig", "eslint-plugin-tsdoc"],
-    rules: {
-        // RECOMMENDED RULES
-        "@rushstack/no-new-null": "error",
-        "no-empty": "error",
-        "no-void": "error",
-        "require-atomic-updates": "error",
+	extends: ["./minimal.js", "plugin:unicorn/recommended", "plugin:editorconfig/all"],
+	plugins: ["editorconfig", "eslint-plugin-tsdoc"],
+	rules: {
+		// RECOMMENDED RULES
+		"@rushstack/no-new-null": "error",
+		"no-empty": "error",
+		"no-void": "error",
+		"require-atomic-updates": "error",
 
-        // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
-        "tsdoc/syntax": "error",
+		// This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
+		"tsdoc/syntax": "error",
 
-        // In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-        // API documentation. For example, type inference might decide a function returns a concrete type
-        // instead of an interface. This has no runtime impact, but would cause compilation problems.
-        "@typescript-eslint/explicit-function-return-type": [
-            "error",
-            {
-                allowExpressions: false,
-                allowTypedFunctionExpressions: true,
-                allowHigherOrderFunctions: true,
-                allowDirectConstAssertionInArrowFunctions: true,
-                allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-            },
-        ],
-        "unicorn/empty-brace-spaces": "off",
-        "unicorn/prevent-abbreviations": "off",
+		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
+		// API documentation. For example, type inference might decide a function returns a concrete type
+		// instead of an interface. This has no runtime impact, but would cause compilation problems.
+		"@typescript-eslint/explicit-function-return-type": [
+			"error",
+			{
+				allowExpressions: false,
+				allowTypedFunctionExpressions: true,
+				allowHigherOrderFunctions: true,
+				allowDirectConstAssertionInArrowFunctions: true,
+				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+			},
+		],
+		"unicorn/empty-brace-spaces": "off",
 
-        /**
-         * Disallows the `any` type.
-         * Using the `any` type defeats the purpose of using TypeScript.
-         * When `any` is used, all compiler type checks around that value are ignored.
-         */
-        "@typescript-eslint/no-explicit-any": "error",
+		// Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
+		//            significant performance regression [node 14 x64].
+		"unicorn/no-for-loop": "off",
 
-        /**
-         * Requires explicit typing for anything exported from a module. Explicit types for function return
-         * values and arguments makes it clear to any calling code what is the module boundary's input and
-         * output.
-         */
-        "@typescript-eslint/explicit-module-boundary-types": "error",
+		"unicorn/prevent-abbreviations": "off",
 
-        /**
-         * Disallows calling a function with a value with type `any`.
-         * Despite your best intentions, the `any` type can sometimes leak into your codebase.
-         * Call a function with `any` typed argument are not checked at all by TypeScript, so it creates a
-         * potential safety hole, and source of bugs in your codebase.
-         */
-        "@typescript-eslint/no-unsafe-argument": "error",
+		/**
+		 * "node:" imports are not supported prior to Node.js v16.
+		 * TODO: re-enable this (remove override) once the repo has been updated to v16.
+		 */
+		"unicorn/prefer-node-protocol": "off",
 
-        /**
-         * Disallows assigning any to a variable, and assigning any[] to an array destructuring. Assigning an
-         * any typed value to a variable can be hard to pick up on, particularly if it leaks in from an external
-         * library.
-         */
-        "@typescript-eslint/no-unsafe-assignment": "error",
+		/**
+		 * Disallows the `any` type.
+		 * Using the `any` type defeats the purpose of using TypeScript.
+		 * When `any` is used, all compiler type checks around that value are ignored.
+		 */
+		"@typescript-eslint/no-explicit-any": "error",
 
-        /**
-         * Disallows calling any variable that is typed as any. The arguments to, and return value of calling an
-         * any typed variable are not checked at all by TypeScript.
-         */
-        "@typescript-eslint/no-unsafe-call": "error",
+		/**
+		 * Requires explicit typing for anything exported from a module. Explicit types for function return
+		 * values and arguments makes it clear to any calling code what is the module boundary's input and
+		 * output.
+		 */
+		"@typescript-eslint/explicit-module-boundary-types": "error",
 
-        /**
-         * Disallows member access on any variable that is typed as any. The arguments to, and return value of
-         * calling an any typed variable are not checked at all by TypeScript.
-         */
-        "@typescript-eslint/no-unsafe-member-access": "error",
+		/**
+		 * Disallows calling a function with a value with type `any`.
+		 * Despite your best intentions, the `any` type can sometimes leak into your codebase.
+		 * Call a function with `any` typed argument are not checked at all by TypeScript, so it creates a
+		 * potential safety hole, and source of bugs in your codebase.
+		 */
+		"@typescript-eslint/no-unsafe-argument": "error",
 
-        /**
-         * Disallows returning a value with type any from a function.
-         *
-         * Despite your best intentions, the any type can sometimes leak into your codebase.
-         * Returned any typed values are not checked at all by TypeScript, so it creates a potential safety
-         * hole, and source of bugs in your codebase.
-         */
-        "@typescript-eslint/no-unsafe-return": "error",
+		/**
+		 * Disallows assigning any to a variable, and assigning any[] to an array destructuring. Assigning an
+		 * any typed value to a variable can be hard to pick up on, particularly if it leaks in from an external
+		 * library.
+		 */
+		"@typescript-eslint/no-unsafe-assignment": "error",
 
-        // #region eslint-plugin-jsdoc rules
+		/**
+		 * Disallows calling any variable that is typed as any. The arguments to, and return value of calling an
+		 * any typed variable are not checked at all by TypeScript.
+		 */
+		"@typescript-eslint/no-unsafe-call": "error",
 
-        /**
-         * Ensures all JSDoc/TSDoc comments use the multi-line format for consistency.
-         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-multiline-blocks>
-         */
-        "jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+		/**
+		 * Disallows member access on any variable that is typed as any. The arguments to, and return value of
+		 * calling an any typed variable are not checked at all by TypeScript.
+		 */
+		"@typescript-eslint/no-unsafe-member-access": "error",
 
-        /**
-         * Require the description (summary) component in JSDoc/TSDoc comments
-         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
-         */
-        "jsdoc/require-description": ["error", { checkConstructors: false }],
+		/**
+		 * Disallows returning a value with type any from a function.
+		 *
+		 * Despite your best intentions, the any type can sometimes leak into your codebase.
+		 * Returned any typed values are not checked at all by TypeScript, so it creates a potential safety
+		 * hole, and source of bugs in your codebase.
+		 */
+		"@typescript-eslint/no-unsafe-return": "error",
 
-        // #endregion
-    },
-    overrides: [
-        {
-            // Rules only for TypeScript files
-            files: ["**/*.{ts,tsx}"],
-            rules: {
-                "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
-            },
-        },
-        {
-            // Rules only for type validation files
-            files: ["**/types/*validate*Previous.ts"],
-            rules: {
-                "@typescript-eslint/no-explicit-any": "off",
-                "@typescript-eslint/no-unsafe-argument": "off",
-            },
-        },
-    ],
+		// #region eslint-plugin-jsdoc rules
+
+		/**
+		 * Ensures all JSDoc/TSDoc comments use the multi-line format for consistency.
+		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-multiline-blocks>
+		 */
+		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+
+		/**
+		 * Require the description (summary) component in JSDoc/TSDoc comments
+		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
+		 */
+		"jsdoc/require-description": ["error", { checkConstructors: false }],
+
+		// #endregion
+	},
+	overrides: [
+		{
+			// Rules only for TypeScript files
+			files: ["**/*.{ts,tsx}"],
+			rules: {
+				"editorconfig/indent": "off",
+			},
+		},
+		{
+			// Rules only for type validation files
+			files: ["**/types/*validate*Previous*.ts"],
+			rules: {
+				"@typescript-eslint/no-explicit-any": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+			},
+		},
+	],
 };

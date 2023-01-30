@@ -58,6 +58,7 @@ async function getSummary(
             const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
                 fileSystemManager,
                 getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+                lumberjackProperties,
             );
             if (latestFullSummaryFromStorage !== undefined) {
                 return latestFullSummaryFromStorage;
@@ -80,6 +81,7 @@ async function getSummary(
     const wholeSummaryManager = new GitWholeSummaryManager(
         repoManagerParams.storageRoutingId.documentId,
         repoManager,
+        lumberjackProperties,
         externalWriterConfig?.enabled ?? false,
     );
     const fullSummary = await wholeSummaryManager.readSummary(sha);
@@ -95,6 +97,7 @@ async function getSummary(
             fileSystemManager,
             getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
             fullSummary,
+            lumberjackProperties,
         ).catch((error) => {
             Lumberjack.error(
                 "Failed to persist latest full summary to storage during getSummary",
@@ -103,7 +106,7 @@ async function getSummary(
         });
     }
 
-    return wholeSummaryManager.readSummary(sha);
+    return fullSummary;
 }
 
 async function createSummary(
@@ -112,20 +115,30 @@ async function createSummary(
     payload: IWholeSummaryPayload,
     repoManagerParams: IRepoManagerParams,
     externalWriterConfig?: IExternalWriterConfig,
+    isInitialSummary?: boolean,
     persistLatestFullSummary = false,
+    enableLowIoWrite: "initial" | boolean = false,
+    optimizeForInitialSummary: boolean = false,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
-    const wholeSummaryManager = new GitWholeSummaryManager(
-        repoManagerParams.storageRoutingId.documentId,
-        repoManager,
-        externalWriterConfig?.enabled ?? false,
-    );
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
         [BaseGitRestTelemetryProperties.summaryType]: payload?.type,
     };
+
+    const wholeSummaryManager = new GitWholeSummaryManager(
+        repoManagerParams.storageRoutingId.documentId,
+        repoManager,
+        lumberjackProperties,
+        externalWriterConfig?.enabled ?? false,
+        {
+            enableLowIoWrite,
+            optimizeForInitialSummary,
+        },
+    );
+
     Lumberjack.info("Creating summary", lumberjackProperties);
 
-    const {isNew, writeSummaryResponse} = await wholeSummaryManager.writeSummary(payload);
+    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload, isInitialSummary);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
     // so skip this step if it is a new document.
@@ -148,8 +161,9 @@ async function createSummary(
                         fileSystemManager,
                         getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
                         latestFullSummary,
+                        lumberjackProperties,
                     );
-                } catch(error) {
+                } catch (error) {
                     Lumberjack.error(
                         "Failed to persist latest full summary to storage during createSummary",
                         lumberjackProperties,
@@ -174,7 +188,7 @@ async function deleteSummary(
     softDelete: boolean,
     repoPerDocEnabled: boolean,
     externalWriterConfig?: IExternalWriterConfig): Promise<void> {
-    if(!repoPerDocEnabled) {
+    if (!repoPerDocEnabled) {
         throw new NetworkError(501, "Not Implemented");
     }
     const lumberjackProperties = {
@@ -199,7 +213,7 @@ async function deleteSummary(
         Lumberjack.info(`Successfully hard-deleted summary data.`, lumberjackProperties);
     } catch (error: any) {
         if (error?.code === "ENOENT" ||
-                (error instanceof NetworkError &&
+            (error instanceof NetworkError &&
                 error?.code === 400 &&
                 error?.message.startsWith("Repo does not exist"))) {
             // File does not exist.
@@ -224,6 +238,8 @@ export function create(
 ): Router {
     const router: Router = Router();
     const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
+    const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
+    const enableOptimizedInitialSummary: boolean = store.get("git:enableOptimizedInitialSummary") ?? false;
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     /**
@@ -259,6 +275,13 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        // request.query type is { [string]: string } but it's actually { [string]: any }
+        // Account for possibilities of undefined, boolean, or string types. A number will be false.
+        const isInitialSummary: boolean | undefined = typeof request.query.initial === "undefined"
+            ? undefined
+            : typeof request.query.initial === "boolean"
+                ? request.query.initial
+                : request.query.initial === "true";
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
@@ -267,18 +290,29 @@ export function create(
             return;
         }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
-        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
-            .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => {
-                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+        const resultP = (async () => {
+            // There are possible optimizations we can make throughout the summary write process
+            // if we are using repoPerDoc model and it is the first summary for that document.
+            const optimizeForInitialSummary = enableOptimizedInitialSummary && isInitialSummary && repoPerDocEnabled;
+            // If creating a repo per document, we do not need to check for an existing repo on initial summary write.
+            const repoManager = await getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled, optimizeForInitialSummary);
+            const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+            // A new document cannot already be soft-deleted.
+            if (!optimizeForInitialSummary) {
                 await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
-                return createSummary(
-                    repoManager,
-                    fsManager,
-                    wholeSummaryPayload,
-                    repoManagerParams,
-                    getExternalWriterParams(request.query?.config as string | undefined),
-                    persistLatestFullSummary);
-            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            }
+            return createSummary(
+                repoManager,
+                fsManager,
+                wholeSummaryPayload,
+                repoManagerParams,
+                getExternalWriterParams(request.query?.config as string | undefined),
+                isInitialSummary,
+                persistLatestFullSummary,
+                enableLowIoWrite,
+                optimizeForInitialSummary,
+            );
+        })().catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 

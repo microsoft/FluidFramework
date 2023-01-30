@@ -17,9 +17,15 @@ describe("`benchmarkMemory` function", () => {
                 delay(1).then(() => {
                     beforeHasBeenCalled = true;
                 }),
-            benchmarkFn: async () => {
-                expect(beforeHasBeenCalled).to.equal(true, "before should be called before test body");
-                expect(afterHasBeenCalled).to.equal(false, "after should not be called during test execution");
+            run: async () => {
+                expect(beforeHasBeenCalled).to.equal(
+                    true,
+                    "before should be called before test body",
+                );
+                expect(afterHasBeenCalled).to.equal(
+                    false,
+                    "after should not be called during test execution",
+                );
             },
             after: async () =>
                 delay(1).then(() => {
@@ -32,7 +38,10 @@ describe("`benchmarkMemory` function", () => {
             if (!isParentProcess) {
                 // If running with separate processes,
                 // this check must only be done in the child process (it will fail in the parent process)
-                expect(afterHasBeenCalled).to.equal(true, "after should be called after test execution");
+                expect(afterHasBeenCalled).to.equal(
+                    true,
+                    "after should be called after test execution",
+                );
             }
         });
     });

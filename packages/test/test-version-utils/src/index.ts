@@ -9,6 +9,7 @@ export {
 	ITestDataObject,
 	TestDataObjectType,
 } from "./compatUtils";
+export { describeInstallVersions } from "./describeWithVersions";
 export {
 	DescribeCompat,
 	DescribeCompatSuite,

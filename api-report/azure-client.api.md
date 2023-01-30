@@ -18,7 +18,7 @@ import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
-// @public (undocumented)
+// @public
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
     // @internal
     protected createServiceMember(audienceMember: IClient): AzureMember;

@@ -68,17 +68,17 @@ export class GitrestRunner implements IRunner {
         }
 
         const bind = typeof this.port === "string"
-            ? `Pipe ${ this.port }`
-            : `Port ${ this.port }`;
+            ? `Pipe ${this.port}`
+            : `Port ${this.port}`;
 
         // handle specific listen errors with friendly messages
         switch (error.code) {
             case "EACCES":
-                Lumberjack.error(`${ bind } requires elevated privileges`);
+                Lumberjack.error(`${bind} requires elevated privileges`);
                 process.exit(1);
                 break;
             case "EADDRINUSE":
-                Lumberjack.error(`${ bind } is already in use`);
+                Lumberjack.error(`${bind} is already in use`);
                 process.exit(1);
                 break;
             default:
@@ -93,8 +93,8 @@ export class GitrestRunner implements IRunner {
     private onListening() {
         const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
-            ? `pipe ${ addr }`
-            : `port ${ addr.port }`;
-        Lumberjack.info(`Listening on ${ bind }`);
+            ? `pipe ${addr}`
+            : `port ${addr.port}`;
+        Lumberjack.info(`Listening on ${bind}`);
     }
 }

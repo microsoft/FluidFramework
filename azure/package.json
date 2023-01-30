@@ -11,7 +11,7 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "scripts": {
-    "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run format && npm run build:compile && npm run lint && npm run build:docs",
+    "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
     "build:ci": "npm run build:genver && lerna run build:compile --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "npm run build:docs:api-extractor && npm run build:docs:copy-metadata",
@@ -22,8 +22,8 @@
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root ..",
-    "bundle-analysis:collect": "npm run webpack:profile && fluid-collect-bundle-analyses",
-    "bundle-analysis:run": "fluid-run-bundle-analyses",
+    "bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
+    "bundle-analysis:run": "flub run bundleStats",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
     "ci:build:docs": "lerna run ci:build:docs --stream --parallel",
     "ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
@@ -31,14 +31,15 @@
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
-    "format": "lerna run format --no-sort --stream -- -- -- --color",
+    "format": "lerna run format --parallel --stream",
     "postinstall": "npm run postinstall:lerna",
     "layer-check": "fluid-layer-check --info ../build-tools/packages/build-tools/data/layerInfo.json",
     "lerna": "lerna",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
-    "policy-check": "fluid-repo-policy-check",
-    "policy-check:fix": "fluid-repo-policy-check -r",
+    "policy-check": "cd .. && npm run policy-check",
+    "policy-check:asserts": "cd .. && npm run policy-check:asserts",
+    "policy-check:fix": "cd .. && npm run policy-check:fix",
     "post-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json lerna-package-lock.json; [ -f package-lock.json.bak ] && mv package-lock.json.bak package-lock.json; exit 0",
     "post-lerna-install:win32": "if exist package-lock.json move package-lock.json lerna-package-lock.json && if exist package-lock.json.bak move package-lock.json.bak package-lock.json",
     "postinstall:lerna": "run-script-os",
@@ -61,8 +62,6 @@
     "test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
     "tsc": "lerna run tsc --stream",
     "tsc:fast": "fluid-build  --root .. -s tsc",
-    "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "typetests:gen": "lerna run typetests:gen --no-sort --stream --no-bail",
     "typetests:prepare": "npm run typetests:gen -- -- -- -p -v",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
@@ -86,7 +85,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^1.0.0",
+    "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/build-tools": "^0.4.4000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
@@ -96,8 +95,20 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "lerna": "^5.1.8",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
+  },
+  "engines": {
+    "node": ">=14.13.0",
+    "npm": "^6"
+  },
+  "fluidBuild": {
+    "branchReleaseTypes": {
+      "main": "major",
+      "lts": "minor",
+      "release/azure/*": "patch"
+    }
   }
 }

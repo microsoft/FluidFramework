@@ -9,42 +9,42 @@ import { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
  * An envelope wraps the contents with the intended target
  */
 export interface IEnvelope {
-    /**
-     * The target for the envelope
-     */
-    address: string;
+	/**
+	 * The target for the envelope
+	 */
+	address: string;
 
-    /**
-     * The contents of the envelope
-     */
-    contents: any;
+	/**
+	 * The contents of the envelope
+	 */
+	contents: any;
 }
 
 export interface ISignalEnvelope {
-    /**
-     * The target for the envelope, undefined for the container
-     */
-    address?: string;
+	/**
+	 * The target for the envelope, undefined for the container
+	 */
+	address?: string;
 
-    /**
-     * Identifier for the signal being submitted.
-     */
-    clientSignalSequenceNumber: number;
+	/**
+	 * Identifier for the signal being submitted.
+	 */
+	clientSignalSequenceNumber: number;
 
-     /**
-     * The contents of the envelope
-     */
-    contents: {
-        type: string;
-        content: any;
-    };
+	/**
+	 * The contents of the envelope
+	 */
+	contents: {
+		type: string;
+		content: any;
+	};
 }
 
 /**
  * Represents ISignalMessage with its type.
  */
 export interface IInboundSignalMessage extends ISignalMessage {
-    type: string;
+	type: string;
 }
 
 /**
@@ -52,20 +52,20 @@ export interface IInboundSignalMessage extends ISignalMessage {
  * Contains snapshot of data structure which is the current state of this data structure.
  */
 export interface IAttachMessage {
-    /**
-     * The identifier for the object
-     */
-    id: string;
+	/**
+	 * The identifier for the object
+	 */
+	id: string;
 
-    /**
-     * The type of object
-     */
-    type: string;
+	/**
+	 * The type of object
+	 */
+	type: string;
 
-    /**
-     * Initial snapshot of the document (contains ownership)
-     */
-    snapshot: ITree;
+	/**
+	 * Initial snapshot of the document (contains ownership)
+	 */
+	snapshot: ITree;
 }
 
 /**
@@ -74,5 +74,6 @@ export interface IAttachMessage {
  * Older versions of attach messages could have null snapshots,
  * so this gives correct typings for writing backward compatible code.
  */
-export type InboundAttachMessage = Omit<IAttachMessage, "snapshot">
-    & { snapshot: IAttachMessage["snapshot"] | null; };
+export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
+	snapshot: IAttachMessage["snapshot"] | null;
+};

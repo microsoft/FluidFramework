@@ -11,8 +11,8 @@ import { rebase } from "./rebase";
 
 export type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 
-export const sequenceFieldChangeRebaser: SequenceChangeRebaser = {
-    compose,
-    invert,
-    rebase,
+export const sequenceFieldChangeRebaser = {
+	compose,
+	invert,
+	rebase,
 };

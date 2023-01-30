@@ -4,150 +4,106 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brand, brandOpaque, fail, makeArray, OffsetListFactory } from "../../util";
-import { TreeSchemaIdentifier, Delta } from "../../core";
+import { brandOpaque, fail, OffsetListFactory } from "../../util";
+import { Delta } from "../../core";
 import { applyModifyToTree } from "../deltaUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";
-import { MarkList, ModifyInsert } from "./format";
-import { isSkipMark } from "./utils";
+import { NodeReviver } from "../modular-schema";
+import { MarkList, ProtoNode } from "./format";
+import { getInputLength, isSkipMark } from "./utils";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
+export type ToDelta<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
+
+const ERR_NO_REVISION_ON_REVIVE =
+	"Unable to get convert revive mark to delta due to missing revision tag";
 
 export function sequenceFieldToDelta<TNodeChange>(
-    marks: MarkList<TNodeChange>,
-    deltaFromChild: ToDelta<TNodeChange>,
+	marks: MarkList<TNodeChange>,
+	deltaFromChild: ToDelta<TNodeChange>,
+	reviver: NodeReviver,
 ): Delta.MarkList {
-    const out = new OffsetListFactory<Delta.Mark>();
-    for (const mark of marks) {
-        if (isSkipMark(mark)) {
-            out.pushOffset(mark);
-        } else {
-            // Inline into `switch(mark.type)` once we upgrade to TS 4.7
-            const type = mark.type;
-            switch (type) {
-                case "Insert": {
-                    const insertMark: Delta.Insert = {
-                        type: Delta.MarkType.Insert,
-                        content: mark.content.map(singleTextCursor),
-                    };
-                    out.pushContent(insertMark);
-                    break;
-                }
-                case "MInsert": {
-                    const cloned = cloneAndModify(mark, deltaFromChild);
-                    if (cloned.fields.size > 0) {
-                        const insertMark: Delta.InsertAndModify = {
-                            type: Delta.MarkType.InsertAndModify,
-                            ...cloned,
-                        };
-                        out.pushContent(insertMark);
-                    } else {
-                        const insertMark: Delta.Insert = {
-                            type: Delta.MarkType.Insert,
-                            content: [cloned.content],
-                        };
-                        out.pushContent(insertMark);
-                    }
-                    break;
-                }
-                case "MoveIn": {
-                    const moveMark: Delta.MoveIn = {
-                        type: Delta.MarkType.MoveIn,
-                        moveId: brandOpaque<Delta.MoveId>(mark.id),
-                    };
-                    out.pushContent(moveMark);
-                    break;
-                }
-                case "Modify": {
-                    if (mark.tomb === undefined) {
-                        const modify = deltaFromChild(mark.changes);
-                        if (modify.setValue !== undefined || modify.fields !== undefined) {
-                            out.pushContent(modify);
-                        } else {
-                            out.pushOffset(1);
-                        }
-                    }
-                    break;
-                }
-                case "Delete": {
-                    const deleteMark: Delta.Delete = {
-                        type: Delta.MarkType.Delete,
-                        count: mark.count,
-                    };
-                    out.pushContent(deleteMark);
-                    break;
-                }
-                case "MDelete": {
-                    const modify = deltaFromChild(mark.changes);
-                    if (modify.fields !== undefined) {
-                        const deleteMark: Delta.ModifyAndDelete = {
-                            type: Delta.MarkType.ModifyAndDelete,
-                            fields: modify.fields,
-                        };
-                        out.pushContent(deleteMark);
-                    } else {
-                        const deleteMark: Delta.Delete = {
-                            type: Delta.MarkType.Delete,
-                            count: 1,
-                        };
-                        out.pushContent(deleteMark);
-                    }
-                    break;
-                }
-                case "MoveOut": {
-                    const moveMark: Delta.MoveOut = {
-                        type: Delta.MarkType.MoveOut,
-                        moveId: brandOpaque<Delta.MoveId>(mark.id),
-                        count: mark.count,
-                    };
-                    out.pushContent(moveMark);
-                    break;
-                }
-                case "Revive": {
-                    const insertMark: Delta.Insert = {
-                        type: Delta.MarkType.Insert,
-                        // TODO: Restore the actual node, possibly as part of Delta application
-                        content: makeArray(mark.count, () =>
-                            singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
-                        ),
-                    };
-                    out.pushContent(insertMark);
-                    break;
-                }
-                case "MRevive": {
-                    const modify = deltaFromChild(mark.changes);
-                    const fields =
-                        modify.fields ?? fail("MRevive marks should always carry field changes");
-                    const insertMark: Delta.InsertAndModify = {
-                        type: Delta.MarkType.InsertAndModify,
-                        // TODO: Restore the actual node, possibly as part of Delta application
-                        content: singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
-                        // TODO: Apply the field changes to the restored node
-                        fields,
-                    };
-                    out.pushContent(insertMark);
-                    break;
-                }
-                case "MMoveIn":
-                case "MMoveOut":
-                case "Return":
-                case "MReturn":
-                    fail(ERR_NOT_IMPLEMENTED);
-                case "Tomb": {
-                    // These tombs are only used to precisely describe the location of other attaches.
-                    // They have no impact on the current state.
-                    break;
-                }
-                default:
-                    unreachableCase(type);
-            }
-        }
-    }
-    return out.list;
+	const out = new OffsetListFactory<Delta.Mark>();
+	let inputIndex = 0;
+	for (const mark of marks) {
+		if (isSkipMark(mark)) {
+			out.pushOffset(mark);
+		} else {
+			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
+			const type = mark.type;
+			switch (type) {
+				case "Insert": {
+					const insertMark: Delta.Mark = makeDeltaInsert(
+						mark.content,
+						mark.changes,
+						deltaFromChild,
+					);
+					out.pushContent(insertMark);
+					break;
+				}
+				case "MoveIn":
+				case "ReturnTo": {
+					const moveMark: Delta.MoveIn = {
+						type: Delta.MarkType.MoveIn,
+						count: mark.count,
+						moveId: brandOpaque<Delta.MoveId>(mark.id),
+					};
+					out.pushContent(moveMark);
+					break;
+				}
+				case "Modify": {
+					const modify = deltaFromChild(mark.changes, inputIndex);
+					if (modify.setValue !== undefined || modify.fields !== undefined) {
+						out.pushContent(modify);
+					} else {
+						out.pushOffset(1);
+					}
+					break;
+				}
+				case "Delete": {
+					const deleteMark: Delta.Delete = {
+						type: Delta.MarkType.Delete,
+						count: mark.count,
+					};
+					out.pushContent(deleteMark);
+					break;
+				}
+				case "MoveOut":
+				case "ReturnFrom": {
+					const moveMark: Delta.MoveOut = {
+						type: Delta.MarkType.MoveOut,
+						moveId: brandOpaque<Delta.MoveId>(mark.id),
+						count: mark.count,
+					};
+					out.pushContent(moveMark);
+					break;
+				}
+				case "Revive": {
+					if (mark.conflictsWith === undefined) {
+						const insertMark: Delta.Insert = {
+							type: Delta.MarkType.Insert,
+							content: reviver(
+								mark.detachedBy ??
+									mark.lastDetachedBy ??
+									fail(ERR_NO_REVISION_ON_REVIVE),
+								mark.detachIndex,
+								mark.count,
+							),
+						};
+						out.pushContent(insertMark);
+					} else if (mark.lastDetachedBy === undefined) {
+						out.pushOffset(mark.count);
+					}
+					break;
+				}
+				default:
+					unreachableCase(type);
+			}
+		}
+		inputIndex += getInputLength(mark);
+	}
+	return out.list;
 }
-
-const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
 
 /**
  * Converts inserted content into the format expected in Delta instances.
@@ -155,30 +111,25 @@ const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
  *
  * The returned `fields` map may be empty if all modifications are applied by the function.
  */
-function cloneAndModify<TNodeChange>(
-    insert: ModifyInsert<TNodeChange>,
-    deltaFromChild: ToDelta<TNodeChange>,
-): DeltaInsertModification {
-    // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
-    const cursor = singleTextCursor(insert.content);
-    const mutableTree = mapTreeFromCursor(cursor);
-    const outModifications = applyModifyToTree(mutableTree, deltaFromChild(insert.changes));
-    return { content: singleMapTreeCursor(mutableTree), fields: outModifications };
+function makeDeltaInsert<TNodeChange>(
+	content: ProtoNode[],
+	changes: TNodeChange | undefined,
+	deltaFromChild: ToDelta<TNodeChange>,
+): Delta.Insert | Delta.InsertAndModify {
+	// TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
+	const cursors = content.map(singleTextCursor);
+	if (changes !== undefined) {
+		const mutableTree = mapTreeFromCursor(cursors[0]);
+		const outModifications = applyModifyToTree(mutableTree, deltaFromChild(changes, undefined));
+		const cursor = singleMapTreeCursor(mutableTree);
+		return outModifications.size > 0
+			? {
+					type: Delta.MarkType.InsertAndModify,
+					content: singleMapTreeCursor(mutableTree),
+					fields: outModifications,
+			  }
+			: { type: Delta.MarkType.Insert, content: [cursor] };
+	} else {
+		return { type: Delta.MarkType.Insert, content: cursors };
+	}
 }
-
-/**
- * Modifications to be applied to an inserted tree in a Delta.
- */
-interface DeltaInsertModification {
-    /**
-     * The subtree to be inserted.
-     */
-    content: Delta.ProtoNode;
-    /**
-     * The modifications to make to the inserted subtree.
-     * May be empty.
-     */
-    fields: Delta.FieldMarks;
-}
-
-const ERR_NOT_IMPLEMENTED = "Not implemented";

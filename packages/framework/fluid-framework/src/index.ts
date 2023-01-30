@@ -12,9 +12,9 @@
  */
 
 export {
-    AttachState,
-    ContainerErrorType,
-    ICriticalContainerError,
+	AttachState,
+	ContainerErrorType,
+	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 export { DriverErrorType } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
