@@ -74,7 +74,7 @@
     "@fluid-tools/build-cli": "^0.8.0",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
-    "@fluidframework/fluid-runner-previous": "npm:@fluidframework/fluid-runner@2.0.0-internal.2.2.0",
+    "@fluidframework/fluid-runner-previous": "npm:@fluidframework/fluid-runner@2.0.0-internal.2.4.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -91,8 +91,9 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.3.0.0",
+    "previousVersionStyle": "^previousMajor",
     "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "baselineVersion": "2.0.0-internal.2.1.1",
+    "baselineVersion": "2.0.0-internal.2.4.0",
     "broken": {}
   }
 }

@@ -42,7 +42,7 @@
     "@fluid-tools/build-cli": "^0.8.0",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
-    "@fluidframework/view-adapters-previous": "npm:@fluidframework/view-adapters@2.0.0-internal.2.2.0",
+    "@fluidframework/view-adapters-previous": "npm:@fluidframework/view-adapters@2.0.0-internal.2.4.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/react": "^17.0.44",
@@ -56,8 +56,9 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.3.0.0",
+    "previousVersionStyle": "^previousMajor",
     "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "baselineVersion": "2.0.0-internal.2.1.1",
+    "baselineVersion": "2.0.0-internal.2.4.0",
     "broken": {}
   }
 }
