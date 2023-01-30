@@ -277,16 +277,6 @@ export function getExistingRandomNodePosition(
                         cursor.free();
                         return path;
                     }
-
-                    if (currentMove === "stop") {
-                        if (cursor.firstField()) {
-                            fieldNodes = cursor.getFieldLength();
-                            nodeIndex = fieldNodes !== 0 ? random.integer(0, fieldNodes - 1) : 0;
-                            cursor.free();
-                            return path;
-                        }
-                        break;
-                    }
                 } else {
                     // if the node does not exist, return the most recently entered node
                     cursor.free();
