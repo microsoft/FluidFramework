@@ -1805,7 +1805,6 @@ export class ContainerRuntime
 			}
 		}
 
-
 		if (changeOfState) {
 			this.replayPendingStates();
 		}
