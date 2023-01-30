@@ -32,13 +32,9 @@ parameters:
   type: number
   default: 60
 
-- name: packageManager
+- name: tagName
   type: string
-  default: npm
-
-- name: packageManagerInstallCommand
-  type: string
-  default: 'npm ci --unsafe-perm'
+  default: client
 
 jobs:
   # Job - Build
@@ -82,21 +78,20 @@ jobs:
       inputs:
         version: 14.x
 
-    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-      - task: Cache@2
-        displayName: Cache pnpm store
-        inputs:
-          key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
-          path: ${{ variables.pnpmStorePath }}
+    - task: Cache@2
+      displayName: Cache pnpm store
+      inputs:
+        key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+        path: ${{ variables.pnpmStorePath }}
 
-      - task: Bash@3
-        displayName: Install and configure pnpm
-        inputs:
-          targetType: 'inline'
-          workingDirectory: ${{ parameters.buildDirectory }}
-          script: |
-            npm i -g pnpm
-            pnpm config set store-dir $(pnpmStorePath)
+    - task: Bash@3
+      displayName: Install and configure pnpm
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          npm i -g pnpm
+          pnpm config set store-dir $(pnpmStorePath)
 
     - task: Bash@3
       displayName: Install dependencies
