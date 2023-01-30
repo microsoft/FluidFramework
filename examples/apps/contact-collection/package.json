@@ -21,6 +21,7 @@
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "esbuild": "node esbuild.cjs",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
@@ -29,12 +30,12 @@
     "prepack": "npm run webpack",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-    "start": "webpack serve",
+    "start": "node serve.cjs",
     "start:test": "webpack serve --config webpack.test.js",
     "test": "npm run test:jest",
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
-    "webpack": "webpack --env production",
+    "webpack": "npm run esbuild",
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
@@ -52,6 +53,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
+    "@craftamap/esbuild-plugin-html": "^0.4.0",
     "@fluid-tools/build-cli": "^0.8.0",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
@@ -65,6 +67,8 @@
     "clean-webpack-plugin": "^4.0.0",
     "concurrently": "^6.2.0",
     "cross-env": "^7.0.2",
+    "esbuild": "^0.15.5",
+    "esbuild-loader": "^2.19.0",
     "eslint": "~8.6.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^26.6.3",
