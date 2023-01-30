@@ -9,12 +9,12 @@ import * as child_process from "child_process";
 // directly at the root of the repo because this better isolates its usage
 // and dependencies
 function main() {
-    try {
-        child_process.execSync(`npx danger ci -d ${__dirname}/dangerfile.js`, { stdio: "inherit" });
-    } catch (e) {
-        console.error(e);
-        process.exit(-1);
-    }
+	try {
+		child_process.execSync(`npx danger ci -d ${__dirname}/dangerfile.js`, { stdio: "inherit" });
+	} catch (e) {
+		console.error(e);
+		process.exit(-1);
+	}
 }
 
 main();

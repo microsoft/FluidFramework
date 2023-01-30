@@ -10,8 +10,8 @@ import { run } from "good-fences";
 // run it as a test.
 
 describe("good-fences", () => {
-    it("good-fences", async () => {
-        const result = await run({});
-        assert.deepEqual(result, { errors: [], warnings: [] });
-    });
+	it("good-fences", async () => {
+		const result = await run({});
+		assert.deepEqual(result, { errors: [], warnings: [] });
+	});
 });
