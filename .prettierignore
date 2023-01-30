@@ -37,5 +37,9 @@ packages/tools/fluid-runner/src/test/telemetryExpectedOutputs/
 # es5 build output
 packages/framework/data-object-base/es5
 
+# Test coverage reports
+**/coverage/*
+**/nyc/*
+
 # TODO: Temporarily ignore package.json files while we figure out why CI fails
 **/package.json
