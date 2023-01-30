@@ -145,7 +145,7 @@ export async function npmCheckUpdates(
 			upgrade: writeChanges,
 			jsonUpgraded: true,
 			silent: true,
-            peer: true,
+			peer: true,
 		})) as Index<VersionSpec>;
 
 		if (typeof result !== "object") {
