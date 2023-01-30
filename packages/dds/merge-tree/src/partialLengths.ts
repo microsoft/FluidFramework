@@ -269,13 +269,11 @@ export class PartialSequenceLengths {
         collabWindow: CollaborationWindow,
         recur = false,
         computeLocalPartials = false,
-        obliterateRefSeq?: number,
     ): PartialSequenceLengths {
         const leafPartialLengths = PartialSequenceLengths.fromLeaves(
             block,
             collabWindow,
             computeLocalPartials,
-            obliterateRefSeq,
         );
 
         let hasInternalChild = false;
@@ -290,7 +288,6 @@ export class PartialSequenceLengths {
                         collabWindow,
                         true,
                         computeLocalPartials,
-                        obliterateRefSeq,
                     );
                 }
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -359,7 +356,6 @@ export class PartialSequenceLengths {
         block: IMergeBlock,
         collabWindow: CollaborationWindow,
         computeLocalPartials: boolean,
-        obliterateRefSeq?: number,
     ): PartialSequenceLengths {
         const combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq, computeLocalPartials);
         combinedPartialLengths.segmentCount = block.childCount;
@@ -389,7 +385,6 @@ export class PartialSequenceLengths {
                         segment,
                         removalInfo,
                         moveInfo,
-                        obliterateRefSeq,
                     );
                 }
             }
@@ -568,8 +563,7 @@ export class PartialSequenceLengths {
         segment: ISegment,
         removalInfo?: IRemovalInfo,
         moveInfo?: IMoveInfo,
-        // todo: remove everywhere
-        obliterateRefSeq?: number) {
+    ) {
         const removalIsLocal = !!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
         const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
         const isLocal =
@@ -821,7 +815,6 @@ export class PartialSequenceLengths {
         seq: number,
         clientId: number,
         collabWindow: CollaborationWindow,
-        obliterateRefSeq?: number,
     ) {
         let seqSeglen = 0;
         let remoteObliteratedLen = 0;

@@ -1527,7 +1527,7 @@ export class MergeTree {
             }
             const clientId = this.collabWindow.clientId;
             for (const node of nodesToUpdate) {
-                this.blockUpdatePathLengths(node, seq, clientId, overwrite, opArgs.op.type === MergeTreeDeltaType.OBLITERATE ? opArgs.sequencedMessage!.referenceSequenceNumber : undefined);
+                this.blockUpdatePathLengths(node, seq, clientId, overwrite);
                 // NodeUpdatePathLengths(node, seq, clientId, true);
             }
         }
@@ -2141,7 +2141,7 @@ export class MergeTree {
                 return undefined;
             } else {
                 // Don't update ordinals because higher block will do it
-                const newNodeFromSplit = this.split(block, refSeq);
+                const newNodeFromSplit = this.split(block);
 
                 if (PartialSequenceLengths.options.verify) {
                     this.nodeLength(block, refSeq, clientId);
@@ -2155,7 +2155,7 @@ export class MergeTree {
         }
     }
 
-    private split(node: IMergeBlock, obliterateRefSeq?: number) {
+    private split(node: IMergeBlock) {
         const halfCount = MaxNodesInBlock / 2;
         const newNode = this.makeBlock(halfCount);
         node.childCount = halfCount;
@@ -2165,8 +2165,8 @@ export class MergeTree {
             newNode.assignChild(node.children[halfCount + i], i, false);
             node.children[halfCount + i] = undefined!;
         }
-        this.nodeUpdateLengthNewStructure(node, undefined, false, obliterateRefSeq);
-        this.nodeUpdateLengthNewStructure(newNode, undefined, false, obliterateRefSeq);
+        this.nodeUpdateLengthNewStructure(node, undefined, false);
+        this.nodeUpdateLengthNewStructure(newNode, undefined, false);
         return newNode;
     }
 
@@ -2319,9 +2319,9 @@ export class MergeTree {
 
         const afterMarkMoved = (node: IMergeBlock, pos: number, _start: number, _end: number) => {
             if (_overwrite) {
-                this.nodeUpdateLengthNewStructure(node, undefined, false, refSeq);
+                this.nodeUpdateLengthNewStructure(node, undefined, false);
             } else {
-                this.blockUpdateLength(node, seq, clientId, refSeq);
+                this.blockUpdateLength(node, seq, clientId);
             }
             return true;
         };
@@ -2563,12 +2563,12 @@ export class MergeTree {
         return segmentPosition;
     }
 
-    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false, computeLocalPartials = false, obliterateRefSeq?: number) {
+    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false, computeLocalPartials = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
             this.localPartialsComputed = false;
             node.partialLengths = PartialSequenceLengths.combine(
-                node, this.collabWindow, recur, computeLocalPartials, obliterateRefSeq);
+                node, this.collabWindow, recur, computeLocalPartials);
         }
     }
 
@@ -2784,20 +2784,19 @@ export class MergeTree {
         seq: number,
         clientId: number,
         newStructure = false,
-        obliterateRefSeq?: number,
     ) {
         let block: IMergeBlock | undefined = startBlock;
         while (block !== undefined) {
             if (newStructure) {
-                this.nodeUpdateLengthNewStructure(block, undefined, false, obliterateRefSeq);
+                this.nodeUpdateLengthNewStructure(block, undefined, false);
             } else {
-                this.blockUpdateLength(block, seq, clientId, obliterateRefSeq);
+                this.blockUpdateLength(block, seq, clientId);
             }
             block = block.parent;
         }
     }
 
-    private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number, obliterateRefSeq?: number) {
+    private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number) {
         this.blockUpdate(node);
         this.localPartialsComputed = false;
         if (
@@ -2810,10 +2809,10 @@ export class MergeTree {
                 && MergeTree.options.incrementalUpdate
                 && clientId !== NonCollabClient
             ) {
-                node.partialLengths.update(node, seq, clientId, this.collabWindow, obliterateRefSeq);
+                node.partialLengths.update(node, seq, clientId, this.collabWindow);
             } else {
                 node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow,
-                    undefined, undefined, obliterateRefSeq);
+                    undefined, undefined);
             }
 
             if (PartialSequenceLengths.options.verify) {
