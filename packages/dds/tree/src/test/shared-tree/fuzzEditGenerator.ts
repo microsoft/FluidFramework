@@ -268,15 +268,9 @@ export function getExistingRandomNodePosition(
                 if (fieldNodes > 0) {
                     nodeIndex = random.integer(0, fieldNodes - 1);
                     cursor.enterNode(nodeIndex);
-                    const currentPath = cursor.getPath();
-                    if (currentPath !== undefined) {
-                        path = currentPath;
-                        currentMove = random.pick(moves.nodes);
-                    } else {
-                        // if node position does not exist, we can just return parent
-                        cursor.free();
-                        return path;
-                    }
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    path = cursor.getPath()!;
+                    currentMove = random.pick(moves.nodes);
                 } else {
                     // if the node does not exist, return the most recently entered node
                     cursor.free();
