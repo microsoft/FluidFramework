@@ -4,11 +4,11 @@
  */
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
-    ApiDeclaredItem,
-    ApiItem,
-    ApiItemKind,
-    ApiPackage,
-    Excerpt,
+	ApiDeclaredItem,
+	ApiItem,
+	ApiItemKind,
+	ApiPackage,
+	Excerpt,
 } from "@microsoft/api-extractor-model";
 
 import { ApiMemberKind, getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
@@ -137,207 +137,207 @@ export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
  * Policy configuration options
  */
 export interface PolicyOptions {
-    /**
-     * Whether or not to include a top-level heading in rendered documents.
-     *
-     * @defaultValue true
-     *
-     * @remarks If you will be rendering the document contents into some other document content that will inject its
-     * own root heading, this can be used to omit that heading from what is rendered by this system.
-     */
-    includeTopLevelDocumentHeading?: boolean;
+	/**
+	 * Whether or not to include a top-level heading in rendered documents.
+	 *
+	 * @defaultValue true
+	 *
+	 * @remarks If you will be rendering the document contents into some other document content that will inject its
+	 * own root heading, this can be used to omit that heading from what is rendered by this system.
+	 */
+	includeTopLevelDocumentHeading?: boolean;
 
-    /**
-     * Whether or not to include a navigation breadcrumb at the top of rendered documents.
-     *
-     * @defaultValue true
-     *
-     * @remarks Note: `Model` items will never have a breadcrumb rendered, even if this is specfied.
-     */
-    includeBreadcrumb?: boolean;
+	/**
+	 * Whether or not to include a navigation breadcrumb at the top of rendered documents.
+	 *
+	 * @defaultValue true
+	 *
+	 * @remarks Note: `Model` items will never have a breadcrumb rendered, even if this is specfied.
+	 */
+	includeBreadcrumb?: boolean;
 
-    /**
-     * See {@link DocumentBoundaries}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultDocumentBoundaries}
-     */
-    documentBoundaries?: DocumentBoundaries;
+	/**
+	 * See {@link DocumentBoundaries}.
+	 *
+	 * @defaultValue {@link DefaultPolicies.defaultDocumentBoundaries}
+	 */
+	documentBoundaries?: DocumentBoundaries;
 
-    /**
-     * See {@link HierarchyBoundaries}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultHierarchyBoundaries}
-     */
-    hierarchyBoundaries?: HierarchyBoundaries;
+	/**
+	 * See {@link HierarchyBoundaries}.
+	 *
+	 * @defaultValue {@link DefaultPolicies.defaultHierarchyBoundaries}
+	 */
+	hierarchyBoundaries?: HierarchyBoundaries;
 
-    /**
-     * See {@link FileNamePolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultFileNamePolicy}
-     */
-    fileNamePolicy?: FileNamePolicy;
+	/**
+	 * See {@link FileNamePolicy}.
+	 *
+	 * @defaultValue {@link DefaultPolicies.defaultFileNamePolicy}
+	 */
+	fileNamePolicy?: FileNamePolicy;
 
-    /**
-     * See {@link UriBaseOverridePolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultUriBaseOverridePolicy}
-     */
-    uriBaseOverridePolicy?: UriBaseOverridePolicy;
+	/**
+	 * See {@link UriBaseOverridePolicy}.
+	 *
+	 * @defaultValue {@link DefaultPolicies.defaultUriBaseOverridePolicy}
+	 */
+	uriBaseOverridePolicy?: UriBaseOverridePolicy;
 
-    /**
-     * See {@link HeadingTitlePolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultHeadingTitlePolicy}
-     */
-    headingTitlePolicy?: HeadingTitlePolicy;
+	/**
+	 * See {@link HeadingTitlePolicy}.
+	 *
+	 * @defaultValue {@link DefaultPolicies.defaultHeadingTitlePolicy}
+	 */
+	headingTitlePolicy?: HeadingTitlePolicy;
 
-    /**
-     * See {@link LinkTextPolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultLinkTextPolicy}
-     */
-    linkTextPolicy?: LinkTextPolicy;
+	/**
+	 * See {@link LinkTextPolicy}.
+	 *
+	 * @defaultValue {@link DefaultPolicies.defaultLinkTextPolicy}
+	 */
+	linkTextPolicy?: LinkTextPolicy;
 
-    /**
-     * See {@link PackageFilterPolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultPackageFilterPolicy}
-     */
-    packageFilterPolicy?: PackageFilterPolicy;
+	/**
+	 * See {@link PackageFilterPolicy}.
+	 *
+	 * @defaultValue {@link DefaultPolicies.defaultPackageFilterPolicy}
+	 */
+	packageFilterPolicy?: PackageFilterPolicy;
 
-    /**
-     * Contents to display in what would otherwise be empty table cells.
-     *
-     * @defaultValue ""
-     */
-    emptyTableCellText?: string;
+	/**
+	 * Contents to display in what would otherwise be empty table cells.
+	 *
+	 * @defaultValue ""
+	 */
+	emptyTableCellText?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultPolicies {
-    /**
-     * Default {@link PolicyOptions.documentBoundaries}.
-     *
-     * Generates separate documents for the following API item kinds:
-     *
-     * - Class
-     *
-     * - Interface
-     *
-     * - Namespace
-     */
-    export const defaultDocumentBoundaries: ApiMemberKind[] = [
-        ApiItemKind.Class,
-        ApiItemKind.Interface,
-        ApiItemKind.Namespace,
-    ];
+	/**
+	 * Default {@link PolicyOptions.documentBoundaries}.
+	 *
+	 * Generates separate documents for the following API item kinds:
+	 *
+	 * - Class
+	 *
+	 * - Interface
+	 *
+	 * - Namespace
+	 */
+	export const defaultDocumentBoundaries: ApiMemberKind[] = [
+		ApiItemKind.Class,
+		ApiItemKind.Interface,
+		ApiItemKind.Namespace,
+	];
 
-    /**
-     * Default {@link PolicyOptions.hierarchyBoundaries}.
-     *
-     * Creates sub-directories for the following API item kinds:
-     *
-     * - Namespace
-     */
-    export const defaultHierarchyBoundaries: ApiMemberKind[] = [ApiItemKind.Namespace];
+	/**
+	 * Default {@link PolicyOptions.hierarchyBoundaries}.
+	 *
+	 * Creates sub-directories for the following API item kinds:
+	 *
+	 * - Namespace
+	 */
+	export const defaultHierarchyBoundaries: ApiMemberKind[] = [ApiItemKind.Namespace];
 
-    /**
-     * Default {@link PolicyOptions.fileNamePolicy}.
-     *
-     * Uses the item's qualified API name, but is handled differently for the following items:
-     *
-     * - Model: Uses "index".
-     *
-     * - Package: Uses the unscoped package name.
-     */
-    export function defaultFileNamePolicy(apiItem: ApiItem): string {
-        switch (apiItem.kind) {
-            case ApiItemKind.Model:
-                return "index";
-            case ApiItemKind.Package:
-                return Utilities.getSafeFilenameForName(
-                    getUnscopedPackageName(apiItem as ApiPackage),
-                );
-            default:
-                return getQualifiedApiItemName(apiItem);
-        }
-    }
+	/**
+	 * Default {@link PolicyOptions.fileNamePolicy}.
+	 *
+	 * Uses the item's qualified API name, but is handled differently for the following items:
+	 *
+	 * - Model: Uses "index".
+	 *
+	 * - Package: Uses the unscoped package name.
+	 */
+	export function defaultFileNamePolicy(apiItem: ApiItem): string {
+		switch (apiItem.kind) {
+			case ApiItemKind.Model:
+				return "index";
+			case ApiItemKind.Package:
+				return Utilities.getSafeFilenameForName(
+					getUnscopedPackageName(apiItem as ApiPackage),
+				);
+			default:
+				return getQualifiedApiItemName(apiItem);
+		}
+	}
 
-    /**
-     * Default {@link PolicyOptions.uriBaseOverridePolicy}.
-     *
-     * Always uses default URI base.
-     */
-    export function defaultUriBaseOverridePolicy(): string | undefined {
-        return undefined;
-    }
+	/**
+	 * Default {@link PolicyOptions.uriBaseOverridePolicy}.
+	 *
+	 * Always uses default URI base.
+	 */
+	export function defaultUriBaseOverridePolicy(): string | undefined {
+		return undefined;
+	}
 
-    /**
-     * Default {@link PolicyOptions.headingTitlePolicy}.
-     *
-     * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
-     */
-    export function defaultHeadingTitlePolicy(apiItem: ApiItem): string {
-        switch (apiItem.kind) {
-            case ApiItemKind.Model:
-                return "API Overview";
-            case ApiItemKind.CallSignature:
-            case ApiItemKind.ConstructSignature:
-            case ApiItemKind.IndexSignature:
-                // For signature items, the display-name is not particularly useful information
-                // ("(constructor)", "(call)", etc.).
-                // Instead, we will use a cleaned up variation on the type signature.
-                return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
-            default:
-                return apiItem.displayName;
-        }
-    }
+	/**
+	 * Default {@link PolicyOptions.headingTitlePolicy}.
+	 *
+	 * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
+	 */
+	export function defaultHeadingTitlePolicy(apiItem: ApiItem): string {
+		switch (apiItem.kind) {
+			case ApiItemKind.Model:
+				return "API Overview";
+			case ApiItemKind.CallSignature:
+			case ApiItemKind.ConstructSignature:
+			case ApiItemKind.IndexSignature:
+				// For signature items, the display-name is not particularly useful information
+				// ("(constructor)", "(call)", etc.).
+				// Instead, we will use a cleaned up variation on the type signature.
+				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+			default:
+				return apiItem.displayName;
+		}
+	}
 
-    /**
-     * Default {@link PolicyOptions.headingTitlePolicy}.
-     *
-     * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
-     */
-    export function defaultLinkTextPolicy(apiItem: ApiItem): string {
-        switch (apiItem.kind) {
-            case ApiItemKind.Model:
-                return "Packages";
-            case ApiItemKind.CallSignature:
-            case ApiItemKind.ConstructSignature:
-            case ApiItemKind.IndexSignature:
-                // For signature items, the display-name is not particularly useful information
-                // ("(constructor)", "(call)", etc.).
-                // Instead, we will use a cleaned up variation on the type signature.
-                return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
-            default:
-                return Utilities.getConciseSignature(apiItem);
-        }
-    }
+	/**
+	 * Default {@link PolicyOptions.headingTitlePolicy}.
+	 *
+	 * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
+	 */
+	export function defaultLinkTextPolicy(apiItem: ApiItem): string {
+		switch (apiItem.kind) {
+			case ApiItemKind.Model:
+				return "Packages";
+			case ApiItemKind.CallSignature:
+			case ApiItemKind.ConstructSignature:
+			case ApiItemKind.IndexSignature:
+				// For signature items, the display-name is not particularly useful information
+				// ("(constructor)", "(call)", etc.).
+				// Instead, we will use a cleaned up variation on the type signature.
+				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+			default:
+				return Utilities.getConciseSignature(apiItem);
+		}
+	}
 
-    /**
-     * Default {@link PolicyOptions.packageFilterPolicy}.
-     *
-     * Unconditionally returns `false` (i.e. no packages will be filtered out).
-     */
-    export function defaultPackageFilterPolicy(): boolean {
-        return false;
-    }
+	/**
+	 * Default {@link PolicyOptions.packageFilterPolicy}.
+	 *
+	 * Unconditionally returns `false` (i.e. no packages will be filtered out).
+	 */
+	export function defaultPackageFilterPolicy(): boolean {
+		return false;
+	}
 }
 
 /**
  * Default {@link PolicyOptions} configuration.
  */
 export const defaultPolicyOptions: Required<PolicyOptions> = {
-    includeTopLevelDocumentHeading: true,
-    includeBreadcrumb: true,
-    documentBoundaries: DefaultPolicies.defaultDocumentBoundaries,
-    hierarchyBoundaries: DefaultPolicies.defaultHierarchyBoundaries,
-    fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
-    uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
-    headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
-    linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
-    packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
-    emptyTableCellText: "",
+	includeTopLevelDocumentHeading: true,
+	includeBreadcrumb: true,
+	documentBoundaries: DefaultPolicies.defaultDocumentBoundaries,
+	hierarchyBoundaries: DefaultPolicies.defaultHierarchyBoundaries,
+	fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
+	uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
+	headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
+	linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
+	packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
+	emptyTableCellText: "",
 };
 
 /**
@@ -347,12 +347,12 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
  * public utilities module and make it part of the public helper suite.
  */
 function getSingleLineExcerptText(excerpt: Excerpt): string {
-    // Regex replaces line breaks with spaces to ensure everything ends up on a single line.
-    let signatureExcerpt = excerpt.text.trim().replace(/\s+/g, " ");
+	// Regex replaces line breaks with spaces to ensure everything ends up on a single line.
+	let signatureExcerpt = excerpt.text.trim().replace(/\s+/g, " ");
 
-    if (signatureExcerpt.endsWith(";")) {
-        signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
-    }
+	if (signatureExcerpt.endsWith(";")) {
+		signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
+	}
 
-    return signatureExcerpt;
+	return signatureExcerpt;
 }

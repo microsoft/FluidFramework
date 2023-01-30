@@ -160,41 +160,41 @@ export type Skip = number;
  * Describes the deletion of a contiguous range of node.
  */
 export interface Delete {
-    readonly type: typeof MarkType.Delete;
-    readonly count: number;
+	readonly type: typeof MarkType.Delete;
+	readonly count: number;
 }
 
 /**
  * Describes the moving out of a contiguous range of node.
  */
 export interface MoveOut {
-    readonly type: typeof MarkType.MoveOut;
-    readonly count: number;
-    /**
-     * The delta should carry exactly one `MoveIn` mark with the same move ID.
-     */
-    readonly moveId: MoveId;
+	readonly type: typeof MarkType.MoveOut;
+	readonly count: number;
+	/**
+	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
+	 */
+	readonly moveId: MoveId;
 }
 
 /**
  * Describes the moving in of a contiguous range of node.
  */
 export interface MoveIn {
-    readonly type: typeof MarkType.MoveIn;
-    readonly count: number;
-    /**
-     * The delta should carry exactly one `MoveOut` mark with the same move ID.
-     */
-    readonly moveId: MoveId;
+	readonly type: typeof MarkType.MoveIn;
+	readonly count: number;
+	/**
+	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
+	 */
+	readonly moveId: MoveId;
 }
 
 /**
  * Describes the insertion of a contiguous range of node.
  */
 export interface Insert<TTree = ProtoNode> {
-    readonly type: typeof MarkType.Insert;
-    // TODO: use a single cursor with multiple nodes instead of array of cursors.
-    readonly content: readonly TTree[];
+	readonly type: typeof MarkType.Insert;
+	// TODO: use a single cursor with multiple nodes instead of array of cursors.
+	readonly content: readonly TTree[];
 }
 
 /**
@@ -208,55 +208,55 @@ export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 export type FieldChangeMap<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
 export interface FieldChanges<TTree = ProtoNode> {
-    readonly shallowChanges?: MarkList<TTree>;
-    readonly nestedChanges?: readonly NestedChange<TTree>[];
+	readonly shallowChanges?: MarkList<TTree>;
+	readonly nestedChanges?: readonly NestedChange<TTree>[];
 }
 
 export type NestedChange<TTree = ProtoNode> = readonly [ChildIndex, NodeChanges<TTree>];
 
 export interface ChildIndex {
-    index: number;
-    context: Context;
+	index: number;
+	context: Context;
 }
 
 export enum Context {
-    Input,
-    Output,
+	Input,
+	Output,
 }
 
 export interface NodeChanges<TTree = ProtoNode> {
-    readonly fields?: FieldChangeMap<TTree>;
-    readonly setValue?: Value;
+	readonly fields?: FieldChangeMap<TTree>;
+	readonly setValue?: Value;
 }
 
 export const MarkType = {
-    Insert: 0,
-    MoveIn: 1,
-    Delete: 2,
-    MoveOut: 3,
+	Insert: 0,
+	MoveIn: 1,
+	Delete: 2,
+	MoveOut: 3,
 } as const;
 
 /**
  * Returns the number of nodes in the input tree that the mark affects or skips.
  */
 export function inputLength(mark: Mark<unknown>): number {
-    if (isSkipMark(mark)) {
-        return mark;
-    }
-    // Inline into `switch(mark.type)` once we upgrade to TS 4.7
-    const type = mark.type;
-    switch (type) {
-        case MarkType.Delete:
-        case MarkType.MoveOut:
-            return mark.count;
-        case MarkType.Insert:
-        case MarkType.MoveIn:
-            return 0;
-        default:
-            unreachableCase(type);
-    }
+	if (isSkipMark(mark)) {
+		return mark;
+	}
+	// Inline into `switch(mark.type)` once we upgrade to TS 4.7
+	const type = mark.type;
+	switch (type) {
+		case MarkType.Delete:
+		case MarkType.MoveOut:
+			return mark.count;
+		case MarkType.Insert:
+		case MarkType.MoveIn:
+			return 0;
+		default:
+			unreachableCase(type);
+	}
 }
 
 export function isSkipMark(mark: Mark<unknown>): mark is Skip {
-    return typeof mark === "number";
+	return typeof mark === "number";
 }

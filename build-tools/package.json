@@ -19,8 +19,8 @@
     "build:full": "npm run build:genver && npm run build:full:compile",
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:genver": "lerna run build:genver --stream --parallel",
-    "bundle-analysis:collect": "npm run webpack:profile && fluid-collect-bundle-analyses",
-    "bundle-analysis:run": "fluid-run-bundle-analyses",
+    "bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
+    "bundle-analysis:run": "flub run bundleStats",
     "changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
     "ci:build:docs": "lerna run ci:build:docs --stream --parallel",
@@ -30,7 +30,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "commit": "git-cz",
-    "format": "lerna run format --parallel --no-sort --stream",
+    "format": "lerna run format --parallel --stream",
     "preinstall": "npx only-allow pnpm",
     "postinstall": "npm run build:compile",
     "install:commitlint": "npm install --global @commitlint/config-conventional",
@@ -99,5 +99,12 @@
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
   },
-  "packageManager": "pnpm@7.14.2"
+  "packageManager": "pnpm@7.14.2",
+  "pnpm": {
+      "peerDependencyRules": {
+        "allowedVersions": {
+          "eslint": "8.6.0"
+        }
+      }
+    }
 }

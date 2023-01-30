@@ -4,15 +4,15 @@
  */
 
 module.exports = function handler(fileData, logger) {
-    fileData.tests.forEach((testData) => {
-        logger.send({
-            category: "performance",
-            eventName: "Benchmark",
-            benchmarkType: "MemoryUsage",
-            suiteName: fileData.suiteName,
-            testName: testData.testName,
-            heapUsedAvg: testData.testData.stats.mean,
-            heapUsedStdDev: testData.testData.stats.deviation,
-        });
-    });
+	fileData.tests.forEach((testData) => {
+		logger.send({
+			category: "performance",
+			eventName: "Benchmark",
+			benchmarkType: "MemoryUsage",
+			suiteName: fileData.suiteName,
+			testName: testData.testName,
+			heapUsedAvg: testData.testData.stats.mean,
+			heapUsedStdDev: testData.testData.stats.deviation,
+		});
+	});
 };

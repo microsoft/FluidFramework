@@ -18,14 +18,14 @@ import { Mutable } from "../util";
  * @param func - The functions used to map tree content.
  */
 export function mapFieldMarks<TIn, TOut>(
-    fields: Delta.FieldChangeMap<TIn>,
-    func: (tree: TIn) => TOut,
+	fields: Delta.FieldChangeMap<TIn>,
+	func: (tree: TIn) => TOut,
 ): Delta.FieldChangeMap<TOut> {
-    const out: Map<FieldKey, Delta.FieldChanges<TOut>> = new Map();
-    for (const [k, v] of fields) {
-        out.set(k, mapFieldChanges<TIn, TOut>(v, func));
-    }
-    return out;
+	const out: Map<FieldKey, Delta.FieldChanges<TOut>> = new Map();
+	for (const [k, v] of fields) {
+		out.set(k, mapFieldChanges<TIn, TOut>(v, func));
+	}
+	return out;
 }
 
 /**
@@ -39,20 +39,20 @@ export function mapFieldMarks<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapFieldChanges<TIn, TOut>(
-    changes: Delta.FieldChanges<TIn>,
-    func: (tree: TIn) => TOut,
+	changes: Delta.FieldChanges<TIn>,
+	func: (tree: TIn) => TOut,
 ): Delta.FieldChanges<TOut> {
-    const field: Mutable<Delta.FieldChanges<TOut>> = {};
-    if (changes.shallowChanges) {
-        field.shallowChanges = mapMarkList(changes.shallowChanges, func);
-    }
-    if (changes.nestedChanges) {
-        field.nestedChanges = changes.nestedChanges.map((nested) => [
-            nested[0],
-            mapNodeChanges(nested[1], func),
-        ]);
-    }
-    return field;
+	const field: Mutable<Delta.FieldChanges<TOut>> = {};
+	if (changes.shallowChanges) {
+		field.shallowChanges = mapMarkList(changes.shallowChanges, func);
+	}
+	if (changes.nestedChanges) {
+		field.nestedChanges = changes.nestedChanges.map((nested) => [
+			nested[0],
+			mapNodeChanges(nested[1], func),
+		]);
+	}
+	return field;
 }
 
 /**
@@ -66,17 +66,17 @@ export function mapFieldChanges<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapNodeChanges<TIn, TOut>(
-    changes: Delta.NodeChanges<TIn>,
-    func: (tree: TIn) => TOut,
+	changes: Delta.NodeChanges<TIn>,
+	func: (tree: TIn) => TOut,
 ): Delta.NodeChanges<TOut> {
-    const out: Mutable<Delta.NodeChanges<TOut>> = {};
-    if (changes.fields !== undefined) {
-        out.fields = mapFieldMarks(changes.fields, func);
-    }
-    if (changes.setValue !== undefined) {
-        out.setValue = changes.setValue;
-    }
-    return out;
+	const out: Mutable<Delta.NodeChanges<TOut>> = {};
+	if (changes.fields !== undefined) {
+		out.fields = mapFieldMarks(changes.fields, func);
+	}
+	if (changes.setValue !== undefined) {
+		out.setValue = changes.setValue;
+	}
+	return out;
 }
 
 /**
@@ -90,10 +90,10 @@ export function mapNodeChanges<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapMarkList<TIn, TOut>(
-    list: Delta.MarkList<TIn>,
-    func: (tree: TIn) => TOut,
+	list: Delta.MarkList<TIn>,
+	func: (tree: TIn) => TOut,
 ): Delta.MarkList<TOut> {
-    return list.map((mark: Delta.Mark<TIn>) => mapMark(mark, func));
+	return list.map((mark: Delta.Mark<TIn>) => mapMark(mark, func));
 }
 
 /**
@@ -107,25 +107,25 @@ export function mapMarkList<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapMark<TIn, TOut>(
-    mark: Delta.Mark<TIn>,
-    func: (tree: TIn) => TOut,
+	mark: Delta.Mark<TIn>,
+	func: (tree: TIn) => TOut,
 ): Delta.Mark<TOut> {
-    if (Delta.isSkipMark(mark)) {
-        return mark;
-    }
-    const type = mark.type;
-    switch (type) {
-        case Delta.MarkType.Insert: {
-            return {
-                type: Delta.MarkType.Insert,
-                content: mark.content.map(func),
-            };
-        }
-        case Delta.MarkType.Delete:
-        case Delta.MarkType.MoveIn:
-        case Delta.MarkType.MoveOut:
-            return mark;
-        default:
-            unreachableCase(type);
-    }
+	if (Delta.isSkipMark(mark)) {
+		return mark;
+	}
+	const type = mark.type;
+	switch (type) {
+		case Delta.MarkType.Insert: {
+			return {
+				type: Delta.MarkType.Insert,
+				content: mark.content.map(func),
+			};
+		}
+		case Delta.MarkType.Delete:
+		case Delta.MarkType.MoveIn:
+		case Delta.MarkType.MoveOut:
+			return mark;
+		default:
+			unreachableCase(type);
+	}
 }

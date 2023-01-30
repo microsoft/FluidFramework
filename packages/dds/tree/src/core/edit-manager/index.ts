@@ -4,11 +4,11 @@
  */
 
 export {
-    Branch,
-    Commit,
-    EditManager,
-    MutableSummaryData,
-    SeqNumber,
-    SessionId,
-    ReadonlySummaryData,
+	Branch,
+	Commit,
+	EditManager,
+	MutableSummaryData,
+	SeqNumber,
+	SessionId,
+	ReadonlySummaryData,
 } from "./editManager";

@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    genericTreeKeys,
-    getGenericTreeField,
-    JsonableTree,
-    ITreeCursor,
-    CursorLocationType,
-    mapCursorField,
-    ITreeCursorSynchronous,
-    setGenericTreeField,
+	genericTreeKeys,
+	getGenericTreeField,
+	JsonableTree,
+	ITreeCursor,
+	CursorLocationType,
+	mapCursorField,
+	ITreeCursorSynchronous,
+	setGenericTreeField,
 } from "../core";
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
@@ -43,31 +43,31 @@ import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonableTree}.
  */
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous {
-    return singleStackTreeCursor(root, adapter);
+	return singleStackTreeCursor(root, adapter);
 }
 
 const adapter: CursorAdapter<JsonableTree> = {
-    value: (node) => node.value,
-    type: (node) => node.type,
-    keysFromNode: genericTreeKeys,
-    getFieldFromNode: (node, key): readonly JsonableTree[] => getGenericTreeField(node, key, false),
+	value: (node) => node.value,
+	type: (node) => node.type,
+	keysFromNode: genericTreeKeys,
+	getFieldFromNode: (node, key): readonly JsonableTree[] => getGenericTreeField(node, key, false),
 };
 
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
-    assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);
-    const node: JsonableTree = {
-        type: cursor.type,
-    };
-    // Normalize object by only including fields that are required.
-    if (cursor.value !== undefined) {
-        node.value = cursor.value;
-    }
-    for (let inFields = cursor.firstField(); inFields; inFields = cursor.nextField()) {
-        const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
-        setGenericTreeField(node, cursor.getFieldKey(), field);
-    }
-    return node;
+	assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);
+	const node: JsonableTree = {
+		type: cursor.type,
+	};
+	// Normalize object by only including fields that are required.
+	if (cursor.value !== undefined) {
+		node.value = cursor.value;
+	}
+	for (let inFields = cursor.firstField(); inFields; inFields = cursor.nextField()) {
+		const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
+		setGenericTreeField(node, cursor.getFieldKey(), field);
+	}
+	return node;
 }
