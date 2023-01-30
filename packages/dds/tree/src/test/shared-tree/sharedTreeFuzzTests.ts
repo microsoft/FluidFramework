@@ -226,11 +226,11 @@ function runBatch(
         const runSeed = seed + i;
         const generatorFactory = () => take(opsPerRun, opGenerator());
         if (skipTests) {
-            it.skip(`with seed ${i}`, async () => {
+            it.skip(`with seed ${runSeed}`, async () => {
                 await fuzzActions(generatorFactory(), runSeed);
             }).timeout(20000);
         } else {
-            it(`with seed ${i}`, async () => {
+            it(`with seed ${runSeed}`, async () => {
                 await fuzzActions(generatorFactory(), runSeed);
             }).timeout(20000);
         }
