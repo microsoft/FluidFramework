@@ -7,47 +7,47 @@ import { Jsonable } from "@fluidframework/datastore-definitions";
 import { forEachNode, forEachField, ITreeCursor } from "../../../core";
 
 export function sum(cursor: ITreeCursor): number {
-    let total = 0;
-    const value = cursor.value;
-    if (typeof value === "number") {
-        total += value;
-    }
+	let total = 0;
+	const value = cursor.value;
+	if (typeof value === "number") {
+		total += value;
+	}
 
-    for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
-        for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
-            total += sum(cursor);
-        }
-    }
+	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+		for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+			total += sum(cursor);
+		}
+	}
 
-    return total;
+	return total;
 }
 
 export function sumMap(cursor: ITreeCursor): number {
-    let total = 0;
-    const value = cursor.value;
-    if (typeof value === "number") {
-        total += value;
-    }
+	let total = 0;
+	const value = cursor.value;
+	if (typeof value === "number") {
+		total += value;
+	}
 
-    forEachField(cursor, () =>
-        forEachNode(cursor, (c) => {
-            total += sumMap(c);
-        }),
-    );
+	forEachField(cursor, () =>
+		forEachNode(cursor, (c) => {
+			total += sumMap(c);
+		}),
+	);
 
-    return total;
+	return total;
 }
 
 export function sumDirect(jsonObj: Jsonable): number {
-    let total = 0;
-    for (const value of Object.values(jsonObj)) {
-        if (typeof value === "object" && value !== null) {
-            total += sumDirect(value);
-        } else if (typeof value === "number") {
-            total += value;
-        }
-    }
-    return total;
+	let total = 0;
+	for (const value of Object.values(jsonObj)) {
+		if (typeof value === "object" && value !== null) {
+			total += sumDirect(value);
+		} else if (typeof value === "number") {
+			total += value;
+		}
+	}
+	return total;
 }
 
 /**
@@ -58,20 +58,20 @@ export function sumDirect(jsonObj: Jsonable): number {
  * @returns a set of two average values.
  */
 export function averageTwoValues(
-    cursor: ITreeCursor,
-    dataConsumer: (cursor: ITreeCursor, calculate: (x: number, y: number) => void) => number,
+	cursor: ITreeCursor,
+	dataConsumer: (cursor: ITreeCursor, calculate: (x: number, y: number) => void) => number,
 ): [number, number] {
-    let count = 0;
-    let xTotal = 0;
-    let yTotal = 0;
+	let count = 0;
+	let xTotal = 0;
+	let yTotal = 0;
 
-    const calculate = (x: number, y: number) => {
-        count += 1;
-        xTotal += x;
-        yTotal += y;
-    };
+	const calculate = (x: number, y: number) => {
+		count += 1;
+		xTotal += x;
+		yTotal += y;
+	};
 
-    dataConsumer(cursor, calculate);
+	dataConsumer(cursor, calculate);
 
-    return [xTotal / count, yTotal / count];
+	return [xTotal / count, yTotal / count];
 }

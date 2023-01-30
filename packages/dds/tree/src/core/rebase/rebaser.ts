@@ -17,92 +17,92 @@ export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
  * @sealed
  */
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
-    private lastRevision = 0;
+	private lastRevision = 0;
 
-    private makeRevision(): RevisionTag {
-        this.lastRevision++;
-        return brand(this.lastRevision);
-    }
+	private makeRevision(): RevisionTag {
+		this.lastRevision++;
+		return brand(this.lastRevision);
+	}
 
-    public readonly empty: RevisionTag = brand(0);
+	public readonly empty: RevisionTag = brand(0);
 
-    /**
-     * All the actual state needed to do the rebases.
-     *
-     * Source and destination can both walk this to find common ancestor,
-     * then rebase across using changes found on walk.
-     */
-    private readonly revisionTree: Map<
-        RevisionTag,
-        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser> }
-    > = new Map();
+	/**
+	 * All the actual state needed to do the rebases.
+	 *
+	 * Source and destination can both walk this to find common ancestor,
+	 * then rebase across using changes found on walk.
+	 */
+	private readonly revisionTree: Map<
+		RevisionTag,
+		{ before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser> }
+	> = new Map();
 
-    public constructor(public readonly rebaser: TChangeRebaser) {
-        // TODO
-    }
+	public constructor(public readonly rebaser: TChangeRebaser) {
+		// TODO
+	}
 
-    /**
-     * Rebase `changes` from being applied to the `from` state to able to be applied to the `to` state.
-     * @returns a RevisionTag for the state after applying changes to `to`, and the rebased changes themselves.
-     */
-    public rebase(
-        changes: ChangesetFromChangeRebaser<TChangeRebaser>,
-        from: RevisionTag,
-        to: RevisionTag,
-    ): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>] {
-        const over = this.getResolutionPath(from, to);
-        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> = this.rebaser.rebase(
-            changes,
-            over,
-        );
-        const newRevision = this.makeRevision();
-        this.revisionTree.set(newRevision, {
-            before: to,
-            change: finalChangeset,
-        });
-        return [newRevision, finalChangeset];
-    }
+	/**
+	 * Rebase `changes` from being applied to the `from` state to able to be applied to the `to` state.
+	 * @returns a RevisionTag for the state after applying changes to `to`, and the rebased changes themselves.
+	 */
+	public rebase(
+		changes: ChangesetFromChangeRebaser<TChangeRebaser>,
+		from: RevisionTag,
+		to: RevisionTag,
+	): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>] {
+		const over = this.getResolutionPath(from, to);
+		const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> = this.rebaser.rebase(
+			changes,
+			over,
+		);
+		const newRevision = this.makeRevision();
+		this.revisionTree.set(newRevision, {
+			before: to,
+			change: finalChangeset,
+		});
+		return [newRevision, finalChangeset];
+	}
 
-    /**
-     * Modifies `anchors` to be valid at the destination.
-     */
-    public rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void {
-        const over = this.getResolutionPath(from, to);
-        this.rebaser.rebaseAnchors(anchors, over);
-    }
+	/**
+	 * Modifies `anchors` to be valid at the destination.
+	 */
+	public rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void {
+		const over = this.getResolutionPath(from, to);
+		this.rebaser.rebaseAnchors(anchors, over);
+	}
 
-    // Separated out for easier testing
-    private getRawResolutionPath(
-        from: RevisionTag,
-        to: RevisionTag,
-    ): ChangesetFromChangeRebaser<TChangeRebaser>[] {
-        if (from !== to) {
-            throw Error("Not implemented"); // TODO: rebase
-        }
-        return [];
-    }
+	// Separated out for easier testing
+	private getRawResolutionPath(
+		from: RevisionTag,
+		to: RevisionTag,
+	): ChangesetFromChangeRebaser<TChangeRebaser>[] {
+		if (from !== to) {
+			throw Error("Not implemented"); // TODO: rebase
+		}
+		return [];
+	}
 
-    public getResolutionPath(
-        from: RevisionTag,
-        to: RevisionTag,
-    ): ChangesetFromChangeRebaser<TChangeRebaser> {
-        // TODO: fix typing
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.rebaser.compose(this.getRawResolutionPath(from, to));
-    }
+	public getResolutionPath(
+		from: RevisionTag,
+		to: RevisionTag,
+	): ChangesetFromChangeRebaser<TChangeRebaser> {
+		// TODO: fix typing
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return this.rebaser.compose(this.getRawResolutionPath(from, to));
+	}
 
-    /**
-     * Informs the Rebaser that `revision` will not be used again,
-     * and internal resources related to it may be freed.
-     */
-    public discardRevision(revision: RevisionTag): void {
-        throw Error("Not implemented"); // TODO
-    }
+	/**
+	 * Informs the Rebaser that `revision` will not be used again,
+	 * and internal resources related to it may be freed.
+	 */
+	public discardRevision(revision: RevisionTag): void {
+		throw Error("Not implemented"); // TODO
+	}
 }
 
 // TODO: managing the types with this is not working well (inferring any for methods in Rebaser). Do something else.
 export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> =
-    TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
+	TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
 
 /**
  * Rebasing logic for a particular kind of change.
@@ -136,84 +136,84 @@ export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>
  * For now assume that such issues are not ok.
  */
 export interface ChangeRebaser<TChangeset> {
-    _typeCheck?: Invariant<TChangeset>;
+	_typeCheck?: Invariant<TChangeset>;
 
-    /**
-     * Compose a collection of changesets into a single one.
-     * See {@link ChangeRebaser} for requirements.
-     */
-    compose(changes: TaggedChange<TChangeset>[]): TChangeset;
+	/**
+	 * Compose a collection of changesets into a single one.
+	 * See {@link ChangeRebaser} for requirements.
+	 */
+	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 
-    /**
-     * @returns the inverse of `changes`.
-     *
-     * `compose([changes, inverse(changes)])` be equal to `compose([])`:
-     * See {@link ChangeRebaser} for details.
-     */
-    invert(changes: TaggedChange<TChangeset>): TChangeset;
+	/**
+	 * @returns the inverse of `changes`.
+	 *
+	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
+	 * See {@link ChangeRebaser} for details.
+	 */
+	invert(changes: TaggedChange<TChangeset>): TChangeset;
 
-    /**
-     * Rebase `change` over `over`.
-     *
-     * The resulting changeset should, as much as possible, replicate the same semantics as `change`,
-     * except be valid to apply after `over` instead of before it.
-     *
-     * Requirements:
-     * The implementation must ensure that for all possible changesets `a`, `b` and `c`:
-     * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
-     * - `rebase(compose([a, b]), c)` is equal to
-     * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
-     * - `rebase(a, compose([]))` is equal to `a`.
-     * - `rebase(compose([]), a)` is equal to `a`.
-     */
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
+	/**
+	 * Rebase `change` over `over`.
+	 *
+	 * The resulting changeset should, as much as possible, replicate the same semantics as `change`,
+	 * except be valid to apply after `over` instead of before it.
+	 *
+	 * Requirements:
+	 * The implementation must ensure that for all possible changesets `a`, `b` and `c`:
+	 * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
+	 * - `rebase(compose([a, b]), c)` is equal to
+	 * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
+	 * - `rebase(a, compose([]))` is equal to `a`.
+	 * - `rebase(compose([]), a)` is equal to `a`.
+	 */
+	rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
 
-    // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
-    // This isn't ideal, but it might be fine?
-    // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
-    rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
+	// TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
+	// This isn't ideal, but it might be fine?
+	// Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
+	rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
 }
 
 export interface TaggedChange<TChangeset> {
-    readonly revision: RevisionTag | undefined;
+	readonly revision: RevisionTag | undefined;
 
-    /**
-     * Whether this change represents the inverse of the specified revision.
-     * Considered false if undefined.
-     */
-    readonly isInverse?: boolean;
-    readonly change: TChangeset;
+	/**
+	 * Whether this change represents the inverse of the specified revision.
+	 * Considered false if undefined.
+	 */
+	readonly isInverse?: boolean;
+	readonly change: TChangeset;
 }
 
 export function tagChange<T>(
-    change: T,
-    tag: RevisionTag | undefined,
-    isInverse?: boolean,
+	change: T,
+	tag: RevisionTag | undefined,
+	isInverse?: boolean,
 ): TaggedChange<T> {
-    return { revision: tag, isInverse, change };
+	return { revision: tag, isInverse, change };
 }
 
 export function tagInverse<T>(
-    inverseChange: T,
-    invertedRevision: RevisionTag | undefined,
+	inverseChange: T,
+	invertedRevision: RevisionTag | undefined,
 ): TaggedChange<T> {
-    return {
-        revision: invertedRevision,
-        isInverse: true,
-        change: inverseChange,
-    };
+	return {
+		revision: invertedRevision,
+		isInverse: true,
+		change: inverseChange,
+	};
 }
 
 export function makeAnonChange<T>(change: T): TaggedChange<T> {
-    return { revision: undefined, change };
+	return { revision: undefined, change };
 }
 
 export interface FinalChange {
-    readonly status: FinalChangeStatus;
+	readonly status: FinalChangeStatus;
 }
 
 export enum FinalChangeStatus {
-    conflicted,
-    rebased,
-    commuted,
+	conflicted,
+	rebased,
+	commuted,
 }

@@ -18,19 +18,19 @@ import { FieldKey } from "./types";
  * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
  */
 export interface UpPath {
-    /**
-     * The parent, or undefined in the case where this path is a member of a detached sequence.
-     */
-    readonly parent: UpPath | undefined;
-    /**
-     * The Field under which this path points.
-     * Note that if `parent` returns `undefined`, this key corresponds to a detached sequence.
-     */
-    readonly parentField: FieldKey; // TODO: Type information, including when in DetachedField.
-    /**
-     * The index within `parentField` this path is pointing to.
-     */
-    readonly parentIndex: number; // TODO: field index branded type?
+	/**
+	 * The parent, or undefined in the case where this path is a member of a detached sequence.
+	 */
+	readonly parent: UpPath | undefined;
+	/**
+	 * The Field under which this path points.
+	 * Note that if `parent` returns `undefined`, this key corresponds to a detached sequence.
+	 */
+	readonly parentField: FieldKey; // TODO: Type information, including when in DetachedField.
+	/**
+	 * The index within `parentField` this path is pointing to.
+	 */
+	readonly parentIndex: number; // TODO: field index branded type?
 }
 
 /**
@@ -39,15 +39,15 @@ export interface UpPath {
  * See {@link UpPath}.
  */
 export interface FieldUpPath {
-    /**
-     * The parent, or undefined in the case where this path is to a detached sequence.
-     */
-    readonly parent: UpPath | undefined;
-    /**
-     * The Field to which this path points.
-     * Note that if `parent` returns `undefined`, this key  corresponds to a detached sequence.
-     */
-    readonly field: FieldKey; // TODO: Type information, including when in DetachedField.
+	/**
+	 * The parent, or undefined in the case where this path is to a detached sequence.
+	 */
+	readonly parent: UpPath | undefined;
+	/**
+	 * The Field to which this path points.
+	 * Note that if `parent` returns `undefined`, this key  corresponds to a detached sequence.
+	 */
+	readonly field: FieldKey; // TODO: Type information, including when in DetachedField.
 }
 
 /**
@@ -56,13 +56,13 @@ export interface FieldUpPath {
  * Runs in O(depth) time.
  */
 export function getDepth(path: UpPath): number {
-    let depth = 0;
-    let next = path.parent;
-    while (next !== undefined) {
-        depth += 1;
-        next = next.parent;
-    }
-    return depth;
+	let depth = 0;
+	let next = path.parent;
+	while (next !== undefined) {
+		depth += 1;
+		next = next.parent;
+	}
+	return depth;
 }
 
 /**
@@ -78,14 +78,14 @@ export function clonePath(path: UpPath): UpPath;
 export function clonePath(path: UpPath | undefined): UpPath | undefined;
 
 export function clonePath(path: UpPath | undefined): UpPath | undefined {
-    if (path === undefined) {
-        return undefined;
-    }
-    return {
-        parent: clonePath(path.parent),
-        parentField: path.parentField,
-        parentIndex: path.parentIndex,
-    };
+	if (path === undefined) {
+		return undefined;
+	}
+	return {
+		parent: clonePath(path.parent),
+		parentField: path.parentField,
+		parentIndex: path.parentIndex,
+	};
 }
 
 /**
@@ -93,13 +93,13 @@ export function clonePath(path: UpPath | undefined): UpPath | undefined {
  * These elements are unchanged and therefore still point "up".
  */
 export function topDownPath(path: UpPath | undefined): UpPath[] {
-    const out: UpPath[] = [];
-    let curr = path;
-    while (curr !== undefined) {
-        out.unshift(curr);
-        curr = curr.parent;
-    }
-    return out;
+	const out: UpPath[] = [];
+	let curr = path;
+	while (curr !== undefined) {
+		out.unshift(curr);
+		curr = curr.parent;
+	}
+	return out;
 }
 
 /**
@@ -108,17 +108,17 @@ export function topDownPath(path: UpPath | undefined): UpPath[] {
  * Note that for mutable paths (as used in `AnchorSet`), this equality may change over time: this only checks if the two paths are currently the same.
  */
 export function compareUpPaths(a: UpPath | undefined, b: UpPath | undefined): boolean {
-    if (a === b) {
-        // This handles the both `undefined` case, as well as provides an early out if a shared node is encountered.
-        return true;
-    }
-    if (a === undefined || b === undefined) {
-        return false;
-    }
-    if (a.parentField !== b.parentField || a.parentIndex !== b.parentIndex) {
-        return false;
-    }
-    return compareUpPaths(a.parent, b.parent);
+	if (a === b) {
+		// This handles the both `undefined` case, as well as provides an early out if a shared node is encountered.
+		return true;
+	}
+	if (a === undefined || b === undefined) {
+		return false;
+	}
+	if (a.parentField !== b.parentField || a.parentIndex !== b.parentIndex) {
+		return false;
+	}
+	return compareUpPaths(a.parent, b.parent);
 }
 
 /**
@@ -127,8 +127,8 @@ export function compareUpPaths(a: UpPath | undefined, b: UpPath | undefined): bo
  * Note that for mutable paths (as used in `AnchorSet`), this equality may change over time: this only checks if the two paths are currently the same.
  */
 export function compareFieldUpPaths(a: FieldUpPath, b: FieldUpPath): boolean {
-    if (a.field !== b.field) {
-        return false;
-    }
-    return compareUpPaths(a.parent, b.parent);
+	if (a.field !== b.field) {
+		return false;
+	}
+	return compareUpPaths(a.parent, b.parent);
 }

@@ -14,66 +14,66 @@ import { ISymlinkOptions } from "./symlinkUtils";
 const { log, errorLog } = defaultLogger;
 
 interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
-    nolint: boolean;
-    lintonly: boolean;
-    showExec: boolean;
-    clean: boolean;
-    matchedOnly: boolean;
-    buildScriptNames: string[];
-    build?: boolean;
-    vscode: boolean;
-    symlink: boolean;
-    fullSymlink: boolean | undefined;
-    depcheck: boolean;
-    force: boolean;
-    install: boolean;
-    nohoist: boolean;
-    uninstall: boolean;
-    concurrency: number;
-    samples: boolean;
-    fix: boolean;
-    services: boolean;
-    worker: boolean;
-    workerThreads: boolean;
-    workerMemoryLimit: number;
+	nolint: boolean;
+	lintonly: boolean;
+	showExec: boolean;
+	clean: boolean;
+	matchedOnly: boolean;
+	buildScriptNames: string[];
+	build?: boolean;
+	vscode: boolean;
+	symlink: boolean;
+	fullSymlink: boolean | undefined;
+	depcheck: boolean;
+	force: boolean;
+	install: boolean;
+	nohoist: boolean;
+	uninstall: boolean;
+	concurrency: number;
+	samples: boolean;
+	fix: boolean;
+	services: boolean;
+	worker: boolean;
+	workerThreads: boolean;
+	workerMemoryLimit: number;
 }
 
 // defaults
 export const options: FastBuildOptions = {
-    nolint: false,
-    lintonly: false,
-    showExec: false,
-    clean: false,
-    match: [],
-    dirs: [],
-    matchedOnly: true,
-    buildScriptNames: [],
-    vscode: false,
-    symlink: false,
-    fullSymlink: undefined,
-    depcheck: false,
-    force: false,
-    install: false,
-    nohoist: false,
-    uninstall: false,
-    concurrency: os.cpus().length, // TODO: argument?
-    samples: true,
-    fix: false,
-    all: false,
-    server: false,
-    azure: false,
-    buildTools: false,
-    services: false,
-    worker: false,
-    workerThreads: false,
-    workerMemoryLimit: -1,
+	nolint: false,
+	lintonly: false,
+	showExec: false,
+	clean: false,
+	match: [],
+	dirs: [],
+	matchedOnly: true,
+	buildScriptNames: [],
+	vscode: false,
+	symlink: false,
+	fullSymlink: undefined,
+	depcheck: false,
+	force: false,
+	install: false,
+	nohoist: false,
+	uninstall: false,
+	concurrency: os.cpus().length, // TODO: argument?
+	samples: true,
+	fix: false,
+	all: false,
+	server: false,
+	azure: false,
+	buildTools: false,
+	services: false,
+	worker: false,
+	workerThreads: false,
+	workerMemoryLimit: -1,
 };
 
 // This string is duplicated in the readme: update readme if changing this.
 
 function printUsage() {
-    log(
-        `
+	log(
+		`
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
@@ -97,240 +97,240 @@ Options:
        --vscode         Output error message to work with default problem matcher in vscode
 ${commonOptionString}
 `,
-    );
+	);
 }
 
 function setClean(build: boolean) {
-    options.force = true;
-    options.clean = true;
-    setBuild(build);
+	options.force = true;
+	options.clean = true;
+	setBuild(build);
 }
 
 function setBuild(build: boolean) {
-    if (build || options.build === undefined) {
-        options.build = build;
-    }
+	if (build || options.build === undefined) {
+		options.build = build;
+	}
 }
 
 function setReinstall(nohoist: boolean) {
-    options.uninstall = true;
-    setInstall(nohoist);
+	options.uninstall = true;
+	setInstall(nohoist);
 }
 
 function setInstall(nohoist: boolean) {
-    options.install = true;
-    options.nohoist = nohoist;
-    setBuild(false);
+	options.install = true;
+	options.nohoist = nohoist;
+	setBuild(false);
 }
 
 function setUninstall() {
-    options.uninstall = true;
-    setBuild(false);
+	options.uninstall = true;
+	setBuild(false);
 }
 
 function setSymlink(fullSymlink: boolean) {
-    options.symlink = true;
-    options.fullSymlink = fullSymlink;
-    setBuild(false);
+	options.symlink = true;
+	options.fullSymlink = fullSymlink;
+	setBuild(false);
 }
 
 export function parseOptions(argv: string[]) {
-    let error = false;
-    for (let i = 2; i < argv.length; i++) {
-        const argParsed = parseOption(argv, i);
-        if (argParsed < 0) {
-            error = true;
-            break;
-        }
-        if (argParsed > 0) {
-            i += argParsed - 1;
-            continue;
-        }
+	let error = false;
+	for (let i = 2; i < argv.length; i++) {
+		const argParsed = parseOption(argv, i);
+		if (argParsed < 0) {
+			error = true;
+			break;
+		}
+		if (argParsed > 0) {
+			i += argParsed - 1;
+			continue;
+		}
 
-        const arg = process.argv[i];
+		const arg = process.argv[i];
 
-        if (arg === "-?" || arg === "--help") {
-            printUsage();
-            process.exit(0);
-        }
+		if (arg === "-?" || arg === "--help") {
+			printUsage();
+			process.exit(0);
+		}
 
-        if (arg === "-d" || arg === "--dep") {
-            options.matchedOnly = false;
-            continue;
-        }
+		if (arg === "-d" || arg === "--dep") {
+			options.matchedOnly = false;
+			continue;
+		}
 
-        if (arg === "-r" || arg === "--rebuild") {
-            setClean(true);
-            continue;
-        }
+		if (arg === "-r" || arg === "--rebuild") {
+			setClean(true);
+			continue;
+		}
 
-        if (arg === "-c" || arg === "--clean") {
-            setClean(false);
-            continue;
-        }
+		if (arg === "-c" || arg === "--clean") {
+			setClean(false);
+			continue;
+		}
 
-        if (arg === "-f" || arg === "--force") {
-            options.force = true;
-            continue;
-        }
+		if (arg === "-f" || arg === "--force") {
+			options.force = true;
+			continue;
+		}
 
-        if (arg === "--nosamples") {
-            options.samples = false;
-            continue;
-        }
+		if (arg === "--nosamples") {
+			options.samples = false;
+			continue;
+		}
 
-        if (arg === "--fix") {
-            options.fix = true;
-            setBuild(false);
-            continue;
-        }
+		if (arg === "--fix") {
+			options.fix = true;
+			setBuild(false);
+			continue;
+		}
 
-        if (arg === "--install") {
-            setInstall(false);
-            continue;
-        }
+		if (arg === "--install") {
+			setInstall(false);
+			continue;
+		}
 
-        if (arg === "--install:nohoist") {
-            setInstall(true);
-            continue;
-        }
+		if (arg === "--install:nohoist") {
+			setInstall(true);
+			continue;
+		}
 
-        if (arg === "--reinstall") {
-            setReinstall(false);
-            continue;
-        }
+		if (arg === "--reinstall") {
+			setReinstall(false);
+			continue;
+		}
 
-        if (arg === "--reinstall:nohoist") {
-            setReinstall(true);
-            continue;
-        }
+		if (arg === "--reinstall:nohoist") {
+			setReinstall(true);
+			continue;
+		}
 
-        if (arg === "--uninstall") {
-            setUninstall();
-            continue;
-        }
+		if (arg === "--uninstall") {
+			setUninstall();
+			continue;
+		}
 
-        if (arg === "--services") {
-            options.services = true;
-            continue;
-        }
+		if (arg === "--services") {
+			options.services = true;
+			continue;
+		}
 
-        if (arg === "--all") {
-            options.all = true;
-            continue;
-        }
+		if (arg === "--all") {
+			options.all = true;
+			continue;
+		}
 
-        if (arg === "--azure") {
-            options.azure = true;
-            continue;
-        }
+		if (arg === "--azure") {
+			options.azure = true;
+			continue;
+		}
 
-        if (arg === "--buildTools") {
-            options.buildTools = true;
-            continue;
-        }
+		if (arg === "--buildTools") {
+			options.buildTools = true;
+			continue;
+		}
 
-        if (arg === "--server") {
-            options.server = true;
-            continue;
-        }
+		if (arg === "--server") {
+			options.server = true;
+			continue;
+		}
 
-        if (arg === "-s" || arg === "--script") {
-            if (i !== process.argv.length - 1) {
-                options.buildScriptNames.push(process.argv[++i]);
-                setBuild(true);
-                continue;
-            }
-            errorLog("Missing argument for --script");
-            error = true;
-            break;
-        }
+		if (arg === "-s" || arg === "--script") {
+			if (i !== process.argv.length - 1) {
+				options.buildScriptNames.push(process.argv[++i]);
+				setBuild(true);
+				continue;
+			}
+			errorLog("Missing argument for --script");
+			error = true;
+			break;
+		}
 
-        if (arg === "--vscode") {
-            options.vscode = true;
-            continue;
-        }
+		if (arg === "--vscode") {
+			options.vscode = true;
+			continue;
+		}
 
-        if (arg === "--symlink") {
-            setSymlink(false);
-            continue;
-        }
+		if (arg === "--symlink") {
+			setSymlink(false);
+			continue;
+		}
 
-        if (arg === "--symlink:full") {
-            setSymlink(true);
-            continue;
-        }
+		if (arg === "--symlink:full") {
+			setSymlink(true);
+			continue;
+		}
 
-        if (arg === "--depcheck") {
-            options.depcheck = true;
-            setBuild(false);
-            continue;
-        }
+		if (arg === "--depcheck") {
+			options.depcheck = true;
+			setBuild(false);
+			continue;
+		}
 
-        // These options are not public
-        if (arg === "--nolint") {
-            options.nolint = true;
-            continue;
-        }
+		// These options are not public
+		if (arg === "--nolint") {
+			options.nolint = true;
+			continue;
+		}
 
-        if (arg === "--lintonly") {
-            options.lintonly = true;
-            continue;
-        }
+		if (arg === "--lintonly") {
+			options.lintonly = true;
+			continue;
+		}
 
-        if (arg === "--showExec") {
-            options.showExec = true;
-            continue;
-        }
+		if (arg === "--showExec") {
+			options.showExec = true;
+			continue;
+		}
 
-        if (arg === "--worker") {
-            options.worker = true;
-            continue;
-        }
+		if (arg === "--worker") {
+			options.worker = true;
+			continue;
+		}
 
-        if (arg === "--workerThreads") {
-            options.workerThreads = true;
-            options.worker = true;
-            continue;
-        }
+		if (arg === "--workerThreads") {
+			options.workerThreads = true;
+			options.worker = true;
+			continue;
+		}
 
-        if (arg === "--workerMemoryLimitMB") {
-            if (i !== process.argv.length - 1) {
-                const mb = parseInt(process.argv[++i]);
-                if (!isNaN(mb)) {
-                    options.workerMemoryLimit = mb * 1024 * 1024;
-                    continue;
-                }
-                errorLog("Argument for --workerMemoryLimitMB is not a number");
-            } else {
-                errorLog("Missing argument for --workerMemoryLimit");
-            }
-            error = true;
-            break;
-        }
+		if (arg === "--workerMemoryLimitMB") {
+			if (i !== process.argv.length - 1) {
+				const mb = parseInt(process.argv[++i]);
+				if (!isNaN(mb)) {
+					options.workerMemoryLimit = mb * 1024 * 1024;
+					continue;
+				}
+				errorLog("Argument for --workerMemoryLimitMB is not a number");
+			} else {
+				errorLog("Missing argument for --workerMemoryLimit");
+			}
+			error = true;
+			break;
+		}
 
-        // Package regexp or paths
-        if (!arg.startsWith("-")) {
-            const resolvedPath = path.resolve(arg);
-            if (existsSync(resolvedPath)) {
-                options.dirs.push(arg);
-            } else {
-                options.match.push(arg);
-            }
-            continue;
-        }
+		// Package regexp or paths
+		if (!arg.startsWith("-")) {
+			const resolvedPath = path.resolve(arg);
+			if (existsSync(resolvedPath)) {
+				options.dirs.push(arg);
+			} else {
+				options.match.push(arg);
+			}
+			continue;
+		}
 
-        errorLog(`Invalid arguments ${arg}`);
-        error = true;
-        break;
-    }
+		errorLog(`Invalid arguments ${arg}`);
+		error = true;
+		break;
+	}
 
-    if (error) {
-        printUsage();
-        process.exit(-1);
-    }
+	if (error) {
+		printUsage();
+		process.exit(-1);
+	}
 
-    if (options.buildScriptNames.length === 0) {
-        options.buildScriptNames = ["build"];
-    }
+	if (options.buildScriptNames.length === 0) {
+		options.buildScriptNames = ["build"];
+	}
 }
