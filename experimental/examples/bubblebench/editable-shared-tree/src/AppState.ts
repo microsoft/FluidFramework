@@ -5,14 +5,16 @@
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
 import {
     brand,
-    //  EditableField,
-    FieldKey, JsonableTree, singleTextCursor
+    EditableField,
+    FieldKey,
+    JsonableTree,
+    singleTextCursor,
 } from "@fluid-internal/tree";
 import { Client } from "./Client";
 import {
-    AppStateTreeProxy,
     bubbleSchema,
     clientSchema,
+    ClientTreeProxy,
     numberSchema,
     stringSchema,
 } from "./schema";
@@ -22,7 +24,7 @@ export class AppState implements IAppState {
     readonly localClient: Client;
 
     constructor(
-        private readonly appStateTreeProxy: AppStateTreeProxy,
+        private readonly clientsSequence: ClientTreeProxy[] & EditableField,
         private _width: number,
         private _height: number,
         numBubbles: number,
@@ -39,12 +41,12 @@ export class AppState implements IAppState {
 
 
         const clientInitialJsonTree: JsonableTree = this.createClientInitialJsonTree(numBubbles);
-        appStateTreeProxy.insertNodes(
-            appStateTreeProxy.length,
+        clientsSequence.insertNodes(
+            clientsSequence.length,
             singleTextCursor(clientInitialJsonTree),
         );
         this.localClient = new Client(
-            appStateTreeProxy[appStateTreeProxy.length - 1],
+            clientsSequence[clientsSequence.length - 1],
         );
 
         console.log(
@@ -87,7 +89,7 @@ export class AppState implements IAppState {
         // return [...this.appStateTreeProxy.clients].map(
         //     (clientTreeProxy) => new Client(clientTreeProxy),
         // );
-        return [...this.appStateTreeProxy].map(
+        return [...this.clientsSequence].map(
             (clientTreeProxy) => new Client(clientTreeProxy),
         );
     }

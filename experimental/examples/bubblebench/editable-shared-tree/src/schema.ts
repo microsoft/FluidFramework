@@ -5,7 +5,6 @@
 
 import {
     brand,
-    EditableField,
     EditableTree,
     FieldKinds,
     fieldSchema,
@@ -45,13 +44,6 @@ export const clientSchema = namedTreeSchema({
     },
 });
 
-export const appStateSchema = namedTreeSchema({
-    name: brand("Test:BubbleBenchAppState-1.0.0"),
-    localFields: {
-        clients: fieldSchema(FieldKinds.sequence, [clientSchema.name]),
-    },
-});
-
 // TODO: Generate this from schema automatically instead of hand coding it.
 export type BubbleTreeProxy = EditableTree & {
     x: number;
@@ -68,14 +60,7 @@ export type ClientTreeProxy = EditableTree & {
     bubbles: BubbleTreeProxy[];
 };
 
-// TODO: Generate this from schema automatically instead of hand coding it.
-// export type AppStateTreeProxy = EditableTree & {
-//     clients: ClientTreeProxy[];
-// };
-
-export type AppStateTreeProxy =  ClientTreeProxy[] & EditableField;
-
-export const rootAppStateSchema = fieldSchema(FieldKinds.value, [appStateSchema.name]);
+export const rootAppStateSchema = fieldSchema(FieldKinds.sequence, [clientSchema.name]);
 
 export const AppStateSchemaData: SchemaData = {
     treeSchema: new Map([
@@ -83,7 +68,6 @@ export const AppStateSchemaData: SchemaData = {
         [numberSchema.name, numberSchema],
         [bubbleSchema.name, bubbleSchema],
         [clientSchema.name, clientSchema],
-        [appStateSchema.name, appStateSchema],
     ]),
     globalFieldSchema: new Map([
         [rootFieldKey, rootAppStateSchema],
