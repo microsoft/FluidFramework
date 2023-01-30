@@ -5,10 +5,10 @@
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
-    OdspResourceTokenFetchOptions,
-    TokenFetcher,
-    IPersistedCache,
-    HostStoragePolicy,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
+	IPersistedCache,
+	HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 
@@ -17,19 +17,15 @@ import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore
  * other dynamically imported module.
  */
 export class OdspDocumentServiceFactoryWithCodeSplit
-    extends OdspDocumentServiceFactoryCore
-    implements IDocumentServiceFactory {
-    constructor(
-        getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-        getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-        persistedCache?: IPersistedCache,
-        hostPolicy?: HostStoragePolicy,
-    ) {
-        super(
-            getStorageToken,
-            getWebsocketToken,
-            persistedCache,
-            hostPolicy,
-        );
-    }
+	extends OdspDocumentServiceFactoryCore
+	implements IDocumentServiceFactory
+{
+	constructor(
+		getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+		getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
+		persistedCache?: IPersistedCache,
+		hostPolicy?: HostStoragePolicy,
+	) {
+		super(getStorageToken, getWebsocketToken, persistedCache, hostPolicy);
+	}
 }

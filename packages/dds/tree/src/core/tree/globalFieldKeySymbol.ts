@@ -23,26 +23,26 @@ const keyMap: Map<GlobalFieldKeySymbol, GlobalFieldKey> = new Map();
  * @returns a symbol to use for `key`.
  */
 export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol {
-    const sym = symbolMap.get(key);
-    if (sym !== undefined) {
-        return sym;
-    }
-    const newSym: GlobalFieldKeySymbol = brand(Symbol(key));
-    symbolMap.set(key, newSym);
-    keyMap.set(newSym, key);
-    return newSym;
+	const sym = symbolMap.get(key);
+	if (sym !== undefined) {
+		return sym;
+	}
+	const newSym: GlobalFieldKeySymbol = brand(Symbol(key));
+	symbolMap.set(key, newSym);
+	keyMap.set(newSym, key);
+	return newSym;
 }
 
 /**
  * @returns the original {@link GlobalFieldKey} for the symbol.
  */
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey {
-    return keyMap.get(key) ?? fail("missing key for symbol");
+	return keyMap.get(key) ?? fail("missing key for symbol");
 }
 
 /**
  * @returns true iff `key` is a {@link GlobalFieldKeySymbol}.
  */
 export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol {
-    return keyMap.has(key as GlobalFieldKeySymbol);
+	return keyMap.has(key as GlobalFieldKeySymbol);
 }

@@ -14,10 +14,11 @@ to the created Table Document.
 
 You can run this example using the following steps:
 
-1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
+1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/table-view`
-1. Run `npm run start` from this directory (examples/data-objects/table-view) and open <http://localhost:8080> in a web browser to see the app running.
+1. Run `npm start` from this directory (examples/data-objects/table-view) and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 
@@ -27,8 +28,8 @@ You can run this example using the following steps:
 
 Table View uses the following distributed data structures:
 
-- SharedDirectory - root
+-   SharedDirectory - root
 
 Table View creates the following Fluid objects:
 
-- `@fluid-example/table-document`
+-   `@fluid-example/table-document`

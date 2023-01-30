@@ -18,14 +18,14 @@ import { Mutable } from "../util";
  * @param func - The functions used to map tree content.
  */
 export function mapFieldMarks<TIn, TOut>(
-    fields: Delta.FieldMarks<TIn>,
-    func: (tree: TIn) => TOut,
+	fields: Delta.FieldMarks<TIn>,
+	func: (tree: TIn) => TOut,
 ): Delta.FieldMarks<TOut> {
-    const out: Map<FieldKey, Delta.MarkList<TOut>> = new Map();
-    for (const [k, v] of fields) {
-        out.set(k, mapMarkList(v, func));
-    }
-    return out;
+	const out: Map<FieldKey, Delta.MarkList<TOut>> = new Map();
+	for (const [k, v] of fields) {
+		out.set(k, mapMarkList(v, func));
+	}
+	return out;
 }
 
 /**
@@ -39,10 +39,10 @@ export function mapFieldMarks<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapMarkList<TIn, TOut>(
-    list: Delta.MarkList<TIn>,
-    func: (tree: TIn) => TOut,
+	list: Delta.MarkList<TIn>,
+	func: (tree: TIn) => TOut,
 ): Delta.MarkList<TOut> {
-    return list.map((mark: Delta.Mark<TIn>) => mapMark(mark, func));
+	return list.map((mark: Delta.Mark<TIn>) => mapMark(mark, func));
 }
 
 /**
@@ -56,77 +56,77 @@ export function mapMarkList<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapMark<TIn, TOut>(
-    mark: Delta.Mark<TIn>,
-    func: (tree: TIn) => TOut,
+	mark: Delta.Mark<TIn>,
+	func: (tree: TIn) => TOut,
 ): Delta.Mark<TOut> {
-    if (Delta.isSkipMark(mark)) {
-        return mark;
-    }
-    const type = mark.type;
-    switch (type) {
-        case Delta.MarkType.Modify: {
-            if (mark.fields === undefined && mark.setValue === undefined) {
-                return { type: Delta.MarkType.Modify };
-            }
-            return mark.fields === undefined
-                ? {
-                      type: Delta.MarkType.Modify,
-                      setValue: mark.setValue,
-                  }
-                : {
-                      ...mark,
-                      fields: mapFieldMarks(mark.fields, func),
-                  };
-        }
-        case Delta.MarkType.ModifyAndMoveOut: {
-            if (mark.fields === undefined && mark.setValue === undefined) {
-                return {
-                    type: Delta.MarkType.ModifyAndMoveOut,
-                    moveId: mark.moveId,
-                };
-            }
-            return mark.fields === undefined
-                ? {
-                      type: Delta.MarkType.ModifyAndMoveOut,
-                      moveId: mark.moveId,
-                      setValue: mark.setValue,
-                  }
-                : {
-                      ...mark,
-                      fields: mapFieldMarks(mark.fields, func),
-                  };
-        }
-        case Delta.MarkType.MoveInAndModify:
-        case Delta.MarkType.ModifyAndDelete: {
-            return {
-                ...mark,
-                fields: mapFieldMarks(mark.fields, func),
-            };
-        }
-        case Delta.MarkType.Insert: {
-            return {
-                type: Delta.MarkType.Insert,
-                content: mark.content.map(func),
-            };
-        }
-        case Delta.MarkType.InsertAndModify: {
-            const out: Mutable<Delta.InsertAndModify<TOut>> = {
-                type: Delta.MarkType.InsertAndModify,
-                content: func(mark.content),
-            };
-            if (mark.fields !== undefined) {
-                out.fields = mapFieldMarks(mark.fields, func);
-            }
-            if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
-                out.setValue = mark.setValue;
-            }
-            return out;
-        }
-        case Delta.MarkType.Delete:
-        case Delta.MarkType.MoveIn:
-        case Delta.MarkType.MoveOut:
-            return mark;
-        default:
-            unreachableCase(type);
-    }
+	if (Delta.isSkipMark(mark)) {
+		return mark;
+	}
+	const type = mark.type;
+	switch (type) {
+		case Delta.MarkType.Modify: {
+			if (mark.fields === undefined && mark.setValue === undefined) {
+				return { type: Delta.MarkType.Modify };
+			}
+			return mark.fields === undefined
+				? {
+						type: Delta.MarkType.Modify,
+						setValue: mark.setValue,
+				  }
+				: {
+						...mark,
+						fields: mapFieldMarks(mark.fields, func),
+				  };
+		}
+		case Delta.MarkType.ModifyAndMoveOut: {
+			if (mark.fields === undefined && mark.setValue === undefined) {
+				return {
+					type: Delta.MarkType.ModifyAndMoveOut,
+					moveId: mark.moveId,
+				};
+			}
+			return mark.fields === undefined
+				? {
+						type: Delta.MarkType.ModifyAndMoveOut,
+						moveId: mark.moveId,
+						setValue: mark.setValue,
+				  }
+				: {
+						...mark,
+						fields: mapFieldMarks(mark.fields, func),
+				  };
+		}
+		case Delta.MarkType.MoveInAndModify:
+		case Delta.MarkType.ModifyAndDelete: {
+			return {
+				...mark,
+				fields: mapFieldMarks(mark.fields, func),
+			};
+		}
+		case Delta.MarkType.Insert: {
+			return {
+				type: Delta.MarkType.Insert,
+				content: mark.content.map(func),
+			};
+		}
+		case Delta.MarkType.InsertAndModify: {
+			const out: Mutable<Delta.InsertAndModify<TOut>> = {
+				type: Delta.MarkType.InsertAndModify,
+				content: func(mark.content),
+			};
+			if (mark.fields !== undefined) {
+				out.fields = mapFieldMarks(mark.fields, func);
+			}
+			if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+				out.setValue = mark.setValue;
+			}
+			return out;
+		}
+		case Delta.MarkType.Delete:
+		case Delta.MarkType.MoveIn:
+		case Delta.MarkType.MoveOut:
+			return mark;
+		default:
+			unreachableCase(type);
+	}
 }

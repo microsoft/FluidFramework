@@ -53,8 +53,8 @@ and metadata we can revert the original change on the sequence.
 As called out above, there is some memory and performance overhead associated with undo redo. This overhead is from the
 TrackingGroup. This overhead manifests in a few ways:
 
-- Removed segments in a TrackingGroup will not be garbage collected from the backing tree structure.
-- Segments can only be merged if they have all the same TrackingGroups.
+-   Removed segments in a TrackingGroup will not be garbage collected from the backing tree structure.
+-   Segments can only be merged if they have all the same TrackingGroups.
 
 This object minimizes the number of TrackingGroups created, so this overhead is very low. This undo redo infrastructure
 is entirely in-memory so it does not affect other users or sessions. If custom IRevertible objects use TrackingGroups

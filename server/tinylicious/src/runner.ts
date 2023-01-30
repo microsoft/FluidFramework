@@ -32,8 +32,8 @@ export class TinyliciousRunner implements IRunner {
         private readonly orderManager: IOrdererManager,
         private readonly tenantManager: ITenantManager,
         private readonly storage: IDocumentStorage,
-        private readonly mongoManager: MongoManager,
-    ) { }
+        private readonly mongoManager: MongoManager
+    ) {}
 
     public async start(): Promise<void> {
         const version = process.env.npm_package_version;
@@ -65,7 +65,7 @@ export class TinyliciousRunner implements IRunner {
             this.storage,
             new TestClientManager(),
             new DefaultMetricClient(),
-            winston,
+            winston
         );
 
         // Listen on provided port, on all network interfaces.
@@ -85,7 +85,7 @@ export class TinyliciousRunner implements IRunner {
                 },
                 (error) => {
                     this.runningDeferred.reject(error);
-                },
+                }
             );
         } else {
             this.runningDeferred.resolve();
@@ -108,7 +108,9 @@ export class TinyliciousRunner implements IRunner {
             return;
         }
 
-        throw new Error(`Port: ${this.port} is occupied. Try port: ${freePort}`);
+        throw new Error(
+            `Port: ${this.port} is occupied. Try port: ${freePort}`
+        );
     }
 
     /**
@@ -128,7 +130,7 @@ export class TinyliciousRunner implements IRunner {
         switch (error.code) {
             case "EACCES":
                 this.runningDeferred.reject(
-                    `${bind} requires elevated privileges`,
+                    `${bind} requires elevated privileges`
                 );
                 break;
             case "EADDRINUSE":

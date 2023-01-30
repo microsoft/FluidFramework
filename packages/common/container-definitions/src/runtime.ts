@@ -4,23 +4,19 @@
  */
 
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import {
-    FluidObject,
-    IRequest,
-    IResponse,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    IClientConfiguration,
-    IClientDetails,
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-    MessageType,
-    ISummaryTree,
-    IVersion,
-    IDocumentMessage,
-    IQuorumClients,
-    ISummaryContent,
+	IClientConfiguration,
+	IClientDetails,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	MessageType,
+	ISummaryTree,
+	IVersion,
+	IDocumentMessage,
+	IQuorumClients,
+	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
@@ -33,22 +29,22 @@ import { IFluidCodeDetails } from "./fluidPackage";
  * service.  The transition from detached to attached state is a one-way transition.
  */
 export enum AttachState {
-    /**
-     * In detached state, the data is only present on the local client's machine.  It has not yet been uploaded
-     * to the service.
-     */
-    Detached = "Detached",
+	/**
+	 * In detached state, the data is only present on the local client's machine.  It has not yet been uploaded
+	 * to the service.
+	 */
+	Detached = "Detached",
 
-    /**
-     * In attaching state, the data has started the upload to the service, but has not yet completed.
-     */
-    Attaching = "Attaching",
+	/**
+	 * In attaching state, the data has started the upload to the service, but has not yet completed.
+	 */
+	Attaching = "Attaching",
 
-    /**
-     * In attached state, the data has completed upload to the service.  It can be accessed by other clients after
-     * reaching attached state.
-     */
-    Attached = "Attached",
+	/**
+	 * In attached state, the data has completed upload to the service.  It can be accessed by other clients after
+	 * reaching attached state.
+	 */
+	Attached = "Attached",
 }
 
 /**
@@ -56,61 +52,60 @@ export enum AttachState {
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  */
 export interface IRuntime extends IDisposable {
+	/**
+	 * Executes a request against the runtime
+	 */
+	request(request: IRequest): Promise<IResponse>;
 
-    /**
-     * Executes a request against the runtime
-     */
-    request(request: IRequest): Promise<IResponse>;
+	/**
+	 * Notifies the runtime of a change in the connection state
+	 */
+	setConnectionState(connected: boolean, clientId?: string);
 
-    /**
-     * Notifies the runtime of a change in the connection state
-     */
-    setConnectionState(connected: boolean, clientId?: string);
+	/**
+	 * Processes the given op (message)
+	 */
+	process(message: ISequencedDocumentMessage, local: boolean);
 
-    /**
-     * Processes the given op (message)
-     */
-    process(message: ISequencedDocumentMessage, local: boolean);
+	/**
+	 * Processes the given signal
+	 */
+	processSignal(message: any, local: boolean);
 
-    /**
-     * Processes the given signal
-     */
-    processSignal(message: any, local: boolean);
+	/**
+	 * Create a summary. Used when attaching or serializing a detached container.
+	 *
+	 * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
+	 * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
+	 * new storage IDs so requests can be redirected.
+	 */
+	createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
 
-    /**
-     * Create a summary. Used when attaching or serializing a detached container.
-     *
-     * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
-     * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
-     * new storage IDs so requests can be redirected.
-     */
-    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
+	/**
+	 * Propagate the container state when container is attaching or attached.
+	 * @param attachState - State of the container.
+	 */
+	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 
-    /**
-     * Propagate the container state when container is attaching or attached.
-     * @param attachState - State of the container.
-     */
-    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	/**
+	 * Get pending local state in a serializable format to be given back to a newly loaded container
+	 */
+	getPendingLocalState(): unknown;
 
-    /**
-     * Get pending local state in a serializable format to be given back to a newly loaded container
-     */
-    getPendingLocalState(): unknown;
-
-    /**
-     * Notify runtime that container is moving to "Attaching" state
-     * @param snapshot - snapshot created at attach time
-     */
-    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+	/**
+	 * Notify runtime that container is moving to "Attaching" state
+	 * @param snapshot - snapshot created at attach time
+	 */
+	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 }
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
  */
 export interface IBatchMessage {
-    contents?: string;
-    metadata: Record<string, unknown> | undefined;
-    compression?: string;
+	contents?: string;
+	metadata: Record<string, unknown> | undefined;
+	compression?: string;
 }
 
 /**
@@ -122,72 +117,72 @@ export interface IBatchMessage {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
-    /** @deprecated Please pass in existing directly in instantiateRuntime */
-    readonly existing: boolean | undefined;
-    readonly options: ILoaderOptions;
-    readonly clientId: string | undefined;
-    readonly clientDetails: IClientDetails;
-    readonly storage: IDocumentStorageService;
-    readonly connected: boolean;
-    readonly baseSnapshot: ISnapshotTree | undefined;
-    /** @deprecated Please use submitBatchFn & submitSummaryFn */
-    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
-    /** @returns clientSequenceNumber of last message in a batch */
-    readonly submitBatchFn: (batch: IBatchMessage[]) => number;
-    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
-    readonly submitSignalFn: (contents: any) => void;
-    readonly disposeFn?: (error?: ICriticalContainerError) => void;
-    readonly closeFn: (error?: ICriticalContainerError) => void;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly quorum: IQuorumClients;
-    /**
-     * @deprecated This method is provided as a migration tool for customers currently reading the code details
-     * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed
-     * from within the Container as this requires coupling between the container contents and the code loader.
-     * Direct access to Quorum proposals will be removed in an upcoming release, and in a further future release this
-     * migration tool will be removed.
-     */
-    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
-    readonly audience: IAudience | undefined;
-    readonly loader: ILoader;
-    // The logger implementation, which would support tagged events, should be provided by the loader.
-    readonly taggedLogger: ITelemetryBaseLogger;
-    readonly serviceConfiguration: IClientConfiguration | undefined;
-    pendingLocalState?: unknown;
+	/** @deprecated Please pass in existing directly in instantiateRuntime */
+	readonly existing: boolean | undefined;
+	readonly options: ILoaderOptions;
+	readonly clientId: string | undefined;
+	readonly clientDetails: IClientDetails;
+	readonly storage: IDocumentStorageService;
+	readonly connected: boolean;
+	readonly baseSnapshot: ISnapshotTree | undefined;
+	/** @deprecated Please use submitBatchFn & submitSummaryFn */
+	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+	/** @returns clientSequenceNumber of last message in a batch */
+	readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+	readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
+	readonly submitSignalFn: (contents: any) => void;
+	readonly disposeFn?: (error?: ICriticalContainerError) => void;
+	readonly closeFn: (error?: ICriticalContainerError) => void;
+	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly quorum: IQuorumClients;
+	/**
+	 * @deprecated This method is provided as a migration tool for customers currently reading the code details
+	 * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed
+	 * from within the Container as this requires coupling between the container contents and the code loader.
+	 * Direct access to Quorum proposals will be removed in an upcoming release, and in a further future release this
+	 * migration tool will be removed.
+	 */
+	getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+	readonly audience: IAudience | undefined;
+	readonly loader: ILoader;
+	// The logger implementation, which would support tagged events, should be provided by the loader.
+	readonly taggedLogger: ITelemetryBaseLogger;
+	readonly serviceConfiguration: IClientConfiguration | undefined;
+	pendingLocalState?: unknown;
 
-    /**
-     * Ambient services provided with the context
-     */
-    readonly scope: FluidObject;
+	/**
+	 * Ambient services provided with the context
+	 */
+	readonly scope: FluidObject;
 
-    /**
-     * Get an absolute url for a provided container-relative request.
-     * @param relativeUrl - A relative request within the container
-     *
-     * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
-     */
-    getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
+	/**
+	 * Get an absolute url for a provided container-relative request.
+	 * @param relativeUrl - A relative request within the container
+	 *
+	 * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
+	 */
+	getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
 
-    /**
-     * Indicates the attachment state of the container to a host service.
-     */
-    readonly attachState: AttachState;
+	/**
+	 * Indicates the attachment state of the container to a host service.
+	 */
+	readonly attachState: AttachState;
 
-    getLoadedFromVersion(): IVersion | undefined;
+	getLoadedFromVersion(): IVersion | undefined;
 
-    updateDirtyContainerState(dirty: boolean): void;
-    /**
-     * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
-     * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
-     * and scenarios which can change in the future.
-     */
-    readonly id: string;
+	updateDirtyContainerState(dirty: boolean): void;
+	/**
+	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
+	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
+	 * and scenarios which can change in the future.
+	 */
+	readonly id: string;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 export interface IProvideRuntimeFactory {
-    readonly IRuntimeFactory: IRuntimeFactory;
+	readonly IRuntimeFactory: IRuntimeFactory;
 }
 
 /**
@@ -197,12 +192,12 @@ export interface IProvideRuntimeFactory {
  * to start up the running instance of the Container.
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
-    /**
-     * Instantiates a new IRuntime for the given IContainerContext to proxy to
-     * This is the main entry point to the Container's business logic
-     *
-     * @param context - container context to be supplied to the runtime
-     * @param existing - whether to instantiate for the first time or from an existing context
-     */
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+	/**
+	 * Instantiates a new IRuntime for the given IContainerContext to proxy to
+	 * This is the main entry point to the Container's business logic
+	 *
+	 * @param context - container context to be supplied to the runtime
+	 * @param existing - whether to instantiate for the first time or from an existing context
+	 */
+	instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }

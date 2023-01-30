@@ -20,7 +20,7 @@ export interface IRoutes {
 export function create(
     config: Provider,
     mongoManager: MongoManager,
-    documentStorage: IDocumentStorage,
+    documentStorage: IDocumentStorage
 ) {
     return {
         ordering: ordering.create(config, documentStorage, mongoManager),

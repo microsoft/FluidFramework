@@ -9,7 +9,5 @@ import "../assets/icons/SVGStoreIcons";
 import { theme } from "./Theme";
 
 export const InspectorDecorator = (storyFn) => (
-  <MuiThemeProvider theme={theme}>
-    {storyFn()}
-  </MuiThemeProvider>
+	<MuiThemeProvider theme={theme}>{storyFn()}</MuiThemeProvider>
 );

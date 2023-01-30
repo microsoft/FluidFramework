@@ -19,140 +19,140 @@ const path3 = makePath([fieldFoo, 4]);
 const path4 = makePath([fieldFoo, 5]);
 
 describe("AnchorSet", () => {
-    it("preserves paths", () => {
-        const [anchors, anchor1, anchor2, anchor3] = setup();
-        checkEquality(anchors.locate(anchor1), path1);
-        checkEquality(anchors.locate(anchor2), path2);
-        checkEquality(anchors.locate(anchor3), path3);
-    });
+	it("preserves paths", () => {
+		const [anchors, anchor1, anchor2, anchor3] = setup();
+		checkEquality(anchors.locate(anchor1), path1);
+		checkEquality(anchors.locate(anchor2), path2);
+		checkEquality(anchors.locate(anchor3), path3);
+	});
 
-    it("can rebase over insert", () => {
-        const [anchors, anchor1, anchor2, anchor3] = setup();
+	it("can rebase over insert", () => {
+		const [anchors, anchor1, anchor2, anchor3] = setup();
 
-        const insert = {
-            type: Delta.MarkType.Insert,
-            content: [node, node].map(singleTextCursor),
-        };
+		const insert = {
+			type: Delta.MarkType.Insert,
+			content: [node, node].map(singleTextCursor),
+		};
 
-        anchors.applyDelta(makeDelta(insert, makePath([fieldFoo, 4])));
+		anchors.applyDelta(makeDelta(insert, makePath([fieldFoo, 4])));
 
-        checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
-        checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
-        checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 6]));
-    });
+		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
+		checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
+		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 6]));
+	});
 
-    it("can rebase over delete", () => {
-        const [anchors, anchor1, anchor2, anchor3] = setup();
-        const deleteMark = {
-            type: Delta.MarkType.Delete,
-            count: 1,
-        };
+	it("can rebase over delete", () => {
+		const [anchors, anchor1, anchor2, anchor3] = setup();
+		const deleteMark = {
+			type: Delta.MarkType.Delete,
+			count: 1,
+		};
 
-        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])));
-        checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
-        checkEquality(anchors.locate(anchor2), path2);
-        assert.equal(anchors.locate(anchor3), undefined);
-        assert.doesNotThrow(() => anchors.forget(anchor3));
-        assert.throws(() => anchors.locate(anchor3));
-    });
+		anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])));
+		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
+		checkEquality(anchors.locate(anchor2), path2);
+		assert.equal(anchors.locate(anchor3), undefined);
+		assert.doesNotThrow(() => anchors.forget(anchor3));
+		assert.throws(() => anchors.locate(anchor3));
+	});
 
-    it("can rebase over delete of parent node", () => {
-        const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
-        const deleteMark = {
-            type: Delta.MarkType.Delete,
-            count: 1,
-        };
+	it("can rebase over delete of parent node", () => {
+		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+		const deleteMark = {
+			type: Delta.MarkType.Delete,
+			count: 1,
+		};
 
-        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])));
-        assert.equal(anchors.locate(anchor4), undefined);
-        assert.equal(anchors.locate(anchor1), undefined);
-        assert.doesNotThrow(() => anchors.forget(anchor4));
-        assert.doesNotThrow(() => anchors.forget(anchor1));
-        checkEquality(anchors.locate(anchor2), path2);
-        checkEquality(anchors.locate(anchor3), path3);
-        assert.throws(() => anchors.locate(anchor4));
-        assert.throws(() => anchors.locate(anchor1));
+		anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])));
+		assert.equal(anchors.locate(anchor4), undefined);
+		assert.equal(anchors.locate(anchor1), undefined);
+		assert.doesNotThrow(() => anchors.forget(anchor4));
+		assert.doesNotThrow(() => anchors.forget(anchor1));
+		checkEquality(anchors.locate(anchor2), path2);
+		checkEquality(anchors.locate(anchor3), path3);
+		assert.throws(() => anchors.locate(anchor4));
+		assert.throws(() => anchors.locate(anchor1));
 
-        checkEquality(anchors.locate(anchor2), path2);
-        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
-        checkEquality(anchors.locate(anchor2), undefined);
-        assert.doesNotThrow(() => anchors.forget(anchor2));
-        assert.throws(() => anchors.locate(anchor2));
+		checkEquality(anchors.locate(anchor2), path2);
+		anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
+		checkEquality(anchors.locate(anchor2), undefined);
+		assert.doesNotThrow(() => anchors.forget(anchor2));
+		assert.throws(() => anchors.locate(anchor2));
 
-        // The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
-        checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
-        checkEquality(anchors.locate(anchor3), undefined);
-        assert.doesNotThrow(() => anchors.forget(anchor3));
-        assert.throws(() => anchors.locate(anchor3));
-    });
+		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
+		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+		anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
+		checkEquality(anchors.locate(anchor3), undefined);
+		assert.doesNotThrow(() => anchors.forget(anchor3));
+		assert.throws(() => anchors.locate(anchor3));
+	});
 
-    it("can rebase over move", () => {
-        const [anchors, anchor1, anchor2, anchor3] = setup();
-        const moveOut: Delta.MoveOut = {
-            type: Delta.MarkType.MoveOut,
-            count: 1,
-            moveId: brand(1),
-        };
+	it("can rebase over move", () => {
+		const [anchors, anchor1, anchor2, anchor3] = setup();
+		const moveOut: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId: brand(1),
+		};
 
-        const moveIn: Delta.MoveIn = {
-            type: Delta.MarkType.MoveIn,
-            count: 1,
-            moveId: brand(1),
-        };
+		const moveIn: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: brand(1),
+		};
 
-        const modify = {
-            type: Delta.MarkType.Modify,
-            fields: new Map([[fieldBar, [3, moveIn]]]),
-        };
+		const modify = {
+			type: Delta.MarkType.Modify,
+			fields: new Map([[fieldBar, [3, moveIn]]]),
+		};
 
-        const delta = new Map([[fieldFoo, [3, moveOut, 1, modify]]]);
-        anchors.applyDelta(delta);
-        checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
-        checkEquality(
-            anchors.locate(anchor2),
-            makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]),
-        );
-        checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-    });
+		const delta = new Map([[fieldFoo, [3, moveOut, 1, modify]]]);
+		anchors.applyDelta(delta);
+		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
+		checkEquality(
+			anchors.locate(anchor2),
+			makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]),
+		);
+		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+	});
 });
 
 function setup(): [AnchorSet, Anchor, Anchor, Anchor, Anchor] {
-    const anchors = new AnchorSet();
-    const anchor1 = anchors.track(path1);
-    const anchor2 = anchors.track(path2);
-    const anchor3 = anchors.track(path3);
-    const anchor4 = anchors.track(path4);
-    return [anchors, anchor1, anchor2, anchor3, anchor4];
+	const anchors = new AnchorSet();
+	const anchor1 = anchors.track(path1);
+	const anchor2 = anchors.track(path2);
+	const anchor3 = anchors.track(path3);
+	const anchor4 = anchors.track(path4);
+	return [anchors, anchor1, anchor2, anchor3, anchor4];
 }
 
 type PathStep = [FieldKey, number];
 
 function makePath(...steps: PathStep[]): UpPath {
-    assert(steps.length > 0, "Path cannot be empty");
-    return steps.reduce(
-        (path: UpPath | undefined, step: PathStep) => ({
-            parent: path,
-            parentField: step[0],
-            parentIndex: step[1],
-        }),
-        undefined,
-    ) as UpPath;
+	assert(steps.length > 0, "Path cannot be empty");
+	return steps.reduce(
+		(path: UpPath | undefined, step: PathStep) => ({
+			parent: path,
+			parentField: step[0],
+			parentIndex: step[1],
+		}),
+		undefined,
+	) as UpPath;
 }
 
 function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined) {
-    assert.deepEqual(clonePath(actual), clonePath(expected));
+	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
 
 function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
-    const fields: Delta.Root = new Map([[path.parentField, [path.parentIndex, mark]]]);
-    if (path.parent === undefined) {
-        return fields;
-    }
+	const fields: Delta.Root = new Map([[path.parentField, [path.parentIndex, mark]]]);
+	if (path.parent === undefined) {
+		return fields;
+	}
 
-    const modify = {
-        type: Delta.MarkType.Modify,
-        fields,
-    };
-    return makeDelta(modify, path.parent);
+	const modify = {
+		type: Delta.MarkType.Modify,
+		fields,
+	};
+	return makeDelta(modify, path.parent);
 }

@@ -31,16 +31,16 @@ console.log(s.IFoo?.foo;)
 
 # API
 
-- [Providers](##Providers)
-  - [`InstanceProvider`](###Instance-Provider)
-  - [`SingletonProvider`](###Singleton-Provider)
-  - [`ValueProvider`](###Value-Provider)
-  - [`FactoryProvider`](###Factory-Provider)
-- [Synthesize](##Synthesize)
-  - [Optional Types](###Optional-Types)
-  - [Required Types](###Required-Types)
-  - [Multiple Types](###Multiple-Types)
-- [Parent](##Parent)
+-   [Providers](##Providers)
+    -   [`InstanceProvider`](###Instance-Provider)
+    -   [`SingletonProvider`](###Singleton-Provider)
+    -   [`ValueProvider`](###Value-Provider)
+    -   [`FactoryProvider`](###Factory-Provider)
+-   [Synthesize](##Synthesize)
+    -   [Optional Types](###Optional-Types)
+    -   [Required Types](###Required-Types)
+    -   [Multiple Types](###Multiple-Types)
+-   [Parent](##Parent)
 
 ## Fluid object Providers
 
@@ -55,10 +55,10 @@ There are four types of providers:
 
 ```typescript
 type FluidObjectProvider<T> =
-    NonNullable<T>
-    | Promise<NonNullable<T>>
-    | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullable<T>)
-    | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullable<T>>);
+	| NonNullable<T>
+	| Promise<NonNullable<T>>
+	| ((dependencyContainer: IFluidDependencySynthesizer) => NonNullable<T>)
+	| ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullable<T>>);
 ```
 
 ### Value Provider
@@ -155,19 +155,19 @@ is a TypeScript `type` that ensures the types being passed match the ones in the
 
 ### Optional Types
 
-Optional types will return a Promise to it's corresponding FluidObject  or undefined. Because of this we need to do
+Optional types will return a Promise to it's corresponding FluidObject or undefined. Because of this we need to do
 an if check to validate the object or use the `?` like in the example below.
 
 ```typescript
 const dc = new DependencyContainer<FluidObject<IFoo>>();
 
-const s = dc.synthesize<IFoo>({IFoo}, {});
+const s = dc.synthesize<IFoo>({ IFoo }, {});
 const foo = await s.IFoo;
 console.log(foo?.foo);
 ```
 
-*Note: Because of how generics in TypeScript work we need to provide an empty `requiredTypes` object even though we don't
-need to provide the type.*
+_Note: Because of how generics in TypeScript work we need to provide an empty `requiredTypes` object even though we don't
+need to provide the type._
 
 ### Required Types
 
@@ -178,7 +178,7 @@ You can see below that we don't need to add the `?` to check our requested type.
 ```typescript
 const dc = new DependencyContainer<FluidObject<IFoo>>();
 
-const scope = dc.synthesize<{}, IFoo>({}, {IFoo});
+const scope = dc.synthesize<{}, IFoo>({}, { IFoo });
 const foo = await s.IFoo;
 console.log(foo.foo);
 ```
@@ -190,7 +190,7 @@ You can declare multiple types for both Optional and Required using the `&` or c
 ```typescript
 const dc = new DependencyContainer<FluidObject<IFoo & IBar>>();
 
-const scope = dc.synthesize<IFoo & IBar>({IFoo, IBar}, {});
+const scope = dc.synthesize<IFoo & IBar>({ IFoo, IBar }, {});
 const fooP = s.IFoo;
 const barP = s.IBar;
 const [foo, bar] = Promise.all([foo, bar]);
@@ -201,7 +201,7 @@ console.log(bar?.bar);
 ```typescript
 const dc = new DependencyContainer<FluidObject<IFoo & IBar>>();
 
-const scope = dc.synthesize<{}, IFoo & IBar>({}, {IFoo, IBar});
+const scope = dc.synthesize<{}, IFoo & IBar>({}, { IFoo, IBar });
 const fooP = s.IFoo;
 const barP = s.IBar;
 const [foo, bar] = Promise.all([foo, bar]);
@@ -212,7 +212,7 @@ console.log(bar.bar);
 ```typescript
 const dc = new DependencyContainer<FluidObject<IFoo & IBar>>();
 
-const scope = dc.synthesize<IFoo, IBar>({IFoo}, {IBar});
+const scope = dc.synthesize<IFoo, IBar>({ IFoo }, { IBar });
 const fooP = s.IFoo;
 const barP = s.IBar;
 const [foo, bar] = Promise.all([foo, bar]);
@@ -224,4 +224,3 @@ console.log(bar.bar);
 
 The `DependencyContainer` takes one optional parameter which is the `parent`. When resolving providers the `DependencyContainer` will first
 check the current container then look in the parent.
-
