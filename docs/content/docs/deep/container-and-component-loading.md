@@ -46,7 +46,7 @@ And a handful more.
 
 To load any Fluid container, the Hosting Application needs the Fluid Loader Package.
 This is a small package whose only responsibility is to load Fluid containers.
-The Fluid Loader has no knowledge of the insides of the container it wants to lead, like the `ContainerRuntime`
+The Fluid Loader has no knowledge of the insides of the container it wants to load, like the `ContainerRuntime`
 or `DataStore` specific code.
 
 The `Loader` object has a `resolve(...)` **(1)** method that can load a `Container` when provided the following:
