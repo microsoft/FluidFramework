@@ -21,10 +21,10 @@
  */
 
 export {
-    AudienceMemberViewProps,
-    ClientDebugView,
-    clientDebugViewClassName,
-    ClientDebugViewProps,
+	AudienceMemberViewProps,
+	ClientDebugView,
+	clientDebugViewClassName,
+	ClientDebugViewProps,
 } from "./components";
 
 export { AudienceMember } from "./Audience";
@@ -32,11 +32,11 @@ export { HasClientDebugger, HasContainerId } from "./CommonProps";
 export { FluidClientDebugger, FluidClientDebuggerProps } from "./Debugger";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {
-    defaultRenderOptions,
-    defaultSharedObjectRenderers,
-    RenderChild,
-    RenderOptions,
-    RenderSharedObject,
-    SharedObjectRenderOptions,
-    SharedObjectType,
+	defaultRenderOptions,
+	defaultSharedObjectRenderers,
+	RenderChild,
+	RenderOptions,
+	RenderSharedObject,
+	SharedObjectRenderOptions,
+	SharedObjectType,
 } from "./RendererOptions";

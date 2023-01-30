@@ -45,9 +45,7 @@ export class Attributor implements IAttributor {
 	/**
 	 * @param initialEntries - Any entries which should be populated on instantiation.
 	 */
-	constructor(
-		initialEntries?: Iterable<[number, AttributionInfo]>,
-	) {
+	constructor(initialEntries?: Iterable<[number, AttributionInfo]>) {
 		this.keyToInfo = new Map(initialEntries ?? []);
 	}
 
@@ -93,8 +91,14 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 			const client = audience.getMember(message.clientId);
 			if (message.type === "op") {
 				// TODO: This case may be legitimate, and if so we need to figure out how to handle it.
-				assert(client !== undefined, 0x4af /* Received message from user not in the audience */);
-				this.keyToInfo.set(message.sequenceNumber, { user: client.user, timestamp: message.timestamp });
+				assert(
+					client !== undefined,
+					0x4af /* Received message from user not in the audience */,
+				);
+				this.keyToInfo.set(message.sequenceNumber, {
+					user: client.user,
+					timestamp: message.timestamp,
+				});
 			}
 		});
 	}

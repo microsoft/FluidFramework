@@ -30,7 +30,10 @@ export const deltaEncoder: TimestampEncoder = {
 		return deltaTimestamps;
 	},
 	decode: (encoded: Jsonable) => {
-		assert(Array.isArray(encoded), 0x4b0 /* Encoded timestamps should be an array of nummbers */);
+		assert(
+			Array.isArray(encoded),
+			0x4b0 /* Encoded timestamps should be an array of nummbers */,
+		);
 		const timestamps: number[] = new Array(encoded.length);
 		let cumulativeSum = 0;
 		for (let i = 0; i < encoded.length; i++) {
@@ -44,7 +47,7 @@ export const deltaEncoder: TimestampEncoder = {
 export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
 export interface SerializedAttributor {
-	interner: readonly string[]; /* result of calling getSerializable() on a StringInterner */
+	interner: readonly string[] /* result of calling getSerializable() on a StringInterner */;
 	seqs: number[];
 	timestamps: number[];
 	attributionRefs: InternedStringId[];
@@ -52,9 +55,11 @@ export interface SerializedAttributor {
 
 export class AttributorSerializer implements IAttributorSerializer {
 	constructor(
-		private readonly makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor,
+		private readonly makeAttributor: (
+			entries: Iterable<[number, AttributionInfo]>,
+		) => IAttributor,
 		private readonly timestampEncoder: TimestampEncoder,
-	) { }
+	) {}
 
 	public encode(attributor: IAttributor): SerializedAttributor {
 		const interner = new MutableStringInterner();
@@ -82,8 +87,10 @@ export class AttributorSerializer implements IAttributorSerializer {
 		const interner = new MutableStringInterner(encoded.interner);
 		const { seqs, timestamps: encodedTimestamps, attributionRefs } = encoded;
 		const timestamps = this.timestampEncoder.decode(encodedTimestamps);
-		assert(seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
-			0x4b1 /* serialized attribution columns should have the same length */);
+		assert(
+			seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
+			0x4b1 /* serialized attribution columns should have the same length */,
+		);
 		const entries = new Array(seqs.length);
 		for (let i = 0; i < seqs.length; i++) {
 			const key = seqs[i];
@@ -101,5 +108,5 @@ export class AttributorSerializer implements IAttributorSerializer {
  */
 export const chain = <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>): Encoder<T1, T3> => ({
 	encode: (content) => b.encode(a.encode(content)),
-	decode: (content) => a.decode(b.decode(content))
+	decode: (content) => a.decode(b.decode(content)),
 });

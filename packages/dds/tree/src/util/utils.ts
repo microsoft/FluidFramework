@@ -9,7 +9,7 @@ import structuredClone from "@ungap/structured-clone";
  * Make all transitive properties in T readonly
  */
 export type RecursiveReadonly<T> = {
-    readonly [P in keyof T]: RecursiveReadonly<T[P]>;
+	readonly [P in keyof T]: RecursiveReadonly<T[P]>;
 };
 
 /**
@@ -18,11 +18,11 @@ export type RecursiveReadonly<T> = {
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 export function clone<T>(original: T): T {
-    return structuredClone(original);
+	return structuredClone(original);
 }
 
 export function fail(message: string): never {
-    throw new Error(message);
+	throw new Error(message);
 }
 
 /**
@@ -43,17 +43,17 @@ export function fail(message: string): never {
  * @param never - The switch value
  */
 export function unreachableCase(never: never): never {
-    fail("unreachableCase was called");
+	fail("unreachableCase was called");
 }
 
 /**
  * Checks whether or not the given object is a `readonly` array.
  */
 export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
-    // `Array.isArray()` does not properly narrow `readonly` array types by itself,
-    // so we wrap it in this type guard. This may become unnecessary if/when
-    // https://github.com/microsoft/TypeScript/issues/17002 is resolved.
-    return Array.isArray(x);
+	// `Array.isArray()` does not properly narrow `readonly` array types by itself,
+	// so we wrap it in this type guard. This may become unnecessary if/when
+	// https://github.com/microsoft/TypeScript/issues/17002 is resolved.
+	return Array.isArray(x);
 }
 
 /**
@@ -62,11 +62,11 @@ export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[]
  * @param filler - Callback for populating the array with a value for a given index
  */
 export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
-    const array = [];
-    for (let i = 0; i < size; ++i) {
-        array.push(filler(i));
-    }
-    return array;
+	const array = [];
+	for (let i = 0; i < size; ++i) {
+		array.push(filler(i));
+	}
+	return array;
 }
 
 /**
@@ -77,21 +77,21 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareArrays<T>(
-    arrayA: readonly T[],
-    arrayB: readonly T[],
-    elementComparator: (a: T, b: T) => boolean = Object.is,
+	arrayA: readonly T[],
+	arrayB: readonly T[],
+	elementComparator: (a: T, b: T) => boolean = Object.is,
 ): boolean {
-    if (arrayA.length !== arrayB.length) {
-        return false;
-    }
+	if (arrayA.length !== arrayB.length) {
+		return false;
+	}
 
-    for (let i = 0; i < arrayA.length; i++) {
-        if (!elementComparator(arrayA[i], arrayB[i])) {
-            return false;
-        }
-    }
+	for (let i = 0; i < arrayA.length; i++) {
+		if (!elementComparator(arrayA[i], arrayB[i])) {
+			return false;
+		}
+	}
 
-    return true;
+	return true;
 }
 
 /**
@@ -106,37 +106,37 @@ export function compareArrays<T>(
  * @returns false iff any of the call backs returned false.
  */
 export function compareSets<T>({
-    a,
-    b,
-    aExtra,
-    bExtra,
-    same,
+	a,
+	b,
+	aExtra,
+	bExtra,
+	same,
 }: {
-    a: ReadonlySet<T> | ReadonlyMap<T, unknown>;
-    b: ReadonlySet<T> | ReadonlyMap<T, unknown>;
-    aExtra?: (t: T) => boolean;
-    bExtra?: (t: T) => boolean;
-    same?: (t: T) => boolean;
+	a: ReadonlySet<T> | ReadonlyMap<T, unknown>;
+	b: ReadonlySet<T> | ReadonlyMap<T, unknown>;
+	aExtra?: (t: T) => boolean;
+	bExtra?: (t: T) => boolean;
+	same?: (t: T) => boolean;
 }): boolean {
-    for (const item of a.keys()) {
-        if (!b.has(item)) {
-            if (aExtra && !aExtra(item)) {
-                return false;
-            }
-        } else {
-            if (same && !same(item)) {
-                return false;
-            }
-        }
-    }
-    for (const item of b.keys()) {
-        if (!a.has(item)) {
-            if (bExtra && !bExtra(item)) {
-                return false;
-            }
-        }
-    }
-    return true;
+	for (const item of a.keys()) {
+		if (!b.has(item)) {
+			if (aExtra && !aExtra(item)) {
+				return false;
+			}
+		} else {
+			if (same && !same(item)) {
+				return false;
+			}
+		}
+	}
+	for (const item of b.keys()) {
+		if (!a.has(item)) {
+			if (bExtra && !bExtra(item)) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 /**
@@ -147,12 +147,12 @@ export function compareSets<T>({
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
 export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K) => V): V {
-    let value = map.get(key);
-    if (value === undefined) {
-        value = defaultValue(key);
-        map.set(key, value);
-    }
-    return value;
+	let value = map.get(key);
+	if (value === undefined) {
+		value = defaultValue(key);
+		map.set(key, value);
+	}
+	return value;
 }
 
 /**
@@ -161,12 +161,12 @@ export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K)
  * Otherwise, creates an entry with an empty list, and returns that list.
  */
 export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
-    let collection = map.get(key);
-    if (collection === undefined) {
-        collection = [];
-        map.set(key, collection);
-    }
-    return collection;
+	let collection = map.get(key);
+	if (collection === undefined) {
+		collection = [];
+		map.set(key, collection);
+	}
+	return collection;
 }
 
 /**
@@ -176,13 +176,13 @@ export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
  * but instead mostly restricts access to it.
  */
 export type JsonCompatible =
-    | string
-    | number
-    | boolean
-    // eslint-disable-next-line @rushstack/no-new-null
-    | null
-    | JsonCompatible[]
-    | JsonCompatibleObject;
+	| string
+	| number
+	| boolean
+	// eslint-disable-next-line @rushstack/no-new-null
+	| null
+	| JsonCompatible[]
+	| JsonCompatibleObject;
 
 /**
  * Use for Json object compatible data.
@@ -199,20 +199,20 @@ export type JsonCompatibleObject = { [P in string]: JsonCompatible };
  * but instead mostly restricts access to it.
  */
 export type JsonCompatibleReadOnly =
-    | string
-    | number
-    | boolean
-    // eslint-disable-next-line @rushstack/no-new-null
-    | null
-    | readonly JsonCompatibleReadOnly[]
-    | { readonly [P in string]: JsonCompatibleReadOnly | undefined };
+	| string
+	| number
+	| boolean
+	// eslint-disable-next-line @rushstack/no-new-null
+	| null
+	| readonly JsonCompatibleReadOnly[]
+	| { readonly [P in string]: JsonCompatibleReadOnly | undefined };
 
 /**
  * Returns if a particular json compatible value is an object.
  * Does not include `null` or arrays.
  */
 export function isJsonObject(
-    value: JsonCompatibleReadOnly,
+	value: JsonCompatibleReadOnly,
 ): value is { readonly [P in string]: JsonCompatibleReadOnly | undefined } {
-    return typeof value === "object" && value !== null && !Array.isArray(value);
+	return typeof value === "object" && value !== null && !Array.isArray(value);
 }

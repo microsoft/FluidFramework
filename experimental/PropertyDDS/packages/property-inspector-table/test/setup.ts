@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Enzyme from 'enzyme';
-import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+import * as Enzyme from "enzyme";
+import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
 
-Enzyme.configure({ adapter: new Adapter() })
+Enzyme.configure({ adapter: new Adapter() });

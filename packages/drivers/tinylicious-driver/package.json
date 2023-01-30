@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/tinylicious-driver",
-  "version": "2.0.0-internal.3.0.0",
+  "version": "2.0.0-internal.3.1.0",
   "description": "Driver for tinylicious",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -25,8 +25,8 @@
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "tsc": "tsc",
@@ -34,11 +34,11 @@
     "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/driver-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
     "@fluidframework/protocol-definitions": "^1.1.0",
-    "@fluidframework/routerlicious-driver": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/routerlicious-driver": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
     "@fluidframework/server-services-client": "^0.1038.2000",
     "jsrsasign": "^10.5.25",
     "uuid": "^8.3.1"
