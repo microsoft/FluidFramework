@@ -86,9 +86,6 @@ export async function performFuzzActions(
             },
             synchronize: async (state) => {
                 const { testTreeProvider } = state;
-                if (testTreeProvider === undefined) {
-                    fail("Attempted to synchronize with undefined testObjectProvider");
-                }
                 await testTreeProvider.ensureSynchronized();
                 return state;
             },
