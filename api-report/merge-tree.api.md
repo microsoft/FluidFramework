@@ -52,9 +52,11 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     localMovedSeq?: number;
+    // (undocumented)
+    localMovedSeqs?: number[];
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
@@ -65,6 +67,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     movedClientIds?: number[];
     // (undocumented)
     movedSeq?: number;
+    // (undocumented)
+    movedSeqs?: number[];
     // (undocumented)
     properties?: PropertySet;
     // (undocumented)
@@ -181,20 +185,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLogger;
     // (undocumented)
     longClientId: string | undefined;
-<<<<<<< HEAD
-    // (undocumented)
-    maxWindowTime: number;
-    // (undocumented)
-    measureOps: boolean;
-    // (undocumented)
-    get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined;
-    set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback | undefined);
-    // (undocumented)
-    get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined;
-    set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg | undefined;
-=======
->>>>>>> fe33990f67e20347f8a944235592bd1429eb6a54
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
@@ -861,7 +852,7 @@ export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     index: number;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     ordinal: string;
     // (undocumented)

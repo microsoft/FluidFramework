@@ -120,6 +120,7 @@ function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo, onInsert: boolean)
     seg.wasObliteratedOnInsert = onInsert;
 }
 
+// todo: better name
 function findMin(a: number[], b: number[], b_ids: number[], offset: number): [number, number | undefined] | undefined {
     const aMoved = new Set(a);
 
@@ -144,6 +145,7 @@ function findMin(a: number[], b: number[], b_ids: number[], offset: number): [nu
     return [min, clientId];
 }
 
+// todo: better name(?)
 function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveInfo | undefined {
     if (!a) {
         return b;
@@ -645,6 +647,7 @@ export class MergeTree {
                 }
                 return 0;
             } else if (moveInfo !== undefined) {
+                // todo: a bit of duplication between here and remove code
                 // todo: we require this to be true for obliterate
                 if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
                     const normalizedMovedSeq = moveInfo.movedSeq === UnassignedSequenceNumber
@@ -1653,7 +1656,7 @@ export class MergeTree {
 
         let segmentGroup: SegmentGroup;
         const saveIfLocal = (locSegment: ISegment) => {
-            // Save segment so can assign sequence number when acked by server
+            // Save segment so we can assign sequence number when acked by server
             if (this.collabWindow.collaborating) {
                 if ((locSegment.seq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
                     segmentGroup = this.addToPendingList(locSegment, segmentGroup, localSeq);
@@ -1998,8 +2001,8 @@ export class MergeTree {
             newNode.assignChild(node.children[halfCount + i], i, false);
             node.children[halfCount + i] = undefined!;
         }
-        this.nodeUpdateLengthNewStructure(node, false);
-        this.nodeUpdateLengthNewStructure(newNode, false);
+        this.nodeUpdateLengthNewStructure(node);
+        this.nodeUpdateLengthNewStructure(newNode);
         return newNode;
     }
 
@@ -2152,7 +2155,7 @@ export class MergeTree {
 
         const afterMarkMoved = (node: IMergeBlock, pos: number, _start: number, _end: number) => {
             if (_overwrite) {
-                this.nodeUpdateLengthNewStructure(node, false);
+                this.nodeUpdateLengthNewStructure(node);
             } else {
                 this.blockUpdateLength(node, seq, clientId);
             }
@@ -2176,8 +2179,8 @@ export class MergeTree {
         );
 
         // opArgs == undefined => test code
-        if (this.mergeTreeDeltaCallback && movedSegments.length > 0) {
-            this.mergeTreeDeltaCallback(
+        if (movedSegments.length > 0) {
+            this.mergeTreeDeltaCallback?.(
                 opArgs,
                 {
                     operation: MergeTreeDeltaType.OBLITERATE,
@@ -2527,7 +2530,7 @@ export class MergeTree {
         newOrder.forEach(computeDepth);
         for (const [node] of Array.from(depths.entries()).sort((a, b) => b[1] - a[1])) {
             if (!node.isLeaf()) {
-                this.nodeUpdateLengthNewStructure(node, false);
+                this.nodeUpdateLengthNewStructure(node);
             }
         }
         newOrder.forEach((seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)));
@@ -2619,7 +2622,7 @@ export class MergeTree {
         let block: IMergeBlock | undefined = startBlock;
         while (block !== undefined) {
             if (newStructure) {
-                this.nodeUpdateLengthNewStructure(block, false);
+                this.nodeUpdateLengthNewStructure(block);
             } else {
                 this.blockUpdateLength(block, seq, clientId);
             }
