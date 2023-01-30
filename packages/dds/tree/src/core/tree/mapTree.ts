@@ -15,22 +15,22 @@ import { FieldKey, NodeData } from "./types";
  * @public
  */
 export interface MapTree extends NodeData {
-    fields: Map<FieldKey, MapTree[]>;
+	fields: Map<FieldKey, MapTree[]>;
 }
 
 /**
  * Get a field from `node`, optionally modifying the tree to create it if missing.
  */
 export function getMapTreeField(node: MapTree, key: FieldKey, createIfMissing: boolean): MapTree[] {
-    const field = node.fields.get(key);
-    if (field !== undefined) {
-        return field;
-    }
-    // Handle missing field:
-    if (createIfMissing === false) {
-        return [];
-    }
-    const newField: MapTree[] = [];
-    node.fields.set(key, newField);
-    return newField;
+	const field = node.fields.get(key);
+	if (field !== undefined) {
+		return field;
+	}
+	// Handle missing field:
+	if (createIfMissing === false) {
+		return [];
+	}
+	const newField: MapTree[] = [];
+	node.fields.set(key, newField);
+	return newField;
 }

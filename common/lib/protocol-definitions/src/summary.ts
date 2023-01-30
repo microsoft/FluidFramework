@@ -19,44 +19,44 @@ export type SummaryTree = ISummaryTree | ISummaryHandle;
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SummaryType {
-    export type Tree = 1;
-    export type Blob = 2;
-    export type Handle = 3;
-    export type Attachment = 4;
+	export type Tree = 1;
+	export type Blob = 2;
+	export type Handle = 3;
+	export type Attachment = 4;
 
-    /**
-     * Represents a sub-tree in the summary.
-     */
-    export const Tree: Tree = 1 as const;
+	/**
+	 * Represents a sub-tree in the summary.
+	 */
+	export const Tree: Tree = 1 as const;
 
-    /**
-     * Represents a blob of data that is added to the summary.
-     * Such as the user data that is added to the DDS or metadata added by runtime
-     * such as data store / channel attributes.
-     */
-    export const Blob: Blob = 2 as const;
+	/**
+	 * Represents a blob of data that is added to the summary.
+	 * Such as the user data that is added to the DDS or metadata added by runtime
+	 * such as data store / channel attributes.
+	 */
+	export const Blob: Blob = 2 as const;
 
-    /**
-     * Path to a summary tree object from the last successful summary.
-     */
-    export const Handle: Handle = 3 as const;
+	/**
+	 * Path to a summary tree object from the last successful summary.
+	 */
+	export const Handle: Handle = 3 as const;
 
-    /**
-     * Unique identifier to larger blobs uploaded outside of the summary.
-     * Ex. DDS has large images or video that will be uploaded by the BlobManager and
-     * receive an Id that can be used in the summary.
-     */
-    export const Attachment: Attachment = 4 as const;
+	/**
+	 * Unique identifier to larger blobs uploaded outside of the summary.
+	 * Ex. DDS has large images or video that will be uploaded by the BlobManager and
+	 * receive an Id that can be used in the summary.
+	 */
+	export const Attachment: Attachment = 4 as const;
 }
 
 /**
  * {@inheritDoc (SummaryType:namespace)}
  */
 export type SummaryType =
-    | SummaryType.Attachment
-    | SummaryType.Blob
-    | SummaryType.Handle
-    | SummaryType.Tree;
+	| SummaryType.Attachment
+	| SummaryType.Blob
+	| SummaryType.Handle
+	| SummaryType.Tree;
 
 /**
  * Summary type that {@link ISummaryHandle} points to.
@@ -77,17 +77,17 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * An example of handle would be: '/<DataStoreId>/<DDSId>'.
  */
 export interface ISummaryHandle {
-    type: SummaryType.Handle;
+	type: SummaryType.Handle;
 
-    /**
-     * Type of Summary Handle (SummaryType.Handle is not supported).
-     */
-    handleType: SummaryTypeNoHandle;
+	/**
+	 * Type of Summary Handle (SummaryType.Handle is not supported).
+	 */
+	handleType: SummaryTypeNoHandle;
 
-    /**
-     * Unique path that identifies the corresponding sub-tree in a previous summary.
-     */
-    handle: string;
+	/**
+	 * Unique path that identifies the corresponding sub-tree in a previous summary.
+	 */
+	handle: string;
 }
 
 /**
@@ -98,8 +98,8 @@ export interface ISummaryHandle {
  *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false \}"
  */
 export interface ISummaryBlob {
-    type: SummaryType.Blob;
-    content: string | Uint8Array;
+	type: SummaryType.Blob;
+	content: string | Uint8Array;
 }
 
 /**
@@ -111,8 +111,8 @@ export interface ISummaryBlob {
  * @example "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
  */
 export interface ISummaryAttachment {
-    type: SummaryType.Attachment;
-    id: string;
+	type: SummaryType.Attachment;
+	id: string;
 }
 
 /**
@@ -120,14 +120,14 @@ export interface ISummaryAttachment {
  * Blob, Handle, Attachment or another Tree.
  */
 export interface ISummaryTree {
-    type: SummaryType.Tree;
+	type: SummaryType.Tree;
 
-    // TODO type I can infer from SummaryObject. File mode I may want to directly specify so have symlink+exec access
-    tree: { [path: string]: SummaryObject };
+	// TODO type I can infer from SummaryObject. File mode I may want to directly specify so have symlink+exec access
+	tree: { [path: string]: SummaryObject };
 
-    /**
-     * Indicates that this tree entry is unreferenced.
-     * If this is not present, the tree entry is considered referenced.
-     */
-    unreferenced?: true;
+	/**
+	 * Indicates that this tree entry is unreferenced.
+	 * If this is not present, the tree entry is considered referenced.
+	 */
+	unreferenced?: true;
 }

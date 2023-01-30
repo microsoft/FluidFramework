@@ -5,15 +5,15 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    FieldKey,
-    TreeSchemaIdentifier,
-    ITreeCursorSynchronous,
-    CursorLocationType,
-    FieldUpPath,
-    UpPath,
-    TreeValue,
-    Value,
-    PathRootPrefix,
+	FieldKey,
+	TreeSchemaIdentifier,
+	ITreeCursorSynchronous,
+	CursorLocationType,
+	FieldUpPath,
+	UpPath,
+	TreeValue,
+	Value,
+	PathRootPrefix,
 } from "../../core";
 import { compareArrays, fail } from "../../util";
 import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
@@ -26,7 +26,7 @@ import { dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
  * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
  */
 export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk {
-    return new UniformChunk(shape, values);
+	return new UniformChunk(shape, values);
 }
 
 /**
@@ -36,33 +36,33 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  * allowing deduplication of shape information and storing of content as a flat sequence of values.
  */
 export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
-    /**
-     * Create a tree chunk with ref count 1.
-     *
-     * @param shape - describes the semantics and layout of `values`.
-     * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
-     */
-    public constructor(public shape: ChunkShape, public values: TreeValue[]) {
-        super();
-        assert(
-            shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
-            0x4c3 /* invalid number of values for shape */,
-        );
-    }
+	/**
+	 * Create a tree chunk with ref count 1.
+	 *
+	 * @param shape - describes the semantics and layout of `values`.
+	 * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
+	 */
+	public constructor(public shape: ChunkShape, public values: TreeValue[]) {
+		super();
+		assert(
+			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
+			0x4c3 /* invalid number of values for shape */,
+		);
+	}
 
-    public get topLevelLength(): number {
-        return this.shape.topLevelLength;
-    }
+	public get topLevelLength(): number {
+		return this.shape.topLevelLength;
+	}
 
-    public clone(): UniformChunk {
-        return new UniformChunk(this.shape, this.values.slice());
-    }
+	public clone(): UniformChunk {
+		return new UniformChunk(this.shape, this.values.slice());
+	}
 
-    public cursor(): Cursor {
-        return new Cursor(this);
-    }
+	public cursor(): Cursor {
+		return new Cursor(this);
+	}
 
-    protected dispose(): void {}
+	protected dispose(): void {}
 }
 
 /**
@@ -82,87 +82,87 @@ export type FieldShape = readonly [FieldKey, TreeShape, number];
  * not all trees can have their shape described using this type.
  */
 export class TreeShape {
-    public readonly fields: ReadonlyMap<FieldKey, OffsetShape>;
-    public readonly fieldsOffsetArray: readonly OffsetShape[];
-    public readonly valuesPerTopLevelNode: number;
+	public readonly fields: ReadonlyMap<FieldKey, OffsetShape>;
+	public readonly fieldsOffsetArray: readonly OffsetShape[];
+	public readonly valuesPerTopLevelNode: number;
 
-    // TODO: this is only needed at chunk roots. Optimize it base on that.
-    public readonly positions: readonly NodePositionInfo[];
+	// TODO: this is only needed at chunk roots. Optimize it base on that.
+	public readonly positions: readonly NodePositionInfo[];
 
-    public constructor(
-        public readonly type: TreeSchemaIdentifier,
-        public readonly hasValue: boolean,
-        public readonly fieldsArray: readonly FieldShape[],
-    ) {
-        const fields: Map<FieldKey, OffsetShape> = new Map();
-        let numberOfValues = hasValue ? 1 : 0;
-        const infos: NodePositionInfo[] = [
-            new NodePositionInfo(undefined, dummyRoot, 0, undefined, undefined, this, 1, 0),
-        ];
-        let fieldIndex = 0;
-        for (const [k, f, length] of fieldsArray) {
-            assert(!fields.has(k), 0x4c5 /* no duplicate keys */);
-            const offset = new OffsetShape(f, length, infos.length, k, fieldIndex);
-            fields.set(k, offset);
-            clonePositions(0, [k, f, length], fieldIndex, numberOfValues, infos);
-            numberOfValues += f.valuesPerTopLevelNode * length;
-            fieldIndex++;
-        }
-        this.fields = fields;
-        this.valuesPerTopLevelNode = numberOfValues;
-        this.positions = infos;
+	public constructor(
+		public readonly type: TreeSchemaIdentifier,
+		public readonly hasValue: boolean,
+		public readonly fieldsArray: readonly FieldShape[],
+	) {
+		const fields: Map<FieldKey, OffsetShape> = new Map();
+		let numberOfValues = hasValue ? 1 : 0;
+		const infos: NodePositionInfo[] = [
+			new NodePositionInfo(undefined, dummyRoot, 0, undefined, undefined, this, 1, 0),
+		];
+		let fieldIndex = 0;
+		for (const [k, f, length] of fieldsArray) {
+			assert(!fields.has(k), 0x4c5 /* no duplicate keys */);
+			const offset = new OffsetShape(f, length, infos.length, k, fieldIndex);
+			fields.set(k, offset);
+			clonePositions(0, [k, f, length], fieldIndex, numberOfValues, infos);
+			numberOfValues += f.valuesPerTopLevelNode * length;
+			fieldIndex++;
+		}
+		this.fields = fields;
+		this.valuesPerTopLevelNode = numberOfValues;
+		this.positions = infos;
 
-        this.fieldsOffsetArray = [...fields.values()];
-    }
+		this.fieldsOffsetArray = [...fields.values()];
+	}
 
-    equals(other: TreeShape): boolean {
-        // TODO: either dedup instances and/or store a collision resistant hash for fast compare.
+	equals(other: TreeShape): boolean {
+		// TODO: either dedup instances and/or store a collision resistant hash for fast compare.
 
-        if (
-            !compareArrays(
-                this.fieldsArray,
-                other.fieldsArray,
-                ([k, f, l], [k2, f2, l2]) => k === k2 && l === l2 && f.equals(f2),
-            )
-        ) {
-            return false;
-        }
-        return this.type === other.type && this.hasValue === other.hasValue;
-    }
+		if (
+			!compareArrays(
+				this.fieldsArray,
+				other.fieldsArray,
+				([k, f, l], [k2, f2, l2]) => k === k2 && l === l2 && f.equals(f2),
+			)
+		) {
+			return false;
+		}
+		return this.type === other.type && this.hasValue === other.hasValue;
+	}
 
-    withTopLevelLength(topLevelLength: number): ChunkShape {
-        return new ChunkShape(this, topLevelLength);
-    }
+	withTopLevelLength(topLevelLength: number): ChunkShape {
+		return new ChunkShape(this, topLevelLength);
+	}
 }
 
 function clonePositions(
-    indexOfParentInOutput: number | undefined,
-    [key, shape, copies]: FieldShape,
-    indexOfParentField: number,
-    valueOffset: number,
-    outputInto: NodePositionInfo[] | (NodePositionInfo | undefined)[],
+	indexOfParentInOutput: number | undefined,
+	[key, shape, copies]: FieldShape,
+	indexOfParentField: number,
+	valueOffset: number,
+	outputInto: NodePositionInfo[] | (NodePositionInfo | undefined)[],
 ): void {
-    const offset = outputInto.length;
-    for (let index = 0; index < copies; index++) {
-        for (const inner of shape.positions) {
-            const wasRoot = inner.indexOfParentPosition === undefined;
-            const parentPositionIndex = wasRoot
-                ? indexOfParentInOutput
-                : inner.indexOfParentPosition + index * shape.positions.length + offset;
-            outputInto.push(
-                new NodePositionInfo(
-                    parentPositionIndex === undefined ? undefined : outputInto[parentPositionIndex],
-                    inner.parentField === dummyRoot ? key : inner.parentField,
-                    wasRoot ? index : inner.parentIndex,
-                    inner.indexOfParentField ?? indexOfParentField,
-                    parentPositionIndex,
-                    inner.shape,
-                    wasRoot ? copies : inner.topLevelLength,
-                    inner.valueOffset + valueOffset + shape.valuesPerTopLevelNode * index,
-                ),
-            );
-        }
-    }
+	const offset = outputInto.length;
+	for (let index = 0; index < copies; index++) {
+		for (const inner of shape.positions) {
+			const wasRoot = inner.indexOfParentPosition === undefined;
+			const parentPositionIndex = wasRoot
+				? indexOfParentInOutput
+				: inner.indexOfParentPosition + index * shape.positions.length + offset;
+			outputInto.push(
+				new NodePositionInfo(
+					parentPositionIndex === undefined ? undefined : outputInto[parentPositionIndex],
+					inner.parentField === dummyRoot ? key : inner.parentField,
+					wasRoot ? index : inner.parentIndex,
+					inner.indexOfParentField ?? indexOfParentField,
+					parentPositionIndex,
+					inner.shape,
+					wasRoot ? copies : inner.topLevelLength,
+					inner.valueOffset + valueOffset + shape.valuesPerTopLevelNode * index,
+				),
+			);
+		}
+	}
 }
 
 /**
@@ -175,69 +175,69 @@ function clonePositions(
  * TODO: consider storing shape information in WASM
  */
 export class ChunkShape {
-    public readonly positions: readonly (NodePositionInfo | undefined)[];
+	public readonly positions: readonly (NodePositionInfo | undefined)[];
 
-    public constructor(
-        public readonly treeShape: TreeShape,
-        public readonly topLevelLength: number,
-    ) {
-        assert(topLevelLength > 0, 0x4c6 /* topLevelLength must be greater than 0 */);
+	public constructor(
+		public readonly treeShape: TreeShape,
+		public readonly topLevelLength: number,
+	) {
+		assert(topLevelLength > 0, 0x4c6 /* topLevelLength must be greater than 0 */);
 
-        // TODO: avoid duplication from inner loop
-        const positions: (NodePositionInfo | undefined)[] = [undefined];
-        clonePositions(0, [dummyRoot, treeShape, topLevelLength], 0, 0, positions);
-        this.positions = positions;
-    }
+		// TODO: avoid duplication from inner loop
+		const positions: (NodePositionInfo | undefined)[] = [undefined];
+		clonePositions(0, [dummyRoot, treeShape, topLevelLength], 0, 0, positions);
+		this.positions = positions;
+	}
 
-    equals(other: ChunkShape): boolean {
-        // TODO: either dedup instances and/or store a collision resistant hash for fast compare.
-        return this.topLevelLength === other.topLevelLength && this.treeShape === other.treeShape;
-    }
+	equals(other: ChunkShape): boolean {
+		// TODO: either dedup instances and/or store a collision resistant hash for fast compare.
+		return this.topLevelLength === other.topLevelLength && this.treeShape === other.treeShape;
+	}
 }
 
 /**
  * Shape of a field (like `FieldShape`) but with information about how it would be offset withing a chunk because of its parents.
  */
 class OffsetShape {
-    /**
-     * @param shape - the shape of each child in this field
-     * @param topLevelLength - number of top level nodes in this sequence chunk (either field withing a chunk, or top level chunk)
-     * @param offset - number of nodes before this in the parent's subtree
-     * @param key - field key
-     * @param indexOfParentField - index of node with this shape
-     */
-    public constructor(
-        public readonly shape: TreeShape,
-        public readonly topLevelLength: number,
-        public readonly offset: number,
-        public readonly key: FieldKey,
-        public readonly indexOfParentField: number | undefined,
-    ) {}
+	/**
+	 * @param shape - the shape of each child in this field
+	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field withing a chunk, or top level chunk)
+	 * @param offset - number of nodes before this in the parent's subtree
+	 * @param key - field key
+	 * @param indexOfParentField - index of node with this shape
+	 */
+	public constructor(
+		public readonly shape: TreeShape,
+		public readonly topLevelLength: number,
+		public readonly offset: number,
+		public readonly key: FieldKey,
+		public readonly indexOfParentField: number | undefined,
+	) {}
 }
 
 /**
  * Information about a node at a specific position within a uniform chunk.
  */
 class NodePositionInfo implements UpPath {
-    /**
-     * @param parent - TODO
-     * @param parentField - TODO
-     * @param parentIndex - indexWithinParentField
-     * @param indexOfParentField - which field of the parent `parentIndex` is indexing into to locate this.
-     * @param indexOfParentPosition - Index of parent NodePositionInfo in positions array. TODO: use offsets to avoid copying at top level?
-     * @param shape - Shape of the top level sequence this node is part of
-     * @param valueOffset - TODO
-     */
-    public constructor(
-        public readonly parent: NodePositionInfo | undefined, // TODO; general UpPath to allow prefixing here?
-        public readonly parentField: FieldKey,
-        public readonly parentIndex: number,
-        public readonly indexOfParentField: number | undefined,
-        public readonly indexOfParentPosition: number | undefined,
-        public readonly shape: TreeShape, // Shape of sequence that contains this node (top level is parent of this node)
-        public readonly topLevelLength: number,
-        public readonly valueOffset: number,
-    ) {}
+	/**
+	 * @param parent - TODO
+	 * @param parentField - TODO
+	 * @param parentIndex - indexWithinParentField
+	 * @param indexOfParentField - which field of the parent `parentIndex` is indexing into to locate this.
+	 * @param indexOfParentPosition - Index of parent NodePositionInfo in positions array. TODO: use offsets to avoid copying at top level?
+	 * @param shape - Shape of the top level sequence this node is part of
+	 * @param valueOffset - TODO
+	 */
+	public constructor(
+		public readonly parent: NodePositionInfo | undefined, // TODO; general UpPath to allow prefixing here?
+		public readonly parentField: FieldKey,
+		public readonly parentIndex: number,
+		public readonly indexOfParentField: number | undefined,
+		public readonly indexOfParentPosition: number | undefined,
+		public readonly shape: TreeShape, // Shape of sequence that contains this node (top level is parent of this node)
+		public readonly topLevelLength: number,
+		public readonly valueOffset: number,
+	) {}
 }
 
 /**
@@ -246,245 +246,245 @@ class NodePositionInfo implements UpPath {
  * Works by tracking its location in the chunk's `positions` array.
  */
 class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
-    private positionIndex!: number; // When in fields mode, this points to the parent node.
-    // Undefined when in root field
-    private nodePositionInfo: NodePositionInfo | undefined;
+	private positionIndex!: number; // When in fields mode, this points to the parent node.
+	// Undefined when in root field
+	private nodePositionInfo: NodePositionInfo | undefined;
 
-    // Cached constants for faster access
-    private readonly shape: ChunkShape;
-    private readonly positions: readonly (NodePositionInfo | undefined)[];
+	// Cached constants for faster access
+	private readonly shape: ChunkShape;
+	private readonly positions: readonly (NodePositionInfo | undefined)[];
 
-    mode: CursorLocationType = CursorLocationType.Fields;
+	mode: CursorLocationType = CursorLocationType.Fields;
 
-    // Undefined when not in fields mode.
-    private fieldKey?: FieldKey;
+	// Undefined when not in fields mode.
+	private fieldKey?: FieldKey;
 
-    // Valid only in fields mode. Can be past end for empty fields.
-    // This is redundant with fieldKey above (but might be worth keeping for perf), and could be removed.
-    private indexOfField: number = 0;
+	// Valid only in fields mode. Can be past end for empty fields.
+	// This is redundant with fieldKey above (but might be worth keeping for perf), and could be removed.
+	private indexOfField: number = 0;
 
-    // TODO: support prefix (path above root, including index offset of chunk in its containing field)
-    public constructor(private readonly chunk: UniformChunk) {
-        super();
-        this.shape = this.chunk.shape;
-        this.positions = this.shape.positions;
-        this.fieldKey = dummyRoot;
-        this.moveToPosition(0);
-    }
+	// TODO: support prefix (path above root, including index offset of chunk in its containing field)
+	public constructor(private readonly chunk: UniformChunk) {
+		super();
+		this.shape = this.chunk.shape;
+		this.positions = this.shape.positions;
+		this.fieldKey = dummyRoot;
+		this.moveToPosition(0);
+	}
 
-    /**
-     * Change the current node withing the chunk.
-     * See `nodeInfo` for getting data about the current node.
-     *
-     * @param positionIndex - index of the position of the newly selected node in `positions`.
-     * This is NOT an index within a field, and is not bounds checked.
-     */
-    private moveToPosition(positionIndex: number): void {
-        this.nodePositionInfo = this.positions[positionIndex];
-        this.positionIndex = positionIndex;
-    }
+	/**
+	 * Change the current node withing the chunk.
+	 * See `nodeInfo` for getting data about the current node.
+	 *
+	 * @param positionIndex - index of the position of the newly selected node in `positions`.
+	 * This is NOT an index within a field, and is not bounds checked.
+	 */
+	private moveToPosition(positionIndex: number): void {
+		this.nodePositionInfo = this.positions[positionIndex];
+		this.positionIndex = positionIndex;
+	}
 
-    /**
-     * Gets information about the current node.
-     *
-     * When in Nodes mode, this means the node this cursor is current at.
-     * When if fields mode, this means the node which is the parent of the current field.
-     * This cursor is in Nodes mode at the root, so there is no case where a fields mode does not have a parent.
-     *
-     * @param requiredMode - asserts that the mode matches this. Since the semantics of this function are somewhat mode dependent,
-     * providing this ensures that the caller knows what the results will mean.
-     */
-    private nodeInfo(requiredMode: CursorLocationType): NodePositionInfo {
-        assert(this.mode === requiredMode, 0x4c8 /* tried to access cursor when in wrong mode */);
-        assert(
-            this.nodePositionInfo !== undefined,
-            0x53e /* can not access nodeInfo in root field */,
-        );
-        return this.nodePositionInfo;
-    }
+	/**
+	 * Gets information about the current node.
+	 *
+	 * When in Nodes mode, this means the node this cursor is current at.
+	 * When if fields mode, this means the node which is the parent of the current field.
+	 * This cursor is in Nodes mode at the root, so there is no case where a fields mode does not have a parent.
+	 *
+	 * @param requiredMode - asserts that the mode matches this. Since the semantics of this function are somewhat mode dependent,
+	 * providing this ensures that the caller knows what the results will mean.
+	 */
+	private nodeInfo(requiredMode: CursorLocationType): NodePositionInfo {
+		assert(this.mode === requiredMode, 0x4c8 /* tried to access cursor when in wrong mode */);
+		assert(
+			this.nodePositionInfo !== undefined,
+			0x53e /* can not access nodeInfo in root field */,
+		);
+		return this.nodePositionInfo;
+	}
 
-    nextField(): boolean {
-        this.indexOfField++;
-        const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
-        if (this.indexOfField < fields.length) {
-            this.fieldKey = fields[this.indexOfField][0];
-            return true;
-        }
-        this.exitField();
-        return false;
-    }
+	nextField(): boolean {
+		this.indexOfField++;
+		const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
+		if (this.indexOfField < fields.length) {
+			this.fieldKey = fields[this.indexOfField][0];
+			return true;
+		}
+		this.exitField();
+		return false;
+	}
 
-    exitField(): void {
-        assert(this.mode === CursorLocationType.Fields, 0x4c9 /* exitField when in wrong mode */);
-        this.fieldKey = undefined;
-        this.mode = CursorLocationType.Nodes;
-    }
+	exitField(): void {
+		assert(this.mode === CursorLocationType.Fields, 0x4c9 /* exitField when in wrong mode */);
+		this.fieldKey = undefined;
+		this.mode = CursorLocationType.Nodes;
+	}
 
-    getFieldKey(): FieldKey {
-        return this.fieldKey ?? fail("not in a field");
-    }
+	getFieldKey(): FieldKey {
+		return this.fieldKey ?? fail("not in a field");
+	}
 
-    getFieldLength(): number {
-        assert(
-            this.mode === CursorLocationType.Fields,
-            0x53f /* tried to access cursor when in wrong mode */,
-        );
-        if (this.nodePositionInfo === undefined) {
-            return this.shape.topLevelLength;
-        }
-        const fieldInfo = this.nodePositionInfo.shape.fieldsArray[this.indexOfField];
-        if (fieldInfo === undefined) {
-            return 0;
-        }
-        return fieldInfo[2];
-    }
+	getFieldLength(): number {
+		assert(
+			this.mode === CursorLocationType.Fields,
+			0x53f /* tried to access cursor when in wrong mode */,
+		);
+		if (this.nodePositionInfo === undefined) {
+			return this.shape.topLevelLength;
+		}
+		const fieldInfo = this.nodePositionInfo.shape.fieldsArray[this.indexOfField];
+		if (fieldInfo === undefined) {
+			return 0;
+		}
+		return fieldInfo[2];
+	}
 
-    firstNode(): boolean {
-        assert(
-            this.mode === CursorLocationType.Fields,
-            0x540 /* tried to access cursor when in wrong mode */,
-        );
+	firstNode(): boolean {
+		assert(
+			this.mode === CursorLocationType.Fields,
+			0x540 /* tried to access cursor when in wrong mode */,
+		);
 
-        if (this.nodePositionInfo === undefined) {
-            // Root field is not allowed to be empty, so we can skip handling that case.
-            this.enterRootNodeInner(0);
-            return true;
-        } else {
-            return this.enterNodeInner(this.nodePositionInfo, 0);
-        }
-    }
+		if (this.nodePositionInfo === undefined) {
+			// Root field is not allowed to be empty, so we can skip handling that case.
+			this.enterRootNodeInner(0);
+			return true;
+		} else {
+			return this.enterNodeInner(this.nodePositionInfo, 0);
+		}
+	}
 
-    enterNode(childIndex: number): void {
-        assert(
-            this.mode === CursorLocationType.Fields,
-            0x541 /* tried to access cursor when in wrong mode */,
-        );
-        assert(childIndex >= 0, 0x4ca /* index must be positive */);
-        if (this.nodePositionInfo === undefined) {
-            assert(
-                childIndex < this.shape.topLevelLength,
-                0x542 /* index must not be past the end of the field */,
-            );
-            this.enterRootNodeInner(childIndex);
-        } else {
-            const moved = this.enterNodeInner(this.nodePositionInfo, childIndex);
-            assert(moved, 0x4cb /* index must not be past the end of the field */);
-        }
-    }
+	enterNode(childIndex: number): void {
+		assert(
+			this.mode === CursorLocationType.Fields,
+			0x541 /* tried to access cursor when in wrong mode */,
+		);
+		assert(childIndex >= 0, 0x4ca /* index must be positive */);
+		if (this.nodePositionInfo === undefined) {
+			assert(
+				childIndex < this.shape.topLevelLength,
+				0x542 /* index must not be past the end of the field */,
+			);
+			this.enterRootNodeInner(childIndex);
+		} else {
+			const moved = this.enterNodeInner(this.nodePositionInfo, childIndex);
+			assert(moved, 0x4cb /* index must not be past the end of the field */);
+		}
+	}
 
-    /**
-     * Enter the current field, at `childIndex`.
-     * @param childIndex - index into current field to navigate to. Must be non-negative integer.
-     */
-    private enterNodeInner(currentPosition: NodePositionInfo, childIndex: number): boolean {
-        const shape = currentPosition.shape;
-        const fields = shape.fieldsOffsetArray;
-        if (this.indexOfField >= fields.length) {
-            return false; // Handle empty field (indexed by key into empty field)
-        }
-        const f = shape.fieldsOffsetArray[this.indexOfField];
-        if (childIndex >= f.topLevelLength) {
-            return false;
-        }
-        this.mode = CursorLocationType.Nodes;
-        this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
-        assert(this.fieldIndex === childIndex, 0x4cc /* should be at selected child */);
-        return true;
-    }
+	/**
+	 * Enter the current field, at `childIndex`.
+	 * @param childIndex - index into current field to navigate to. Must be non-negative integer.
+	 */
+	private enterNodeInner(currentPosition: NodePositionInfo, childIndex: number): boolean {
+		const shape = currentPosition.shape;
+		const fields = shape.fieldsOffsetArray;
+		if (this.indexOfField >= fields.length) {
+			return false; // Handle empty field (indexed by key into empty field)
+		}
+		const f = shape.fieldsOffsetArray[this.indexOfField];
+		if (childIndex >= f.topLevelLength) {
+			return false;
+		}
+		this.mode = CursorLocationType.Nodes;
+		this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
+		assert(this.fieldIndex === childIndex, 0x4cc /* should be at selected child */);
+		return true;
+	}
 
-    private enterRootNodeInner(childIndex: number): void {
-        this.mode = CursorLocationType.Nodes;
-        // 1 for the "undefined" at the beginning of the positions array, then stride by top level tree shape.
-        this.moveToPosition(1 + childIndex * this.shape.treeShape.positions.length);
-        assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
-    }
+	private enterRootNodeInner(childIndex: number): void {
+		this.mode = CursorLocationType.Nodes;
+		// 1 for the "undefined" at the beginning of the positions array, then stride by top level tree shape.
+		this.moveToPosition(1 + childIndex * this.shape.treeShape.positions.length);
+		assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
+	}
 
-    getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
-        return prefixFieldPath(prefix, {
-            field: this.getFieldKey(),
-            parent: this.nodePositionInfo,
-        });
-    }
+	getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
+		return prefixFieldPath(prefix, {
+			field: this.getFieldKey(),
+			parent: this.nodePositionInfo,
+		});
+	}
 
-    getPath(prefix?: PathRootPrefix): UpPath | undefined {
-        return prefixPath(prefix, this.nodeInfo(CursorLocationType.Nodes));
-    }
+	getPath(prefix?: PathRootPrefix): UpPath | undefined {
+		return prefixPath(prefix, this.nodeInfo(CursorLocationType.Nodes));
+	}
 
-    get fieldIndex(): number {
-        return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
-    }
+	get fieldIndex(): number {
+		return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
+	}
 
-    public get chunkStart(): number {
-        return 0;
-    }
+	public get chunkStart(): number {
+		return 0;
+	}
 
-    public get chunkLength(): number {
-        return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;
-    }
+	public get chunkLength(): number {
+		return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;
+	}
 
-    seekNodes(offset: number): boolean {
-        const info = this.nodeInfo(CursorLocationType.Nodes);
-        const index = offset + info.parentIndex;
-        if (index >= 0 && index < info.topLevelLength) {
-            this.moveToPosition(this.positionIndex + offset * info.shape.positions.length);
-            return true;
-        }
-        this.exitNode();
-        return false;
-    }
+	seekNodes(offset: number): boolean {
+		const info = this.nodeInfo(CursorLocationType.Nodes);
+		const index = offset + info.parentIndex;
+		if (index >= 0 && index < info.topLevelLength) {
+			this.moveToPosition(this.positionIndex + offset * info.shape.positions.length);
+			return true;
+		}
+		this.exitNode();
+		return false;
+	}
 
-    nextNode(): boolean {
-        // This is the same as `return this.seekNodes(1);` but slightly faster.
+	nextNode(): boolean {
+		// This is the same as `return this.seekNodes(1);` but slightly faster.
 
-        const info = this.nodeInfo(CursorLocationType.Nodes);
-        const index = info.parentIndex + 1;
-        if (index === info.topLevelLength) {
-            this.exitNode();
-            return false;
-        }
-        this.moveToPosition(this.positionIndex + info.shape.positions.length);
-        return true;
-    }
+		const info = this.nodeInfo(CursorLocationType.Nodes);
+		const index = info.parentIndex + 1;
+		if (index === info.topLevelLength) {
+			this.exitNode();
+			return false;
+		}
+		this.moveToPosition(this.positionIndex + info.shape.positions.length);
+		return true;
+	}
 
-    exitNode(): void {
-        const info = this.nodeInfo(CursorLocationType.Nodes);
-        this.indexOfField =
-            info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
-        this.moveToPosition(
-            info.indexOfParentPosition ?? fail("navigation up to root field not yet supported"),
-        ); // TODO
-        this.fieldKey = info.parentField;
-        this.mode = CursorLocationType.Fields;
-    }
+	exitNode(): void {
+		const info = this.nodeInfo(CursorLocationType.Nodes);
+		this.indexOfField =
+			info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
+		this.moveToPosition(
+			info.indexOfParentPosition ?? fail("navigation up to root field not yet supported"),
+		); // TODO
+		this.fieldKey = info.parentField;
+		this.mode = CursorLocationType.Fields;
+	}
 
-    firstField(): boolean {
-        const fieldsArray = this.nodeInfo(CursorLocationType.Nodes).shape.fieldsArray;
-        if (fieldsArray.length === 0) {
-            return false;
-        }
-        this.indexOfField = 0;
-        this.mode = CursorLocationType.Fields;
-        this.fieldKey = fieldsArray[0][0];
-        return true;
-    }
+	firstField(): boolean {
+		const fieldsArray = this.nodeInfo(CursorLocationType.Nodes).shape.fieldsArray;
+		if (fieldsArray.length === 0) {
+			return false;
+		}
+		this.indexOfField = 0;
+		this.mode = CursorLocationType.Fields;
+		this.fieldKey = fieldsArray[0][0];
+		return true;
+	}
 
-    enterField(key: FieldKey): void {
-        const fieldMap = this.nodeInfo(CursorLocationType.Nodes).shape.fields;
-        const fieldInfo = fieldMap.get(key);
-        this.indexOfField =
-            fieldInfo === undefined
-                ? fieldMap.size
-                : fieldInfo.indexOfParentField ?? fail("children should have parents");
-        this.fieldKey = key;
-        this.mode = CursorLocationType.Fields;
-    }
+	enterField(key: FieldKey): void {
+		const fieldMap = this.nodeInfo(CursorLocationType.Nodes).shape.fields;
+		const fieldInfo = fieldMap.get(key);
+		this.indexOfField =
+			fieldInfo === undefined
+				? fieldMap.size
+				: fieldInfo.indexOfParentField ?? fail("children should have parents");
+		this.fieldKey = key;
+		this.mode = CursorLocationType.Fields;
+	}
 
-    get type(): TreeSchemaIdentifier {
-        return this.nodeInfo(CursorLocationType.Nodes).shape.type;
-    }
+	get type(): TreeSchemaIdentifier {
+		return this.nodeInfo(CursorLocationType.Nodes).shape.type;
+	}
 
-    get value(): Value {
-        const info = this.nodeInfo(CursorLocationType.Nodes);
-        return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
-    }
+	get value(): Value {
+		const info = this.nodeInfo(CursorLocationType.Nodes);
+		return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
+	}
 }

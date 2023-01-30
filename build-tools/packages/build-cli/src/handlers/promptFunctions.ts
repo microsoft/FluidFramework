@@ -307,7 +307,7 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, promptWriter, releaseGroup } = data;
+	const { command, context, promptWriter, releaseGroup } = data;
 	assert(context !== undefined, "Context is undefined.");
 	assert(promptWriter !== undefined, "promptWriter is undefined.");
 
@@ -329,27 +329,35 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
 	if (prereleaseDepNames.releaseGroups.size > 0 || prereleaseDepNames.packages.size > 0) {
 		if (prereleaseDepNames.packages.size > 0) {
 			let packageSection = "";
+			let cmd = "\n";
 			for (const [pkg, depVersion] of prereleaseDepNames.packages.entries()) {
 				packageSection += `${pkg} = ${depVersion}`;
+				cmd += `${command?.config.bin} ${command?.id} -p ${packageSection}\n`;
 			}
 
 			prompt.sections.push({
 				title: "FIRST",
-				message: `Release these packages first:\n\n${chalk.blue(packageSection)}`,
-				cmd: `flub release -p ${packageSection}`,
+				message: `Release these packages first:\n\n${chalk.blue(
+					packageSection,
+				)} by running the following command`,
+				cmd,
 			});
 		}
 
 		if (prereleaseDepNames.releaseGroups.size > 0) {
 			let packageSection = "";
+			let cmd = "\n";
 			for (const [rg, depVersion] of prereleaseDepNames.releaseGroups.entries()) {
 				packageSection += `${rg} = ${depVersion}`;
+				cmd += `${command?.config.bin} ${command?.id} -g ${packageSection}\n`;
 			}
 
 			prompt.sections.push({
 				title: "NEXT",
-				message: `Release these release groups:\n\n${chalk.blue(packageSection)}`,
-				cmd: `flub release -g ${packageSection}`,
+				message: `Release these release groups:\n\n${chalk.blue(
+					packageSection,
+				)} by running the following command`,
+				cmd,
 			});
 		}
 	}
