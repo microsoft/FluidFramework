@@ -14,6 +14,7 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { AttributionCollection, SerializedAttributionCollection } from "../attributionCollection";
+import { BaseSegment, ISegment } from "../mergeTreeNodes";
 
 describe("AttributionCollection", () => {
 	describe(".getAtOffset", () => {
