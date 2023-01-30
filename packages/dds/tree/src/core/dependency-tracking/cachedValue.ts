@@ -15,35 +15,35 @@ import { SimpleObservingDependent } from "./simpleObservingDependent";
  * nor support the Cleanable protocol or any eviction system other than invalidation.
  */
 class CachedValue<T> extends SimpleObservingDependent implements ICachedValue<T> {
-    private cache?: T;
-    public constructor(
-        private readonly compute: (observer: ObservingDependent) => T,
-        computationName: string,
-    ) {
-        super(() => {
-            this.cache = undefined;
-        }, computationName);
-    }
+	private cache?: T;
+	public constructor(
+		private readonly compute: (observer: ObservingDependent) => T,
+		computationName: string,
+	) {
+		super(() => {
+			this.cache = undefined;
+		}, computationName);
+	}
 
-    get(): T {
-        this.cache ??= this.compute(this);
-        return this.cache;
-    }
+	get(): T {
+		this.cache ??= this.compute(this);
+		return this.cache;
+	}
 }
 
 /**
  * Caches and invalidates a value.
  */
 export interface ICachedValue<T> {
-    get(): T;
+	get(): T;
 }
 
 /**
  * Create a ICachedValue that is invalidated when `observer` (as provided to `compute`) gets invalidated.
  */
 export function cachedValue<T>(
-    compute: (observer: ObservingDependent) => T,
-    computationName = "CachedValue",
+	compute: (observer: ObservingDependent) => T,
+	computationName = "CachedValue",
 ): ICachedValue<T> {
-    return new CachedValue(compute, computationName);
+	return new CachedValue(compute, computationName);
 }

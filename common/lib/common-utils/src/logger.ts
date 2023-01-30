@@ -4,12 +4,12 @@
  */
 
 import {
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
-    ITelemetryErrorEvent,
-    ITelemetryGenericEvent,
-    ITelemetryLogger,
-    ITelemetryPerformanceEvent,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	ITelemetryErrorEvent,
+	ITelemetryGenericEvent,
+	ITelemetryLogger,
+	ITelemetryPerformanceEvent,
 } from "@fluidframework/common-definitions";
 
 /**
@@ -18,14 +18,14 @@ import {
  * @deprecated BaseTelemetryNullLogger has been moved to the \@fluidframework/telemetry-utils package.
  */
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
-    /**
-     * Send an event with the logger
-     *
-     * @param event - the event to send
-     */
-    public send(event: ITelemetryBaseEvent): void {
-        return;
-    }
+	/**
+	 * Send an event with the logger
+	 *
+	 * @param event - the event to send
+	 */
+	public send(event: ITelemetryBaseEvent): void {
+		return;
+	}
 }
 
 /**
@@ -34,8 +34,8 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
  * @deprecated TelemetryNullLogger has been moved to the \@fluidframework/telemetry-utils package.
  */
 export class TelemetryNullLogger implements ITelemetryLogger {
-    public send(event: ITelemetryBaseEvent): void {}
-    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
-    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
+	public send(event: ITelemetryBaseEvent): void {}
+	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
+	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
+	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
 }

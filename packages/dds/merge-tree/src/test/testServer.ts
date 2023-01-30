@@ -5,16 +5,12 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IIntegerRange } from "../base";
+import { Heap, RedBlackTree, Stack } from "../collections";
 import {
-    Heap,
-    RedBlackTree,
-    Stack,
-} from "../collections";
-import {
-    compareNumbers,
-    IncrementalExecOp,
-    IncrementalMapState,
-    ISegment,
+	compareNumbers,
+	IncrementalExecOp,
+	IncrementalMapState,
+	ISegment,
 } from "../mergeTreeNodes";
 import { ClientSeq, clientSeqComparer } from "../mergeTree";
 import { PropertySet } from "../properties";
@@ -27,177 +23,186 @@ import { TestClient } from "./testClient";
  * messages in client queues.
  */
 export class TestServer extends TestClient {
-    seq = 1;
-    clients: TestClient[] = [];
-    listeners: TestClient[] = []; // Listeners do not generate edits
-    clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>([], clientSeqComparer);
-    upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(compareNumbers);
-    constructor(options?: PropertySet) {
-        super(options);
-    }
-    addUpstreamClients(upstreamClients: TestClient[]) {
-        // Assumes addClients already called
-        this.upstreamMap = new RedBlackTree<number, number>(compareNumbers);
-        for (const upstreamClient of upstreamClients) {
-            this.clientSeqNumbers.add({
-                refSeq: upstreamClient.getCurrentSeq(),
-                clientId: upstreamClient.longClientId ?? "",
-            });
-        }
-    }
-    addClients(clients: TestClient[]) {
-        this.clientSeqNumbers = new Heap<ClientSeq>([], clientSeqComparer);
-        this.clients = clients;
-        for (const client of clients) {
-            this.clientSeqNumbers.add({ refSeq: client.getCurrentSeq(), clientId: client.longClientId ?? "" });
-        }
-    }
-    addListeners(listeners: TestClient[]) {
-        this.listeners = listeners;
-    }
-    applyMsg(msg: ISequencedDocumentMessage) {
-        super.applyMsg(msg);
-        if (TestClient.useCheckQ) {
-            const clid = this.getShortClientId(msg.clientId);
-            return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
-        } else {
-            return false;
-        }
-    }
-    // TODO: remove mappings when no longer needed using min seq
-    // in upstream message
-    transformUpstreamMessage(msg: ISequencedDocumentMessage) {
-        if (msg.referenceSequenceNumber > 0) {
-            msg.referenceSequenceNumber =
-                this.upstreamMap.get(msg.referenceSequenceNumber)?.data ?? 0;
-        }
-        msg.origin = {
-            id: "A",
-            sequenceNumber: msg.sequenceNumber,
-            minimumSequenceNumber: msg.minimumSequenceNumber,
-        };
-        this.upstreamMap.put(msg.sequenceNumber, this.seq);
-        msg.sequenceNumber = -1;
-    }
-    copyMsg(msg: ISequencedDocumentMessage) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        return {
-            clientId: msg.clientId,
-            clientSequenceNumber: msg.clientSequenceNumber,
-            contents: msg.contents,
-            minimumSequenceNumber: msg.minimumSequenceNumber,
-            referenceSequenceNumber: msg.referenceSequenceNumber,
-            sequenceNumber: msg.sequenceNumber,
-            type: msg.type,
-        } as ISequencedDocumentMessage;
-    }
+	seq = 1;
+	clients: TestClient[] = [];
+	private messageListeners: TestClient[] = []; // Listeners do not generate edits
+	clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>([], clientSeqComparer);
+	upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(compareNumbers);
+	constructor(options?: PropertySet) {
+		super(options);
+	}
+	addUpstreamClients(upstreamClients: TestClient[]) {
+		// Assumes addClients already called
+		this.upstreamMap = new RedBlackTree<number, number>(compareNumbers);
+		for (const upstreamClient of upstreamClients) {
+			this.clientSeqNumbers.add({
+				refSeq: upstreamClient.getCurrentSeq(),
+				clientId: upstreamClient.longClientId ?? "",
+			});
+		}
+	}
+	addClients(clients: TestClient[]) {
+		this.clientSeqNumbers = new Heap<ClientSeq>([], clientSeqComparer);
+		this.clients = clients;
+		for (const client of clients) {
+			this.clientSeqNumbers.add({
+				refSeq: client.getCurrentSeq(),
+				clientId: client.longClientId ?? "",
+			});
+		}
+	}
+	addListeners(listeners: TestClient[]) {
+		this.messageListeners = listeners;
+	}
+	applyMsg(msg: ISequencedDocumentMessage) {
+		super.applyMsg(msg);
+		if (TestClient.useCheckQ) {
+			const clid = this.getShortClientId(msg.clientId);
+			return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
+		} else {
+			return false;
+		}
+	}
+	// TODO: remove mappings when no longer needed using min seq
+	// in upstream message
+	transformUpstreamMessage(msg: ISequencedDocumentMessage) {
+		if (msg.referenceSequenceNumber > 0) {
+			msg.referenceSequenceNumber =
+				this.upstreamMap.get(msg.referenceSequenceNumber)?.data ?? 0;
+		}
+		msg.origin = {
+			id: "A",
+			sequenceNumber: msg.sequenceNumber,
+			minimumSequenceNumber: msg.minimumSequenceNumber,
+		};
+		this.upstreamMap.put(msg.sequenceNumber, this.seq);
+		msg.sequenceNumber = -1;
+	}
+	copyMsg(msg: ISequencedDocumentMessage) {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return {
+			clientId: msg.clientId,
+			clientSequenceNumber: msg.clientSequenceNumber,
+			contents: msg.contents,
+			minimumSequenceNumber: msg.minimumSequenceNumber,
+			referenceSequenceNumber: msg.referenceSequenceNumber,
+			sequenceNumber: msg.sequenceNumber,
+			type: msg.type,
+		} as ISequencedDocumentMessage;
+	}
 
-    private minSeq = 0;
+	private minSeq = 0;
 
-    applyMessages(msgCount: number) {
-        let _msgCount = msgCount;
-        while (_msgCount > 0) {
-            const msg = this.dequeueMsg();
-            if (msg) {
-                if (msg.sequenceNumber >= 0) {
-                    this.transformUpstreamMessage(msg);
-                }
-                msg.sequenceNumber = this.seq++;
-                msg.minimumSequenceNumber = this.minSeq;
-                if (this.applyMsg(msg)) {
-                    return true;
-                }
-                if (this.clients) {
-                    let minCli = this.clientSeqNumbers.peek();
-                    if (minCli && (minCli.clientId === msg.clientId) &&
-                        (minCli.refSeq < msg.referenceSequenceNumber)) {
-                        const cliSeq = this.clientSeqNumbers.get();
-                        const oldSeq = cliSeq.refSeq;
-                        cliSeq.refSeq = msg.referenceSequenceNumber;
-                        this.clientSeqNumbers.add(cliSeq);
-                        minCli = this.clientSeqNumbers.peek();
-                        if (minCli.refSeq > oldSeq) {
-                            msg.minimumSequenceNumber = minCli.refSeq;
-                            this.minSeq = minCli.refSeq;
-                        }
-                    }
-                    for (const client of this.clients) {
-                        client.enqueueMsg(msg);
-                    }
-                    if (this.listeners) {
-                        for (const listener of this.listeners) {
-                            listener.enqueueMsg(this.copyMsg(msg));
-                        }
-                    }
-                }
-            } else {
-                break;
-            }
-            _msgCount--;
-        }
-        return false;
-    }
-    public incrementalGetText(start?: number, end?: number) {
-        const range: Partial<IIntegerRange> = { start, end };
-        if (range.start === undefined) {
-            range.start = 0;
-        }
-        if (range.end === undefined) {
-            range.end = this.getLength();
-        }
-        const context = new TextSegment("");
-        const stack = new Stack<IncrementalMapState<TextSegment>>();
-        const initialState = new IncrementalMapState(
-            this.mergeTree.root,
-            { leaf: incrementalGatherText },
-            0,
-            this.getCurrentSeq(),
-            this.getClientId(),
-            context,
-            range.start,
-            range.end,
-            0);
-        stack.push(initialState);
+	applyMessages(msgCount: number) {
+		let _msgCount = msgCount;
+		while (_msgCount > 0) {
+			const msg = this.dequeueMsg();
+			if (msg) {
+				if (msg.sequenceNumber >= 0) {
+					this.transformUpstreamMessage(msg);
+				}
+				msg.sequenceNumber = this.seq++;
+				msg.minimumSequenceNumber = this.minSeq;
+				if (this.applyMsg(msg)) {
+					return true;
+				}
+				if (this.clients) {
+					let minCli = this.clientSeqNumbers.peek();
+					if (
+						minCli &&
+						minCli.clientId === msg.clientId &&
+						minCli.refSeq < msg.referenceSequenceNumber
+					) {
+						const cliSeq = this.clientSeqNumbers.get();
+						const oldSeq = cliSeq.refSeq;
+						cliSeq.refSeq = msg.referenceSequenceNumber;
+						this.clientSeqNumbers.add(cliSeq);
+						minCli = this.clientSeqNumbers.peek();
+						if (minCli.refSeq > oldSeq) {
+							msg.minimumSequenceNumber = minCli.refSeq;
+							this.minSeq = minCli.refSeq;
+						}
+					}
+					for (const client of this.clients) {
+						client.enqueueMsg(msg);
+					}
+					if (this.messageListeners) {
+						for (const listener of this.messageListeners) {
+							listener.enqueueMsg(this.copyMsg(msg));
+						}
+					}
+				}
+			} else {
+				break;
+			}
+			_msgCount--;
+		}
+		return false;
+	}
+	public incrementalGetText(start?: number, end?: number) {
+		const range: Partial<IIntegerRange> = { start, end };
+		if (range.start === undefined) {
+			range.start = 0;
+		}
+		if (range.end === undefined) {
+			range.end = this.getLength();
+		}
+		const context = new TextSegment("");
+		const stack = new Stack<IncrementalMapState<TextSegment>>();
+		const initialState = new IncrementalMapState(
+			this.mergeTree.root,
+			{ leaf: incrementalGatherText },
+			0,
+			this.getCurrentSeq(),
+			this.getClientId(),
+			context,
+			range.start,
+			range.end,
+			0,
+		);
+		stack.push(initialState);
 
-        while (!stack.empty()) {
-            this.mergeTree.incrementalBlockMap(stack);
-        }
-        return context.text;
-    }
+		while (!stack.empty()) {
+			this.mergeTree.incrementalBlockMap(stack);
+		}
+		return context.text;
+	}
 }
 
 function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
-    if (TextSegment.is(segment)) {
-        if ((state.start <= 0) && (state.end >= segment.text.length)) {
-            state.context.text += segment.text;
-        } else {
-            state.context.text += state.end >= segment.text.length
-                ? segment.text.substring(state.start)
-                : segment.text.substring(state.start, state.end);
-        }
-    }
-    state.op = IncrementalExecOp.Go;
+	if (TextSegment.is(segment)) {
+		if (state.start <= 0 && state.end >= segment.text.length) {
+			state.context.text += segment.text;
+		} else {
+			state.context.text +=
+				state.end >= segment.text.length
+					? segment.text.substring(state.start)
+					: segment.text.substring(state.start, state.end);
+		}
+	}
+	state.op = IncrementalExecOp.Go;
 }
 
 /**
  * Used for in-memory testing.  This will queue a reference string for each client message.
  */
 export function checkTextMatchRelative(
-    refSeq: number,
-    clientId: number,
-    server: TestServer,
-    msg: ISequencedDocumentMessage) {
-    const client = server.clients[clientId];
-    const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
-    const cliText = client.checkQ.shift()?.data;
-    if ((cliText === undefined) || (cliText !== serverText)) {
-        console.log(`mismatch `);
-        console.log(msg);
-        //        console.log(serverText);
-        //        console.log(cliText);
-        console.log(server.mergeTree.toString());
-        console.log(client.mergeTree.toString());
-        return true;
-    }
-    return false;
+	refSeq: number,
+	clientId: number,
+	server: TestServer,
+	msg: ISequencedDocumentMessage,
+) {
+	const client = server.clients[clientId];
+	const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
+	const cliText = client.checkQ.shift()?.data;
+	if (cliText === undefined || cliText !== serverText) {
+		console.log(`mismatch `);
+		console.log(msg);
+		//        console.log(serverText);
+		//        console.log(cliText);
+		console.log(server.mergeTree.toString());
+		console.log(client.mergeTree.toString());
+		return true;
+	}
+	return false;
 }

@@ -4,18 +4,16 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid/minimal"),"prettier"
-    ],
-    "rules": {
-        "@typescript-eslint/no-use-before-define": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off",
-        "import/no-internal-modules": "off",
-        "max-len": "off",
-        "no-bitwise": "off",
-        "no-case-declarations": "off",
-    },
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
-    },
-}
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	rules: {
+		"@typescript-eslint/no-use-before-define": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
+		"import/no-internal-modules": "off",
+		"max-len": "off",
+		"no-bitwise": "off",
+		"no-case-declarations": "off",
+	},
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
+};
