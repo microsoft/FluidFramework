@@ -100,7 +100,12 @@ describe("snapshot", () => {
 		const summaryTree = snapshot.emit([], serializer, undefined!);
 		const services = MockStorage.createFromSummary(summaryTree.summary);
 
-		const roundTripClient = new TestClient({ attribution: { track: true } });
+		const roundTripClient = new TestClient({
+			attribution: {
+				track: true,
+				policyFactory: createInsertOnlyAttributionPolicy,
+			},
+		});
 		const runtime: Partial<IFluidDataStoreRuntime> = {
 			logger: roundTripClient.logger,
 			clientId: "round-trips summary",
