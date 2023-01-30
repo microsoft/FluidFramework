@@ -14,21 +14,21 @@ import { jsonSchemaData, jsonRoot } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
 
 describe("SchemaIndex", () => {
-    it("roundtrip", () => {
-        // Just test with the Json domain schema for now.
-        // TODO: add more targeted tests, and tests for more cases.
-        const data: SchemaData = {
-            globalFieldSchema: new Map([[rootFieldKey, jsonRoot]]),
-            treeSchema: jsonSchemaData.treeSchema,
-        };
-        const s = getSchemaString(data);
-        const parsed = parseSchemaString(s);
-        const s2 = getSchemaString(parsed);
-        assert.equal(s, s2);
-        assert(allowsRepoSuperset(defaultSchemaPolicy, data, parsed));
-        assert(allowsRepoSuperset(defaultSchemaPolicy, parsed, data));
-    });
+	it("roundtrip", () => {
+		// Just test with the Json domain schema for now.
+		// TODO: add more targeted tests, and tests for more cases.
+		const data: SchemaData = {
+			globalFieldSchema: new Map([[rootFieldKey, jsonRoot]]),
+			treeSchema: jsonSchemaData.treeSchema,
+		};
+		const s = getSchemaString(data);
+		const parsed = parseSchemaString(s);
+		const s2 = getSchemaString(parsed);
+		assert.equal(s, s2);
+		assert(allowsRepoSuperset(defaultSchemaPolicy, data, parsed));
+		assert(allowsRepoSuperset(defaultSchemaPolicy, parsed, data));
+	});
 
-    // TODO: testing SchemaIndex class itself, specifically for attachment and normal summaries.
-    // TODO: format compatibility tests to detect breaking of existing documents.
+	// TODO: testing SchemaIndex class itself, specifically for attachment and normal summaries.
+	// TODO: format compatibility tests to detect breaking of existing documents.
 });

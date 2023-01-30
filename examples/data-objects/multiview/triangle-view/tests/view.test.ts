@@ -5,7 +5,6 @@
 
 // import { TriangleView } from "..";
 
-describe("TriangleView", function() {
-    it("Runs this test", function() {
-    });
+describe("TriangleView", function () {
+    it("Runs this test", function () {});
 });

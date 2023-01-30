@@ -6,13 +6,13 @@ Interface `IFluidDataStoreRuntime` specifies the data store developer API.
 
 _TODO: The full set of functionality is under review_
 
-- DDS creation and management APIs
-- Container info and states (connection state, documentId, quorum, audience, etc.)
-- Loader
-- Op/Signal submission
-- Snapshotting
-- DeltaManager
-- Blob Management API.
+-   DDS creation and management APIs
+-   Container info and states (connection state, documentId, quorum, audience, etc.)
+-   Loader
+-   Op/Signal submission
+-   Snapshotting
+-   DeltaManager
+-   Blob Management API.
 
 ### Signals
 

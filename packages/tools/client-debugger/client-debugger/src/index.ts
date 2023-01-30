@@ -48,17 +48,17 @@ export { MemberChangeKind } from "./Audience";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 
 export {
-    AudienceChangeLogEntry,
-    ConnectionStateChangeLogEntry,
-    LogEntry,
-    StateChangeLogEntry,
+	AudienceChangeLogEntry,
+	ConnectionStateChangeLogEntry,
+	LogEntry,
+	StateChangeLogEntry,
 } from "./Logs";
 
 export {
-    clearDebuggerRegistry,
-    closeFluidClientDebugger,
-    FluidClientDebuggerProps,
-    getFluidClientDebugger,
-    getFluidClientDebuggers,
-    initializeFluidClientDebugger,
+	clearDebuggerRegistry,
+	closeFluidClientDebugger,
+	FluidClientDebuggerProps,
+	getFluidClientDebugger,
+	getFluidClientDebuggers,
+	initializeFluidClientDebugger,
 } from "./Registry";

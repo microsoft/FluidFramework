@@ -19,48 +19,53 @@ import { LocalOdspDocumentService } from "./localOdspDocumentService";
  * content directly.
  */
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-    private logger: TelemetryLogger | undefined;
+	private logger: TelemetryLogger | undefined;
 
-    constructor(
-        private readonly localSnapshot: Uint8Array | string,
-    ) {
-        super(
-            (_options) => this.throwUnsupportedUsageError("Getting storage token"),
-            (_options) => this.throwUnsupportedUsageError("Getting websocket token"),
-        );
-    }
+	constructor(private readonly localSnapshot: Uint8Array | string) {
+		super(
+			(_options) => this.throwUnsupportedUsageError("Getting storage token"),
+			(_options) => this.throwUnsupportedUsageError("Getting websocket token"),
+		);
+	}
 
-    private throwUnsupportedUsageError(unsupportedFuncName: string): never {
-        const toThrow = new UsageError(
-            `${unsupportedFuncName} is not supported by LocalOdspDocumentServiceFactory`);
-        this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
-        throw toThrow;
-    }
+	private throwUnsupportedUsageError(unsupportedFuncName: string): never {
+		const toThrow = new UsageError(
+			`${unsupportedFuncName} is not supported by LocalOdspDocumentServiceFactory`,
+		);
+		this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+		throw toThrow;
+	}
 
-    public createContainer(
-        _createNewSummary: ISummaryTree | undefined,
-        _createNewResolvedUrl: IResolvedUrl,
-        logger?: ITelemetryBaseLogger,
-        _clientIsSummarizer?: boolean,
-    ): never {
-        const toThrow = new UsageError("\"createContainer\" is not supported by LocalOdspDocumentServiceFactory");
-        createOdspLogger(logger).sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
-        throw toThrow;
-    }
+	public createContainer(
+		_createNewSummary: ISummaryTree | undefined,
+		_createNewResolvedUrl: IResolvedUrl,
+		logger?: ITelemetryBaseLogger,
+		_clientIsSummarizer?: boolean,
+	): never {
+		const toThrow = new UsageError(
+			'"createContainer" is not supported by LocalOdspDocumentServiceFactory',
+		);
+		createOdspLogger(logger).sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+		throw toThrow;
+	}
 
-    protected async createDocumentServiceCore(
-        resolvedUrl: IResolvedUrl,
-        odspLogger: TelemetryLogger,
-        _cacheAndTrackerArg?: ICacheAndTracker,
-        _clientIsSummarizer?: boolean,
-    ): Promise<IDocumentService> {
-        if (_cacheAndTrackerArg !== undefined) {
-            throw new UsageError("Invalid usage. \"_cacheAndTrackerArg\" should not be provided");
-        }
-        if (_clientIsSummarizer) {
-            throw new UsageError("Invalid usage. \"_clientIsSummarizer\" should not be provided");
-        }
-        this.logger = odspLogger;
-        return new LocalOdspDocumentService(getOdspResolvedUrl(resolvedUrl), odspLogger, this.localSnapshot);
-    }
+	protected async createDocumentServiceCore(
+		resolvedUrl: IResolvedUrl,
+		odspLogger: TelemetryLogger,
+		_cacheAndTrackerArg?: ICacheAndTracker,
+		_clientIsSummarizer?: boolean,
+	): Promise<IDocumentService> {
+		if (_cacheAndTrackerArg !== undefined) {
+			throw new UsageError('Invalid usage. "_cacheAndTrackerArg" should not be provided');
+		}
+		if (_clientIsSummarizer) {
+			throw new UsageError('Invalid usage. "_clientIsSummarizer" should not be provided');
+		}
+		this.logger = odspLogger;
+		return new LocalOdspDocumentService(
+			getOdspResolvedUrl(resolvedUrl),
+			odspLogger,
+			this.localSnapshot,
+		);
+	}
 }
