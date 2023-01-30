@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import { mkdirSync, readFileSync } from "fs";
+import { mkdirSync, readFileSync, writeFileSync } from "fs";
 import { strict as assert } from "assert";
 import {
     AcceptanceCondition,
@@ -426,7 +426,7 @@ function getPath(seed: number): string {
     return path.join(directory, `${seed}.json`);
 }
 
-const describeFuzz = createFuzzDescribe({ defaultTestCount: 100 });
+const describeFuzz = createFuzzDescribe({ defaultTestCount: 1000 });
 
 describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     before(() => {
@@ -498,28 +498,32 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     }
 
     function minimizeTestFromFailureFile(seed: number, loggingInfo?: LoggingInfo) {
-        it("foo", () => {
-        const filepath = getPath(seed);
-        let operations: Operation[];
-        try {
-            operations = JSON.parse(readFileSync(filepath).toString());
-        } catch (err: any) {
-            // Mocha executes skipped suite creation blocks, but whoever's running this suite only cares if
-            // the containing block isn't skipped. Report the original error to them from inside a test.
-            if (err.message.includes("ENOENT")) {
-                it(`with default config, seed ${seed}`, () => {
-                    throw err;
-                });
-                return;
-            }
-            throw err;
+        if (Number.isNaN(seed)) {
+            return;
         }
+
+        it(`minimize test ${seed}`, () => {
+            const filepath = getPath(seed);
+            let operations: Operation[];
+            try {
+                operations = JSON.parse(readFileSync(filepath).toString());
+            } catch (err: any) {
+                // Mocha executes skipped suite creation blocks, but whoever's running this suite only cares if
+                // the containing block isn't skipped. Report the original error to them from inside a test.
+                if (err.message.includes("ENOENT")) {
+                    it(`with default config, seed ${seed}`, () => {
+                        throw err;
+                    });
+                    return;
+                }
+                throw err;
+            }
 
             const pass_manager = new PassManager(operations, seed);
 
             pass_manager.deleteOps();
 
-            for (let i = 0; i < 2500; i+=1) {
+            for (let i = 0; i < 1000; i += 1) {
                 pass_manager.applyRandomPass();
                 pass_manager.applyTwoRandomlySingle();
                 pass_manager.applyThreeRandomlySingle();
@@ -527,12 +531,14 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
 
             pass_manager.deleteOps();
 
+            writeFileSync(filepath, JSON.stringify(pass_manager.operations, null, 2));
+
             throw new Error(JSON.stringify(pass_manager.operations));
         });
-        }
+    }
 
     for (let i = 0; i < testCount; i++) {
-        const generator = take(31, makeOperationGenerator({ validateInterval: 10 }));
+        const generator = take(100, makeOperationGenerator({ validateInterval: 10 }));
         runTests(i, generator);
     }
 
@@ -549,8 +555,8 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
         );
     });
 
-    describe.only("minimize seed", () => {
-        const seedToMinimize = 651;
+    describe.skip("minimize seed", () => {
+        const seedToMinimize = parseInt(process.env.TEST ?? "", 10);
         minimizeTestFromFailureFile(seedToMinimize);
     });
 });
