@@ -96,7 +96,6 @@ export async function performFuzzActions(
 export async function performFuzzActionsAbort(
     generator: AsyncGenerator<Operation, FuzzTestState>,
     seed: number,
-    validateAnchor?: boolean,
     saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
 ): Promise<FuzzTestState> {
     const random = makeRandom(seed);
@@ -146,19 +145,18 @@ export async function performFuzzActionsAbort(
     await finalState.testTreeProvider.ensureSynchronized();
     validateTree(provider.trees[0], [initialTreeState]);
 
-    if (validateAnchor) {
-        const expectedPath: UpPath = {
-            parent: {
-                parent: undefined,
-                parentIndex: 0,
-                parentField: rootFieldKeySymbol,
-            },
-            parentField: brand("foo"),
-            parentIndex: 1,
-        };
-        const anchorPath = tree.locate(firstAnchor);
-        assert(compareUpPaths(expectedPath, anchorPath));
-    }
+    // validate anchor
+    const expectedPath: UpPath = {
+        parent: {
+            parent: undefined,
+            parentIndex: 0,
+            parentField: rootFieldKeySymbol,
+        },
+        parentField: brand("foo"),
+        parentIndex: 1,
+    };
+    const anchorPath = tree.locate(firstAnchor);
+    assert(compareUpPaths(expectedPath, anchorPath));
     return finalState;
 }
 
