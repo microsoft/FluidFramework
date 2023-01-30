@@ -47,7 +47,6 @@
     "@fluidframework/azure-client": "^1.2.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/routerlicious-driver": "^1.4.0-121020",
-    "@fluidframework/test-client-utils": "1.4.0-121020",
     "axios": "^0.21.2",
     "fluid-framework": "^1.4.0-121020"
   },
@@ -61,6 +60,7 @@
     "@fluidframework/server-local-server": "^0.1036.5000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
+    "@fluidframework/test-client-utils": "1.4.0-121020",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
