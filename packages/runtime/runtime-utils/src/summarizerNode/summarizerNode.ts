@@ -235,12 +235,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 		readAndParseBlob: ReadAndParseBlob,
 		correlatedSummaryLogger: ITelemetryLogger,
 	): Promise<RefreshSummaryResult> {
-        this.defaultLogger.sendTelemetryEvent({
-            eventName: "refreshLatestSummary_start",
-            proposalHandle,
-            referenceSequenceNumber: this.referenceSequenceNumber,
-            summaryRefSeq,
-        });
+		this.defaultLogger.sendTelemetryEvent({
+			eventName: "refreshLatestSummary_start",
+			proposalHandle,
+			referenceSequenceNumber: this.referenceSequenceNumber,
+			summaryRefSeq,
+		});
 
 		if (proposalHandle !== undefined) {
 			const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
