@@ -203,21 +203,14 @@ function runBatch(
     opsPerRun: number,
     batchSize: number,
     random: IRandom,
-    skipTests?: boolean,
 ): void {
     const seed = random.integer(1, 1000000);
     for (let i = 0; i < batchSize; i++) {
         const runSeed = seed + i;
         const generatorFactory = () => take(opsPerRun, opGenerator());
-        if (skipTests) {
-            it.skip(`with seed ${runSeed}`, async () => {
-                await fuzzActions(generatorFactory(), runSeed);
-            }).timeout(20000);
-        } else {
-            it(`with seed ${runSeed}`, async () => {
-                await fuzzActions(generatorFactory(), runSeed);
-            }).timeout(20000);
-        }
+        it(`with seed ${runSeed}`, async () => {
+            await fuzzActions(generatorFactory(), runSeed);
+        }).timeout(20000);
     }
 }
 
@@ -227,30 +220,25 @@ export function runSharedTreeFuzzTests(title: string): void {
     describeFuzz(title, () => {
         const testOpsPerRun = 20;
         describe("basic convergence", () => {
-            describe("using TestTreeProvider", () => {
-                describe(`with stepSize ${testOpsPerRun}`, () => {
-                    runBatch(
-                        makeOpGenerator,
-                        performFuzzActions,
-                        testOpsPerRun,
-                        testBatchSize,
-                        random,
-                    );
-                });
+            describe(`with stepSize ${testOpsPerRun}`, () => {
+                runBatch(
+                    makeOpGenerator,
+                    performFuzzActions,
+                    testOpsPerRun,
+                    testBatchSize,
+                    random,
+                );
             });
         });
         describe("abort all edits", () => {
-            describe("using TestTreeProvider", () => {
-                describe(`with stepSize ${testOpsPerRun}`, () => {
-                    runBatch(
-                        makeOpGenerator,
-                        performFuzzActionsAbort,
-                        testOpsPerRun,
-                        testBatchSize,
-                        random,
-                        true,
-                    );
-                });
+            describe.skip(`with stepSize ${testOpsPerRun}`, () => {
+                runBatch(
+                    makeOpGenerator,
+                    performFuzzActionsAbort,
+                    testOpsPerRun,
+                    testBatchSize,
+                    random,
+                );
             });
         });
     });
