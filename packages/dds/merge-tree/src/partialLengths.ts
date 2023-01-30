@@ -865,10 +865,15 @@ export class PartialSequenceLengths {
                 } else if (seq === moveInfo?.movedSeq) {
                     if (removeHappenedFirst) {
                         remoteObliteratedLen -= segment.cachedLength;
-                    } else if (segment.wasObliteratedOnInsert && segment.seq !== -1 && segment.seq !== undefined && moveInfo.movedSeq > segment.seq) {
+                    } else if (
+                        segment.wasObliteratedOnInsert
+                        && segment.seq !== -1
+                        && segment.seq !== undefined
+                        && moveInfo.movedSeq > segment.seq
+                    ) {
                         remoteObliteratedLen += segment.cachedLength;
                         seqSeglen -= segment.cachedLength;
-                    } else if (segment.seq !== -1 && !removeHappenedFirst) {
+                    } else if (segment.seq !== -1) {
                         seqSeglen -= segment.cachedLength;
                     }
                 }
@@ -1107,7 +1112,6 @@ function verifyPartialLengths(
             }
         }
 
-        // todo: probably need to check not remove and not obliterate
         if (partialLength.overlapRemoveClients) {
             // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
             assert(!clientPartials, 0x058 /* "Both overlapRemoveClients and clientPartials are set!" */);
@@ -1115,6 +1119,15 @@ function verifyPartialLengths(
             // Each overlap client count as one, but the first remove to sequence was already counted.
             // (this aligns with the logic to omit the removing client in `addClientSeqNumberFromPartial`)
             count += partialLength.overlapRemoveClients.size() - 1;
+        }
+
+        if (partialLength.overlapObliterateClients) {
+            // Only the flat partialLengths can have overlapObliterateClients, the per client view shouldn't
+            assert(!clientPartials, "Both overlapObliterateClients and clientPartials are set!");
+
+            // Each overlap client count as one, but the first move to sequence was already counted.
+            // (this aligns with the logic to omit the moving client in `addClientSeqNumberFromPartial`)
+            count += partialLength.overlapObliterateClients.size() - 1;
         }
     }
     return count;

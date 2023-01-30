@@ -120,13 +120,12 @@ function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo, onInsert: boolean)
     seg.wasObliteratedOnInsert = onInsert;
 }
 
-// todo: better name
-function findMin(a: number[], b: number[], b_ids: number[], offset: number): [number, number | undefined] | undefined {
-    const aMoved = new Set(a);
+function findMinMovedSeq(aMoveSeqs: number[], bMoveSeqs: number[], bIds: number[], offset: number): [number, number | undefined] | undefined {
+    const aMoved = new Set(aMoveSeqs);
 
     let min = Number.POSITIVE_INFINITY;
 
-    for (const movedSeq of b) {
+    for (const movedSeq of bMoveSeqs) {
         if (!aMoved.has(movedSeq)) {
             continue;
         }
@@ -134,9 +133,9 @@ function findMin(a: number[], b: number[], b_ids: number[], offset: number): [nu
         min = Math.min(movedSeq, min);
     }
 
-    const minIndex = b.indexOf(min);
+    const minIndex = bMoveSeqs.indexOf(min);
 
-    const clientId = b_ids[minIndex + offset];
+    const clientId = bIds[minIndex + offset];
 
     if (min === Number.POSITIVE_INFINITY) {
         return undefined;
@@ -145,7 +144,6 @@ function findMin(a: number[], b: number[], b_ids: number[], offset: number): [nu
     return [min, clientId];
 }
 
-// todo: better name(?)
 function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveInfo | undefined {
     if (!a) {
         return b;
@@ -154,8 +152,8 @@ function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveI
         return a;
     }
 
-    const min = findMin(a.movedSeqs, b.movedSeqs, b.movedClientIds, 0);
-    const minLocal = findMin(a.localMovedSeqs, b.localMovedSeqs, b.movedClientIds, b.movedSeqs.length);
+    const min = findMinMovedSeq(a.movedSeqs, b.movedSeqs, b.movedClientIds, 0);
+    const minLocal = findMinMovedSeq(a.localMovedSeqs, b.localMovedSeqs, b.movedClientIds, b.movedSeqs.length);
 
     if (!min && !minLocal) {
         return undefined;
@@ -631,37 +629,31 @@ export class MergeTree {
         const removalInfo = toRemovalInfo(segment);
         const moveInfo = toMoveInfo(segment);
         if (localSeq === undefined) {
-            if (removalInfo !== undefined) {
-                // todo: we require this to be true for obliterate
-                if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
-                    const normalizedRemovedSeq = removalInfo.removedSeq === UnassignedSequenceNumber
-                        ? Number.MAX_SAFE_INTEGER
-                        : removalInfo.removedSeq;
-                    if (normalizedRemovedSeq > this.collabWindow.minSeq) {
-                        return 0;
-                    }
-                    // this segment removed and outside the collab window which means it is zamboni eligible
-                    // this also means the segment could not exist, so we should not consider it
-                    // when making decisions about conflict resolutions
-                    return undefined;
-                }
+            // todo: we require this to be true for obliterate
+            if ((removalInfo || moveInfo) && this.options?.mergeTreeUseNewLengthCalculations === true) {
                 return 0;
+            } else if (removalInfo !== undefined) {
+                const normalizedRemovedSeq = removalInfo.removedSeq === UnassignedSequenceNumber
+                    ? Number.MAX_SAFE_INTEGER
+                    : removalInfo.removedSeq;
+                if (normalizedRemovedSeq > this.collabWindow.minSeq) {
+                    return 0;
+                }
+                // this segment removed and outside the collab window which means it is zamboni eligible
+                // this also means the segment could not exist, so we should not consider it
+                // when making decisions about conflict resolutions
+                return undefined;
             } else if (moveInfo !== undefined) {
-                // todo: a bit of duplication between here and remove code
-                // todo: we require this to be true for obliterate
-                if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
-                    const normalizedMovedSeq = moveInfo.movedSeq === UnassignedSequenceNumber
-                        ? Number.MAX_SAFE_INTEGER
-                        : moveInfo.movedSeq;
-                    if (normalizedMovedSeq > this.collabWindow.minSeq) {
-                        return 0;
-                    }
-                    // this segment removed and outside the collab window which means it is zamboni eligible
-                    // this also means the segment could not exist, so we should not consider it
-                    // when making decisions about conflict resolutions
-                    return undefined;
+                const normalizedMovedSeq = moveInfo.movedSeq === UnassignedSequenceNumber
+                    ? Number.MAX_SAFE_INTEGER
+                    : moveInfo.movedSeq;
+                if (normalizedMovedSeq > this.collabWindow.minSeq) {
+                    return 0;
                 }
-                return 0;
+                // this segment removed and outside the collab window which means it is zamboni eligible
+                // this also means the segment could not exist, so we should not consider it
+                // when making decisions about conflict resolutions
+                return undefined;
             } else {
                 return segment.cachedLength;
             }
@@ -944,7 +936,7 @@ export class MergeTree {
 
                     if (expected !== partialLen) {
                         node.partialLengths!.getPartialLength(refSeq, clientId);
-                        throw new Error(`expected ${expected} partial length but found ${partialLen}`);
+                        throw new Error(`expected partial length of ${expected} but found ${partialLen}`);
                     }
                 }
 
@@ -1803,13 +1795,8 @@ export class MergeTree {
                             moveInfo.movedSeq !== UnassignedSequenceNumber,
                         );
 
-                        let parent: IMergeBlock | undefined = newSegment.parent;
-
-                        // TODO: do we already have functionality to do this?/is there
-                        // a more sane way
-                        while (parent) {
-                            this.blockUpdateLength(parent, seq, clientId);
-                            parent = parent.parent;
+                        if (newSegment.parent) {
+                            this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
                         }
                     }
                 }
