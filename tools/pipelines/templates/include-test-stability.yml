@@ -99,7 +99,7 @@ jobs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
-          ${{ parameters.packageManagerInstallCommand }}
+          pnpm i --frozen-lockfile
 
     # Build
     - ${{ if ne(parameters.taskBuild, 'false') }}:
