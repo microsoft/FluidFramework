@@ -11,11 +11,7 @@ import {
     takeAsync as take,
     IRandom,
 } from "@fluid-internal/stochastic-test-utils";
-import {
-    FieldKinds,
-    singleTextCursor,
-    namedTreeSchema,
-} from "../../feature-libraries";
+import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { brand, fail } from "../../util";
 import { initializeTestTree, SummarizeType, TestTreeProvider, validateTree } from "../utils";
 import { ISharedTree } from "../../shared-tree";
