@@ -48,6 +48,12 @@ export function create(
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
 
+    // Throttling logic for creating documents to provide per-cluster rate-limiting at the HTTP route level
+    const commonThrottleOptionsCreateDoc: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: "createDoc",
+        throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+    };
+
     router.get(
         "/:tenantId/:id",
         validateRequestParams("tenantId", "id"),
@@ -81,6 +87,7 @@ export function create(
             singleUseTokenCache,
         }),
         throttle(throttler, winston, commonThrottleOptions),
+        throttle(throttler, winston, commonThrottleOptionsCreateDoc),
         async (request, response, next) => {
             // Tenant and document
             const tenantId = getParam(request.params, "tenantId");
