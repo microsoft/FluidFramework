@@ -65,6 +65,10 @@
       "InterfaceDeclaration_IFluidObject": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IFluidObject": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
