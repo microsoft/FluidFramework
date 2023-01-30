@@ -459,7 +459,9 @@ interface InsertAndModify<TTree = ProtoNode> {
     // (undocumented)
     readonly content: TTree;
     // (undocumented)
-    readonly fields: FieldMarks<TTree>;
+    readonly fields?: FieldMarks<TTree>;
+    // (undocumented)
+    readonly setValue?: Value;
     // (undocumented)
     readonly type: typeof MarkType.InsertAndModify;
 }

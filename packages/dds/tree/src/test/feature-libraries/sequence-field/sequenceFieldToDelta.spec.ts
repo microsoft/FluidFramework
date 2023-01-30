@@ -228,20 +228,19 @@ describe("SequenceField - toDelta", () => {
 		assert.deepStrictEqual(actual, expected);
 	});
 
-	it("insert and modify => insert", () => {
+	it("insert and modify => InsertAndModify", () => {
 		const changeset = SF.sequenceFieldChangeRebaser.compose(
 			[makeAnonChange(Change.insert(0, 1)), makeAnonChange(Change.modify(0, childChange1))],
 			TestChange.compose,
 			idAllocatorFromMaxId(),
 		);
-		const mark: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content: [
-				singleTextCursor({
-					type,
-					value: "1",
-				}),
-			],
+		const mark: Delta.InsertAndModify = {
+			type: Delta.MarkType.InsertAndModify,
+			content: singleTextCursor({
+				type,
+				value: 0,
+			}),
+			setValue: "1",
 		};
 		const expected: Delta.MarkList = [mark];
 		const actual = toDelta(changeset);
@@ -264,7 +263,7 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	// This test requires more support for MoveIn
-	it.skip("Insert and modify => Insert and modify", () => {
+	it.skip("Insert and modify w/ move-in => Insert and modify", () => {
 		const nestedChange: FieldChange = {
 			fieldKind: FieldKinds.sequence.identifier,
 			change: brand({
