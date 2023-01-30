@@ -88,7 +88,8 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 }
 
 /**
- * React hook for asynchronously creating / loading the Fluid Container.
+ * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
+ * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
 function useContainerInfo(): (ContainerInfo | undefined)[] {
     const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
