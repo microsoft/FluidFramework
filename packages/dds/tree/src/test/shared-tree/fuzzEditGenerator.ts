@@ -76,7 +76,7 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
             parent: path,
             parentField: nodeField,
             parentIndex: nodeIndex,
-        } = getRandomNodePosition(tree, state.random);
+        } = getRandomPlace(tree, state.random);
         const insert: FuzzInsert = {
             fuzzType: "insert",
             parent: path,
@@ -151,7 +151,7 @@ const moves = {
     nodes: ["stop", "firstField"],
 };
 
-function getRandomNodePosition(tree: ISharedTree, random: IRandom): UpPath {
+function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
     const testerKey: FieldKey = brand("Test");
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
