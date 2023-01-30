@@ -151,7 +151,7 @@ const moves = {
     nodes: ["stop", "firstField"],
 };
 
-export function getRandomNodePosition(tree: ISharedTree, random: IRandom): UpPath {
+function getRandomNodePosition(tree: ISharedTree, random: IRandom): UpPath {
     const testerKey: FieldKey = brand("Test");
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
@@ -239,7 +239,7 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): UpPat
     return { parent: parentPath, parentField: nodeField, parentIndex: nodeIndex };
 }
 
-export function getExistingRandomNodePosition(
+function getExistingRandomNodePosition(
     tree: ISharedTree,
     random: IRandom,
 ): UpPath {
@@ -301,7 +301,7 @@ export function getExistingRandomNodePosition(
     return path;
 }
 
-export function containsAtLeastOneNode(tree: ISharedTree): boolean {
+function containsAtLeastOneNode(tree: ISharedTree): boolean {
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
     const firstNode = cursor.firstNode();
