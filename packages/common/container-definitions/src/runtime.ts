@@ -87,18 +87,18 @@ export interface IRuntime extends IDisposable {
 	 */
 	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 
-    /**
-     * Get pending local state in a serializable format to be given back to a newly loaded container
-     * @experimental
-     * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
-     */
-    getPendingLocalState(): unknown;
+	/**
+	 * Get pending local state in a serializable format to be given back to a newly loaded container
+	 * @experimental
+	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
+	 */
+	getPendingLocalState(): unknown;
 
-    /**
-     * Notify runtime that container is moving to "Attaching" state
-     * @param snapshot - snapshot created at attach time
-     */
-    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+	/**
+	 * Notify runtime that container is moving to "Attaching" state
+	 * @param snapshot - snapshot created at attach time
+	 */
+	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 }
 
 /**

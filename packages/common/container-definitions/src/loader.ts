@@ -348,13 +348,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 */
 	close(error?: ICriticalContainerError): void;
 
-    /**
-     * Closes the container and returns serialized local state intended to be
-     * given to a newly loaded container.
-     * @experimental
-     * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
-     */
-    closeAndGetPendingLocalState(): string;
+	/**
+	 * Closes the container and returns serialized local state intended to be
+	 * given to a newly loaded container.
+	 * @experimental
+	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
+	 */
+	closeAndGetPendingLocalState(): string;
 
 	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.
