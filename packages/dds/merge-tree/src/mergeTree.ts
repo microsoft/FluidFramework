@@ -110,13 +110,38 @@ function wasRemovedAfter(seg: ISegment, seq: number): boolean {
         && (seg.removedSeq === undefined || seg.removedSeq > seq);
 }
 
-function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
+function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo, onInsert: boolean): void {
     seg.moveDst = moveInfo.moveDst;
     seg.movedClientIds = moveInfo.movedClientIds.slice();
     seg.movedSeqs = moveInfo.movedSeq === -1 ? [] : [moveInfo.movedSeq];
     seg.movedSeq = moveInfo.movedSeq;
     seg.localMovedSeq = moveInfo.localMovedSeq;
     seg.localMovedSeqs = moveInfo.localMovedSeqs?.slice();
+    seg.wasObliteratedOnInsert = onInsert;
+}
+
+function findMin(a: number[], b: number[], b_ids: number[], offset: number): [number, number | undefined] | undefined {
+    const aMoved = new Set(a);
+
+    let min = Number.POSITIVE_INFINITY;
+
+    for (const movedSeq of b) {
+        if (!aMoved.has(movedSeq)) {
+            continue;
+        }
+
+        min = Math.min(movedSeq, min);
+    }
+
+    const minIndex = b.indexOf(min);
+
+    const clientId = b_ids[minIndex + offset];
+
+    if (min === Number.POSITIVE_INFINITY) {
+        return undefined;
+    }
+
+    return [min, clientId];
 }
 
 function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveInfo | undefined {
@@ -126,10 +151,22 @@ function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveI
     if (!b) {
         return a;
     }
-    if (a.movedSeq > b.movedSeq) {
-        return b;
+
+    const min = findMin(a.movedSeqs, b.movedSeqs, b.movedClientIds, 0);
+    const minLocal = findMin(a.localMovedSeqs, b.localMovedSeqs, b.movedClientIds, b.movedSeqs.length);
+
+    if (!min && !minLocal) {
+        return undefined;
     }
-    return a;
+
+    return {
+        movedClientIds: min?.[1] !== undefined ? [min[1]] : (minLocal?.[1] !== undefined ? [minLocal[1]] : []),
+        movedSeq: min?.[0] ?? -1,
+        movedSeqs: min !== undefined ? [min[0]] : [],
+        localMovedSeq: min?.[0] !== undefined ? undefined : minLocal?.[0],
+        localMovedSeqs: minLocal !== undefined ? [minLocal[0]] : [],
+        wasObliteratedOnInsert: false,
+    }
 }
 
 function isRemoved(segment: ISegment): boolean {
@@ -1055,13 +1092,26 @@ export class MergeTree {
         } else {
             // Sequence number within window
             if (!node.isLeaf()) {
-                return node.partialLengths!.getPartialLength(refSeq, clientId);
+                const partialLen = node.partialLengths!.getPartialLength(refSeq, clientId);
+
+                if (PartialSequenceLengths.options.verify) {
+                    let expected = 0;
+                    for (let i = 0; i < node.childCount; i++) {
+                        expected += this.nodeLength(node.children[i], refSeq, clientId) ?? 0;
+                    }
+
+                    if (expected !== partialLen) {
+                        node.partialLengths!.getPartialLength(refSeq, clientId);
+                        throw new Error(`expected ${expected} partial length but found ${partialLen}`);
+                    }
+                }
+
+                return partialLen
             } else {
                 const segment = node;
                 const removalInfo = toRemovalInfo(segment);
                 const moveInfo = toMoveInfo(segment);
 
-                // todo: we require this to be true for obliterate
                 if (this.options?.mergeTreeUseNewLengthCalculations === true) {
                     // normalize the seq numbers
                     // if the remove is local (UnassignedSequenceNumber) give it the highest possible
@@ -1388,6 +1438,26 @@ export class MergeTree {
                 if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
                     forwardExcursion(pendingSegment, (seg) => {
                         const moveInfo = toMoveInfo(seg);
+                        const removalInfo = toRemovalInfo(seg);
+
+                        // if the segment has been removed, skip over it
+                        if (removalInfo && !moveInfo) {
+                            return true;
+                        }
+
+                        // if the segment has been obliterated, but _not_ by this
+                        // seq, skip over it
+                        if (
+                            moveInfo
+                            && localMovedSeq
+                            && !moveInfo.localMovedSeqs.includes(localMovedSeq)
+                            && (moveInfo.movedSeq !== UnassignedSequenceNumber || (moveInfo.localMovedSeq && moveInfo.localMovedSeq < localMovedSeq))
+                        ) {
+                            return true;
+                        }
+
+                        // if the segment wasn't obliterated by this seq, end
+                        // traversal
                         if (
                             !moveInfo
                             || (localMovedSeq !== undefined && !moveInfo.localMovedSeqs.includes(localMovedSeq))
@@ -1399,8 +1469,8 @@ export class MergeTree {
                         // if we are going to visit this segment anyway, exit
                         // traversal early to avoid removing local move seq
                         // information from this segment
-                        if (pendingSegmentGroup.segments.includes(pendingSegment)) {
-                            return true;
+                        if (pendingSegmentGroup.segments.includes(seg)) {
+                            return false;
                         }
 
                         moveInfo.localMovedSeq = undefined;
@@ -1410,6 +1480,10 @@ export class MergeTree {
 
                         if (!moveInfo.movedSeqs.includes(seq)) {
                             moveInfo.movedSeqs.push(seq);
+                        }
+
+                        if (!nodesToUpdate.includes(seg.parent!)) {
+                            nodesToUpdate.push(seg.parent!);
                         }
 
                         if (moveInfo.movedSeq === UnassignedSequenceNumber) {
@@ -1829,7 +1903,7 @@ export class MergeTree {
                         leftLocalSegments[localMovedSeq] = seg;
                     }
 
-                    if (movedSeqs.length > 0 || localMovedSeqs.length > 0) {
+                    if ((seg.movedSeqs?.length ?? 0) > 0 || localMovedSeqs.length > 0) {
                         return true;
                     }
 
@@ -1863,7 +1937,7 @@ export class MergeTree {
                         }
                     }
 
-                    if (movedSeqs.length > 0 || localMovedSeqs.length > 0) {
+                    if ((seg.movedSeqs?.length ?? 0) || localMovedSeqs.length > 0) {
                         return true;
                     }
 
@@ -1886,7 +1960,11 @@ export class MergeTree {
                     // We mark it as moved using the info from the earlier such operation.
                     const moveInfo = minMoveDist(nearMoveInfo, farMoveInfo);
                     if (moveInfo) {
-                        markSegmentMoved(newSegment, moveInfo);
+                        markSegmentMoved(
+                            newSegment,
+                            moveInfo,
+                            moveInfo.movedSeq !== UnassignedSequenceNumber,
+                        );
 
                         let parent: IMergeBlock | undefined = newSegment.parent;
 
@@ -1914,6 +1992,8 @@ export class MergeTree {
             },
                 undefined);
         }
+
+        next.wasObliteratedOnInsert = segment.wasObliteratedOnInsert;
 
         return { next };
     };
@@ -1949,7 +2029,7 @@ export class MergeTree {
         }
     }
 
-    // TODO: use this in a smarter way
+    // todo: use this in a smarter way
     private readonly moveSeqs: number[] = [];
     private readonly localMoveSeqs: Set<number> = new Set();
 
@@ -2061,7 +2141,14 @@ export class MergeTree {
                 return undefined;
             } else {
                 // Don't update ordinals because higher block will do it
-                return this.split(block, refSeq);
+                const newNodeFromSplit = this.split(block, refSeq);
+
+                if (PartialSequenceLengths.options.verify) {
+                    this.nodeLength(block, refSeq, clientId);
+                    this.nodeLength(newNodeFromSplit, refSeq, clientId);
+                }
+
+                return newNodeFromSplit;
             }
         } else {
             return undefined;
@@ -2177,6 +2264,16 @@ export class MergeTree {
         let segmentGroup: SegmentGroup;
         const markMoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
             const existingMoveInfo = toMoveInfo(segment);
+
+            if (clientId !== segment.clientId
+                && segment.seq !== undefined
+                && ((refSeq < segment.seq
+                    && segment.seq !== -1)
+                || (seq !== -1 && segment.seq === -1))
+            ) {
+                segment.wasObliteratedOnInsert = true;
+            }
+
 
             if (existingMoveInfo !== undefined) {
                 _overwrite = true;
@@ -2718,6 +2815,10 @@ export class MergeTree {
                 node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow,
                     undefined, undefined, obliterateRefSeq);
             }
+
+            if (PartialSequenceLengths.options.verify) {
+                this.nodeLength(node, seq, clientId);
+            }
         }
     }
 
@@ -2830,7 +2931,7 @@ export class MergeTree {
                 const lenAtRefSeq = lenSeq === refSeq ? len : (this.nodeLength(node, refSeq, clientId, localSeq) ?? 0);
 
                 const isUnackedAndInObliterate =
-                    node.isLeaf() && node.seq === UnassignedSequenceNumber && lenSeq !== refSeq;
+                    (!node.isLeaf() || node.seq === UnassignedSequenceNumber) && lenSeq !== refSeq;
 
                 if ((len === undefined && !lenAtRefSeq) || (len === 0 && !isUnackedAndInObliterate && !lenAtRefSeq)) {
                     return NodeAction.Skip;

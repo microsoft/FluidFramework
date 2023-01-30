@@ -55,10 +55,10 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 export interface AttributionKey {
     /**
      * The type of attribution this key corresponds to.
-     * 
+     *
      * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
      * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
-     * 
+     *
      * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
      * AttributionKey a discriminated union on the 'type' field. This would empower
      * consumers with the ability to implement different attribution policies.
@@ -199,6 +199,18 @@ export interface IMoveInfo {
      * client in this list. Other clients in the list have all issued concurrent ops to move the segment.
      */
     movedClientIds: number[];
+
+    /**
+     * If this segment was inserted into a concurrently obliterated range and
+     * the obliterate op was sequenced before the insertion op. In this case,
+     * the segment is visible only to the inserting client
+     *
+     * `wasObliteratedOnInsert` only applies for acked obliterates. That is, if
+     * a segment inserted by a remote client is obliterated on insertion by a local
+     * and unacked obliterate, we do not consider it as having been obliterated
+     * on insert
+     */
+    wasObliteratedOnInsert: boolean;
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
@@ -223,13 +235,13 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
      * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
      * Pending segments (i.e. ones that only exist locally and haven't been acked by the server) also have
      * `attribution === undefined` until ack.
-     * 
+     *
      * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
-     * 
+     *
      * @alpha
-     * 
+     *
      * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
-     * 
+     *
      * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
      * content but keeping the old attribution information).
      * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
@@ -405,7 +417,7 @@ export class MergeNode implements IMergeNodeCommon {
     parent?: IMergeBlock;
     cachedLength: number = 0;
 
-    isLeaf() {
+    isLeaf(): this is ISegment {
         return false;
     }
 }
@@ -503,7 +515,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return !!this.properties && (this.properties[key] !== undefined);
     }
 
-    public isLeaf() {
+    public isLeaf(): this is ISegment {
         return true;
     }
 
