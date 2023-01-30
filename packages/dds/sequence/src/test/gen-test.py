@@ -20,7 +20,7 @@ def construct_test(seed):
             buf += "helper.processAllOps();\n"
             buf += "helper.logger.validate();\n"
         else:
-            raise "unknown op type"
+            raise Exception("unknown op type")
     return buf
 
 print(construct_test(sys.argv[1]))
