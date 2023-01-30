@@ -4,14 +4,15 @@
  */
 
 /**
- * This handler uses the TemeletryClient as its logger which is from the 'applicationinsights' Azure package.
+ * This handler emits metrics to the Azure App Insights instance configured by the telemetryClient provided to this handler.
+ * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
-module.exports = async function handler(fileData, logger) {
+module.exports = async function handler(fileData, telemetryClient) {
     fileData.tests.forEach(async (testData) => {
         const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;
         try {
             console.log(`emitting metric ${heapUsedAvgMetricName} with value ${testData.testData.stats.mean}`);
-            await logger.trackMetric({
+            await telemetryClient.trackMetric({
                 name: heapUsedAvgMetricName,
                 value: testData.testData.stats.mean,
                 namespace: 'performance_benchmark_memoryUsage',
@@ -32,7 +33,7 @@ module.exports = async function handler(fileData, logger) {
         const heapUsedStdDevMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedStdDev`;
         try {
             console.log(`emitting metric ${heapUsedStdDevMetricName} with value ${testData.testData.stats.deviation}`)
-            await logger.trackMetric({
+            await telemetryClient.trackMetric({
                 name: heapUsedStdDevMetricName,
                 value: testData.testData.stats.deviation,
                 namespace: 'performance_benchmark_memoryUsage',

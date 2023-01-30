@@ -4,14 +4,15 @@
  */
 
 /**
- * This handler uses the TemeletryClient as its logger which is from the 'applicationinsights' Azure package.
+ * This handler emits metrics to the Azure App Insights instance configured by the telemetryClient provided to this handler.
+ * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
-module.exports = async function handler(fileData, logger) {
+module.exports = async function handler(fileData, telemetryClient) {
     fileData.benchmarks.forEach(async (testData) => {
         const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
         try {
             console.log(`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.arithmeticMean}`)
-            await logger.trackMetric({
+            await telemetryClient.trackMetric({
                 name: arithmeticMeanMetricName,
                 value: testData.stats.arithmeticMean,
                 namespace: "performance_benchmark_executionTime",
@@ -32,7 +33,7 @@ module.exports = async function handler(fileData, logger) {
         const marginOfErrorMetricName = `${fileData.suiteName}_${testData.benchmarkName}_marginOfError`;
         try {
             console.log(`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.marginOfError}`)
-            await logger.trackMetric({
+            await telemetryClient.trackMetric({
                 name: marginOfErrorMetricName,
                 value: testData.stats.marginOfError,
                 namespace: "performance_benchmark_executionTime",

@@ -206,7 +206,7 @@ stages:
             script: |
               echo "Writing performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -365,7 +365,7 @@ stages:
             script: |
               echo "Writing performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -513,14 +513,14 @@ stages:
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
 
         - task: Bash@3
-          displayName: Send Excecution Time Perf Benchmark Measurments to Azure App Insights
+          displayName: Send Execution Time Perf Benchmark Measurments to Azure App Insights
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo "Writing memory usage performance benchmark output to Azure App Insights..."
+              echo "Writing execution time performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -531,9 +531,9 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo "Writing execution time performance benchmark output to Azure App Insights..."
+              echo "Writing memory usage performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)

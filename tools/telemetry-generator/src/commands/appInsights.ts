@@ -27,13 +27,13 @@ export class EntryPoint extends Command {
         connectionString: Flags.string({
             char: "c",
             required: true,
-            description: "The connection string to initialize the azure telemetry client with",
+            description: "The connection string to initialize the Azure App Insights telemetry client with",
         }),
     };
 
     static examples = [
         {
-            command: "$ node bin/run --handlerModule /path/to/my/module.js --dir /path/to/my/files",
+            command: "$ node bin/run appInsights --handlerModule /path/to/my/module.js --dir /path/to/my/files --connectionString <Your_AppInsights_Connection_String>",
             description: "Process files from /path/to/my/files and all its subfolders, using the handler at " +
                 "/path/to/my/module.js",
         },
@@ -56,11 +56,9 @@ export class EntryPoint extends Command {
             exitWithError("Handler module does not have a function as its default export");
         }
 
-        console.log(`obtained connectionstring: ${flags.connectionString}`)
-
         appInsight.setup(flags.connectionString)
         .start();
-        const logger = appInsight.defaultClient;
+        const telemetryClient = appInsight.defaultClient;
 
         const dirs = [...flags.dir]
         const filesToProcess: string[] = [];
@@ -93,13 +91,13 @@ export class EntryPoint extends Command {
             try {
                 console.log(`Processing file '${fullPath}'`);
                 const data = JSON.parse(fs.readFileSync(fullPath, "utf8"));
-                handler(data, logger);
+                handler(data, telemetryClient);
             } catch (err: any) {
                 console.error(`Unexpected error processing file '${fullPath}'.\n${err.stack}`);
             }
         });
 
-        logger.flush();
+        telemetryClient.flush();
     }
 }
 
