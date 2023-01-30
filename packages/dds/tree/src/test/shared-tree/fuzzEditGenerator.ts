@@ -114,15 +114,10 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         };
     }
 
-    /**
-     * currently the acceptance conditions are based on some arbitrary number of edits.
-     * This should be changed to the max number of nodes allowed in tree.
-     * TODO: create helper function to get number of nodes in tree and use that to set acceptance condition
-     * */
     const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
         [insertGenerator, 5],
-        [deleteGenerator, 1],
-        [setPayloadGenerator, 1],
+        [deleteGenerator, 1, ({ testTreeProvider, treeIndex }) => containsAtLeastOneNode(testTreeProvider.trees[treeIndex])],
+        [setPayloadGenerator, 1, ({ testTreeProvider, treeIndex }) => containsAtLeastOneNode(testTreeProvider.trees[treeIndex])],
     ]);
 
     return async (state: FuzzTestState): Promise<Operation | typeof done> => {
