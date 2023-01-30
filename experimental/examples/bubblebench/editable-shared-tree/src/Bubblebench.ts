@@ -2,11 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISharedTree, SharedTreeFactory, singleTextCursor } from "@fluid-internal/tree";
+import { ISharedTree, SharedTreeFactory,
+    // singleTextCursor
+} from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./AppState";
-import { appStateSchema, AppStateSchemaData, AppStateTreeProxy } from "./schema";
+import {
+    // appStateSchema,
+    AppStateSchemaData,
+    AppStateTreeProxy } from "./schema";
 
 export class Bubblebench extends DataObject {
     public static get Name() {
@@ -76,13 +81,14 @@ export class Bubblebench extends DataObject {
      */
     initializeTree(tree: ISharedTree) {
         tree.storedSchema.update(AppStateSchemaData);
-        const initialRootNodeJson = {
-            type: appStateSchema.name,
-            fields: {
-                clients: [],
-            },
-        };
-        tree.context.root.insertNodes(0, [initialRootNodeJson].map(singleTextCursor));
+        // const initialRootNodeJson = {
+        //     type: appStateSchema.name,
+        //     fields: {
+        //         clients: [],
+        //     },
+        // };
+        // tree.context.root.insertNodes(0, [initialRootNodeJson].map(singleTextCursor));
+        tree.context.root.insertNodes(0, []);
     }
 
     private get tree() {

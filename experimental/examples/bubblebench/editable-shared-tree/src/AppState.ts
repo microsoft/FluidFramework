@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { brand, EditableField, FieldKey, JsonableTree, singleTextCursor } from "@fluid-internal/tree";
+import {
+    brand,
+    //  EditableField,
+    FieldKey, JsonableTree, singleTextCursor
+} from "@fluid-internal/tree";
 import { Client } from "./Client";
 import {
     AppStateTreeProxy,
@@ -23,21 +27,32 @@ export class AppState implements IAppState {
         private _height: number,
         numBubbles: number,
     ) {
-        const clientsSequenceNode = appStateTreeProxy[AppState.clientsFieldKey] as EditableField;
+        // const clientsSequenceNode = appStateTreeProxy[AppState.clientsFieldKey] as EditableField;
+        // const clientInitialJsonTree: JsonableTree = this.createClientInitialJsonTree(numBubbles);
+        // clientsSequenceNode.insertNodes(
+        //     clientsSequenceNode.length,
+        //     singleTextCursor(clientInitialJsonTree),
+        // );
+        // this.localClient = new Client(
+        //     appStateTreeProxy.clients[appStateTreeProxy.clients.length - 1],
+        // );
+
+
         const clientInitialJsonTree: JsonableTree = this.createClientInitialJsonTree(numBubbles);
-        clientsSequenceNode.insertNodes(
-            clientsSequenceNode.length,
+        appStateTreeProxy.insertNodes(
+            appStateTreeProxy.length,
             singleTextCursor(clientInitialJsonTree),
         );
         this.localClient = new Client(
-            appStateTreeProxy.clients[appStateTreeProxy.clients.length - 1],
+            appStateTreeProxy[appStateTreeProxy.length - 1],
         );
+
         console.log(
             `created client with id ${this.localClient.clientId} and color ${this.localClient.color}`,
         );
     }
 
-    public applyEdits() {}
+    public applyEdits() { }
 
     createClientInitialJsonTree(numBubbles: number): JsonableTree {
         const clientInitialJsonTree: JsonableTree = {
@@ -69,7 +84,10 @@ export class AppState implements IAppState {
     }
 
     public get clients() {
-        return [...this.appStateTreeProxy.clients].map(
+        // return [...this.appStateTreeProxy.clients].map(
+        //     (clientTreeProxy) => new Client(clientTreeProxy),
+        // );
+        return [...this.appStateTreeProxy].map(
             (clientTreeProxy) => new Client(clientTreeProxy),
         );
     }

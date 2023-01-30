@@ -5,6 +5,7 @@
 
 import {
     brand,
+    EditableField,
     EditableTree,
     FieldKinds,
     fieldSchema,
@@ -68,9 +69,11 @@ export type ClientTreeProxy = EditableTree & {
 };
 
 // TODO: Generate this from schema automatically instead of hand coding it.
-export type AppStateTreeProxy = EditableTree & {
-    clients: ClientTreeProxy[];
-};
+// export type AppStateTreeProxy = EditableTree & {
+//     clients: ClientTreeProxy[];
+// };
+
+export type AppStateTreeProxy =  ClientTreeProxy[] & EditableField;
 
 export const rootAppStateSchema = fieldSchema(FieldKinds.value, [appStateSchema.name]);
 
