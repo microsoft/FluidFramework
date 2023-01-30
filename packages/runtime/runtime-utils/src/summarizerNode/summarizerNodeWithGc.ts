@@ -391,7 +391,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		const gcDetailsMap = unpackChildNodesGCDetails(gcDetails);
 		const { childrenTree } = parseSummaryForSubtrees(snapshotTree);
 		gcDetailsMap.forEach((childGCDetails: IGarbageCollectionDetailsBase, childId: string) => {
-			childrenTree.trees[childId].blobs[gcTreeKey] = JSON.stringify(childGCDetails);
+			if (childrenTree.trees[childId] !== undefined) {
+				childrenTree.trees[childId].blobs[gcTreeKey] = JSON.stringify(childGCDetails);
+			}
 		});
 	}
 

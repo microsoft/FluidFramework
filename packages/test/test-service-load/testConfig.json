@@ -16,7 +16,7 @@
 			},
 			"offline": {
 				"delayMs": {
-					"min": 0,
+					"min": 1000,
 					"max": 150000
 				},
 				"durationMs": {
