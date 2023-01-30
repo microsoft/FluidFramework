@@ -11,7 +11,11 @@ import {
     takeAsync as take,
     IRandom,
 } from "@fluid-internal/stochastic-test-utils";
-import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
+import {
+    FieldKinds,
+    singleTextCursor,
+    namedTreeSchema,
+} from "../../feature-libraries";
 import { brand, fail } from "../../util";
 import { initializeTestTree, SummarizeType, TestTreeProvider, validateTree } from "../utils";
 import { ISharedTree } from "../../shared-tree";
@@ -170,44 +174,38 @@ function applyFuzzChange(
     contents: FuzzChange,
     transactionResult: TransactionResult,
 ): void {
-    const index = contents.index;
-    const nodeField = contents.field;
     switch (contents.fuzzType) {
         case "insert":
-            if (index !== undefined && nodeField !== undefined) {
+            tree.runTransaction((forest, editor) => {
+                const field = editor.sequenceField(contents.parent, contents.field);
+                field.insert(
+                    contents.index,
+                    singleTextCursor({ type: brand("Test"), value: contents.value }),
+                );
+                return transactionResult;
+            });
+            break;
+        case "delete":
+            // generated edit returns path as undefined if no node exists
+            if (contents.path !== undefined) {
+                const parent = contents.path?.parent;
+                const delField = contents.path?.parentField;
+                const parentIndex = contents.path?.parentIndex;
                 tree.runTransaction((forest, editor) => {
-                    const field = editor.sequenceField(contents.parent, nodeField);
-                    field.insert(
-                        index,
-                        singleTextCursor({ type: brand("Test"), value: contents.value }),
-                    );
+                    const field = editor.sequenceField(parent, delField);
+                    field.delete(parentIndex, 1);
                     return transactionResult;
                 });
             }
             break;
-        case "delete":
-            if (index !== undefined && nodeField !== undefined) {
-                const parent = contents.parent?.parent;
-                const delField = contents.parent?.parentField;
-                const parentIndex = contents.parent?.parentIndex;
-                if (delField !== undefined && parent !== undefined && parentIndex !== undefined) {
-                    tree.runTransaction((forest, editor) => {
-                        const field = editor.sequenceField(parent, delField);
-                        field.delete(parentIndex, 1);
-                        return transactionResult;
-                    });
-                }
-            }
-            break;
         case "setPayload":
-            if (index !== undefined && nodeField !== undefined) {
-                const path = contents.parent;
-                if (path !== undefined) {
-                    tree.runTransaction((forest, editor) => {
-                        editor.setValue(path, contents.value);
-                        return transactionResult;
-                    });
-                }
+            // generated edit returns path as undefined if no node exists
+            if (contents.path !== undefined) {
+                const path = contents.path;
+                tree.runTransaction((forest, editor) => {
+                    editor.setValue(path, contents.value);
+                    return transactionResult;
+                });
             }
             break;
         default:
@@ -217,7 +215,10 @@ function applyFuzzChange(
 
 function runBatch(
     opGenerator: () => AsyncGenerator<Operation, FuzzTestState>,
-    fuzzActions: (generatorFactory: AsyncGenerator<Operation, FuzzTestState>, seed: number) => Promise<FuzzTestState>,
+    fuzzActions: (
+        generatorFactory: AsyncGenerator<Operation, FuzzTestState>,
+        seed: number,
+    ) => Promise<FuzzTestState>,
     opsPerRun: number,
     batchSize: number,
     random: IRandom,
@@ -229,17 +230,11 @@ function runBatch(
         const generatorFactory = () => take(opsPerRun, opGenerator());
         if (skipTests) {
             it.skip(`with seed ${i}`, async () => {
-                await fuzzActions(
-                    generatorFactory(),
-                    runSeed,
-                );
+                await fuzzActions(generatorFactory(), runSeed);
             }).timeout(20000);
         } else {
             it(`with seed ${i}`, async () => {
-                await fuzzActions(
-                    generatorFactory(),
-                    runSeed,
-                );
+                await fuzzActions(generatorFactory(), runSeed);
             }).timeout(20000);
         }
     }
@@ -247,20 +242,33 @@ function runBatch(
 
 export function runSharedTreeFuzzTests(title: string): void {
     const random = makeRandom(0);
-    const testBatchSize = 3;
+    const testBatchSize = 20;
     describeFuzz(title, () => {
         const testOpsPerRun = 20;
         describe("basic convergence", () => {
             describe("using TestTreeProvider", () => {
                 describe(`with stepSize ${testOpsPerRun}`, () => {
-                    runBatch(makeOpGenerator, performFuzzActions, testOpsPerRun, testBatchSize, random);
+                    runBatch(
+                        makeOpGenerator,
+                        performFuzzActions,
+                        testOpsPerRun,
+                        testBatchSize,
+                        random,
+                    );
                 });
             });
         });
         describe("abort all edits", () => {
             describe("using TestTreeProvider", () => {
                 describe(`with stepSize ${testOpsPerRun}`, () => {
-                    runBatch(makeOpGenerator, performFuzzActionsAbort, testOpsPerRun, testBatchSize, random, true);
+                    runBatch(
+                        makeOpGenerator,
+                        performFuzzActionsAbort,
+                        testOpsPerRun,
+                        testBatchSize,
+                        random,
+                        true,
+                    );
                 });
             });
         });
