@@ -5,12 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { singleTextCursor } from "../../treeTextCursor";
-import {
-	TreeSchemaIdentifier,
-	FieldKey,
-	Value,
-	Delta,
-} from "../../../core";
+import { TreeSchemaIdentifier, FieldKey, Value, Delta } from "../../../core";
 import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
 import { Transposed as T } from "./format";
 import { isSkipMark } from "./utils";
