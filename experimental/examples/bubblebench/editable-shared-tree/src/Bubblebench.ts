@@ -2,7 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISharedTree, SharedTreeFactory,
+import {
+    EditableField,
+    ISharedTree,
+    SharedTreeFactory,
     // singleTextCursor
 } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
@@ -11,7 +14,8 @@ import { AppState } from "./AppState";
 import {
     // appStateSchema,
     AppStateSchemaData,
-    AppStateTreeProxy } from "./schema";
+    ClientTreeProxy,
+} from "./schema";
 
 export class Bubblebench extends DataObject {
     public static get Name() {
@@ -46,7 +50,7 @@ export class Bubblebench extends DataObject {
             );
         }
         this.maybeAppState = new AppState(
-            this.tree.root as AppStateTreeProxy,
+            this.tree.root as ClientTreeProxy[] & EditableField,
             /* stageWidth: */ 640,
             /* stageHeight: */ 480,
             /* numBubbles: */ 1,
@@ -81,14 +85,6 @@ export class Bubblebench extends DataObject {
      */
     initializeTree(tree: ISharedTree) {
         tree.storedSchema.update(AppStateSchemaData);
-        // const initialRootNodeJson = {
-        //     type: appStateSchema.name,
-        //     fields: {
-        //         clients: [],
-        //     },
-        // };
-        // tree.context.root.insertNodes(0, [initialRootNodeJson].map(singleTextCursor));
-        tree.context.root.insertNodes(0, []);
     }
 
     private get tree() {
