@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 import { AttributionInfo } from "@fluidframework/runtime-definitions";
 import {
-    createRuntimeAttributor,
-    enableOnNewFileKey,
-    IRuntimeAttributor,
+	createRuntimeAttributor,
+	enableOnNewFileKey,
+	IRuntimeAttributor,
 } from "@fluidframework/attributor";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
