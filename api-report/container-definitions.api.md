@@ -5,6 +5,7 @@
 ```ts
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
+import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IClient } from '@fluidframework/protocol-definitions';
@@ -51,6 +52,9 @@ export namespace ConnectionState {
 
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
+
+// @public
+export type ContainerCloseError = ContainerErrorType | DriverErrorType | string;
 
 // @public
 export enum ContainerErrorType {
@@ -228,7 +232,7 @@ export interface IContainerLoadMode {
 }
 
 // @public
-export type ICriticalContainerError = IErrorBase;
+export type ICriticalContainerError = IErrorBase<ContainerCloseError>;
 
 // @public
 export interface IDeltaHandlerStrategy {
@@ -303,8 +307,8 @@ export interface IDeltaSender {
 }
 
 // @public
-export interface IErrorBase extends Partial<Error> {
-    readonly errorType: string;
+export interface IErrorBase<T extends string = string> extends Partial<Error> {
+    readonly errorType: T;
     getTelemetryProperties?(): ITelemetryProperties;
     readonly message: string;
     readonly name?: string;

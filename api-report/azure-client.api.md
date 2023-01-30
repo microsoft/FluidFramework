@@ -4,6 +4,7 @@
 
 ```ts
 
+import { ContainerErrorType } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
@@ -105,6 +106,8 @@ export interface AzureUser<T = any> extends IUser {
     additionalDetails?: T;
     name: string;
 }
+
+export { ContainerErrorType }
 
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;

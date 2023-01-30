@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 
 /**
  * Different error types the Container may report out to the Host
@@ -44,13 +45,13 @@ export enum ContainerErrorType {
 /**
  * Base interface for all errors and warnings at container level
  */
-export interface IErrorBase extends Partial<Error> {
+export interface IErrorBase<T extends string = string> extends Partial<Error> {
 	/** errorType is a union of error types from
 	 * - container
 	 * - runtime
 	 * - drivers
 	 */
-	readonly errorType: string;
+	readonly errorType: T;
 
 	/**
 	 * See Error.message
@@ -83,9 +84,26 @@ export interface ContainerWarning extends IErrorBase {
 }
 
 /**
- * Represents errors raised on container.
+ * Represents error objects raised on container.
+ *
+ * @see
+ *
+ * * {@link IErrorBase}
+ *
+ * * {@link ContainerCloseError}
  */
-export type ICriticalContainerError = IErrorBase;
+export type ICriticalContainerError = IErrorBase<ContainerCloseError>;
+
+/**
+ * Represents errors raised that closed the container.
+ *
+ * @see
+ *
+ * * {@link ContainerErrorType}
+ *
+ * * {@link @fluidframework/driver-definitions#DriverErrorType}
+ */
+export type ContainerCloseError = ContainerErrorType | DriverErrorType | string;
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object

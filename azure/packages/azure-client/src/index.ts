@@ -28,5 +28,6 @@ export {
 	ITelemetryBaseLogger,
 } from "./interfaces";
 
+export { ContainerErrorType } from "@fluidframework/container-definitions";
 export { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 export { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
