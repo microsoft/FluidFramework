@@ -41,12 +41,12 @@ export interface FuzzInsert {
 
 export interface FuzzDelete {
     fuzzType: "delete";
-    path: UpPath | undefined;
+    path: UpPath;
 }
 
 export interface FuzzSetPayload {
     fuzzType: "setPayload";
-    path: UpPath | undefined;
+    path: UpPath;
     value: number;
 }
 
@@ -74,8 +74,8 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         // generate edit for that specific tree
         const {
             parent: path,
-            field: nodeField,
-            index: nodeIndex,
+            parentField: nodeField,
+            parentIndex: nodeIndex,
         } = getRandomNodePosition(tree, state.random);
         const insert: FuzzInsert = {
             fuzzType: "insert",
@@ -91,9 +91,7 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         const trees = state.testTreeProvider.trees;
         const tree = trees[state.treeIndex];
         // generate edit for that specific tree
-        const path = containsAtLeastOneNode(tree)
-            ? getExistingRandomNodePosition(tree, state.random)
-            : undefined;
+        const path = getExistingRandomNodePosition(tree, state.random);
         return {
             fuzzType: "delete",
             path,
@@ -104,9 +102,7 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
         const trees = state.testTreeProvider.trees;
         const tree = trees[state.treeIndex];
         // generate edit for that specific tree
-        const path = containsAtLeastOneNode(tree)
-            ? getExistingRandomNodePosition(tree, state.random)
-            : undefined;
+        const path = getExistingRandomNodePosition(tree, state.random);
         return {
             fuzzType: "setPayload",
             path,
@@ -155,7 +151,7 @@ const moves = {
     nodes: ["stop", "firstField"],
 };
 
-export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeLocation {
+export function getRandomNodePosition(tree: ISharedTree, random: IRandom): UpPath {
     const testerKey: FieldKey = brand("Test");
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
@@ -163,14 +159,16 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeL
     if (!firstNode) {
         // no node exists, insert a rootnode
         cursor.free();
-        return { parent: undefined, field: rootFieldKeySymbol, index: 0 };
+        return { parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 };
     }
-    let parentPath: UpPath | undefined = cursor.getPath();
+    let currentPath = cursor.getPath();
+    assert(currentPath !== undefined)
+    let parentPath: UpPath = currentPath;
     const firstField = cursor.firstField();
     if (!firstField) {
         // no fields, insert at random field at index 0 under rootnode
         cursor.free();
-        return { parent: parentPath, field: testerKey, index: 0 };
+        return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
     }
     let fieldNodes: number = cursor.getFieldLength();
     let nodeField: FieldKey = testerKey; // if no field is selected use default testerKey
@@ -185,7 +183,9 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeL
                 if (fieldNodes > 0) {
                     nodeIndex = random.integer(0, fieldNodes - 1);
                     cursor.enterNode(nodeIndex);
-                    parentPath = cursor.getPath();
+                    currentPath = cursor.getPath();
+                    assert(currentPath !== undefined)
+                    parentPath = currentPath
                     currentMove = random.pick(moves.nodes);
                     if (currentMove === "stop") {
                         if (cursor.firstField()) {
@@ -193,7 +193,7 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeL
                             nodeField = cursor.getFieldKey();
                             nodeIndex = fieldNodes !== 0 ? random.integer(0, fieldNodes - 1) : 0;
                             cursor.free();
-                            return { parent: parentPath, field: nodeField, index: nodeIndex };
+                            return { parent: parentPath, parentField: nodeField, parentIndex: nodeIndex };
                         } else {
                             nodeField = testerKey;
                             nodeIndex = 0;
@@ -204,8 +204,8 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeL
                     cursor.free();
                     return {
                         parent: parentPath,
-                        field: nodeField,
-                        index: 0,
+                        parentField: nodeField,
+                        parentIndex: 0,
                     };
                 }
                 break;
@@ -216,7 +216,7 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeL
                     nodeField = cursor.getFieldKey();
                 } else {
                     cursor.free();
-                    return { parent: parentPath, field: testerKey, index: 0 };
+                    return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
                 }
                 break;
 
@@ -236,13 +236,13 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeL
         }
     }
     cursor.free();
-    return { parent: parentPath, field: nodeField, index: nodeIndex };
+    return { parent: parentPath, parentField: nodeField, parentIndex: nodeIndex };
 }
 
 export function getExistingRandomNodePosition(
     tree: ISharedTree,
     random: IRandom,
-): UpPath | undefined {
+): UpPath {
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
     const firstNode = cursor.firstNode();

@@ -177,27 +177,17 @@ function applyFuzzChange(
             });
             break;
         case "delete":
-            // generated edit returns path as undefined if no node exists
-            if (contents.path !== undefined) {
-                const parent = contents.path?.parent;
-                const delField = contents.path?.parentField;
-                const parentIndex = contents.path?.parentIndex;
-                tree.runTransaction((forest, editor) => {
-                    const field = editor.sequenceField(parent, delField);
-                    field.delete(parentIndex, 1);
-                    return transactionResult;
-                });
-            }
+            tree.runTransaction((forest, editor) => {
+                const field = editor.sequenceField(contents.path?.parent, contents.path?.parentField);
+                field.delete(contents.path?.parentIndex, 1);
+                return transactionResult;
+            });
             break;
         case "setPayload":
-            // generated edit returns path as undefined if no node exists
-            if (contents.path !== undefined) {
-                const path = contents.path;
-                tree.runTransaction((forest, editor) => {
-                    editor.setValue(path, contents.value);
-                    return transactionResult;
-                });
-            }
+            tree.runTransaction((forest, editor) => {
+                editor.setValue(contents.path, contents.value);
+                return transactionResult;
+            });
             break;
         default:
             fail("Invalid edit.");
