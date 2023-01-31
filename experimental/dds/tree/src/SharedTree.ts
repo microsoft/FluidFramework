@@ -88,7 +88,7 @@ import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEn
 import { revert } from './HistoryEditFactory';
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes';
 import { TransactionInternal } from './TransactionInternal';
-import { IdCompressor, createSessionId } from './id-compressor';
+import { IdCompressor, createSessionId, createThrottledIdCompressorLogger } from './id-compressor';
 import { convertEditIds } from './IdConversion';
 import { MutableStringInterner } from './StringInterner';
 import { nilUuid } from './UuidUtilities';
@@ -545,7 +545,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		);
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
-		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, this.logger);
+		this.idCompressor = new IdCompressor(
+			createSessionId(),
+			reservedIdCount,
+			attributionId,
+			createThrottledIdCompressorLogger(this.logger, 0.05)
+		);
 		this.editLogSize = options.inMemoryHistorySize;
 		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
