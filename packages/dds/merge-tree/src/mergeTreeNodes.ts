@@ -382,29 +382,34 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public localSeq?: number;
 	public localRemovedSeq?: number;
 
-    public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number,
-        collabWindow?: CollaborationWindow, rollback: PropertiesRollback = PropertiesRollback.None) {
-        if (!this.propertyManager) {
-            this.propertyManager = new PropertiesManager();
-        }
-        if (!this.properties) {
-            this.properties = createMap<any>();
-        }
-        const result =  this.propertyManager.addProperties(
-            this.properties,
-            newProps,
-            op,
-            seq,
-            collabWindow && collabWindow.collaborating,
-            rollback,
-        );
+	public addProperties(
+		newProps: PropertySet,
+		op?: ICombiningOp,
+		seq?: number,
+		collabWindow?: CollaborationWindow,
+		rollback: PropertiesRollback = PropertiesRollback.None,
+	) {
+		if (!this.propertyManager) {
+			this.propertyManager = new PropertiesManager();
+		}
+		if (!this.properties) {
+			this.properties = createMap<any>();
+		}
+		const result = this.propertyManager.addProperties(
+			this.properties,
+			newProps,
+			op,
+			seq,
+			collabWindow && collabWindow.collaborating,
+			rollback,
+		);
 
-        // if (Object.entries(this.properties).length === 0) {
-        //     this.properties = undefined;
-        // }
+		// if (Object.entries(this.properties).length === 0) {
+		//     this.properties = undefined;
+		// }
 
-        return result;
-    }
+		return result;
+	}
 
 	public hasProperty(key: string): boolean {
 		return !!this.properties && this.properties[key] !== undefined;
@@ -437,18 +442,27 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public abstract toJSONObject(): any;
 
-    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
-        const currentSegmentGroup = this.segmentGroups.dequeue();
-        assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
-        switch (opArgs.op.type) {
-            case MergeTreeDeltaType.ANNOTATE:
-                assert(!!this.propertyManager, 0x044 /* "On annotate ack, missing segment property manager!" */);
-                this.propertyManager.ackPendingProperties(opArgs.op);
-                if (!this.propertyManager.hasPendingProperties() && Object.entries(this.properties!).length === 0) {
-                    this.properties = undefined;
-                    this.propertyManager = undefined;
-                }
-                return true;
+	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
+		const currentSegmentGroup = this.segmentGroups.dequeue();
+		assert(
+			currentSegmentGroup === segmentGroup,
+			0x043 /* "On ack, unexpected segmentGroup!" */,
+		);
+		switch (opArgs.op.type) {
+			case MergeTreeDeltaType.ANNOTATE:
+				assert(
+					!!this.propertyManager,
+					0x044 /* "On annotate ack, missing segment property manager!" */,
+				);
+				this.propertyManager.ackPendingProperties(opArgs.op);
+				if (
+					!this.propertyManager.hasPendingProperties() &&
+					Object.entries(this.properties!).length === 0
+				) {
+					this.properties = undefined;
+					this.propertyManager = undefined;
+				}
+				return true;
 
 			case MergeTreeDeltaType.INSERT:
 				assert(

@@ -69,11 +69,11 @@ export function combine(
 }
 
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
-    if (a && Object.entries(a).length > 0) {
-        if (!b || Object.entries(b).length === 0) {
-            return false;
-        } else {
-            // For now, straightforward; later use hashing
+	if (a && Object.entries(a).length > 0) {
+		if (!b || Object.entries(b).length === 0) {
+			return false;
+		} else {
+			// For now, straightforward; later use hashing
 
 			// eslint-disable-next-line no-restricted-syntax
 			for (const key in a) {
@@ -88,18 +88,18 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 				}
 			}
 
-            // eslint-disable-next-line no-restricted-syntax
-            for (const key in b) {
-                if (a[key] === undefined) {
-                    return false;
-                }
-            }
-        }
-    } else {
-        if (b && Object.entries(b).length > 0) {
-            return false;
-        }
-    }
+			// eslint-disable-next-line no-restricted-syntax
+			for (const key in b) {
+				if (a[key] === undefined) {
+					return false;
+				}
+			}
+		}
+	} else {
+		if (b && Object.entries(b).length > 0) {
+			return false;
+		}
+	}
 
 	return true;
 }
