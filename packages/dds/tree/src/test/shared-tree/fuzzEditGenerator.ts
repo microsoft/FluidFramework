@@ -171,7 +171,6 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
     const parentPath: UpPath = currentPath;
     const firstField = cursor.firstField();
     if (!firstField) {
-        // no fields, insert at random field at index 0 under rootnode
         cursor.free();
         return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
     }
