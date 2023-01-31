@@ -41,7 +41,7 @@ import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
 // @public
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer | undefined, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined);
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer | undefined, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined, initializeEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
