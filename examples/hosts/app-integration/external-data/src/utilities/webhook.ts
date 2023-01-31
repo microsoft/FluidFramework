@@ -93,6 +93,7 @@ export class MockWebhook<TData = unknown> implements IDisposable {
 			`WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`,
 		);
 
+        const messageBody = JSON.stringify({ data });
 		for (const subscriberUrl of this._subscribers) {
 			fetch(subscriberUrl, {
 				method: "POST",
@@ -100,7 +101,7 @@ export class MockWebhook<TData = unknown> implements IDisposable {
 					"Access-Control-Allow-Origin": "*",
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ data }),
+				body: messageBody
 			}).catch((error) => {
 				console.error("WEBHOOK: Encountered an error while notifying subscribers:", error);
 			});
