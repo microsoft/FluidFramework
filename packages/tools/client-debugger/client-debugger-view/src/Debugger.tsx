@@ -108,19 +108,17 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			<></>
 		);
 
-	console.log(debuggerRegistry);
 	return (
 		<Resizable
 			style={{
 				position: "absolute",
-				width: "400px",
-				height: "100%",
 				top: "0px",
 				right: "0px",
 				bottom: "0px",
 				zIndex: "2",
 				backgroundColor: "lightgray", // TODO: remove
 			}}
+			defaultSize={{ width: 400, height: "100%" }}
 			className={"debugger-panel"}
 		>
 			{slectionView}
