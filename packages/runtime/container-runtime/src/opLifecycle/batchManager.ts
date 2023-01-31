@@ -122,6 +122,8 @@ export class BatchManager {
 			return;
 		}
 
+		message.referenceSequenceNumber = this.pendingBatch[0].referenceSequenceNumber;
+
 		const telemetryProperties = {
 			referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
 			messageReferenceSequenceNumber: message.referenceSequenceNumber,
