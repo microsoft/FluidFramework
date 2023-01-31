@@ -12,6 +12,14 @@ TBD
 
 TBD
 
+### Echo Webhook Pattern
+
+TODO: Document the echo-webhook pattern and how it is surfaced in the example code.
+
+### Bot Pattern
+
+TODO: Document the bot pattern and how it is surfaced in the example code.
+
 ## Generalizing to other data sources
 
 TBD
