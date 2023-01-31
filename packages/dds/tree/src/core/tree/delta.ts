@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
 import { Brand, Opaque } from "../../util";
 import { ITreeCursorSynchronous } from "./cursor";
 import { FieldKey, Value } from "./types";
@@ -129,17 +128,19 @@ import { FieldKey, Value } from "./types";
 /**
  * Represents the change made to a document.
  * Immutable, therefore safe to retain for async processing.
+ * @alpha
  */
 export type Root<TTree = ProtoNode> = FieldChangeMap<TTree>;
-export const empty: Root<never> = new Map();
 
 /**
  * The default representation for inserted content.
+ * @alpha
  */
 export type ProtoNode = ITreeCursorSynchronous;
 
 /**
  * Represents a change being made to a part of the tree.
+ * @alpha
  */
 export type Mark<TTree = ProtoNode> = Skip | Delete | MoveOut | MoveIn | Insert<TTree>;
 
@@ -147,17 +148,20 @@ export type Mark<TTree = ProtoNode> = Skip | Delete | MoveOut | MoveIn | Insert<
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
  * applying any of the changes, is not represented explicitly.
  * It corresponds to the sum of `inputLength(mark)` for all previous marks.
+ * @alpha
  */
 export type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
 
 /**
  * Represents a range of contiguous nodes that is unaffected by changes.
  * The value represents the length of the range.
+ * @alpha
  */
 export type Skip = number;
 
 /**
  * Describes modifications made to a subtree.
+ * @alpha
  */
 export interface NodeChanges<TTree = ProtoNode> {
 	readonly setValue?: Value;
@@ -166,6 +170,7 @@ export interface NodeChanges<TTree = ProtoNode> {
 
 /**
  * Describes the deletion of a contiguous range of node.
+ * @alpha
  */
 export interface Delete {
 	readonly type: typeof MarkType.Delete;
@@ -174,6 +179,7 @@ export interface Delete {
 
 /**
  * Describes the moving out of a contiguous range of node.
+ * @alpha
  */
 export interface MoveOut {
 	readonly type: typeof MarkType.MoveOut;
@@ -186,6 +192,7 @@ export interface MoveOut {
 
 /**
  * Describes the moving in of a contiguous range of node.
+ * @alpha
  */
 export interface MoveIn {
 	readonly type: typeof MarkType.MoveIn;
@@ -198,6 +205,7 @@ export interface MoveIn {
 
 /**
  * Describes the insertion of a contiguous range of node.
+ * @alpha
  */
 export interface Insert<TTree = ProtoNode> {
 	readonly type: typeof MarkType.Insert;
@@ -207,14 +215,23 @@ export interface Insert<TTree = ProtoNode> {
 
 /**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
+ * @alpha
  */
 export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 
-export type Offset = number;
-
+/**
+ * @alpha
+ */
 export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
+
+/**
+ * @alpha
+ */
 export type FieldChangeMap<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
+/**
+ * @alpha
+ */
 export interface FieldChanges<TTree = ProtoNode> {
 	readonly shallowChanges?: MarkList<TTree>;
 	/**
@@ -224,15 +241,22 @@ export interface FieldChanges<TTree = ProtoNode> {
 	readonly nestedChanges?: readonly NestedChange<TTree>[];
 }
 
+/**
+ * @alpha
+ */
 export interface ChildIndex {
 	readonly context: typeof Context[keyof typeof Context];
 	readonly index: number;
 }
 
+/**
+ * @alpha
+ */
 export type NestedChange<TTree = ProtoNode> = readonly [ChildIndex, NodeChanges<TTree>];
 
 /**
  * The context in which a `ChildIndex` must be interpreted.
+ * @alpha
  */
 export const Context = {
 	/**
@@ -247,34 +271,12 @@ export const Context = {
 	Output: 1,
 } as const;
 
+/**
+ * @alpha
+ */
 export const MarkType = {
 	Insert: 0,
 	MoveIn: 1,
 	Delete: 2,
 	MoveOut: 3,
 } as const;
-
-/**
- * Returns the number of nodes in the input tree that the mark affects or skips.
- */
-export function inputLength(mark: Mark<unknown>): number {
-	if (isSkipMark(mark)) {
-		return mark;
-	}
-	// Inline into `switch(mark.type)` once we upgrade to TS 4.7
-	const type = mark.type;
-	switch (type) {
-		case MarkType.Delete:
-		case MarkType.MoveOut:
-			return mark.count;
-		case MarkType.Insert:
-		case MarkType.MoveIn:
-			return 0;
-		default:
-			unreachableCase(type);
-	}
-}
-
-export function isSkipMark(mark: Mark<unknown>): mark is Skip {
-	return typeof mark === "number";
-}

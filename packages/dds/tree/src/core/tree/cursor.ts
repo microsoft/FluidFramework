@@ -9,6 +9,7 @@ import { FieldKey, TreeType, Value } from "./types";
 
 /**
  * A stateful low-level interface for reading tree data.
+ * @alpha
  */
 export interface ITreeCursor {
 	/**
@@ -228,6 +229,7 @@ export interface ITreeCursor {
  * For example, if a node is being inserted in the 5th position in a field "Foo", you can update a path in that node's subtree to its new path by prefixing it with
  * `{ parent: theNodeAboveTheMovedNode, rootFieldOverride: Foo, indexOffset: 5 }`.
  * See {@link prefixPath} and {@link prefixFieldPath} for how to apply the prefix to the paths.
+ * @alpha
  */
 export interface PathRootPrefix {
 	/**
@@ -251,6 +253,9 @@ export interface PathRootPrefix {
 	indexOffset?: number;
 }
 
+/**
+ * @alpha
+ */
 export const enum CursorLocationType {
 	/**
 	 * Can iterate through nodes in a field.
@@ -267,6 +272,7 @@ export const enum CursorLocationType {
 
 /**
  * {@link ITreeCursor} that is never pending.
+ * @alpha
  */
 export interface ITreeCursorSynchronous extends ITreeCursor {
 	readonly pending: false;

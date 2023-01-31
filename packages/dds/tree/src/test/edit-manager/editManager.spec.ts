@@ -14,6 +14,7 @@ import {
 	Delta,
 	FieldKey,
 	TaggedChange,
+	emptyDelta,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -39,7 +40,7 @@ type TestEditManager = EditManager<TestChange, TestChangeFamily>;
  */
 function asDelta(intentions: number[]): Delta.Root {
 	return intentions.length === 0
-		? Delta.empty
+		? emptyDelta
 		: new Map([[rootKey, { shallowChanges: intentions }]]);
 }
 
@@ -511,7 +512,7 @@ function runUnitTestScenario(
 						);
 					}
 					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
-					assert.deepEqual(manager.addSequencedChange(commit), Delta.empty);
+					assert.deepEqual(manager.addSequencedChange(commit), emptyDelta);
 					localRef = seq;
 					recordSequencedEdit(commit);
 					break;

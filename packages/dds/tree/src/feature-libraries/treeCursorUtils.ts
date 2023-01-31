@@ -352,6 +352,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 /**
  * Apply `prefix` to `path`.
+ * @alpha
  */
 export function prefixPath(
 	prefix: PathRootPrefix | undefined,
@@ -372,6 +373,7 @@ export function prefixPath(
 
 /**
  * Apply `prefix` to `path`.
+ * @alpha
  */
 export function prefixFieldPath(
 	prefix: PathRootPrefix | undefined,
