@@ -111,9 +111,9 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 */
 	expressApp.post("/register-for-webhook", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const subscriberUrl = request.body.url as string;
+		const subscriberUrl = request.body?.url as string;
 		if (subscriberUrl === undefined) {
-			const errorMessage = "Client failed to provide URL for subscription.";
+			const errorMessage = 'No subscription URL provided. Expected under "url" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else if (isWebUri(subscriberUrl) === undefined) {
@@ -151,16 +151,16 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 */
 	expressApp.post("/echo-external-data-webhook", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		if (request.body.data === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-			const errorMessage = `No tasklist data provided by external data service webhook. Request body received: "${request.body.toString()}"`;
+		const messageData = request.body?.data as unknown;
+		if (messageData === undefined) {
+			const errorMessage =
+				'No data provided by external data service webhook. Expected under "data" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
 			let taskData: TaskData;
 			try {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				taskData = assertValidTaskData(request.body.data as unknown);
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = `Malformed data received from external data service webhook: ${error}`;
 				console.error(formatLogMessage(errorMessage));

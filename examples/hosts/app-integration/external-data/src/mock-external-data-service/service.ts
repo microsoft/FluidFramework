@@ -93,10 +93,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 */
 	expressApp.post("/register-for-webhook", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const subscriberUrl = request.body.url as string;
+		const subscriberUrl = request.body?.url as string;
 		if (subscriberUrl === undefined) {
-			const errorMessage =
-				'Caller failed to provide URL for subscription. Must provide "subcriberUrl" parameter.';
+			const errorMessage = 'No subscription URL provided. Expected under "url" property.';
 			console.log(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else if (isWebUri(subscriberUrl) === undefined) {
@@ -163,16 +162,15 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 */
 	expressApp.post("/set-tasks", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-		const maybeTaskData = request.body.taskList;
-		if (maybeTaskData === undefined) {
-			const errorMessage =
-				'Caller failed to provide task list to set. Must provide "taskList" parameter.';
+		const messageData = request.body?.taskList;
+		if (messageData === undefined) {
+			const errorMessage = 'No task list data provided. Expected under "taskList" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
 			let taskData: TaskData;
 			try {
-				taskData = assertValidTaskData(maybeTaskData);
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);
