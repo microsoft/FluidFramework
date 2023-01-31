@@ -396,7 +396,8 @@ export class IdCompressor {
 		public readonly localSessionId: SessionId,
 		public readonly reservedIdCount: number,
 		attributionId?: AttributionId,
-		private readonly logger?: ITelemetryLogger
+		private readonly logger?: ITelemetryLogger,
+		private readonly shouldEmitTelemetry?: boolean
 	) {
 		assert(reservedIdCount >= 0, 'reservedIdCount must be non-negative');
 		if (attributionId !== undefined) {
@@ -643,13 +644,15 @@ export class IdCompressor {
 						// actually finalized, because total order broadcast guarantees that any usage of those final IDs will be observed after
 						// the finalization of the ranges.
 						this.sessionIdNormalizer.registerFinalIdBlock(finalPivot, expansionAmount, currentCluster);
-						this.logger?.sendTelemetryEvent({
-							eventName: 'SharedTreeIdCompressor:ClusterExpansion',
-							sessionId: this.localSessionId,
-							previousCapacity,
-							newCapacity: currentCluster.capacity,
-							overflow,
-						});
+						if (this.shouldEmitTelemetry ?? false) {
+							this.logger?.sendTelemetryEvent({
+								eventName: 'SharedTreeIdCompressor:ClusterExpansion',
+								sessionId: this.localSessionId,
+								previousCapacity,
+								newCapacity: currentCluster.capacity,
+								overflow,
+							});
+						}
 					}
 				}
 			} else {
@@ -659,15 +662,17 @@ export class IdCompressor {
 				currentCluster.count += remainingCapacity;
 				eagerFinalIdCount = remainingCapacity;
 				remainingCount -= remainingCapacity;
-				this.logger?.sendTelemetryEvent({
-					eventName: 'SharedTreeIdCompressor:OverfilledCluster',
-					sessionId: this.localSessionId,
-				});
+				if (this.shouldEmitTelemetry ?? false) {
+					this.logger?.sendTelemetryEvent({
+						eventName: 'SharedTreeIdCompressor:OverfilledCluster',
+						sessionId: this.localSessionId,
+					});
+				}
 			}
 		} else {
 			// Session has never made a cluster, form a new one with the session UUID as the baseUuid
 			newBaseUuid = session.sessionUuid;
-			if (isLocal) {
+			if ((this.shouldEmitTelemetry ?? false) && isLocal) {
 				this.logger?.sendTelemetryEvent({
 					eventName: 'SharedTreeIdCompressor:FirstCluster',
 					sessionId: this.localSessionId,
@@ -708,12 +713,14 @@ export class IdCompressor {
 			localIdPivot = (newFirstFinalizedLocal - usedCapacity) as LocalCompressedId;
 
 			if (isLocal) {
-				this.logger?.sendTelemetryEvent({
-					eventName: 'SharedTreeIdCompressor:NewCluster',
-					sessionId: this.localSessionId,
-					clusterCapacity: newCapacity,
-					clusterCount: remainingCount,
-				});
+				if (this.shouldEmitTelemetry ?? false) {
+					this.logger?.sendTelemetryEvent({
+						eventName: 'SharedTreeIdCompressor:NewCluster',
+						sessionId: this.localSessionId,
+						clusterCapacity: newCapacity,
+						clusterCount: remainingCount,
+					});
+				}
 				this.sessionIdNormalizer.registerFinalIdBlock(newBaseFinalId, newCluster.capacity, newCluster);
 			}
 
@@ -829,7 +836,7 @@ export class IdCompressor {
 			}
 		}
 
-		if (isLocal) {
+		if ((this.shouldEmitTelemetry ?? false) && isLocal) {
 			this.logger?.sendTelemetryEvent({
 				eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
 				eagerFinalIdCount: eagerFinalIdCount - (overrides?.length ?? 0),
@@ -1614,12 +1621,14 @@ export class IdCompressor {
 			return serializedWithSession;
 		}
 
-		this.logger?.sendTelemetryEvent({
-			eventName: 'SharedTreeIdCompressor:SerializedIdCompressorSize',
-			size: JSON.stringify(serializedIdCompressor).length,
-			clusterCount: serializedIdCompressor.clusters.length,
-			sessionCount: serializedIdCompressor.sessions.length,
-		});
+		if (this.shouldEmitTelemetry ?? false) {
+			this.logger?.sendTelemetryEvent({
+				eventName: 'SharedTreeIdCompressor:SerializedIdCompressorSize',
+				size: JSON.stringify(serializedIdCompressor).length,
+				clusterCount: serializedIdCompressor.clusters.length,
+				sessionCount: serializedIdCompressor.sessions.length,
+			});
+		}
 
 		return serializedIdCompressor as SerializedIdCompressor;
 	}

@@ -79,9 +79,10 @@ export function createCompressor(
 	client: Client,
 	clusterCapacity = 5,
 	attributionId?: AttributionId,
-	logger?: ITelemetryLogger
+	logger?: ITelemetryLogger,
+	emitTelemetry?: boolean
 ): IdCompressor {
-	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionId, logger);
+	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionId, logger, emitTelemetry);
 	compressor.clusterCapacity = clusterCapacity;
 	return compressor;
 }

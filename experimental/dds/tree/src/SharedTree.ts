@@ -545,7 +545,15 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		);
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
-		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, this.logger);
+		// Only emit compressor telemetry for 5% of sessions
+		const emitIdCompressorTelemetry = Math.random() < 0.05;
+		this.idCompressor = new IdCompressor(
+			createSessionId(),
+			reservedIdCount,
+			attributionId,
+			this.logger,
+			emitIdCompressorTelemetry
+		);
 		this.editLogSize = options.inMemoryHistorySize;
 		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
