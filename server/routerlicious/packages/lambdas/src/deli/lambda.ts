@@ -1713,6 +1713,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     checkpointParams.clear = true;
                 }
                 void this.checkpointContext.checkpoint(checkpointParams);
+                const checkpointReason = CheckpointReason[checkpointParams.reason];
+                const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
+                const lumberjackProperties = {
+                    ...getLumberBaseProperties(this.documentId, this.tenantId),
+                    checkpointReason,
+                };
+                Lumberjack.info(checkpointResult, lumberjackProperties);
             },
             (error) => {
                 const errorMsg = `Could not send message to scriptorium`;

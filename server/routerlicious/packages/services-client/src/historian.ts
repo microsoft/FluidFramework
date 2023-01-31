@@ -79,8 +79,8 @@ export class Historian implements IHistorian {
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
         return this.restWrapper.get<git.ICommitDetails[]>(
             `/commits`, this.getQueryString({ count, sha }))
-                .catch((error) => (error === 400 || error === 404) ?
-                    [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
+            .catch((error) => (error === 400 || error === 404) ?
+                [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public async getCommit(sha: string): Promise<git.ICommit> {
@@ -129,8 +129,12 @@ export class Historian implements IHistorian {
             `/git/trees/${encodeURIComponent(sha)}`,
             this.getQueryString({ recursive: recursive ? 1 : 0 }));
     }
-    public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
-        return this.restWrapper.post<IWriteSummaryResponse>(`/git/summaries`, summary, this.getQueryString());
+    public async createSummary(summary: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse> {
+        return this.restWrapper.post<IWriteSummaryResponse>(
+            `/git/summaries`,
+            summary,
+            this.getQueryString(initial !== undefined ? { initial } : undefined),
+        );
     }
     public async deleteSummary(softDelete: boolean): Promise<void> {
         const headers = { "Soft-Delete": softDelete };

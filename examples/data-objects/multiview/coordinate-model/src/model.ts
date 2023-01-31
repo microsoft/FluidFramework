@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
@@ -17,7 +14,9 @@ const yKey = "y";
  * The Coordinate is our implementation of the ICoordinate interface.
  */
 export class Coordinate extends DataObject implements ICoordinate {
-    public static get ComponentName(): string { return "@fluid-example/coordinate"; }
+    public static get ComponentName(): string {
+        return "@fluid-example/coordinate";
+    }
 
     public static getFactory(): DataObjectFactory<Coordinate> {
         return Coordinate.factory;
@@ -27,7 +26,7 @@ export class Coordinate extends DataObject implements ICoordinate {
         Coordinate.ComponentName,
         Coordinate,
         [],
-        {},
+        {}
     );
 
     protected async initializingFirstTime(): Promise<void> {

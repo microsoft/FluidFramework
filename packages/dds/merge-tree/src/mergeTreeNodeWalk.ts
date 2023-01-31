@@ -6,16 +6,16 @@
 import { IMergeBlock, IMergeNode, ISegment } from "./mergeTreeNodes";
 
 export const LeafAction = {
-    Exit: false,
+	Exit: false,
 } as const;
 
 export type LeafAction = boolean | undefined | void;
 
 export const NodeAction = {
-    Continue: undefined,
-    // exit is false to unify with leafActionOverride
-    Exit: LeafAction.Exit,
-    Skip: 2,
+	Continue: undefined,
+	// exit is false to unify with leafActionOverride
+	Exit: LeafAction.Exit,
+	Skip: 2,
 } as const;
 
 // we exclude true from, as we only want one continue value, undefined
@@ -33,84 +33,85 @@ export type NodeAction = typeof NodeAction[keyof typeof NodeAction] | Exclude<Le
  * @returns true if we naturally exit, false if exiting due to Exit action result
  */
 export function depthFirstNodeWalk(
-    startBlock: IMergeBlock,
-    startChild: IMergeNode | undefined,
-    downAction?: (node: IMergeNode) => NodeAction,
-    leafActionOverride?: (seg: ISegment) => LeafAction,
-    upAction?: (block: IMergeBlock) => void,
-    forward: boolean = true,
+	startBlock: IMergeBlock,
+	startChild: IMergeNode | undefined,
+	downAction?: (node: IMergeNode) => NodeAction,
+	leafActionOverride?: (seg: ISegment) => LeafAction,
+	upAction?: (block: IMergeBlock) => void,
+	forward: boolean = true,
 ): boolean {
-    const increment = forward ? 1 : -1;
-    const leafAction = leafActionOverride ?? downAction;
-    if (leafAction === undefined) {
-        return true;
-    }
+	const increment = forward ? 1 : -1;
+	const leafAction = leafActionOverride ?? downAction;
+	if (leafAction === undefined) {
+		return true;
+	}
 
-    let block = startBlock;
-    let childCount = block.childCount;
-    let start: IMergeNode | undefined = startChild;
+	let block = startBlock;
+	let childCount = block.childCount;
+	let start: IMergeNode | undefined = startChild;
 
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        // go down to the leaf level
-        let blockResult: NodeAction;
-        while (start?.isLeaf() === false) {
-            // cast is safe due to isLeaf === false in while above
-            block = start as IMergeBlock;
-            childCount = block.childCount;
-            blockResult = downAction?.(block);
-            // setting start undefined will skip the leaf walk
-            // so if the block result isn't continue, set it
-            // undefined
-            start = blockResult === NodeAction.Continue
-                ? block.children[forward ? 0 : childCount - 1]
-                : undefined;
-        }
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		// go down to the leaf level
+		let blockResult: NodeAction;
+		while (start?.isLeaf() === false) {
+			// cast is safe due to isLeaf === false in while above
+			block = start as IMergeBlock;
+			childCount = block.childCount;
+			blockResult = downAction?.(block);
+			// setting start undefined will skip the leaf walk
+			// so if the block result isn't continue, set it
+			// undefined
+			start =
+				blockResult === NodeAction.Continue
+					? block.children[forward ? 0 : childCount - 1]
+					: undefined;
+		}
 
-        let exit = blockResult === NodeAction.Exit;
+		let exit = blockResult === NodeAction.Exit;
 
-        // walk the leaves if we reached them
-        if (start !== undefined) {
-            for (let i = start.index; i !== -1 && i !== childCount; i += increment) {
-                // the above loop ensures start is a leaf or undefined, so all children
-                // will be leaves if start exits, so the cast is safe
-                if (leafAction(block.children[i] as ISegment) === LeafAction.Exit) {
-                    exit = true;
-                    break;
-                }
-            }
-        }
+		// walk the leaves if we reached them
+		if (start !== undefined) {
+			for (let i = start.index; i !== -1 && i !== childCount; i += increment) {
+				// the above loop ensures start is a leaf or undefined, so all children
+				// will be leaves if start exits, so the cast is safe
+				if (leafAction(block.children[i] as ISegment) === LeafAction.Exit) {
+					exit = true;
+					break;
+				}
+			}
+		}
 
-        // if there is no upAction, we don't need to walk up before exiting
-        if (upAction === undefined && exit) {
-            return false;
-        }
+		// if there is no upAction, we don't need to walk up before exiting
+		if (upAction === undefined && exit) {
+			return false;
+		}
 
-        // since we already enumerated the children
-        // we walk up to the next level until there is a sibling
-        // or all the way up if exit is true
-        let nextIndex = -1;
-        do {
-            // if the blockAction was exit or skip
-            // we shouldn't process that block again,
-            // if there are subsequent parents while walking up
-            // we will process those.
-            if (blockResult === NodeAction.Continue) {
-                upAction?.(block);
-            } else {
-                blockResult = NodeAction.Continue;
-            }
-            if (block.parent === undefined) {
-                return !exit;
-            }
-            start = block;
-            block = block.parent;
-            childCount = block.childCount;
-            nextIndex = start.index + increment;
-        } while (exit || nextIndex === -1 || nextIndex === childCount);
-        // the above loop ensured that siblings are possible
-        start = block.children[nextIndex];
-    }
+		// since we already enumerated the children
+		// we walk up to the next level until there is a sibling
+		// or all the way up if exit is true
+		let nextIndex = -1;
+		do {
+			// if the blockAction was exit or skip
+			// we shouldn't process that block again,
+			// if there are subsequent parents while walking up
+			// we will process those.
+			if (blockResult === NodeAction.Continue) {
+				upAction?.(block);
+			} else {
+				blockResult = NodeAction.Continue;
+			}
+			if (block.parent === undefined) {
+				return !exit;
+			}
+			start = block;
+			block = block.parent;
+			childCount = block.childCount;
+			nextIndex = start.index + increment;
+		} while (exit || nextIndex === -1 || nextIndex === childCount);
+		// the above loop ensured that siblings are possible
+		start = block.children[nextIndex];
+	}
 }
 
 /**
@@ -118,22 +119,22 @@ export function depthFirstNodeWalk(
  * All segments past `node` are visited, regardless of their visibility.
  */
 export function forwardExcursion(
-    startNode: IMergeNode,
-    leafAction: (seg: ISegment) => boolean | undefined,
+	startNode: IMergeNode,
+	leafAction: (seg: ISegment) => boolean | undefined,
 ): boolean {
-    if (startNode.parent === undefined) {
-        return true;
-    }
+	if (startNode.parent === undefined) {
+		return true;
+	}
 
-    return depthFirstNodeWalk(
-        startNode.parent,
-        // this will either be the sibling, or undefined
-        // either is fine, and will result in skipping
-        // the startNode only
-        startNode.parent.children[startNode.index + 1],
-        undefined /* downAction */,
-        leafAction,
-    );
+	return depthFirstNodeWalk(
+		startNode.parent,
+		// this will either be the sibling, or undefined
+		// either is fine, and will result in skipping
+		// the startNode only
+		startNode.parent.children[startNode.index + 1],
+		undefined /* downAction */,
+		leafAction,
+	);
 }
 
 /**
@@ -141,23 +142,23 @@ export function forwardExcursion(
  * All segments past `node` are visited, regardless of their visibility.
  */
 export function backwardExcursion(
-    startNode: IMergeNode,
-    leafAction: (seg: ISegment) => boolean | undefined,
+	startNode: IMergeNode,
+	leafAction: (seg: ISegment) => boolean | undefined,
 ): boolean {
-    if (startNode.parent === undefined) {
-        return true;
-    }
-    return depthFirstNodeWalk(
-        startNode.parent,
-        // this will either be the sibling, or undefined
-        // either is fine, and will result in skipping
-        // the startNode only
-        startNode.parent.children[startNode.index - 1],
-        undefined /* downAction */,
-        leafAction,
-        undefined /* upAction */,
-        false /* forward */,
-    );
+	if (startNode.parent === undefined) {
+		return true;
+	}
+	return depthFirstNodeWalk(
+		startNode.parent,
+		// this will either be the sibling, or undefined
+		// either is fine, and will result in skipping
+		// the startNode only
+		startNode.parent.children[startNode.index - 1],
+		undefined /* downAction */,
+		leafAction,
+		undefined /* upAction */,
+		false /* forward */,
+	);
 }
 
 /**
@@ -167,26 +168,26 @@ export function backwardExcursion(
  * @returns true if we naturally exit, false if exiting due to leaf action result
  */
 export function walkAllChildSegments(
-    startBlock: IMergeBlock,
-    leafAction: (segment: ISegment) => boolean | undefined | void,
+	startBlock: IMergeBlock,
+	leafAction: (segment: ISegment) => boolean | undefined | void,
 ): boolean {
-    if (startBlock.childCount === 0) {
-        return true;
-    }
+	if (startBlock.childCount === 0) {
+		return true;
+	}
 
-    // undefined shouldn't actually be added, but this allows subsequent check for `node.parent` to typecheck
-    // without further runtime work.
-    const ancestors = new Set<IMergeBlock | undefined>();
-    for (let cur = startBlock.parent; cur !== undefined; cur = cur.parent) {
-        ancestors.add(cur);
-    }
+	// undefined shouldn't actually be added, but this allows subsequent check for `node.parent` to typecheck
+	// without further runtime work.
+	const ancestors = new Set<IMergeBlock | undefined>();
+	for (let cur = startBlock.parent; cur !== undefined; cur = cur.parent) {
+		ancestors.add(cur);
+	}
 
-    return depthFirstNodeWalk(
-        startBlock,
-        startBlock.children[0],
-        ancestors.size === 0
-            ? undefined
-            : (node) => ancestors.has(node.parent) ? NodeAction.Exit : NodeAction.Continue,
-        leafAction,
-    );
+	return depthFirstNodeWalk(
+		startBlock,
+		startBlock.children[0],
+		ancestors.size === 0
+			? undefined
+			: (node) => (ancestors.has(node.parent) ? NodeAction.Exit : NodeAction.Continue),
+		leafAction,
+	);
 }
