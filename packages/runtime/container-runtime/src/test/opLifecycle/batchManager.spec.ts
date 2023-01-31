@@ -206,7 +206,7 @@ describe("BatchManager", () => {
 		mockLogger.assertMatch(
 			new Array(5).fill({
 				eventName: "BatchManager:ReferenceSequenceNumberMismatch",
-				category: "error",
+				category: "generic",
 				enableOpReentryCheck: false,
 			}),
 		);
