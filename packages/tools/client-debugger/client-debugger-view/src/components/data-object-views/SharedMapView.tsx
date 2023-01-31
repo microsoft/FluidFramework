@@ -38,6 +38,7 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 			setEntries([...sharedMap.entries()]);
 		}
 
+		setEntries([...sharedMap.entries()]);
 		sharedMap.on("valueChanged", updateEntries);
 
 		return (): void => {

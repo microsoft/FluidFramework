@@ -29,10 +29,9 @@ export interface FluidClientDebuggersProps {
 	renderOptions?: RenderOptions;
 }
 
-// Drop down to show 2+ containers and manage the selected container in debugger view.
 /**
- * Renders the debug view for an active debugger session registered using
- * {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
+ * Renders drop down to show more than 2 containers and manage the selected container in the debug view for an active
+ * debugger session registered using {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
  *
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
