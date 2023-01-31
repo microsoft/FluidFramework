@@ -131,7 +131,7 @@ export interface IGarbageCollectionRuntime {
 	 * After GC has run, called to notify the runtime of deletable routes. The runtime is responsible
 	 * for telling the garbage collector the routes of the objects it has deleted
 	 */
-	deleteUnusedNodes(deletableRoutes: string[]): string[];
+	deleteUnusedNodes(unusedNodes: string[]): string[];
 	/** Called to notify the runtime of routes that are tombstones. */
 	updateTombstonedRoutes(tombstoneRoutes: string[]): void;
 	/** Returns a referenced timestamp to be used to track unreferenced nodes. */
