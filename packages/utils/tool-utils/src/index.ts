@@ -11,4 +11,8 @@ export {
 	OdspTokenManager,
 	odspTokensCache,
 } from "./odspTokenManager";
-export { gcBlobPrefix, getNormalizedSnapshot, ISnapshotNormalizerConfig } from "./snapshotNormalizer";
+export {
+	gcBlobPrefix,
+	getNormalizedSnapshot,
+	ISnapshotNormalizerConfig,
+} from "./snapshotNormalizer";

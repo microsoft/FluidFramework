@@ -10,7 +10,12 @@ import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
-const renderTriangleToCanvas = (ctx: CanvasRenderingContext2D, c1: ICoordinate, c2: ICoordinate, c3: ICoordinate): void => {
+const renderTriangleToCanvas = (
+    ctx: CanvasRenderingContext2D,
+    c1: ICoordinate,
+    c2: ICoordinate,
+    c3: ICoordinate
+): void => {
     ctx.clearRect(0, 0, 100, 100);
     ctx.fillStyle = "#ff0000";
     ctx.beginPath();
@@ -30,13 +35,20 @@ interface ITriangleViewProps {
  * TriangleView is a React component that renders a triangle using the given ICoordinates as the vertices.
  * For now, it only renders out the triangle, but we could enhance it to allow manipulating the coordinates.
  */
-export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
+export const TriangleView: React.FC<ITriangleViewProps> = (
+    props: ITriangleViewProps
+) => {
     const canvasRef = React.createRef<HTMLCanvasElement>();
     const rerenderCanvas = (): void => {
         if (canvasRef.current !== null) {
             const ctx = canvasRef.current.getContext("2d");
             if (ctx !== null) {
-                renderTriangleToCanvas(ctx, props.coordinate1, props.coordinate2, props.coordinate3);
+                renderTriangleToCanvas(
+                    ctx,
+                    props.coordinate1,
+                    props.coordinate2,
+                    props.coordinate3
+                );
             }
         }
     };
@@ -58,7 +70,5 @@ export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewP
         };
     });
 
-    return (
-        <canvas className="triangle-canvas" ref={canvasRef}></canvas>
-    );
+    return <canvas className="triangle-canvas" ref={canvasRef}></canvas>;
 };

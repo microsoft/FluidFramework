@@ -16,27 +16,27 @@ import { FluidClientDebugger } from "./Debugger";
  * @returns `true` if the debug view was succesfully rendered, otherwise `false`.
  */
 export async function renderClientDebuggerView(
-    // eslint-disable-next-line @rushstack/no-new-null
-    targetElement: HTMLElement | null,
+	// eslint-disable-next-line @rushstack/no-new-null
+	targetElement: HTMLElement | null,
 ): Promise<boolean> {
-    if (targetElement === null) {
-        console.log("Provided null targetElement.");
-        return false;
-    }
+	if (targetElement === null) {
+		console.log("Provided null targetElement.");
+		return false;
+	}
 
-    const debuggerElement = document.createElement("debugger");
-    targetElement.append(debuggerElement);
+	const debuggerElement = document.createElement("debugger");
+	targetElement.append(debuggerElement);
 
-    return new Promise<boolean>((resolve) => {
-        try {
-            ReactDOM.render(React.createElement(FluidClientDebugger), debuggerElement, () => {
-                resolve(true);
-            });
-        } catch (error) {
-            console.error(`Could not open the client debugger view due to an error: ${error}.`);
-            resolve(false);
-        }
-    });
+	return new Promise<boolean>((resolve) => {
+		try {
+			ReactDOM.render(React.createElement(FluidClientDebugger), debuggerElement, () => {
+				resolve(true);
+			});
+		} catch (error) {
+			console.error(`Could not open the client debugger view due to an error: ${error}.`);
+			resolve(false);
+		}
+	});
 }
 
 // #2: Render "debugger frame" - user passes in element, we wrap that element in a frame containing the debug view

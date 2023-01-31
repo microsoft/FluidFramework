@@ -17,12 +17,12 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
  * @internal
  */
 export interface IFluidClientDebuggerEvents extends IEvent {
-    /**
-     * Emitted when the {@link IFluidClientDebugger} itself has been disposed.
-     *
-     * @see {@link IFluidClientDebugger.dispose}
-     */
-    (event: "disposed", listener: () => void);
+	/**
+	 * Emitted when the {@link IFluidClientDebugger} itself has been disposed.
+	 *
+	 * @see {@link IFluidClientDebugger.dispose}
+	 */
+	(event: "disposed", listener: () => void);
 }
 
 /**
@@ -33,68 +33,68 @@ export interface IFluidClientDebuggerEvents extends IEvent {
  * @internal
  */
 export interface IFluidClientDebugger
-    extends IEventProvider<IFluidClientDebuggerEvents>,
-        IDisposable {
-    /**
-     * The ID of {@link IFluidClientDebugger.container}.
-     */
-    readonly containerId: string;
+	extends IEventProvider<IFluidClientDebuggerEvents>,
+		IDisposable {
+	/**
+	 * The ID of {@link IFluidClientDebugger.container}.
+	 */
+	readonly containerId: string;
 
-    /**
-     * The Container session with which the debugger is associated.
-     */
-    readonly container: IContainer;
+	/**
+	 * The Container session with which the debugger is associated.
+	 */
+	readonly container: IContainer;
 
-    /**
-     * The Audience associated with the Container
-     */
-    readonly audience: IAudience;
+	/**
+	 * The Audience associated with the Container
+	 */
+	readonly audience: IAudience;
 
-    /**
-     * Data contents of the Container.
-     *
-     * @remarks
-     *
-     * This map is assumed to be immutable. The debugger will not make any modifications to its contents.
-     */
-    readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+	/**
+	 * Data contents of the Container.
+	 *
+	 * @remarks
+	 *
+	 * This map is assumed to be immutable. The debugger will not make any modifications to its contents.
+	 */
+	readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
 
-    /**
-     * Optional: Nickname to assign to the debugger instance.
-     *
-     * @remarks
-     *
-     * Associated tooling may take advantage of this to differentiate between debugger instances using
-     * semantically meaningful information.
-     *
-     * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
-     * debugger instances.
-     */
-    readonly containerNickname?: string;
+	/**
+	 * Optional: Nickname to assign to the debugger instance.
+	 *
+	 * @remarks
+	 *
+	 * Associated tooling may take advantage of this to differentiate between debugger instances using
+	 * semantically meaningful information.
+	 *
+	 * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
+	 * debugger instances.
+	 */
+	readonly containerNickname?: string;
 
-    /**
-     * Gets the history of all ConnectionState changes since the debugger session was initialized.
-     *
-     * @remarks
-     *
-     * {@link IFluidClientDebugger.container}'s `connected` and `disconnected` events signal that this data has changed.
-     * Consumers will need to re-call this to get the most up-to-date data.
-     */
-    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
+	/**
+	 * Gets the history of all ConnectionState changes since the debugger session was initialized.
+	 *
+	 * @remarks
+	 *
+	 * {@link IFluidClientDebugger.container}'s `connected` and `disconnected` events signal that this data has changed.
+	 * Consumers will need to re-call this to get the most up-to-date data.
+	 */
+	getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
 
-    /**
-     * Historical log of audience member changes.
-     *
-     * @remarks
-     *
-     * {@link IFluidClientDebugger.audience}'s `addMember` and `removeMember` events signal that this data has changed.
-     * Consumers will need to re-call this to get the most up-to-date data.
-     */
-    getAudienceHistory(): readonly AudienceChangeLogEntry[];
+	/**
+	 * Historical log of audience member changes.
+	 *
+	 * @remarks
+	 *
+	 * {@link IFluidClientDebugger.audience}'s `addMember` and `removeMember` events signal that this data has changed.
+	 * Consumers will need to re-call this to get the most up-to-date data.
+	 */
+	getAudienceHistory(): readonly AudienceChangeLogEntry[];
 
-    /**
-     * Disposes the debugger session.
-     * All data recording will stop, and no further state change events will be emitted.
-     */
-    dispose(): void;
+	/**
+	 * Disposes the debugger session.
+	 * All data recording will stop, and no further state change events will be emitted.
+	 */
+	dispose(): void;
 }
