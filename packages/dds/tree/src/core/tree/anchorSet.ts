@@ -11,6 +11,7 @@ import { Value } from "./types";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
+ * @alpha
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -21,6 +22,7 @@ const NeverAnchor: Anchor = brand(0);
 
 /**
  * Maps anchors (which must be ones this locator knows about) to paths.
+ * @alpha
  */
 export interface AnchorLocator {
 	/**
@@ -40,6 +42,7 @@ export interface AnchorLocator {
  * See `Rebaser` for how to update across revisions.
  *
  * @sealed
+ * @alpha
  */
 export class AnchorSet {
 	/**
