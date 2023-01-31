@@ -459,7 +459,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 					!this.propertyManager.hasPendingProperties() &&
 					Object.entries(this.properties!).length === 0
 				) {
-					this.properties = undefined;
 					this.propertyManager = undefined;
 				}
 				return true;

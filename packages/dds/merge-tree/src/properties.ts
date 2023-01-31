@@ -126,6 +126,9 @@ export function extend<T>(
 			}
 		}
 	}
+	if (Object.entries(base).length === 0) {
+		return undefined;
+	}
 	return base;
 }
 
