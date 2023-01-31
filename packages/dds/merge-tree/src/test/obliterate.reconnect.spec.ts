@@ -622,6 +622,11 @@ describe("obliterate", () => {
         it("tracks obliterate refSeq when acking op for partial len calculation", () => {
             const helper = new ReconnectTestHelper();
 
+            //   v-----------------------v
+            //           v--v
+            //                  v--v
+            // 6-(345-AB-(CD)-E-(FG)-HI-1)-2
+
             helper.insertText("A", 0, "12");
             helper.insertText("B", 0, "ABCDEFGHI");
             helper.insertText("A", 0, "345");
@@ -1742,7 +1747,7 @@ describe("obliterate", () => {
         helper.logger.validate();
     });
 
-    describe("partial length updates", () => {
+    describe("incremental partial length updates", () => {
         it("obliterates concurrently inserted segment", () => {
             const helper = new ReconnectTestHelper();
 
@@ -1858,11 +1863,16 @@ describe("obliterate", () => {
             helper.logger.validate();
         });
 
-        // failing for incremental updates
-        it.skip("...", () => {
+        it("keeps track of remote obliterated length when hier node contains hier nodes", () => {
             const helper = new ReconnectTestHelper();
 
-            // HIJ-E-K-FG-D-C-AB
+            // LMNO-HIJ-E-K-FG-D-C-AB
+            // lmnopq-L-[M]-NO-H-ghijk-I-(J-E-K-FG-D-C-A-a)-bc-ef-d-B
+            //                                  v--------------------------------------v
+            //          v-------------------v
+            // r-l-x-mn-[opq-L-[M]-NO-H-gh-s]-t-(u-i-[j]-k-I-(J-E-K-FG-D-C-A-a)-b-v-c-e)-f-d-B
+
+            // bad segment: (I-(J-E-K-FG-D-C-A-a)-b-v-c-e)-f-d-B
 
             helper.insertText("B", 0, "AB");
             helper.insertText("C", 0, "C");
@@ -1876,25 +1886,75 @@ describe("obliterate", () => {
             helper.removeRange("A", 1, 2);
             helper.insertText("A", 13, "abcd");
             helper.obliterateRange("A", 5, 14);
-            helper.insertText("A", 7, "ef");
+            helper.insertText("A", 7, "ef"); // seq: 11, len: 7
             helper.insertText("B", 5, "ghijk");
-            helper.insertText("C", 0, "lmnopq");
+            helper.insertText("C", 0, "lmnopq"); // seq: 13, len: 7
             helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "lmnopqLNOHghijkIbcefdB");
+
             helper.logger.validate();
             helper.insertText("A", 0, "r");
             helper.insertText("B", 12, "stu");
-            helper.insertText("A", 18, "v");
-            helper.obliterateRange("B", 14, 22);
-            helper.removeRange("B", 3, 13);
-            helper.removeRange("A", 14, 15);
-            helper.insertText("B", 1, "u");
+            helper.insertText("A", 18, "v"); // seq: 16, len: 8
+            helper.obliterateRange("B", 14, 22); // seq: 17, len: 3
+            helper.removeRange("B", 3, 13); // seq: 18, len: 3
+            helper.removeRange("A", 14, 15); // seq: 19, len: 3
+            helper.insertText("B", 1, "x");
+            helper.processAllOps();
+            helper.logger.validate();
+        });
+
+        it.skip("...", () => {
+            const helper = new ReconnectTestHelper();
+
+            // VWXYZ0-(K)-[L]-M-[N]-O-EFGHIJ-[A]-B-P-TU-QRS-CD
+            //                                      v-v------v------------v
+            //                                            v--------------------v
+            //       v----v---------v-v-----v-----v------------------------------v----v
+            // V-c-W-[XYZ0]-(K)-[L]-[M]-[N]-[O-EFG]-[H]-a-[b-[IJ-[A]-B-P-T]-U-Q]-[RS-C]-d-f-e-D
+
+            //                                                  v-v------v-v---v-----------v
+            //                                                        v-------------------------v
+            //            v------v---------v-v-----v---v---v-v------------------------------------v----v
+            //     v---------v
+            // j-i-(V-c-W-[XY)-Z0]-(K)-[L]-[M]-[N]-[O-E]-h-[FG]-[H]-a-[b-[I]-g-[J-[A]-B-P-T]-U-Q]-[RS-C]-d-f-e-D
+
+            // problem segment: j-i-(V-c-W-[XY)-Z0]-(K)-[L]-[M]-[N]-[O-E]-h-[FG]-[H]-a-[b]
+
+            helper.insertText("C", 0, "ABCD");
+            helper.removeRange("C", 0, 1);
+            helper.insertText("B", 0, "EFGHIJ");
+            helper.insertText("A", 0, "KLMNO");
+            helper.obliterateRange("A", 0, 1);
+            helper.removeRange("A", 0, 1);
+            helper.insertText("C", 1, "PQRS");
+            helper.insertText("C", 2, "TU");
+            helper.removeRange("A", 1, 2);
+            helper.insertText("A", 0, "VWXYZ0");
+            helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "VWXYZ0MOEFGHIJBPTUQRSCD");
+
+            helper.logger.validate();
+            helper.insertText("C", 12, "ab");
+            helper.removeRange("B", 11, 17);
+            helper.removeRange("C", 13, 21);
+            helper.insertText("B", 1, "c");
+            helper.insertText("C", 16, "de");
+            helper.insertText("C", 17, "f");
+            helper.removeRange("B", 3, 15);
+            helper.insertText("A", 13, "g");
+            helper.insertText("A", 9, "h");
+            helper.obliterateRange("C", 0, 4);
+            helper.insertText("C", 0, "i");
+            helper.insertText("A", 0, "j");
             helper.processAllOps();
             helper.logger.validate();
         });
     });
 
-    // failing unrelated to partial lengths
-    it.skip("...", () => {
+    it("three obliterates on same segment", () => {
         const helper = new ReconnectTestHelper();
 
         // A

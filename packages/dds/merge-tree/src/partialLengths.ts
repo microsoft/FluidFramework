@@ -721,6 +721,7 @@ export class PartialSequenceLengths {
         partialLengths: PartialSequenceLengthsSet,
         seq: number,
         seqSeglen: number,
+        remoteObliteratedLen?: number,
         clientId?: number,
     ) {
         let seqPartialLen: PartialSequenceLength | undefined;
@@ -744,9 +745,11 @@ export class PartialSequenceLengths {
                 len,
                 seglen: seqSeglen,
                 seq,
+                remoteObliteratedLen,
             };
             partialLengths.addOrUpdate(seqPartialLen);
         } else {
+            seqPartialLen.remoteObliteratedLen = remoteObliteratedLen;
             seqPartialLen.seglen = seqSeglen;
             seqPartialLen.len = len;
             // Assert client id matches
@@ -883,9 +886,9 @@ export class PartialSequenceLengths {
         this.segmentCount = segCount;
         this.unsequencedRecords = undefined;
 
-        PartialSequenceLengths.addSeq(this.partialLengths, seq, seqSeglen, clientId);
+        PartialSequenceLengths.addSeq(this.partialLengths, seq, seqSeglen, remoteObliteratedLen, clientId);
         this.clientSeqNumbers[clientId] ??= new PartialSequenceLengthsSet();
-        PartialSequenceLengths.addSeq(this.clientSeqNumbers[clientId], seq, seqSeglen + remoteObliteratedLen, clientId);
+        PartialSequenceLengths.addSeq(this.clientSeqNumbers[clientId], seq, seqSeglen + remoteObliteratedLen, remoteObliteratedLen, clientId);
         if (PartialSequenceLengths.options.zamboni) {
             this.zamboni(collabWindow);
         }

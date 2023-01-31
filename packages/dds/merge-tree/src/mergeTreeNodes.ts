@@ -173,7 +173,6 @@ export interface IMoveInfo {
      * acked. Only set on the tombstone "source" segment of the move.
      */
     localMovedSeq?: number;
-    localMovedSeqs: number[];
     /**
      * Seq at which this segment was moved. Only set on the tombstone "source"
      * segment of the move.
@@ -478,7 +477,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public localSeq?: number;
     public localRemovedSeq?: number;
     public localMovedSeq?: number;
-    public localMovedSeqs?: number[];
 
     public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number,
         collabWindow?: CollaborationWindow, rollback: PropertiesRollback = PropertiesRollback.None) {
@@ -557,13 +555,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             case MergeTreeDeltaType.OBLITERATE:
                 const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
                 assert(moveInfo !== undefined, "On obliterate ack, missing move info!");
-                const localMovedSeq = this.localMovedSeq;
                 this.localMovedSeq = undefined;
-                moveInfo.movedSeqs.push(opArgs.sequencedMessage!.sequenceNumber)
-
-                if (localMovedSeq !== undefined) {
-                    moveInfo.localMovedSeqs = moveInfo.localMovedSeqs.filter((localSeq) => localSeq !== localMovedSeq);
-                }
+                const seqIdx = moveInfo.movedSeqs.indexOf(-1);
+                assert(seqIdx !== -1, "expected movedSeqs to contain unacked seq")
+                moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
 
                 if (moveInfo.movedSeq === UnassignedSequenceNumber) {
                     moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
@@ -599,7 +594,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.movedSeq = this.movedSeq;
                 leafSegment.movedSeqs = this.movedSeqs?.slice();
                 leafSegment.localMovedSeq = this.localMovedSeq;
-                leafSegment.localMovedSeqs = this.localMovedSeqs?.slice();
                 this.segmentGroups.copyTo(leafSegment);
                 this.trackingCollection.copyTo(leafSegment);
                 if (this.localRefs) {
