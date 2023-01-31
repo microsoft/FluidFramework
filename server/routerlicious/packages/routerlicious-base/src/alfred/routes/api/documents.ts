@@ -30,7 +30,8 @@ import { Constants, getSession } from "../../../utils";
 export function create(
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    throttler: IThrottler,
+    tenantThrottler: IThrottler,
+    clusterThrottler: IThrottler,
     singleUseTokenCache: ICache,
     config: Provider,
     tenantManager: ITenantManager,
@@ -58,7 +59,7 @@ export function create(
         "/:tenantId/:id",
         validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
-        throttle(throttler, winston, commonThrottleOptions),
+        throttle(tenantThrottler, winston, commonThrottleOptions),
         (request, response, next) => {
             const documentP = storage.getDocument(
                 getParam(request.params, "tenantId") || appTenants[0].id,
@@ -86,8 +87,8 @@ export function create(
             ensureSingleUseToken: true,
             singleUseTokenCache,
         }),
-        throttle(throttler, winston, commonThrottleOptions),
-        throttle(throttler, winston, createDocThrottleOptions),
+        throttle(tenantThrottler, winston, commonThrottleOptions),
+        throttle(clusterThrottler, winston, createDocThrottleOptions),
         async (request, response, next) => {
             // Tenant and document
             const tenantId = getParam(request.params, "tenantId");
@@ -155,7 +156,7 @@ export function create(
     router.get(
         "/:tenantId/session/:id",
         verifyStorageToken(tenantManager, config),
-        throttle(throttler, winston, commonThrottleOptions),
+        throttle(tenantThrottler, winston, commonThrottleOptions),
         async (request, response, next) => {
             const documentId = getParam(request.params, "id");
             const tenantId = getParam(request.params, "tenantId");

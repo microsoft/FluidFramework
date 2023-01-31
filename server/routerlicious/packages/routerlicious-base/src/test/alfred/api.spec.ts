@@ -101,11 +101,13 @@ describe("Routerlicious", () => {
             describe("throttling", () => {
                 const limit = 10;
                 beforeEach(() => {
-                    const throttler = new TestThrottler(limit);
+                    const tenantThrottler = new TestThrottler(limit);
+                    const clusterThrottler = new TestThrottler(limit);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        clusterThrottler,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -193,11 +195,13 @@ describe("Routerlicious", () => {
             describe("authorization", () => {
                 const maxThrottlerLimit = 10;
                 beforeEach(() => {
-                    const throttler = new TestThrottler(maxThrottlerLimit);
+                    const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const clusterThrottler = new TestThrottler(maxThrottlerLimit);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        clusterThrottler,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -259,11 +263,13 @@ describe("Routerlicious", () => {
 
                 const maxThrottlerLimit = 1000000;
                 beforeEach(() => {
-                    const throttler = new TestThrottler(maxThrottlerLimit);
+                    const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const clusterThrottler = new TestThrottler(maxThrottlerLimit);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        clusterThrottler,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -321,11 +327,13 @@ describe("Routerlicious", () => {
             describe("single-use JWTs", () => {
                 const limit = 1000000;
                 beforeEach(() => {
-                    const throttler = new TestThrottler(limit);
+                    const tenantThrottler = new TestThrottler(limit);
+                    const clusterThrottler = new TestThrottler(limit);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        clusterThrottler,
                         new TestCache(),
                         defaultStorage,
                         defaultAppTenants,
@@ -359,14 +367,16 @@ describe("Routerlicious", () => {
 
                 beforeEach(() => {
                     const maxThrottlerLimit = 1000000;
-                    const throttler = new TestThrottler(maxThrottlerLimit);
+                    const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const clusterThrottler = new TestThrottler(maxThrottlerLimit);
 
                     spyGetSession = Sinon.spy(SessionHelper, "getSession")
 
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        clusterThrottler,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,

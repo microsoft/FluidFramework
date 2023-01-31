@@ -85,7 +85,8 @@ export class AlfredResources implements core.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public restThrottler: core.IThrottler,
+        public restTenantThrottler: core.IThrottler,
+        public restClusterThrottler: core.IThrottler,
         public socketConnectThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
         public socketSubmitSignalThrottler: core.IThrottler,
@@ -260,9 +261,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         };
 
         // Rest API Throttler
-        const restApiThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:restCalls") ?? {};
-        const restThrottler = configureThrottler(restApiThrottleConfig);
+        const restApiTenantThrottleConfig: Partial<IThrottleConfig> =
+            config.get("alfred:throttling:restTenantCalls") ?? {};
+        const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
+
+        const restApiClusterThrottleConfig: Partial<IThrottleConfig> =
+        config.get("alfred:throttling:restClusterCalls") ?? {};
+        const restClusterThrottler = configureThrottler(restApiClusterThrottleConfig);
 
         // Socket Connection Throttler
         const socketConnectionThrottleConfig: Partial<IThrottleConfig> =
@@ -340,7 +345,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             webSocketLibrary,
             orderManager,
             tenantManager,
-            restThrottler,
+            restTenantThrottler,
+            restClusterThrottler,
             socketConnectThrottler,
             socketSubmitOpThrottler,
             socketSubmitSignalThrottler,
@@ -366,7 +372,8 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.port,
             resources.orderManager,
             resources.tenantManager,
-            resources.restThrottler,
+            resources.restTenantThrottler,
+            resources.restClusterThrottler,
             resources.socketConnectThrottler,
             resources.socketSubmitOpThrottler,
             resources.socketSubmitSignalThrottler,
