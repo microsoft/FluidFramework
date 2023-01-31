@@ -71,6 +71,8 @@ export {
 	forEachNode,
 	forEachField,
 	PathRootPrefix,
+	isSkipMark,
+	emptyDelta,
 } from "./tree";
 
 export {
