@@ -16,6 +16,7 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import type { IEventThisPlaceHolder, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -120,11 +121,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		if (options?.attribution?.track) {
 			const policy = this._mergeTree?.attributionPolicy;
-			// TODO: Depending on who's expected to configure, this should potentially be a UsageError instead.
-			assert(
-				policy !== undefined,
-				"Attribution tracking was enabled but no implementation injected.",
-			);
+			if (policy === undefined) {
+				throw new UsageError(
+					"Attribution policy must be provided when attribution tracking is requested.",
+				);
+			}
 			policy.attach(this);
 		}
 	}

@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
@@ -260,12 +261,12 @@ export class SnapshotLoader {
 		this.mergeTree.options.attribution ??= {};
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
-			// TODO: unify validation strategy and make sure asserts vs. exceptions makes sense.
-			// (this one should potentially be a usage error)
-			assert(
-				attributionPolicy !== undefined,
-				"Attempted to open a file containing attribution information without injected attribution policy",
-			);
+			if (attributionPolicy === undefined) {
+				throw new UsageError(
+					"Attribution policy must be provided when loading a document with attribution information.",
+				);
+			}
+
 			const { isAttached, attach, serializer } = attributionPolicy;
 			if (!isAttached) {
 				attach(this.client);
