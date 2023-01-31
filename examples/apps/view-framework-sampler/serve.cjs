@@ -7,11 +7,11 @@ const esbuild = require("esbuild");
 const options = require("./esbuild.cjs");
 
 esbuild
-    .serve(
-        {
-            servedir: "dist",
-            port: 3000,
-        },
-        options.buildOptions,
-    )
-    .catch(() => process.exit());
+	.serve(
+		{
+			servedir: "dist",
+			port: 3000,
+		},
+		options.buildOptions,
+	)
+	.catch(() => process.exit());
