@@ -124,6 +124,10 @@ export interface IContainerLoadOptions {
 	 * Loads the Container in paused state if true, unpaused otherwise.
 	 */
 	loadMode?: IContainerLoadMode;
+    /**
+     * A logger that the container will use for logging operations. If not provided, the container will
+     * use the loader's logger, `Loader.services.subLogger`.
+     */
 	baseLogger?: ITelemetryBaseLogger;
 }
 

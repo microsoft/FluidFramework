@@ -543,7 +543,7 @@ export enum LoaderHeader {
 	 */
 	version = "version",
 
-	// TODO #AB3350: This is a breaking change, so it will be made in th next branch
+	// TODO #AB3350: This is a breaking change; it will be enabled in the "next" branch
 	// baseLogger = "fluid-base-logger"
 }
 
