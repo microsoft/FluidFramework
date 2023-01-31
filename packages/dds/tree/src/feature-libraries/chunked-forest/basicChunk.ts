@@ -190,7 +190,12 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			return this.nestedCursor.getFieldLength();
 		}
 		assert(this.mode === CursorLocationType.Fields, 0x522 /* must be in fields mode */);
-		return this.getField().length;
+		let total = 0;
+		// TODO: optimize?
+		for (const chunk of this.getField()) {
+			total += chunk.topLevelLength;
+		}
+		return total;
 	}
 
 	public enterNode(index: number): void {
@@ -429,8 +434,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	}
 
 	private initNestedCursor(): void {
+		assert(this.mode === CursorLocationType.Nodes, "can only initNestedCursor when in Nodes");
 		const chunk = (this.siblings as TreeChunk[])[this.indexOfChunk];
 		this.nestedCursor = !(chunk instanceof BasicChunk) ? chunk.cursor() : undefined;
+		this.nestedCursor?.enterNode(this.indexWithinChunk);
 	}
 
 	public exitField(): void {
@@ -504,6 +511,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		);
 		if (this.nestedCursor !== undefined) {
 			if (this.nestedCursor.atChunkRoot()) {
+				// TODO: this.index
 				return this.nestedCursor.fieldIndex + this.nestedOffset();
 			}
 			return this.nestedCursor.fieldIndex;
@@ -512,7 +520,13 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	}
 
 	private nestedOffset(): number {
-		fail("todo");
+		assert(this.nestedCursor !== undefined, "nested offset requires nested cursor");
+		assert(
+			!this.nestedCursor.atChunkRoot() ||
+				this.indexWithinChunk === this.nestedCursor.fieldIndex,
+			"indexes should match if at root",
+		);
+		return this.index - this.indexWithinChunk;
 	}
 
 	public get chunkStart(): number {

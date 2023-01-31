@@ -273,15 +273,22 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous, Chunke
 	}
 
 	public atChunkRoot(): boolean {
-		return this.nodePositionInfo === undefined || this.nodePositionInfo.parent === undefined;
+		assert(
+			(this.fieldKey === undefined) === (this.mode === CursorLocationType.Nodes),
+			"expect valid field key",
+		);
+		return (
+			this.nodePositionInfo === undefined ||
+			(this.nodePositionInfo.parent === undefined && this.fieldKey === undefined)
+		);
 	}
 
 	public fork(): Cursor {
 		const cursor = new Cursor(this.chunk);
-		cursor.moveToPosition(this.positionIndex);
 		cursor.mode = this.mode;
 		cursor.fieldKey = this.fieldKey;
 		cursor.indexOfField = this.indexOfField;
+		cursor.moveToPosition(this.positionIndex);
 		return cursor;
 	}
 
@@ -295,6 +302,10 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous, Chunke
 	private moveToPosition(positionIndex: number): void {
 		this.nodePositionInfo = this.positions[positionIndex];
 		this.positionIndex = positionIndex;
+		if (this.nodePositionInfo === undefined) {
+			assert(positionIndex === 0, "expected root at start");
+			assert(this.mode === CursorLocationType.Fields, "expected root to be a field");
+		}
 	}
 
 	/**
@@ -329,6 +340,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous, Chunke
 
 	exitField(): void {
 		assert(this.mode === CursorLocationType.Fields, 0x4c9 /* exitField when in wrong mode */);
+		assert(this.nodePositionInfo !== undefined, "can not exit root field");
 		this.fieldKey = undefined;
 		this.mode = CursorLocationType.Nodes;
 	}
@@ -400,6 +412,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous, Chunke
 			return false;
 		}
 		this.mode = CursorLocationType.Nodes;
+		this.fieldKey = undefined;
 		this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
 		assert(this.fieldIndex === childIndex, 0x4cc /* should be at selected child */);
 		return true;
@@ -407,6 +420,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous, Chunke
 
 	private enterRootNodeInner(childIndex: number): void {
 		this.mode = CursorLocationType.Nodes;
+		this.fieldKey = undefined;
 		// 1 for the "undefined" at the beginning of the positions array, then stride by top level tree shape.
 		this.moveToPosition(1 + childIndex * this.shape.treeShape.positions.length);
 		assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
@@ -463,11 +477,11 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous, Chunke
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		this.indexOfField =
 			info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
+		this.fieldKey = info.parentField;
+		this.mode = CursorLocationType.Fields;
 		this.moveToPosition(
 			info.indexOfParentPosition ?? fail("navigation up to root field not yet supported"),
 		); // TODO
-		this.fieldKey = info.parentField;
-		this.mode = CursorLocationType.Fields;
 	}
 
 	firstField(): boolean {
