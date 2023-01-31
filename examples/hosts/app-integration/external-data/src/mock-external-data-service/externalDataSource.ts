@@ -6,7 +6,7 @@
 import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Response } from "node-fetch";
-import { assertValidTaskData, TaskData } from "../model-interface";
+import { TaskData } from "../model-interface";
 
 const startingExternalData: TaskData = {
 	12: {
@@ -84,7 +84,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @returns A promise that resolves when the write completes.
 	 */
 	public async writeData(data: TaskData): Promise<Response> {
-		this.data = assertValidTaskData(data);
+		this.data = data;
 
 		// Emit for debug views to update
 		this.emit("debugDataWritten", this.data);
