@@ -115,7 +115,7 @@ extends:
       displayName: 'Generate Mono repo package json'
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ Build.SourcesDirectory }}
+        workingDirectory: $(Build.SourcesDirectory)
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
           set _FLUID_ROOT_=$(Build.SourcesDirectory)
