@@ -24,30 +24,30 @@ import {
  * Contract representing the result of a newly established connection to the server for syncing deltas.
  */
 export interface IConnectionDetails {
-    clientId: string;
-    claims: ITokenClaims;
-    serviceConfiguration: IClientConfiguration;
+	clientId: string;
+	claims: ITokenClaims;
+	serviceConfiguration: IClientConfiguration;
 
-    /**
-     * Last known sequence number to ordering service at the time of connection.
-     *
-     * @remarks
-     *
-     * It may lap actual last sequence number (quite a bit, if container is very active).
-     * But it's the best information for client to figure out how far it is behind, at least
-     * for "read" connections. "write" connections may use own "join" op to similar information,
-     * that is likely to be more up-to-date.
-     */
-    checkpointSequenceNumber: number | undefined;
+	/**
+	 * Last known sequence number to ordering service at the time of connection.
+	 *
+	 * @remarks
+	 *
+	 * It may lap actual last sequence number (quite a bit, if container is very active).
+	 * But it's the best information for client to figure out how far it is behind, at least
+	 * for "read" connections. "write" connections may use own "join" op to similar information,
+	 * that is likely to be more up-to-date.
+	 */
+	checkpointSequenceNumber: number | undefined;
 }
 
 /**
  * Internal version of IConnectionDetails with props are only exposed internally
  */
 export interface IConnectionDetailsInternal extends IConnectionDetails {
-    mode: ConnectionMode;
-    version: string;
-    initialClients: ISignalClient[];
+	mode: ConnectionMode;
+	version: string;
+	initialClients: ISignalClient[];
 }
 
 /**
