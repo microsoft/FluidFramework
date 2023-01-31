@@ -85,7 +85,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	 * Starts at root field which might be a detached sequence.
 	 *
 	 * @param root - sequence of BasicChunk which make up the contents of the root sequence.
-	 * Since this cursor starts in `Fields` node at the root, the siblings array when in fields mode is just the field keys,
+	 * Since this cursor starts in `Fields` mode at the root, the siblings array when in fields mode is just the field keys,
 	 * this is needed to get the actual root nodes when entering nodes of the root field.
 	 * @param siblingStack - Stack of collections of siblings along the path through the tree:
 	 * does not include current level (which is stored in `siblings`).
