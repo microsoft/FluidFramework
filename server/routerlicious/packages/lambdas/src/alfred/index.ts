@@ -492,6 +492,9 @@ export function configureWebSocketServices(
                 },
                 (error) => {
                     socket.emit("connect_document_error", error);
+                    if (isNetworkError(error)) {
+                        connectMetric.setProperty(CommonProperties.errorCode, error.code);
+                    }
                     connectMetric.error(`Connect document failed`, error);
                 });
         });
