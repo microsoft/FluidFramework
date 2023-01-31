@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
 	TreeSchemaIdentifier,
-	ITreeCursorSynchronous,
 	CursorLocationType,
 	FieldUpPath,
 	UpPath,
@@ -245,7 +244,7 @@ class NodePositionInfo implements UpPath {
  *
  * Works by tracking its location in the chunk's `positions` array.
  */
-class Cursor extends SynchronousCursor implements ITreeCursorSynchronous, ChunkedCursor {
+class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
 	// Undefined when in root field
 	private nodePositionInfo: NodePositionInfo | undefined;
