@@ -36,4 +36,3 @@ declare function use_old_VariableDeclaration_generateTestUser(
     use: TypeOnly<typeof old.generateTestUser>);
 use_old_VariableDeclaration_generateTestUser(
     get_current_VariableDeclaration_generateTestUser());
-
