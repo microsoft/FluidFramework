@@ -111,4 +111,6 @@ export function tryGetChunk(cursor: ITreeCursor): undefined | TreeChunk {
 
 export interface ChunkedCursor extends ITreeCursorSynchronous, WithChunk {
 	readonly [cursorChunk]?: TreeChunk;
+	atChunkRoot(): boolean;
+	fork(): ChunkedCursor;
 }

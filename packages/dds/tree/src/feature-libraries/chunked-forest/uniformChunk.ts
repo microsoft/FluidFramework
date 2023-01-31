@@ -17,7 +17,7 @@ import {
 } from "../../core";
 import { compareArrays, fail } from "../../util";
 import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -245,7 +245,7 @@ class NodePositionInfo implements UpPath {
  *
  * Works by tracking its location in the chunk's `positions` array.
  */
-class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
+class Cursor extends SynchronousCursor implements ITreeCursorSynchronous, ChunkedCursor {
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
 	// Undefined when in root field
 	private nodePositionInfo: NodePositionInfo | undefined;
@@ -270,6 +270,19 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
 		this.positions = this.shape.positions;
 		this.fieldKey = dummyRoot;
 		this.moveToPosition(0);
+	}
+
+	public atChunkRoot(): boolean {
+		return this.nodePositionInfo === undefined || this.nodePositionInfo.parent === undefined;
+	}
+
+	public fork(): Cursor {
+		const cursor = new Cursor(this.chunk);
+		cursor.moveToPosition(this.positionIndex);
+		cursor.mode = this.mode;
+		cursor.fieldKey = this.fieldKey;
+		cursor.indexOfField = this.indexOfField;
+		return cursor;
 	}
 
 	/**
