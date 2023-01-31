@@ -81,6 +81,9 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	expressApp.use(express.json());
 	expressApp.use(cors());
 
+	/**
+	 * Default route. Can be used to verify connectivity to the service.
+	 */
 	expressApp.get("/", (_, result) => {
 		result.send();
 	});

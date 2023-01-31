@@ -63,6 +63,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	expressApp.use(express.json());
 	expressApp.use(cors());
 
+	/**
+	 * Default route. Can be used to verify connectivity to the service.
+	 */
 	expressApp.get("/", (_, result) => {
 		result.send();
 	});
