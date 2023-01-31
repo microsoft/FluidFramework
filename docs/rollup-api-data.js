@@ -27,7 +27,7 @@ const memberCombineInstructions = [
     {
         package: "@fluidframework/azure-client",
         sourceImports: new Map([
-            ["@fluidframework/container-definitions", ["ContainerCloseError"]],
+            ["@fluidframework/container-definitions", ["ContainerCloseError", "ContainerErrorType"]],
             ["@fluidframework/routerlicious-driver", ["ITokenProvider", "ITokenResponse"]],
             ["@fluidframework/protocol-definitions", ["ScopeType", "ITokenClaims", "IUser"]],
         ])

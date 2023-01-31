@@ -99,7 +99,7 @@ export type ICriticalContainerError = IErrorBase<ContainerCloseError>;
  *
  * @see
  *
- * * {@link ContainerErrorType}
+ * * {@link @fluidframework/container-definitions#ContainerErrorType}
  *
  * * {@link @fluidframework/driver-definitions#DriverErrorType}
  */
