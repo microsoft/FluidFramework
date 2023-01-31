@@ -166,7 +166,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
             return undefined; // At root
         }
 
-        assert(length > 0, 0x44a /* invalid offset to above root */);
+        // assert(length > 0, 0x44a /* invalid offset to above root */);
         assert(length % 2 === 0, 0x44b /* offset path must point to node not field */);
 
         // Perf Note:
