@@ -1090,6 +1090,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	 * context.
 	 */
 	public delete() {
+		// TODO: GC:Validation - potentially prevent this from happening or asserting. Maybe throw here.
 		sendGCUnexpectedUsageEvent(
 			this.mc,
 			{
