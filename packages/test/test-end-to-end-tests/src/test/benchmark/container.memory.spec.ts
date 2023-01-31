@@ -47,10 +47,8 @@ describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) 
 		});
 	}
 
-	before(function () {
-		provider = getTestObjectProvider();
-	});
 	before(async () => {
+		provider = getTestObjectProvider();
 		loader = createLoader();
 		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
