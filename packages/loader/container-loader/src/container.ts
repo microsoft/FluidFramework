@@ -124,7 +124,7 @@ export interface IContainerLoadOptions {
 	 * Loads the Container in paused state if true, unpaused otherwise.
 	 */
 	loadMode?: IContainerLoadMode;
-	loggerOverride?: ITelemetryBaseLogger;
+	baseLogger?: ITelemetryBaseLogger;
 }
 
 export interface IContainerConfig {
@@ -138,7 +138,7 @@ export interface IContainerConfig {
 	 * Serialized state from a previous instance of this container
 	 */
 	serializedContainerState?: IPendingContainerState;
-	loggerOverride?: ITelemetryBaseLogger;
+	baseLogger?: ITelemetryBaseLogger;
 }
 
 /**
@@ -291,7 +291,7 @@ export class Container
 				resolvedUrl: loadOptions.resolvedUrl,
 				canReconnect: loadOptions.canReconnect,
 				serializedContainerState: pendingLocalState,
-				loggerOverride: loadOptions.loggerOverride,
+				baseLogger: loadOptions.baseLogger,
 			},
 			protocolHandlerBuilder,
 		);
@@ -630,7 +630,8 @@ export class Container
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = ChildLogger.create(
-			config.loggerOverride ?? loader.services.subLogger,
+			// If a baseLogger was provided, use it; otherwise use the loader's logger.
+			config.baseLogger ?? loader.services.subLogger,
 			undefined,
 			{
 				all: {
