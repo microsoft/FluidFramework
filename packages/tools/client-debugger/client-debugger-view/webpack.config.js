@@ -22,6 +22,7 @@ module.exports = (env) => {
 			},
 			resolve: {
 				extensions: [".ts", ".tsx", ".js"],
+                fallback: { "process/browser": require.resolve("process/browser"), },
 			},
 			module: {
 				rules: [

@@ -23,16 +23,16 @@ export interface SharedStringViewProps {
 export function SharedStringView(props: SharedStringViewProps): React.ReactElement {
 	const { sharedString } = props;
 
-    const [text, setText] = React.useState<SharedString>(sharedString);
+	const [text, setText] = React.useState<SharedString>(sharedString);
 
-    React.useEffect(() => {
-        setText(sharedString);
-    }, [sharedString, setText]);
+	React.useEffect(() => {
+		setText(sharedString);
+	}, [sharedString, setText]);
 
-    return (
-        <CollaborativeTextArea
-            style={{ height: 30, width: 200 }}
-            sharedStringHelper={new SharedStringHelper(text)}
-        />
-    );
+	return (
+		<CollaborativeTextArea
+			style={{ height: 30, width: 200 }}
+			sharedStringHelper={new SharedStringHelper(text)}
+		/>
+	);
 }

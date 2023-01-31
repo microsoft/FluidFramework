@@ -41,14 +41,14 @@ export const clientDebugViewClassName = `fluid-client-debugger-view`;
  * @internal
  */
 export interface ClientDebugViewProps extends HasClientDebugger {
-    /**
-     * Rendering policies for different kinds of Fluid client and object data.
-     *
-     * @defaultValue Strictly use default visualization policies.
-     *
-     * @privateRemarks TODO: get render options from debugger object.
-     */
-    renderOptions?: RenderOptions;
+	/**
+	 * Rendering policies for different kinds of Fluid client and object data.
+	 *
+	 * @defaultValue Strictly use default visualization policies.
+	 *
+	 * @privateRemarks TODO: get render options from debugger object.
+	 */
+	renderOptions?: RenderOptions;
 }
 
 /**
@@ -57,88 +57,88 @@ export interface ClientDebugViewProps extends HasClientDebugger {
  * @internal
  */
 export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
-    const { clientDebugger, renderOptions: userRenderOptions } = props;
-    const { container } = clientDebugger;
+	const { clientDebugger, renderOptions: userRenderOptions } = props;
+	const { container } = clientDebugger;
 
-    const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
+	const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
-    const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
+	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
 
-    React.useEffect(() => {
-        function onContainerClose(): void {
-            setIsContainerClosed(true);
-        }
+	React.useEffect(() => {
+		function onContainerClose(): void {
+			setIsContainerClosed(true);
+		}
 
-        container.on("closed", onContainerClose);
+		container.on("closed", onContainerClose);
 
-        setIsContainerClosed(container.closed);
+		setIsContainerClosed(container.closed);
 
-        return (): void => {
-            container.off("closed", onContainerClose);
-        };
-    }, [clientDebugger, container, setIsContainerClosed]);
+		return (): void => {
+			container.off("closed", onContainerClose);
+		};
+	}, [clientDebugger, container, setIsContainerClosed]);
 
-    // UI state
-    const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
-        RootView.Container,
-    );
+	// UI state
+	const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
+		RootView.Container,
+	);
 
-    let view: React.ReactElement;
-    if (isContainerClosed) {
-        view = <div>The Container has been disposed.</div>;
-    } else {
-        let innerView: React.ReactElement;
-        switch (rootViewSelection) {
-            case RootView.Container:
-                innerView = <ContainerDataView clientDebugger={clientDebugger} />;
-                break;
-            case RootView.Data:
-                innerView = (
-                    <DataObjectsView
-                        clientDebugger={clientDebugger}
-                        renderOptions={renderOptions.sharedObjectRenderOptions}
-                    />
-                );
-                break;
-            case RootView.Audience:
-                innerView = (
-                    <AudienceView
-                        clientDebugger={clientDebugger}
-                        onRenderAudienceMember={renderOptions.onRenderAudienceMember}
-                    />
-                );
-                break;
-            default:
-                throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
-        }
-        view = (
-            <Stack tokens={{ childrenGap: 10 }}>
-                <ViewSelectionMenu
-                    currentSelection={rootViewSelection}
-                    updateSelection={updateRootViewSelection}
-                />
-                {innerView}
-            </Stack>
-        );
-    }
+	let view: React.ReactElement;
+	if (isContainerClosed) {
+		view = <div>The Container has been disposed.</div>;
+	} else {
+		let innerView: React.ReactElement;
+		switch (rootViewSelection) {
+			case RootView.Container:
+				innerView = <ContainerDataView clientDebugger={clientDebugger} />;
+				break;
+			case RootView.Data:
+				innerView = (
+					<DataObjectsView
+						clientDebugger={clientDebugger}
+						renderOptions={renderOptions.sharedObjectRenderOptions}
+					/>
+				);
+				break;
+			case RootView.Audience:
+				innerView = (
+					<AudienceView
+						clientDebugger={clientDebugger}
+						onRenderAudienceMember={renderOptions.onRenderAudienceMember}
+					/>
+				);
+				break;
+			default:
+				throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
+		}
+		view = (
+			<Stack tokens={{ childrenGap: 10 }}>
+				<ViewSelectionMenu
+					currentSelection={rootViewSelection}
+					updateSelection={updateRootViewSelection}
+				/>
+				{innerView}
+			</Stack>
+		);
+	}
 
-    return (
-        <Stack
-            tokens={{
-                // Add some spacing between the menu and the inner view
-                childrenGap: 25,
-            }}
-            styles={{
-                root: {
-                    height: "100%",
-                },
-            }}
-            className={clientDebugViewClassName}
-        >
-            <ContainerSummaryView clientDebugger={clientDebugger} />
-            <div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
-        </Stack>
-    );
+	return (
+		<Stack
+			tokens={{
+				// Add some spacing between the menu and the inner view
+				childrenGap: 25,
+			}}
+			styles={{
+				root: {
+					height: "100%",
+				},
+			}}
+			className={clientDebugViewClassName}
+		>
+			<ContainerSummaryView clientDebugger={clientDebugger} />
+			<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
+		</Stack>
+	);
 }
 
 /**

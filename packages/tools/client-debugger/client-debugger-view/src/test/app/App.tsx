@@ -92,75 +92,75 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
 function useContainerInfo(): (ContainerInfo | undefined)[] {
-    const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
-        ContainerInfo | undefined
-    >();
-    const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
-        ContainerInfo | undefined
-    >();
+	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
+		ContainerInfo | undefined
+	>();
+	const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
+		ContainerInfo | undefined
+	>();
 
-    // Get the Fluid Data data on app startup and store in the state
-    React.useEffect(() => {
-        async function getFluidData(): Promise<ContainerInfo> {
-            let container: IFluidContainer;
-            let audience: ITinyliciousAudience;
-            let containerId = getContainerIdFromLocation(window.location);
-            if (containerId.length === 0) {
-                ({ container, audience, containerId } = await createFluidContainer(
-                    containerSchema,
-                    populateRootMap,
-                ));
-            } else {
-                ({ container, audience } = await loadExistingFluidContainer(
-                    containerId,
-                    containerSchema,
-                ));
-            }
+	// Get the Fluid Data data on app startup and store in the state
+	React.useEffect(() => {
+		async function getFluidData(): Promise<ContainerInfo> {
+			let container: IFluidContainer;
+			let audience: ITinyliciousAudience;
+			let containerId = getContainerIdFromLocation(window.location);
+			if (containerId.length === 0) {
+				({ container, audience, containerId } = await createFluidContainer(
+					containerSchema,
+					populateRootMap,
+				));
+			} else {
+				({ container, audience } = await loadExistingFluidContainer(
+					containerId,
+					containerSchema,
+				));
+			}
 
-            return { container, audience, containerId };
-        }
+			return { container, audience, containerId };
+		}
 
-        getFluidData().then(
-            (data) => {
-                if (getContainerIdFromLocation(window.location) !== data.containerId) {
-                    window.location.hash = data.containerId;
-                }
+		getFluidData().then(
+			(data) => {
+				if (getContainerIdFromLocation(window.location) !== data.containerId) {
+					window.location.hash = data.containerId;
+				}
 
-                initializeFluidClientDebugger(data);
-                setSharedContainerInfo(data);
-            },
-            (error) => {
-                console.error(error);
-            },
-        );
+				initializeFluidClientDebugger(data);
+				setSharedContainerInfo(data);
+			},
+			(error) => {
+				console.error(error);
+			},
+		);
 
-        async function getPrivateContainerData(): Promise<ContainerInfo> {
-            // Always create a new container for the private view.
-            // This isn't shared with other collaborators.
-            return createFluidContainer(containerSchema, populateRootMap);
-        }
+		async function getPrivateContainerData(): Promise<ContainerInfo> {
+			// Always create a new container for the private view.
+			// This isn't shared with other collaborators.
+			return createFluidContainer(containerSchema, populateRootMap);
+		}
 
-        getPrivateContainerData().then(
-            (data) => {
-                initializeFluidClientDebugger(data);
-                setPrivateContainerInfo(data);
-            },
-            (error) => {
-                console.error(error);
-            },
-        );
+		getPrivateContainerData().then(
+			(data) => {
+				initializeFluidClientDebugger(data);
+				setPrivateContainerInfo(data);
+			},
+			(error) => {
+				console.error(error);
+			},
+		);
 
-        return (): void => {
-            if (sharedContainerInfo !== undefined) {
-                closeFluidClientDebugger(sharedContainerInfo.containerId);
-            }
-            if (privateContainerInfo !== undefined) {
-                closeFluidClientDebugger(privateContainerInfo.containerId);
-            }
-        };
-    }, []);
+		return (): void => {
+			if (sharedContainerInfo !== undefined) {
+				closeFluidClientDebugger(sharedContainerInfo.containerId);
+			}
+			if (privateContainerInfo !== undefined) {
+				closeFluidClientDebugger(privateContainerInfo.containerId);
+			}
+		};
+	}, []);
 
-    return [sharedContainerInfo, privateContainerInfo];
+	return [sharedContainerInfo, privateContainerInfo];
 }
 
 const appTheme = createTheme({
@@ -206,41 +206,41 @@ const appViewPaneStackStyles = mergeStyles({
  * Initializes the Fluid Container and displays app view once it is ready.
  */
 export function App(): React.ReactElement {
-    // Load the collaborative SharedString object
-    const containers = useContainerInfo();
+	// Load the collaborative SharedString object
+	const containers = useContainerInfo();
 
-    if (containers.length !== 2) {
-        console.error(
-            `Initialization created an unexpected number of containers: ${containers.length}`,
-        );
-    }
+	if (containers.length !== 2) {
+		console.error(
+			`Initialization created an unexpected number of containers: ${containers.length}`,
+		);
+	}
 
-    const view = (
-        <Stack horizontal>
-            <StackItem>
-                {containers[0] === undefined ? (
-                    <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-                        <Spinner />
-                        <div>Loading Fluid container...</div>
-                    </Stack>
-                ) : (
-                    <AppView containerInfo={containers[0]} />
-                )}
-            </StackItem>
-            <StackItem>
-                {containers[1] === undefined ? (
-                    <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-                        <Spinner />
-                        <div>Loading Fluid container...</div>
-                    </Stack>
-                ) : (
-                    <AppView containerInfo={containers[1]} />
-                )}
-            </StackItem>
-        </Stack>
-    );
+	const view = (
+		<Stack horizontal>
+			<StackItem>
+				{containers[0] === undefined ? (
+					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+						<Spinner />
+						<div>Loading Fluid container...</div>
+					</Stack>
+				) : (
+					<AppView containerInfo={containers[0]} />
+				)}
+			</StackItem>
+			<StackItem>
+				{containers[1] === undefined ? (
+					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+						<Spinner />
+						<div>Loading Fluid container...</div>
+					</Stack>
+				) : (
+					<AppView containerInfo={containers[1]} />
+				)}
+			</StackItem>
+		</Stack>
+	);
 
-    return <ThemeProvider theme={appTheme}>{view}</ThemeProvider>;
+	return <ThemeProvider theme={appTheme}>{view}</ThemeProvider>;
 }
 
 /**

@@ -27,16 +27,16 @@ export async function renderClientDebuggerView(
 	const debuggerElement = document.createElement("debugger");
 	targetElement.append(debuggerElement);
 
-    return new Promise<boolean>((resolve) => {
-        try {
-            ReactDOM.render(React.createElement(FluidClientDebuggers), debuggerElement, () => {
-                resolve(true);
-            });
-        } catch (error) {
-            console.error(`Could not open the client debugger view due to an error: ${error}.`);
-            resolve(false);
-        }
-    });
+	return new Promise<boolean>((resolve) => {
+		try {
+			ReactDOM.render(React.createElement(FluidClientDebuggers), debuggerElement, () => {
+				resolve(true);
+			});
+		} catch (error) {
+			console.error(`Could not open the client debugger view due to an error: ${error}.`);
+			resolve(false);
+		}
+	});
 }
 
 // #2: Render "debugger frame" - user passes in element, we wrap that element in a frame containing the debug view

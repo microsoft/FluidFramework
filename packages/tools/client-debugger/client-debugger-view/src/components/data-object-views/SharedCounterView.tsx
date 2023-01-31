@@ -36,95 +36,95 @@ export interface SharedCounterViewProps {
  * Default {@link @fluidframework/counter#SharedCounter} viewer.
  */
 export function SharedCounterView(props: SharedCounterViewProps): React.ReactElement {
-    const { sharedCounter } = props;
+	const { sharedCounter } = props;
 
-    const [value, setValue] = React.useState<number>(sharedCounter.value);
-    const [deltaValue, setDeltaValue] = React.useState("");
+	const [value, setValue] = React.useState<number>(sharedCounter.value);
+	const [deltaValue, setDeltaValue] = React.useState("");
 
-    React.useEffect(() => {
-        function updateValue(delta: number, newValue: number): void {
-            setValue(newValue);
-        }
+	React.useEffect(() => {
+		function updateValue(delta: number, newValue: number): void {
+			setValue(newValue);
+		}
 
-        sharedCounter.on("incremented", updateValue);
-        setValue(sharedCounter.value);
+		sharedCounter.on("incremented", updateValue);
+		setValue(sharedCounter.value);
 
-        return (): void => {
-            sharedCounter.off("incremented", updateValue);
-        };
-    }, [sharedCounter, setValue]);
+		return (): void => {
+			sharedCounter.off("incremented", updateValue);
+		};
+	}, [sharedCounter, setValue]);
 
-    function decrementCounter(): void {
-        sharedCounter.increment(-Number.parseInt(deltaValue, 10));
-        setDeltaValue("");
-    }
+	function decrementCounter(): void {
+		sharedCounter.increment(-Number.parseInt(deltaValue, 10));
+		setDeltaValue("");
+	}
 
-    function incrementCounter(): void {
-        sharedCounter.increment(Number.parseInt(deltaValue, 10));
-        setDeltaValue("");
-    }
+	function incrementCounter(): void {
+		sharedCounter.increment(Number.parseInt(deltaValue, 10));
+		setDeltaValue("");
+	}
 
-    const inputSetValue = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        setDeltaValue(e.target.value);
-    };
+	const inputSetValue = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		setDeltaValue(e.target.value);
+	};
 
-    const stackStyles: IStackStyles = {
-        root: {
-            padding: 15,
-        },
-    };
+	const stackStyles: IStackStyles = {
+		root: {
+			padding: 15,
+		},
+	};
 
-    const buttonStyles: IStackStyles = {
-        root: {
-            margin: 20,
-        },
-    };
+	const buttonStyles: IStackStyles = {
+		root: {
+			margin: 20,
+		},
+	};
 
-    return (
-        <Stack>
-            <StackItem>
-                <b>SharedCounter</b>
-            </StackItem>
-            <StackItem>Value: {value} </StackItem>
-            <StackItem styles={stackStyles}>
-                <TooltipHost
-                    content="Decrememt counter by the delta-value."
-                    id={decrementButtonTooltipId}
-                >
-                    <IconButton
-                        onClick={decrementCounter}
-                        disabled={deltaValue === ""}
-                        menuIconProps={{ iconName: "CalculatorSubtract" }}
-                        aria-describedby={decrementButtonTooltipId}
-                        styles={buttonStyles}
-                    />
-                </TooltipHost>
+	return (
+		<Stack>
+			<StackItem>
+				<b>SharedCounter</b>
+			</StackItem>
+			<StackItem>Value: {value} </StackItem>
+			<StackItem styles={stackStyles}>
+				<TooltipHost
+					content="Decrememt counter by the delta-value."
+					id={decrementButtonTooltipId}
+				>
+					<IconButton
+						onClick={decrementCounter}
+						disabled={deltaValue === ""}
+						menuIconProps={{ iconName: "CalculatorSubtract" }}
+						aria-describedby={decrementButtonTooltipId}
+						styles={buttonStyles}
+					/>
+				</TooltipHost>
 
-                <TooltipHost
-                    content="Enter the delta value of your choice"
-                    id={inputFieldTooltipId}
-                >
-                    <input
-                        type="number"
-                        onChange={inputSetValue}
-                        placeholder="Enter Delta"
-                        value={deltaValue}
-                    />
-                </TooltipHost>
+				<TooltipHost
+					content="Enter the delta value of your choice"
+					id={inputFieldTooltipId}
+				>
+					<input
+						type="number"
+						onChange={inputSetValue}
+						placeholder="Enter Delta"
+						value={deltaValue}
+					/>
+				</TooltipHost>
 
-                <TooltipHost
-                    content="Increment counter by the delta-value."
-                    id={incrementButtonTooltipId}
-                >
-                    <IconButton
-                        onClick={incrementCounter}
-                        disabled={deltaValue === ""}
-                        menuIconProps={{ iconName: "CalculatorAddition" }}
-                        aria-describedby={incrementButtonTooltipId}
-                        styles={buttonStyles}
-                    />
-                </TooltipHost>
-            </StackItem>
-        </Stack>
-    );
+				<TooltipHost
+					content="Increment counter by the delta-value."
+					id={incrementButtonTooltipId}
+				>
+					<IconButton
+						onClick={incrementCounter}
+						disabled={deltaValue === ""}
+						menuIconProps={{ iconName: "CalculatorAddition" }}
+						aria-describedby={incrementButtonTooltipId}
+						styles={buttonStyles}
+					/>
+				</TooltipHost>
+			</StackItem>
+		</Stack>
+	);
 }
