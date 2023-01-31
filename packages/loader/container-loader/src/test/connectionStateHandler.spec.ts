@@ -56,7 +56,9 @@ describe("ConnectionStateHandler Tests", () => {
 	const pendingClientId3 = "pendingClientId3";
 	let deltaManagerForCatchingUp: MockDeltaManagerForCatchingUp;
 	let connectionStateHandler_receivedAddMemberEvent: (id: string) => void;
-	let connectionStateHandler_receivedJoinSignalEvent: (details: IConnectionDetailsInternal) => void;
+	let connectionStateHandler_receivedJoinSignalEvent: (
+		details: IConnectionDetailsInternal,
+	) => void;
 	let connectionStateHandler_receivedRemoveMemberEvent: (id: string) => void;
 
 	// Stash the real setTimeout because sinon fake timers will hijack it.

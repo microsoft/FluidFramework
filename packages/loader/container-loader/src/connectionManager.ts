@@ -302,7 +302,9 @@ export class ConnectionManager implements IConnectionManager {
 		return { readonly: this._readonlyPermissions };
 	}
 
-	private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetailsInternal {
+	private static detailsFromConnection(
+		connection: IDocumentDeltaConnection,
+	): IConnectionDetailsInternal {
 		return {
 			claims: connection.claims,
 			clientId: connection.clientId,

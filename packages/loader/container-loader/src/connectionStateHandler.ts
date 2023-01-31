@@ -9,7 +9,7 @@ import {
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
-import {  IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
+import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { ILocalSequencedClient } from "@fluidframework/protocol-base";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";

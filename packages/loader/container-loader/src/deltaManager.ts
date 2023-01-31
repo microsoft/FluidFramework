@@ -57,7 +57,7 @@ export interface IConnectionArgs {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
-    (event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
+	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
 }
 
 /**
@@ -359,7 +359,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
 			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
-			connectHandler: (connection: IConnectionDetailsInternal) => this.connectHandler(connection),
+			connectHandler: (connection: IConnectionDetailsInternal) =>
+				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
 				safeRaiseEvent(this, this.logger, "readonly", readonly),
