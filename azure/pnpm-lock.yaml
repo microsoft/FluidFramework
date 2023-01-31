@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.8.0-123358
+      '@fluidframework/build-tools': ^0.8.0
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.17.9
       '@microsoft/api-extractor': ^7.22.2
@@ -20,7 +20,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.8.0-123358
+      '@fluidframework/build-tools': 0.8.0
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.19.24
       '@microsoft/api-extractor': 7.33.6
@@ -40,7 +40,7 @@ importers:
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@1.0.0
       '@fluidframework/azure-local-service': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.8.0-123358
+      '@fluidframework/build-tools': ^0.8.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.0.0
       '@fluidframework/container-definitions': ^1.4.0-121020
@@ -96,7 +96,7 @@ importers:
       '@fluidframework/azure-client-previous': /@fluidframework/azure-client/1.0.0
       '@fluidframework/azure-local-service': link:../azure-local-service
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.8.0-123358
+      '@fluidframework/build-tools': 0.8.0
       '@fluidframework/counter': 1.4.0-121020
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-client-utils': 1.4.0-121020
@@ -154,7 +154,7 @@ importers:
     specifiers:
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@^1.0.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.8.0-123358
+      '@fluidframework/build-tools': ^0.8.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
@@ -177,7 +177,7 @@ importers:
     devDependencies:
       '@fluidframework/azure-service-utils-previous': 'link:'
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.8.0-123358
+      '@fluidframework/build-tools': 0.8.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -913,8 +913,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/version-tools/0.8.0-123358:
-    resolution: {integrity: sha512-EdR0u8b7n8YYxHdFwxCT/Lk6CRbx7f8r8LIInZUxdyq/pF/baFBFOD68y4EdSFIbiQXrRjL/sJ2HDXKP33dJ4w==}
+  /@fluid-tools/version-tools/0.8.0:
+    resolution: {integrity: sha512-fUqzN7rus7mQKVTZ2mkzkU5b+5ZHxVbtKdTT+KSmgaVk9nC0nEV26eMKoh37gIJ0mYEYnrL4EKjiC1IFXHabZQ==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
@@ -1034,13 +1034,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.8.0-123358:
-    resolution: {integrity: sha512-aq+ngChON59Z7zRjiyPZzHggyV5LUHDT1gv/PQKOpItVUO/AE6tEhftcHNwxoT5P6zx1fnhgDtdf6kjHzARVvQ==}
+  /@fluidframework/build-tools/0.8.0:
+    resolution: {integrity: sha512-hvwN0J591XEiH39m5SeT7P1ayXAnaEhXA2+Hdb1kCZkfcx9Pl3N+Yx1V9c9udvBKVJWV9paAoBu9u6HI8mYD6w==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.8.0-123358
-      '@fluidframework/bundle-size-tools': 0.8.0-123358
+      '@fluid-tools/version-tools': 0.8.0
+      '@fluidframework/bundle-size-tools': 0.8.0
       '@octokit/core': 4.1.0
       '@rushstack/node-core-library': 3.53.2
       async: 3.2.4
@@ -1074,8 +1074,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.8.0-123358:
-    resolution: {integrity: sha512-edQrBFRhtzMlZ8kjdaQu5FRPikBdXPdnudCyQrLE6RFhMLQYeROCGcNHtEHrSFb6gG+a0QW4SmEa19HUsTV2Ew==}
+  /@fluidframework/bundle-size-tools/0.8.0:
+    resolution: {integrity: sha512-RodL7XfVlViHME+4jTmQ6zIZjMhzY3RsMNijHnw9mrBhYXce3Lv3wioccmPiPkfEOQ/9UEfBI3Z9Wxbygutqsg==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
