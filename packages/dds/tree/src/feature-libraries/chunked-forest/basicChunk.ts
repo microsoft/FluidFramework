@@ -82,8 +82,11 @@ export type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
  */
 export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor {
 	/**
-	 * Might start at special root where fields are detached sequences.
+	 * Starts at root field which might be a detached sequence.
 	 *
+	 * @param root - sequence of BasicChunk which make up the contents of the root sequence.
+	 * Since this cursor starts in `Fields` node at the root, the siblings array when in fields mode is just the field keys,
+	 * this is needed to get the actual root nodes when entering nodes of the root field.
 	 * @param siblingStack - Stack of collections of siblings along the path through the tree:
 	 * does not include current level (which is stored in `siblings`).
 	 * Even levels in the stack (starting from 0) are keys and odd levels are sequences of nodes.
@@ -94,6 +97,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	 * @param index - Index into `siblings`.
 	 * @param indexOfChunk - Index of chunk in array of chunks. Only for Nodes mode.
 	 * @param indexWithinChunk - Index withing chunk selected by indexOfChunkStack. Only for Nodes mode.
+	 * @param nestedCursor - When the outer cursor (this `BasicChunkCursor` cursor)
+	 * navigates into a chunk it does not natively understand (currently anything other than `BasicChunk`s)
+	 * it creates the `nestedCursor` over that chunk, and delegates all operations to it.
 	 */
 	public constructor(
 		protected root: BasicChunk[],
