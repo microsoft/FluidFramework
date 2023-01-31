@@ -18,6 +18,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 
 /**
  * `true` iff the given type is an acceptable shape for an event
+ * @alpha
  */
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
@@ -32,6 +33,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
  * ```
  * Any object type is a valid {@link Events}, but only the event-like properties of that
  * type will be included.
+ * @alpha
  */
 export type Events<E> = {
 	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
@@ -73,6 +75,7 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  *   error: (errorCode: number) => void;
  * }>
  * ```
+ * @alpha
  */
 export interface ISubscribable<E extends Events<E>> {
 	/**
@@ -87,6 +90,7 @@ export interface ISubscribable<E extends Events<E>> {
 
 /**
  * An object which can emit events to subscribed listeners.
+ * @alpha
  */
 export interface IEmitter<E extends Events<E>> {
 	/**
@@ -102,6 +106,7 @@ export interface IEmitter<E extends Events<E>> {
  *
  * A class can delegate handling {@link ISubscribable} to the returned value while using it to emit the events.
  * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
+ * @alpha
  */
 export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitter<E> {
 	return new ComposableEventEmitter<E>();

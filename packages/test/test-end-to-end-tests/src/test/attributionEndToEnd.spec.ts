@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+import { AttributionInfo } from "@fluidframework/runtime-definitions";
 import {
-	AttributionInfo,
 	createRuntimeAttributor,
 	enableOnNewFileKey,
 	IRuntimeAttributor,

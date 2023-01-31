@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -19,13 +20,6 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
-
-// @alpha (undocumented)
-export interface AttributionKey {
-    // (undocumented)
-    seq: number;
-    type: "op";
-}
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
