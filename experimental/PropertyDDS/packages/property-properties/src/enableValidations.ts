@@ -4,7 +4,7 @@
  */
 
 export let validationsEnabled = {
-    enabled: true,
+	enabled: true,
 };
 
 /**
@@ -14,5 +14,5 @@ export let validationsEnabled = {
  * @param enabled - Are the validations enabled?
  */
 export function enableValidations(enabled: boolean) {
-    validationsEnabled.enabled = enabled;
+	validationsEnabled.enabled = enabled;
 }

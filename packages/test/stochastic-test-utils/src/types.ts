@@ -4,7 +4,7 @@
  */
 
 export interface BaseFuzzTestState {
-    random: IRandom;
+	random: IRandom;
 }
 
 export const done = Symbol("GeneratorDone");
@@ -38,7 +38,11 @@ export type AcceptanceCondition<TState> = (state: TState) => boolean;
  * This is useful in practice to avoid invoking generators for known-to-be invalid actions based on the current state:
  * for example, a "leave" op cannot be generated if there are no currently connected clients.
  */
-export type Weights<TOp, TState> = [TOp | Generator<TOp, TState>, number, AcceptanceCondition<TState>?][];
+export type Weights<TOp, TState> = [
+	TOp | Generator<TOp, TState>,
+	number,
+	AcceptanceCondition<TState>?,
+][];
 
 /**
  * Array of weighted generators to select from.
@@ -47,61 +51,65 @@ export type Weights<TOp, TState> = [TOp | Generator<TOp, TState>, number, Accept
  * This is useful in practice to avoid invoking generators for known-to-be invalid actions based on the current state:
  * for example, a "leave" op cannot be generated if there are no currently connected clients.
  */
-export type AsyncWeights<TOp, TState> = [TOp | AsyncGenerator<TOp, TState>, number, AcceptanceCondition<TState>?][];
+export type AsyncWeights<TOp, TState> = [
+	TOp | AsyncGenerator<TOp, TState>,
+	number,
+	AcceptanceCondition<TState>?,
+][];
 
 export interface SaveInfo {
-    saveAt?: number;
-    saveOnFailure: boolean;
-    /** Filepath to dump the history file. Containing folder must already be created. */
-    filepath: string;
+	saveAt?: number;
+	saveOnFailure: boolean;
+	/** Filepath to dump the history file. Containing folder must already be created. */
+	filepath: string;
 }
 
 export interface IRandom {
-    /**
-     * Return a pseudorandomly chosen boolean value that is true with the given probability.
-     * (A probability of 0 is always false, a probability of 1 is always true)
-     */
-    bool(probability?: number): boolean;
+	/**
+	 * Return a pseudorandomly chosen boolean value that is true with the given probability.
+	 * (A probability of 0 is always false, a probability of 1 is always true)
+	 */
+	bool(probability?: number): boolean;
 
-    /**
-     * Return a pseudorandomly chosen int53 in the range [min..max] (both inclusive).
-     */
-    integer(min: number, max: number): number;
+	/**
+	 * Return a pseudorandomly chosen int53 in the range [min..max] (both inclusive).
+	 */
+	integer(min: number, max: number): number;
 
-    /**
-     * Returns a pseudorandomly chosen float64 from the normal distribution with the given
-     * 'mean' and 'standardDeviation'.
-     */
-    normal(mean?: number, standardDeviation?: number): number;
+	/**
+	 * Returns a pseudorandomly chosen float64 from the normal distribution with the given
+	 * 'mean' and 'standardDeviation'.
+	 */
+	normal(mean?: number, standardDeviation?: number): number;
 
-    /**
-     * Returns a pseudorandomly chosen item from the set of provided 'items'.
-     */
-    pick<T>(items: T[]): T;
+	/**
+	 * Returns a pseudorandomly chosen item from the set of provided 'items'.
+	 */
+	pick<T>(items: T[]): T;
 
-    /**
-     * Return a pseudorandomly chosen float64 in the range [min..max) (inclusive min, exclusive max).
-     *
-     * If 'min' and 'max' are unspecified, defaults to [0..1).
-     */
-    real(min?: number, max?: number): number;
+	/**
+	 * Return a pseudorandomly chosen float64 in the range [min..max) (inclusive min, exclusive max).
+	 *
+	 * If 'min' and 'max' are unspecified, defaults to [0..1).
+	 */
+	real(min?: number, max?: number): number;
 
-    /**
-     * Pseudorandomly shuffles the order of the items in the given array (array is modified in place.)
-     */
-    shuffle<T>(items: T[]);
+	/**
+	 * Pseudorandomly shuffles the order of the items in the given array (array is modified in place.)
+	 */
+	shuffle<T>(items: T[]);
 
-    /**
-     * Returns a pseudorandomly generated string of the specified length.  The string is constructed
-     * of characters from the given alphabet.
-     *
-     * If unspecified, the base58 alphabet is used, which excludes non-alphanumeric characters as
-     * well as 0 – zero / O – capital o and I – capital i / l – lower-case L.
-     */
-    string(length: number, alphabet?: string): string;
+	/**
+	 * Returns a pseudorandomly generated string of the specified length.  The string is constructed
+	 * of characters from the given alphabet.
+	 *
+	 * If unspecified, the base58 alphabet is used, which excludes non-alphanumeric characters as
+	 * well as 0 – zero / O – capital o and I – capital i / l – lower-case L.
+	 */
+	string(length: number, alphabet?: string): string;
 
-    /**
-     * Return a pseudorandomly generated UUID (version 4).
-     */
-    uuid4(): string;
+	/**
+	 * Return a pseudorandomly generated UUID (version 4).
+	 */
+	uuid4(): string;
 }

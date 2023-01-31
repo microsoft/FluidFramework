@@ -15,13 +15,13 @@ import { isDebuggerPanelOpen } from "./Utilities";
  * @internal
  */
 export async function openDebuggerPanel(): Promise<boolean> {
-    if (isDebuggerPanelOpen()) {
-        return false;
-    }
+	if (isDebuggerPanelOpen()) {
+		return false;
+	}
 
-    const debugPanel = document.createElement("div");
-    debugPanel.id = debuggerPanelId;
-    document.body.append(debugPanel);
+	const debugPanel = document.createElement("div");
+	debugPanel.id = debuggerPanelId;
+	document.body.append(debugPanel);
 
-    return renderClientDebuggerView(debugPanel);
+	return renderClientDebuggerView(debugPanel);
 }

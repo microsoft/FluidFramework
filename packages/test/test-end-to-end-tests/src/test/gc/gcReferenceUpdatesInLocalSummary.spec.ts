@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
-    DataObjectFactory,
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -24,43 +24,43 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
+	public get _root() {
+		return this.root;
+	}
 
-    public get _context() {
-        return this.context;
-    }
+	public get _context() {
+		return this.context;
+	}
 
-    private readonly matrixKey = "matrix";
-    public matrix!: SharedMatrix;
-    public undoRedoStackManager!: UndoRedoStackManager;
+	private readonly matrixKey = "matrix";
+	public matrix!: SharedMatrix;
+	public undoRedoStackManager!: UndoRedoStackManager;
 
-    private readonly sharedStringKey = "sharedString";
-    public sharedString!: SharedString;
+	private readonly sharedStringKey = "sharedString";
+	public sharedString!: SharedString;
 
-    protected async initializingFirstTime() {
-        const sharedMatrix = SharedMatrix.create(this.runtime);
-        this.root.set(this.matrixKey, sharedMatrix.handle);
+	protected async initializingFirstTime() {
+		const sharedMatrix = SharedMatrix.create(this.runtime);
+		this.root.set(this.matrixKey, sharedMatrix.handle);
 
-        const sharedString = SharedString.create(this.runtime);
-        this.root.set(this.sharedStringKey, sharedString.handle);
-    }
+		const sharedString = SharedString.create(this.runtime);
+		this.root.set(this.sharedStringKey, sharedString.handle);
+	}
 
-    protected async hasInitialized() {
-        const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-        assert(matrixHandle !== undefined, "SharedMatrix not found");
-        this.matrix = await matrixHandle.get();
+	protected async hasInitialized() {
+		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+		assert(matrixHandle !== undefined, "SharedMatrix not found");
+		this.matrix = await matrixHandle.get();
 
-        this.undoRedoStackManager = new UndoRedoStackManager();
-        this.matrix.insertRows(0, 3);
-        this.matrix.insertCols(0, 3);
-        this.matrix.openUndo(this.undoRedoStackManager);
+		this.undoRedoStackManager = new UndoRedoStackManager();
+		this.matrix.insertRows(0, 3);
+		this.matrix.insertCols(0, 3);
+		this.matrix.openUndo(this.undoRedoStackManager);
 
-        const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
-        assert(sharedStringHandle !== undefined, "SharedMatrix not found");
-        this.sharedString = await sharedStringHandle.get();
-    }
+		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
+		assert(sharedStringHandle !== undefined, "SharedMatrix not found");
+		this.sharedString = await sharedStringHandle.get();
+	}
 }
 
 /**
@@ -71,151 +71,152 @@ class TestDataObject extends DataObject {
  * the "unreferenced" property.
  */
 describeFullCompat("GC reference updates in local summary", (getTestObjectProvider) => {
-    let provider: ITestObjectProvider;
-    const factory = new DataObjectFactory(
-        "TestDataObject",
-        TestDataObject,
-        [SharedMatrix.getFactory(), SharedString.getFactory()],
-        []);
+	let provider: ITestObjectProvider;
+	const factory = new DataObjectFactory(
+		"TestDataObject",
+		TestDataObject,
+		[SharedMatrix.getFactory(), SharedString.getFactory()],
+		[],
+	);
 
-    const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: {
-            disableSummaries: true,
-            summaryConfigOverrides: {
-                state: "disabled",
-            },
-         },
-        gcOptions: { gcAllowed: true },
-    };
-    const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        factory,
-        [
-            [factory.type, Promise.resolve(factory)],
-        ],
-        undefined,
-        undefined,
-        runtimeOptions,
-    );
+	const runtimeOptions: IContainerRuntimeOptions = {
+		summaryOptions: {
+			summaryConfigOverrides: {
+				state: "disabled",
+			},
+		},
+		gcOptions: { gcAllowed: true },
+	};
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+		factory,
+		[[factory.type, Promise.resolve(factory)]],
+		undefined,
+		undefined,
+		runtimeOptions,
+	);
 
-    let containerRuntime: ContainerRuntime;
-    let mainDataStore: TestDataObject;
+	let containerRuntime: ContainerRuntime;
+	let mainDataStore: TestDataObject;
 
-    /**
-     * Validates that the data store with the given id is represented correctly in the summary.
-     *
-     * For referenced data stores:
-     *
-     * - The unreferenced property in its entry in the summary should be undefined.
-     *
-     * For unreferenced data stores:
-     *
-     * - The unreferenced property in its entry in the summary should be true.
-     */
-    async function validateDataStoreInSummary(dataStoreId: string, referenced: boolean) {
-        await provider.ensureSynchronized();
-        const { summary } = await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger: new TelemetryNullLogger(),
-        });
+	/**
+	 * Validates that the data store with the given id is represented correctly in the summary.
+	 *
+	 * For referenced data stores:
+	 *
+	 * - The unreferenced property in its entry in the summary should be undefined.
+	 *
+	 * For unreferenced data stores:
+	 *
+	 * - The unreferenced property in its entry in the summary should be true.
+	 */
+	async function validateDataStoreInSummary(dataStoreId: string, referenced: boolean) {
+		await provider.ensureSynchronized();
+		const { summary } = await containerRuntime.summarize({
+			runGC: true,
+			fullTree: true,
+			trackState: false,
+			summaryLogger: new TelemetryNullLogger(),
+		});
 
-        let dataStoreTree: ISummaryTree | undefined;
-        const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
-        for (const [id, summaryObject] of Object.entries(channelsTree)) {
-            if (id === dataStoreId) {
-                assert(
-                    summaryObject.type === SummaryType.Tree,
-                    `Data store ${dataStoreId}'s entry is not a tree`,
-                );
-                dataStoreTree = summaryObject;
-                break;
-            }
-        }
+		let dataStoreTree: ISummaryTree | undefined;
+		const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
+		for (const [id, summaryObject] of Object.entries(channelsTree)) {
+			if (id === dataStoreId) {
+				assert(
+					summaryObject.type === SummaryType.Tree,
+					`Data store ${dataStoreId}'s entry is not a tree`,
+				);
+				dataStoreTree = summaryObject;
+				break;
+			}
+		}
 
-        assert(dataStoreTree !== undefined, `Data store ${dataStoreId} tree not in summary`);
+		assert(dataStoreTree !== undefined, `Data store ${dataStoreId} tree not in summary`);
 
-        if (referenced) {
-            assert(dataStoreTree.unreferenced === undefined, `Data store ${dataStoreId} should be referenced`);
-        } else {
-            assert(dataStoreTree.unreferenced === true, `Data store ${dataStoreId} should be unreferenced`);
-        }
-    }
+		if (referenced) {
+			assert(
+				dataStoreTree.unreferenced === undefined,
+				`Data store ${dataStoreId} should be referenced`,
+			);
+		} else {
+			assert(
+				dataStoreTree.unreferenced === true,
+				`Data store ${dataStoreId} should be unreferenced`,
+			);
+		}
+	}
 
-    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
+	const createContainer = async (): Promise<IContainer> =>
+		provider.createContainer(runtimeFactory);
 
-    beforeEach(async function() {
-        provider = getTestObjectProvider({ syncSummarizer: true });
-        // These tests validate the GC state in summary by calling summarize directly on the container runtime.
-        // They do not post these summaries or download them. So, it doesn't need to run against real services.
-        if (provider.driver.type !== "local") {
-            this.skip();
-        }
+	beforeEach(async function () {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+		// These tests validate the GC state in summary by calling summarize directly on the container runtime.
+		// They do not post these summaries or download them. So, it doesn't need to run against real services.
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
 
-        const container = await createContainer();
-        mainDataStore = await requestFluidObject<TestDataObject>(container, "/");
-        containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
-        await waitForContainerConnection(container);
-    });
+		const container = await createContainer();
+		mainDataStore = await requestFluidObject<TestDataObject>(container, "/");
+		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+		await waitForContainerConnection(container);
+	});
 
-    describe("SharedMatrix", () => {
-        it("should reflect undo / redo of data stores in the next summary", async () => {
-            // Create a second data store (dataStore2).
+	describe("SharedMatrix", () => {
+		it("should reflect undo / redo of data stores in the next summary", async () => {
+			// Create a second data store (dataStore2).
 
-            const dataStore2 = await factory.createInstance(containerRuntime);
-            // Add the handle of dataStore2 to the matrix to mark it as referenced.
-            mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
-            await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
-            mainDataStore.undoRedoStackManager.closeCurrentOperation();
+			const dataStore2 = await factory.createInstance(containerRuntime);
+			// Add the handle of dataStore2 to the matrix to mark it as referenced.
+			mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
+			await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
+			mainDataStore.undoRedoStackManager.closeCurrentOperation();
 
-            // Remove its handle and verify its marked as unreferenced.
-            mainDataStore.matrix.removeCols(0, 1);
-            await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
+			// Remove its handle and verify its marked as unreferenced.
+			mainDataStore.matrix.removeCols(0, 1);
+			await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
 
-            // Undo column remove so that its marked as referenced again.
-            mainDataStore.undoRedoStackManager.undoOperation();
-            await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
+			// Undo column remove so that its marked as referenced again.
+			mainDataStore.undoRedoStackManager.undoOperation();
+			await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
 
-            // Redo column remove so that its marked as unreferenced again.
-            mainDataStore.undoRedoStackManager.redoOperation();
-            await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
-        });
-    });
+			// Redo column remove so that its marked as unreferenced again.
+			mainDataStore.undoRedoStackManager.redoOperation();
+			await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
+		});
+	});
 
-    describe("SharedString", () => {
-        it("should reflect unreferenced data stores in the next summary", async () => {
-            // Create a second data store (dataStore2).
-            const dataStore2 = await factory.createInstance(containerRuntime);
+	describe("SharedString", () => {
+		it("should reflect unreferenced data stores in the next summary", async () => {
+			// Create a second data store (dataStore2).
+			const dataStore2 = await factory.createInstance(containerRuntime);
 
-            // Add the handle of dataStore2 to the shared string to mark it as referenced.
-            mainDataStore.sharedString.insertText(0, "Hello");
-            mainDataStore.sharedString.insertMarker(
-                0,
-                ReferenceType.Simple,
-                {
-                    [reservedMarkerIdKey]: "markerId",
-                    ["handle"]: dataStore2.handle,
-                },
-            );
-            await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
+			// Add the handle of dataStore2 to the shared string to mark it as referenced.
+			mainDataStore.sharedString.insertText(0, "Hello");
+			mainDataStore.sharedString.insertMarker(0, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+				["handle"]: dataStore2.handle,
+			});
+			await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
 
-            // Remove its handle and verify its marked as unreferenced.
-            mainDataStore.sharedString.annotateMarker(
-                mainDataStore.sharedString.getMarkerFromId("markerId") as Marker,
-                {
-                    ["handle"]: "",
-                },
-            );
-            await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
+			// Remove its handle and verify its marked as unreferenced.
+			mainDataStore.sharedString.annotateMarker(
+				mainDataStore.sharedString.getMarkerFromId("markerId") as Marker,
+				{
+					["handle"]: "",
+				},
+			);
+			await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
 
-            // Add the handle back and verify its marked as referenced.
-            mainDataStore.sharedString.annotateMarker(
-                mainDataStore.sharedString.getMarkerFromId("markerId") as Marker,
-                {
-                    ["handle"]: dataStore2.handle,
-                },
-            );
-            await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
-        });
-    });
+			// Add the handle back and verify its marked as referenced.
+			mainDataStore.sharedString.annotateMarker(
+				mainDataStore.sharedString.getMarkerFromId("markerId") as Marker,
+				{
+					["handle"]: dataStore2.handle,
+				},
+			);
+			await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
+		});
+	});
 });

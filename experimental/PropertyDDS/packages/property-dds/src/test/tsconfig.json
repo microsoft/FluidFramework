@@ -6,12 +6,12 @@
 		"types": ["node", "mocha"],
 		"declaration": false,
 		"noUnusedLocals": false,
-		"declarationMap": false
+		"declarationMap": false,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }

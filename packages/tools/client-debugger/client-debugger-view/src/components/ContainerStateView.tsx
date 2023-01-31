@@ -21,64 +21,64 @@ export type ContainerStateViewProps = HasClientDebugger;
  * connection state, attach state, etc.
  */
 export function ContainerStateView(props: ContainerStateViewProps): React.ReactElement {
-    const { clientDebugger } = props;
-    const { container } = clientDebugger;
+	const { clientDebugger } = props;
+	const { container } = clientDebugger;
 
-    const [containerAttachState, setContainerAttachState] = React.useState<AttachState>(
-        container.attachState,
-    );
-    const [containerConnectionState, setContainerConnectionState] = React.useState<ConnectionState>(
-        container.connectionState,
-    );
-    const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(container.closed);
+	const [containerAttachState, setContainerAttachState] = React.useState<AttachState>(
+		container.attachState,
+	);
+	const [containerConnectionState, setContainerConnectionState] = React.useState<ConnectionState>(
+		container.connectionState,
+	);
+	const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(container.closed);
 
-    React.useEffect(() => {
-        function onContainerAttached(): void {
-            setContainerAttachState(container.attachState);
-        }
+	React.useEffect(() => {
+		function onContainerAttached(): void {
+			setContainerAttachState(container.attachState);
+		}
 
-        function onContainerConnectionChange(): void {
-            setContainerConnectionState(container.connectionState);
-        }
+		function onContainerConnectionChange(): void {
+			setContainerConnectionState(container.connectionState);
+		}
 
-        function onContainerDisposed(): void {
-            setIsContainerDisposed(true);
-        }
+		function onContainerDisposed(): void {
+			setIsContainerDisposed(true);
+		}
 
-        container.on("attached", onContainerAttached);
-        container.on("connected", onContainerConnectionChange);
-        container.on("disconnected", onContainerConnectionChange);
-        container.on("closed", onContainerDisposed);
+		container.on("attached", onContainerAttached);
+		container.on("connected", onContainerConnectionChange);
+		container.on("disconnected", onContainerConnectionChange);
+		container.on("closed", onContainerDisposed);
 
-        return (): void => {
-            container.off("attached", onContainerAttached);
-            container.off("connected", onContainerConnectionChange);
-            container.off("disconnected", onContainerConnectionChange);
-            container.off("closed", onContainerDisposed);
-        };
-    }, [container]);
+		return (): void => {
+			container.off("attached", onContainerAttached);
+			container.off("connected", onContainerConnectionChange);
+			container.off("disconnected", onContainerConnectionChange);
+			container.off("closed", onContainerDisposed);
+		};
+	}, [container]);
 
-    const children: React.ReactElement[] = [
-        <span>
-            <b>Status: </b>
-        </span>,
-    ];
-    if (isContainerDisposed) {
-        children.push(<span>Disposed</span>);
-    } else {
-        children.push(<span>{containerAttachState}</span>);
-        if (containerAttachState === AttachState.Attached) {
-            children.push(<span>{connectionStateToString(containerConnectionState)}</span>);
-        }
-    }
+	const children: React.ReactElement[] = [
+		<span>
+			<b>Status: </b>
+		</span>,
+	];
+	if (isContainerDisposed) {
+		children.push(<span>Disposed</span>);
+	} else {
+		children.push(<span>{containerAttachState}</span>);
+		if (containerAttachState === AttachState.Attached) {
+			children.push(<span>{connectionStateToString(containerConnectionState)}</span>);
+		}
+	}
 
-    return (
-        <Stack horizontal>
-            {children.map((child, index) => (
-                <StackItem key={`state-child-${index}`} styles={{ root: { paddingRight: 5 } }}>
-                    {child}
-                </StackItem>
-            ))}
-        </Stack>
-    );
+	return (
+		<Stack horizontal>
+			{children.map((child, index) => (
+				<StackItem key={`state-child-${index}`} styles={{ root: { paddingRight: 5 } }}>
+					{child}
+				</StackItem>
+			))}
+		</Stack>
+	);
 }

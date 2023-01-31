@@ -15,7 +15,8 @@ async function getDeltas(
     tenantId: string,
     documentId: string,
     from?: number,
-    to?: number): Promise<ISequencedDocumentMessage[]> {
+    to?: number
+): Promise<ISequencedDocumentMessage[]> {
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
     if (from !== undefined || to !== undefined) {
@@ -33,7 +34,9 @@ async function getDeltas(
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
     const collection = db.collection<any>(collectionName);
-    const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
+    const dbDeltas = await collection.find(query, {
+        "operation.sequenceNumber": 1,
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return dbDeltas.map((delta) => delta.operation);
@@ -58,7 +61,8 @@ export function create(config: Provider, mongoManager: MongoManager): Router {
             tenantId,
             getParam(request.params, "id"),
             from,
-            to);
+            to
+        );
 
         deltasP.then(
             (deltas) => {
@@ -66,7 +70,8 @@ export function create(config: Provider, mongoManager: MongoManager): Router {
             },
             (error) => {
                 response.status(500).json(error);
-            });
+            }
+        );
     });
 
     return router;

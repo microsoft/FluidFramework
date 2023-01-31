@@ -101,7 +101,10 @@ export function benchmark(args: BenchmarkArguments): Test {
             // to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
             // of scope for now.
             let inspectArgIndex: number = -1;
-            while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
+            while (
+                (inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >=
+                0
+            ) {
                 childArgs.splice(inspectArgIndex, 1);
             }
 
@@ -137,17 +140,23 @@ export function benchmark(args: BenchmarkArguments): Test {
                 defer: isAsync,
             };
 
-            const benchmarkFunction: (deferred: { resolve: Mocha.Done; }) => void | Promise<unknown> = isAsync
-                ? async (deferred: { resolve: Mocha.Done; }) => {
-                    // We have to do a little translation because the Benchmark library expects callback-based
-                    // asynchronicity.
-                    await argsBenchmarkFn();
-                    deferred.resolve();
-                }
+            const benchmarkFunction: (deferred: {
+                resolve: Mocha.Done;
+            }) => void | Promise<unknown> = isAsync
+                ? async (deferred: { resolve: Mocha.Done }) => {
+                      // We have to do a little translation because the Benchmark library expects callback-based
+                      // asynchronicity.
+                      await argsBenchmarkFn();
+                      deferred.resolve();
+                  }
                 : argsBenchmarkFn;
 
             await new Promise<void>((resolve) => {
-                const benchmarkInstance = new Benchmark(args.title, benchmarkFunction, benchmarkOptions);
+                const benchmarkInstance = new Benchmark(
+                    args.title,
+                    benchmarkFunction,
+                    benchmarkOptions,
+                );
                 // Run a garbage collection, if possible, before the test.
                 // This helps noise from allocations before the test (ex: from previous tests or startup) from
                 // impacting the test.

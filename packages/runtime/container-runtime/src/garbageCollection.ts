@@ -6,7 +6,11 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
+import {
+	ClientSessionExpiredError,
+	DataProcessingError,
+	UsageError,
+} from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	cloneGCData,
@@ -65,7 +69,7 @@ import {
 	stableGCVersion,
 	trackGCStateKey,
 } from "./garbageCollectionConstants";
-import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
 	getGCVersion,
@@ -126,7 +130,7 @@ export interface IGarbageCollectionRuntime {
 	/**
 	 * After GC has run, called to notify the runtime of deletable routes. The runtime is responsible
 	 * for telling the garbage collector the routes of the objects it has deleted
-	*/
+	 */
 	deleteUnusedNodes(deletableRoutes: string[]): string[];
 	/** Called to notify the runtime of routes that are tombstones. */
 	updateTombstonedRoutes(tombstoneRoutes: string[]): void;
@@ -148,9 +152,11 @@ export interface IGarbageCollector {
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
-	collectGarbage(
-		options: { logger?: ITelemetryLogger; runSweep?: boolean; fullGC?: boolean; },
-	): Promise<IGCStats | undefined>;
+	collectGarbage(options: {
+		logger?: ITelemetryLogger;
+		runSweep?: boolean;
+		fullGC?: boolean;
+	}): Promise<IGCStats | undefined>;
 	/** Summarizes the GC data and returns it as a summary tree. */
 	summarize(
 		fullTree: boolean,
@@ -262,16 +268,19 @@ export class UnreferencedStateTracker {
 		private readonly sweepTimeoutMs: number | undefined,
 	) {
 		if (this.sweepTimeoutMs !== undefined) {
-			assert(this.inactiveTimeoutMs <= this.sweepTimeoutMs,
-				0x3b0 /* inactive timeout must not be greater than the sweep timeout */);
+			assert(
+				this.inactiveTimeoutMs <= this.sweepTimeoutMs,
+				0x3b0 /* inactive timeout must not be greater than the sweep timeout */,
+			);
 		}
 
-		this.sweepTimer = new TimerWithNoDefaultTimeout(
-			() => {
-				this._state = UnreferencedState.SweepReady;
-				assert(!this.inactiveTimer.hasTimer, 0x3b1 /* inactiveTimer still running after sweepTimer fired! */);
-			},
-		);
+		this.sweepTimer = new TimerWithNoDefaultTimeout(() => {
+			this._state = UnreferencedState.SweepReady;
+			assert(
+				!this.inactiveTimer.hasTimer,
+				0x3b1 /* inactiveTimer still running after sweepTimer fired! */,
+			);
+		});
 
 		this.inactiveTimer = new TimerWithNoDefaultTimeout(() => {
 			this._state = UnreferencedState.Inactive;
@@ -366,8 +375,10 @@ export class GarbageCollector implements IGarbageCollector {
 	 * 4.2. This client's latest summary was updated from a snapshot that has a different GC version.
 	 */
 	public get summaryStateNeedsReset(): boolean {
-		return this.gcStateNeedsReset ||
-			(this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion);
+		return (
+			this.gcStateNeedsReset ||
+			(this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion)
+		);
 	}
 
 	/**
@@ -411,7 +422,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * Note that the state will be reset only once for the first summary generated after this returns true. After that,
 	 * this will return false.
-	*/
+	 */
 	private get gcStateNeedsReset(): boolean {
 		return this.wasGCRunInLatestSummary !== this.shouldRunGC;
 	}
@@ -475,7 +486,9 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly sweepTimeoutMs: number | undefined;
 
 	/** For a given node path, returns the node's package path. */
-	private readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
+	private readonly getNodePackagePath: (
+		nodePath: string,
+	) => Promise<readonly string[] | undefined>;
 	/** Returns the timestamp of the last summary generated for this container. */
 	private readonly getLastSummaryTimestampMs: () => number | undefined;
 	/** Returns true if connection is active, i.e. it's "write" connection and the runtime is connected. */
@@ -514,13 +527,17 @@ export class GarbageCollector implements IGarbageCollector {
 		const metadata = createParams.metadata;
 		const readAndParseBlob = createParams.readAndParseBlob;
 
-		this.mc = loggerToMonitoringContext(ChildLogger.create(
-			createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
-		));
+		this.mc = loggerToMonitoringContext(
+			ChildLogger.create(createParams.baseLogger, "GarbageCollector", {
+				all: { completedGCRuns: () => this.completedRuns },
+			}),
+		);
 
 		// If version upgrade is not enabled, fall back to the stable GC version.
 		this.currentGCVersion =
-			this.mc.config.getBoolean(gcVersionUpgradeToV2Key) === true ? currentGCVersion : stableGCVersion;
+			this.mc.config.getBoolean(gcVersionUpgradeToV2Key) === true
+				? currentGCVersion
+				: stableGCVersion;
 
 		this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
 			createParams.getContainerDiagnosticId(),
@@ -541,8 +558,10 @@ export class GarbageCollector implements IGarbageCollector {
 		function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined) {
 			const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
 			const bufferMs = oneDayMs;
-			return sessionExpiryTimeoutMs &&
-				(sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs);
+			return (
+				sessionExpiryTimeoutMs &&
+				sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs
+			);
 		}
 
 		/**
@@ -560,18 +579,20 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sweepEnabled = metadata?.sweepEnabled ?? false;
 			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 			this.sweepTimeoutMs =
-				metadata?.sweepTimeoutMs
-				?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
+				metadata?.sweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
 		} else {
 			// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
 			// scenario but explicitly failing makes it clearer and promotes correct usage.
 			if (this.gcOptions.sweepAllowed && this.gcOptions.gcAllowed === false) {
-				throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
+				throw new UsageError(
+					"GC sweep phase cannot be enabled without enabling GC mark phase",
+				);
 			}
 
 			// This Test Override only applies for new containers
-			const testOverrideSweepTimeoutMs =
-				this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SweepTimeoutMs");
+			const testOverrideSweepTimeoutMs = this.mc.config.getNumber(
+				"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs",
+			);
 
 			// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
 			// flag in GC options to false.
@@ -581,24 +602,26 @@ export class GarbageCollector implements IGarbageCollector {
 
 			// Set the Session Expiry only if the flag is enabled and GC is enabled.
 			if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
-				this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
+				this.sessionExpiryTimeoutMs =
+					this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 			}
 			this.sweepTimeoutMs =
-				testOverrideSweepTimeoutMs
-				?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
+				testOverrideSweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
 		}
 
 		// If session expiry is enabled, we need to close the container when the session expiry timeout expires.
 		if (this.sessionExpiryTimeoutMs !== undefined) {
 			// If Test Override config is set, override Session Expiry timeout.
-			const overrideSessionExpiryTimeoutMs =
-				this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
+			const overrideSessionExpiryTimeoutMs = this.mc.config.getNumber(
+				"Fluid.GarbageCollection.TestOverride.SessionExpiryMs",
+			);
 			const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
 
-			this.sessionExpiryTimer = new Timer(
-				timeoutMs,
-				() => { this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs)); },
-			);
+			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
+				this.runtime.closeFn(
+					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
+				);
+			});
 			this.sessionExpiryTimer.start();
 		}
 
@@ -615,12 +638,12 @@ export class GarbageCollector implements IGarbageCollector {
 		 *
 		 * These conditions can be overridden via runGCKey feature flag.
 		 */
-		this.shouldRunGC = this.mc.config.getBoolean(runGCKey) ?? (
+		this.shouldRunGC =
+			this.mc.config.getBoolean(runGCKey) ??
 			// GC must be enabled for the document.
-			this.gcEnabled
-			// GC must not be disabled via GC options.
-			&& !this.gcOptions.disableGC
-		);
+			(this.gcEnabled &&
+				// GC must not be disabled via GC options.
+				!this.gcOptions.disableGC);
 
 		/**
 		 * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -633,14 +656,15 @@ export class GarbageCollector implements IGarbageCollector {
 		 * feature flag.
 		 */
 		this.shouldRunSweep =
-			this.shouldRunGC
-			&& this.sweepTimeoutMs !== undefined
-			&& (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
+			this.shouldRunGC &&
+			this.sweepTimeoutMs !== undefined &&
+			(this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
 
 		this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
 		// Override inactive timeout if test config or gc options to override it is set.
-		this.inactiveTimeoutMs = this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
+		this.inactiveTimeoutMs =
+			this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
 			this.gcOptions.inactiveTimeoutMs ??
 			defaultInactiveTimeoutMs;
 
@@ -650,84 +674,100 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-		this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
+		this.testMode =
+			this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
 		// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
 		// via feature flags.
-		this.tombstoneMode = !this.shouldRunSweep && this.mc.config.getBoolean(disableTombstoneKey) !== true;
+		this.tombstoneMode =
+			!this.shouldRunSweep && this.mc.config.getBoolean(disableTombstoneKey) !== true;
 
 		// If GC ran in the container that generated the base snapshot, it will have a GC tree.
 		this.wasGCRunInLatestSummary = baseSnapshot?.trees[gcTreeKey] !== undefined;
 
 		// Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
 		// it involves fetching blobs from storage which is expensive.
-		this.baseSnapshotDataP = new LazyPromise<IGarbageCollectionSnapshotData | undefined>(async () => {
-			if (baseSnapshot === undefined) {
-				return undefined;
-			}
-
-			try {
-				// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
-				const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
-				if (gcSnapshotTree !== undefined) {
-					return getGCDataFromSnapshot(
-						gcSnapshotTree,
-						readAndParseBlob,
-					);
+		this.baseSnapshotDataP = new LazyPromise<IGarbageCollectionSnapshotData | undefined>(
+			async () => {
+				if (baseSnapshot === undefined) {
+					return undefined;
 				}
 
-				// back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
-				// consolidate into IGarbageCollectionState format.
-				// Add a node for the root node that is not present in older snapshot format.
-				const gcState: IGarbageCollectionState = { gcNodes: { "/": { outboundRoutes: [] } } };
-				const dataStoreSnapshotTree = getSummaryForDatastores(baseSnapshot, metadata);
-				assert(dataStoreSnapshotTree !== undefined,
-					0x2a8 /* "Expected data store snapshot tree in base snapshot" */);
-				for (const [dsId, dsSnapshotTree] of Object.entries(dataStoreSnapshotTree.trees)) {
-					const blobId = dsSnapshotTree.blobs[gcTreeKey];
-					if (blobId === undefined) {
-						continue;
+				try {
+					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
+					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+					if (gcSnapshotTree !== undefined) {
+						return getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 					}
 
-					const gcSummaryDetails = await readAndParseBlob<IGarbageCollectionSummaryDetailsLegacy>(blobId);
-					// If there are no nodes for this data store, skip it.
-					if (gcSummaryDetails.gcData?.gcNodes === undefined) {
-						continue;
-					}
-
-					const dsRootId = `/${dsId}`;
-					// Since we used to write GC data at data store level, we won't have an entry for the root ("/").
-					// Construct that entry by adding root data store ids to its outbound routes.
-					const initialSnapshotDetails = await readAndParseBlob<ReadFluidDataStoreAttributes>(
-						dsSnapshotTree.blobs[dataStoreAttributesBlobName],
+					// back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
+					// consolidate into IGarbageCollectionState format.
+					// Add a node for the root node that is not present in older snapshot format.
+					const gcState: IGarbageCollectionState = {
+						gcNodes: { "/": { outboundRoutes: [] } },
+					};
+					const dataStoreSnapshotTree = getSummaryForDatastores(baseSnapshot, metadata);
+					assert(
+						dataStoreSnapshotTree !== undefined,
+						0x2a8 /* "Expected data store snapshot tree in base snapshot" */,
 					);
-					if (initialSnapshotDetails.isRootDataStore) {
-						gcState.gcNodes["/"].outboundRoutes.push(dsRootId);
-					}
+					for (const [dsId, dsSnapshotTree] of Object.entries(
+						dataStoreSnapshotTree.trees,
+					)) {
+						const blobId = dsSnapshotTree.blobs[gcTreeKey];
+						if (blobId === undefined) {
+							continue;
+						}
 
-					for (const [id, outboundRoutes] of Object.entries(gcSummaryDetails.gcData.gcNodes)) {
-						// Prefix the data store id to the GC node ids to make them relative to the root from being
-						// relative to the data store. Similar to how its done in DataStore::getGCData.
-						const rootId = id === "/" ? dsRootId : `${dsRootId}${id}`;
-						gcState.gcNodes[rootId] = { outboundRoutes: Array.from(outboundRoutes) };
+						const gcSummaryDetails =
+							await readAndParseBlob<IGarbageCollectionSummaryDetailsLegacy>(blobId);
+						// If there are no nodes for this data store, skip it.
+						if (gcSummaryDetails.gcData?.gcNodes === undefined) {
+							continue;
+						}
+
+						const dsRootId = `/${dsId}`;
+						// Since we used to write GC data at data store level, we won't have an entry for the root ("/").
+						// Construct that entry by adding root data store ids to its outbound routes.
+						const initialSnapshotDetails =
+							await readAndParseBlob<ReadFluidDataStoreAttributes>(
+								dsSnapshotTree.blobs[dataStoreAttributesBlobName],
+							);
+						if (initialSnapshotDetails.isRootDataStore) {
+							gcState.gcNodes["/"].outboundRoutes.push(dsRootId);
+						}
+
+						for (const [id, outboundRoutes] of Object.entries(
+							gcSummaryDetails.gcData.gcNodes,
+						)) {
+							// Prefix the data store id to the GC node ids to make them relative to the root from being
+							// relative to the data store. Similar to how its done in DataStore::getGCData.
+							const rootId = id === "/" ? dsRootId : `${dsRootId}${id}`;
+							gcState.gcNodes[rootId] = {
+								outboundRoutes: Array.from(outboundRoutes),
+							};
+						}
+						assert(
+							gcState.gcNodes[dsRootId] !== undefined,
+							0x2a9 /* GC nodes for data store not in GC blob */,
+						);
+						gcState.gcNodes[dsRootId].unreferencedTimestampMs =
+							gcSummaryDetails.unrefTimestamp;
 					}
-					assert(gcState.gcNodes[dsRootId] !== undefined,
-						0x2a9 /* GC nodes for data store not in GC blob */);
-					gcState.gcNodes[dsRootId].unreferencedTimestampMs = gcSummaryDetails.unrefTimestamp;
+					// If there is only one node (root node just added above), either GC is disabled or we are loading from
+					// the first summary generated by detached container. In both cases, GC was not run - return undefined.
+					return Object.keys(gcState.gcNodes).length === 1
+						? undefined
+						: { gcState, tombstones: undefined, deletedNodes: undefined };
+				} catch (error) {
+					const dpe = DataProcessingError.wrapIfUnrecognized(
+						error,
+						"FailedToInitializeGC",
+					);
+					dpe.addTelemetryProperties({ gcConfigs: JSON.stringify(this.configs) });
+					throw dpe;
 				}
-				// If there is only one node (root node just added above), either GC is disabled or we are loading from
-				// the first summary generated by detached container. In both cases, GC was not run - return undefined.
-				return Object.keys(gcState.gcNodes).length === 1
-					? undefined
-					: { gcState, tombstones: undefined, deletedNodes: undefined };
-			} catch (error) {
-				const dpe = DataProcessingError.wrapIfUnrecognized(
-					error,
-					"FailedToInitializeGC",
-				);
-				dpe.addTelemetryProperties({ gcConfigs: JSON.stringify(this.configs) });
-				throw dpe;
-			}
-		});
+			},
+		);
 
 		/**
 		 * Set up the initializer which initializes the GC state from the data in base snapshot. This is done when
@@ -773,7 +813,7 @@ export class GarbageCollector implements IGarbageCollector {
 				return {};
 			}
 
-			const gcNodes: { [id: string]: string[]; } = {};
+			const gcNodes: { [id: string]: string[] } = {};
 			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
 				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
 			}
@@ -852,7 +892,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// Clear all existing unreferenced state tracking.
 		for (const [, nodeStateTracker] of this.unreferencedNodesState) {
 			nodeStateTracker.stopTracking();
-		};
+		}
 		this.unreferencedNodesState.clear();
 
 		// If running sweep, the tombstone state represents the list of nodes that have been deleted during sweep.
@@ -861,7 +901,9 @@ export class GarbageCollector implements IGarbageCollector {
 		// If this call is because we are refreshing from a snapshot due to an ack, it is likely that the GC state
 		// in the snapshot is newer than this client's. And so, the deleted / tombstone nodes need to be updated.
 		if (this.shouldRunSweep) {
-			const snapshotDeletedNodes = snapshotData?.deletedNodes ? new Set(snapshotData.deletedNodes) : undefined;
+			const snapshotDeletedNodes = snapshotData?.deletedNodes
+				? new Set(snapshotData.deletedNodes)
+				: undefined;
 			// If the snapshot contains deleted nodes that are not yet deleted by this client, ask the runtime to
 			// delete them.
 			if (snapshotDeletedNodes !== undefined) {
@@ -891,7 +933,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// Update unreferenced state tracking as per the GC state in the snapshot data and update gcDataFromLastRun
 		// to the GC data from the snapshot data.
-		const gcNodes: { [id: string]: string[]; } = {};
+		const gcNodes: { [id: string]: string[] } = {};
 		for (const [nodeId, nodeData] of Object.entries(snapshotData.gcState.gcNodes)) {
 			if (nodeData.unreferencedTimestampMs !== undefined) {
 				this.unreferencedNodesState.set(
@@ -947,19 +989,20 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Runs garbage collection and updates the reference / used state of the nodes in the container.
 	 * @returns stats of the GC run or undefined if GC did not run.
 	 */
-	public async collectGarbage(
-		options: {
-			/** Logger to use for logging GC events */
-			logger?: ITelemetryLogger;
-			/** True to run GC sweep phase after the mark phase */
-			runSweep?: boolean;
-			/** True to generate full GC data */
-			fullGC?: boolean;
-		},
-	): Promise<IGCStats | undefined> {
-		const fullGC = options.fullGC ?? (this.gcOptions.runFullGC === true || this.summaryStateNeedsReset);
+	public async collectGarbage(options: {
+		/** Logger to use for logging GC events */
+		logger?: ITelemetryLogger;
+		/** True to run GC sweep phase after the mark phase */
+		runSweep?: boolean;
+		/** True to generate full GC data */
+		fullGC?: boolean;
+	}): Promise<IGCStats | undefined> {
+		const fullGC =
+			options.fullGC ?? (this.gcOptions.runFullGC === true || this.summaryStateNeedsReset);
 		const logger = options.logger
-			? ChildLogger.create(options.logger, undefined, { all: { completedGCRuns: () => this.completedRuns } })
+			? ChildLogger.create(options.logger, undefined, {
+					all: { completedGCRuns: () => this.completedRuns },
+			  })
 			: this.mc.logger;
 
 		/**
@@ -980,18 +1023,28 @@ export class GarbageCollector implements IGarbageCollector {
 			return undefined;
 		}
 
-		return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
-			await this.runPreGCSteps();
+		return PerformanceEvent.timedExecAsync(
+			logger,
+			{ eventName: "GarbageCollection" },
+			async (event) => {
+				await this.runPreGCSteps();
 
-			// Get the runtime's GC data and run GC on the reference graph in it.
-			const gcData = await this.runtime.getGCData(fullGC);
-			const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
+				// Get the runtime's GC data and run GC on the reference graph in it.
+				const gcData = await this.runtime.getGCData(fullGC);
+				const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
 
-			const gcStats = await this.runPostGCSteps(gcData, gcResult, logger, currentReferenceTimestampMs);
-			event.end({ ...gcStats, timestamp: currentReferenceTimestampMs });
-			this.completedRuns++;
-			return gcStats;
-		}, { end: true, cancel: "error" });
+				const gcStats = await this.runPostGCSteps(
+					gcData,
+					gcResult,
+					logger,
+					currentReferenceTimestampMs,
+				);
+				event.end({ ...gcStats, timestamp: currentReferenceTimestampMs });
+				this.completedRuns++;
+				return gcStats;
+			},
+			{ end: true, cancel: "error" },
+		);
 	}
 
 	private async runPreGCSteps() {
@@ -1012,7 +1065,12 @@ export class GarbageCollector implements IGarbageCollector {
 		const gcStats = this.generateStats(gcResult);
 
 		// Update the current mark state and update the runtime of all used routes or ids that used as per the GC run.
-		const sweepReadyNodes = this.updateMarkPhase(gcData, gcResult, currentReferenceTimestampMs, logger);
+		const sweepReadyNodes = this.updateMarkPhase(
+			gcData,
+			gcResult,
+			currentReferenceTimestampMs,
+			logger,
+		);
 		this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
 		// Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
@@ -1024,8 +1082,8 @@ export class GarbageCollector implements IGarbageCollector {
 		if (this.shouldRunSweep) {
 			const sweepData = this.runSweepPhase(sweepReadyNodes, gcData);
 			updatedGCData = sweepData;
-		// If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
-		// involving access to deleted data.
+			// If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
+			// involving access to deleted data.
 		} else if (this.testMode) {
 			this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
 		} else if (this.tombstoneMode) {
@@ -1064,19 +1122,23 @@ export class GarbageCollector implements IGarbageCollector {
 		for (const [nodeId, outboundRoutes] of Object.entries(this.gcDataFromLastRun.gcNodes)) {
 			gcState.gcNodes[nodeId] = {
 				outboundRoutes,
-				unreferencedTimestampMs: this.unreferencedNodesState.get(nodeId)?.unreferencedTimestampMs,
+				unreferencedTimestampMs:
+					this.unreferencedNodesState.get(nodeId)?.unreferencedTimestampMs,
 			};
 		}
 
 		const serializedGCState = JSON.stringify(generateSortedGCState(gcState));
 		// Serialize and write deleted nodes, if any. This is done irrespective of whether sweep is enabled or not so
 		// to identify deleted nodes' usage.
-		const serializedDeletedNodes = this.deletedNodes.size > 0
-			? JSON.stringify(Array.from(this.deletedNodes).sort())
-			: undefined;
+		const serializedDeletedNodes =
+			this.deletedNodes.size > 0
+				? JSON.stringify(Array.from(this.deletedNodes).sort())
+				: undefined;
 		// If running in tombstone mode, serialize and write tombstones, if any.
 		const serializedTombstones = this.tombstoneMode
-			? (this.tombstones.length > 0 ? JSON.stringify(this.tombstones.sort()) : undefined)
+			? this.tombstones.length > 0
+				? JSON.stringify(this.tombstones.sort())
+				: undefined
 			: undefined;
 
 		/**
@@ -1086,11 +1148,17 @@ export class GarbageCollector implements IGarbageCollector {
 		 * for each of these that did not change, write a summary handle.
 		 */
 		if (this.trackGCState) {
-			this.pendingSummaryData = { serializedGCState, serializedTombstones, serializedDeletedNodes };
+			this.pendingSummaryData = {
+				serializedGCState,
+				serializedTombstones,
+				serializedDeletedNodes,
+			};
 			if (trackState && !fullTree && this.latestSummaryData !== undefined) {
 				// If nothing changed since last summary, send a summary handle for the entire GC data.
-				if (this.latestSummaryData.serializedGCState === serializedGCState
-					&& this.latestSummaryData.serializedTombstones === serializedTombstones) {
+				if (
+					this.latestSummaryData.serializedGCState === serializedGCState &&
+					this.latestSummaryData.serializedTombstones === serializedTombstones
+				) {
 					const stats = mergeStats();
 					stats.handleNodeCount++;
 					return {
@@ -1105,12 +1173,20 @@ export class GarbageCollector implements IGarbageCollector {
 
 				// If some state changed, build a GC summary tree.
 				return this.buildGCSummaryTree(
-					serializedGCState, serializedTombstones, serializedDeletedNodes, true /* trackState */);
+					serializedGCState,
+					serializedTombstones,
+					serializedDeletedNodes,
+					true /* trackState */,
+				);
 			}
 		}
 		// If not tracking GC state, build a GC summary tree without any summary handles.
 		return this.buildGCSummaryTree(
-			serializedGCState, serializedTombstones, serializedDeletedNodes, false /* trackState */);
+			serializedGCState,
+			serializedTombstones,
+			serializedDeletedNodes,
+			false /* trackState */,
+		);
 	}
 
 	/**
@@ -1142,8 +1218,15 @@ export class GarbageCollector implements IGarbageCollector {
 		// If tombstones exist, write a summary handle if it hasn't changed. If it has changed, write a
 		// summary blob.
 		if (serializedTombstones !== undefined) {
-			if (this.latestSummaryData?.serializedTombstones === serializedTombstones && trackState) {
-				builder.addHandle(gcTombstoneBlobKey, SummaryType.Blob, `/${gcTreeKey}/${gcTombstoneBlobKey}`);
+			if (
+				this.latestSummaryData?.serializedTombstones === serializedTombstones &&
+				trackState
+			) {
+				builder.addHandle(
+					gcTombstoneBlobKey,
+					SummaryType.Blob,
+					`/${gcTreeKey}/${gcTombstoneBlobKey}`,
+				);
 			} else {
 				builder.addBlob(gcTombstoneBlobKey, serializedTombstones);
 			}
@@ -1155,8 +1238,15 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// If the deleted nodes hasn't changed, write a summary handle, else write a summary blob for it.
-		if (this.latestSummaryData?.serializedDeletedNodes === serializedDeletedNodes && trackState) {
-			builder.addHandle(gcDeletedBlobKey, SummaryType.Blob, `/${gcTreeKey}/${gcDeletedBlobKey}`);
+		if (
+			this.latestSummaryData?.serializedDeletedNodes === serializedDeletedNodes &&
+			trackState
+		) {
+			builder.addHandle(
+				gcDeletedBlobKey,
+				SummaryType.Blob,
+				`/${gcTreeKey}/${gcDeletedBlobKey}`,
+			);
 		} else {
 			builder.addBlob(gcDeletedBlobKey, serializedDeletedNodes);
 		}
@@ -1241,10 +1331,7 @@ export class GarbageCollector implements IGarbageCollector {
 		this.wasGCRunInLatestSummary = gcSnapshotTree !== undefined;
 		let latestGCData: IGarbageCollectionSnapshotData | undefined;
 		if (gcSnapshotTree !== undefined) {
-			latestGCData = await getGCDataFromSnapshot(
-				gcSnapshotTree,
-				readAndParseBlob,
-			);
+			latestGCData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 		}
 		this.updateStateFromSnapshotData(latestGCData, currentReferenceTimestampMs);
 		this.pendingSummaryData = undefined;
@@ -1305,7 +1392,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		if (this.tombstones.includes(toNodePath)) {
-			const nodeType = this.runtime.getNodeType(toNodePath)
+			const nodeType = this.runtime.getNodeType(toNodePath);
 
 			let eventName = "GC_Tombstone_SubDatastore_Revived";
 			if (nodeType === GCNodeType.DataStore) {
@@ -1314,7 +1401,7 @@ export class GarbageCollector implements IGarbageCollector {
 				eventName = "GC_Tombstone_Blob_Revived";
 			}
 
-			sendGCTombstoneEvent(
+			sendGCUnexpectedUsageEvent(
 				this.mc,
 				{
 					eventName,
@@ -1322,7 +1409,7 @@ export class GarbageCollector implements IGarbageCollector {
 					isSummarizerClient: this.isSummarizerClient,
 					url: trimLeadingSlashes(toNodePath),
 					nodeType,
-				 },
+				},
 				undefined /* packagePath */,
 			);
 		}
@@ -1360,7 +1447,8 @@ export class GarbageCollector implements IGarbageCollector {
 		// Update the state since the last GC run. There can be nodes that were referenced between the last and
 		// the current run. We need to identify than and update their unreferenced state if needed.
 		const allNodesReferencedBetweenGCs =
-			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger)?.referencedNodeIds ?? gcResult.referencedNodeIds;
+			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger)
+				?.referencedNodeIds ?? gcResult.referencedNodeIds;
 		this.newReferencesSinceLastRun.clear();
 
 		// Iterate through the referenced nodes and stop tracking if they were unreferenced before.
@@ -1406,9 +1494,7 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	// The state of garbage collection should be fully updated as if a summarizer had just run
-	private updateLocalState(
-		gcData: IGarbageCollectionData,
-	) {
+	private updateLocalState(gcData: IGarbageCollectionData) {
 		this.gcDataFromLastRun = cloneGCData(gcData);
 		this.newReferencesSinceLastRun.clear();
 	}
@@ -1421,7 +1507,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// TODO: GC:Validation - validate that removed routes are not double deleted
 		// TODO: GC:Validation - validate that the child routes of removed routes are deleted as well
 		const sweptRoutes = this.runtime.deleteUnusedNodes(sweepReadyNodes);
-		const updatedGCData = this.deleteSweptRoutes(sweptRoutes, gcData)
+		const updatedGCData = this.deleteSweptRoutes(sweptRoutes, gcData);
 		this.deleteSweptNodeTrackers(sweptRoutes);
 		return updatedGCData;
 	}
@@ -1445,9 +1531,12 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * @returns IGarbageCollectionData after deleting the sweptRoutes from the gcData
 	 */
-	private deleteSweptRoutes(sweptRoutes: string[], gcData: IGarbageCollectionData): IGarbageCollectionData {
+	private deleteSweptRoutes(
+		sweptRoutes: string[],
+		gcData: IGarbageCollectionData,
+	): IGarbageCollectionData {
 		const sweptRoutesSet = new Set<string>(sweptRoutes);
-		const gcNodes: { [ id: string ]: string[]; } = {};
+		const gcNodes: { [id: string]: string[] } = {};
 		for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
 			if (!sweptRoutesSet.has(id)) {
 				gcNodes[id] = Array.from(outboundRoutes);
@@ -1499,7 +1588,6 @@ export class GarbageCollector implements IGarbageCollector {
 					gcRoutes: JSON.stringify(missingExplicitReference[1]),
 				});
 			});
-			// should we prevent sweeping here? This is likely an indication of a bug in our system
 		}
 
 		// No references were added since the last run so we don't have to update reference states of any unreferenced
@@ -1542,7 +1630,10 @@ export class GarbageCollector implements IGarbageCollector {
 		 * Note that some of these nodes may be unreferenced now and if so, the current run will mark them as
 		 * unreferenced and add unreferenced state.
 		 */
-		const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/", ...newOutboundRoutesSinceLastRun]);
+		const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, [
+			"/",
+			...newOutboundRoutesSinceLastRun,
+		]);
 		return gcResult;
 	}
 
@@ -1566,7 +1657,7 @@ export class GarbageCollector implements IGarbageCollector {
 	): [string, string[]][] {
 		assert(
 			previousGCData !== undefined,
-			0x2b7, /* "Can't validate correctness without GC data from last run" */
+			0x2b7 /* "Can't validate correctness without GC data from last run" */,
 		);
 
 		const currentGraph = Object.entries(currentGCData.gcNodes);
@@ -1586,9 +1677,12 @@ export class GarbageCollector implements IGarbageCollector {
 			 */
 			currentOutboundRoutes.forEach((route) => {
 				const nodeType = this.runtime.getNodeType(route);
-				if ((nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob)
-					&& !nodeId.startsWith(route)
-					&& (!previousRoutes.includes(route) && !explicitRoutes.includes(route))) {
+				if (
+					(nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob) &&
+					!nodeId.startsWith(route) &&
+					!previousRoutes.includes(route) &&
+					!explicitRoutes.includes(route)
+				) {
 					missingExplicitRoutes.push(route);
 				}
 			});
@@ -1623,7 +1717,8 @@ export class GarbageCollector implements IGarbageCollector {
 			gcStats.nodeCount++;
 			// If there is no previous GC data, every node's state is generated and is considered as updated.
 			// Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
-			const stateUpdated = this.gcDataFromLastRun === undefined ||
+			const stateUpdated =
+				this.gcDataFromLastRun === undefined ||
 				this.unreferencedNodesState.has(nodeId) === referenced;
 			if (stateUpdated) {
 				gcStats.updatedNodeCount++;
@@ -1668,7 +1763,10 @@ export class GarbageCollector implements IGarbageCollector {
 	 * this will give us a view into how much deleted content a container has.
 	 */
 	private logSweepEvents(logger: ITelemetryLogger, currentReferenceTimestampMs: number) {
-		if (this.mc.config.getBoolean(disableSweepLogKey) === true || this.sweepTimeoutMs === undefined) {
+		if (
+			this.mc.config.getBoolean(disableSweepLogKey) === true ||
+			this.sweepTimeoutMs === undefined
+		) {
 			return;
 		}
 
@@ -1715,7 +1813,10 @@ export class GarbageCollector implements IGarbageCollector {
 		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
 		// logging as nothing interesting would have happened worth logging.
 		// If the node is active, skip logging.
-		if (currentReferenceTimestampMs === undefined || nodeStateTracker.state === UnreferencedState.Active) {
+		if (
+			currentReferenceTimestampMs === undefined ||
+			nodeStateTracker.state === UnreferencedState.Active
+		) {
 			return;
 		}
 
@@ -1738,9 +1839,10 @@ export class GarbageCollector implements IGarbageCollector {
 			type: nodeType,
 			unrefTime: nodeStateTracker.unreferencedTimestampMs,
 			age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
-			timeout: nodeStateTracker.state === UnreferencedState.Inactive
-				? this.inactiveTimeoutMs
-				: this.sweepTimeoutMs,
+			timeout:
+				nodeStateTracker.state === UnreferencedState.Inactive
+					? this.inactiveTimeoutMs
+					: this.sweepTimeoutMs,
 			completedGCRuns: this.completedRuns,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			...this.createContainerMetadata,
@@ -1782,7 +1884,10 @@ export class GarbageCollector implements IGarbageCollector {
 			// Once Sweep is fully implemented, this will be removed since the objects will be gone
 			// and errors will arise elsewhere in the runtime
 			if (state === UnreferencedState.SweepReady) {
-				this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({ ...propsToLog, usageType });
+				this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({
+					...propsToLog,
+					usageType,
+				});
 			}
 		}
 	}
@@ -1802,16 +1907,24 @@ export class GarbageCollector implements IGarbageCollector {
 			 * revived and a Revived event will be logged for it.
 			 */
 			const nodeStateTracker = this.unreferencedNodesState.get(eventProps.id);
-			const active = nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
+			const active =
+				nodeStateTracker === undefined ||
+				nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
 				const pkg = await this.getNodePackagePath(eventProps.id);
-				const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
+				const fromPkg = eventProps.fromId
+					? await this.getNodePackagePath(eventProps.fromId)
+					: undefined;
 				const event = {
 					...propsToLog,
 					eventName: `${state}Object_${usageType}`,
-					pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-					fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-				}
+					pkg: pkg
+						? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
+						: undefined,
+					fromPkg: fromPkg
+						? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
+						: undefined,
+				};
 
 				if (state === UnreferencedState.Inactive) {
 					logger.sendTelemetryEvent(event);
@@ -1837,11 +1950,11 @@ function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollec
 
 /** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
 class TimerWithNoDefaultTimeout extends Timer {
-	constructor(
-		private readonly callback: () => void,
-	) {
+	constructor(private readonly callback: () => void) {
 		// The default timeout/handlers will never be used since start/restart pass overrides below
-		super(0, () => { throw new Error("DefaultHandler should not be used"); });
+		super(0, () => {
+			throw new Error("DefaultHandler should not be used");
+		});
 	}
 
 	start(timeoutMs: number) {

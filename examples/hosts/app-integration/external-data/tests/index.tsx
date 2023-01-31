@@ -17,62 +17,62 @@ import { TaskListView } from "../src/view";
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
-    const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
-        new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
-    );
+	const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
+		new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
+	);
 
-    let id: string;
-    let model: IAppModel;
+	let id: string;
+	let model: IAppModel;
 
-    if (location.hash.length === 0) {
-        // Normally our code loader is expected to match up with the version passed here.
-        // But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
-        // the version doesn't actually matter.
-        const createResponse = await sessionStorageModelLoader.createDetached("1.0");
-        model = createResponse.model;
+	if (location.hash.length === 0) {
+		// Normally our code loader is expected to match up with the version passed here.
+		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+		// the version doesn't actually matter.
+		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
+		model = createResponse.model;
 
-        // Add a test task so we can see something.
-        model.taskList.addTask("1", "testName", 3);
+		// Add a test task so we can see something.
+		model.taskList.addTask("1", "testName", 3);
 
-        id = await createResponse.attach();
-    } else {
-        id = location.hash.slice(1);
-        model = await sessionStorageModelLoader.loadExisting(id);
-    }
+		id = await createResponse.attach();
+	} else {
+		id = location.hash.slice(1);
+		model = await sessionStorageModelLoader.loadExisting(id);
+	}
 
-    // update the browser URL and the window title with the actual container ID
-    // eslint-disable-next-line require-atomic-updates
-    location.hash = id;
-    document.title = id;
+	// update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
+	location.hash = id;
+	document.title = id;
 
-    // Render it
-    ReactDOM.render(<TaskListView taskList={ model.taskList } />, element);
+	// Render it
+	ReactDOM.render(<TaskListView taskList={model.taskList} />, element);
 
-    // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    window["fluidStarted"] = true;
+	// Setting "fluidStarted" is just for our test automation
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["fluidStarted"] = true;
 }
 
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
 async function setup(): Promise<void> {
-    const leftElement = document.querySelector("#sbs-left") as HTMLDivElement;
-    if (leftElement === null) {
-        throw new Error("sbs-left does not exist");
-    }
-    await createContainerAndRenderInElement(leftElement);
-    const rightElement = document.querySelector("#sbs-right") as HTMLDivElement;
-    if (rightElement === null) {
-        throw new Error("sbs-right does not exist");
-    }
-    await createContainerAndRenderInElement(rightElement);
+	const leftElement = document.querySelector("#sbs-left") as HTMLDivElement;
+	if (leftElement === null) {
+		throw new Error("sbs-left does not exist");
+	}
+	await createContainerAndRenderInElement(leftElement);
+	const rightElement = document.querySelector("#sbs-right") as HTMLDivElement;
+	if (rightElement === null) {
+		throw new Error("sbs-right does not exist");
+	}
+	await createContainerAndRenderInElement(rightElement);
 }
 
 setup().catch((error) => {
-    console.error(error);
-    console.log(
-        "%cThere were issues setting up and starting the in memory Fluid Server",
-        "font-size:30px",
-    );
+	console.error(error);
+	console.log(
+		"%cThere were issues setting up and starting the in memory Fluid Server",
+		"font-size:30px",
+	);
 });

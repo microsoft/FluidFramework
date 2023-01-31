@@ -10,7 +10,7 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	Factory,
-    packagePathToTelemetryProperty,
+	packagePathToTelemetryProperty,
 	requestFluidObject,
 	responseToException,
 } from "./dataStoreHelpers";
