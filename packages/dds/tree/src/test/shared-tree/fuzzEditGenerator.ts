@@ -112,8 +112,18 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 
     const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
         [insertGenerator, 5],
-        [deleteGenerator, 1, ({ testTreeProvider, treeIndex }) => containsAtLeastOneNode(testTreeProvider.trees[treeIndex])],
-        [setPayloadGenerator, 1, ({ testTreeProvider, treeIndex }) => containsAtLeastOneNode(testTreeProvider.trees[treeIndex])],
+        [
+            deleteGenerator,
+            1,
+            ({ testTreeProvider, treeIndex }) =>
+                containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
+        ],
+        [
+            setPayloadGenerator,
+            1,
+            ({ testTreeProvider, treeIndex }) =>
+                containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
+        ],
     ]);
 
     return async (state: FuzzTestState): Promise<Operation | typeof done> => {
@@ -145,7 +155,7 @@ const moves = {
     nodes: ["stop", "firstField"],
 };
 
-const nodePlaceType = ["beforeNode", "afterNode", "belowNode"]
+const nodePlaceType = ["beforeNode", "afterNode", "belowNode"];
 
 function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
     const testerKey: FieldKey = brand("Test");
@@ -158,7 +168,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
         return { parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 };
     }
     let currentPath = cursor.getPath();
-    assert(currentPath !== undefined)
+    assert(currentPath !== undefined);
     const parentPath: UpPath = currentPath;
     const firstField = cursor.firstField();
     if (!firstField) {
@@ -174,21 +184,16 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
             return parentPath;
         case "afterNode":
             cursor.free();
-            return { ...parentPath, parentIndex: parentPath.parentIndex + 1 }
+            return { ...parentPath, parentIndex: parentPath.parentIndex + 1 };
         case "belowNode":
             cursor.free();
-            return { parent: parentPath, parentField: testerKey, parentIndex: 0}
+            return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
         default:
             fail(`Unexpected option ${choosePath}`);
     }
-
 }
 
-
-function getExistingRandomNodePosition(
-    tree: ISharedTree,
-    random: IRandom,
-): UpPath {
+function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): UpPath {
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
     const firstNode = cursor.firstNode();

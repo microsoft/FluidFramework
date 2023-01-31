@@ -178,7 +178,10 @@ function applyFuzzChange(
             break;
         case "delete":
             tree.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(contents.path?.parent, contents.path?.parentField);
+                const field = editor.sequenceField(
+                    contents.path?.parent,
+                    contents.path?.parentField,
+                );
                 field.delete(contents.path?.parentIndex, 1);
                 return transactionResult;
             });
@@ -221,13 +224,7 @@ export function runSharedTreeFuzzTests(title: string): void {
         const testOpsPerRun = 20;
         describe("basic convergence", () => {
             describe(`with stepSize ${testOpsPerRun}`, () => {
-                runBatch(
-                    makeOpGenerator,
-                    performFuzzActions,
-                    testOpsPerRun,
-                    testBatchSize,
-                    random,
-                );
+                runBatch(makeOpGenerator, performFuzzActions, testOpsPerRun, testBatchSize, random);
             });
         });
         describe("abort all edits", () => {
