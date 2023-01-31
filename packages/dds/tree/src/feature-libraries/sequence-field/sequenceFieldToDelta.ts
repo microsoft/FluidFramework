@@ -25,7 +25,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 	reviver: NodeReviver,
 ): Delta.FieldChanges {
 	const markList = new OffsetListFactory<Delta.Mark>();
-	const modList: Delta.NestedChange[] = [];
+	const beforeShallow: Delta.NestedChange[] = [];
+	const afterShallow: Delta.NestedChange[] = [];
 	let inputIndex = 0;
 	let outputIndex = 0;
 	for (const mark of marks) {
@@ -44,10 +45,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					if (mark.changes !== undefined) {
 						const childDelta = deltaFromChild(mark.changes, undefined);
 						if (childDelta !== undefined) {
-							modList.push([
-								{ context: Delta.Context.Output, index: outputIndex },
-								childDelta,
-							]);
+							afterShallow.push({ index: outputIndex, ...childDelta });
 						}
 					}
 					break;
@@ -65,10 +63,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				case "Modify": {
 					const childDelta = deltaFromChild(mark.changes, inputIndex);
 					if (childDelta !== undefined) {
-						modList.push([
-							{ context: Delta.Context.Input, index: inputIndex },
-							childDelta,
-						]);
+						beforeShallow.push({ index: inputIndex, ...childDelta });
 					}
 					break;
 				}
@@ -81,10 +76,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					if (mark.changes !== undefined) {
 						const childDelta = deltaFromChild(mark.changes, inputIndex);
 						if (childDelta !== undefined) {
-							modList.push([
-								{ context: Delta.Context.Input, index: inputIndex },
-								childDelta,
-							]);
+							beforeShallow.push({ index: inputIndex, ...childDelta });
 						}
 					}
 					break;
@@ -100,10 +92,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					if (mark.changes !== undefined) {
 						const childDelta = deltaFromChild(mark.changes, inputIndex);
 						if (childDelta !== undefined) {
-							modList.push([
-								{ context: Delta.Context.Input, index: inputIndex },
-								childDelta,
-							]);
+							beforeShallow.push({ index: inputIndex, ...childDelta });
 						}
 					}
 					break;
@@ -127,10 +116,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					if (mark.changes !== undefined) {
 						const childDelta = deltaFromChild(mark.changes, outputIndex);
 						if (childDelta !== undefined) {
-							modList.push([
-								{ context: Delta.Context.Output, index: outputIndex },
-								childDelta,
-							]);
+							afterShallow.push({ index: outputIndex, ...childDelta });
 						}
 					}
 					break;
@@ -143,11 +129,14 @@ export function sequenceFieldToDelta<TNodeChange>(
 		inputIndex += getInputLength(mark);
 	}
 	const fieldChanges: Mutable<Delta.FieldChanges> = {};
-	if (markList.list.length) {
-		fieldChanges.shallowChanges = markList.list;
+	if (beforeShallow.length > 0) {
+		fieldChanges.beforeShallow = beforeShallow;
 	}
-	if (modList.length) {
-		fieldChanges.nestedChanges = modList;
+	if (markList.list.length) {
+		fieldChanges.shallow = markList.list;
+	}
+	if (afterShallow.length > 0) {
+		fieldChanges.afterShallow = afterShallow;
 	}
 	return fieldChanges;
 }

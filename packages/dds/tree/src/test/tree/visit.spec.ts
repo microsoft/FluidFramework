@@ -75,7 +75,7 @@ describe("visit", () => {
 
 	it("set root value", () => {
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, { setValue: 1 }]],
+			beforeShallow: [{ index: 0, setValue: 1 }],
 		};
 		const expected: VisitScript = [
 			["enterNode", 0],
@@ -87,25 +87,11 @@ describe("visit", () => {
 
 	it("set child value", () => {
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{ context: Delta.Context.Input, index: 0 },
-					{
-						fields: new Map([
-							[
-								fooKey,
-								{
-									nestedChanges: [
-										[
-											{ context: Delta.Context.Input, index: 42 },
-											{ setValue: 1 },
-										],
-									],
-								},
-							],
-						]),
-					},
-				],
+			beforeShallow: [
+				{
+					index: 0,
+					fields: new Map([[fooKey, { beforeShallow: [{ index: 42, setValue: 1 }] }]]),
+				},
 			],
 		};
 		const expected: VisitScript = [
@@ -126,7 +112,7 @@ describe("visit", () => {
 			content,
 		};
 		const delta: Delta.FieldChanges = {
-			shallowChanges: [mark],
+			shallow: [mark],
 		};
 		testTreeVisit(delta, [["onInsert", 0, content]]);
 	});
@@ -136,18 +122,8 @@ describe("visit", () => {
 			type: Delta.MarkType.Insert,
 			content,
 		};
-		const node: Delta.NodeChanges = {
-			fields: new Map([
-				[
-					fooKey,
-					{
-						shallowChanges: [42, mark],
-					},
-				],
-			]),
-		};
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, node]],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, { shallow: [42, mark] }]]) }],
 		};
 		const expected: VisitScript = [
 			["enterNode", 0],
@@ -165,7 +141,7 @@ describe("visit", () => {
 			count: 10,
 		};
 		const delta: Delta.FieldChanges = {
-			shallowChanges: [mark],
+			shallow: [mark],
 		};
 		testTreeVisit(delta, [["onDelete", 0, 10]]);
 	});
@@ -176,7 +152,7 @@ describe("visit", () => {
 			count: 10,
 		};
 		const node: Delta.NodeChanges = {
-			fields: new Map([[fooKey, { shallowChanges: [42, mark] }]]),
+			fields: new Map([[fooKey, { shallow: [42, mark] }]]),
 		};
 		const expected: VisitScript = [
 			["enterNode", 0],
@@ -186,7 +162,7 @@ describe("visit", () => {
 			["exitNode", 0],
 		];
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, node]],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, { shallow: [42, mark] }]]) }],
 		};
 		testTreeVisit(delta, expected);
 	});
@@ -200,22 +176,19 @@ describe("visit", () => {
 			type: Delta.MarkType.Insert,
 			content,
 		};
-		const set: Delta.NodeChanges = {
-			setValue: 1,
-		};
 		const nodeChanges: Delta.NodeChanges = {
 			fields: new Map([
 				[
 					fooKey,
 					{
-						shallowChanges: [del, 3, ins],
-						nestedChanges: [[{ context: Delta.Context.Input, index: 14 }, set]],
+						beforeShallow: [{ index: 14, setValue: 1 }],
+						shallow: [del, 3, ins],
 					},
 				],
 			]),
 		};
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+			beforeShallow: [{ index: 0, ...nodeChanges }],
 		};
 		const expected: VisitScript = [
 			["enterNode", 0],
@@ -246,10 +219,10 @@ describe("visit", () => {
 		};
 
 		const nodeChanges: Delta.NodeChanges = {
-			fields: new Map([[fooKey, { shallowChanges: [2, moveOut, 3, moveIn] }]]),
+			fields: new Map([[fooKey, { shallow: [2, moveOut, 3, moveIn] }]]),
 		};
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+			beforeShallow: [{ index: 0, ...nodeChanges }],
 		};
 
 		const expected: VisitScript = [
@@ -289,10 +262,10 @@ describe("visit", () => {
 		};
 
 		const nodeChanges: Delta.NodeChanges = {
-			fields: new Map([[fooKey, { shallowChanges: [2, moveIn, 3, moveOut] }]]),
+			fields: new Map([[fooKey, { shallow: [2, moveIn, 3, moveOut] }]]),
 		};
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+			beforeShallow: [{ index: 0, ...nodeChanges }],
 		};
 
 		const expected: VisitScript = [
@@ -336,16 +309,14 @@ describe("visit", () => {
 				[
 					fooKey,
 					{
-						shallowChanges: [2, moveIn, 3, moveOut],
-						nestedChanges: [
-							[{ context: Delta.Context.Input, index: 6 }, { setValue: 42 }],
-						],
+						beforeShallow: [{ index: 6, setValue: 42 }],
+						shallow: [2, moveIn, 3, moveOut],
 					},
 				],
 			]),
 		};
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+			beforeShallow: [{ index: 0, ...nodeChanges }],
 		};
 
 		const expected: VisitScript = [
@@ -389,12 +360,12 @@ describe("visit", () => {
 
 		const nodeChanges: Delta.NodeChanges = {
 			fields: new Map([
-				[fooKey, { shallowChanges: [moveIn] }],
-				[barKey, { shallowChanges: [moveOut] }],
+				[fooKey, { shallow: [moveIn] }],
+				[barKey, { shallow: [moveOut] }],
 			]),
 		};
 		const delta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeChanges]],
+			beforeShallow: [{ index: 0, ...nodeChanges }],
 		};
 
 		const expected: VisitScript = [

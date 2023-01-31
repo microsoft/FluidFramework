@@ -233,43 +233,35 @@ export type FieldChangeMap<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
  * @alpha
  */
 export interface FieldChanges<TTree = ProtoNode> {
-	readonly shallowChanges?: MarkList<TTree>;
 	/**
-	 * Changes to the subtrees contained in the field.
+	 * Changes to the subtrees contained in the field before any of the shallow changes are applied.
 	 * Ordered by ascending index.
 	 */
-	readonly nestedChanges?: readonly NestedChange<TTree>[];
+	readonly beforeShallow?: readonly NestedChange<TTree>[];
+
+	/**
+	 * Changes to apply to the contents of the field.
+	 */
+	readonly shallow?: MarkList<TTree>;
+
+	/**
+	 * Changes to the subtrees contained in the field after all the shallow changes are applied.
+	 * Ordered by ascending index.
+	 */
+	readonly afterShallow?: readonly NestedChange<TTree>[];
 }
 
 /**
  * @alpha
  */
 export interface ChildIndex {
-	readonly context: typeof Context[keyof typeof Context];
 	readonly index: number;
 }
 
 /**
  * @alpha
  */
-export type NestedChange<TTree = ProtoNode> = readonly [ChildIndex, NodeChanges<TTree>];
-
-/**
- * The context in which a `ChildIndex` must be interpreted.
- * @alpha
- */
-export const Context = {
-	/**
-	 * The owning `ChildIndex.index` must be used within the input context of the Delta,
-	 * meaning before any of the shallow changes are applied to the field.
-	 */
-	Input: 0,
-	/**
-	 * The owning `ChildIndex.index` must be used within the output context of the Delta,
-	 * meaning after all of the shallow changes are applied to the field.
-	 */
-	Output: 1,
-} as const;
+export type NestedChange<TTree = ProtoNode> = ChildIndex & NodeChanges<TTree>;
 
 /**
  * @alpha

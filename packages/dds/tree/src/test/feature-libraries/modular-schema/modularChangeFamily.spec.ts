@@ -42,13 +42,7 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change, deltaFromChild): Delta.FieldChanges =>
-		change === 0
-			? {}
-			: {
-					nestedChanges: [
-						[{ context: Delta.Context.Input, index: 0 }, { setValue: change.new }],
-					],
-			  },
+		change === 0 ? {} : { beforeShallow: [{ index: 0, setValue: change.new }] },
 };
 
 const valueField = new FieldKind(
@@ -83,11 +77,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): Delta.FieldChanges => {
 		const childDelta = deltaFromChild(change, 0);
-		return childDelta !== undefined
-			? {
-					nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, childDelta]],
-			  }
-			: {};
+		return childDelta !== undefined ? { beforeShallow: [{ index: 0, ...childDelta }] } : {};
 	},
 };
 
@@ -705,27 +695,14 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const valueDelta1: Delta.NodeChanges = {
-				setValue: 1,
-			};
-			const valueDelta2: Delta.NodeChanges = {
-				setValue: 2,
-			};
 			const innerFieldADelta: Delta.FieldChanges = {
-				nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, valueDelta1]],
+				beforeShallow: [{ index: 0, setValue: 1 }],
 			};
 			const outerFieldADelta: Delta.FieldChanges = {
-				nestedChanges: [
-					[
-						{ context: Delta.Context.Input, index: 0 },
-						{
-							fields: new Map([[fieldA, innerFieldADelta]]),
-						},
-					],
-				],
+				beforeShallow: [{ index: 0, fields: new Map([[fieldA, innerFieldADelta]]) }],
 			};
 			const fieldBDelta: Delta.FieldChanges = {
-				nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, valueDelta2]],
+				beforeShallow: [{ index: 0, setValue: 2 }],
 			};
 			const expectedDelta: Delta.Root = new Map([
 				[fieldA, outerFieldADelta],
@@ -736,22 +713,16 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("value overwrite", () => {
-			const nodeDelta: Delta.NodeChanges = {
-				setValue: testValue,
-			};
 			const fieldADelta: Delta.FieldChanges = {
-				nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeDelta]],
+				beforeShallow: [{ index: 0, setValue: testValue }],
 			};
 			const expectedDelta: Delta.Root = new Map([[fieldA, fieldADelta]]);
 			assertDeltaEqual(family.intoDelta(nodeValueOverwrite), expectedDelta);
 		});
 
 		it("value revert", () => {
-			const nodeDelta: Delta.NodeChanges = {
-				setValue: testValue,
-			};
 			const fieldADelta: Delta.FieldChanges = {
-				nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, nodeDelta]],
+				beforeShallow: [{ index: 0, setValue: testValue }],
 			};
 			const expectedDelta: Delta.Root = new Map([[fieldA, fieldADelta]]);
 			const repair: RepairDataStore = {

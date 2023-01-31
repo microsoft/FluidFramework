@@ -131,18 +131,15 @@ function visitModify(
 function firstPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 	let containsMoves = false;
 
-	const nestedChanges = delta.nestedChanges ?? [];
-	for (const [nodeIndex, nodeChange] of nestedChanges) {
-		if (nodeIndex.context === Delta.Context.Input) {
-			const result = visitModify(nodeIndex.index, nodeChange, visitor, firstPass);
-			containsMoves ||= result;
-		}
+	for (const nodeChange of delta.beforeShallow ?? []) {
+		const result = visitModify(nodeChange.index, nodeChange, visitor, firstPass);
+		containsMoves ||= result;
 	}
 
 	const moveInGaps: { readonly index: number; readonly cumulCount: number }[] = [];
-	const shallowChanges = delta.shallowChanges ?? [];
+	const shallow = delta.shallow ?? [];
 	let index = 0;
-	for (const mark of shallowChanges) {
+	for (const mark of shallow) {
 		if (typeof mark === "number") {
 			// Untouched nodes
 			index += mark;
@@ -179,49 +176,37 @@ function firstPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 
 	let iMoveInGap = 0;
 	let missingMoveIns = 0;
-	for (const [nodeIndex, nodeChange] of nestedChanges) {
-		if (nodeIndex.context === Delta.Context.Output) {
-			while (
-				iMoveInGap < moveInGaps.length &&
-				nodeIndex.index > moveInGaps[iMoveInGap].index
-			) {
-				missingMoveIns = moveInGaps[iMoveInGap].cumulCount;
-				iMoveInGap += 1;
-			}
-			const result = visitModify(
-				nodeIndex.index - missingMoveIns,
-				nodeChange,
-				visitor,
-				firstPass,
-			);
-			containsMoves ||= result;
+	for (const nodeChange of delta.afterShallow ?? []) {
+		while (iMoveInGap < moveInGaps.length && nodeChange.index > moveInGaps[iMoveInGap].index) {
+			missingMoveIns = moveInGaps[iMoveInGap].cumulCount;
+			iMoveInGap += 1;
 		}
+		const result = visitModify(
+			nodeChange.index - missingMoveIns,
+			nodeChange,
+			visitor,
+			firstPass,
+		);
+		containsMoves ||= result;
 	}
 	return containsMoves;
 }
 
 function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
-	const nestedChanges = delta.nestedChanges ?? [];
-	const inputNested: Delta.NestedChange[] = [];
-	const outputNested: Delta.NestedChange[] = [];
-	for (const nested of nestedChanges) {
-		(nested[0].context === Delta.Context.Input ? inputNested : outputNested).push(nested);
-	}
+	const before: readonly Delta.NestedChange[] = delta.beforeShallow ?? [];
+	const after: readonly Delta.NestedChange[] = delta.afterShallow ?? [];
 	let iNested = 0;
 	let inputContextIndex = 0;
 	let index = 0;
-	const shallowChanges = delta.shallowChanges ?? [];
-	for (const mark of shallowChanges) {
+	const shallow = delta.shallow ?? [];
+	for (const mark of shallow) {
 		if (typeof mark === "number") {
 			// Untouched nodes
 			index += mark;
 			inputContextIndex += mark;
-			while (
-				iNested < inputNested.length &&
-				inputNested[iNested][0].index < inputContextIndex
-			) {
-				const adjustedIndex = index - (inputContextIndex - inputNested[iNested][0].index);
-				visitModify(adjustedIndex, inputNested[iNested][1], visitor, secondPass);
+			while (iNested < before.length && before[iNested].index < inputContextIndex) {
+				const adjustedIndex = index - (inputContextIndex - before[iNested].index);
+				visitModify(adjustedIndex, before[iNested], visitor, secondPass);
 				iNested += 1;
 			}
 		} else {
@@ -232,10 +217,7 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 				case Delta.MarkType.MoveOut:
 					// Handled in the first pass
 					inputContextIndex += mark.count;
-					while (
-						iNested < inputNested.length &&
-						inputNested[iNested][0].index < inputContextIndex
-					) {
+					while (iNested < before.length && before[iNested].index < inputContextIndex) {
 						iNested += 1;
 					}
 					break;
@@ -253,13 +235,13 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 			}
 		}
 	}
-	while (iNested < inputNested.length) {
-		const adjustedIndex = index - (inputContextIndex - inputNested[iNested][0].index);
-		visitModify(adjustedIndex, inputNested[iNested][1], visitor, secondPass);
+	while (iNested < before.length) {
+		const adjustedIndex = index - (inputContextIndex - before[iNested].index);
+		visitModify(adjustedIndex, before[iNested], visitor, secondPass);
 		iNested += 1;
 	}
-	for (const [nodeIndex, nodeChange] of outputNested) {
-		visitModify(nodeIndex.index, nodeChange, visitor, secondPass);
+	for (const nodeChange of after) {
+		visitModify(nodeChange.index, nodeChange, visitor, secondPass);
 	}
 	return false;
 }

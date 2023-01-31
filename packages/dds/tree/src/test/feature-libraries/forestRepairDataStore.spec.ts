@@ -67,26 +67,24 @@ describe("ForestRepairDataStore", () => {
 			[
 				rootFieldKeySymbol,
 				{
-					nestedChanges: [
-						[
-							{ context: Delta.Context.Input, index: 0 },
-							{
-								fields: new Map([
-									[
-										fooKey,
-										{
-											shallowChanges: [
-												1,
-												{
-													type: Delta.MarkType.Delete,
-													count: 2,
-												},
-											],
-										},
-									],
-								]),
-							},
-						],
+					beforeShallow: [
+						{
+							index: 0,
+							fields: new Map([
+								[
+									fooKey,
+									{
+										shallow: [
+											1,
+											{
+												type: Delta.MarkType.Delete,
+												count: 2,
+											},
+										],
+									},
+								],
+							]),
+						},
 					],
 				},
 			],
@@ -97,25 +95,23 @@ describe("ForestRepairDataStore", () => {
 			[
 				rootFieldKeySymbol,
 				{
-					nestedChanges: [
-						[
-							{ context: Delta.Context.Input, index: 0 },
-							{
-								fields: new Map([
-									[
-										fooKey,
-										{
-											shallowChanges: [
-												{
-													type: Delta.MarkType.Delete,
-													count: 2,
-												},
-											],
-										},
-									],
-								]),
-							},
-						],
+					beforeShallow: [
+						{
+							index: 0,
+							fields: new Map([
+								[
+									fooKey,
+									{
+										shallow: [
+											{
+												type: Delta.MarkType.Delete,
+												count: 2,
+											},
+										],
+									},
+								],
+							]),
+						},
 					],
 				},
 			],
@@ -152,33 +148,22 @@ describe("ForestRepairDataStore", () => {
 			[
 				rootFieldKeySymbol,
 				{
-					nestedChanges: [
-						[
-							{ context: Delta.Context.Input, index: 0 },
-							{
-								fields: new Map([
-									[
-										fooKey,
-										{
-											nestedChanges: [
-												[
-													{ context: Delta.Context.Input, index: 0 },
-													{ setValue: 40 },
-												],
-												[
-													{ context: Delta.Context.Input, index: 2 },
-													{ setValue: 42 },
-												],
-												[
-													{ context: Delta.Context.Input, index: 3 },
-													{ setValue: undefined },
-												],
-											],
-										},
-									],
-								]),
-							},
-						],
+					beforeShallow: [
+						{
+							index: 0,
+							fields: new Map([
+								[
+									fooKey,
+									{
+										beforeShallow: [
+											{ index: 0, setValue: 40 },
+											{ index: 2, setValue: 42 },
+											{ index: 3, setValue: undefined },
+										],
+									},
+								],
+							]),
+						},
 					],
 				},
 			],

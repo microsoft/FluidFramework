@@ -23,13 +23,14 @@ describe("DeltaUtils", () => {
 				[
 					fooField,
 					{
-						shallowChanges: [
+						shallow: [
 							42,
 							{
 								type: Delta.MarkType.Insert,
 								content: [nodeXCursor],
 							},
 						],
+						afterShallow: [{ index: 0, setValue: 45 }],
 					},
 				],
 			]);
@@ -37,7 +38,13 @@ describe("DeltaUtils", () => {
 				[
 					fooField,
 					{
-						shallowChanges: [
+						beforeShallow: [
+							{ index: 0, setValue: 1 },
+							{ index: 1, setValue: 1, fields: nestedCursorInsert },
+							{ index: 2, setValue: 1, fields: nestedCursorInsert },
+							{ index: 3, fields: nestedCursorInsert },
+						],
+						shallow: [
 							2,
 							{
 								type: Delta.MarkType.MoveOut,
@@ -75,25 +82,6 @@ describe("DeltaUtils", () => {
 								moveId,
 								count: 1,
 							},
-						],
-						nestedChanges: [
-							[{ context: Delta.Context.Input, index: 0 }, { setValue: 1 }],
-							[
-								{ context: Delta.Context.Input, index: 1 },
-								{ setValue: 1, fields: nestedCursorInsert },
-							],
-							[
-								{ context: Delta.Context.Input, index: 2 },
-								{ setValue: 1, fields: nestedCursorInsert },
-							],
-							[
-								{ context: Delta.Context.Input, index: 3 },
-								{ fields: nestedCursorInsert },
-							],
-							[
-								{ context: Delta.Context.Input, index: 3 },
-								{ fields: nestedCursorInsert },
-							],
 						],
 					},
 				],
@@ -104,13 +92,14 @@ describe("DeltaUtils", () => {
 				[
 					fooField,
 					{
-						shallowChanges: [
+						shallow: [
 							42,
 							{
 								type: Delta.MarkType.Insert,
 								content: [nodeX],
 							},
 						],
+						afterShallow: [{ index: 0, setValue: 45 }],
 					},
 				],
 			]);
@@ -118,7 +107,13 @@ describe("DeltaUtils", () => {
 				[
 					fooField,
 					{
-						shallowChanges: [
+						beforeShallow: [
+							{ index: 0, setValue: 1 },
+							{ index: 1, setValue: 1, fields: nestedMapTreeInsert },
+							{ index: 2, setValue: 1, fields: nestedMapTreeInsert },
+							{ index: 3, fields: nestedMapTreeInsert },
+						],
+						shallow: [
 							2,
 							{
 								type: Delta.MarkType.MoveOut,
@@ -156,25 +151,6 @@ describe("DeltaUtils", () => {
 								moveId,
 								count: 1,
 							},
-						],
-						nestedChanges: [
-							[{ context: Delta.Context.Input, index: 0 }, { setValue: 1 }],
-							[
-								{ context: Delta.Context.Input, index: 1 },
-								{ setValue: 1, fields: nestedMapTreeInsert },
-							],
-							[
-								{ context: Delta.Context.Input, index: 2 },
-								{ setValue: 1, fields: nestedMapTreeInsert },
-							],
-							[
-								{ context: Delta.Context.Input, index: 3 },
-								{ fields: nestedMapTreeInsert },
-							],
-							[
-								{ context: Delta.Context.Input, index: 3 },
-								{ fields: nestedMapTreeInsert },
-							],
 						],
 					},
 				],

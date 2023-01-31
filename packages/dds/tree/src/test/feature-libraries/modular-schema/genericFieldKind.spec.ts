@@ -25,13 +25,7 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
 	editor: { buildChildChange: () => fail("Child changes not supported") },
 	intoDelta: (change): Delta.FieldChanges =>
-		change === 0
-			? {}
-			: {
-					nestedChanges: [
-						[{ context: Delta.Context.Input, index: 0 }, { setValue: change.new }],
-					],
-			  },
+		change === 0 ? {} : { beforeShallow: [{ index: 0, setValue: change.new }] },
 };
 
 const valueField = new FieldKind(
@@ -348,18 +342,10 @@ describe("Generic FieldKind", () => {
 			},
 		];
 
-		const valueDelta1: Delta.NodeChanges = {
-			setValue: 1,
-		};
-
-		const valueDelta2: Delta.NodeChanges = {
-			setValue: 2,
-		};
-
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [
-				[{ context: Delta.Context.Input, index: 0 }, valueDelta1],
-				[{ context: Delta.Context.Input, index: 2 }, valueDelta2],
+			beforeShallow: [
+				{ index: 0, setValue: 1 },
+				{ index: 2, setValue: 2 },
 			],
 		};
 

@@ -206,14 +206,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 	encoder: new ValueEncoder<number>(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 	intoDelta: (change: number): Delta.FieldChanges => ({
-		nestedChanges: [
-			[
-				{ context: Delta.Context.Input, index: 0 },
-				{
-					setValue: change,
-				},
-			],
-		],
+		beforeShallow: [{ index: 0, setValue: change }],
 	}),
 };
 
@@ -400,7 +393,7 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 			} else {
 				newValue = singleTextCursor(change.value.set);
 			}
-			fieldChanges.shallowChanges = [
+			fieldChanges.shallow = [
 				{ type: Delta.MarkType.Delete, count: 1 },
 				{
 					type: Delta.MarkType.Insert,
@@ -411,9 +404,7 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 		if (change.changes !== undefined) {
 			const modify = deltaFromChild(change.changes, 0);
 			if (modify) {
-				fieldChanges.nestedChanges = [
-					[{ context: Delta.Context.Output, index: 0 }, modify],
-				];
+				fieldChanges.afterShallow = [{ ...modify, index: 0 }];
 			}
 		}
 		return fieldChanges;
@@ -641,13 +632,13 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
 			const fieldChanges: Mutable<Delta.FieldChanges> = {};
 			const update = change.fieldChange?.newContent;
-			const shallowChanges = [];
+			const shallow = [];
 			if (change.fieldChange !== undefined && !change.fieldChange.wasEmpty) {
-				shallowChanges.push({ type: Delta.MarkType.Delete, count: 1 });
+				shallow.push({ type: Delta.MarkType.Delete, count: 1 });
 			}
 			if (update !== undefined) {
 				if ("set" in update) {
-					shallowChanges.push({
+					shallow.push({
 						type: Delta.MarkType.Insert,
 						content: [singleTextCursor(update.set)],
 					});
@@ -658,22 +649,25 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 						0x478 /* Unable to revert to undefined revision */,
 					);
 					const content = reviver(revision, 0, 1);
-					shallowChanges.push({
+					shallow.push({
 						type: Delta.MarkType.Insert,
 						content,
 					});
 				}
 			}
-			if (shallowChanges.length > 0) {
-				fieldChanges.shallowChanges = shallowChanges;
+			if (shallow.length > 0) {
+				fieldChanges.shallow = shallow;
 			}
 			if (change.childChange !== undefined) {
-				// TODO: the changeset should be able to represent changes to both the subtree present before
-				// the change and the subtree present after the change.
-				const context = update === undefined ? Delta.Context.Input : Delta.Context.Output;
 				const childDelta = deltaFromChild(change.childChange, 0);
 				if (childDelta) {
-					fieldChanges.nestedChanges = [[{ context, index: 0 }, childDelta]];
+					// TODO: the changeset should be able to represent changes to both the subtree present before
+					// the change and the subtree present after the change.
+					if (update === undefined) {
+						fieldChanges.beforeShallow = [{ index: 0, ...childDelta }];
+					} else {
+						fieldChanges.afterShallow = [{ index: 0, ...childDelta }];
+					}
 				}
 			}
 			return fieldChanges;

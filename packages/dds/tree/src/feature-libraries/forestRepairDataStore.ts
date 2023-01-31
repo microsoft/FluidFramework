@@ -64,19 +64,16 @@ export class ForestRepairDataStore implements RepairDataStore {
 			parent: RepairDataNode,
 			key: FieldKey,
 		): void {
-			if (delta.shallowChanges !== undefined) {
-				visitFieldMarks(delta.shallowChanges, parent, key);
+			if (delta.shallow !== undefined) {
+				visitFieldMarks(delta.shallow, parent, key);
 			}
-			if (delta.nestedChanges !== undefined) {
-				for (const nested of delta.nestedChanges) {
-					assert(
-						nested[0].context === Delta.Context.Input,
-						"TODO: support storage of deleted content from inserted trees",
-					);
-					const index = nested[0].index;
+			// TODO: support storage of deleted content from inserted trees
+			if (delta.beforeShallow !== undefined) {
+				for (const nested of delta.beforeShallow) {
+					const index = nested.index;
 					cursor.enterNode(index);
 					const child = parent.getOrCreateChild(key, index, undefinedFactory);
-					visitModify(nested[1], child);
+					visitModify(nested, child);
 					cursor.exitNode();
 				}
 			}

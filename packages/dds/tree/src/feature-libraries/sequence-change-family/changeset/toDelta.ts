@@ -32,7 +32,8 @@ export function toDelta(changeset: T.LocalChangeset): Delta.Root {
 
 function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 	const markList = new OffsetListFactory<Delta.Mark>();
-	const modList: Delta.NestedChange[] = [];
+	const beforeShallow: Delta.NestedChange[] = [];
+	const afterShallow: Delta.NestedChange[] = [];
 	let inputIndex = 0;
 	let outputIndex = 0;
 	for (const mark of marks) {
@@ -60,10 +61,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 						content: [singleTextCursor(mark.content)],
 					};
 					markList.pushContent(insertMark);
-					modList.push([
-						{ context: Delta.Context.Output, index: outputIndex },
-						convertModify(mark),
-					]);
+					afterShallow.push({ index: outputIndex, ...convertModify(mark) });
 					outputIndex += 1;
 					break;
 				}
@@ -84,10 +82,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 					// These have no impacts on the document state.
 					break;
 				case "Modify": {
-					modList.push([
-						{ context: Delta.Context.Input, index: inputIndex },
-						convertModify(mark),
-					]);
+					beforeShallow.push({ index: inputIndex, ...convertModify(mark) });
 					inputIndex += 1;
 					outputIndex += 1;
 					break;
@@ -104,10 +99,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 				case "MDelete": {
 					const fields = convertModify(mark).fields;
 					if (fields !== undefined) {
-						modList.push([
-							{ context: Delta.Context.Input, index: inputIndex },
-							convertModify(mark),
-						]);
+						beforeShallow.push({ index: inputIndex, ...convertModify(mark) });
 					}
 					const deleteMark: Delta.Delete = {
 						type: Delta.MarkType.Delete,
@@ -165,11 +157,14 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 		}
 	}
 	const fieldChanges: Mutable<Delta.FieldChanges> = {};
-	if (markList.list.length > 0) {
-		fieldChanges.shallowChanges = markList.list;
+	if (beforeShallow.length > 0) {
+		fieldChanges.beforeShallow = beforeShallow;
 	}
-	if (modList.length > 0) {
-		fieldChanges.nestedChanges = modList;
+	if (markList.list.length > 0) {
+		fieldChanges.shallow = markList.list;
+	}
+	if (afterShallow.length > 0) {
+		fieldChanges.afterShallow = afterShallow;
 	}
 	return fieldChanges;
 }

@@ -43,14 +43,14 @@ export function mapFieldChanges<TIn, TOut>(
 	func: (tree: TIn) => TOut,
 ): Delta.FieldChanges<TOut> {
 	const field: Mutable<Delta.FieldChanges<TOut>> = {};
-	if (changes.shallowChanges) {
-		field.shallowChanges = mapMarkList(changes.shallowChanges, func);
+	if (changes.beforeShallow) {
+		field.beforeShallow = changes.beforeShallow.map((nested) => mapNodeChanges(nested, func));
 	}
-	if (changes.nestedChanges) {
-		field.nestedChanges = changes.nestedChanges.map((nested) => [
-			nested[0],
-			mapNodeChanges(nested[1], func),
-		]);
+	if (changes.shallow) {
+		field.shallow = mapMarkList(changes.shallow, func);
+	}
+	if (changes.afterShallow) {
+		field.afterShallow = changes.afterShallow.map((nested) => mapNodeChanges(nested, func));
 	}
 	return field;
 }
@@ -66,10 +66,10 @@ export function mapFieldChanges<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapNodeChanges<TIn, TOut>(
-	changes: Delta.NodeChanges<TIn>,
+	changes: Delta.NestedChange<TIn>,
 	func: (tree: TIn) => TOut,
-): Delta.NodeChanges<TOut> {
-	const out: Mutable<Delta.NodeChanges<TOut>> = {};
+): Delta.NestedChange<TOut> {
+	const out: Mutable<Delta.NestedChange<TOut>> = { index: changes.index };
 	if (changes.fields !== undefined) {
 		out.fields = mapFieldMarks(changes.fields, func);
 	}

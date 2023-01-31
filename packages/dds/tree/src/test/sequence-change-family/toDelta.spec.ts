@@ -64,7 +64,7 @@ describe("toDelta", () => {
 			},
 		];
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, { setValue: 1 }]],
+			beforeShallow: [{ index: 0, setValue: 1 }],
 		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -86,15 +86,10 @@ describe("toDelta", () => {
 			},
 		];
 		const fooDelta: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 42 }, { setValue: 1 }]],
+			beforeShallow: [{ index: 42, setValue: 1 }],
 		};
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{ context: Delta.Context.Input, index: 0 },
-					{ fields: new Map([[fooKey, fooDelta]]) },
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -107,7 +102,7 @@ describe("toDelta", () => {
 			content: contentCursor,
 		};
 		const expected: Delta.FieldChanges = {
-			shallowChanges: [mark],
+			shallow: [mark],
 		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -127,15 +122,10 @@ describe("toDelta", () => {
 			content: contentCursor,
 		};
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [42, mark],
+			shallow: [42, mark],
 		};
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{ context: Delta.Context.Input, index: 0 },
-					{ fields: new Map([[fooKey, fooDelta]]) },
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -154,7 +144,7 @@ describe("toDelta", () => {
 			count: 10,
 		};
 		const expected: Delta.FieldChanges = {
-			shallowChanges: [mark],
+			shallow: [mark],
 		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -181,15 +171,10 @@ describe("toDelta", () => {
 			count: 10,
 		};
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [42, mark],
+			shallow: [42, mark],
 		};
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{ context: Delta.Context.Input, index: 0 },
-					{ fields: new Map([[fooKey, fooDelta]]) },
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -228,15 +213,10 @@ describe("toDelta", () => {
 			count: 10,
 		};
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [42, moveOut, 8, moveIn],
+			shallow: [42, moveOut, 8, moveIn],
 		};
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{ context: Delta.Context.Input, index: 0 },
-					{ fields: new Map([[fooKey, fooDelta]]) },
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -277,22 +257,20 @@ describe("toDelta", () => {
 			count: 10,
 		};
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [42, moveOut],
+			shallow: [42, moveOut],
 		};
 		const barDelta: Delta.FieldChanges = {
-			shallowChanges: [8, moveIn],
+			shallow: [8, moveIn],
 		};
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{ context: Delta.Context.Input, index: 0 },
-					{
-						fields: new Map([
-							[fooKey, fooDelta],
-							[barKey, barDelta],
-						]),
-					},
-				],
+			beforeShallow: [
+				{
+					index: 0,
+					fields: new Map([
+						[fooKey, fooDelta],
+						[barKey, barDelta],
+					]),
+				},
 			],
 		};
 		const actual = toTreeDelta(changeset);
@@ -338,18 +316,13 @@ describe("toDelta", () => {
 			count: 10,
 		};
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [42, moveOut],
+			shallow: [42, moveOut],
 		};
 		const detachedDelta: Delta.FieldChanges = {
-			shallowChanges: [8, moveIn],
+			shallow: [8, moveIn],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{ context: Delta.Context.Input, index: 0 },
-					{ fields: new Map([[fooKey, fooDelta]]) },
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([
 			[rootKey, rootDelta],
@@ -394,16 +367,11 @@ describe("toDelta", () => {
 			content: contentCursor,
 		};
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [del, 3, ins],
-			nestedChanges: [[{ context: Delta.Context.Input, index: 14 }, { setValue: 1 }]],
+			shallow: [del, 3, ins],
+			beforeShallow: [{ index: 14, setValue: 1 }],
 		};
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{ context: Delta.Context.Input, index: 0 },
-					{ fields: new Map([[fooKey, fooDelta]]) },
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -432,19 +400,11 @@ describe("toDelta", () => {
 				content: contentCursor,
 			};
 			const fooDelta: Delta.FieldChanges = {
-				nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, { setValue: 4343 }]],
+				beforeShallow: [{ index: 0, setValue: 4343 }],
 			};
 			const expected: Delta.FieldChanges = {
-				shallowChanges: [mark],
-				nestedChanges: [
-					[
-						{ context: Delta.Context.Output, index: 0 },
-						{
-							setValue: 4242,
-							fields: new Map([[fooKey, fooDelta]]),
-						},
-					],
-				],
+				shallow: [mark],
+				afterShallow: [{ index: 0, setValue: 4242, fields: new Map([[fooKey, fooDelta]]) }],
 			};
 			const actual = toTreeDelta(changeset);
 			assert.deepStrictEqual(actual, expected);
@@ -478,7 +438,7 @@ describe("toDelta", () => {
 				content: contentCursor,
 			};
 			const fooDelta: Delta.FieldChanges = {
-				shallowChanges: [
+				shallow: [
 					{
 						type: Delta.MarkType.Insert,
 						content: [singleTextCursor({ type, value: 44 })],
@@ -491,15 +451,8 @@ describe("toDelta", () => {
 				],
 			};
 			const expected: Delta.FieldChanges = {
-				shallowChanges: [mark],
-				nestedChanges: [
-					[
-						{ context: Delta.Context.Output, index: 0 },
-						{
-							fields: new Map([[fooKey, fooDelta]]),
-						},
-					],
-				],
+				shallow: [mark],
+				afterShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 			};
 			const actual = toTreeDelta(changeset);
 			assertFieldChangesEqual(actual, expected);
@@ -529,32 +482,18 @@ describe("toDelta", () => {
 				content: contentCursor,
 			};
 			const fooDelta: Delta.FieldChanges = {
-				shallowChanges: [
+				shallow: [
 					1,
 					{
 						type: Delta.MarkType.Insert,
 						content: [singleTextCursor({ type, value: 45 })],
 					},
 				],
-				nestedChanges: [
-					[
-						{ context: Delta.Context.Output, index: 1 },
-						{
-							setValue: 4545,
-						},
-					],
-				],
+				afterShallow: [{ index: 1, setValue: 4545 }],
 			};
 			const expected: Delta.FieldChanges = {
-				shallowChanges: [mark],
-				nestedChanges: [
-					[
-						{ context: Delta.Context.Output, index: 0 },
-						{
-							fields: new Map([[fooKey, fooDelta]]),
-						},
-					],
-				],
+				shallow: [mark],
+				afterShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 			};
 			const actual = toTreeDelta(changeset);
 			assertFieldChangesEqual(actual, expected);
@@ -582,7 +521,7 @@ describe("toDelta", () => {
 				content: contentCursor,
 			};
 			const fooDelta: Delta.FieldChanges = {
-				shallowChanges: [
+				shallow: [
 					{
 						type: Delta.MarkType.Delete,
 						count: 1,
@@ -590,15 +529,8 @@ describe("toDelta", () => {
 				],
 			};
 			const expected: Delta.FieldChanges = {
-				shallowChanges: [mark],
-				nestedChanges: [
-					[
-						{ context: Delta.Context.Output, index: 0 },
-						{
-							fields: new Map([[fooKey, fooDelta]]),
-						},
-					],
-				],
+				shallow: [mark],
+				afterShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 			};
 			const actual = toTreeDelta(changeset);
 			assert.deepStrictEqual(actual, expected);

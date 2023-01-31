@@ -185,11 +185,11 @@ describe("Value field changesets", () => {
 
 	it("can be converted to a delta when overwriting content", () => {
 		const expected: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				{ type: Delta.MarkType.Delete, count: 1 },
 				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
 			],
-			nestedChanges: [[{ context: Delta.Context.Output, index: 0 }, { setValue: "value3" }]],
+			afterShallow: [{ index: 0, setValue: "value3" }],
 		};
 
 		const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1, noRepair);
@@ -198,7 +198,7 @@ describe("Value field changesets", () => {
 
 	it("can be converted to a delta when restoring content", () => {
 		const expected: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				{ type: Delta.MarkType.Delete, count: 1 },
 				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
 			],
@@ -341,13 +341,13 @@ describe("Optional field changesets", () => {
 
 	it("can be converted to a delta when field was empty", () => {
 		const expected: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				{
 					type: Delta.MarkType.Insert,
 					content: [singleTextCursor(tree1)],
 				},
 			],
-			nestedChanges: [[{ context: Delta.Context.Output, index: 0 }, { setValue: "value3" }]],
+			afterShallow: [{ index: 0, setValue: "value3" }],
 		};
 
 		assertFieldChangesEqual(
@@ -358,7 +358,7 @@ describe("Optional field changesets", () => {
 
 	it("can be converted to a delta when replacing content", () => {
 		const expected: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				{ type: Delta.MarkType.Delete, count: 1 },
 				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
 			],
@@ -372,7 +372,7 @@ describe("Optional field changesets", () => {
 
 	it("can be converted to a delta when restoring content", () => {
 		const expected: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				{ type: Delta.MarkType.Delete, count: 1 },
 				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
 			],
@@ -390,7 +390,7 @@ describe("Optional field changesets", () => {
 
 	it("can be converted to a delta with only child changes", () => {
 		const expected: Delta.FieldChanges = {
-			nestedChanges: [[{ context: Delta.Context.Input, index: 0 }, { setValue: "value4" }]],
+			beforeShallow: [{ index: 0, setValue: "value4" }],
 		};
 
 		assertFieldChangesEqual(

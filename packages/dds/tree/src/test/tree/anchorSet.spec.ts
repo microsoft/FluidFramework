@@ -106,15 +106,15 @@ describe("AnchorSet", () => {
 				[
 					fieldBar,
 					{
-						shallowChanges: [3, moveIn],
+						shallow: [3, moveIn],
 					},
 				],
 			]),
 		};
 
 		const fooChanges: Delta.FieldChanges = {
-			shallowChanges: [3, moveOut],
-			nestedChanges: [[{ context: Delta.Context.Input, index: 5 }, modify]],
+			shallow: [3, moveOut],
+			beforeShallow: [{ index: 5, ...modify }],
 		};
 		const delta = new Map([[fieldFoo, fooChanges]]);
 		anchors.applyDelta(delta);
@@ -156,7 +156,7 @@ function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined)
 
 function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 	const fields: Delta.FieldChangeMap = new Map([
-		[path.parentField, { shallowChanges: [path.parentIndex, mark] }],
+		[path.parentField, { shallow: [path.parentIndex, mark] }],
 	]);
 
 	if (path.parent === undefined) {
@@ -173,23 +173,11 @@ function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 
 function makeDeltaSpine(modify: Delta.NodeChanges, path: UpPath): Delta.Root {
 	const fields: Delta.Root = new Map([
-		[
-			path.parentField,
-			{
-				nestedChanges: [
-					[{ context: Delta.Context.Input, index: path.parentIndex }, modify],
-				],
-			},
-		],
+		[path.parentField, { beforeShallow: [{ index: path.parentIndex, ...modify }] }],
 	]);
 	if (path.parent === undefined) {
 		return fields;
 	}
 
-	return makeDeltaSpine(
-		{
-			fields,
-		},
-		path.parent,
-	);
+	return makeDeltaSpine({ fields }, path.parent);
 }

@@ -109,14 +109,7 @@ describe("SequenceEditBuilder", () => {
 			[
 				rootKey,
 				{
-					nestedChanges: [
-						[
-							{ context: Delta.Context.Input, index: 0 },
-							{
-								setValue: 42,
-							},
-						],
-					],
+					beforeShallow: [{ index: 0, setValue: 42 }],
 				},
 			],
 		]);
@@ -126,43 +119,13 @@ describe("SequenceEditBuilder", () => {
 	it("Can set a child node value", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const innerFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 5,
-					},
-					{
-						setValue: 42,
-					},
-				],
-			],
+			beforeShallow: [{ index: 5, setValue: 42 }],
 		};
 		const outerFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 2, fields: new Map([[fooKey, innerFooDelta]]) }],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, outerFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
 		builder.setValue(root_foo2_foo5, 42);
@@ -175,7 +138,7 @@ describe("SequenceEditBuilder", () => {
 			[
 				rootKey,
 				{
-					shallowChanges: [
+					shallow: [
 						{
 							type: Delta.MarkType.Insert,
 							content: [nodeXCursor],
@@ -191,7 +154,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can insert a child node", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const innerFooDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				5,
 				{
 					type: Delta.MarkType.Insert,
@@ -200,30 +163,10 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const outerFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 2, fields: new Map([[fooKey, innerFooDelta]]) }],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, outerFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
 		builder.insert(root_foo2_foo5, singleTextCursor(nodeX));
@@ -236,7 +179,7 @@ describe("SequenceEditBuilder", () => {
 			[
 				rootKey,
 				{
-					shallowChanges: [
+					shallow: [
 						{
 							type: Delta.MarkType.Delete,
 							count: 1,
@@ -252,7 +195,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can delete child nodes", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const innerFooDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				5,
 				{
 					type: Delta.MarkType.Delete,
@@ -261,30 +204,10 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const outerFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 2, fields: new Map([[fooKey, innerFooDelta]]) }],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, outerFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
 		builder.delete(root_foo2_foo5, 10);
@@ -294,7 +217,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes to the right within a field", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				2,
 				{
 					type: Delta.MarkType.MoveOut,
@@ -310,17 +233,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, fooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
 		builder.move(root_foo2, 10, root_foo17);
@@ -330,7 +243,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes to the left within a field", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				2,
 				{
 					type: Delta.MarkType.MoveIn,
@@ -346,17 +259,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, fooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
 		builder.move(root_foo17, 10, root_foo2);
@@ -366,7 +269,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes into their own midst", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				2,
 				{
 					type: Delta.MarkType.MoveOut,
@@ -391,17 +294,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, fooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
 		builder.move(root_foo2, 20, root_foo17);
@@ -411,7 +304,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes across fields of the same parent", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				2,
 				{
 					type: Delta.MarkType.MoveOut,
@@ -421,7 +314,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const barDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				2,
 				{
 					type: Delta.MarkType.MoveIn,
@@ -431,19 +324,14 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([
-							[fooKey, fooDelta],
-							[barKey, barDelta],
-						]),
-					},
-				],
+			beforeShallow: [
+				{
+					index: 0,
+					fields: new Map([
+						[fooKey, fooDelta],
+						[barKey, barDelta],
+					]),
+				},
 			],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
@@ -454,7 +342,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes to the right across subtrees of the same field", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const innerFooDeltaSrc: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				5,
 				{
 					type: Delta.MarkType.MoveOut,
@@ -464,7 +352,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const innerFooDeltaDst: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				5,
 				{
 					type: Delta.MarkType.MoveIn,
@@ -474,39 +362,13 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const outerFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDeltaSrc]]),
-					},
-				],
-				[
-					{
-						context: Delta.Context.Input,
-						index: 17,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDeltaDst]]),
-					},
-				],
+			beforeShallow: [
+				{ index: 2, fields: new Map([[fooKey, innerFooDeltaSrc]]) },
+				{ index: 17, fields: new Map([[fooKey, innerFooDeltaDst]]) },
 			],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, outerFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
 		builder.move(root_foo2_foo5, 3, root_foo17_foo5);
@@ -516,7 +378,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes to the left across subtrees of the same field", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const innerFooDeltaSrc: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				5,
 				{
 					type: Delta.MarkType.MoveOut,
@@ -526,7 +388,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const innerFooDeltaDst: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				5,
 				{
 					type: Delta.MarkType.MoveIn,
@@ -536,39 +398,13 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const outerFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDeltaDst]]),
-					},
-				],
-				[
-					{
-						context: Delta.Context.Input,
-						index: 17,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDeltaSrc]]),
-					},
-				],
+			beforeShallow: [
+				{ index: 2, fields: new Map([[fooKey, innerFooDeltaDst]]) },
+				{ index: 17, fields: new Map([[fooKey, innerFooDeltaSrc]]) },
 			],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, outerFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
 		builder.move(root_foo17_foo5, 3, root_foo2_foo5);
@@ -578,7 +414,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes across subtrees of different fields", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const innerFooDeltaSrc: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				5,
 				{
 					type: Delta.MarkType.MoveOut,
@@ -588,7 +424,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const innerBarDeltaDst: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				5,
 				{
 					type: Delta.MarkType.MoveIn,
@@ -598,45 +434,20 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const outerFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDeltaSrc]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 2, fields: new Map([[fooKey, innerFooDeltaSrc]]) }],
 		};
 		const outerBarDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[barKey, innerBarDeltaDst]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 2, fields: new Map([[barKey, innerBarDeltaDst]]) }],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([
-							[fooKey, outerFooDelta],
-							[barKey, outerBarDelta],
-						]),
-					},
-				],
+			beforeShallow: [
+				{
+					index: 0,
+					fields: new Map([
+						[fooKey, outerFooDelta],
+						[barKey, outerBarDelta],
+					]),
+				},
 			],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
@@ -647,7 +458,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes across deep subtrees of different fields", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const innerFooDeltaSrc: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				7,
 				{
 					type: Delta.MarkType.MoveOut,
@@ -657,7 +468,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const innerBarDeltaDst: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				7,
 				{
 					type: Delta.MarkType.MoveIn,
@@ -667,71 +478,26 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const midFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 5,
-					},
-					{
-						fields: new Map([[fooKey, innerFooDeltaSrc]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 5, fields: new Map([[fooKey, innerFooDeltaSrc]]) }],
 		};
 		const midBarDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 5,
-					},
-					{
-						fields: new Map([[barKey, innerBarDeltaDst]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 5, fields: new Map([[barKey, innerBarDeltaDst]]) }],
 		};
 		const outerFooDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[fooKey, midFooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 2, fields: new Map([[fooKey, midFooDelta]]) }],
 		};
 		const outerBarDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 2,
-					},
-					{
-						fields: new Map([[barKey, midBarDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 2, fields: new Map([[barKey, midBarDelta]]) }],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([
-							[fooKey, outerFooDelta],
-							[barKey, outerBarDelta],
-						]),
-					},
-				],
+			beforeShallow: [
+				{
+					index: 0,
+					fields: new Map([
+						[fooKey, outerFooDelta],
+						[barKey, outerBarDelta],
+					]),
+				},
 			],
 		};
 		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
@@ -742,7 +508,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes to a detached tree", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				2,
 				{
 					type: Delta.MarkType.MoveOut,
@@ -752,7 +518,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const detachedDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				{
 					type: Delta.MarkType.MoveIn,
 					moveId,
@@ -761,17 +527,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, fooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([
 			[rootKey, rootDelta],
@@ -784,7 +540,7 @@ describe("SequenceEditBuilder", () => {
 	it("Can move nodes from a detached tree", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
 		const fooDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				2,
 				{
 					type: Delta.MarkType.MoveIn,
@@ -794,7 +550,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const detachedDelta: Delta.FieldChanges = {
-			shallowChanges: [
+			shallow: [
 				{
 					type: Delta.MarkType.MoveOut,
 					moveId,
@@ -803,17 +559,7 @@ describe("SequenceEditBuilder", () => {
 			],
 		};
 		const rootDelta: Delta.FieldChanges = {
-			nestedChanges: [
-				[
-					{
-						context: Delta.Context.Input,
-						index: 0,
-					},
-					{
-						fields: new Map([[fooKey, fooDelta]]),
-					},
-				],
-			],
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
 		};
 		const expected: Delta.Root = new Map([
 			[rootKey, rootDelta],
@@ -833,14 +579,7 @@ describe("SequenceEditBuilder", () => {
 				[
 					rootKey,
 					{
-						nestedChanges: [
-							[
-								{ context: Delta.Context.Input, index: 0 },
-								{
-									setValue: 42,
-								},
-							],
-						],
+						beforeShallow: [{ index: 0, setValue: 42 }],
 					},
 				],
 			]),
@@ -853,14 +592,7 @@ describe("SequenceEditBuilder", () => {
 				[
 					rootKey,
 					{
-						nestedChanges: [
-							[
-								{ context: Delta.Context.Input, index: 0 },
-								{
-									setValue: 43,
-								},
-							],
-						],
+						beforeShallow: [{ index: 0, setValue: 43 }],
 					},
 				],
 			]),
@@ -873,14 +605,7 @@ describe("SequenceEditBuilder", () => {
 				[
 					rootKey,
 					{
-						nestedChanges: [
-							[
-								{ context: Delta.Context.Input, index: 0 },
-								{
-									setValue: 44,
-								},
-							],
-						],
+						beforeShallow: [{ index: 0, setValue: 44 }],
 					},
 				],
 			]),
