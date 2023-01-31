@@ -375,7 +375,7 @@ These conflicts, if the application does not react to them, can be a form of dat
 Attempting to repair the outcome of a merge of conflicting edits “after the fact” is a challenging problem, one whose difficulty will grow non-linearly as the number and complexity of edits increases.
 
 An approach that places far less burden on application developers is to let them structure their edits in a manner that captures end users’ intent as precisely as possible.
-This model requires that edits are structured as _commands_ who's parameters are organized into tree references that the system understands and opaque parameters understood only by the command author.
+This model requires that edits are structured as _commands_ whose parameters are organized into tree references that the system understands and opaque parameters understood only by the command author.
 When a local edit is rebased against a conflicting edit by another user, the local edit can simply be rolled back, the conflicting edit applied first, and the command that produced the local edit then re-executed, as if the user had applied it under these new circumstances in the first place.
 The Shared Tree can use heuristics to adjust the tree reference parameters as necessary before the command is executed, meaning the handles passed to the command may be a best approximation of those originally supplied when the user first ran the command.
 Even if the command author does nothing else, many merge scenarios will yield better outcomes with this model than one that attempts to modify primitive operations applied to the tree.
