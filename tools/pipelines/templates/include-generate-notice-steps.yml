@@ -18,7 +18,7 @@ steps:
       customCommand: 'ci --ignore-scripts'
       customRegistry: 'useNpmrc'
   - task: Bash@3
-    displayName: Parameters
+    displayName: 'Generate Mono repo package json'
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
