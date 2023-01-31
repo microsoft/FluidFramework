@@ -138,7 +138,7 @@ export class BatchManager {
 		}
 
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-			this.logger.sendErrorEvent(
+			this.logger.sendTelemetryEvent(
 				{
 					eventName,
 					...telemetryProperties,

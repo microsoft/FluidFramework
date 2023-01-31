@@ -229,16 +229,10 @@ export class LoadTestDataStoreModel {
 		this.taskId = `op_sender${config.runId % halfClients}`;
 		this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
 		const changed = (taskId) => {
-			this.deferUntilConnected(
-				() => {
-					if (taskId === this.taskId && this.taskStartTime !== 0) {
-						this.dir.set(taskTimeKey, this.totalTaskTime);
-						this.taskStartTime = 0;
-					}
-				},
-				(error) =>
-					this.logger.sendErrorEvent({ eventName: "TaskManager_OnValueChanged" }, error),
-			);
+			if (taskId === this.taskId && this.taskStartTime !== 0) {
+				this.dir.set(taskTimeKey, this.totalTaskTime);
+				this.taskStartTime = 0;
+			}
 		};
 		this.taskManager.on("lost", changed);
 		this.taskManager.on("assigned", changed);
@@ -259,34 +253,24 @@ export class LoadTestDataStoreModel {
 			this.blobCount = Math.trunc(this.counter.value * blobsPerOp);
 
 			// upload blobs progressively as the counter is incremented
-			this.counter.on("op", (_, local) =>
-				this.deferUntilConnected(
-					() => {
-						const value = this.counter.value;
-						if (!local) {
-							// this is an old op, we should have already uploaded this blob
-							this.blobCount = Math.max(
-								this.blobCount,
-								Math.trunc(value * blobsPerOp),
-							);
-							return;
-						}
-						const newBlobs =
-							value >= clientOpCount
-								? clientBlobCount - this.blobCount
-								: Math.trunc(value * blobsPerOp - this.blobCount);
+			this.counter.on("op", (_, local) => () => {
+				const value = this.counter.value;
+				if (!local) {
+					// this is an old op, we should have already uploaded this blob
+					this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
+					return;
+				}
+				const newBlobs =
+					value >= clientOpCount
+						? clientBlobCount - this.blobCount
+						: Math.trunc(value * blobsPerOp - this.blobCount);
 
-						if (newBlobs > 0) {
-							this.blobUploads.push(
-								...[...Array(newBlobs)].map(async () =>
-									this.writeBlob(this.blobCount++),
-								),
-							);
-						}
-					},
-					(error) => this.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error),
-				),
-			);
+				if (newBlobs > 0) {
+					this.blobUploads.push(
+						...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)),
+					);
+				}
+			});
 		}
 
 		// download any blobs our partner may upload
@@ -320,20 +304,6 @@ export class LoadTestDataStoreModel {
 		for (const key of this.root.keys()) {
 			readBlob(key);
 		}
-	}
-
-	private deferUntilConnected(callback: () => void, errorHandler: (error) => void) {
-		Promise.resolve()
-			.then(() => {
-				if (this.runtime.connected) {
-					callback();
-				} else {
-					this.runtime.once("connected", () => {
-						callback();
-					});
-				}
-			})
-			.catch((error) => errorHandler(error));
 	}
 
 	public get startTime(): number {

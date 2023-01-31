@@ -94,7 +94,7 @@ export function generateRuntimeOptions(
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
 		],
 		maxBatchSizeInBytes: [undefined],
-		enableOpReentryCheck: [true],
+		enableOpReentryCheck: [undefined],
 		// Compressed payloads over 1MB will be split into chunked ops of this size
 		chunkSizeInBytes: [1024, 38400, 614400],
 	};
