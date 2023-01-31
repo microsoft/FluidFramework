@@ -3213,7 +3213,6 @@ importers:
       '@babel/plugin-transform-runtime': ^7.2.0
       '@babel/preset-env': ^7.2.0
       '@babel/runtime': ^7.13.7
-      '@fluid-experimental/property-binder-previous': npm:@fluid-experimental/property-binder@2.0.0-internal.2.1.0
       '@fluid-experimental/property-changeset': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-experimental/property-dds': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-experimental/property-properties': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -3263,7 +3262,6 @@ importers:
       '@babel/eslint-parser': 7.19.1_aoceuat6qprn2tq3avdar6uqtm
       '@babel/plugin-transform-runtime': 7.19.6_@babel+core@7.20.2
       '@babel/preset-env': 7.20.2_@babel+core@7.20.2
-      '@fluid-experimental/property-binder-previous': /@fluid-experimental/property-binder/2.0.0-internal.2.1.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
@@ -3299,7 +3297,6 @@ importers:
 
   experimental/PropertyDDS/packages/property-changeset:
     specifiers:
-      '@fluid-experimental/property-changeset-previous': npm:@fluid-experimental/property-changeset@2.0.0-internal.2.1.0
       '@fluid-experimental/property-common': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -3336,7 +3333,6 @@ importers:
       semver: 7.3.8
       traverse: 0.6.6
     devDependencies:
-      '@fluid-experimental/property-changeset-previous': /@fluid-experimental/property-changeset/2.0.0-internal.2.1.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -3358,7 +3354,6 @@ importers:
 
   experimental/PropertyDDS/packages/property-common:
     specifiers:
-      '@fluid-experimental/property-common-previous': npm:@fluid-experimental/property-common@2.0.0-internal.2.1.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -3402,7 +3397,6 @@ importers:
       semver: 7.3.8
       traverse: 0.6.6
     devDependencies:
-      '@fluid-experimental/property-common-previous': /@fluid-experimental/property-common/2.0.0-internal.2.1.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
@@ -3730,7 +3724,6 @@ importers:
       '@babel/preset-env': ^7.2.0
       '@fluid-experimental/property-changeset': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-experimental/property-properties': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluid-experimental/property-proxy-previous': npm:@fluid-experimental/property-proxy@2.0.0-internal.2.1.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@rushstack/eslint-config': ^2.5.1
@@ -3756,7 +3749,6 @@ importers:
       '@babel/core': 7.20.2
       '@babel/plugin-transform-runtime': 7.19.6_@babel+core@7.20.2
       '@babel/preset-env': 7.20.2_@babel+core@7.20.2
-      '@fluid-experimental/property-proxy-previous': /@fluid-experimental/property-proxy/2.0.0-internal.2.1.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -12372,119 +12364,6 @@ packages:
       react: 17.0.2
       tslib: 2.4.1
 
-  /@fluid-experimental/property-binder/2.0.0-internal.2.1.0:
-    resolution: {integrity: sha512-fYxodOBCeLLI/uBhFCnXObk2rxAGXKCxZ5lcjlzS8X0Ww5DBjjBmkZutVWr3B6Zmf/IfB80EEazQTwRMrOhEfA==}
-    dependencies:
-      '@babel/runtime': 7.20.7
-      '@fluid-experimental/property-changeset': 2.0.0-internal.2.2.0
-      '@fluid-experimental/property-dds': 2.0.0-internal.2.2.0
-      '@fluid-experimental/property-properties': 2.0.0-internal.2.2.0
-      lodash: 4.17.21
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
-  /@fluid-experimental/property-changeset/2.0.0-internal.2.1.0:
-    resolution: {integrity: sha512-vcylyvKuEsx/Hp6YPS+HsOmF+TYEAApWfeMoj8j4jfHyY1OLTeZ/R36ZnuBaBMk4X9zvpCBee9Cdcc3Mfmzh5w==}
-    dependencies:
-      '@fluid-experimental/property-common': 2.0.0-internal.2.2.0
-      ajv: 7.1.1
-      ajv-keywords: 4.0.0_ajv@7.1.1
-      async: 3.2.4
-      fastest-json-copy: 1.0.1
-      lodash: 4.17.21
-      semver: 7.3.8
-      traverse: 0.6.6
-    dev: true
-
-  /@fluid-experimental/property-changeset/2.0.0-internal.2.2.0:
-    resolution: {integrity: sha512-cjePMCuwVFTClaVsZMP+SMhY9/D50HkgY73E6Iau2tkLQAIzY8A3UVCwSUIwCbxy/jB29fzuv9ZPMAMOLhFWlw==}
-    dependencies:
-      '@fluid-experimental/property-common': 2.0.0-internal.2.2.0
-      ajv: 7.1.1
-      ajv-keywords: 4.0.0_ajv@7.1.1
-      async: 3.2.4
-      fastest-json-copy: 1.0.1
-      lodash: 4.17.21
-      semver: 7.3.8
-      traverse: 0.6.6
-    dev: true
-
-  /@fluid-experimental/property-common/2.0.0-internal.2.1.0:
-    resolution: {integrity: sha512-+gUpPkFIUKChM2gmD3Jshubll4M5WzbTDkJIjjIMUj/SFJFJGJTRRGD3P2n/NIFOV8y3OWtCPKiRj0lvcq6I5A==}
-    dependencies:
-      ajv: 7.1.1
-      async: 3.2.4
-      base64-js: 1.3.0
-      events: 3.3.0
-      fastest-json-copy: 1.0.1
-      lodash: 4.17.21
-      murmurhash3js: 3.0.1
-      semver: 7.3.8
-      traverse: 0.6.6
-    dev: true
-
-  /@fluid-experimental/property-common/2.0.0-internal.2.2.0:
-    resolution: {integrity: sha512-Tttwf50SEQctfasZrPDCGVQj2Z5lVZHCHFSiowj3p1m1M4Ayb6ERVeqkcJCHtRFMK3IctIDi6T5G9VhADJjeUQ==}
-    dependencies:
-      ajv: 7.1.1
-      async: 3.2.4
-      base64-js: 1.3.0
-      events: 3.3.0
-      fastest-json-copy: 1.0.1
-      lodash: 4.17.21
-      murmurhash3js: 3.0.1
-      semver: 7.3.8
-      traverse: 0.6.6
-    dev: true
-
-  /@fluid-experimental/property-dds/2.0.0-internal.2.2.0:
-    resolution: {integrity: sha512-9Y2CVp4g7Vgm3sqKShxQNWMEwW7UY7d0+sti0ly8lRJSGr4A+oAHUEJJBRdWeHtIrOYdgTybS29UTGAxCAwP2A==}
-    dependencies:
-      '@fluid-experimental/property-changeset': 2.0.0-internal.2.2.0
-      '@fluid-experimental/property-properties': 2.0.0-internal.2.2.0
-      '@fluidframework/common-utils': 1.0.0
-      '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/runtime-utils': 2.0.0-internal.2.4.0
-      '@fluidframework/shared-object-base': 2.0.0-internal.2.4.0
-      axios: 0.26.1
-      fastest-json-copy: 1.0.1
-      lodash: 4.17.21
-      lz4js: 0.2.0
-      msgpackr: 1.8.1
-      pako: 2.1.0
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
-  /@fluid-experimental/property-properties/2.0.0-internal.2.2.0:
-    resolution: {integrity: sha512-Fhohi2FnSboF1/unVkAyZ6VeiM4yr1/leXZmeu1eEY14yOedsH00I7yy8ucfa5GaFJ4iNXSrznGnDluHP452Ng==}
-    dependencies:
-      '@fluid-experimental/property-changeset': 2.0.0-internal.2.2.0
-      '@fluid-experimental/property-common': 2.0.0-internal.2.2.0
-      ajv: 7.1.1
-      async: 3.2.4
-      fastest-json-copy: 1.0.1
-      lodash: 4.17.21
-      semver: 7.3.8
-      traverse: 0.6.6
-      underscore: 1.13.6
-    dev: true
-
-  /@fluid-experimental/property-proxy/2.0.0-internal.2.1.0:
-    resolution: {integrity: sha512-rG5+0DyoB9lHP/YJQuMi+WBlyqCXz6zO+ioRN0KQWEL3quNYkJtbiP/W1KqcNNWSCnBsoqqW66DsthBDrt8UGQ==}
-    dependencies:
-      '@fluid-experimental/property-changeset': 2.0.0-internal.2.2.0
-      '@fluid-experimental/property-properties': 2.0.0-internal.2.2.0
-    dev: true
-
   /@fluid-experimental/sequence-deprecated/2.0.0-internal.2.0.0:
     resolution: {integrity: sha512-l2UdVP3sZRlqm0FD0GRVF5VJGrFI2FgD9hYzCMRXCk1m6jaNmkNB0rtf8LboczoTu3NMad3IEz+bOKbLCHrr/Q==}
     dependencies:
@@ -16823,6 +16702,7 @@ packages:
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
+    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-darwin-x64/2.2.0:
@@ -16830,6 +16710,7 @@ packages:
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
+    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-linux-arm/2.2.0:
@@ -16837,6 +16718,7 @@ packages:
     cpu: [arm]
     os: [linux]
     requiresBuild: true
+    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-linux-arm64/2.2.0:
@@ -16844,6 +16726,7 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
+    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-linux-x64/2.2.0:
@@ -16851,6 +16734,7 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
+    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-win32-x64/2.2.0:
@@ -16858,6 +16742,7 @@ packages:
     cpu: [x64]
     os: [win32]
     requiresBuild: true
+    dev: false
     optional: true
 
   /@nicolo-ribaudo/eslint-scope-5-internals/5.1.1-v1:
@@ -21178,6 +21063,7 @@ packages:
       ajv: ^7.0.0
     dependencies:
       ajv: 7.1.1
+    dev: false
 
   /ajv-keywords/5.1.0_ajv@8.12.0:
     resolution: {integrity: sha512-YCS/JNFAUyr5vAuhk1DWm1CBxRHW9LbJ2ozWeemrIqpbsqKjHVxYPyi5GC0rjZIT5JxJ3virVTS8wk4i/Z+krw==}
@@ -21211,6 +21097,7 @@ packages:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
       uri-js: 4.2.2
+    dev: false
 
   /ajv/8.12.0:
     resolution: {integrity: sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==}
@@ -22291,6 +22178,7 @@ packages:
 
   /base64-js/1.3.0:
     resolution: {integrity: sha512-ccav/yGvoa80BQDljCxsmmQ3Xvx60/UpBIij5QN21W3wBi/hhIC9OoO+KLpu9IJTS9j4DRVJ3aDDF9cMSoa2lw==}
+    dev: false
 
   /base64-js/1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -26838,6 +26726,7 @@ packages:
   /fastest-json-copy/1.0.1:
     resolution: {integrity: sha512-Y4/wf9ARleMh4so64oyOt+tUAae8HN1W8P4tZfmnTkWjqKPuqZo7HxFQRFiQ/kGH8VRDYPNuh25eHCLxEKRPSA==}
     engines: {node: '>=10.18'}
+    dev: false
 
   /fastest-levenshtein/1.0.16:
     resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
@@ -33028,6 +32917,7 @@ packages:
       '@msgpackr-extract/msgpackr-extract-linux-arm64': 2.2.0
       '@msgpackr-extract/msgpackr-extract-linux-x64': 2.2.0
       '@msgpackr-extract/msgpackr-extract-win32-x64': 2.2.0
+    dev: false
     optional: true
 
   /msgpackr/1.8.0:
@@ -33035,12 +32925,6 @@ packages:
     optionalDependencies:
       msgpackr-extract: 2.2.0
     dev: false
-
-  /msgpackr/1.8.1:
-    resolution: {integrity: sha512-05fT4J8ZqjYlR4QcRDIhLCYKUOHXk7C/xa62GzMKj74l3up9k2QZ3LgFc6qWdsPHl91QA2WLWqWc8b8t7GLNNw==}
-    optionalDependencies:
-      msgpackr-extract: 2.2.0
-    dev: true
 
   /multicast-dns-service-types/1.1.0:
     resolution: {integrity: sha512-cnAsSVxIDsYt0v7HmC0hWZFwwXSh+E6PgCrREDuN/EsjgLwA5XRmlMHhSiDPrt6HxY1gTivEa/Zh7GtODoLevQ==}
@@ -33077,6 +32961,7 @@ packages:
   /murmurhash3js/3.0.1:
     resolution: {integrity: sha512-KL8QYUaxq7kUbcl0Yto51rMcYt7E/4N4BG3/c96Iqw1PQrTRspu8Cpx4TZ4Nunib1d4bEkIH3gjCYlP2RLBdow==}
     engines: {node: '>=0.10.0'}
+    dev: false
 
   /mute-stream/0.0.7:
     resolution: {integrity: sha512-r65nCZhrbXXb6dXOACihYApHw2Q6pV0M3V0PSxd74N0+D8nzAdEAITq2oAjA1jVnKI+tGvEBUpqiMh0+rW6zDQ==}
@@ -33266,6 +33151,7 @@ packages:
   /node-gyp-build-optional-packages/5.0.3:
     resolution: {integrity: sha512-k75jcVzk5wnnc/FMxsf4udAoTEUv2jY3ycfdSd3yWu6Cnd1oee6/CfZJApyscA4FJOmdoixWwiwOyf16RzD5JA==}
     hasBin: true
+    dev: false
     optional: true
 
   /node-gyp-build/4.5.0:
@@ -39971,6 +39857,7 @@ packages:
     resolution: {integrity: sha512-KY9Frmirql91X2Qgjry0Wd4Y+YTdrdZheS8TFwvkbLWf/G5KNJDCh6pKL5OZctEW4+0Baa5idK2ZQuELRwPznQ==}
     dependencies:
       punycode: 2.1.1
+    dev: false
 
   /uri-js/4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
