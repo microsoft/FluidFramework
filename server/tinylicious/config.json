@@ -11,7 +11,13 @@
         "permissions": {
             "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
             "augloopQueue": ["augmentation"],
-            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+            "headlessQueue": [
+                "chain-snapshot",
+                "chain-intel",
+                "chain-translation",
+                "chain-spell",
+                "chain-cache"
+            ]
         }
     },
     "alfred": {

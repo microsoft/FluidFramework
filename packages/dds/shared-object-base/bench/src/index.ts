@@ -13,13 +13,15 @@ const serializer = new FluidSerializer(new MockHandleContext(), (handle: IFluidH
 
 // Mock Fluid handle
 const handle: IFluidHandle = {
-    get IFluidHandle() { return handle; },
-    absolutePath: "/",
-    isAttached: false,
+	get IFluidHandle() {
+		return handle;
+	},
+	absolutePath: "/",
+	isAttached: false,
 
-    attachGraph(): void { },
-    get: async () => Promise.resolve(undefined as any),
-    bind() {},
+	attachGraph(): void {},
+	get: async () => Promise.resolve(undefined as any),
+	bind() {},
 };
 
 const shallowNoHandles = makeJson(/* breadth: */ 2, /* depth: */ 2, () => ({}));
@@ -28,41 +30,43 @@ const deepWithHandles = makeJson(/* breadth: */ 8, /* depth: */ 8, () => handle)
 const shallowNoHandlesString = serializer.stringify(shallowNoHandles, handle);
 const deepWithHandlesString = serializer.stringify(deepWithHandles, handle);
 
-const measureReplaceHandles = (name: string, value: any) => new Suite(`encode Handles: ${name}`)
-    .add("encode(...)", () => {
-        consume(serializer.encode(value, handle));
-    })
-    .add("parse(stringify(...))", () => {
-        consume(serializer.parse(serializer.stringify(value, handle)));
-    });
+const measureReplaceHandles = (name: string, value: any) =>
+	new Suite(`encode Handles: ${name}`)
+		.add("encode(...)", () => {
+			consume(serializer.encode(value, handle));
+		})
+		.add("parse(stringify(...))", () => {
+			consume(serializer.parse(serializer.stringify(value, handle)));
+		});
 
-const measureStringify = (name: string, value: any) => new Suite(`Stringify: ${name}`)
-    .add("JSON.stringify(encode(...))", () => {
-        consume(JSON.stringify(serializer.encode(value, handle)));
-    })
-    .add("stringify(...)", () => {
-        consume(serializer.stringify(value, handle));
-    });
+const measureStringify = (name: string, value: any) =>
+	new Suite(`Stringify: ${name}`)
+		.add("JSON.stringify(encode(...))", () => {
+			consume(JSON.stringify(serializer.encode(value, handle)));
+		})
+		.add("stringify(...)", () => {
+			consume(serializer.stringify(value, handle));
+		});
 
-const measureParse = (name: string, value: any) => new Suite(`Parse: ${name}`)
-    .add("parse(...)", () => {
-        consume(serializer.parse(value));
-    });
+const measureParse = (name: string, value: any) =>
+	new Suite(`Parse: ${name}`).add("parse(...)", () => {
+		consume(serializer.parse(value));
+	});
 
 runSuites([
-    measureReplaceHandles("primitive", 0),
-    measureReplaceHandles("shallow (no handles)", shallowNoHandles),
-    measureReplaceHandles("deep (with handles)", deepWithHandles),
+	measureReplaceHandles("primitive", 0),
+	measureReplaceHandles("shallow (no handles)", shallowNoHandles),
+	measureReplaceHandles("deep (with handles)", deepWithHandles),
 ]);
 
 runSuites([
-    measureStringify("primitive", 0),
-    measureStringify("shallow (no handles)", shallowNoHandles),
-    measureStringify("deep (with handles)", deepWithHandles),
+	measureStringify("primitive", 0),
+	measureStringify("shallow (no handles)", shallowNoHandles),
+	measureStringify("deep (with handles)", deepWithHandles),
 ]);
 
 runSuites([
-    measureParse("primitive", "0"),
-    measureParse("shallow (no handles)", shallowNoHandlesString),
-    measureParse("deep (with handles)", deepWithHandlesString),
+	measureParse("primitive", "0"),
+	measureParse("shallow (no handles)", shallowNoHandlesString),
+	measureParse("deep (with handles)", deepWithHandlesString),
 ]);

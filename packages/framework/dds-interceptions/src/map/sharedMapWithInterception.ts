@@ -22,32 +22,36 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
  * @returns A new SharedMap that intercepts the set method and calls the setInterceptionCallback.
  */
 export function createSharedMapWithInterception(
-    sharedMap: SharedMap,
-    context: IFluidDataStoreContext,
-    setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void): SharedMap {
-    const sharedMapWithInterception = Object.create(sharedMap);
+	sharedMap: SharedMap,
+	context: IFluidDataStoreContext,
+	setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void,
+): SharedMap {
+	const sharedMapWithInterception = Object.create(sharedMap);
 
-    // executingCallback keeps track of whether set is called recursively from the setInterceptionCallback.
-    let executingCallback: boolean = false;
+	// executingCallback keeps track of whether set is called recursively from the setInterceptionCallback.
+	let executingCallback: boolean = false;
 
-    sharedMapWithInterception.set = (key: string, value: any) => {
-        let map;
-        // Set should not be called on the wrapped object from the interception callback as this will lead to
-        // infinite recursion.
-        assert(executingCallback === false, 0x0c0 /* "set called recursively from the interception callback" */);
+	sharedMapWithInterception.set = (key: string, value: any) => {
+		let map;
+		// Set should not be called on the wrapped object from the interception callback as this will lead to
+		// infinite recursion.
+		assert(
+			executingCallback === false,
+			0x0c0 /* "set called recursively from the interception callback" */,
+		);
 
-        context.containerRuntime.orderSequentially(() => {
-            map = sharedMap.set(key, value);
-            executingCallback = true;
-            try {
-                setInterceptionCallback(sharedMap, key, value);
-            } finally {
-                executingCallback = false;
-            }
-        });
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return map;
-    };
+		context.containerRuntime.orderSequentially(() => {
+			map = sharedMap.set(key, value);
+			executingCallback = true;
+			try {
+				setInterceptionCallback(sharedMap, key, value);
+			} finally {
+				executingCallback = false;
+			}
+		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return map;
+	};
 
-    return sharedMapWithInterception as SharedMap;
+	return sharedMapWithInterception as SharedMap;
 }

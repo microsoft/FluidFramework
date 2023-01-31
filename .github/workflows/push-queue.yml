@@ -7,12 +7,11 @@ on:
 jobs:
   queue-pr:
     runs-on: ubuntu-latest
-    if: github.event.label.name != 'do-not-merge-in-next' && github.repository_owner
-      == 'microsoft'
+    if: github.event.label.name != 'do-not-merge-in-next' && github.repository_owner == 'microsoft'
     steps:
       - run: echo ${{ github.event.issue.number }} echo ${{ github.event.label.name }}
       - run: npm install @azure/storage-queue
-      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+      - uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # ratchet:actions/github-script@v6
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')

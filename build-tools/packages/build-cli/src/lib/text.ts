@@ -7,13 +7,13 @@
  * Indent text by prepending spaces.
  */
 export function indentString(str: string, indentNumber = 2): string {
-    const ind = getIndent(indentNumber);
-    return `${ind}${str}`;
+	const ind = getIndent(indentNumber);
+	return `${ind}${str}`;
 }
 
 /**
  * Returns a string of spaces.
  */
 export function getIndent(indentNumber = 2) {
-    return " ".repeat(indentNumber);
+	return " ".repeat(indentNumber);
 }
