@@ -28,7 +28,7 @@ export interface ServiceProps {
 	 * @remarks
 	 *
 	 * This service will register with the external data service to receive data change notifications.
-	 * Any restered listeners for this "webhook echo" via `/register-for-webhook` will be notified of changes
+	 * Any registered listeners for this "webhook echo" via `/register-for-webhook` will be notified of changes
 	 * any time the external data service communicates them.
 	 */
 	externalDataServiceWebhookRegistrationUrl: string;
