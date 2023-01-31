@@ -19,7 +19,7 @@ import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoaderHeader } from "@fluidframework/container-definitions";
-import { getGCStateFromSummary, getGCSweepStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
+import { getGCStateFromSummary, getGCDeletedStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC sweep phases without overlapping.
@@ -114,8 +114,8 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         const tombstoneState1 = getGCTombstoneStateFromSummary(summaryTree1);
         assert(tombstoneState1 === undefined, "Nothing should be tombstoned");
         // GC Sweep check
-        const sweepState1 = getGCSweepStateFromSummary(summaryTree1);
-        assert(sweepState1 === undefined, "Nothing should be swept");
+        const deletedState1 = getGCDeletedStateFromSummary(summaryTree1);
+        assert(deletedState1 === undefined, "Nothing should be swept");
         // Summary check
         assert(await isDataStoreInSummaryTree(summaryTree1, dataStoreId), "Data Store should be in the summary!");
 
@@ -144,11 +144,11 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         const tombstoneState3 = getGCTombstoneStateFromSummary(summaryTree3);
         assert(tombstoneState3 === undefined, "Nothing should be tombstoned");
         // GC Sweep check
-        const sweepState = getGCSweepStateFromSummary(summaryTree3);
-        assert(sweepState !== undefined, "Should have sweep state");
-        assert(sweepState.includes(dataStoreHandle.absolutePath), "Data Store should be swept");
-        assert(sweepState.includes(ddsHandle.absolutePath), "DDS should be swept");
-        assert(sweepState.length === 2, "Nothing else should have been swept");
+        const deletedState3 = getGCDeletedStateFromSummary(summaryTree3);
+        assert(deletedState3 !== undefined, "Should have sweep state");
+        assert(deletedState3.includes(dataStoreHandle.absolutePath), "Data Store should be swept");
+        assert(deletedState3.includes(ddsHandle.absolutePath), "DDS should be swept");
+        assert(deletedState3.length === 2, "Nothing else should have been swept");
         // Summary check
         assert(!(await isDataStoreInSummaryTree(summaryTree3, dataStoreId)), "Data Store should not be in the summary!");
 

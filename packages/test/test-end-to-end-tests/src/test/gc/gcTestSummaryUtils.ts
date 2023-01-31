@@ -72,7 +72,7 @@ export function getGCTombstoneStateFromSummary(summaryTree: ISummaryTree): strin
  * @param summaryTree - The summary tree that contains the GC summary.
  * @returns The sweep data if it exists, undefined otherwise.
  */
-export function getGCSweepStateFromSummary(summaryTree: ISummaryTree): string[] | undefined {
+export function getGCDeletedStateFromSummary(summaryTree: ISummaryTree): string[] | undefined {
     const rootGCTree = summaryTree.tree[gcTreeKey];
     if (rootGCTree === undefined) {
         return undefined;

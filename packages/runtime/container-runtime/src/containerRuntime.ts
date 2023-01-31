@@ -2234,11 +2234,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * This is called to delete objects from the runtime
-     * @param deletableRoutes - object routes and sub routes that can be deleted
+     * @param unusedRoutes - object routes and sub routes that can be deleted
      * @returns - routes of objects deleted from the runtime
      */
-    public deleteUnusedNodes(deletableRoutes: string[]): string[] {
-        const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(deletableRoutes);
+    public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+        const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
         const deletedRoutes: string[] = [];
 
         const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
@@ -2256,7 +2256,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.blobManager.updateUnusedRoutes(blobManagerRoutes);
         this.dataStores.updateUnusedRoutes(dataStoreRoutes);
     }
-
 
     /**
      * This is called to update objects that are tombstones.

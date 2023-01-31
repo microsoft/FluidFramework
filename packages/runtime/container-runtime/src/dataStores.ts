@@ -668,16 +668,16 @@ export class DataStores implements IDisposable {
 
     /**
      * This is called to delete unused nodes.
-     * @param deletableRoutes - The routes of data stores and DDSes that should be deleted
+     * @param unusedRoutes - The routes of data stores and DDSes that should be deleted
      * @returns - routes of deleted nodes
      */
-    public deleteUnusedNodes(deletableRoutes: string[]): string[] {
+    public deleteUnusedNodes(unusedRoutes: string[]): string[] {
         if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
             return [];
         }
         const deletedRoutes = new Set<string>();
 
-        for (const route of deletableRoutes) {
+        for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             const dataStoreId = pathParts[1];
 

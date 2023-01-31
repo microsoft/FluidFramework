@@ -151,7 +151,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Send ops fails for swept datastores in summarizing container loaded before sweep timeout",
         [
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Sweep_DataStore_Changed" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed" },
         ],
         async () => {
             const {
@@ -175,7 +175,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 
         itExpects("Send signals fails for swept datastores in summarizing container loaded before sweep timeout",
         [
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Sweep_DataStore_Changed" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed" },
         ],
         async () => {
             const {

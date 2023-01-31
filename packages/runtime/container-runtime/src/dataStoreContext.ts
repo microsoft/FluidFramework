@@ -781,7 +781,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             const error = new DataCorruptionError(messageString, safeTelemetryProps);
             this.mc.logger.sendErrorEvent(
                 {
-                    eventName: "GC_Sweep_DataStore_Changed",
+                    eventName: "GC_Deleted_DataStore_Changed",
                     isSummarizerClient: this.clientDetails.type === summarizerClientType,
                     callSite,
                 },
@@ -1023,12 +1023,19 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         return {};
     }
 
-    /** A context should only be marked as deleted when its a remote context */
+    /**
+     * A context should only be marked as deleted when its a remote context.
+     * Session Expiry at the runtime level should have closed the container creating the local data store context
+     * before delete is even possible. Session Expiry is at 30 days, and sweep is done 36+ days later from the time
+     * it was unreferenced. Thus the sweeping container should have loaded from a snapshot and thus creating a remote
+     * context.
+     */
     public delete() {
         sendGCTombstoneEvent(
             this.mc,
             {
                 eventName: "GC_Deleted_DataStore_Unexpected_Delete",
+                message: "Unexpected deletion of a local data store context",
                 category: "error",
                 isSummarizerClient: this.containerRuntime.clientDetails.type === summarizerClientType,
             },
