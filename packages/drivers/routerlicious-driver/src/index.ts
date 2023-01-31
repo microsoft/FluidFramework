@@ -7,6 +7,9 @@
 export { DefaultTokenProvider } from "./defaultTokenProvider";
 export { ITokenProvider, ITokenResponse, ITokenService } from "./tokens";
 
+// Errors
+export { R11sErrorType } from "./errorUtils";
+
 // Factory
 export {
 	DocumentPostCreateError,

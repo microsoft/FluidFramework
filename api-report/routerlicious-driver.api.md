@@ -62,6 +62,14 @@ export interface ITokenService {
     extractClaims(token: string): ITokenClaims;
 }
 
+// @public (undocumented)
+export enum R11sErrorType {
+    // (undocumented)
+    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
+    // (undocumented)
+    sslCertError = "sslCertError"
+}
+
 // @public
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
