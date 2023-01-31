@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AttributionInfo, Attributor, IAttributor } from "../attributor";
+import { AttributionInfo } from "@fluidframework/runtime-definitions";
+import { Attributor, IAttributor } from "../attributor";
 import { AttributorSerializer, chain, Encoder, SerializedAttributor } from "../encoders";
 
 function makeNoopEncoder<T>(): Encoder<T, T> {
