@@ -4,7 +4,8 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { AttributionKey, ISegment } from "./mergeTreeNodes";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { ISegment } from "./mergeTreeNodes";
 
 export interface SerializedAttributionCollection {
 	/**
