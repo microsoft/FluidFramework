@@ -12,9 +12,9 @@ import { renderModuleLikeSection } from "./DefaultRenderModuleLike";
  * Default policy for rendering doc sections for `Namespace` items.
  */
 export function renderNamespaceSection(
-    apiNamespace: ApiNamespace,
-    config: Required<MarkdownDocumenterConfiguration>,
-    renderChild: (apiItem: ApiItem) => DocSection,
+	apiNamespace: ApiNamespace,
+	config: Required<MarkdownDocumenterConfiguration>,
+	renderChild: (apiItem: ApiItem) => DocSection,
 ): DocSection {
-    return renderModuleLikeSection(apiNamespace, apiNamespace.members, config, renderChild);
+	return renderModuleLikeSection(apiNamespace, apiNamespace.members, config, renderChild);
 }

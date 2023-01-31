@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 // Export modules to global scope as necessary (only for testing)
-const path = require('path');
-const chai = require('chai');
-const sinonChai = require('sinon-chai');
-const chaiAsPromised = require('chai-as-promised');
+const path = require("path");
+const chai = require("chai");
+const sinonChai = require("sinon-chai");
+const chaiAsPromised = require("chai-as-promised");
 /*const {ddbSettings} = require('hfdm-dynamodb-store');
 const ddbEndpoint = require('hfdm-private-tools').getDDBEndpoint();
 const s3Endpoint = require('hfdm-private-tools').getS3Endpoint();
 const redisConfig = require('hfdm-private-tools').getRedisConfig();*/
-const ModuleLogger = require('../src/utils/module_logger');
+const ModuleLogger = require("../src/utils/module_logger");
 
 global.targets = {};
 //global.targets.ddbEndpoint = ddbEndpoint;
@@ -27,25 +27,25 @@ settings.set('store-dynamodb:aws:endpoint', ddbEndpoint);
 settings.set('s3Store:config:endpoint', s3Endpoint);
 settings.set('binary:s3:endpoint', s3Endpoint);*/
 
-
 global.expect = chai.expect;
 global.assert = chai.assert;
 global.should = chai.should();
 chai.use(sinonChai);
 chai.use(chaiAsPromised);
 
-global.PropertyFactory = require('@fluid-experimental/property-properties').PropertyFactory;
+global.PropertyFactory =
+    require("@fluid-experimental/property-properties").PropertyFactory;
 
 [
-  'HFDM.Redis.HfdmRedisClient',
-  'HFDM.ServerUtils.BaseServer',
-  'HFDM.PropertyGraphStore.DynamoDB',
-  'HFDM.PropertyGraph.BasePropertyGraph',
-  'HFDM.MaterializedHistoryServer.LoadManager',
-  'HFDM.MaterializedHistoryService.Server',
-  'HFDM.Utils.RequestUtils'
+    "HFDM.Redis.HfdmRedisClient",
+    "HFDM.ServerUtils.BaseServer",
+    "HFDM.PropertyGraphStore.DynamoDB",
+    "HFDM.PropertyGraph.BasePropertyGraph",
+    "HFDM.MaterializedHistoryServer.LoadManager",
+    "HFDM.MaterializedHistoryService.Server",
+    "HFDM.Utils.RequestUtils",
 ].forEach((loggerName) => {
-  ModuleLogger.getLogger(loggerName).setLevel('OFF');
+    ModuleLogger.getLogger(loggerName).setLevel("OFF");
 });
 
 //const PluginManager = require('../src/plugins/PluginManager');

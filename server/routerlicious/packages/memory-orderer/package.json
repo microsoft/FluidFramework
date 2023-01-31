@@ -68,6 +68,7 @@
     "@types/lodash": "^4.14.118",
     "@types/node": "^14.18.0",
     "@types/ws": "^6.0.1",
+    "assert": "^2.0.0",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.21",

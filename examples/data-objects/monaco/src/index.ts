@@ -4,9 +4,7 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import {
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObjectFactory } from "@fluidframework/aqueduct";
 import * as sequence from "@fluidframework/sequence";
 import React from "react";
 
@@ -16,14 +14,13 @@ import { MonacoView } from "./view";
 const monacoName = "@fluid-example/monaco";
 
 const componentFactory = new DataObjectFactory(
-    monacoName,
-    MonacoRunner,
-    [
-        sequence.SharedString.getFactory(),
-    ],
-    {},
+	monacoName,
+	MonacoRunner,
+	[sequence.SharedString.getFactory()],
+	{},
 );
 
-const monacoViewCallback = (model: MonacoRunner): React.ReactElement => React.createElement(MonacoView, { sharedString: model.text });
+const monacoViewCallback = (model: MonacoRunner): React.ReactElement =>
+	React.createElement(MonacoView, { sharedString: model.text });
 
 export const fluidExport = new ContainerViewRuntimeFactory(componentFactory, monacoViewCallback);

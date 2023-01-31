@@ -12,10 +12,10 @@ import { amendRebase, rebase } from "./rebase";
 export type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 
 export const sequenceFieldChangeRebaser = {
-    compose,
-    amendCompose,
-    invert,
-    amendInvert,
-    rebase,
-    amendRebase,
+	compose,
+	amendCompose,
+	invert,
+	amendInvert,
+	rebase,
+	amendRebase,
 };
