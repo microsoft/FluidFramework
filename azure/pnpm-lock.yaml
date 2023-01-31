@@ -60,6 +60,7 @@ importers:
       '@fluidframework/test-utils': ^1.4.0-121020
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
+      '@trivago/prettier-plugin-sort-imports': ^3.3.0
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.0
       axios: ^0.21.2
@@ -103,6 +104,7 @@ importers:
       '@fluidframework/test-utils': 1.4.0-121020
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@trivago/prettier-plugin-sort-imports': 3.4.0_prettier@2.6.2
       '@types/mocha': 9.1.1
       '@types/node': 14.18.33
       concurrently: 6.5.1
@@ -123,6 +125,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
+      '@trivago/prettier-plugin-sort-imports': ^3.3.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -140,6 +143,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@trivago/prettier-plugin-sort-imports': 3.4.0_prettier@2.6.2
       concurrently: 6.5.1
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -159,6 +163,7 @@ importers:
       '@fluidframework/protocol-definitions': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
+      '@trivago/prettier-plugin-sort-imports': ^3.3.0
       '@types/jsrsasign': ^8.0.8
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
@@ -181,6 +186,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@trivago/prettier-plugin-sort-imports': 3.4.0_prettier@2.6.2
       '@types/jsrsasign': 8.0.13
       concurrently: 6.5.1
       copyfiles: 2.4.1
@@ -205,6 +211,7 @@ importers:
       '@fluidframework/test-client-utils': 1.4.0-121020
       '@fluidframework/test-tools': ^0.2.3074
       '@rushstack/eslint-config': ^2.5.1
+      '@trivago/prettier-plugin-sort-imports': ^3.3.0
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -252,6 +259,7 @@ importers:
       '@fluidframework/test-client-utils': 1.4.0-121020
       '@fluidframework/test-tools': 0.2.3074
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@trivago/prettier-plugin-sort-imports': 3.4.0_prettier@2.6.2
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -14622,6 +14630,7 @@ packages:
 
   /sourcemap-codec/1.4.8:
     resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
+    deprecated: Please use @jridgewell/sourcemap-codec instead
     dev: true
 
   /spawn-command/0.0.2-1:
