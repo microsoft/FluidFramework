@@ -165,8 +165,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			try {
 				taskData = assertValidTaskData(messageData);
 			} catch (error) {
-				const errorMessage = `Malformed data received from external data service webhook: ${error}`;
-				console.error(formatLogMessage(errorMessage));
+				const errorMessage = "Malformed data received from external data service webhook.";
+				console.error(formatLogMessage(errorMessage), error);
 				result.status(400).json({ errorMessage });
 				return;
 			}

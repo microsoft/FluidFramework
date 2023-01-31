@@ -139,8 +139,17 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					string | number | symbol,
 					unknown
 				>;
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				const taskList = assertValidTaskData((responseBody as any).taskList);
+
+				let taskList: TaskData;
+				try {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					taskList = assertValidTaskData((responseBody as any).taskList);
+				} catch (error) {
+					const errorMessage = "Received task data received from external data source.";
+					console.error(formatLogMessage(errorMessage), error);
+					result.status(400).json({ message: errorMessage });
+					return;
+				}
 
 				console.log(formatLogMessage("Returning current task list:"), taskList);
 
