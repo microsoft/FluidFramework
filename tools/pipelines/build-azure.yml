@@ -118,6 +118,7 @@ extends:
         workingDirectory: azure
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
+          set _FLUID_ROOT_=$(Build.SourcesDirectory)"
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
