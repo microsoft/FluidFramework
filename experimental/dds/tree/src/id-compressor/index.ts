@@ -31,4 +31,4 @@ export {
 	VersionedSerializedIdCompressor,
 } from './persisted-types';
 export { createSessionId } from './NumericUuid';
-export { IdCompressorLogger } from './idCompressorLogger';
+export { createThrottledIdCompressorLogger } from './Logger';

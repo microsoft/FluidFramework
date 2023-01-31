@@ -30,7 +30,7 @@ import {
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
 import { getIds } from '../id-compressor/IdRange';
-import { IdCompressorLogger, IdCreationRange, UnackedLocalId } from '../id-compressor';
+import { IdCreationRange, UnackedLocalId } from '../id-compressor';
 import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities';
 import {
 	createCompressor,
@@ -930,35 +930,6 @@ describe('IdCompressor', () => {
 					size: 137,
 					clusterCount: 1,
 					sessionCount: 1,
-				},
-			]);
-		});
-
-		it('does not emit telemetry when not sampled', () => {
-			const mockLogger = new MockLogger();
-			const sampledLogger = new IdCompressorLogger(mockLogger, true);
-			const compressor = createCompressor(Client.Client1, 5, undefined, sampledLogger);
-			const localId1 = compressor.generateCompressedId();
-			expect(isLocalId(localId1)).to.be.true;
-			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-
-			mockLogger.assertMatch([
-				{
-					eventName: 'SharedTreeIdCompressor:FirstCluster',
-					sessionId: '88888888-8888-4888-b088-888888888888',
-				},
-				{
-					eventName: 'SharedTreeIdCompressor:NewCluster',
-					sessionId: '88888888-8888-4888-b088-888888888888',
-					clusterCapacity: 5,
-					clusterCount: 1,
-				},
-				{
-					eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
-					sessionId: '88888888-8888-4888-b088-888888888888',
-					eagerFinalIdCount: 0,
-					overridesCount: 0,
-					localIdCount: 1,
 				},
 			]);
 		});
