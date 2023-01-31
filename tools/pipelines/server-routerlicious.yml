@@ -72,9 +72,6 @@ pr:
     - tools/pipelines/server-routerlicious.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
-    - tools/pipelines/templates/include-publish-npm-package-steps.yml
-    - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     exclude:
