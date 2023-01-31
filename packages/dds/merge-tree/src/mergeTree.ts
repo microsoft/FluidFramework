@@ -1478,7 +1478,9 @@ export class MergeTree {
 					this.slideAckedRemovedSegmentReferences(pendingSegment);
 				}
 				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
-					this.moveSeqs.push(seq);
+					if (seq !== this.moveSeqs[this.moveSeqs.length - 1]) {
+						this.moveSeqs.push(seq);
+					}
 					if (localMovedSeq !== undefined) {
 						this.localMoveSeqs.delete(localMovedSeq);
 					}
@@ -2043,7 +2045,6 @@ export class MergeTree {
 		}
 	}
 
-	// todo: use this in a smarter way
 	private readonly moveSeqs: number[] = [];
 	private readonly localMoveSeqs: Set<number> = new Set();
 
