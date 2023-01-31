@@ -185,6 +185,20 @@
 				}
 			},
 			"opsSendType": "allClientsConcurrentReadWrite"
+		},
+		"ci_with_large_payloads": {
+			"opRatePerMin": 10,
+			"progressIntervalMs": 15000,
+			"numClients": 100,
+			"totalSendCount": 10000,
+			"readWriteCycleMs": 30000,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 150000
+			},
+			"useRandomContent": true,
+			"useVariableOpSize": true,
+			"opSizeinBytes": 1172864
 		}
 	}
 }
