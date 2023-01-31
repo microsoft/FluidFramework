@@ -11,17 +11,17 @@ import { BaseFileLogger } from "./baseFileLogger";
  * @internal
  */
 export class JSONFileLogger extends BaseFileLogger {
-    constructor(
-        filePath: string,
-        eventsPerFlush: number = 50,
-        defaultProps?: Record<string, string | number>,
-    ) {
-        super(filePath, eventsPerFlush, defaultProps);
-        fs.appendFileSync(this.filePath, "[");
-    }
+	constructor(
+		filePath: string,
+		eventsPerFlush: number = 50,
+		defaultProps?: Record<string, string | number>,
+	) {
+		super(filePath, eventsPerFlush, defaultProps);
+		fs.appendFileSync(this.filePath, "[");
+	}
 
-    public async close(): Promise<void> {
-        await super.close();
-        fs.appendFileSync(this.filePath, "]");
-    }
+	public async close(): Promise<void> {
+		await super.close();
+		fs.appendFileSync(this.filePath, "]");
+	}
 }

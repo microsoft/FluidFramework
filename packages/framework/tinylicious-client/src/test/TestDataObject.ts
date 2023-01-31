@@ -6,16 +6,18 @@
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
 
 export class TestDataObject extends DataObject {
-    public static get Name() { return "@fluid-example/test-data-object"; }
+	public static get Name() {
+		return "@fluid-example/test-data-object";
+	}
 
-    public static readonly factory = new DataObjectFactory(
-        TestDataObject.Name,
-        TestDataObject,
-        [],
-        {},
-    );
+	public static readonly factory = new DataObjectFactory(
+		TestDataObject.Name,
+		TestDataObject,
+		[],
+		{},
+	);
 
-    public constructor(props: IDataObjectProps) {
-        super(props);
-    }
+	public constructor(props: IDataObjectProps) {
+		super(props);
+	}
 }

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-loader-utils",
-  "version": "2.0.0-internal.3.0.0",
+  "version": "2.0.0-internal.4.0.0",
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -23,8 +23,8 @@
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "tsc": "tsc",
@@ -34,8 +34,8 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/driver-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
     "@fluidframework/protocol-definitions": "^1.1.0"
   },
   "devDependencies": {

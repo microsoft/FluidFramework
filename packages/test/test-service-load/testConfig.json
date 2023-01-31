@@ -1,190 +1,190 @@
 {
-    "profiles": {
-        "ci": {
-            "opRatePerMin": 10,
-            "signalsPerMin":  10,
-            "progressIntervalMs": 15000,
-            "numClients": 120,
-            "totalSendCount": 10000,
-            "totalSignalsSendCount":  10000,
-            "totalBlobCount": 480,
-            "blobSize": 256,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMs": {
-                "min": 0,
-                "max": 150000
-            },
-            "offline": {
-                "delayMs": {
-                    "min": 0,
-                    "max": 150000
-                },
-                "durationMs": {
-                    "min": 5000,
-                    "max": 15000
-                }
-            },
-            "optionOverrides":{
-                "odsp":{
-                    "configurations":{
-                        "Fluid.Container.summarizeProtocolTree2": [true, false]
-                    }
-                },
-                "odsp-odsp-df":{
-                    "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
-                        "Fluid.Container.summarizeProtocolTree2": [true, false]
-                    }
-                }
-            }
-        },
-        "ci_frs": {
-            "opRatePerMin": 10,
-            "progressIntervalMs": 15000,
-            "numClients": 100,
-            "totalSendCount": 10000,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMs": {
-                "min": 0,
-                "max": 150000
-            }
-        },
-        "full": {
-            "opRatePerMin": 1920,
-            "progressIntervalMs": 1500000,
-            "numClients": 60,
-            "totalSendCount": 200000,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMs": {
-                "min": 0,
-                "max": 150000
-            }
-        },
-        "mini": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 5000,
-            "numClients": 2,
-            "totalSendCount": 30,
-            "readWriteCycleMs": 10000,
-            "faultInjectionMs": {
-                "min": 0,
-                "max": 50000
-            },
-            "optionOverrides":{
-                "odsp":{
-                    "configurations":{
-                        "Fluid.Container.summarizeProtocolTree2": [true, false]
-                    }
-                }
-            }
-        },
-        "debug": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 5000,
-            "numClients": 1,
-            "totalSendCount": 30,
-            "readWriteCycleMs": 10000,
-            "faultInjectionMs": {
-                "min": 0,
-                "max": 50000
-            }
-        },
-        "ci_nofault": {
-            "opRatePerMin": 10,
-            "progressIntervalMs": 15000,
-            "numClients": 120,
-            "totalSendCount": 10000,
-            "readWriteCycleMs": 30000
-        },
-        "scale": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 70000,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMs": {
-                "min": 900000,
-                "max": 1800000
-            }
-        },
-        "scale_nofault": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 70000,
-            "readWriteCycleMs": 30000
-        },
-        "blobs": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 5000,
-            "numClients": 4,
-            "totalSendCount": 150,
-            "readWriteCycleMs": 10000,
-            "faultInjectionMs": {
-                "min": 0,
-                "max": 10000
-            },
-            "offline": {
-                "delayMs": {
-                    "min": 0,
-                    "max": 150000
-                },
-                "durationMs": {
-                    "min": 5000,
-                    "max": 15000
-                }
-            },
-            "totalBlobCount": 300,
-            "blobSize": 10240,
-            "detachedBlobCount": 0
-        },
-        "binarySnapshotFormat": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 5000,
-            "numClients": 4,
-            "totalSendCount": 150,
-            "readWriteCycleMs": 10000,
-            "optionOverrides":{
-                "odsp":{
-                    "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [2]
-                    }
-                }
-            }
-        },
-        "scale_with_signals":  {
-            "opRatePerMin":  7,
-            "signalsPerMin":  46,
-            "totalSignalsSendCount":  420000,
-            "progressIntervalMs":  20000,
-            "numClients":  10,
-            "totalSendCount":  70000,
-            "readWriteCycleMs":  30000,
-            "faultInjectionMs": {
-                "min": 900000,
-                "max": 1800000
-            }
-        },
-        "scale_with_signals_concurrent":  {
-            "opRatePerMin":  7,
-            "signalsPerMin":  46,
-            "totalSignalsSendCount":  420000,
-            "progressIntervalMs":  20000,
-            "numClients":  10,
-            "totalSendCount":  70000,
-            "readWriteCycleMs":  30000,
-            "faultInjectionMs": {
-                "min": 900000,
-                "max": 1800000
-            },
-            "optionOverrides":{
-              "odsp":{
-                  "configurations":{
-                      "Fluid.Container.summarizeProtocolTree": [true]
-                  }
-              }
-            },
-            "opsSendType":  "allClientsConcurrentReadWrite"
-        }
-    }
+	"profiles": {
+		"ci": {
+			"opRatePerMin": 10,
+			"signalsPerMin": 10,
+			"progressIntervalMs": 15000,
+			"numClients": 120,
+			"totalSendCount": 10000,
+			"totalSignalsSendCount": 10000,
+			"totalBlobCount": 480,
+			"blobSize": 256,
+			"readWriteCycleMs": 30000,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 150000
+			},
+			"offline": {
+				"delayMs": {
+					"min": 0,
+					"max": 150000
+				},
+				"durationMs": {
+					"min": 5000,
+					"max": 15000
+				}
+			},
+			"optionOverrides": {
+				"odsp": {
+					"configurations": {
+						"Fluid.Container.summarizeProtocolTree2": [true, false]
+					}
+				},
+				"odsp-odsp-df": {
+					"configurations": {
+						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
+						"Fluid.Container.summarizeProtocolTree2": [true, false]
+					}
+				}
+			}
+		},
+		"ci_frs": {
+			"opRatePerMin": 10,
+			"progressIntervalMs": 15000,
+			"numClients": 100,
+			"totalSendCount": 10000,
+			"readWriteCycleMs": 30000,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 150000
+			}
+		},
+		"full": {
+			"opRatePerMin": 1920,
+			"progressIntervalMs": 1500000,
+			"numClients": 60,
+			"totalSendCount": 200000,
+			"readWriteCycleMs": 30000,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 150000
+			}
+		},
+		"mini": {
+			"opRatePerMin": 60,
+			"progressIntervalMs": 5000,
+			"numClients": 2,
+			"totalSendCount": 30,
+			"readWriteCycleMs": 10000,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 50000
+			},
+			"optionOverrides": {
+				"odsp": {
+					"configurations": {
+						"Fluid.Container.summarizeProtocolTree2": [true, false]
+					}
+				}
+			}
+		},
+		"debug": {
+			"opRatePerMin": 60,
+			"progressIntervalMs": 5000,
+			"numClients": 1,
+			"totalSendCount": 30,
+			"readWriteCycleMs": 10000,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 50000
+			}
+		},
+		"ci_nofault": {
+			"opRatePerMin": 10,
+			"progressIntervalMs": 15000,
+			"numClients": 120,
+			"totalSendCount": 10000,
+			"readWriteCycleMs": 30000
+		},
+		"scale": {
+			"opRatePerMin": 60,
+			"progressIntervalMs": 20000,
+			"numClients": 10,
+			"totalSendCount": 70000,
+			"readWriteCycleMs": 30000,
+			"faultInjectionMs": {
+				"min": 900000,
+				"max": 1800000
+			}
+		},
+		"scale_nofault": {
+			"opRatePerMin": 60,
+			"progressIntervalMs": 20000,
+			"numClients": 10,
+			"totalSendCount": 70000,
+			"readWriteCycleMs": 30000
+		},
+		"blobs": {
+			"opRatePerMin": 60,
+			"progressIntervalMs": 5000,
+			"numClients": 4,
+			"totalSendCount": 150,
+			"readWriteCycleMs": 10000,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 10000
+			},
+			"offline": {
+				"delayMs": {
+					"min": 0,
+					"max": 150000
+				},
+				"durationMs": {
+					"min": 5000,
+					"max": 15000
+				}
+			},
+			"totalBlobCount": 300,
+			"blobSize": 10240,
+			"detachedBlobCount": 0
+		},
+		"binarySnapshotFormat": {
+			"opRatePerMin": 60,
+			"progressIntervalMs": 5000,
+			"numClients": 4,
+			"totalSendCount": 150,
+			"readWriteCycleMs": 10000,
+			"optionOverrides": {
+				"odsp": {
+					"configurations": {
+						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2]
+					}
+				}
+			}
+		},
+		"scale_with_signals": {
+			"opRatePerMin": 7,
+			"signalsPerMin": 46,
+			"totalSignalsSendCount": 420000,
+			"progressIntervalMs": 20000,
+			"numClients": 10,
+			"totalSendCount": 70000,
+			"readWriteCycleMs": 30000,
+			"faultInjectionMs": {
+				"min": 900000,
+				"max": 1800000
+			}
+		},
+		"scale_with_signals_concurrent": {
+			"opRatePerMin": 7,
+			"signalsPerMin": 46,
+			"totalSignalsSendCount": 420000,
+			"progressIntervalMs": 20000,
+			"numClients": 10,
+			"totalSendCount": 70000,
+			"readWriteCycleMs": 30000,
+			"faultInjectionMs": {
+				"min": 900000,
+				"max": 1800000
+			},
+			"optionOverrides": {
+				"odsp": {
+					"configurations": {
+						"Fluid.Container.summarizeProtocolTree": [true]
+					}
+				}
+			},
+			"opsSendType": "allClientsConcurrentReadWrite"
+		}
+	}
 }

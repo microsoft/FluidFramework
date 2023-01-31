@@ -5,9 +5,9 @@
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 import {
-    ITinyliciousAudience,
-    TinyliciousClient,
-    TinyliciousContainerServices,
+	ITinyliciousAudience,
+	TinyliciousClient,
+	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 
 import { initializeFluidClientDebugger as initializeFluidClientDebuggerBase } from "@fluid-tools/client-debugger";
@@ -20,22 +20,22 @@ import { initializeFluidClientDebugger as initializeFluidClientDebuggerBase } fr
  * Type returned from when creating / loading the Container.
  */
 export interface ContainerLoadResult {
-    container: IFluidContainer;
-    services: TinyliciousContainerServices;
+	container: IFluidContainer;
+	services: TinyliciousContainerServices;
 }
 
 /**
  * Basic information about the container, as well as the associated audience.
  */
 export interface ContainerInfo {
-    containerId: string;
-    container: IFluidContainer;
-    audience: ITinyliciousAudience;
+	containerId: string;
+	container: IFluidContainer;
+	audience: ITinyliciousAudience;
 }
 
 function initializeTinyliciousClient(): TinyliciousClient {
-    console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
-    return new TinyliciousClient();
+	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
+	return new TinyliciousClient();
 }
 
 /**
@@ -48,48 +48,48 @@ function initializeTinyliciousClient(): TinyliciousClient {
  * @throws If container creation or attaching fails for any reason.
  */
 export async function createFluidContainer(
-    containerSchema: ContainerSchema,
-    setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
+	containerSchema: ContainerSchema,
+	setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
 ): Promise<ContainerInfo> {
-    // Initialize Tinylicious client
-    const client = initializeTinyliciousClient();
+	// Initialize Tinylicious client
+	const client = initializeTinyliciousClient();
 
-    // Create the container
-    console.log("Creating new container...");
-    let createContainerResult: ContainerLoadResult;
-    try {
-        createContainerResult = await client.createContainer(containerSchema);
-    } catch (error) {
-        console.error(`Encountered error creating Fluid container: "${error}".`);
-        throw error;
-    }
-    console.log("Container created!");
+	// Create the container
+	console.log("Creating new container...");
+	let createContainerResult: ContainerLoadResult;
+	try {
+		createContainerResult = await client.createContainer(containerSchema);
+	} catch (error) {
+		console.error(`Encountered error creating Fluid container: "${error}".`);
+		throw error;
+	}
+	console.log("Container created!");
 
-    const { container, services } = createContainerResult;
+	const { container, services } = createContainerResult;
 
-    // Populate the container with initial app contents (*before* attaching)
-    if (setContentsPreAttach !== undefined) {
-        console.log("Populating initial app data...");
-        await setContentsPreAttach(container);
-        console.log("Initial data populated!");
-    }
+	// Populate the container with initial app contents (*before* attaching)
+	if (setContentsPreAttach !== undefined) {
+		console.log("Populating initial app data...");
+		await setContentsPreAttach(container);
+		console.log("Initial data populated!");
+	}
 
-    // Attach container
-    console.log("Awaiting container attach...");
-    let containerId: string;
-    try {
-        containerId = await container.attach();
-    } catch (error) {
-        console.error(`Encountered error attaching Fluid container: "${error}".`);
-        throw error;
-    }
-    console.log("Fluid container attached!");
+	// Attach container
+	console.log("Awaiting container attach...");
+	let containerId: string;
+	try {
+		containerId = await container.attach();
+	} catch (error) {
+		console.error(`Encountered error attaching Fluid container: "${error}".`);
+		throw error;
+	}
+	console.log("Fluid container attached!");
 
-    return {
-        container,
-        containerId,
-        audience: services.audience,
-    };
+	return {
+		container,
+		containerId,
+		audience: services.audience,
+	};
 }
 
 /**
@@ -98,51 +98,51 @@ export async function createFluidContainer(
  * @throws If no container exists with the specified ID, or if loading / connecting fails for any reason.
  */
 export async function loadExistingFluidContainer(
-    containerId: string,
-    containerSchema: ContainerSchema,
+	containerId: string,
+	containerSchema: ContainerSchema,
 ): Promise<ContainerInfo> {
-    // Initialize Tinylicious client
-    const client = initializeTinyliciousClient();
+	// Initialize Tinylicious client
+	const client = initializeTinyliciousClient();
 
-    console.log("Loading existing container...");
-    let getContainerResult: ContainerLoadResult;
-    try {
-        getContainerResult = await client.getContainer(containerId, containerSchema);
-    } catch (error) {
-        console.error(`Encountered error loading Fluid container: "${error}".`);
-        throw error;
-    }
-    console.log("Container loaded!");
+	console.log("Loading existing container...");
+	let getContainerResult: ContainerLoadResult;
+	try {
+		getContainerResult = await client.getContainer(containerId, containerSchema);
+	} catch (error) {
+		console.error(`Encountered error loading Fluid container: "${error}".`);
+		throw error;
+	}
+	console.log("Container loaded!");
 
-    const { container, services } = getContainerResult;
+	const { container, services } = getContainerResult;
 
-    if (container.connectionState !== ConnectionState.Connected) {
-        console.log("Connecting to container...");
-        await new Promise<void>((resolve) => {
-            container.once("connected", () => {
-                resolve();
-            });
-        });
-        console.log("Connected!");
-    }
+	if (container.connectionState !== ConnectionState.Connected) {
+		console.log("Connecting to container...");
+		await new Promise<void>((resolve) => {
+			container.once("connected", () => {
+				resolve();
+			});
+		});
+		console.log("Connected!");
+	}
 
-    return {
-        container,
-        containerId,
-        audience: services.audience,
-    };
+	return {
+		container,
+		containerId,
+		audience: services.audience,
+	};
 }
 
 /**
  * Initializes the Fluid Client debugger using the current session Container info.
  */
 export function initializeFluidClientDebugger(containerInfo: ContainerInfo): void {
-    initializeFluidClientDebuggerBase({
-        containerId: containerInfo.containerId,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        container: (containerInfo.container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
-        containerData: containerInfo.container.initialObjects,
-    });
+	initializeFluidClientDebuggerBase({
+		containerId: containerInfo.containerId,
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		container: (containerInfo.container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
+		containerData: containerInfo.container.initialObjects,
+	});
 }
 
 // Convenience re-export, since no adapter logic is required for clean-up

@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const _ = require('lodash');
-const HttpStatus = require('http-status-codes');
+const _ = require("lodash");
+const HttpStatus = require("http-status-codes");
 
-const duplicateKeyRE = new RegExp('Provided list of item keys contains duplicates');
+const duplicateKeyRE = new RegExp(
+    "Provided list of item keys contains duplicates"
+);
 
 /**
  * @fileOverview
@@ -27,7 +29,11 @@ class DynamoDBException {
      * @static
      */
     static getProvisionedThroughputExceededException(message) {
-        return _createError('ProvisionedThroughputExceededException', HttpStatus.BAD_REQUEST, message);
+        return _createError(
+            "ProvisionedThroughputExceededException",
+            HttpStatus.BAD_REQUEST,
+            message
+        );
     }
 
     /**
@@ -51,9 +57,13 @@ class DynamoDBException {
      * @static
      */
     static isTransient(error) {
-        return (!_.isUndefined(error.statusCode) && error.statusCode >= 500 && error.statusCode < 600) ||
-            error.code === 'ProvisionedThroughputExceededException' ||
-            error.code === 'ThrottlingException';
+        return (
+            (!_.isUndefined(error.statusCode) &&
+                error.statusCode >= 500 &&
+                error.statusCode < 600) ||
+            error.code === "ProvisionedThroughputExceededException" ||
+            error.code === "ThrottlingException"
+        );
     }
 
     /**
@@ -61,9 +71,11 @@ class DynamoDBException {
      * @return {boolean} Whether or not the error is a DynamoDB duplicate key error.
      */
     static isDuplicateKey(error) {
-        return error.statusCode === HttpStatus.BAD_REQUEST &&
-            error.code === 'ValidationException' &&
-            duplicateKeyRE.test(error.message);
+        return (
+            error.statusCode === HttpStatus.BAD_REQUEST &&
+            error.code === "ValidationException" &&
+            duplicateKeyRE.test(error.message)
+        );
     }
 }
 

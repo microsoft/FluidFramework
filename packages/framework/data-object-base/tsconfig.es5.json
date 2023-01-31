@@ -1,12 +1,8 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "outDir": "./es5",
-        "downlevelIteration": true
-    },
-    "exclude": [
-        "dist",
-        "node_modules",
-        "src/test/**/*"
-    ],
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./es5",
+		"downlevelIteration": true,
+	},
+	"exclude": ["dist", "node_modules", "src/test/**/*"],
 }

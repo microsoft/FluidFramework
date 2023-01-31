@@ -1,24 +1,24 @@
 {
-  "manifest_version": 3,
-  "name": "Fluid Client Debugger",
-  "description": "Displays a live debug view of the Fluid client in your application.",
-  "version": "1.0",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "action": {
-    "default_icon": "images/icon.png"
-  },
-  "background": {
-    "service_worker": "BackgroundScript.js"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "OpenDebuggerPanelScript.js",
-        "CloseDebuggerPanelScript.js",
-        "InjectDebuggerOpenScript.js",
-        "InjectDebuggerCloseScript.js"
-      ],
-      "matches": ["<all_urls>"]
-    }
-  ]
+	"manifest_version": 3,
+	"name": "Fluid Client Debugger",
+	"description": "Displays a live debug view of the Fluid client in your application.",
+	"version": "1.0",
+	"permissions": ["activeTab", "scripting", "storage"],
+	"action": {
+		"default_icon": "images/icon.png"
+	},
+	"background": {
+		"service_worker": "BackgroundScript.js"
+	},
+	"web_accessible_resources": [
+		{
+			"resources": [
+				"OpenDebuggerPanelScript.js",
+				"CloseDebuggerPanelScript.js",
+				"InjectDebuggerOpenScript.js",
+				"InjectDebuggerCloseScript.js"
+			],
+			"matches": ["<all_urls>"]
+		}
+	]
 }

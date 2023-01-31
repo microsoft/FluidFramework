@@ -66,164 +66,164 @@ import * as Delta from "./delta";
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
-    const containsMoves = visitFieldMarks(delta, visitor, firstPass);
-    if (containsMoves) {
-        visitFieldMarks(delta, visitor, secondPass);
-    }
+	const containsMoves = visitFieldMarks(delta, visitor, firstPass);
+	if (containsMoves) {
+		visitFieldMarks(delta, visitor, secondPass);
+	}
 }
 
 export interface DeltaVisitor {
-    onDelete(index: number, count: number): void;
-    onInsert(index: number, content: readonly Delta.ProtoNode[]): void;
-    onMoveOut(index: number, count: number, id: Delta.MoveId): void;
-    onMoveIn(index: number, count: number, id: Delta.MoveId): void;
-    onSetValue(value: Value): void;
-    // TODO: better align this with ITreeCursor:
-    // maybe rename its up and down to enter / exit? Maybe Also)?
-    // Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
-    // this visitor?
-    enterNode(index: number): void;
-    exitNode(index: number): void;
-    enterField(key: FieldKey): void;
-    exitField(key: FieldKey): void;
+	onDelete(index: number, count: number): void;
+	onInsert(index: number, content: readonly Delta.ProtoNode[]): void;
+	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
+	onMoveIn(index: number, count: number, id: Delta.MoveId): void;
+	onSetValue(value: Value): void;
+	// TODO: better align this with ITreeCursor:
+	// maybe rename its up and down to enter / exit? Maybe Also)?
+	// Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
+	// this visitor?
+	enterNode(index: number): void;
+	exitNode(index: number): void;
+	enterField(key: FieldKey): void;
+	exitField(key: FieldKey): void;
 }
 
 type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor) => boolean;
 
 interface ModifyLike {
-    setValue?: Value;
-    fields?: Delta.FieldMarks;
+	setValue?: Value;
+	fields?: Delta.FieldMarks;
 }
 
 function visitFieldMarks(fields: Delta.FieldMarks, visitor: DeltaVisitor, func: Pass): boolean {
-    let containsMoves = false;
-    for (const [key, field] of fields) {
-        visitor.enterField(key);
-        const result = func(field, visitor);
-        containsMoves ||= result;
-        visitor.exitField(key);
-    }
-    return containsMoves;
+	let containsMoves = false;
+	for (const [key, field] of fields) {
+		visitor.enterField(key);
+		const result = func(field, visitor);
+		containsMoves ||= result;
+		visitor.exitField(key);
+	}
+	return containsMoves;
 }
 
 function visitModify(
-    index: number,
-    modify: ModifyLike,
-    visitor: DeltaVisitor,
-    func: Pass,
+	index: number,
+	modify: ModifyLike,
+	visitor: DeltaVisitor,
+	func: Pass,
 ): boolean {
-    let containsMoves = false;
-    visitor.enterNode(index);
-    // Note that the `in` operator return true for properties that are present on the object even if they
-    // are set to `undefined. This is leveraged here to represent the fact that the value should be set to
-    // `undefined` as opposed to leaving the value untouched.
-    if ("setValue" in modify) {
-        visitor.onSetValue(modify.setValue);
-    }
-    if (modify.fields !== undefined) {
-        const result = visitFieldMarks(modify.fields, visitor, func);
-        containsMoves ||= result;
-    }
-    visitor.exitNode(index);
-    return containsMoves;
+	let containsMoves = false;
+	visitor.enterNode(index);
+	// Note that the `in` operator return true for properties that are present on the object even if they
+	// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
+	// `undefined` as opposed to leaving the value untouched.
+	if ("setValue" in modify) {
+		visitor.onSetValue(modify.setValue);
+	}
+	if (modify.fields !== undefined) {
+		const result = visitFieldMarks(modify.fields, visitor, func);
+		containsMoves ||= result;
+	}
+	visitor.exitNode(index);
+	return containsMoves;
 }
 
 function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
-    let containsMoves = false;
-    let index = 0;
-    for (const mark of delta) {
-        if (typeof mark === "number") {
-            // Untouched nodes
-            index += mark;
-        } else {
-            let result = false;
-            // Inline into `switch(mark.type)` once we upgrade to TS 4.7
-            const type = mark.type;
-            switch (type) {
-                case Delta.MarkType.ModifyAndDelete:
-                    result = visitModify(index, mark, visitor, firstPass);
-                    visitor.onDelete(index, 1);
-                    break;
-                case Delta.MarkType.Delete:
-                    visitor.onDelete(index, mark.count);
-                    break;
-                case Delta.MarkType.ModifyAndMoveOut: {
-                    result = visitModify(index, mark, visitor, firstPass);
-                    visitor.onMoveOut(index, 1, mark.moveId);
-                    break;
-                }
-                case Delta.MarkType.MoveOut:
-                    visitor.onMoveOut(index, mark.count, mark.moveId);
-                    break;
-                case Delta.MarkType.Modify:
-                    result = visitModify(index, mark, visitor, firstPass);
-                    index += 1;
-                    break;
-                case Delta.MarkType.Insert:
-                    visitor.onInsert(index, mark.content);
-                    index += mark.content.length;
-                    break;
-                case Delta.MarkType.InsertAndModify:
-                    visitor.onInsert(index, [mark.content]);
-                    result = visitModify(index, mark, visitor, firstPass);
-                    index += 1;
-                    break;
-                case Delta.MarkType.MoveIn:
-                case Delta.MarkType.MoveInAndModify:
-                    // Handled in the second pass
-                    result = true;
-                    break;
-                default:
-                    unreachableCase(type);
-            }
-            containsMoves ||= result;
-        }
-    }
-    return containsMoves;
+	let containsMoves = false;
+	let index = 0;
+	for (const mark of delta) {
+		if (typeof mark === "number") {
+			// Untouched nodes
+			index += mark;
+		} else {
+			let result = false;
+			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
+			const type = mark.type;
+			switch (type) {
+				case Delta.MarkType.ModifyAndDelete:
+					result = visitModify(index, mark, visitor, firstPass);
+					visitor.onDelete(index, 1);
+					break;
+				case Delta.MarkType.Delete:
+					visitor.onDelete(index, mark.count);
+					break;
+				case Delta.MarkType.ModifyAndMoveOut: {
+					result = visitModify(index, mark, visitor, firstPass);
+					visitor.onMoveOut(index, 1, mark.moveId);
+					break;
+				}
+				case Delta.MarkType.MoveOut:
+					visitor.onMoveOut(index, mark.count, mark.moveId);
+					break;
+				case Delta.MarkType.Modify:
+					result = visitModify(index, mark, visitor, firstPass);
+					index += 1;
+					break;
+				case Delta.MarkType.Insert:
+					visitor.onInsert(index, mark.content);
+					index += mark.content.length;
+					break;
+				case Delta.MarkType.InsertAndModify:
+					visitor.onInsert(index, [mark.content]);
+					result = visitModify(index, mark, visitor, firstPass);
+					index += 1;
+					break;
+				case Delta.MarkType.MoveIn:
+				case Delta.MarkType.MoveInAndModify:
+					// Handled in the second pass
+					result = true;
+					break;
+				default:
+					unreachableCase(type);
+			}
+			containsMoves ||= result;
+		}
+	}
+	return containsMoves;
 }
 
 function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
-    let index = 0;
-    for (const mark of delta) {
-        if (typeof mark === "number") {
-            // Untouched nodes
-            index += mark;
-        } else {
-            // Inline into the `switch(...)` once we upgrade to TS 4.7
-            const type = mark.type;
-            switch (type) {
-                case Delta.MarkType.ModifyAndDelete:
-                case Delta.MarkType.ModifyAndMoveOut:
-                case Delta.MarkType.Delete:
-                case Delta.MarkType.MoveOut:
-                    // Handled in the first pass
-                    break;
-                case Delta.MarkType.Modify:
-                    visitModify(index, mark, visitor, secondPass);
-                    index += 1;
-                    break;
-                case Delta.MarkType.Insert:
-                    // Handled in the first pass
-                    index += mark.content.length;
-                    break;
-                case Delta.MarkType.InsertAndModify:
-                    // Handled in the first pass
-                    index += 1;
-                    break;
-                case Delta.MarkType.MoveIn: {
-                    visitor.onMoveIn(index, mark.count, mark.moveId);
-                    index += mark.count;
-                    break;
-                }
-                case Delta.MarkType.MoveInAndModify:
-                    visitor.onMoveIn(index, 1, mark.moveId);
-                    visitModify(index, mark, visitor, secondPass);
-                    index += 1;
-                    break;
-                default:
-                    unreachableCase(type);
-            }
-        }
-    }
-    return false;
+	let index = 0;
+	for (const mark of delta) {
+		if (typeof mark === "number") {
+			// Untouched nodes
+			index += mark;
+		} else {
+			// Inline into the `switch(...)` once we upgrade to TS 4.7
+			const type = mark.type;
+			switch (type) {
+				case Delta.MarkType.ModifyAndDelete:
+				case Delta.MarkType.ModifyAndMoveOut:
+				case Delta.MarkType.Delete:
+				case Delta.MarkType.MoveOut:
+					// Handled in the first pass
+					break;
+				case Delta.MarkType.Modify:
+					visitModify(index, mark, visitor, secondPass);
+					index += 1;
+					break;
+				case Delta.MarkType.Insert:
+					// Handled in the first pass
+					index += mark.content.length;
+					break;
+				case Delta.MarkType.InsertAndModify:
+					// Handled in the first pass
+					index += 1;
+					break;
+				case Delta.MarkType.MoveIn: {
+					visitor.onMoveIn(index, mark.count, mark.moveId);
+					index += mark.count;
+					break;
+				}
+				case Delta.MarkType.MoveInAndModify:
+					visitor.onMoveIn(index, 1, mark.moveId);
+					visitModify(index, mark, visitor, secondPass);
+					index += 1;
+					break;
+				default:
+					unreachableCase(type);
+			}
+		}
+	}
+	return false;
 }
