@@ -217,15 +217,19 @@ export type FieldChangeMap<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
 export interface FieldChanges<TTree = ProtoNode> {
 	readonly shallowChanges?: MarkList<TTree>;
+	/**
+	 * Changes to the subtrees contained in the field.
+	 * Ordered by ascending index.
+	 */
 	readonly nestedChanges?: readonly NestedChange<TTree>[];
 }
-
-export type NestedChange<TTree = ProtoNode> = readonly [ChildIndex, NodeChanges<TTree>];
 
 export interface ChildIndex {
 	readonly context: typeof Context[keyof typeof Context];
 	readonly index: number;
 }
+
+export type NestedChange<TTree = ProtoNode> = readonly [ChildIndex, NodeChanges<TTree>];
 
 /**
  * The context in which a `ChildIndex` must be interpreted.
