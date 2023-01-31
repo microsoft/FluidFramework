@@ -14,6 +14,7 @@ importers:
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       lerna: ^5.1.8
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       run-script-os: ^1.1.6
       typescript: ~4.5.5
@@ -23,11 +24,12 @@ importers:
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.19.24
       '@microsoft/api-extractor': 7.33.6
-      '@trivago/prettier-plugin-sort-imports': 3.4.0
+      '@trivago/prettier-plugin-sort-imports': 3.4.0_prettier@2.6.2
       c8: 7.12.0
       concurrently: 6.5.1
       copyfiles: 2.4.1
       lerna: 5.6.2
+      prettier: 2.6.2
       rimraf: 2.7.1
       run-script-os: 1.1.6
       typescript: 4.5.5
@@ -309,6 +311,7 @@ importers:
       mocha: ^10.0.0
       nock: ^10.0.1
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
@@ -334,6 +337,7 @@ importers:
       cross-env: 7.0.3
       fluid-framework: 1.4.0-121020
       mocha: 10.1.0
+      prettier: 2.6.2
       sinon: 7.5.0
       start-server-and-test: 1.14.0
       tinylicious: 0.5.0
@@ -4460,7 +4464,7 @@ packages:
     engines: {node: '>= 10'}
     dev: true
 
-  /@trivago/prettier-plugin-sort-imports/3.4.0:
+  /@trivago/prettier-plugin-sort-imports/3.4.0_prettier@2.6.2:
     resolution: {integrity: sha512-485Iailw8X5f7KetzRka20RF1kPBEINR5LJMNwlBZWY1gRAlVnv5dZzyNPnLxSP0Qcia8HETa9Cdd8LlX9o+pg==}
     peerDependencies:
       prettier: 2.x
@@ -4473,6 +4477,7 @@ packages:
       '@vue/compiler-sfc': 3.2.41
       javascript-natural-sort: 0.7.1
       lodash: 4.17.21
+      prettier: 2.6.2
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -13361,7 +13366,6 @@ packages:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
     hasBin: true
-    dev: true
 
   /pretty-error/4.0.0:
     resolution: {integrity: sha512-AoJ5YMAcXKYxKhuJGdcvse+Voc6v1RgnsR3nWcYU7q4t6z0Q6T86sv5Zq8VIRbOWWFpvdGE83LtdSMNd+6Y0xw==}
