@@ -222,7 +222,6 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 
 	server.on("close", () => {
 		externalDataSource.off("debugDataWritten", notifyWebhookSubscribers);
-		webhook?.dispose();
 		console.log(formatLogMessage("Service was closed."));
 	});
 
