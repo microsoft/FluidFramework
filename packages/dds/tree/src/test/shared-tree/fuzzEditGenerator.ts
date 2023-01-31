@@ -174,7 +174,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
             return parentPath;
         case "afterNode":
             cursor.free();
-            return { parent: parentPath.parent, parentField: parentPath.parentField, parentIndex: parentPath.parentIndex}
+            return { ...parentPath, parentIndex: parentPath.parentIndex + 1 }
         case "belowNode":
             cursor.free();
             return { parent: parentPath, parentField: testerKey, parentIndex: 0}
