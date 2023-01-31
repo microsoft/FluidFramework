@@ -21,6 +21,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
     const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
     const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+    const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
     const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -71,7 +72,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaNumberOfPartitions,
         kafkaReplicationFactor,
         kafkaMaxBatchSize,
-        kafkaSslCACertFilePath);
+        kafkaSslCACertFilePath,
+        eventHubConnString);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
@@ -82,7 +84,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaNumberOfPartitions,
         kafkaReplicationFactor,
         kafkaMaxBatchSize,
-        kafkaSslCACertFilePath);
+        kafkaSslCACertFilePath,
+        eventHubConnString);
 
     const redisConfig = config.get("redis");
     const redisOptions: RedisOptions = {

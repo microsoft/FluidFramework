@@ -60,6 +60,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const consumeTimeout = config.get("kafka:lib:rdkafkaConsumeTimeout");
         const maxConsumerCommitRetries = config.get("kafka:lib:rdkafkaMaxConsumerCommitRetries");
         const sslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+        const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -88,6 +89,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
                 maxConsumerCommitRetries,
                 sslCACertFilePath,
                 zooKeeperClientConstructor: this.zookeeperClientConstructor,
+                eventHubConnString,
             },
         );
 

@@ -33,6 +33,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
     const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
     const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+    const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+
     const sendTopic = config.get("lambdas:deli:topic");
     const kafkaClientId = config.get("scribe:kafkaClientId");
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
@@ -99,7 +101,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         kafkaNumberOfPartitions,
         kafkaReplicationFactor,
         kafkaMaxBatchSize,
-        kafkaSslCACertFilePath);
+        kafkaSslCACertFilePath,
+        eventHubConnString);
 
     const externalOrdererUrl = config.get("worker:serverUrl");
     const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
