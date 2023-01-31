@@ -163,7 +163,6 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
     moveToDetachedField(tree.forest, cursor);
     const firstNode = cursor.firstNode();
     if (!firstNode) {
-        // no node exists, insert a rootnode
         cursor.free();
         return { parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 };
     }
