@@ -5,13 +5,13 @@
 
 /**
  * An identifier (UUID) that has been shortened by a distributed compression algorithm.
- * @public
+ * @alpha
  */
 export type CompressedId = FinalCompressedId | LocalCompressedId;
 
 /**
  * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the original string.
- * @public
+ * @alpha
  */
 export type InternedStringId = number & {
 	readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
@@ -28,7 +28,7 @@ export interface SessionUnique {
  * A compressed ID that has been normalized into "session space" (see `IdCompressor` for more).
  * Consumer-facing APIs and data structures should use session-space IDs as their lifetime and equality is stable and tied to the
  * compressor that produced them.
- * @public
+ * @alpha
  */
 export type SessionSpaceCompressedId = CompressedId & SessionUnique;
 
@@ -45,7 +45,7 @@ export type OpSpaceCompressedId = CompressedId & {
  * A compressed ID that is local to a document. Stable across all revisions of a document starting from the one in which it was created.
  * It should not be persisted outside of the history as it can only be decompressed in the context of the originating document.
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
- * @public
+ * @alpha
  */
 export type FinalCompressedId = number & {
 	readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
@@ -58,7 +58,7 @@ export type FinalCompressedId = number & {
  * A compressed ID that is local to a session (can only be decompressed when paired with a SessionId).
  * It should not be persisted outside of the history as it can only be decompressed in the context of the originating session.
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
- * @public
+ * @alpha
  */
 export type LocalCompressedId = number & {
 	readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";

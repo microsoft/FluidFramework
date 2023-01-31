@@ -103,6 +103,14 @@
     "previousVersionStyle": "~previousMinor",
     "baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
     "baselineVersion": "2.0.0-internal.3.0.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_AuthorizationError": {"backCompat": false},
+      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {"backCompat": false},
+      "ClassDeclaration_FluidInvalidSchemaError": {"backCompat": false},
+      "ClassDeclaration_GenericNetworkError": {"backCompat": false},
+      "ClassDeclaration_LocationRedirectionError": {"backCompat": false},
+      "ClassDeclaration_ThrottlingError": {"backCompat": false},
+      "ClassDeclaration_UsageError": {"backCompat": false}
+    }
   }
 }

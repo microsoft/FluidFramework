@@ -51,6 +51,7 @@ import {
  * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
  *
  * See [the README](../../README.md) for details.
+ * @alpha
  */
 export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
 	/**
@@ -200,6 +201,7 @@ class SharedTree
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
+ * @alpha
  */
 export class SharedTreeFactory implements IChannelFactory {
 	public type: string = "SharedTree";

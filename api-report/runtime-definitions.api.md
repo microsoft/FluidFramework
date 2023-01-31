@@ -27,11 +27,24 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
+import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
+
+// @alpha
+export interface AttributionInfo {
+    timestamp: number;
+    user: IUser;
+}
+
+// @alpha
+export interface AttributionKey {
+    seq: number;
+    type: "op";
+}
 
 // @public @deprecated (undocumented)
 export enum BindState {
@@ -49,7 +62,7 @@ export const blobCountPropertyName = "BlobCount";
 // @public (undocumented)
 export const channelsTreeName = ".channels";
 
-// @public
+// @alpha
 export type CompressedId = FinalCompressedId | LocalCompressedId;
 
 // @public (undocumented)
@@ -77,7 +90,7 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
-// @public
+// @alpha
 export type FinalCompressedId = number & {
     readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
     readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
@@ -335,19 +348,30 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
 export interface IIdCompressor {
     // (undocumented)
     generateCompressedId(): number;
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToOpSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    //
     // (undocumented)
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    //
     // (undocumented)
     normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "tryDecompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "tryDecompress" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
     tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
+    // Warning: (ae-incompatible-release-tags) The symbol "tryRecompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
 }
 
 // @public
 export interface IIdCompressorCore {
     finalizeCreationRange(range: IdCreationRange): void;
+    // Warning: (ae-incompatible-release-tags) The symbol "getAllIdsFromLocalSession" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>;
     serialize(withSession: boolean): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
@@ -477,7 +501,7 @@ export interface ITelemetryContext {
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
 }
 
-// @public
+// @alpha
 export type LocalCompressedId = number & {
     readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
 } & SessionUnique;
@@ -488,6 +512,8 @@ export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreReg
 // @public
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
+// Warning: (ae-incompatible-release-tags) The symbol "OpSpaceCompressedId" is marked as @public, but its signature references "CompressedId" which is marked as @alpha
+//
 // @public
 export type OpSpaceCompressedId = CompressedId & {
     readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
@@ -501,6 +527,8 @@ countOrOverrides?: number | SerializedClusterOverrides,
 overrides?: SerializedClusterOverrides
 ];
 
+// Warning: (ae-incompatible-release-tags) The symbol "SerializedClusterOverrides" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+//
 // @public (undocumented)
 export type SerializedClusterOverrides = readonly [
 overriddenFinalIndex: number,
@@ -530,11 +558,14 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
     readonly localState?: SerializedLocalState;
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "SerializedLocalOverrides" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+//
 // @public (undocumented)
 export type SerializedLocalOverrides = readonly (readonly [LocalCompressedId, string])[];
 
 // @public (undocumented)
 export interface SerializedLocalState {
+    // Warning: (ae-incompatible-release-tags) The symbol "lastTakenLocalId" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
     readonly lastTakenLocalId: LocalCompressedId | undefined;
     readonly localIdCount: number;
     readonly overrides?: SerializedLocalOverrides;
@@ -548,6 +579,9 @@ sessionId: SessionId
 
 // @public
 export interface SerializedSessionIdNormalizer {
+    // Warning: (ae-incompatible-release-tags) The symbol "localRanges" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "localRanges" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+    //
     // (undocumented)
     readonly localRanges: readonly (readonly [
     firstLocal: LocalCompressedId,
@@ -558,6 +592,8 @@ export interface SerializedSessionIdNormalizer {
     lastFinal: FinalCompressedId
     ])[]
     ])[];
+    // Warning: (ae-incompatible-release-tags) The symbol "nextLocalId" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+    //
     // (undocumented)
     readonly nextLocalId: LocalCompressedId;
 }
@@ -567,7 +603,7 @@ export type SessionId = StableId & {
     readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
 };
 
-// @public
+// @alpha
 export type SessionSpaceCompressedId = CompressedId & SessionUnique;
 
 // @public
@@ -587,6 +623,8 @@ export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telem
 // @public (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";
 
+// Warning: (ae-incompatible-release-tags) The symbol "UnackedLocalId" is marked as @public, but its signature references "LocalCompressedId" which is marked as @alpha
+//
 // @public (undocumented)
 export type UnackedLocalId = LocalCompressedId & OpSpaceCompressedId;
 
