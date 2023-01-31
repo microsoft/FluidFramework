@@ -323,8 +323,6 @@ export interface IAttributionCollection<T> {
 // @internal @sealed (undocumented)
 export interface IAttributionCollectionSerializer {
     populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
-    // Warning: (ae-forgotten-export) The symbol "SerializedAttributionCollection" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     serializeAttributionCollections(segments: Iterable<{
         attribution?: IAttributionCollection<AttributionKey>;
@@ -1200,6 +1198,15 @@ export class SegmentGroupCollection {
     pop?(): SegmentGroup | undefined;
     // (undocumented)
     get size(): number;
+}
+
+// @internal (undocumented)
+export interface SerializedAttributionCollection {
+    // (undocumented)
+    length: number;
+    // (undocumented)
+    posBreakpoints: number[];
+    seqs: number[];
 }
 
 // @internal (undocumented)

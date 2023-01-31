@@ -15,6 +15,9 @@ import {
 import { AttributionKey, ISegment } from "./mergeTreeNodes";
 import { MergeTreeDeltaType } from "./ops";
 
+/**
+ * @internal
+ */
 export interface SerializedAttributionCollection {
 	/**
 	 * Parallel array with posBreakpoints which tracks the seq of insertion.
