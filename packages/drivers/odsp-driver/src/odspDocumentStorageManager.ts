@@ -193,6 +193,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	public async getSnapshotTree(
 		version?: api.IVersion,
 		scenarioName?: string,
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		if (!this.snapshotUrl) {
 			return null;
