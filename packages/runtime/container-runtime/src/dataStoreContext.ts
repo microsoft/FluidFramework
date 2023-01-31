@@ -346,11 +346,11 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-    /**
-     * When delete is called, that means that the data store is permanently removed from the runtime, and will not show up in future summaries
-     * This function is called to prevent ops from being generated from this data store once it has been deleted. Furthermore, this data store
-     * should not receive any ops/signals.
-     */
+	/**
+	 * When delete is called, that means that the data store is permanently removed from the runtime, and will not show up in future summaries
+	 * This function is called to prevent ops from being generated from this data store once it has been deleted. Furthermore, this data store
+	 * should not receive any ops/signals.
+	 */
 	public delete() {
 		this.deleted = true;
 	}
