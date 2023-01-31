@@ -123,6 +123,7 @@ Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDet
 - `existing` : this will always be true, which no longer provides useful information
 - `mode` : this is implementation detail of connection
 - `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
+
 ### Remove deprecated experimental get-container package
 The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
 

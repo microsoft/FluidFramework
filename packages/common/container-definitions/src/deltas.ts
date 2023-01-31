@@ -50,7 +50,6 @@ export interface IConnectionDetailsInternal extends IConnectionDetails {
     initialClients: ISignalClient[];
 }
 
-
 /**
  * Interface used to define a strategy for handling incoming delta messages
  */
