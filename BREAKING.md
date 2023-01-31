@@ -19,9 +19,19 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 - [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
+- [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
 
 ### Deprecated IPendingFlush
 `IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+
+### For Driver Authors: Document Storage Service policy may become required
+
+_AWARENESS: The policy `IDocumentStorageServicePolicies.maximumCacheDurationMs` MUST be set and enforced by drivers
+used in applications where [Garbage Collection](packages/runtime/container-runtime/garbageCollection.md) is enabled, otherwise **data loss may occur**._
+
+In a subsequent major release, the policy `IDocumentStorageServicePolicies.maximumCacheDurationMs`
+(and likewise `IDocumentStorageService.policies` itself) may become required,
+to ensure all drivers take note of this requirement and enforce this policy.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
@@ -30,7 +40,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
+- [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
 - [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+- [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
@@ -78,14 +90,43 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 `ISummaryBaseConfiguration.summarizerClientElection` was deprecated and is now being removed.
 There will be no replacement for this property.'
 
+### `InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`
+
+`InsecureTokenProvider` takes a field names `user` that previously was defined as type `IUser` but also expects
+the `name` field to be present. This is not a requirement of `IUser` and is not enforced by the `IUser` interface.
+To avoid confusion, `InsecureTokenProvider` now takes a new type `IInsecureUser` that extends `IUser` and requires
+the `name` field to be present.
+Previously you would use `InsecureTokenProvider` like this:
+
+```typescript
+const user: IUser & { name: string } = { id: "userId", name: "userName" };
+const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
+```
+
+Now you would either pass `{ id: "userId", name: "userName" }` inline to `InsecureTokenProvider` or:
+
+```typescript
+import { IInsecureUser, InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+
+const user: IInsecureUser = { id: "userId", name: "userName" };
+const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
+```
+
 ### Remove Deprecated IFluidObject Interface
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove deprecated experimental get-container package
+The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
 
 # 2.0.0-internal.2.4.0
 
 ## 2.0.0-internal.2.4.0 Upcoming changes
+- [Support for passing empty string in `IUrlResolver.getAbsoluteUrl` relativeUrl argument in OdspDriverUrlResolverForShareLink and OdspDriverUrlResolver](#Support-for-passing-empty-string-in-IUrlResolver.getAbsoluteUrl-relativeUrl-argument-in-OdspDriverUrlResolverForShareLink-and-OdspDriverUrlResolver)
 - [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
 - [Deprecate internal connection details from `IConnectionDetails`](#deprecate-internal-connection-details-from-IConnectionDetails)
+
+### Support for passing empty string in `IUrlResolver.getAbsoluteUrl` relativeUrl argument in OdspDriverUrlResolverForShareLink and OdspDriverUrlResolver
+Now if an empty string is passed, then the relativeUrl or data store path will be derived from the resolved url if possible.
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 

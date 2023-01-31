@@ -23,15 +23,15 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
  * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
  */
 export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType;
-    tag: string;
+	value: TelemetryEventPropertyType;
+	tag: string;
 }
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  */
 export interface ITelemetryProperties {
-    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+	[index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 
 /**
@@ -41,8 +41,8 @@ export interface ITelemetryProperties {
  * @param eventName - name of the event.
  */
 export interface ITelemetryBaseEvent extends ITelemetryProperties {
-    category: string;
-    eventName: string;
+	category: string;
+	eventName: string;
 }
 
 /**
@@ -50,7 +50,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  * Implemented by hosting app / loader
  */
 export interface ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent): void;
+	send(event: ITelemetryBaseEvent): void;
 }
 
 /**
@@ -58,8 +58,8 @@ export interface ITelemetryBaseLogger {
  * Maps to category = "generic"
  */
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
-    eventName: string;
-    category?: TelemetryEventCategory;
+	eventName: string;
+	category?: TelemetryEventCategory;
 }
 
 /**
@@ -67,7 +67,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  * Maps to category = "error"
  */
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
-    eventName: string;
+	eventName: string;
 }
 
 /**
@@ -75,17 +75,17 @@ export interface ITelemetryErrorEvent extends ITelemetryProperties {
  * Maps to category = "performance"
  */
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-    duration?: number; // Duration of event (optional)
+	duration?: number; // Duration of event (optional)
 }
 
 /**
  * An error object that supports exporting its properties to be logged to telemetry
  */
 export interface ILoggingError extends Error {
-    /**
-     * Return all properties from this object that should be logged to telemetry
-     */
-    getTelemetryProperties(): ITelemetryProperties;
+	/**
+	 * Return all properties from this object that should be logged to telemetry
+	 */
+	getTelemetryProperties(): ITelemetryProperties;
 }
 
 /**
@@ -94,32 +94,32 @@ export interface ILoggingError extends Error {
  * Creates sub-logger that appends properties to all events
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    /**
-     * Actual implementation that sends telemetry event
-     * Implemented by derived classes
-     * @param event - Telemetry event to send over
-     */
-    send(event: ITelemetryBaseEvent): void;
+	/**
+	 * Actual implementation that sends telemetry event
+	 * Implemented by derived classes
+	 * @param event - Telemetry event to send over
+	 */
+	send(event: ITelemetryBaseEvent): void;
 
-    /**
-     * Send information telemetry event
-     * @param event - Event to send
-     * @param error - optional error object to log
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+	/**
+	 * Send information telemetry event
+	 * @param event - Event to send
+	 * @param error - optional error object to log
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 
-    /**
-     * Send error telemetry event
-     * @param event - Event to send
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
+	/**
+	 * Send error telemetry event
+	 * @param event - Event to send
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
 
-    /**
-     * Send performance telemetry event
-     * @param event - Event to send
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+	/**
+	 * Send performance telemetry event
+	 * @param event - Event to send
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
 }

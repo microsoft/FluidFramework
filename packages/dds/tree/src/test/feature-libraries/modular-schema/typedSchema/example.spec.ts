@@ -4,10 +4,10 @@
  */
 
 import {
-    typedTreeSchema as tree,
-    typedFieldSchema as field,
-    // Allow importing from this specific file which is being tested:
-    /* eslint-disable-next-line import/no-internal-modules */
+	typedTreeSchema as tree,
+	typedFieldSchema as field,
+	// Allow importing from this specific file which is being tested:
+	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema";
 
 import { rootFieldKey, SchemaDataAndPolicy, ValueSchema } from "../../../../core";
@@ -18,17 +18,17 @@ const { optional, value, sequence } = FieldKinds;
 
 // Declare a simple type which just holds a number.
 const numberSchema = tree({
-    name: "number",
-    value: ValueSchema.Number,
+	name: "number",
+	value: ValueSchema.Number,
 });
 
 // Declare an aggregate type with local fields
 const ballSchema = tree({
-    name: "Ball",
-    local: {
-        x: field(value, [numberSchema]),
-        y: field(value, [numberSchema]),
-    },
+	name: "Ball",
+	local: {
+		x: field(value, [numberSchema]),
+		y: field(value, [numberSchema]),
+	},
 });
 
 // We can inspect the schema.
@@ -42,10 +42,10 @@ const invalidChildSchema = ballSchema.localFields.get("z");
 // Declare an recursive aggregate type via local fields.
 // Note that the type name can be used instead of the schema to allow recursion.
 const diagramSchema = tree({
-    name: "Diagram",
-    local: {
-        children: field(sequence, ["Diagram", ballSchema]),
-    },
+	name: "Diagram",
+	local: {
+		children: field(sequence, ["Diagram", ballSchema]),
+	},
 });
 
 const rootField = field(optional, [diagramSchema]);
@@ -53,11 +53,11 @@ const rootField = field(optional, [diagramSchema]);
 // Collect the schema together.
 // TODO: add APIs for this which preserve the compile time type information.
 const schemaData: SchemaDataAndPolicy = {
-    policy: defaultSchemaPolicy,
-    globalFieldSchema: new Map([[rootFieldKey, rootField]]),
-    treeSchema: new Map(
-        [numberSchema, diagramSchema, ballSchema].map((schema) => [schema.name, schema]),
-    ),
+	policy: defaultSchemaPolicy,
+	globalFieldSchema: new Map([[rootFieldKey, rootField]]),
+	treeSchema: new Map(
+		[numberSchema, diagramSchema, ballSchema].map((schema) => [schema.name, schema]),
+	),
 };
 
 // TODO: use compile time type information from schemaData to generate useful APIs, like a strongly typed EditableTree.

@@ -70,18 +70,18 @@ export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
  * This design is just a placeholder.
  */
 export enum ValueSchema {
-    Nothing,
-    Number,
-    String,
-    Boolean,
-    /**
-     * Any Fluid serializable data.
-     *
-     * This includes Nothing / undefined.
-     *
-     * If it is desired to not include Nothing here, `anyNode` and `allowsValueSuperset` would need adjusting.
-     */
-    Serializable,
+	Nothing,
+	Number,
+	String,
+	Boolean,
+	/**
+	 * Any Fluid serializable data.
+	 *
+	 * This includes Nothing / undefined.
+	 *
+	 * If it is desired to not include Nothing here, `anyNode` and `allowsValueSuperset` would need adjusting.
+	 */
+	Serializable,
 }
 
 /**
@@ -116,95 +116,95 @@ export enum ValueSchema {
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 export interface FieldSchema {
-    readonly kind: FieldKindIdentifier;
-    /**
-     * The set of allowed child types.
-     * If not specified, types are unconstrained.
-     */
-    readonly types?: TreeTypeSet;
+	readonly kind: FieldKindIdentifier;
+	/**
+	 * The set of allowed child types.
+	 * If not specified, types are unconstrained.
+	 */
+	readonly types?: TreeTypeSet;
 }
 
 export interface TreeSchema {
-    /**
-     * Schema for fields with keys scoped to this TreeSchema.
-     *
-     * This refers to the FieldSchema directly
-     * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldSchema map).
-     * This allows os short friendly field keys which can ergonomically used as field names in code.
-     * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
-     */
-    readonly localFields: ReadonlyMap<LocalFieldKey, FieldSchema>;
+	/**
+	 * Schema for fields with keys scoped to this TreeSchema.
+	 *
+	 * This refers to the FieldSchema directly
+	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldSchema map).
+	 * This allows os short friendly field keys which can ergonomically used as field names in code.
+	 * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
+	 */
+	readonly localFields: ReadonlyMap<LocalFieldKey, FieldSchema>;
 
-    /**
-     * Schema for fields with keys scoped to the whole document.
-     *
-     * Having a centralized map indexed by FieldSchemaIdentifier
-     * can be used for fields which have the same meaning in multiple places,
-     * and simplifies document root handling (since the root can just have a special `FieldSchemaIdentifier`).
-     */
-    readonly globalFields: ReadonlySet<GlobalFieldKey>;
+	/**
+	 * Schema for fields with keys scoped to the whole document.
+	 *
+	 * Having a centralized map indexed by FieldSchemaIdentifier
+	 * can be used for fields which have the same meaning in multiple places,
+	 * and simplifies document root handling (since the root can just have a special `FieldSchemaIdentifier`).
+	 */
+	readonly globalFields: ReadonlySet<GlobalFieldKey>;
 
-    /**
-     * Constraint for local fields not mentioned in `localFields`.
-     *
-     * Allows using using the local fields as a map, with the keys being
-     * LocalFieldKeys and the values being constrained by this FieldSchema.
-     *
-     * To forbid this map like usage, use {@link emptyField} here.
-     *
-     * Usually `FieldKind.Value` should NOT be used here
-     * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
-     * (that would require infinite children).
-     * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
-     * and can be useful in special cases (like a default stored schema when none is specified).
-     */
-    readonly extraLocalFields: FieldSchema;
+	/**
+	 * Constraint for local fields not mentioned in `localFields`.
+	 *
+	 * Allows using using the local fields as a map, with the keys being
+	 * LocalFieldKeys and the values being constrained by this FieldSchema.
+	 *
+	 * To forbid this map like usage, use {@link emptyField} here.
+	 *
+	 * Usually `FieldKind.Value` should NOT be used here
+	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
+	 * (that would require infinite children).
+	 * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
+	 * and can be useful in special cases (like a default stored schema when none is specified).
+	 */
+	readonly extraLocalFields: FieldSchema;
 
-    /**
-     * If true,
-     * GlobalFieldKeys other than the ones listed above in globalFields may be used to store data on this tree node.
-     * Such fields must still be in schema with their global FieldSchema.
-     *
-     * This allows for the "augmentations" pattern where
-     * users can attach information they understand to any tree without risk of name collisions.
-     * This is not the only way to do "augmentations":
-     * another approach is for the applications that wish to add them to include
-     * the augmentation in their view schema on the nodes they with to augment,
-     * and update the stored schema to permit them as needed.
-     *
-     * This schema system could work with extraGlobalFields unconditionally on
-     * (justified as allowing augmentations everywhere though requiring stored schema changes),
-     * or unconditionally off (requiring augmentations to sometimes update stored schema).
-     * Simplifying this system to not have extraGlobalFields and default it to on or off is a design decision which
-     * doesn't impact the rest of this system,
-     * and thus is being put off for now.
-     *
-     * Unlike with extraLocalFields, only non-empty global fields have to be in schema here,
-     * so the existence of a global value field does not immediately make all TreeSchema permitting extra global fields
-     * out of schema if they are missing said field.
-     *
-     * TODO: this approach is inconsistent and should likely be redesigned
-     * so global and local extra fields work more similarly.
-     */
-    readonly extraGlobalFields: boolean;
+	/**
+	 * If true,
+	 * GlobalFieldKeys other than the ones listed above in globalFields may be used to store data on this tree node.
+	 * Such fields must still be in schema with their global FieldSchema.
+	 *
+	 * This allows for the "augmentations" pattern where
+	 * users can attach information they understand to any tree without risk of name collisions.
+	 * This is not the only way to do "augmentations":
+	 * another approach is for the applications that wish to add them to include
+	 * the augmentation in their view schema on the nodes they with to augment,
+	 * and update the stored schema to permit them as needed.
+	 *
+	 * This schema system could work with extraGlobalFields unconditionally on
+	 * (justified as allowing augmentations everywhere though requiring stored schema changes),
+	 * or unconditionally off (requiring augmentations to sometimes update stored schema).
+	 * Simplifying this system to not have extraGlobalFields and default it to on or off is a design decision which
+	 * doesn't impact the rest of this system,
+	 * and thus is being put off for now.
+	 *
+	 * Unlike with extraLocalFields, only non-empty global fields have to be in schema here,
+	 * so the existence of a global value field does not immediately make all TreeSchema permitting extra global fields
+	 * out of schema if they are missing said field.
+	 *
+	 * TODO: this approach is inconsistent and should likely be redesigned
+	 * so global and local extra fields work more similarly.
+	 */
+	readonly extraGlobalFields: boolean;
 
-    /**
-     * There are several approaches for how to store actual data in the tree
-     * (special node types, special field contents, data on nodes etc.)
-     * as well as several options about how the data should be modeled at this level
-     * (byte sequence? javascript type? json?),
-     * as well as options for how much of this would be exposed in the schema language
-     * (ex: would all nodes with values be special built-ins, or could any schema add them?)
-     *
-     * A simple easy to do in javascript approach is taken here:
-     * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
-     * This is simply one approach that can work for modeling them in the internal schema representation.
-     */
-    readonly value: ValueSchema;
+	/**
+	 * There are several approaches for how to store actual data in the tree
+	 * (special node types, special field contents, data on nodes etc.)
+	 * as well as several options about how the data should be modeled at this level
+	 * (byte sequence? javascript type? json?),
+	 * as well as options for how much of this would be exposed in the schema language
+	 * (ex: would all nodes with values be special built-ins, or could any schema add them?)
+	 *
+	 * A simple easy to do in javascript approach is taken here:
+	 * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
+	 * This is simply one approach that can work for modeling them in the internal schema representation.
+	 */
+	readonly value: ValueSchema;
 }
 
 export interface Named<TName> {
-    readonly name: TName;
+	readonly name: TName;
 }
 
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
@@ -217,8 +217,8 @@ export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
  * thus if needing to hand onto a specific version, make a copy.
  */
 export interface SchemaData {
-    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
 /**
@@ -226,16 +226,16 @@ export interface SchemaData {
  * The app must ensure consistency for all users of the document.
  */
 export interface SchemaPolicy {
-    /**
-     * Schema used when there is no schema explicitly specified for an identifier.
-     * Typically a "never" schema which forbids any nodes with that type.
-     */
-    readonly defaultTreeSchema: TreeSchema;
+	/**
+	 * Schema used when there is no schema explicitly specified for an identifier.
+	 * Typically a "never" schema which forbids any nodes with that type.
+	 */
+	readonly defaultTreeSchema: TreeSchema;
 
-    /**
-     * Schema used when there is no schema explicitly specified for an identifier.
-     * Typically an "empty" schema which forbids any field with that type from having children.
-     * TODO: maybe this must be an empty field? Anything else might break things.
-     */
-    readonly defaultGlobalFieldSchema: FieldSchema;
+	/**
+	 * Schema used when there is no schema explicitly specified for an identifier.
+	 * Typically an "empty" schema which forbids any field with that type from having children.
+	 * TODO: maybe this must be an empty field? Anything else might break things.
+	 */
+	readonly defaultGlobalFieldSchema: FieldSchema;
 }

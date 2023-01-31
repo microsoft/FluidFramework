@@ -55,6 +55,11 @@ import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
+// @public
+export interface IInsecureUser extends IUser {
+    name: string;
+}
+
 // @public (undocumented)
 export interface IMockContainerRuntimePendingMessage {
     // (undocumented)
@@ -69,7 +74,7 @@ export interface IMockContainerRuntimePendingMessage {
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
     tenantKey: string,
-    user: IUser,
+    user: IInsecureUser,
     scopes?: ScopeType[] | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;

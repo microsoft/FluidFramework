@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 import {
-    ReleaseVersion,
-    VersionBumpType,
-    VersionScheme,
-    detectVersionScheme,
-    getVersionRange,
+	ReleaseVersion,
+	VersionBumpType,
+	VersionScheme,
+	detectVersionScheme,
+	getVersionRange,
 } from "@fluid-tools/version-tools";
 
 import { ReleaseGroup } from "../releaseGroups";
@@ -16,28 +16,28 @@ import { ReleaseGroup } from "../releaseGroups";
  * A map of package names to their versions. This is the format of the "simple" release report.
  */
 export interface PackageVersionList {
-    [packageName: string]: ReleaseVersion;
+	[packageName: string]: ReleaseVersion;
 }
 
 /**
  * A map of package names to full release reports. This is the format of the "full" release report.
  */
 export interface ReleaseReport {
-    [packageName: string]: ReleaseDetails;
+	[packageName: string]: ReleaseDetails;
 }
 
 /**
  * Full details about a release.
  */
 export interface ReleaseDetails {
-    version: ReleaseVersion;
-    previousVersion?: ReleaseVersion;
-    versionScheme: VersionScheme;
-    date?: Date;
-    releaseType: VersionBumpType;
-    isNewRelease: boolean;
-    releaseGroup?: ReleaseGroup;
-    ranges: ReleaseRanges;
+	version: ReleaseVersion;
+	previousVersion?: ReleaseVersion;
+	versionScheme: VersionScheme;
+	date?: Date;
+	releaseType: VersionBumpType;
+	isNewRelease: boolean;
+	releaseGroup?: ReleaseGroup;
+	ranges: ReleaseRanges;
 }
 
 /**
@@ -50,25 +50,25 @@ export interface ReleaseDetails {
  * used by partners, and having both eases confusion.
  */
 export interface ReleaseRanges {
-    /**
-     * A minor version range. Equivalent to caret.
-     */
-    minor: string;
+	/**
+	 * A minor version range. Equivalent to caret.
+	 */
+	minor: string;
 
-    /**
-     * A patch version range. Equivalent to tilde.
-     */
-    patch: string;
+	/**
+	 * A patch version range. Equivalent to tilde.
+	 */
+	patch: string;
 
-    /**
-     * A caret version range. Equivalent to minor.
-     */
-    caret: string;
+	/**
+	 * A caret version range. Equivalent to minor.
+	 */
+	caret: string;
 
-    /**
-     * A tilde version range. Equivalent to patch.
-     */
-    tilde: string;
+	/**
+	 * A tilde version range. Equivalent to patch.
+	 */
+	tilde: string;
 }
 
 /**
@@ -78,28 +78,28 @@ export interface ReleaseRanges {
  * @returns The {@link ReleaseRanges} for a version string
  */
 export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): ReleaseRanges => {
-    const schemeToUse = scheme ?? detectVersionScheme(version);
-    return schemeToUse === "internal"
-        ? {
-              patch: getVersionRange(version, "patch"),
-              minor: getVersionRange(version, "minor"),
-              tilde: getVersionRange(version, "~"),
-              caret: getVersionRange(version, "^"),
-          }
-        : {
-              patch: `~${version}`,
-              minor: `^${version}`,
-              tilde: `~${version}`,
-              caret: `^${version}`,
-          };
+	const schemeToUse = scheme ?? detectVersionScheme(version);
+	return schemeToUse === "internal"
+		? {
+				patch: getVersionRange(version, "patch"),
+				minor: getVersionRange(version, "minor"),
+				tilde: getVersionRange(version, "~"),
+				caret: getVersionRange(version, "^"),
+		  }
+		: {
+				patch: `~${version}`,
+				minor: `^${version}`,
+				tilde: `~${version}`,
+				caret: `^${version}`,
+		  };
 };
 
 interface PackageCaretRange {
-    [packageName: string]: string;
+	[packageName: string]: string;
 }
 
 interface PackageTildeRange {
-    [packageName: string]: string;
+	[packageName: string]: string;
 }
 
 /**
@@ -122,44 +122,44 @@ export type ReportKind = "full" | "caret" | "tilde" | "simple";
  * Converts a {@link ReleaseReport} into different formats based on the kind.
  */
 export function toReportKind(
-    report: ReleaseReport,
-    kind: ReportKind,
+	report: ReleaseReport,
+	kind: ReportKind,
 ): ReleaseReport | PackageVersionList | PackageTildeRange | PackageCaretRange {
-    const toReturn: PackageVersionList | PackageTildeRange | PackageCaretRange = {};
+	const toReturn: PackageVersionList | PackageTildeRange | PackageCaretRange = {};
 
-    switch (kind) {
-        case "full": {
-            return report;
-        }
+	switch (kind) {
+		case "full": {
+			return report;
+		}
 
-        case "simple": {
-            for (const [pkg, details] of Object.entries(report)) {
-                toReturn[pkg] = details.version;
-            }
+		case "simple": {
+			for (const [pkg, details] of Object.entries(report)) {
+				toReturn[pkg] = details.version;
+			}
 
-            break;
-        }
+			break;
+		}
 
-        case "caret": {
-            for (const [pkg, details] of Object.entries(report)) {
-                toReturn[pkg] = details.ranges.caret;
-            }
+		case "caret": {
+			for (const [pkg, details] of Object.entries(report)) {
+				toReturn[pkg] = details.ranges.caret;
+			}
 
-            break;
-        }
+			break;
+		}
 
-        case "tilde": {
-            for (const [pkg, details] of Object.entries(report)) {
-                toReturn[pkg] = details.ranges.tilde;
-            }
+		case "tilde": {
+			for (const [pkg, details] of Object.entries(report)) {
+				toReturn[pkg] = details.ranges.tilde;
+			}
 
-            break;
-        }
+			break;
+		}
 
-        default: {
-            throw new Error(`Unexpected ReportKind: ${kind}`);
-        }
-    }
+		default: {
+			throw new Error(`Unexpected ReportKind: ${kind}`);
+		}
+	}
 
-    return toReturn;
+	return toReturn;
 }

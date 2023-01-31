@@ -12,11 +12,11 @@ import { v4 as uuid } from "uuid";
  *
  * @returns a user object with a name and id property
  */
-export const generateTestUser = (): IUser & { name: string; } => {
-    const user = {
-        id: uuid(),
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        name: generateName() as string,
-    };
-    return user;
+export const generateTestUser = (): IUser & { name: string } => {
+	const user = {
+		id: uuid(),
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+		name: generateName() as string,
+	};
+	return user;
 };

@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-describe("Bubblebench", () => {
-});
+describe("Bubblebench", () => {});

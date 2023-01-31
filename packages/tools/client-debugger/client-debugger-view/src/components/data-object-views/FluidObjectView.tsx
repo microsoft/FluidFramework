@@ -15,15 +15,15 @@ import { DynamicDataView } from "./DynamicDataView";
  * {@link FluidObjectView} input props.
  */
 export interface FluidObjectViewProps {
-    /**
-     * The handle to the Fluid object to be rendered.
-     */
-    fluidObjectHandle: IFluidHandle;
+	/**
+	 * The handle to the Fluid object to be rendered.
+	 */
+	fluidObjectHandle: IFluidHandle;
 
-    /**
-     * {@inheritDoc SharedObjectRenderOptions}
-     */
-    renderOptions: SharedObjectRenderOptions;
+	/**
+	 * {@inheritDoc SharedObjectRenderOptions}
+	 */
+	renderOptions: SharedObjectRenderOptions;
 }
 
 /**
@@ -32,37 +32,37 @@ export interface FluidObjectViewProps {
  * for the data type (see {@link FluidObjectViewProps.renderOptions}).
  */
 export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement {
-    const { fluidObjectHandle, renderOptions } = props;
+	const { fluidObjectHandle, renderOptions } = props;
 
-    // eslint-disable-next-line unicorn/no-useless-undefined
-    const [resolvedData, setResolvedData] = React.useState<FluidObject | undefined>(undefined);
+	// eslint-disable-next-line unicorn/no-useless-undefined
+	const [resolvedData, setResolvedData] = React.useState<FluidObject | undefined>(undefined);
 
-    React.useEffect(() => {
-        fluidObjectHandle.get().then(setResolvedData, (error) => {
-            throw error;
-        });
-    }, [resolvedData]);
+	React.useEffect(() => {
+		fluidObjectHandle.get().then(setResolvedData, (error) => {
+			throw error;
+		});
+	}, [resolvedData]);
 
-    if (resolvedData === undefined) {
-        return <Spinner />;
-    }
+	if (resolvedData === undefined) {
+		return <Spinner />;
+	}
 
-    // TODO: is this the right type check for this?
-    const sharedObject = resolvedData as ISharedObject;
-    if (sharedObject?.attributes?.type !== undefined) {
-        const dataObjectType = (resolvedData as ISharedObject).attributes.type;
-        return renderOptions[dataObjectType] === undefined ? (
-            <Stack>
-                <StackItem>
-                    No renderer provided for shared object type "{dataObjectType}"
-                </StackItem>
-            </Stack>
-        ) : (
-            renderOptions[dataObjectType](sharedObject, (data) => (
-                <DynamicDataView data={data} renderOptions={renderOptions} />
-            ))
-        );
-    }
+	// TODO: is this the right type check for this?
+	const sharedObject = resolvedData as ISharedObject;
+	if (sharedObject?.attributes?.type !== undefined) {
+		const dataObjectType = (resolvedData as ISharedObject).attributes.type;
+		return renderOptions[dataObjectType] === undefined ? (
+			<Stack>
+				<StackItem>
+					No renderer provided for shared object type "{dataObjectType}"
+				</StackItem>
+			</Stack>
+		) : (
+			renderOptions[dataObjectType](sharedObject, (data) => (
+				<DynamicDataView data={data} renderOptions={renderOptions} />
+			))
+		);
+	}
 
-    return <Stack>Unrecognized kind of Fluid data: {resolvedData.toString()}</Stack>;
+	return <Stack>Unrecognized kind of Fluid data: {resolvedData.toString()}</Stack>;
 }

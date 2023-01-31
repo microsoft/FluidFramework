@@ -4,6 +4,6 @@
  */
 
 export { uniformChunk, ChunkShape } from "./uniformChunk";
-export { TreeChunk } from "./chunk";
+export { TreeChunk, dummyRoot } from "./chunk";
 export { chunkTree } from "./chunkTree";
 export { buildChunkedForest } from "./chunkedForest";
