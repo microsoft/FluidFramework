@@ -128,10 +128,10 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 // @public (undocumented)
 export interface IContainerConfig {
     // (undocumented)
+    baseLogger?: ITelemetryBaseLogger;
+    // (undocumented)
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
-    // (undocumented)
-    loggerOverride?: ITelemetryBaseLogger;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
     serializedContainerState?: IPendingContainerState;
@@ -139,11 +139,10 @@ export interface IContainerConfig {
 
 // @public (undocumented)
 export interface IContainerLoadOptions {
+    baseLogger?: ITelemetryBaseLogger;
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
     loadMode?: IContainerLoadMode;
-    // (undocumented)
-    loggerOverride?: ITelemetryBaseLogger;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
     version: string | undefined;
