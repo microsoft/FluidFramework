@@ -6873,6 +6873,7 @@ importers:
       '@fluidframework/common-utils': ^1.0.0
       '@fluidframework/container-definitions': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
       '@fluidframework/data-object-base-previous': npm:@fluidframework/data-object-base@2.0.0-internal.2.2.0
       '@fluidframework/datastore': '>=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0'
@@ -6900,6 +6901,7 @@ importers:
       '@fluidframework/common-utils': 1.0.0
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions

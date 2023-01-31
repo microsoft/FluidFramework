@@ -10,6 +10,7 @@ import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -74,12 +75,11 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
 // @public (undocumented)
 export class RuntimeFactory extends RuntimeFactoryHelper {
-    constructor(defaultStoreFactory: IFluidDataStoreFactory, storeFactories?: IFluidDataStoreFactory[], requestHandlers?: RuntimeRequestHandler[]);
+    constructor(defaultStoreFactory: IFluidDataStoreFactory, storeFactories?: IFluidDataStoreFactory[], requestHandlers?: RuntimeRequestHandler[], initializeEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined);
     // (undocumented)
     instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
     // (undocumented)
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
-    }
-
+}
 
 ```
