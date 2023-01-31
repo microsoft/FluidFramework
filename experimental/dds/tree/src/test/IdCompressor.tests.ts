@@ -30,7 +30,7 @@ import {
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
 import { getIds } from '../id-compressor/IdRange';
-import { IdCreationRange, UnackedLocalId } from '../id-compressor';
+import type { IdCreationRange, UnackedLocalId } from '../id-compressor';
 import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities';
 import {
 	createCompressor,
