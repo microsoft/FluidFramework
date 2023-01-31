@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { AttributionInfo, AttributionKey } from "./attribution";
 export {
 	AliasResult,
 	BindState,
