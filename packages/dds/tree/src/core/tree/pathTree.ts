@@ -16,6 +16,7 @@ import { FieldKey } from "./types";
  *
  * UpPaths can be mutated over time and should be considered to be invalidated when any edits occurs:
  * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
+ * @alpha
  */
 export interface UpPath {
 	/**
@@ -37,6 +38,7 @@ export interface UpPath {
  * Path from a field in the tree upward.
  *
  * See {@link UpPath}.
+ * @alpha
  */
 export interface FieldUpPath {
 	/**
