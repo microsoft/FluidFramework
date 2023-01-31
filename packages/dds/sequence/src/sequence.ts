@@ -264,8 +264,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @param start - The inclusive start of the range to remove
-	 * @param end - The exclusive end of the range to remove
+     * Obliterate is similar to remove, but differs in that segments concurrently
+     * inserted into an obliterated range will also be removed
+     *
+	 * @param start - The inclusive start of the range to obliterate
+	 * @param end - The exclusive end of the range to obliterate
 	 *
 	 * @alpha
 	 */

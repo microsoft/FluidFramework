@@ -56,7 +56,10 @@ if (x) {
 
 class ReconnectTestHelper {
 	clients = createClientsAtInitialState(
-		{ initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
+		{
+			initialState: "",
+			options: { mergeTreeUseNewLengthCalculations: true, mergeTreeEnableObliterate: true },
+		},
 		...ClientIds,
 	);
 

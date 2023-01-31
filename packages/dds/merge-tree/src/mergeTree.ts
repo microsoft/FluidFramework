@@ -517,6 +517,8 @@ export interface IMergeTreeOptions {
 	 * Options related to attribution
 	 */
 	attribution?: IMergeTreeAttributionOptions;
+
+	mergeTreeEnableObliterate?: boolean;
 }
 
 export interface IMergeTreeAttributionOptions {
@@ -1878,6 +1880,10 @@ export class MergeTree {
 
 				insertPos += newSegment.cachedLength;
 
+				if (!this.options?.mergeTreeEnableObliterate) {
+					return;
+				}
+
 				let moveUpperBound = Number.POSITIVE_INFINITY;
 				const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
 
@@ -2288,6 +2294,10 @@ export class MergeTree {
 		overwrite: boolean = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
+		if (!this.options?.mergeTreeEnableObliterate) {
+			throw new Error("Attempted to send obliterate op without enabling feature flag.");
+		}
+
 		this.ensureIntervalBoundary(start, refSeq, clientId);
 		this.ensureIntervalBoundary(end, refSeq, clientId);
 

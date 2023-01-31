@@ -144,10 +144,10 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
  * Tracks information about when and where this segment was moved to.
  * @example - Suppose a merge tree had 3 TextSegments "X", "A", and "B", and
  * received the operation `move({ start: 0, end: 1 }, { dest: 3 }, { seq: 30 })`
- * (moving the "X"
- * after the "A" and the "B").
- * After processing this operation, it would have the segments `[<moved "X" tombstone>, "A", "B", "X"]`.
- * The moved "X" tombstone segment would have the following IMoveInfo:
+ * (moving the "X" after the "A" and the "B").
+ * After processing this operation, it would have the segments
+ * `[<moved "X" tombstone>, "A", "B", "X"]`. The moved "X" tombstone segment
+ * would have the following IMoveInfo:
  * `{ movedSeq: 30, moveDst: <reference to living "X" segment>}`
  */
 export interface IMoveInfo {
