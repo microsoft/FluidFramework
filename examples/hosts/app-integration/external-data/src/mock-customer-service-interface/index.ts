@@ -3,4 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { customerServicePort } from "./constants";
+/**
+ * The port used by the mock customer service.
+ */
+export const customerServicePort = process.env.MOCK_CUSTOMER_SERVICE_PORT ?? 5237;
