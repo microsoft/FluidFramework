@@ -145,6 +145,8 @@ const moves = {
     nodes: ["stop", "firstField"],
 };
 
+const placeType = ["currentNode", "nextNode", "addField"]
+
 function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
     const testerKey: FieldKey = brand("Test");
     const cursor = tree.forest.allocateCursor();
@@ -165,7 +167,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
         return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
     }
     currentPath = getExistingRandomNodePosition(tree, random);
-    const choosePath = random.pick(["currentNode", "nextNode", "addField"])
+    const choosePath = random.pick(placeType);
     switch (choosePath) {
         case "currentNode":
             cursor.free();
