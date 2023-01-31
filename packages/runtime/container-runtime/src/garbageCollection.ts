@@ -1094,7 +1094,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
 
-        this.gcDataFromLastRun = cloneGCData(updatedGCData);
+		this.gcDataFromLastRun = cloneGCData(updatedGCData);
 
 		// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
 		// updates its state so that we don't send false positives based on intermediate state. For example, we may get
@@ -1503,7 +1503,7 @@ export class GarbageCollector implements IGarbageCollector {
 		const sweptRoutes = this.runtime.deleteUnusedNodes(sweepReadyNodes);
 		const updatedGCData = this.deleteSweptRoutes(sweptRoutes, gcData);
 		this.deleteSweptNodeTrackers(sweptRoutes);
-        this.trackDeletedNodes(sweptRoutes);
+		this.trackDeletedNodes(sweptRoutes);
 		return updatedGCData;
 	}
 
@@ -1545,12 +1545,12 @@ export class GarbageCollector implements IGarbageCollector {
 		};
 	}
 
-    private trackDeletedNodes(deletedNodes: string[]) {
-        deletedNodes.forEach((node) => {
-            // TODO: GC:Validation - assert that the deleted node is not a duplicate
-            this.deletedNodes.add(node);
-        })
-    }
+	private trackDeletedNodes(deletedNodes: string[]) {
+		deletedNodes.forEach((node) => {
+			// TODO: GC:Validation - assert that the deleted node is not a duplicate
+			this.deletedNodes.add(node);
+		});
+	}
 
 	/**
 	 * Since GC runs periodically, the GC data that is generated only tells us the state of the world at that point in
