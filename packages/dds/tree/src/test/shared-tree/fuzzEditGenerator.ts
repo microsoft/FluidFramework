@@ -157,81 +157,31 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
     }
     let currentPath = cursor.getPath();
     assert(currentPath !== undefined)
-    let parentPath: UpPath = currentPath;
+    const parentPath: UpPath = currentPath;
     const firstField = cursor.firstField();
     if (!firstField) {
         // no fields, insert at random field at index 0 under rootnode
         cursor.free();
         return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
     }
-    let fieldNodes: number = cursor.getFieldLength();
-    let nodeField: FieldKey = testerKey; // if no field is selected use default testerKey
-    let nodeIndex: number = 0;
-
-    let currentMove = random.pick(moves.field);
-    assert(cursor.mode === CursorLocationType.Fields);
-
-    while (currentMove !== "stop") {
-        switch (currentMove) {
-            case "enterNode":
-                if (fieldNodes > 0) {
-                    nodeIndex = random.integer(0, fieldNodes - 1);
-                    cursor.enterNode(nodeIndex);
-                    currentPath = cursor.getPath();
-                    assert(currentPath !== undefined)
-                    parentPath = currentPath
-                    currentMove = random.pick(moves.nodes);
-                    if (currentMove === "stop") {
-                        if (cursor.firstField()) {
-                            fieldNodes = cursor.getFieldLength();
-                            nodeField = cursor.getFieldKey();
-                            nodeIndex = fieldNodes !== 0 ? random.integer(0, fieldNodes - 1) : 0;
-                            cursor.free();
-                            return { parent: parentPath, parentField: nodeField, parentIndex: nodeIndex };
-                        } else {
-                            nodeField = testerKey;
-                            nodeIndex = 0;
-                        }
-                        break;
-                    }
-                } else {
-                    cursor.free();
-                    return {
-                        parent: parentPath,
-                        parentField: nodeField,
-                        parentIndex: 0,
-                    };
-                }
-                break;
-            case "firstField":
-                if (cursor.firstField()) {
-                    currentMove = random.pick(moves.field);
-                    fieldNodes = cursor.getFieldLength();
-                    nodeField = cursor.getFieldKey();
-                } else {
-                    cursor.free();
-                    return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
-                }
-                break;
-
-            case "nextField":
-                if (cursor.nextField()) {
-                    currentMove = random.pick(moves.field);
-                    fieldNodes = cursor.getFieldLength();
-                    nodeField = cursor.getFieldKey();
-                } else {
-                    currentMove = "stop";
-                    nodeField = testerKey;
-                    nodeIndex = 0;
-                }
-                break;
-            default:
-                fail(`Unexpected move ${currentMove}`);
-        }
+    currentPath = getExistingRandomNodePosition(tree, random);
+    const choosePath = random.pick(["currentNode", "nextNode", "addField"])
+    switch (choosePath) {
+        case "currentNode":
+            cursor.free();
+            return parentPath;
+        case "nextNode":
+            cursor.free();
+            return { parent: parentPath.parent, parentField: parentPath.parentField, parentIndex: parentPath.parentIndex}
+        case "addField":
+            cursor.free();
+            return { parent: parentPath, parentField: testerKey, parentIndex: 0}
+        default:
+            fail(`Unexpected option ${choosePath}`);
     }
-    cursor.free();
-    return { parent: parentPath, parentField: nodeField, parentIndex: nodeIndex };
+
 }
+
 
 function getExistingRandomNodePosition(
     tree: ISharedTree,
