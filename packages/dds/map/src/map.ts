@@ -159,9 +159,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * Get an iterator over the entries in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public entries(): IterableIterator<[string, any]> {
+	public entries(): IterableIterator<[string, unknown]> {
 		return this.kernel.entries();
 	}
 
@@ -169,9 +167,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * Get an iterator over the values in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public values(): IterableIterator<any> {
+	public values(): IterableIterator<unknown> {
 		return this.kernel.values();
 	}
 
@@ -179,9 +175,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * Get an iterator over the entries in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public [Symbol.iterator](): IterableIterator<[string, any]> {
+	public [Symbol.iterator](): IterableIterator<[string, unknown]> {
 		return this.kernel.entries();
 	}
 
@@ -196,9 +190,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * Executes the given callback on each entry in the map.
 	 * @param callbackFn - Callback function
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
+	public forEach(
+		callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void,
+	): void {
 		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
 		this.kernel.forEach(callbackFn);
 	}
@@ -206,9 +200,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * {@inheritDoc ISharedMap.get}
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public get<T = any>(key: string): T | undefined {
+	public get<T = unknown>(key: string): T | undefined {
 		return this.kernel.get<T>(key);
 	}
 

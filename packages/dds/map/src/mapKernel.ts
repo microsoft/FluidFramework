@@ -197,9 +197,7 @@ export class MapKernel {
 	 * Get an iterator over the entries in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public entries(): IterableIterator<[string, any]> {
+	public entries(): IterableIterator<[string, unknown]> {
 		const localEntriesIterator = this.data.entries();
 		const iterator = {
 			next(): IteratorResult<[string, unknown]> {
@@ -220,9 +218,7 @@ export class MapKernel {
 	 * Get an iterator over the values in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public values(): IterableIterator<any> {
+	public values(): IterableIterator<unknown> {
 		const localValuesIterator = this.data.values();
 		const iterator = {
 			next(): IteratorResult<unknown> {
@@ -230,7 +226,7 @@ export class MapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-					  { value: nextVal.value.value as unknown, done: false };
+					  { value: nextVal.value.value, done: false };
 			},
 			[Symbol.iterator](): IterableIterator<unknown> {
 				return this;
@@ -243,9 +239,7 @@ export class MapKernel {
 	 * Get an iterator over the entries in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public [Symbol.iterator](): IterableIterator<[string, any]> {
+	public [Symbol.iterator](): IterableIterator<[string, unknown]> {
 		return this.entries();
 	}
 
@@ -265,9 +259,7 @@ export class MapKernel {
 	/**
 	 * {@inheritDoc ISharedMap.get}
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public get<T = any>(key: string): T | undefined {
+	public get<T = unknown>(key: string): T | undefined {
 		const localValue = this.data.get(key);
 		return localValue === undefined ? undefined : (localValue.value as T);
 	}

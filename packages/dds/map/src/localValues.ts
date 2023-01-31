@@ -25,9 +25,7 @@ export interface ILocalValue {
 	/**
 	 * The in-memory value stored within.
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly value: any;
+	readonly value: unknown;
 
 	/**
 	 * Retrieve the serialized form of the value stored within.

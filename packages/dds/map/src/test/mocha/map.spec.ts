@@ -548,7 +548,8 @@ describe("Map", () => {
 
 					/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
-					const retrieved = map1.get("object");
+					const retrieved = map1.get<any>("object");
+					assert.notEqual(retrieved, undefined);
 					const retrievedSubMap: unknown = await retrieved.subMapHandle.get();
 					assert.equal(retrievedSubMap, subMap, "could not get nested map 1");
 					const retrievedSubMap2: unknown = await retrieved.nestedObj.subMap2Handle.get();

@@ -23,9 +23,7 @@ export interface IValueChanged {
 	/**
 	 * The value that was stored at the key prior to the change.
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	previousValue: any;
+	previousValue: unknown;
 }
 
 /**
@@ -33,10 +31,8 @@ export interface IValueChanged {
  *
  * @remarks When used as a Map, operates on its keys.
  */
-// TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IDirectory
-	extends Map<string, any>,
+	extends Map<string, unknown>,
 		IEventProvider<IDirectoryEvents>,
 		Partial<IDisposable> {
 	/**
@@ -49,9 +45,7 @@ export interface IDirectory
 	 * @param key - Key to retrieve from
 	 * @returns The stored value, or undefined if the key is not set
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	get<T = any>(key: string): T | undefined;
+	get<T = unknown>(key: string): T | undefined;
 
 	/**
 	 * Sets the value stored at key to the provided value.
@@ -271,9 +265,7 @@ export interface ISharedDirectory
 		Omit<IDirectory, "on" | "once" | "off"> {
 	// The Omit type excludes symbols, which we don't want to exclude.  Adding them back here manually.
 	// https://github.com/microsoft/TypeScript/issues/31671
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[Symbol.iterator](): IterableIterator<[string, any]>;
+	[Symbol.iterator](): IterableIterator<[string, unknown]>;
 	readonly [Symbol.toStringTag]: string;
 }
 
@@ -328,17 +320,13 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  */
-// TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, unknown> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from
 	 * @returns The stored value, or undefined if the key is not set
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	get<T = any>(key: string): T | undefined;
+	get<T = unknown>(key: string): T | undefined;
 
 	/**
 	 * Sets the value stored at key to the provided value.

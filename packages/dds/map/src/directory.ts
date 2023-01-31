@@ -377,9 +377,7 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc IDirectory.get}
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public get<T = any>(key: string): T | undefined {
+	public get<T = unknown>(key: string): T | undefined {
 		return this.root.get<T>(key);
 	}
 
@@ -435,9 +433,9 @@ export class SharedDirectory
 	 * Issue a callback on each entry under this IDirectory.
 	 * @param callback - Callback to issue
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
+	public forEach(
+		callback: (value: unknown, key: string, map: Map<string, unknown>) => void,
+	): void {
 		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
 		this.root.forEach(callback);
 	}
@@ -446,9 +444,7 @@ export class SharedDirectory
 	 * Get an iterator over the entries under this IDirectory.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public [Symbol.iterator](): IterableIterator<[string, any]> {
+	public [Symbol.iterator](): IterableIterator<[string, unknown]> {
 		return this.root[Symbol.iterator]();
 	}
 
@@ -456,9 +452,7 @@ export class SharedDirectory
 	 * Get an iterator over the entries under this IDirectory.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public entries(): IterableIterator<[string, any]> {
+	public entries(): IterableIterator<[string, unknown]> {
 		return this.root.entries();
 	}
 
@@ -481,9 +475,7 @@ export class SharedDirectory
 	 * Get an iterator over the values under this IDirectory.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public values(): IterableIterator<any> {
+	public values(): IterableIterator<unknown> {
 		return this.root.values();
 	}
 

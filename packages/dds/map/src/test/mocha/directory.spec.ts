@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/container-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
@@ -1847,7 +1848,7 @@ describe("Directory", () => {
 				const subMapId = `subMap-${this.subMapCount}`;
 
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				const deletedHandle = fooDirectory.get(subMapId);
+				const deletedHandle = fooDirectory.get<IFluidHandle>(subMapId);
 				assert(deletedHandle, "Route must be added before deleting");
 
 				fooDirectory.delete(subMapId);

@@ -39,12 +39,12 @@ export class DirectoryFactory implements IChannelFactory {
 }
 
 // @public
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+export interface IDirectory extends Map<string, unknown>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
-    get<T = any>(key: string): T | undefined;
+    get<T = unknown>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
@@ -133,7 +133,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 export interface ILocalValue {
     makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
     readonly type: string;
-    readonly value: any;
+    readonly value: unknown;
 }
 
 // @public @deprecated
@@ -151,7 +151,7 @@ export interface ISerializedValue {
 // @public
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
-    [Symbol.iterator](): IterableIterator<[string, any]>;
+    [Symbol.iterator](): IterableIterator<[string, unknown]>;
     // (undocumented)
     readonly [Symbol.toStringTag]: string;
 }
@@ -165,8 +165,8 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @public
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
-    get<T = any>(key: string): T | undefined;
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, unknown> {
+    get<T = unknown>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
@@ -179,7 +179,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 // @public
 export interface IValueChanged {
     key: string;
-    previousValue: any;
+    previousValue: unknown;
 }
 
 // @public
@@ -207,7 +207,7 @@ export class MapFactory implements IChannelFactory {
 
 // @public @sealed
 export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
-    [Symbol.iterator](): IterableIterator<[string, any]>;
+    [Symbol.iterator](): IterableIterator<[string, unknown]>;
     [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
@@ -223,9 +223,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     dispose(error?: Error): void;
     // (undocumented)
     get disposed(): boolean;
-    entries(): IterableIterator<[string, any]>;
-    forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
-    get<T = any>(key: string): T | undefined;
+    entries(): IterableIterator<[string, unknown]>;
+    forEach(callback: (value: unknown, key: string, map: Map<string, unknown>) => void): void;
+    get<T = unknown>(key: string): T | undefined;
     static getFactory(): IChannelFactory;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
@@ -253,12 +253,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    values(): IterableIterator<any>;
+    values(): IterableIterator<unknown>;
 }
 
 // @public
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
-    [Symbol.iterator](): IterableIterator<[string, any]>;
+    [Symbol.iterator](): IterableIterator<[string, unknown]>;
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
@@ -266,9 +266,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
     delete(key: string): boolean;
-    entries(): IterableIterator<[string, any]>;
-    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
-    get<T = any>(key: string): T | undefined;
+    entries(): IterableIterator<[string, unknown]>;
+    forEach(callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void): void;
+    get<T = unknown>(key: string): T | undefined;
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
@@ -286,7 +286,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     get size(): number;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    values(): IterableIterator<any>;
+    values(): IterableIterator<unknown>;
 }
 
 ```
