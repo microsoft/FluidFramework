@@ -70,6 +70,7 @@ export const defaultChangeFamily = new DefaultChangeFamily();
 
 /**
  * Default editor for transactions.
+ * @alpha
  */
 export interface IDefaultEditBuilder {
 	setValue(path: UpPath, value: Value): void;
@@ -204,6 +205,9 @@ export class DefaultEditBuilder
 	}
 }
 
+/**
+ * @alpha
+ */
 export interface ValueFieldEditBuilder {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
@@ -212,6 +216,9 @@ export interface ValueFieldEditBuilder {
 	set(newContent: ITreeCursor): void;
 }
 
+/**
+ * @alpha
+ */
 export interface OptionalFieldEditBuilder {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`
@@ -221,6 +228,9 @@ export interface OptionalFieldEditBuilder {
 	set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
 }
 
+/**
+ * @alpha
+ */
 export interface SequenceFieldEditBuilder {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.

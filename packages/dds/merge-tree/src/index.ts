@@ -53,7 +53,6 @@ export {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 export {
-	AttributionKey,
 	BaseSegment,
 	BlockAction,
 	BlockUpdateActions,

@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { AttributionPolicy } from "./mergeTree";
 import { Client } from "./client";
 import { UnassignedSequenceNumber } from "./constants";
@@ -12,7 +13,7 @@ import {
 	MergeTreeMaintenanceCallback,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
-import { AttributionKey, ISegment } from "./mergeTreeNodes";
+import { ISegment } from "./mergeTreeNodes";
 import { MergeTreeDeltaType } from "./ops";
 
 /**

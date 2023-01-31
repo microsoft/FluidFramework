@@ -67,3 +67,5 @@ import * as Delta from "./delta";
 export { Delta };
 
 export { SparseNode, getDescendant } from "./sparseTree";
+
+export { isSkipMark, emptyDelta } from "./deltaUtil";
