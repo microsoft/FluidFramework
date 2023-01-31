@@ -5,7 +5,6 @@
 
 // import { Constellation } from "..";
 
-describe("Constellation", function() {
-    it("Runs this test", function() {
-    });
+describe("Constellation", function () {
+    it("Runs this test", function () {});
 });

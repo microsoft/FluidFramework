@@ -3,31 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import {
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
 import { AppState } from "./state";
 
 export class Bubblebench extends DataObject {
-    public static get Name(): string { return "@fluid-example/bubblebench-baseline"; }
-    private state?: AppState;
+	public static get Name(): string {
+		return "@fluid-example/bubblebench-baseline";
+	}
+	private state?: AppState;
 
-    protected async hasInitialized(): Promise<void> {
-        this.state = new AppState(
-            /* stageWidth: */ 640,
-            /* stageHeight: */ 480,
-            /* numBubbles: */ 1,
-        );
-    }
+	protected async hasInitialized(): Promise<void> {
+		this.state = new AppState(
+			/* stageWidth: */ 640,
+			/* stageHeight: */ 480,
+			/* numBubbles: */ 1,
+		);
+	}
 
-    public get clientManager(): AppState {
-        if (this.state === undefined) {
-            throw new Error("App state has not yet been initialized.");
-        }
-        return this.state;
-    }
+	public get clientManager(): AppState {
+		if (this.state === undefined) {
+			throw new Error("App state has not yet been initialized.");
+		}
+		return this.state;
+	}
 }
 
 /**
@@ -35,8 +34,8 @@ export class Bubblebench extends DataObject {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
-    Bubblebench.Name,
-    Bubblebench,
-    [],
-    {},
+	Bubblebench.Name,
+	Bubblebench,
+	[],
+	{},
 );

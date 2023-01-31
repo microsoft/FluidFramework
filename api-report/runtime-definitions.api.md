@@ -27,11 +27,24 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
+import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
+
+// @alpha
+export interface AttributionInfo {
+    timestamp: number;
+    user: IUser;
+}
+
+// @alpha
+export interface AttributionKey {
+    seq: number;
+    type: "op";
+}
 
 // @public @deprecated (undocumented)
 export enum BindState {

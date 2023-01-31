@@ -7,9 +7,9 @@ export { decompressStatsFile } from "./decompressStatsFile";
 export { getAllFilesInDirectory } from "./getAllFilesInDirectory";
 export { GetBuildOptions, getBuilds } from "./getBuilds";
 export {
-    AggregatedChunkAnalysis,
-    ChunkSizeInfo,
-    getChunkAndDependencySizes,
+	AggregatedChunkAnalysis,
+	ChunkSizeInfo,
+	getChunkAndDependencySizes,
 } from "./getChunkAndDependenciesSizes";
 export { getChunkParsedSize } from "./getChunkParsedSize";
 export { getLastCommitHashFromPR } from "./getLastCommitHashFromPR";

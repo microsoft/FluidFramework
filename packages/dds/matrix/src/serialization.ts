@@ -10,15 +10,19 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { bufferToString } from "@fluidframework/common-utils";
 
 export const serializeBlob = (
-    handle: IFluidHandle,
-    path: string,
-    snapshot: Serializable,
-    serializer: IFluidSerializer,
+	handle: IFluidHandle,
+	path: string,
+	snapshot: Serializable,
+	serializer: IFluidSerializer,
 ) => new BlobTreeEntry(path, serializer.stringify(snapshot, handle));
 
-export async function deserializeBlob(storage: IChannelStorageService, path: string, serializer: IFluidSerializer) {
-    const blob = await storage.readBlob(path);
-    const utf8 = bufferToString(blob, "utf8");
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return serializer.parse(utf8);
+export async function deserializeBlob(
+	storage: IChannelStorageService,
+	path: string,
+	serializer: IFluidSerializer,
+) {
+	const blob = await storage.readBlob(path);
+	const utf8 = bufferToString(blob, "utf8");
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return serializer.parse(utf8);
 }

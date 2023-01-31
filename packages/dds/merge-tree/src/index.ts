@@ -6,21 +6,21 @@
 export { IAttributionCollection } from "./attributionCollection";
 export { IIntegerRange } from "./base";
 export { Client } from "./client";
-export 	{
-    ConflictAction,
-    Dictionary,
-    IRBAugmentation,
-    IRBMatcher,
-    KeyComparer,
-    Property,
-    PropertyAction,
-    QProperty,
-    RBColor,
-    RBNode,
-    RBNodeActions,
-    RedBlackTree,
-    SortedDictionary,
-    Stack,
+export {
+	ConflictAction,
+	Dictionary,
+	IRBAugmentation,
+	IRBMatcher,
+	KeyComparer,
+	Property,
+	PropertyAction,
+	QProperty,
+	RBColor,
+	RBNode,
+	RBNodeActions,
+	RedBlackTree,
+	SortedDictionary,
+	Stack,
 } from "./collections";
 export {
 	LocalClientId,
@@ -30,14 +30,11 @@ export {
 	UniversalSequenceNumber,
 } from "./constants";
 export {
-    createDetachedLocalReferencePosition,
-    LocalReferenceCollection,
-    LocalReferencePosition,
+	createDetachedLocalReferencePosition,
+	LocalReferenceCollection,
+	LocalReferencePosition,
 } from "./localReference";
-export {
-	IMergeTreeAttributionOptions,
-	IMergeTreeOptions
-} from "./mergeTree";
+export { IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
 export {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -51,7 +48,6 @@ export {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 export {
-	AttributionKey,
 	BaseSegment,
 	BlockAction,
 	BlockUpdateActions,
@@ -151,9 +147,9 @@ export { SortedSet } from "./sortedSet";
 export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet";
 export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegment";
 export {
-    appendToMergeTreeDeltaRevertibles,
-    discardMergeTreeDeltaRevertible,
-    MergeTreeDeltaRevertible,
-    MergeTreeRevertibleDriver,
-    revertMergeTreeDeltaRevertibles,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	MergeTreeDeltaRevertible,
+	MergeTreeRevertibleDriver,
+	revertMergeTreeDeltaRevertibles,
 } from "./revertibles";
