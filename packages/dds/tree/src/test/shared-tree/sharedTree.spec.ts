@@ -522,6 +522,33 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 
+			insert(tree1, 0, "a", "b");
+			await provider.ensureSynchronized();
+
+			// Move b before a
+			tree1.runTransaction((forest, editor) => {
+				editor.move(undefined, rootFieldKeySymbol, 1, 1, undefined, rootFieldKeySymbol, 0);
+				return TransactionResult.Apply;
+			});
+
+			// Delete b
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.delete(1, 1);
+				return TransactionResult.Apply;
+			});
+
+			await provider.ensureSynchronized();
+
+			const expected = ["a"];
+			validateRootField(tree1, expected);
+			validateRootField(tree2, expected);
+		});
+
+		it.skip("can rebase delete over cross-field move", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {

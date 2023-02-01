@@ -103,11 +103,11 @@ export interface IDefaultEditBuilder {
 	sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder;
 
 	move(
-		sourcePath: UpPath,
+		sourcePath: UpPath | undefined,
 		sourceField: FieldKey,
 		sourceIndex: number,
 		count: number,
-		destPath: UpPath,
+		destPath: UpPath | undefined,
 		destField: FieldKey,
 		destIndex: number,
 	): void;
@@ -161,11 +161,11 @@ export class DefaultEditBuilder
 	}
 
 	public move(
-		sourcePath: UpPath,
+		sourcePath: UpPath | undefined,
 		sourceField: FieldKey,
 		sourceIndex: number,
 		count: number,
-		destPath: UpPath,
+		destPath: UpPath | undefined,
 		destField: FieldKey,
 		destIndex: number,
 	): void {

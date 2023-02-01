@@ -447,7 +447,7 @@ export type IdAllocator = () => ChangesetLocalId;
 // @alpha
 export interface IDefaultEditBuilder {
     // (undocumented)
-    move(sourcePath: UpPath, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath, destField: FieldKey, destIndex: number): void;
+    move(sourcePath: UpPath | undefined, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath | undefined, destField: FieldKey, destIndex: number): void;
     // (undocumented)
     optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
     // (undocumented)
