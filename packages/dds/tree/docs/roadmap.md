@@ -82,24 +82,42 @@ Each item includes an indication of whether it is complete, in active developmen
 
 ## Rebaser core architecture
 
-> Complete
+> In progress
 
-In Shared Tree, the core algorithms for processing edits to the tree have the dual responsibility of maintaining intention preservation while also supporting very large documents—potentially larger than client memory.
+In Shared Tree, the core algorithms for processing edits should preserve the intention of concurrent edits as it rebases them.
+It needs to do this while also supporting very large documents—potentially larger than client memory.
 The scaling requirement means that these algorithms should be able to operate without reifying (loading/reading) the tree data and should be a function only of the operations themselves.
 The intention preservation requirement dictates that all editing operations should have an intuitive effect on the tree even during concurrency.
 
-The mechanism in Shared Tree responsible for satisfying these criteria is called the Rebaser.
-Some of the resulting design documents can be found [here](../docs).
-The operations available in the editing API (e.g., insert, delete) are rolled out incrementally in future milestones.
+This work falls into four areas:
 
-## UUID Compression Scheme
+-   A library for handling branches and rebasing of edits between them which is independent of the specific types of edits. (`Rebaser`)
+-   Implementations of the actual edits to work this this library (`modular-change-family`).
+-   Integration of the branching model with Fluid Framework (`EditManager`)
+-   Future branching features, like long lived online and offline branches.
 
-> Complete
+This road-map item specifically refers to the first bullet here.
 
-Supporting larger-than-memory data sets in the tree requires efficiently handling trees that contain large numbers of strong identifiers (UUIDs).
-To meet this requirement, Shared Tree leverages a novel distributed compression scheme that reduces the average storage cost of the identifiers to that of a small integer.
-This enables better scaling in scenarios where large numbers of these compressed IDs are needed (e.g., graph-like references).
-The documentation for this scheme can be found [here](../src/id-compressor/idCompressor.ts#L272).
+### Status
+
+This is in-progress as the relation between `Rebaser` and `EditManager` is a work in progress.
+Currently `Rebaser` is unused and `EditManager` is reimplementing its functionality.
+
+## Distributed Short Identifier Allocation
+
+> In progress
+
+"Strong node identifiers and lookup index" (below) uses unique identifiers on nodes.
+These need to be allocated in a distributed way while avoiding collisions.
+A trivial implementation of this is to randomly generate [Version 4 UUIDs](<https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)>).
+
+To reduce the space these consume, and improve performance when using them, it is desirable to have a system which can allocate compressible (for example sequential) smaller (can fit in JavaScript's number type) identifiers.
+A design that accomplishes this can be found [here](../src/id-compressor/idCompressor.ts#L272).
+
+### Status
+
+An initial implementation of the allocator is complete, but it is planned to be integrated at a higher level into the Fluid Framework.
+This integration is a work in progress.
 
 ## Data model specification
 
