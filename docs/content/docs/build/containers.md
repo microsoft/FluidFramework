@@ -210,7 +210,7 @@ container.on("disposed", (error?: ICriticalContainerError) => {
 
 As mentioned above, you probably want to make sure all pending changes are saved prior to calling `dispose`.
 
-To learn more about the possible errors that can be emitted from the `disposed` event, see [ICriticalContainerError](/docs/apis/azure-client/#icriticalcontainererror-interface).
+To learn more about the possible errors that can be emitted from the `disposed` event, see [ICriticalContainerError](/docs/apis/azure-client/#icriticalcontainererror-typealias).
 
 ### Deleting a container
 
