@@ -144,7 +144,7 @@ Errors are of [ICriticalContainerError](../../../common/lib/container-definition
 There are 3 sources of errors:
 
 1. [ContainerErrorType](../../../common/lib/container-definitions/src/error.ts) - errors & warnings raised at loader level
-2. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [R11sErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
+2. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [RouterliciousErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
 3. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors is not pre-determined and depends on type of container loaded.
 
 `ICriticalContainerError.errorType` is a string, which represents a union of 3 error types described above. Hosting application may package different drivers and open different types of containers, and only hosting application may have enough information to enumerate all possible error codes in such scenarios.
