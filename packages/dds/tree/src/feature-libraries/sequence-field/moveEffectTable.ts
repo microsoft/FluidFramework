@@ -513,7 +513,7 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 			return [
 				{ ...markObj, content: markObj.content.slice(0, length) },
 				{ ...markObj, content: markObj.content.slice(length) },
-			] as [TMark, TMark];
+			];
 		case "MoveIn":
 		case "ReturnTo": {
 			const newId = genId();
@@ -547,13 +547,13 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 							count: remainder,
 							detachIndex: markObj.detachIndex + length,
 					  },
-			] as [TMark, TMark];
+			];
 		}
 		case "Revive":
 			return [
 				{ ...markObj, count: length },
 				{ ...markObj, count: remainder, detachIndex: markObj.detachIndex + length },
-			] as [TMark, TMark];
+			];
 		default:
 			unreachableCase(type);
 	}

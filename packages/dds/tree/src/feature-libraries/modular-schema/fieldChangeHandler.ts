@@ -41,8 +41,11 @@ export interface FieldChangeRebaser<TChangeset> {
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
 
+	/**
+	 * Amend `composedChange` with respect to new data in `crossFieldManager`.
+	 */
 	amendCompose(
-		composeChange: TChangeset,
+		composedChange: TChangeset,
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
@@ -59,6 +62,9 @@ export interface FieldChangeRebaser<TChangeset> {
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
 
+	/**
+	 * Amend `invertedChange` with respect to new data in `crossFieldManager`.
+	 */
 	amendInvert(
 		invertedChange: TChangeset,
 		originalRevision: RevisionTag | undefined,
@@ -78,6 +84,9 @@ export interface FieldChangeRebaser<TChangeset> {
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
 
+	/**
+	 * Amend `rebasedChange` with respect to new data in `crossFieldManager`.
+	 */
 	amendRebase(
 		rebasedChange: TChangeset,
 		over: TaggedChange<TChangeset>,
@@ -103,22 +112,9 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 }
 
 export function isolatedFieldChangeRebaser<TChangeset>(data: {
-	compose: (
-		changes: TaggedChange<TChangeset>[],
-		composeChild: NodeChangeComposer,
-		genId: IdAllocator,
-	) => TChangeset;
-	invert: (
-		change: TaggedChange<TChangeset>,
-		invertChild: NodeChangeInverter,
-		genId: IdAllocator,
-	) => TChangeset;
-	rebase: (
-		change: TChangeset,
-		over: TaggedChange<TChangeset>,
-		rebaseChild: NodeChangeRebaser,
-		genId: IdAllocator,
-	) => TChangeset;
+	compose: FieldChangeRebaser<TChangeset>["compose"];
+	invert: FieldChangeRebaser<TChangeset>["invert"];
+	rebase: FieldChangeRebaser<TChangeset>["rebase"];
 }): FieldChangeRebaser<TChangeset> {
 	return {
 		...data,
