@@ -62,12 +62,38 @@ export function refHasRangeLabels(refPos: ReferencePosition): boolean {
 	return refGetRangeLabels(refPos) !== undefined;
 }
 
+/**
+ * Represents a reference to a place within a merge tree. This place conceptually remains stable over time
+ * by referring to a particular segment and offset within that segment.
+ * Thus, this reference's character position changes as the tree is edited.
+ */
 export interface ReferencePosition {
+	/**
+	 * @returns - Properties associated with this reference
+	 */
 	properties?: PropertySet;
 	refType: ReferenceType;
 
+	/**
+	 * Gets the segment that this reference position is semantically associated with. Returns undefined iff the
+	 * reference became detached from the string.
+	 */
 	getSegment(): ISegment | undefined;
+
+	/**
+	 * Gets the offset for this reference position within its associated segment.
+	 * @example
+	 * If a merge-tree has 3 leaf segments ["hello", " ", "world"] and a ReferencePosition refers to the "l"
+	 * in "world", that reference's offset would be 3 as "l" is the character at index 3 within "world".
+	 */
 	getOffset(): number;
+
+	/**
+	 * @param newProps - Properties to add to this reference.
+	 * @param op - Combining semantics for changed properties. By default, property changes are last-write-wins.
+	 * @remarks - Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
+	 * to ensure broadcast happens if that is desired.
+	 */
 	addProperties(newProps: PropertySet, op?: ICombiningOp): void;
 	isLeaf(): this is ISegment;
 }

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
 import { TaggedChange, RevisionTag, tagChange, tagInverse } from "../rebase";
 import { SimpleDependee } from "../dependency-tracking";
-import { AnchorSet, Delta } from "../tree";
+import { AnchorSet, Delta, emptyDelta } from "../tree";
 import { brand, Brand, fail, RecursiveReadonly } from "../../util";
 
 export interface Commit<TChangeset> {
@@ -173,7 +173,7 @@ export class EditManager<
 				...newCommit,
 				changeset: change.change,
 			});
-			return Delta.empty;
+			return emptyDelta;
 		}
 
 		const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);

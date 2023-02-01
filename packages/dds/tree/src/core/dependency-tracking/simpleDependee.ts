@@ -8,7 +8,7 @@ import { Dependee, Dependent, InvalidationToken } from "./dependencies";
 /**
  * Simple implementation of {@link Dependee}.
  *
- * @public
+ * @alpha
  */
 export class SimpleDependee implements Dependee {
 	private readonly dependents = new Set<Dependent>();

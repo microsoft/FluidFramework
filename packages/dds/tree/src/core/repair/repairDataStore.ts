@@ -8,6 +8,7 @@ import { Value, Delta, UpPath, FieldKey } from "../tree";
 
 /**
  * An object that can queried for document data that was deleted in prior revisions.
+ * @alpha
  */
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 	/**
@@ -43,6 +44,7 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 
 /**
  * An object that captures document data being deleted by changes, and can be queried to retrieve that data.
+ * @alpha
  */
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
 	/**

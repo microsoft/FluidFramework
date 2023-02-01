@@ -38,7 +38,6 @@ import {
 	NodeReviver,
 } from "./modular-schema";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
-import { applyModifyToTree } from "./deltaUtils";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 
 type BrandedFieldKind<
@@ -407,18 +406,11 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 				const modify = deltaFromChild(change.changes, 0);
 				const cursor = singleTextCursor(newValue);
 				const mutableTree = mapTreeFromCursor(cursor);
-				const fields = applyModifyToTree(mutableTree, modify);
-				mark =
-					fields.size === 0
-						? {
-								type: Delta.MarkType.Insert,
-								content: [singleMapTreeCursor(mutableTree)],
-						  }
-						: {
-								type: Delta.MarkType.InsertAndModify,
-								content: singleMapTreeCursor(mutableTree),
-								fields,
-						  };
+				mark = {
+					...modify,
+					type: Delta.MarkType.InsertAndModify,
+					content: singleMapTreeCursor(mutableTree),
+				};
 			}
 
 			return [{ type: Delta.MarkType.Delete, count: 1 }, mark];
@@ -645,16 +637,13 @@ function deltaFromInsertAndChange(
 		const content = mapTreeFromCursor(singleTextCursor(insertedContent));
 		if (nodeChange !== undefined) {
 			const nodeDelta = deltaFromNode(nodeChange, index);
-			const fields = applyModifyToTree(content, nodeDelta);
-			if (fields.size > 0) {
-				return [
-					{
-						type: Delta.MarkType.InsertAndModify,
-						content: singleMapTreeCursor(content),
-						fields,
-					},
-				];
-			}
+			return [
+				{
+					...nodeDelta,
+					type: Delta.MarkType.InsertAndModify,
+					content: singleMapTreeCursor(content),
+				},
+			];
 		}
 		return [{ type: Delta.MarkType.Insert, content: [singleMapTreeCursor(content)] }];
 	}

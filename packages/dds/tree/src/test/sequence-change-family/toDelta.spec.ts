@@ -391,17 +391,11 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.Insert = {
-				type: Delta.MarkType.Insert,
-				content: [
-					singleTextCursor({
-						type,
-						value: 4242,
-						fields: {
-							foo: [{ type, value: 4343 }],
-						},
-					}),
-				],
+			const mark: Delta.InsertAndModify = {
+				type: Delta.MarkType.InsertAndModify,
+				content: singleTextCursor(content[0]),
+				setValue: 4242,
+				fields: new Map([[fooKey, [{ type: Delta.MarkType.Modify, setValue: 4343 }]]]),
 			};
 			const expected: Delta.MarkList = [mark];
 			const actual = toTreeDelta(changeset);
@@ -431,21 +425,25 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.Insert = {
-				type: Delta.MarkType.Insert,
-				content: [
-					singleTextCursor({
-						type,
-						value: 42,
-						fields: {
-							foo: [
-								{ type, value: 44 },
-								{ type, value: 43 },
-								{ type, value: 45 },
-							],
-						},
-					}),
-				],
+			const mark: Delta.InsertAndModify = {
+				type: Delta.MarkType.InsertAndModify,
+				content: singleTextCursor(content[0]),
+				fields: new Map([
+					[
+						fooKey,
+						[
+							{
+								type: Delta.MarkType.Insert,
+								content: [singleTextCursor({ type, value: 44 })],
+							},
+							1,
+							{
+								type: Delta.MarkType.Insert,
+								content: [singleTextCursor({ type, value: 45 })],
+							},
+						],
+					],
+				]),
 			};
 			const expected: Delta.MarkList = [mark];
 			const actual = toTreeDelta(changeset);
@@ -471,20 +469,22 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.Insert = {
-				type: Delta.MarkType.Insert,
-				content: [
-					singleTextCursor({
-						type,
-						value: 42,
-						fields: {
-							foo: [
-								{ type, value: 43 },
-								{ type, value: 4545 },
-							],
-						},
-					}),
-				],
+			const mark: Delta.InsertAndModify = {
+				type: Delta.MarkType.InsertAndModify,
+				content: singleTextCursor(content[0]),
+				fields: new Map([
+					[
+						fooKey,
+						[
+							1,
+							{
+								type: Delta.MarkType.InsertAndModify,
+								content: singleTextCursor({ type, value: 45 }),
+								setValue: 4545,
+							},
+						],
+					],
+				]),
 			};
 			const expected: Delta.MarkList = [mark];
 			const actual = toTreeDelta(changeset);
@@ -508,14 +508,20 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.Insert = {
-				type: Delta.MarkType.Insert,
-				content: [
-					singleTextCursor({
-						type,
-						value: 42,
-					}),
-				],
+			const mark: Delta.InsertAndModify = {
+				type: Delta.MarkType.InsertAndModify,
+				content: singleTextCursor(content[0]),
+				fields: new Map([
+					[
+						fooKey,
+						[
+							{
+								type: Delta.MarkType.Delete,
+								count: 1,
+							},
+						],
+					],
+				]),
 			};
 			const expected: Delta.MarkList = [mark];
 			const actual = toTreeDelta(changeset);

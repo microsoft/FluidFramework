@@ -5,17 +5,9 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { singleTextCursor } from "../../treeTextCursor";
-import {
-	TreeSchemaIdentifier,
-	FieldKey,
-	Value,
-	Delta,
-	genericTreeKeys,
-	getGenericTreeField,
-	genericTreeDeleteIfEmpty,
-} from "../../../core";
+import { TreeSchemaIdentifier, FieldKey, Value, Delta } from "../../../core";
 import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
-import { ProtoNode, Transposed as T } from "./format";
+import { Transposed as T } from "./format";
 import { isSkipMark } from "./utils";
 
 /**
@@ -49,20 +41,12 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 					break;
 				}
 				case "MInsert": {
-					const cloned = cloneAndModify(mark);
-					if (cloned.fields.size > 0) {
-						const insertMark: Delta.InsertAndModify = {
-							type: Delta.MarkType.InsertAndModify,
-							...cloned,
-						};
-						out.pushContent(insertMark);
-					} else {
-						const insertMark: Delta.Insert = {
-							type: Delta.MarkType.Insert,
-							content: [cloned.content],
-						};
-						out.pushContent(insertMark);
-					}
+					const insertMark: Delta.InsertAndModify = {
+						...convertModify(mark),
+						type: Delta.MarkType.InsertAndModify,
+						content: singleTextCursor(mark.content),
+					};
+					out.pushContent(insertMark);
 					break;
 				}
 				case "MoveIn": {
@@ -163,159 +147,7 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
 
-/**
- * Converts inserted content into the format expected in Delta instances.
- * This involves applying all except MoveIn changes.
- *
- * The returned `fields` map may be empty if all modifications are applied by the function.
- */
-function cloneAndModify(insert: T.ModifyInsert): DeltaInsertModification {
-	// TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
-	const outNode = clone(insert.content);
-	const outModifications = applyOrCollectModifications(outNode, insert);
-	return { content: singleTextCursor(outNode), fields: outModifications };
-}
-
-/**
- * Modifications to be applied to an inserted tree in a Delta.
- */
-interface DeltaInsertModification {
-	/**
-	 * The subtree to be inserted.
-	 */
-	content: Delta.ProtoNode;
-	/**
-	 * The modifications to make to the inserted subtree.
-	 * May be empty.
-	 */
-	fields: Delta.FieldMarks;
-}
-
-/**
- * Converts inserted content into the format expected in Delta instances.
- * This involves applying the following changes:
- *
- * - Updating node values
- *
- * - Inserting new subtrees within the inserted content
- *
- * - Deleting parts of the inserted content
- *
- * The only kind of change that is not applied by this function is MoveIn.
- *
- * @param node - The subtree to apply modifications to. Updated in place.
- * @param modify - The modifications to either apply or collect.
- * @returns The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if
- * all modifications are applied by the function.
- */
-function applyOrCollectModifications(node: ProtoNode, modify: ChangesetMods): Delta.FieldMarks {
-	const outFieldsMarks: Map<FieldKey, Delta.MarkList> = new Map();
-	if (modify.value !== undefined) {
-		node.value = modify.value.value;
-	}
-	for (const key of genericTreeKeys(modify)) {
-		const brandedKey: FieldKey = brand(key);
-		const outNodes = getGenericTreeField(node, key, true);
-		const outMarks = new OffsetListFactory<Delta.Mark>();
-		let index = 0;
-		for (const mark of getGenericTreeField(modify, key, false)) {
-			if (isSkipMark(mark)) {
-				index += mark;
-				outMarks.pushOffset(mark);
-			} else {
-				// Inline into `switch(mark.type)` once we upgrade to TS 4.7
-				const type = mark.type;
-				switch (type) {
-					case "Insert": {
-						// TODO: can we skip this clone?
-						const content = clone(mark.content).map(singleTextCursor);
-						outNodes.splice(index, 0, ...content);
-						index += content.length;
-						outMarks.pushOffset(content.length);
-						break;
-					}
-					case "MInsert": {
-						const cloned = cloneAndModify(mark);
-						if (cloned.fields.size > 0) {
-							outMarks.pushContent({
-								type: Delta.MarkType.Modify,
-								fields: cloned.fields,
-							});
-						}
-						outNodes.splice(index, 0, cloned.content);
-						index += 1;
-						break;
-					}
-					case "MoveIn":
-					case "MMoveIn":
-						// TODO: convert into a Delta.MoveIn/MoveInAndModify
-						fail(ERR_NOT_IMPLEMENTED);
-					case "Bounce":
-						fail(ERR_BOUNCE_ON_INSERT);
-					case "Intake":
-						fail(ERR_INTAKE_ON_INSERT);
-					case "Modify": {
-						if ("tomb" in mark) {
-							continue;
-						}
-						const clonedFields = applyOrCollectModifications(outNodes[index], mark);
-						if (clonedFields.size > 0) {
-							outMarks.pushContent({
-								type: Delta.MarkType.Modify,
-								fields: clonedFields,
-							});
-						}
-						index += 1;
-						break;
-					}
-					case "Delete": {
-						if ("tomb" in mark) {
-							continue;
-						}
-						outNodes.splice(index, mark.count);
-						break;
-					}
-					case "MDelete": {
-						if ("tomb" in mark) {
-							continue;
-						}
-						// TODO: convert move-out of inserted content into insert at the destination
-						fail(ERR_NOT_IMPLEMENTED);
-					}
-					case "MoveOut":
-					case "MMoveOut":
-						// TODO: convert move-out of inserted content into insert at the destination
-						fail(ERR_NOT_IMPLEMENTED);
-					case "Gap":
-						// Gap marks have no effect on the document state
-						break;
-					case "Tomb":
-						fail(ERR_TOMB_IN_INSERT);
-					case "Revive":
-					case "MRevive":
-						fail(ERR_REVIVE_ON_INSERT);
-					case "Return":
-					case "MReturn":
-						fail(ERR_RETURN_ON_INSERT);
-					default:
-						unreachableCase(type);
-				}
-			}
-		}
-		if (outMarks.list.length > 0) {
-			outFieldsMarks.set(brandedKey, outMarks.list);
-		}
-		genericTreeDeleteIfEmpty(node, key, true);
-	}
-	return outFieldsMarks;
-}
-
 const ERR_NOT_IMPLEMENTED = "Not implemented";
-const ERR_TOMB_IN_INSERT = "Encountered a concurrent deletion in inserted content";
-const ERR_BOUNCE_ON_INSERT = "Encountered a Bounce mark in an inserted field";
-const ERR_INTAKE_ON_INSERT = "Encountered an Intake mark in an inserted field";
-const ERR_REVIVE_ON_INSERT = "Encountered a Revive mark in an inserted field";
-const ERR_RETURN_ON_INSERT = "Encountered a Return mark in an inserted field";
 
 /**
  * Modifications to a subtree as described by a Changeset.
