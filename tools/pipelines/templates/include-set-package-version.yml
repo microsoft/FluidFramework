@@ -18,6 +18,16 @@ parameters:
 
 # Set version
 steps:
+# package.json files are reformatted by upcoming set version steps, then will be reformatted by prettier. We check them
+# here because otherwise legitimate formatting problems would be hidden by the forced reformatting in CI.
+- task: Bash@3
+  displayName: Check package.json formatting
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      npx lerna exec prettier -- --check package.json
+
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
     name: PrependPath
@@ -139,3 +149,12 @@ steps:
         else
           npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
         fi
+
+# package.json files are reformatted by the prior set version steps, so reformat them (and only them) with prettier
+- task: Bash@3
+  displayName: Reformat package.json files
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      npx lerna exec prettier -- --write package.json
