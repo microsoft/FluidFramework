@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import { mkdirSync, readFileSync, writeFileSync } from "fs";
+import { mkdirSync, readFileSync, writeFileSync, readdirSync } from "fs";
 import { strict as assert } from "assert";
 import {
 	AcceptanceCondition,
@@ -543,8 +543,8 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
 	}
 
 	function minimizeTestFromFailureFile(seed: number, loggingInfo?: LoggingInfo) {
-		if (Number.isNaN(seed)) {
-			return;
+        if (Number.isNaN(seed)) {
+            return;
 		}
 
 		it(`minimize test ${seed}`, () => {
@@ -566,7 +566,11 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
 
 			const pass_manager = new PassManager(operations, seed);
 
-			pass_manager.deleteOps();
+            if (!pass_manager.runTest()) {
+                throw new Error(`Seed ${seed} doesn't crash`)
+            }
+
+            pass_manager.deleteOps();
 
 			for (let i = 0; i < 1000; i += 1) {
 				pass_manager.applyRandomPass();
@@ -577,8 +581,6 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
 			pass_manager.deleteOps();
 
 			writeFileSync(filepath, JSON.stringify(pass_manager.operations, null, 2));
-
-			throw new Error(JSON.stringify(pass_manager.operations));
 		});
 	}
 
@@ -600,9 +602,18 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
 		);
 	});
 
-	describe.skip("minimize seed", () => {
-		const seedToMinimize = parseInt(process.env.TEST ?? "", 10);
+	describe.skip("minimize specific seed", () => {
+		const seedToMinimize = 0;
 		minimizeTestFromFailureFile(seedToMinimize);
+	});
+
+	describe.skip("minimize all seeds", () => {
+        const files = readdirSync("./results");
+
+        for (const file of files) {
+            const seedToMinimize = parseInt(file.substring(0, file.length - ".json".length), 10);
+            minimizeTestFromFailureFile(seedToMinimize);
+        }
 	});
 });
 

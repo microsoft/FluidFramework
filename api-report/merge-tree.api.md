@@ -56,8 +56,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     localMovedSeq?: number;
     // (undocumented)
-    localMovedSeqs?: number[];
-    // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
     localRemovedSeq?: number;
@@ -533,6 +531,8 @@ export interface IMergeTreeOptions {
     attribution?: IMergeTreeAttributionOptions;
     // (undocumented)
     catchUpBlobName?: string;
+    // (undocumented)
+    mergeTreeEnableObliterate?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
     mergeTreeUseNewLengthCalculations?: boolean;
