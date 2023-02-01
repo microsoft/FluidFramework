@@ -112,6 +112,18 @@ extends:
         customCommand: 'ci --ignore-scripts'
         customRegistry: 'useNpmrc'
     - task: Bash@3
+      name: InstallBuildTools
+      displayName: Install Fluid Build Tools (from repo)
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          pushd "$(Build.SourcesDirectory)/build-tools"
+          npm i -g pnpm
+          pnpm config set store-dir $(pnpmStorePath)
+          pnpm install # builds automatically postinstall
+          popd
+    - task: Bash@3
       displayName: 'Generate Mono repo package json'
       inputs:
         targetType: 'inline'
@@ -119,6 +131,6 @@ extends:
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
           set _FLUID_ROOT_=$(Build.SourcesDirectory)
-          node azure/node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure -v
+          node build-tools/packages/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure -v
           cp repo-package.json azure/packages/package.json
           cp repo-package-lock.json azure/packages/package-lock.json

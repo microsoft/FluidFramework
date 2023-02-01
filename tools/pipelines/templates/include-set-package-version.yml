@@ -41,6 +41,7 @@ steps:
         pushd "$(Build.SourcesDirectory)/build-tools"
         npm i -g pnpm
         pnpm config set store-dir $(pnpmStorePath)
+        pnpm install
         pnpm link --global
         which flub
         popd
