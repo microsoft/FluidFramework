@@ -5,6 +5,7 @@
 
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, fail, Invariant, JsonCompatibleReadOnly } from "../../util";
+import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -210,39 +211,6 @@ export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangese
  * @alpha
  */
 export type IdAllocator = () => ChangesetLocalId;
-
-/**
- * @alpha
- */
-export enum CrossFieldTarget {
-	Source,
-	Destination,
-}
-
-/**
- * @alpha
- */
-export interface CrossFieldManager<T = unknown> {
-	getOrCreate: (
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
-		newValue: T,
-	) => T;
-	get: (
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
-	) => T | undefined;
-}
-
-/**
- * An ID which is unique within a revision of a `ModularChangeset`.
- * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
- * but they are unique when qualified by the revision of the change they are used in.
- * @alpha
- */
-export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
  * Changeset for a subtree rooted at a specific node.

@@ -6,18 +6,23 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import {
+	addToNestedSet,
 	clone,
 	deleteFromNestedMap,
 	fail,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
-	getOrDefaultInNestedMap,
 	NestedMap,
-	setInNestedMap,
+	nestedSetContains,
 	StackyIterator,
 	tryGetFromNestedMap,
 } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
+import {
+	CrossFieldManager,
+	CrossFieldQuerySet,
+	CrossFieldTarget,
+	IdAllocator,
+} from "../modular-schema";
 import {
 	Attach,
 	Detach,
@@ -820,8 +825,8 @@ export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): bool
  * @alpha
  */
 export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
-	srcQueries: MoveQuerySet;
-	dstQueries: MoveQuerySet;
+	srcQueries: CrossFieldQuerySet;
+	dstQueries: CrossFieldQuerySet;
 	isInvalidated: boolean;
 	mapSrc: NestedMap<RevisionTag | undefined, MoveId, T>;
 	mapDst: NestedMap<RevisionTag | undefined, MoveId, T>;
@@ -832,8 +837,8 @@ export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
  * @alpha
  */
 export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: MoveQuerySet = new Map();
-	const dstQueries: MoveQuerySet = new Map();
+	const srcQueries: CrossFieldQuerySet = new Map();
+	const dstQueries: CrossFieldQuerySet = new Map();
 	const mapSrc: NestedMap<RevisionTag | undefined, MoveId, T> = new Map();
 	const mapDst: NestedMap<RevisionTag | undefined, MoveId, T> = new Map();
 
@@ -889,30 +894,4 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
  */
 export function newMoveEffectTable<T>(): MoveEffectTable<T> {
 	return newCrossFieldTable();
-}
-
-/**
- * @alpha
- */
-export type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, boolean>;
-
-/**
- * @alpha
- */
-export type MoveQuerySet = NestedSet<RevisionTag | undefined, MoveId>;
-
-export function addToNestedSet<Key1, Key2>(
-	set: NestedSet<Key1, Key2>,
-	key1: Key1,
-	key2: Key2,
-): void {
-	setInNestedMap(set, key1, key2, true);
-}
-
-export function nestedSetContains<Key1, Key2>(
-	set: NestedSet<Key1, Key2>,
-	key1: Key1,
-	key2: Key2,
-): boolean {
-	return getOrDefaultInNestedMap(set, key1, key2, false);
 }

@@ -132,12 +132,10 @@ export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitte
 // @alpha
 export const createField: unique symbol;
 
-// @alpha (undocumented)
+// @alpha
 export interface CrossFieldManager<T = unknown> {
-    // (undocumented)
-    get: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId) => T | undefined;
-    // (undocumented)
-    getOrCreate: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T) => T;
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId): T | undefined;
+    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T): T;
 }
 
 // @alpha (undocumented)

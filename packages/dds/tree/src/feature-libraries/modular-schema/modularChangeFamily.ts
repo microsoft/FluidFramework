@@ -23,21 +23,25 @@ import {
 	makeAnonChange,
 } from "../../core";
 import {
+	addToNestedSet,
 	brand,
 	clone,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
-	getOrDefaultInNestedMap,
 	JsonCompatibleReadOnly,
 	Mutable,
 	NestedMap,
+	nestedSetContains,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
-
-// TODO: This module Shouldn't depend on sequence-field
-import { MoveQuerySet, NestedSet } from "../sequence-field";
+import {
+	ChangesetLocalId,
+	CrossFieldManager,
+	CrossFieldQuerySet,
+	CrossFieldTarget,
+} from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
 	FieldChangeMap,
@@ -46,31 +50,11 @@ import {
 	NodeChangeset,
 	ValueChange,
 	ModularChangeset,
-	ChangesetLocalId,
 	IdAllocator,
-	CrossFieldManager,
-	CrossFieldTarget,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
 import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding";
-
-// TODO: Deduplicate these with the ones in sequence-field/util.ts
-export function addToNestedSet<Key1, Key2>(
-	set: NestedSet<Key1, Key2>,
-	key1: Key1,
-	key2: Key2,
-): void {
-	setInNestedMap(set, key1, key2, true);
-}
-
-export function nestedSetContains<Key1, Key2>(
-	set: NestedSet<Key1, Key2>,
-	key1: Key1,
-	key2: Key2,
-): boolean {
-	return getOrDefaultInNestedMap(set, key1, key2, false);
-}
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -596,8 +580,8 @@ interface RebaseData {
 
 interface CrossFieldManagerI<T> extends CrossFieldManager {
 	table: CrossFieldTable<T>;
-	srcQueries: MoveQuerySet;
-	dstQueries: MoveQuerySet;
+	srcQueries: CrossFieldQuerySet;
+	dstQueries: CrossFieldQuerySet;
 	fieldInvalidated: boolean;
 }
 

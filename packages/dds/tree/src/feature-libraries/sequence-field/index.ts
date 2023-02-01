@@ -72,8 +72,6 @@ export {
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
-	MoveQuerySet,
-	NestedSet,
 } from "./utils";
 export {
 	isMoveMark,

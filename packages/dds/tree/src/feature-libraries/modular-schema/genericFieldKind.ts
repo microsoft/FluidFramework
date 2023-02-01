@@ -5,6 +5,7 @@
 
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../util";
+import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
 	NodeChangeset,
@@ -15,7 +16,6 @@ import {
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	IdAllocator,
-	CrossFieldManager,
 	isolatedFieldChangeRebaser,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
