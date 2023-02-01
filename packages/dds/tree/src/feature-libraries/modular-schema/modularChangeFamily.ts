@@ -22,8 +22,22 @@ import {
 	tagChange,
 	makeAnonChange,
 } from "../../core";
-import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly, Mutable } from "../../util";
+import {
+	brand,
+	clone,
+	getOrAddEmptyToMap,
+	getOrAddInNestedMap,
+	getOrDefaultInNestedMap,
+	JsonCompatibleReadOnly,
+	Mutable,
+	NestedMap,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
+
+// TODO: This module Shouldn't depend on sequence-field
+import { MoveQuerySet, NestedSet } from "../sequence-field";
 import {
 	FieldChangeHandler,
 	FieldChangeMap,
@@ -40,6 +54,23 @@ import {
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
 import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding";
+
+// TODO: Deduplicate these with the ones in sequence-field/util.ts
+export function addToNestedSet<Key1, Key2>(
+	set: NestedSet<Key1, Key2>,
+	key1: Key1,
+	key2: Key2,
+): void {
+	setInNestedMap(set, key1, key2, true);
+}
+
+export function nestedSetContains<Key1, Key2>(
+	set: NestedSet<Key1, Key2>,
+	key1: Key1,
+	key2: Key2,
+): boolean {
+	return getOrDefaultInNestedMap(set, key1, key2, false);
+}
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -124,7 +155,7 @@ export class ModularChangeFamily
 					field.change,
 					(children) => this.composeNodeChanges(children, genId, crossFieldTable),
 					genId,
-					makeCrossFieldManager(crossFieldTable),
+					newCrossFieldManager(crossFieldTable),
 				);
 				field.change = brand(amendedChange);
 			}
@@ -167,8 +198,7 @@ export class ModularChangeFamily
 					0x4a8 /* Number of changes should be constant when normalizing */,
 				);
 
-				const srcQueries = new Set<ChangesetLocalId>();
-				const dstQueries = new Set<ChangesetLocalId>();
+				const manager = newCrossFieldManager(crossFieldTable);
 				const taggedChangesets = changesets.map((change, i) =>
 					tagChange(change, changesForField[i].revision),
 				);
@@ -176,7 +206,7 @@ export class ModularChangeFamily
 					taggedChangesets,
 					(children) => this.composeNodeChanges(children, genId, crossFieldTable),
 					genId,
-					makeCrossFieldManager(crossFieldTable, srcQueries, dstQueries),
+					manager,
 				);
 
 				composedField = {
@@ -184,7 +214,7 @@ export class ModularChangeFamily
 					change: brand(composedChange),
 				};
 
-				addCrossFieldReceivers(crossFieldTable, srcQueries, dstQueries, composedField);
+				finishField(manager, composedField);
 			}
 
 			// TODO: Could optimize by checking that composedField is non-empty
@@ -244,7 +274,7 @@ export class ModularChangeFamily
 					fieldChange.change,
 					originalRevision,
 					genId,
-					makeCrossFieldManager(crossFieldTable),
+					newCrossFieldManager(crossFieldTable),
 				);
 				fieldChange.change = brand(amendedChange);
 			}
@@ -262,8 +292,7 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of changes.change) {
 			const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
 
-			const crossFieldSrcQueries = new Set<ChangesetLocalId>();
-			const crossFieldDstQueries = new Set<ChangesetLocalId>();
+			const manager = newCrossFieldManager(crossFieldTable);
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
@@ -276,7 +305,7 @@ export class ModularChangeFamily
 						crossFieldTable,
 					),
 				genId,
-				makeCrossFieldManager(crossFieldTable, crossFieldSrcQueries, crossFieldDstQueries),
+				manager,
 			);
 
 			const invertedFieldChange: FieldChange = {
@@ -290,12 +319,7 @@ export class ModularChangeFamily
 				originalRevision: changes.revision,
 			};
 
-			addCrossFieldReceivers(
-				crossFieldTable,
-				crossFieldSrcQueries,
-				crossFieldDstQueries,
-				invertData,
-			);
+			finishField(manager, invertData);
 		}
 
 		return invertedFields;
@@ -350,7 +374,7 @@ export class ModularChangeFamily
 					fieldChange.change,
 					baseChange,
 					genId,
-					makeCrossFieldManager(crossFieldTable),
+					newCrossFieldManager(crossFieldTable),
 				);
 				fieldChange.change = brand(amendedChange);
 			}
@@ -378,9 +402,8 @@ export class ModularChangeFamily
 				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId);
 
 				const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
-				const srcQueries = new Set<ChangesetLocalId>();
-				const dstQueries = new Set<ChangesetLocalId>();
 				const taggedBaseChange = { revision, change: baseChangeset };
+				const manager = newCrossFieldManager(crossFieldTable);
 				const rebasedField = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
 					taggedBaseChange,
@@ -392,7 +415,7 @@ export class ModularChangeFamily
 							crossFieldTable,
 						),
 					genId,
-					makeCrossFieldManager(crossFieldTable, srcQueries, dstQueries),
+					manager,
 				);
 
 				const rebasedFieldChange: FieldChange = {
@@ -405,7 +428,7 @@ export class ModularChangeFamily
 					baseChange: taggedBaseChange,
 				};
 
-				addCrossFieldReceivers(crossFieldTable, srcQueries, dstQueries, rebaseData);
+				finishField(manager, rebaseData);
 				rebasedFields.set(field, rebasedFieldChange);
 			}
 		}
@@ -540,20 +563,20 @@ export function getChangeHandler(
 	return getFieldKind(fieldKinds, kind).changeHandler;
 }
 
-interface CrossFieldTable<T> {
-	srcTable: Map<ChangesetLocalId, unknown>;
-	dstTable: Map<ChangesetLocalId, unknown>;
-	srcReceivers: Map<ChangesetLocalId, T>;
-	dstReceivers: Map<ChangesetLocalId, T>;
-	fieldsToUpdate: Set<T>;
+interface CrossFieldTable<TFieldData> {
+	srcTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
+	dstTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
+	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
+	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
+	fieldsToUpdate: Set<TFieldData>;
 }
 
 function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	return {
 		srcTable: new Map(),
 		dstTable: new Map(),
-		srcReceivers: new Map(),
-		dstReceivers: new Map(),
+		srcDependents: new Map(),
+		dstDependents: new Map(),
 		fieldsToUpdate: new Set(),
 	};
 }
@@ -570,67 +593,84 @@ interface RebaseData {
 	baseChange: TaggedChange<FieldChangeset>;
 }
 
-function makeCrossFieldManager<T>(
-	crossFieldTable: CrossFieldTable<T>,
-	srcQueries?: Set<ChangesetLocalId>,
-	dstQueries?: Set<ChangesetLocalId>,
-): CrossFieldManager {
-	return {
+interface CrossFieldManagerI<T> extends CrossFieldManager {
+	table: CrossFieldTable<T>;
+	srcQueries: MoveQuerySet;
+	dstQueries: MoveQuerySet;
+	fieldInvalidated: boolean;
+}
+
+function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFieldManagerI<T> {
+	const srcQueries = new Map();
+	const dstQueries = new Map();
+	const getMap = (target: CrossFieldTarget) =>
+		target === CrossFieldTarget.Source ? crossFieldTable.srcTable : crossFieldTable.dstTable;
+
+	const getQueries = (target: CrossFieldTarget) =>
+		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
+
+	const manager = {
+		table: crossFieldTable,
+		srcQueries,
+		dstQueries,
+		fieldInvalidated: false,
 		getOrCreate: (
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: ChangesetLocalId,
 			newValue: unknown,
 		) => {
-			const table =
+			const dependents =
 				target === CrossFieldTarget.Source
-					? crossFieldTable.srcTable
-					: crossFieldTable.dstTable;
-			if (!table.has(id)) {
-				table.set(id, newValue);
+					? crossFieldTable.srcDependents
+					: crossFieldTable.dstDependents;
+			const dependent = tryGetFromNestedMap(dependents, revision, id);
+			if (dependent !== undefined) {
+				crossFieldTable.fieldsToUpdate.add(dependent);
 			}
 
-			const receivers =
-				target === CrossFieldTarget.Source
-					? crossFieldTable.srcReceivers
-					: crossFieldTable.dstReceivers;
-			const receiver = receivers.get(id);
-			if (receiver !== undefined) {
-				crossFieldTable.fieldsToUpdate.add(receiver);
+			if (nestedSetContains(getQueries(target), revision, id)) {
+				manager.fieldInvalidated = true;
 			}
-			return table.get(id);
+
+			return getOrAddInNestedMap(getMap(target), revision, id, newValue);
 		},
 		get: (
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: ChangesetLocalId,
 		) => {
-			const table =
-				target === CrossFieldTarget.Source
-					? crossFieldTable.srcTable
-					: crossFieldTable.dstTable;
-
-			const queries = target === CrossFieldTarget.Source ? srcQueries : dstQueries;
-			if (queries !== undefined) {
-				queries.add(id);
-			}
-			return table.get(id);
+			addToNestedSet(getQueries(target), revision, id);
+			return tryGetFromNestedMap(getMap(target), revision, id);
 		},
 	};
+
+	return manager;
 }
 
-function addCrossFieldReceivers<T>(
-	crossFieldTable: CrossFieldTable<T>,
-	srcQueries: Set<ChangesetLocalId>,
-	dstQueries: Set<ChangesetLocalId>,
-	fieldData: T,
-) {
-	for (const id of srcQueries) {
-		crossFieldTable.srcReceivers.set(id, fieldData);
+function finishField<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
+	for (const [revision, ids] of manager.srcQueries) {
+		for (const id of ids.keys()) {
+			assert(
+				tryGetFromNestedMap(manager.table.srcDependents, revision, id) === undefined,
+				"TODO: Support multiple dependents per key",
+			);
+			setInNestedMap(manager.table.srcDependents, revision, id, fieldData);
+		}
 	}
 
-	for (const id of dstQueries) {
-		crossFieldTable.dstReceivers.set(id, fieldData);
+	for (const [revision, ids] of manager.dstQueries) {
+		for (const id of ids.keys()) {
+			assert(
+				tryGetFromNestedMap(manager.table.dstDependents, revision, id) === undefined,
+				"TODO: Support multiple dependents per key",
+			);
+			setInNestedMap(manager.table.dstDependents, revision, id, fieldData);
+		}
+	}
+
+	if (manager.fieldInvalidated) {
+		manager.table.fieldsToUpdate.add(fieldData);
 	}
 }
 

@@ -901,11 +901,15 @@ export type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, boolean>;
  */
 export type MoveQuerySet = NestedSet<RevisionTag | undefined, MoveId>;
 
-function addToNestedSet<Key1, Key2>(set: NestedSet<Key1, Key2>, key1: Key1, key2: Key2): void {
+export function addToNestedSet<Key1, Key2>(
+	set: NestedSet<Key1, Key2>,
+	key1: Key1,
+	key2: Key2,
+): void {
 	setInNestedMap(set, key1, key2, true);
 }
 
-function nestedSetContains<Key1, Key2>(
+export function nestedSetContains<Key1, Key2>(
 	set: NestedSet<Key1, Key2>,
 	key1: Key1,
 	key2: Key2,
