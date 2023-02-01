@@ -214,7 +214,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 					continuingAllocator(changes),
 				);
 				const delta = toDelta(actual);
-				assert.deepEqual(delta, []);
+				assert.deepEqual(delta, {});
 			});
 		}
 	});
@@ -247,7 +247,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 						continuingAllocator(changes),
 					);
 					const delta = toDelta(actual);
-					assert.deepEqual(delta, []);
+					assert.deepEqual(delta, {});
 				});
 			}
 		}
@@ -291,7 +291,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 			continuingAllocator([delABC2, revABC4]),
 		);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
+		assert.deepEqual(delta, {});
 	});
 
 	it.skip("[Move ABC, Return ABC] ↷ Delete B", () => {
@@ -318,7 +318,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 			continuingAllocator([movABC2, retABC4]),
 		);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
+		assert.deepEqual(delta, {});
 	});
 
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
@@ -336,6 +336,6 @@ describe("SequenceField - Sandwich Rebasing", () => {
 			continuingAllocator([delAC2, revAC4]),
 		);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
+		assert.deepEqual(delta, {});
 	});
 });

@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
 	TreeSchemaIdentifier,
-	ITreeCursorSynchronous,
 	CursorLocationType,
 	FieldUpPath,
 	UpPath,
@@ -17,7 +16,7 @@ import {
 } from "../../core";
 import { compareArrays, fail } from "../../util";
 import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -245,7 +244,7 @@ class NodePositionInfo implements UpPath {
  *
  * Works by tracking its location in the chunk's `positions` array.
  */
-class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
+class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
 	// Undefined when in root field
 	private nodePositionInfo: NodePositionInfo | undefined;
@@ -272,6 +271,26 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
 		this.moveToPosition(0);
 	}
 
+	public atChunkRoot(): boolean {
+		assert(
+			(this.fieldKey === undefined) === (this.mode === CursorLocationType.Nodes),
+			"expect valid field key",
+		);
+		return (
+			this.nodePositionInfo === undefined ||
+			(this.nodePositionInfo.parent === undefined && this.fieldKey === undefined)
+		);
+	}
+
+	public fork(): Cursor {
+		const cursor = new Cursor(this.chunk);
+		cursor.mode = this.mode;
+		cursor.fieldKey = this.fieldKey;
+		cursor.indexOfField = this.indexOfField;
+		cursor.moveToPosition(this.positionIndex);
+		return cursor;
+	}
+
 	/**
 	 * Change the current node withing the chunk.
 	 * See `nodeInfo` for getting data about the current node.
@@ -282,6 +301,10 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
 	private moveToPosition(positionIndex: number): void {
 		this.nodePositionInfo = this.positions[positionIndex];
 		this.positionIndex = positionIndex;
+		if (this.nodePositionInfo === undefined) {
+			assert(positionIndex === 0, "expected root at start");
+			assert(this.mode === CursorLocationType.Fields, "expected root to be a field");
+		}
 	}
 
 	/**
@@ -316,6 +339,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
 
 	exitField(): void {
 		assert(this.mode === CursorLocationType.Fields, 0x4c9 /* exitField when in wrong mode */);
+		assert(this.nodePositionInfo !== undefined, "can not exit root field");
 		this.fieldKey = undefined;
 		this.mode = CursorLocationType.Nodes;
 	}
@@ -387,6 +411,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
 			return false;
 		}
 		this.mode = CursorLocationType.Nodes;
+		this.fieldKey = undefined;
 		this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
 		assert(this.fieldIndex === childIndex, 0x4cc /* should be at selected child */);
 		return true;
@@ -394,6 +419,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
 
 	private enterRootNodeInner(childIndex: number): void {
 		this.mode = CursorLocationType.Nodes;
+		this.fieldKey = undefined;
 		// 1 for the "undefined" at the beginning of the positions array, then stride by top level tree shape.
 		this.moveToPosition(1 + childIndex * this.shape.treeShape.positions.length);
 		assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
@@ -450,11 +476,11 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		this.indexOfField =
 			info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
+		this.fieldKey = info.parentField;
+		this.mode = CursorLocationType.Fields;
 		this.moveToPosition(
 			info.indexOfParentPosition ?? fail("navigation up to root field not yet supported"),
 		); // TODO
-		this.fieldKey = info.parentField;
-		this.mode = CursorLocationType.Fields;
 	}
 
 	firstField(): boolean {

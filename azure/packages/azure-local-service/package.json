@@ -56,8 +56,6 @@
     "node": ">=14.0.0"
   },
   "typeValidation": {
-    "disabled": true,
-    "version": "1.2.0",
-    "broken": {}
+    "disabled": true
   }
 }

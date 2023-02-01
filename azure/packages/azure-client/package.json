@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@fluidframework/aqueduct": "^1.4.0-121020",
-    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@1.0.0",
+    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@1.1.1",
     "@fluidframework/azure-local-service": "^1.2.0",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/build-tools": "^0.8.0",
@@ -90,15 +90,9 @@
   },
   "typeValidation": {
     "version": "1.2.0",
+    "previousVersionStyle": "^previousMajor",
     "baselineRange": "^1.0.0",
-    "broken": {
-      "InterfaceDeclaration_AzureClientProps": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_AzureUser": {
-        "forwardCompat": false,
-        "backCompat": false
-      }
-    }
+    "baselineVersion": "1.1.1",
+    "broken": {}
   }
 }

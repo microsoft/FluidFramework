@@ -9,20 +9,12 @@ import {
 	uniformChunk,
 	TreeShape,
 	ChunkShape,
-	UniformChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
-import { TestField, testSpecializedFieldCursor } from "../../cursorTestSuite";
-import {
-	cursorToJsonObject,
-	jsonArray,
-	jsonNull,
-	jsonNumber,
-	jsonObject,
-	singleJsonCursor,
-} from "../../../domains";
-import { brand, makeArray } from "../../../util";
-import { EmptyKey, FieldKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
+import { testSpecializedFieldCursor } from "../../cursorTestSuite";
+import { cursorToJsonObject, singleJsonCursor } from "../../../domains";
+import { brand } from "../../../util";
+import { EmptyKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks";
 import {
@@ -32,113 +24,7 @@ import {
 	singleTextCursor,
 	TreeChunk,
 } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { dummyRoot } from "../../../feature-libraries/chunked-forest";
-
-const xField: FieldKey = brand("x");
-const yField: FieldKey = brand("y");
-
-const numberShape = new TreeShape(jsonNumber.name, true, []);
-const withChildShape = new TreeShape(jsonObject.name, false, [[xField, numberShape, 1]]);
-const pointShape = new TreeShape(jsonObject.name, false, [
-	[xField, numberShape, 1],
-	[yField, numberShape, 1],
-]);
-const emptyShape = new TreeShape(jsonNull.name, false, []);
-
-const sides = 100000;
-const polygon = new TreeShape(jsonArray.name, false, [
-	[EmptyKey, pointShape, sides],
-]).withTopLevelLength(1);
-
-const polygonTree = {
-	name: "polygon",
-	dataFactory: () =>
-		uniformChunk(
-			polygon,
-			makeArray(sides * 2, (index) => index),
-		),
-	reference: {
-		type: jsonArray.name,
-		fields: {
-			[EmptyKey]: makeArray(sides, (index) => ({
-				type: jsonObject.name,
-				fields: {
-					x: [{ type: jsonNumber.name, value: index * 2 }],
-					y: [{ type: jsonNumber.name, value: index * 2 + 1 }],
-				},
-			})),
-		},
-	},
-};
-
-const testTrees = [
-	{
-		name: "number",
-		dataFactory: () => uniformChunk(numberShape.withTopLevelLength(1), [5]),
-		reference: [{ type: jsonNumber.name, value: 5 }],
-	},
-	{
-		name: "root sequence",
-		dataFactory: () => uniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
-		reference: [
-			{ type: jsonNumber.name, value: 1 },
-			{ type: jsonNumber.name, value: 2 },
-			{ type: jsonNumber.name, value: 3 },
-		],
-	},
-	{
-		name: "child sequence",
-		dataFactory: () =>
-			uniformChunk(
-				new TreeShape(jsonArray.name, false, [
-					[EmptyKey, numberShape, 3],
-				]).withTopLevelLength(1),
-				[1, 2, 3],
-			),
-		reference: [
-			{
-				type: jsonArray.name,
-				fields: {
-					[EmptyKey]: [
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
-					],
-				},
-			},
-		],
-	},
-	{
-		name: "withChild",
-		dataFactory: () => uniformChunk(withChildShape.withTopLevelLength(1), [1]),
-		reference: [
-			{
-				type: jsonObject.name,
-				fields: {
-					x: [{ type: jsonNumber.name, value: 1 }],
-				},
-			},
-		],
-	},
-	{
-		name: "point",
-		dataFactory: () => uniformChunk(pointShape.withTopLevelLength(1), [1, 2]),
-		reference: [
-			{
-				type: jsonObject.name,
-				fields: {
-					x: [{ type: jsonNumber.name, value: 1 }],
-					y: [{ type: jsonNumber.name, value: 2 }],
-				},
-			},
-		],
-	},
-	{
-		...polygonTree,
-		reference: [polygonTree.reference],
-	},
-];
+import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
@@ -166,21 +52,11 @@ function validateShape(shape: ChunkShape): void {
 	});
 }
 
-// testing is per node, and our data can have multiple nodes at the root, so split tests as needed:
-const testData: TestField<TreeChunk>[] = testTrees.map(({ name, dataFactory, reference }) => {
-	return {
-		name,
-		dataFactory,
-		reference,
-		path: { parent: undefined, field: dummyRoot },
-	};
-});
-
 describe("uniformChunk", () => {
 	describe("shapes", () => {
-		for (const tree of testTrees) {
+		for (const tree of testData) {
 			it(`validate shape for ${tree.name}`, () => {
-				validateShape((tree.dataFactory() as UniformChunk).shape);
+				validateShape(tree.dataFactory().shape);
 			});
 		}
 	});
@@ -240,7 +116,7 @@ describe("uniformChunk", () => {
 	for (const { name: cursorName, factory } of cursorSources) {
 		describe(`${cursorName} bench`, () => {
 			let cursor: ITreeCursorSynchronous;
-			for (const { name, dataFactory: data } of testTrees) {
+			for (const { name, dataFactory: data } of testData) {
 				benchmark({
 					type: BenchmarkType.Measurement,
 					title: `Sum: '${name}'`,
