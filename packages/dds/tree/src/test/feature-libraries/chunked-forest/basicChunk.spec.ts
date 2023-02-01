@@ -30,6 +30,7 @@ import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk
 import { emptyShape, testData } from "./uniformChunkTestData";
 
 describe("basic chunk", () => {
+    // TODO: Unskip once BasicChunk implements [cursorChunk]
 	it.skip("calling chunkTree on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
 		const inputCursor = singleTextCursor(data);
