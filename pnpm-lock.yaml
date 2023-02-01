@@ -6809,6 +6809,7 @@ importers:
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/merge-tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
@@ -6850,6 +6851,7 @@ importers:
       '@fluidframework/build-tools': 0.8.0
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
