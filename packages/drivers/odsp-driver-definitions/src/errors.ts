@@ -5,8 +5,8 @@
 import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
 
 /**
- * ODSP Error types
- * Different error types that may be thrown by the ODSP driver
+ * ODSP Error types.
+ * Different error types that may be thrown by the ODSP driver.
  */
 export enum OdspErrorType {
 	/**
