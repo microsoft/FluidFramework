@@ -1080,11 +1080,10 @@ export class GarbageCollector implements IGarbageCollector {
 		let updatedGCData: IGarbageCollectionData = gcData;
 
 		if (this.shouldRunSweep) {
-			const sweepData = this.runSweepPhase(sweepReadyNodes, gcData);
-			updatedGCData = sweepData;
+			updatedGCData = this.runSweepPhase(sweepReadyNodes, gcData);
+		} else if (this.testMode) {
 			// If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
 			// involving access to deleted data.
-		} else if (this.testMode) {
 			this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
 		} else if (this.tombstoneMode) {
 			this.tombstones = sweepReadyNodes;
@@ -1444,8 +1443,8 @@ export class GarbageCollector implements IGarbageCollector {
 		currentReferenceTimestampMs: number,
 		logger: ITelemetryLogger,
 	) {
-		// Update the state since the last GC run. There can be nodes that were referenced between the last and
-		// the current run. We need to identify than and update their unreferenced state if needed.
+		// Get references from the current GC run + references between previous and current run and then update each
+		// node's state
 		const allNodesReferencedBetweenGCs =
 			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger)
 				?.referencedNodeIds ?? gcResult.referencedNodeIds;
@@ -1502,16 +1501,8 @@ export class GarbageCollector implements IGarbageCollector {
 		// TODO: GC:Validation - validate that the child routes of removed routes are deleted as well
 		const sweptRoutes = this.runtime.deleteUnusedNodes(sweepReadyNodes);
 		const updatedGCData = this.deleteSweptRoutes(sweptRoutes, gcData);
-		this.deleteSweptNodeTrackers(sweptRoutes);
-		this.trackDeletedNodes(sweptRoutes);
-		return updatedGCData;
-	}
 
-	/**
-	 * Removes nodes that are swept from GC state and updates the deleted nodes
-	 */
-	private deleteSweptNodeTrackers(gcNodes: string[]) {
-		for (const nodeId of gcNodes) {
+		for (const nodeId of sweptRoutes) {
 			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
 			// TODO: GC:Validation - assert that the nodeStateTracker is defined
 			if (nodeStateTracker !== undefined) {
@@ -1520,7 +1511,11 @@ export class GarbageCollector implements IGarbageCollector {
 				// Delete the node as we don't need to track it any more.
 				this.unreferencedNodesState.delete(nodeId);
 			}
+			// TODO: GC:Validation - assert that the deleted node is not a duplicate
+			this.deletedNodes.add(nodeId);
 		}
+
+		return updatedGCData;
 	}
 
 	/**
@@ -1545,13 +1540,6 @@ export class GarbageCollector implements IGarbageCollector {
 		};
 	}
 
-	private trackDeletedNodes(deletedNodes: string[]) {
-		deletedNodes.forEach((node) => {
-			// TODO: GC:Validation - assert that the deleted node is not a duplicate
-			this.deletedNodes.add(node);
-		});
-	}
-
 	/**
 	 * Since GC runs periodically, the GC data that is generated only tells us the state of the world at that point in
 	 * time. There can be nodes that were referenced in between two runs and their unreferenced state needs to be
@@ -1562,7 +1550,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * 2. A reference is added from one unreferenced node to one or more unreferenced nodes. Even though the node[s] were
 	 * unreferenced, they could have been accessed and in-memory reference to them added.
 	 *
-	 * This function identifies nodes that were referenced since last run and removes their unreferenced state, if any.
+	 * This function identifies nodes that were referenced since the last run.
 	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
 	 */
 	private findAllNodesReferencedBetweenGCs(
