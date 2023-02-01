@@ -23,6 +23,7 @@ export class BatchManager {
 	private readonly logger;
 	private pendingBatch: BatchMessage[] = [];
 	private batchContentSize = 0;
+	private pendingBatchOutOfSync = false;
 	/**
 	 * Track the number of ops which were detected to have a mismatched
 	 * reference sequence number, in order to self-throttle the telemetry events.
@@ -86,10 +87,12 @@ export class BatchManager {
 		const batch: IBatch = {
 			content: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
+			outOfSync: this.pendingBatchOutOfSync,
 		};
 
 		this.pendingBatch = [];
 		this.batchContentSize = 0;
+		this.pendingBatchOutOfSync = false;
 
 		return addBatchMetadata(batch);
 	}
@@ -122,6 +125,7 @@ export class BatchManager {
 			return;
 		}
 
+		this.pendingBatchOutOfSync = true;
 		const telemetryProperties = {
 			referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
 			messageReferenceSequenceNumber: message.referenceSequenceNumber,

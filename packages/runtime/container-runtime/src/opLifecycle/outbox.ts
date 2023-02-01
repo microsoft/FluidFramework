@@ -112,10 +112,15 @@ export class Outbox {
 	}
 
 	private flushInternal(rawBatch: IBatch) {
-		const processedBatch = this.compressBatch(rawBatch);
-		const clientSequenceNumber = this.sendBatch(processedBatch);
+		if (rawBatch.outOfSync === true) {
+			this.persistBatch(-1, rawBatch.content);
+			this.params.pendingStateManager.replayPendingStates();
+		} else {
+			const processedBatch = this.compressBatch(rawBatch);
+			const clientSequenceNumber = this.sendBatch(processedBatch);
 
-		this.persistBatch(clientSequenceNumber, rawBatch.content);
+			this.persistBatch(clientSequenceNumber, rawBatch.content);
+		}
 	}
 
 	private compressBatch(batch: IBatch): IBatch {

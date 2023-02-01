@@ -30,6 +30,11 @@ export interface IBatch {
 	 * All the messages in the batch
 	 */
 	readonly content: BatchMessage[];
+	/**
+	 * 'true' if the batch contains messages with different reference sequence numbers,
+	 * 'false' otherwise.
+	 */
+	readonly outOfSync?: boolean;
 }
 
 export interface IBatchCheckpoint {
