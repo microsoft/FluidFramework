@@ -10,48 +10,51 @@ import { TelemetryClient } from "applicationinsights";
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
 module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
-    fileData.tests.forEach((testData) => {
-        const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;
-        try {
-            console.log(`emitting metric ${heapUsedAvgMetricName} with value ${testData.testData.stats.mean}`);
-            telemetryClient.trackMetric({
-                name: heapUsedAvgMetricName,
-                value: testData.testData.stats.mean,
-                namespace: 'performance_benchmark_memoryUsage',
-                properties: {
-                    buildId: process.env.BUILD_ID,
-                    branchName: process.env.BRANCH_NAME,
-                    category: "performance",
-                    eventName: "Benchmark",
-                    benchmarkType: "MemoryUsage",
-                    suiteName: fileData.suiteName,
-                    testName: testData.testName,
-                }
-            });
-        } catch (error) {
-            console.error(`failed to emit metric ${heapUsedAvgMetricName}`, error);
-        }
+	fileData.tests.forEach((testData) => {
+		const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;
+		try {
+			console.log(
+				`emitting metric ${heapUsedAvgMetricName} with value ${testData.testData.stats.mean}`,
+			);
+			telemetryClient.trackMetric({
+				name: heapUsedAvgMetricName,
+				value: testData.testData.stats.mean,
+				namespace: "performance_benchmark_memoryUsage",
+				properties: {
+					buildId: process.env.BUILD_ID,
+					branchName: process.env.BRANCH_NAME,
+					category: "performance",
+					eventName: "Benchmark",
+					benchmarkType: "MemoryUsage",
+					suiteName: fileData.suiteName,
+					testName: testData.testName,
+				},
+			});
+		} catch (error) {
+			console.error(`failed to emit metric ${heapUsedAvgMetricName}`, error);
+		}
 
-        const heapUsedStdDevMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedStdDev`;
-        try {
-            console.log(`emitting metric ${heapUsedStdDevMetricName} with value ${testData.testData.stats.deviation}`)
-            telemetryClient.trackMetric({
-                name: heapUsedStdDevMetricName,
-                value: testData.testData.stats.deviation,
-                namespace: 'performance_benchmark_memoryUsage',
-                properties: {
-                    buildId: process.env.BUILD_ID,
-                    branchName: process.env.BRANCH_NAME,
-                    category: "performance",
-                    eventName: "Benchmark",
-                    benchmarkType: "MemoryUsage",
-                    suiteName: fileData.suiteName,
-                    testName: testData.testName,
-                }
-            });
-        } catch (error) {
-            console.error(`failed to emit metric ${heapUsedStdDevMetricName}`, error);
-        }
-
-    });
+		const heapUsedStdDevMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedStdDev`;
+		try {
+			console.log(
+				`emitting metric ${heapUsedStdDevMetricName} with value ${testData.testData.stats.deviation}`,
+			);
+			telemetryClient.trackMetric({
+				name: heapUsedStdDevMetricName,
+				value: testData.testData.stats.deviation,
+				namespace: "performance_benchmark_memoryUsage",
+				properties: {
+					buildId: process.env.BUILD_ID,
+					branchName: process.env.BRANCH_NAME,
+					category: "performance",
+					eventName: "Benchmark",
+					benchmarkType: "MemoryUsage",
+					suiteName: fileData.suiteName,
+					testName: testData.testName,
+				},
+			});
+		} catch (error) {
+			console.error(`failed to emit metric ${heapUsedStdDevMetricName}`, error);
+		}
+	});
 };
