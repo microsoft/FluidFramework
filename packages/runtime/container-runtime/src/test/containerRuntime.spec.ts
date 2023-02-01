@@ -611,7 +611,6 @@ describe("Runtime", () => {
 				pendingStateManager.onSubmitMessage(
 					ContainerMessageType.FluidDataStoreOp,
 					0,
-					0,
 					"",
 					"",
 					undefined,
