@@ -198,7 +198,7 @@ export class ModularChangeFamily
 					change: brand(composedChange),
 				};
 
-				finishField(manager, composedField);
+				addFieldData(manager, composedField);
 			}
 
 			// TODO: Could optimize by checking that composedField is non-empty
@@ -303,7 +303,7 @@ export class ModularChangeFamily
 				originalRevision: changes.revision,
 			};
 
-			finishField(manager, invertData);
+			addFieldData(manager, invertData);
 		}
 
 		return invertedFields;
@@ -412,7 +412,7 @@ export class ModularChangeFamily
 					baseChange: taggedBaseChange,
 				};
 
-				finishField(manager, rebaseData);
+				addFieldData(manager, rebaseData);
 				rebasedFields.set(field, rebasedFieldChange);
 			}
 		}
@@ -633,7 +633,7 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 	return manager;
 }
 
-function finishField<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
+function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 	for (const [revision, ids] of manager.srcQueries) {
 		for (const id of ids.keys()) {
 			assert(
