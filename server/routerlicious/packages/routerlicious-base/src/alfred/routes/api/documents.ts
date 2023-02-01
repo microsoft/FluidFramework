@@ -44,13 +44,13 @@ export function create(
     // Whether to enforce server-generated document ids in create doc flow
     const enforceServerGeneratedDocumentId: boolean = config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
 
-    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+    const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
 
     // Throttling logic for creating documents to provide per-cluster rate-limiting at the HTTP route level
-    const createDocThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+    const clusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: "createDoc",
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
@@ -59,7 +59,7 @@ export function create(
         "/:tenantId/:id",
         validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
-        throttle(tenantThrottler, winston, commonThrottleOptions),
+        throttle(tenantThrottler, winston, tenantThrottleOptions),
         (request, response, next) => {
             const documentP = storage.getDocument(
                 getParam(request.params, "tenantId") || appTenants[0].id,
@@ -87,8 +87,8 @@ export function create(
             ensureSingleUseToken: true,
             singleUseTokenCache,
         }),
-        throttle(tenantThrottler, winston, commonThrottleOptions),
-        throttle(clusterThrottler, winston, createDocThrottleOptions),
+        throttle(clusterThrottler, winston, clusterThrottleOptions),
+        throttle(tenantThrottler, winston, tenantThrottleOptions),
         async (request, response, next) => {
             // Tenant and document
             const tenantId = getParam(request.params, "tenantId");
@@ -156,7 +156,7 @@ export function create(
     router.get(
         "/:tenantId/session/:id",
         verifyStorageToken(tenantManager, config),
-        throttle(tenantThrottler, winston, commonThrottleOptions),
+        throttle(tenantThrottler, winston, tenantThrottleOptions),
         async (request, response, next) => {
             const documentId = getParam(request.params, "id");
             const tenantId = getParam(request.params, "tenantId");

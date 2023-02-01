@@ -27,7 +27,7 @@ export function create(
     const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();
 
-    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+    const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
@@ -46,7 +46,7 @@ export function create(
         ["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
         validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
-        throttle(throttler, winston, commonThrottleOptions),
+        throttle(throttler, winston, tenantThrottleOptions),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);
             const to = stringToSequenceNumber(request.query.to);
@@ -71,7 +71,7 @@ export function create(
         "/raw/:tenantId/:id",
         validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
-        throttle(throttler, winston, commonThrottleOptions),
+        throttle(throttler, winston, tenantThrottleOptions),
         (request, response, next) => {
             const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
@@ -92,7 +92,7 @@ export function create(
         "/:tenantId/:id",
         validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
-        throttle(throttler, winston, commonThrottleOptions),
+        throttle(throttler, winston, tenantThrottleOptions),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);
             const to = stringToSequenceNumber(request.query.to);

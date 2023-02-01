@@ -262,11 +262,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
         // Rest API Throttler
         const restApiTenantThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:restTenantCalls") ?? {};
+            config.get("alfred:throttling:restCallsPerTenant") ?? {};
         const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
 
         const restApiClusterThrottleConfig: Partial<IThrottleConfig> =
-        config.get("alfred:throttling:restClusterCalls") ?? {};
+        config.get("alfred:throttling:restCallsPerCluster") ?? {};
         const restClusterThrottler = configureThrottler(restApiClusterThrottleConfig);
 
         // Socket Connection Throttler

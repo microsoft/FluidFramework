@@ -58,7 +58,7 @@
         "numberOfMessagesPerTrace": 100,
         "sessionStickinessDurationMs": 3600000,
         "throttling": {
-            "restTenantCalls": {
+            "restCallsPerTenant": {
                 "maxPerMs": 1000000,
                 "maxBurst": 1000000,
                 "minCooldownIntervalInMs": 1000000,
@@ -67,7 +67,7 @@
                 "maxInMemoryCacheAgeInMs": 60000,
                 "enableEnhancedTelemetry": false
             },
-            "restClusterCalls": {
+            "restCallsPerCluster": {
                 "maxPerMs": 1000000,
                 "maxBurst": 1000000,
                 "minCooldownIntervalInMs": 1000000,
