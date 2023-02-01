@@ -600,21 +600,21 @@ export class Container
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
 	public async getEntryPoint?(): Promise<FluidObject | undefined> {
-		if (this._lifecycleState === "closed" || this._lifecycleState === "disposed") {
-			throw new UsageError("The container is already closed or disposed");
+		if (this._lifecycleState === "disposed") {
+			throw new UsageError("The container is already disposed");
 		}
 		while (this._context === undefined) {
 			await new Promise<void>((resolve, reject) => {
 				const contextChangedHandler = () => {
 					resolve();
-					this.off("closed", closedHandler);
+					this.off("disposed", disposedHandler);
 				};
-				const closedHandler = (error) => {
+				const disposedHandler = (error) => {
 					reject(error);
 					this.off("contextChanged", contextChangedHandler);
 				};
-				this.once("contextChanged", contextChangedHandler);
-				this.once("closed", closedHandler);
+                this.once("contextChanged", contextChangedHandler);
+				this.once("disposed", disposedHandler);
 			});
 		}
 		// Disable lint rule for the sake of more complete stack traces
