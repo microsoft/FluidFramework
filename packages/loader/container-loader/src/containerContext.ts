@@ -175,16 +175,12 @@ export class ContainerContext implements IContainerContext {
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
 	 */
-	public getEntryPoint?(): Promise<FluidObject | undefined> {
+	public async getEntryPoint?(): Promise<FluidObject | undefined> {
 		if (this._disposed) {
 			throw new UsageError("The context is already disposed");
 		}
 		if (this._runtime !== undefined) {
-			// TODO: I don't get why this line complains about unsafe return, this._runtime.getEntryPoint has a return type
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return this._runtime?.getEntryPoint !== undefined
-				? this._runtime.getEntryPoint()
-				: Promise.resolve(undefined);
+			return this._runtime?.getEntryPoint?.();
 		}
 		return new Promise<FluidObject | undefined>((resolve, reject) => {
 			const runtimeInstantiatedHandler = () => {

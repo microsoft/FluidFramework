@@ -613,7 +613,7 @@ export class Container
 					reject(error);
 					this.off("contextChanged", contextChangedHandler);
 				};
-                this.once("contextChanged", contextChangedHandler);
+				this.once("contextChanged", contextChangedHandler);
 				this.once("disposed", disposedHandler);
 			});
 		}

@@ -629,10 +629,6 @@ export class ContainerRuntime
 	 * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
 	 * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
 	 * allows mixin classes to leverage this method to define their own async initializer.
-	 * @param initializeEntryPoint - (optional) Promise that resolves to an object which will act as entryPoint for
-	 * the Container.
-	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
-	 * If not provided, the entryPoint will be set to the container runtime itself.
 	 */
 	public static async load(
 		context: IContainerContext,
@@ -642,7 +638,6 @@ export class ContainerRuntime
 		containerScope: FluidObject = context.scope,
 		existing?: boolean,
 		containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	): Promise<ContainerRuntime> {
 		let existingFlag = true;
 		if (!existing) {
@@ -656,7 +651,6 @@ export class ContainerRuntime
 			runtimeOptions,
 			containerScope,
 			containerRuntimeCtor,
-			initializeEntryPoint,
 		});
 	}
 
@@ -693,7 +687,7 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint = async (containerRuntime) => containerRuntime,
+			initializeEntryPoint,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
