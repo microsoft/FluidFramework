@@ -30,9 +30,9 @@ export {
 	JsonableTree,
 	Delta,
 	rootFieldKey,
-    rootField,
-    rootFieldKeySymbol,
-    fieldSchema,
+	rootField,
+	rootFieldKeySymbol,
+	fieldSchema,
 	FieldScope,
 	GlobalFieldKeySymbol,
 	symbolFromKey,
@@ -55,7 +55,7 @@ export {
 	LocalFieldKey,
 	GlobalFieldKey,
 	TreeSchemaIdentifier,
-    TreeSchemaBuilder,
+	TreeSchemaBuilder,
 	NamedTreeSchema,
 	Named,
 	FieldSchema,
@@ -181,18 +181,27 @@ export {
 	SequenceFieldEditBuilder,
 	prefixPath,
 	prefixFieldPath,
-    singleTextCursor,
-    namedTreeSchema,
+	singleTextCursor,
+	namedTreeSchema,
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:
 import { FieldKind, FieldKinds as FieldKindsOriginal } from "./feature-libraries";
+/**
+ * @alpha
+ */
 interface FieldKinds {
-    value: FieldKind;
-    optional: FieldKind;
-    sequence: FieldKind;
+	value: FieldKind;
+	optional: FieldKind;
+	sequence: FieldKind;
 }
+/**
+ * @alpha
+ */
 const FieldKinds: FieldKinds = FieldKindsOriginal;
+/**
+ * @alpha
+ */
 export { FieldKinds };
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";
