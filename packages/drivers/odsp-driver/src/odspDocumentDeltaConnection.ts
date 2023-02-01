@@ -622,7 +622,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						clientIdOrDocumentId === this.clientId;
 					const { code, type, message, retryAfter } = nacks[0]?.content ?? {};
 					const {clientSequenceNumber, referenceSequenceNumber} = nacks[0].operation ?? {};
-					this.logger.logger.sendTelemetryEvent({
+					this.logger.sendTelemetryEvent({
 						eventName: "ServerNack",
 						code,
 						type,
