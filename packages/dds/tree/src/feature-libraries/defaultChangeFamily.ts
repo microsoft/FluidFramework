@@ -169,7 +169,7 @@ export class DefaultEditBuilder
 		destField: FieldKey,
 		destIndex: number,
 	): void {
-		const changes = sequence.changeHandler.editor.move2(sourceIndex, count, destIndex);
+		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex);
 		this.modularBuilder.submitChanges(
 			[
 				{

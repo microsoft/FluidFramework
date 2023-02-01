@@ -23,6 +23,10 @@ export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
 	return composeI(changes, TestChange.compose);
 }
 
+export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
+	return shallowCompose(changes.map(makeAnonChange));
+}
+
 export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.Changeset<T> {
 	return composeI(changes, (children) => {
 		assert(children.length === 1, "Should only have one child to compose");

@@ -7,7 +7,7 @@ import { SequenceField as SF, singleTextCursor } from "../../../feature-librarie
 import { brand } from "../../../util";
 import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
-import { composeAnonChanges } from "./utils";
+import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = brand(42);
@@ -106,7 +106,7 @@ function createMoveChangeset(
 	count: number,
 	destIndex: number,
 ): SF.Changeset<never> {
-	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex);
+	return composeAnonChangesShallow(SF.sequenceFieldEditor.move(sourceIndex, count, destIndex));
 }
 
 function createReturnChangeset(
