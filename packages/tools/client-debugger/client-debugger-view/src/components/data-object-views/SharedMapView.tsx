@@ -44,7 +44,7 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 		return (): void => {
 			sharedMap.off("valueChanged", updateEntries);
 		};
-	}, []);
+	}, [sharedMap, setEntries]);
 
 	return (
 		<Stack>
