@@ -93,7 +93,7 @@ export {
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
-export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
+export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	EditManagerIndex,

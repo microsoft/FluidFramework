@@ -9,8 +9,20 @@ import {
 	OpAttributionKey,
 	DetachedAttributionKey,
 } from "@fluidframework/runtime-definitions";
+import { AttributionPolicy } from "./mergeTree";
+import { Client } from "./client";
+import { UnassignedSequenceNumber } from "./constants";
+import {
+	MergeTreeDeltaCallback,
+	MergeTreeMaintenanceCallback,
+	MergeTreeMaintenanceType,
+} from "./mergeTreeDeltaCallback";
 import { ISegment } from "./mergeTreeNodes";
+import { MergeTreeDeltaType } from "./ops";
 
+/**
+ * @internal
+ */
 export interface SerializedAttributionCollection {
 	/**
 	 * Parallel array with posBreakpoints which tracks the seq of insertion.
@@ -22,6 +34,31 @@ export interface SerializedAttributionCollection {
 	posBreakpoints: number[];
 	/* Total length; only necessary for validation */
 	length: number;
+}
+
+/**
+ * @internal
+ * @sealed
+ */
+export interface IAttributionCollectionSerializer {
+	/**
+	 * @internal
+	 */
+	serializeAttributionCollections(
+		segments: Iterable<{
+			attribution?: IAttributionCollection<AttributionKey>;
+			cachedLength: number;
+		}>,
+	): SerializedAttributionCollection;
+
+	/**
+	 * Populates attribution information on segments using the provided summary.
+	 * @internal
+	 */
+	populateAttributionCollections(
+		segments: Iterable<ISegment>,
+		summary: SerializedAttributionCollection,
+	): void;
 }
 
 /**
@@ -239,4 +276,70 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		};
 		return blobContents;
 	}
+}
+
+/**
+ * @alpha
+ * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ */
+export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
+	let unsubscribe: undefined | (() => void);
+	return {
+		attach: (client: Client) => {
+			assert(unsubscribe === undefined, "cannot attach to multiple clients at once");
+			const deltaCallback: MergeTreeDeltaCallback = (
+				opArgs,
+				{ deltaSegments, operation },
+			) => {
+				if (operation !== MergeTreeDeltaType.INSERT) {
+					return;
+				}
+
+				for (const { segment } of deltaSegments) {
+					if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
+						segment.attribution ??= new AttributionCollection(
+							{ type: "op", seq: segment.seq },
+							segment.cachedLength,
+						);
+					}
+				}
+			};
+
+			const maintenanceCallback: MergeTreeMaintenanceCallback = (
+				{ deltaSegments, operation },
+				opArgs,
+			) => {
+				if (
+					operation !== MergeTreeMaintenanceType.ACKNOWLEDGED ||
+					opArgs === undefined ||
+					opArgs.op.type !== MergeTreeDeltaType.INSERT
+				) {
+					return;
+				}
+				for (const { segment } of deltaSegments) {
+					assert(segment.seq !== undefined, "segment.seq should be set after ack.");
+					segment.attribution = new AttributionCollection(
+						{ type: "op", seq: segment.seq },
+						segment.cachedLength,
+					);
+				}
+			};
+
+			client.on("delta", deltaCallback);
+			client.on("maintenance", maintenanceCallback);
+
+			unsubscribe = () => {
+				client.off("delta", deltaCallback);
+				client.off("maintenance", maintenanceCallback);
+			};
+		},
+		detach: () => {
+			unsubscribe?.();
+			unsubscribe = undefined;
+		},
+		get isAttached() {
+			return unsubscribe !== undefined;
+		},
+		serializer: AttributionCollection,
+	};
 }

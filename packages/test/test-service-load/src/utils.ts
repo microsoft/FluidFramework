@@ -144,6 +144,7 @@ export async function initialize(
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
 	testIdn?: string,
+	profileName?: string,
 ) {
 	const randEng = random.engines.mt19937();
 	randEng.seed(seed);
@@ -168,6 +169,7 @@ export async function initialize(
 		all: {
 			driverType: testDriver.type,
 			driverEndpointName: testDriver.endpointName,
+			profile: profileName,
 		},
 	});
 	// Construct the loader
