@@ -57,6 +57,13 @@ export interface TreeChunk extends ReferenceCounted {
 export abstract class ReferenceCountedBase implements ReferenceCounted {
     private refCount: number = 1;
 
+    /**
+     * Exposed for testing.
+     */
+    public get referenceCount(): number {
+        return this.refCount;
+    }
+
     public referenceAdded(): void {
         this.refCount++;
     }
