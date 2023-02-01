@@ -14,7 +14,8 @@
     "files.associations": {
         "tools/pipelines/*.yml": "azure-pipelines",
         // good-fences' fence files support comments, so detect them as "jsonc" instead of "json":
-        "fence.json": "jsonc"
+        "fence.json": "jsonc",
+        ".git-blame-ignore-revs": "ignore"
     },
     "[azure-pipelines].customSchemaFile": "",
     "deno.enable": false,

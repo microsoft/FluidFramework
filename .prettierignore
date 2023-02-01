@@ -41,5 +41,8 @@ packages/framework/data-object-base/es5
 **/coverage/*
 **/nyc/*
 
+# Git configuration file
+.git-blame-ignore-revs
+
 # TODO: Temporarily ignore package.json files while we figure out why CI fails
 **/package.json
