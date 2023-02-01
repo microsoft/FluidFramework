@@ -116,7 +116,7 @@ extends:
       displayName: Install Fluid Build Tools (from repo)
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Build.SourcesDirectory)
         script: |
           pushd "$(Build.SourcesDirectory)/build-tools"
           npm i -g pnpm
