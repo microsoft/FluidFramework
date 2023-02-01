@@ -10,7 +10,7 @@ import {
     JsonableTree,
     singleTextCursor,
 } from "@fluid-internal/tree";
-import { Client } from "./Client";
+import { Client } from "./client";
 import {
     bubbleSchema,
     clientSchema,

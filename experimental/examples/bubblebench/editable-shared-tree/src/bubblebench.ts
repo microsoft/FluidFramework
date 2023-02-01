@@ -10,7 +10,7 @@ import {
 } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AppState } from "./AppState";
+import { AppState } from "./appState";
 import {
     appSchemaData,
     ClientTreeProxy,

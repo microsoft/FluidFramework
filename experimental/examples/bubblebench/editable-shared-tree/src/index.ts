@@ -6,8 +6,8 @@ import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { AppView } from "@fluid-example/bubblebench-common";
 import React from "react";
 
-import { Bubblebench, BubblebenchInstantiationFactory } from "./Bubblebench";
-export { Bubblebench, BubblebenchInstantiationFactory } from "./Bubblebench";
+import { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench";
+export { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench";
 
 const bubblebenchViewCallback = (model: Bubblebench) =>
     React.createElement(AppView, { app: model.appState });

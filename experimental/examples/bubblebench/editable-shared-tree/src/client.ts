@@ -4,7 +4,7 @@
  */
 import { IClient } from "@fluid-example/bubblebench-common";
 import { brand, EditableField, FieldKey, JsonableTree, singleTextCursor } from "@fluid-internal/tree";
-import { Bubble } from "./Bubble";
+import { Bubble } from "./bubble";
 import { ClientTreeProxy, bubbleSchema, numberSchema } from "./schema";
 
 export class Client implements IClient {
