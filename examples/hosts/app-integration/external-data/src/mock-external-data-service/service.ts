@@ -32,8 +32,6 @@ export interface ServiceProps {
 
 /**
  * Initializes the mock external data service.
- *
- * @remarks Consumers are required to manually dispose of the returned `Server` object.
  */
 export async function initializeExternalDataService(props: ServiceProps): Promise<Server> {
 	const { port } = props;

@@ -36,8 +36,6 @@ export interface ServiceProps {
 
 /**
  * Initializes the mock customer service.
- *
- * @remarks Consumers are required to manually dispose of the returned `Server` object.
  */
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
 	const { port, externalDataServiceWebhookRegistrationUrl } = props;
