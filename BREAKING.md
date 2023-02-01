@@ -15,6 +15,17 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.4.0.0
+
+## 2.0.0-internal.4.0.0 Breaking changes
+
+### @fluidframework/map `any` => `unknown`
+
+The `SharedMap` and `SharedDirectory` DDSes were updated to operate on `unknown` as their default value types, rather than `any`.
+
+Consumers who are using the type parameter defaults here will need to either specify a explicit type parameter, or appropriately handle values of type `unknown`.
+Providing `any` would yield parity with the previous behavior, though we recommend using a more concrete type if possible.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
