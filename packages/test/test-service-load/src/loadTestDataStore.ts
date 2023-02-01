@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as crypto from "crypto";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -559,19 +558,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? 0
 				: config.testConfig.opSizeinBytes;
 		assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
-
 		const generateStringOfSize = (sizeInBytes: number): string =>
 			new Array(sizeInBytes + 1).join("0");
-		const generateRandomStringOfSize = (sizeInBytes: number): string =>
-			crypto.randomBytes(sizeInBytes / 2).toString("hex");
-		const generateContentOfSize =
-			config.testConfig.useRandomContent === true
-				? generateRandomStringOfSize
-				: generateStringOfSize;
-		const getOpSizeInBytes = () =>
-			config.testConfig.useVariableOpSize === true
-				? Math.floor(Math.random() * opSizeinBytes)
-				: opSizeinBytes;
+		let opsSent = 0;
 
 		const sendSingleOp =
 			opSizeinBytes === 0
@@ -579,12 +568,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 						dataModel.counter.increment(1);
 				  }
 				: () => {
-						const opPayload = generateContentOfSize(getOpSizeInBytes());
+						const opPayload = generateStringOfSize(opSizeinBytes);
 						const opKey = Math.random().toString();
 						dataModel.sharedmap.set(opKey, opPayload);
 				  };
 
-		let opsSent = 0;
 		const updateOpsSent =
 			opSizeinBytes === 0
 				? () => {

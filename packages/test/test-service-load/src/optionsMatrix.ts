@@ -95,8 +95,7 @@ export function generateRuntimeOptions(
 		],
 		maxBatchSizeInBytes: [undefined],
 		enableOpReentryCheck: [true],
-		// Compressed payloads over 1MB will be split into chunked ops of this size
-		chunkSizeInBytes: [1024, 38400, 614400],
+		chunkSizeInBytes: [undefined],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(
