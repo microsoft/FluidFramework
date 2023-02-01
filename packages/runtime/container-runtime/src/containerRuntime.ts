@@ -31,7 +31,13 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import {
+	assert,
+	LazyPromise,
+	Trace,
+	TypedEventEmitter,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -1065,9 +1071,7 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
-		private readonly initializeEntryPoint?: (
-			containerRuntime: IContainerRuntime,
-		) => Promise<FluidObject>,
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	) {
 		super();
 
@@ -1416,6 +1420,8 @@ export class ContainerRuntime
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
+
+		this.entryPoint = new LazyPromise(async () => initializeEntryPoint?.(this));
 	}
 
 	/**
@@ -1536,12 +1542,9 @@ export class ContainerRuntime
 	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
 	 */
 	public async getEntryPoint(): Promise<FluidObject | undefined> {
-		if (this._entryPoint === undefined && this.initializeEntryPoint !== undefined) {
-			this._entryPoint = await this.initializeEntryPoint?.(this);
-		}
-		return this._entryPoint;
+		return this.entryPoint;
 	}
-	private _entryPoint: FluidObject | undefined;
+	private readonly entryPoint: LazyPromise<FluidObject | undefined>;
 
 	private internalId(maybeAlias: string): string {
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
