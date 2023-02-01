@@ -38,10 +38,11 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
+        pushd "$(Build.SourcesDirectory)/build-tools"
         npm i -g pnpm
         pnpm config set store-dir $(pnpmStorePath)
-        pushd "$(Build.SourcesDirectory)/build-tools"
-        pnpm install # automatically builds postinstall
+        pnpm i
+        npm run build:compile
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:

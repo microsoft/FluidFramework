@@ -106,9 +106,6 @@ export class MonoRepo {
 			: existsSync(yarnLockPath)
 			? "yarn"
 			: "npm";
-
-        logger.verbose(`${kind}: using package manager ${this.packageManager}`);
-
 		if (existsSync(lernaPath)) {
 			const lerna = readJsonSync(lernaPath);
 			if (lerna.version !== undefined) {
