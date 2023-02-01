@@ -12,7 +12,7 @@ import {
 } from "@fluentui/react";
 import React from "react";
 
-import { HasClientDebugger, HasContainerId } from "../CommonProps";
+import { HasClientDebugger } from "../CommonProps";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
@@ -40,7 +40,7 @@ export const clientDebugViewClassName = `fluid-client-debugger-view`;
  *
  * @internal
  */
-export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
+export interface ClientDebugViewProps extends HasClientDebugger {
 	/**
 	 * Rendering policies for different kinds of Fluid client and object data.
 	 *
@@ -71,10 +71,12 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 
 		container.on("closed", onContainerClose);
 
+		setIsContainerClosed(container.closed);
+
 		return (): void => {
 			container.off("closed", onContainerClose);
 		};
-	}, [container, setIsContainerClosed]);
+	}, [clientDebugger, container, setIsContainerClosed]);
 
 	// UI state
 	const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
@@ -83,7 +85,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 
 	let view: React.ReactElement;
 	if (isContainerClosed) {
-		view = <div>The container has been disposed.</div>;
+		view = <div>The Container has been disposed.</div>;
 	} else {
 		let innerView: React.ReactElement;
 		switch (rootViewSelection) {

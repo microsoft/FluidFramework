@@ -13,7 +13,6 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { AttributionCollection } from "./attributionCollection";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
 import { matchProperties } from "./properties";
@@ -95,6 +94,11 @@ export class SnapshotLegacy {
 			0x4bf /* all or no segments should have attribution */,
 		);
 
+		const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
+		assert(
+			segsWithAttribution === 0 || attributionSerializer !== undefined,
+			"attribution serializer must be provided when there are segments with attribution.",
+		);
 		return {
 			version: undefined,
 			chunkStartSegmentIndex: startIndex,
@@ -106,7 +110,7 @@ export class SnapshotLegacy {
 			segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
 			attribution:
 				segsWithAttribution > 0
-					? AttributionCollection.serializeAttributionCollections(segs)
+					? attributionSerializer?.serializeAttributionCollections(segs)
 					: undefined,
 		};
 	}

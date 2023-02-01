@@ -47,7 +47,7 @@ module.exports = (env) => {
 			},
 			plugins: [
 				new webpack.ProvidePlugin({
-					process: "process/browser",
+					process: require.resolve("process/browser"),
 				}),
 			],
 			// This impacts which files are watched by the dev server (and likely by webpack if watch is true).

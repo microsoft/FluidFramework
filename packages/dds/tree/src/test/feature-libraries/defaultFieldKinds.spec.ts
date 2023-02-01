@@ -14,7 +14,7 @@ import {
 } from "../../feature-libraries";
 import { makeAnonChange, RevisionTag, TaggedChange, TreeSchemaIdentifier, Delta } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
-import { assertMarkListEqual, noRepair } from "../utils";
+import { assertFieldChangesEqual, noRepair } from "../utils";
 
 const nodeType: TreeSchemaIdentifier = brand("Node");
 const tree1 = { type: nodeType, value: "value1" };
@@ -33,14 +33,14 @@ const crossFieldManager = {
 	consume: unexpectedDelegate,
 };
 
-const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
+const deltaFromChild1 = (child: NodeChangeset): Delta.NodeChanges => {
 	assert.deepEqual(child, nodeChange1);
-	return { type: Delta.MarkType.Modify, setValue: "value3" };
+	return { setValue: "value3" };
 };
 
-const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
+const deltaFromChild2 = (child: NodeChangeset): Delta.NodeChanges => {
 	assert.deepEqual(child, nodeChange2);
-	return { type: Delta.MarkType.Modify, setValue: "value4" };
+	return { setValue: "value4" };
 };
 
 const encodedChild = "encoded child";
@@ -198,24 +198,25 @@ describe("Value field changesets", () => {
 	});
 
 	it("can be converted to a delta when overwriting content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
-				setValue: "value3",
-			},
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
+			],
+			afterShallow: [{ index: 0, setValue: "value3" }],
+		};
 
 		const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1, noRepair);
-		assertMarkListEqual(delta, expected);
+		assertFieldChangesEqual(delta, expected);
 	});
 
 	it("can be converted to a delta when restoring content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
+			],
+		};
 
 		const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
 			assert.equal(revision, detachedBy);
@@ -224,7 +225,7 @@ describe("Value field changesets", () => {
 			return [singleTextCursor(tree1)];
 		};
 		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1, repair);
-		assertMarkListEqual(actual, expected);
+		assertFieldChangesEqual(actual, expected);
 	});
 
 	it("can be encoded in JSON", () => {
@@ -362,31 +363,43 @@ describe("Optional field changesets", () => {
 	});
 
 	it("can be converted to a delta when field was empty", () => {
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
-				setValue: "value3",
-			},
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{
+					type: Delta.MarkType.Insert,
+					content: [singleTextCursor(tree1)],
+				},
+			],
+			afterShallow: [{ index: 0, setValue: "value3" }],
+		};
 
-		assertMarkListEqual(fieldHandler.intoDelta(change1, deltaFromChild1, noRepair), expected);
+		assertFieldChangesEqual(
+			fieldHandler.intoDelta(change1, deltaFromChild1, noRepair),
+			expected,
+		);
 	});
 
 	it("can be converted to a delta when replacing content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
+			],
+		};
 
-		assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1, noRepair), expected);
+		assertFieldChangesEqual(
+			fieldHandler.intoDelta(change2, deltaFromChild1, noRepair),
+			expected,
+		);
 	});
 
 	it("can be converted to a delta when restoring content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
+			],
+		};
 
 		const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
 			assert.equal(revision, detachedBy);
@@ -395,13 +408,18 @@ describe("Optional field changesets", () => {
 			return [singleTextCursor(tree1)];
 		};
 		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1, repair);
-		assertMarkListEqual(actual, expected);
+		assertFieldChangesEqual(actual, expected);
 	});
 
 	it("can be converted to a delta with only child changes", () => {
-		const expected: Delta.MarkList = [{ type: Delta.MarkType.Modify, setValue: "value4" }];
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, setValue: "value4" }],
+		};
 
-		assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2, noRepair), expected);
+		assertFieldChangesEqual(
+			fieldHandler.intoDelta(change4, deltaFromChild2, noRepair),
+			expected,
+		);
 	});
 
 	it("can be encoded in JSON", () => {
