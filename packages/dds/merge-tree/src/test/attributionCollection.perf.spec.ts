@@ -5,13 +5,14 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 import {
 	AttributionCollection as NewAttributionCollection,
 	IAttributionCollection,
 	SerializedAttributionCollection,
 } from "../attributionCollection";
 import { TextSegmentGranularity } from "../textSegment";
-import { AttributionKey, compareNumbers, ISegment } from "../mergeTreeNodes";
+import { compareNumbers, ISegment } from "../mergeTreeNodes";
 import { RedBlackTree } from "../collections";
 
 interface IAttributionCollectionCtor {

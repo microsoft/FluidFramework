@@ -10,7 +10,7 @@ import {
 	sequenceChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/sequence-change-family";
-import { makeAnonChange, TreeSchemaIdentifier, Delta } from "../../core";
+import { makeAnonChange, TreeSchemaIdentifier, emptyDelta } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 import { asForest } from "./cases";
@@ -131,7 +131,7 @@ describe("SequenceChangeFamily", () => {
 						makeAnonChange(inv),
 					]);
 					const delta = sequenceChangeFamily.intoDelta(actual);
-					assert.deepEqual(delta, Delta.empty);
+					assert.deepEqual(delta, emptyDelta);
 				});
 			}
 		}

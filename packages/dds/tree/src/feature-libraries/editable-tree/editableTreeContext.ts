@@ -31,6 +31,7 @@ import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "./utiliti
 /**
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
+ * @alpha
  */
 export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**

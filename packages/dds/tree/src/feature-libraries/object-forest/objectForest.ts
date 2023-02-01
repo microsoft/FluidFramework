@@ -466,6 +466,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
+ * @alpha
  */
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
 	return new ObjectForest(schema, anchors);

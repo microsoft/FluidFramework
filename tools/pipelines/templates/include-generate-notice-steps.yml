@@ -14,19 +14,25 @@ steps:
     displayName: npm ci
     inputs:
       command: 'custom'
+      workingDir: ${{ parameters.buildDirectory }}
       customCommand: 'ci --ignore-scripts'
       customRegistry: 'useNpmrc'
-  - bash: |
-      # Generate the package/package lock for the lerna project so we would scan it.
-      node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --server
-      cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
-      cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
+  - task: Bash@3
     displayName: 'Generate Mono repo package json'
+    inputs:
+      targetType: 'inline'
+      # Must run in the root but creates files relative to the release group root
+      workingDirectory: $(Build.SourcesDirectory)
+      script: |
+        # Generate the package/package lock for the lerna project so we would scan it.
+        node server/routerlicious/node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --server
+        cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
+        cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
 
 - task: ComponentGovernanceComponentDetection@0
   displayName: Component Detection
   inputs:
-    sourceScanPath: ${{ parameters.buildDirectory }}
+    sourceScanPath: ${{ parameters.buildDirectory }}/packages
     verbosity: Verbose
     scanType: Register
     alertWarningLevel: High

@@ -88,10 +88,16 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 }
 
 /**
- * React hook for asynchronously creating / loading the Fluid Container.
+ * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
+ * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(): ContainerInfo | undefined {
-	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo | undefined>();
+function useContainerInfo(): (ContainerInfo | undefined)[] {
+	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
+		ContainerInfo | undefined
+	>();
+	const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
+		ContainerInfo | undefined
+	>();
 
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
@@ -121,22 +127,40 @@ function useContainerInfo(): ContainerInfo | undefined {
 				}
 
 				initializeFluidClientDebugger(data);
-				setContainerInfo(data);
+				setSharedContainerInfo(data);
 			},
 			(error) => {
-				throw error;
+				console.error(error);
+			},
+		);
+
+		async function getPrivateContainerData(): Promise<ContainerInfo> {
+			// Always create a new container for the private view.
+			// This isn't shared with other collaborators.
+			return createFluidContainer(containerSchema, populateRootMap);
+		}
+
+		getPrivateContainerData().then(
+			(data) => {
+				initializeFluidClientDebugger(data);
+				setPrivateContainerInfo(data);
+			},
+			(error) => {
+				console.error(error);
 			},
 		);
 
 		return (): void => {
-			if (containerInfo !== undefined) {
-				containerInfo.container.dispose();
-				closeFluidClientDebugger(containerInfo.containerId);
+			if (sharedContainerInfo !== undefined) {
+				closeFluidClientDebugger(sharedContainerInfo.containerId);
+			}
+			if (privateContainerInfo !== undefined) {
+				closeFluidClientDebugger(privateContainerInfo.containerId);
 			}
 		};
 	}, []);
 
-	return containerInfo;
+	return [sharedContainerInfo, privateContainerInfo];
 }
 
 const appTheme = createTheme({
@@ -183,17 +207,38 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Load the collaborative SharedString object
-	const containerInfo = useContainerInfo();
+	const containers = useContainerInfo();
 
-	const view =
-		containerInfo !== undefined ? (
-			<AppView containerInfo={containerInfo} />
-		) : (
-			<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-				<Spinner />
-				<div>Loading Fluid container...</div>
-			</Stack>
+	if (containers.length !== 2) {
+		console.error(
+			`Initialization created an unexpected number of containers: ${containers.length}`,
 		);
+	}
+
+	const view = (
+		<Stack horizontal>
+			<StackItem>
+				{containers[0] === undefined ? (
+					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+						<Spinner />
+						<div>Loading Fluid container...</div>
+					</Stack>
+				) : (
+					<AppView containerInfo={containers[0]} />
+				)}
+			</StackItem>
+			<StackItem>
+				{containers[1] === undefined ? (
+					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+						<Spinner />
+						<div>Loading Fluid container...</div>
+					</Stack>
+				) : (
+					<AppView containerInfo={containers[1]} />
+				)}
+			</StackItem>
+		</Stack>
+	);
 
 	return <ThemeProvider theme={appTheme}>{view}</ThemeProvider>;
 }
