@@ -17,7 +17,7 @@ import {
 	TreeSchemaIdentifier,
 	FieldSchema,
 } from "../core";
-import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
 	FieldKind,
@@ -37,7 +37,6 @@ import {
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
 } from "./modular-schema";
-import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 
 type BrandedFieldKind<
@@ -187,7 +186,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	encoder: new UnitEncoder(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
+	intoDelta: (change: 0): Delta.FieldChanges => ({}),
 };
 
 /**
@@ -206,12 +205,9 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	encoder: new ValueEncoder<number>(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
-		{
-			type: Delta.MarkType.Modify,
-			setValue: change,
-		},
-	],
+	intoDelta: (change: number): Delta.FieldChanges => ({
+		beforeShallow: [{ index: 0, setValue: change }],
+	}),
 };
 
 /**
@@ -387,8 +383,8 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 	editor: valueFieldEditor,
 
 	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
+		const fieldChanges: Mutable<Delta.FieldChanges> = {};
 		if (change.value !== undefined) {
-			let mark: Delta.Mark;
 			let newValue: ITreeCursorSynchronous;
 			if ("revert" in change.value) {
 				const revision = change.value.revert;
@@ -397,26 +393,21 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 			} else {
 				newValue = singleTextCursor(change.value.set);
 			}
-			if (change.changes === undefined) {
-				mark = {
+			fieldChanges.shallow = [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{
 					type: Delta.MarkType.Insert,
 					content: [newValue],
-				};
-			} else {
-				const modify = deltaFromChild(change.changes, 0);
-				const cursor = singleTextCursor(newValue);
-				const mutableTree = mapTreeFromCursor(cursor);
-				mark = {
-					...modify,
-					type: Delta.MarkType.InsertAndModify,
-					content: singleMapTreeCursor(mutableTree),
-				};
-			}
-
-			return [{ type: Delta.MarkType.Delete, count: 1 }, mark];
+				},
+			];
 		}
-
-		return change.changes === undefined ? [] : [deltaFromChild(change.changes, 0)];
+		if (change.changes !== undefined) {
+			const modify = deltaFromChild(change.changes, 0);
+			if (modify) {
+				fieldChanges.afterShallow = [{ ...modify, index: 0 }];
+			}
+		}
+		return fieldChanges;
 	},
 };
 
@@ -627,34 +618,6 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 	},
 };
 
-function deltaFromInsertAndChange(
-	insertedContent: JsonableTree | undefined,
-	nodeChange: NodeChangeset | undefined,
-	index: number,
-	deltaFromNode: ToDelta,
-): Delta.Mark[] {
-	if (insertedContent !== undefined) {
-		const content = mapTreeFromCursor(singleTextCursor(insertedContent));
-		if (nodeChange !== undefined) {
-			const nodeDelta = deltaFromNode(nodeChange, index);
-			return [
-				{
-					...nodeDelta,
-					type: Delta.MarkType.InsertAndModify,
-					content: singleMapTreeCursor(content),
-				},
-			];
-		}
-		return [{ type: Delta.MarkType.Insert, content: [singleMapTreeCursor(content)] }];
-	}
-
-	if (nodeChange !== undefined) {
-		return [deltaFromNode(nodeChange, index)];
-	}
-
-	return [];
-}
-
 /**
  * 0 or 1 items.
  */
@@ -667,27 +630,47 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 		editor: optionalFieldEditor,
 
 		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
+			const fieldChanges: Mutable<Delta.FieldChanges> = {};
 			const update = change.fieldChange?.newContent;
-			let content: JsonableTree | ITreeCursorSynchronous | undefined;
-			if (update === undefined || "set" in update) {
-				content = update?.set;
-			} else {
-				const revision = update.revert;
-				assert(revision !== undefined, 0x478 /* Unable to revert to undefined revision */);
-				content = reviver(revision, 0, 1)[0];
-			}
-			const insertDelta = deltaFromInsertAndChange(
-				content,
-				change.childChange,
-				0,
-				deltaFromChild,
-			);
-
+			const shallow = [];
 			if (change.fieldChange !== undefined && !change.fieldChange.wasEmpty) {
-				return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
+				shallow.push({ type: Delta.MarkType.Delete, count: 1 });
 			}
-
-			return insertDelta;
+			if (update !== undefined) {
+				if ("set" in update) {
+					shallow.push({
+						type: Delta.MarkType.Insert,
+						content: [singleTextCursor(update.set)],
+					});
+				} else {
+					const revision = update.revert;
+					assert(
+						revision !== undefined,
+						0x478 /* Unable to revert to undefined revision */,
+					);
+					const content = reviver(revision, 0, 1);
+					shallow.push({
+						type: Delta.MarkType.Insert,
+						content,
+					});
+				}
+			}
+			if (shallow.length > 0) {
+				fieldChanges.shallow = shallow;
+			}
+			if (change.childChange !== undefined) {
+				const childDelta = deltaFromChild(change.childChange, 0);
+				if (childDelta) {
+					// TODO: the changeset should be able to represent changes to both the subtree present before
+					// the change and the subtree present after the change.
+					if (update === undefined) {
+						fieldChanges.beforeShallow = [{ index: 0, ...childDelta }];
+					} else {
+						fieldChanges.afterShallow = [{ index: 0, ...childDelta }];
+					}
+				}
+			}
+			return fieldChanges;
 		},
 	},
 	(types, other) =>

@@ -69,9 +69,7 @@ As such, it is critical that Shared Tree investments include significant focus o
 The following goals and investments will ensure Shared Tree is reliable and remains stable as it evolves:
 
 -   Roughly 90% unit test coverage
-
 -   Fuzz testing of all major components
-
 -   Two or more test apps built on Shared Tree that are used to validate every significant update
 -   Code for types and persisting state is isolated and policies are in place to ensure stable migrations between versions
 -   Forwards and backwards compatibility tests
@@ -132,7 +130,7 @@ To accomplish this, the underlying Shared Tree layer is built on a [cursor API](
 Layers built on cursors are also able to remain agnostic to the structure of the tree it is navigating, allowing for flexible/multiple implementations.
 This cursor API is intended to be an expert API as working with it is more cumbersome compared with the more ergonomic APIs exposed in future milestones.
 
-While this is an important architectural milestone to build in early, the benefits around reification will not be fully realized until the _Storage performance: incrementality and virtualization_ milestone, as downloading the entire tree on load is currently required.
+While this is an important architectural milestone to build in early, the benefits around reification will not be fully realized until the [Storage performance: incrementality and virtualization](#storage-performance-incrementality-and-virtualization) milestone, as downloading the entire tree on load is currently required.
 
 ## Isolation of synchronous non-overlapping transaction
 
@@ -148,8 +146,8 @@ Reasons for doing so include:
 This milestone enables the creation of a single synchronous transaction per Shared Tree and guarantees the changes bundled in the transaction will be applied without interleaving of other changes.
 This is true for transactions made locally, as well as transaction received from peers.
 
-This milestone does not include support for atomicity of transactions (see _Constraints_).
-See also _Undo/redo_.
+This milestone does not include support for atomicity of transactions (see [constraints](#constraints)).
+See also [undo/redo](#undoredo).
 
 ## Tree reading and writing with JS object style API
 
@@ -248,7 +246,7 @@ Transactions always guarantee atomicity (no interleaved changes from other trans
 While convenient and usually sufficient, this behavior may not appropriately uphold application invariants.
 
 This milestone enables a developer to declaratively specify what sorts of concurrent edits should cause a transaction to fail and be marked as conflicted.
-These declarations are known as _constraints_ and are evaluated as the edit (transaction) is applied.
+These declarations are known as [constraints](#constraints) and are evaluated as the edit (transaction) is applied.
 The constraints delivered in this milestone include specifying that a given node still exists and specifying that a given node or field has not been edited (recursively or non-recursively).
 
 ## Schema and schema enforcement
@@ -259,7 +257,7 @@ Schema determines how the data in the Shared Tree is structured and modified bas
 these types are associated with rules that govern the shape of the data (e.g., which types are allowed in which fields).
 This metadata is stored in the tree ([schema specification](../src/core/schema-stored/README.md)) and the Shared Tree uses it to guarantee that data conforms to the schema even in the face of concurrent editing.
 This milestone exposes the ability to author a schema, create schematized data, and guarantees that edits will never violate that schema.
-It does not provide a type-safe way to view the data—that is enabled by the _Type-safe schema API_ milestone.
+It does not provide a type-safe way to view the data—that is enabled by the [type-safe schema API](#type-safe-schema-api) milestone.
 
 ## Lossless JSON roundtripping
 
@@ -370,7 +368,19 @@ In this milestone, Shared Tree exposes an extension point that allows developers
 
 > Pending
 
-// TODO
+While [constraints](#constraints) and [schema](#schema-and-schema-enforcement) offer powerful ways to ensure an application's data model is never violated, they enable such guarantees by explicitly creating conflicts when their invariants are violated.
+These conflicts, if the application does not react to them, can be a form of data loss if the rejected change contained data a client cares about.
+Attempting to repair the outcome of a merge of conflicting edits “after the fact” is a challenging problem, one whose difficulty will grow non-linearly as the number and complexity of edits increases.
+
+An approach that places far less burden on application developers is to let them structure their edits in a manner that captures end users’ intent as precisely as possible.
+This model requires that edits are structured as _commands_ whose parameters are organized into tree references that the system understands and opaque parameters understood only by the command author.
+When a local edit is rebased against a conflicting edit by another user, the local edit can simply be rolled back, the conflicting edit applied first, and the command that produced the local edit then re-executed, as if the user had applied it under these new circumstances in the first place.
+The Shared Tree can use heuristics to adjust the tree reference parameters as necessary before the command is executed, meaning the handles passed to the command may be a best approximation of those originally supplied when the user first ran the command.
+Even if the command author does nothing else, many merge scenarios will yield better outcomes with this model than one that attempts to modify primitive operations applied to the tree.
+
+As an example, if User A adds a row to a table and User B concurrently adds a column, the table will be well-formed regardless of the eventual order of these edits, as would be the case if they were executed in either order on a single client.
+
+This milestone explores this command model, how it interplays with other features such as constraints, and how it handles edge-cases such as code availability and versioning.
 
 ## Partial checkout
 
@@ -381,7 +391,7 @@ It must be feasible to load and collaborate on documents of any size and still e
 For exceptionally large documents it is likely that the number of concurrently editing clients vastly exceeds the number of clients editing the same region of the tree.
 This means that each client would receive, process, and ignore most edits—resulting in computational waste and bottlenecks.
 
-The _Storage performance: incrementality and virtualization_ milestone ensures that document load times and summarization performance (both bandwidth and CPU time) are not limiting factors in these cases.
+The [storage performance: incrementality and virtualization](#storage-performance-incrementality-and-virtualization) milestone ensures that document load times and summarization performance (both bandwidth and CPU time) are not limiting factors in these cases.
 This milestone introduces a _partial checkout_: a partial view of the tree registered with the server during document load.
 The view (a subset of the tree) is dynamic and can be expanded by navigating the tree.
 The server provides op filtering to ensure that a client only receives the edits that apply to the region of the tree that they are viewing.
