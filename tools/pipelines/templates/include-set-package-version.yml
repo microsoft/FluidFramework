@@ -139,3 +139,12 @@ steps:
         else
           npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
         fi
+
+# package.json files are reformatted by the prior set version steps, so reformat them (and only them) with prettier
+- task: Bash@3
+  displayName: Reformat package.json files
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      npx lerna exec prettier -- --write package.json
