@@ -90,12 +90,17 @@ async function main() {
 
 	const testUsers = await getTestUsers(credFile);
 
-	await orchestratorProcess(
-		driver,
-		endpoint,
-		profile,
-		{ testId, debug, verbose, seed, browserAuth, enableMetrics, createTestId, testUsers, profileName },
-	);
+	await orchestratorProcess(driver, endpoint, profile, {
+		testId,
+		debug,
+		verbose,
+		seed,
+		browserAuth,
+		enableMetrics,
+		createTestId,
+		testUsers,
+		profileName,
+	});
 }
 
 /**
@@ -195,9 +200,7 @@ async function orchestratorProcess(
 
 	try {
 		const usernames =
-			args.testUsers !== undefined
-				? Object.keys(args.testUsers.credentials)
-				: undefined;
+			args.testUsers !== undefined ? Object.keys(args.testUsers.credentials) : undefined;
 		await Promise.all(
 			runnerArgs.map(async (childArgs, index) => {
 				const username =

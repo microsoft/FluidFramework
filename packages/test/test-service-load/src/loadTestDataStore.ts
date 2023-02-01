@@ -25,7 +25,7 @@ import { LeaderElection } from "./leaderElection";
 
 export interface IRunConfig {
 	runId: number;
-	profileName: string,
+	profileName: string;
 	testConfig: ILoadTestConfig;
 	verbose: boolean;
 	randEng: random.Engine;
@@ -33,7 +33,10 @@ export interface IRunConfig {
 
 export interface ILoadTest {
 	run(config: IRunConfig, reset: boolean, logger): Promise<boolean>;
-	detached(config: Omit<IRunConfig, "runId" | "profileName">, logger): Promise<LoadTestDataStoreModel>;
+	detached(
+		config: Omit<IRunConfig, "runId" | "profileName">,
+		logger,
+	): Promise<LoadTestDataStoreModel>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
 }
 
