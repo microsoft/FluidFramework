@@ -12,7 +12,7 @@ import { IFluidFileConverter } from "./codeLoaderBundle";
  * @internal
  */
 export function isJsonSnapshot(content: Buffer): boolean {
-    return content.toString(undefined, 0, 1) === "{";
+	return content.toString(undefined, 0, 1) === "{";
 }
 
 /**
@@ -21,24 +21,24 @@ export function isJsonSnapshot(content: Buffer): boolean {
  * @param filePath - path to the ODSP snapshot file
  */
 export function getSnapshotFileContent(filePath: string): string | Buffer {
-    // TODO: read file stream
-    const content = fs.readFileSync(filePath);
-    return isJsonSnapshot(content) ? content.toString() : content;
+	// TODO: read file stream
+	const content = fs.readFileSync(filePath);
+	return isJsonSnapshot(content) ? content.toString() : content;
 }
 
 /**
  * Validate provided command line arguments
  * @internal
  */
- export function validateCommandLineArgs(
-    codeLoader?: string,
-    fluidFileConverter?: IFluidFileConverter,
+export function validateCommandLineArgs(
+	codeLoader?: string,
+	fluidFileConverter?: IFluidFileConverter,
 ): string | undefined {
-    if (codeLoader && fluidFileConverter !== undefined) {
-        return "\"codeLoader\" and \"fluidFileConverter\" cannot both be provided. See README for details.";
-    }
-    if (!codeLoader && fluidFileConverter === undefined) {
-        return "\"codeLoader\" must be provided if there is no explicit \"fluidFileConverter\". See README for details.";
-    }
-    return undefined;
+	if (codeLoader && fluidFileConverter !== undefined) {
+		return '"codeLoader" and "fluidFileConverter" cannot both be provided. See README for details.';
+	}
+	if (!codeLoader && fluidFileConverter === undefined) {
+		return '"codeLoader" must be provided if there is no explicit "fluidFileConverter". See README for details.';
+	}
+	return undefined;
 }

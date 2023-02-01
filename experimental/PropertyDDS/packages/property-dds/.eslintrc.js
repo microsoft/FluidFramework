@@ -8,15 +8,12 @@
  */
 
 module.exports = {
-    extends: [
-        require.resolve("@fluidframework/eslint-config-fluid/minimal"),
-        "prettier"
-    ],
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
-    },
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-        "tsdoc/syntax": "off",
+		"tsdoc/syntax": "off",
 	},
 };

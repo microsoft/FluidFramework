@@ -5,10 +5,10 @@
 import React from "react";
 
 import {
-    IFluidHandle,
-    IFluidLoadable,
-    IProvideFluidHandle,
-    IProvideFluidLoadable,
+	IFluidHandle,
+	IFluidLoadable,
+	IProvideFluidHandle,
+	IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
 
 import { SharedObjectRenderOptions } from "../../RendererOptions";
@@ -22,15 +22,15 @@ import { RecordDataView } from "./RecordView";
  * {@link DynamicDataView} input props.
  */
 export interface DynamicDataViewProps {
-    /**
-     * The data to render.
-     */
-    data: unknown;
+	/**
+	 * The data to render.
+	 */
+	data: unknown;
 
-    /**
-     * {@inheritDoc SharedObjectRenderOptions}
-     */
-    renderOptions: SharedObjectRenderOptions;
+	/**
+	 * {@inheritDoc SharedObjectRenderOptions}
+	 */
+	renderOptions: SharedObjectRenderOptions;
 }
 
 /**
@@ -44,30 +44,30 @@ export interface DynamicDataViewProps {
  * - Else: the data is assumed to be an object with serializable traits; recurse on each of those traits.
  */
 export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement {
-    const { data, renderOptions } = props;
+	const { data, renderOptions } = props;
 
-    // Render primitives and falsy types via their string representation
-    if (typeof data !== "object") {
-        return <>{data}</>;
-    }
+	// Render primitives and falsy types via their string representation
+	if (typeof data !== "object") {
+		return <>{data}</>;
+	}
 
-    if ((data as IProvideFluidLoadable)?.IFluidLoadable !== undefined) {
-        const handle = (data as IFluidLoadable).handle;
-        return <FluidObjectView fluidObjectHandle={handle} renderOptions={renderOptions} />;
-    }
+	if ((data as IProvideFluidLoadable)?.IFluidLoadable !== undefined) {
+		const handle = (data as IFluidLoadable).handle;
+		return <FluidObjectView fluidObjectHandle={handle} renderOptions={renderOptions} />;
+	}
 
-    if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
-        const handle = data as IFluidHandle;
-        return <FluidObjectView fluidObjectHandle={handle} renderOptions={renderOptions} />;
-    }
+	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
+		const handle = data as IFluidHandle;
+		return <FluidObjectView fluidObjectHandle={handle} renderOptions={renderOptions} />;
+	}
 
-    if (data === null) {
-        return <div>NULL</div>;
-    }
+	if (data === null) {
+		return <div>NULL</div>;
+	}
 
-    // If the underlying data was not a primitive, and it wasn't a Fluid handle, we may assume that
-    // it is a serializable record.
-    // Note: this is only valid because the debugger's containerData strictly takes in DDS handles,
-    // and DDS children must be either serializable or a fluid handle.
-    return <RecordDataView data={data as Record<string, unknown>} renderOptions={renderOptions} />;
+	// If the underlying data was not a primitive, and it wasn't a Fluid handle, we may assume that
+	// it is a serializable record.
+	// Note: this is only valid because the debugger's containerData strictly takes in DDS handles,
+	// and DDS children must be either serializable or a fluid handle.
+	return <RecordDataView data={data as Record<string, unknown>} renderOptions={renderOptions} />;
 }

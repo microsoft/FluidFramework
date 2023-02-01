@@ -5,25 +5,25 @@
 import { notificationContext } from "./NotificationsViewer";
 
 const isPromise = <K, R>(in_obj: Promise<K> | R): in_obj is Promise<K> => {
-  return Promise.resolve(in_obj as Promise<K>) === in_obj;
+	return Promise.resolve(in_obj as Promise<K>) === in_obj;
 };
 
 /**
  * Extracts the error message and pushes to the notification list in the context
  */
 export const CreateErrorObjAndSend = (err: string | Error) => {
-  const errObj = {
-    message: (typeof err === "string" ? err : err.message),
-  };
-  notificationContext.pushNotification(errObj);
+	const errObj = {
+		message: typeof err === "string" ? err : err.message,
+	};
+	notificationContext.pushNotification(errObj);
 };
 
 /**
  * Print the error, push into notification context and throw again if needed
  */
 const processError = (err: string | Error) => {
-  console.log(err);
-  CreateErrorObjAndSend(err);
+	console.log(err);
+	CreateErrorObjAndSend(err);
 };
 
 type anyFunction = (...args: any[]) => any;
@@ -40,22 +40,22 @@ type anyFunction = (...args: any[]) => any;
  * the original error object, depending on the `catchErr` flag.
  */
 export async function ErrorPopup<
-  T extends anyFunction = anyFunction,
-  K = ReturnType<T> extends Promise<infer R> ? R : ReturnType<T>,
+	T extends anyFunction = anyFunction,
+	K = ReturnType<T> extends Promise<infer R> ? R : ReturnType<T>,
 >(anythingThatMightEmitError: T, catchErr = true): Promise<void | K> {
-  try {
-    const result = anythingThatMightEmitError();
-    if (isPromise<K, ReturnType<T>>(result)) {
-      const caughtPromise = result.catch((err) => processError(err));
-      if (catchErr) {
-        return caughtPromise;
-      }
-      return result;
-    } else {
-      return Promise.resolve(result);
-    }
-  } catch (err: any) {
-    processError(err);
-    return catchErr ? Promise.resolve() : Promise.reject(err);
-  }
+	try {
+		const result = anythingThatMightEmitError();
+		if (isPromise<K, ReturnType<T>>(result)) {
+			const caughtPromise = result.catch((err) => processError(err));
+			if (catchErr) {
+				return caughtPromise;
+			}
+			return result;
+		} else {
+			return Promise.resolve(result);
+		}
+	} catch (err: any) {
+		processError(err);
+		return catchErr ? Promise.resolve() : Promise.reject(err);
+	}
 }

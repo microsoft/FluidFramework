@@ -12,6 +12,7 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -31,6 +32,22 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
     clientId: string | undefined;
 }
 
+// @internal
+export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
+    constructor();
+    closeDebugger(containerId: string): void;
+    getRegisteredDebuggers(): Map<string, IFluidClientDebugger>;
+    initializeDebugger(props: FluidClientDebuggerProps): void;
+}
+
+// @internal
+export interface DebuggerRegistryEvents extends IEvent {
+    // @eventProperty
+    (event: "debuggerRegistered", listener: (containerId: string) => void): void;
+    // @eventProperty
+    (event: "debuggerClosed", listener: (containerId: string) => void): void;
+}
+
 // @public
 export interface FluidClientDebuggerProps {
     container: IContainer;
@@ -38,6 +55,9 @@ export interface FluidClientDebuggerProps {
     containerId: string;
     containerNickname?: string;
 }
+
+// @internal
+export function getDebuggerRegistry(): DebuggerRegistry;
 
 // @internal
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined;

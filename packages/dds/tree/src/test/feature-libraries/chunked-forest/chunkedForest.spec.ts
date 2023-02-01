@@ -46,9 +46,7 @@ describe("ChunkedForest", () => {
     testForest({
         suiteName: "",
         factory: () =>
-            buildChunkedForest(
-                new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-            ),
+            buildChunkedForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
         skipCursorErrorCheck: true,
     });
 

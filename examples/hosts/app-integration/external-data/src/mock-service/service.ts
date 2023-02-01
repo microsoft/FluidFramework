@@ -13,15 +13,15 @@
  */
 
 // eslint-disable-next-line import/no-nodejs-modules
-import { Server } from 'http';
+import { Server } from "http";
 
 import cors from "cors";
 import express from "express";
 import type { Express } from "express";
 import { isWebUri } from "valid-url";
-import { TaskData } from '../model-interface';
-import { ExternalDataSource } from './externalData';
-import { MockWebhook } from './webhook';
+import { TaskData } from "../model-interface";
+import { ExternalDataSource } from "./externalData";
+import { MockWebhook } from "./webhook";
 
 /**
  * The express app instance.
@@ -35,15 +35,15 @@ let expressApp: Express | undefined;
  * {@link initializeCustomerService} input properties.
  */
 export interface ServiceProps {
-    /**
-     * External data source backing this service.
-     */
-    externalDataSource: ExternalDataSource;
+	/**
+	 * External data source backing this service.
+	 */
+	externalDataSource: ExternalDataSource;
 
-    /**
-     * Port to listen on.
-     */
-    port: number | string;
+	/**
+	 * Port to listen on.
+	 */
+	port: number | string;
 }
 
 /**
@@ -52,138 +52,142 @@ export interface ServiceProps {
  * @remarks Consumers are required to manually dispose of the returned `Server` object.
  */
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
-    const { externalDataSource, port } = props;
+	const { externalDataSource, port } = props;
 
-    if (expressApp !== undefined) {
-        throw new Error("Customer service has already been initialized.");
-    }
+	if (expressApp !== undefined) {
+		throw new Error("Customer service has already been initialized.");
+	}
 
-    /**
-     * Mock webhook for notifying subscibers to changes in external data.
-     *
-     * @remarks Initialized on demand.
-     */
-    let webhook: MockWebhook | undefined;
+	/**
+	 * Mock webhook for notifying subscibers to changes in external data.
+	 *
+	 * @remarks Initialized on demand.
+	 */
+	let webhook: MockWebhook | undefined;
 
-    expressApp = express();
-    expressApp.use(express.json());
-    expressApp.use(cors());
+	expressApp = express();
+	expressApp.use(express.json());
+	expressApp.use(cors());
 
-    /**
-     * Hello World!
-     */
-    expressApp.get("/", (request, result) => {
-        result.send("Hello World!");
-    });
+	/**
+	 * Hello World!
+	 */
+	expressApp.get("/", (request, result) => {
+		result.send("Hello World!");
+	});
 
-    /**
-     * Register's the sender's URL to receive notifications when the external task-list data changes.
-     *
-     * Expected input data format:
-     *
-     * ```json
-     * {
-     *  url: string // The target URL to receive change notification
-     * }
-     * ```
-     *
-     * Notifications sent to subscribers will not contain any task-list data.
-     * Rather, the notification can be considered as a signal to fetch the most recent data from the service.
-     */
-    expressApp.post("/register-for-webhook", (request, result) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const subscriberUrl = request.body.url as string;
-        if (subscriberUrl === undefined) {
-            result.status(400).json({ message: "Client failed to provide URL for subscription." })
-        } else if (isWebUri(subscriberUrl) === undefined) {
-            result.status(400).json({ message: "Provided subscription URL is invalid." })
-        } else {
-            console.log(`SERVICE: Registering for webhook notifications at URL: "${subscriberUrl}".`);
-            if (webhook === undefined) {
-                webhook = new MockWebhook(externalDataSource);
-            }
-            webhook.registerSubscriber(subscriberUrl);
-            result.send();
-        }
-    });
+	/**
+	 * Register's the sender's URL to receive notifications when the external task-list data changes.
+	 *
+	 * Expected input data format:
+	 *
+	 * ```json
+	 * {
+	 *  url: string // The target URL to receive change notification
+	 * }
+	 * ```
+	 *
+	 * Notifications sent to subscribers will not contain any task-list data.
+	 * Rather, the notification can be considered as a signal to fetch the most recent data from the service.
+	 */
+	expressApp.post("/register-for-webhook", (request, result) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const subscriberUrl = request.body.url as string;
+		if (subscriberUrl === undefined) {
+			result.status(400).json({ message: "Client failed to provide URL for subscription." });
+		} else if (isWebUri(subscriberUrl) === undefined) {
+			result.status(400).json({ message: "Provided subscription URL is invalid." });
+		} else {
+			console.log(
+				`SERVICE: Registering for webhook notifications at URL: "${subscriberUrl}".`,
+			);
+			if (webhook === undefined) {
+				webhook = new MockWebhook(externalDataSource);
+			}
+			webhook.registerSubscriber(subscriberUrl);
+			result.send();
+		}
+	});
 
-    /**
-     * Fetches the task list from the external data store.
-     */
-    expressApp.get("/fetch-tasks", (request, result) => {
-        console.log(`SERVICE: Fetching task list data...`);
-        externalDataSource.fetchData().then(
-            (data) => {
-                console.log(`SERVICE: Returning current task list:\n"${data.body}".`);
-                result.send(JSON.parse(data.body.toString()) as TaskData);
-            },
-            (error) => {
-                console.error(`SERVICE: Encountered an error while reading mock external data file:\n${error}`);
-                result.status(500).json({ message: "Failed to fetch task data." });
-            }
-        )
-    });
+	/**
+	 * Fetches the task list from the external data store.
+	 */
+	expressApp.get("/fetch-tasks", (request, result) => {
+		console.log(`SERVICE: Fetching task list data...`);
+		externalDataSource.fetchData().then(
+			(data) => {
+				console.log(`SERVICE: Returning current task list:\n"${data.body}".`);
+				result.send(JSON.parse(data.body.toString()) as TaskData);
+			},
+			(error) => {
+				console.error(
+					`SERVICE: Encountered an error while reading mock external data file:\n${error}`,
+				);
+				result.status(500).json({ message: "Failed to fetch task data." });
+			},
+		);
+	});
 
-    /**
-     * Updates external data store with new tasks list (complete override).
-     *
-     * Expected input data format:
-     *
-     * ```json
-     * {
-     *  taskList: string // TODO: object instead
-     * }
-     * ```
-     */
-    expressApp.post("/set-tasks", (request, result) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (request.body.taskList === undefined) {
-            result.status(400).json({ message: "Client failed to provide task list to set." });
-        } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const taskList = request.body.taskList as TaskData;
-            console.log(taskList)
+	/**
+	 * Updates external data store with new tasks list (complete override).
+	 *
+	 * Expected input data format:
+	 *
+	 * ```json
+	 * {
+	 *  taskList: string // TODO: object instead
+	 * }
+	 * ```
+	 */
+	expressApp.post("/set-tasks", (request, result) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		if (request.body.taskList === undefined) {
+			result.status(400).json({ message: "Client failed to provide task list to set." });
+		} else {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const taskList = request.body.taskList as TaskData;
+			console.log(taskList);
 
-            console.log(`SERVICE: Setting task list to "${taskList}"...`);
-            externalDataSource.writeData(taskList).then(
-                () => {
-                    console.log("SERVICE: Data set request completed!");
-                    result.send();
-                },
-                (error) => {
-                    console.error(`SERVICE: Encountered an error while writing to mock external data file:\n${error}`);
-                    result.status(500).json({ message: "Failed to set task data." });
-                }
-            );
-        }
-    });
+			console.log(`SERVICE: Setting task list to "${taskList}"...`);
+			externalDataSource.writeData(taskList).then(
+				() => {
+					console.log("SERVICE: Data set request completed!");
+					result.send();
+				},
+				(error) => {
+					console.error(
+						`SERVICE: Encountered an error while writing to mock external data file:\n${error}`,
+					);
+					result.status(500).json({ message: "Failed to set task data." });
+				},
+			);
+		}
+	});
 
-    /**
-     * Resets the external data to its original contents.
-     */
-    expressApp.post("/debug-reset-task-list", (request, result) => {
-        externalDataSource.debugResetData();
-        console.log("SERVICE (DEBUG): External data reset!");
-        result.send();
-    });
+	/**
+	 * Resets the external data to its original contents.
+	 */
+	expressApp.post("/debug-reset-task-list", (request, result) => {
+		externalDataSource.debugResetData();
+		console.log("SERVICE (DEBUG): External data reset!");
+		result.send();
+	});
 
-    const server = expressApp.listen(port.toString());
+	const server = expressApp.listen(port.toString());
 
-    server.on("close", () => {
-        webhook?.dispose();
-        closeCustomerService();
-    });
+	server.on("close", () => {
+		webhook?.dispose();
+		closeCustomerService();
+	});
 
-    return server;
+	return server;
 }
 
 function closeCustomerService(): void {
-    if (expressApp === undefined) {
-        console.warn("SERVICE: Service has already been closed.")
-    } else {
-        expressApp.removeAllListeners();
-        expressApp = undefined;
-    }
+	if (expressApp === undefined) {
+		console.warn("SERVICE: Service has already been closed.");
+	} else {
+		expressApp.removeAllListeners();
+		expressApp = undefined;
+	}
 }
-
-

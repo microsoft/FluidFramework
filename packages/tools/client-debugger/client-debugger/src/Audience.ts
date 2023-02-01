@@ -9,13 +9,13 @@
  * @internal
  */
 export enum MemberChangeKind {
-    /**
-     * An audience member was added.
-     */
-    Added = "Added",
+	/**
+	 * An audience member was added.
+	 */
+	Added = "Added",
 
-    /**
-     * An audience member was removed.
-     */
-    Removed = "Removed",
+	/**
+	 * An audience member was removed.
+	 */
+	Removed = "Removed",
 }
