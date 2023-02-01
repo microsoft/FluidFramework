@@ -18,12 +18,8 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
-- [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
 - [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
-- [Deprecated IPendingMessage.clientSequenceNumber](#Deprecated-IPendingMessageclientSequenceNumber)
-
-### Deprecated IPendingFlush
-`IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+- [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -34,8 +30,12 @@ In a subsequent major release, the policy `IDocumentStorageServicePolicies.maxim
 (and likewise `IDocumentStorageService.policies` itself) may become required,
 to ensure all drivers take note of this requirement and enforce this policy.
 
-### Deprecated IPendingMessage.clientSequenceNumber
-`IPendingMessage.clientSequenceNumber` has been deprecated. Provide dummy values as needed and remove any dependencies on it as this property will no longer be used in the `PendingStateManager`.
+### Deprecated PendingStateManager interfaces
+The following interfaces used by the `PendingStateManager` have been deprecated and will no longer be exported in a future version:
+- `IPendingMessage`
+- `IPendingFlush`
+- `IPendingState`
+- `IPendingLocalState`
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)

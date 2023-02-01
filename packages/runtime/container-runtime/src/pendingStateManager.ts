@@ -15,11 +15,11 @@ import { pkgVersion } from "./packageVersion";
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
+ * @deprecated - This interface will no longer be exported in a future version
  */
 export interface IPendingMessage {
 	type: "message";
 	messageType: ContainerMessageType;
-	/** @deprecated - provide dummy values and remove any dependencies */
 	clientSequenceNumber: number;
 	referenceSequenceNumber: number;
 	content: any;
@@ -36,8 +36,14 @@ export interface IPendingFlush {
 	type: "flush";
 }
 
+/**
+ * @deprecated - This interface will no longer be exported in a future version
+ */
 export type IPendingState = IPendingMessage | IPendingFlush;
 
+/**
+ * @deprecated - This interface will no longer be exported in a future version
+ */
 export interface IPendingLocalState {
 	/**
 	 * list of pending states, including ops and batch information

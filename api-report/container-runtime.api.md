@@ -423,14 +423,14 @@ export interface IPendingFlush {
     type: "flush";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPendingLocalState {
     pendingStates: IPendingState[];
 }
 
-// @public
+// @public @deprecated
 export interface IPendingMessage {
-    // @deprecated (undocumented)
+    // (undocumented)
     clientSequenceNumber: number;
     // (undocumented)
     content: any;
@@ -446,7 +446,7 @@ export interface IPendingMessage {
     type: "message";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type IPendingState = IPendingMessage | IPendingFlush;
 
 // @public @deprecated (undocumented)
