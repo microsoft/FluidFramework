@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { IConnectionDetails, IDeltaHandlerStrategy, IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
 import { IDocumentService } from "@fluidframework/driver-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaManager } from "./deltaManager";
 
@@ -29,8 +29,8 @@ class VirtualDeltaQueueProxy<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> 
 
     constructor(
         private readonly _queue: IDeltaQueue<T>,
-        private readonly _virtualizeValue: (value: T) => T[],
-        _storeVirtualizedSequenceNumber?: (value: T) => void,
+        private readonly _virtualizeValue: (value: Readonly<T>) => T[],
+        _observeValue: (value: Readonly<T>) => void,
     ) {
         super();
 
@@ -43,7 +43,7 @@ class VirtualDeltaQueueProxy<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> 
                 if (event === "push" || event === "op") {
                     listener = (task: T) => {
                         // Let VirtualDeltaManager know it should update sequence number map (for inbound)
-                        _storeVirtualizedSequenceNumber?.(task);
+                        _observeValue(task);
 
                         // Emit event for each decomposed op as if that's how they were pushed to the DeltaQueue
                         this._virtualizeValue(task).forEach((it) => this.emit(event, it));
@@ -170,13 +170,14 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
 
         this._virtualizedOutbound = new VirtualDeltaQueueProxy(
             this.connectionManager.outbound,
-            (messages: IDocumentMessage[]) => {
+            (messages: Readonly<IDocumentMessage[]>) => {
                 const virtualizedMessages: IDocumentMessage[] = [];
                 for (const message of messages) {
                     this.ungroupAndVirtualizeDocumentMessage(message).forEach((it) => virtualizedMessages.push(it));
                 }
                 return [virtualizedMessages];
             },
+            () => {}, // empty callback (nothing to be done on observing new value)
         );
     }
 
@@ -202,7 +203,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
         super.connectHandler(connection);
     }
 
-    protected sendMessageToConnectionManager(messages: IDocumentMessage[]): void {
+    protected sendMessageToConnectionManager(messages: Readonly<IDocumentMessage[]>): void {
         // If we are sending a batch (more than one message), group the messages together into a single op
         if (messages.length >= 2) {
             // Note: we don't need to store clientSequenceNumber in the map since this op will be forgotten
@@ -220,7 +221,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
         }
     }
 
-    protected processMessage(message: ISequencedDocumentMessage, startTime: number): void {
+    protected processMessage(message: Readonly<ISequencedDocumentMessage>, startTime: number): void {
         for (const subMessage of this.ungroupAndVirtualizeSequencedMessage(message)) {
             super.processMessage(subMessage, startTime);
         }
@@ -244,7 +245,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
      * Will ungroup any "groupedBatch" SEQUENCED messages into their separate messages
      * Will virtualize all sequenceNumber properties as appropriate
      */
-    private ungroupAndVirtualizeSequencedMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
+    private ungroupAndVirtualizeSequencedMessage(message: Readonly<ISequencedDocumentMessage>): ISequencedDocumentMessage[] {
         if (message.type === GroupedBatchOpType) {
             const messages = message.contents as IDocumentMessage[];
             let groupSequenceNumber = this.virtualizeSequenceNumber(message.sequenceNumber) - messages.length + 1;
@@ -273,7 +274,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
      * Will ungroup any "groupedBatch" messages into their separate messages
      * Will virtualize all sequenceNumber properties as appropriate
      */
-    private ungroupAndVirtualizeDocumentMessage(message: IDocumentMessage): IDocumentMessage[] {
+    private ungroupAndVirtualizeDocumentMessage(message: Readonly<IDocumentMessage>): IDocumentMessage[] {
         if (message.type === GroupedBatchOpType) {
             const messages = message.contents as IDocumentMessage[];
 
@@ -296,7 +297,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
      * - update virtualSequenceNumber counter
      * - update the sequenceNumber map to store translation between "real" and "virtual" sequence numbers
      */
-    private storeVirtualizedSequenceNumbers(message: ISequencedDocumentMessage): void {
+    private storeVirtualizedSequenceNumbers(message: Readonly<ISequencedDocumentMessage>): void {
         if (message.type === GroupedBatchOpType) {
             this._virtualSequenceNumber += (message.contents as IDocumentMessage[]).length;
             this._sequenceNumberMap.set(message.sequenceNumber, this._virtualSequenceNumber); // We store last sequenceNumber of group
