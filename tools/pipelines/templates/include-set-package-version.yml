@@ -84,9 +84,8 @@ steps:
       script: |
         if [ -f "lerna.json" ]; then
           npx lerna exec prettier -- --check package.json
-        else
-          npx prettier --check package.json
         fi
+        npx prettier --check package.json
 
 - task: Bash@3
   name: SetVersion
@@ -170,6 +169,5 @@ steps:
       script: |
         if [ -f "lerna.json" ]; then
           npx lerna exec prettier -- --write package.json
-        else
-          npx prettier --write package.json
         fi
+        npx prettier --write package.json
