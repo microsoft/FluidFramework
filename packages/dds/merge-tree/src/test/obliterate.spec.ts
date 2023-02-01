@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { UnassignedSequenceNumber } from "../constants";
 import { MergeTreeDeltaType } from "../ops";
 import { TestClient } from "./testClient";
 import { insertText } from "./testUtils";
@@ -13,10 +12,13 @@ describe("obliterate", () => {
 	let client: TestClient;
 	let refSeq: number;
 	const localClientId = 17;
-	const remoteClientId = 18;
+	const remoteClientId = localClientId + 1;
 
 	beforeEach(() => {
-		client = new TestClient();
+		client = new TestClient({
+			mergeTreeUseNewLengthCalculations: true,
+			mergeTreeEnableObliterate: true,
+		});
 		client.startOrUpdateCollaboration("local");
 		for (const char of "hello world") {
 			client.applyMsg(
@@ -31,15 +33,7 @@ describe("obliterate", () => {
 	});
 
 	it("removes text", () => {
-		client.obliterateRange({
-			start: 0,
-			end: client.getLength(),
-			refSeq,
-			clientId: localClientId,
-			seq: refSeq + 1,
-			overwrite: false,
-			opArgs: undefined as any,
-		});
+		client.obliterateRangeLocal(0, client.getLength());
 		assert.equal(client.getText(), "");
 	});
 
@@ -161,15 +155,7 @@ describe("obliterate", () => {
 
 	describe("local obliterate with concurrent inserts", () => {
 		it("removes range when pending local obliterate op", () => {
-			client.obliterateRange({
-				start: 0,
-				end: "hello world".length,
-				refSeq,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as any,
-			});
+			client.obliterateRangeLocal(0, "hello world".length);
 			insertText({
 				mergeTree: client.mergeTree,
 				pos: 1,

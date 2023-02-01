@@ -17,7 +17,10 @@ describe("obliterate partial lengths", () => {
 
 	beforeEach(() => {
 		PartialSequenceLengths.options.verifier = verify;
-		client = new TestClient();
+		client = new TestClient({
+			mergeTreeUseNewLengthCalculations: true,
+			mergeTreeEnableObliterate: true,
+		});
 		client.startOrUpdateCollaboration("local");
 		for (const char of "hello world") {
 			client.applyMsg(
@@ -74,7 +77,10 @@ describe("obliterate partial lengths", () => {
 	});
 
 	it("is correct for different heights", () => {
-		client = new TestClient();
+		client = new TestClient({
+			mergeTreeUseNewLengthCalculations: true,
+			mergeTreeEnableObliterate: true,
+		});
 		client.startOrUpdateCollaboration("local");
 
 		for (let i = 0; i < 100; i++) {

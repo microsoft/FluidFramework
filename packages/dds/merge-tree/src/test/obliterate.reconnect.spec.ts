@@ -1402,8 +1402,6 @@ describe("obliterate", () => {
 		//    v-----v
 		// (D-(E-H-F)-G)-B-I-C-A
 
-		// issue appears to be E and F are being inserted into B's local obliterated(?)
-
 		helper.insertText("B", 0, "A");
 		helper.insertText("C", 0, "BC");
 		helper.insertText("B", 0, "DEFG");
@@ -1513,8 +1511,7 @@ describe("obliterate", () => {
 	});
 
 	// reduced from seed 174
-	// skipped for now -- only crashes during strict checks
-	it("...", () => {
+	it("overlapping obliterates", () => {
 		const helper = new ReconnectTestHelper();
 
 		// ABCDEF
@@ -1539,7 +1536,7 @@ describe("obliterate", () => {
 	});
 
 	// reduced from seed 174
-	it("...", () => {
+	it("overlapping obliterates", () => {
 		const helper = new ReconnectTestHelper();
 
 		// CDEF-AB
@@ -1592,8 +1589,8 @@ describe("obliterate", () => {
 
 		// I-H-BCDEFG-A
 		//            v------------v
-		//                v-------v
-		//                   v-v
+		//               v-------v
+		//                  v-v
 		// v-------------------------v
 		// [[I]-H-BCD-(E-(F-(J)-G))-A]
 
@@ -1911,9 +1908,13 @@ describe("obliterate", () => {
 			helper.removeRange("A", 14, 15); // seq: 19, len: 3
 			helper.insertText("B", 1, "x");
 			helper.processAllOps();
+
+			assert.equal(helper.clients.A.getText(), "rlxmntfdB");
+
 			helper.logger.validate();
 		});
 
+		// fails for incremental
 		it.skip("...", () => {
 			const helper = new ReconnectTestHelper();
 

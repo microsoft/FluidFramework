@@ -2319,7 +2319,8 @@ export class MergeTree {
 			if (
 				clientId !== segment.clientId &&
 				segment.seq !== undefined &&
-				((refSeq < segment.seq && segment.seq !== -1) || (seq !== -1 && segment.seq === -1))
+				seq !== -1 &&
+				((refSeq < segment.seq && segment.seq !== -1) || segment.seq === -1)
 			) {
 				segment.wasObliteratedOnInsert = true;
 			}
