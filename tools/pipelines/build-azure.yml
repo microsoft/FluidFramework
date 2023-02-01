@@ -108,14 +108,16 @@ extends:
       displayName: npm ci
       inputs:
         command: 'custom'
+        workingDir: azure
         customCommand: 'ci --ignore-scripts'
         customRegistry: 'useNpmrc'
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
       inputs:
         targetType: 'inline'
+        workingDirectory: azure
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure
-          cp azure/repo-package.json azure/packages/package.json
-          cp azure/repo-package-lock.json azure/packages/package-lock.json
+          cp repo-package.json packages/package.json
+          cp repo-package-lock.json packages/package-lock.json

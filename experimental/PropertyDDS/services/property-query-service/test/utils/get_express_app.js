@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const qs = require('qs');
+const qs = require("qs");
 
 // A limitation of Express 4 makes it that app.set has no effect
 // Once app.use was called at least once.
@@ -16,16 +16,16 @@ const qs = require('qs');
 // This is a small helper that configures the same query
 // parser in an express, for usage in MaterializedHistoryServer
 
-const express = require('express');
+const express = require("express");
 
 const getExpressApp = () => {
-  const app = express();
+    const app = express();
 
-  app.set('query parser', function(str) {
-    return qs.parse(str, { depth: 50 });
-  });
+    app.set("query parser", function (str) {
+        return qs.parse(str, { depth: 50 });
+    });
 
-  return app;
+    return app;
 };
 
 module.exports = getExpressApp;

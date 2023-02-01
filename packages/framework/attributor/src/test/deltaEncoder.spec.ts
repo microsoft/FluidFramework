@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { deltaEncoder } from "../encoders";
 
 describe("deltaEncoder", () => {
-	const cases: { name: string; data: number[]; expected: number[]; }[] = [
+	const cases: { name: string; data: number[]; expected: number[] }[] = [
 		{ name: "empty lists", data: [], expected: [] },
 		{ name: "lists of size 1", data: [5], expected: [5] },
 		{ name: "increasing numbers", data: [7, 19], expected: [7, 12] },

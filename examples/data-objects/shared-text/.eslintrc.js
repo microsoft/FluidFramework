@@ -4,10 +4,8 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid/minimal"),"prettier"
-    ],
-    "rules": {
-        "@typescript-eslint/prefer-optional-chain": "off",
-    },
-}
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	rules: {
+		"@typescript-eslint/prefer-optional-chain": "off",
+	},
+};

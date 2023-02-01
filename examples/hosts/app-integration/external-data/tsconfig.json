@@ -1,19 +1,10 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "outDir": "dist",
-        "jsx": "react",
-        "types": [
-            "jest",
-            "puppeteer",
-            "jest-environment-puppeteer",
-            "expect-puppeteer",
-            "react"
-        ]
-    },
-    "include": [
-        "src/**/*",
-        "tests/**/*"
-    ],
-    "lib": ["dom"]
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"outDir": "dist",
+		"jsx": "react",
+		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react"],
+	},
+	"include": ["src/**/*", "tests/**/*"],
+	"lib": ["dom"],
 }

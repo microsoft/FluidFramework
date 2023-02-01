@@ -4,28 +4,28 @@
  */
 
 module.exports = {
-    extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
-    parserOptions: {
-        project: ["./tsconfig.json"],
-    },
-    rules: {
-        // Disabled because they disagrees with React common patterns / best practices.
-        "@typescript-eslint/unbound-method": "off",
-        "unicorn/consistent-function-scoping": "off",
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json"],
+	},
+	rules: {
+		// Disabled because they disagrees with React common patterns / best practices.
+		"@typescript-eslint/unbound-method": "off",
+		"unicorn/consistent-function-scoping": "off",
 
-        // Disabled because they conflict with Prettier.
-        "unicorn/no-nested-ternary": "off",
-    },
-    overrides: [
-        {
-            // Overrides for test files
-            files: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/test/**"],
-            plugins: ["jest"],
-            extends: ["plugin:jest/recommended"],
-            rules: {
-                "import/no-nodejs-modules": "off",
-                "unicorn/prefer-module": "off",
-            },
-        },
-    ],
+		// Disabled because they conflict with Prettier.
+		"unicorn/no-nested-ternary": "off",
+	},
+	overrides: [
+		{
+			// Overrides for test files
+			files: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/test/**"],
+			plugins: ["jest"],
+			extends: ["plugin:jest/recommended"],
+			rules: {
+				"import/no-nodejs-modules": "off",
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
 };

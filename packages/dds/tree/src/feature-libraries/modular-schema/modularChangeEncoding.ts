@@ -4,21 +4,21 @@
  */
 
 import {
-    FieldKey,
-    FieldKindIdentifier,
-    GlobalFieldKey,
-    isGlobalFieldKey,
-    keyFromSymbol,
-    LocalFieldKey,
-    symbolFromKey,
+	FieldKey,
+	FieldKindIdentifier,
+	GlobalFieldKey,
+	isGlobalFieldKey,
+	keyFromSymbol,
+	LocalFieldKey,
+	symbolFromKey,
 } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
-    ChangesetLocalId,
-    FieldChangeMap,
-    ModularChangeset,
-    NodeChangeset,
-    ValueChange,
+	ChangesetLocalId,
+	FieldChangeMap,
+	ModularChangeset,
+	NodeChangeset,
+	ValueChange,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { getChangeHandler } from "./modularChangeFamily";
@@ -27,13 +27,13 @@ import { getChangeHandler } from "./modularChangeFamily";
  * Format for encoding as json.
  */
 interface EncodedNodeChangeset {
-    valueChange?: ValueChange;
-    fieldChanges?: EncodedFieldChangeMap;
+	valueChange?: ValueChange;
+	fieldChanges?: EncodedFieldChangeMap;
 }
 
 interface EncodedModularChangeset {
-    maxId?: ChangesetLocalId;
-    changes: EncodedFieldChangeMap;
+	maxId?: ChangesetLocalId;
+	changes: EncodedFieldChangeMap;
 }
 
 /**
@@ -47,125 +47,125 @@ interface EncodedModularChangeset {
 type EncodedFieldChangeMap = EncodedFieldChange[];
 
 interface EncodedFieldChange {
-    fieldKey: LocalFieldKey | GlobalFieldKey;
-    keyIsGlobal: boolean;
-    fieldKind: FieldKindIdentifier;
-    /**
-     * Encoded in format selected by `fieldKind`
-     */
-    change: JsonCompatibleReadOnly;
+	fieldKey: LocalFieldKey | GlobalFieldKey;
+	keyIsGlobal: boolean;
+	fieldKind: FieldKindIdentifier;
+	/**
+	 * Encoded in format selected by `fieldKind`
+	 */
+	change: JsonCompatibleReadOnly;
 }
 
 export function encodeForJsonFormat0(
-    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	change: ModularChangeset,
 ): EncodedModularChangeset & JsonCompatibleReadOnly {
-    return {
-        maxId: change.maxId,
-        changes: encodeFieldChangesForJson(fieldKinds, change.changes),
-    };
+	return {
+		maxId: change.maxId,
+		changes: encodeFieldChangesForJson(fieldKinds, change.changes),
+	};
 }
 
 function encodeFieldChangesForJson(
-    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    change: FieldChangeMap,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	change: FieldChangeMap,
 ): EncodedFieldChangeMap & JsonCompatibleReadOnly {
-    const encodedFields: EncodedFieldChangeMap & JsonCompatibleReadOnly = [];
-    for (const [field, fieldChange] of change) {
-        const encodedChange = getChangeHandler(
-            fieldKinds,
-            fieldChange.fieldKind,
-        ).encoder.encodeForJson(0, fieldChange.change, (childChange) =>
-            encodeNodeChangesForJson(fieldKinds, childChange),
-        );
+	const encodedFields: EncodedFieldChangeMap & JsonCompatibleReadOnly = [];
+	for (const [field, fieldChange] of change) {
+		const encodedChange = getChangeHandler(
+			fieldKinds,
+			fieldChange.fieldKind,
+		).encoder.encodeForJson(0, fieldChange.change, (childChange) =>
+			encodeNodeChangesForJson(fieldKinds, childChange),
+		);
 
-        const global = isGlobalFieldKey(field);
-        const fieldKey: LocalFieldKey | GlobalFieldKey = global ? keyFromSymbol(field) : field;
-        const encodedField: EncodedFieldChange = {
-            fieldKey,
-            keyIsGlobal: global,
-            fieldKind: fieldChange.fieldKind,
-            change: encodedChange,
-        };
+		const global = isGlobalFieldKey(field);
+		const fieldKey: LocalFieldKey | GlobalFieldKey = global ? keyFromSymbol(field) : field;
+		const encodedField: EncodedFieldChange = {
+			fieldKey,
+			keyIsGlobal: global,
+			fieldKind: fieldChange.fieldKind,
+			change: encodedChange,
+		};
 
-        encodedFields.push(encodedField);
-    }
+		encodedFields.push(encodedField);
+	}
 
-    return encodedFields;
+	return encodedFields;
 }
 
 function encodeNodeChangesForJson(
-    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    change: NodeChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	change: NodeChangeset,
 ): EncodedNodeChangeset & JsonCompatibleReadOnly {
-    const encodedChange: EncodedNodeChangeset & JsonCompatibleReadOnly = {};
-    if (change.valueChange !== undefined) {
-        encodedChange.valueChange = change.valueChange;
-    }
+	const encodedChange: EncodedNodeChangeset & JsonCompatibleReadOnly = {};
+	if (change.valueChange !== undefined) {
+		encodedChange.valueChange = change.valueChange;
+	}
 
-    if (change.fieldChanges !== undefined) {
-        const encodedFieldChanges = encodeFieldChangesForJson(fieldKinds, change.fieldChanges);
-        encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
-    }
+	if (change.fieldChanges !== undefined) {
+		const encodedFieldChanges = encodeFieldChangesForJson(fieldKinds, change.fieldChanges);
+		encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
+	}
 
-    return encodedChange;
+	return encodedChange;
 }
 
 export function decodeJsonFormat0(
-    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    change: JsonCompatibleReadOnly,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	change: JsonCompatibleReadOnly,
 ): ModularChangeset {
-    const encodedChange = change as unknown as EncodedModularChangeset;
-    const decoded: ModularChangeset = {
-        changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
-    };
-    if (encodedChange.maxId !== undefined) {
-        decoded.maxId = encodedChange.maxId;
-    }
-    return decoded;
+	const encodedChange = change as unknown as EncodedModularChangeset;
+	const decoded: ModularChangeset = {
+		changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
+	};
+	if (encodedChange.maxId !== undefined) {
+		decoded.maxId = encodedChange.maxId;
+	}
+	return decoded;
 }
 
 function decodeFieldChangesFromJson(
-    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    encodedChange: EncodedFieldChangeMap,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	encodedChange: EncodedFieldChangeMap,
 ): FieldChangeMap {
-    const decodedFields: FieldChangeMap = new Map();
-    for (const field of encodedChange) {
-        const fieldChangeset = getChangeHandler(fieldKinds, field.fieldKind).encoder.decodeJson(
-            0,
-            field.change,
-            (encodedChild) => decodeNodeChangesetFromJson(fieldKinds, encodedChild),
-        );
+	const decodedFields: FieldChangeMap = new Map();
+	for (const field of encodedChange) {
+		const fieldChangeset = getChangeHandler(fieldKinds, field.fieldKind).encoder.decodeJson(
+			0,
+			field.change,
+			(encodedChild) => decodeNodeChangesetFromJson(fieldKinds, encodedChild),
+		);
 
-        const fieldKey: FieldKey = field.keyIsGlobal
-            ? symbolFromKey(brand<GlobalFieldKey>(field.fieldKey))
-            : brand<LocalFieldKey>(field.fieldKey);
+		const fieldKey: FieldKey = field.keyIsGlobal
+			? symbolFromKey(brand<GlobalFieldKey>(field.fieldKey))
+			: brand<LocalFieldKey>(field.fieldKey);
 
-        decodedFields.set(fieldKey, {
-            fieldKind: field.fieldKind,
-            change: brand(fieldChangeset),
-        });
-    }
+		decodedFields.set(fieldKey, {
+			fieldKind: field.fieldKind,
+			change: brand(fieldChangeset),
+		});
+	}
 
-    return decodedFields;
+	return decodedFields;
 }
 
 function decodeNodeChangesetFromJson(
-    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    change: JsonCompatibleReadOnly,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	change: JsonCompatibleReadOnly,
 ): NodeChangeset {
-    const encodedChange = change as EncodedNodeChangeset;
-    const decodedChange: NodeChangeset = {};
-    if (encodedChange.valueChange !== undefined) {
-        decodedChange.valueChange = encodedChange.valueChange;
-    }
+	const encodedChange = change as EncodedNodeChangeset;
+	const decodedChange: NodeChangeset = {};
+	if (encodedChange.valueChange !== undefined) {
+		decodedChange.valueChange = encodedChange.valueChange;
+	}
 
-    if (encodedChange.fieldChanges !== undefined) {
-        decodedChange.fieldChanges = decodeFieldChangesFromJson(
-            fieldKinds,
-            encodedChange.fieldChanges,
-        );
-    }
+	if (encodedChange.fieldChanges !== undefined) {
+		decodedChange.fieldChanges = decodeFieldChangesFromJson(
+			fieldKinds,
+			encodedChange.fieldChanges,
+		);
+	}
 
-    return decodedChange;
+	return decodedChange;
 }

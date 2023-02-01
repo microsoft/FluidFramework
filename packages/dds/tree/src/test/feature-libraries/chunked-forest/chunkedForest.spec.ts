@@ -13,8 +13,8 @@ import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 
 testForest({
-    suiteName: "chunked-forest",
-    factory: () =>
-        buildChunkedForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
-    skipCursorErrorCheck: true,
+	suiteName: "chunked-forest",
+	factory: () =>
+		buildChunkedForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
+	skipCursorErrorCheck: true,
 });
