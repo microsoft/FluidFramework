@@ -223,16 +223,15 @@ describe("SequenceField - toDelta", () => {
 		assert.deepStrictEqual(actual, expected);
 	});
 
-	it("insert and modify => insert", () => {
+	it("insert and modify => InsertAndModify", () => {
 		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
-		const mark: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content: [
-				singleTextCursor({
-					type,
-					value: "1",
-				}),
-			],
+		const mark: Delta.InsertAndModify = {
+			type: Delta.MarkType.InsertAndModify,
+			content: singleTextCursor({
+				type,
+				value: 0,
+			}),
+			setValue: "1",
 		};
 		const expected: Delta.MarkList = [mark];
 		const actual = toDelta(changeset);
