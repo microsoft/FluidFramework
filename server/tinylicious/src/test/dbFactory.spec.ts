@@ -64,7 +64,7 @@ interface IConfigFactory {
  */
 function createTestDocument(
     tenantId: string,
-    documentId: string,
+    documentId: string
 ): ITestDocument {
     return {
         documentId,
@@ -78,7 +78,7 @@ function createTestDocument(
 function createTestDelta(
     tenantId: string,
     documentId: string,
-    sequenceNumber: number,
+    sequenceNumber: number
 ): ITestDelta {
     return {
         tenantId,
@@ -100,13 +100,15 @@ describe("Tinylicious", () => {
                             inMemory: true,
                         },
                     },
-                    dispose: async () => { },
+                    dispose: async () => {},
                 }),
             },
             {
                 name: "levelDb",
                 create: () => {
-                    const levelDir = fs.mkdtempSync(path.join(os.tmpdir(), "level-"));
+                    const levelDir = fs.mkdtempSync(
+                        path.join(os.tmpdir(), "level-")
+                    );
 
                     return {
                         value: {
@@ -120,7 +122,8 @@ describe("Tinylicious", () => {
                         },
                     };
                 },
-            });
+            }
+        );
 
         for (const configFactory of configFactories) {
             describe(configFactory.name, () => {
@@ -155,25 +158,44 @@ describe("Tinylicious", () => {
                     });
 
                     it("findAll - nonempty", async () => {
-                        const obj1 = createTestDocument(testTenantId, "document1");
-                        const obj2 = createTestDocument(testTenantId, "document2");
+                        const obj1 = createTestDocument(
+                            testTenantId,
+                            "document1"
+                        );
+                        const obj2 = createTestDocument(
+                            testTenantId,
+                            "document2"
+                        );
                         await c.insertOne(obj1);
                         await c.insertOne(obj2);
                         assert.deepStrictEqual(await c.findAll(), [obj1, obj2]);
                     });
 
                     it("findOne - missing", async () => {
-                        const obj = createTestDocument(testTenantId, testDocumentId);
+                        const obj = createTestDocument(
+                            testTenantId,
+                            testDocumentId
+                        );
                         await c.insertOne(obj);
                         assert.deepStrictEqual(
-                            await c.findOne({ tenantId: testTenantId, documentId: "missing" }),
-                            null);
+                            await c.findOne({
+                                tenantId: testTenantId,
+                                documentId: "missing",
+                            }),
+                            null
+                        );
                     });
 
                     it("findOne - present", async () => {
-                        const obj = createTestDocument(testTenantId, testDocumentId);
+                        const obj = createTestDocument(
+                            testTenantId,
+                            testDocumentId
+                        );
                         await c.insertOne(obj);
-                        const found = await c.findOne({ tenantId: testTenantId, documentId: testDocumentId });
+                        const found = await c.findOne({
+                            tenantId: testTenantId,
+                            documentId: testDocumentId,
+                        });
 
                         assert.deepStrictEqual(found, obj);
                     });
@@ -187,63 +209,93 @@ describe("Tinylicious", () => {
                     });
 
                     it("find/findOne - with range query", async () => {
-                        const obj = createTestDelta(testTenantId, testDocumentId, 5);
+                        const obj = createTestDelta(
+                            testTenantId,
+                            testDocumentId,
+                            5
+                        );
 
                         await c.insertOne(obj);
 
                         const queries = [
                             {
-                                "tenantId": testTenantId,
-                                "documentId": testDocumentId,
+                                tenantId: testTenantId,
+                                documentId: testDocumentId,
                                 "operation.sequenceNumber": 5,
                             },
                             {
-                                "tenantId": testTenantId,
-                                "documentId": testDocumentId,
+                                tenantId: testTenantId,
+                                documentId: testDocumentId,
                                 "operation.sequenceNumber": { $gt: 4 },
                             },
                             {
-                                "tenantId": testTenantId,
-                                "documentId": testDocumentId,
+                                tenantId: testTenantId,
+                                documentId: testDocumentId,
                                 "operation.sequenceNumber": { $lt: 6 },
                             },
                         ];
 
                         for (const query of queries) {
-                            assert.deepStrictEqual(await c.find(query, {}), [obj]);
+                            assert.deepStrictEqual(await c.find(query, {}), [
+                                obj,
+                            ]);
                             assert.deepStrictEqual(await c.findOne(query), obj);
                         }
                     });
 
                     it("find/findOne - multiple documents", async () => {
-                        const first = createTestDelta(testTenantId, testDocumentId, 1);
-                        const second = createTestDelta(testTenantId, testDocumentId, 2);
+                        const first = createTestDelta(
+                            testTenantId,
+                            testDocumentId,
+                            1
+                        );
+                        const second = createTestDelta(
+                            testTenantId,
+                            testDocumentId,
+                            2
+                        );
 
                         await c.insertOne(first);
                         await c.insertOne(second);
 
-                        const query = { tenantId: testTenantId, documentId: testDocumentId };
+                        const query = {
+                            tenantId: testTenantId,
+                            documentId: testDocumentId,
+                        };
 
-                        assert.deepStrictEqual(await c.find(query, {}), [first, second]);
+                        assert.deepStrictEqual(await c.find(query, {}), [
+                            first,
+                            second,
+                        ]);
                         assert.deepStrictEqual(await c.findOne(query), first);
                     });
 
                     it("find - with sort", async () => {
-                        const obj10 = createTestDelta(testTenantId, testDocumentId, 10);
-                        const obj15 = createTestDelta(testTenantId, testDocumentId, 15);
+                        const obj10 = createTestDelta(
+                            testTenantId,
+                            testDocumentId,
+                            10
+                        );
+                        const obj15 = createTestDelta(
+                            testTenantId,
+                            testDocumentId,
+                            15
+                        );
 
                         await c.insertOne(obj10);
                         await c.insertOne(obj15);
 
                         const query = {
-                            "tenantId": testTenantId,
-                            "documentId": testDocumentId,
+                            tenantId: testTenantId,
+                            documentId: testDocumentId,
                             "operation.sequenceNumber": { $gt: 4 },
                         };
 
                         assert.deepStrictEqual(
-                            await c.find(query, { "operation.sequenceNumber": 1 }),
-                            [obj10, obj15],
+                            await c.find(query, {
+                                "operation.sequenceNumber": 1,
+                            }),
+                            [obj10, obj15]
                         );
                     });
                 });

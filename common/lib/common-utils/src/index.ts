@@ -17,14 +17,14 @@ export { doIfNotDisposed } from "./disposal";
 export { EventForwarder } from "./eventForwarder";
 export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
 export {
-    Buffer,
-    bufferToString,
-    gitHashFile,
-    hashFile,
-    IsoBuffer,
-    performance,
-    stringToBuffer,
-    Uint8ArrayToString,
+	Buffer,
+	bufferToString,
+	gitHashFile,
+	hashFile,
+	IsoBuffer,
+	performance,
+	stringToBuffer,
+	Uint8ArrayToString,
 } from "./indexNode";
 export { Lazy } from "./lazy";
 export { BaseTelemetryNullLogger, TelemetryNullLogger } from "./logger";
@@ -35,12 +35,12 @@ export { IRange, IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
 export { RateLimiter } from "./rateLimiter";
 export { safelyParseJSON } from "./safeParser";
 export {
-    IPromiseTimer,
-    IPromiseTimerResult,
-    ITimer,
-    PromiseTimer,
-    setLongTimeout,
-    Timer,
+	IPromiseTimer,
+	IPromiseTimerResult,
+	ITimer,
+	PromiseTimer,
+	setLongTimeout,
+	Timer,
 } from "./timer";
 export { ITraceEvent, Trace } from "./trace";
 export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter";

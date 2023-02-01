@@ -4,9 +4,7 @@
  */
 
 class MockAsyncContext {
-    incrementInContext(key, count) {
-
-    }
+    incrementInContext(key, count) {}
 
     runInNewContext(callback) {
         return callback();

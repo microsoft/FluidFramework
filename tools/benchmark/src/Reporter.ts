@@ -32,7 +32,16 @@ import * as path from "path";
 import * as fs from "fs";
 import Benchmark from "benchmark";
 import Table from "easy-table";
-import { bold, geometricMean, italicize, pad, prettyNumber, green, red, yellow } from "./ReporterUtilities";
+import {
+    bold,
+    geometricMean,
+    italicize,
+    pad,
+    prettyNumber,
+    green,
+    red,
+    yellow,
+} from "./ReporterUtilities";
 
 interface BenchmarkResults {
     table: Table;
@@ -97,7 +106,10 @@ export class BenchmarkReporter {
      *
      * Tracking multiple suites at once is required due to nesting of suites.
      */
-    private readonly inProgressSuites: Map<string, BenchmarkResults> = new Map<string, BenchmarkResults>();
+    private readonly inProgressSuites: Map<string, BenchmarkResults> = new Map<
+        string,
+        BenchmarkResults
+    >();
 
     private readonly allBenchmarkPeriodsSeconds: number[] = [];
     private totalSumRuntimeSeconds = 0;
@@ -114,7 +126,9 @@ export class BenchmarkReporter {
         // If changing this or the result file logic in general,
         // be sure to update the glob used to look for output files in the perf pipeline.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        this.outputDirectory = outputDirectory ? path.resolve(outputDirectory) : path.join(__dirname, ".output");
+        this.outputDirectory = outputDirectory
+            ? path.resolve(outputDirectory)
+            : path.join(__dirname, ".output");
 
         if (!fs.existsSync(this.outputDirectory)) {
             fs.mkdirSync(this.outputDirectory, { recursive: true });
@@ -125,7 +139,11 @@ export class BenchmarkReporter {
      * Appends a prettified version of the results of a benchmark instance provided to the provided
      * BenchmarkResults object.
      */
-    public recordTestResult(suiteName: string, testName: string, benchmarkInstance: BenchmarkData): void {
+    public recordTestResult(
+        suiteName: string,
+        testName: string,
+        benchmarkInstance: BenchmarkData,
+    ): void {
         let results = this.inProgressSuites.get(suiteName);
         if (results === undefined) {
             results = { table: new Table(), benchmarksMap: new Map<string, BenchmarkData>() };
@@ -142,9 +160,18 @@ export class BenchmarkReporter {
         }
         table.cell("name", italicize(testName));
         if (!benchmarkInstance.aborted) {
-            const numIterations: number = benchmarkInstance.stats.sample.length * benchmarkInstance.count;
-            table.cell("period (ns/op)", prettyNumber(1e9 * benchmarkInstance.times.period, 1), Table.padLeft);
-            table.cell("relative margin of error", `±${benchmarkInstance.stats.rme.toFixed(2)}%`, Table.padLeft);
+            const numIterations: number =
+                benchmarkInstance.stats.sample.length * benchmarkInstance.count;
+            table.cell(
+                "period (ns/op)",
+                prettyNumber(1e9 * benchmarkInstance.times.period, 1),
+                Table.padLeft,
+            );
+            table.cell(
+                "relative margin of error",
+                `±${benchmarkInstance.stats.rme.toFixed(2)}%`,
+                Table.padLeft,
+            );
             table.cell("iterations", `${prettyNumber(numIterations, 0)}`, Table.padLeft);
             table.cell("samples", benchmarkInstance.stats.sample.length.toString(), Table.padLeft);
             table.cell("total time (s)", benchmarkInstance.times.elapsed.toFixed(2), Table.padLeft);
@@ -210,14 +237,21 @@ export class BenchmarkReporter {
         }
         this.overallSummaryTable.cell("status", pad(4) + statusSymbol);
         this.overallSummaryTable.cell("suite name", italicize(suiteName));
-        const geometricMeanString: string = prettyNumber(geometricMean(benchmarkPeriodsSeconds) * 1e9, 1);
+        const geometricMeanString: string = prettyNumber(
+            geometricMean(benchmarkPeriodsSeconds) * 1e9,
+            1,
+        );
         this.overallSummaryTable.cell("geometric mean (ns)", geometricMeanString, Table.padLeft);
         this.overallSummaryTable.cell(
             "# of passed tests",
             `${countSuccessful} out of ${benchmarksMap.size}`,
             Table.padLeft,
         );
-        this.overallSummaryTable.cell("total time (s)", `${prettyNumber(sumRuntime, 1)}`, Table.padLeft);
+        this.overallSummaryTable.cell(
+            "total time (s)",
+            `${prettyNumber(sumRuntime, 1)}`,
+            Table.padLeft,
+        );
         this.overallSummaryTable.newRow();
 
         // Update accumulators for overall totals
@@ -259,12 +293,17 @@ export class BenchmarkReporter {
         console.log(`\n${this.overallSummaryTable.toString()}`);
         if (countFailure > 0) {
             console.log(
-                `* ${countFailure} benchmark${countFailure > 1 ? "s" : ""} failed. This will skew the geometric mean.`,
+                `* ${countFailure} benchmark${
+                    countFailure > 1 ? "s" : ""
+                } failed. This will skew the geometric mean.`,
             );
         }
     }
 
-    private writeCompletedBenchmarks(suiteName: string, benchmarks: Map<string, BenchmarkData>): string {
+    private writeCompletedBenchmarks(
+        suiteName: string,
+        benchmarks: Map<string, BenchmarkData>,
+    ): string {
         const outputFriendlyBenchmarks: unknown[] = [];
         // Filter successful benchmarks and ready them for output to file
         const successful = Benchmark.filter(Array.from(benchmarks.values()), "successful");
@@ -312,7 +351,9 @@ export class BenchmarkReporter {
      * The Benchmark.Stats object contains a lot of data we don't need and also has vague names,
      * so this method extracts the necessary data and provides friendlier names.
      */
-    private outputFriendlyObjectFromStats(benchmarkStats: Benchmark.Stats): Record<string, unknown> {
+    private outputFriendlyObjectFromStats(
+        benchmarkStats: Benchmark.Stats,
+    ): Record<string, unknown> {
         const obj = {
             marginOfError: benchmarkStats.moe,
             relatedMarginOfError: benchmarkStats.rme,

@@ -12,32 +12,28 @@ export const tableModelType = "@fluid-example/table-view";
 const matrixKey = "matrixKey";
 
 export class TableModel extends DataObject {
-    public static getFactory() { return factory; }
+	public static getFactory() {
+		return factory;
+	}
 
-    private _tableMatrix: SharedMatrix | undefined;
-    public get tableMatrix() {
-        if (this._tableMatrix === undefined) {
-            throw new Error("Table matrix not fully initialized");
-        }
-        return this._tableMatrix;
-    }
+	private _tableMatrix: SharedMatrix | undefined;
+	public get tableMatrix() {
+		if (this._tableMatrix === undefined) {
+			throw new Error("Table matrix not fully initialized");
+		}
+		return this._tableMatrix;
+	}
 
-    protected async initializingFirstTime() {
-        const matrix = SharedMatrix.create(this.runtime);
-        this.root.set(matrixKey, matrix.handle);
-        matrix.insertRows(0, 5);
-        matrix.insertCols(0, 8);
-    }
+	protected async initializingFirstTime() {
+		const matrix = SharedMatrix.create(this.runtime);
+		this.root.set(matrixKey, matrix.handle);
+		matrix.insertRows(0, 5);
+		matrix.insertCols(0, 8);
+	}
 
-    protected async hasInitialized(): Promise<void> {
-        this._tableMatrix = await this.root.get<IFluidHandle<SharedMatrix>>(matrixKey)?.get();
-    }
+	protected async hasInitialized(): Promise<void> {
+		this._tableMatrix = await this.root.get<IFluidHandle<SharedMatrix>>(matrixKey)?.get();
+	}
 }
 
-const factory = new DataObjectFactory(
-    tableModelType,
-    TableModel,
-    [
-        SharedMatrix.getFactory(),
-    ],
-    {});
+const factory = new DataObjectFactory(tableModelType, TableModel, [SharedMatrix.getFactory()], {});
