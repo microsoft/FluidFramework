@@ -21,6 +21,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	JsonableTree,
 	mapCursorField,
+	mapCursorFields,
 	moveToDetachedField,
 	rootFieldKeySymbol,
 	TransactionResult,
@@ -52,7 +53,8 @@ describe("ChunkedForest", () => {
 		skipCursorErrorCheck: true,
 	});
 
-	it.skip("can abandon a transaction", () => {
+    // TODO: Unskip once BasicChunk implements [cursorChunk]
+	it.skip("doesn't copy data when capturing and restoring repair data", () => {
 		const initialState: JsonableTree = {
 			type: brand("Node"),
 			fields: {
@@ -73,7 +75,17 @@ describe("ChunkedForest", () => {
 			anchors,
 		);
 		editManager.initSessionId(uuid());
-		const chunk = chunkTree(singleTextCursor(initialState));
+		const cursor = singleTextCursor(initialState);
+		const chunk = new TestChunk(
+			cursor.type,
+			new Map(
+				mapCursorFields(cursor, () => [
+					cursor.getFieldKey(),
+					mapCursorField(cursor, () => chunkTree(cursor)),
+				]),
+			),
+			cursor.value,
+		);
 		const chunkCursor = chunk.cursor();
 		chunkCursor.firstNode();
 		initializeForest(forest, [chunkCursor]);
@@ -88,7 +100,7 @@ describe("ChunkedForest", () => {
 		};
 
 		assert(chunk.isShared(), "chunk should be shared after forest initialization");
-		assert((chunk as any as BasicChunk).referenceCount === 2);
+		assert.equal(chunk.referenceCount, 2);
 
 		runSynchronousTransaction(checkout, (_, editor) => {
 			const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
@@ -101,7 +113,7 @@ describe("ChunkedForest", () => {
 			chunk.isShared(),
 			"chunk should be shared after storing as repair data and reinserting",
 		);
-		assert((chunk as any as BasicChunk).referenceCount === 3);
+		assert.equal(chunk.referenceCount, 4);
 
 		const readCursor = forest.allocateCursor();
 		moveToDetachedField(forest, readCursor);
@@ -110,3 +122,12 @@ describe("ChunkedForest", () => {
 		assert.deepEqual(actual, [initialState]);
 	});
 });
+
+class TestChunk extends BasicChunk {
+	public referenceCount: number = 1;
+
+	public referenceAdded(): void {
+		super.referenceAdded();
+		this.referenceCount++;
+	}
+}
