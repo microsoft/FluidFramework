@@ -4,7 +4,11 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import {
+	AttributionKey,
+	OpAttributionKey,
+	DetachedAttributionKey,
+} from "@fluidframework/runtime-definitions";
 import { ISegment } from "./mergeTreeNodes";
 
 export interface SerializedAttributionCollection {
@@ -14,7 +18,7 @@ export interface SerializedAttributionCollection {
 	 * between offsets 0 and 3 was inserted at seq 45 and the section of the string between
 	 * 3 and the length of the string was inserted at seq 46.
 	 */
-	seqs: number[];
+	seqs: (number | AttributionKey)[];
 	posBreakpoints: number[];
 	/* Total length; only necessary for validation */
 	length: number;
@@ -53,16 +57,19 @@ export interface IAttributionCollection<T> {
 	clone(): IAttributionCollection<T>;
 }
 
-function areEqualAttributionKeys(a: AttributionKey, b: AttributionKey): boolean {
+export function areEqualAttributionKeys(a: AttributionKey, b: AttributionKey): boolean {
 	if (a.type !== b.type) {
 		return false;
 	}
 
+	// Note: TS can't narrow the type of b inside this switch statement, hence the need for casting.
 	switch (a.type) {
 		case "op":
-			return a.seq === b.seq;
+			return a.seq === (b as OpAttributionKey).seq;
+		case "detached":
+			return a.id === (b as DetachedAttributionKey).id;
 		default:
-			unreachableCase(a.type, "Unhandled AttributionKey type");
+			unreachableCase(a, "Unhandled AttributionKey type");
 	}
 }
 
@@ -158,7 +165,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 		for (const segment of segments) {
 			const attribution = new AttributionCollection(
-				{ type: "op", seq: currentInfo },
+				typeof currentInfo === "object" ? currentInfo : { type: "op", seq: currentInfo },
 				segment.cachedLength,
 			);
 			while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
@@ -166,7 +173,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				const nextOffset = posBreakpoints[curIndex] - cumulativeSegPos;
 				if (attribution.offsets[attribution.offsets.length - 1] !== nextOffset) {
 					attribution.offsets.push(nextOffset);
-					attribution.keys.push({ type: "op", seq: currentInfo });
+					attribution.keys.push(
+						typeof currentInfo === "object"
+							? currentInfo
+							: { type: "op", seq: currentInfo },
+					);
 				}
 				curIndex++;
 			}
@@ -190,7 +201,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		}>,
 	): SerializedAttributionCollection {
 		const posBreakpoints: number[] = [];
-		const seqs: number[] = [];
+		const seqs: (number | AttributionKey)[] = [];
 		let mostRecentAttributionKey: AttributionKey | undefined;
 		let cumulativePos = 0;
 
@@ -205,7 +216,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
-						seqs.push(key.seq);
+						seqs.push(key.type === "op" ? key.seq : key);
 					}
 					mostRecentAttributionKey = key;
 				}
