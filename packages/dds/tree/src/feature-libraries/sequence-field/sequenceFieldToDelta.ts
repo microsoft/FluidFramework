@@ -25,10 +25,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 	reviver: NodeReviver,
 ): Delta.FieldChanges {
 	const markList = new OffsetListFactory<Delta.Mark>();
-	const beforeShallow: Delta.NestedChange[] = [];
-	const afterShallow: Delta.NestedChange[] = [];
-	let inputIndex = 0;
-	let outputIndex = 0;
 	for (const mark of marks) {
 		if (isSkipMark(mark)) {
 			markList.pushOffset(mark);
@@ -42,12 +38,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						content: mark.content.map(singleTextCursor),
 					};
 					markList.pushContent(insertMark);
-					if (mark.changes !== undefined) {
-						const childDelta = deltaFromChild(mark.changes, undefined);
-						if (childDelta !== undefined) {
-							afterShallow.push({ index: outputIndex, ...childDelta });
-						}
-					}
 					break;
 				}
 				case "MoveIn":
@@ -61,10 +51,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Modify": {
-					const childDelta = deltaFromChild(mark.changes, inputIndex);
-					if (childDelta !== undefined) {
-						beforeShallow.push({ index: inputIndex, ...childDelta });
-					}
 					break;
 				}
 				case "Delete": {
@@ -73,12 +59,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						count: mark.count,
 					};
 					markList.pushContent(deleteMark);
-					if (mark.changes !== undefined) {
-						const childDelta = deltaFromChild(mark.changes, inputIndex);
-						if (childDelta !== undefined) {
-							beforeShallow.push({ index: inputIndex, ...childDelta });
-						}
-					}
 					break;
 				}
 				case "MoveOut":
@@ -89,12 +69,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						count: mark.count,
 					};
 					markList.pushContent(moveMark);
-					if (mark.changes !== undefined) {
-						const childDelta = deltaFromChild(mark.changes, inputIndex);
-						if (childDelta !== undefined) {
-							beforeShallow.push({ index: inputIndex, ...childDelta });
-						}
-					}
 					break;
 				}
 				case "Revive": {
@@ -113,14 +87,48 @@ export function sequenceFieldToDelta<TNodeChange>(
 					} else if (mark.lastDetachedBy === undefined) {
 						markList.pushOffset(mark.count);
 					}
+					break;
+				}
+				default:
+					unreachableCase(type);
+			}
+		}
+	}
+
+	const beforeShallow: Delta.NestedChange[] = [];
+	const afterShallow: Delta.NestedChange[] = [];
+	let inputIndex = 0;
+	let outputIndex = 0;
+	for (const mark of marks) {
+		if (!isSkipMark(mark)) {
+			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
+			const type = mark.type;
+			switch (type) {
+				case "Modify":
+				case "Delete":
+				case "MoveOut":
+				case "ReturnFrom": {
 					if (mark.changes !== undefined) {
-						const childDelta = deltaFromChild(mark.changes, outputIndex);
+						const childDelta = deltaFromChild(mark.changes, inputIndex);
+						if (childDelta !== undefined) {
+							beforeShallow.push({ index: inputIndex, ...childDelta });
+						}
+					}
+					break;
+				}
+				case "Revive":
+				case "Insert": {
+					if (mark.changes !== undefined) {
+						const childDelta = deltaFromChild(mark.changes, undefined);
 						if (childDelta !== undefined) {
 							afterShallow.push({ index: outputIndex, ...childDelta });
 						}
 					}
 					break;
 				}
+				case "MoveIn":
+				case "ReturnTo":
+					break;
 				default:
 					unreachableCase(type);
 			}
@@ -128,11 +136,12 @@ export function sequenceFieldToDelta<TNodeChange>(
 		outputIndex += getOutputLength(mark);
 		inputIndex += getInputLength(mark);
 	}
+
 	const fieldChanges: Mutable<Delta.FieldChanges> = {};
 	if (beforeShallow.length > 0) {
 		fieldChanges.beforeShallow = beforeShallow;
 	}
-	if (markList.list.length) {
+	if (markList.list.length > 0) {
 		fieldChanges.shallow = markList.list;
 	}
 	if (afterShallow.length > 0) {

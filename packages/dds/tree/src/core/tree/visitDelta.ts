@@ -174,6 +174,10 @@ function firstPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 		}
 	}
 
+	// While processing the `afterShallow` we have to translate each `NestedChange.index` into the corresponding
+	// index for the visitor. Those are not the same because the first pass doesn't apply move-in shallow changes.
+	// While processing the shallow changes, the `moveInGaps` array gets populated with the relevant offsets for us
+	// to make this index adjustment below.
 	let iMoveInGap = 0;
 	let missingMoveIns = 0;
 	for (const nodeChange of delta.afterShallow ?? []) {
@@ -193,9 +197,20 @@ function firstPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 }
 
 function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
-	const before: readonly Delta.NestedChange[] = delta.beforeShallow ?? [];
+	const processBeforeChanges = (() => {
+		const before: readonly Delta.NestedChange[] = delta.beforeShallow ?? [];
+		let iNested = 0;
+		return (visit: boolean, maxIndex: number): void => {
+			while (iNested < before.length && before[iNested].index < maxIndex) {
+				if (visit) {
+					const adjustedIndex = index - (inputContextIndex - before[iNested].index);
+					visitModify(adjustedIndex, before[iNested], visitor, secondPass);
+				}
+				iNested += 1;
+			}
+		};
+	})();
 	const after: readonly Delta.NestedChange[] = delta.afterShallow ?? [];
-	let iNested = 0;
 	let inputContextIndex = 0;
 	let index = 0;
 	const shallow = delta.shallow ?? [];
@@ -204,11 +219,7 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 			// Untouched nodes
 			index += mark;
 			inputContextIndex += mark;
-			while (iNested < before.length && before[iNested].index < inputContextIndex) {
-				const adjustedIndex = index - (inputContextIndex - before[iNested].index);
-				visitModify(adjustedIndex, before[iNested], visitor, secondPass);
-				iNested += 1;
-			}
+			processBeforeChanges(true, inputContextIndex);
 		} else {
 			// Inline into the `switch(...)` once we upgrade to TS 4.7
 			const type = mark.type;
@@ -217,9 +228,7 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 				case Delta.MarkType.MoveOut:
 					// Handled in the first pass
 					inputContextIndex += mark.count;
-					while (iNested < before.length && before[iNested].index < inputContextIndex) {
-						iNested += 1;
-					}
+					processBeforeChanges(false, inputContextIndex);
 					break;
 				case Delta.MarkType.Insert:
 					// Handled in the first pass
@@ -235,11 +244,7 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 			}
 		}
 	}
-	while (iNested < before.length) {
-		const adjustedIndex = index - (inputContextIndex - before[iNested].index);
-		visitModify(adjustedIndex, before[iNested], visitor, secondPass);
-		iNested += 1;
-	}
+	processBeforeChanges(true, Number.POSITIVE_INFINITY);
 	for (const nodeChange of after) {
 		visitModify(nodeChange.index, nodeChange, visitor, secondPass);
 	}

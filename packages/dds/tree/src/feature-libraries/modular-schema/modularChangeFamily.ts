@@ -371,13 +371,16 @@ export class ModularChangeFamily
 	}
 
 	private deltaFromNodeChange(
-		change: NodeChangeset,
+		{ valueChange, fieldChanges }: NodeChangeset,
 		repairStore: ReadonlyRepairDataStore,
 		path?: UpPath,
 	): Delta.NodeChanges | undefined {
+		if (valueChange === undefined && fieldChanges === undefined) {
+			return undefined;
+		}
+
 		const modify: Mutable<Delta.NodeChanges> = {};
 
-		const valueChange = change.valueChange;
 		if (valueChange !== undefined) {
 			if ("revert" in valueChange) {
 				assert(
@@ -394,10 +397,8 @@ export class ModularChangeFamily
 			}
 		}
 
-		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairStore, path);
-		} else if (!Object.prototype.hasOwnProperty.call(modify, "setValue")) {
-			return undefined;
+		if (fieldChanges !== undefined) {
+			modify.fields = this.intoDeltaImpl(fieldChanges, repairStore, path);
 		}
 
 		return modify;
