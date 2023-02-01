@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IAudience,
 	IContainerContext,
@@ -47,6 +46,16 @@ import { UsageError } from "@fluidframework/container-utils";
 import { Container } from "./container";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
+
+/**
+ * Events that {@link ContainerContext} can emit through its lifecycle.
+ *
+ * "runtimeInstantiated" - When an {@link @fluidframework/container-definitions#IRuntime} has been instantiated (by
+ * calling instantiateRuntime() on the runtime factory), and this._runtime is set.
+ *
+ * "disposed" - When its dispose() method is called. The {@link ContainerContext} is no longer usable at that point.
+ */
+type ContextLifecycleEvents = "runtimeInstantiated" | "disposed";
 
 export class ContainerContext implements IContainerContext {
 	public static async createOrLoad(
@@ -204,7 +213,7 @@ export class ContainerContext implements IContainerContext {
 	 * Emits events about the container context's lifecycle.
 	 * Use it to coordinate things inside the ContainerContext class.
 	 */
-	private readonly lifecycleEvents = new EventEmitter();
+	private readonly lifecycleEvents = new TypedEventEmitter<ContextLifecycleEvents>();
 
 	constructor(
 		private readonly container: Container,
