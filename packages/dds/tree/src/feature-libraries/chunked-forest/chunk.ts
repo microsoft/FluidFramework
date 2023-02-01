@@ -55,35 +55,35 @@ export interface TreeChunk extends ReferenceCounted {
  * Base class to assist with implementing ReferenceCounted
  */
 export abstract class ReferenceCountedBase implements ReferenceCounted {
-    private refCount: number = 1;
+	private refCount: number = 1;
 
-    /**
-     * Exposed for testing.
-     */
-    public get referenceCount(): number {
-        return this.refCount;
-    }
+	/**
+	 * Exposed for testing.
+	 */
+	public get referenceCount(): number {
+		return this.refCount;
+	}
 
-    public referenceAdded(): void {
-        this.refCount++;
-    }
+	public referenceAdded(): void {
+		this.refCount++;
+	}
 
-    public referenceRemoved(): void {
-        this.refCount--;
-        assert(this.refCount >= 0, 0x4c4 /* Negative ref count */);
-        if (this.refCount === 0) {
-            this.dispose();
-        }
-    }
+	public referenceRemoved(): void {
+		this.refCount--;
+		assert(this.refCount >= 0, 0x4c4 /* Negative ref count */);
+		if (this.refCount === 0) {
+			this.dispose();
+		}
+	}
 
-    public isShared(): boolean {
-        return this.refCount > 1;
-    }
+	public isShared(): boolean {
+		return this.refCount > 1;
+	}
 
-    /**
-     * Called when refcount reaches 0.
-     */
-    protected abstract dispose(): void;
+	/**
+	 * Called when refcount reaches 0.
+	 */
+	protected abstract dispose(): void;
 }
 
 /**

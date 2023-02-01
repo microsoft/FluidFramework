@@ -351,5 +351,5 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
  * TODO: #1404: Handle this properly for partial data loading support.
  */
 export function castCursorToSynchronous(cursor: ITreeCursor): ITreeCursorSynchronous {
-    return cursor as ITreeCursorSynchronous;
+	return cursor as ITreeCursorSynchronous;
 }

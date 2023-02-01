@@ -7,7 +7,7 @@ export { Anchor, AnchorLocator, AnchorSet } from "./anchorSet";
 export {
 	ITreeCursor,
 	CursorLocationType,
-    castCursorToSynchronous,
+	castCursorToSynchronous,
 	mapCursorField,
 	mapCursorFields,
 	forEachNode,

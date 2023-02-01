@@ -5,27 +5,27 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    castCursorToSynchronous,
-    Delta,
-    EmptyKey,
-    FieldKey,
-    getDescendant,
-    IForestSubscription,
-    ITreeCursorSynchronous,
-    keyAsDetachedField,
-    moveToDetachedField,
-    RepairDataStore,
-    RevisionTag,
-    SparseNode,
-    UpPath,
-    Value,
+	castCursorToSynchronous,
+	Delta,
+	EmptyKey,
+	FieldKey,
+	getDescendant,
+	IForestSubscription,
+	ITreeCursorSynchronous,
+	keyAsDetachedField,
+	moveToDetachedField,
+	RepairDataStore,
+	RevisionTag,
+	SparseNode,
+	UpPath,
+	Value,
 } from "../core";
 import { unreachableCase } from "../util";
 import { chunkTree, TreeChunk } from "./chunked-forest";
 
 interface RepairData {
-    value?: Map<RevisionTag, Value>;
-    node?: Map<RevisionTag, TreeChunk>;
+	value?: Map<RevisionTag, Value>;
+	node?: Map<RevisionTag, TreeChunk>;
 }
 type RepairDataNode = SparseNode<RepairData | undefined>;
 
@@ -132,7 +132,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 				const fork = cursor.fork();
 				const index = startIndex + i;
 				fork.enterNode(index);
-                const nodeData = chunkTree(castCursorToSynchronous(fork));
+				const nodeData = chunkTree(castCursorToSynchronous(fork));
 				fork.free();
 				const child = parent.getOrCreateChild(key, index, repairDataFactory);
 				if (child.data === undefined) {
@@ -170,9 +170,9 @@ export class ForestRepairDataStore implements RepairDataStore {
 			const repair = node.data?.node?.get(revision);
 			assert(repair !== undefined, 0x47d /* No repair data found */);
 			const cursor = repair.cursor();
-            assert(cursor.getFieldLength() === 1, "only one node should have been chunked");
-            cursor.firstNode();
-            return cursor;
+			assert(cursor.getFieldLength() === 1, "only one node should have been chunked");
+			cursor.firstNode();
+			return cursor;
 		});
 	}
 
