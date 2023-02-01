@@ -21,7 +21,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions } from "./loader";
+import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
@@ -93,15 +93,17 @@ export interface IRuntime extends IDisposable {
 	getPendingLocalState(): unknown;
 
 	/**
-	 * Get pending local state in a serializable format to be given back to a newly loaded container
+	 * Notify runtime that container is moving to "Attaching" state
+	 * @param snapshot - snapshot created at attach time
+	 * @deprecated - not necessary after op replay moved to Container
 	 */
-	getPendingLocalState(): unknown;
+	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 
 	/**
 	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
 	 * stashed ops) after having processed it.
 	 */
-	notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
+	notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
 }
 
 /**
