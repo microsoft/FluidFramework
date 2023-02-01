@@ -1,90 +1,90 @@
 .ink-component-root {
-    width: 100%;
-    height: 100%;
-    /* Set a minimum usable size for the component, we won't tolerate anything smaller */
-    min-width: 300px;
-    min-height: 300px;
-    /* Absolute at the root so we don't inadvertently stretch our container element */
-    position: absolute;
+	width: 100%;
+	height: 100%;
+	/* Set a minimum usable size for the component, we won't tolerate anything smaller */
+	min-width: 300px;
+	min-height: 300px;
+	/* Absolute at the root so we don't inadvertently stretch our container element */
+	position: absolute;
 }
 
 .ink-surface {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
 
 .ink-canvas {
-    flex-grow: 1;
-    /* Save 50 px for the toolbar */
-    max-height: calc(100% - 50px);
-    background-color: #000;
-    touch-action: none;
+	flex-grow: 1;
+	/* Save 50 px for the toolbar */
+	max-height: calc(100% - 50px);
+	background-color: #000;
+	touch-action: none;
 }
 
 .ink-toolbar {
-    width: 100%;
-    height: 50px;
-    background-color: #222;
-    display: inline-flex;
+	width: 100%;
+	height: 50px;
+	background-color: #222;
+	display: inline-flex;
 }
 
 .ink-toolbar-button {
-    width: 50px;
-    height: 50px;
-    background-color: white;
-    background-size: 50%;
-    background-repeat: no-repeat;
-    background-position: center;
-    border: none;
-    border-radius: 0;
-    position: relative;
+	width: 50px;
+	height: 50px;
+	background-color: white;
+	background-size: 50%;
+	background-repeat: no-repeat;
+	background-position: center;
+	border: none;
+	border-radius: 0;
+	position: relative;
 }
 
 .ink-toolbar-button:hover {
-    background-color: orangered;
+	background-color: orangered;
 }
 
 .ink-toolbar-button:focus {
-    outline: none;
+	outline: none;
 }
 
 .ink-toolbar-button:focus:before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    bottom: 2px;
-    left: 2px;
-    right: 2px;
-    border: 2px solid black;
+	content: "";
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	left: 2px;
+	right: 2px;
+	border: 2px solid black;
 }
 
 .fluid-icon-pencil {
-    background-image: url("../images/icons/Edit.svg");
+	background-image: url("../images/icons/Edit.svg");
 }
 
 .fluid-icon-replay {
-    background-image: url("../images/icons/PlaybackRate1x.svg");
+	background-image: url("../images/icons/PlaybackRate1x.svg");
 }
 
 .fluid-icon-cross {
-    background-image: url("../images/icons/Cancel.svg");
+	background-image: url("../images/icons/Cancel.svg");
 }
 
 .ink-color-picker {
-    width: 100px;
-    position: absolute;
-    bottom: 50px;
-    display: none;
-    flex-direction: column;
+	width: 100px;
+	position: absolute;
+	bottom: 50px;
+	display: none;
+	flex-direction: column;
 }
 
 .ink-color-picker.show {
-    display: flex;
+	display: flex;
 }
 
 .ink-color-option {
-    width: 100%;
-    height: 25px;
-    border: none;
+	width: 100%;
+	height: 25px;
+	border: none;
 }

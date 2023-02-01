@@ -95,7 +95,8 @@ cd FluidFramework
 Run the following to build the client packages:
 
 ```shell
-npm install
+npm i -g pnpm
+pnpm install
 npm run build:fast
 ```
 
@@ -185,7 +186,35 @@ Then:
 -   `npm run start:tinylicious`
 -   Browse to <http://localhost:8080,> copy the full URL you're redirected to, and open in a second window to collaborate
 
+## Tools
+
+### Prettier
+
+This repository uses [prettier](https://prettier.io/) as its code formatter.
+Right now, this is implemented on a per-package basis, with a [shared base configuration](./common/build/build-common/prettier.config.cjs).
+
+To run `prettier` on your code, run `npm run format` from the appropriate package or release group.
+
+* To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the script argument (e.g. `fluid-build -s format`).
+
+To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
+
+#### VSCode Options
+
+Our [workspace configuration](./.vscode/settings.json) specifies `prettier` as the default formatter.
+Please do not change this.
+
+It is not configured to do any formatting automatically, however.
+This is intentional, to ensure that each developer can work formatting into their workflow as they see fit.
+If you wish to configure your setup to format on save/paste/etc., please feel free to update your [user preferences](https://code.visualstudio.com/docs/getstarted/settings) to do so.
+
 ## Contributing
+
+<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=FALSE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 
@@ -194,14 +223,15 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the
-[Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact
-[opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these
-trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks). Use of
-Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft
-sponsorship.
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

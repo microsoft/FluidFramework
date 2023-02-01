@@ -5,13 +5,12 @@
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
-    OdspResourceTokenFetchOptions,
-    TokenFetcher,
-    IPersistedCache,
-    HostStoragePolicy,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
+	IPersistedCache,
+	HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
-import { getSocketIo } from "./getSocketIo";
 // eslint-disable-next-line import/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory";
 
@@ -20,22 +19,18 @@ import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocu
  * use the sharepoint implementation.
  */
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-    constructor(
-        getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-        getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-        persistedCache?: IPersistedCache,
-        hostPolicy?: HostStoragePolicy,
-    ) {
-        super(
-            getStorageToken,
-            getWebsocketToken,
-            async () => getSocketIo(),
-            persistedCache,
-            hostPolicy,
-        );
-    }
+	constructor(
+		getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+		getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
+		persistedCache?: IPersistedCache,
+		hostPolicy?: HostStoragePolicy,
+	) {
+		super(getStorageToken, getWebsocketToken, persistedCache, hostPolicy);
+	}
 }
 
-export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory {
-    return new LocalOdspDocumentServiceFactory(localSnapshot);
+export function createLocalOdspDocumentServiceFactory(
+	localSnapshot: Uint8Array | string,
+): IDocumentServiceFactory {
+	return new LocalOdspDocumentServiceFactory(localSnapshot);
 }

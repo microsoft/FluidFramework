@@ -1,7 +1,7 @@
 # @fluid-tools/fetch-tool
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
-In order to connect to ODSP, the clientID and clientSecret must be set as environment variables login__microsoft__clientId and login__microsoft__secret, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
+In order to connect to ODSP, the clientID and clientSecret must be set as environment variables login**microsoft**clientId and login**microsoft**secret, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 Beware that to use fetch-tool on documents in the Microsoft tenant, you will need to follow the fetch tool usage instructions on the "Debugging Tools" page of the internal Fluid wiki.
 
 ## Usage
@@ -27,17 +27,17 @@ Beware that to use fetch-tool on documents in the Microsoft tenant, you will nee
 
 ### Tips
 
-- If not done already run `npm run build`
-- Example command - run `node bin/fluid-fetch --saveDir example 'URL'` in the `fetch-tool` directory
-  - An example URL is something from office.com that looks like `https://www.office.com/launch/fluid/...`
-  - This command creates an `example` directory (if it doesn't exist) in the `fetch-tool` folder.
-  - If run multiple times without clearing the `example` directory, the snapshot will overwrite any old folders or files.
-- Looking at the `example` directory:
-  - Go to `1-XYZ/decoded/tree.json` to see the snapshot tree.
-  - Each `'#-XYZ'` string in the `tree.json` correlates to a file in the decoded folder. These files are essentially blobs.
-  - `0-XYZ/decoded/tree.json` is an older snapshot tree.
-  - The `messages.json` is a list of ops/messages that are stored.
-- For 401 authentication errors, as stated above, check that [getkeys](../../../tools/getkeys) has been run.
+-   If not done already run `npm run build`
+-   Example command - run `node bin/fluid-fetch --saveDir example 'URL'` in the `fetch-tool` directory
+    -   An example URL is something from office.com that looks like `https://www.office.com/launch/fluid/...`
+    -   This command creates an `example` directory (if it doesn't exist) in the `fetch-tool` folder.
+    -   If run multiple times without clearing the `example` directory, the snapshot will overwrite any old folders or files.
+-   Looking at the `example` directory:
+    -   Go to `1-XYZ/decoded/tree.json` to see the snapshot tree.
+    -   Each `'#-XYZ'` string in the `tree.json` correlates to a file in the decoded folder. These files are essentially blobs.
+    -   `0-XYZ/decoded/tree.json` is an older snapshot tree.
+    -   The `messages.json` is a list of ops/messages that are stored.
+-   For 401 authentication errors, as stated above, check that [getkeys](../../../tools/getkeys) has been run.
 
 ## Example Output
 
@@ -56,7 +56,6 @@ Beware that to use fetch-tool on documents in the Microsoft tenant, you will nee
     leave                                                                    |    16       3810
     ----------------------------------------------------------------------------------------------------
     Total                                                                    |   105      38605
-
 
 **--stat:dataType**
 
@@ -117,13 +116,13 @@ If you would like to debug fetch-tool, you can create a unit test. Remember to a
 In the unit test, you can use `setArguments()` from fluidFetchArgs to pass in arguments you want to test. Then call the methods you want to run and you will be able to set breakpoints in vscode.
 
 **Example**
+
 ```js
 describe("fetch tool", () => {
-    it("can fetch messages", async () => {
-        fluidFetchArgs.setArguments(your_args);
-        const documentService = await fluidFetchInit(your_paramURL);
-        await fluidFetchMessages(documentService, your_saveDir);
-    });
+	it("can fetch messages", async () => {
+		fluidFetchArgs.setArguments(your_args);
+		const documentService = await fluidFetchInit(your_paramURL);
+		await fluidFetchMessages(documentService, your_saveDir);
+	});
 });
 ```
-

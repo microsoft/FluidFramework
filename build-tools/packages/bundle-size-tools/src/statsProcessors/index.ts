@@ -4,11 +4,11 @@
  */
 
 export {
-    BundleBuddyConfigProcessorOptions,
-    getBundleBuddyConfigProcessor,
+	BundleBuddyConfigProcessorOptions,
+	getBundleBuddyConfigProcessor,
 } from "./bundleBuddyConfigProcessor";
 export { EntryStatsProcessorOptions, getEntryStatsProcessor } from "./entryStatsProcessor";
 export {
-    getTotalSizeStatsProcessor,
-    TotalSizeStatsProcessorOptions,
+	getTotalSizeStatsProcessor,
+	TotalSizeStatsProcessorOptions,
 } from "./totalSizeStatsProcessor";

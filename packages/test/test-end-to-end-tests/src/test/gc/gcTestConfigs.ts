@@ -9,12 +9,11 @@ import { ITestContainerConfig, mockConfigProvider } from "@fluidframework/test-u
  * Default test container configs used by GC tests to create / load containers.
  */
 export const defaultGCConfig: ITestContainerConfig = {
-    runtimeOptions: {
-        summaryOptions: {
-            disableSummaries: true,
-            summaryConfigOverrides: { state: "disabled" },
-        },
-        gcOptions: { gcAllowed: true },
-    },
-    loaderProps: { configProvider: mockConfigProvider() },
+	runtimeOptions: {
+		summaryOptions: {
+			summaryConfigOverrides: { state: "disabled" },
+		},
+		gcOptions: { gcAllowed: true },
+	},
+	loaderProps: { configProvider: mockConfigProvider() },
 };

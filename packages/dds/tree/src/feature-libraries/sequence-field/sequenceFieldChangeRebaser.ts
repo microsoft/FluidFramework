@@ -12,7 +12,7 @@ import { rebase } from "./rebase";
 export type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 
 export const sequenceFieldChangeRebaser = {
-    compose,
-    invert,
-    rebase,
+	compose,
+	invert,
+	rebase,
 };
