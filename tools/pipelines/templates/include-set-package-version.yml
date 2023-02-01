@@ -42,9 +42,13 @@ steps:
         npm i -g pnpm
         pnpm config set store-dir $(pnpmStorePath)
         pnpm install
+        pushd packages/build-tools
         pnpm link --global
-        which flub
         popd
+        pushd packages/build-cli
+        pnpm link --global
+        popd
+        which flub
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
