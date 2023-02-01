@@ -15,218 +15,218 @@ import { FieldKey, TreeType, Value } from "./types";
  * This allows performance optimizations to be done based on a data.
  */
 export interface ITreeCursor {
-    /**
-     * What kind of place the cursor is at.
-     * Determines which operations are allowed.
-     *
-     * @remarks Users of cursors frequently need to refer to places in trees, both fields and nodes.
-     * Approaches other than having the cursor have separate modes for these cases had issues even worse than having the two modes.
-     *
-     * For example, modeling fields as parent + key has issues when there is no parent, and doesn't provide a great way to do iteration over
-     * fields while also having a nice API and making it easy for the implementation to track state (like its current
-     * location inside a sequence tree of fields) while traversing without having to allocate some state management for that.
-     *
-     * Another approach, of using arrays of cursors for fields (like we currently do for inserting content) is very inefficient and
-     * better addressed by a duel mode cursor.
-     *
-     * Another approach, of using the first node in a field when referring to the field gets confusing since it's unclear if a given cursor
-     * means that node, or that node, and the ones after it, and in the second case, it's hard to restore the cursor back to the right state
-     * when returning. It also doesn't work for empty fields. Overall there just didn't seem to be a way that sucked less than the duel mode API.
-     */
-    readonly mode: CursorLocationType;
+	/**
+	 * What kind of place the cursor is at.
+	 * Determines which operations are allowed.
+	 *
+	 * @remarks Users of cursors frequently need to refer to places in trees, both fields and nodes.
+	 * Approaches other than having the cursor have separate modes for these cases had issues even worse than having the two modes.
+	 *
+	 * For example, modeling fields as parent + key has issues when there is no parent, and doesn't provide a great way to do iteration over
+	 * fields while also having a nice API and making it easy for the implementation to track state (like its current
+	 * location inside a sequence tree of fields) while traversing without having to allocate some state management for that.
+	 *
+	 * Another approach, of using arrays of cursors for fields (like we currently do for inserting content) is very inefficient and
+	 * better addressed by a duel mode cursor.
+	 *
+	 * Another approach, of using the first node in a field when referring to the field gets confusing since it's unclear if a given cursor
+	 * means that node, or that node, and the ones after it, and in the second case, it's hard to restore the cursor back to the right state
+	 * when returning. It also doesn't work for empty fields. Overall there just didn't seem to be a way that sucked less than the duel mode API.
+	 */
+	readonly mode: CursorLocationType;
 
-    /*
-     * True iff the current field or node (depending on mode) is "pending",
-     * meaning that it has not been downloaded.
-     */
-    readonly pending: boolean;
+	/*
+	 * True iff the current field or node (depending on mode) is "pending",
+	 * meaning that it has not been downloaded.
+	 */
+	readonly pending: boolean;
 
-    // ********** APIs for when mode = Fields ********** //
+	// ********** APIs for when mode = Fields ********** //
 
-    /**
-     * Moves the "current field" forward one in an arbitrary field traversal order,
-     * skipping any empty fields.
-     *
-     * If there is no remaining field to iterate to,
-     * returns false and navigates up to the parent setting the mode to `Nodes`.
-     *
-     * Order of fields is only guaranteed to be consistent thorough a single iteration.
-     *
-     * If skipPending, skip past fields which are currently pending.
-     * This can be used to skip to the end of a large number of consecutive pending fields.
-     *
-     * Allowed when `mode` is `Fields`.
-     */
-    nextField(): boolean;
+	/**
+	 * Moves the "current field" forward one in an arbitrary field traversal order,
+	 * skipping any empty fields.
+	 *
+	 * If there is no remaining field to iterate to,
+	 * returns false and navigates up to the parent setting the mode to `Nodes`.
+	 *
+	 * Order of fields is only guaranteed to be consistent thorough a single iteration.
+	 *
+	 * If skipPending, skip past fields which are currently pending.
+	 * This can be used to skip to the end of a large number of consecutive pending fields.
+	 *
+	 * Allowed when `mode` is `Fields`.
+	 */
+	nextField(): boolean;
 
-    /**
-     * Navigate up to parent node.
-     * Sets mode to `Nodes`
-     *
-     * Only valid when `mode` is `Fields`.
-     *
-     * TODO: what to do if at root?
-     */
-    exitField(): void;
+	/**
+	 * Navigate up to parent node.
+	 * Sets mode to `Nodes`
+	 *
+	 * Only valid when `mode` is `Fields`.
+	 *
+	 * TODO: what to do if at root?
+	 */
+	exitField(): void;
 
-    /**
-     * Moves the "current field" forward until `pending` is `false`.
-     *
-     * If there are no remaining field to iterate to,
-     * returns false and navigates up to the parent setting the mode to `Nodes`.
-     *
-     * Order of fields is only guaranteed to be consistent thorough a single iteration.
-     *
-     * Allowed when `mode` is `Fields`.
-     */
-    skipPendingFields(): boolean;
+	/**
+	 * Moves the "current field" forward until `pending` is `false`.
+	 *
+	 * If there are no remaining field to iterate to,
+	 * returns false and navigates up to the parent setting the mode to `Nodes`.
+	 *
+	 * Order of fields is only guaranteed to be consistent thorough a single iteration.
+	 *
+	 * Allowed when `mode` is `Fields`.
+	 */
+	skipPendingFields(): boolean;
 
-    // ********** APIs for when mode = Fields, and not pending ********** //
+	// ********** APIs for when mode = Fields, and not pending ********** //
 
-    /**
-     * Returns the FieldKey for the current field.
-     *
-     * Allowed when `mode` is `Fields`, and not `pending`.
-     */
-    getFieldKey(): FieldKey;
+	/**
+	 * Returns the FieldKey for the current field.
+	 *
+	 * Allowed when `mode` is `Fields`, and not `pending`.
+	 */
+	getFieldKey(): FieldKey;
 
-    /**
-     * @returns the number of immediate children in the current field.
-     *
-     * Allowed when `mode` is `Fields`, and not `pending`.
-     */
-    getFieldLength(): number;
+	/**
+	 * @returns the number of immediate children in the current field.
+	 *
+	 * Allowed when `mode` is `Fields`, and not `pending`.
+	 */
+	getFieldLength(): number;
 
-    /**
-     * Moves to the first node of the selected field, setting mode to `Nodes`.
-     *
-     * If field is empty, returns false instead.
-     *
-     * Allowed when `mode` is `Fields`, and not `pending`.
-     */
-    firstNode(): boolean;
+	/**
+	 * Moves to the first node of the selected field, setting mode to `Nodes`.
+	 *
+	 * If field is empty, returns false instead.
+	 *
+	 * Allowed when `mode` is `Fields`, and not `pending`.
+	 */
+	firstNode(): boolean;
 
-    /**
-     * Sets current node to the node at the provided `index` of the current field.
-     *
-     * Allowed when `mode` is `Fields`, and not `pending`.
-     * Sets mode to `Nodes`.
-     */
-    enterNode(childIndex: number): void;
+	/**
+	 * Sets current node to the node at the provided `index` of the current field.
+	 *
+	 * Allowed when `mode` is `Fields`, and not `pending`.
+	 * Sets mode to `Nodes`.
+	 */
+	enterNode(childIndex: number): void;
 
-    /**
-     * @returns a path to the current field. See {@link FieldUpPath}.
-     *
-     * Only valid when `mode` is `Fields`.
-     * Assumes this cursor has a root node where its field keys are actually detached sequences.
-     * If the cursor is not rooted at such a node,
-     * calling this function is invalid, and the returned FieldUpPath (if any) may not be meaningful.
-     * This requirement exists because {@link FieldUpPath}s are absolute paths
-     * and thus must be rooted in a detached sequence.
-     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
-     */
-    getFieldPath(): FieldUpPath;
+	/**
+	 * @returns a path to the current field. See {@link FieldUpPath}.
+	 *
+	 * Only valid when `mode` is `Fields`.
+	 * Assumes this cursor has a root node where its field keys are actually detached sequences.
+	 * If the cursor is not rooted at such a node,
+	 * calling this function is invalid, and the returned FieldUpPath (if any) may not be meaningful.
+	 * This requirement exists because {@link FieldUpPath}s are absolute paths
+	 * and thus must be rooted in a detached sequence.
+	 * TODO: consider adding an optional base path to append to remove/clarify this restriction.
+	 */
+	getFieldPath(): FieldUpPath;
 
-    // ********** APIs for when mode = Nodes ********** //
+	// ********** APIs for when mode = Nodes ********** //
 
-    /**
-     * @returns a path to the current node. See {@link UpPath}.
-     *
-     * Only valid when `mode` is `Nodes`.
-     * Assumes this cursor has a root node where its field keys are actually detached sequences.
-     * If the cursor is not rooted at such a node,
-     * calling this function is invalid, and the returned UpPath (if any) may not be meaningful.
-     * This requirement exists because {@link UpPath}s are absolute paths
-     * and thus must be rooted in a detached sequence.
-     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
-     */
-    getPath(): UpPath | undefined;
+	/**
+	 * @returns a path to the current node. See {@link UpPath}.
+	 *
+	 * Only valid when `mode` is `Nodes`.
+	 * Assumes this cursor has a root node where its field keys are actually detached sequences.
+	 * If the cursor is not rooted at such a node,
+	 * calling this function is invalid, and the returned UpPath (if any) may not be meaningful.
+	 * This requirement exists because {@link UpPath}s are absolute paths
+	 * and thus must be rooted in a detached sequence.
+	 * TODO: consider adding an optional base path to append to remove/clarify this restriction.
+	 */
+	getPath(): UpPath | undefined;
 
-    /**
-     * Index (within its parent field) of the current node.
-     *
-     * Only valid when `mode` is `Nodes`.
-     */
-    readonly fieldIndex: number;
+	/**
+	 * Index (within its parent field) of the current node.
+	 *
+	 * Only valid when `mode` is `Nodes`.
+	 */
+	readonly fieldIndex: number;
 
-    /**
-     * Index (within its parent field) of the first node in the current chunk.
-     * Always less than or equal to `currentIndexInField`.
-     *
-     * Only valid when `mode` is `Nodes`.
-     */
-    readonly chunkStart: number;
+	/**
+	 * Index (within its parent field) of the first node in the current chunk.
+	 * Always less than or equal to `currentIndexInField`.
+	 *
+	 * Only valid when `mode` is `Nodes`.
+	 */
+	readonly chunkStart: number;
 
-    /**
-     * Length of current chunk.
-     * Since an entire chunk always has the same `pending` value,
-     * can be used to help skip over all of a pending chunk at once.
-     *
-     * TODO:
-     * Add optional APIs to access underlying chunks so readers can
-     * accelerate processing of chunk formats they understand.
-     *
-     * Only valid when `mode` is `Nodes`.
-     */
-    readonly chunkLength: number;
+	/**
+	 * Length of current chunk.
+	 * Since an entire chunk always has the same `pending` value,
+	 * can be used to help skip over all of a pending chunk at once.
+	 *
+	 * TODO:
+	 * Add optional APIs to access underlying chunks so readers can
+	 * accelerate processing of chunk formats they understand.
+	 *
+	 * Only valid when `mode` is `Nodes`.
+	 */
+	readonly chunkLength: number;
 
-    /**
-     * Moves `offset` nodes in the field.
-     * If seeking to exactly past either end,
-     * returns false and navigates up to the parent field (setting mode to `Fields`).
-     *
-     * Allowed if mode is `Nodes`.
-     */
-    seekNodes(offset: number): boolean;
+	/**
+	 * Moves `offset` nodes in the field.
+	 * If seeking to exactly past either end,
+	 * returns false and navigates up to the parent field (setting mode to `Fields`).
+	 *
+	 * Allowed if mode is `Nodes`.
+	 */
+	seekNodes(offset: number): boolean;
 
-    /**
-     * The same as `seekNodes(1)`, but might be faster.
-     */
-    nextNode(): boolean;
+	/**
+	 * The same as `seekNodes(1)`, but might be faster.
+	 */
+	nextNode(): boolean;
 
-    /**
-     * Navigate up to parent field.
-     * Sets mode to `Fields`
-     *
-     * Same as seek Number.POSITIVE_INFINITY, but only valid when `mode` is `Nodes`.
-     *
-     * TODO: what to do if at root?
-     * TODO: Maybe merge with upToNode to make a single "Up"?
-     */
-    exitNode(): void;
+	/**
+	 * Navigate up to parent field.
+	 * Sets mode to `Fields`
+	 *
+	 * Same as seek Number.POSITIVE_INFINITY, but only valid when `mode` is `Nodes`.
+	 *
+	 * TODO: what to do if at root?
+	 * TODO: Maybe merge with upToNode to make a single "Up"?
+	 */
+	exitNode(): void;
 
-    // ********** APIs for when mode = Nodes and not pending ********** //
+	// ********** APIs for when mode = Nodes and not pending ********** //
 
-    /**
-     * Enters the first non-empty field (setting mode to `Fields`)
-     * so fields can be iterated with `nextField` and `skipPendingFields`.
-     *
-     * If there are no fields, mode is returned to `Nodes` and false is returned.
-     *
-     * Allowed when `mode` is `Nodes` and not `pending`.
-     */
-    firstField(): boolean;
+	/**
+	 * Enters the first non-empty field (setting mode to `Fields`)
+	 * so fields can be iterated with `nextField` and `skipPendingFields`.
+	 *
+	 * If there are no fields, mode is returned to `Nodes` and false is returned.
+	 *
+	 * Allowed when `mode` is `Nodes` and not `pending`.
+	 */
+	firstField(): boolean;
 
-    /**
-     * Navigate to the field with the specified `key` and set the mode to `Fields`.
-     *
-     * Only valid when `mode` is `Nodes`, and not `pending`.
-     */
-    enterField(key: FieldKey): void;
+	/**
+	 * Navigate to the field with the specified `key` and set the mode to `Fields`.
+	 *
+	 * Only valid when `mode` is `Nodes`, and not `pending`.
+	 */
+	enterField(key: FieldKey): void;
 
-    /**
-     * The type of the currently selected node.
-     *
-     * Only valid when `mode` is `Nodes`, and not `pending`.
-     */
-    readonly type: TreeType;
+	/**
+	 * The type of the currently selected node.
+	 *
+	 * Only valid when `mode` is `Nodes`, and not `pending`.
+	 */
+	readonly type: TreeType;
 
-    /**
-     * The value associated with the currently selected node.
-     *
-     * Only valid when `mode` is `Nodes`, and not `pending`.
-     */
-    readonly value: Value;
+	/**
+	 * The value associated with the currently selected node.
+	 *
+	 * Only valid when `mode` is `Nodes`, and not `pending`.
+	 */
+	readonly value: Value;
 }
 
 /**
