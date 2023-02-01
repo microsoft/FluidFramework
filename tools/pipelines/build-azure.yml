@@ -114,7 +114,7 @@ extends:
           npm i -g pnpm
           pnpm config set store-dir $(pnpmStorePath)
           pushd "$(Build.SourcesDirectory)/build-tools"
-          pnpm install
+          pnpm install # automatically builds postinstall
           popd
     - task: Bash@3
       displayName: 'Generate Mono repo package json'

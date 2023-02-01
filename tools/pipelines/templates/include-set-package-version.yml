@@ -41,7 +41,7 @@ steps:
         npm i -g pnpm
         pnpm config set store-dir $(pnpmStorePath)
         pushd "$(Build.SourcesDirectory)/build-tools"
-        pnpm install
+        pnpm install # automatically builds postinstall
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
