@@ -19,17 +19,17 @@ parameters:
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
-  - task: Bash@3
-    name: PrependPath
-    displayName: Prepend build-tools CLI to path
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        # Prepend the cli bin dir to the path. See
-        # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
-        # more information.
-        echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
+  # - task: Bash@3
+  #   name: PrependPath
+  #   displayName: Prepend build-tools CLI to path
+  #   inputs:
+  #     targetType: 'inline'
+  #     workingDirectory: ${{ parameters.buildDirectory }}
+  #     script: |
+  #       # Prepend the cli bin dir to the path. See
+  #       # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
+  #       # more information.
+  #       echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
 
   - task: Bash@3
     name: InstallBuildTools
@@ -41,8 +41,8 @@ steps:
         pushd "$(Build.SourcesDirectory)/build-tools"
         npm i -g pnpm
         pnpm config set store-dir $(pnpmStorePath)
-        pnpm i
-        npm run build:compile
+        pnpm link --global
+        which flub
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -55,6 +55,7 @@ steps:
       script: |
         echo "${{ parameters.buildToolsVersionToInstall }}"
         npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+        npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
 
 - task: Bash@3
   name: BuildToolsInstallCheck
