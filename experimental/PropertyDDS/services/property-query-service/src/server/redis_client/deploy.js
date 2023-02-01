@@ -6,7 +6,7 @@
  * @return {boolean} true is running in green mode, false otherwise
  */
 function isGreen() {
-  return process.env.HFDM_GREEN === 'true';
+    return process.env.HFDM_GREEN === "true";
 }
 
-module.exports = {isGreen};
+module.exports = { isGreen };

@@ -101,14 +101,15 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
-  - name: pnpmStorePath
-    value: $(Pipeline.Workspace)/.pnpm-store
   - template: include-vars.yml
     parameters:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
       nonScopedPackages: ${{ parameters.nonScopedPackages }}
+  - name: toolAbsolutePath
+    value:  $(Build.SourcesDirectory)/tools/telemetry-generator
+    readonly: true
 
 stages:
   # Install / Build / Test Stage
@@ -155,6 +156,10 @@ stages:
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
 
+              Variables:
+                toolAbsolutePath=$(toolAbsolutePath)
+                BuildReason=$(variables['Build.Reason'])
+
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
@@ -164,6 +169,7 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
+                pnpmStorePath=${{ variables.pnpmStorePath }}
 
                 release=$(release)"
 
@@ -425,6 +431,79 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
 
+          - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
+            # Auth to internal feed
+            - task: Bash@3
+              name: Initialize
+              displayName: Initialize .npmrc for telemetry logger
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ variables.toolAbsolutePath }}
+                script: |
+                  echo Initialize package
+                  npm init --yes
+
+                  echo Generating .npmrc
+                  echo "registry=https://registry.npmjs.org" >> ./.npmrc
+                  echo "always-auth=false" >> ./.npmrc
+
+                  echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
+                  echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+                  echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
+                  echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+                  echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+                  echo "always-auth=true" >> ./.npmrc
+                  cat .npmrc
+
+            - task: npmAuthenticate@0
+              displayName: 'npm authenticate (internal feed)'
+              inputs:
+                workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
+
+            - task: npmAuthenticate@0
+              displayName: 'npm authenticate (office feed)'
+              inputs:
+                workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
+                customEndpoint: 'Office Packages - Readonly'
+
+            - task: Bash@3
+              displayName: 'List report.json and .npmrc'
+              inputs:
+                targetType: 'inline'
+                workingDirectory:  ${{ parameters.buildDirectory }}
+                script: |
+                  echo "Build Directory is ${{ parameters.buildDirectory }}"
+                  ls -la '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                  cat '${{ variables.toolAbsolutePath }}/.npmrc';
+
+            - task: Bash@3
+              displayName: 'Prepare telemetry-generator for bundle size'
+              inputs:
+                targetType: 'inline'
+                workingDirectory:  ${{ variables.toolAbsolutePath }}
+                script: |
+                  ls -la '${{ variables.toolAbsolutePath }}';
+                  ls -la '${{ parameters.buildDirectory }}';
+                  npm install @ff-internal/aria-logger;
+                  npm i;
+                  npm run build:compile;
+
+            - task: Bash@3
+              displayName: Write bundle sizes measurements to Aria/Kusto
+              condition: succeededOrFailed()
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ variables.toolAbsolutePath }}
+                script: |
+                  echo "Writing the following performance tests results to Aria/Kusto"
+                  echo "Report Size:"
+                  ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                  echo "Tools Path:"
+                  ls -la '../../tools/telemetry-generator/dist/handlers';
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                  echo "Removing .npmrc"
+                  rm ../../tools/telemetry-generator/.npmrc;
+
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
           - task: Npm@1
@@ -459,7 +538,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"

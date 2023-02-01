@@ -1,12 +1,12 @@
 #editor,
 .editor {
-    background: white;
-    color: black;
-    background-clip: padding-box;
-    border-radius: 4px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    padding: 5px 0;
-    margin-bottom: 23px;
+	background: white;
+	color: black;
+	background-clip: padding-box;
+	border-radius: 4px;
+	border: 2px solid rgba(0, 0, 0, 0.2);
+	padding: 5px 0;
+	margin-bottom: 23px;
 }
 
 .ProseMirror p:first-child,
@@ -16,64 +16,64 @@
 .ProseMirror h4:first-child,
 .ProseMirror h5:first-child,
 .ProseMirror h6:first-child {
-    margin-top: 10px;
+	margin-top: 10px;
 }
 
 .ProseMirror {
-    padding: 4px 8px 4px 14px;
-    line-height: 1.2;
-    outline: none;
+	padding: 4px 8px 4px 14px;
+	line-height: 1.2;
+	outline: none;
 }
 
 .ProseMirror p {
-    margin-bottom: 1em
+	margin-bottom: 1em;
 }
 
 .ProseMirror {
-  counter-reset: prosemirror-footnote;
+	counter-reset: prosemirror-footnote;
 }
 
 footnote {
-  display: inline-block;
-  position: relative;
-  cursor: pointer;
+	display: inline-block;
+	position: relative;
+	cursor: pointer;
 }
 
 footnote::after {
-  content: counter(prosemirror-footnote);
-  vertical-align: super;
-  font-size: 75%;
-  counter-increment: prosemirror-footnote;
+	content: counter(prosemirror-footnote);
+	vertical-align: super;
+	font-size: 75%;
+	counter-increment: prosemirror-footnote;
 }
 
 .ProseMirror-hideselection .footnote-tooltip *::selection {
-  background-color: transparent;
+	background-color: transparent;
 }
 
 .ProseMirror-hideselection .footnote-tooltip *::-moz-selection {
-  background-color: transparent;
+	background-color: transparent;
 }
 
 .footnote-tooltip {
-  cursor: auto;
-  position: absolute;
-  left: -30px;
-  top: calc(100% + 10px);
-  background: silver;
-  padding: 3px;
-  border-radius: 2px;
-  width: 500px;
+	cursor: auto;
+	position: absolute;
+	left: -30px;
+	top: calc(100% + 10px);
+	background: silver;
+	padding: 3px;
+	border-radius: 2px;
+	width: 500px;
 }
 
 .footnote-tooltip::before {
-  border: 5px solid silver;
-  border-top-width: 0px;
-  border-left-color: transparent;
-  border-right-color: transparent;
-  position: absolute;
-  top: -5px;
-  left: 27px;
-  content: " ";
-  height: 0;
-  width: 0;
+	border: 5px solid silver;
+	border-top-width: 0px;
+	border-left-color: transparent;
+	border-right-color: transparent;
+	position: absolute;
+	top: -5px;
+	left: 27px;
+	content: " ";
+	height: 0;
+	width: 0;
 }
