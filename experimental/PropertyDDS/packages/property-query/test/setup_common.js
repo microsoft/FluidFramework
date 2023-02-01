@@ -33,18 +33,19 @@ global.should = chai.should();
 chai.use(sinonChai);
 chai.use(chaiAsPromised);
 
-global.PropertyFactory = require("@fluid-experimental/property-properties").PropertyFactory;
+global.PropertyFactory =
+    require("@fluid-experimental/property-properties").PropertyFactory;
 
 [
-	"HFDM.Redis.HfdmRedisClient",
-	"HFDM.ServerUtils.BaseServer",
-	"HFDM.PropertyGraphStore.DynamoDB",
-	"HFDM.PropertyGraph.BasePropertyGraph",
-	"HFDM.MaterializedHistoryServer.LoadManager",
-	"HFDM.MaterializedHistoryService.Server",
-	"HFDM.Utils.RequestUtils",
+    "HFDM.Redis.HfdmRedisClient",
+    "HFDM.ServerUtils.BaseServer",
+    "HFDM.PropertyGraphStore.DynamoDB",
+    "HFDM.PropertyGraph.BasePropertyGraph",
+    "HFDM.MaterializedHistoryServer.LoadManager",
+    "HFDM.MaterializedHistoryService.Server",
+    "HFDM.Utils.RequestUtils",
 ].forEach((loggerName) => {
-	ModuleLogger.getLogger(loggerName).setLevel("OFF");
+    ModuleLogger.getLogger(loggerName).setLevel("OFF");
 });
 
 //const PluginManager = require('../src/plugins/PluginManager');

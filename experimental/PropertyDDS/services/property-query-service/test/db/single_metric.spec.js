@@ -15,31 +15,31 @@ const { promisify } = require("util");
 const requestAsPromise = promisify(RequestUtils.requestWithRetries);
 
 describe("Single metric endpoint", () => {
-	let server, port;
+    let server, port;
 
-	before(async () => {
-		port = await getPort();
-		targets.mhServerUrl = `http://127.0.0.1:${port}`;
-		server = new MHServer({
-			app: getExpressApp(),
-			port,
-			systemMonitor: PluginManager.instance.systemMonitor,
-		});
-		await server.start();
-	});
+    before(async () => {
+        port = await getPort();
+        targets.mhServerUrl = `http://127.0.0.1:${port}`;
+        server = new MHServer({
+            app: getExpressApp(),
+            port,
+            systemMonitor: PluginManager.instance.systemMonitor,
+        });
+        await server.start();
+    });
 
-	it("should return the load metric", async () => {
-		let result = await requestAsPromise({
-			requestParams: {
-				url: `${targets.mhServerUrl}/v1/metric/MH_load`,
-				json: true,
-			},
-			logger: () => {},
-		});
-		expect(result).to.exist;
-		expect(result.metricName).to.eql("MH_load");
-		expect(result.value).to.be.a("number");
-	});
+    it("should return the load metric", async () => {
+        let result = await requestAsPromise({
+            requestParams: {
+                url: `${targets.mhServerUrl}/v1/metric/MH_load`,
+                json: true,
+            },
+            logger: () => {},
+        });
+        expect(result).to.exist;
+        expect(result.metricName).to.eql("MH_load");
+        expect(result.value).to.be.a("number");
+    });
 
-	after(() => server.stop());
+    after(() => server.stop());
 });

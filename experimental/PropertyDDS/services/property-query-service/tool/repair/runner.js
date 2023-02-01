@@ -21,82 +21,86 @@ let recoveryDate = new Date();
 let dop = 1;
 
 const processArgs = function () {
-	const argv = yargs
-		.option("since", {
-			alias: "s",
-			description: "Date/time since when branches that were modified will be checked",
-			type: "string",
-		})
-		.option("dop", {
-			alias: "p",
-			description: "Maximum number of branches that will be checked in parallel",
-			default: 1,
-			type: "number",
-		})
-		.coerce("since", (value) => {
-			const date = new Date(value);
-			if (isNaN(date)) {
-				throw new Error("The provided value is not a valid ISO date/time");
-			}
-			return date;
-		})
-		.demandOption(["since"]).argv;
+    const argv = yargs
+        .option("since", {
+            alias: "s",
+            description:
+                "Date/time since when branches that were modified will be checked",
+            type: "string",
+        })
+        .option("dop", {
+            alias: "p",
+            description:
+                "Maximum number of branches that will be checked in parallel",
+            default: 1,
+            type: "number",
+        })
+        .coerce("since", (value) => {
+            const date = new Date(value);
+            if (isNaN(date)) {
+                throw new Error(
+                    "The provided value is not a valid ISO date/time"
+                );
+            }
+            return date;
+        })
+        .demandOption(["since"]).argv;
 
-	recoveryDate = argv.since;
-	dop = argv.dop;
+    recoveryDate = argv.since;
+    dop = argv.dop;
 
-	return Promise.resolve();
+    return Promise.resolve();
 };
 
 const init = async function () {
-	const hfdmClassicClient = new HfdmClassicClient();
-	const branchWriteQueue = new BranchWriteQueue({
-		pssClient: hfdmClassicClient,
-	});
-	const factory = new BackendFactory({ settings });
-	const mhBackend = factory.getBackend();
-	const sf = new SerializerFactory({ settings });
+    const hfdmClassicClient = new HfdmClassicClient();
+    const branchWriteQueue = new BranchWriteQueue({
+        pssClient: hfdmClassicClient,
+    });
+    const factory = new BackendFactory({ settings });
+    const mhBackend = factory.getBackend();
+    const sf = new SerializerFactory({ settings });
 
-	const storageManager = new StorageManager({
-		backend: mhBackend,
-		settings: settings,
-		serializer: sf.getSerializer(),
-	});
+    const storageManager = new StorageManager({
+        backend: mhBackend,
+        settings: settings,
+        serializer: sf.getSerializer(),
+    });
 
-	const mhService = new MaterializedHistoryService({
-		settings,
-		serializer: sf.getSerializer(),
-		systemMonitor: PluginManager.instance.systemMonitor,
-		storageManager: storageManager,
-		nodeDependencyManager: new NodeDependencyManager(mhBackend),
-		branchWriteQueue,
-	});
-	repairManager = new RepairManager({
-		mhService,
-		hfdmClassicClient,
-	});
-	await repairManager.init();
+    const mhService = new MaterializedHistoryService({
+        settings,
+        serializer: sf.getSerializer(),
+        systemMonitor: PluginManager.instance.systemMonitor,
+        storageManager: storageManager,
+        nodeDependencyManager: new NodeDependencyManager(mhBackend),
+        branchWriteQueue,
+    });
+    repairManager = new RepairManager({
+        mhService,
+        hfdmClassicClient,
+    });
+    await repairManager.init();
 };
 
 const stop = async function () {
-	await repairManager.stop();
+    await repairManager.stop();
 };
 
 const doWork = async function () {
-	await repairManager.scanAndRepairBranches({
-		lastModifiedSince: recoveryDate,
-		dop,
-	});
+    await repairManager.scanAndRepairBranches({
+        lastModifiedSince: recoveryDate,
+        dop,
+    });
 };
 
 processArgs()
-	.then(init)
-	.then(doWork)
-	.then(stop)
-	.then(() => {
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	});
+    .then(init)
+    .then(doWork)
+    .then(stop)
+    .then(() => {
+        process.exit(0);
+    })
+    .catch((err) => {
+        console.error(err);
+        process.exit(1);
+    });

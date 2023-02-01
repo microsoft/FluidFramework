@@ -19,13 +19,13 @@ const qs = require("qs");
 const express = require("express");
 
 const getExpressApp = () => {
-	const app = express();
+    const app = express();
 
-	app.set("query parser", function (str) {
-		return qs.parse(str, { depth: 50 });
-	});
+    app.set("query parser", function (str) {
+        return qs.parse(str, { depth: 50 });
+    });
 
-	return app;
+    return app;
 };
 
 module.exports = getExpressApp;
