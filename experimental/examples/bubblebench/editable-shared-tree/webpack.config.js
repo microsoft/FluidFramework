@@ -43,25 +43,6 @@ module.exports = (env) => {
             watchOptions: {
                 ignored: "**/node_modules/**",
             },
-            plugins: [
-                // Uncaught reference error: process is not defined at
-                // ../../../../packages/dds/tree/lib/feature-libraries/editable-tree/editableTree.js
-                new webpack.ProvidePlugin({
-                    // Make a global `process` variable that points to the `process` package,
-                    // because the `util` package expects there to be a global variable named `process`.
-                         // Thanks to https://stackoverflow.com/a/65018686/14239942
-                    process: 'process/browser'
-                 }),
-                //  new webpack.ProvidePlugin({
-                //     conosle: 'console-browserify'
-                //  })
-            ],
-            // resolve: {
-            //     fallback: {
-            //       // make sure you `npm install path-browserify` to use this
-            //       console: require.resolve('console-browserify')
-            //     }
-            //   }
         },
         isProduction ? require("./webpack.prod") : require("./webpack.dev"),
         fluidRoute.devServerConfig(__dirname, env)
