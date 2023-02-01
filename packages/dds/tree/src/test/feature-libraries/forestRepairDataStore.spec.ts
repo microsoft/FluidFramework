@@ -63,49 +63,57 @@ describe("ForestRepairDataStore", () => {
 			},
 		};
 		initializeForest(forest, [singleTextCursor(data)]);
-		const delta1 = new Map([
+		const delta1: Delta.Root = new Map([
 			[
 				rootFieldKeySymbol,
-				[
-					{
-						type: Delta.MarkType.Modify,
-						fields: new Map([
-							[
-								fooKey,
+				{
+					beforeShallow: [
+						{
+							index: 0,
+							fields: new Map([
 								[
-									1,
+									fooKey,
 									{
-										type: Delta.MarkType.Delete,
-										count: 2,
+										shallow: [
+											1,
+											{
+												type: Delta.MarkType.Delete,
+												count: 2,
+											},
+										],
 									},
 								],
-							],
-						]),
-					},
-				],
+							]),
+						},
+					],
+				},
 			],
 		]);
 		store.capture(delta1, revision1);
 		forest.applyDelta(delta1);
-		const delta2 = new Map([
+		const delta2: Delta.Root = new Map([
 			[
 				rootFieldKeySymbol,
-				[
-					{
-						type: Delta.MarkType.Modify,
-						fields: new Map([
-							[
-								fooKey,
+				{
+					beforeShallow: [
+						{
+							index: 0,
+							fields: new Map([
 								[
+									fooKey,
 									{
-										type: Delta.MarkType.Delete,
-										count: 2,
+										shallow: [
+											{
+												type: Delta.MarkType.Delete,
+												count: 2,
+											},
+										],
 									},
 								],
-							],
-						]),
-					},
-				],
+							]),
+						},
+					],
+				},
 			],
 		]);
 		store.capture(delta2, revision2);
@@ -136,39 +144,31 @@ describe("ForestRepairDataStore", () => {
 			},
 		};
 		initializeForest(forest, [singleTextCursor(data)]);
-		store.capture(
-			new Map([
-				[
-					rootFieldKeySymbol,
-					[
+		const delta: Delta.Root = new Map([
+			[
+				rootFieldKeySymbol,
+				{
+					beforeShallow: [
 						{
-							type: Delta.MarkType.Modify,
+							index: 0,
 							fields: new Map([
 								[
 									fooKey,
-									[
-										{
-											type: Delta.MarkType.Modify,
-											setValue: 40,
-										},
-										1,
-										{
-											type: Delta.MarkType.Modify,
-											setValue: 42,
-										},
-										{
-											type: Delta.MarkType.Modify,
-											setValue: undefined,
-										},
-									],
+									{
+										beforeShallow: [
+											{ index: 0, setValue: 40 },
+											{ index: 2, setValue: 42 },
+											{ index: 3, setValue: undefined },
+										],
+									},
 								],
 							]),
 						},
 					],
-				],
-			]),
-			revision1,
-		);
+				},
+			],
+		]);
+		store.capture(delta, revision1);
 		const value0 = store.getValue(revision1, {
 			parent: root,
 			parentField: fooKey,

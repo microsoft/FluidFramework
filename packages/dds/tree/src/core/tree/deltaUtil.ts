@@ -6,7 +6,7 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { Mark, MarkType, Root, Skip } from "./delta";
 
-export const emptyDelta: Root<any> = new Map();
+export const emptyDelta: Root<never> = new Map();
 
 /**
  * Returns the number of nodes in the input tree that the mark affects or skips.
@@ -21,14 +21,8 @@ export function inputLength(mark: Mark<unknown>): number {
 		case MarkType.Delete:
 		case MarkType.MoveOut:
 			return mark.count;
-		case MarkType.Modify:
-		case MarkType.ModifyAndDelete:
-		case MarkType.ModifyAndMoveOut:
-			return 1;
 		case MarkType.Insert:
-		case MarkType.InsertAndModify:
 		case MarkType.MoveIn:
-		case MarkType.MoveInAndModify:
 			return 0;
 		default:
 			unreachableCase(type);
