@@ -53,8 +53,9 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
+    // Warning: (ae-forgotten-export) The symbol "IContainerConfig" needs to be exported by the entry point index.d.ts
     constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
@@ -94,6 +95,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
+    // Warning: (ae-forgotten-export) The symbol "IPendingContainerState" needs to be exported by the entry point index.d.ts
     static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
@@ -123,16 +125,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
-}
-
-// @public (undocumented)
-export interface IContainerConfig {
-    // (undocumented)
-    canReconnect?: boolean;
-    clientDetailsOverride?: IClientDetails;
-    // (undocumented)
-    resolvedUrl?: IFluidResolvedUrl;
-    serializedContainerState?: IPendingContainerState;
 }
 
 // @public (undocumented)
@@ -187,20 +179,6 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public
-export interface IPendingContainerState {
-    // (undocumented)
-    clientId?: string;
-    // (undocumented)
-    pendingRuntimeState: unknown;
-    // (undocumented)
-    protocol: IProtocolState;
-    // (undocumented)
-    term: number;
-    // (undocumented)
-    url: string;
-}
-
 // @public (undocumented)
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
@@ -229,7 +207,7 @@ export class Loader implements IHostLoader {
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
-// @public (undocumented)
+// @internal (undocumented)
 export class RelativeLoader implements ILoader {
     constructor(container: Container, loader: ILoader | undefined);
     // (undocumented)

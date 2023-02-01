@@ -58,6 +58,9 @@ function canUseCache(request: IRequest): boolean {
 	return request.headers[LoaderHeader.cache] !== false;
 }
 
+/**
+ * @internal
+ */
 export class RelativeLoader implements ILoader {
 	constructor(
 		private readonly container: Container,
