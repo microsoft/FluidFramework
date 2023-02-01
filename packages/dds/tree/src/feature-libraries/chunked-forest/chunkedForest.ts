@@ -30,7 +30,7 @@ import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk";
 import { chunkTree } from "./chunkTree";
-import { TreeChunk } from "./chunk";
+import { ChunkedCursor, TreeChunk } from "./chunk";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(brand("above root placeholder"), new Map());
@@ -217,6 +217,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			0,
 			0,
 			0,
+			undefined,
 		);
 	}
 
@@ -307,6 +308,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 		index: number,
 		indexOfChunk: number,
 		indexWithinChunk: number,
+		nestedCursor: ChunkedCursor | undefined,
 	) {
 		super(
 			root,
@@ -318,6 +320,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 			index,
 			indexOfChunk,
 			indexWithinChunk,
+			nestedCursor,
 		);
 	}
 
@@ -348,6 +351,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 			this.index,
 			this.indexOfChunk,
 			this.indexWithinChunk,
+			this.nestedCursor?.fork(),
 		);
 	}
 
