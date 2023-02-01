@@ -10,6 +10,8 @@
         -   [Loading](#loading)
         -   [Connectivity](#connectivity)
         -   [Closure](#closure)
+            -   [`Container.close()`](#containerclose)
+            -   [`Container.dispose()`](#containerdispose)
     -   [Audience](#audience)
     -   [ClientID and client identification](#clientid-and-client-identification)
     -   [Error handling](#error-handling)
@@ -141,13 +143,14 @@ Errors are of [ICriticalContainerError](../../../common/lib/container-definition
      readonly errorType: string;
 ```
 
-There are 3 sources of errors:
+There are 4 sources of errors:
 
 1. [ContainerErrorType](../../../common/lib/container-definitions/src/error.ts) - errors & warnings raised at loader level
-2. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [RouterliciousErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
-3. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors is not pre-determined and depends on type of container loaded.
+2. [DriverErrorType](../../common/driver-definitions/src/driverError.ts) - errors that are likely to be raised from the driver level
+3. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [RouterliciousErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
+4. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors is not pre-determined and depends on type of container loaded.
 
-`ICriticalContainerError.errorType` is a string, which represents a union of 3 error types described above. Hosting application may package different drivers and open different types of containers, and only hosting application may have enough information to enumerate all possible error codes in such scenarios.
+`ICriticalContainerError.errorType` is a string, which represents a union of 4 error types described above. Hosting application may package different drivers and open different types of containers, and only hosting application may have enough information to enumerate all possible error codes in such scenarios.
 
 Hosts must listen to `"closed"` event. If error object is present there, container was closed due to error and this information needs to be communicated to user in some way. If there is no error object, it was closed due to host application calling Container.close() (without specifying error).
 When container is closed, it is no longer connected to ordering service. It is also in read-only state, communicating to data stores not to allow user to make changes to container.
