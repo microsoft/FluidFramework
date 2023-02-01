@@ -38,6 +38,7 @@
     "tinylicious": "0.5.0"
   },
   "devDependencies": {
+    "@fluidframework/azure-local-service-previous": "npm:@fluidframework/azure-local-service@1.1.1",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -54,5 +55,12 @@
   },
   "engines": {
     "node": ">=14.0.0"
+  },
+  "typeValidation": {
+    "version": "1.2.0",
+    "previousVersionStyle": "^previousMajor",
+    "baselineRange": "^1.0.0",
+    "baselineVersion": "1.1.1",
+    "broken": {}
   }
 }
