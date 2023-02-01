@@ -53,7 +53,7 @@ describe("ChunkedForest", () => {
 		skipCursorErrorCheck: true,
 	});
 
-    // TODO: Unskip once BasicChunk implements [cursorChunk]
+	// TODO: Unskip once BasicChunk implements [cursorChunk]
 	it.skip("doesn't copy data when capturing and restoring repair data", () => {
 		const initialState: JsonableTree = {
 			type: brand("Node"),
