@@ -87,7 +87,7 @@ export interface ContainerWarning extends IErrorBase {
  *
  * @see
  *
- * The following are commonly thrown error types.
+ * The following are commonly thrown error types, but `errorType` could be any string.
  *
  * - {@link @fluidframework/container-definitions#ContainerErrorType}
  *
