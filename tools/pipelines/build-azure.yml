@@ -111,17 +111,11 @@ extends:
         targetType: 'inline'
         workingDirectory: $(Build.SourcesDirectory)
         script: |
-          pushd "$(Build.SourcesDirectory)/build-tools"
           npm i -g pnpm
           pnpm config set store-dir $(pnpmStorePath)
+          pushd "$(Build.SourcesDirectory)/build-tools"
           pnpm install
-          pushd packages/build-tools
-          pnpm link --global
           popd
-          pushd packages/build-cli
-          pnpm link --global
-          popd
-          which flub
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
       inputs:
