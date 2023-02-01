@@ -1,14 +1,12 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "module": "esnext",
-        "rootDir": "./src",
-        "outDir": "lib",
-        "jsx": "react",
-        "composite": true,
-        "types": ["node"]
-    },
-    "include": [
-        "src/**/*"
-    ]
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"module": "esnext",
+		"rootDir": "./src",
+		"outDir": "lib",
+		"jsx": "react",
+		"composite": true,
+		"types": ["node"],
+	},
+	"include": ["src/**/*"],
 }

@@ -1815,7 +1815,7 @@ export class ContainerRuntime
 			if (!this.shouldContinueReconnecting()) {
 				this.closeFn(
 					DataProcessingError.create(
-						"Runtime detected too many reconnects with no progress syncing local ops. Batch of ops is likely too large (over 1Mb)",
+						"Runtime detected too many reconnects with no progress syncing local ops.",
 						"setConnectionState",
 						undefined,
 						{

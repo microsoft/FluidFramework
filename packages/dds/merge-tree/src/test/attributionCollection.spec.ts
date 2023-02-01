@@ -12,8 +12,9 @@ import {
 	performFuzzActions,
 	take,
 } from "@fluid-internal/stochastic-test-utils";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { AttributionCollection, SerializedAttributionCollection } from "../attributionCollection";
-import { AttributionKey, BaseSegment, ISegment } from "../mergeTreeNodes";
+import { BaseSegment, ISegment } from "../mergeTreeNodes";
 
 describe("AttributionCollection", () => {
 	describe(".getAtOffset", () => {
