@@ -83,8 +83,11 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         if [ -f "lerna.json" ]; then
+          # Run on all the release group packages, if in a release group
           npx lerna exec prettier -- --check package.json
         fi
+
+        # Check the package.json at the root of the release group/package
         npx prettier --check package.json
 
 - task: Bash@3
@@ -168,6 +171,9 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         if [ -f "lerna.json" ]; then
+          # Run on all the release group packages, if in a release group
           npx lerna exec prettier -- --write package.json
         fi
+
+        # Format the package.json at the root of the release group/package
         npx prettier --write package.json
