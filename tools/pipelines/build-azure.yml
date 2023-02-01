@@ -126,5 +126,6 @@ extends:
           set _FLUID_ROOT_=$(Build.SourcesDirectory)
           node build-tools/packages/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure -v
           ls
-          cp repo-package.json azure/packages/package.json
-          cp repo-package-lock.json azure/packages/package-lock.json
+          ls azure/
+          cp azure/repo-package.json azure/packages/package.json
+          cp azure/repo-package-lock.json azure/packages/package-lock.json
