@@ -6,7 +6,6 @@ import {
     EditableField,
     ISharedTree,
     SharedTreeFactory,
-    // singleTextCursor
 } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

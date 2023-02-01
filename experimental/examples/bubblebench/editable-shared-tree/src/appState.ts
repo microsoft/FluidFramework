@@ -29,17 +29,6 @@ export class AppState implements IAppState {
         private _height: number,
         numBubbles: number,
     ) {
-        // const clientsSequenceNode = appStateTreeProxy[AppState.clientsFieldKey] as EditableField;
-        // const clientInitialJsonTree: JsonableTree = this.createClientInitialJsonTree(numBubbles);
-        // clientsSequenceNode.insertNodes(
-        //     clientsSequenceNode.length,
-        //     singleTextCursor(clientInitialJsonTree),
-        // );
-        // this.localClient = new Client(
-        //     appStateTreeProxy.clients[appStateTreeProxy.clients.length - 1],
-        // );
-
-
         const clientInitialJsonTree: JsonableTree = this.createClientInitialJsonTree(numBubbles);
         clientsSequence.insertNodes(
             clientsSequence.length,
@@ -86,9 +75,6 @@ export class AppState implements IAppState {
     }
 
     public get clients() {
-        // return [...this.appStateTreeProxy.clients].map(
-        //     (clientTreeProxy) => new Client(clientTreeProxy),
-        // );
         return [...this.clientsSequence].map(
             (clientTreeProxy) => new Client(clientTreeProxy),
         );
