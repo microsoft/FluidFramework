@@ -19,7 +19,8 @@ export interface ITreeCursor {
      * What kind of place the cursor is at.
      * Determines which operations are allowed.
      *
-     * @remarks Users of cursors frequently need to refer to places in trees, both fields and nodes.
+     * @remarks
+     * Users of cursors frequently need to refer to places in trees, both fields and nodes.
      * Approaches other than having the cursor have separate modes for these cases had issues even worse than having the two modes.
      *
      * For example, modeling fields as parent + key has issues when there is no parent, and doesn't provide a great way to do iteration over
