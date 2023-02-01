@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/mocha-test-setup",
-  "version": "2.0.0-internal.3.1.0",
+  "version": "2.0.0-internal.4.0.0",
   "description": "Utilities for Fluid tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/test-driver-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/test-driver-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
     "mocha": "^10.0.0"
   },
   "devDependencies": {
@@ -77,9 +77,9 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.3.1.0",
-    "previousVersionStyle": "~previousMinor",
-    "baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
+    "version": "2.0.0-internal.4.0.0",
+    "previousVersionStyle": "^previousMajor",
+    "baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "baselineVersion": "2.0.0-internal.3.0.0",
     "broken": {}
   }
