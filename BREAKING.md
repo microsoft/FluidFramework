@@ -42,6 +42,7 @@ to ensure all drivers take note of this requirement and enforce this policy.
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
 - [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
 - [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+- [Remove internal connection details from `IConnectionDetails`](#Remove-internal-connection-details-from-IConnectionDetails)
 - [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
@@ -114,6 +115,14 @@ const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
 
 ### Remove Deprecated IFluidObject Interface
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+
+### Remove internal connection details from `IConnectionDetails`
+
+Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDetails`, no longer exposing these to runtime. Reasons for removing each of them:
+- `existing` : this will always be true, which no longer provides useful information
+- `mode` : this is implementation detail of connection
+- `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
 
 ### Remove deprecated experimental get-container package
 The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
