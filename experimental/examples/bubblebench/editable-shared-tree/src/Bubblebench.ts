@@ -12,8 +12,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./AppState";
 import {
-    // appStateSchema,
-    AppStateSchemaData,
+    appSchemaData,
     ClientTreeProxy,
 } from "./schema";
 
@@ -84,7 +83,7 @@ export class Bubblebench extends DataObject {
      * @param tree - ISharedTree
      */
     initializeTree(tree: ISharedTree) {
-        tree.storedSchema.update(AppStateSchemaData);
+        tree.storedSchema.update(appSchemaData);
     }
 
     private get tree() {

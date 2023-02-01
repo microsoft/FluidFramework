@@ -62,7 +62,7 @@ export type ClientTreeProxy = EditableTree & {
 
 export const rootAppStateSchema = fieldSchema(FieldKinds.sequence, [clientSchema.name]);
 
-export const AppStateSchemaData: SchemaData = {
+export const appSchemaData: SchemaData = {
     treeSchema: new Map([
         [stringSchema.name, stringSchema],
         [numberSchema.name, numberSchema],
