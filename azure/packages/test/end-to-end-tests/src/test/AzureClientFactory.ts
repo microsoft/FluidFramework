@@ -35,7 +35,7 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
         ? {
               tenantId,
               tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
-              endpoint: endPoint ?? "https://alfred.westus2.fluidrelay.azure.com",
+              endpoint: endPoint ?? "https://us.fluidrelay.azure.com",
               type: "remote",
           }
         : {
