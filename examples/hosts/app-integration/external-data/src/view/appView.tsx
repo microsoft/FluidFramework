@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
+import React, { useEffect } from "react";
+import { RecoilRoot } from "recoil";
 import type { IAppModel } from "../model-interface";
+import { DebugView } from "./debugView";
 import { TaskListView } from "./taskListView";
 
 /**
@@ -23,6 +24,15 @@ export interface IAppViewProps {
  */
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 	const { model } = props;
-
-	return <TaskListView taskList={model.taskList} />;
+	// The DebugView is just for demo purposes, to offer manual controls and inspectability for things that normally
+	// would be some external system or arbitrarily occurring.
+	const showExternalServerView: boolean = true;
+	const debugView = <DebugView model={model} />;
+	useEffect(() => {}, [model]);
+	return (
+		<RecoilRoot>
+			{showExternalServerView && debugView}
+			<TaskListView taskList={model.taskList} />
+		</RecoilRoot>
+	);
 };

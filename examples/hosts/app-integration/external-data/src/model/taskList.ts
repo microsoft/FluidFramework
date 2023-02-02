@@ -28,6 +28,15 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		}
 		return cellValue;
 	}
+	public set priority(newPriority: number) {
+		this._priority.set(newPriority);
+	}
+	public get localChange(): boolean {
+		return this._localChange;
+	}
+	public set localChange(changed: boolean) {
+		this._localChange = changed;
+	}
 	public get incomingName(): string | undefined {
 		return this._incomingName;
 	}
@@ -52,6 +61,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		private readonly _id: string,
 		private readonly _name: SharedString,
 		private readonly _priority: ISharedCell<number>,
+		private _localChange: boolean,
 		private _incomingName: string | undefined,
 		private _incomingPriority: number | undefined,
 		private _incomingType: string | undefined,
@@ -107,6 +117,15 @@ export class TaskList extends DataObject implements ITaskList {
 	 * collection pattern -- see the contact-collection example for more details on this pattern.
 	 */
 	private readonly tasks = new Map<string, Task>();
+
+	private _localUnsavedChanges: number = 0;
+
+	public get localUnsavedChanges(): number {
+		return this._localUnsavedChanges;
+	}
+	public set localUnsavedChanges(newValue: number) {
+		this._localUnsavedChanges = newValue;
+	}
 	/*
 	 * savedData stores data retrieved from the external source.
 	 */
@@ -157,6 +176,26 @@ export class TaskList extends DataObject implements ITaskList {
 		this.draftData.set(id, draftDataPT);
 	};
 
+	public readonly taskChangedLocally = async (id: string): Promise<void> => {
+		const changedTask = this.getTask(id);
+		if (changedTask !== undefined) {
+			const savedTaskData = this._savedData?.get(id) as PersistedTask;
+			if (savedTaskData === undefined) {
+				throw new Error("There are no existing tasks with this ID.");
+			}
+			const [savedNameSharedString, savedPrioritySharedCell] = await Promise.all([
+				savedTaskData.name.get(),
+				savedTaskData.priority.get(),
+			]);
+			changedTask.localChange =
+				changedTask.name.getText() !== savedNameSharedString.getText() ||
+				changedTask.priority !== savedPrioritySharedCell.get()
+					? true
+					: false;
+		}
+		this.emit("taskChanged");
+	};
+
 	public readonly deleteTask = (id: string): void => {
 		this.draftData.delete(id);
 	};
@@ -198,6 +237,7 @@ export class TaskList extends DataObject implements ITaskList {
 			id,
 			nameSharedString,
 			prioritySharedCell,
+			false,
 			savedNameSharedString.getText(),
 			savedPrioritySharedCell.get(),
 			"add",
@@ -357,6 +397,7 @@ export class TaskList extends DataObject implements ITaskList {
 
 			// TODO: display error status to user?
 		}
+		this.localUnsavedChanges = 0;
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
@@ -402,22 +443,6 @@ export class TaskList extends DataObject implements ITaskList {
 			}
 		});
 
-		this._draftData.on("valueChanged", (changed) => {
-			if (changed.previousValue === undefined) {
-				// Must be from adding a new task
-				this.handleTaskAdded(changed.key).catch((error) => {
-					console.error(error);
-				});
-			} else if (this.draftData.get(changed.key) === undefined) {
-				// Must be from a deletion
-				this.handleTaskDeleted(changed.key);
-			} else {
-				// Since all data modifications happen within the SharedString or SharedCell (task IDs are immutable),
-				// the root directory should never see anything except adds and deletes.
-				console.error("Unexpected modification to task list");
-			}
-		});
-
 		for (const [id, task] of this.draftData) {
 			const typedTaskData = task as PersistedTask;
 			const [nameSharedString, prioritySharedCell] = await Promise.all([
@@ -426,7 +451,15 @@ export class TaskList extends DataObject implements ITaskList {
 			]);
 			this.tasks.set(
 				id,
-				new Task(id, nameSharedString, prioritySharedCell, undefined, undefined, undefined),
+				new Task(
+					id,
+					nameSharedString,
+					prioritySharedCell,
+					false,
+					undefined,
+					undefined,
+					undefined,
+				),
 			);
 		}
 	}

@@ -4,9 +4,11 @@
  */
 
 import React, { useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
 import isEqual from "lodash.isequal";
 import type { IAppModel, TaskData } from "../model-interface";
 import { customerServicePort } from "../mock-service-interface";
+import { localUnsavedChangesState } from "./recoilState";
 
 /**
  * Helper function used in several of the views to fetch data form the external app
@@ -56,30 +58,19 @@ export interface IDebugViewProps {
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
-    const [unsynchronizedChangesCount, setUnsynchronizedChangesCount] = useState(0);
-    const fluidSync = props.model.taskList.getSync();
-    const unsyncExternalChangesUpdate = (count: number): void => {
-        setUnsynchronizedChangesCount(count);
-    }
-
-    return (
-        <div>
-            <h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
-			<TaskListView model={props.model} />
-            <ExternalDataView unsynchronizedChangesCount={unsynchronizedChangesCount} setUnsynchronizedChangesCount={setUnsynchronizedChangesCount} />
-            <SyncStatusView
-                fluidSync={fluidSync}
-                unsynchronizedChangesCount={unsynchronizedChangesCount} handleCountUpdate={unsyncExternalChangesUpdate} />
-            <ControlsView model={props.model} />
-        </div>
-    );
+	return (
+		<div>
+			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
+			<ExternalAppForm model={props.model} />
+			<ExternalDataView />
+			<SyncStatusView model={props.model} />
+			<ControlsView model={props.model} />
+		</div>
+	);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IExternalDataViewProps {
-    unsynchronizedChangesCount: number;
-    setUnsynchronizedChangesCount: (count: number) => void;
-}
+interface IExternalDataViewProps {}
 
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
 	const [externalData, setExternalData] = useState({});
@@ -127,21 +118,19 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 	);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface ISyncStatusViewProps {
-    fluidSync: boolean;
-    unsynchronizedChangesCount: number;
-    handleCountUpdate: (count: number) => void;
+	model: IAppModel;
 }
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
+	const localUnsavedChanges = useRecoilValue(localUnsavedChangesState);
 	return (
 		<div>
 			<h3>Sync status</h3>
 			<div style={{ margin: "10px 0" }}>
 				Fluid has [no] unsync'd changes (not implemented)
 				<br />
-				External data source has [no] unsync'd changes (not implemented)
+				External data source has {localUnsavedChanges} unsync'd changes.
 				<br />
 				Current sync activity: [idle | fetching | writing | resolving conflicts?] (not
 				implemented)
@@ -249,7 +238,7 @@ export interface ExternalDataTask {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
+export const ExternalAppForm: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
 	const { model } = props;
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {

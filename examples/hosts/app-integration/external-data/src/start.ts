@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
 import type { IAppModel } from "./model-interface";
-import { DebugView, AppView } from "./view";
+import { AppView } from "./view";
 import { TaskListContainerRuntimeFactory } from "./model";
 
 const updateTabForId = (id: string): void => {
@@ -20,18 +20,10 @@ const updateTabForId = (id: string): void => {
 	document.title = id;
 };
 
-const render = (model: IAppModel, showExternalServerView: boolean): void => {
+const render = (model: IAppModel): void => {
 	const appDiv = document.querySelector("#app") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(appDiv);
 	ReactDOM.render(React.createElement(AppView, { model }), appDiv);
-
-	// The DebugView is just for demo purposes, to offer manual controls and inspectability for things that normally
-	// would be some external system or arbitrarily occurring.
-	if (showExternalServerView) {
-		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
-		ReactDOM.unmountComponentAtNode(debugDiv);
-		ReactDOM.render(React.createElement(DebugView, { model }), debugDiv);
-	}
 };
 
 async function start(): Promise<void> {
@@ -41,7 +33,6 @@ async function start(): Promise<void> {
 
 	let id: string;
 	let model: IAppModel;
-	let showExternalServerView: boolean = true;
 
 	if (location.hash.length === 0) {
 		// Normally our code loader is expected to match up with the version passed here.
@@ -54,10 +45,9 @@ async function start(): Promise<void> {
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
-		showExternalServerView = false;
 	}
 
-	render(model, showExternalServerView);
+	render(model);
 	updateTabForId(id);
 }
 
