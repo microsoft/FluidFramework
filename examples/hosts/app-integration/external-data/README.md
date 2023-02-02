@@ -8,7 +8,7 @@ Please note that the ideas explored here are experimental and under development.
 
 This example demonstrates a scenario in which the Customers "source of truth" of their data lives in a service that is external to the Fluid service. The Customers can then:
 
-1. Import the external data into a Fluid collboration session.
+1. Import the external data into a Fluid collaboration session.
 2. Export data from a Fluid collaboration session back to the source of truth.
 3. Sync updates between Fluid and the source of truth in as close to real-time as the scenario allows.
 
@@ -16,7 +16,8 @@ In this case, the Fluid collaboration session serves as a "drafting surface" in 
 
 ## Strategy overview
 
-Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates. However, they often expose third-party integration via REST APIS for querying and manipulating data, as well as webhooks for watching updates to the data.
+Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates.
+However, they often expose third-party integration via REST APIS for querying and manipulating data, as well as webhooks for watching updates to the data.
 
 This repo contains an external service that serves as a mock external "source of truth" data server, that offers this REST API collection and webhook interfaces in ./src/mock-external-data-service. The APIs served by this external service are the following:
 
