@@ -6,19 +6,19 @@
 import { mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { MountableView } from "@fluidframework/view-adapters";
 
 // import React from "react";
 
 import { Smde, SmdeFactory, SmdeHTMLView } from "./smde";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { MountableView } from "@fluidframework/view-adapters";
 
 const defaultComponentId = "default";
 
-const smde = new SmdeFactory();
+const smdeFactory = new SmdeFactory();
 
 const viewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
 	if (request.pathParts.length === 0) {
@@ -40,8 +40,8 @@ const viewRequestHandler = async (request: RequestParser, runtime: IContainerRun
 
 class SmdeContainerFactory extends RuntimeFactoryHelper {
 	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-		const dataStore = await runtime.createDataStore(smde.type);
-		await dataStore.trySetAlias(defaultComponentId);
+		const smde = await runtime.createDataStore(smdeFactory.type);
+		await smde.trySetAlias(defaultComponentId);
 	}
 
 	public async preInitialize(
@@ -49,7 +49,7 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 		existing: boolean,
 	): Promise<ContainerRuntime> {
 		const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-			[smde.type, Promise.resolve(smde)],
+			[smdeFactory.type, Promise.resolve(smdeFactory)],
 		]);
 
 		const runtime: ContainerRuntime = await ContainerRuntime.load(

@@ -687,12 +687,11 @@ importers:
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/view-adapters': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/view-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
-      '@types/codemirror': 0.0.76
+      '@types/codemirror': ^5.60.7
       '@types/node': ^14.18.36
       '@types/react': ^17.0.44
-      codemirror: ^5.48.4
+      codemirror: ^6.0.1
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
@@ -723,8 +722,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
-      codemirror: 5.65.9
+      codemirror: 6.0.1
       events: 3.3.0
       react: 17.0.2
     devDependencies:
@@ -732,7 +730,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/codemirror': 0.0.76
+      '@types/codemirror': 5.60.7
       '@types/node': 14.18.36
       '@types/react': 17.0.52
       concurrently: 6.3.0
@@ -1543,7 +1541,6 @@ importers:
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/view-adapters': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/view-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/node': ^14.18.36
       '@types/orderedmap': ^1.0.0
@@ -1593,7 +1590,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       events: 3.3.0
       orderedmap: 2.1.0
       prosemirror-example-setup: 1.2.1
@@ -1653,7 +1649,6 @@ importers:
       '@fluidframework/sequence': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-tools': ^0.2.3074
       '@fluidframework/undo-redo': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/view-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -1707,7 +1702,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/undo-redo': link:../../../packages/framework/undo-redo
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       bootstrap: 3.4.1
       debug: 4.3.4
       events: 3.3.0
@@ -1757,6 +1751,7 @@ importers:
       '@fluidframework/common-utils': ^1.0.0
       '@fluidframework/container-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/datastore': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
@@ -1767,6 +1762,7 @@ importers:
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/view-adapters': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/view-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/events': ^3.0.0
@@ -1794,6 +1790,7 @@ importers:
       '@fluidframework/common-utils': 1.0.0
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
+      '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore': link:../../../packages/runtime/datastore
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
@@ -1803,6 +1800,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
+      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       events: 3.3.0
       marked: 2.1.3
@@ -19486,8 +19484,8 @@ packages:
       '@types/har-format': 1.2.10
     dev: true
 
-  /@types/codemirror/0.0.76:
-    resolution: {integrity: sha512-k/hpUb+Ebyn9z63qM8IbsRiW0eYHZ+pi/1e2reGzBKAZJzkjWmNTXXqLLiNv5d9ekyxkajxRBr5Hu2WZq/nokw==}
+  /@types/codemirror/5.60.7:
+    resolution: {integrity: sha512-QXIC+RPzt/1BGSuD6iFn6UMC9TDp+9hkOANYNPVsjjrDdzKphfRkwQDKGp2YaC54Yhz0g6P5uYTCCibZZEiMAA==}
     dependencies:
       '@types/tern': 0.23.4
     dev: true
@@ -23630,10 +23628,6 @@ packages:
     resolution: {integrity: sha512-2Tl6n0v+GJRsC9K3MLCdLaMOmvWL0uukajNJseorZJsslaxZyZMgENocPU8R0DyoTAiKsyqiemSOZo7kjGV0LQ==}
     dependencies:
       typo-js: 1.2.2
-    dev: false
-
-  /codemirror/5.65.9:
-    resolution: {integrity: sha512-19Jox5sAKpusTDgqgKB5dawPpQcY+ipQK7xoEI+MVucEF9qqFaXpeqY1KaoyGBso/wHQoDa4HMMxMjdsS3Zzzw==}
     dev: false
 
   /codemirror/6.0.1:
