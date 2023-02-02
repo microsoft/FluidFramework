@@ -25,6 +25,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService, defaultSummarizerCacheExpiryTimeout } from "../odspDocumentStorageManager";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
+import { FetchSource } from "@fluidframework/driver-definitions";
 
 const createUtLocalCache = () => new LocalPersistentCache();
 
@@ -359,8 +360,92 @@ describe("xxxTests for snapshot fetch", () => {
             );
 
             assert.deepStrictEqual(version, expectedVersion, "incorrect version");
-            assert(mockLogger.events.filter((event) => event.eventName.includes("ObtainSnapshot_end")).length === 1, "1 Obtain snapshot event should be there");
-            assert(mockLogger.matchEvents([{ eventName: "ObtainSnapshot_end", method: "network" }]), "Source should be network");
+            assert(mockLogger.events.filter((event) => event.eventName.includes("PrefetchSnapshotError")).length === 1, "Snapshot prefetch has different epoch");
+            assert(mockLogger.matchEvents([
+                { eventName: "PrefetchSnapshotError", errorType: "fileOverwrittenInStorage", error: "Epoch mismatch" },
+                { eventName: "ObtainSnapshot_end", method: "network" },
+            ]), "unexpected events");
+        });
+
+        
+        it("prefetching snapshot should result in epoch error if different from what is already present, fetch is not from cache", async () => {
+            epochTracker.setEpoch("epoch1", true, "cache");
+            await mockFetchSingle(
+                async () => prefetchLatestSnapshot(resolved, async (_options) => "token", localCache, true, mockLogger, undefined, false, undefined, undefined, nonPersistentCache.snapshotPrefetchResultCache),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch2", "content-type": "application/json" },
+                    odspSnapshot,
+                    200,
+                ),
+            );
+
+            assert(nonPersistentCache.snapshotPrefetchResultCache?.has(snapshotPrefetchCacheKey), "non persistent cache should have the snapshot");
+            const version = await mockFetchSingle(
+                async () => service.getVersions(null, 1, "test", FetchSource.noCache),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                    odspSnapshot,
+                    200,
+                ),
+            );
+
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+            assert(mockLogger.events.filter((event) => event.eventName.includes("PrefetchSnapshotError")).length === 1, "Snapshot prefetch has different epoch");
+            assert(mockLogger.matchEvents([
+                { eventName: "PrefetchSnapshotError", errorType: "fileOverwrittenInStorage", error: "Epoch mismatch" },
+                { eventName: "ObtainSnapshot_end", method: "networkOnly" },
+            ]), "unexpected events");
+        });
+
+        it("prefetching snapshot should result in epoch error if different from what is already present, no concurrent fetch", async () => {
+            service["hostPolicy"].concurrentSnapshotFetch = false;
+            epochTracker.setEpoch("epoch1", true, "cache");
+            await mockFetchSingle(
+                async () => prefetchLatestSnapshot(resolved, async (_options) => "token", localCache, true, mockLogger, undefined, false, undefined, undefined, nonPersistentCache.snapshotPrefetchResultCache),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch2", "content-type": "application/json" },
+                    odspSnapshot,
+                    200,
+                ),
+            );
+
+            assert(nonPersistentCache.snapshotPrefetchResultCache?.has(snapshotPrefetchCacheKey), "non persistent cache should have the snapshot");
+            const version = await mockFetchSingle(
+                async () => service.getVersions(null, 1),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                    odspSnapshot,
+                    200,
+                ),
+            );
+
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+            assert(mockLogger.events.filter((event) => event.eventName.includes("PrefetchSnapshotError")).length === 1, "Snapshot prefetch has different epoch");
+            assert(mockLogger.matchEvents([
+                { eventName: "PrefetchSnapshotError", errorType: "fileOverwrittenInStorage", error: "Epoch mismatch" },
+                { eventName: "ObtainSnapshot_end", method: "network" },
+            ]), "unexpected events");
+        });
+
+        it("prefetching snapshot should be successful from prefetching, no concurrent fetch", async () => {
+            service["hostPolicy"].concurrentSnapshotFetch = false;
+            epochTracker.setEpoch("epoch1", true, "cache");
+            await mockFetchSingle(
+                async () => prefetchLatestSnapshot(resolved, async (_options) => "token", localCache, true, mockLogger, undefined, false, undefined, undefined, nonPersistentCache.snapshotPrefetchResultCache),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                    odspSnapshot,
+                    200,
+                ),
+            );
+
+            assert(nonPersistentCache.snapshotPrefetchResultCache?.has(snapshotPrefetchCacheKey), "non persistent cache should have the snapshot");
+            const version = await service.getVersions(null, 1);
+
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+            assert(mockLogger.matchEvents([
+                { eventName: "ObtainSnapshot_end", method: "prefetched" },
+            ]), "unexpected events");
         });
 
         it("cache fetch throws and network fetch succeeds", async () => {
