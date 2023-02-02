@@ -33,8 +33,10 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import {
+    INonPersistentCache,
     LocalPersistentCache,
     NonPersistentCache,
+    SnapshotPrefetchResultCache,
 } from "./odspCache";
 import {
     createOdspCacheAndTracker,
@@ -55,7 +57,7 @@ import { createNewContainerOnExistingFile } from "./createNewContainerOnExisting
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
 
-    private readonly nonPersistentCache = new NonPersistentCache();
+    private readonly nonPersistentCache: INonPersistentCache;
     private readonly socketReferenceKeyPrefix?: string;
 
     public async createContainer(
@@ -178,15 +180,17 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
      * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
      * response payload.
-     * @param storageFetchWrapper - if not provided FetchWrapper will be used
-     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param persistedCache - PersistedCache provided by host for use in this session.
+     * @param hostPolicy - Policy for storage provided by host.
+     * @param snapshotPrefetchResultCache - Non Persistant cache which could contain snapshot promise if it has been
+     * prefetched by host.
      */
     constructor(
         private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
         private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
+        private readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache,
     ) {
         if (this.hostPolicy.isolateSocketCache === true) {
             // create the key to separate the socket reuse cache
@@ -198,6 +202,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             forceAccessTokenViaAuthorizationHeader: true,
             ...this.hostPolicy.sessionOptions,
         };
+        this.nonPersistentCache = new NonPersistentCache(this.snapshotPrefetchResultCache);
     }
 
     public async createDocumentService(

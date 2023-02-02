@@ -44,3 +44,5 @@ export {
 } from "./odspFluidFileLink";
 
 export { parseCompactSnapshotResponse } from "./compactSnapshotParser";
+
+export { SnapshotPrefetchResultCache } from "./odspCache";

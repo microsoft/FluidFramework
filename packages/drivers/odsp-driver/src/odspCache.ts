@@ -11,6 +11,8 @@ import {
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
+import { ISnapshotContents } from "./odspPublicUtils";
+
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
  */
@@ -106,6 +108,8 @@ export interface INonPersistentCache {
      * Cache of resolved/resolving file URLs
      */
     readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
+
+    readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache;
 }
 
 /**
@@ -119,8 +123,24 @@ export interface IOdspCache extends INonPersistentCache {
 }
 
 export class NonPersistentCache implements INonPersistentCache {
+    constructor(readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache) {
+        if (this.snapshotPrefetchResultCache === undefined) {
+            this.snapshotPrefetchResultCache = new PromiseCache<string, ISnapshotContentsWithEpoch>();
+        }
+    }
+
     public readonly sessionJoinCache =
         new PromiseCache<string, { entryTime: number; joinSessionResponse: ISocketStorageDiscovery; }>();
 
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 }
+
+export interface ISnapshotContentsWithEpoch extends ISnapshotContents {
+    fluidEpoch: string,
+}
+
+export function snapshotPrefetchCacheKeyFromEntry(entry: ICacheEntry): string {
+    return `${entry.file.docId}_${entry.type}_${entry.key}`;
+}
+
+export type SnapshotPrefetchResultCache = PromiseCache<string, ISnapshotContentsWithEpoch>;

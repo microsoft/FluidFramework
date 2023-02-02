@@ -5,7 +5,7 @@
 
 import { default as AbortController } from "abort-controller";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
     IOdspResolvedUrl,
@@ -24,6 +24,7 @@ import {
 } from "./odspUtils";
 import { downloadSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
+import { snapshotPrefetchCacheKeyFromEntry, ISnapshotContentsWithEpoch, SnapshotPrefetchResultCache } from "./odspCache";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -42,6 +43,7 @@ import { IVersionedValueWithEpoch } from "./contracts";
  * Note: this can be considered deprecated - it will be replaced with `snapshotFormatFetchType`.
  * @param fetchBinarySnapshotFormat - Control if we want to fetch binary format snapshot.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
+ * @param snapshotPrefetchResultCache - Non Persistant cache to store snapshot promise.
  *
  * @returns - True if the snapshot is cached, false otherwise.
  */
@@ -55,6 +57,7 @@ export async function prefetchLatestSnapshot(
     enableRedeemFallback: boolean = true,
     fetchBinarySnapshotFormat?: boolean,
     snapshotFormatFetchType?: SnapshotFormatSupportType,
+    snapshotPrefetchResultCache?: SnapshotPrefetchResultCache,
 ): Promise<boolean> {
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -82,7 +85,9 @@ export async function prefetchLatestSnapshot(
     };
     const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;
+    let snapshotEpoch: string | undefined;
     const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
+        snapshotEpoch = valueWithEpoch.fluidEpoch;
         cacheP = persistedCache.put(
             snapshotKey,
             valueWithEpoch,
@@ -94,17 +99,26 @@ export async function prefetchLatestSnapshot(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
         async () => {
+            // Add the deferred promise to the cache, so that it can be leveraged while loading the container.
+            const snapshotContentsWithEpochP = new Deferred<ISnapshotContentsWithEpoch>();
+            snapshotPrefetchResultCache?.add(snapshotPrefetchCacheKeyFromEntry(snapshotKey), async () => snapshotContentsWithEpochP.promise);
             await fetchSnapshotWithRedeem(
-                    odspResolvedUrl,
-                    storageTokenFetcher,
-                    hostSnapshotFetchOptions,
-                    forceAccessTokenViaAuthorizationHeader,
-                    odspLogger,
-                    snapshotDownloader,
-                    putInCache,
-                    removeEntries,
-                    enableRedeemFallback,
-                );
+                odspResolvedUrl,
+                storageTokenFetcher,
+                hostSnapshotFetchOptions,
+                forceAccessTokenViaAuthorizationHeader,
+                odspLogger,
+                snapshotDownloader,
+                putInCache,
+                removeEntries,
+                enableRedeemFallback,
+            ).then((value) => {
+                assert(!!snapshotEpoch, "prefetched snapshot should have a valid epoch");
+                snapshotContentsWithEpochP.resolve({ ...value, fluidEpoch: snapshotEpoch });
+            }).catch((err) => {
+                snapshotContentsWithEpochP.reject(err);
+                throw err;
+            });
             assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
             await cacheP;
             return true;
