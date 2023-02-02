@@ -9594,7 +9594,7 @@ importers:
       '@fluentui/react': ^8.96.1
       '@fluentui/react-hooks': ^8.6.12
       '@fluentui/react-icons-mdl2': ^1.3.22
-      '@fluentui/react-tabs': ^9.0.6
+      '@fluentui/react-tabs': ^9.1.6
       '@fluid-example/collaborative-textarea': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluid-experimental/react-inputs': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/client-debugger': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
@@ -9616,6 +9616,7 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/tinylicious-client': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.22.2
+      '@testing-library/dom': ^8.2.0
       '@testing-library/jest-dom': ^5.16.5
       '@testing-library/react': ^12.0.0
       '@testing-library/user-event': ^14.4.3
@@ -9639,6 +9640,7 @@ importers:
       react-dom: ^17.0.1
       react-json-view: ^1.21.3
       rimraf: ^2.6.2
+      scheduler: ^0.20.0
       start-server-and-test: ^1.11.7
       style-loader: ^1.0.0
       tinylicious: 0.5.0
@@ -9653,7 +9655,7 @@ importers:
       '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/react-icons-mdl2': 1.3.28_74b3ggvk3akyhuq4eydyx3fqim
-      '@fluentui/react-tabs': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-tabs': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-tools/client-debugger': link:../client-debugger
       '@fluidframework/container-definitions': link:../../../common/container-definitions
@@ -9670,6 +9672,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-json-view: 1.21.3_gzv7pa6nrbev3fs6gyzn7sadkq
+      scheduler: 0.20.2
     devDependencies:
       '@fluid-example/collaborative-textarea': link:../../../../examples/apps/collaborative-textarea
       '@fluid-tools/webpack-fluid-loader': link:../../webpack-fluid-loader
@@ -9680,9 +9683,10 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@fluidframework/tinylicious-client': link:../../../framework/tinylicious-client
       '@microsoft/api-extractor': 7.22.2
+      '@testing-library/dom': 8.19.1
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
-      '@testing-library/user-event': 14.4.3
+      '@testing-library/user-event': 14.4.3_ua4wuun3fnehcjqtqj2e2ldgpe
       '@types/jest': 22.2.3
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
@@ -12076,7 +12080,7 @@ packages:
       '@fluentui/set-version': 8.2.3
       tslib: 2.4.1
 
-  /@fluentui/react-context-selector/9.1.5_74b3ggvk3akyhuq4eydyx3fqim:
+  /@fluentui/react-context-selector/9.1.5_7dy3sgqkcy3kjbu4ktqmdo3kpm:
     resolution: {integrity: sha512-3U0d6qOP1IMASLpWK6ek9PLagxdGK0L0EKBhaO7U9Q89k2DJ0JQRzz2kZSrnN0a23yL0BipxtKGZiqhO0u6AHA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
@@ -12090,6 +12094,7 @@ packages:
       '@types/react-dom': 17.0.18
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
       tslib: 2.4.1
     dev: false
 
@@ -12197,7 +12202,7 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@fluentui/react-tabs/9.1.6_74b3ggvk3akyhuq4eydyx3fqim:
+  /@fluentui/react-tabs/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
     resolution: {integrity: sha512-U0fjKZOV5Z6BZW+ZtOOvS43ttkCVZGdE+OlbkU8+6r+DHltl5Y4hPu0d4pL39NnwPHuDGyayB7MRixrNT64Myg==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
@@ -12206,7 +12211,7 @@ packages:
       react-dom: '>=16.8.0 <19.0.0'
       scheduler: ^0.19.0 || ^0.20.0
     dependencies:
-      '@fluentui/react-context-selector': 9.1.5_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-context-selector': 9.1.5_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluentui/react-tabster': 9.3.6_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-theme': 9.1.5
       '@fluentui/react-utilities': 9.4.0_q5o373oqrklnndq2vhekyuzhxi
@@ -12215,6 +12220,7 @@ packages:
       '@types/react-dom': 17.0.18
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
       tslib: 2.4.1
     dev: false
 
@@ -19373,11 +19379,13 @@ packages:
       react-dom: 17.0.2_react@17.0.2
     dev: true
 
-  /@testing-library/user-event/14.4.3:
+  /@testing-library/user-event/14.4.3_ua4wuun3fnehcjqtqj2e2ldgpe:
     resolution: {integrity: sha512-kCUc5MEwaEMakkO5x7aoD+DLi02ehmEM2QCGWvNqAS1dV/fAvORWEjnjsEIvml59M7Y5kCkWN6fCCyPOe8OL6Q==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
+    dependencies:
+      '@testing-library/dom': 8.19.1
     dev: true
 
   /@tiny-calc/micro/0.0.0-alpha.5:
