@@ -57,7 +57,7 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 					<Accordion
 						header={
 							<div>
-								<b>"{key}"</b>
+								<b>&quot;{key}&quot;</b>
 							</div>
 						}
 					>
