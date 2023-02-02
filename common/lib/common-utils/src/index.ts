@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-export { assert } from "./assert";
+export { assert, fail } from "./assert";
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared";
 export { delay } from "./delay";
