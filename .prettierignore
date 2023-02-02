@@ -14,6 +14,9 @@ common/build/eslint-config-fluid/printed-configs/
 # Dependencies
 **/node_modules/*
 
+# Pipeline definitions are in YAML and can be broken by autoformatting
+tools/pipelines/
+
 # Used by API-Extractor
 **/_api-extractor-temp/*
 **/api-report/*
@@ -28,6 +31,7 @@ packages/framework/attributor/src/test/attribution/documents/**/*.json
 packages/test/snapshots/content/
 packages/tools/fluid-runner/src/test/localOdspSnapshots/
 packages/tools/fluid-runner/src/test/telemetryExpectedOutputs/
+tools/api-markdown-documenter/src/test/snapshots/
 
 # Generated type-tests
 **/*.generated.ts
