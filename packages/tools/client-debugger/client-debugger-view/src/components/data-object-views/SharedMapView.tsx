@@ -45,17 +45,22 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 	}, [sharedMap, setEntries]);
 
 	return (
-		<table style={{borderCollapse: "collapse", width: "100%"}}>
+		<table style={{ borderCollapse: "collapse", width: "100%" }}>
 			<thead>
 				<tr>
 					<th>Key</th>
 					<th>Value</th>
 				</tr>
 			</thead>
-			<tbody style={{borderCollapse: "collapse"}}>
+			<tbody style={{ borderCollapse: "collapse" }}>
 				{entries.map(([key, value]) => (
-					<tr style={{borderCollapse: "collapse", border: "thin solid" }}>
-						<td data-label="Key" style={{borderCollapse: "collapse", border: "thin solid" }}>{key}</td>
+					<tr style={{ borderCollapse: "collapse", border: "thin solid" }}>
+						<td
+							data-label="Key"
+							style={{ borderCollapse: "collapse", border: "thin solid" }}
+						>
+							{key}
+						</td>
 						<td data-label="Value">{getTableValue(value, renderChild)}</td>
 					</tr>
 				))}
