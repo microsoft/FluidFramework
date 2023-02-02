@@ -15,9 +15,26 @@ In this case, the Fluid collaboration session serves as a "drafting surface" in 
 
 ## Strategy overview
 
-This example repo explores two routes to implement the scenario above. One is the Echo Webhook Pattern and the other is the Bot Pattern. Both are documented in more detail below. However, they both operate in the following environment: many data sources (that would hold the "source of truth" of their data) offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates. However, theyoften expose third-party integration via REST APIS for uerying and manipulating data, as well as webhooks for watching updates to the data. 
+Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates. However, they often expose third-party integration via REST APIS for querying and manipulating data, as well as webhooks for watching updates to the data. 
 
-We have created a mock external service that offers this REST API collection and webhook interfaces in ./src/mock-external-data-service.
+This repo contains an external service that serves as a mock external "source of truth" data server, that offers this REST API collection and webhook interfaces in ./src/mock-external-data-service. The APIs served by this external service are the following: 
+
+1. POST `/register-for-webhook`
+2. GET `/fetch-tasks`
+3. POST `/set-tasks`
+4. POST `/debug-reset-task-list`
+
+Find the documentation for them in the code itself: (./src/mock-external-data-service/service.ts)[./src/mock-external-data-service/service.ts]
+
+Next we need a service that will register the webhooks and listen for incoming changes. In a true implementation, this registration would happen in the Fluid server-side, potentially in the Alfred service, as we have in our dev branch here: https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts#L463-L508.
+
+However, for the purposes of this example, we have built out a separate service to register for the webhook. It contains the following endpoints:
+1. POST `/register-for-webhook`
+2. POST `/echo-external-data-webhook`
+
+Find the details in the code here: (examples/hosts/app-integration/external-data/src/mock-customer-service/service.ts)[examples/hosts/app-integration/external-data/src/mock-customer-service/service.ts]
+
+Next we come to how the Fluid collaboration session and clients will consume the APIs above and render them to the screen. To accomplish that, this example repo explores two routes to implement the scenario above. One is the Echo Webhook Pattern and the other is the Bot Pattern. Both are documented in more detail below.
 
 ### Echo Webhook Pattern
 
