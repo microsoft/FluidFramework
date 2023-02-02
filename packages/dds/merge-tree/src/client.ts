@@ -73,8 +73,10 @@ type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage
 
 function removeMoveInfo(segment: Partial<IMoveInfo>): void {
 	delete segment.movedSeq;
+	delete segment.movedSeqs;
 	delete segment.localMovedSeq;
 	delete segment.movedClientIds;
+	delete segment.wasObliteratedOnInsert;
 }
 
 /**
@@ -805,7 +807,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						segInsertOp = segment.clone();
 						segInsertOp.properties = resetOp.seg.props;
 					}
-					removeMoveInfo(segment);
+					if (segment.movedSeq !== -1) {
+						removeMoveInfo(segment);
+					}
 					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);
 					break;
 
@@ -849,7 +853,22 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				};
 				segment.segmentGroups.enqueue(newSegmentGroup);
 				this._mergeTree.pendingSegments!.push(newSegmentGroup);
-				opList.push(newOp);
+
+				const first = opList[0];
+
+				if (first && resetOp.type === MergeTreeDeltaType.OBLITERATE) {
+					// HACK: if an obliterate op gets split, it becomes more
+					// difficult to track concurrently obliterated segments.
+					// instead of writing more traversal code, we can reuse the
+					// existing implementation by concatening the obliterate ops
+					//
+					// we still have to create nop obliterates in order to clear
+					// the segment queue
+					first.pos2! += newOp.pos2! - newOp.pos1!;
+					opList.push(createObliterateRangeOp(0, 0));
+				} else {
+					opList.push(newOp);
+				}
 			}
 		}
 

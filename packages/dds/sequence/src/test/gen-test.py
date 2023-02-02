@@ -19,6 +19,8 @@ def construct_test(seed):
         elif op['type'] == "synchronize":
             buf += "helper.processAllOps();\n"
             buf += "helper.logger.validate();\n"
+        elif op['type'] == "changeConnectionState":
+            buf += f"// changeConnectionState for {op['stringId']} to {op['connected']};\n"
         else:
             raise Exception("unknown op type")
     return buf

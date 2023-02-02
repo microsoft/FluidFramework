@@ -987,7 +987,28 @@ export class MergeTree {
 			} else {
 				this.computeLocalPartials(refSeq);
 				// Local client should see all segments except those after localSeq.
-				return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
+				const partialLen = node.partialLengths!.getPartialLength(
+					refSeq,
+					clientId,
+					localSeq,
+				);
+
+				if (PartialSequenceLengths.options.verifier) {
+					let expected = 0;
+					for (let i = 0; i < node.childCount; i++) {
+						expected +=
+							this.nodeLength(node.children[i], refSeq, clientId, localSeq) ?? 0;
+					}
+
+					if (expected !== partialLen) {
+						node.partialLengths!.getPartialLength(refSeq, clientId);
+						throw new Error(
+							`expected partial length of ${expected} but found ${partialLen}. ${refSeq} ${clientId}`,
+						);
+					}
+				}
+
+				return partialLen;
 			}
 		} else {
 			// Sequence number within window
@@ -1416,7 +1437,10 @@ export class MergeTree {
 					);
 				}
 
-				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
+				if (
+					opArgs.op.type === MergeTreeDeltaType.OBLITERATE &&
+					localMovedSeq !== undefined
+				) {
 					forwardExcursion(pendingSegment, (seg) => {
 						const moveInfo = toMoveInfo(seg);
 						const removalInfo = toRemovalInfo(seg);

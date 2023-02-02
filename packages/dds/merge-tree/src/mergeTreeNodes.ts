@@ -200,8 +200,10 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 		return maybe as IMoveInfo;
 	}
 	assert(
-		maybe?.movedClientIds === undefined && maybe?.movedSeq === undefined,
-		"both movedClientIds and movedSeq should be set or not set",
+		maybe?.movedClientIds === undefined &&
+			maybe?.movedSeq === undefined &&
+			maybe?.movedSeqs === undefined,
+		"movedClientIds, movedSeq, and movedSeqs should all be either set or not set",
 	);
 }
 
