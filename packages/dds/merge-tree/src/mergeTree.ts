@@ -170,6 +170,10 @@ function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveI
 	};
 }
 
+function isMoved(segment: ISegment): boolean {
+	return toMoveInfo(segment) !== undefined;
+}
+
 function isRemoved(segment: ISegment): boolean {
 	return toRemovalInfo(segment) !== undefined;
 }
@@ -1188,7 +1192,7 @@ export class MergeTree {
 			return this.getPosition(refPos, refSeq, clientId);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			const offset = isRemoved(seg) ? 0 : refPos.getOffset();
+			const offset = isRemoved(seg) || isMoved(seg) ? 0 : refPos.getOffset();
 			return offset + this.getPosition(seg, refSeq, clientId);
 		}
 		return DetachedReferencePosition;
@@ -1498,7 +1502,11 @@ export class MergeTree {
 
 				overwrite = overlappingRemove || overwrite;
 
-				if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+				if (
+					!overlappingRemove &&
+					(opArgs.op.type === MergeTreeDeltaType.REMOVE ||
+						opArgs.op.type === MergeTreeDeltaType.OBLITERATE)
+				) {
 					this.slideAckedRemovedSegmentReferences(pendingSegment);
 				}
 				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
@@ -2697,7 +2705,7 @@ export class MergeTree {
 		properties: PropertySet | undefined,
 	): LocalReferencePosition {
 		if (
-			isRemovedAndAcked(segment) &&
+			(isRemovedAndAcked(segment) || isMovedAndAcked(segment)) &&
 			!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)
 		) {
 			throw new UsageError(

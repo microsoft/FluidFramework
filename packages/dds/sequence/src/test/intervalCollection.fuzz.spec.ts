@@ -683,6 +683,10 @@ class PassManager {
 	}
 
 	applyThreeRandomlySingle() {
+		if (this.operations.length < 3) {
+			return;
+		}
+
 		const op1 = this.operations[
 			PassManager.randInt(this.operations.length)
 		] as any as Operation;
@@ -767,6 +771,7 @@ class PassManager {
 					break;
 				case "removeRange":
 				case "obliterateRange":
+				case "addInterval":
 					op.start -= 1;
 					op.end -= 1;
 					break;
@@ -781,6 +786,7 @@ class PassManager {
 					break;
 				case "removeRange":
 				case "obliterateRange":
+				case "addInterval":
 					op.start += 1;
 					op.end += 1;
 					break;
@@ -792,14 +798,22 @@ class PassManager {
 
 	_shrinkRange: Pass = {
 		apply(op) {
-			if (op.type !== "removeRange" && op.type !== "obliterateRange") {
+			if (
+				op.type !== "removeRange" &&
+				op.type !== "obliterateRange" &&
+				op.type !== "addInterval"
+			) {
 				return;
 			}
 
 			op.end -= 1;
 		},
 		undo(op) {
-			if (op.type !== "removeRange" && op.type !== "obliterateRange") {
+			if (
+				op.type !== "removeRange" &&
+				op.type !== "obliterateRange" &&
+				op.type !== "addInterval"
+			) {
 				return;
 			}
 			op.end += 1;
@@ -852,6 +866,7 @@ class PassManager {
 				break;
 			case "removeRange":
 			case "obliterateRange":
+			case "addInterval":
 				while (op.start > 0) {
 					op.start -= 1;
 					op.end -= 1;
@@ -873,7 +888,11 @@ class PassManager {
 	}
 
 	shrinkRangeSingle(op: Operation) {
-		if (op.type === "removeRange" || op.type === "obliterateRange") {
+		if (
+			op.type === "removeRange" ||
+			op.type === "obliterateRange" ||
+			op.type === "addInterval"
+		) {
 			while (op.start < op.end) {
 				op.end -= 1;
 				if (!this.runTest()) {
@@ -899,7 +918,10 @@ class PassManager {
 			);
 			return false;
 		} catch (e: any) {
-			if (e?.message === "RangeOutOfBounds") {
+			if (
+				e?.message === "RangeOutOfBounds" ||
+				e?.message === "Non-transient references need segment"
+			) {
 				return false;
 			}
 			return true;

@@ -63,6 +63,7 @@ export {
 	IMergeBlock,
 	IMergeNode,
 	IMergeNodeCommon,
+	IMoveInfo,
 	IncrementalBlockAction,
 	IncrementalExecOp,
 	IncrementalMapState,
