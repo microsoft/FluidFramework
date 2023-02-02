@@ -567,6 +567,16 @@ export interface IMergeTreeTextHelper {
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
+// @public
+export interface IMoveInfo {
+    localMovedSeq?: number;
+    movedClientIds: number[];
+    movedSeq: number;
+    movedSeqs: number[];
+    moveDst?: ReferencePosition;
+    wasObliteratedOnInsert: boolean;
+}
+
 // @public (undocumented)
 export interface IncrementalBlockAction<TContext> {
     // (undocumented)
@@ -669,8 +679,6 @@ export interface IRemovalInfo {
     removedSeq: number;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IMoveInfo" needs to be exported by the entry point index.d.ts
-//
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
