@@ -6,11 +6,9 @@
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import isEqual from "lodash.isequal";
-import React, { useEffect, useState } from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import type { IAppModel, TaskData } from "../model-interface";
-import { customerServicePort } from "../mock-service-interface";
 import { localUnsavedChangesState } from "./recoilState";
 
 /**

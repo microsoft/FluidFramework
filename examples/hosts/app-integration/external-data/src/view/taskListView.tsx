@@ -147,7 +147,6 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			for (const task of taskList.getTasks()) {
 				if (task.localChange) changedTasks++;
 			}
-			console.log(changedTasks);
 			setLocalUnsavedChanges(changedTasks);
 		};
 
