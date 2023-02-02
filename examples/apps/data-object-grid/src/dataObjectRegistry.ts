@@ -11,7 +11,7 @@ import {
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import { CodeMirrorComponent, CodeMirrorView, SmdeFactory } from "@fluid-example/codemirror";
+import { CodeMirrorComponent, CodeMirrorReactView, SmdeFactory } from "@fluid-example/codemirror";
 import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
@@ -49,7 +49,10 @@ const getCodeMirrorView = async (serializableObject: ISingleHandleItem) => {
 	const handle = serializableObject.handle as IFluidHandle<CodeMirrorComponent>;
 	const codeMirror = await handle.get();
 	return React.createElement(ReactViewAdapter, {
-		view: new CodeMirrorView(codeMirror.text, codeMirror.presenceManager),
+		view: React.createElement(CodeMirrorReactView, {
+			text: codeMirror.text,
+			presenceManager: codeMirror.presenceManager,
+		}),
 	});
 };
 
