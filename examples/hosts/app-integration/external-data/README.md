@@ -11,13 +11,13 @@ This example demonstrates a scenario in which the Customers "source of truth" of
 2. Export data from a Fluid collaboration session back to the source of truth.
 3. Sync updates between Fluid and the source of truth in as close to real-time as the scenario allows.
 
-In this case, the Fluid collaboration session serves as a "drafting surface" in which clients collaborate to create a draft of the data and then send the saved data back to the source of truth for long term storage. 
+In this case, the Fluid collaboration session serves as a "drafting surface" in which clients collaborate to create a draft of the data and then send the saved data back to the source of truth for long term storage.
 
 ## Strategy overview
 
-Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates. However, they often expose third-party integration via REST APIS for querying and manipulating data, as well as webhooks for watching updates to the data. 
+Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates. However, they often expose third-party integration via REST APIS for querying and manipulating data, as well as webhooks for watching updates to the data.
 
-This repo contains an external service that serves as a mock external "source of truth" data server, that offers this REST API collection and webhook interfaces in ./src/mock-external-data-service. The APIs served by this external service are the following: 
+This repo contains an external service that serves as a mock external "source of truth" data server, that offers this REST API collection and webhook interfaces in ./src/mock-external-data-service. The APIs served by this external service are the following:
 
 1. POST `/register-for-webhook`
 2. GET `/fetch-tasks`
@@ -48,9 +48,9 @@ In this pattern. the indivdual clients are responsible for authenticatin with th
 
 The clients (or elected leader client) can then send a fetch call to retrieve the information and dsiplay it to screen by making a call to the external data server's GET `/fetch-tasks` endpoint.
 
-In this example, we have opted for a signal to be broadcast to relay this information. On receipt of the signal, the clients send a fetch request to pull the data from the external-data server. This data is stored in a SharedMap known as "SavedData", whereas the local collaboration state is stored in a SharedMap known as "DraftData". This is known as the draft data, as we are treating the Fluid collbaoration session as a drafting surface, which will eventually get pushed back to the External Data Server for longer term storage.
+In this example, we have opted for a signal to be broadcast to relay this information. On receipt of the signal, the clients send a fetch request to pull the data from the external-data server. This data is stored in a SharedMap known as "SavedData", whereas the local collaboration state is stored in a SharedMap known as "DraftData". This is known as the draft data, as we are treating the Fluid collaboration session as a drafting surface, which will eventually get pushed back to the External Data Server for longer term storage.
 
-Upon receipt of new external data, the external data is written immediately into the "SavedData" map, and a check occurs comparing the SavedData to the DraftData. If there are changes between the two, these are displayed on screen and the clients can (currently) only choose to consume the changes and overwrite their local data, via using regular ops mechanism. The first person to overwrite will use regular ops to write into the FluidData and the change will be attributed to them. 
+Upon receipt of new external data, the external data is written immediately into the "SavedData" map, and a check occurs comparing the SavedData to the DraftData. If there are changes between the two, these are displayed on screen and the clients can (currently) only choose to consume the changes and overwrite their local data, via using regular ops mechanism. The first person to overwrite will use regular ops to write into the FluidData and the change will be attributed to them.
 
 The collaboration session can continue as expected, and when the collboartion session is ready to be closed, the clients can simply Save Changes to write back to the External Data Source by making a request to the External Data Server's POST `/set-tasks` endpoint.
 
