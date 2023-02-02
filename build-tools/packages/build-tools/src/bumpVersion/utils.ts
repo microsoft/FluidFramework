@@ -6,19 +6,19 @@ import { strict as assert } from "assert";
 import * as semver from "semver";
 
 import {
-    VersionBumpType,
-    VersionChangeType,
-    VersionChangeTypeExtended,
-    VersionScheme,
-    isVersionBumpType,
+	VersionBumpType,
+	VersionChangeType,
+	VersionChangeTypeExtended,
+	VersionScheme,
+	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
 import { execAsync } from "../common/utils";
 
 export function fatal(error: string): never {
-    const e = new Error(error);
-    (e as any).fatal = true;
-    throw e;
+	const e = new Error(error);
+	(e as any).fatal = true;
+	throw e;
 }
 
 /**
@@ -29,13 +29,13 @@ export function fatal(error: string): never {
  * @param error description of command line to print when error happens
  */
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
-    const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
-    if (result.error) {
-        fatal(
-            `ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,
-        );
-    }
-    return result.stdout;
+	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+	if (result.error) {
+		fatal(
+			`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,
+		);
+	}
+	return result.stdout;
 }
 
 /**
@@ -46,14 +46,14 @@ export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: 
  * @param error description of command line to print when error happens
  */
 export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) {
-    const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
-    if (result.error) {
-        return undefined;
-    }
-    return result.stdout;
+	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+	if (result.error) {
+		return undefined;
+	}
+	return result.stdout;
 }
 
 export function prereleaseSatisfies(packageVersion: string, range: string) {
-    // Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
-    return semver.satisfies(`${packageVersion}-zzz`, range);
+	// Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
+	return semver.satisfies(`${packageVersion}-zzz`, range);
 }

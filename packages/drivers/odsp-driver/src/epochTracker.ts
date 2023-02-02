@@ -7,41 +7,53 @@ import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    ThrottlingError,
-    RateLimiter,
-    NonRetryableError,
-    LocationRedirectionError,
+	ThrottlingError,
+	RateLimiter,
+	NonRetryableError,
+	LocationRedirectionError,
 } from "@fluidframework/driver-utils";
 import {
-    snapshotKey,
-    ICacheEntry,
-    IEntry,
-    IFileEntry,
-    IPersistedCache,
-    IOdspError,
-    IOdspErrorAugmentations,
-    IOdspResolvedUrl,
+	snapshotKey,
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IPersistedCache,
+	IOdspError,
+	IOdspErrorAugmentations,
+	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
-    PerformanceEvent,
-    isFluidError,
-    normalizeError,
-    loggerToMonitoringContext,
+	PerformanceEvent,
+	isFluidError,
+	normalizeError,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchArray, fetchHelper, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
 import {
-    IOdspCache,
-    INonPersistentCache,
-    IPersistedFileCache,
- } from "./odspCache";
+	fetchAndParseAsJSONHelper,
+	fetchArray,
+	fetchHelper,
+	getOdspResolvedUrl,
+	IOdspResponse,
+} from "./odspUtils";
+import { IOdspCache, INonPersistentCache, IPersistedFileCache } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection";
 
-export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
-    "treesLatest" | "uploadSummary" | "push" | "versions";
+export type FetchType =
+	| "blob"
+	| "createBlob"
+	| "createFile"
+	| "joinSession"
+	| "ops"
+	| "test"
+	| "snapshotTree"
+	| "treesLatest"
+	| "uploadSummary"
+	| "push"
+	| "versions";
 
 export type FetchTypeInternal = FetchType | "cache";
 
@@ -414,130 +426,149 @@ export class EpochTracker implements IPersistedFileCache {
 }
 
 export class EpochTrackerWithRedemption extends EpochTracker {
-    private readonly treesLatestDeferral = new Deferred<void>();
+	private readonly treesLatestDeferral = new Deferred<void>();
 
-    constructor(
-        protected readonly cache: IPersistedCache,
-        protected readonly fileEntry: IFileEntry,
-        protected readonly logger: ITelemetryLogger,
-        protected readonly clientIsSummarizer?: boolean,
-    ) {
-        super(cache, fileEntry, logger, clientIsSummarizer);
-        // Handles the rejected promise within treesLatestDeferral.
-        this.treesLatestDeferral.promise.catch(() => {});
-    }
+	constructor(
+		protected readonly cache: IPersistedCache,
+		protected readonly fileEntry: IFileEntry,
+		protected readonly logger: ITelemetryLogger,
+		protected readonly clientIsSummarizer?: boolean,
+	) {
+		super(cache, fileEntry, logger, clientIsSummarizer);
+		// Handles the rejected promise within treesLatestDeferral.
+		this.treesLatestDeferral.promise.catch(() => {});
+	}
 
-    protected validateEpochFromResponse(
-        epochFromResponse: string | undefined,
-        fetchType: FetchType,
-        fromCache: boolean = false,
-    ) {
-        super.validateEpochFromResponse(epochFromResponse, fetchType, fromCache);
+	protected validateEpochFromResponse(
+		epochFromResponse: string | undefined,
+		fetchType: FetchType,
+		fromCache: boolean = false,
+	) {
+		super.validateEpochFromResponse(epochFromResponse, fetchType, fromCache);
 
-        // Any successful call means we have access to a file, i.e. any redemption that was required already happened.
-        // That covers cases of "treesLatest" as well as "getVersions" or "createFile" - all the ways we can start
-        // exploring a file.
-        this.treesLatestDeferral.resolve();
-    }
+		// Any successful call means we have access to a file, i.e. any redemption that was required already happened.
+		// That covers cases of "treesLatest" as well as "getVersions" or "createFile" - all the ways we can start
+		// exploring a file.
+		this.treesLatestDeferral.resolve();
+	}
 
-    public async get(
-        entry: IEntry,
-    ): Promise<any> {
-        let result = super.get(entry);
+	public async get(entry: IEntry): Promise<any> {
+		let result = super.get(entry);
 
-        // equivalence of what happens in fetchAndParseAsJSON()
-        if (entry.type === snapshotKey) {
-            result = result
-                .then((value) => {
-                    // If there is nothing in cache, we need to wait for network call to complete (and do redemption)
-                    // Otherwise file was redeemed in prior session, so if joinSession failed, we should not retry
-                    if (value !== undefined) {
-                        this.treesLatestDeferral.resolve();
-                    }
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                    return value;
-                })
-                .catch((error) => {
-                    this.treesLatestDeferral.reject(error);
-                    throw error;
-                });
-        }
-        return result;
-    }
+		// equivalence of what happens in fetchAndParseAsJSON()
+		if (entry.type === snapshotKey) {
+			result = result
+				.then((value) => {
+					// If there is nothing in cache, we need to wait for network call to complete (and do redemption)
+					// Otherwise file was redeemed in prior session, so if joinSession failed, we should not retry
+					if (value !== undefined) {
+						this.treesLatestDeferral.resolve();
+					}
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					return value;
+				})
+				.catch((error) => {
+					this.treesLatestDeferral.reject(error);
+					throw error;
+				});
+		}
+		return result;
+	}
 
-    public async fetchAndParseAsJSON<T>(
-        url: string,
-        fetchOptions: { [index: string]: any; },
-        fetchType: FetchType,
-        addInBody: boolean = false,
-        fetchReason?: string,
-    ): Promise<IOdspResponse<T>> {
-        // Optimize the flow if we know that treesLatestDeferral was already completed by the timer we started
-        // joinSession call. If we did - there is no reason to repeat the call as it will fail with same error.
-        const completed = this.treesLatestDeferral.isCompleted;
+	public async fetchAndParseAsJSON<T>(
+		url: string,
+		fetchOptions: { [index: string]: any },
+		fetchType: FetchType,
+		addInBody: boolean = false,
+		fetchReason?: string,
+	): Promise<IOdspResponse<T>> {
+		// Optimize the flow if we know that treesLatestDeferral was already completed by the timer we started
+		// joinSession call. If we did - there is no reason to repeat the call as it will fail with same error.
+		const completed = this.treesLatestDeferral.isCompleted;
 
-        try {
-            return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody, fetchReason);
-        } catch (error: any) {
-            // Only handling here treesLatest. If createFile failed, we should never try to do joinSession.
-            // Similar, if getVersions failed, we should not do any further storage calls.
-            // So treesLatest is the only call that can have parallel joinSession request.
-            if (fetchType === "treesLatest") {
-                this.treesLatestDeferral.reject(error);
-            }
-            if (fetchType !== "joinSession" || error.statusCode < 401 || error.statusCode > 404 || completed) {
-                throw error;
-            }
-        }
+		try {
+			return await super.fetchAndParseAsJSON<T>(
+				url,
+				fetchOptions,
+				fetchType,
+				addInBody,
+				fetchReason,
+			);
+		} catch (error: any) {
+			// Only handling here treesLatest. If createFile failed, we should never try to do joinSession.
+			// Similar, if getVersions failed, we should not do any further storage calls.
+			// So treesLatest is the only call that can have parallel joinSession request.
+			if (fetchType === "treesLatest") {
+				this.treesLatestDeferral.reject(error);
+			}
+			if (
+				fetchType !== "joinSession" ||
+				error.statusCode < 401 ||
+				error.statusCode > 404 ||
+				completed
+			) {
+				throw error;
+			}
+		}
 
-        // It is joinSession failing with 401..404 error
-        // Repeat after waiting for treeLatest succeeding (or fail if it failed).
-        // No special handling after first call - if file has been deleted, then it's game over.
+		// It is joinSession failing with 401..404 error
+		// Repeat after waiting for treeLatest succeeding (or fail if it failed).
+		// No special handling after first call - if file has been deleted, then it's game over.
 
-        // Ensure we have some safety here - we do not want to deadlock if we got logic somewhere wrong.
-        // If we waited too long, we will log error event and proceed with call.
-        // It may result in failure for user, but refreshing document would address it.
-        // Thus we use rather long timeout (not to get these failures as much as possible), but not large enough
-        // to unblock the process.
-        await PerformanceEvent.timedExecAsync(
-            this.logger,
-            { eventName: "JoinSessionSyncWait" },
-            async (event) => {
-                const timeoutRes = 51; // anything will work here
-                let timer: ReturnType<typeof setTimeout>;
-                const timeoutP = new Promise<number>((resolve) => {
-                    timer = setTimeout(() => { resolve(timeoutRes); }, 15000);
-                });
-                const res = await Promise.race([
-                    timeoutP,
-                    // cancel timeout to unblock UTs (otherwise Node process does not exit for 15 sec)
-                    this.treesLatestDeferral.promise.finally(() => clearTimeout(timer))]);
-                if (res === timeoutRes) {
-                    event.cancel();
-                }
-            },
-            { start: true, end: true, cancel: "generic" });
-        return super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
-    }
+		// Ensure we have some safety here - we do not want to deadlock if we got logic somewhere wrong.
+		// If we waited too long, we will log error event and proceed with call.
+		// It may result in failure for user, but refreshing document would address it.
+		// Thus we use rather long timeout (not to get these failures as much as possible), but not large enough
+		// to unblock the process.
+		await PerformanceEvent.timedExecAsync(
+			this.logger,
+			{ eventName: "JoinSessionSyncWait" },
+			async (event) => {
+				const timeoutRes = 51; // anything will work here
+				let timer: ReturnType<typeof setTimeout>;
+				const timeoutP = new Promise<number>((resolve) => {
+					timer = setTimeout(() => {
+						resolve(timeoutRes);
+					}, 15000);
+				});
+				const res = await Promise.race([
+					timeoutP,
+					// cancel timeout to unblock UTs (otherwise Node process does not exit for 15 sec)
+					this.treesLatestDeferral.promise.finally(() => clearTimeout(timer)),
+				]);
+				if (res === timeoutRes) {
+					event.cancel();
+				}
+			},
+			{ start: true, end: true, cancel: "generic" },
+		);
+		return super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
+	}
 }
 
 export interface ICacheAndTracker {
-    cache: IOdspCache;
-    epochTracker: EpochTracker;
+	cache: IOdspCache;
+	epochTracker: EpochTracker;
 }
 
 export function createOdspCacheAndTracker(
-    persistedCacheArg: IPersistedCache,
-    nonpersistentCache: INonPersistentCache,
-    fileEntry: IFileEntry,
-    logger: ITelemetryLogger,
-    clientIsSummarizer?: boolean): ICacheAndTracker {
-    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger, clientIsSummarizer);
-    return {
-        cache: {
-            ...nonpersistentCache,
-            persistedCache: epochTracker,
-        },
-        epochTracker,
-    };
+	persistedCacheArg: IPersistedCache,
+	nonpersistentCache: INonPersistentCache,
+	fileEntry: IFileEntry,
+	logger: ITelemetryLogger,
+	clientIsSummarizer?: boolean,
+): ICacheAndTracker {
+	const epochTracker = new EpochTrackerWithRedemption(
+		persistedCacheArg,
+		fileEntry,
+		logger,
+		clientIsSummarizer,
+	);
+	return {
+		cache: {
+			...nonpersistentCache,
+			persistedCache: epochTracker,
+		},
+		epochTracker,
+	};
 }

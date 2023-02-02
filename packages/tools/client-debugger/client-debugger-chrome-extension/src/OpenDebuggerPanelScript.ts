@@ -12,6 +12,6 @@ import { openDebuggerPanel } from "./OpenDebuggerPanel";
  */
 
 openDebuggerPanel().catch((error) => {
-    console.error(error);
-    throw error;
+	console.error(error);
+	throw error;
 });

@@ -8,21 +8,25 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
-    IOdspResolvedUrl,
-    IPersistedCache,
-    ISnapshotOptions,
-    OdspResourceTokenFetchOptions,
-    TokenFetcher,
-    IOdspUrlParts,
+	IOdspResolvedUrl,
+	IPersistedCache,
+	ISnapshotOptions,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
+	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    createCacheSnapshotKey,
-    createOdspLogger,
-    getOdspResolvedUrl,
-    toInstrumentedOdspTokenFetcher,
+	createCacheSnapshotKey,
+	createOdspLogger,
+	getOdspResolvedUrl,
+	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { downloadSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
+import {
+	downloadSnapshot,
+	fetchSnapshotWithRedeem,
+	SnapshotFormatSupportType,
+} from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
 import { snapshotPrefetchCacheKeyFromEntry, ISnapshotContentsWithEpoch, SnapshotPrefetchResultCache } from "./odspCache";
 
@@ -59,20 +63,20 @@ export async function prefetchLatestSnapshot(
     snapshotFormatFetchType?: SnapshotFormatSupportType,
     snapshotPrefetchResultCache?: SnapshotPrefetchResultCache,
 ): Promise<boolean> {
-    const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
-    const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+	const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
+	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
-    const resolvedUrlData: IOdspUrlParts = {
-        siteUrl: odspResolvedUrl.siteUrl,
-        driveId: odspResolvedUrl.driveId,
-        itemId: odspResolvedUrl.itemId,
-    };
-    const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
-        odspLogger,
-        resolvedUrlData,
-        getStorageToken,
-        true /* throwOnNullToken */,
-    );
+	const resolvedUrlData: IOdspUrlParts = {
+		siteUrl: odspResolvedUrl.siteUrl,
+		driveId: odspResolvedUrl.driveId,
+		itemId: odspResolvedUrl.itemId,
+	};
+	const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+		odspLogger,
+		resolvedUrlData,
+		getStorageToken,
+		true /* throwOnNullToken */,
+	);
 
     const snapshotDownloader = async (
         finalOdspResolvedUrl: IOdspResolvedUrl,

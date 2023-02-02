@@ -4,20 +4,17 @@
  */
 
 import React from "react";
-import {
-    CollaborativeTextArea,
-    SharedStringHelper,
-} from "@fluid-experimental/react-inputs";
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { SharedString } from "@fluidframework/sequence";
 
 interface CollaborativeTextProps {
-    text: SharedString;
+	text: SharedString;
 }
 
 export const CollaborativeTextView = (props: CollaborativeTextProps) => {
-    return (
-        <div className="text-area">
-            <CollaborativeTextArea sharedStringHelper={new SharedStringHelper(props.text)} />
-        </div>
-    );
+	return (
+		<div className="text-area">
+			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(props.text)} />
+		</div>
+	);
 };

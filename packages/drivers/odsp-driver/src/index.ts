@@ -24,7 +24,10 @@ export { getApiRoot, getOdspUrlParts, isOdcOrigin, isOdcUrl, isSpoUrl } from "./
 export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot";
 
 // Factory
-export { createLocalOdspDocumentServiceFactory, OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
+export {
+	createLocalOdspDocumentServiceFactory,
+	OdspDocumentServiceFactory,
+} from "./odspDocumentServiceFactory";
 export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 export { OdspDocumentServiceFactoryWithCodeSplit } from "./odspDocumentServiceFactoryWithCodeSplit";
 
@@ -33,7 +36,10 @@ export { createOdspCreateContainerRequest } from "./createOdspCreateContainerReq
 
 // URI Resolver functionality, URI management
 export { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-export { OdspDriverUrlResolverForShareLink, ShareLinkFetcherProps } from "./odspDriverUrlResolverForShareLink";
+export {
+	OdspDriverUrlResolverForShareLink,
+	ShareLinkFetcherProps,
+} from "./odspDriverUrlResolverForShareLink";
 
 // It's used by URL resolve code, but also has some public functions
 export {

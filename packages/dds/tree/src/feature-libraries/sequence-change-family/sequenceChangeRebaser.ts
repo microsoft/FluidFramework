@@ -13,12 +13,12 @@ import { rebase } from "./rebase";
 export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset>;
 
 function rebaseAnchors(anchors: AnchorSet, over: SequenceChangeset): void {
-    anchors.applyDelta(toDelta(over));
+	anchors.applyDelta(toDelta(over));
 }
 
 export const sequenceChangeRebaser: SequenceChangeRebaser = {
-    compose,
-    invert,
-    rebase,
-    rebaseAnchors,
+	compose,
+	invert,
+	rebase,
+	rebaseAnchors,
 };

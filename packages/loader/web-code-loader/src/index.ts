@@ -5,5 +5,9 @@
 
 export { AllowList } from "./allowList";
 export { SemVerCdnCodeResolver } from "./semVerCdnCodeResolver";
-export { extractPackageIdentifierDetails, IPackageIdentifierDetails, resolveFluidPackageEnvironment } from "./utils";
+export {
+	extractPackageIdentifierDetails,
+	IPackageIdentifierDetails,
+	resolveFluidPackageEnvironment,
+} from "./utils";
 export { WebCodeLoader } from "./webLoader";

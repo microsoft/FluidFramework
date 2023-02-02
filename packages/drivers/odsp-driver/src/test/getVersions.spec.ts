@@ -12,10 +12,10 @@ import { TelemetryNullLogger, MockLogger } from "@fluidframework/telemetry-utils
 import { delay } from "@fluidframework/common-utils";
 import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
 import {
-    IOdspSnapshot,
-    HostStoragePolicyInternal,
-    IVersionedValueWithEpoch,
-    persistedCacheValueVersion,
+	IOdspSnapshot,
+	HostStoragePolicyInternal,
+	IVersionedValueWithEpoch,
+	persistedCacheValueVersion,
 } from "../contracts";
 import { LocalPersistentCache, NonPersistentCache, snapshotPrefetchCacheKeyFromEntry } from "../odspCache";
 import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils";

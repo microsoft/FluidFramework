@@ -10,11 +10,11 @@ import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
-    IClient,
-    IConnect,
-    INack,
-    ISequencedDocumentMessage,
-    ISignalMessage,
+	IClient,
+	IConnect,
+	INack,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { Socket, io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
@@ -29,8 +29,8 @@ const feature_get_ops = "api_get_ops";
 const feature_flush_ops = "api_flush_ops";
 
 export interface FlushResult {
-    lastPersistedSequenceNumber?: number;
-    retryAfter?: number;
+	lastPersistedSequenceNumber?: number;
+	retryAfter?: number;
 }
 
 // How long to wait before disconnecting the socket after the last reference is removed
@@ -38,157 +38,178 @@ export interface FlushResult {
 const socketReferenceBufferTime = 2000;
 
 interface ISocketEvents extends IEvent {
-    (event: "disconnect", listener: (error: IFluidErrorBase & OdspError, clientId?: string) => void);
+	(
+		event: "disconnect",
+		listener: (error: IFluidErrorBase & OdspError, clientId?: string) => void,
+	);
 }
 
 class SocketReference extends TypedEventEmitter<ISocketEvents> {
-    private references: number = 1;
-    private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
-    private _socket: Socket | undefined;
+	private references: number = 1;
+	private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
+	private _socket: Socket | undefined;
 
-    // When making decisions about socket reuse, we do not reuse disconnected socket.
-    // But we want to differentiate the following case from disconnected case:
-    // Socket that never connected and never failed, it's in "attempting to connect" mode
-    // such sockets should be reused, despite socket.disconnected === true
-    private isPendingInitialConnection = true;
+	// When making decisions about socket reuse, we do not reuse disconnected socket.
+	// But we want to differentiate the following case from disconnected case:
+	// Socket that never connected and never failed, it's in "attempting to connect" mode
+	// such sockets should be reused, despite socket.disconnected === true
+	private isPendingInitialConnection = true;
 
-    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
-    private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
+	// Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
+	private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
-    public static find(key: string, logger: ITelemetryLogger) {
-        const socketReference = SocketReference.socketIoSockets.get(key);
+	public static find(key: string, logger: ITelemetryLogger) {
+		const socketReference = SocketReference.socketIoSockets.get(key);
 
-        // Verify the socket is healthy before reusing it
-        if (socketReference?.disconnected) {
-            // The socket is in a bad state. fully remove the reference
-            socketReference.closeSocket();
-            return undefined;
-        }
+		// Verify the socket is healthy before reusing it
+		if (socketReference?.disconnected) {
+			// The socket is in a bad state. fully remove the reference
+			socketReference.closeSocket();
+			return undefined;
+		}
 
-        if (socketReference) {
-            // Clear the pending deletion if there is one
-            socketReference.clearTimer();
-            socketReference.references++;
-        }
+		if (socketReference) {
+			// Clear the pending deletion if there is one
+			socketReference.clearTimer();
+			socketReference.references++;
+		}
 
-        return socketReference;
-    }
+		return socketReference;
+	}
 
-    /**
-     * Removes a reference for the given key
-     * Once the ref count hits 0, the socket is disconnected and removed
-     */
-    public removeSocketIoReference() {
-        assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
-        this.references--;
+	/**
+	 * Removes a reference for the given key
+	 * Once the ref count hits 0, the socket is disconnected and removed
+	 */
+	public removeSocketIoReference() {
+		assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
+		this.references--;
 
-        // see comment in disconnected() getter
-        this.isPendingInitialConnection = false;
+		// see comment in disconnected() getter
+		this.isPendingInitialConnection = false;
 
-        if (this.disconnected) {
-            this.closeSocket();
-            return;
-        }
+		if (this.disconnected) {
+			this.closeSocket();
+			return;
+		}
 
-        if (this.references === 0 && this.delayDeleteTimeout === undefined) {
-            this.delayDeleteTimeout = setTimeout(() => {
-                // We should not get here with active users.
-                assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
-                this.closeSocket();
-            }, socketReferenceBufferTime);
-        }
-    }
+		if (this.references === 0 && this.delayDeleteTimeout === undefined) {
+			this.delayDeleteTimeout = setTimeout(() => {
+				// We should not get here with active users.
+				assert(
+					this.references === 0,
+					0x0a0 /* "Unexpected socketIO references on timeout" */,
+				);
+				this.closeSocket();
+			}, socketReferenceBufferTime);
+		}
+	}
 
-    public get socket() {
-        if (!this._socket) {
-            throw new Error(`Invalid socket for key "${this.key}`);
-        }
-        return this._socket;
-    }
+	public get socket() {
+		if (!this._socket) {
+			throw new Error(`Invalid socket for key "${this.key}`);
+		}
+		return this._socket;
+	}
 
-    public constructor(public readonly key: string, socket: Socket) {
-        super();
+	public constructor(public readonly key: string, socket: Socket) {
+		super();
 
-        this._socket = socket;
-        assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
-        SocketReference.socketIoSockets.set(key, this);
+		this._socket = socket;
+		assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
+		SocketReference.socketIoSockets.set(key, this);
 
-        // Server sends this event when it wants to disconnect a particular client in which case the client id would
-        // be present or if it wants to disconnect all the clients. The server always closes the socket in case all
-        // clients needs to be disconnected. So fully remove the socket reference in this case.
-        socket.on("server_disconnect", (socketError: IOdspSocketError, clientId?: string) => {
-            // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
-            // filter out retryable vs. non-retryable cases.
-            const error = errorObjectFromSocketError(socketError, "server_disconnect");
-            error.addTelemetryProperties({ disconnectClientId: clientId });
-            error.canRetry = true;
+		// Server sends this event when it wants to disconnect a particular client in which case the client id would
+		// be present or if it wants to disconnect all the clients. The server always closes the socket in case all
+		// clients needs to be disconnected. So fully remove the socket reference in this case.
+		socket.on("server_disconnect", (socketError: IOdspSocketError, clientId?: string) => {
+			// Treat all errors as recoverable, and rely on joinSession / reconnection flow to
+			// filter out retryable vs. non-retryable cases.
+			const error = errorObjectFromSocketError(socketError, "server_disconnect");
+			error.addTelemetryProperties({ disconnectClientId: clientId });
+			error.canRetry = true;
 
-            // see comment in disconnected() getter
-            // Setting it here to ensure socket reuse does not happen if new request to connect
-            // comes in from "disconnect" listener below, before we close socket.
-            this.isPendingInitialConnection = false;
+			// see comment in disconnected() getter
+			// Setting it here to ensure socket reuse does not happen if new request to connect
+			// comes in from "disconnect" listener below, before we close socket.
+			this.isPendingInitialConnection = false;
 
-            if (clientId === undefined) {
-                // We could first raise "disconnect" event, but that may result in socket reuse due to
-                // new connection comming in. So, it's better to have more explicit flow to make it impossible.
-                this.closeSocket(error);
-            } else {
-                this.emit("disconnect", error, clientId);
-            }
-        });
-    }
+			if (clientId === undefined) {
+				// We could first raise "disconnect" event, but that may result in socket reuse due to
+				// new connection comming in. So, it's better to have more explicit flow to make it impossible.
+				this.closeSocket(error);
+			} else {
+				this.emit("disconnect", error, clientId);
+			}
+		});
+	}
 
-    private clearTimer() {
-        if (this.delayDeleteTimeout !== undefined) {
-            clearTimeout(this.delayDeleteTimeout);
-            this.delayDeleteTimeout = undefined;
-        }
-    }
+	private clearTimer() {
+		if (this.delayDeleteTimeout !== undefined) {
+			clearTimeout(this.delayDeleteTimeout);
+			this.delayDeleteTimeout = undefined;
+		}
+	}
 
-    public closeSocket(error?: IAnyDriverError) {
-        if (!this._socket) { return; }
+	public closeSocket(error?: IAnyDriverError) {
+		if (!this._socket) {
+			return;
+		}
 
-        this.clearTimer();
+		this.clearTimer();
 
-        assert(SocketReference.socketIoSockets.get(this.key) === this,
-            0x0a1 /* "Socket reference set unexpectedly does not point to this socket!" */);
+		assert(
+			SocketReference.socketIoSockets.get(this.key) === this,
+			0x0a1 /* "Socket reference set unexpectedly does not point to this socket!" */,
+		);
 
-        // First, remove socket to ensure no socket reuse is possible.
-        SocketReference.socketIoSockets.delete(this.key);
+		// First, remove socket to ensure no socket reuse is possible.
+		SocketReference.socketIoSockets.delete(this.key);
 
-        // Block access to socket. From now on, calls like flush() or requestOps()
-        // Disconnect flow should be synchronous and result in system fully forgetting about this connection / socket.
-        const socket = this._socket;
-        this._socket = undefined;
+		// Block access to socket. From now on, calls like flush() or requestOps()
+		// Disconnect flow should be synchronous and result in system fully forgetting about this connection / socket.
+		const socket = this._socket;
+		this._socket = undefined;
 
-        // Let all connections know they need to go through disconnect flow.
-        this.emit("disconnect",
-            error ?? createGenericNetworkError(
-                "Socket closed without error",
-                { canRetry: true },
-                { driverVersion: pkgVersion }),
-            undefined /* clientId */);
+		// Let all connections know they need to go through disconnect flow.
+		this.emit(
+			"disconnect",
+			error ??
+				createGenericNetworkError(
+					"Socket closed without error",
+					{ canRetry: true },
+					{ driverVersion: pkgVersion },
+				),
+			undefined /* clientId */,
+		);
 
-        // We should not have any users now, assuming synchronous disconnect flow in response to
-        // "disconnect" event
-        assert(this.references === 0, 0x412 /* Nobody should be connected to this socket at this point! */);
+		// We should not have any users now, assuming synchronous disconnect flow in response to
+		// "disconnect" event
+		assert(
+			this.references === 0,
+			0x412 /* Nobody should be connected to this socket at this point! */,
+		);
 
-        socket.disconnect();
-    }
+		socket.disconnect();
+	}
 
-    public get disconnected() {
-        if (this._socket === undefined) { return true; }
-        if (this.socket.connected) { return false; }
+	public get disconnected() {
+		if (this._socket === undefined) {
+			return true;
+		}
+		if (this.socket.connected) {
+			return false;
+		}
 
-        // We have a socket that is not connected. Possible cases:
-        // 1) It was connected some time ago and lost connection. We do not want to reuse it.
-        // 2) It failed to connect (was never connected).
-        // 3) It was just created and never had a chance to connect - connection is in process.
-        // We have to differentiate 1 from 2-3 (specifically 1 & 3) in order to be able to reuse socket in #3.
-        // We will use the fact that socket had some activity. I.e. if socket disconnected, or client stopped using
-        // socket, then removeSocketIoReference() will be called for it, and it will be the indiction that it's not #3.
-        return !this.isPendingInitialConnection;
-    }
+		// We have a socket that is not connected. Possible cases:
+		// 1) It was connected some time ago and lost connection. We do not want to reuse it.
+		// 2) It failed to connect (was never connected).
+		// 3) It was just created and never had a chance to connect - connection is in process.
+		// We have to differentiate 1 from 2-3 (specifically 1 & 3) in order to be able to reuse socket in #3.
+		// We will use the fact that socket had some activity. I.e. if socket disconnected, or client stopped using
+		// socket, then removeSocketIoReference() will be called for it, and it will be the indiction that it's not #3.
+		return !this.isPendingInitialConnection;
+	}
 }
 
 /**

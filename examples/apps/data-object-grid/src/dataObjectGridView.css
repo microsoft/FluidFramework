@@ -1,40 +1,41 @@
 .data-grid-view {
-    width: 100%;
+	width: 100%;
 }
 
 .data-grid-item-view-wrapper {
-    overflow: scroll;
+	overflow: scroll;
 }
 
 .editable .data-grid-item-view-wrapper {
-    border: 1px solid black;
-    background-color: #d3d3d3;
-    box-sizing: border-box;
-    overflow: hidden;
+	border: 1px solid black;
+	background-color: #d3d3d3;
+	box-sizing: border-box;
+	overflow: hidden;
 }
 
 .data-grid-embedded-item-wrapper {
-    height: 100%;
+	height: 100%;
 }
 
 .editable .data-grid-embedded-item-wrapper {
-    pointer-events: none;
-    opacity: 0.5;
+	pointer-events: none;
+	opacity: 0.5;
 }
 
 .data-grid-edit-pane {
-    opacity: 1;
-    position: absolute;
-    bottom: 0;
-    right: 0;
+	opacity: 1;
+	position: absolute;
+	bottom: 0;
+	right: 0;
 }
 
 .data-grid-button {
-    display: none;
-    width: 2rem;
-    height: 2rem;
+	display: none;
+	width: 2rem;
+	height: 2rem;
 }
 
-.data-grid-item-view-wrapper:hover .data-grid-button, .editable .data-grid-button {
-    display: initial;
+.data-grid-item-view-wrapper:hover .data-grid-button,
+.editable .data-grid-button {
+	display: initial;
 }
