@@ -4,9 +4,8 @@
  */
 import axios from "axios";
 
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-
 import { AzureMember } from "@fluidframework/azure-client";
+import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
@@ -25,17 +24,25 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 		private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
 	) {}
 
-	public async fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse> {
+	public async fetchOrdererToken(
+		tenantId: string,
+		documentId?: string,
+		refresh?: boolean,
+	): Promise<ITokenResponse> {
 		return {
 			jwt: await this.getToken(tenantId, documentId),
-            fromCache: false,
+			fromCache: false,
 		};
 	}
 
-	public async fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse> {
+	public async fetchStorageToken(
+		tenantId: string,
+		documentId: string,
+		refresh?: boolean,
+	): Promise<ITokenResponse> {
 		return {
 			jwt: await this.getToken(tenantId, documentId),
-            fromCache: false,
+			fromCache: false,
 		};
 	}
 
