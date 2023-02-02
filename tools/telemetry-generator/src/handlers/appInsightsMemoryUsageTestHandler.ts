@@ -59,6 +59,6 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 			console.error(`failed to emit metric ${heapUsedStdDevMetricName}`, error);
 		}
 
-        telemetryClient.flush();
+        // telemetryClient.flush();
 	});
 };
