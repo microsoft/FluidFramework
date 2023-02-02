@@ -338,10 +338,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								// First wait for result either from cache or from prefetch cache.
 								const promiseRaceWinner = await promiseRaceWithWinner<
 									ISnapshotContents | ISnapshotContentsWithEpoch | undefined
-								>([
-									cachedSnapshotP.catch(() => undefined),
-									prefetchedSnapshotP,
-								]);
+								>([cachedSnapshotP.catch(() => undefined), prefetchedSnapshotP]);
 								retrievedSnapshot = promiseRaceWinner.value;
 								method = promiseRaceWinner.index === 0 ? "cache" : "prefetched";
 								if (retrievedSnapshot === undefined) {
