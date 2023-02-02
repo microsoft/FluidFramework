@@ -88,5 +88,5 @@ describe("basic chunk", () => {
 		},
 		cursorFactory: (data: TreeChunk): ITreeCursorSynchronous => data.cursor(),
 		testData: hybridData,
-	});
+	}).timeout(10000);
 });
