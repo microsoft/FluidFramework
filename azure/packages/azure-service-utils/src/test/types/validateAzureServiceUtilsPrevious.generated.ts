@@ -40,6 +40,30 @@ use_old_FunctionDeclaration_generateToken(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IUser": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IUser():
+    TypeOnly<old.IUser>;
+declare function use_current_InterfaceDeclaration_IUser(
+    use: TypeOnly<current.IUser>);
+use_current_InterfaceDeclaration_IUser(
+    get_old_InterfaceDeclaration_IUser());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IUser": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IUser():
+    TypeOnly<current.IUser>;
+declare function use_old_InterfaceDeclaration_IUser(
+    use: TypeOnly<old.IUser>);
+use_old_InterfaceDeclaration_IUser(
+    get_current_InterfaceDeclaration_IUser());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ScopeType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ScopeType():

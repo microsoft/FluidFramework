@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { clone, fail, unreachableCase } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
-import { IdAllocator } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import {
 	getInputLength,
 	getOutputLength,
@@ -46,9 +46,8 @@ import { ComposeQueue } from "./compose";
 import {
 	getMoveEffect,
 	getOrAddEffect,
+	MoveEffect,
 	MoveEffectTable,
-	MoveEnd,
-	newMoveEffectTable,
 	PairedMarkUpdate,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
@@ -73,8 +72,16 @@ export function rebase<TNodeChange>(
 	base: TaggedChange<Changeset<TNodeChange>>,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
+	manager: CrossFieldManager,
 ): Changeset<TNodeChange> {
-	return rebaseMarkList(change, base.change, base.revision, rebaseChild, genId);
+	return rebaseMarkList(
+		change,
+		base.change,
+		base.revision,
+		rebaseChild,
+		genId,
+		manager as MoveEffectTable<TNodeChange>,
+	);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -88,8 +95,8 @@ function rebaseMarkList<TNodeChange>(
 	baseRevision: RevisionTag | undefined,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
+	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
 ): MarkList<TNodeChange> {
-	const moveEffects = newMoveEffectTable<TNodeChange>();
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects, true);
 	const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
@@ -137,7 +144,22 @@ function rebaseMarkList<TNodeChange>(
 				baseDetachOffset += detachLength;
 				baseInputIndex += detachLength;
 			} else if (isAttach(baseMark)) {
-				factory.pushOffset(getOutputLength(baseMark));
+				if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
+					const effect = getMoveEffect(
+						moveEffects,
+						CrossFieldTarget.Destination,
+						baseMark.revision ?? baseRevision,
+						baseMark.id,
+					);
+					if (effect.movedMark !== undefined) {
+						factory.push(effect.movedMark);
+						delete effect.movedMark;
+					} else {
+						factory.pushOffset(getOutputLength(baseMark));
+					}
+				} else {
+					factory.pushOffset(getOutputLength(baseMark));
+				}
 			}
 		} else {
 			assert(
@@ -178,7 +200,7 @@ function rebaseMarkList<TNodeChange>(
 		updateLineage(lineageRequests, baseRevision);
 	}
 
-	return applyMoveEffects(baseRevision, baseMarkList, factory.list, moveEffects);
+	return factory.list;
 }
 
 class RebaseQueue<T> {
@@ -419,7 +441,7 @@ function rebaseMark<TNodeChange>(
 			) {
 				getOrAddEffect(
 					moveEffects,
-					MoveEnd.Dest,
+					CrossFieldTarget.Destination,
 					currMark.revision,
 					currMark.id,
 				).shouldRemove = true;
@@ -452,7 +474,7 @@ function rebaseMark<TNodeChange>(
 					delete newCurrMark.detachIndex;
 					getOrAddEffect(
 						moveEffects,
-						MoveEnd.Dest,
+						CrossFieldTarget.Destination,
 						newCurrMark.revision,
 						newCurrMark.id,
 					).pairedMarkStatus = PairedMarkUpdate.Reactivated;
@@ -478,7 +500,7 @@ function rebaseMark<TNodeChange>(
 						if (currMarkType === "ReturnTo") {
 							getOrAddEffect(
 								moveEffects,
-								MoveEnd.Source,
+								CrossFieldTarget.Source,
 								currMark.revision,
 								currMark.id,
 							).pairedMarkStatus = PairedMarkUpdate.Deactivated;
@@ -526,7 +548,7 @@ function rebaseMark<TNodeChange>(
 					newCurrMark.detachIndex = baseInputOffset;
 					getOrAddEffect(
 						moveEffects,
-						MoveEnd.Dest,
+						CrossFieldTarget.Destination,
 						newCurrMark.revision,
 						newCurrMark.id,
 					).pairedMarkStatus = PairedMarkUpdate.Deactivated;
@@ -544,7 +566,7 @@ function rebaseMark<TNodeChange>(
 					delete (newCurrMark as CanConflict).conflictsWith;
 					const effect = getOrAddEffect(
 						moveEffects,
-						MoveEnd.Source,
+						CrossFieldTarget.Source,
 						newCurrMark.revision,
 						newCurrMark.id,
 					);
@@ -569,7 +591,7 @@ function rebaseMark<TNodeChange>(
 				} else {
 					getOrAddEffect(
 						moveEffects,
-						MoveEnd.Dest,
+						CrossFieldTarget.Destination,
 						baseMark.revision ?? baseRevision,
 						baseMark.id,
 					).movedMark = newCurrMark;
@@ -582,11 +604,25 @@ function rebaseMark<TNodeChange>(
 	}
 }
 
-function applyMoveEffects<TNodeChange>(
+export function amendRebase<TNodeChange>(
+	rebasedMarks: MarkList<TNodeChange>,
+	baseMarks: TaggedChange<MarkList<TNodeChange>>,
+	genId: IdAllocator,
+	crossFieldManager: CrossFieldManager,
+): Changeset<TNodeChange> {
+	return amendRebaseI(
+		baseMarks.revision,
+		baseMarks.change,
+		rebasedMarks,
+		crossFieldManager as MoveEffectTable<TNodeChange>,
+	);
+}
+
+function amendRebaseI<TNodeChange>(
 	baseRevision: RevisionTag | undefined,
 	baseMarks: MarkList<TNodeChange>,
 	rebasedMarks: MarkList<TNodeChange>,
-	moveEffects: MoveEffectTable<TNodeChange>,
+	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
 ): Changeset<TNodeChange> {
 	// Is it correct to use ComposeQueue here?
 	// If we used a special AmendRebaseQueue, we could ignore any base marks which don't have associated move-ins
@@ -605,7 +641,7 @@ function applyMoveEffects<TNodeChange>(
 		if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
 			const effect = getMoveEffect(
 				moveEffects,
-				MoveEnd.Dest,
+				CrossFieldTarget.Destination,
 				baseMark.revision ?? baseRevision,
 				baseMark.id,
 			);
