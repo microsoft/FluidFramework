@@ -71,6 +71,8 @@ export class DocumentDeltaConnection
 
 	private _details: IConnected | undefined;
 
+	private trackLatencyTimer: number | undefined;
+
 	// Listeners only needed while the connection is in progress
 	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
 	// Listeners used throughout the lifetime of the DocumentDeltaConnection
@@ -160,6 +162,24 @@ export class DocumentDeltaConnection
 					this.emit(event, ...args);
 				});
 			}
+
+			// log latency every minute
+			this.trackLatencyTimer = setInterval(() => {
+				const start = Date.now();
+
+				// volatile, so the packet will be discarded if the socket is not connected
+				socket.volatile.emit("pong", () => {
+					const latency = Date.now() - start;
+					if (latency > 1000 * 60) {
+						this.mc.logger.sendPerformanceEvent({
+							eventName: "LatencyTooLong",
+							driverVersion,
+							latency,
+						});
+					}
+					return latency;
+				});
+			}, 1000 * 60);
 		});
 	}
 
@@ -347,6 +367,7 @@ export class DocumentDeltaConnection
 	}
 
 	protected disconnect(err: IAnyDriverError) {
+		clearInterval(this.trackLatencyTimer);
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
