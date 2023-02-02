@@ -132,6 +132,20 @@ export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitte
 // @alpha
 export const createField: unique symbol;
 
+// @alpha
+export interface CrossFieldManager<T = unknown> {
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId): T | undefined;
+    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T): T;
+}
+
+// @alpha (undocumented)
+export enum CrossFieldTarget {
+    // (undocumented)
+    Destination = 1,
+    // (undocumented)
+    Source = 0
+}
+
 // @alpha (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -231,6 +245,18 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 // @alpha
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
+// @alpha (undocumented)
+export interface EditDescription {
+    // (undocumented)
+    change: FieldChangeset;
+    // (undocumented)
+    field: FieldKey;
+    // (undocumented)
+    fieldKind: FieldKindIdentifier;
+    // (undocumented)
+    path: UpPath | undefined;
+}
+
 // @alpha
 export const emptyField: FieldSchema;
 
@@ -292,10 +318,13 @@ type FieldChangeMap_2<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
 // @alpha (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
-    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator): TChangeset;
+    amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     // (undocumented)
-    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator): TChangeset;
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
 }
 
 // @alpha (undocumented)
@@ -424,6 +453,8 @@ export type IdAllocator = () => ChangesetLocalId;
 
 // @alpha
 export interface IDefaultEditBuilder {
+    // (undocumented)
+    move(sourcePath: UpPath | undefined, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath | undefined, destField: FieldKey, destIndex: number): void;
     // (undocumented)
     optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
     // (undocumented)
@@ -687,6 +718,8 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
+    // (undocumented)
+    submitChanges(changes: EditDescription[], maxId?: ChangesetLocalId): void;
 }
 
 // @alpha
@@ -829,6 +862,8 @@ export abstract class ProgressiveEditBuilderBase<TChange> implements Progressive
     constructor(changeFamily: ChangeFamily<unknown, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
     // @sealed
     protected applyChange(change: TChange): void;
+    // (undocumented)
+    protected readonly changeFamily: ChangeFamily<unknown, TChange>;
     // @sealed (undocumented)
     getChanges(): TChange[];
 }
