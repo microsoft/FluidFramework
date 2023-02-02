@@ -10,8 +10,8 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import { customerServicePort } from "../mock-service-interface";
 import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
+import { externalDataServicePort } from "../mock-external-data-service-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {
@@ -28,13 +28,33 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		}
 		return cellValue;
 	}
-	public set priority(newValue: number) {
-		this._priority.set(newValue);
+	public get incomingName(): string | undefined {
+		return this._incomingName;
+	}
+	public set incomingName(newValue: string | undefined) {
+		this._incomingName = newValue;
+		this.emit("incomingNameChanged");
+	}
+	public get incomingType(): string | undefined {
+		return this._incomingType;
+	}
+	public set incomingType(newValue: string | undefined) {
+		this._incomingType = newValue;
+	}
+	public get incomingPriority(): number | undefined {
+		return this._incomingPriority;
+	}
+	public set incomingPriority(newValue: number | undefined) {
+		this._incomingPriority = newValue;
+		this.emit("incomingPriorityChanged");
 	}
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: SharedString,
 		private readonly _priority: ISharedCell<number>,
+		private _incomingName: string | undefined,
+		private _incomingPriority: number | undefined,
+		private _incomingType: string | undefined,
 	) {
 		super();
 		this._name.on("sequenceDelta", () => {
@@ -44,6 +64,26 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 			this.emit("priorityChanged");
 		});
 	}
+	public incomingNameChanged = (savedName: string): void => {
+		this.incomingType = "change";
+		this.incomingName = savedName;
+	};
+	public incomingPriorityChanged = (savedPriority: number): void => {
+		this.incomingType = "change";
+		this.incomingPriority = savedPriority;
+	};
+	public overwriteWithIncomingData = (): void => {
+		this.incomingType = undefined;
+		if (this.incomingPriority !== undefined) {
+			this._priority.set(this.incomingPriority);
+			this.incomingPriority = undefined;
+		}
+		if (this.incomingName !== undefined) {
+			const oldString = this._name.getText();
+			this._name.replaceText(0, oldString.length, this.incomingName);
+			this.incomingName = undefined;
+		}
+	};
 }
 
 /**
@@ -113,20 +153,12 @@ export class TaskList extends DataObject implements ITaskList {
 		// To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
 		// and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
 		// the this.tasks collection.
-		const savedDataPT: PersistedTask = {
-			id,
-			name: savedNameString.handle as IFluidHandle<SharedString>,
-			priority: savedPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
-		};
-		this.savedData.set(id, savedDataPT);
-
 		const draftDataPT: PersistedTask = {
 			id,
 			name: draftNameString.handle as IFluidHandle<SharedString>,
 			priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
 		};
 		this.draftData.set(id, draftDataPT);
-		console.log(this.root.get);
 	};
 
 	public readonly deleteTask = (id: string): void => {
@@ -144,18 +176,36 @@ export class TaskList extends DataObject implements ITaskList {
 	private readonly handleTaskAdded = async (id: string): Promise<void> => {
 		const taskData = this._draftData?.get(id) as PersistedTask;
 		if (taskData === undefined) {
-			throw new Error("Newly added task is missing from map.");
+			throw new Error("Newly added task is missing from draft map.");
+		}
+
+		const savedTaskData = this._savedData?.get(id) as PersistedTask;
+		if (savedTaskData === undefined) {
+			throw new Error("Newly added task is missing from saved map.");
 		}
 
 		const [nameSharedString, prioritySharedCell] = await Promise.all([
 			taskData.name.get(),
 			taskData.priority.get(),
 		]);
+
+		const [savedNameSharedString, savedPrioritySharedCell] = await Promise.all([
+			savedTaskData.name.get(),
+			savedTaskData.priority.get(),
+		]);
+
 		// It's possible the task was deleted while getting the name/priority, in which case quietly exit.
 		if (this._draftData?.get(id) === undefined) {
 			return;
 		}
-		const newTask = new Task(id, nameSharedString, prioritySharedCell);
+		const newTask = new Task(
+			id,
+			nameSharedString,
+			prioritySharedCell,
+			savedNameSharedString.getText(),
+			savedPrioritySharedCell.get(),
+			"add",
+		);
 		this.tasks.set(id, newTask);
 		this.emit("taskAdded", newTask);
 	};
@@ -198,13 +248,16 @@ export class TaskList extends DataObject implements ITaskList {
 			},
 		][];
 		try {
-			const response = await fetch(`http://localhost:${customerServicePort}/fetch-tasks`, {
-				method: "GET",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
+			const response = await fetch(
+				`http://localhost:${externalDataServicePort}/fetch-tasks`,
+				{
+					method: "GET",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
 				},
-			});
+			);
 
 			const responseBody = (await response.json()) as Record<string, unknown>;
 			if (responseBody.taskList === undefined) {
@@ -223,36 +276,56 @@ export class TaskList extends DataObject implements ITaskList {
 
 		// TODO: Delete any items that are in the root but missing from the external data
 		const updateTaskPs = updatedExternalData.map(async ([id, { name, priority }]) => {
-			const currentTask = this.draftData.get<PersistedTask>(id);
 			// Write external data into savedData map.
-			this.savedData.set(id, currentTask);
-
+			const currentTask = this.savedData.get<PersistedTask>(id);
+			let incomingNameDiffersFromSavedName = false;
+			let incomingPriorityDiffersFromSavedPriority = false;
+			// Create a new task because it doesn't exist already
 			if (currentTask === undefined) {
+				const savedNameString = SharedString.create(this.runtime);
+				const savedPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+				const savedDataPT: PersistedTask = {
+					id,
+					name: savedNameString.handle as IFluidHandle<SharedString>,
+					priority: savedPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+				};
+				savedNameString.insertText(0, name);
+				savedPriorityCell.set(priority);
+				this.savedData.set(id, savedDataPT);
+			} else {
+				// Make changes to exisiting saved tasks
+				const [savedNameString, savedPriorityCell] = await Promise.all([
+					currentTask.name.get(),
+					currentTask.priority.get(),
+				]);
+				if (savedNameString.getText() !== name) {
+					incomingNameDiffersFromSavedName = true;
+				}
+				if (savedPriorityCell.get() !== priority) {
+					incomingPriorityDiffersFromSavedPriority = true;
+				}
+				savedNameString.insertText(0, name);
+				savedPriorityCell.set(priority);
+			}
+
+			// Now look for differences between draftData and savedData
+			const task = this.tasks.get(id);
+			if (task === undefined) {
 				// A new task was added from external source, add it to the Fluid data.
 				this.addTask(id, name, priority);
 				return;
 			}
-			const [currName, currPriority] = await Promise.all([
-				currentTask.name.get(),
-				currentTask.priority.get(),
-			]);
-			if (currName.getText() !== name) {
-				// TODO: Currently replacing existing Fluid data.  But eventually this is where
-				// we'd want conflict resolution UX.
-				currName.replaceText(0, currName.getLength(), name);
+			// External change has come in AND local change has happened, so there is some conflict to resolve
+			if (incomingNameDiffersFromSavedName && task.name.getText() !== name) {
+				task.incomingNameChanged(name);
 			}
-			if (currPriority.get() !== priority) {
-				// TODO: Currently replacing existing Fluid data. But eventually this is where
-				// we'd want conflict resolution UX.
-				currPriority.set(priority);
+			// External change has come in AND local change has happened, so there is some conflict to resolve
+			if (incomingPriorityDiffersFromSavedPriority && task.priority !== priority) {
+				task.incomingPriorityChanged(priority);
 			}
-			// Saved updated Fluid data with
-			this.draftData.set(id, currentTask);
 		});
-
 		await Promise.all(updateTaskPs);
 	}
-
 	/**
 	 * Save the current data in the container back to the external data source.
 	 *
@@ -277,7 +350,7 @@ export class TaskList extends DataObject implements ITaskList {
 			};
 		}
 		try {
-			await fetch(`http://localhost:${customerServicePort}/set-tasks`, {
+			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
 				method: "POST",
 				headers: {
 					"Access-Control-Allow-Origin": "*",
@@ -341,7 +414,10 @@ export class TaskList extends DataObject implements ITaskList {
 				typedTaskData.name.get(),
 				typedTaskData.priority.get(),
 			]);
-			this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell));
+			this.tasks.set(
+				id,
+				new Task(id, nameSharedString, prioritySharedCell, undefined, undefined, undefined),
+			);
 		}
 	}
 }

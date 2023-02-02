@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-urlresolver",
-  "version": "2.0.0-internal.3.0.0",
+  "version": "2.0.0-internal.3.1.0",
   "description": "Url Resolver for routerlicious urls.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -40,8 +40,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
     "@fluidframework/protocol-definitions": "^1.1.0",
     "nconf": "^0.12.0",
     "url": "^0.11.0"
@@ -51,8 +51,8 @@
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/build-tools": "^0.8.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.0.0-internal.2.2.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.0.0-internal.3.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/nconf": "^0.10.0",
@@ -67,9 +67,10 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.3.0.0",
-    "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "baselineVersion": "2.0.0-internal.2.1.1",
+    "version": "2.0.0-internal.3.1.0",
+    "previousVersionStyle": "~previousMinor",
+    "baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
+    "baselineVersion": "2.0.0-internal.3.0.0",
     "broken": {}
   }
 }

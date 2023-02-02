@@ -14,17 +14,17 @@ import { ISequencedClient } from "./clients";
  * the proposal.
  */
 export interface IProposal {
-    /**
-     * The key for the proposal.
-     */
-    key: string;
+	/**
+	 * The key for the proposal.
+	 */
+	key: string;
 
-    /**
-     * The value of the proposal.
-     */
-    // TODO: use `unknown` instead.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    value: any;
+	/**
+	 * The value of the proposal.
+	 */
+	// TODO: use `unknown` instead.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	value: any;
 }
 
 /**
@@ -46,26 +46,26 @@ export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedPro
  * Events fired by a Quorum in response to client tracking.
  */
 export interface IQuorumClientsEvents extends IErrorEvent {
-    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
-    (event: "removeMember", listener: (clientId: string) => void);
+	(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
+	(event: "removeMember", listener: (clientId: string) => void);
 }
 
 /**
  * Events fired by a Quorum in response to proposal tracking.
  */
 export interface IQuorumProposalsEvents extends IErrorEvent {
-    (event: "addProposal", listener: (proposal: ISequencedProposal) => void);
-    (
-        event: "approveProposal",
-        listener: (
-            sequenceNumber: number,
-            key: string,
-            // TODO: use `unknown` instead.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            value: any,
-            approvalSequenceNumber: number,
-        ) => void,
-    );
+	(event: "addProposal", listener: (proposal: ISequencedProposal) => void);
+	(
+		event: "approveProposal",
+		listener: (
+			sequenceNumber: number,
+			key: string,
+			// TODO: use `unknown` instead.
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			value: any,
+			approvalSequenceNumber: number,
+		) => void,
+	);
 }
 
 /**
@@ -77,42 +77,42 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
  * Interface for tracking clients in the Quorum.
  */
 export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
-    getMembers(): Map<string, ISequencedClient>;
+	getMembers(): Map<string, ISequencedClient>;
 
-    getMember(clientId: string): ISequencedClient | undefined;
+	getMember(clientId: string): ISequencedClient | undefined;
 }
 
 /**
  * Interface for tracking proposals in the Quorum.
  */
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
-    // TODO: use `unknown` instead.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    propose(key: string, value: any): Promise<void>;
+	// TODO: use `unknown` instead.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	propose(key: string, value: any): Promise<void>;
 
-    has(key: string): boolean;
+	has(key: string): boolean;
 
-    // TODO: return `unknown` instead.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    get(key: string): any;
+	// TODO: return `unknown` instead.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	get(key: string): any;
 }
 
 /**
  * Interface combining tracking of clients as well as proposals in the Quorum.
  */
 export interface IQuorum
-    extends Omit<IQuorumClients, "on" | "once" | "off">,
-        Omit<IQuorumProposals, "on" | "once" | "off">,
-        IEventProvider<IQuorumEvents> {}
+	extends Omit<IQuorumClients, "on" | "once" | "off">,
+		Omit<IQuorumProposals, "on" | "once" | "off">,
+		IEventProvider<IQuorumEvents> {}
 
 export interface IProtocolState {
-    sequenceNumber: number;
-    minimumSequenceNumber: number;
-    members: [string, ISequencedClient][];
-    proposals: [number, ISequencedProposal, string[]][];
-    values: [string, ICommittedProposal][];
+	sequenceNumber: number;
+	minimumSequenceNumber: number;
+	members: [string, ISequencedClient][];
+	proposals: [number, ISequencedProposal, string[]][];
+	values: [string, ICommittedProposal][];
 }
 
 export interface IProcessMessageResult {
-    immediateNoOp?: boolean;
+	immediateNoOp?: boolean;
 }

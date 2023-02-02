@@ -68,7 +68,7 @@ async function main() {
 
 	const driver: TestDriverTypes = commander.driver;
 	const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
-	const profileArg: string = commander.profile;
+	const profileName: string = commander.profile;
 	const url: string = commander.url;
 	const runId: number = commander.runId;
 	const log: string | undefined = commander.log;
@@ -76,7 +76,7 @@ async function main() {
 	const seed: number = commander.seed;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
-	const profile = getProfile(profileArg);
+	const profile = getProfile(profileName);
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
@@ -101,6 +101,7 @@ async function main() {
 			testConfig: profile,
 			verbose,
 			randEng,
+			profileName,
 		},
 		url,
 		seed,
@@ -185,13 +186,14 @@ async function runnerProcess(
 				runId: runConfig.runId,
 				driverType: testDriver.type,
 				driverEndpointName: testDriver.endpointName,
+				profile: runConfig.profileName,
 			},
 		});
-		process.on("unhandledRejection", (reason, promise) => {
+		process.on("uncaughtExceptionMonitor", (error, origin) => {
 			try {
-				logger.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
+				logger.sendErrorEvent({ eventName: "uncaughtExceptionMonitor", origin }, error);
 			} catch (e) {
-				console.error("Error during logging unhandled promise rejection: ", e);
+				console.error("Error during logging unhandled exception: ", e);
 			}
 		});
 

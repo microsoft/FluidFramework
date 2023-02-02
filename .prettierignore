@@ -31,8 +31,18 @@ packages/tools/fluid-runner/src/test/telemetryExpectedOutputs/
 # Generated type-tests
 **/*.generated.ts
 
+# Generated bundle analysis files
+**/bundleAnalysis/**
+
 # es5 build output
 packages/framework/data-object-base/es5
+
+# Test coverage reports
+**/coverage/*
+**/nyc/*
+
+# Git configuration file
+.git-blame-ignore-revs
 
 # TODO: Temporarily ignore package.json files while we figure out why CI fails
 **/package.json

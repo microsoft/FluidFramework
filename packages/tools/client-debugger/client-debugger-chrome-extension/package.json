@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/client-debugger-chrome-extension",
-  "version": "2.0.0-internal.3.0.0",
+  "version": "2.0.0-internal.3.1.0",
   "private": true,
   "description": "A Chrome extension visual debugger for the Fluid Client.",
   "homepage": "https://fluidframework.com",
@@ -28,8 +28,8 @@
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
-    "prettier": "prettier --check .",
-    "prettier:fix": "prettier --write .",
+    "prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
     "test": "npm run test:jest",
     "test:coverage": "npm run test:jest:coverage",
     "test:jest": "jest --detectOpenHandles",
@@ -39,7 +39,7 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-tools/client-debugger-view": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluid-tools/client-debugger-view": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
