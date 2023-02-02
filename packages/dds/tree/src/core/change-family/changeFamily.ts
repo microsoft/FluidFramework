@@ -8,6 +8,9 @@ import { ReadonlyRepairDataStore } from "../repair";
 import { AnchorSet, Delta } from "../tree";
 import { ChangeEncoder } from "./changeEncoder";
 
+/**
+ * @alpha
+ */
 export interface ChangeFamily<TEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
 

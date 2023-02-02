@@ -650,6 +650,7 @@ export class Container
 				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
 				dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
 				dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+				dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 				connectionStateDuration: () =>
 					performance.now() - this.connectionTransitionTimes[this.connectionState],
 			},
