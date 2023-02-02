@@ -136,11 +136,24 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 			onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
 				const [parent, key] = cursor.getParent();
 				const sourceField = getMapTreeField(parent, key, false);
-				const field = this.detachRangeOfChildren(sourceField, index, index + count);
+				const startIndex = index;
+				const endIndex = index + count;
+				assertValidIndex(startIndex, sourceField, true);
+				assertValidIndex(endIndex, sourceField, true);
+				assert(
+					startIndex <= endIndex,
+					0x371 /* detached range's end must be after its start */,
+				);
+				const newField = sourceField.splice(startIndex, endIndex - startIndex);
+				const field = this.addFieldAsDetached(newField);
+				// const field = this.detachRangeOfChildren(sourceField, index, index + count);
 				if (id !== undefined) {
 					moves.set(id, field);
 				} else {
 					this.delete(field);
+					if (sourceField.length === 0) {
+						parent.fields.delete(key);
+					}
 				}
 			},
 			onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {
@@ -190,17 +203,17 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		return detached;
 	}
 
-	private detachRangeOfChildren(
-		field: ObjectField,
-		startIndex: number,
-		endIndex: number,
-	): DetachedField {
-		assertValidIndex(startIndex, field, true);
-		assertValidIndex(endIndex, field, true);
-		assert(startIndex <= endIndex, 0x371 /* detached range's end must be after its start */);
-		const newField = field.splice(startIndex, endIndex - startIndex);
-		return this.addFieldAsDetached(newField);
-	}
+	// private detachRangeOfChildren(
+	// 	field: ObjectField,
+	// 	startIndex: number,
+	// 	endIndex: number,
+	// ): DetachedField {
+	// 	assertValidIndex(startIndex, field, true);
+	// 	assertValidIndex(endIndex, field, true);
+	// 	assert(startIndex <= endIndex, 0x371 /* detached range's end must be after its start */);
+	// 	const newField = field.splice(startIndex, endIndex - startIndex);
+	// 	return this.addFieldAsDetached(newField);
+	// }
 
 	private delete(field: DetachedField): void {
 		this.roots.fields.delete(detachedFieldAsKey(field));

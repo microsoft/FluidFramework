@@ -135,6 +135,9 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 					for (const child of newField) {
 						child.referenceRemoved();
 					}
+					if (sourceField.length === 0) {
+						parent.mutableChunk.fields.delete(parent.key);
+					}
 				}
 			},
 			onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {

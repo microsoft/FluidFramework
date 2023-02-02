@@ -767,6 +767,72 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 		});
 
+		describe("When deleting the last node in the field", () => {
+			it("leaves an empty field", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+				const content: JsonableTree[] = [
+					{
+						type: jsonObject.name,
+						fields: {
+							testField1: [
+								{ type: jsonNumber.name, value: 1 },
+								{ type: jsonNumber.name, value: 2 },
+							],
+							testField2: [
+								{ type: jsonNumber.name, value: 1 },
+								{ type: jsonNumber.name, value: 2 },
+							],
+						},
+					},
+				];
+
+				const testField1: FieldKey = brand("testField1");
+				const delta: Delta.Root = new Map([
+					[
+						rootFieldKeySymbol,
+						[
+							{
+								type: Delta.MarkType.Modify,
+								fields: new Map([
+									[
+										testField1,
+										[
+											0,
+											{
+												type: Delta.MarkType.Delete,
+												count: 2,
+											},
+										],
+									],
+								]),
+							},
+						],
+					],
+				]);
+
+				const expected: JsonableTree[] = [
+					{
+						type: jsonObject.name,
+						fields: {
+							testField2: [
+								{ type: jsonNumber.name, value: 1 },
+								{ type: jsonNumber.name, value: 2 },
+							],
+						},
+					},
+				];
+
+				initializeForest(forest, content.map(singleTextCursor));
+				forest.applyDelta(delta);
+				const readCursor = forest.allocateCursor();
+				moveToDetachedField(forest, readCursor);
+				const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+				readCursor.free();
+
+				assert.deepEqual(actual, expected);
+			});
+		});
+
 		testGeneralPurposeTreeCursor(
 			"forest cursor",
 			(data): ITreeCursor => {
