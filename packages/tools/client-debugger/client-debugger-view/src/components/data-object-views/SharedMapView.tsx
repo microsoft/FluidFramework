@@ -45,7 +45,7 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 	}, [sharedMap, setEntries]);
 
 	return (
-		<table style={{borderCollapse: "collapse"}}>
+		<table style={{borderCollapse: "collapse", width: "100%"}}>
 			<thead>
 				<tr>
 					<th>Key</th>
