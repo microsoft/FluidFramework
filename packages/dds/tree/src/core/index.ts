@@ -44,6 +44,7 @@ export {
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
+	castCursorToSynchronous,
 	GenericFieldsNode,
 	AnchorLocator,
 	genericTreeKeys,
