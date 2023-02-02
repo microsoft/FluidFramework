@@ -57,7 +57,8 @@
     "@fluidframework/view-adapters": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
     "@fluidframework/view-interfaces": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
     "codemirror": "^5.48.4",
-    "events": "^3.1.0"
+    "events": "^3.1.0",
+    "react": "^17.0.1"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
@@ -66,6 +67,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/codemirror": "0.0.76",
     "@types/node": "^14.18.36",
+    "@types/react": "^17.0.44",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "css-loader": "^1.0.0",

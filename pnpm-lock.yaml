@@ -691,6 +691,7 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/codemirror': 0.0.76
       '@types/node': ^14.18.36
+      '@types/react': ^17.0.44
       codemirror: ^5.48.4
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
@@ -698,6 +699,7 @@ importers:
       eslint: ~8.6.0
       events: ^3.1.0
       prettier: ~2.6.2
+      react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -724,6 +726,7 @@ importers:
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       codemirror: 5.65.9
       events: 3.3.0
+      react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
@@ -731,6 +734,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/codemirror': 0.0.76
       '@types/node': 14.18.36
+      '@types/react': 17.0.52
       concurrently: 6.3.0
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.74.0
@@ -1547,6 +1551,7 @@ importers:
       '@types/prosemirror-schema-list': ^1.0.3
       '@types/prosemirror-state': ^1.3.0
       '@types/prosemirror-view': ^1.23.3
+      '@types/react': ^17.0.44
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
@@ -1563,6 +1568,7 @@ importers:
       prosemirror-state: ^1.4.1
       prosemirror-transform: ^1.7.0
       prosemirror-view: ^1.28.3
+      react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -1599,6 +1605,7 @@ importers:
       prosemirror-state: 1.4.2
       prosemirror-transform: 1.7.0
       prosemirror-view: 1.29.1
+      react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
@@ -1610,6 +1617,7 @@ importers:
       '@types/prosemirror-schema-list': 1.2.0
       '@types/prosemirror-state': 1.4.0
       '@types/prosemirror-view': 1.24.0
+      '@types/react': 17.0.52
       concurrently: 6.3.0
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.74.0
@@ -1763,6 +1771,7 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/events': ^3.0.0
       '@types/marked': ^2.0.2
+      '@types/react': ^17.0.44
       '@types/simplemde': ^1.11.7
       concurrently: ^6.2.0
       css-loader: ^1.0.0
@@ -1770,6 +1779,7 @@ importers:
       events: ^3.1.0
       marked: ^2.0.3
       prettier: ~2.6.2
+      react: ^17.0.1
       rimraf: ^2.6.2
       simplemde: ^1.11.2
       style-loader: ^1.0.0
@@ -1796,6 +1806,7 @@ importers:
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       events: 3.3.0
       marked: 2.1.3
+      react: 17.0.2
       simplemde: 1.11.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
@@ -1804,6 +1815,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/events': 3.0.0
       '@types/marked': 2.0.5
+      '@types/react': 17.0.52
       '@types/simplemde': 1.11.8
       concurrently: 6.3.0
       css-loader: 1.0.1_webpack@5.74.0
