@@ -1,7 +1,0 @@
-# Don't go up further looking for more .editorconfig files
-root = true
-
-[*]
-charset = utf-8
-end_of_line = lf
-indent_style = tab
