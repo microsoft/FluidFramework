@@ -31,7 +31,6 @@
     "clean:nyc": "rimraf nyc/**",
     "commit": "git-cz",
     "format": "lerna run format --parallel --stream",
-    "preinstall": "npx only-allow pnpm",
     "postinstall": "npm run build:compile",
     "install:commitlint": "npm install --global @commitlint/config-conventional",
     "lint": "lerna run lint --no-sort --stream",
