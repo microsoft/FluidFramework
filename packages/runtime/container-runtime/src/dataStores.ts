@@ -724,7 +724,7 @@ export class DataStores implements IDisposable {
 	}
 
 	/**
-	 * This is called to delete unused nodes. This is called to delete unused nodes and returns that list so that other
+	 * This is called to delete unused nodes and returns that list so that other
 	 * systems can remove those nodes from their states (i.e. garbage collection when sweep is run)
 	 * @param unusedRoutes - The routes of data stores and DDSes that should be deleted
 	 * @returns - routes of deleted nodes such that garbage collection can delete those nodes from its reference graph
