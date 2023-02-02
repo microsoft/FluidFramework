@@ -30,15 +30,12 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import {
-    INonPersistentCache,
-    LocalPersistentCache,
-    NonPersistentCache,
-    SnapshotPrefetchResultCache,
+	INonPersistentCache,
+	LocalPersistentCache,
+	NonPersistentCache,
+	SnapshotPrefetchResultCache,
 } from "./odspCache";
-import {
-    createOdspCacheAndTracker,
-    ICacheAndTracker,
-} from "./epochTracker";
+import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
 import {
 	INewFileInfo,
@@ -59,8 +56,8 @@ import {
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	public readonly protocolName = "fluid-odsp:";
 
-    private readonly nonPersistentCache: INonPersistentCache;
-    private readonly socketReferenceKeyPrefix?: string;
+	private readonly nonPersistentCache: INonPersistentCache;
+	private readonly socketReferenceKeyPrefix?: string;
 
 	public async createContainer(
 		createNewSummary: ISummaryTree | undefined,
@@ -208,36 +205,36 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 		);
 	}
 
-    /**
-     * @param getStorageToken - function that can provide the storage token for a given site. This is
-     * is also referred to as the "Vroom" token in SPO.
-     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
-     * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
-     * response payload.
-     * @param persistedCache - PersistedCache provided by host for use in this session.
-     * @param hostPolicy - Policy for storage provided by host.
-     * @param snapshotPrefetchResultCache - Non Persistant cache which could contain snapshot promise if it has been
-     * prefetched by host.
-     */
-    constructor(
-        private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-        private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-        protected persistedCache: IPersistedCache = new LocalPersistentCache(),
-        private readonly hostPolicy: HostStoragePolicy = {},
-        private readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache,
-    ) {
-        if (this.hostPolicy.isolateSocketCache === true) {
-            // create the key to separate the socket reuse cache
-            this.socketReferenceKeyPrefix = uuid();
-        }
-        // Set enableRedeemFallback by default as true.
-        this.hostPolicy.enableRedeemFallback = this.hostPolicy.enableRedeemFallback ?? true;
-        this.hostPolicy.sessionOptions = {
-            forceAccessTokenViaAuthorizationHeader: true,
-            ...this.hostPolicy.sessionOptions,
-        };
-        this.nonPersistentCache = new NonPersistentCache(this.snapshotPrefetchResultCache);
-    }
+	/**
+	 * @param getStorageToken - function that can provide the storage token for a given site. This is
+	 * is also referred to as the "Vroom" token in SPO.
+	 * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
+	 * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
+	 * response payload.
+	 * @param persistedCache - PersistedCache provided by host for use in this session.
+	 * @param hostPolicy - Policy for storage provided by host.
+	 * @param snapshotPrefetchResultCache - Non Persistant cache which could contain snapshot promise if it has been
+	 * prefetched by host.
+	 */
+	constructor(
+		private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+		private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
+		protected persistedCache: IPersistedCache = new LocalPersistentCache(),
+		private readonly hostPolicy: HostStoragePolicy = {},
+		private readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache,
+	) {
+		if (this.hostPolicy.isolateSocketCache === true) {
+			// create the key to separate the socket reuse cache
+			this.socketReferenceKeyPrefix = uuid();
+		}
+		// Set enableRedeemFallback by default as true.
+		this.hostPolicy.enableRedeemFallback = this.hostPolicy.enableRedeemFallback ?? true;
+		this.hostPolicy.sessionOptions = {
+			forceAccessTokenViaAuthorizationHeader: true,
+			...this.hostPolicy.sessionOptions,
+		};
+		this.nonPersistentCache = new NonPersistentCache(this.snapshotPrefetchResultCache);
+	}
 
 	public async createDocumentService(
 		resolvedUrl: IResolvedUrl,

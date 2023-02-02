@@ -103,12 +103,12 @@ export interface INonPersistentCache {
 		{ entryTime: number; joinSessionResponse: ISocketStorageDiscovery }
 	>;
 
-    /**
-     * Cache of resolved/resolving file URLs
-     */
-    readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
+	/**
+	 * Cache of resolved/resolving file URLs
+	 */
+	readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
 
-    readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache;
+	readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache;
 }
 
 /**
@@ -122,24 +122,29 @@ export interface IOdspCache extends INonPersistentCache {
 }
 
 export class NonPersistentCache implements INonPersistentCache {
-    constructor(readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache) {
-        if (this.snapshotPrefetchResultCache === undefined) {
-            this.snapshotPrefetchResultCache = new PromiseCache<string, ISnapshotContentsWithEpoch>();
-        }
-    }
+	constructor(readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache) {
+		if (this.snapshotPrefetchResultCache === undefined) {
+			this.snapshotPrefetchResultCache = new PromiseCache<
+				string,
+				ISnapshotContentsWithEpoch
+			>();
+		}
+	}
 
-    public readonly sessionJoinCache =
-        new PromiseCache<string, { entryTime: number; joinSessionResponse: ISocketStorageDiscovery; }>();
+	public readonly sessionJoinCache = new PromiseCache<
+		string,
+		{ entryTime: number; joinSessionResponse: ISocketStorageDiscovery }
+	>();
 
 	public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 }
 
 export interface ISnapshotContentsWithEpoch extends ISnapshotContents {
-    fluidEpoch: string,
+	fluidEpoch: string;
 }
 
 export function snapshotPrefetchCacheKeyFromEntry(entry: ICacheEntry): string {
-    return `${entry.file.docId}_${entry.type}_${entry.key}`;
+	return `${entry.file.docId}_${entry.type}_${entry.key}`;
 }
 
 export type SnapshotPrefetchResultCache = PromiseCache<string, ISnapshotContentsWithEpoch>;

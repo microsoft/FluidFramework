@@ -28,7 +28,11 @@ import {
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
-import { snapshotPrefetchCacheKeyFromEntry, ISnapshotContentsWithEpoch, SnapshotPrefetchResultCache } from "./odspCache";
+import {
+	snapshotPrefetchCacheKeyFromEntry,
+	ISnapshotContentsWithEpoch,
+	SnapshotPrefetchResultCache,
+} from "./odspCache";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -52,16 +56,16 @@ import { snapshotPrefetchCacheKeyFromEntry, ISnapshotContentsWithEpoch, Snapshot
  * @returns - True if the snapshot is cached, false otherwise.
  */
 export async function prefetchLatestSnapshot(
-    resolvedUrl: IResolvedUrl,
-    getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-    persistedCache: IPersistedCache,
-    forceAccessTokenViaAuthorizationHeader: boolean,
-    logger: ITelemetryBaseLogger,
-    hostSnapshotFetchOptions: ISnapshotOptions | undefined,
-    enableRedeemFallback: boolean = true,
-    fetchBinarySnapshotFormat?: boolean,
-    snapshotFormatFetchType?: SnapshotFormatSupportType,
-    snapshotPrefetchResultCache?: SnapshotPrefetchResultCache,
+	resolvedUrl: IResolvedUrl,
+	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	persistedCache: IPersistedCache,
+	forceAccessTokenViaAuthorizationHeader: boolean,
+	logger: ITelemetryBaseLogger,
+	hostSnapshotFetchOptions: ISnapshotOptions | undefined,
+	enableRedeemFallback: boolean = true,
+	fetchBinarySnapshotFormat?: boolean,
+	snapshotFormatFetchType?: SnapshotFormatSupportType,
+	snapshotPrefetchResultCache?: SnapshotPrefetchResultCache,
 ): Promise<boolean> {
 	const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -78,53 +82,62 @@ export async function prefetchLatestSnapshot(
 		true /* throwOnNullToken */,
 	);
 
-    const snapshotDownloader = async (
-        finalOdspResolvedUrl: IOdspResolvedUrl,
-        storageToken: string,
-        snapshotOptions: ISnapshotOptions | undefined,
-        controller?: AbortController,
-    ) => {
-        return downloadSnapshot(
-            finalOdspResolvedUrl, storageToken, odspLogger, snapshotOptions, snapshotFormatFetchType, controller);
-    };
-    const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
-    let cacheP: Promise<void> | undefined;
-    let snapshotEpoch: string | undefined;
-    const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
-        snapshotEpoch = valueWithEpoch.fluidEpoch;
-        cacheP = persistedCache.put(
-            snapshotKey,
-            valueWithEpoch,
-        );
-        return cacheP;
-    };
-    const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
-    return PerformanceEvent.timedExecAsync(
-        odspLogger,
-        { eventName: "PrefetchLatestSnapshot" },
-        async () => {
-            // Add the deferred promise to the cache, so that it can be leveraged while loading the container.
-            const snapshotContentsWithEpochP = new Deferred<ISnapshotContentsWithEpoch>();
-            snapshotPrefetchResultCache?.add(snapshotPrefetchCacheKeyFromEntry(snapshotKey), async () => snapshotContentsWithEpochP.promise);
-            await fetchSnapshotWithRedeem(
-                odspResolvedUrl,
-                storageTokenFetcher,
-                hostSnapshotFetchOptions,
-                forceAccessTokenViaAuthorizationHeader,
-                odspLogger,
-                snapshotDownloader,
-                putInCache,
-                removeEntries,
-                enableRedeemFallback,
-            ).then((value) => {
-                assert(!!snapshotEpoch, "prefetched snapshot should have a valid epoch");
-                snapshotContentsWithEpochP.resolve({ ...value, fluidEpoch: snapshotEpoch });
-            }).catch((err) => {
-                snapshotContentsWithEpochP.reject(err);
-                throw err;
-            });
-            assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
-            await cacheP;
-            return true;
-    }).catch(async (error) => false);
+	const snapshotDownloader = async (
+		finalOdspResolvedUrl: IOdspResolvedUrl,
+		storageToken: string,
+		snapshotOptions: ISnapshotOptions | undefined,
+		controller?: AbortController,
+	) => {
+		return downloadSnapshot(
+			finalOdspResolvedUrl,
+			storageToken,
+			odspLogger,
+			snapshotOptions,
+			snapshotFormatFetchType,
+			controller,
+		);
+	};
+	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
+	let cacheP: Promise<void> | undefined;
+	let snapshotEpoch: string | undefined;
+	const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
+		snapshotEpoch = valueWithEpoch.fluidEpoch;
+		cacheP = persistedCache.put(snapshotKey, valueWithEpoch);
+		return cacheP;
+	};
+	const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
+	return PerformanceEvent.timedExecAsync(
+		odspLogger,
+		{ eventName: "PrefetchLatestSnapshot" },
+		async () => {
+			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
+			const snapshotContentsWithEpochP = new Deferred<ISnapshotContentsWithEpoch>();
+			snapshotPrefetchResultCache?.add(
+				snapshotPrefetchCacheKeyFromEntry(snapshotKey),
+				async () => snapshotContentsWithEpochP.promise,
+			);
+			await fetchSnapshotWithRedeem(
+				odspResolvedUrl,
+				storageTokenFetcher,
+				hostSnapshotFetchOptions,
+				forceAccessTokenViaAuthorizationHeader,
+				odspLogger,
+				snapshotDownloader,
+				putInCache,
+				removeEntries,
+				enableRedeemFallback,
+			)
+				.then((value) => {
+					assert(!!snapshotEpoch, "prefetched snapshot should have a valid epoch");
+					snapshotContentsWithEpochP.resolve({ ...value, fluidEpoch: snapshotEpoch });
+				})
+				.catch((err) => {
+					snapshotContentsWithEpochP.reject(err);
+					throw err;
+				});
+			assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
+			await cacheP;
+			return true;
+		},
+	).catch(async (error) => false);
 }
