@@ -28,19 +28,18 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { getTextAndMarkers, SharedString } from "@fluidframework/sequence";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import SimpleMDE from "simplemde";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
 
-export class Smde extends EventEmitter implements IFluidLoadable, IFluidRouter {
+export class Smde extends EventEmitter implements IFluidLoadable, IFluidRouter, IFluidHTMLView {
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
-		const smde = new Smde(runtime);
-		await smde.initialize(existing);
-		smde.setupEditor();
+		const collection = new Smde(runtime);
+		await collection.initialize(existing);
 
-		return smde;
+		return collection;
 	}
 
 	private readonly innerHandle: IFluidHandle<this>;
@@ -58,10 +57,13 @@ export class Smde extends EventEmitter implements IFluidLoadable, IFluidRouter {
 	public get IFluidRouter() {
 		return this;
 	}
+	public get IFluidHTMLView() {
+		return this;
+	}
 
 	private root: ISharedMap | undefined;
 	private _text: SharedString | undefined;
-	public readonly textArea: HTMLTextAreaElement = document.createElement("textarea");
+	private textArea: HTMLTextAreaElement | undefined;
 	private smde: SimpleMDE | undefined;
 
 	private get text() {
@@ -92,6 +94,23 @@ export class Smde extends EventEmitter implements IFluidLoadable, IFluidRouter {
 
 		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
 		this._text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
+	}
+
+	public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+		// Create base textarea
+		if (!this.textArea) {
+			this.textArea = document.createElement("textarea");
+		}
+
+		// Reparent if needed
+		if (this.textArea.parentElement !== elm) {
+			this.textArea.remove();
+			elm.appendChild(this.textArea);
+		}
+
+		if (!this.smde) {
+			this.setupEditor();
+		}
 	}
 
 	private setupEditor() {
@@ -176,22 +195,6 @@ export class Smde extends EventEmitter implements IFluidLoadable, IFluidRouter {
 				}
 			});
 		});
-	}
-}
-
-export class SmdeHTMLView implements IFluidHTMLView {
-	public constructor(private readonly smde: Smde) { }
-
-	public render(elm: HTMLElement): void {
-		// Reparent if needed
-		if (this.smde.textArea.parentElement !== elm) {
-			this.smde.textArea.remove();
-			elm.appendChild(this.smde.textArea);
-		}
-	}
-
-	public get IFluidHTMLView() {
-		return this;
 	}
 }
 
