@@ -15,7 +15,7 @@ import { CodeMirrorComponent, CodeMirrorReactView, SmdeFactory } from "@fluid-ex
 import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
-import { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "@fluid-example/prosemirror";
+import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
 import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -66,7 +66,9 @@ const getProseMirrorView = async (serializableObject: ISingleHandleItem) => {
 	const handle = serializableObject.handle as IFluidHandle<ProseMirror>;
 	const proseMirror = await handle.get();
 	return React.createElement(ReactViewAdapter, {
-		view: new ProseMirrorView(proseMirror.collabManager),
+		view: React.createElement(ProseMirrorReactView, {
+			collabManager: proseMirror.collabManager,
+		}),
 	});
 };
 

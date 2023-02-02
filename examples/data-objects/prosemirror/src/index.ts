@@ -15,9 +15,12 @@ import {
 	RuntimeFactoryHelper,
 } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
-import { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "./prosemirror";
 
-export { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "./prosemirror";
+import React from "react";
+
+import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror";
+
+export { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror";
 
 const defaultComponentId = "default";
 
@@ -36,7 +39,9 @@ const viewRequestHandler = async (request: RequestParser, runtime: IContainerRun
 		return {
 			status: 200,
 			mimeType: "fluid/view",
-			value: new ProseMirrorView(proseMirror.collabManager),
+			value: React.createElement(ProseMirrorReactView, {
+				collabManager: proseMirror.collabManager,
+			}),
 		};
 	}
 };

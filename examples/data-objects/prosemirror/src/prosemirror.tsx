@@ -33,6 +33,9 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
 import { ILoader } from "@fluidframework/container-definitions";
+
+import React, { useEffect, useRef } from "react";
+
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 
@@ -62,44 +65,6 @@ function createTreeMarkerOps(
 			type: MergeTreeDeltaType.INSERT,
 		},
 	];
-}
-
-export class ProseMirrorView implements IFluidHTMLView {
-	private content: HTMLDivElement | undefined;
-	private editorView: EditorView | undefined;
-	private textArea: HTMLDivElement | undefined;
-	public get IFluidHTMLView() {
-		return this;
-	}
-
-	public constructor(private readonly collabManager: FluidCollabManager) {}
-
-	public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
-		// Create base textarea
-		if (!this.textArea) {
-			this.textArea = document.createElement("div");
-			this.textArea.classList.add("editor");
-			this.content = document.createElement("div");
-			this.content.style.display = "none";
-			this.content.innerHTML = "";
-		}
-
-		// Reparent if needed
-		if (this.textArea.parentElement !== elm) {
-			this.textArea.remove();
-			this.content!.remove();
-			elm.appendChild(this.textArea);
-			elm.appendChild(this.content!);
-		}
-
-		if (!this.editorView) {
-			this.editorView = this.collabManager.setupEditor(this.textArea);
-		}
-	}
-
-	public remove() {
-		// Maybe implement this some time.
-	}
 }
 
 /**
@@ -217,3 +182,61 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 		return runtime;
 	}
 }
+
+class ProseMirrorView implements IFluidHTMLView {
+	private content: HTMLDivElement | undefined;
+	private editorView: EditorView | undefined;
+	private textArea: HTMLDivElement | undefined;
+	public get IFluidHTMLView() {
+		return this;
+	}
+
+	public constructor(private readonly collabManager: FluidCollabManager) {}
+
+	public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+		// Create base textarea
+		if (!this.textArea) {
+			this.textArea = document.createElement("div");
+			this.textArea.classList.add("editor");
+			this.content = document.createElement("div");
+			this.content.style.display = "none";
+			this.content.innerHTML = "";
+		}
+
+		// Reparent if needed
+		if (this.textArea.parentElement !== elm) {
+			this.textArea.remove();
+			this.content!.remove();
+			elm.appendChild(this.textArea);
+			elm.appendChild(this.content!);
+		}
+
+		if (!this.editorView) {
+			this.editorView = this.collabManager.setupEditor(this.textArea);
+		}
+	}
+
+	public remove() {
+		// Maybe implement this some time.
+	}
+}
+
+export interface IProseMirrorReactViewProps {
+	readonly collabManager: FluidCollabManager;
+}
+
+export const ProseMirrorReactView: React.FC<IProseMirrorReactViewProps> = (
+	props: IProseMirrorReactViewProps,
+) => {
+	const { collabManager } = props;
+	const htmlView = useRef<ProseMirrorView>(new ProseMirrorView(collabManager));
+	const divRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (divRef.current !== null) {
+			htmlView.current.render(divRef.current);
+		} else {
+			htmlView.current.remove();
+		}
+	}, [divRef.current]);
+	return <div ref={divRef}></div>;
+};
