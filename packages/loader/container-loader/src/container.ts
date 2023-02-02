@@ -890,7 +890,7 @@ export class Container
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerDispose",
-						category: error === undefined ? "generic" : "error",
+						category: "generic",
 					},
 					error,
 				);
