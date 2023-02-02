@@ -138,7 +138,7 @@ This will produce the following batches:
 ```
 +-----------+
 | Chunk 2/3 |
-| SeqNum: 1 |
+| SeqNum: 2 |
 | Size: 300 |
 +-----------+
 
@@ -147,7 +147,7 @@ This will produce the following batches:
 ```
 +-----------+-----------+-----------+-----------+
 | Chunk 3/3 | Op 2      | Op 3      | Op 4      |
-| SeqNum: 1 | SeqNum: 2 | SeqNum: 3 | SeqNum: 4 |
+| SeqNum: 3 | SeqNum: 4 | SeqNum: 5 | SeqNum: 6 |
 | Size: 300 | Size: 0   | Size: 0   | Size: 0   |
 +-----------+-----------+-----------+-----------+
 ```
