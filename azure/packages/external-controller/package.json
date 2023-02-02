@@ -46,6 +46,10 @@
   "dependencies": {
     "@fluidframework/azure-client": "^1.2.0",
     "@fluidframework/common-definitions": "^0.20.1",
+    "@fluidframework/routerlicious-driver": "^1.4.0-121020",
+    "assert": "^2.0.0",
+    "axios": "^0.21.2",
+    "events": "^3.1.0",
     "fluid-framework": "^1.4.0-121020"
   },
   "devDependencies": {
@@ -70,6 +74,7 @@
     "eslint": "~8.6.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^26.6.3",
+    "jest-environment-puppeteer": "^4.3.0",
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
     "prettier": "~2.6.2",

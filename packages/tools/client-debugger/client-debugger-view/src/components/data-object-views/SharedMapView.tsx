@@ -38,12 +38,13 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 			setEntries([...sharedMap.entries()]);
 		}
 
+		setEntries([...sharedMap.entries()]);
 		sharedMap.on("valueChanged", updateEntries);
 
 		return (): void => {
 			sharedMap.off("valueChanged", updateEntries);
 		};
-	}, []);
+	}, [sharedMap, setEntries]);
 
 	return (
 		<Stack>
@@ -56,7 +57,7 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 					<Accordion
 						header={
 							<div>
-								<b>"{key}"</b>
+								<b>&quot;{key}&quot;</b>
 							</div>
 						}
 					>
