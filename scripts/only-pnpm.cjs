@@ -19,5 +19,9 @@ const message = `
 ╚═════════════════════════════════════════════════════════════╝
 `;
 
-console.error(message);
-process.exit(1);
+const used_pnpm = process.env.npm_config_user_agent.startsWith(`pnpm`);
+
+if(!used_pnpm) {
+    console.error(message);
+    process.exit(1);
+}
