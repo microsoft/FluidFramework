@@ -15,7 +15,7 @@ async function getDeltas(
     tenantId: string,
     documentId: string,
     from?: number,
-    to?: number
+    to?: number,
 ): Promise<ISequencedDocumentMessage[]> {
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
@@ -61,7 +61,7 @@ export function create(config: Provider, mongoManager: MongoManager): Router {
             tenantId,
             getParam(request.params, "id"),
             from,
-            to
+            to,
         );
 
         deltasP.then(
@@ -70,7 +70,7 @@ export function create(config: Provider, mongoManager: MongoManager): Router {
             },
             (error) => {
                 response.status(500).json(error);
-            }
+            },
         );
     });
 

@@ -4,11 +4,7 @@
  */
 
 import fs from "fs";
-import {
-    ICreateTreeParams,
-    ITree,
-    ITreeEntry,
-} from "@fluidframework/gitresources";
+import { ICreateTreeParams, ITree, ITreeEntry } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import nconf from "nconf";
@@ -18,7 +14,7 @@ export async function createTree(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    params: ICreateTreeParams
+    params: ICreateTreeParams,
 ): Promise<ITree> {
     const entries: git.TreeEntry[] = params.tree.map((tree) => {
         const entry: git.TreeEntry = {
@@ -46,7 +42,7 @@ export async function getTree(
     authorization: string,
     sha: string,
     recursive: boolean,
-    useCache: boolean
+    useCache: boolean,
 ): Promise<ITree> {
     let returnEntries;
 
@@ -107,28 +103,25 @@ export function create(store: nconf.Provider): Router {
             store,
             request.params.tenantId,
             request.get("Authorization"),
-            request.body
+            request.body,
         );
 
         utils.handleResponse(treeP, response, false, 201);
     });
 
-    router.get(
-        "/repos/:ignored?/:tenantId/git/trees/:sha",
-        (request, response) => {
-            const useCache = !("disableCache" in request.query);
-            const treeP = getTree(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.params.sha,
-                request.query.recursive === "1",
-                useCache
-            );
+    router.get("/repos/:ignored?/:tenantId/git/trees/:sha", (request, response) => {
+        const useCache = !("disableCache" in request.query);
+        const treeP = getTree(
+            store,
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.params.sha,
+            request.query.recursive === "1",
+            useCache,
+        );
 
-            utils.handleResponse(treeP, response, useCache);
-        }
-    );
+        utils.handleResponse(treeP, response, useCache);
+    });
 
     return router;
 }

@@ -15,7 +15,7 @@ export function handleResponse<T>(
     response: Response,
     cache = true,
     status: number = 200,
-    handler: (value: T) => void = (value) => value
+    handler: (value: T) => void = (value) => value,
 ) {
     resultP.then(handler).then(
         (result) => {
@@ -27,7 +27,7 @@ export function handleResponse<T>(
         },
         (error) => {
             response.status(400).json(error);
-        }
+        },
     );
 }
 

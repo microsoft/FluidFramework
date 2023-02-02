@@ -12,7 +12,7 @@ export async function createTag(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    params: git.ICreateTagParams
+    params: git.ICreateTagParams,
 ): Promise<git.ITag> {
     throw new Error("Not implemented");
 }
@@ -21,7 +21,7 @@ export async function getTag(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    tag: string
+    tag: string,
 ): Promise<git.ITag> {
     throw new Error("Not implemented");
 }
@@ -34,7 +34,7 @@ export function create(store: nconf.Provider): Router {
             store,
             request.params.tenantId,
             request.get("Authorization"),
-            request.body
+            request.body,
         );
 
         utils.handleResponse(tagP, response, false, 201);
@@ -45,7 +45,7 @@ export function create(store: nconf.Provider): Router {
             store,
             request.params.tenantId,
             request.get("Authorization"),
-            request.params[0]
+            request.params[0],
         );
 
         utils.handleResponse(tagP, response, false);

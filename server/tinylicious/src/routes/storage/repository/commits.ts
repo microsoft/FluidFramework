@@ -16,7 +16,7 @@ export async function getCommits(
     tenantId: string,
     authorization: string,
     sha: string,
-    count: number
+    count: number,
 ): Promise<ICommitDetails[]> {
     const descriptions = await git.log({
         fs,
@@ -34,16 +34,12 @@ export async function getCommits(
                 author: {
                     name: description.commit.author.name,
                     email: description.commit.author.email,
-                    date: new Date(
-                        description.commit.author.timestamp * 1000
-                    ).toISOString(),
+                    date: new Date(description.commit.author.timestamp * 1000).toISOString(),
                 },
                 committer: {
                     name: description.commit.committer.name,
                     email: description.commit.committer.email,
-                    date: new Date(
-                        description.commit.committer.timestamp * 1000
-                    ).toISOString(),
+                    date: new Date(description.commit.committer.timestamp * 1000).toISOString(),
                 },
                 message: description.commit.message,
                 tree: {
@@ -68,7 +64,7 @@ export function create(store: nconf.Provider): Router {
             request.params.tenantId,
             request.get("Authorization"),
             queryParamToString(request.query.sha),
-            queryParamToNumber(request.query.count)
+            queryParamToNumber(request.query.count),
         );
 
         utils.handleResponse(commitsP, response, false);

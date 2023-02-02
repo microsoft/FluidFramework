@@ -4,11 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    ICollection,
-    IDb,
-    IDbFactory,
-} from "@fluidframework/server-services-core";
+import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
 import { Level } from "level";
 import sublevel from "level-sublevel";
 import { Collection, ICollectionProperty } from "./levelDbCollection";
@@ -23,7 +19,7 @@ export class LevelDb extends EventEmitter implements IDb {
         this.db = sublevel(
             new Level(this.path, {
                 valueEncoding: "json",
-            })
+            }),
         );
     }
 
@@ -47,11 +43,7 @@ export class LevelDb extends EventEmitter implements IDb {
         switch (name) {
             case "deltas":
                 return {
-                    indexes: [
-                        "tenantId",
-                        "documentId",
-                        "operation.sequenceNumber",
-                    ],
+                    indexes: ["tenantId", "documentId", "operation.sequenceNumber"],
                     limit: MaxFetchSize,
                 };
             case "documents":
@@ -64,11 +56,7 @@ export class LevelDb extends EventEmitter implements IDb {
                 };
             case "scribeDeltas":
                 return {
-                    indexes: [
-                        "tenantId",
-                        "documentId",
-                        "operation.sequenceNumber",
-                    ],
+                    indexes: ["tenantId", "documentId", "operation.sequenceNumber"],
                     limit: MaxFetchSize,
                 };
             case "content":

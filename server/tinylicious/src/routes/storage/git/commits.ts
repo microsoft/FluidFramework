@@ -14,7 +14,7 @@ export async function createCommit(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    params: ICreateCommitParams
+    params: ICreateCommitParams,
 ): Promise<ICommit> {
     // TODO should include both author and committer
     const author = {
@@ -57,7 +57,7 @@ export async function getCommit(
     tenantId: string,
     authorization: string,
     sha: string,
-    useCache: boolean
+    useCache: boolean,
 ): Promise<ICommit> {
     const commit = await git.readCommit({
         fs,
@@ -75,9 +75,7 @@ export async function getCommit(
         committer: {
             email: description.committer.email,
             name: description.committer.name,
-            date: new Date(
-                description.committer.timestamp * 1000
-            ).toISOString(),
+            date: new Date(description.committer.timestamp * 1000).toISOString(),
         },
         message: description.message,
         parents: description.parent.map((parentSha) => ({
@@ -93,35 +91,29 @@ export async function getCommit(
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
-    router.post(
-        "/repos/:ignored?/:tenantId/git/commits",
-        (request, response) => {
-            const commitP = createCommit(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.body
-            );
+    router.post("/repos/:ignored?/:tenantId/git/commits", (request, response) => {
+        const commitP = createCommit(
+            store,
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.body,
+        );
 
-            utils.handleResponse(commitP, response, false, 201);
-        }
-    );
+        utils.handleResponse(commitP, response, false, 201);
+    });
 
-    router.get(
-        "/repos/:ignored?/:tenantId/git/commits/:sha",
-        (request, response) => {
-            const useCache = !("disableCache" in request.query);
-            const commitP = getCommit(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.params.sha,
-                useCache
-            );
+    router.get("/repos/:ignored?/:tenantId/git/commits/:sha", (request, response) => {
+        const useCache = !("disableCache" in request.query);
+        const commitP = getCommit(
+            store,
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.params.sha,
+            useCache,
+        );
 
-            utils.handleResponse(commitP, response, useCache);
-        }
-    );
+        utils.handleResponse(commitP, response, useCache);
+    });
 
     return router;
 }

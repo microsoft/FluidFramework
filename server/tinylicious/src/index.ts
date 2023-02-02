@@ -31,5 +31,5 @@ runService(
     new TinyliciousRunnerFactory(),
     winston,
     "tinylicious",
-    configPath
+    configPath,
 );

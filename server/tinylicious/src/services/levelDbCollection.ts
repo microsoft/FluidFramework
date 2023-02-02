@@ -36,20 +36,13 @@ async function readStream<T>(stream): Promise<T[]> {
 }
 
 export class Collection<T> implements ICollection<T> {
-    constructor(
-        private readonly db: any,
-        private readonly property: ICollectionProperty
-    ) {}
+    constructor(private readonly db: any, private readonly property: ICollectionProperty) {}
 
     public aggregate(pipeline: any, options?: any): any {
         throw new Error("Method Not Implemented");
     }
 
-    public async updateMany(
-        filter: any,
-        set: any,
-        addToSet: any
-    ): Promise<void> {
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
         throw new Error("Method Not Implemented");
     }
     public async distinct(key: any, query: any): Promise<any> {
@@ -92,10 +85,7 @@ export class Collection<T> implements ICollection<T> {
         return this.insertOneInternal(value);
     }
 
-    public async findOrCreate(
-        query: any,
-        value: any
-    ): Promise<{ value: any; existing: boolean }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
         const existing = await this.findOneInternal(query);
         if (existing) {
             return { value: existing, existing: true };
@@ -164,11 +154,7 @@ export class Collection<T> implements ICollection<T> {
         this.property.indexes.forEach((key) => {
             const innerValue = getValueByKey(value, key);
             // Leveldb does lexicographic comparison. We need to encode a number for numeric comparison.
-            values.push(
-                isNaN(innerValue)
-                    ? innerValue
-                    : charwise.encode(Number(innerValue))
-            );
+            values.push(isNaN(innerValue) ? innerValue : charwise.encode(Number(innerValue)));
         });
 
         return values.join("!");
@@ -183,9 +169,7 @@ export class Collection<T> implements ICollection<T> {
             const queryValue = query[indexes[i]];
             if (queryValue !== undefined) {
                 queryValues.push(
-                    isNaN(queryValue)
-                        ? queryValue
-                        : charwise.encode(Number(queryValue))
+                    isNaN(queryValue) ? queryValue : charwise.encode(Number(queryValue)),
                 );
             }
         }
@@ -193,9 +177,7 @@ export class Collection<T> implements ICollection<T> {
         if (isRange) {
             const rangeKey = indexes[indexes.length - 1];
             const from =
-                query[rangeKey] && query[rangeKey].$gt > 0
-                    ? Number(query[rangeKey].$gt) + 1
-                    : 1;
+                query[rangeKey] && query[rangeKey].$gt > 0 ? Number(query[rangeKey].$gt) + 1 : 1;
             const to =
                 query[rangeKey] && query[rangeKey].$lt > 0
                     ? Number(query[rangeKey].$lt) - 1

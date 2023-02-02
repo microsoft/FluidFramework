@@ -17,10 +17,7 @@ export class TinyliciousTenant implements ITenant {
     private readonly repository = "tinylicious";
     private readonly manager: GitManager;
 
-    constructor(
-        private readonly url: string,
-        private readonly historianUrl: string
-    ) {
+    constructor(private readonly url: string, private readonly historianUrl: string) {
         const historian = new Historian(historianUrl, false, false);
         this.manager = new GitManager(historian);
     }
@@ -51,18 +48,13 @@ export class TinyliciousTenant implements ITenant {
 export class TenantManager implements ITenantManager {
     constructor(private readonly url: string) {}
 
-    public async createTenant(
-        tenantId?: string
-    ): Promise<ITenantConfig & { key: string }> {
+    public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
         throw new Error("Method not implemented.");
     }
 
     public getTenant(tenantId: string): Promise<ITenant> {
         return Promise.resolve(
-            new TinyliciousTenant(
-                this.url,
-                `${this.url}/repos/${encodeURIComponent(tenantId)}`
-            )
+            new TinyliciousTenant(this.url, `${this.url}/repos/${encodeURIComponent(tenantId)}`),
         );
     }
 

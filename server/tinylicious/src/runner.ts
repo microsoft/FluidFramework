@@ -32,7 +32,7 @@ export class TinyliciousRunner implements IRunner {
         private readonly orderManager: IOrdererManager,
         private readonly tenantManager: ITenantManager,
         private readonly storage: IDocumentStorage,
-        private readonly mongoManager: MongoManager
+        private readonly mongoManager: MongoManager,
     ) {}
 
     public async start(): Promise<void> {
@@ -65,7 +65,7 @@ export class TinyliciousRunner implements IRunner {
             this.storage,
             new TestClientManager(),
             new DefaultMetricClient(),
-            winston
+            winston,
         );
 
         // Listen on provided port, on all network interfaces.
@@ -85,7 +85,7 @@ export class TinyliciousRunner implements IRunner {
                 },
                 (error) => {
                     this.runningDeferred.reject(error);
-                }
+                },
             );
         } else {
             this.runningDeferred.resolve();
@@ -108,9 +108,7 @@ export class TinyliciousRunner implements IRunner {
             return;
         }
 
-        throw new Error(
-            `Port: ${this.port} is occupied. Try port: ${freePort}`
-        );
+        throw new Error(`Port: ${this.port} is occupied. Try port: ${freePort}`);
     }
 
     /**
@@ -121,17 +119,12 @@ export class TinyliciousRunner implements IRunner {
             throw error;
         }
 
-        const bind =
-            typeof this.port === "string"
-                ? `Pipe ${this.port}`
-                : `Port ${this.port}`;
+        const bind = typeof this.port === "string" ? `Pipe ${this.port}` : `Port ${this.port}`;
 
         // Handle specific listen errors with friendly messages
         switch (error.code) {
             case "EACCES":
-                this.runningDeferred.reject(
-                    `${bind} requires elevated privileges`
-                );
+                this.runningDeferred.reject(`${bind} requires elevated privileges`);
                 break;
             case "EADDRINUSE":
                 this.runningDeferred.reject(`${bind} is already in use`);
@@ -146,8 +139,7 @@ export class TinyliciousRunner implements IRunner {
      */
     private onListening() {
         const addr = this.server.httpServer.address();
-        const bind =
-            typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+        const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
         winston.info(`Listening on ${bind}`);
     }
 }

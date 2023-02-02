@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentStorage,
-    MongoManager,
-} from "@fluidframework/server-services-core";
+import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as deltas from "./deltas";
@@ -15,7 +12,7 @@ import * as documents from "./documents";
 export function create(
     config: Provider,
     storage: IDocumentStorage,
-    mongoManager: MongoManager
+    mongoManager: MongoManager,
 ): Router {
     const router: Router = Router();
     const deltasRoute = deltas.create(config, mongoManager);

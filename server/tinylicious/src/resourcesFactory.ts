@@ -5,10 +5,7 @@
 
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
-import {
-    generateToken,
-    Historian,
-} from "@fluidframework/server-services-client";
+import { generateToken, Historian } from "@fluidframework/server-services-client";
 import {
     MongoDatabaseManager,
     MongoManager,
@@ -31,15 +28,11 @@ import {
 
 const defaultTinyliciousPort = 7070;
 
-export class TinyliciousResourcesFactory
-    implements IResourcesFactory<TinyliciousResources>
-{
+export class TinyliciousResourcesFactory implements IResourcesFactory<TinyliciousResources> {
     public async create(config: Provider): Promise<TinyliciousResources> {
         const globalDbEnabled = false;
         // Pull in the default port off the config
-        const port = utils.normalizePort(
-            process.env.PORT ?? defaultTinyliciousPort
-        );
+        const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager(`http://localhost:${port}`);
@@ -54,13 +47,9 @@ export class TinyliciousResourcesFactory
             collectionNames.nodes,
             collectionNames.documents,
             collectionNames.deltas,
-            collectionNames.scribeDeltas
+            collectionNames.scribeDeltas,
         );
-        const storage = new DocumentStorage(
-            databaseManager,
-            tenantManager,
-            false
-        );
+        const storage = new DocumentStorage(databaseManager, tenantManager, false);
         const io = new Server({
             // enable compatibility with socket.io v2 clients
             // https://socket.io/docs/v4/client-installation/
@@ -77,9 +66,7 @@ export class TinyliciousResourcesFactory
             config.get("foreman:permissions"),
             generateToken,
             async (tenantId: string) => {
-                const url = `http://localhost:${port}/repos/${encodeURIComponent(
-                    tenantId
-                )}`;
+                const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
                 return new Historian(url, false, false);
             },
             winston,
@@ -91,7 +78,7 @@ export class TinyliciousResourcesFactory
                     generateServiceSummary: false,
                 },
             },
-            pubsub
+            pubsub,
         );
 
         return new TinyliciousResources(
@@ -101,7 +88,7 @@ export class TinyliciousResourcesFactory
             storage,
             mongoManager,
             port,
-            webServerFactory
+            webServerFactory,
         );
     }
 }

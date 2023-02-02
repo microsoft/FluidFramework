@@ -15,7 +15,7 @@ export function create(storage: IDocumentStorage): Router {
     router.get("/:tenantId?/:id", (request, response) => {
         const documentP = storage.getDocument(
             getParam(request.params, "tenantId"),
-            getParam(request.params, "id")
+            getParam(request.params, "id"),
         );
         documentP.then(
             (document) => {
@@ -23,7 +23,7 @@ export function create(storage: IDocumentStorage): Router {
             },
             (error) => {
                 response.status(400).json(error);
-            }
+            },
         );
     });
 
@@ -53,7 +53,7 @@ export function create(storage: IDocumentStorage): Router {
             `http://${request.hostname}`,
             `http://${request.hostname}`,
             values,
-            false
+            false,
         );
 
         createP.then(
@@ -62,7 +62,7 @@ export function create(storage: IDocumentStorage): Router {
             },
             (error) => {
                 response.status(400).json(error);
-            }
+            },
         );
     });
 

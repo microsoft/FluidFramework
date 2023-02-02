@@ -17,11 +17,7 @@ export class Collection<T> implements ICollection<T> {
         throw new Error("Method Not Implemented");
     }
 
-    public async updateMany(
-        filter: any,
-        set: any,
-        addToSet: any
-    ): Promise<void> {
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
         throw new Error("Method Not Implemented");
     }
     public async distinct(key: any, query: any): Promise<any> {
@@ -67,10 +63,7 @@ export class Collection<T> implements ICollection<T> {
         return this.insertOneInternal(value);
     }
 
-    public async findOrCreate(
-        query: any,
-        value: any
-    ): Promise<{ value: any; existing: boolean }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
         const existing = this.findOneInternal(query);
         if (existing) {
             return { value: existing, existing: true };
@@ -105,9 +98,7 @@ export class Collection<T> implements ICollection<T> {
     private findOneInternal(query: any): any {
         let returnValue: any;
         if (query._id) {
-            returnValue = this.collection.find(
-                (value) => (value as any)._id === query._id
-            );
+            returnValue = this.collection.find((value) => (value as any)._id === query._id);
         } else {
             const found = this.findInternal(query);
             returnValue = found[0];
@@ -135,17 +126,17 @@ export class Collection<T> implements ICollection<T> {
             if (query[key].$gt > 0 || query[key].$lt > 0) {
                 if (query[key].$gt > 0) {
                     filteredCollection = filteredCollection.filter(
-                        (value) => getValueByKey(value, key) > query[key].$gt
+                        (value) => getValueByKey(value, key) > query[key].$gt,
                     );
                 }
                 if (query[key].$lt > 0) {
                     filteredCollection = filteredCollection.filter(
-                        (value) => getValueByKey(value, key) < query[key].$lt
+                        (value) => getValueByKey(value, key) < query[key].$lt,
                     );
                 }
             } else {
                 filteredCollection = filteredCollection.filter(
-                    (value) => getValueByKey(value, key) === query[key]
+                    (value) => getValueByKey(value, key) === query[key],
                 );
             }
         });

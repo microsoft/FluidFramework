@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentStorage,
-    MongoManager,
-} from "@fluidframework/server-services-core";
+import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -29,11 +26,7 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(
-    config: Provider,
-    storage: IDocumentStorage,
-    mongoManager: MongoManager
-) {
+export function create(config: Provider, storage: IDocumentStorage, mongoManager: MongoManager) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -73,9 +66,9 @@ export function create(
     app.use(
         Router().get("/", (req, res) => {
             res.status(200).send(
-                "This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious"
+                "This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious",
             );
-        })
+        }),
     );
 
     // Catch 404 and forward to error handler

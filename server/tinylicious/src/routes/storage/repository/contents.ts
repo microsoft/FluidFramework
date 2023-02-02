@@ -15,20 +15,14 @@ export async function getContent(
     tenantId: string,
     authorization: string,
     path: string,
-    ref: string
+    ref: string,
 ): Promise<any> {
     const tree = await getTree(store, tenantId, authorization, ref, true, true);
 
     let content;
     for (const entry of tree.tree) {
         if (entry.path === path) {
-            content = await getBlob(
-                store,
-                tenantId,
-                authorization,
-                entry.sha,
-                true
-            );
+            content = await getBlob(store, tenantId, authorization, entry.sha, true);
         }
     }
 
@@ -45,7 +39,7 @@ export function create(store: nconf.Provider): Router {
             request.params.tenantId,
             request.get("Authorization"),
             request.params[0],
-            queryParamToString(request.query.ref)
+            queryParamToString(request.query.ref),
         );
 
         utils.handleResponse(contentP, response, false);
