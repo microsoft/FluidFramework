@@ -36,10 +36,6 @@ class CodeMirrorView {
 
 	private sequenceDeltaCb: any;
 
-	public get IFluidHTMLView() {
-		return this;
-	}
-
 	constructor(
 		private readonly text: SharedString,
 		private readonly presenceManager: PresenceManager,

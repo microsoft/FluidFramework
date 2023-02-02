@@ -30,7 +30,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
 import { ILoader } from "@fluidframework/container-definitions";
 
@@ -183,17 +182,14 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	}
 }
 
-class ProseMirrorView implements IFluidHTMLView {
+class ProseMirrorView {
 	private content: HTMLDivElement | undefined;
 	private editorView: EditorView | undefined;
 	private textArea: HTMLDivElement | undefined;
-	public get IFluidHTMLView() {
-		return this;
-	}
 
 	public constructor(private readonly collabManager: FluidCollabManager) {}
 
-	public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+	public render(elm: HTMLElement): void {
 		// Create base textarea
 		if (!this.textArea) {
 			this.textArea = document.createElement("div");
