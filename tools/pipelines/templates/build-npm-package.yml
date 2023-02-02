@@ -93,6 +93,11 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+# If true, then this pipeline will check and format package.json files according to prettier settings.
+- name: usesPrettier
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
@@ -248,6 +253,7 @@ stages:
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
             buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             tagName: ${{ parameters.tagName }}
+            usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

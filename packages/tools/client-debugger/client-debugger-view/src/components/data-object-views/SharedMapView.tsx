@@ -42,9 +42,10 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 		return (): void => {
 			sharedMap.off("valueChanged", updateEntries);
 		};
-	}, []);
+	}, [sharedMap, setEntries]);
 
 	return (
+<<<<<<< HEAD
 		<table style={{borderCollapse: "collapse"}}>
 			<thead>
 				<tr>
@@ -61,6 +62,27 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 				))}
 			</tbody>
 		</table>
+=======
+		<Stack>
+			<StackItem>
+				<b>SharedMap</b>
+			</StackItem>
+			<StackItem>Entry count: {entries.length}</StackItem>
+			{entries.map(([key, value]) => (
+				<StackItem key={`map-entry-${key}`}>
+					<Accordion
+						header={
+							<div>
+								<b>&quot;{key}&quot;</b>
+							</div>
+						}
+					>
+						{renderChild(value)}
+					</Accordion>
+				</StackItem>
+			))}
+		</Stack>
+>>>>>>> b4335b85f33970d3802b501abfba0a01d2c4645b
 	);
 }
 

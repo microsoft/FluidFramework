@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useState } from "react";
 import isEqual from "lodash.isequal";
+import React, { useEffect, useState } from "react";
+
+import { externalDataServicePort } from "../mock-external-data-service-interface";
 import type { IAppModel, TaskData } from "../model-interface";
-import { customerServicePort } from "../mock-service-interface";
 
 /**
  * Helper function used in several of the views to fetch data form the external app
@@ -16,7 +17,7 @@ async function pollForServiceUpdates(
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
 	try {
-		const response = await fetch(`http://localhost:${customerServicePort}/fetch-tasks`, {
+		const response = await fetch(`http://localhost:${externalDataServicePort}/fetch-tasks`, {
 			method: "GET",
 			headers: {
 				"Access-Control-Allow-Origin": "*",
@@ -31,7 +32,7 @@ async function pollForServiceUpdates(
 			setExternalData(newData);
 		}
 	} catch (error) {
-		console.error(`APP: An error was encountered while polling external data:\n${error}`);
+		console.error("APP: An error was encountered while polling external data:", error);
 	}
 }
 
@@ -73,15 +74,14 @@ interface IExternalDataViewProps {}
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
-		// HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
-		// for changes coming into the model that way.
-		// For now, poll the external service directly for any updates and apply as needed.
 		// Run once immediately to run without waiting.
 		pollForServiceUpdates(externalData, setExternalData).catch(console.error);
 
+		// HACK: Poll every 3 seconds
 		const timer = setInterval(() => {
 			pollForServiceUpdates(externalData, setExternalData).catch(console.error);
-		}, 3000); // Poll every 3 seconds
+		}, 3000);
+
 		return (): void => {
 			clearInterval(timer);
 		};
@@ -99,7 +99,7 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 
 	return (
 		<div>
-			<h3>External Data Server:</h3>
+			<h3>External Data:</h3>
 			<div style={{ margin: "10px 0" }}>
 				<table>
 					<thead>
@@ -146,7 +146,7 @@ interface IControlsViewProps {
  */
 function debugResetExternalData(): void {
 	console.log("APP (DEBUG): Resetting external data...");
-	fetch(`http://localhost:${customerServicePort}/debug-reset-task-list`, {
+	fetch(`http://localhost:${externalDataServicePort}/debug-reset-task-list`, {
 		method: "POST",
 		headers: {
 			"Access-Control-Allow-Origin": "*",
@@ -256,7 +256,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			};
 		}
 		try {
-			await fetch(`http://localhost:${customerServicePort}/set-tasks`, {
+			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
 				method: "POST",
 				headers: {
 					"Access-Control-Allow-Origin": "*",
