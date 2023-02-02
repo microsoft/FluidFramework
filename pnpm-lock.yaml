@@ -238,7 +238,6 @@ importers:
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-tools': ^0.2.3074
-      '@fluidframework/view-adapters': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -296,7 +295,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       office-ui-fabric-react: 7.199.6_74b3ggvk3akyhuq4eydyx3fqim
       prop-types: 15.8.1
       react: 17.0.2
