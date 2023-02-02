@@ -129,7 +129,8 @@ async function main() {
 			endpoint: config.connEndpoint,
 			region: config.region,
 		},
-		["scenario:runner", eventMap],
+		["scenario:runner"],
+		eventMap,
 	);
 
 	const ac = await createAzureClient({
