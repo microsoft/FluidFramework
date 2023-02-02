@@ -74,13 +74,19 @@ versions of Node.js side-by-side.
 Because of a transitive dependency on a native addon module, you'll also need to ensure that you have the prerequisites for `node-gyp`. Depending on your operating system, you'll have slightly different installation requirements (these are largely copied from `node-gyp`'s [documentation](https://github.com/nodejs/node-gyp#readme)):
 
 ### On Windows
+
 The node installer should ask if you want to install "Tools for Native Modules." If you check the box for this nothing further should be needed. Otherwise, you can follow the steps listed [here](https://github.com/Microsoft/nodejs-guidelines/blob/master/windows-environment.md#prerequisites)
+
 ### On Unix
+
 1. Python v3.7, v3.8, v3.9, or v3.10
 2. `make`
 3. A C/C++ toolchain (like [GCC](https://gcc.gnu.org/))
+
 ### On MacOS
-If you've *upgraded* your Mac to Catalina or higher, you may need to follow [these](https://github.com/nodejs/node-gyp/blob/main/macOS_Catalina.md) instructions.
+
+If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [these](https://github.com/nodejs/node-gyp/blob/main/macOS_Catalina.md) instructions.
+
 1. Python v3.7, v3.8, v3.9, or v3.10
 2. `XCode Command Line Tools`, which will install `make`, `clang`, and `clang++`
     - You can install these by running `xcode-select --install` from a command line.
@@ -195,7 +201,7 @@ Right now, this is implemented on a per-package basis, with a [shared base confi
 
 To run `prettier` on your code, run `npm run format` from the appropriate package or release group.
 
-* To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the script argument (e.g. `fluid-build -s format`).
+-   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the script argument (e.g. `fluid-build -s format`).
 
 To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
 

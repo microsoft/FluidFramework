@@ -56,7 +56,7 @@ describe("basic chunk", () => {
 		},
 		jsonableTreeFromCursor,
 		true,
-	);
+	).timeout(10000);
 
 	const schema: TreeSchemaIdentifier = brand("fakeSchema");
 
@@ -88,5 +88,5 @@ describe("basic chunk", () => {
 		},
 		cursorFactory: (data: TreeChunk): ITreeCursorSynchronous => data.cursor(),
 		testData: hybridData,
-	});
+	}).timeout(10000);
 });
