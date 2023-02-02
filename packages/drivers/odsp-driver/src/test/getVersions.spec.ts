@@ -29,7 +29,7 @@ import { FetchSource } from "@fluidframework/driver-definitions";
 
 const createUtLocalCache = () => new LocalPersistentCache();
 
-describe("xxxTests for snapshot fetch", () => {
+describe("Tests for snapshot fetch", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
     const itemId = "itemId";
