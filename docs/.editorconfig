@@ -1,9 +1,7 @@
-[*]
-trim_trailing_whitespace = true
-insert_final_newline = true
-indent_style = space
-indent_size = 4
+# Don't go up further looking for more .editorconfig files
+root = true
 
-[*.{json,md,scss,toml,yml}]
-indent_style = space
-indent_size = 2
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = tab
