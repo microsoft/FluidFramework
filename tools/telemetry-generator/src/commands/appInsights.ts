@@ -93,14 +93,16 @@ export class EntryPoint extends Command {
 			}
 		}
 
-		filesToProcess.forEach((fullPath) => {
-			try {
-				console.log(`Processing file '${fullPath}'`);
-				const data = JSON.parse(fs.readFileSync(fullPath, "utf8"));
-				handler(data, telemetryClient, rateLimiter);
-			} catch (err: any) {
-				console.error(`Unexpected error processing file '${fullPath}'.\n${err.stack}`);
-			}
+		filesToProcess.forEach( (fullPath) => {
+            void (async () => {
+            	try {
+				    console.log(`Processing file '${fullPath}'`);
+				    const data = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+				    await handler(data, telemetryClient, rateLimiter);
+			    } catch (err: any) {
+				    console.error(`Unexpected error processing file '${fullPath}'.\n${err.stack}`);
+			    }
+              })();
 		});
 
 		telemetryClient.flush();
