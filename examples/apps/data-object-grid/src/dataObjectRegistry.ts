@@ -10,7 +10,6 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
-import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { CodeMirrorComponent, CodeMirrorReactView, SmdeFactory } from "@fluid-example/codemirror";
 import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
@@ -48,11 +47,9 @@ const getClickerView = async (serializableObject: ISingleHandleItem) => {
 const getCodeMirrorView = async (serializableObject: ISingleHandleItem) => {
 	const handle = serializableObject.handle as IFluidHandle<CodeMirrorComponent>;
 	const codeMirror = await handle.get();
-	return React.createElement(ReactViewAdapter, {
-		view: React.createElement(CodeMirrorReactView, {
-			text: codeMirror.text,
-			presenceManager: codeMirror.presenceManager,
-		}),
+	return React.createElement(CodeMirrorReactView, {
+		text: codeMirror.text,
+		presenceManager: codeMirror.presenceManager,
 	});
 };
 
@@ -65,10 +62,8 @@ const getCollaborativeTextView = async (serializableObject: ISingleHandleItem) =
 const getProseMirrorView = async (serializableObject: ISingleHandleItem) => {
 	const handle = serializableObject.handle as IFluidHandle<ProseMirror>;
 	const proseMirror = await handle.get();
-	return React.createElement(ReactViewAdapter, {
-		view: React.createElement(ProseMirrorReactView, {
-			collabManager: proseMirror.collabManager,
-		}),
+	return React.createElement(ProseMirrorReactView, {
+		collabManager: proseMirror.collabManager,
 	});
 };
 
