@@ -340,7 +340,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 									ISnapshotContents | ISnapshotContentsWithEpoch | undefined
 								>([
 									cachedSnapshotP.catch(() => undefined),
-									prefetchedSnapshotP.catch(() => undefined),
+									prefetchedSnapshotP,
 								]);
 								retrievedSnapshot = promiseRaceWinner.value;
 								method = promiseRaceWinner.index === 0 ? "cache" : "prefetched";
