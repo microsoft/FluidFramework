@@ -5,63 +5,63 @@
 
 import assert from "assert";
 import {
-    ITelemetryBaseEvent,
-    ITelemetryErrorEvent,
-    ITelemetryPerformanceEvent,
-    ITelemetryGenericEvent,
-    ITelemetryLogger,
+	ITelemetryBaseEvent,
+	ITelemetryErrorEvent,
+	ITelemetryPerformanceEvent,
+	ITelemetryGenericEvent,
+	ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { ThresholdCounter } from "../thresholdCounter";
 
 class FakeTelemetryLogger implements ITelemetryLogger {
-    public events: ITelemetryGenericEvent[] = [];
+	public events: ITelemetryGenericEvent[] = [];
 
-    public send(_event: ITelemetryBaseEvent): void {
-        assert.fail("Should not be called");
-    }
+	public send(_event: ITelemetryBaseEvent): void {
+		assert.fail("Should not be called");
+	}
 
-    public sendTelemetryEvent(_event: ITelemetryGenericEvent, _error?: any) {
-        assert.fail("Should not be called");
-    }
+	public sendTelemetryEvent(_event: ITelemetryGenericEvent, _error?: any) {
+		assert.fail("Should not be called");
+	}
 
-    public sendErrorEvent(_event: ITelemetryErrorEvent, _error?: any) {
-        assert.fail("Should not be called");
-    }
+	public sendErrorEvent(_event: ITelemetryErrorEvent, _error?: any) {
+		assert.fail("Should not be called");
+	}
 
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, _error?: any): void {
-        this.events.push(event);
-    }
+	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, _error?: any): void {
+		this.events.push(event);
+	}
 }
 
 describe("ThresholdCounter", () => {
-    let logger: FakeTelemetryLogger;
-    let sender: ThresholdCounter;
-    const threshold = 100;
+	let logger: FakeTelemetryLogger;
+	let sender: ThresholdCounter;
+	const threshold = 100;
 
-    beforeEach(() => {
-        logger = new FakeTelemetryLogger();
-        sender = new ThresholdCounter(threshold, logger);
-    });
+	beforeEach(() => {
+		logger = new FakeTelemetryLogger();
+		sender = new ThresholdCounter(threshold, logger);
+	});
 
-    it("Send only if it passes threshold", () => {
-        sender.send("event_1", threshold);
-        sender.send("event_2", threshold + 1);
-        sender.send("event_3", threshold - 1);
-        sender.send("event_4", 0);
+	it("Send only if it passes threshold", () => {
+		sender.send("event_1", threshold);
+		sender.send("event_2", threshold + 1);
+		sender.send("event_3", threshold - 1);
+		sender.send("event_4", 0);
 
-        assert.strictEqual(logger.events.length, 2);
-        assert.deepStrictEqual(logger.events[0], { eventName: "event_1", value: threshold });
-        assert.deepStrictEqual(logger.events[1], { eventName: "event_2", value: threshold + 1 });
-    });
+		assert.strictEqual(logger.events.length, 2);
+		assert.deepStrictEqual(logger.events[0], { eventName: "event_1", value: threshold });
+		assert.deepStrictEqual(logger.events[1], { eventName: "event_2", value: threshold + 1 });
+	});
 
-    it("Send only if value is multiple", () => {
-        sender.sendIfMultiple("event_1", threshold);
-        sender.sendIfMultiple("event_2", threshold * 2);
-        sender.sendIfMultiple("event_3", threshold - 1);
-        sender.sendIfMultiple("event_4", 0);
+	it("Send only if value is multiple", () => {
+		sender.sendIfMultiple("event_1", threshold);
+		sender.sendIfMultiple("event_2", threshold * 2);
+		sender.sendIfMultiple("event_3", threshold - 1);
+		sender.sendIfMultiple("event_4", 0);
 
-        assert.strictEqual(logger.events.length, 2);
-        assert.deepStrictEqual(logger.events[0], { eventName: "event_1", value: threshold });
-        assert.deepStrictEqual(logger.events[1], { eventName: "event_2", value: threshold * 2 });
-    });
+		assert.strictEqual(logger.events.length, 2);
+		assert.deepStrictEqual(logger.events[0], { eventName: "event_1", value: threshold });
+		assert.deepStrictEqual(logger.events[1], { eventName: "event_2", value: threshold * 2 });
+	});
 });

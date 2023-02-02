@@ -10,17 +10,30 @@ This implementation demonstrates plugging that Container into a standalone appli
 [Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
 bind to the data in the container.
 
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
 ## Getting Started
 
 You can run this example using the following steps:
 
-1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
+1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/app-integration-external-controller`
-1. This example can be run against the `tinylicious` service, or the `azure` service.
-    - To run against `tinylicious`, run `npm start` from this directory (examples/hosts/app-integration/external-data) and open <http://localhost:8080> in a web browser to see the app running.
-    - To run against `azure`, run `npm run start:azure`.
-        - Note: this option requires additional steps outlined [below](#backed-locally-and-running-with-live-azure-fluid-relay-service-instance).
+1. Run `npm start` from this directory (azure/packages/external-controller) and open <http://localhost:8080> in a web browser to see the app running.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+This example runs against the `tinylicious` service by default, but you can also run it against the `azure` service.
+To run against `azure`, run `npm run start:azure`.
+
+Note: this option requires additional steps outlined [below](#backed-locally-and-running-with-live-azure-fluid-relay-service-instance).
 
 ## Testing
 
@@ -63,20 +76,20 @@ to generate and sign the token such that the service will accept it.
 
 ```typescript
 const connectionConfig: AzureConnectionConfig = useAzure
-    ? {
-          type: "remote",
-          tenantId: "YOUR-TENANT-ID-HERE",
-          tokenProvider: new AzureFunctionTokenProvider(
-              "AZURE-FUNCTION-URL" + "/api/GetAzureToken",
-              { userId: "test-user", userName: "Test User" },
-          ),
-          endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
-      }
-    : {
-          type: "local",
-          tokenProvider: new InsecureTokenProvider("fooBar", user),
-          endpoint: "http://localhost:7070",
-      };
+	? {
+			type: "remote",
+			tenantId: "YOUR-TENANT-ID-HERE",
+			tokenProvider: new AzureFunctionTokenProvider(
+				"AZURE-FUNCTION-URL" + "/api/GetAzureToken",
+				{ userId: "test-user", userName: "Test User" },
+			),
+			endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
+	  }
+	: {
+			type: "local",
+			tokenProvider: new InsecureTokenProvider("fooBar", user),
+			endpoint: "http://localhost:7070",
+	  };
 ```
 
 In this way, we can toggle between remote and local mode using the same config format. We make use of
