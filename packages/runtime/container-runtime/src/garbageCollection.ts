@@ -1446,8 +1446,8 @@ export class GarbageCollector implements IGarbageCollector {
 		// Get references from the current GC run + references between previous and current run and then update each
 		// node's state
 		const allNodesReferencedBetweenGCs =
-			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger)
-				?? gcResult.referencedNodeIds;
+			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger) ??
+			gcResult.referencedNodeIds;
 		this.newReferencesSinceLastRun.clear();
 
 		// Iterate through the referenced nodes and stop tracking if they were unreferenced before.
@@ -1552,8 +1552,8 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * This function identifies nodes that were referenced since the last run.
 	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
-     *
-     * @returns - a list of all nodes referenced from the last local summary until now.
+	 *
+	 * @returns - a list of all nodes referenced from the last local summary until now.
 	 */
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
@@ -1561,7 +1561,7 @@ export class GarbageCollector implements IGarbageCollector {
 		logger: ITelemetryLogger,
 	): string[] | undefined {
 		// If we haven't run GC before there is nothing to do.
-        // No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear
+		// No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear
 		if (previousGCData === undefined) {
 			return undefined;
 		}
