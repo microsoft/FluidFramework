@@ -47,6 +47,8 @@ To enable, use the `IContainerRuntimeOptions.chunkSizeInBytes` property, which r
 
 This config would govern chunking compressed batches only. We will not be enabling chunking across all types of ops/batches but **only when compression is enabled and when the batch is compressed**, and its payload size is more than `maxBatchSizeInBytes`. Therefore, for this feature to be working, it is required that compression is enabled using `IContainerRuntimeOptions.compressionOptions`.
 
+It is recommended to also change the `maxBatchSizeInBytes` property in `IContainerRuntimeOptions`. By default, if unspecified it is 972800. We recommend a lower value such as `716800`, to account for any overhead on the server side. The reason for this is that chunking will only kick in after this configuration limit is exceeded. If the limit is too high, we might allow batches which are under 1MB but can increase in size due to overhead after they reach the server.
+
 ## Disabling in case of emergency
 
 If the features are enabled using the configs, they can be disabled at runtime via feature gates as following:
@@ -63,7 +65,8 @@ Enable only compression:
         compressionOptions: {
             minimumBatchSizeInBytes: 614400,
             compressionAlgorithm: CompressionAlgorithms.lz4,
-        },
+        },
+        maxBatchSizeInBytes: 716800,
     }
 ```
 
@@ -76,6 +79,7 @@ Enable compression and chunking:
             compressionAlgorithm: CompressionAlgorithms.lz4,
         },
         chunkSizeInBytes: 614400,
+        maxBatchSizeInBytes: 716800,
     }
 ```
 
