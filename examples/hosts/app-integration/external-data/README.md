@@ -7,6 +7,7 @@ Please note that the ideas explored here are experimental and under development.
 ## Scenario
 
 This example demonstrates a scenario in which the Customers "source of truth" of their data lives in a service that is external to the Fluid service. The Customers can then:
+
 1. Import the external data into a Fluid collboration session.
 2. Export data from a Fluid collaboration session back to the source of truth.
 3. Sync updates between Fluid and the source of truth in as close to real-time as the scenario allows.
@@ -29,6 +30,7 @@ Find the documentation for them in the code itself: (./src/mock-external-data-se
 Next we need a service that will register the webhooks and listen for incoming changes. In a true implementation, this registration would happen in the Fluid server-side, potentially in the Alfred service, as we have in our dev branch here: https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts#L463-L508.
 
 However, for the purposes of this example, we have built out a separate service to register for the webhook. It contains the following endpoints:
+
 1. POST `/register-for-webhook`
 2. POST `/echo-external-data-webhook`
 
@@ -53,7 +55,6 @@ In this example, we have opted for a signal to be broadcast to relay this inform
 Upon receipt of new external data, the external data is written immediately into the "SavedData" map, and a check occurs comparing the SavedData to the DraftData. If there are changes between the two, these are displayed on screen and the clients can (currently) only choose to consume the changes and overwrite their local data, via using regular ops mechanism. The first person to overwrite will use regular ops to write into the FluidData and the change will be attributed to them.
 
 The collaboration session can continue as expected, and when the collboartion session is ready to be closed, the clients can simply Save Changes to write back to the External Data Source by making a request to the External Data Server's POST `/set-tasks` endpoint.
-
 
 ### Bot Pattern
 
