@@ -158,7 +158,10 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
 				closeFluidClientDebugger(privateContainerInfo.containerId);
 			}
 		};
-	}, []);
+	},
+    // This app never changes the containers after initialization, so we just want to run this effect once.
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+    []);
 
 	return [sharedContainerInfo, privateContainerInfo];
 }
