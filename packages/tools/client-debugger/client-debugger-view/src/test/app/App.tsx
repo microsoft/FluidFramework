@@ -100,68 +100,70 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
 	>();
 
 	// Get the Fluid Data data on app startup and store in the state
-	React.useEffect(() => {
-		async function getFluidData(): Promise<ContainerInfo> {
-			let container: IFluidContainer;
-			let audience: ITinyliciousAudience;
-			let containerId = getContainerIdFromLocation(window.location);
-			if (containerId.length === 0) {
-				({ container, audience, containerId } = await createFluidContainer(
-					containerSchema,
-					populateRootMap,
-				));
-			} else {
-				({ container, audience } = await loadExistingFluidContainer(
-					containerId,
-					containerSchema,
-				));
-			}
-
-			return { container, audience, containerId };
-		}
-
-		getFluidData().then(
-			(data) => {
-				if (getContainerIdFromLocation(window.location) !== data.containerId) {
-					window.location.hash = data.containerId;
+	React.useEffect(
+		() => {
+			async function getFluidData(): Promise<ContainerInfo> {
+				let container: IFluidContainer;
+				let audience: ITinyliciousAudience;
+				let containerId = getContainerIdFromLocation(window.location);
+				if (containerId.length === 0) {
+					({ container, audience, containerId } = await createFluidContainer(
+						containerSchema,
+						populateRootMap,
+					));
+				} else {
+					({ container, audience } = await loadExistingFluidContainer(
+						containerId,
+						containerSchema,
+					));
 				}
 
-				initializeFluidClientDebugger(data);
-				setSharedContainerInfo(data);
-			},
-			(error) => {
-				console.error(error);
-			},
-		);
-
-		async function getPrivateContainerData(): Promise<ContainerInfo> {
-			// Always create a new container for the private view.
-			// This isn't shared with other collaborators.
-			return createFluidContainer(containerSchema, populateRootMap);
-		}
-
-		getPrivateContainerData().then(
-			(data) => {
-				initializeFluidClientDebugger(data);
-				setPrivateContainerInfo(data);
-			},
-			(error) => {
-				console.error(error);
-			},
-		);
-
-		return (): void => {
-			if (sharedContainerInfo !== undefined) {
-				closeFluidClientDebugger(sharedContainerInfo.containerId);
+				return { container, audience, containerId };
 			}
-			if (privateContainerInfo !== undefined) {
-				closeFluidClientDebugger(privateContainerInfo.containerId);
+
+			getFluidData().then(
+				(data) => {
+					if (getContainerIdFromLocation(window.location) !== data.containerId) {
+						window.location.hash = data.containerId;
+					}
+
+					initializeFluidClientDebugger(data);
+					setSharedContainerInfo(data);
+				},
+				(error) => {
+					console.error(error);
+				},
+			);
+
+			async function getPrivateContainerData(): Promise<ContainerInfo> {
+				// Always create a new container for the private view.
+				// This isn't shared with other collaborators.
+				return createFluidContainer(containerSchema, populateRootMap);
 			}
-		};
-	},
-    // This app never changes the containers after initialization, so we just want to run this effect once.
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-    []);
+
+			getPrivateContainerData().then(
+				(data) => {
+					initializeFluidClientDebugger(data);
+					setPrivateContainerInfo(data);
+				},
+				(error) => {
+					console.error(error);
+				},
+			);
+
+			return (): void => {
+				if (sharedContainerInfo !== undefined) {
+					closeFluidClientDebugger(sharedContainerInfo.containerId);
+				}
+				if (privateContainerInfo !== undefined) {
+					closeFluidClientDebugger(privateContainerInfo.containerId);
+				}
+			};
+		},
+		// This app never changes the containers after initialization, so we just want to run this effect once.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
 
 	return [sharedContainerInfo, privateContainerInfo];
 }
