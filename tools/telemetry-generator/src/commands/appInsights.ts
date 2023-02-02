@@ -7,6 +7,7 @@ import fs from "fs";
 import path from "path";
 import { Command, Flags } from "@oclif/core";
 import * as appInsight from "applicationinsights";
+import { RateLimiter } from "limiter";
 
 export class EntryPoint extends Command {
 	static flags = {
@@ -63,6 +64,7 @@ export class EntryPoint extends Command {
 
 		appInsight.setup(flags.connectionString).start();
 		const telemetryClient = appInsight.defaultClient;
+        const rateLimiter = new RateLimiter({ tokensPerInterval: 10, interval: 'second' });
 
 		const dirs = [...flags.dir];
 		const filesToProcess: string[] = [];
@@ -95,7 +97,7 @@ export class EntryPoint extends Command {
 			try {
 				console.log(`Processing file '${fullPath}'`);
 				const data = JSON.parse(fs.readFileSync(fullPath, "utf8"));
-				handler(data, telemetryClient);
+				handler(data, telemetryClient, rateLimiter);
 			} catch (err: any) {
 				console.error(`Unexpected error processing file '${fullPath}'.\n${err.stack}`);
 			}
