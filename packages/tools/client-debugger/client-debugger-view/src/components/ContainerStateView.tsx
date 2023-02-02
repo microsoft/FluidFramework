@@ -59,7 +59,7 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 	}, [container, setContainerAttachState, setContainerConnectionState, setIsContainerDisposed]);
 
 	const children: React.ReactElement[] = [
-		<span>
+		<span key="status-span">
 			<b>Status: </b>
 		</span>,
 	];

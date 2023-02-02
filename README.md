@@ -208,6 +208,10 @@ It is not configured to do any formatting automatically, however.
 This is intentional, to ensure that each developer can work formatting into their workflow as they see fit.
 If you wish to configure your setup to format on save/paste/etc., please feel free to update your [user preferences](https://code.visualstudio.com/docs/getstarted/settings) to do so.
 
+### Git Configuration
+
+Run the following command in each of your repositories to ignore formatting changes in git blame commands: `git config --local blame.ignoreRevsFile .git-blame-ignore-revs`
+
 ## Contributing
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=FALSE) -->
