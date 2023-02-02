@@ -97,10 +97,7 @@ export class DocumentDeltaConnection
 	protected _disposed: boolean = false;
 	private readonly mc: MonitoringContext;
 
-	/**
-	 * @deprecated Implementors should manage their own logger or monitoring context
-	 */
-	protected get logger(): ITelemetryLogger {
+	private get logger(): ITelemetryLogger {
 		return this.mc.logger;
 	}
 
