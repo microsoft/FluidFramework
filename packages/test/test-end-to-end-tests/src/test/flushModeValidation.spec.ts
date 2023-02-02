@@ -9,12 +9,12 @@ import { SharedMap } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-    ITestObjectProvider,
-    ITestContainerConfig,
-    DataObjectFactoryType,
-    waitForContainerConnection,
+	ITestFluidObject,
+	ChannelFactoryRegistry,
+	ITestObjectProvider,
+	ITestContainerConfig,
+	DataObjectFactoryType,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -24,52 +24,58 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
  * It also validates the scenario in this bug - https://github.com/microsoft/FluidFramework/issues/9398.
  */
 describeNoCompat("Flush mode validation", (getTestObjectProvider) => {
-    const map1Id = "map1Key";
-    const registry: ChannelFactoryRegistry = [
-        [map1Id, SharedMap.getFactory()],
-    ];
-    const testContainerConfig: ITestContainerConfig = {
-        fluidDataObjectType: DataObjectFactoryType.Test,
-        registry,
-    };
+	const map1Id = "map1Key";
+	const registry: ChannelFactoryRegistry = [[map1Id, SharedMap.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
 
-    let provider: ITestObjectProvider;
-    let dataObject1: ITestFluidObject;
-    let dataObject1map1: SharedMap;
+	let provider: ITestObjectProvider;
+	let dataObject1: ITestFluidObject;
+	let dataObject1map1: SharedMap;
 
-    before(function() {
-        provider = getTestObjectProvider();
-        if (provider.driver.type !== "local") {
-            this.skip();
-        }
-    });
+	before(function () {
+		provider = getTestObjectProvider();
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
+	});
 
-    async function setupContainer(runtimeOptions?: IContainerRuntimeOptions) {
-        const configCopy = { ...testContainerConfig, runtimeOptions };
+	async function setupContainer(runtimeOptions?: IContainerRuntimeOptions) {
+		const configCopy = { ...testContainerConfig, runtimeOptions };
 
-        // Create a Container for the first client.
-        const container1 = await provider.makeTestContainer(configCopy) as Container;
-        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-        dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
-        // Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
-        dataObject1map1.set("key", "value");
-        await waitForContainerConnection(container1, true);
-        await provider.ensureSynchronized();
-    }
+		// Create a Container for the first client.
+		const container1 = (await provider.makeTestContainer(configCopy)) as Container;
+		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
+		// Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
+		dataObject1map1.set("key", "value");
+		await waitForContainerConnection(container1, true);
+		await provider.ensureSynchronized();
+	}
 
-    it("can set flush mode to Immediate and send ops", async () => {
-        await setupContainer({ flushMode: FlushMode.Immediate });
-        dataObject1map1.set("flushMode", "Immediate");
-        await provider.ensureSynchronized();
+	it("can set flush mode to Immediate and send ops", async () => {
+		await setupContainer({ flushMode: FlushMode.Immediate });
+		dataObject1map1.set("flushMode", "Immediate");
+		await provider.ensureSynchronized();
 
-        assert.strictEqual(dataObject1map1.get("flushMode"), "Immediate", "container1's map did not get updated");
-    });
+		assert.strictEqual(
+			dataObject1map1.get("flushMode"),
+			"Immediate",
+			"container1's map did not get updated",
+		);
+	});
 
-    it("can set flush mode to TurnBased and send ops", async () => {
-        await setupContainer({ flushMode: FlushMode.TurnBased });
-        dataObject1map1.set("flushMode", "TurnBased");
-        await provider.ensureSynchronized();
+	it("can set flush mode to TurnBased and send ops", async () => {
+		await setupContainer({ flushMode: FlushMode.TurnBased });
+		dataObject1map1.set("flushMode", "TurnBased");
+		await provider.ensureSynchronized();
 
-        assert.strictEqual(dataObject1map1.get("flushMode"), "TurnBased", "container1's map did not get updated");
-    });
+		assert.strictEqual(
+			dataObject1map1.get("flushMode"),
+			"TurnBased",
+			"container1's map did not get updated",
+		);
+	});
 });

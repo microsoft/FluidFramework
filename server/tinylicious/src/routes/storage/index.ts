@@ -15,45 +15,45 @@ import * as contents from "./repository/contents";
 import * as headers from "./repository/headers";
 
 export interface IRoutes {
-    git: {
-        blobs: Router;
-        commits: Router;
-        refs: Router;
-        tags: Router;
-        trees: Router;
-    };
-    repository: {
-        commits: Router;
-        contents: Router;
-        headers: Router;
-    };
+	git: {
+		blobs: Router;
+		commits: Router;
+		refs: Router;
+		tags: Router;
+		trees: Router;
+	};
+	repository: {
+		commits: Router;
+		contents: Router;
+		headers: Router;
+	};
 }
 
 export function create(store: nconf.Provider): Router {
-    const apiRoutes = {
-        git: {
-            blobs: blobs.create(store),
-            commits: commits.create(store),
-            refs: refs.create(store),
-            tags: tags.create(store),
-            trees: trees.create(store),
-        },
-        repository: {
-            commits: repositoryCommits.create(store),
-            contents: contents.create(store),
-            headers: headers.create(store),
-        },
-    };
+	const apiRoutes = {
+		git: {
+			blobs: blobs.create(store),
+			commits: commits.create(store),
+			refs: refs.create(store),
+			tags: tags.create(store),
+			trees: trees.create(store),
+		},
+		repository: {
+			commits: repositoryCommits.create(store),
+			contents: contents.create(store),
+			headers: headers.create(store),
+		},
+	};
 
-    const router: Router = Router();
-    router.use(apiRoutes.git.blobs);
-    router.use(apiRoutes.git.refs);
-    router.use(apiRoutes.git.tags);
-    router.use(apiRoutes.git.trees);
-    router.use(apiRoutes.git.commits);
-    router.use(apiRoutes.repository.commits);
-    router.use(apiRoutes.repository.contents);
-    router.use(apiRoutes.repository.headers);
+	const router: Router = Router();
+	router.use(apiRoutes.git.blobs);
+	router.use(apiRoutes.git.refs);
+	router.use(apiRoutes.git.tags);
+	router.use(apiRoutes.git.trees);
+	router.use(apiRoutes.git.commits);
+	router.use(apiRoutes.repository.commits);
+	router.use(apiRoutes.repository.contents);
+	router.use(apiRoutes.repository.headers);
 
-    return router;
+	return router;
 }

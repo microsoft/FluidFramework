@@ -8,10 +8,10 @@ import webpackDevMiddleware from "webpack-dev-middleware";
 import webpackHotMiddleware from "webpack-hot-middleware";
 import webpack from "webpack";
 import {
-    getMicrosoftConfiguration,
-    OdspTokenManager,
-    odspTokensCache,
-    OdspTokenConfig,
+	getMicrosoftConfiguration,
+	OdspTokenManager,
+	odspTokensCache,
+	OdspTokenConfig,
 } from "@fluidframework/tool-utils";
 import { getServer, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
 import { assert } from "@fluidframework/common-utils";
@@ -24,60 +24,61 @@ let odspAccessToken: string | undefined;
 const app = express();
 const compiler = webpack(config);
 
-app.use(webpackDevMiddleware(compiler, {
-    publicPath: config.output.publicPath,
-}));
+app.use(
+	webpackDevMiddleware(compiler, {
+		publicPath: config.output.publicPath,
+	}),
+);
 
 app.use(webpackHotMiddleware(compiler));
 
 app.get("/", (req, res) => res.redirect("/fetchApp"));
 
-app.get('/fetchApp', (req, res) => {
-    (async () => {
-        const originalUrl = `${getThisOrigin(8080)}${req.url}`;
-        let first = true;
-        if (odspAuthStage === 0) {
-            first = await getOdspToken(res, originalUrl);
-        }
-        if (first) {
-            assert(odspAccessToken !== undefined, "token should be intialized now");
-            return prepareResponse(req, res, odspAccessToken);
-        }
-    })().catch((error) => console.log("Error in rendering ", error));
+app.get("/fetchApp", (req, res) => {
+	(async () => {
+		const originalUrl = `${getThisOrigin(8080)}${req.url}`;
+		let first = true;
+		if (odspAuthStage === 0) {
+			first = await getOdspToken(res, originalUrl);
+		}
+		if (first) {
+			assert(odspAccessToken !== undefined, "token should be intialized now");
+			return prepareResponse(req, res, odspAccessToken);
+		}
+	})().catch((error) => console.log("Error in rendering ", error));
 });
 
 app.use(express.static(__dirname));
 
 app.listen(8080, () => {
-    console.log('Node server is running..');
+	console.log("Node server is running..");
 });
 
 async function getOdspToken(res, originalUrl: string) {
-    const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
-        type: "browserLogin",
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        navigator: (url: string) => response.redirect(url),
-        redirectUriCallback,
-    });
-    const tokenManager = new OdspTokenManager(odspTokensCache);
-    await tokenManager.getOdspTokens(
-        getServer("spo-df"),
-        getMicrosoftConfiguration(),
-        buildTokenConfig(res, async (tokens: IOdspTokens) => {
-            odspAccessToken = tokens.accessToken;
-            odspAuthStage += 1;
-            return originalUrl;
-        }),
-        true /* forceRefresh */,
-        true,
-    );
-    return false;
+	const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
+		type: "browserLogin",
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		navigator: (url: string) => response.redirect(url),
+		redirectUriCallback,
+	});
+	const tokenManager = new OdspTokenManager(odspTokensCache);
+	await tokenManager.getOdspTokens(
+		getServer("spo-df"),
+		getMicrosoftConfiguration(),
+		buildTokenConfig(res, async (tokens: IOdspTokens) => {
+			odspAccessToken = tokens.accessToken;
+			odspAuthStage += 1;
+			return originalUrl;
+		}),
+		true /* forceRefresh */,
+		true,
+	);
+	return false;
 }
 
 const prepareResponse = (req: express.Request, res: express.Response, token: string) => {
-    const documentId = req.params.id;
-    const html =
-        `<!DOCTYPE html>
+	const documentId = req.params.id;
+	const html = `<!DOCTYPE html>
         <html style="height: 100%;" lang="en">
         <head>
             <meta charset="utf-8">
@@ -98,6 +99,6 @@ const prepareResponse = (req: express.Request, res: express.Response, token: str
         </body>
         </html>`;
 
-    res.setHeader("Content-Type", "text/html");
-    res.end(html);
+	res.setHeader("Content-Type", "text/html");
+	res.end(html);
 };

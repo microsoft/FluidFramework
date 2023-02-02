@@ -35,86 +35,86 @@ export const DUMMY_INVERSE_VALUE = "Dummy inverse value";
  * - Support for slices is not implemented.
  */
 export function invert(change: TaggedChange<SequenceChangeset>): SequenceChangeset {
-    // TODO: support the input change being a squash
-    const opIdToTag = (id: OpId): ChangesetTag => {
-        return DUMMY_INVERT_TAG;
-    };
-    return {
-        marks: invertFieldMarks(change.change.marks, opIdToTag),
-    };
+	// TODO: support the input change being a squash
+	const opIdToTag = (id: OpId): ChangesetTag => {
+		return DUMMY_INVERT_TAG;
+	};
+	return {
+		marks: invertFieldMarks(change.change.marks, opIdToTag),
+	};
 }
 
 type IdToTagLookup = (id: OpId) => ChangesetTag;
 
 function invertFieldMarks(fieldMarks: T.FieldMarks, opIdToTag: IdToTagLookup): T.FieldMarks {
-    const inverseFieldMarks: T.FieldMarks = {};
-    for (const key of Object.keys(fieldMarks)) {
-        const markList = fieldMarks[key];
-        inverseFieldMarks[key] = invertMarkList(markList, opIdToTag);
-    }
-    return inverseFieldMarks;
+	const inverseFieldMarks: T.FieldMarks = {};
+	for (const key of Object.keys(fieldMarks)) {
+		const markList = fieldMarks[key];
+		inverseFieldMarks[key] = invertMarkList(markList, opIdToTag);
+	}
+	return inverseFieldMarks;
 }
 
 function invertMarkList(markList: T.MarkList, opIdToTag: IdToTagLookup): T.MarkList {
-    const inverseMarkList: T.MarkList = [];
-    for (const mark of markList) {
-        const inverseMarks = invertMark(mark, opIdToTag);
-        inverseMarkList.push(...inverseMarks);
-    }
-    return inverseMarkList;
+	const inverseMarkList: T.MarkList = [];
+	for (const mark of markList) {
+		const inverseMarks = invertMark(mark, opIdToTag);
+		inverseMarkList.push(...inverseMarks);
+	}
+	return inverseMarkList;
 }
 
 function invertMark(mark: T.Mark, opIdToTag: IdToTagLookup): T.Mark[] {
-    if (isSkipMark(mark)) {
-        return [mark];
-    } else {
-        switch (mark.type) {
-            case "Insert":
-            case "MInsert": {
-                return [
-                    {
-                        type: "Delete",
-                        id: mark.id,
-                        count: mark.type === "Insert" ? mark.content.length : 1,
-                    },
-                ];
-            }
-            case "Delete": {
-                return [
-                    {
-                        type: "Revive",
-                        id: mark.id,
-                        tomb: opIdToTag(mark.id),
-                        count: mark.count,
-                    },
-                ];
-            }
-            case "Revive": {
-                return [
-                    {
-                        type: "Delete",
-                        id: mark.id,
-                        count: mark.count,
-                    },
-                ];
-            }
-            case "Modify": {
-                const modify: T.Modify = {
-                    type: "Modify",
-                };
-                if (mark.value !== undefined) {
-                    modify.value = {
-                        id: mark.value.id,
-                        value: DUMMY_INVERSE_VALUE,
-                    };
-                }
-                if (mark.fields !== undefined) {
-                    modify.fields = invertFieldMarks(mark.fields, opIdToTag);
-                }
-                return [modify];
-            }
-            default:
-                fail("Not implemented");
-        }
-    }
+	if (isSkipMark(mark)) {
+		return [mark];
+	} else {
+		switch (mark.type) {
+			case "Insert":
+			case "MInsert": {
+				return [
+					{
+						type: "Delete",
+						id: mark.id,
+						count: mark.type === "Insert" ? mark.content.length : 1,
+					},
+				];
+			}
+			case "Delete": {
+				return [
+					{
+						type: "Revive",
+						id: mark.id,
+						tomb: opIdToTag(mark.id),
+						count: mark.count,
+					},
+				];
+			}
+			case "Revive": {
+				return [
+					{
+						type: "Delete",
+						id: mark.id,
+						count: mark.count,
+					},
+				];
+			}
+			case "Modify": {
+				const modify: T.Modify = {
+					type: "Modify",
+				};
+				if (mark.value !== undefined) {
+					modify.value = {
+						id: mark.value.id,
+						value: DUMMY_INVERSE_VALUE,
+					};
+				}
+				if (mark.fields !== undefined) {
+					modify.fields = invertFieldMarks(mark.fields, opIdToTag);
+				}
+				return [modify];
+			}
+			default:
+				fail("Not implemented");
+		}
+	}
 }
