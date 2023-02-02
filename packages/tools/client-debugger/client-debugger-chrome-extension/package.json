@@ -35,8 +35,7 @@
     "test:jest": "jest --detectOpenHandles",
     "test:jest:coverage": "jest  --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junit",
     "tsc": "tsc",
-    "webpack": "webpack --env production",
-    "webpack:dev": "webpack --env development"
+    "webpack": "webpack"
   },
   "dependencies": {
     "@fluid-tools/client-debugger-view": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
