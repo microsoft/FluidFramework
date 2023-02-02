@@ -18,7 +18,6 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 			console.log(
 				`emitting metric ${heapUsedAvgMetricName} with value ${testData.testData.stats.mean}`,
 			);
-            await rateLimiter.removeTokens(1);
 			telemetryClient.trackMetric({
 				name: heapUsedAvgMetricName,
 				value: testData.testData.stats.mean,
@@ -42,7 +41,6 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 			console.log(
 				`emitting metric ${heapUsedStdDevMetricName} with value ${testData.testData.stats.deviation}`,
 			);
-            await rateLimiter.removeTokens(1);
 			telemetryClient.trackMetric({
 				name: heapUsedStdDevMetricName,
 				value: testData.testData.stats.deviation,

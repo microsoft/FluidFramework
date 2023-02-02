@@ -4,22 +4,19 @@
  */
 
 import { TelemetryClient } from "applicationinsights";
-import { RateLimiter } from "limiter";
 
 /**
  * This handler emits metrics to the Azure App Insights instance configured by the telemetryClient provided to this handler.
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
-module.exports = function handler(fileData, telemetryClient: TelemetryClient, rateLimiter: RateLimiter) {
+module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
     console.log(`Found ${fileData.benchmarks.length} total benchmark tests to emit`);
 	fileData.benchmarks.forEach(async (testData) => {
 		const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
 		try {
-
 			console.log(
 				`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.arithmeticMean}`,
 			);
-            await rateLimiter.removeTokens(1);
 			telemetryClient.trackMetric({
 				name: arithmeticMeanMetricName,
 				value: testData.stats.arithmeticMean,
@@ -40,11 +37,9 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 
 		const marginOfErrorMetricName = `${fileData.suiteName}_${testData.benchmarkName}_marginOfError`;
 		try {
-
 			console.log(
 				`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.marginOfError}`,
 			);
-            await rateLimiter.removeTokens(1);
 			telemetryClient.trackMetric({
 				name: marginOfErrorMetricName,
 				value: testData.stats.marginOfError,
