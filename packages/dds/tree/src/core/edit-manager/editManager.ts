@@ -378,7 +378,7 @@ export class EditManager<
 	}
 
 	private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {
-        return getOrCreate(this.branches, sessionId, () => ({ localChanges: [], refSeq }));
+		return getOrCreate(this.branches, sessionId, () => ({ localChanges: [], refSeq }));
 	}
 
 	private inverseFromCommit(commit: Commit<TChangeset>): TaggedChange<TChangeset> {
