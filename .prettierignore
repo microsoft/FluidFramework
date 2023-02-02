@@ -4,6 +4,11 @@
 **/pnpm-lock.yaml
 **/pnpm-workspace.yaml
 
+# Boilerplate files
+CODE_OF_CONDUCT.md
+PACKAGES.md
+SECURITY.md
+
 # Build output
 **/dist/*
 **/lib/*
