@@ -85,3 +85,4 @@ extends:
     test: test
     tagName: historian
     pack: true
+    usesPrettier: false

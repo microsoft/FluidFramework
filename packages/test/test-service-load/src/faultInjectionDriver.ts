@@ -340,7 +340,11 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
-		this.throwIfOffline();
+		// Intentionally return blobs even while offline. Current driver behavior is to cache the initial
+		// snapshot which means readBlob() calls will succeed regardless of connection status. While
+		// depending on this behavior is not advised, it's more accurate to real usage. Additionally, very
+		// long service response delays can cause offline injection to interfere with Container load, which
+		// is not expected to succeed offline, as well as interfering with the test setup itself.
 		return this.internal.readBlob(id);
 	}
 
