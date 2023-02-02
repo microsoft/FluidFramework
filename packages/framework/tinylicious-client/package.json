@@ -80,7 +80,7 @@
 		"typescript": "~4.5.5"
 	},
 	"peerDependencies": {
-		"fluid-framework": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0"
+		"fluid-framework": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0"
 	},
 	"typeValidation": {
 		"version": "2.0.0-internal.3.2.0",

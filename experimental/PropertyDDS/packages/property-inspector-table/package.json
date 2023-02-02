@@ -114,11 +114,11 @@
 		"webpack-merge": "^5.8.0"
 	},
 	"peerDependencies": {
-		"@fluid-experimental/property-binder": "^1.0.0",
-		"@fluid-experimental/property-changeset": "^1.0.0",
-		"@fluid-experimental/property-dds": "^1.0.0",
-		"@fluid-experimental/property-properties": "^1.0.0",
-		"@fluid-experimental/property-proxy": "^1.0.0",
+		"@fluid-experimental/property-binder": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluid-experimental/property-changeset": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluid-experimental/property-dds": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluid-experimental/property-properties": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluid-experimental/property-proxy": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
 		"react": "^17.0.1"
 	},
 	"jest-junit": {
