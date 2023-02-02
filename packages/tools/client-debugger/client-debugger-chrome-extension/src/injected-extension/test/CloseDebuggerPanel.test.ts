@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { isDebuggerPanelOpen } from "../Utilities";
 import { closeDebuggerPanel } from "../CloseDebuggerPanel";
 import { openDebuggerPanel } from "../OpenDebuggerPanel";
-import { isDebuggerPanelOpen } from "../Utilities";
 
 describe("CloseDebuggerPanelScript tests", () => {
 	beforeEach(async () => {

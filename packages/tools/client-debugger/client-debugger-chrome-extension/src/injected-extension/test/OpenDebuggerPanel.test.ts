@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { openDebuggerPanel } from "../OpenDebuggerPanel";
+
 import { isDebuggerPanelOpen } from "../Utilities";
+import { openDebuggerPanel } from "../OpenDebuggerPanel";
 
 describe("OpenDebuggerPanelScript tests", () => {
 	beforeEach(() => {

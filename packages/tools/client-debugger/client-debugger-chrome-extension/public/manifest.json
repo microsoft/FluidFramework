@@ -1,6 +1,6 @@
 {
 	"manifest_version": 3,
-	"name": "Fluid Client Debugger",
+	"name": "Fluid Client Debugger: Injected",
 	"description": "Displays a live debug view of the Fluid client in your application.",
 	"version": "1.0",
 	"permissions": ["activeTab", "scripting", "storage"],
@@ -8,15 +8,15 @@
 		"default_icon": "images/icon.png"
 	},
 	"background": {
-		"service_worker": "BackgroundScript.js"
+		"service_worker": "injected-script/BackgroundScript.js"
 	},
 	"web_accessible_resources": [
 		{
 			"resources": [
-				"OpenDebuggerPanelScript.js",
-				"CloseDebuggerPanelScript.js",
-				"InjectDebuggerOpenScript.js",
-				"InjectDebuggerCloseScript.js"
+				"injected-script/OpenDebuggerPanelScript.js",
+				"injected-script/CloseDebuggerPanelScript.js",
+				"injected-script/InjectDebuggerOpenScript.js",
+				"injected-script/InjectDebuggerCloseScript.js"
 			],
 			"matches": ["<all_urls>"]
 		}
