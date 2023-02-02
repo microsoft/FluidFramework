@@ -590,7 +590,35 @@ export class GitWholeSummaryManager {
                 },
             }
         );
+        try {
+            const fullGitTree = await this.inMemorySummaryTreeComputationCore(
+                wholeSummaryTreeEntries,
+                existingRef,
+                inMemoryRepoManager,
+            );
+            return this.writeSummaryTreeCore(
+                [{
+                    path: fullTreePath,
+                    type: "blob",
+                    value: {
+                        type: "blob",
+                        content: JSON.stringify(fullGitTree),
+                        encoding: "utf-8",
+                    }
+                }],
+                this.repoManager,
+            );
+        } finally {
+            // Ensure temporary in-memory volume is destroyed.
+            inMemoryFsManagerFactory.volume.reset();
+        }
+    }
 
+    private async inMemorySummaryTreeComputationCore(
+        wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
+        existingRef: IRef | undefined,
+        inMemoryRepoManager: IRepositoryManager,
+    ) {
         if (existingRef) {
             // Update in-memory repo manager with previous summary for handle references.
             const previousSummary = await this.readSummary(existingRef.object.sha);
@@ -667,19 +695,7 @@ export class GitWholeSummaryManager {
             inMemoryRepoManager,
             false, /* parseInnerFullGitTrees */
         );
-        const summaryTreeHandle = this.writeSummaryTreeCore(
-            [{
-                path: fullTreePath,
-                type: "blob",
-                value: {
-                    type: "blob",
-                    content: JSON.stringify(fullGitTree),
-                    encoding: "utf-8",
-                }
-            }],
-            this.repoManager,
-        );
-        return summaryTreeHandle;
+        return fullGitTree;
     }
 
     private async writeSummaryTreeCore(
