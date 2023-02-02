@@ -97,7 +97,7 @@ export class DocumentDeltaConnection
 	protected _disposed: boolean = false;
 	private readonly mc: MonitoringContext;
 
-	private get logger(): ITelemetryLogger {
+	protected get logger(): ITelemetryLogger {
 		return this.mc.logger;
 	}
 
