@@ -16,18 +16,20 @@ When closeAndGetPendingLocalState() is called it will return a serialized blob c
 The stashed changes blob can be used by passing it to `Loader.resolve()` when loading a new container.
 The container will then automatically submit the stashed changes when the Container reaches the "connected" state, if the changes were not originally successful.
 
-__It's important that these blobs are not reused, since it can result in the same changes being submitted multiple times, possibly resulting in document corruption.__
+**It's important that these blobs are not reused, since it can result in the same changes being submitted multiple times, possibly resulting in document corruption.**
 Instead, closeAndGetPendingLocalState() should be called again on the new container, which will return a new blob containing all its pending changes, including any still-pending stashed changes it was loaded with.
 
-``` ts
+```ts
 const myContainer = await myLoader.resolve(myRequest);
 const pendingChanges = myContainer.closeAndGetPendingLocalState();
 const myNewContainer = await myLoader.resolve(myRequest, pendingChanges);
 ```
+
 Note that closeAndGetPendingLocalState() cannot be called on a Container that is already closed or disposed.
 The purpose of closeAndGetPendingLocalState() is to avoid data loss when a dirty container must be closed, not recovering from internal Container errors.
 
 ## How it works
+
 The blob contains ops and attachment blob uploads that were still pending whe the container was closed.
 It also contains the container's last client ID, a snapshot older than the reference sequence number of the oldest pending op, and all sequenced ops the container has processed since the snapshot.
 
