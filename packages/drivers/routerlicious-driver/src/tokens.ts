@@ -41,7 +41,10 @@ export interface ITokenProvider {
 	 * @param tenantId - Tenant ID.
 	 * @param documentId - Optional. Document ID is only required for document-scoped requests.
 	 * @param refresh - Optional flag indicating whether token fetch must bypass local cache.
+	 * This likely indicates that some previous request failed authorization due to an expired token.
 	 * Default: `false`.
+	 *
+	 * NOTE: This parameter will be made required in the future.
 	 */
 	fetchOrdererToken(
 		tenantId: string,
@@ -55,7 +58,10 @@ export interface ITokenProvider {
 	 * @param tenantId - Tenant ID.
 	 * @param documentId - Document ID.
 	 * @param refresh - Optional flag indicating whether token fetch must bypass local cache.
+	 * This likely indicates that some previous request failed authorization due to an expired token.
 	 * Default: `false`.
+	 *
+	 * NOTE: This parameter will be made required in the future.
 	 */
 	fetchStorageToken(
 		tenantId: string,
