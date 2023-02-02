@@ -69,7 +69,7 @@ export interface AzureContainerVersion {
     id: string;
 }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
