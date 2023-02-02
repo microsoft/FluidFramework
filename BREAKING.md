@@ -77,9 +77,9 @@ With the feature enabled, If the runtime detects an op which was submitted in th
 
 ```ts
 sharedMap.on("valueChanged", (changed) => {
-    if (changed.key !== "key2") {
-        sharedMap.set("key2", "2");
-    }
+	if (changed.key !== "key2") {
+		sharedMap.set("key2", "2");
+	}
 });
 
 sharedMap.set("key1", "1"); // executing this statement will cause an exception to be thrown
@@ -115,10 +115,7 @@ const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
 Now you would either pass `{ id: "userId", name: "userName" }` inline to `InsecureTokenProvider` or:
 
 ```typescript
-import {
-    IInsecureUser,
-    InsecureTokenProvider,
-} from "@fluidframework/test-runtime-utils";
+import { IInsecureUser, InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 const user: IInsecureUser = { id: "userId", name: "userName" };
 const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
@@ -912,15 +909,14 @@ The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-
 In particular, note the `ILoaderService` and `ILoaderProps` interfaces used with the `Loader` class now only support `ICodeDetailsLoader`. If you were using an `ICodeLoader` with these previously, you'll need to update to an `ICodeDetailsLoader`.
 
 ```ts
-export interface ICodeDetailsLoader
-    extends Partial<IProvideFluidCodeDetailsComparer> {
-    /**
-     * Load the code module (package) that is capable to interact with the document.
-     *
-     * @param source - Code proposal that articulates the current schema the document is written in.
-     * @returns - Code module entry point along with the code details associated with it.
-     */
-    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+	/**
+	 * Load the code module (package) that is capable to interact with the document.
+	 *
+	 * @param source - Code proposal that articulates the current schema the document is written in.
+	 * @returns - Code module entry point along with the code details associated with it.
+	 */
+	load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 ```
 
@@ -1303,51 +1299,48 @@ The `IFluidConfiguration` member of `ContainerRuntime` from `@fluidframework/con
 The `wait()` methods on `ISharedMap` and `IDirectory` have been deprecated and will be removed in an upcoming release. To wait for a change to a key, you can replicate this functionality with a helper function that listens to the change events.
 
 ```ts
-const directoryWait = async <T = any>(
-    directory: IDirectory,
-    key: string
-): Promise<T> => {
-    const maybeValue = directory.get<T>(key);
-    if (maybeValue !== undefined) {
-        return maybeValue;
-    }
+const directoryWait = async <T = any>(directory: IDirectory, key: string): Promise<T> => {
+	const maybeValue = directory.get<T>(key);
+	if (maybeValue !== undefined) {
+		return maybeValue;
+	}
 
-    return new Promise((resolve) => {
-        const handler = (changed: IValueChanged) => {
-            if (changed.key === key) {
-                directory.off("containedValueChanged", handler);
-                const value = directory.get<T>(changed.key);
-                if (value === undefined) {
-                    throw new Error("Unexpected containedValueChanged result");
-                }
-                resolve(value);
-            }
-        };
-        directory.on("containedValueChanged", handler);
-    });
+	return new Promise((resolve) => {
+		const handler = (changed: IValueChanged) => {
+			if (changed.key === key) {
+				directory.off("containedValueChanged", handler);
+				const value = directory.get<T>(changed.key);
+				if (value === undefined) {
+					throw new Error("Unexpected containedValueChanged result");
+				}
+				resolve(value);
+			}
+		};
+		directory.on("containedValueChanged", handler);
+	});
 };
 
 const foo = await directoryWait<Foo>(this.root, fooKey);
 
 const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
-    const maybeValue = map.get<T>(key);
-    if (maybeValue !== undefined) {
-        return maybeValue;
-    }
+	const maybeValue = map.get<T>(key);
+	if (maybeValue !== undefined) {
+		return maybeValue;
+	}
 
-    return new Promise((resolve) => {
-        const handler = (changed: IValueChanged) => {
-            if (changed.key === key) {
-                map.off("valueChanged", handler);
-                const value = map.get<T>(changed.key);
-                if (value === undefined) {
-                    throw new Error("Unexpected valueChanged result");
-                }
-                resolve(value);
-            }
-        };
-        map.on("valueChanged", handler);
-    });
+	return new Promise((resolve) => {
+		const handler = (changed: IValueChanged) => {
+			if (changed.key === key) {
+				map.off("valueChanged", handler);
+				const value = map.get<T>(changed.key);
+				if (value === undefined) {
+					throw new Error("Unexpected valueChanged result");
+				}
+				resolve(value);
+			}
+		};
+		map.on("valueChanged", handler);
+	});
 };
 
 const bar = await mapWait<Bar>(someSharedMap, barKey);
@@ -1601,20 +1594,19 @@ The non-generic `FluidObject` is returned or taken in cases where the specific f
 The non-generic `FluidObject` is a hint that the generic form of `FluidObject` should be used to inspect it. For example
 
 ```typescript
-const provider: FluidObject<IFluidHTMLView> = requestFluidObject(
-    container,
-    "/"
-);
+const provider: FluidObject<IFluidHTMLView> = requestFluidObject(container, "/");
 if (provider.IFluidHTMLView !== undefined) {
-    provider.IFluidHTMLView.render(div);
+	provider.IFluidHTMLView.render(div);
 }
 ```
 
 If you want to inspect for multiple interfaces via `FluidObject`, you can use an intersection:
 
 ```typescript
-const provider: FluidObject<IFluidHTMLView & IFluidMountableView> =
-    requestFluidObject(container, "/");
+const provider: FluidObject<IFluidHTMLView & IFluidMountableView> = requestFluidObject(
+	container,
+	"/",
+);
 ```
 
 Please begin reducing the usage of `IFluidObject` and moving to `FluidObject`. If you find any cases that `FluidObject` doesn't support please file an issue.
@@ -1929,15 +1921,13 @@ parameter's got decommissioned and the logger's moved to the client's constructo
 // Create a client using connection settings and an optional logger
 const client = new AzureClient(connectionConfig, logger);
 // Create a new container
-const { fluidContainer, containerServices } = await client.createContainer(
-    containerSchema
-);
+const { fluidContainer, containerServices } = await client.createContainer(containerSchema);
 // Retrieve the new container ID
 const containerId = fluidContainer.id;
 // Access the existing container
 const { fluidContainer, containerServices } = await client.getContainer(
-    containerId,
-    containerSchema
+	containerId,
+	containerSchema,
 );
 ```
 
@@ -2290,19 +2280,10 @@ object that consolidates all properties that are necessary to get share link.
 
 ```typescript
 // before:
-new OdspDriverUrlResolverForShareLink(
-    tokenFetcher,
-    identityType,
-    logger,
-    appName
-);
+new OdspDriverUrlResolverForShareLink(tokenFetcher, identityType, logger, appName);
 
 // After:
-new OdspDriverUrlResolverForShareLink(
-    { tokenFetcher, identityType },
-    logger,
-    appName
-);
+new OdspDriverUrlResolverForShareLink({ tokenFetcher, identityType }, logger, appName);
 ```
 
 ### AgentScheduler-related deprecations
@@ -2316,18 +2297,15 @@ A `.leader` property and `"leader"`/`"notleader"` events are currently exposed o
 A `TaskSubscription` has been added to the `@fluidframework/agent-scheduler` package which can be used in conjunction with an `AgentScheduler` to get equivalent API surface:
 
 ```typescript
-const leadershipTaskSubscription = new TaskSubscription(
-    agentScheduler,
-    "leader"
-);
+const leadershipTaskSubscription = new TaskSubscription(agentScheduler, "leader");
 if (leadershipTaskSubscription.haveTask()) {
-    // client is the leader
+	// client is the leader
 }
 leadershipTaskSubscription.on("gotTask", () => {
-    // client just became leader
+	// client just became leader
 });
 leadershipTaskSubscription.on("lostTask", () => {
-    // client is no longer leader
+	// client is no longer leader
 });
 ```
 
@@ -2335,8 +2313,8 @@ The `AgentScheduler` can be one of your choosing, or the built-in `AgentSchedule
 
 ```typescript
 const agentScheduler = await requestFluidObject<IAgentScheduler>(
-    await containerRuntime.getRootDataStore("_scheduler"),
-    ""
+	await containerRuntime.getRootDataStore("_scheduler"),
+	"",
 );
 ```
 
@@ -2348,22 +2326,19 @@ If you continue to use the built-in `AgentScheduler` and want to replicate this 
 
 ```typescript
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import {
-    IEnvelope,
-    InboundAttachMessage,
-} from "@fluidframework/runtime-definitions";
+import { IEnvelope, InboundAttachMessage } from "@fluidframework/runtime-definitions";
 
 // In shouldDiscardMessage()...
 if (type === ContainerMessageType.Attach) {
-    const attachMessage = contents as InboundAttachMessage;
-    if (attachMessage.id === "_scheduler") {
-        return true;
-    }
+	const attachMessage = contents as InboundAttachMessage;
+	if (attachMessage.id === "_scheduler") {
+		return true;
+	}
 } else if (type === ContainerMessageType.FluidDataStoreOp) {
-    const envelope = contents as IEnvelope;
-    if (envelope.address === "_scheduler") {
-        return true;
-    }
+	const envelope = contents as IEnvelope;
+	if (envelope.address === "_scheduler") {
+		return true;
+	}
 }
 // Otherwise, proceed with other discard logic...
 ```
@@ -2376,38 +2351,37 @@ For backwards compat with documents created prior to this change, you'll need to
 
 ```typescript
 const runtime = await ContainerRuntime.load(
-    context,
-    [
-        // Any other registry entries...
-        AgentSchedulerFactory.registryEntry,
-    ],
-    requestHandler,
-    // Opt-out of adding the AgentScheduler
-    { addGlobalAgentSchedulerAndLeaderElection: false },
-    scope
+	context,
+	[
+		// Any other registry entries...
+		AgentSchedulerFactory.registryEntry,
+	],
+	requestHandler,
+	// Opt-out of adding the AgentScheduler
+	{ addGlobalAgentSchedulerAndLeaderElection: false },
+	scope,
 );
 ```
 
 ```typescript
-const SomeContainerRuntimeFactory =
-    new ContainerRuntimeFactoryWithDefaultDataStore(
-        DefaultFactory,
-        new Map([
-            // Any other registry entries...
-            AgentSchedulerFactory.registryEntry,
-        ]),
-        providerEntries,
-        requestHandlers,
-        // Opt-out of adding the AgentScheduler
-        { addGlobalAgentSchedulerAndLeaderElection: false }
-    );
+const SomeContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+	DefaultFactory,
+	new Map([
+		// Any other registry entries...
+		AgentSchedulerFactory.registryEntry,
+	]),
+	providerEntries,
+	requestHandlers,
+	// Opt-out of adding the AgentScheduler
+	{ addGlobalAgentSchedulerAndLeaderElection: false },
+);
 ```
 
 If you use `AgentScheduler` functionality, it is recommended to instantiate this as a normal (non-root) data store (probably on your root data object). But if you are not yet ready to migrate away from the root data store, you can instantiate it yourself on new containers (you should do this while the container is still detached):
 
 ```typescript
 if (!context.existing) {
-    await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
+	await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
 }
 ```
 
@@ -2439,10 +2413,10 @@ The `loader` property on the `IContainerRuntime`, `IFluidDataStoreRuntime`, and 
 
 ```typescript
 const loader = new Loader({
-    urlResolver,
-    documentServiceFactory,
-    codeLoader,
-    options: { provideScopeLoader: true },
+	urlResolver,
+	documentServiceFactory,
+	codeLoader,
+	options: { provideScopeLoader: true },
 });
 ```
 
@@ -2734,12 +2708,12 @@ Before:
 
 ```typescript
 const loader = new Loader(
-    urlResolver,
-    documentServiceFactory,
-    codeLoader,
-    { blockUpdateMarkers: true },
-    {},
-    new Map()
+	urlResolver,
+	documentServiceFactory,
+	codeLoader,
+	{ blockUpdateMarkers: true },
+	{},
+	new Map(),
 );
 ```
 
@@ -2747,9 +2721,9 @@ After:
 
 ```typescript
 const loader = new Loader({
-    urlResolver,
-    documentServiceFactory,
-    codeLoader,
+	urlResolver,
+	documentServiceFactory,
+	codeLoader,
 });
 ```
 
@@ -2893,129 +2867,129 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 
 ```json
 {
-    "dataStore": {
-        "types": {
-            "IComponentRuntimeChannel": "IFluidDataStoreChannel",
-            "IComponentAttributes": "IFluidDataStoretAttributes",
+	"dataStore": {
+		"types": {
+			"IComponentRuntimeChannel": "IFluidDataStoreChannel",
+			"IComponentAttributes": "IFluidDataStoretAttributes",
 
-            "IComponentContext": "IFluidDataStoreContext",
-            "ComponentContext": "FluidDataStoreContext",
-            "LocalComponentContext": "LocalFluidDataStoreContext",
-            "RemotedComponentContext": "RemotedFluidDataStoreContext ",
+			"IComponentContext": "IFluidDataStoreContext",
+			"ComponentContext": "FluidDataStoreContext",
+			"LocalComponentContext": "LocalFluidDataStoreContext",
+			"RemotedComponentContext": "RemotedFluidDataStoreContext ",
 
-            "IComponentRuntime": "IFluidDataStoreRuntime",
-            "ComponentRuntime": "FluidDataStoreRuntime",
-            "MockComponentRuntime": "MockFluidDataStoreRuntime"
-        },
-        "methods": {
-            "createComponent": "_createDataStore",
-            "createComponentContext": "createDataStoreContext",
-            "createComponentWithProps": "createDataStoreWithProps",
-            "_createComponentWithProps": "_createDataStoreWithProps",
-            "createComponentWithRealizationFn": "createDataStoreWithRealizationFn",
-            "getComponentRuntime": "getDataStore",
-            "notifyComponentInstantiated": "notifyDataStoreInstantiated"
-        }
-    },
+			"IComponentRuntime": "IFluidDataStoreRuntime",
+			"ComponentRuntime": "FluidDataStoreRuntime",
+			"MockComponentRuntime": "MockFluidDataStoreRuntime"
+		},
+		"methods": {
+			"createComponent": "_createDataStore",
+			"createComponentContext": "createDataStoreContext",
+			"createComponentWithProps": "createDataStoreWithProps",
+			"_createComponentWithProps": "_createDataStoreWithProps",
+			"createComponentWithRealizationFn": "createDataStoreWithRealizationFn",
+			"getComponentRuntime": "getDataStore",
+			"notifyComponentInstantiated": "notifyDataStoreInstantiated"
+		}
+	},
 
-    "aquaduct": {
-        "IComponentInterfaces": {
-            "IProvideComponentDefaultFactoryName": "IProvideFluidExportDefaultFactoryName",
-            "IComponentDefaultFactoryName": "IFluidExportDefaultFactoryName"
-        },
-        "types": {
-            "SharedComponentFactory": "PureDataObjectFactory",
-            "SharedComponent": "PureDataObject",
+	"aquaduct": {
+		"IComponentInterfaces": {
+			"IProvideComponentDefaultFactoryName": "IProvideFluidExportDefaultFactoryName",
+			"IComponentDefaultFactoryName": "IFluidExportDefaultFactoryName"
+		},
+		"types": {
+			"SharedComponentFactory": "PureDataObjectFactory",
+			"SharedComponent": "PureDataObject",
 
-            "PrimedComponentFactory": "DataObjectFactory",
-            "PrimedComponent": "DataObject",
+			"PrimedComponentFactory": "DataObjectFactory",
+			"PrimedComponent": "DataObject",
 
-            "ContainerRuntimeFactoryWithDefaultComponent": "ContainerRuntimeFactoryWithDefaultDataStore",
+			"ContainerRuntimeFactoryWithDefaultComponent": "ContainerRuntimeFactoryWithDefaultDataStore",
 
-            "defaultComponentRuntimeRequestHandler": "defaultRouteRequestHandler"
-        },
-        "methods": {
-            "getComponent": "requestFluidObject",
-            "asComponent": "asFluidObject",
-            "createAndAttachComponent": "createAndAttachDataStore",
-            "getComponentFromDirectory": "getFluidObjectFromDirectory",
-            "getComponent_UNSAFE": "requestFluidObject_UNSAFE",
-            "componentInitializingFirstTime": "initializingFirstTime",
-            "componentInitializingFromExisting": "initializingFromExisting",
-            "componentHasInitialized": "hasInitialized"
-        }
-    },
+			"defaultComponentRuntimeRequestHandler": "defaultRouteRequestHandler"
+		},
+		"methods": {
+			"getComponent": "requestFluidObject",
+			"asComponent": "asFluidObject",
+			"createAndAttachComponent": "createAndAttachDataStore",
+			"getComponentFromDirectory": "getFluidObjectFromDirectory",
+			"getComponent_UNSAFE": "requestFluidObject_UNSAFE",
+			"componentInitializingFirstTime": "initializingFirstTime",
+			"componentInitializingFromExisting": "initializingFromExisting",
+			"componentHasInitialized": "hasInitialized"
+		}
+	},
 
-    "fluidObject": {
-        "IComponentInterfaces": {
-            "IProvideComponentRouter": "IProvideFluidRouter",
-            "IComponentRouter": "IFluidRouter",
+	"fluidObject": {
+		"IComponentInterfaces": {
+			"IProvideComponentRouter": "IProvideFluidRouter",
+			"IComponentRouter": "IFluidRouter",
 
-            "IProvideComponentLoadable": "IProvideFluidLoadable",
-            "IComponentLoadable": "IFluidLoadable",
+			"IProvideComponentLoadable": "IProvideFluidLoadable",
+			"IComponentLoadable": "IFluidLoadable",
 
-            "IProvideComponentHandle": "IProvideFluidHandle",
-            "IComponentHandle": "IFluidHandle",
+			"IProvideComponentHandle": "IProvideFluidHandle",
+			"IComponentHandle": "IFluidHandle",
 
-            "IProvideComponentHandleContext": "IProvideFluidHandleContext",
-            "IComponentHandleContext": "IFluidHandleContext",
+			"IProvideComponentHandleContext": "IProvideFluidHandleContext",
+			"IComponentHandleContext": "IFluidHandleContext",
 
-            "IProvideComponentSerializer": "IProvideFluidSerializer",
-            "IComponentSerializer": "IFluidSerializer",
+			"IProvideComponentSerializer": "IProvideFluidSerializer",
+			"IComponentSerializer": "IFluidSerializer",
 
-            "IProvideComponentRunnable": "IProvideFluidRunnable",
-            "IComponentRunnable": "IFluidRunnable",
+			"IProvideComponentRunnable": "IProvideFluidRunnable",
+			"IComponentRunnable": "IFluidRunnable",
 
-            "IProvideComponentConfiguration": "IProvideFluidConfiguration",
-            "IComponentConfiguration": "IFluidConfiguration",
+			"IProvideComponentConfiguration": "IProvideFluidConfiguration",
+			"IComponentConfiguration": "IFluidConfiguration",
 
-            "IProvideComponentHTMLView": "IProvideFluidHTMLView",
-            "IComponentHTMLView": "IFluidHTMLView",
-            "IComponentHTMLOptions": "IFluidHTMLOptions",
+			"IProvideComponentHTMLView": "IProvideFluidHTMLView",
+			"IComponentHTMLView": "IFluidHTMLView",
+			"IComponentHTMLOptions": "IFluidHTMLOptions",
 
-            "IProvideComponentMountableView": "IProvideFluidMountableView",
-            "IComponentMountableViewClass": "IFluidMountableViewClass",
-            "IComponentMountableView": "IFluidMountableView",
+			"IProvideComponentMountableView": "IProvideFluidMountableView",
+			"IComponentMountableViewClass": "IFluidMountableViewClass",
+			"IComponentMountableView": "IFluidMountableView",
 
-            "IProvideComponentLastEditedTracker": "IProvideFluidLastEditedTracker",
-            "IComponentLastEditedTracker": "IFluidLastEditedTracker",
+			"IProvideComponentLastEditedTracker": "IProvideFluidLastEditedTracker",
+			"IComponentLastEditedTracker": "IFluidLastEditedTracker",
 
-            "IProvideComponentRegistry": "IProvideFluidDataStoreRegistry",
-            "IComponentRegistry": "IFluidDataStoreRegistry",
+			"IProvideComponentRegistry": "IProvideFluidDataStoreRegistry",
+			"IComponentRegistry": "IFluidDataStoreRegistry",
 
-            "IProvideComponentFactory": "IProvideFluidDataStoreFactory",
-            "IComponentFactory": "IFluidDataStoreFactory",
+			"IProvideComponentFactory": "IProvideFluidDataStoreFactory",
+			"IComponentFactory": "IFluidDataStoreFactory",
 
-            "IProvideComponentCollection": "IProvideFluidObjectCollection",
-            "IComponentCollection": "IFluidObjectCollection",
+			"IProvideComponentCollection": "IProvideFluidObjectCollection",
+			"IComponentCollection": "IFluidObjectCollection",
 
-            "IProvideComponentDependencySynthesizer": "IProvideFluidDependencySynthesizer",
-            "IComponentDependencySynthesizer": "IFluidDependencySynthesizer",
+			"IProvideComponentDependencySynthesizer": "IProvideFluidDependencySynthesizer",
+			"IComponentDependencySynthesizer": "IFluidDependencySynthesizer",
 
-            "IProvideComponentTokenProvider": "IProvideFluidTokenProvider",
-            "IComponentTokenProvider": "IFluidTokenProvider"
-        },
-        "types": {
-            "IComponent": "IFluidObject",
-            "fluid/component": "fluid/object",
+			"IProvideComponentTokenProvider": "IProvideFluidTokenProvider",
+			"IComponentTokenProvider": "IFluidTokenProvider"
+		},
+		"types": {
+			"IComponent": "IFluidObject",
+			"fluid/component": "fluid/object",
 
-            "SharedObjectComponentHandle": "SharedObjectHandle",
-            "RemoteComponentHandle": "RemoteFluidObjectHandle",
-            "ComponentHandle": "FluidObjectHandle",
-            "ComponentSerializer": "FluidSerializer",
+			"SharedObjectComponentHandle": "SharedObjectHandle",
+			"RemoteComponentHandle": "RemoteFluidObjectHandle",
+			"ComponentHandle": "FluidObjectHandle",
+			"ComponentSerializer": "FluidSerializer",
 
-            "ComponentHandleContext": "FluidHandleContext",
+			"ComponentHandleContext": "FluidHandleContext",
 
-            "ComponentRegistryEntry": "FluidDataStoreRegistryEntry",
-            "NamedComponentRegistryEntry": "NamedFluidDataStoreRegistryEntry",
-            "NamedComponentRegistryEntries": "NamedFluidDataStoreRegistryEntries",
-            "ComponentRegistry": "FluidDataStoreRegistry",
-            "ContainerRuntimeComponentRegistry": "ContainerRuntimeDataStoreRegistry"
-        },
-        "methods": {
-            "instantiateComponent": "instantiateDataStore"
-        }
-    }
+			"ComponentRegistryEntry": "FluidDataStoreRegistryEntry",
+			"NamedComponentRegistryEntry": "NamedFluidDataStoreRegistryEntry",
+			"NamedComponentRegistryEntries": "NamedFluidDataStoreRegistryEntries",
+			"ComponentRegistry": "FluidDataStoreRegistry",
+			"ContainerRuntimeComponentRegistry": "ContainerRuntimeDataStoreRegistry"
+		},
+		"methods": {
+			"instantiateComponent": "instantiateDataStore"
+		}
+	}
 }
 ```
 
@@ -3081,11 +3055,11 @@ builder.pushHandler(defaultRouteRequestHandler("defaultComponent"));
 builder.pushHandler(innerRequestHandler());
 
 const runtime = await ContainerRuntime.load(
-    context,
-    this.registryEntries,
-    async (req, rt) => builder.handleRequest(req, rt),
-    undefined,
-    scope
+	context,
+	this.registryEntries,
+	async (req, rt) => builder.handleRequest(req, rt),
+	undefined,
+	scope,
 );
 ```
 
@@ -3176,19 +3150,14 @@ So, the usage has now changed to pass in the deltaManager from the object that w
 
 ```typescript
 // Old usage
-containerDeltaEventManager = new DocumentDeltaEventManager(
-    deltaConnectionServer
-);
-containerDeltaEventManager.registerDocuments(
-    component1.runtime,
-    component2.runtime
-);
+containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
 
 // New usage
 opProcessingController = new OpProcessingController(deltaConnectionServer);
 opProcessingController.addDeltaManagers(
-    component1.runtime.deltaManager,
-    component2.runtime.deltaManager
+	component1.runtime.deltaManager,
+	component2.runtime.deltaManager,
 );
 ```
 
