@@ -6,11 +6,18 @@ Please note that the ideas explored here are experimental and under development.
 
 ## Scenario
 
-TBD
+This example demonstrates a scenario in which the Customers "source of truth" of their data lives in a service that is external to the Fluid service. The Customers can then:
+1. Import the external data into a Fluid collboration session.
+2. Export data from a Fluid collaboration session back to the source of truth.
+3. Sync updates between Fluid and the source of truth in as close to real-time as the scenario allows.
+
+In this case, the Fluid collaboration session serves as a "drafting surface" in which clients collaborate to create a draft of the data and then send the saved data back to the source of truth for long term storage. 
 
 ## Strategy overview
 
-TBD
+This example repo explores two routes to implement the scenario above. One is the Echo Webhook Pattern and the other is the Bot Pattern. Both are documented in more detail below. However, they both operate in the following environment: many data sources (that would hold the "source of truth" of their data) offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates. However, theyoften expose third-party integration via REST APIS for uerying and manipulating data, as well as webhooks for watching updates to the data. 
+
+We have created a mock external service that offers this REST API collection and webhook interfaces in ./src/mock-external-data-service.
 
 ### Echo Webhook Pattern
 
