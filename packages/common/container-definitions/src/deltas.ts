@@ -122,9 +122,6 @@ export interface IDeltaManagerEvents extends IEvent {
 	 */
 	(event: "allSentOpsAckd", listener: () => void);
 
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
 	(event: "pong", listener: (latency: number) => void);
 
 	/**
