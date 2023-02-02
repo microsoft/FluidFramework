@@ -10,8 +10,8 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import { customerServicePort } from "../mock-service-interface";
 import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
+import { externalDataServicePort } from "../mock-external-data-service-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {
@@ -155,14 +155,18 @@ export class TaskList extends DataObject implements ITaskList {
 		if (this.tasks.get(id) !== undefined) {
 			throw new Error("Task already exists");
 		}
+		const savedNameString = SharedString.create(this.runtime);
 		const draftNameString = SharedString.create(this.runtime);
 
 		// TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
 		// savedMap will get updated when the data syncs back
+		savedNameString.insertText(0, name);
 		draftNameString.insertText(0, name);
 
+		const savedPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
 		const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
 
+		savedPriorityCell.set(priority);
 		draftPriorityCell.set(priority);
 
 		// To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
@@ -284,13 +288,16 @@ export class TaskList extends DataObject implements ITaskList {
 			},
 		][];
 		try {
-			const response = await fetch(`http://localhost:${customerServicePort}/fetch-tasks`, {
-				method: "GET",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
+			const response = await fetch(
+				`http://localhost:${externalDataServicePort}/fetch-tasks`,
+				{
+					method: "GET",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
 				},
-			});
+			);
 
 			const responseBody = (await response.json()) as Record<string, unknown>;
 			if (responseBody.taskList === undefined) {
@@ -359,7 +366,6 @@ export class TaskList extends DataObject implements ITaskList {
 		});
 		await Promise.all(updateTaskPs);
 	}
-
 	/**
 	 * Save the current data in the container back to the external data source.
 	 *
@@ -384,7 +390,7 @@ export class TaskList extends DataObject implements ITaskList {
 			};
 		}
 		try {
-			await fetch(`http://localhost:${customerServicePort}/set-tasks`, {
+			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
 				method: "POST",
 				headers: {
 					"Access-Control-Allow-Origin": "*",
