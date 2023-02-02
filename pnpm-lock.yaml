@@ -3214,7 +3214,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-binder:
     specifiers:
-      '@babel/core': ^7.12.10
+      '@babel/core': ^7.13.0
       '@babel/eslint-parser': ^7.16.5
       '@babel/plugin-transform-runtime': ^7.2.0
       '@babel/preset-env': ^7.2.0
@@ -3735,7 +3735,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-proxy:
     specifiers:
-      '@babel/core': ^7.12.10
+      '@babel/core': ^7.13.0
       '@babel/plugin-transform-runtime': ^7.2.0
       '@babel/preset-env': ^7.2.0
       '@fluid-experimental/property-changeset': '>=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0'
@@ -9639,7 +9639,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
-      eslint-plugin-jest: ^27.1.5
+      eslint-plugin-jest: ~27.1.5
       html-webpack-plugin: ^5.5.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
@@ -9674,7 +9674,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      eslint-plugin-jest: 27.2.1_e7w73bdyuoy63spbnf7wdyrtai
+      eslint-plugin-jest: 27.1.7_e7w73bdyuoy63spbnf7wdyrtai
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
       jest-junit: 10.0.0
@@ -9728,9 +9728,9 @@ importers:
       cross-env: ^7.0.2
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
-      eslint-plugin-jest: ^27.1.5
-      eslint-plugin-react: ^7.28.0
-      eslint-plugin-react-hooks: ^4.6.0
+      eslint-plugin-jest: ~27.1.5
+      eslint-plugin-react: ~7.28.0
+      eslint-plugin-react-hooks: ~4.6.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
       prettier: ~2.6.2
@@ -9795,7 +9795,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      eslint-plugin-jest: 27.2.1_e7w73bdyuoy63spbnf7wdyrtai
+      eslint-plugin-jest: 27.1.7_e7w73bdyuoy63spbnf7wdyrtai
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
       jest: 26.6.3
@@ -25959,8 +25959,8 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-plugin-jest/27.2.1_e7w73bdyuoy63spbnf7wdyrtai:
-    resolution: {integrity: sha512-l067Uxx7ZT8cO9NJuf+eJHvt6bqJyz2Z29wykyEdz/OtmcELQl2MQGQLX8J94O1cSJWAwUSEvCjwjA7KEK3Hmg==}
+  /eslint-plugin-jest/27.1.7_e7w73bdyuoy63spbnf7wdyrtai:
+    resolution: {integrity: sha512-0QVzf+og4YI1Qr3UoprkqqhezAZjFffdi62b0IurkCXMqPtRW84/UT4CKsYT80h/D82LA9avjO/80Ou1LdgbaQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     peerDependencies:
       '@typescript-eslint/eslint-plugin': ^5.0.0
