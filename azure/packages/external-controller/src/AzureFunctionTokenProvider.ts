@@ -4,17 +4,14 @@
  */
 import axios from "axios";
 
+import { AzureMember } from "@fluidframework/azure-client";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-
-import { AzureMember } from "./interfaces";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
- * Azure Fluid Relay token resolution.
- *
- * @deprecated 1.2.0, This API will be removed in 2.0.0
- * No replacement since it is not expected anyone will use this token provider as is
- * See https://github.com/microsoft/FluidFramework/issues/13693 for context
+ * Azure Fluid Relay token resolution. Note: this is a simplified implementation of
+ * TokenProvider. For production-ready applications, you should consider implementing
+ * the TokenProvider with retry logic, token caching, error handling, etc.
  */
 export class AzureFunctionTokenProvider implements ITokenProvider {
 	/**
@@ -27,15 +24,25 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 		private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
 	) {}
 
-	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
+	public async fetchOrdererToken(
+		tenantId: string,
+		documentId?: string,
+		refresh?: boolean,
+	): Promise<ITokenResponse> {
 		return {
 			jwt: await this.getToken(tenantId, documentId),
+			fromCache: false,
 		};
 	}
 
-	public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
+	public async fetchStorageToken(
+		tenantId: string,
+		documentId: string,
+		refresh?: boolean,
+	): Promise<ITokenResponse> {
 		return {
 			jwt: await this.getToken(tenantId, documentId),
+			fromCache: false,
 		};
 	}
 
