@@ -8,6 +8,7 @@ export { createProducer } from "./kafkaProducerFactory";
 export { createMessageReceiver } from "./messageReceiver";
 export { createMessageSender } from "./messageSender";
 export { createMetricClient } from "./metricClient";
+export { DeltaManager } from "./deltaManager";
 export { MongoCollection, MongoDb, MongoDbFactory } from "./mongodb";
 export { NodeAllowList, NodeCodeLoader } from "./nodeCodeLoader";
 export { RedisCache } from "./redis";

@@ -7,6 +7,9 @@ import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { Encoder } from "./encoders";
 
+/**
+ * @alpha
+ */
 export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string> {
 	return {
 		encode: (decoded: Jsonable<T>) => {

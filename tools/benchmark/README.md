@@ -9,8 +9,8 @@ mocha).
 
 This package exports a few functions that you'll use instead of mocha's `it()` to define profiling tests:
 
-- `benchmark()` for runtime tests
-- `benchmarkMemory()` for memory usage tests
+-   `benchmark()` for runtime tests
+-   `benchmarkMemory()` for memory usage tests
 
 More details particular to each can be found in the sections below.
 
@@ -92,52 +92,52 @@ A high-level explanation of how memory profiling tests execute might help make t
 
 For each test:
 
-01. The `before()` method in the class instance is called.
-02. The `beforeIteration()` method in the class instance is called.
-03. Garbage Collection is triggered.
-04. We collect a baseline "before" memory measurement.
-05. The `run()` method in the class instance is called.
-06. The `afterIteration()` method in the class instance is called.
-07. Garbage Collection is triggered.
-08. We collect an "after" memory measurement.
-09. Repeat steps 2-9 until some conditions are met.
+1.  The `before()` method in the class instance is called.
+2.  The `beforeIteration()` method in the class instance is called.
+3.  Garbage Collection is triggered.
+4.  We collect a baseline "before" memory measurement.
+5.  The `run()` method in the class instance is called.
+6.  The `afterIteration()` method in the class instance is called.
+7.  Garbage Collection is triggered.
+8.  We collect an "after" memory measurement.
+9.  Repeat steps 2-9 until some conditions are met.
 10. The `after()` method in the class instance is called.
 
 In general terms, this means you should:
 
-- Put code that sets up the test but should *not* be included in the baseline "before" memory measurement, in the
-  `beforeIteration()` method.
-- Put test code in the `run()` method, and ensure that things that need to be considered in the "after" memory measurement
-  are assigned to local variables declared *outside* of the `run()` method, so they won't go out of scope as soon as
-  the method returns, and thus are not collected when GC runs in step 7 above.
+-   Put code that sets up the test but should _not_ be included in the baseline "before" memory measurement, in the
+    `beforeIteration()` method.
+-   Put test code in the `run()` method, and ensure that things that need to be considered in the "after" memory measurement
+    are assigned to local variables declared _outside_ of the `run()` method, so they won't go out of scope as soon as
+    the method returns, and thus are not collected when GC runs in step 7 above.
 
-  Technically, those variables could be declared outside the class, but that is prone to cross-test contamination.
-  Private variables declared inside the class (which in a way "represents" the test), should make it clear that they are
-  only relevant for that test, and help avoid cross-contamination because the class instance will be out of scope (and
-  thus garbage-collectable) by the time the next test executes.
+    Technically, those variables could be declared outside the class, but that is prone to cross-test contamination.
+    Private variables declared inside the class (which in a way "represents" the test), should make it clear that they are
+    only relevant for that test, and help avoid cross-contamination because the class instance will be out of scope (and
+    thus garbage-collectable) by the time the next test executes.
 
 The pattern most memory tests will want to follow is something like this (note the `()` after the test declaration
 to immediately instantiate it):
 
 ```typescript
-benchmarkMemory(new class implements IMemoryTestObject {
-    title = `My test title`;
-    private someLocalVariable: MyType | undefined;
+benchmarkMemory(
+    new (class implements IMemoryTestObject {
+        title = `My test title`;
+        private someLocalVariable: MyType | undefined;
 
-    beforeIteration() {
-        // Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
+        beforeIteration() {
+            // Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
+            // For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
+        }
 
-        // For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
-    }
-
-    async run() {
-        // The actual code that you want to measure.
-
-        // For example, creating a new object and assigning it to someLocalVariable.
-        // Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
-        // the memory allocated into the variable will be "seen" by the "after" memory measurement.
-    }
-}());
+        async run() {
+            // The actual code that you want to measure.
+            // For example, creating a new object and assigning it to someLocalVariable.
+            // Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
+            // the memory allocated into the variable will be "seen" by the "after" memory measurement.
+        }
+    })(),
+);
 ```
 
 When ran, tests for memory profiling will be tagged with `@Benchmark` (or whatever you pass in `IMemoryTestObject.type`

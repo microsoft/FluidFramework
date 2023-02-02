@@ -10,8 +10,11 @@ import { TableModel, tableModelType } from "./tableModel";
 import { TableView } from "./tableView";
 
 const tableModelFactory = createDataStoreFactory(
-    tableModelType,
-    import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel").then((m) => m.TableModel.getFactory()));
+	tableModelType,
+	import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel").then((m) =>
+		m.TableModel.getFactory(),
+	),
+);
 
 const tableViewCallback = (model: TableModel) => React.createElement(TableView, { model });
 

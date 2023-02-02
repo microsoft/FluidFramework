@@ -73,6 +73,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     readonly protocolName = "fluid:";
 }
 
+// @public
+export enum RouterliciousErrorType {
+    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
+    // (undocumented)
+    sslCertError = "sslCertError"
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```

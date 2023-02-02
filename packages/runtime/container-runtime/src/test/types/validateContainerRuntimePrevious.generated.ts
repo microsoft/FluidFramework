@@ -40,6 +40,30 @@ use_old_VariableDeclaration_agentSchedulerId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_AllowTombstoneRequestHeaderKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_AllowTombstoneRequestHeaderKey():
+    TypeOnly<typeof old.AllowTombstoneRequestHeaderKey>;
+declare function use_current_VariableDeclaration_AllowTombstoneRequestHeaderKey(
+    use: TypeOnly<typeof current.AllowTombstoneRequestHeaderKey>);
+use_current_VariableDeclaration_AllowTombstoneRequestHeaderKey(
+    get_old_VariableDeclaration_AllowTombstoneRequestHeaderKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_AllowTombstoneRequestHeaderKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_AllowTombstoneRequestHeaderKey():
+    TypeOnly<typeof current.AllowTombstoneRequestHeaderKey>;
+declare function use_old_VariableDeclaration_AllowTombstoneRequestHeaderKey(
+    use: TypeOnly<typeof old.AllowTombstoneRequestHeaderKey>);
+use_old_VariableDeclaration_AllowTombstoneRequestHeaderKey(
+    get_current_VariableDeclaration_AllowTombstoneRequestHeaderKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_CompressionAlgorithms": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_CompressionAlgorithms():
@@ -204,78 +228,6 @@ declare function use_old_ClassDeclaration_FluidDataStoreRegistry(
     use: TypeOnly<old.FluidDataStoreRegistry>);
 use_old_ClassDeclaration_FluidDataStoreRegistry(
     get_current_ClassDeclaration_FluidDataStoreRegistry());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcBlobPrefix": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_gcBlobPrefix():
-    TypeOnly<typeof old.gcBlobPrefix>;
-declare function use_current_VariableDeclaration_gcBlobPrefix(
-    use: TypeOnly<typeof current.gcBlobPrefix>);
-use_current_VariableDeclaration_gcBlobPrefix(
-    get_old_VariableDeclaration_gcBlobPrefix());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcBlobPrefix": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_gcBlobPrefix():
-    TypeOnly<typeof current.gcBlobPrefix>;
-declare function use_old_VariableDeclaration_gcBlobPrefix(
-    use: TypeOnly<typeof old.gcBlobPrefix>);
-use_old_VariableDeclaration_gcBlobPrefix(
-    get_current_VariableDeclaration_gcBlobPrefix());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTombstoneBlobKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_gcTombstoneBlobKey():
-    TypeOnly<typeof old.gcTombstoneBlobKey>;
-declare function use_current_VariableDeclaration_gcTombstoneBlobKey(
-    use: TypeOnly<typeof current.gcTombstoneBlobKey>);
-use_current_VariableDeclaration_gcTombstoneBlobKey(
-    get_old_VariableDeclaration_gcTombstoneBlobKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTombstoneBlobKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_gcTombstoneBlobKey():
-    TypeOnly<typeof current.gcTombstoneBlobKey>;
-declare function use_old_VariableDeclaration_gcTombstoneBlobKey(
-    use: TypeOnly<typeof old.gcTombstoneBlobKey>);
-use_old_VariableDeclaration_gcTombstoneBlobKey(
-    get_current_VariableDeclaration_gcTombstoneBlobKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTreeKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_gcTreeKey():
-    TypeOnly<typeof old.gcTreeKey>;
-declare function use_current_VariableDeclaration_gcTreeKey(
-    use: TypeOnly<typeof current.gcTreeKey>);
-use_current_VariableDeclaration_gcTreeKey(
-    get_old_VariableDeclaration_gcTreeKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTreeKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_gcTreeKey():
-    TypeOnly<typeof current.gcTreeKey>;
-declare function use_old_VariableDeclaration_gcTreeKey(
-    use: TypeOnly<typeof old.gcTreeKey>);
-use_old_VariableDeclaration_gcTreeKey(
-    get_current_VariableDeclaration_gcTreeKey());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1692,6 +1644,30 @@ declare function use_old_ClassDeclaration_SummaryCollection(
     use: TypeOnly<old.SummaryCollection>);
 use_old_ClassDeclaration_SummaryCollection(
     get_current_ClassDeclaration_SummaryCollection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_TombstoneResponseHeaderKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_TombstoneResponseHeaderKey():
+    TypeOnly<typeof old.TombstoneResponseHeaderKey>;
+declare function use_current_VariableDeclaration_TombstoneResponseHeaderKey(
+    use: TypeOnly<typeof current.TombstoneResponseHeaderKey>);
+use_current_VariableDeclaration_TombstoneResponseHeaderKey(
+    get_old_VariableDeclaration_TombstoneResponseHeaderKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_TombstoneResponseHeaderKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_TombstoneResponseHeaderKey():
+    TypeOnly<typeof current.TombstoneResponseHeaderKey>;
+declare function use_old_VariableDeclaration_TombstoneResponseHeaderKey(
+    use: TypeOnly<typeof old.TombstoneResponseHeaderKey>);
+use_old_VariableDeclaration_TombstoneResponseHeaderKey(
+    get_current_VariableDeclaration_TombstoneResponseHeaderKey());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -13,89 +13,83 @@ import { Todo } from "./Todo";
 import "./style.css";
 
 interface TodoViewProps {
-    readonly todoModel: Todo;
-    readonly getDirectLink: (itemId: string) => string;
+	readonly todoModel: Todo;
+	readonly getDirectLink: (itemId: string) => string;
 }
 
 export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
-    const { todoModel, getDirectLink } = props;
+	const { todoModel, getDirectLink } = props;
 
-    const [todoItems, setTodoItems] = useState<[string, TodoItem][]>([]);
-    const [titleString, setTitleString] = useState<SharedString | undefined>();
+	const [todoItems, setTodoItems] = useState<[string, TodoItem][]>([]);
+	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
-    const newItemTextInputRef = useRef<HTMLInputElement>(null);
+	const newItemTextInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        todoModel.getTodoTitleString()
-            .then(setTitleString)
-            .catch(console.error);
+	useEffect(() => {
+		todoModel.getTodoTitleString().then(setTitleString).catch(console.error);
 
-        const refreshTodoItemListFromModel = () => {
-            todoModel.getTodoItems()
-                .then(setTodoItems)
-                .catch(console.error);
-        };
-        todoModel.on("todoItemsChanged", refreshTodoItemListFromModel);
-        refreshTodoItemListFromModel();
+		const refreshTodoItemListFromModel = () => {
+			todoModel.getTodoItems().then(setTodoItems).catch(console.error);
+		};
+		todoModel.on("todoItemsChanged", refreshTodoItemListFromModel);
+		refreshTodoItemListFromModel();
 
-        return () => {
-            todoModel.off("todoItemsChanged", refreshTodoItemListFromModel);
-        };
-    }, [todoModel]);
+		return () => {
+			todoModel.off("todoItemsChanged", refreshTodoItemListFromModel);
+		};
+	}, [todoModel]);
 
-    if (titleString === undefined) {
-        return <div>Loading...</div>;
-    }
+	if (titleString === undefined) {
+		return <div>Loading...</div>;
+	}
 
-    const handleCreateClick = async (ev: React.FormEvent<HTMLFormElement>): Promise<void> => {
-        ev.preventDefault();
-        if (newItemTextInputRef.current === null) {
-            throw new Error("New item text field missing");
-        }
-        await todoModel.addTodoItem({
-            startingText: newItemTextInputRef.current.value,
-        });
-        newItemTextInputRef.current.value = "";
-    };
+	const handleCreateClick = async (ev: React.FormEvent<HTMLFormElement>): Promise<void> => {
+		ev.preventDefault();
+		if (newItemTextInputRef.current === null) {
+			throw new Error("New item text field missing");
+		}
+		await todoModel.addTodoItem({
+			startingText: newItemTextInputRef.current.value,
+		});
+		newItemTextInputRef.current.value = "";
+	};
 
-    // Using the list of TodoItem objects, make a list of TodoItemViews.
-    const todoItemViews = todoItems.map(([id, todoItem]) => (
-        <div className="item-wrap" key={id}>
-            <TodoItemView todoItemModel={todoItem} className="todo-item-view" />
-            <button
-                name="OpenInNewTab"
-                id={id}
-                className="action-button"
-                onClick={() => window.open(getDirectLink(id), "_blank")}
-            >↗
-            </button>
-            <button
-                className="action-button"
-                onClick={() => todoModel.deleteTodoItem(id)}>X</button>
-        </div>
-    ));
+	// Using the list of TodoItem objects, make a list of TodoItemViews.
+	const todoItemViews = todoItems.map(([id, todoItem]) => (
+		<div className="item-wrap" key={id}>
+			<TodoItemView todoItemModel={todoItem} className="todo-item-view" />
+			<button
+				name="OpenInNewTab"
+				id={id}
+				className="action-button"
+				onClick={() => window.open(getDirectLink(id), "_blank")}
+			>
+				↗
+			</button>
+			<button className="action-button" onClick={() => todoModel.deleteTodoItem(id)}>
+				X
+			</button>
+		</div>
+	));
 
-    // TodoView is made up of an editable title input, an input/button for submitting new items, and the list
-    // of TodoItemViews.
-    return (
-        <div className="todo-view">
-            <CollaborativeInput
-                className="todo-title"
-                sharedString={titleString}
-            />
-            <form className="new-item-form" onSubmit={handleCreateClick}>
-                <input
-                    className="new-item-text"
-                    type="text"
-                    ref={newItemTextInputRef}
-                    name="itemName"
-                    autoFocus
-                />
-                <button className="new-item-button" type="submit" name="createItem">+</button>
-            </form>
-            <div className="todo-item-list">
-                {todoItemViews}
-            </div>
-        </div>
-    );
+	// TodoView is made up of an editable title input, an input/button for submitting new items, and the list
+	// of TodoItemViews.
+	return (
+		<div className="todo-view">
+			<CollaborativeInput className="todo-title" sharedString={titleString} />
+			<form className="new-item-form" onSubmit={handleCreateClick}>
+				<input
+					className="new-item-text"
+					type="text"
+					ref={newItemTextInputRef}
+					name="itemName"
+					autoFocus
+				/>
+				<button className="new-item-button" type="submit" name="createItem">
+					+
+				</button>
+			</form>
+			<div className="todo-item-list">{todoItemViews}</div>
+		</div>
+	);
 };

@@ -10,6 +10,7 @@ import {
     ICollection,
     IContext,
     IControlMessage,
+    IDeltaService,
     IDocument,
     ILambdaStartControlMessageContents,
     IPartitionLambda,
@@ -33,6 +34,7 @@ import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
 import { initializeProtocol, sendToDeli } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
+import { PendingMessageReader } from "./pendingMessageReader";
 
 const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,
@@ -55,6 +57,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         private readonly documentCollection: ICollection<IDocument>,
         private readonly messageCollection: ICollection<ISequencedOperationMessage>,
         private readonly producer: IProducer,
+        private readonly deltaManager: IDeltaService,
         private readonly tenantManager: ITenantManager,
         private readonly serviceConfiguration: IServiceConfiguration,
         private readonly enableWholeSummaryUpload: boolean,
@@ -153,7 +156,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
                 // the sequence number is 'n' rather than '0'.
                 lastCheckpoint.logOffset = -1;
-                const checkpointMessage = JSON.stringify(lastCheckpoint);
+                const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
                 context.log?.info(checkpointMessage, { messageMetaData });
                 Lumberjack.info(checkpointMessage, getLumberBaseProperties(documentId, tenantId));
             }
@@ -206,13 +209,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.documentCollection,
             this.messageCollection);
 
+        const pendingMessageReader = new PendingMessageReader(tenantId, documentId, this.deltaManager);
+
         const scribeLambda = new ScribeLambda(
             context,
             document.tenantId,
             document.documentId,
             summaryWriter,
             summaryReader,
-            undefined,
+            pendingMessageReader,
             checkpointManager,
             lastCheckpoint,
             this.serviceConfiguration,

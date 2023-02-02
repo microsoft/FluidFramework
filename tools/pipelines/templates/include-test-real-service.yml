@@ -66,6 +66,12 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
+# Custom steps specified by the "caller" of this template, for any additional things that need to be done
+# after the steps in this template complete.
+- name: additionalSteps
+  type: stepList
+  default: []
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -309,6 +315,27 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
           customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
+      # filter report
+      - task: Bash@3
+        displayName: Filter skipped test from report
+        inputs:
+          workingDir: ${{ variables.testPackageDir }}/nyc
+          targetType: 'inline'
+          script: |
+            if [[ -d ${{ variables.testPackageDir }}/nyc ]]; then
+              echo "directory '${{ variables.testPackageDir }}/nyc' exists."
+              cd ${{ variables.testPackageDir }}/nyc
+              if ! [[ -z "$(ls -A .)" ]]; then
+                curdirfiles=`ls`
+                echo "report file(s) ${curdirfiles} found. Filtering skipped tests..."
+                for i in `ls`; do sed -i '/<skipped/d' $i; done
+              else
+                echo "No report files found in '${{ variables.testPackageDir }}/nyc'"
+              fi
+            else
+              echo "Directory '${{ variables.testPackageDir }}/nyc' not found"
+            fi
+
       # Upload results
       - task: PublishTestResults@2
         displayName: Publish Test Results
@@ -318,3 +345,5 @@ jobs:
           searchFolder: ${{ variables.testPackageDir }}/nyc
           mergeTestResults: false
         condition: succeededOrFailed()
+
+      - ${{ parameters.additionalSteps }}

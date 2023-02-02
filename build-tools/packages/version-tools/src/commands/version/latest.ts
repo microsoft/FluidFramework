@@ -16,52 +16,52 @@ import { getLatestReleaseFromList } from "../../schemes";
  */
 // eslint-disable-next-line import/no-default-export
 export default class LatestCommand extends Command {
-    static description =
-        "Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.";
+	static description =
+		"Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.";
 
-    static enableJsonFlag = true;
+	static enableJsonFlag = true;
 
-    static flags = {
-        versions: Flags.string({
-            char: "r",
-            description:
-                "The versions to evaluate. The argument can be passed multiple times to provide multiple versions, or a space-delimited list of versions can be provided using a single argument.",
-            multiple: true,
-            required: true,
-        }),
-        prerelease: Flags.boolean({
-            default: false,
-            description:
-                "Include prerelease versions. By default, prerelease versions are excluded.",
-        }),
-    };
+	static flags = {
+		versions: Flags.string({
+			char: "r",
+			description:
+				"The versions to evaluate. The argument can be passed multiple times to provide multiple versions, or a space-delimited list of versions can be provided using a single argument.",
+			multiple: true,
+			required: true,
+		}),
+		prerelease: Flags.boolean({
+			default: false,
+			description:
+				"Include prerelease versions. By default, prerelease versions are excluded.",
+		}),
+	};
 
-    static examples = [
-        {
-            description: "You can use the --versions (-r) flag multiple times.",
-            command:
-                "<%= config.bin %> <%= command.id %> -r 2.0.0 -r 2.0.0-internal.1.0.0 -r 1.0.0 -r 0.56.1000",
-        },
-        {
-            description:
-                "You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.",
-            command:
-                "<%= config.bin %> <%= command.id %> -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000",
-        },
-    ];
+	static examples = [
+		{
+			description: "You can use the --versions (-r) flag multiple times.",
+			command:
+				"<%= config.bin %> <%= command.id %> -r 2.0.0 -r 2.0.0-internal.1.0.0 -r 1.0.0 -r 0.56.1000",
+		},
+		{
+			description:
+				"You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.",
+			command:
+				"<%= config.bin %> <%= command.id %> -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000",
+		},
+	];
 
-    async run(): Promise<{
-        latest: string;
-    }> {
-        const { flags } = await this.parse(LatestCommand);
+	async run(): Promise<{
+		latest: string;
+	}> {
+		const { flags } = await this.parse(LatestCommand);
 
-        const data = {
-            latest: getLatestReleaseFromList(flags.versions, flags.prerelease),
-        };
+		const data = {
+			latest: getLatestReleaseFromList(flags.versions, flags.prerelease),
+		};
 
-        this.log(data.latest);
+		this.log(data.latest);
 
-        // When the --json flag is passed, the command will return the raw data as JSON.
-        return data;
-    }
+		// When the --json flag is passed, the command will return the raw data as JSON.
+		return data;
+	}
 }

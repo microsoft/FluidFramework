@@ -14,10 +14,10 @@ import { handlers as npmPackageContentsHandlers } from "./npmPackages";
  * declared file handlers
  */
 export const policyHandlers: Handler[] = [
-    ...copyrightFileHeaderHandlers,
-    ...npmPackageContentsHandlers,
-    dockerfilePackageHandler,
-    fluidCaseHandler,
-    ...lockfilesHandlers,
-    assertShortCodeHandler,
+	...copyrightFileHeaderHandlers,
+	...npmPackageContentsHandlers,
+	dockerfilePackageHandler,
+	fluidCaseHandler,
+	...lockfilesHandlers,
+	assertShortCodeHandler,
 ];

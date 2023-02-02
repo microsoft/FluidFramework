@@ -6,7 +6,7 @@
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { requestWithRetry } from "@fluidframework/server-services-core";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -40,7 +40,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
             }
             return queryCursor.toArray();
         };
-        return this.requestWithRetry(req, "MongoCollection.find");
+        return this.requestWithRetry(req, "MongoCollection.find", query);
     }
 
     public async findOne(query: object): Promise<T> {
@@ -48,6 +48,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.findOne", // callerName
+            query, // queryOrFilter
         );
     }
 
@@ -64,6 +65,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.update", // callerName
+            filter, // queryOrFilter
         );
     }
 
@@ -72,6 +74,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.updateMany", // callerName
+            filter, // queryOrFilter
         );
     }
 
@@ -80,6 +83,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.upsert", // callerName
+            filter, // queryOrFilter
         );
     }
 
@@ -88,6 +92,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.distinct", // callerName
+            query, // queryOrFilter
         );
     }
 
@@ -96,6 +101,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.deleteOne", // callerName
+            filter, // queryOrFilter
         );
     }
 
@@ -104,6 +110,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.deleteMany", // callerName
+            filter, // queryOrFilter
         );
     }
 
@@ -115,6 +122,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.insertOne", // callerName
+            value, // queryOrFilter
         );
     }
 
@@ -179,22 +187,30 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return this.requestWithRetry(
             req, // request
             "MongoCollection.findOrCreate", // callerName
+            query, // queryOrFilter
         );
     }
 
     public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
-        const result = await this.collection.findOneAndUpdate(
-            query,
-            {
-                $set: value,
-            },
-            {
-                returnOriginal: true,
-            });
+        const req = async () => {
+            const result = await this.collection.findOneAndUpdate(
+                query,
+                {
+                    $set: value,
+                },
+                {
+                    returnOriginal: true,
+                });
 
-        return result.value
-            ? { value: result.value, existing: true }
-            : { value, existing: false };
+            return result.value
+                ? { value: result.value, existing: true }
+                : { value, existing: false };
+        };
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.findAndUpdate", // callerName
+            query, // queryOrFilter
+        );
     }
 
     private async updateCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
@@ -227,11 +243,16 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         await this.collection.updateMany(filter, update, options);
     }
 
-    private async requestWithRetry<TOut>(request: () => Promise<TOut>, callerName: string): Promise<TOut> {
+    private async requestWithRetry<TOut>(
+        request: () => Promise<TOut>,
+        callerName: string,
+        queryOrFilter?: any,
+    ): Promise<TOut> {
+        const telemetryProperties = this.getTelemetryPropertiesFromQuery(queryOrFilter);
         return requestWithRetry<TOut>(
             request,
             callerName,
-            {}, // telemetryProperties
+            telemetryProperties,
             (e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
             MaxRetryAttempts, // maxRetries
             InitialRetryIntervalInMs, // retryAfterMs
@@ -240,6 +261,27 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
             undefined, /* onErrorFn */
             this.telemetryEnabled, // telemetryEnabled
         );
+    }
+
+    private getTelemetryPropertiesFromQuery(queryOrFilter?: any): Map<string, any> | Record<string, any> {
+        const properties: Map<string, any> = new Map();
+        if (!queryOrFilter) {
+            return properties;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(queryOrFilter, "_id")) {
+            properties.set("id", queryOrFilter._id);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(queryOrFilter, "tenantId")) {
+            properties.set(BaseTelemetryProperties.tenantId, queryOrFilter.tenantId);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(queryOrFilter, "documentId")) {
+            properties.set(BaseTelemetryProperties.documentId, queryOrFilter.documentId);
+        }
+
+        return properties;
     }
 }
 

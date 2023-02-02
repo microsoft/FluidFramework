@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { AttributionInfo, AttributionKey } from "./attribution";
 export {
 	AliasResult,
 	BindState,
@@ -25,15 +26,30 @@ export {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
 } from "./dataStoreRegistry";
-export { gcBlobKey, IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
-export { IAttachMessage, IEnvelope, IInboundSignalMessage, InboundAttachMessage, ISignalEnvelope } from "./protocol";
+export {
+	gcBlobPrefix,
+	gcDeletedBlobKey,
+	gcTombstoneBlobKey,
+	gcTreeKey,
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+} from "./garbageCollection";
+export {
+	IAttachMessage,
+	IEnvelope,
+	IInboundSignalMessage,
+	InboundAttachMessage,
+	ISignalEnvelope,
+} from "./protocol";
 export {
 	blobCountPropertyName,
 	channelsTreeName,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IGarbageCollectionNodeData,
+	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
+	IGarbageCollectionSummaryDetailsLegacy,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,
