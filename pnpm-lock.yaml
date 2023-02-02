@@ -691,7 +691,7 @@ importers:
       '@types/codemirror': ^5.60.7
       '@types/node': ^14.18.36
       '@types/react': ^17.0.44
-      codemirror: ^6.0.1
+      codemirror: ^5.65.11
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
@@ -722,7 +722,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      codemirror: 6.0.1
+      codemirror: 5.65.11
       events: 3.3.0
       react: 17.0.2
     devDependencies:
@@ -23620,6 +23620,10 @@ packages:
     resolution: {integrity: sha512-2Tl6n0v+GJRsC9K3MLCdLaMOmvWL0uukajNJseorZJsslaxZyZMgENocPU8R0DyoTAiKsyqiemSOZo7kjGV0LQ==}
     dependencies:
       typo-js: 1.2.2
+    dev: false
+
+  /codemirror/5.65.11:
+    resolution: {integrity: sha512-Gp62g2eKSCHYt10axmGhKq3WoJSvVpvhXmowNq7pZdRVowwtvBR/hi2LSP5srtctKkRT33T6/n8Kv1UGp7JW4A==}
     dev: false
 
   /codemirror/6.0.1:
