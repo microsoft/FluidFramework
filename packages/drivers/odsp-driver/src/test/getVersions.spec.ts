@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { IOdspResolvedUrl, ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { TelemetryNullLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import { delay } from "@fluidframework/common-utils";
+import { FetchSource } from "@fluidframework/driver-definitions";
 import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
 import {
 	IOdspSnapshot,
@@ -29,7 +30,6 @@ import {
 } from "../odspDocumentStorageManager";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
-import { FetchSource } from "@fluidframework/driver-definitions";
 
 const createUtLocalCache = () => new LocalPersistentCache();
 
@@ -558,6 +558,7 @@ describe("Tests for snapshot fetch", () => {
 		});
 
 		it("prefetching snapshot should result in epoch error if different from what is already present, no concurrent fetch", async () => {
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			service["hostPolicy"].concurrentSnapshotFetch = false;
 			epochTracker.setEpoch("epoch1", true, "cache");
 			await mockFetchSingle(
@@ -617,6 +618,7 @@ describe("Tests for snapshot fetch", () => {
 		});
 
 		it("prefetching snapshot should be successful from prefetching, no concurrent fetch", async () => {
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			service["hostPolicy"].concurrentSnapshotFetch = false;
 			epochTracker.setEpoch("epoch1", true, "cache");
 			await mockFetchSingle(

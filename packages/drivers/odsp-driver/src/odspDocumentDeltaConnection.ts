@@ -234,7 +234,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public static async create(
 		tenantId: string,
 		documentId: string,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		token: string | null,
 		client: IClient,
 		url: string,
@@ -622,8 +622,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						clientIdOrDocumentId === this.documentId ||
 						clientIdOrDocumentId === this.clientId;
 					const { code, type, message, retryAfter } = nacks[0]?.content ?? {};
-                    const { clientSequenceNumber, referenceSequenceNumber } =
-                        nacks[0]?.operation ?? {};
+					const { clientSequenceNumber, referenceSequenceNumber } =
+						nacks[0]?.operation ?? {};
 					this.logger.sendTelemetryEvent({
 						eventName: "ServerNack",
 						code,
@@ -632,7 +632,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						retryAfterSeconds: retryAfter,
 						clientId: this.clientId,
 						handle,
-                        clientSequenceNumber,
+						clientSequenceNumber,
 						referenceSequenceNumber,
 						opType: nacks[0]?.operation?.type,
 					});

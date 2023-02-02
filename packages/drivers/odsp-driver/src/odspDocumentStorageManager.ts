@@ -101,7 +101,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
 		this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
 		this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
-
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
@@ -198,6 +197,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	public async getSnapshotTree(
 		version?: api.IVersion,
 		scenarioName?: string,
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		if (!this.snapshotUrl) {
 			return null;
@@ -206,7 +206,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	public async getVersions(
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,
@@ -596,7 +596,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	): Promise<string> {
 		this.checkSnapshotUrl();
 
-        // Set the module promise right away, so as to not call it twice.
+		// Set the module promise right away, so as to not call it twice.
 		if (this.summaryModuleP === undefined) {
 			this.summaryModuleP = this.getDelayLoadedSummaryManager();
 		}
@@ -633,7 +633,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 		}
 
-        if (!this.odspSummaryUploadManager) {
+		if (!this.odspSummaryUploadManager) {
 			this.odspSummaryUploadManager = await this.summaryModuleP
 				.then(async (m) => {
 					this.odspSummaryModuleLoaded = true;
@@ -653,7 +653,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return id;
 	}
 
-    private async getDelayLoadedSummaryManager() {
+	private async getDelayLoadedSummaryManager() {
 		assert(this.odspSummaryModuleLoaded === false, "Should be loaded only once");
 		const module = await import(
 			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager"
