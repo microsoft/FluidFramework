@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { AttributionPolicy } from "./mergeTree";
 import { Client } from "./client";
-import { UnassignedSequenceNumber } from "./constants";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import {
 	MergeTreeDeltaCallback,
 	MergeTreeMaintenanceCallback,
@@ -297,8 +297,12 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 
 				for (const { segment } of deltaSegments) {
 					if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
+						const key: AttributionKey =
+							segment.seq === UniversalSequenceNumber
+								? { type: "detached", id: 0 }
+								: { type: "op", seq: segment.seq };
 						segment.attribution ??= new AttributionCollection(
-							{ type: "op", seq: segment.seq },
+							key,
 							segment.cachedLength,
 						);
 					}
