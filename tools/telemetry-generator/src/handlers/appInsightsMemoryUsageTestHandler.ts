@@ -15,10 +15,10 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 	fileData.tests.forEach(async (testData) => {
 		const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;
 		try {
-            await rateLimiter.removeTokens(1);
 			console.log(
 				`emitting metric ${heapUsedAvgMetricName} with value ${testData.testData.stats.mean}`,
 			);
+            await rateLimiter.removeTokens(1);
 			telemetryClient.trackMetric({
 				name: heapUsedAvgMetricName,
 				value: testData.testData.stats.mean,
@@ -39,10 +39,10 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 
 		const heapUsedStdDevMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedStdDev`;
 		try {
-            await rateLimiter.removeTokens(1);
 			console.log(
 				`emitting metric ${heapUsedStdDevMetricName} with value ${testData.testData.stats.deviation}`,
 			);
+            await rateLimiter.removeTokens(1);
 			telemetryClient.trackMetric({
 				name: heapUsedStdDevMetricName,
 				value: testData.testData.stats.deviation,

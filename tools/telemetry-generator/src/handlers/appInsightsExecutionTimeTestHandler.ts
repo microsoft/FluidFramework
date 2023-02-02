@@ -15,10 +15,11 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 	fileData.benchmarks.forEach(async (testData) => {
 		const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
 		try {
-            await rateLimiter.removeTokens(1);
+
 			console.log(
 				`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.arithmeticMean}`,
 			);
+            await rateLimiter.removeTokens(1);
 			telemetryClient.trackMetric({
 				name: arithmeticMeanMetricName,
 				value: testData.stats.arithmeticMean,
@@ -39,10 +40,11 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 
 		const marginOfErrorMetricName = `${fileData.suiteName}_${testData.benchmarkName}_marginOfError`;
 		try {
-            await rateLimiter.removeTokens(1);
+
 			console.log(
 				`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.marginOfError}`,
 			);
+            await rateLimiter.removeTokens(1);
 			telemetryClient.trackMetric({
 				name: marginOfErrorMetricName,
 				value: testData.stats.marginOfError,
@@ -60,5 +62,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 		} catch (error) {
 			console.error(`failed to emit metric ${marginOfErrorMetricName}`, error);
 		}
+
+        telemetryClient.flush();
 	});
 };
