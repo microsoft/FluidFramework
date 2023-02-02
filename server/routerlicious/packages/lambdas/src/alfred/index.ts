@@ -33,6 +33,7 @@ import {
     Lumberjack,
     getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
+import { Redis } from "ioredis";
 import {
     createRoomJoinMessage,
     createNackMessage,
@@ -157,6 +158,39 @@ async function storeClientConnectivityTime(
 }
 
 /**
+ * This function will store total connection count per node to Redis and also log connectionCountPerNodeMetric.
+ */
+async function logTotalConnectionsPerNode(isConnect: boolean, cache?: Redis): Promise<void> {
+    const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
+    const nodeName = process.env.NODE_ENV;
+    const keyName = `totalConnections_${nodeName}`;
+    if(!cache) {
+        connectionCountPerNodeMetric.error(`Redis Cache not found on ${nodeName}`);
+        return;
+    }
+    if (isConnect) {
+        cache.incr(keyName).then((val) => {
+            connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
+            Lumberjack.info(`Temp Log. TotalConnectionCount key = ${keyName} and val = ${val}`);
+        },
+        (error) => {
+            connectionCountPerNodeMetric.error(
+                `Error while logging ConnectionCountPerNode`, error);
+        });
+    }
+    else {
+        cache.decr(keyName).then((val) => {
+            connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
+            Lumberjack.info(`Temp Log. TotalConnectionCount key = ${keyName} and val = ${val}`);
+        },
+        (error) => {
+            connectionCountPerNodeMetric.error(
+                `Error while logging ConnectionCountPerNode`, error);
+        });
+    }
+}
+
+/**
  * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
  */
 function checkThrottleAndUsage(
@@ -207,6 +241,7 @@ export function configureWebSocketServices(
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
     isSignalUsageCountingEnabled: boolean = false,
+    cache?: Redis,
     connectThrottler?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
     submitSignalThrottler?: core.IThrottler,
@@ -482,7 +517,10 @@ export function configureWebSocketServices(
                             "signal",
                             createRoomJoinMessage(message.connection.clientId, message.details));
                     }
-
+                    if (message?.details?.details?.type !== "summarizer") {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        logTotalConnectionsPerNode(true, cache);
+                    }
                     connectMetric.setProperties({
                         [CommonProperties.clientId]: message.connection.clientId,
                         [CommonProperties.clientCount]: message.connection.initialClients.length + 1,
@@ -683,6 +721,10 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the room map
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
+                if (connectionTimeMap.has(clientId)) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    logTotalConnectionsPerNode(false, cache);
+                }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId} from room`,
