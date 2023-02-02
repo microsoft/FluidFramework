@@ -97,6 +97,9 @@ export class DocumentDeltaConnection
 	protected _disposed: boolean = false;
 	private readonly mc: MonitoringContext;
 
+	/**
+	 * @deprecated Implementors should manage their own logger or monitoring context
+	 */
 	protected get logger(): ITelemetryLogger {
 		return this.mc.logger;
 	}
@@ -165,7 +168,7 @@ export class DocumentDeltaConnection
 				const start = Date.now();
 
 				// volatile, so the packet will be discarded if the socket is not connected
-				this.socket.volatile.emit("pong", () => {
+				this.socket.emit("pong", () => {
 					const latency = Date.now() - start;
 					if (latency > 1000 * 60) {
 						this.mc.logger.sendPerformanceEvent({
