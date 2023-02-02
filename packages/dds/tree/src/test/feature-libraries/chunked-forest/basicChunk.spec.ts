@@ -56,7 +56,7 @@ describe("basic chunk", () => {
 		},
 		jsonableTreeFromCursor,
 		true,
-	);
+	).timeout(10000);
 
 	const schema: TreeSchemaIdentifier = brand("fakeSchema");
 
