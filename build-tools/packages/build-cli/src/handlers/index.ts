@@ -6,6 +6,6 @@
 export { InitFailedStateHandler } from "./initFailedStateHandler";
 export { BaseStateHandler, type StateHandler } from "./stateHandlers";
 export {
-    type FluidReleaseStateHandlerData,
-    FluidReleaseStateHandler,
+	type FluidReleaseStateHandlerData,
+	FluidReleaseStateHandler,
 } from "./fluidReleaseStateHandler";

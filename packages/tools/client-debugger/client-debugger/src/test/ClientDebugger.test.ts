@@ -9,60 +9,84 @@ import { IContainer } from "@fluidframework/container-definitions";
 
 import { IFluidClientDebugger } from "../IFluidClientDebugger";
 import {
-    clearDebuggerRegistry,
-    closeFluidClientDebugger,
-    getDebuggerRegistry,
-    getFluidClientDebugger,
-    initializeFluidClientDebugger,
+	clearDebuggerRegistry,
+	closeFluidClientDebugger,
+	getFluidClientDebuggers,
+	getFluidClientDebugger,
+	initializeFluidClientDebugger,
 } from "../Registry";
 import { createMockContainer } from "./Utilities";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("ClientDebugger unit tests", () => {
-    const containerId = "test-container-id";
-    let container: IContainer | undefined;
+	const containerId = "test-container-id";
+	let container: IContainer | undefined;
 
-    beforeEach(async () => {
-        container = createMockContainer();
-    });
+	const otherContainerId = "test-container-id-other";
+	let otherContainer: IContainer | undefined;
 
-    afterEach(() => {
-        clearDebuggerRegistry();
-    });
+	beforeEach(async () => {
+		container = createMockContainer();
+		otherContainer = createMockContainer();
+	});
 
-    function initializeDebugger(): IFluidClientDebugger {
-        initializeFluidClientDebugger({ container: container!, containerId });
-        return getFluidClientDebugger(containerId)!;
-    }
+	afterEach(() => {
+		clearDebuggerRegistry();
+	});
 
-    it("Initializing debugger populates global (window) registry", () => {
-        let debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(0); // There should be no registered debuggers yet.
+	function initializeDebugger(
+		_containerId: string,
+		_container: IContainer,
+	): IFluidClientDebugger {
+		initializeFluidClientDebugger({ container: _container, containerId: _containerId });
+		return getFluidClientDebugger(_containerId)!;
+	}
 
-        initializeDebugger();
+	it("Initializing debugger populates global (window) registry", () => {
+		let debuggers = getFluidClientDebuggers();
+		expect(debuggers.length).to.equal(0); // There should be no registered debuggers yet.
 
-        debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(1);
-    });
+		initializeDebugger(containerId, container!);
+		initializeDebugger(otherContainerId, otherContainer!);
 
-    it("Closing debugger removes it from global (window) registry and disposes it.", () => {
-        const clientDebugger = initializeDebugger();
+		debuggers = getFluidClientDebuggers();
+		expect(debuggers.length).to.equal(2);
+	});
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        expect(clientDebugger.disposed).to.be.false;
+	it("Validate multi-debugger contents are as expected", () => {
+		const clientDebugger = getFluidClientDebugger(containerId);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebugger?.disposed).to.be.false;
 
-        let debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(1);
+		const clientDebuggerOther = getFluidClientDebugger(otherContainerId);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebuggerOther?.disposed).to.be.false;
+	});
 
-        closeFluidClientDebugger(containerId);
+	it("Closing debugger removes it from global (window) registry and disposes it.", () => {
+		const clientDebugger = initializeDebugger(containerId, container!);
+		const otherClientDebugger = initializeDebugger(otherContainerId, otherContainer!);
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        expect(clientDebugger.disposed).to.be.true;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebugger.disposed).to.be.false;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(otherClientDebugger.disposed).to.be.false;
 
-        debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(0);
-    });
+		let debuggers = getFluidClientDebuggers();
+		expect(debuggers.length).to.equal(2);
+
+		closeFluidClientDebugger(containerId);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebugger.disposed).to.be.true;
+
+		closeFluidClientDebugger(otherContainerId);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(otherClientDebugger.disposed).to.be.true;
+
+		debuggers = getFluidClientDebuggers();
+		expect(debuggers.length).to.equal(0);
+	});
 });
 
 /* eslint-enable @typescript-eslint/no-non-null-assertion */

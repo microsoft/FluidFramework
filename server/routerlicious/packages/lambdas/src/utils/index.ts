@@ -8,5 +8,4 @@ export { NoOpLambda } from "./noOpLambda";
 export { getRandomInt } from "./random";
 export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelper";
 export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";
-export { convertNumberArrayToRanges } from "./helpers"
 export { CheckpointReason, ICheckpoint } from "./checkpointHelper";

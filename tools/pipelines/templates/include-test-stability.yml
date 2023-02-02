@@ -32,6 +32,10 @@ parameters:
   type: number
   default: 60
 
+- name: tagName
+  type: string
+  default: client
+
 jobs:
   # Job - Build
   - job: build
@@ -73,13 +77,29 @@ jobs:
       displayName: Use Node 14.x
       inputs:
         version: 14.x
-    - task: Npm@1
-      displayName: npm ci
+
+    - task: Cache@2
+      displayName: Cache pnpm store
       inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'ci --unsafe-perm'
-        customRegistry: 'useNpmrc'
+        key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+        path: ${{ variables.pnpmStorePath }}
+
+    - task: Bash@3
+      displayName: Install and configure pnpm
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          npm i -g pnpm
+          pnpm config set store-dir $(pnpmStorePath)
+
+    - task: Bash@3
+      displayName: Install dependencies
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          pnpm i --frozen-lockfile
 
     # Build
     - ${{ if ne(parameters.taskBuild, 'false') }}:

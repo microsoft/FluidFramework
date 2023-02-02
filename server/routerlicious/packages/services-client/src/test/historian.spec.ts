@@ -442,7 +442,7 @@ describe("Historian", () => {
     });
 
     describe("getTree", () => {
-        const url = getUrlWithToken(`/git/trees/${encodeURIComponent(sha)}`, initialCredentials, { recursive: 1});
+        const url = getUrlWithToken(`/git/trees/${encodeURIComponent(sha)}`, initialCredentials, { recursive: 1 });
         const response = mockTree;
         it("succeeds on 200", async () => {
             axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
@@ -474,6 +474,18 @@ describe("Historian", () => {
         it("succeeds on 200", async () => {
             axiosMock.onPost(url, summaryPayload).reply(mockReplyWithAuth(initialCredentials, response));
             const received = await historian.createSummary(summaryPayload);
+            assert.deepStrictEqual(received, response);
+        });
+        it("succeeds with initial=true query param", async () => {
+            const initialUrl = getUrlWithToken(`/git/summaries`, initialCredentials, { initial: true });
+            axiosMock.onPost(initialUrl, summaryPayload).reply(mockReplyWithAuth(initialCredentials, response));
+            const received = await historian.createSummary(summaryPayload, true);
+            assert.deepStrictEqual(received, response);
+        });
+        it("succeeds with initial=false query param", async () => {
+            const initialUrl = getUrlWithToken(`/git/summaries`, initialCredentials, { initial: false });
+            axiosMock.onPost(initialUrl, summaryPayload).reply(mockReplyWithAuth(initialCredentials, response));
+            const received = await historian.createSummary(summaryPayload, false);
             assert.deepStrictEqual(received, response);
         });
         it("retries once with new credentials on 401", async () => {

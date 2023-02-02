@@ -7,7 +7,7 @@
  * Size interfaces
  */
 export interface ISize {
-    width: number;
+	width: number;
 
-    height: number;
+	height: number;
 }

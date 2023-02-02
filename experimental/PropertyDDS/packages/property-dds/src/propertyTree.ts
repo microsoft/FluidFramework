@@ -30,7 +30,11 @@ import {
 	rebaseToRemoteChanges,
 } from "@fluid-experimental/property-changeset";
 
-import { PropertyFactory, BaseProperty, NodeProperty } from "@fluid-experimental/property-properties";
+import {
+	PropertyFactory,
+	BaseProperty,
+	NodeProperty,
+} from "@fluid-experimental/property-properties";
 
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
@@ -73,6 +77,7 @@ export interface ISnapshotSummary {
 	remoteTipView?: SerializedChangeSet;
 	remoteChanges?: IPropertyTreeMessage[];
 	unrebasedRemoteChanges?: Record<string, IRemotePropertyTreeMessage>;
+	remoteHeadGuid: string;
 }
 
 export interface SharedPropertyTreeOptions {
@@ -82,9 +87,11 @@ export interface SharedPropertyTreeOptions {
 }
 
 export interface ISharedPropertyTreeEncDec {
-	messageEncoder: { encode: (IPropertyTreeMessage) => IPropertyTreeMessage;
-		decode: (IPropertyTreeMessage) => IPropertyTreeMessage; };
-	summaryEncoder: { encode: (ISnapshotSummary) => Buffer; decode: (Buffer) => ISnapshotSummary; };
+	messageEncoder: {
+		encode: (IPropertyTreeMessage) => IPropertyTreeMessage;
+		decode: (IPropertyTreeMessage) => IPropertyTreeMessage;
+	};
+	summaryEncoder: { encode: (ISnapshotSummary) => Buffer; decode: (Buffer) => ISnapshotSummary };
 }
 
 export interface IPropertyTreeConfig {
@@ -92,8 +99,10 @@ export interface IPropertyTreeConfig {
 }
 
 const defaultEncDec: ISharedPropertyTreeEncDec = {
-	messageEncoder: { encode: (msg: IPropertyTreeMessage) => msg,
-		decode: (msg: IPropertyTreeMessage) => msg },
+	messageEncoder: {
+		encode: (msg: IPropertyTreeMessage) => msg,
+		decode: (msg: IPropertyTreeMessage) => msg,
+	},
 	summaryEncoder: {
 		encode: (summary: ISnapshotSummary) => {
 			const packr = new Packr();
@@ -184,7 +193,8 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	private scopeFutureDeltasToPaths(paths?: string[]) {
-		const socket = (this.runtime.deltaManager as any).deltaManager.connectionManager.connection.socket;
+		const socket = (this.runtime.deltaManager as any).deltaManager.connectionManager.connection
+			.socket;
 		socket.emit("partial_checkout", { paths });
 	}
 
@@ -192,15 +202,19 @@ export class SharedPropertyTree extends SharedObject {
 		// Check whether anybody is listening. If not, we don't want to pay the price
 		// for the serialization of the data structure
 		if (this.listenerCount("localModification") > 0) {
-			const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
-            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+			const changes = this._root._serialize(
+				true,
+				false,
+				BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
+			);
+			this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 			const _changeSet = new ChangeSet(changes);
 			if (!isEmpty(_changeSet.getSerializedChangeSet())) {
 				this.emit("localModification", _changeSet);
 			}
 		} else {
-            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
-        }
+			this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+		}
 	}
 
 	public get changeSet(): SerializedChangeSet {
@@ -210,15 +224,19 @@ export class SharedPropertyTree extends SharedObject {
 
 	public get activeCommit(): IPropertyTreeMessage {
 		return this.localChanges.length > 0
-            ? this.localChanges[this.localChanges.length - 1]
-            : this.remoteChanges[this.remoteChanges.length - 1];
+			? this.localChanges[this.localChanges.length - 1]
+			: this.remoteChanges[this.remoteChanges.length - 1];
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;
 	}
 
 	public commit(metadata?: Metadata, submitEmptyChange?: boolean) {
-		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
+		const changes = this._root._serialize(
+			true,
+			false,
+			BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+		);
 
 		let doSubmit = !!submitEmptyChange;
 
@@ -236,15 +254,15 @@ export class SharedPropertyTree extends SharedObject {
 	/**
 	 * This method encodes the given message to the transfer form
 	 * @param change - The message to be encoded.
- 	 */
+	 */
 	private encodeMessage(change: IPropertyTreeMessage): IPropertyTreeMessage {
 		return this.propertyTreeConfig.encDec.messageEncoder.encode(change);
 	}
 
 	/**
- 	 * This method decodes message from the transfer form.
+	 * This method decodes message from the transfer form.
 	 * @param transferChange - The message to be decoded.
-     	 */
+	 */
 	private decodeMessage(transferChange: IPropertyTreeMessage): IPropertyTreeMessage {
 		return this.propertyTreeConfig.encDec.messageEncoder.decode(transferChange);
 	}
@@ -253,18 +271,18 @@ export class SharedPropertyTree extends SharedObject {
 		const _changeSet = new ChangeSet(changeSet);
 		_changeSet._toReversibleChangeSet(this.tipView);
 
-		const remoteHeadGuid =
-			this.remoteChanges.length > 0
-				? this.remoteChanges[this.remoteChanges.length - 1].guid
-				: this.headCommitGuid;
+		this.updateRemoteHeadGuid();
+
 		const change = {
 			op: OpKind.ChangeSet,
 			changeSet,
 			metadata,
 			guid: uuidv4(),
-			remoteHeadGuid,
+			remoteHeadGuid: this.headCommitGuid,
 			referenceGuid:
-				this.localChanges.length > 0 ? this.localChanges[this.localChanges.length - 1].guid : remoteHeadGuid,
+				this.localChanges.length > 0
+					? this.localChanges[this.localChanges.length - 1].guid
+					: this.headCommitGuid,
 			localBranchStart: this.localChanges.length > 0 ? this.localChanges[0].guid : undefined,
 			useMH: this.useMH,
 		};
@@ -321,10 +339,20 @@ export class SharedPropertyTree extends SharedObject {
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-		if (message.type === MessageType.Operation && message.sequenceNumber > this.skipSequenceNumber) {
+	protected processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
+		if (
+			message.type === MessageType.Operation &&
+			message.sequenceNumber > this.skipSequenceNumber
+		) {
 			const change: IPropertyTreeMessage = this.decodeMessage(cloneDeep(message.contents));
-			const content: IRemotePropertyTreeMessage = { ...change, sequenceNumber: message.sequenceNumber };
+			const content: IRemotePropertyTreeMessage = {
+				...change,
+				sequenceNumber: message.sequenceNumber,
+			};
 			switch (content.op) {
 				case OpKind.ChangeSet:
 					// If the op originated locally from this client, we've already accounted for it
@@ -335,6 +363,18 @@ export class SharedPropertyTree extends SharedObject {
 					break;
 			}
 		}
+	}
+
+	private addRemoteChange(change: IPropertyTreeMessage) {
+		this.remoteChanges.push(change);
+		this.updateRemoteHeadGuid();
+	}
+
+	private updateRemoteHeadGuid() {
+		this.headCommitGuid =
+			this.remoteChanges.length > 0
+				? this.remoteChanges[this.remoteChanges.length - 1].guid
+				: this.headCommitGuid;
 	}
 
 	public static prune(
@@ -384,7 +424,10 @@ export class SharedPropertyTree extends SharedObject {
 					visitedUnrebasedRemoteChanges.add(visitor.guid);
 				}
 				// if we exited the loop because we hit a remote change than add it as visited
-				if (visitor.remoteHeadGuid === visitor.referenceGuid && remoteChangeMap.has(visitor.referenceGuid)) {
+				if (
+					visitor.remoteHeadGuid === visitor.referenceGuid &&
+					remoteChangeMap.has(visitor.referenceGuid)
+				) {
 					visitedRemoteChanges.add(visitor.referenceGuid);
 				}
 
@@ -408,7 +451,9 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		// find minimum index
-		const minIndex = Math.min(...[...visitedRemoteChanges].map((key) => remoteChangeMap.get(key) as number));
+		const minIndex = Math.min(
+			...[...visitedRemoteChanges].map((key) => remoteChangeMap.get(key) as number),
+		);
 
 		const prunedRemoteChanges = remoteChanges.slice(minIndex);
 		pruned += minIndex;
@@ -445,32 +490,32 @@ export class SharedPropertyTree extends SharedObject {
 	 * This method decodes the serialized form of the summary into the local summary (snapshot) object.
 	 * @param serializedSummary - The serialized summary representation.
 	 * @returns The local summary (snapshot)representation.
- 	 */
+	 */
 	private decodeSummary(serializedSummary): ISnapshotSummary {
 		return this.propertyTreeConfig.encDec.summaryEncoder.decode(serializedSummary);
 	}
 
 	/**
- 	 * This method writes the log message if the logging is enabled in the extended DDS.
+	 * This method writes the log message if the logging is enabled in the extended DDS.
 	 * The logging is not enabled in the default Property DDS
 	 * @param message - The message to be logged.
 	 */
 	protected logIfEnabled(message) {}
 
 	/**
- 	 * This method encodes the binary representation of the
- 	 * blob.
+	 * This method encodes the binary representation of the
+	 * blob.
 	 * @param blob - The binary representation of the blob.
 	 * @returns The encoded representation of the blob.
- 	 */
+	 */
 	private encodeSummaryBlob(blob: ArrayBuffer): any {
 		return bufferToString(blob, "base64");
 	}
 
 	/**
- 	 * This method decodes the encoded representation of the
+	 * This method decodes the encoded representation of the
 	 * blob.
- 	 * @param blob - The encoded representation of the blob.
+	 * @param blob - The encoded representation of the blob.
 	 * @returns The binary representation of the blob.
 	 */
 	private decodeSummaryBlob(encoded: any): ArrayBuffer {
@@ -494,13 +539,17 @@ export class SharedPropertyTree extends SharedObject {
 			const summary: ISnapshotSummary = {
 				remoteTipView: this.remoteTipView,
 				remoteChanges: this.remoteChanges,
+				remoteHeadGuid: this.headCommitGuid,
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
+
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
 			let totalBlobsSize = 0;
 			const serializedSummary = this.encodeSummary(summary);
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
-				const summaryBlob = this.encodeSummaryBlob(serializedSummary.slice(pos, pos + chunkSize));
+				const summaryBlob = this.encodeSummaryBlob(
+					serializedSummary.slice(pos, pos + chunkSize),
+				);
 				// eslint-disable-next-line @typescript-eslint/dot-notation
 				totalBlobsSize += summaryBlob["length"];
 				builder.addBlob(`summaryChunk_${i}`, summaryBlob);
@@ -509,9 +558,12 @@ export class SharedPropertyTree extends SharedObject {
 			this.logIfEnabled(`Total blobs transfer size: ${totalBlobsSize}`);
 		}
 
-		builder.addBlob("properties", serializer !== undefined
-			? serializer.stringify(snapshot, this.handle)
-			: JSON.stringify(snapshot));
+		builder.addBlob(
+			"properties",
+			serializer !== undefined
+				? serializer.stringify(snapshot, this.handle)
+				: JSON.stringify(snapshot),
+		);
 		return builder.getSummaryTree();
 	}
 
@@ -547,11 +599,31 @@ export class SharedPropertyTree extends SharedObject {
 					throw new Error("Invalid Snapshot.");
 				}
 
+				if (snapshotSummary.remoteHeadGuid === undefined) {
+					// The summary does not contain a remoteHeadGuid. This means the summary has
+					// been created by an old version of PropertyDDS, that did not yet have this patch.
+					snapshotSummary.remoteHeadGuid =
+						snapshotSummary.remoteChanges.length > 0
+							? // If there are remote changes in the
+							  // summary we can deduce the head GUID from these changes.
+							  snapshotSummary.remoteChanges[
+									snapshotSummary.remoteChanges.length - 1
+							  ].guid
+							: // If no remote head GUID is available, we will fall back to the old behaviour,
+							  // where the head GUID was set to an empty string. However, this could lead to
+							  // divergence between the clients, if there is still a client in the session
+							  // that is using a version of this library without this patch and which
+							  // has started the session at a different summary.
+							  "";
+				}
+
 				this.remoteTipView = snapshotSummary.remoteTipView;
 				this.remoteChanges = snapshotSummary.remoteChanges;
 				this.unrebasedRemoteChanges = snapshotSummary.unrebasedRemoteChanges;
-
-				const isPartialCheckoutActive = !!(this.options.clientFiltering && this.options.paths);
+				this.headCommitGuid = snapshotSummary.remoteHeadGuid;
+				const isPartialCheckoutActive = !!(
+					this.options.clientFiltering && this.options.paths
+				);
 				if (isPartialCheckoutActive && this.options.paths) {
 					this.remoteTipView = ChangeSetUtils.getFilteredChangeSetByPaths(
 						this.remoteTipView,
@@ -563,11 +635,17 @@ export class SharedPropertyTree extends SharedObject {
 				this.skipSequenceNumber = 0;
 			} else {
 				const { branchGuid, summaryMinimumSequenceNumber } = snapshot;
-				const branchResponse = await axios.get(`http://localhost:3000/branch/${branchGuid}`);
+				const branchResponse = await axios.get(
+					`http://localhost:3000/branch/${branchGuid}`,
+				);
 				this.headCommitGuid = branchResponse.data.headCommitGuid;
 				const {
 					commit: { meta: commitMetadata },
-				} = (await axios.get(`http://localhost:3000/branch/${branchGuid}/commit/${this.headCommitGuid}`)).data;
+				} = (
+					await axios.get(
+						`http://localhost:3000/branch/${branchGuid}/commit/${this.headCommitGuid}`,
+					)
+				).data;
 				let { changeSet: materializedView } = (
 					await axios.get(
 						`http://localhost:3000/branch/${branchGuid}/commit/${this.headCommitGuid}/materializedView`,
@@ -577,7 +655,10 @@ export class SharedPropertyTree extends SharedObject {
 				const isPartialCheckoutActive = this.options.clientFiltering && this.options.paths;
 
 				if (isPartialCheckoutActive && this.options.paths) {
-					materializedView = ChangeSetUtils.getFilteredChangeSetByPaths(materializedView, this.options.paths);
+					materializedView = ChangeSetUtils.getFilteredChangeSetByPaths(
+						materializedView,
+						this.options.paths,
+					);
 				}
 
 				this.tipView = materializedView;
@@ -585,19 +666,28 @@ export class SharedPropertyTree extends SharedObject {
 				this.remoteChanges = [];
 
 				let missingDeltas: ISequencedDocumentMessage[] = [];
-				const firstDelta = Math.min(commitMetadata.minimumSequenceNumber, summaryMinimumSequenceNumber);
+				const firstDelta = Math.min(
+					commitMetadata.minimumSequenceNumber,
+					summaryMinimumSequenceNumber,
+				);
 				const lastDelta = commitMetadata.sequenceNumber;
 
 				const dm = (this.runtime.deltaManager as any).deltaManager;
-				await dm.getDeltas("DocumentOpen", firstDelta, lastDelta, (messages: ISequencedDocumentMessage[]) => {
-					missingDeltas = messages.filter((x) => x.type === "op");
-				});
+				await dm.getDeltas(
+					"DocumentOpen",
+					firstDelta,
+					lastDelta,
+					(messages: ISequencedDocumentMessage[]) => {
+						missingDeltas = messages.filter((x) => x.type === "op");
+					},
+				);
 
 				// eslint-disable-next-line @typescript-eslint/prefer-for-of
 				for (let i = 0; i < missingDeltas.length; i++) {
 					if (missingDeltas[i].sequenceNumber < commitMetadata.sequenceNumber) {
-						const remoteChange: IPropertyTreeMessage
-							= JSON.parse(missingDeltas[i].contents).contents.contents.content.contents;
+						const remoteChange: IPropertyTreeMessage = JSON.parse(
+							missingDeltas[i].contents,
+						).contents.contents.content.contents;
 						const { changeSet } = (
 							await axios.get(
 								`http://localhost:3000/branch/${branchGuid}/commit/${remoteChange.guid}/changeSet`,
@@ -612,7 +702,7 @@ export class SharedPropertyTree extends SharedObject {
 									this.options.paths,
 								);
 							}
-							this.remoteChanges.push(remoteChange);
+							this.addRemoteChange(remoteChange);
 						}
 					} else {
 						this.processCore(missingDeltas[i], false, {});
@@ -635,7 +725,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	protected onDisconnect() { }
+	protected onDisconnect() {}
 
 	private _applyLocalChangeSet(change: IPropertyTreeMessage) {
 		const changeSetWrapper = new ChangeSet(this.tipView);
@@ -661,14 +751,17 @@ export class SharedPropertyTree extends SharedObject {
 			);
 		}
 
-		this.remoteChanges.push(change);
-
+		this.addRemoteChange(change);
 		// Apply the remote change set to the remote tip view
 		const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView);
 		remoteChangeSetWrapper.applyChangeSet(change.changeSet);
 
 		// Rebase the local changes
-		const pendingChanges = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
+		const pendingChanges = this._root._serialize(
+			true,
+			false,
+			BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+		);
 		new ChangeSet(pendingChanges)._toReversibleChangeSet(this.tipView);
 
 		const changesToTip: SerializedChangeSet = {};
@@ -731,9 +824,13 @@ export class SharedPropertyTree extends SharedObject {
 			const rebaseMetaInformation = new Map();
 
 			const copiedChangeSet = new ChangeSet(cloneDeep(this.localChanges[i].changeSet));
-			new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(this.localChanges[i].changeSet, conflicts, {
-				applyAfterMetaInformation: rebaseMetaInformation,
-			});
+			new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(
+				this.localChanges[i].changeSet,
+				conflicts,
+				{
+					applyAfterMetaInformation: rebaseMetaInformation,
+				},
+			);
 
 			copiedChangeSet.toInverseChangeSet();
 			copiedChangeSet.applyChangeSet(rebaseBaseChangeSet);
