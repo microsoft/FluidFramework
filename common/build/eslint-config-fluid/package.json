@@ -39,6 +39,7 @@
 		"eslint-plugin-jsdoc": "~39.3.0",
 		"eslint-plugin-promise": "~6.0.0",
 		"eslint-plugin-react": "~7.28.0",
+		"eslint-plugin-react-hooks": "~4.6.0",
 		"eslint-plugin-tsdoc": "~0.2.14",
 		"eslint-plugin-unicorn": "~40.0.0",
 		"eslint-plugin-unused-imports": "~2.0.0"
