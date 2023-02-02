@@ -51,7 +51,6 @@ stages:
             azure__fluid__relay__service__tenantKey: $(fluid-afr-perf-test-westus2-tenantKey)
             azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-westus2-function-url)
   # Run Azure Client FRS Tests (WestUS3)
-  # TODO: This region hangs indefinitely on the first test. Re-enable when we can figure out why.
   - stage:
     displayName: AFR Perf Tests (WestUS3)
     dependsOn: []
@@ -72,7 +71,6 @@ stages:
             azure__fluid__relay__service__tenantKey: $(fluid-afr-perf-test-westus3-tenantKey)
             azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-westus3-function-url)
   # Run Azure Client FRS Tests (EastUS)
-  # TODO: This region hangs indefinitely on the first test. Re-enable when we can figure out why.
   - stage:
     displayName: AFR Perf Tests (EastUS)
     dependsOn: []
