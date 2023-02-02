@@ -7,6 +7,7 @@
 **/lib/*
 !common/lib/*
 common/lib/**/lib
+common/build/eslint-config-fluid/printed-configs/
 **/src/**/test/types/*
 **/src/packageVersion.ts
 
@@ -45,4 +46,4 @@ packages/framework/data-object-base/es5
 .git-blame-ignore-revs
 
 # TODO: Temporarily ignore package.json files while we figure out why CI fails
-**/package.json
+# **/package.json
