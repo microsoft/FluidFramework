@@ -165,7 +165,7 @@ export class DocumentDeltaConnection
 				const start = Date.now();
 
 				// volatile, so the packet will be discarded if the socket is not connected
-				socket.volatile.emit("pong", () => {
+				this.socket.volatile.emit("pong", () => {
 					const latency = Date.now() - start;
 					if (latency > 1000 * 60) {
 						this.mc.logger.sendPerformanceEvent({
