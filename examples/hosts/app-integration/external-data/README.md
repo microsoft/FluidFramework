@@ -38,7 +38,22 @@ Next we come to how the Fluid collaboration session and clients will consume the
 
 ### Echo Webhook Pattern
 
-TODO: Document the echo-webhook pattern and how it is surfaced in the example code.
+<img width="1356" alt="image" src="https://user-images.githubusercontent.com/6777404/216415477-14d0b193-29c9-48e5-8b6b-0a549a5dde58.png">
+
+<img width="1404" alt="image" src="https://user-images.githubusercontent.com/6777404/216417448-2a43db3e-12a2-48a6-b6d0-a6c4a95e27d1.png">
+
+<img width="1374" alt="image" src="https://user-images.githubusercontent.com/6777404/216417779-12861504-7909-489c-b7a2-4d75814a396f.png">
+
+In this pattern. the indivdual clients are responsible for authenticatin with the external data source and making REST calls as needed. However, since the the "customer server" from the section prior, is registered to the webhooks and listening for incoming changes, the clients do not have a way to know that there has been a change upstream. The "echo webhook" pattern is therefore a signal that the server side broadcasts to the Fluid service to echo the information that it has received from the webhook that there is incoming information.
+
+The clients (or elected leader client) can then send a fetch call to retrieve the information and dsiplay it to screen by making a call to the external data server's GET `/fetch-tasks` endpoint.
+
+In this example, we have opted for a signal to be broadcast to relay this information. On receipt of the signal, the clients send a fetch request to pull the data from the external-data server. This data is stored in a SharedMap known as "SavedData", whereas the local collaboration state is stored in a SharedMap known as "DraftData". This is known as the draft data, as we are treating the Fluid collbaoration session as a drafting surface, which will eventually get pushed back to the External Data Server for longer term storage.
+
+Upon receipt of new external data, the external data is written immediately into the "SavedData" map, and a check occurs comparing the SavedData to the DraftData. If there are changes between the two, these are displayed on screen and the clients can (currently) only choose to consume the changes and overwrite their local data, via using regular ops mechanism. The first person to overwrite will use regular ops to write into the FluidData and the change will be attributed to them. 
+
+The collaboration session can continue as expected, and when the collboartion session is ready to be closed, the clients can simply Save Changes to write back to the External Data Source by making a request to the External Data Server's POST `/set-tasks` endpoint.
+
 
 ### Bot Pattern
 
