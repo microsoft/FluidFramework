@@ -114,7 +114,7 @@ describe("uniformChunk", () => {
 	];
 
 	for (const { name: cursorName, factory } of cursorSources) {
-		describe.skip(`${cursorName} bench`, () => {
+		describe(`${cursorName} bench`, () => {
 			let cursor: ITreeCursorSynchronous;
 			for (const { name, dataFactory: data } of testData) {
 				benchmark({
