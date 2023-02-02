@@ -203,18 +203,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		return detached;
 	}
 
-	// private detachRangeOfChildren(
-	// 	field: ObjectField,
-	// 	startIndex: number,
-	// 	endIndex: number,
-	// ): DetachedField {
-	// 	assertValidIndex(startIndex, field, true);
-	// 	assertValidIndex(endIndex, field, true);
-	// 	assert(startIndex <= endIndex, 0x371 /* detached range's end must be after its start */);
-	// 	const newField = field.splice(startIndex, endIndex - startIndex);
-	// 	return this.addFieldAsDetached(newField);
-	// }
-
 	private delete(field: DetachedField): void {
 		this.roots.fields.delete(detachedFieldAsKey(field));
 	}
