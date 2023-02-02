@@ -10,7 +10,9 @@ We are not yet publishing any artifacts to the Chrome extension store.
 To use this extension in your browser:
 
 1. Build the package and its dependencies. Your extension file should be generated under the build directory ("dist") in the package.
-2. Load the unpacked extension in the browser by following [these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked). For the wsl users, your liunx files should be at a \\wsl$ path. In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$
+2. Load the unpacked extension in the browser by following [these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
+   For the wsl users, your Linux files should be at a \\wsl$ path.
+   In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$.
 
 ## Package TODOs
 
