@@ -355,9 +355,15 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
-			if (this.runtime.idCompressor !== undefined && content.idRange === undefined) {
+			// Resubmited ops will already have an idRange specified and taking the next creation range
+			// again will result in finalizations out of order
+			if (
+				this.runtime.idCompressor !== undefined &&
+				content.__fluid_idRange__ === undefined
+			) {
 				const range = this.runtime.idCompressor.takeNextCreationRange();
-				content.idRange = range.ids?.first !== undefined ? range : undefined;
+				// Don't include the idRange if there weren't any Ids allocated
+				content.__fluid_idRange__ = range.ids?.first !== undefined ? range : undefined;
 			}
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -506,8 +512,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.verifyNotClosed(); // This will result in container closure.
 		this.emitInternal("pre-op", message, local, this);
 
-		if (message.contents.idRange !== undefined) {
-			this.runtime.idCompressor?.finalizeCreationRange(message.contents.idRange);
+		if (message.contents.__fluid_idRange__ !== undefined) {
+			this.runtime.idCompressor?.finalizeCreationRange(message.contents.__fluid_idRange__);
 		}
 
 		this.opProcessingHelper.measure(

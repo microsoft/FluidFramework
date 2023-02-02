@@ -521,6 +521,11 @@ export enum CompressionAlgorithms {
 }
 
 /**
+ * Default count of reserved Ids that the runtime IdCompressor will initialize itself with if enabled.
+ */
+export const defaultIdCompressorReservedIdCount = 10;
+
+/**
  * @deprecated
  * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
  * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
@@ -722,7 +727,7 @@ export class ContainerRuntime
 			},
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes = Number.POSITIVE_INFINITY,
-			enableRuntimeIdCompressor: enableRuntimeCompressor = false,
+			enableRuntimeIdCompressor = false,
 			enableOpReentryCheck = false,
 		} = runtimeOptions;
 
@@ -814,7 +819,7 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes,
 				chunkSizeInBytes,
-				enableRuntimeIdCompressor: enableRuntimeCompressor,
+				enableRuntimeIdCompressor,
 				enableOpReentryCheck,
 			},
 			containerScope,
@@ -1141,7 +1146,11 @@ export class ContainerRuntime
 					? IdCompressor.deserialize(idCompressorSnapshot)
 					: IdCompressor.deserialize(idCompressorSnapshot, createSessionId());
 			} else {
-				this.idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
+				this.idCompressor = new IdCompressor(
+					createSessionId(),
+					defaultIdCompressorReservedIdCount,
+					this.logger,
+				);
 			}
 		}
 
