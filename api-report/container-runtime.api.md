@@ -367,7 +367,6 @@ export interface IGCRuntimeOptions {
     [key: string]: any;
     disableGC?: boolean;
     gcAllowed?: boolean;
-    readonly gcContainerGeneration?: number;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
     sweepAllowed?: boolean;
