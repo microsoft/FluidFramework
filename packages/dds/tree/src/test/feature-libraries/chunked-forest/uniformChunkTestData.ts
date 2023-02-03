@@ -115,10 +115,6 @@ const testTrees = [
 			},
 		],
 	},
-	{
-		...polygonTree,
-		reference: [polygonTree.reference],
-	},
 ];
 
 export const testData: readonly TestField<UniformChunk>[] = testTrees.map(
