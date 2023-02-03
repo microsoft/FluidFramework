@@ -15,7 +15,9 @@ importers:
       c8: ^7.7.1
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
+      jest: ^26.6.3
       lerna: ^5.1.8
+      mocha: ^10.0.0
       prettier: ~2.6.2
       rimraf: ^2.6.2
       run-script-os: ^1.1.6
@@ -29,7 +31,9 @@ importers:
       c8: 7.7.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
+      jest: 26.6.3
       lerna: 5.1.8
+      mocha: 10.2.0
       prettier: 2.6.2
       rimraf: 2.7.1
       run-script-os: 1.1.6
@@ -23858,7 +23862,7 @@ packages:
       - supports-color
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -38908,7 +38912,7 @@ packages:
       schema-utils: 3.1.1
       serialize-javascript: 6.0.0
       terser: 5.15.1
-      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack: 5.75.0
     dev: true
 
   /terser/4.8.1:
