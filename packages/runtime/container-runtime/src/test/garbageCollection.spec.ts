@@ -231,15 +231,21 @@ describe("Garbage Collection Tests", () => {
 				assert(gc.gcEnabled, "gcEnabled incorrect");
 				assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
 			});
-            it("gcContainerGeneration mismatch, sweepEnabled true", () => {
-                gc = createGcWithPrivateMembers({ createContainerRuntimeVersion: "2.0.0-internal.2.3.1", sweepEnabled: true }, { gcContainerGeneration: 1 });
-                assert(gc.gcEnabled, "gcEnabled incorrect");
-                assert(!gc.sweepEnabled, "sweepEnabled incorrect");
-            });
-            it("gcContainerGeneration matches", () => {
-                gc = createGcWithPrivateMembers({ createContainerRuntimeVersion: "2.0.0-internal.2.3.1", sweepEnabled: true }, { gcContainerGeneration: 2 });
-                assert(gc.sweepEnabled, "sweepEnabled incorrect");
-            });
+			it("gcContainerGeneration mismatch, sweepEnabled true", () => {
+				gc = createGcWithPrivateMembers(
+					{ createContainerRuntimeVersion: "2.0.0-internal.2.3.1", sweepEnabled: true },
+					{ gcContainerGeneration: 1 },
+				);
+				assert(gc.gcEnabled, "gcEnabled incorrect");
+				assert(!gc.sweepEnabled, "sweepEnabled incorrect");
+			});
+			it("gcContainerGeneration matches", () => {
+				gc = createGcWithPrivateMembers(
+					{ createContainerRuntimeVersion: "2.0.0-internal.2.3.1", sweepEnabled: true },
+					{ gcContainerGeneration: 2 },
+				);
+				assert(gc.sweepEnabled, "sweepEnabled incorrect");
+			});
 			it("sweepEnabled false", () => {
 				gc = createGcWithPrivateMembers({ sweepEnabled: false });
 				assert(!gc.sweepEnabled, "sweepEnabled incorrect");
