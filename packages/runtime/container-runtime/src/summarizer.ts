@@ -8,12 +8,11 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { DriverErrorType, DriverHeader } from "@fluidframework/driver-definitions";
+import { DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
 	IFluidErrorBase,
-	isFluidError,
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
@@ -26,7 +25,7 @@ import {
 import { ISummaryConfiguration } from "./containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
-import { IAckedSummary, SummaryCollection } from "./summaryCollection";
+import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
@@ -266,12 +265,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		if (clientId === undefined) {
 			throw new UsageError("clientId should be defined if connected.");
 		}
-
 		const runningSummarizer = await RunningSummarizer.start(
 			this.logger,
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
+			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryCallback
 			new SummarizeHeuristicData(this.runtime.deltaManager.lastSequenceNumber, {
 				/** summary attempt baseline for heuristics */
 				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
@@ -295,7 +294,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
 		// Handle summary acks
 		// Note: no exceptions are thrown from handleSummaryAcks handler as it handles all exceptions
-		this.handleSummaryAcks().catch((error) => {
+		this.handleSummaryAcks(this.runningSummarizer.lastAckRefNumber).catch((error) => {
 			this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
 		});
 
@@ -389,69 +388,28 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		}
 		return this.runningSummarizer.enqueueSummarize(...args);
 	};
-
-	private async handleSummaryAcks() {
+    /**
+     * Responsible for receiving and processing all the summaryAcks.
+     * @param lastAckRefNumber - Before initializing the summarization, if there is a last Ack to be processed, use it.
+     */
+	private async handleSummaryAcks(lastAckRefNumber: number) {
 		let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;
-		let ack: IAckedSummary | undefined;
 		while (this.runningSummarizer) {
 			const summaryLogger =
 				this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
-			try {
-				// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
-				// we record undefined, not previous handles.
-				ack = undefined;
-				ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
-				refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-				const summaryOpHandle = ack.summaryOp.contents.handle;
-				const summaryAckHandle = ack.summaryAck.contents.handle;
-				// Make sure we block any summarizer from being executed/enqueued while
-				// executing the refreshLatestSummaryAck.
-				// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
-				await this.runningSummarizer.lockedRefreshSummaryAckAction(async () =>
-					this.internalsProvider
-						.refreshLatestSummaryAck({
-							proposalHandle: summaryOpHandle,
-							ackHandle: summaryAckHandle,
-							summaryRefSeq: refSequenceNumber,
-							summaryLogger,
-						})
-						.catch(async (error) => {
-							// If the error is 404, so maybe the fetched version no longer exists on server. We just
-							// ignore this error in that case, as that means we will have another summaryAck for the
-							// latest version with which we will refresh the state. However in case of single commit
-							// summary, we might me missing a summary ack, so in that case we are still fine as the
-							// code in `submitSummary` function in container runtime, will refresh the latest state
-							// by calling `refreshLatestSummaryAckFromServer` and we will be fine.
-							if (
-								isFluidError(error) &&
-								error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
-							) {
-								summaryLogger.sendTelemetryEvent(
-									{
-										eventName: "HandleSummaryAckErrorIgnored",
-										referenceSequenceNumber: refSequenceNumber,
-										proposalHandle: summaryOpHandle,
-										ackHandle: summaryAckHandle,
-									},
-									error,
-								);
-							} else {
-								throw error;
-							}
-						}),
-				);
-			} catch (error) {
-				summaryLogger.sendErrorEvent(
-					{
-						eventName: "HandleSummaryAckError",
-						referenceSequenceNumber: refSequenceNumber,
-						handle: ack?.summaryOp?.contents?.handle,
-						ackHandle: ack?.summaryAck?.contents?.handle,
-					},
-					error,
-				);
-			}
-			refSequenceNumber++;
-		}
+            summaryLogger.sendTelemetryEvent(
+                {
+                    eventName: "handleSummaryAcks",
+                    referenceSequenceNumber: refSequenceNumber,
+                }
+            );
+			// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
+            // we record undefined, not previous handles.
+            await this.summaryCollection.waitSummaryAck(
+                lastAckRefNumber > 0 ? lastAckRefNumber : refSequenceNumber,
+            );
+
+            refSequenceNumber = await this.runningSummarizer.handleSummaryAck();
+    	}
 	}
 }

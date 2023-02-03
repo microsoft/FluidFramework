@@ -150,6 +150,7 @@ describe("Summary Manager", () => {
 						error: undefined,
 					} as const;
 				},
+				async (options) => {},
 				new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
 				() => {},
 				summaryCollection,
