@@ -75,10 +75,10 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 		return true;
 	}
 	if (a) {
-		entriesA = Object.entries(a);
+		entriesA = Object.keys(a);
 	}
 	if (b) {
-		entriesB = Object.entries(b);
+		entriesB = Object.keys(b);
 	}
 
 	if (a && entriesA.length > 0) {
@@ -86,14 +86,14 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 			return false;
 		} else {
 			// For now, straightforward; later use hashing
-			for (const [key, value] of entriesA) {
+			for (const key of entriesA) {
 				if (b[key] === undefined) {
 					return false;
 				} else if (typeof b[key] === "object") {
-					if (!matchProperties(value, b[key])) {
+					if (!matchProperties(a[key], b[key])) {
 						return false;
 					}
-				} else if (b[key] !== value) {
+				} else if (b[key] !== a[key]) {
 					return false;
 				}
 			}
