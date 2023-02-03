@@ -834,22 +834,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.deepEqual(actual, expected);
 			});
 		});
-
-		testGeneralPurposeTreeCursor(
-			"forest cursor",
-			(data): ITreeCursor => {
-				const forest = factory(
-					new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-				);
-				initializeForest(forest, [singleTextCursor(data)]);
-				const cursor = forest.allocateCursor();
-				moveToDetachedField(forest, cursor);
-				assert(cursor.firstNode());
-				return cursor;
-			},
-			jsonableTreeFromCursor,
-			true,
-		);
 	});
 
 	testGeneralPurposeTreeCursor(
