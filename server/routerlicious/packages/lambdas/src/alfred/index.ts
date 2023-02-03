@@ -162,7 +162,7 @@ async function storeClientConnectivityTime(
  */
 async function logTotalConnectionsPerNode(isConnect: boolean, cache?: Redis): Promise<void> {
     const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
-    const nodeName = process.env.NODE_ENV;
+    const nodeName = process.env.NODE_NAME;
     const keyName = `totalConnections_${nodeName}`;
     if(!cache) {
         connectionCountPerNodeMetric.error(`Redis Cache not found on ${nodeName}`);
