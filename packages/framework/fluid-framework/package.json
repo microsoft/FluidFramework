@@ -70,6 +70,9 @@
 		"broken": {
 			"EnumDeclaration_DriverErrorType": {
 				"backCompat": false
+			},
+			"ClassDeclaration_SharedMap": {
+				"forwardCompat": false
 			}
 		}
 	}

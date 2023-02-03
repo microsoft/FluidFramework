@@ -12,14 +12,11 @@ import {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import {
-	AttributionKey,
-	ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IMapOptions, ISharedMap, ISharedMapEvents } from "./interfaces";
+import { IMapOptions, ISharedMap, ISharedMapEvents, AttributionKey } from "./interfaces";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
@@ -286,9 +283,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 * @internal
 	 */
-	protected summarizeCore(
-		serializer: IFluidSerializer,
-	): ISummaryTreeWithStats {
+	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		let currentSize = 0;
 		let counter = 0;
 		let headerBlob: IMapDataObjectSerializable = {};

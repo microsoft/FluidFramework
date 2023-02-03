@@ -4,7 +4,6 @@
 
 ```ts
 
-import { AttributionKey as AttributionKey_2 } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -295,9 +294,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
     // @alpha
-    getAllAttribution(): Map<string, AttributionKey_2> | undefined;
+    getAllAttribution(): Map<string, AttributionKey> | undefined;
     // @alpha
-    getAttribution(key: string): AttributionKey_2 | undefined;
+    getAttribution(key: string): AttributionKey | undefined;
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
@@ -314,7 +313,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     set(key: string, value: unknown): this;
     get size(): number;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 
