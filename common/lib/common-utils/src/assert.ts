@@ -60,7 +60,7 @@ export function fail(message: string | number): never {
 /**
  * Format the message for use in error.
  * This shared utility function just does the message formatting (and not Error creation or throwing)
- * so that both callers don't get this added to their call stack for the error itself.
+ * so that callers don't get this added to their call stack for the error itself.
  */
 function formatMessage(message: string | number): string {
 	return typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
