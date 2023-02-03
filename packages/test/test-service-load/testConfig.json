@@ -36,7 +36,11 @@
 						"Fluid.Container.summarizeProtocolTree2": [true, false]
 					}
 				}
-			}
+			},
+			"useRandomContent": true,
+			"useVariableOpSize": true,
+			"opSizeinBytes": 2172864,
+			"largeOpRate": 500
 		},
 		"ci_frs": {
 			"opRatePerMin": 10,
@@ -185,20 +189,6 @@
 				}
 			},
 			"opsSendType": "allClientsConcurrentReadWrite"
-		},
-		"ci_with_large_payloads": {
-			"opRatePerMin": 10,
-			"progressIntervalMs": 15000,
-			"numClients": 25,
-			"totalSendCount": 100,
-			"readWriteCycleMs": 30000,
-			"faultInjectionMs": {
-				"min": 0,
-				"max": 150000
-			},
-			"useRandomContent": true,
-			"useVariableOpSize": true,
-			"opSizeinBytes": 1572864
 		}
 	}
 }

@@ -576,27 +576,20 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			config.testConfig.useVariableOpSize === true
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
-
-		const sendSingleOp =
-			opSizeinBytes === 0
-				? () => {
-						dataModel.counter.increment(1);
-				  }
-				: () => {
-						const opPayload = generateContentOfSize(getOpSizeInBytes());
-						const opKey = Math.random().toString();
-						dataModel.sharedmap.set(opKey, opPayload);
-				  };
-
+		const largeOpRate = config.testConfig.largeOpRate ?? 1;
 		let opsSent = 0;
-		const updateOpsSent =
-			opSizeinBytes === 0
-				? () => {
-						opsSent = dataModel.counter.value;
-				  }
-				: () => {
-						opsSent++;
-				  };
+
+		const sendSingleOp = () => {
+			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === 1) {
+				const opPayload = generateContentOfSize(getOpSizeInBytes());
+				const opKey = Math.random().toString();
+				dataModel.sharedmap.set(opKey, opPayload);
+			} else {
+				dataModel.counter.increment(1);
+			}
+
+			opsSent++;
+		};
 
 		const enableQuickRampDown = () => {
 			return opsSendType === "staggeredReadWrite" && opSizeinBytes === 0 ? true : false;
@@ -607,7 +600,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? async () => {
 						if (dataModel.assigned()) {
 							sendSingleOp();
-							updateOpsSent();
 							if (opsSent % opsPerCycle === 0) {
 								dataModel.abandonTask();
 								await delay(cycleMs / 2);
@@ -622,7 +614,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  }
 				: async () => {
 						sendSingleOp();
-						updateOpsSent();
 						await delay(
 							opsGapMs + opsGapMs * random.real(0, 0.5, true)(config.randEng),
 						);
