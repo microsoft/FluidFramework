@@ -103,6 +103,7 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	NestedMap,
+	fail,
 } from "./util";
 
 export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";

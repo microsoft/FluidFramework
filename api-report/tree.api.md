@@ -248,6 +248,9 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaqu
 // @alpha
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
+// @alpha (undocumented)
+export function fail(message: string): never;
+
 // @alpha
 export interface FieldAnchor {
     // (undocumented)

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluid-example/bubblebench-common";
-import { brand, EditableField, FieldKey, JsonableTree, singleTextCursor } from "@fluid-internal/tree";
+import { brand, EditableField, FieldKey } from "@fluid-internal/tree";
 import { Bubble } from "./bubble";
-import { ClientTreeProxy, bubbleSchema, numberSchema } from "./schema";
+import { ClientTreeProxy, BubbleTreeProxy } from "./schema";
 
 export class Client implements IClient {
     static bubblesFieldKey: FieldKey = brand("bubbles");
@@ -34,22 +34,24 @@ export class Client implements IClient {
     }
 
     public increaseBubbles(bubble: { x: number; y: number; r: number; vx: number; vy: number; }) {
-        const newBubbleJson: JsonableTree = {
-            type: bubbleSchema.name,
-            fields: {
-                x: [{ type: numberSchema.name, value: bubble.x }],
-                y: [{ type: numberSchema.name, value: bubble.y }],
-                r: [{ type: numberSchema.name, value: bubble.r }],
-                vx: [{ type: numberSchema.name, value: bubble.vx }],
-                vy: [{ type: numberSchema.name, value: bubble.vy }],
-            },
-        };
+        // const newBubbleJson: JsonableTree = {
+        //     type: bubbleSchema.name,
+        //     fields: {
+        //         x: [{ type: numberSchema.name, value: bubble.x }],
+        //         y: [{ type: numberSchema.name, value: bubble.y }],
+        //         r: [{ type: numberSchema.name, value: bubble.r }],
+        //         vx: [{ type: numberSchema.name, value: bubble.vx }],
+        //         vy: [{ type: numberSchema.name, value: bubble.vy }],
+        //     },
+        // };
 
-        const bubblesSequenceNode = this.clientTreeProxy[Client.bubblesFieldKey] as EditableField;
-        bubblesSequenceNode.insertNodes(
-            bubblesSequenceNode.length,
-            singleTextCursor(newBubbleJson),
-        );
+        // const bubblesSequenceNode = this.clientTreeProxy[Client.bubblesFieldKey] as EditableField;
+        // bubblesSequenceNode.insertNodes(
+        //     bubblesSequenceNode.length,
+        //     singleTextCursor(newBubbleJson),
+        // );
+        const bubblesSequenceNode = this.clientTreeProxy.bubbles;
+        bubblesSequenceNode[bubblesSequenceNode.length] = bubble as BubbleTreeProxy;
     }
 
     public decreaseBubbles() {

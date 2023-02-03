@@ -4,6 +4,7 @@
  */
 import {
     EditableField,
+    fail,
     ISharedTree,
     SharedTreeFactory,
 } from "@fluid-internal/tree";
@@ -85,14 +86,20 @@ export class Bubblebench extends DataObject {
         tree.storedSchema.update(appSchemaData);
     }
 
-    private get tree() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.maybeTree!;
+    /**
+     * Get the SharedTree.
+     * Cannot be accessed until after initialization has complected.
+     */
+    private get tree(): ISharedTree  {
+        return this.maybeTree  ?? fail("not initialized");;
     }
 
-    public get appState() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.maybeAppState!;
+    /**
+     * Get the AppState.
+     * Cannot be accessed until after initialization has complected.
+     */
+    public get appState(): AppState {
+        return this.maybeAppState ?? fail("not initialized");
     }
 }
 

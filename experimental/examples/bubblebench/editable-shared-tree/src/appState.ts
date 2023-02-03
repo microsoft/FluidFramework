@@ -2,21 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
+import { IAppState, IClient, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
 import {
     brand,
     EditableField,
     FieldKey,
-    JsonableTree,
-    singleTextCursor,
 } from "@fluid-internal/tree";
 import { Client } from "./client";
 import {
-    bubbleSchema,
-    clientSchema,
     ClientTreeProxy,
-    numberSchema,
-    stringSchema,
 } from "./schema";
 
 export class AppState implements IAppState {
@@ -29,11 +23,7 @@ export class AppState implements IAppState {
         private _height: number,
         numBubbles: number,
     ) {
-        const clientInitialJsonTree: JsonableTree = this.createClientInitialJsonTree(numBubbles);
-        clientsSequence.insertNodes(
-            clientsSequence.length,
-            singleTextCursor(clientInitialJsonTree),
-        );
+        clientsSequence[clientsSequence.length] = this.createInitialClientNode(numBubbles) as ClientTreeProxy;
         this.localClient = new Client(
             clientsSequence[clientsSequence.length - 1],
         );
@@ -45,33 +35,21 @@ export class AppState implements IAppState {
 
     public applyEdits() { }
 
-    createClientInitialJsonTree(numBubbles: number): JsonableTree {
-        const clientInitialJsonTree: JsonableTree = {
-            type: clientSchema.name,
-            fields: {
-                clientId: [{ type: stringSchema.name, value: `${Math.random()}` }],
-                color: [{ type: stringSchema.name, value: randomColor() }],
-                bubbles: [],
-            },
-        };
+
+    createInitialClientNode(numBubbles: number): IClient {
+        const client: IClient = {
+            clientId:  `${Math.random()}`,
+            color: randomColor(),
+            bubbles: [],
+        }
 
         // create and add initial bubbles to initial client json tree
         for (let i = 0; i < numBubbles; i++) {
             const bubble = makeBubble(this._width, this._height);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            clientInitialJsonTree.fields!.bubbles.push({
-                type: bubbleSchema.name,
-                fields: {
-                    x: [{ type: numberSchema.name, value: bubble.x }],
-                    y: [{ type: numberSchema.name, value: bubble.y }],
-                    r: [{ type: numberSchema.name, value: bubble.r }],
-                    vx: [{ type: numberSchema.name, value: bubble.vx }],
-                    vy: [{ type: numberSchema.name, value: bubble.vy }],
-                },
-            });
+            client.bubbles.push(bubble);
         }
 
-        return clientInitialJsonTree;
+        return client;
     }
 
     public get clients() {
