@@ -55,7 +55,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		// Default to the current version to match createContainerRuntimeVersion metadata in test containers created here
-		gcFailureMinCreateContainerRuntimeVersion: pkgVersion,
+		gcEnforcementMinCreateContainerRuntimeVersion: pkgVersion,
 	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -77,8 +77,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			},
 			gcOptions: {
 				...gcOptions,
-				// Simulate these test containers being loaded at a future time with a higher min version for GC Failures
-				gcFailureMinCreateContainerRuntimeVersion: "3.0.0",
+				// Simulate these test containers being loaded at a future time with a higher min version for GC enforcement
+				gcEnforcementMinCreateContainerRuntimeVersion: "3.0.0",
 			},
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
@@ -625,7 +625,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
-			"Requesting tombstoned datastores succeeds with future gcFailureMinCreateContainerRuntimeVersion",
+			"Requesting tombstoned datastores succeeds with future gcEnforcementMinCreateContainerRuntimeVersion",
 			[
 				// Interactive client's request that succeeds
 				{
@@ -651,7 +651,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const container = await loadContainer(summaryVersion);
 				await sendOpToUpdateSummaryTimestampToNow(container);
 
-				// This request succeeds even though the datastore is tombstoned, on account of the later gcFailureMinCreateContainerRuntimeVersion passed in
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcEnforcementMinCreateContainerRuntimeVersion passed in
 				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
 					url: unreferencedId,
 				});
