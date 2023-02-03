@@ -66,6 +66,11 @@ parameters:
   type: string
   default: repo
 
+# If true, then this pipeline will check and format package.json files according to prettier settings.
+- name: usesPrettier
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
@@ -220,6 +225,7 @@ stages:
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
           tagName: ${{ parameters.tagName }}
+          usesPrettier: ${{ parameters.usesPrettier }}
     - ${{ if eq(parameters.setVersion, false) }}:
       - task: Bash@3
         name: SetVersion

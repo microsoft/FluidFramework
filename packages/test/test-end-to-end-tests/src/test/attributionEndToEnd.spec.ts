@@ -22,6 +22,7 @@ import {
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -81,6 +82,12 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 				configProvider: configProvider({
 					[enableOnNewFileKey]: true,
 				}),
+				options: {
+					attribution: {
+						track: true,
+						policyFactory: createInsertOnlyAttributionPolicy,
+					},
+				},
 			},
 		});
 

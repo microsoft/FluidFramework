@@ -88,14 +88,14 @@ export interface DeltaVisitor {
 	exitField(key: FieldKey): void;
 }
 
-type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor) => boolean;
+type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor) => boolean;
 
 interface ModifyLike {
 	setValue?: Value;
-	fields?: Delta.FieldMarks;
+	fields?: Delta.FieldChangeMap;
 }
 
-function visitFieldMarks(fields: Delta.FieldMarks, visitor: DeltaVisitor, func: Pass): boolean {
+function visitFieldMarks(fields: Delta.FieldChangeMap, visitor: DeltaVisitor, func: Pass): boolean {
 	let containsMoves = false;
 	for (const [key, field] of fields) {
 		visitor.enterField(key);
@@ -128,102 +128,125 @@ function visitModify(
 	return containsMoves;
 }
 
-function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
+function firstPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 	let containsMoves = false;
+
+	for (const nodeChange of delta.beforeShallow ?? []) {
+		const result = visitModify(nodeChange.index, nodeChange, visitor, firstPass);
+		containsMoves ||= result;
+	}
+
+	const moveInGaps: { readonly index: number; readonly cumulCount: number }[] = [];
+	const shallow = delta.shallow ?? [];
 	let index = 0;
-	for (const mark of delta) {
+	for (const mark of shallow) {
 		if (typeof mark === "number") {
 			// Untouched nodes
 			index += mark;
 		} else {
-			let result = false;
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
-				case Delta.MarkType.ModifyAndDelete:
-					result = visitModify(index, mark, visitor, firstPass);
-					visitor.onDelete(index, 1);
-					break;
 				case Delta.MarkType.Delete:
 					visitor.onDelete(index, mark.count);
 					break;
-				case Delta.MarkType.ModifyAndMoveOut: {
-					result = visitModify(index, mark, visitor, firstPass);
-					visitor.onMoveOut(index, 1, mark.moveId);
-					break;
-				}
 				case Delta.MarkType.MoveOut:
 					visitor.onMoveOut(index, mark.count, mark.moveId);
-					break;
-				case Delta.MarkType.Modify:
-					result = visitModify(index, mark, visitor, firstPass);
-					index += 1;
 					break;
 				case Delta.MarkType.Insert:
 					visitor.onInsert(index, mark.content);
 					index += mark.content.length;
 					break;
-				case Delta.MarkType.InsertAndModify:
-					visitor.onInsert(index, [mark.content]);
-					result = visitModify(index, mark, visitor, firstPass);
-					index += 1;
-					break;
-				case Delta.MarkType.MoveIn:
-				case Delta.MarkType.MoveInAndModify:
+				case Delta.MarkType.MoveIn: {
 					// Handled in the second pass
-					result = true;
+					containsMoves = true;
+					const prevCount =
+						moveInGaps.length === 0 ? 0 : moveInGaps[moveInGaps.length - 1].cumulCount;
+					moveInGaps.push({
+						index: index + prevCount,
+						cumulCount: prevCount + mark.count,
+					});
 					break;
+				}
 				default:
 					unreachableCase(type);
 			}
-			containsMoves ||= result;
 		}
+	}
+
+	// While processing the `afterShallow` we have to translate each `NestedChange.index` into the corresponding
+	// index for the visitor. Those are not the same because the first pass doesn't apply move-in shallow changes.
+	// While processing the shallow changes, the `moveInGaps` array gets populated with the relevant offsets for us
+	// to make this index adjustment below.
+	let iMoveInGap = 0;
+	let missingMoveIns = 0;
+	for (const nodeChange of delta.afterShallow ?? []) {
+		while (iMoveInGap < moveInGaps.length && nodeChange.index > moveInGaps[iMoveInGap].index) {
+			missingMoveIns = moveInGaps[iMoveInGap].cumulCount;
+			iMoveInGap += 1;
+		}
+		const result = visitModify(
+			nodeChange.index - missingMoveIns,
+			nodeChange,
+			visitor,
+			firstPass,
+		);
+		containsMoves ||= result;
 	}
 	return containsMoves;
 }
 
-function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
+function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
+	const processBeforeChanges = (() => {
+		const before: readonly Delta.NestedChange[] = delta.beforeShallow ?? [];
+		let iNested = 0;
+		return (visit: boolean, maxIndex: number): void => {
+			while (iNested < before.length && before[iNested].index < maxIndex) {
+				if (visit) {
+					const adjustedIndex = index - (inputContextIndex - before[iNested].index);
+					visitModify(adjustedIndex, before[iNested], visitor, secondPass);
+				}
+				iNested += 1;
+			}
+		};
+	})();
+	const after: readonly Delta.NestedChange[] = delta.afterShallow ?? [];
+	let inputContextIndex = 0;
 	let index = 0;
-	for (const mark of delta) {
+	const shallow = delta.shallow ?? [];
+	for (const mark of shallow) {
 		if (typeof mark === "number") {
 			// Untouched nodes
 			index += mark;
+			inputContextIndex += mark;
+			processBeforeChanges(true, inputContextIndex);
 		} else {
 			// Inline into the `switch(...)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
-				case Delta.MarkType.ModifyAndDelete:
-				case Delta.MarkType.ModifyAndMoveOut:
 				case Delta.MarkType.Delete:
 				case Delta.MarkType.MoveOut:
 					// Handled in the first pass
-					break;
-				case Delta.MarkType.Modify:
-					visitModify(index, mark, visitor, secondPass);
-					index += 1;
+					inputContextIndex += mark.count;
+					processBeforeChanges(false, inputContextIndex);
 					break;
 				case Delta.MarkType.Insert:
 					// Handled in the first pass
 					index += mark.content.length;
-					break;
-				case Delta.MarkType.InsertAndModify:
-					// Handled in the first pass
-					index += 1;
 					break;
 				case Delta.MarkType.MoveIn: {
 					visitor.onMoveIn(index, mark.count, mark.moveId);
 					index += mark.count;
 					break;
 				}
-				case Delta.MarkType.MoveInAndModify:
-					visitor.onMoveIn(index, 1, mark.moveId);
-					visitModify(index, mark, visitor, secondPass);
-					index += 1;
-					break;
 				default:
 					unreachableCase(type);
 			}
 		}
+	}
+	processBeforeChanges(true, Number.POSITIVE_INFINITY);
+	for (const nodeChange of after) {
+		visitModify(nodeChange.index, nodeChange, visitor, secondPass);
 	}
 	return false;
 }
