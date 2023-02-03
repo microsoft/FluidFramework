@@ -48,13 +48,13 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		this._incomingPriority = newValue;
 		this.emit("incomingPriorityChanged");
 	}
+    private _incomingName: string | undefined;
+    private _incomingPriority: number | undefined;
+    private _incomingType: string | undefined;
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: SharedString,
 		private readonly _priority: ISharedCell<number>,
-		private _incomingName: string | undefined,
-		private _incomingPriority: number | undefined,
-		private _incomingType: string | undefined,
 	) {
 		super();
 		this._name.on("sequenceDelta", () => {
@@ -151,7 +151,7 @@ export class TaskList extends DataObject implements ITaskList {
 		draftPriorityCell.set(priority);
 
 		// To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
-		// and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
+		// and persisted.  In turn, this will trigger the "valueChanged" event and handleDraftTaskAdded which will update
 		// the this.tasks collection.
 		const draftDataPT: PersistedTask = {
 			id,
@@ -173,25 +173,15 @@ export class TaskList extends DataObject implements ITaskList {
 		return this.tasks.get(id);
 	};
 
-	private readonly handleTaskAdded = async (id: string): Promise<void> => {
+	private readonly handleDraftTaskAdded = async (id: string): Promise<void> => {
 		const taskData = this._draftData?.get(id) as PersistedTask;
 		if (taskData === undefined) {
 			throw new Error("Newly added task is missing from draft map.");
 		}
 
-		const savedTaskData = this._savedData?.get(id) as PersistedTask;
-		if (savedTaskData === undefined) {
-			throw new Error("Newly added task is missing from saved map.");
-		}
-
 		const [nameSharedString, prioritySharedCell] = await Promise.all([
 			taskData.name.get(),
 			taskData.priority.get(),
-		]);
-
-		const [savedNameSharedString, savedPrioritySharedCell] = await Promise.all([
-			savedTaskData.name.get(),
-			savedTaskData.priority.get(),
 		]);
 
 		// It's possible the task was deleted while getting the name/priority, in which case quietly exit.
@@ -201,16 +191,13 @@ export class TaskList extends DataObject implements ITaskList {
 		const newTask = new Task(
 			id,
 			nameSharedString,
-			prioritySharedCell,
-			savedNameSharedString.getText(),
-			savedPrioritySharedCell.get(),
-			"add",
+			prioritySharedCell
 		);
 		this.tasks.set(id, newTask);
 		this.emit("taskAdded", newTask);
 	};
 
-	private readonly handleTaskDeleted = (id: string): void => {
+	private readonly handleDraftTaskDeleted = (id: string): void => {
 		const deletedTask = this.tasks.get(id);
 		this.tasks.delete(id);
 		// Here we might want to consider raising an event on the Task object so that anyone holding it can know
@@ -395,12 +382,12 @@ export class TaskList extends DataObject implements ITaskList {
 		this._draftData.on("valueChanged", (changed) => {
 			if (changed.previousValue === undefined) {
 				// Must be from adding a new task
-				this.handleTaskAdded(changed.key).catch((error) => {
+				this.handleDraftTaskAdded(changed.key).catch((error) => {
 					console.error(error);
 				});
 			} else if (this.draftData.get(changed.key) === undefined) {
 				// Must be from a deletion
-				this.handleTaskDeleted(changed.key);
+				this.handleDraftTaskDeleted(changed.key);
 			} else {
 				// Since all data modifications happen within the SharedString or SharedCell (task IDs are immutable),
 				// the root directory should never see anything except adds and deletes.
@@ -416,7 +403,7 @@ export class TaskList extends DataObject implements ITaskList {
 			]);
 			this.tasks.set(
 				id,
-				new Task(id, nameSharedString, prioritySharedCell, undefined, undefined, undefined),
+				new Task(id, nameSharedString, prioritySharedCell),
 			);
 		}
 	}
