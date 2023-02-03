@@ -1990,7 +1990,10 @@ export class ContainerRuntime
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
-		this.flush();
+		if (this._orderSequentiallyCalls === 0) {
+			this.flush();
+		}
+
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
 			// Note: we are not touching this.pendingAttachBatch here, for two reasons:
 			// 1. It would not help, as we flush attach ops as they become available.
