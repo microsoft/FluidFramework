@@ -1990,6 +1990,7 @@ export class ContainerRuntime
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
+		this.flush();
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
 			// Note: we are not touching this.pendingAttachBatch here, for two reasons:
 			// 1. It would not help, as we flush attach ops as they become available.
@@ -2031,7 +2032,7 @@ export class ContainerRuntime
 		}
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
-		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
+		if (this._orderSequentiallyCalls === 0) {
 			this.flush();
 		}
 		return result;
@@ -2829,7 +2830,7 @@ export class ContainerRuntime
 
 			if (!this.currentlyBatching()) {
 				this.flush();
-			} else if (!this.flushMicroTaskExists) {
+			} else if (!this.flushMicroTaskExists && this._orderSequentiallyCalls === 0) {
 				this.flushMicroTaskExists = true;
 				// Queue a microtask to detect the end of the turn and force a flush.
 				Promise.resolve()
