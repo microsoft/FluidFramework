@@ -190,6 +190,13 @@ export class SnapshotV1 {
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
 		const pushSeg = (segment?: ISegment) => {
 			if (segment) {
+				if (
+					segment.properties !== undefined &&
+					Object.entries(segment.properties).length === 0
+				) {
+					segment.properties = undefined;
+					segment.propertyManager = undefined;
+				}
 				pushSegRaw(segment.toJSONObject(), segment.cachedLength, segment.attribution);
 			}
 		};
@@ -241,6 +248,13 @@ export class SnapshotV1 {
 				pushSeg(prev);
 				prev = undefined;
 
+				if (
+					segment.properties !== undefined &&
+					Object.entries(segment.properties).length === 0
+				) {
+					segment.properties = undefined;
+					segment.propertyManager = undefined;
+				}
 				const raw: IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
 				// If the segment insertion is above the MSN, record the insertion merge info.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

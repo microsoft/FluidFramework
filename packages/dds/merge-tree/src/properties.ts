@@ -69,21 +69,31 @@ export function combine(
 }
 
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
-	if (a && Object.entries(a).length > 0) {
-		if (!b || Object.entries(b).length === 0) {
+	let entriesA;
+	let entriesB;
+	if (!a && !b) {
+		return true;
+	}
+	if (a) {
+		entriesA = Object.entries(a);
+	}
+	if (b) {
+		entriesB = Object.entries(b);
+	}
+
+	if (a && entriesA.length > 0) {
+		if (!b || entriesB.length === 0) {
 			return false;
 		} else {
 			// For now, straightforward; later use hashing
-
-			// eslint-disable-next-line no-restricted-syntax
-			for (const key in a) {
+			for (const [key, value] of entriesA) {
 				if (b[key] === undefined) {
 					return false;
 				} else if (typeof b[key] === "object") {
-					if (!matchProperties(a[key], b[key])) {
+					if (!matchProperties(value, b[key])) {
 						return false;
 					}
-				} else if (b[key] !== a[key]) {
+				} else if (b[key] !== value) {
 					return false;
 				}
 			}
@@ -96,7 +106,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 			}
 		}
 	} else {
-		if (b && Object.entries(b).length > 0) {
+		if (b && entriesB.length > 0) {
 			return false;
 		}
 	}
