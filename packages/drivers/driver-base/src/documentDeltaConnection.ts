@@ -167,7 +167,7 @@ export class DocumentDeltaConnection
 			this.trackLatencyTimer = setInterval(() => {
 				const start = Date.now();
 
-				// volatile, so the packet will be discarded if the socket is not connected
+				// emit pong event every minute. If latency is longer than 1 min, log separately
 				this.socket.emit("pong", () => {
 					const latency = Date.now() - start;
 					if (latency > 1000 * 60) {
