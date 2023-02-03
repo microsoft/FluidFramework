@@ -231,27 +231,43 @@ describe("Garbage Collection Tests", () => {
 				assert(gc.gcEnabled, "gcEnabled incorrect");
 				assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
 			});
-			it("gcEnforcementMinCreateContainerRuntimeVersion later than persisted value, sweepEnabled false", () => {
-				gc = createGcWithPrivateMembers(
-					{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
-					{ gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0" },
-				);
-				assert(gc.gcEnabled, "gcEnabled incorrect");
-				assert(!gc.sweepEnabled, "sweepEnabled incorrect");
-			});
-			it("gcEnforcementMinCreateContainerRuntimeVersion equal to persisted value, sweepEnabled true", () => {
-				gc = createGcWithPrivateMembers(
-					{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
-					{ gcEnforcementMinCreateContainerRuntimeVersion: "1.2.3" },
-				);
-				assert(gc.sweepEnabled, "sweepEnabled incorrect");
-			});
-			it("gcEnforcementMinCreateContainerRuntimeVersion earlier than persisted value, sweepEnabled true", () => {
-				gc = createGcWithPrivateMembers(
-					{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
-					{ gcEnforcementMinCreateContainerRuntimeVersion: "1.0.0" },
-				);
-				assert(gc.sweepEnabled, "sweepEnabled incorrect");
+			describe("gcEnforcementMinCreateContainerRuntimeVersion overriding sweepEnabled true for some existing containers", () => {
+				it("gcEnforcementMinCreateContainerRuntimeVersion later than persisted value: sweepEnabled false", () => {
+					gc = createGcWithPrivateMembers(
+						{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
+						{ gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0" },
+					);
+					assert(gc.gcEnabled, "gcEnabled incorrect");
+					assert(!gc.sweepEnabled, "sweepEnabled incorrect");
+				});
+				it("gcEnforcementMinCreateContainerRuntimeVersion equal to persisted value: sweepEnabled true", () => {
+					gc = createGcWithPrivateMembers(
+						{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
+						{ gcEnforcementMinCreateContainerRuntimeVersion: "1.2.3" },
+					);
+					assert(gc.sweepEnabled, "sweepEnabled incorrect");
+				});
+				it("gcEnforcementMinCreateContainerRuntimeVersion earlier than persisted value: sweepEnabled true", () => {
+					gc = createGcWithPrivateMembers(
+						{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
+						{ gcEnforcementMinCreateContainerRuntimeVersion: "1.0.0" },
+					);
+					assert(gc.sweepEnabled, "sweepEnabled incorrect");
+				});
+				it("gcEnforcementMinCreateContainerRuntimeVersion set, createContainerRuntimeVersion missing: sweepEnabled false", () => {
+					gc = createGcWithPrivateMembers(
+						{ createContainerRuntimeVersion: undefined, sweepEnabled: true },
+						{ gcEnforcementMinCreateContainerRuntimeVersion: "0.0.0" },
+					);
+					assert(!gc.sweepEnabled, "sweepEnabled incorrect");
+				});
+				it("gcEnforcementMinCreateContainerRuntimeVersion missing: sweepEnabled true", () => {
+					gc = createGcWithPrivateMembers(
+						{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
+						{ },
+					);
+					assert(gc.sweepEnabled, "sweepEnabled incorrect");
+				});
 			});
 			it("sweepEnabled false", () => {
 				gc = createGcWithPrivateMembers({ sweepEnabled: false });
