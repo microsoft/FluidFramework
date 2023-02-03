@@ -102,7 +102,7 @@ import {
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
-    createResponseError,
+	createResponseError,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
@@ -1540,7 +1540,7 @@ export class ContainerRuntime
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
 		}
 
-        const dataStoreNodePath = `/${id}`
+		const dataStoreNodePath = `/${id}`;
 		if (this.garbageCollector.isNodeDeleted(dataStoreNodePath)) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
 			const error = responseToException(
