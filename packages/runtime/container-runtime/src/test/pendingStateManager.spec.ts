@@ -102,7 +102,6 @@ describe("Pending State Manager", () => {
 		const clientId = "clientId";
 
 		beforeEach(async () => {
-			closeError = undefined;
 			pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: () => {
@@ -190,6 +189,27 @@ describe("Pending State Manager", () => {
 			assert(closeError instanceof DataProcessingError);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
+		});
+
+		it("processing out of sync messages will call close", () => {
+			const messages: Partial<ISequencedDocumentMessage>[] = [
+				{
+					clientId,
+					type: MessageType.Operation,
+					clientSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+				},
+			];
+
+			submitBatch(messages);
+			process(
+				messages.map((message) => ({
+					...message,
+					clientSequenceNumber: (message.clientSequenceNumber ?? 0) + 1,
+				})),
+			);
+			assert(closeError instanceof DataProcessingError);
+			assert.strictEqual(closeError.getTelemetryProperties().expectedClientSequenceNumber, 0);
 		});
 	});
 
