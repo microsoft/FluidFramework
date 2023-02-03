@@ -1,0 +1,10 @@
+{
+	"manifest_version": 3,
+	"name": "Fluid Client Debugger: Content",
+	"description": "Displays a live debug view of the Fluid client for your application.",
+	"version": "1.0",
+	"action": {
+		"default_popup": "hello.html",
+		"default_icon": "images/icon.png"
+	}
+}
