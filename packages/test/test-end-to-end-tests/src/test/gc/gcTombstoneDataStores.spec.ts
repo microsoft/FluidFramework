@@ -36,6 +36,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
+import { pkgVersion } from "../../packageVersion";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
@@ -53,7 +54,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
-		gcContainerGeneration: "2.0.0-internal.2.3.1",
+		// Default to the current version to match createContainerRuntimeVersion metadata in test containers created here
+		gcFailureMinCreateContainerRuntimeVersion: pkgVersion,
 	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -66,14 +68,18 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
 	};
-	const oldContainerConfig: ITestContainerConfig = {
+	const testContainerConfigWithFutureMinGcOption: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
 				summaryConfigOverrides: {
 					state: "disabled",
 				},
 			},
-			gcOptions: { ...gcOptions, gcContainerGeneration: "1.2.3" }, //* Rename (...MinGeneration?)
+			gcOptions: {
+				...gcOptions,
+				// Simulate these test containers being loaded at a future time with a higher min version for GC Failures
+				gcFailureMinCreateContainerRuntimeVersion: "3.0.0",
+			},
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
 	};
@@ -96,14 +102,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 	let documentAbsoluteUrl: string | undefined;
 
-	const makeContainer = async () => {
-		const container = await provider.makeTestContainer(testContainerConfig);
-		documentAbsoluteUrl = await container.getAbsoluteUrl("");
-		return container;
-	};
-
-	const makeOldContainer = async () => {
-		const container = await provider.makeTestContainer(oldContainerConfig);
+	const makeContainer = async (config: ITestContainerConfig = testContainerConfig) => {
+		const container = await provider.makeTestContainer(config);
 		documentAbsoluteUrl = await container.getAbsoluteUrl("");
 		return container;
 	};
@@ -126,9 +126,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	// datastore was unreferenced in.
 	const summarizationWithUnreferencedDataStoreAfterTime = async (
 		approximateUnreferenceTimestampMs: number,
-		useOldGeneration: boolean = false,
+		disableGcFailureViaOption: boolean = false,
 	) => {
-		const container = useOldGeneration ? await makeOldContainer() : await makeContainer();
+		const container = disableGcFailureViaOption ? await makeContainer(testContainerConfigWithFutureMinGcOption) : await makeContainer();
 		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
 		await waitForContainerConnection(container);
 
@@ -625,7 +625,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
-			"Requesting tombstoned datastores succeeds if gcContainerGeneration doesn't match",
+			"Requesting tombstoned datastores succeeds with future gcFailureMinCreateContainerRuntimeVersion",
 			[
 				// Interactive client's request that succeeds
 				{
@@ -642,7 +642,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
 						sweepTimeoutMs,
-						true /* useOldGeneration */,
+						true /* disableGcFailureViaOption */,
 					);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
@@ -651,7 +651,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const container = await loadContainer(summaryVersion);
 				await sendOpToUpdateSummaryTimestampToNow(container);
 
-				// This request succeeds even though the datastore is tombstoned, on account of the mismatched gcContainerGeneration
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcFailureMinCreateContainerRuntimeVersion passed in
 				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
 					url: unreferencedId,
 				});

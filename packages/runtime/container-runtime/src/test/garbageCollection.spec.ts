@@ -193,12 +193,12 @@ describe("Garbage Collection Tests", () => {
 			metadata?: IGCMetadata & ICreateContainerMetadata,
 			gcOptions?: IGCRuntimeOptions,
 		): GcWithPrivates => {
-			const crMetadata: IContainerRuntimeMetadata | undefined = metadata && {
+			const allMetadata: IContainerRuntimeMetadata | undefined = metadata && {
 				summaryFormatVersion: 1,
 				message: undefined,
 				...metadata,
 			};
-			return createGarbageCollector({ metadata: crMetadata, gcOptions }) as GcWithPrivates;
+			return createGarbageCollector({ metadata: allMetadata, gcOptions }) as GcWithPrivates;
 		};
 		const customSessionExpiryDurationMs = defaultSessionExpiryDurationMs + 1;
 
@@ -231,18 +231,25 @@ describe("Garbage Collection Tests", () => {
 				assert(gc.gcEnabled, "gcEnabled incorrect");
 				assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
 			});
-			it("gcContainerGeneration mismatch, sweepEnabled true", () => {
+			it("gcFailureMinCreateContainerRuntimeVersion later than persisted value, sweepEnabled false", () => {
 				gc = createGcWithPrivateMembers(
-					{ createContainerRuntimeVersion: "2.0.0-internal.2.3.1", sweepEnabled: true },
-					{ gcContainerGeneration: 1 },
+					{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
+					{ gcFailureMinCreateContainerRuntimeVersion: "2.0.0" },
 				);
 				assert(gc.gcEnabled, "gcEnabled incorrect");
 				assert(!gc.sweepEnabled, "sweepEnabled incorrect");
 			});
-			it("gcContainerGeneration matches", () => {
+			it("gcFailureMinCreateContainerRuntimeVersion equal to persisted value, sweepEnabled true", () => {
 				gc = createGcWithPrivateMembers(
-					{ createContainerRuntimeVersion: "2.0.0-internal.2.3.1", sweepEnabled: true },
-					{ gcContainerGeneration: 2 },
+					{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
+					{ gcFailureMinCreateContainerRuntimeVersion: "1.2.3" },
+				);
+				assert(gc.sweepEnabled, "sweepEnabled incorrect");
+			});
+			it("gcFailureMinCreateContainerRuntimeVersion earlier than persisted value, sweepEnabled true", () => {
+				gc = createGcWithPrivateMembers(
+					{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
+					{ gcFailureMinCreateContainerRuntimeVersion: "1.0.0" },
 				);
 				assert(gc.sweepEnabled, "sweepEnabled incorrect");
 			});
