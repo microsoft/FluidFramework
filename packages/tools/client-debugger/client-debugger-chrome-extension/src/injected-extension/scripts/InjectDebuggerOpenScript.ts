@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { openDebuggerScriptId } from "./Constants";
+import { openDebuggerScriptId } from "../Constants";
 
 /**
  * Injects `OpenDebuggerPanelScript` into the page to launch the debugger panel on the page (if it

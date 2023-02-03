@@ -7,11 +7,11 @@ const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
 
-const sourcePath = path.resolve(__dirname, "..", "src");
-const buildPath = path.resolve(__dirname, "..", "dist");
+const packageSourcePath = path.resolve(__dirname, "..", "src");
+const packageBuildPath = path.resolve(__dirname, "..", "dist");
 
-const contentExtensionSourcePath = path.resolve(sourcePath, "content-extension");
-const contentExtensionBuildPath = path.resolve(buildPath, "content-extension");
+const contentExtensionScriptsPath = path.resolve(packageSourcePath, "content-extension", "scripts");
+const contentExtensionBuildPath = path.resolve(packageBuildPath, "content-extension");
 
 module.exports = {
 	mode: "production",

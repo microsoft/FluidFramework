@@ -8,15 +8,15 @@
 		"default_icon": "images/icon.png"
 	},
 	"background": {
-		"service_worker": "BackgroundScript.js"
+		"service_worker": "scripts/BackgroundScript.js"
 	},
 	"web_accessible_resources": [
 		{
 			"resources": [
-				"OpenDebuggerPanelScript.js",
-				"CloseDebuggerPanelScript.js",
-				"InjectDebuggerOpenScript.js",
-				"InjectDebuggerCloseScript.js"
+				"scripts/OpenDebuggerPanelScript.js",
+				"scripts/CloseDebuggerPanelScript.js",
+				"scripts/InjectDebuggerOpenScript.js",
+				"scripts/InjectDebuggerCloseScript.js"
 			],
 			"matches": ["<all_urls>"]
 		}

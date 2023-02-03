@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { onStorageChange, toggleDebuggerView } from "./Background";
+import { onStorageChange, toggleDebuggerView } from "../Background";
 
 /**
  * When the extension icon is clicked, launch the debug view.
