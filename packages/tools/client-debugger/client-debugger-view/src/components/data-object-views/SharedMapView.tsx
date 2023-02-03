@@ -54,7 +54,7 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 			</thead>
 			<tbody style={{ borderCollapse: "collapse" }}>
 				{entries.map(([key, value]) => (
-					<tr style={{ borderCollapse: "collapse", border: "thin solid" }}>
+					<tr key={key} style={{ borderCollapse: "collapse", border: "thin solid" }}>
 						<td
 							data-label="Key"
 							style={{ borderCollapse: "collapse", border: "thin solid" }}
