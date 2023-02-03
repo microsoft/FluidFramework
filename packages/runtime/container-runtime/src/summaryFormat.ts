@@ -108,13 +108,6 @@ export interface IGCMetadata {
 	 */
 	readonly gcFeature?: GCVersion;
 	/**
-	 * The "GC Container Generation" is provided by the container author to denote GC-impacting changes to the container's structure.
-	 * The value provided at creation time is persisted, and compared with the value provided at each load.
-	 * If the persisted value doesn't match the value provided on load, GC Sweep will be disabled to protect against dataloss in case
-	 * containers with an older Generation were found to have GC-impacting bugs.
-	 */
-	readonly gcContainerGeneration?: number;
-	/**
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
 	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
