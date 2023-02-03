@@ -786,31 +786,31 @@ export function testForest(config: ForestTestConfiguration): void {
 
 				const testField1: FieldKey = brand("testField1");
 
-                const delta: Delta.Root = new Map([
-                    [
-                        rootFieldKeySymbol,
-                        {
-                            beforeShallow: [
-                                {
-                                    index: 0,
-                                    fields: new Map([
-                                        [
-                                            testField1,
-                                            {
-                                                shallow: [
-                                                    {
-                                                        type: Delta.MarkType.Delete,
-                                                        count: 2,
-                                                    },
-                                                ],
-                                            },
-                                        ],
-                                    ]),
-                                },
-                            ],
-                        },
-                    ],
-                ]);
+				const delta: Delta.Root = new Map([
+					[
+						rootFieldKeySymbol,
+						{
+							beforeShallow: [
+								{
+									index: 0,
+									fields: new Map([
+										[
+											testField1,
+											{
+												shallow: [
+													{
+														type: Delta.MarkType.Delete,
+														count: 2,
+													},
+												],
+											},
+										],
+									]),
+								},
+							],
+						},
+					],
+				]);
 
 				const expected: JsonableTree[] = [
 					{
