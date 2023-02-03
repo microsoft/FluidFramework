@@ -111,7 +111,8 @@ describe("Routerlicious", () => {
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
 
-                    const testConnectionThrottler = new TestThrottler(throttleLimit);
+                    const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimit);
+                    const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimit);
                     const testSubmitOpThrottler = new TestThrottler(throttleLimit);
 
                     configureWebSocketServices(
@@ -128,7 +129,8 @@ describe("Routerlicious", () => {
                         false,
                         false,
                         false,
-                        testConnectionThrottler,
+                        testConnectionThrottlerPerTenant,
+                        testConnectionThrottlerPerCluster,
                         testSubmitOpThrottler,
                         undefined,
                         undefined);
@@ -451,7 +453,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
 
-                    const testConnectionThrottler = new TestThrottler(throttleLimit);
+                    const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimit);
                     const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimit);
                     const testSubmitOpThrottler = new TestThrottler(throttleLimit);
                     const throttlerHelper = new ThrottlerHelper(testThrottleAndUsageStorageManager);
@@ -472,7 +474,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                         false,
                         true,
                         true,
-                        testConnectionThrottler,
+                        testConnectionThrottlerPerTenant,
                         testConnectionThrottlerPerCluster,
                         testSubmitOpThrottler,
                         testSubmitSignalThrottler,
