@@ -797,5 +797,10 @@ describe("semver", () => {
 			assert.equal(result1, expected1, "previous major version mismatch");
 			assert.equal(result2, expected2, "previous minor version mismatch");
 		});
+
+		it("0.0.0-126085-test throws", () => {
+			const input = `0.0.0-126085-test`;
+			assert.throws(() => getPreviousVersions(input));
+		});
 	});
 });
