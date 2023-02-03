@@ -40,7 +40,7 @@
 		"clean:nyc": "rimraf nyc/**",
 		"clean:r11s": "cd server/routerlicious && npm run clean",
 		"format": "npm run prettier:fix:root && lerna run format --parallel --stream",
-		"preinstall": "npx only-allow pnpm",
+		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
 		"lerna": "lerna",
 		"lint": "npm run prettier:root && lerna run lint --no-sort --stream",
