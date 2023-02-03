@@ -164,8 +164,8 @@ export const handler: Handler = {
 		}
 		if (otherErrors.length !== 0) {
 			errorMessages.push(
-				`Unsupported argument kind:\n${templateErrors
-					.map((msg) => `${msg.getKind()}: ${getCallsiteString(msg)}`)
+				`Unsupported argument kind:\n${otherErrors
+					.map((msg) => `${SyntaxKind[msg.getKind()]}: ${getCallsiteString(msg)}`)
 					.join("\n")}`,
 			);
 		}
