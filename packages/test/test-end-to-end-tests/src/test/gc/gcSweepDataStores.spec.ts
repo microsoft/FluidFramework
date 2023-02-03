@@ -208,12 +208,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	});
 
 	describe("Loading swept data stores not allowed", () => {
-		const expectedHeadersLogged = {
-			request: "{}",
-			handleGet: JSON.stringify({ viaHandle: true }),
-			request_allowTombstone: JSON.stringify({ allowTombstone: true }),
-		};
-
 		/**
 		 * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
 		 * but the test containers are wired up to route requests to this function.
@@ -227,31 +221,15 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		}
 
 		// TODO: Receive ops scenarios - loaded before and loaded after (are these just context loading errors?)
-		// TODO: load deleted datastore scenarios
-		itExpects.skip(
+		itExpects(
 			"Requesting swept datastores fails in client loaded after sweep timeout and summarizing container",
 			[
-				// Interactive client's request
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.request,
-				},
-				// Interactive client's request w/ allowTombstone
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
-					headers: expectedHeadersLogged.request_allowTombstone,
-				},
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 				},
 				// Summarizer client's request
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
-					headers: expectedHeadersLogged.request,
-					isSummarizerClient: true,
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 				},
 			],
 			async () => {
