@@ -6,7 +6,7 @@
 import { isDebuggerPanelOpen } from "../Utilities";
 import { openDebuggerPanel } from "../OpenDebuggerPanel";
 
-describe("OpenDebuggerPanelScript tests", () => {
+describe("OpenDebuggerPanel tests", () => {
 	beforeEach(() => {
 		document.body.innerHTML = `<div id="test">test</div>`;
 	});
