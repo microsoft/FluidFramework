@@ -1,92 +1,92 @@
 {
-  "name": "@fluid-example/smde",
-  "version": "2.0.0-internal.3.1.0",
-  "private": true,
-  "description": "Simple markdown editor",
-  "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "examples/data-objects/smde"
-  },
-  "license": "MIT",
-  "author": "Microsoft and contributors",
-  "main": "lib/index.js",
-  "module": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run build:esnext",
-    "build:esnext": "tsc",
-    "build:full": "concurrently npm:build npm:webpack",
-    "build:full:compile": "concurrently npm:build:compile npm:webpack",
-    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "dev": "npm run webpack:dev",
-    "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-    "format": "npm run prettier:fix",
-    "lint": "npm run prettier && npm run eslint",
-    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
-    "prepack": "npm run webpack",
-    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-    "start": "webpack serve --config webpack.config.js",
-    "start:docker": "webpack serve --config webpack.config.js --env mode=docker",
-    "start:r11s": "webpack serve --config webpack.config.js --env mode=r11s",
-    "start:spo": "webpack serve --config webpack.config.js --env mode=spo",
-    "start:spo-df": "webpack serve --config webpack.config.js --env mode=spo-df",
-    "start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
-    "webpack": "webpack --env production",
-    "webpack:dev": "webpack --env development"
-  },
-  "dependencies": {
-    "@fluidframework/aqueduct": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/container-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/container-runtime": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/datastore": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/datastore-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/map": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/merge-tree": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/request-handler": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/runtime-utils": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/sequence": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/view-interfaces": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "events": "^3.1.0",
-    "marked": "^2.0.3",
-    "simplemde": "^1.11.2"
-  },
-  "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^2.0.0",
-    "@rushstack/eslint-config": "^2.5.1",
-    "@types/events": "^3.0.0",
-    "@types/marked": "^2.0.2",
-    "@types/simplemde": "^1.11.7",
-    "concurrently": "^6.2.0",
-    "css-loader": "^1.0.0",
-    "eslint": "~8.6.0",
-    "prettier": "~2.6.2",
-    "rimraf": "^2.6.2",
-    "style-loader": "^1.0.0",
-    "ts-loader": "^9.3.0",
-    "typescript": "~4.5.5",
-    "webpack": "^5.72.0",
-    "webpack-cli": "^4.9.2",
-    "webpack-dev-server": "~4.6.0",
-    "webpack-merge": "^5.8.0"
-  },
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
-  }
+	"name": "@fluid-example/smde",
+	"version": "2.0.0-internal.3.1.0",
+	"private": true,
+	"description": "Simple markdown editor",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "examples/data-objects/smde"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "lib/index.js",
+	"module": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"scripts": {
+		"build": "concurrently npm:build:compile npm:lint",
+		"build:compile": "npm run build:esnext",
+		"build:esnext": "tsc",
+		"build:full": "concurrently npm:build npm:webpack",
+		"build:full:compile": "concurrently npm:build:compile npm:webpack",
+		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"dev": "npm run webpack:dev",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prepack": "npm run webpack",
+		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"start": "webpack serve --config webpack.config.js",
+		"start:docker": "webpack serve --config webpack.config.js --env mode=docker",
+		"start:r11s": "webpack serve --config webpack.config.js --env mode=r11s",
+		"start:spo": "webpack serve --config webpack.config.js --env mode=spo",
+		"start:spo-df": "webpack serve --config webpack.config.js --env mode=spo-df",
+		"start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
+		"webpack": "webpack --env production",
+		"webpack:dev": "webpack --env development"
+	},
+	"dependencies": {
+		"@fluidframework/aqueduct": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/common-utils": "^1.0.0",
+		"@fluidframework/container-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/container-runtime": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/datastore": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/datastore-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/map": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/merge-tree": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/request-handler": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/runtime-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/runtime-utils": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/sequence": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/view-interfaces": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"events": "^3.1.0",
+		"marked": "^2.0.3",
+		"simplemde": "^1.11.2"
+	},
+	"devDependencies": {
+		"@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@rushstack/eslint-config": "^2.5.1",
+		"@types/events": "^3.0.0",
+		"@types/marked": "^2.0.2",
+		"@types/simplemde": "^1.11.7",
+		"concurrently": "^6.2.0",
+		"css-loader": "^1.0.0",
+		"eslint": "~8.6.0",
+		"prettier": "~2.6.2",
+		"rimraf": "^2.6.2",
+		"style-loader": "^1.0.0",
+		"ts-loader": "^9.3.0",
+		"typescript": "~4.5.5",
+		"webpack": "^5.72.0",
+		"webpack-cli": "^4.9.2",
+		"webpack-dev-server": "~4.6.0",
+		"webpack-merge": "^5.8.0"
+	},
+	"fluid": {
+		"browser": {
+			"umd": {
+				"files": [
+					"dist/main.bundle.js"
+				],
+				"library": "main"
+			}
+		}
+	}
 }
