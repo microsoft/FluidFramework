@@ -3,8 +3,23 @@
 	"name": "Fluid Client Debugger: Content",
 	"description": "Displays a live debug view of the Fluid client for your application.",
 	"version": "1.0",
+	"permissions": ["activeTab", "scripting", "storage"],
 	"action": {
-		"default_popup": "hello.html",
 		"default_icon": "images/icon.png"
-	}
+	},
+	"background": {
+		"service_worker": "BackgroundScript.js"
+	},
+	"content_scripts": [
+		{
+			"js": ["ContentScript.js"],
+			"matches": ["<all_urls>"]
+		}
+	],
+	"web_accessible_resources": [
+		{
+			"resources": ["DebuggerPanelScript.js"],
+			"matches": ["<all_urls>"]
+		}
+	]
 }

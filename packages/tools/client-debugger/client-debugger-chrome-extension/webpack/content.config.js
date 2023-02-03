@@ -10,14 +10,19 @@ const webpack = require("webpack");
 const packageSourcePath = path.resolve(__dirname, "..", "src");
 const packageBuildPath = path.resolve(__dirname, "..", "dist");
 
-const contentExtensionScriptsPath = path.resolve(packageSourcePath, "content-extension", "scripts");
+const contentExtensionSourcePath = path.resolve(packageSourcePath, "content-extension");
 const contentExtensionBuildPath = path.resolve(packageBuildPath, "content-extension");
 
 module.exports = {
-	mode: "production",
-	devtool: "inline-source-map",
+	mode: "development", // TODO: production
+	devtool: "inline-source-map", // TODO: remove this
 	entry: {
-		// TODO
+		// The Background script
+		BackgroundScript: path.join(contentExtensionSourcePath, "BackgroundScript.ts"),
+
+		// The Content scripts
+		ContentScript: path.join(contentExtensionSourcePath, "ContentScript.ts"),
+		DebugPanelScript: path.join(contentExtensionSourcePath, "DebugPanelScript.tsx"),
 	},
 	output: {
 		path: contentExtensionBuildPath,

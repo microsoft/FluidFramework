@@ -44,6 +44,7 @@ function getStateKey(tabId: number): string {
 
 /**
  * Get stored tab state, if any exists.
+ * Otherwise generates the default state for the tab.
  */
 async function getTabState(tabId: number): Promise<TabState> {
 	const stateKey = getStateKey(tabId);
@@ -68,12 +69,18 @@ export async function toggleDebuggerView(tabId: number): Promise<void> {
 	const tabState = await getTabState(tabId);
 	const visible: boolean = tabState.isDebuggerVisible;
 
-	const scriptToInvoke = visible ? "CloseDebuggerPanelScript.js" : "OpenDebuggerPanelScript.js";
-
-	await chrome.scripting.executeScript({
-		target: { tabId },
-		files: [scriptToInvoke],
-	});
+	// TODO: Notify content script of state change
+	if (visible) {
+		chrome.tabs.sendMessage(tabId, "hide").then((response) => {
+			console.log(`BACKGROUND: "hide" response received: ${response}`);
+		}, console.error);
+		console.log('BACKGROUND: "hide" message sent.');
+	} else {
+		chrome.tabs.sendMessage(tabId, "show").then((response) => {
+			console.log(`BACKGROUND: "show" response received: ${response}`);
+		}, console.error);
+		console.log('BACKGROUND: "show" message sent.');
+	}
 
 	await updateTabState(tabId, {
 		tabId,

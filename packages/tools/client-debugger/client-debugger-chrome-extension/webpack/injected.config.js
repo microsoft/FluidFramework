@@ -10,31 +10,27 @@ const webpack = require("webpack");
 const packageSourcePath = path.resolve(__dirname, "..", "src");
 const packageBuildPath = path.resolve(__dirname, "..", "dist");
 
-const injectedExtensionScriptsPath = path.resolve(
-	packageSourcePath,
-	"injected-extension",
-	"scripts",
-);
+const injectedExtensionSourcePath = path.resolve(packageSourcePath, "injected-extension");
 const injectedExtensionBuildPath = path.resolve(packageBuildPath, "injected-extension");
 
 module.exports = {
-	mode: "production",
-	devtool: "inline-source-map",
+	mode: "development", // TODO: production
+	devtool: "inline-source-map", // TODO: Remove this
 	entry: {
 		// The Background script
-		BackgroundScript: path.join(injectedExtensionScriptsPath, "BackgroundScript.ts"),
+		BackgroundScript: path.join(injectedExtensionSourcePath, "BackgroundScript.ts"),
 
 		// The Content scripts
-		OpenDebuggerView: path.join(injectedExtensionScriptsPath, "InjectDebuggerOpenScript.ts"),
-		CloseDebuggerView: path.join(injectedExtensionScriptsPath, "InjectDebuggerCloseScript.ts"),
+		OpenDebuggerView: path.join(injectedExtensionSourcePath, "InjectDebuggerOpenScript.ts"),
+		CloseDebuggerView: path.join(injectedExtensionSourcePath, "InjectDebuggerCloseScript.ts"),
 
 		// The Injected scripts
 		OpenDebuggerPanelScript: path.join(
-			injectedExtensionScriptsPath,
+			injectedExtensionSourcePath,
 			"OpenDebuggerPanelScript.ts",
 		),
 		CloseDebuggerPanelScript: path.join(
-			injectedExtensionScriptsPath,
+			injectedExtensionSourcePath,
 			"CloseDebuggerPanelScript.ts",
 		),
 	},
