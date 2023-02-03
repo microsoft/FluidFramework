@@ -75,6 +75,7 @@
 		"@fluidframework/runtime-definitions": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/shared-object-base": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/telemetry-utils": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
 		"path-browserify": "^1.0.1"
 	},
 	"devDependencies": {
@@ -108,6 +109,10 @@
 		"previousVersionStyle": "~previousMinor",
 		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
 		"baselineVersion": "2.0.0-internal.3.0.0",
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_SharedMap": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

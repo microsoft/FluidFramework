@@ -383,6 +383,12 @@ export interface ISerializableValue {
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
+
+	/**
+	 * @alpha
+	 * The attribution key attached with the entry
+	 */
+	attribution?: AttributionKey;
 }
 
 /**
@@ -400,4 +406,55 @@ export interface ISerializedValue {
 	 * @remarks Will be undefined if the original value was undefined.
 	 */
 	value: string | undefined;
+
+	/**
+	 * @alpha
+	 * The attribution key attached with the entry
+	 */
+	attribution?: string;
+}
+
+/**
+ * Options related to attribution
+ *
+ * @alpha
+ */
+export interface IMapOptions {
+	attribution?: IMapAttributionOptions;
+}
+
+/**
+ * This enables the map to store the attribution information which can be accessed with the runtime
+ * (i.e. who creeated the content and when it was created)
+ *
+ * default: false
+ *
+ * @alpha
+ */
+export interface IMapAttributionOptions {
+	track?: boolean;
+}
+
+/**
+ * Can be indexed into the ContainerRuntime in order to retrieve attribution info.
+ *
+ * @alpha
+ */
+export interface AttributionKey {
+	/**
+	 * The type of attribution this key corresponds to.
+	 *
+	 * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+	 * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
+	 *
+	 * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
+	 * AttributionKey a discriminated union on the 'type' field. This would empower
+	 * consumers with the ability to implement different attribution policies.
+	 */
+	type: "op";
+
+	/**
+	 * The sequenceNumber of the op this attribution key is for.
+	 */
+	seq: number;
 }

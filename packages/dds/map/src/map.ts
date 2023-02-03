@@ -4,6 +4,7 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -11,11 +12,14 @@ import {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import {
+	AttributionKey,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISharedMap, ISharedMapEvents } from "./interfaces";
+import { IMapOptions, ISharedMap, ISharedMapEvents } from "./interfaces";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
@@ -125,8 +129,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 */
 	private readonly kernel: MapKernel;
 
+	private readonly options: IMapOptions | undefined;
+
 	/**
 	 * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
+	 *
+	 * @alpha
 	 *
 	 * @param id - String identifier.
 	 * @param runtime - Data store runtime.
@@ -136,14 +144,24 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
+		options?: IMapOptions,
 	) {
 		super(id, runtime, attributes, "fluid_map_");
+		this.options ??= options;
+
+		const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean(
+			"Fluid.Attribution.EnableOnNewFile",
+		);
+		if (configSetAttribution !== undefined) {
+			(this.options ?? (this.options = {})).attribution = { track: configSetAttribution };
+		}
 		this.kernel = new MapKernel(
 			this.serializer,
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			() => this.isAttached(),
 			this,
+			options,
 		);
 	}
 
@@ -246,12 +264,30 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	}
 
 	/**
+	 * Get the attribution of one entry through its key
+	 * @param key - Key to track
+	 * @returns The attribution of related entry
+	 * @alpha
+	 */
+	public getAttribution(key: string): AttributionKey | undefined {
+		return this.kernel.getAttribution(key);
+	}
+
+	/**
+	 * Get all attribution of the map
+	 * @returns All attribution in the map
+	 * @alpha
+	 */
+	public getAllAttribution(): Map<string, AttributionKey> | undefined {
+		return this.kernel.getAllAttribution();
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 * @internal
 	 */
 	protected summarizeCore(
 		serializer: IFluidSerializer,
-		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		let currentSize = 0;
 		let counter = 0;
@@ -281,7 +317,11 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		//    loads all blobs at once and partitioning schema has no impact on that process.
 		for (const key of Object.keys(data)) {
 			const value = data[key];
-			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+			if (
+				value.value &&
+				value.value.length + (value.attribution?.length ?? 0) >=
+					MinValueSizeSeparateSnapshotBlob
+			) {
 				const blobName = `blob${counter}`;
 				counter++;
 				blobs.push(blobName);
@@ -296,6 +336,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 				currentSize += value.type.length + 21; // Approximation cost of property header
 				if (value.value) {
 					currentSize += value.value.length;
+				}
+				if (value.attribution) {
+					currentSize += value.attribution.length;
 				}
 
 				if (currentSize > MaxSnapshotBlobSize) {
@@ -312,6 +355,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 						value.value === undefined
 							? undefined
 							: (JSON.parse(value.value) as unknown),
+					attribution:
+						value.attribution === undefined ? undefined : JSON.parse(value.attribution),
 				};
 			}
 		}
@@ -377,11 +422,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		localOpMetadata: unknown,
 	): void {
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(
-				message.contents as IMapOperation,
-				local,
-				localOpMetadata,
-			);
+			this.kernel.tryProcessMessage(message, local, localOpMetadata);
 		}
 	}
 

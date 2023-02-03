@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttributionKey as AttributionKey_2 } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -21,6 +22,12 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+
+// @alpha
+export interface AttributionKey {
+    seq: number;
+    type: "op";
+}
 
 // @public @sealed
 export class DirectoryFactory implements IChannelFactory {
@@ -131,19 +138,36 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 // @public
 export interface ILocalValue {
-    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
+    // @alpha
+    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle, attribution?: AttributionKey): ISerializedValue;
     readonly type: string;
     readonly value: any;
 }
 
+// @alpha
+export interface IMapAttributionOptions {
+    // (undocumented)
+    track?: boolean;
+}
+
+// @alpha
+export interface IMapOptions {
+    // (undocumented)
+    attribution?: IMapAttributionOptions;
+}
+
 // @public @deprecated
 export interface ISerializableValue {
+    // @alpha
+    attribution?: AttributionKey;
     type: string;
     value: any;
 }
 
 // @public
 export interface ISerializedValue {
+    // @alpha
+    attribution?: string;
     type: string;
     value: string | undefined;
 }
@@ -260,7 +284,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    // @alpha
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options?: IMapOptions);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     clear(): void;
@@ -269,6 +294,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
+    // @alpha
+    getAllAttribution(): Map<string, AttributionKey_2> | undefined;
+    // @alpha
+    getAttribution(key: string): AttributionKey_2 | undefined;
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;

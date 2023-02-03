@@ -13,7 +13,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISerializableValue, IValueChanged } from "../../interfaces";
+import { ISerializableValue, IValueChanged, IMapOptions } from "../../interfaces";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -25,20 +25,24 @@ import {
 import { MapFactory, SharedMap } from "../../map";
 import { IMapOperation } from "../../mapKernel";
 
-function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): SharedMap {
+function createConnectedMap(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+	options?: IMapOptions,
+): SharedMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
+	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes, options);
 	map.connect(services);
 	return map;
 }
 
-function createLocalMap(id: string): SharedMap {
-	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
+function createLocalMap(id: string, options?: IMapOptions): SharedMap {
+	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes, options);
 	return map;
 }
 
@@ -769,6 +773,133 @@ describe("Map", () => {
 
 					assert.equal(set.size, 0);
 				});
+			});
+		});
+	});
+
+	describe("Attribution", () => {
+		describe("Local State", () => {
+			let map: SharedMap;
+
+			beforeEach(async () => {
+				const options: IMapOptions = { attribution: { track: true } };
+				map = createLocalMap("testMap", options);
+			});
+
+			it("Should not generate attribution in local state", () => {
+				map.set("first", "second");
+				map.set("third", "fourth");
+				map.set("fifth", "sixth");
+
+				const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob)
+					.content;
+
+				assert.equal(
+					map.getAllAttribution()?.size,
+					0,
+					"do not have correct number of attribution",
+				);
+				assert.equal(
+					summaryContent,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"}}}`,
+				);
+			});
+		});
+
+		describe("Connected State", () => {
+			let containerRuntimeFactory: MockContainerRuntimeFactory;
+			let map1: SharedMap;
+			let map2: SharedMap;
+
+			beforeEach(async () => {
+				const options: IMapOptions = { attribution: { track: true } };
+				containerRuntimeFactory = new MockContainerRuntimeFactory();
+				// Create the first map
+				map1 = createConnectedMap("map1", containerRuntimeFactory, options);
+				// Create and connect a second map
+				map2 = createConnectedMap("map2", containerRuntimeFactory, options);
+			});
+
+			it("Can generate proper attribution in connected state", () => {
+				map1.set("first", "value1");
+				map1.set("second", "value2");
+				map2.set("first", "value3");
+
+				containerRuntimeFactory.processSomeMessages(1);
+
+				assert.notEqual(
+					map1.getAttribution("first"),
+					undefined,
+					"map1 did not generate correct attribution",
+				);
+
+				containerRuntimeFactory.processAllMessages();
+
+				assert.deepEqual(
+					map1.getAllAttribution(),
+					map2.getAllAttribution(),
+					"map1 and map2 do not have consistent attribution",
+				);
+
+				map1.clear();
+				containerRuntimeFactory.processAllMessages();
+				assert.equal(
+					map1.getAllAttribution()?.size,
+					0,
+					"the attribution of map1 was not cleared",
+				);
+				assert.equal(
+					map2.getAllAttribution()?.size,
+					0,
+					"the attribution of map2 was not cleared",
+				);
+			});
+		});
+
+		describe("Summarization", () => {
+			let containerRuntimeFactory: MockContainerRuntimeFactory;
+			let map1: SharedMap;
+			let map2: SharedMap;
+
+			beforeEach(async () => {
+				const options: IMapOptions = { attribution: { track: true } };
+				containerRuntimeFactory = new MockContainerRuntimeFactory();
+				// Create the first map
+				map1 = createConnectedMap("map1", containerRuntimeFactory, options);
+				// Create and connect a second map
+				map2 = createConnectedMap("map2", containerRuntimeFactory, options);
+			});
+
+			it("Can summarize/load the map correctly with attribution", async () => {
+				map1.set("first", "value1");
+				map1.set("second", "value2");
+
+				containerRuntimeFactory.processAllMessages();
+
+				const summaryContent = (map1.getAttachSummary().summary.tree.header as ISummaryBlob)
+					.content;
+
+				assert.equal(
+					map1.getAllAttribution()?.size,
+					2,
+					"do not have correct number of attribution",
+				);
+				assert.equal(
+					summaryContent,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"value1","attribution":{"type":"op","seq":1}},"second":{"type":"Plain","value":"value2","attribution":{"type":"op","seq":2}}}}`,
+					"the serialized data is not consistent",
+				);
+
+				const services = new MockSharedObjectServices({ header: summaryContent });
+				await map2.load(services);
+
+				assert.equal(map1.get("first"), map2.get("first"));
+				assert.equal(map1.get("second"), map2.get("second"));
+				assert.deepEqual(
+					map1.getAllAttribution(),
+					map2.getAllAttribution(),
+					"map1 and map2 do not have consistent attribution",
+				);
 			});
 		});
 	});
