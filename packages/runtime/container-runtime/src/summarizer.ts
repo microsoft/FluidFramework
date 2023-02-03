@@ -388,28 +388,26 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		}
 		return this.runningSummarizer.enqueueSummarize(...args);
 	};
-    /**
-     * Responsible for receiving and processing all the summaryAcks.
-     * @param lastAckRefNumber - Before initializing the summarization, if there is a last Ack to be processed, use it.
-     */
+	/**
+	 * Responsible for receiving and processing all the summaryAcks.
+	 * @param lastAckRefNumber - Before initializing the summarization, if there is a last Ack to be processed, use it.
+	 */
 	private async handleSummaryAcks(lastAckRefNumber: number) {
 		let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;
 		while (this.runningSummarizer) {
 			const summaryLogger =
 				this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
-            summaryLogger.sendTelemetryEvent(
-                {
-                    eventName: "handleSummaryAcks",
-                    referenceSequenceNumber: refSequenceNumber,
-                }
-            );
+			summaryLogger.sendTelemetryEvent({
+				eventName: "handleSummaryAcks",
+				referenceSequenceNumber: refSequenceNumber,
+			});
 			// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
-            // we record undefined, not previous handles.
-            await this.summaryCollection.waitSummaryAck(
-                lastAckRefNumber > 0 ? lastAckRefNumber : refSequenceNumber,
-            );
+			// we record undefined, not previous handles.
+			await this.summaryCollection.waitSummaryAck(
+				lastAckRefNumber > 0 ? lastAckRefNumber : refSequenceNumber,
+			);
 
-            refSequenceNumber = await this.runningSummarizer.handleSummaryAck();
-    	}
+			refSequenceNumber = await this.runningSummarizer.handleSummaryAck();
+		}
 	}
 }

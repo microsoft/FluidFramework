@@ -249,29 +249,29 @@ export class RunningSummarizer implements IDisposable {
 						summaryRefSeq: refSequenceNumber,
 						summaryLogger,
 					}).catch(async (error) => {
-                        // If the error is 404, so maybe the fetched version no longer exists on server. We just
-                        // ignore this error in that case, as that means we will have another summaryAck for the
-                        // latest version with which we will refresh the state. However in case of single commit
-                        // summary, we might me missing a summary ack, so in that case we are still fine as the
-                        // code in `submitSummary` function in container runtime, will refresh the latest state
-                        // by calling `refreshLatestSummaryAckFromServer` and we will be fine.
-                        if (
-                            isFluidError(error) &&
-                            error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
-                        ) {
-                            summaryLogger.sendTelemetryEvent(
-                                {
-                                    eventName: "HandleSummaryAckErrorIgnored",
-                                    referenceSequenceNumber: refSequenceNumber,
-                                    proposalHandle: summaryOpHandle,
-                                    ackHandle: summaryAckHandle,
-                                },
-                                error,
-                            );
-                        } else {
-                            throw error;
-                        }
-                    }),
+						// If the error is 404, so maybe the fetched version no longer exists on server. We just
+						// ignore this error in that case, as that means we will have another summaryAck for the
+						// latest version with which we will refresh the state. However in case of single commit
+						// summary, we might me missing a summary ack, so in that case we are still fine as the
+						// code in `submitSummary` function in container runtime, will refresh the latest state
+						// by calling `refreshLatestSummaryAckFromServer` and we will be fine.
+						if (
+							isFluidError(error) &&
+							error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
+						) {
+							summaryLogger.sendTelemetryEvent(
+								{
+									eventName: "HandleSummaryAckErrorIgnored",
+									referenceSequenceNumber: refSequenceNumber,
+									proposalHandle: summaryOpHandle,
+									ackHandle: summaryAckHandle,
+								},
+								error,
+							);
+						} else {
+							throw error;
+						}
+					}),
 				);
 			} catch (error) {
 				summaryLogger.sendErrorEvent(
