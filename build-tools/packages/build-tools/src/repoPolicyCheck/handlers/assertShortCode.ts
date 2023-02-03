@@ -4,7 +4,15 @@
  */
 import fs from "fs";
 import path from "path";
-import { Node, NumericLiteral, Project, SourceFile, StringLiteralLike, SyntaxKind } from "ts-morph";
+import {
+	NoSubstitutionTemplateLiteral,
+	Node,
+	NumericLiteral,
+	Project,
+	SourceFile,
+	StringLiteralLike,
+	SyntaxKind,
+} from "ts-morph";
 
 import { Handler } from "../common";
 
@@ -14,7 +22,8 @@ const codeToMsgMap = new Map<string, string>();
 let maxShortCode = -1;
 
 function getCallsiteString(msg: Node) {
-	return `${msg.getSourceFile().getFilePath()}@${msg.getStartLineNumber()}`;
+	// Use filepath:line number so that the error message can be navigated to by clicking on it in vscode.
+	return `${msg.getSourceFile().getFilePath()}:${msg.getStartLineNumber()}`;
 }
 
 /**
@@ -25,6 +34,8 @@ const assertionFunctions: ReadonlyMap<string, number> = new Map([
 	["fail", 0],
 ]);
 
+type Message = StringLiteralLike | NumericLiteral | NoSubstitutionTemplateLiteral;
+
 /**
  * Given a source file this function will look for all assert functions contained in it, and return the message parameters.
  * This includes both functions named "assert" and ones named "fail"
@@ -32,32 +43,33 @@ const assertionFunctions: ReadonlyMap<string, number> = new Map([
  * @param sourceFile - The file to get the assert message parameters for.
  * @returns - an array of all the assert message parameters
  */
-function getAssertMessageParams(sourceFile: SourceFile): (StringLiteralLike | NumericLiteral)[] {
+function getAssertMessageParams(sourceFile: SourceFile): Message[] {
 	const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
-	const messageArgs: (StringLiteralLike | NumericLiteral)[] = [];
+	const messageArgs: Message[] = [];
 	for (const call of calls) {
 		const messageIndex = assertionFunctions.get(call.getExpression().getText());
 		if (messageIndex !== undefined) {
 			const args = call.getArguments();
 			if (args.length >= messageIndex && args[messageIndex] !== undefined) {
-				const kind = args[messageIndex].getKind();
+				const messageArg = args[messageIndex];
+				const kind = messageArg.getKind();
 				switch (kind) {
 					case SyntaxKind.StringLiteral:
 					case SyntaxKind.NumericLiteral:
 					case SyntaxKind.NoSubstitutionTemplateLiteral:
-						messageArgs.push(args[messageIndex] as any);
+						messageArgs.push(messageArg as Message);
 						break;
 					case SyntaxKind.TemplateExpression:
 						throw new Error(
 							`Template expressions are not supported in assertions (they'll be replaced by a short code anyway). ` +
-								`Use a string literal instead.\n${getCallsiteString(args[1])}`,
+								`Use a string literal instead.\n${getCallsiteString(messageArg)}`,
 						);
 					case SyntaxKind.BinaryExpression:
 					case SyntaxKind.CallExpression:
 						break;
 					default:
 						throw new Error(
-							`Unsupported argument kind: ${kind}\n${getCallsiteString(args[1])}`,
+							`Unsupported argument kind: ${kind}\n${getCallsiteString(messageArg)}`,
 						);
 				}
 			}
