@@ -86,14 +86,14 @@ data:
                     "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsCreateDoc.maxInMemoryCacheAgeInMs }},
                     "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsCreateDoc.enableEnhancedTelemetry }}
                 },
-                "restCallsDeleteDoc": {
-                    "maxPerMs": {{ .Values.alfred.throttling.restCallsDeleteDoc.maxPerMs }},
-                    "maxBurst": {{ .Values.alfred.throttling.restCallsDeleteDoc.maxBurst }},
-                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCallsDeleteDoc.minCooldownIntervalInMs }},
-                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCallsDeleteDoc.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsDeleteDoc.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsDeleteDoc.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsDeleteDoc.enableEnhancedTelemetry }}
+                "restCallsGetDeltas": {
+                    "maxPerMs": {{ .Values.alfred.throttling.restCallsGetDeltas.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.restCallsGetDeltas.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCallsGetDeltas.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCallsGetDeltas.minThrottleIntervalInMs }},
+                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsGetDeltas.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsGetDeltas.maxInMemoryCacheAgeInMs }},
+                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsGetDeltas.enableEnhancedTelemetry }}
                 },
                 "socketConnectionsPerTenant": {
                     "maxPerMs": {{ .Values.alfred.throttling.socketConnectionsPerTenant.maxPerMs }},
