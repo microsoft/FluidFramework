@@ -207,7 +207,8 @@ export function configureWebSocketServices(
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
     isSignalUsageCountingEnabled: boolean = false,
-    connectThrottler?: core.IThrottler,
+    connectThrottlerPerTenant?: core.IThrottler,
+    connectThrottlerPerCluster?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
     submitSignalThrottler?: core.IThrottler,
     throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
@@ -247,13 +248,21 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-            const throttleError = checkThrottleAndUsage(
-                connectThrottler,
+            const throttleErrorPerCluster = checkThrottleAndUsage(
+                connectThrottlerPerCluster,
+                getSocketConnectThrottleId("connectDoc"),
+                message.tenantId,
+                logger);
+            if (throttleErrorPerCluster) {
+                return Promise.reject(throttleErrorPerCluster);
+            }
+            const throttleErrorPerTenant = checkThrottleAndUsage(
+                connectThrottlerPerTenant,
                 getSocketConnectThrottleId(message.tenantId),
                 message.tenantId,
                 logger);
-            if (throttleError) {
-                return Promise.reject(throttleError);
+            if (throttleErrorPerTenant) {
+                return Promise.reject(throttleErrorPerTenant);
             }
             if (!message.token) {
                 throw new NetworkError(403, "Must provide an authorization token");

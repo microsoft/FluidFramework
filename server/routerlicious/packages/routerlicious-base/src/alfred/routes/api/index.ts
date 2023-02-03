@@ -25,7 +25,7 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     tenantThrottler: IThrottler,
-    clusterThrottler: IThrottler,
+    clusterThrottlers: Map<string, IThrottler>,
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     deltaService: IDeltaService,
@@ -33,12 +33,12 @@ export function create(
     appTenants: IAlfredTenant[],
     documentsCollection: ICollection<IDocument>): Router {
     const router: Router = Router();
-    const deltasRoute = deltas.create(config, tenantManager, deltaService, appTenants, tenantThrottler);
+    const deltasRoute = deltas.create(config, tenantManager, deltaService, appTenants, tenantThrottler, clusterThrottlers);
     const documentsRoute = documents.create(
         storage,
         appTenants,
         tenantThrottler,
-        clusterThrottler,
+        clusterThrottlers,
         singleUseTokenCache,
         config,
         tenantManager,

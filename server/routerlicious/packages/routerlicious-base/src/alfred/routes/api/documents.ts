@@ -31,7 +31,7 @@ export function create(
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     tenantThrottler: IThrottler,
-    clusterThrottler: IThrottler,
+    clusterThrottlers: Map<string, IThrottler>,
     singleUseTokenCache: ICache,
     config: Provider,
     tenantManager: ITenantManager,
@@ -50,8 +50,8 @@ export function create(
     };
 
     // Throttling logic for creating documents to provide per-cluster rate-limiting at the HTTP route level
-    const clusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-        throttleIdPrefix: "createDoc",
+    const createDocThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: Constants.alfredRestThrottleIdCreateDoc,
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
 
@@ -87,7 +87,7 @@ export function create(
             ensureSingleUseToken: true,
             singleUseTokenCache,
         }),
-        throttle(clusterThrottler, winston, clusterThrottleOptions),
+        throttle(clusterThrottlers.get(Constants.alfredRestThrottleIdCreateDoc), winston, createDocThrottleOptions),
         throttle(tenantThrottler, winston, tenantThrottleOptions),
         async (request, response, next) => {
             // Tenant and document

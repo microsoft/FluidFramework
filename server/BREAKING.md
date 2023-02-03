@@ -22,7 +22,7 @@ export class AlfredResources implements core.IResources {
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
         public restTenantThrottler: core.IThrottler,
-        public restClusterThrottler: core.IThrottler,
+        public restClusterThrottlers: Map<string, core.IThrottler>,
         public socketConnectThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
         public socketSubmitSignalThrottler: core.IThrottler,

@@ -452,6 +452,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                     webSocketServer = new LocalWebSocketServer(pubsub);
 
                     const testConnectionThrottler = new TestThrottler(throttleLimit);
+                    const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimit);
                     const testSubmitOpThrottler = new TestThrottler(throttleLimit);
                     const throttlerHelper = new ThrottlerHelper(testThrottleAndUsageStorageManager);
 
@@ -472,6 +473,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                         true,
                         true,
                         testConnectionThrottler,
+                        testConnectionThrottlerPerCluster,
                         testSubmitOpThrottler,
                         testSubmitSignalThrottler,
                         testThrottleAndUsageStorageManager);

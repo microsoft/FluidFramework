@@ -21,6 +21,7 @@ import Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
 import { DeltaService } from "./services";
 
@@ -86,8 +87,9 @@ export class AlfredResources implements core.IResources {
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
         public restTenantThrottler: core.IThrottler,
-        public restClusterThrottler: core.IThrottler,
-        public socketConnectThrottler: core.IThrottler,
+        public restClusterThrottlers: Map<string, core.IThrottler>,
+        public socketConnectThrottlerPerTenant: core.IThrottler,
+        public socketConnectThrottlerPerCluster: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
         public socketSubmitSignalThrottler: core.IThrottler,
         public singleUseTokenCache: core.ICache,
@@ -265,14 +267,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             config.get("alfred:throttling:restCallsPerTenant") ?? {};
         const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
 
-        const restApiClusterThrottleConfig: Partial<IThrottleConfig> =
-        config.get("alfred:throttling:restCallsPerCluster") ?? {};
-        const restClusterThrottler = configureThrottler(restApiClusterThrottleConfig);
+        const restApiCreateDocThrottleConfig: Partial<IThrottleConfig> =
+        config.get("alfred:throttling:restCallsCreateDoc") ?? {};
+        const restCreateDocThrottler = configureThrottler(restApiCreateDocThrottleConfig);
+
+        const restApiGetDeltasThrottleConfig: Partial<IThrottleConfig> =
+        config.get("alfred:throttling:restCallsGetDeltas") ?? {};
+        const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
+
+        const restClusterThrottlers = new Map<string, core.IThrottler>();
+        restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
+        restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
 
         // Socket Connection Throttler
-        const socketConnectionThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:socketConnections") ?? {};
-        const socketConnectThrottler = configureThrottler(socketConnectionThrottleConfig);
+        const socketConnectionThrottleConfigPerTenant: Partial<IThrottleConfig> =
+            config.get("alfred:throttling:socketConnectionsPerTenant") ?? {};
+        const socketConnectThrottlerPerTenant = configureThrottler(socketConnectionThrottleConfigPerTenant);
+
+        const socketConnectionThrottleConfigPerCluster: Partial<IThrottleConfig> =
+        config.get("alfred:throttling:socketConnectionsPerCluster") ?? {};
+        const socketConnectThrottlerPerCluster = configureThrottler(socketConnectionThrottleConfigPerCluster);
 
         // Socket SubmitOp Throttler
         const submitOpThrottleConfig: Partial<IThrottleConfig> =
@@ -346,8 +360,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             orderManager,
             tenantManager,
             restTenantThrottler,
-            restClusterThrottler,
-            socketConnectThrottler,
+            restClusterThrottlers,
+            socketConnectThrottlerPerTenant,
+            socketConnectThrottlerPerCluster,
             socketSubmitOpThrottler,
             socketSubmitSignalThrottler,
             redisJwtCache,
@@ -373,8 +388,9 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.orderManager,
             resources.tenantManager,
             resources.restTenantThrottler,
-            resources.restClusterThrottler,
-            resources.socketConnectThrottler,
+            resources.restClusterThrottlers,
+            resources.socketConnectThrottlerPerTenant,
+            resources.socketConnectThrottlerPerCluster,
             resources.socketSubmitOpThrottler,
             resources.socketSubmitSignalThrottler,
             resources.singleUseTokenCache,

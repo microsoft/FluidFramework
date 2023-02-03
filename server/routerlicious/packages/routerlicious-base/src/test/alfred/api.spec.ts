@@ -18,6 +18,7 @@ import { TestCache } from "@fluidframework/server-test-utils";
 import { DeltaService } from "../../alfred/services";
 import * as SessionHelper from "../../utils/sessionHelper"
 import Sinon from "sinon";
+import { Constants } from "../../utils";
 
 
 const nodeCollectionName = "testNodes";
@@ -102,12 +103,16 @@ describe("Routerlicious", () => {
                 const limit = 10;
                 beforeEach(() => {
                     const tenantThrottler = new TestThrottler(limit);
-                    const clusterThrottler = new TestThrottler(limit);
+                    const restCreateDocThrottler = new TestThrottler(limit);
+                    const restGetDeltasThrottler = new TestThrottler(limit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
                         tenantThrottler,
-                        clusterThrottler,
+                        restClusterThrottlers,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -196,12 +201,16 @@ describe("Routerlicious", () => {
                 const maxThrottlerLimit = 10;
                 beforeEach(() => {
                     const tenantThrottler = new TestThrottler(maxThrottlerLimit);
-                    const clusterThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
                         tenantThrottler,
-                        clusterThrottler,
+                        restClusterThrottlers,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -264,12 +273,16 @@ describe("Routerlicious", () => {
                 const maxThrottlerLimit = 1000000;
                 beforeEach(() => {
                     const tenantThrottler = new TestThrottler(maxThrottlerLimit);
-                    const clusterThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
                         tenantThrottler,
-                        clusterThrottler,
+                        restClusterThrottlers,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -328,12 +341,16 @@ describe("Routerlicious", () => {
                 const limit = 1000000;
                 beforeEach(() => {
                     const tenantThrottler = new TestThrottler(limit);
-                    const clusterThrottler = new TestThrottler(limit);
+                    const restCreateDocThrottler = new TestThrottler(limit);
+                    const restGetDeltasThrottler = new TestThrottler(limit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
                         tenantThrottler,
-                        clusterThrottler,
+                        restClusterThrottlers,
                         new TestCache(),
                         defaultStorage,
                         defaultAppTenants,
@@ -368,7 +385,11 @@ describe("Routerlicious", () => {
                 beforeEach(() => {
                     const maxThrottlerLimit = 1000000;
                     const tenantThrottler = new TestThrottler(maxThrottlerLimit);
-                    const clusterThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
 
                     spyGetSession = Sinon.spy(SessionHelper, "getSession")
 
@@ -376,7 +397,7 @@ describe("Routerlicious", () => {
                         defaultProvider,
                         defaultTenantManager,
                         tenantThrottler,
-                        clusterThrottler,
+                        restClusterThrottlers,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,

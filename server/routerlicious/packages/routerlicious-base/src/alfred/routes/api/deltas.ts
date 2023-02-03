@@ -22,13 +22,19 @@ export function create(
     tenantManager: ITenantManager,
     deltaService: IDeltaService,
     appTenants: IAlfredTenant[],
-    throttler: IThrottler): Router {
+    throttler: IThrottler,
+    clusterThrottlers: Map<string, IThrottler>): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();
 
     const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+        throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+    };
+
+    const getDeltasThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: Constants.alfredRestThrottleIdGetDeltas,
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
 
@@ -92,6 +98,7 @@ export function create(
         "/:tenantId/:id",
         validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
+        throttle(clusterThrottlers.get(Constants.alfredRestThrottleIdGetDeltas), winston, getDeltasThrottleOptions),
         throttle(throttler, winston, tenantThrottleOptions),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);
