@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { ChildLogger, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -22,7 +22,6 @@ import {
 	IMergeTreeDeltaOp,
 	IMergeTreeGroupMsg,
 	IMergeTreeOp,
-	IMergeTreeOptions,
 	IMergeTreeRemoveMsg,
 	IRelativePosition,
 	ISegment,
