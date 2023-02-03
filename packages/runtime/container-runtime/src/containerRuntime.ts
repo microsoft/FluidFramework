@@ -335,20 +335,20 @@ export interface IGCRuntimeOptions {
 	 */
 	sweepAllowed?: boolean;
 
-    /**
-     * The "GC Container Generation" is provided by the container author to denote GC-impacting changes to the container's structure.
-     * The value provided at creation time is persisted, and compared with the value provided at each load.
-     *
-     * If the persisted value doesn't match the value provided on load, GC Sweep will be disabled to protect against dataloss in case
-     * containers with an older Generation were found to have GC-impacting bugs.
-     */
-    readonly gcContainerGeneration?: number;
+	/**
+	 * The "GC Container Generation" is provided by the container author to denote GC-impacting changes to the container's structure.
+	 * The value provided at creation time is persisted, and compared with the value provided at each load.
+	 *
+	 * If the persisted value doesn't match the value provided on load, GC Sweep will be disabled to protect against dataloss in case
+	 * containers with an older Generation were found to have GC-impacting bugs.
+	 */
+	readonly gcContainerGeneration?: number;
 
-    /**
-     * Flag that if true, will disable garbage collection for the session.
-     * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-     */
-    disableGC?: boolean;
+	/**
+	 * Flag that if true, will disable garbage collection for the session.
+	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
+	 */
+	disableGC?: boolean;
 
 	/**
 	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
