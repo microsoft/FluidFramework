@@ -197,22 +197,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
-		const mergeTreeOptions = {
-			...(dataStoreRuntime.options as IMergeTreeOptions),
-		};
-
-		const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean(
-			"Fluid.Attribution.EnableOnNewFile",
-		);
-		if (configSetAttribution !== undefined) {
-			mergeTreeOptions.attribution ??= {};
-			mergeTreeOptions.attribution.track = configSetAttribution;
-		}
-
 		this.client = new Client(
 			segmentFromSpec,
 			ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
-			mergeTreeOptions,
+			dataStoreRuntime.options,
 		);
 
 		this.client.on("delta", (opArgs, deltaArgs) => {
