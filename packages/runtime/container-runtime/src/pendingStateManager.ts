@@ -19,7 +19,6 @@ import { pkgVersion } from "./packageVersion";
 export interface IPendingMessage {
 	type: "message";
 	messageType: ContainerMessageType;
-	/** @deprecated - remove all usage */
 	clientSequenceNumber: number;
 	referenceSequenceNumber: number;
 	content: any;

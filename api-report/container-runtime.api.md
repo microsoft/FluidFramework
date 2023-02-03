@@ -431,7 +431,7 @@ export interface IPendingLocalState {
 
 // @public
 export interface IPendingMessage {
-    // @deprecated (undocumented)
+    // (undocumented)
     clientSequenceNumber: number;
     // (undocumented)
     content: any;
