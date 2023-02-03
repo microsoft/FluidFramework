@@ -160,7 +160,7 @@ async function storeClientConnectivityTime(
 /**
  * This function will store total connection count per node to Redis and also log connectionCountPerNodeMetric.
  */
-function logTotalConnectionsPerNode(isConnect: boolean, cache?: Redis) {
+async function logTotalConnectionsPerNode(isConnect: boolean, cache?: Redis): Promise<void> {
     const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
     const nodeName = process.env.NODE_ENV;
     const keyName = `totalConnections_${nodeName}`;
@@ -518,6 +518,7 @@ export function configureWebSocketServices(
                             createRoomJoinMessage(message.connection.clientId, message.details));
                     }
                     if (message?.details?.details?.type !== "summarizer") {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         logTotalConnectionsPerNode(true, cache);
                     }
                     connectMetric.setProperties({
@@ -721,6 +722,7 @@ export function configureWebSocketServices(
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
                 if (connectionTimeMap.has(clientId)) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     logTotalConnectionsPerNode(false, cache);
                 }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
