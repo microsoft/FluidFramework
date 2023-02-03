@@ -35,8 +35,6 @@ const assertionFunctions: ReadonlyMap<string, number> = new Map([
 	["fail", 0],
 ]);
 
-type Message = StringLiteralLike | NumericLiteral | NoSubstitutionTemplateLiteral;
-
 /**
  * Given a source file this function will look for all assert functions contained in it, and return the message parameters.
  * This includes both functions named "assert" and ones named "fail"
