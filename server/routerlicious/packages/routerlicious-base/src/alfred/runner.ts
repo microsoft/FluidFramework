@@ -84,11 +84,17 @@ export class AlfredRunner implements IRunner {
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
         const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
 
+        const redisConfigForThrottling = this.config.get("redisForThrottling");
         const redisOptions: Redis.RedisOptions = {
-            host: this.config.get("redisForThrottling").host,
-            port: this.config.get("redisForThrottling").port,
-            password: this.config.get("redisForThrottling").pass,
+            host: redisConfigForThrottling.host,
+            port: redisConfigForThrottling.port,
+            password: redisConfigForThrottling.pass,
         };
+        if (redisConfigForThrottling.tls) {
+            redisOptions.tls = {
+                servername: redisConfigForThrottling.host,
+            };
+        }
         const redisCache = new Redis(redisOptions);
 
         // Register all the socket.io stuff
