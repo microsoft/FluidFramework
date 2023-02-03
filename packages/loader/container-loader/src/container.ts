@@ -16,7 +16,7 @@ import { assert, performance, unreachableCase } from "@fluidframework/common-uti
 import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 	IContainer,
 	IContainerEvents,
 	IDeltaManager,
@@ -1762,7 +1762,7 @@ export class Container
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		deltaManager.inboundSignal.pause();
 
-		deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+		deltaManager.on("connect", (details: IConnectionDetailsInternal, _opsBehind?: number) => {
 			assert(this.connectionMode === details.mode, 0x4b7 /* mismatch */);
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
