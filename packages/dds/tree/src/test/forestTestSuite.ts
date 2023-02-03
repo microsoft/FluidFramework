@@ -768,11 +768,6 @@ export function testForest(config: ForestTestConfiguration): void {
 		describe("Does not leave an empty field", () => {
 			it("when deleting the last node in the field", () => {
 				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-				const content = {
-					testField1: 1,
-					testField2: 1,
-				};
-				const testField1: FieldKey = brand("testField1");
 				const delta: Delta.Root = new Map([
 					[
 						rootFieldKeySymbol,
@@ -782,7 +777,7 @@ export function testForest(config: ForestTestConfiguration): void {
 									index: 0,
 									fields: new Map([
 										[
-											testField1,
+											xField,
 											{
 												shallow: [
 													{
@@ -798,16 +793,24 @@ export function testForest(config: ForestTestConfiguration): void {
 						},
 					],
 				]);
-				const expected = [
+				const expected: JsonableTree[] = [
 					{
-						testField2: 1,
+						type: jsonObject.name,
+						fields: {
+							y: [
+								{
+									type: jsonNumber.name,
+									value: 1,
+								},
+							],
+						},
 					},
 				];
-				initializeForest(forest, [singleJsonCursor(content)]);
+				initializeForest(forest, nestedContent.map(singleTextCursor));
 				forest.applyDelta(delta);
 				const readCursor = forest.allocateCursor();
 				moveToDetachedField(forest, readCursor);
-				const actual = mapCursorField(readCursor, cursorToJsonObject);
+				const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
 				readCursor.free();
 				assert.deepEqual(actual, expected);
 			});
