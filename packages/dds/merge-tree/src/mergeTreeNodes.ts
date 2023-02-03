@@ -395,7 +395,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		if (!this.properties) {
 			this.properties = createMap<any>();
 		}
-		const result = this.propertyManager.addProperties(
+		return this.propertyManager.addProperties(
 			this.properties,
 			newProps,
 			op,
@@ -403,12 +403,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			collabWindow && collabWindow.collaborating,
 			rollback,
 		);
-
-		// if (Object.entries(this.properties).length === 0) {
-		//     this.properties = undefined;
-		// }
-
-		return result;
 	}
 
 	public hasProperty(key: string): boolean {
