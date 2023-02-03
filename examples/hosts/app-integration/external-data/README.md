@@ -27,8 +27,8 @@ This repo contains a service that mocks the external "source of truth" data serv
 
 1. POST `/register-for-webhook`: Register's the sender's URL (in this case the Customer Service's URL) to receive notifications when the external task-list data changes.
 2. GET `/fetch-tasks`: Fetches the task list from the external data store.
-3. POST `/set-tasks`:  Updates external data store with new tasks list (complete override).
-4. POST `/debug-reset-task-list`:  Resets the external data to its original contents.
+3. POST `/set-tasks`: Updates external data store with new tasks list (complete override).
+4. POST `/debug-reset-task-list`: Resets the external data to its original contents.
 
 Find the details of the API in the [External Data Service README](./src/mock-external-data-service/README.md)
 
@@ -38,7 +38,7 @@ Next we need a customer service that functions as the intermediary between the E
 
 In this example, the Customer Service contains the following endpoints:
 
-1. POST `/register-for-webhook`:  Register's the sender's URL (in this case, the Fluid Service's URL) to receive notifications when the external task-list data changes.
+1. POST `/register-for-webhook`: Register's the sender's URL (in this case, the Fluid Service's URL) to receive notifications when the external task-list data changes.
 2. POST `/echo-external-data-webhook`: "Echoes" the external data services data update notifications to our own webhook subscribers. This data will be forwarded to our own subscribers.
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
@@ -57,7 +57,7 @@ Since the Customer Service is registered to the webhooks and listening for incom
 
 The "echo webhook" pattern accomplishes this by having the Fluid service subscribe to "echo webhooks" in the Customer Service, listening for the webhook notifications there, and then sending a Signal to the clients to alert them of this upstream change.
 
-So, on receiving the notification from the External Server's webhook, the Customer Service makes a POST request using the `/echo-external-data-webhook` which simply echoes the information to the Fluid Service. 
+So, on receiving the notification from the External Server's webhook, the Customer Service makes a POST request using the `/echo-external-data-webhook` which simply echoes the information to the Fluid Service.
 
 On receiving notification from the Echo webhhooks, Alfred (the Fluid Service Front End) broadcasts a Signal to let the the clients know that there has been a changeupstream.
 
@@ -79,17 +79,19 @@ TBD
 
 ### Concepts of data in this repository
 
-TaskList - Think of this as a board that holds all of your tasks. It is the component that shows up in the Loop app, or any similar app. There are two TaskLists that we have to keep track of - 
+A few useful concepts to understand in implementing conflict resolution in this app:
 
-Task - This is the smaller item that 
+Task - This is the unit that can be edited and attributed to an author. It is also the level at which conflict resolution currently takes place. The task holds knowledge of the local edits as well as the external edits and can display one or both to the screen.
 
-This repo has a few concepts to that are good to understand when navigating the views and the data. Data that comes in fresh from the external data source is first stored in a SharedMap known as "SavedData".
+TaskList - This can be compared to a "board" that holds all of the tasks. It is the larger visible entity to show up in a component within the Loop app, or any similar app. The app stores two types of TaskList's - a "draft" version and a "saved version". More on these below.
 
-Local collaboration state between the Fluid clients is stored in a SharedMap known as "DraftData". This is known as draft data because we are treating the Fluid collaboration session as a drafting surface.
+SavedData - Data that comes in fresh from the external data source is first stored in a SharedMap known as "SavedData".
+
+DraftData - Local collaboration state between the Fluid clients is stored in a SharedMap known as "DraftData". This is known as draft data because we are treating the Fluid collaboration session as a drafting surface.
 
 To get to a state in which DraftData and SavedData are the same again, the DraftData needs to get pushed back to the External Data Server for longer term storage.
 
-Upon receipt of new external data, the external data is written immediately into the "SavedData" map, and a check occurs comparing the SavedData to the DraftData. If there are changes between the two, these are displayed on screen and the clients can (currently) only choose to consume the changes and overwrite their local data, via using regular ops mechanism. The first person to overwrite will use regular ops to write into the FluidData and the change will be attributed to them.
+Upon receipt of new external data, the external data is written immediately into the "SavedData" map, and a check occurs comparing the SavedData to the DraftData. If there are differences between the two, these are displayed on screen and the clients can (currently) only choose to consume the changes and overwrite their local data, via using regular ops mechanism. The first client to overwrite will use regular ops to write into the FluidData and the change will be attributed to them.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
 
