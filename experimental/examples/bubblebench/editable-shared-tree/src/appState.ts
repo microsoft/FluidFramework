@@ -19,8 +19,8 @@ export class AppState implements IAppState {
 
     constructor(
         private readonly clientsSequence: ClientTreeProxy[] & EditableField,
-        private _width: number,
-        private _height: number,
+        public width: number,
+        public height: number,
         numBubbles: number,
     ) {
         clientsSequence[clientsSequence.length] = this.createInitialClientNode(numBubbles) as ClientTreeProxy;
@@ -45,7 +45,7 @@ export class AppState implements IAppState {
 
         // create and add initial bubbles to initial client json tree
         for (let i = 0; i < numBubbles; i++) {
-            const bubble = makeBubble(this._width, this._height);
+            const bubble = makeBubble(this.width, this.height);
             client.bubbles.push(bubble);
         }
 
@@ -58,20 +58,13 @@ export class AppState implements IAppState {
         );
     }
 
-    public get width() {
-        return this._width;
-    }
-    public get height() {
-        return this._height;
-    }
-
     public setSize(width?: number, height?: number) {
-        this._width = width ?? 640;
-        this._height = height ?? 480;
+        this.width = width ?? 640;
+        this.height = height ?? 480;
     }
 
     public increaseBubbles() {
-        this.localClient.increaseBubbles(makeBubble(this._width, this._height));
+        this.localClient.increaseBubbles(makeBubble(this.width, this.height));
     }
 
     public decreaseBubbles() {

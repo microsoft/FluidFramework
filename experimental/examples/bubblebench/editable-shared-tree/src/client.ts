@@ -34,22 +34,6 @@ export class Client implements IClient {
     }
 
     public increaseBubbles(bubble: { x: number; y: number; r: number; vx: number; vy: number; }) {
-        // const newBubbleJson: JsonableTree = {
-        //     type: bubbleSchema.name,
-        //     fields: {
-        //         x: [{ type: numberSchema.name, value: bubble.x }],
-        //         y: [{ type: numberSchema.name, value: bubble.y }],
-        //         r: [{ type: numberSchema.name, value: bubble.r }],
-        //         vx: [{ type: numberSchema.name, value: bubble.vx }],
-        //         vy: [{ type: numberSchema.name, value: bubble.vy }],
-        //     },
-        // };
-
-        // const bubblesSequenceNode = this.clientTreeProxy[Client.bubblesFieldKey] as EditableField;
-        // bubblesSequenceNode.insertNodes(
-        //     bubblesSequenceNode.length,
-        //     singleTextCursor(newBubbleJson),
-        // );
         const bubblesSequenceNode = this.clientTreeProxy.bubbles;
         bubblesSequenceNode[bubblesSequenceNode.length] = bubble as BubbleTreeProxy;
     }
