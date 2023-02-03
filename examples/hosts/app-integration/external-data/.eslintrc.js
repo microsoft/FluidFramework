@@ -4,7 +4,13 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	plugins: ["react", "react-hooks"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid"),
+		"plugin:react/recommended",
+		"plugin:react-hooks/recommended",
+		"prettier",
+	],
 	rules: {
 		"import/no-nodejs-modules": ["error", { allow: ["http"] }],
 	},
@@ -25,4 +31,9 @@ module.exports = {
 			},
 		},
 	],
+	settings: {
+		react: {
+			version: "detect",
+		},
+	},
 };
