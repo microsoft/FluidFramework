@@ -94,6 +94,7 @@
     "mocha": "^10.1.0",
     "nyc": "^15.1.0",
     "prettier": "~2.6.2",
+    "redis-commands": "^1.7.0",
     "rimraf": "^3.0.2",
     "sinon": "^9.2.1",
     "typescript": "~4.5.5"
