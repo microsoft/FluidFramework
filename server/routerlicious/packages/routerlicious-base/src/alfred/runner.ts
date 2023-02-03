@@ -20,6 +20,7 @@ import {
     IWebServer,
     IWebServerFactory,
 } from "@fluidframework/server-services-core";
+import Redis from "ioredis";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
@@ -82,6 +83,20 @@ export class AlfredRunner implements IRunner {
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
         const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
+
+        const redisConfigForThrottling = this.config.get("redisForThrottling");
+        const redisOptions: Redis.RedisOptions = {
+            host: redisConfigForThrottling.host,
+            port: redisConfigForThrottling.port,
+            password: redisConfigForThrottling.pass,
+        };
+        if (redisConfigForThrottling.tls) {
+            redisOptions.tls = {
+                servername: redisConfigForThrottling.host,
+            };
+        }
+        const redisCache = new Redis(redisOptions);
+
         // Register all the socket.io stuff
         configureWebSocketServices(
             this.server.webSocketServer,
@@ -97,6 +112,7 @@ export class AlfredRunner implements IRunner {
             isTokenExpiryEnabled,
             isClientConnectivityCountingEnabled,
             isSignalUsageCountingEnabled,
+            redisCache,
             this.socketConnectThrottler,
             this.socketSubmitOpThrottler,
             this.socketSubmitSignalThrottler,

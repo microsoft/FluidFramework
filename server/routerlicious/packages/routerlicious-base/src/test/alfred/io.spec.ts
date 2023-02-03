@@ -52,6 +52,8 @@ import {
     TestThrottler,
     TestThrottleAndUsageStorageManager,
 } from "@fluidframework/server-test-utils";
+import { Redis } from "ioredis";
+import RedisMock from "ioredis-mock";
 import { OrdererManager } from "../../alfred";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
@@ -62,6 +64,14 @@ if (!Lumberjack.isSetupCompleted()) {
 }
 
 describe("Routerlicious", () => {
+    let mockRedisClient: Redis;
+    beforeEach(() => {
+        mockRedisClient = new RedisMock() as Redis;
+    });
+    afterEach(() => {
+        mockRedisClient.flushall();
+        mockRedisClient.quit();
+    });
     describe("Alfred", () => {
         describe("WebSockets", () => {
             describe("Messages", () => {
@@ -128,6 +138,7 @@ describe("Routerlicious", () => {
                         false,
                         false,
                         false,
+                        mockRedisClient,
                         testConnectionThrottler,
                         testSubmitOpThrottler,
                         undefined,
@@ -471,6 +482,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                         false,
                         true,
                         true,
+                        mockRedisClient,
                         testConnectionThrottler,
                         testSubmitOpThrottler,
                         testSubmitSignalThrottler,
