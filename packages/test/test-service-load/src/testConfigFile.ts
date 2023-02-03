@@ -69,6 +69,16 @@ export interface ILoadTestConfig {
 	 * Specify Ops payload size for the test run.
 	 */
 	opSizeinBytes?: number;
+	/**
+	 * Whether the ops generated should have random content.
+	 * This config can be used to force a low compression ratio.
+	 */
+	useRandomContent?: boolean;
+	/**
+	 * If enabled, for each op, the test will generate content of random size
+	 * between 0 and `opSizeinBytes`
+	 */
+	useVariableOpSize?: boolean;
 }
 
 export interface OptionOverride {

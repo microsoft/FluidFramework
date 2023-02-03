@@ -131,6 +131,9 @@ describe("Garbage Collection Tests", () => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
 			updateUnusedRoutes: (unusedRoutes: string[]) => {},
+			deleteUnusedNodes: (deletableRoutes: string[]): string[] => {
+				return [];
+			},
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),

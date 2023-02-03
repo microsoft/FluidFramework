@@ -6,6 +6,9 @@
 import { AnchorSet } from "../tree";
 import { ChangeFamily } from "./changeFamily";
 
+/**
+ * @alpha
+ */
 export interface ProgressiveEditBuilder<TChange> {
 	/**
 	 * @returns a copy of the internal change list so far.
@@ -13,13 +16,16 @@ export interface ProgressiveEditBuilder<TChange> {
 	getChanges(): TChange[];
 }
 
+/**
+ * @alpha
+ */
 export abstract class ProgressiveEditBuilderBase<TChange>
 	implements ProgressiveEditBuilder<TChange>
 {
 	private readonly changes: TChange[] = [];
 
 	constructor(
-		private readonly changeFamily: ChangeFamily<unknown, TChange>,
+		protected readonly changeFamily: ChangeFamily<unknown, TChange>,
 		private readonly changeReceiver: (change: TChange) => void,
 		private readonly anchorSet: AnchorSet,
 	) {}
