@@ -20,7 +20,10 @@ function getCallsiteString(msg: Node) {
 /**
  * Map from assertion function name to the index of its message argument.
  */
-const assertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1],["fail", 0]]);
+const assertionFunctions: ReadonlyMap<string, number> = new Map([
+	["assert", 1],
+	["fail", 0],
+]);
 
 /**
  * Given a source file this function will look for all assert functions contained in it, and return the message parameters.
@@ -33,7 +36,7 @@ function getAssertMessageParams(sourceFile: SourceFile): (StringLiteralLike | Nu
 	const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
 	const messageArgs: (StringLiteralLike | NumericLiteral)[] = [];
 	for (const call of calls) {
-        const messageIndex = assertionFunctions.get(call.getExpression().getText());
+		const messageIndex = assertionFunctions.get(call.getExpression().getText());
 		if (messageIndex !== undefined) {
 			const args = call.getArguments();
 			if (args.length >= messageIndex && args[messageIndex] !== undefined) {
@@ -58,7 +61,7 @@ function getAssertMessageParams(sourceFile: SourceFile): (StringLiteralLike | Nu
 						);
 				}
 			}
-        }
+		}
 	}
 	return messageArgs;
 }

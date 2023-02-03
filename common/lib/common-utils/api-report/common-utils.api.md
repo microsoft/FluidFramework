@@ -74,6 +74,9 @@ export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> i
 }
 
 // @public
+export function fail(message: string | number): never;
+
+// @public
 export const fromBase64ToUtf8: (input: string) => string;
 
 // @public
