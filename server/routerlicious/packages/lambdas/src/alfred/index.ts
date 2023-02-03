@@ -171,6 +171,7 @@ async function logTotalConnectionsPerNode(isConnect: boolean, cache?: Redis): Pr
     if (isConnect) {
         cache.incr(keyName).then((val) => {
             connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
+            connectionCountPerNodeMetric.success("ConnectionCount incremented.");
             Lumberjack.info(`Temp Log. TotalConnectionCount key = ${keyName} and val = ${val}`);
         },
         (error) => {
@@ -181,6 +182,7 @@ async function logTotalConnectionsPerNode(isConnect: boolean, cache?: Redis): Pr
     else {
         cache.decr(keyName).then((val) => {
             connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
+            connectionCountPerNodeMetric.success("ConnectionCount decremented.");
             Lumberjack.info(`Temp Log. TotalConnectionCount key = ${keyName} and val = ${val}`);
         },
         (error) => {
