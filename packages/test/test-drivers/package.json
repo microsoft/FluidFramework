@@ -104,8 +104,12 @@
 		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
 		"baselineVersion": "2.0.0-internal.3.0.0",
 		"broken": {
-            "ClassDeclaration_LocalServerTestDriver": {"forwardCompat": false},
-      "ClassDeclaration_TinyliciousTestDriver": {"forwardCompat": false}
-        }
+			"ClassDeclaration_LocalServerTestDriver": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TinyliciousTestDriver": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
