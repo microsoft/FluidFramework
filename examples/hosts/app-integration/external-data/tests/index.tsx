@@ -8,6 +8,7 @@ import ReactDOM from "react-dom";
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
+import { RecoilRoot } from "recoil";
 import { TaskListContainerRuntimeFactory } from "../src/model";
 import type { IAppModel } from "../src/model-interface";
 import { TaskListView } from "../src/view";
@@ -46,7 +47,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	document.title = id;
 
 	// Render it
-	ReactDOM.render(<TaskListView taskList={model.taskList} />, element);
+	ReactDOM.render(
+		<RecoilRoot>
+			<TaskListView taskList={model.taskList} />
+		</RecoilRoot>,
+		element,
+	);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation

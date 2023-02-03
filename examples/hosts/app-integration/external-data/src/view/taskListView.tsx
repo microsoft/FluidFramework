@@ -159,7 +159,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 
 			taskList.off("taskChanged", updateLocalChangeTracker);
 		};
-	}, [taskList]);
+	}, [taskList, setLocalUnsavedChanges]);
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow

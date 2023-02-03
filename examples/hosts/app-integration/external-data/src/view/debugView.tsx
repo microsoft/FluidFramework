@@ -130,7 +130,7 @@ const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewPr
 			<div style={{ margin: "10px 0" }}>
 				Fluid has [no] unsync&apos;d changes (not implemented)
 				<br />
-				External data source has {localUnsavedChanges} unsync'd changes.
+				External data source has {localUnsavedChanges} unsync &apos;d changes.
 				<br />
 				Current sync activity: [idle | fetching | writing | resolving conflicts?] (not
 				implemented)
