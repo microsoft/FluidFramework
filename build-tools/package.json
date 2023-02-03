@@ -31,7 +31,7 @@
 		"clean:nyc": "rimraf nyc/**",
 		"commit": "git-cz",
 		"format": "npm run prettier:fix",
-		"preinstall": "npx only-allow pnpm",
+		"preinstall": "node ../scripts/only-pnpm.cjs",
 		"postinstall": "npm run build:compile",
 		"install:commitlint": "npm install --global @commitlint/config-conventional",
 		"lint": "lerna run lint --no-sort --stream",
