@@ -477,22 +477,23 @@ export class Loader implements IHostLoader {
         };
     }
 
-    private async loadContainer(
-        request: IRequest,
-        resolved: IFluidResolvedUrl,
-        pendingLocalState?: IPendingContainerState,
-    ): Promise<Container> {
-        return Container.load(
-            this,
-            {
-                canReconnect: request.headers?.[LoaderHeader.reconnect],
-                clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-                resolvedUrl: resolved,
-                version: request.headers?.[LoaderHeader.version] ?? undefined,
-                loadMode: request.headers?.[LoaderHeader.loadMode],
-            },
-            pendingLocalState,
-            this.protocolHandlerBuilder,
-        );
-    }
+	private async loadContainer(
+		request: IRequest,
+		resolved: IFluidResolvedUrl,
+		pendingLocalState?: IPendingContainerState,
+	): Promise<Container> {
+		return Container.load(
+			this,
+			{
+				canReconnect: request.headers?.[LoaderHeader.reconnect],
+				clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+				resolvedUrl: resolved,
+				version: request.headers?.[LoaderHeader.version] ?? undefined,
+				loadMode: request.headers?.[LoaderHeader.loadMode],
+				baseLogger: request.headers?.["fluid-base-logger"],
+			},
+			pendingLocalState,
+			this.protocolHandlerBuilder,
+		);
+	}
 }
