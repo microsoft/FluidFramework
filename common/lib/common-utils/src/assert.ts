@@ -14,7 +14,9 @@
  */
 export function assert(condition: boolean, message: string | number): asserts condition {
 	if (!condition) {
-		fail(message);
+		// Note that this can not simply delegate to Fail below,
+		// since that would mean calling `fail` with a message thats not a constant, which is forbidden.
+		throw new Error(formatMessage(message));
 	}
 }
 
@@ -52,7 +54,14 @@ export function assert(condition: boolean, message: string | number): asserts co
  * use numbered error codes instead.
  */
 export function fail(message: string | number): never {
-	throw new Error(
-		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
-	);
+	throw new Error(formatMessage(message));
+}
+
+/**
+ * Format the message for use in error.
+ * This shared utility function just does the message formatting (and not Error creation or throwing)
+ * so that both callers don't get this added to their call stack for the error itself.
+ */
+function formatMessage(message: string | number): string {
+	return typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
 }
