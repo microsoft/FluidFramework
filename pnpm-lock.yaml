@@ -1,5 +1,8 @@
 lockfileVersion: 5.4
 
+overrides:
+  '@types/node': ^14.18.36
+
 importers:
 
   .:
@@ -10203,11 +10206,10 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/test-driver-definitions': '>=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0'
       '@oclif/core': ^1.12.0
-      '@types/node': ^14.18.0
+      '@types/node': ^14.18.36
       applicationinsights: ^2.4.1
       concurrently: ^6.2.0
       eslint: ~8.6.0
-      limiter: ^2.1.0
       prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -10216,7 +10218,6 @@ importers:
       '@fluidframework/test-driver-definitions': 2.0.0-internal.1.4.9
       '@oclif/core': 1.20.4
       applicationinsights: 2.4.1
-      limiter: 2.1.0
     devDependencies:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -31287,10 +31288,6 @@ packages:
   /just-extend/4.2.1:
     resolution: {integrity: sha512-g3UB796vUFIY90VIv/WX3L2c8CS2MdWUww3CNrYmqza1Fg0DURc2K/O4YrnklBdQarSJ/y8JnJYDGc+1iumQjg==}
 
-  /just-performance/4.3.0:
-    resolution: {integrity: sha512-L7RjvtJsL0QO8xFs5wEoDDzzJwoiowRw6Rn/GnvldlchS2JQr9wFYPiwZcDfrbbujEKqKN0tvENdbjXdYhDp5Q==}
-    dev: false
-
   /jwa/1.4.1:
     resolution: {integrity: sha512-qiLX/xhEEFKUAJ6FiBMbes3w9ATzyk5W7Hvzpa/SLYdxNtng+gcurvrI7TbACjIXlsJyr05/S1oUhZrc63evQA==}
     dependencies:
@@ -31682,12 +31679,6 @@ packages:
       - supports-color
       - utf-8-validate
     dev: true
-
-  /limiter/2.1.0:
-    resolution: {integrity: sha512-361TYz6iay6n+9KvUUImqdLuFigK+K79qrUtBsXhJTLdH4rIt/r1y8r1iozwh8KbZNpujbFTSh74mJ7bwbAMOw==}
-    dependencies:
-      just-performance: 4.3.0
-    dev: false
 
   /lines-and-columns/1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}

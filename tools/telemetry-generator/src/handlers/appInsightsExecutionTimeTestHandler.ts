@@ -58,6 +58,5 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
 			console.error(`failed to emit metric ${marginOfErrorMetricName}`, error);
 		}
 
-        telemetryClient.flush();
 	});
 };

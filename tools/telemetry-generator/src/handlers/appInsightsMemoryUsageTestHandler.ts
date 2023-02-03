@@ -4,13 +4,12 @@
  */
 
 import { TelemetryClient } from "applicationinsights";
-import { RateLimiter } from "limiter";
 
 /**
  * This handler emits metrics to the Azure App Insights instance configured by the telemetryClient provided to this handler.
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
-module.exports = function handler(fileData, telemetryClient: TelemetryClient, rateLimiter: RateLimiter) {
+module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
     console.log(`Found ${fileData.tests.length} total benchmark tests to emit`);
 	fileData.tests.forEach(async (testData) => {
 		const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;
@@ -59,6 +58,5 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient, ra
 			console.error(`failed to emit metric ${heapUsedStdDevMetricName}`, error);
 		}
 
-        // telemetryClient.flush();
 	});
 };
