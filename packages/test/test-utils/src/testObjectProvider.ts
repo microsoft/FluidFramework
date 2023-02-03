@@ -154,10 +154,18 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * any expected events that have not occurred.
  */
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
-	/** Even if these error events are logged, tests should still be allowed to pass */
-	private readonly allowedErrors: string[] = [
+	/**
+	 * Even if these error events are logged, tests should still be allowed to pass
+	 * Additionally, if downgrade is true, then log as generic (e.g. to avoid polluting the e2e test logs)
+	 */
+	private readonly allowedErrors: { eventName: string; downgrade?: true }[] = [
 		// This log was removed in current version as unnecessary, but it's still present in previous versions
-		"fluid:telemetry:Container:NoRealStorageInDetachedContainer",
+		{
+			eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer",
+			downgrade: true,
+		},
+		// This log's category changes depending on the op latency. test results shouldn't be affected but if we see lots we'd like an alert from the logs.
+		{ eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
 	];
 
 	constructor(private readonly baseLogger: ITelemetryBaseLogger) {
@@ -207,10 +215,15 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
 			}
 		}
 		if (event.category === "error") {
-			if (this.allowedErrors.includes(event.eventName)) {
-				event.category = "generic";
-			} else {
+			// Check to see if this error is allowed and if its category should be downgraded
+			const allowedError = this.allowedErrors.find(
+				({ eventName }) => eventName === event.eventName,
+			);
+
+			if (allowedError === undefined) {
 				this.unexpectedErrors.push(event);
+			} else if (allowedError.downgrade) {
+				event.category = "generic";
 			}
 		}
 

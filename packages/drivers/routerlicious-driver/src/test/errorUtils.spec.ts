@@ -8,7 +8,7 @@ import { DriverErrorType, IThrottlingWarning } from "@fluidframework/driver-defi
 import {
 	createR11sNetworkError,
 	throwR11sNetworkError,
-	R11sErrorType,
+	RouterliciousErrorType,
 	errorObjectFromSocketError,
 } from "../errorUtils";
 
@@ -29,7 +29,10 @@ describe("ErrorUtils", () => {
 		it("creates non-retriable not-found error on 404", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 404);
-			assert.strictEqual(error.errorType, R11sErrorType.fileNotFoundOrAccessDeniedError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
+			);
 			assert.strictEqual(error.canRetry, false);
 		});
 		it("creates retriable error on 429 with retry-after", () => {
@@ -106,7 +109,7 @@ describe("ErrorUtils", () => {
 					throwR11sNetworkError(message, 404);
 				},
 				{
-					errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
+					errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
 					canRetry: false,
 				},
 			);
@@ -240,7 +243,10 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, R11sErrorType.fileNotFoundOrAccessDeniedError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
+			);
 			assert.strictEqual(error.canRetry, false);
 			assert.strictEqual((error as any).statusCode, 404);
 		});

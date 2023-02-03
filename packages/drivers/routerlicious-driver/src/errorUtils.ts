@@ -12,8 +12,16 @@ import {
 } from "@fluidframework/driver-utils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
-export enum R11sErrorType {
+/**
+ * Routerlicious Error types
+ * Different error types that may be thrown by the routerlicious driver
+ */
+export enum RouterliciousErrorType {
+	/**
+	 * File not found, or file deleted during session
+	 */
 	fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
+
 	sslCertError = "sslCertError",
 }
 
@@ -48,7 +56,7 @@ export interface IR11sSocketError {
 }
 
 export interface IR11sError {
-	readonly errorType: R11sErrorType;
+	readonly errorType: RouterliciousErrorType;
 	readonly message: string;
 	canRetry: boolean;
 }
@@ -69,7 +77,11 @@ export function createR11sNetworkError(
 			// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 			// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
 			if (errorMessage.includes("failed, reason: self signed certificate")) {
-				return new NonRetryableError(errorMessage, R11sErrorType.sslCertError, props);
+				return new NonRetryableError(
+					errorMessage,
+					RouterliciousErrorType.sslCertError,
+					props,
+				);
 			}
 			return new GenericNetworkError(
 				errorMessage,
@@ -82,7 +94,7 @@ export function createR11sNetworkError(
 		case 403:
 			return new AuthorizationError(errorMessage, undefined, undefined, props);
 		case 404:
-			const errorType = R11sErrorType.fileNotFoundOrAccessDeniedError;
+			const errorType = RouterliciousErrorType.fileNotFoundOrAccessDeniedError;
 			return new NonRetryableError(errorMessage, errorType, props);
 		case 429:
 			return createGenericNetworkError(errorMessage, { canRetry: true, retryAfterMs }, props);
