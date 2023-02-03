@@ -329,36 +329,26 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
 	if (prereleaseDepNames.releaseGroups.size > 0 || prereleaseDepNames.packages.size > 0) {
 		if (prereleaseDepNames.packages.size > 0) {
 			let packageSection = "";
-			let cmd = "\n";
 			for (const [pkg, depVersion] of prereleaseDepNames.packages.entries()) {
-				packageSection += `${pkg} = ${depVersion}`;
-				cmd += `${command?.config.bin} ${command?.id} -p ${packageSection}\n`;
+				packageSection = `${pkg} = ${depVersion}`;
+				prompt.sections.push({
+					title: "RELEASE PACKAGE",
+					message: `Release this package first:\n\n${chalk.blue(packageSection)}`,
+					cmd: `${command?.config.bin} release -p ${pkg}`,
+				});
 			}
-
-			prompt.sections.push({
-				title: "FIRST",
-				message: `Release these packages first:\n\n${chalk.blue(
-					packageSection,
-				)} by running the following command`,
-				cmd,
-			});
 		}
 
 		if (prereleaseDepNames.releaseGroups.size > 0) {
 			let packageSection = "";
-			let cmd = "\n";
 			for (const [rg, depVersion] of prereleaseDepNames.releaseGroups.entries()) {
-				packageSection += `${rg} = ${depVersion}`;
-				cmd += `${command?.config.bin} ${command?.id} -g ${packageSection}\n`;
+				packageSection = `${rg} = ${depVersion}`;
+				prompt.sections.push({
+					title: "RELEASE RELEASE GROUP",
+					message: `Release this release group:\n\n${chalk.blue(packageSection)}`,
+					cmd: `${command?.config.bin} release -g ${rg}`,
+				});
 			}
-
-			prompt.sections.push({
-				title: "NEXT",
-				message: `Release these release groups:\n\n${chalk.blue(
-					packageSection,
-				)} by running the following command`,
-				cmd,
-			});
 		}
 	}
 

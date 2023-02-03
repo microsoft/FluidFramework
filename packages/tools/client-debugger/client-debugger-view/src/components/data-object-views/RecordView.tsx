@@ -38,7 +38,7 @@ export function RecordDataView(props: RecordDataViewProps): React.ReactElement {
 					<Accordion
 						header={
 							<div>
-								<b>"{key}"</b>
+								<b>&quot;{key}&quot;</b>
 							</div>
 						}
 					>

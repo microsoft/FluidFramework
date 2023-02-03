@@ -7,6 +7,7 @@ export { Anchor, AnchorLocator, AnchorSet } from "./anchorSet";
 export {
 	ITreeCursor,
 	CursorLocationType,
+	castCursorToSynchronous,
 	mapCursorField,
 	mapCursorFields,
 	forEachNode,
@@ -67,3 +68,5 @@ import * as Delta from "./delta";
 export { Delta };
 
 export { SparseNode, getDescendant } from "./sparseTree";
+
+export { isSkipMark, emptyDelta } from "./deltaUtil";
