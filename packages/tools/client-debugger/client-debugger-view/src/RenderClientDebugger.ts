@@ -13,14 +13,14 @@ import { FluidClientDebuggers } from "./Debugger";
  *
  * @param targetElement - The HTML element takes the client debugger view.
  *
- * @returns `true` if the debug view was succesfully rendered, otherwise `false`.
+ * @returns `true` if the debug view was successfully rendered, otherwise `false`.
  */
 export async function renderClientDebuggerView(
 	// eslint-disable-next-line @rushstack/no-new-null
 	targetElement: HTMLElement | null,
 ): Promise<boolean> {
 	if (targetElement === null) {
-		console.log("Provided null targetElement.");
+		console.warn("Caller provided null targetElement parameter.");
 		return false;
 	}
 
@@ -38,9 +38,3 @@ export async function renderClientDebuggerView(
 		}
 	});
 }
-
-// #2: Render "debugger frame" - user passes in element, we wrap that element in a frame containing the debug view
-//    + UI for showing / hiding the "debugger panel".
-//   renderWithClientDebugger(appElement);
-//   const parent = appElement.parent;
-//   render app and frame
