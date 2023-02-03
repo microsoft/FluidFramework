@@ -146,7 +146,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				);
 				const newField = sourceField.splice(startIndex, endIndex - startIndex);
 				const field = this.addFieldAsDetached(newField);
-				// const field = this.detachRangeOfChildren(sourceField, index, index + count);
 				if (id !== undefined) {
 					moves.set(id, field);
 				} else {
