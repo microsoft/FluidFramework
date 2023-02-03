@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -20,11 +21,16 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @alpha (undocumented)
-export interface AttributionKey {
-    // (undocumented)
-    seq: number;
-    type: "op";
+// @alpha @sealed
+export interface AttributionPolicy {
+    // @internal
+    attach: (client: Client) => void;
+    // @internal
+    detach: () => void;
+    // @internal (undocumented)
+    isAttached: boolean;
+    // @internal
+    serializer: IAttributionCollectionSerializer;
 }
 
 // @public (undocumented)
@@ -249,6 +255,9 @@ export function createDetachedLocalReferencePosition(refType?: ReferenceType): L
 // @public (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
+// @alpha (undocumented)
+export function createInsertOnlyAttributionPolicy(): AttributionPolicy;
+
 // @public (undocumented)
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg;
 
@@ -303,6 +312,16 @@ export interface IAttributionCollection<T> {
     readonly length: number;
     // @internal (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;
+}
+
+// @internal @sealed (undocumented)
+export interface IAttributionCollectionSerializer {
+    populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
+    // (undocumented)
+    serializeAttributionCollections(segments: Iterable<{
+        attribution?: IAttributionCollection<AttributionKey>;
+        cachedLength: number;
+    }>): SerializedAttributionCollection;
 }
 
 // @public (undocumented)
@@ -433,6 +452,9 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 
 // @public (undocumented)
 export interface IMergeTreeAttributionOptions {
+    // @alpha
+    policyFactory?: () => AttributionPolicy;
+    // @alpha
     track?: boolean;
 }
 
@@ -1170,6 +1192,15 @@ export class SegmentGroupCollection {
     pop?(): SegmentGroup | undefined;
     // (undocumented)
     get size(): number;
+}
+
+// @internal (undocumented)
+export interface SerializedAttributionCollection {
+    // (undocumented)
+    length: number;
+    // (undocumented)
+    posBreakpoints: number[];
+    seqs: (number | AttributionKey)[];
 }
 
 // @internal (undocumented)

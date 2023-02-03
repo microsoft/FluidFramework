@@ -7,8 +7,8 @@ import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
 import { TaggedChange, RevisionTag, tagChange, tagInverse } from "../rebase";
 import { SimpleDependee } from "../dependency-tracking";
-import { AnchorSet, Delta } from "../tree";
-import { brand, Brand, fail, RecursiveReadonly } from "../../util";
+import { AnchorSet, Delta, emptyDelta } from "../tree";
+import { brand, Brand, fail, getOrCreate, RecursiveReadonly } from "../../util";
 
 export interface Commit<TChangeset> {
 	sessionId: SessionId;
@@ -173,7 +173,7 @@ export class EditManager<
 				...newCommit,
 				changeset: change.change,
 			});
-			return Delta.empty;
+			return emptyDelta;
 		}
 
 		const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
@@ -378,10 +378,7 @@ export class EditManager<
 	}
 
 	private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {
-		if (!this.branches.has(sessionId)) {
-			this.branches.set(sessionId, { localChanges: [], refSeq });
-		}
-		return this.branches.get(sessionId) as Branch<TChangeset>;
+		return getOrCreate(this.branches, sessionId, () => ({ localChanges: [], refSeq }));
 	}
 
 	private inverseFromCommit(commit: Commit<TChangeset>): TaggedChange<TChangeset> {

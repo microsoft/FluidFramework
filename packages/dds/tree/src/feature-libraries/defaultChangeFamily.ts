@@ -70,6 +70,7 @@ export const defaultChangeFamily = new DefaultChangeFamily();
 
 /**
  * Default editor for transactions.
+ * @alpha
  */
 export interface IDefaultEditBuilder {
 	setValue(path: UpPath, value: Value): void;
@@ -100,6 +101,16 @@ export interface IDefaultEditBuilder {
 	 * is bounded by the lifetime of this edit builder.
 	 */
 	sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder;
+
+	move(
+		sourcePath: UpPath | undefined,
+		sourceField: FieldKey,
+		sourceIndex: number,
+		count: number,
+		destPath: UpPath | undefined,
+		destField: FieldKey,
+		destIndex: number,
+	): void;
 }
 
 /**
@@ -147,6 +158,35 @@ export class DefaultEditBuilder
 				this.modularBuilder.submitChange(parent, field, optional.identifier, change);
 			},
 		};
+	}
+
+	public move(
+		sourcePath: UpPath | undefined,
+		sourceField: FieldKey,
+		sourceIndex: number,
+		count: number,
+		destPath: UpPath | undefined,
+		destField: FieldKey,
+		destIndex: number,
+	): void {
+		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex);
+		this.modularBuilder.submitChanges(
+			[
+				{
+					path: sourcePath,
+					field: sourceField,
+					fieldKind: sequence.identifier,
+					change: brand(changes[0]),
+				},
+				{
+					path: destPath,
+					field: destField,
+					fieldKind: sequence.identifier,
+					change: brand(changes[1]),
+				},
+			],
+			brand(0),
+		);
 	}
 
 	public sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder {
@@ -204,6 +244,9 @@ export class DefaultEditBuilder
 	}
 }
 
+/**
+ * @alpha
+ */
 export interface ValueFieldEditBuilder {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
@@ -212,6 +255,9 @@ export interface ValueFieldEditBuilder {
 	set(newContent: ITreeCursor): void;
 }
 
+/**
+ * @alpha
+ */
 export interface OptionalFieldEditBuilder {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`
@@ -221,6 +267,9 @@ export interface OptionalFieldEditBuilder {
 	set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
 }
 
+/**
+ * @alpha
+ */
 export interface SequenceFieldEditBuilder {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.

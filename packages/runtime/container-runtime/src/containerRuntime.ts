@@ -1791,7 +1791,7 @@ export class ContainerRuntime
 			if (!this.shouldContinueReconnecting()) {
 				this.closeFn(
 					DataProcessingError.create(
-						"Runtime detected too many reconnects with no progress syncing local ops. Batch of ops is likely too large (over 1Mb)",
+						"Runtime detected too many reconnects with no progress syncing local ops.",
 						"setConnectionState",
 						undefined,
 						{
@@ -2356,6 +2356,21 @@ export class ContainerRuntime
 			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
 		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
 		this.dataStores.updateUnusedRoutes(dataStoreRoutes);
+	}
+
+	/**
+	 * This is called to delete objects from the runtime
+	 * @param unusedRoutes - object routes and sub routes that can be deleted
+	 * @returns - routes of objects deleted from the runtime
+	 */
+	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
+		const deletedRoutes: string[] = [];
+
+		const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
+		deletedRoutes.push(...deletedDataStoreRoutes);
+
+		return deletedRoutes;
 	}
 
 	/**

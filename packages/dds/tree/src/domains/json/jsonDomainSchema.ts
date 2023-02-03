@@ -22,35 +22,56 @@ import { brand } from "../../util";
  */
 const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
 
+/**
+ * @alpha
+ */
 export const jsonObject: NamedTreeSchema = namedTreeSchema({
 	name: brand("Json.Object"),
 	extraLocalFields: fieldSchema(FieldKinds.optional, jsonTypes),
 });
 
+/**
+ * @alpha
+ */
 export const jsonArray: NamedTreeSchema = namedTreeSchema({
 	name: brand("Json.Array"),
 	localFields: { [EmptyKey]: fieldSchema(FieldKinds.sequence, jsonTypes) },
 });
 
+/**
+ * @alpha
+ */
 export const jsonNumber: NamedTreeSchema = namedTreeSchema({
 	name: brand("Json.Number"),
 	value: ValueSchema.Number,
 });
 
+/**
+ * @alpha
+ */
 export const jsonString: NamedTreeSchema = namedTreeSchema({
 	name: brand("Json.String"),
 	value: ValueSchema.String,
 });
 
+/**
+ * @alpha
+ */
 export const jsonNull: NamedTreeSchema = namedTreeSchema({
 	name: brand("Json.Null"),
 });
 
+/**
+ * @alpha
+ */
 export const jsonBoolean: NamedTreeSchema = namedTreeSchema({
 	name: brand("Json.Boolean"),
 	value: ValueSchema.Boolean,
 });
 
+/**
+ * @alpha
+ */
 export const jsonSchemaData: SchemaData = {
 	treeSchema: mapFromNamed([
 		jsonObject,
@@ -65,4 +86,7 @@ export const jsonSchemaData: SchemaData = {
 
 jsonSchemaData.treeSchema.forEach((_, key) => jsonTypes.add(key));
 
+/**
+ * @alpha
+ */
 export const jsonRoot: FieldSchema = fieldSchema(FieldKinds.value, jsonTypes);
