@@ -765,27 +765,14 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 		});
 
-		describe("When deleting the last node in the field", () => {
-			it("leaves an empty field", () => {
+		describe("Does not leave an empty field", () => {
+			it("when deleting the last node in the field", () => {
 				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-				const content: JsonableTree[] = [
-					{
-						type: jsonObject.name,
-						fields: {
-							testField1: [
-								{ type: jsonNumber.name, value: 1 },
-								{ type: jsonNumber.name, value: 2 },
-							],
-							testField2: [
-								{ type: jsonNumber.name, value: 1 },
-								{ type: jsonNumber.name, value: 2 },
-							],
-						},
-					},
-				];
-
+				const content = {
+					testField1: 1,
+					testField2: 1,
+				};
 				const testField1: FieldKey = brand("testField1");
-
 				const delta: Delta.Root = new Map([
 					[
 						rootFieldKeySymbol,
@@ -800,7 +787,7 @@ export function testForest(config: ForestTestConfiguration): void {
 												shallow: [
 													{
 														type: Delta.MarkType.Delete,
-														count: 2,
+														count: 1,
 													},
 												],
 											},
@@ -811,26 +798,64 @@ export function testForest(config: ForestTestConfiguration): void {
 						},
 					],
 				]);
-
+				const expected = [
+					{
+						testField2: 1,
+					},
+				];
+				initializeForest(forest, [singleJsonCursor(content)]);
+				forest.applyDelta(delta);
+				const readCursor = forest.allocateCursor();
+				moveToDetachedField(forest, readCursor);
+				const actual = mapCursorField(readCursor, cursorToJsonObject);
+				readCursor.free();
+				assert.deepEqual(actual, expected);
+			});
+			it("when moving the last node in the field", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+				initializeForest(forest, nestedContent.map(singleTextCursor));
+				const moveId = brandOpaque<Delta.MoveId>(0);
+				const moveOut: Delta.MoveOut = {
+					type: Delta.MarkType.MoveOut,
+					count: 1,
+					moveId,
+				};
+				const moveIn: Delta.MoveIn = {
+					type: Delta.MarkType.MoveIn,
+					count: 1,
+					moveId,
+				};
+				const modify: Delta.NodeChanges = {
+					fields: new Map([
+						[xField, { shallow: [moveOut] }],
+						[yField, { shallow: [1, moveIn] }],
+					]),
+				};
+				const delta: Delta.Root = new Map([
+					[rootFieldKeySymbol, { beforeShallow: [{ index: 0, ...modify }] }],
+				]);
+				forest.applyDelta(delta);
 				const expected: JsonableTree[] = [
 					{
 						type: jsonObject.name,
 						fields: {
-							testField2: [
-								{ type: jsonNumber.name, value: 1 },
-								{ type: jsonNumber.name, value: 2 },
+							y: [
+								{
+									type: jsonNumber.name,
+									value: 1,
+								},
+								{
+									type: jsonNumber.name,
+									value: 0,
+								},
 							],
 						},
 					},
 				];
-
-				initializeForest(forest, content.map(singleTextCursor));
-				forest.applyDelta(delta);
 				const readCursor = forest.allocateCursor();
 				moveToDetachedField(forest, readCursor);
 				const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
 				readCursor.free();
-
 				assert.deepEqual(actual, expected);
 			});
 		});

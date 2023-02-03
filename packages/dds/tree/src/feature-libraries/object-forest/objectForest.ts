@@ -150,9 +150,9 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 					moves.set(id, field);
 				} else {
 					this.delete(field);
-					if (sourceField.length === 0) {
-						parent.fields.delete(key);
-					}
+				}
+				if (sourceField.length === 0) {
+					parent.fields.delete(key);
 				}
 			},
 			onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {
