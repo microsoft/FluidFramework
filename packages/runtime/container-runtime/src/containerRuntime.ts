@@ -358,15 +358,6 @@ export interface IGCRuntimeOptions {
 	 * Allows additional GC options to be passed.
 	 */
 	[key: string]: any;
-
-	/**
-	 * UNDOCUMENTED (will delete this comment)
-	 * gcContainerMinGeneration can be provided by the container author to specify the min runtime version required at creation time.
-	 * The value provided at creation time is persisted, and compared with the value provided at each load.
-	 *
-	 * If the persisted value doesn't match the value provided on load, GC Sweep will be disabled to protect against dataloss in case
-	 * containers with an older Generation were found to have GC-impacting bugs.
-	 */
 }
 
 export interface ISummaryRuntimeOptions {
