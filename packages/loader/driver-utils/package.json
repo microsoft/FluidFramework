@@ -101,6 +101,14 @@
   "typeValidation": {
     "version": "2.0.0-internal.2.3.1",
     "baselineRange": "2.0.0-internal.2.3.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_AuthorizationError": {"forwardCompat": false},
+      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {"forwardCompat": false},
+      "ClassDeclaration_FluidInvalidSchemaError": {"forwardCompat": false},
+      "ClassDeclaration_GenericNetworkError": {"forwardCompat": false},
+      "ClassDeclaration_LocationRedirectionError": {"forwardCompat": false},
+      "ClassDeclaration_ThrottlingError": {"forwardCompat": false},
+      "ClassDeclaration_UsageError": {"forwardCompat": false}
+    }
   }
 }
