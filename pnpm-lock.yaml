@@ -6809,6 +6809,7 @@ importers:
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/merge-tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
@@ -6850,6 +6851,7 @@ importers:
       '@fluidframework/build-tools': 0.8.0
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
@@ -9625,6 +9627,8 @@ importers:
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-jest: ^27.1.5
+      eslint-plugin-react: ^7.28.0
+      eslint-plugin-react-hooks: ^4.6.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
       prettier: ~2.6.2
@@ -9687,6 +9691,8 @@ importers:
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-jest: 27.2.1_e7w73bdyuoy63spbnf7wdyrtai
+      eslint-plugin-react: 7.28.0_eslint@8.6.0
+      eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
       jest: 26.6.3
       jest-junit: 10.0.0
       prettier: 2.6.2
@@ -23842,7 +23848,7 @@ packages:
       - supports-color
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -26064,6 +26070,15 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0
+    dependencies:
+      eslint: 8.6.0
+    dev: true
+
+  /eslint-plugin-react-hooks/4.6.0_eslint@8.6.0:
+    resolution: {integrity: sha512-oFc7Itz9Qxh2x4gNHStv3BqJq54ExXmfC+a1NjAta66IAN87Wu0R/QArgIS9qKzX3dXKPI9H5crl9QchNMY9+g==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0
     dependencies:
       eslint: 8.6.0
     dev: true
