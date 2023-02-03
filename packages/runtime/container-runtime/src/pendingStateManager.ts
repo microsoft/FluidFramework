@@ -175,11 +175,13 @@ export class PendingStateManager implements IDisposable {
 	 * Called when a message is submitted locally. Adds the message and the associated details to the pending state
 	 * queue.
 	 * @param type - The container message type.
+	 * @param clientSequenceNumber - The clientSequenceNumber associated with the message.
 	 * @param content - The message content.
 	 * @param localOpMetadata - The local metadata associated with the message.
 	 */
 	public onSubmitMessage(
 		type: ContainerMessageType,
+		clientSequenceNumber: number,
 		referenceSequenceNumber: number,
 		content: any,
 		localOpMetadata: unknown,
@@ -188,7 +190,7 @@ export class PendingStateManager implements IDisposable {
 		const pendingMessage: IPendingMessage = {
 			type: "message",
 			messageType: type,
-			clientSequenceNumber: -1, // dummy value (not to be used anywhere)
+			clientSequenceNumber,
 			referenceSequenceNumber,
 			content,
 			localOpMetadata,
@@ -245,6 +247,21 @@ export class PendingStateManager implements IDisposable {
 			0x169 /* "No pending message found for this remote message" */,
 		);
 		this.pendingMessages.shift();
+
+		// Processing part - Verify that there has been no data corruption.
+		// The clientSequenceNumber of the incoming message must match that of the pending message.
+		if (pendingMessage.clientSequenceNumber !== message.clientSequenceNumber) {
+			// Close the container because this could indicate data corruption.
+			const error = DataProcessingError.create(
+				"pending local message clientSequenceNumber mismatch",
+				"unexpectedAckReceived",
+				message,
+				{ expectedClientSequenceNumber: pendingMessage.clientSequenceNumber },
+			);
+
+			this.stateHandler.close(error);
+			return;
+		}
 
 		// Post-processing part - If we are processing a batch then this could be the last message in the batch.
 		this.maybeProcessBatchEnd(message);
@@ -312,6 +329,8 @@ export class PendingStateManager implements IDisposable {
 								hasBatchStart: batchBeginMetadata === true,
 								hasBatchEnd: batchEndMetadata === false,
 								messageType: message.type,
+								batchStartSequenceNumber:
+									this.pendingBatchBeginMessage.clientSequenceNumber,
 								pendingMessagesCount: this.pendingMessagesCount,
 							},
 						),

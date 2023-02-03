@@ -107,6 +107,7 @@ describe("Outbox", () => {
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		onSubmitMessage: (
 			type: ContainerMessageType,
+			_clientSequenceNumber: number,
 			referenceSequenceNumber: number,
 			content: any,
 			_localOpMetadata: unknown,
