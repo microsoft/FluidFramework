@@ -611,7 +611,6 @@ export class SummaryWriter implements ISummaryWriter {
             const logTailOpMessage = await this.opStorage.find(query, { "operation.sequenceNumber": 1 });
             logTail = logTailOpMessage.map((log) => log.operation);
         }
-
         
         Lumberjack.info(`LogTail of length ${logTail.length} fetched from seq no ${gt} to ${lt}`, this.lumberProperties);
 

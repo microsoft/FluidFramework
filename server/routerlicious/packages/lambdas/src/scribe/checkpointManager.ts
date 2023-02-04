@@ -85,7 +85,7 @@ export class CheckpointManager implements ICheckpointManager {
                 const expectedSequenceNumber = pending[pending.length - 1].operation.sequenceNumber;
                 const lastDelta = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber-1, expectedSequenceNumber + 1);
                 
-                // Check again after a delay to see if the last pending op has been persisted to op storage
+                // If we don't get the expected delta, retry after a delay
                 if (lastDelta.length === 0 || lastDelta[0].sequenceNumber < expectedSequenceNumber) {
                     const lumberjackProperties = {
                         ...getLumberBaseProperties(this.documentId, this.tenantId),
