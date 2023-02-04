@@ -19,7 +19,11 @@ import {
  */
 export function sendGCUnexpectedUsageEvent(
 	mc: MonitoringContext,
-	event: ITelemetryGenericEvent & { category: "error" | "generic"; isSummarizerClient: boolean; gcEnforcementDisabled: boolean },
+	event: ITelemetryGenericEvent & {
+		category: "error" | "generic";
+		isSummarizerClient: boolean;
+		gcEnforcementDisabled: boolean;
+	},
 	packagePath: readonly string[] | undefined,
 	error?: unknown,
 ) {
@@ -55,10 +59,15 @@ export function shouldDisableGcEnforcementForOldContainer(
 	const r = /^(\d{1,4}\.\d{1,4}\.\d{1,4})(?:-internal\.(\d{1,4}\.\d{1,4}\.\d{1,4}))?$/;
 
 	function padSemVer(semver: string): string {
-		return semver.split(".").map((x) => x.padStart(4, "0")).join(".");
+		return semver
+			.split(".")
+			.map((x) => x.padStart(4, "0"))
+			.join(".");
 	}
-	
-	function makeVersionComparableAsString(version: string | undefined): string | { fail: "undefined" | "invalid" } {
+
+	function makeVersionComparableAsString(
+		version: string | undefined,
+	): string | { fail: "undefined" | "invalid" } {
 		if (version === undefined) {
 			return { fail: "undefined" };
 		}
@@ -69,23 +78,27 @@ export function shouldDisableGcEnforcementForOldContainer(
 		}
 		const [_full, external, internal] = m;
 		const paddedExternal = padSemVer(external);
-		return internal !== undefined ? `${paddedExternal}-internal.${padSemVer(internal)}` : `${paddedExternal}RELEASE`;
+		return internal !== undefined
+			? `${paddedExternal}-internal.${padSemVer(internal)}`
+			: `${paddedExternal}RELEASE`;
 	}
 
-	const comparableMinVersion = makeVersionComparableAsString(gcEnforcementMinCreateContainerRuntimeVersion);
+	const comparableMinVersion = makeVersionComparableAsString(
+		gcEnforcementMinCreateContainerRuntimeVersion,
+	);
 	if (typeof comparableMinVersion !== "string") {
 		// No valid min version was provided, so don't disable
 		return false;
 	}
-	
-	const comparablePersistedVersion = makeVersionComparableAsString(createContainerRuntimeVersion); //*  ?? "0.0.0-internal.0.0.0";
+
+	const comparablePersistedVersion = makeVersionComparableAsString(createContainerRuntimeVersion);
 
 	if (typeof comparablePersistedVersion !== "string") {
 		// If undefined, this file predates the createContainerRuntimeVersion metadata, so it's older than whatever min version was provided, so we should disable
 		// Otherwise it's invalid (e.g. -dev version) and we should NOT disable
 		return comparablePersistedVersion.fail === "undefined";
 	}
-	
+
 	// If the persisted version is less than the min version according to string comparison rules, then we need to disable GC enforcement
-	return comparablePersistedVersion < comparableMinVersion;	
+	return comparablePersistedVersion < comparableMinVersion;
 }

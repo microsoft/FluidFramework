@@ -1092,10 +1092,13 @@ export class ContainerRuntime
 
 		this._connected = this.context.connected;
 
-		const rawGcEnforcementMinVersionOption = this.runtimeOptions.gcOptions[gcEnforcementMinCreateContainerRuntimeVersionOption];
+		const rawGcEnforcementMinVersionOption =
+			this.runtimeOptions.gcOptions[gcEnforcementMinCreateContainerRuntimeVersionOption];
 		this.disableGcTombstoneEnforcement = shouldDisableGcEnforcementForOldContainer(
 			this.createContainerMetadata.createContainerRuntimeVersion,
-			typeof rawGcEnforcementMinVersionOption === "string" ? rawGcEnforcementMinVersionOption : undefined,
+			typeof rawGcEnforcementMinVersionOption === "string"
+				? rawGcEnforcementMinVersionOption
+				: undefined,
 		);
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));

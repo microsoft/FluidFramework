@@ -854,7 +854,8 @@ export abstract class FluidDataStoreContext
 					eventName: "GC_Tombstone_DataStore_Changed",
 					category: this.throwOnTombstoneUsage ? "error" : "generic",
 					isSummarizerClient: this.clientDetails.type === summarizerClientType,
-					gcEnforcementDisabled: (this.containerRuntime as ContainerRuntime).disableGcTombstoneEnforcement,
+					gcEnforcementDisabled: (this.containerRuntime as ContainerRuntime)
+						.disableGcTombstoneEnforcement,
 					callSite,
 				},
 				this.pkg,
@@ -1101,7 +1102,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 				category: "error",
 				isSummarizerClient:
 					this.containerRuntime.clientDetails.type === summarizerClientType,
-				gcEnforcementDisabled: (this.containerRuntime as ContainerRuntime).disableGcTombstoneEnforcement,
+				gcEnforcementDisabled: (this.containerRuntime as ContainerRuntime)
+					.disableGcTombstoneEnforcement,
 			},
 			this.pkg,
 		);

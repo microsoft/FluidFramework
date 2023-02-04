@@ -580,7 +580,8 @@ export class GarbageCollector implements IGarbageCollector {
 			// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
 			// other existing documents, GC is enabled.
 			this.gcEnabled = prevSummaryGCVersion > 0;
-			this.sweepEnabled = (metadata?.sweepEnabled ?? false) && !this.runtime.disableGcTombstoneEnforcement;
+			this.sweepEnabled =
+				(metadata?.sweepEnabled ?? false) && !this.runtime.disableGcTombstoneEnforcement;
 			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 			this.sweepTimeoutMs =
 				metadata?.sweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this

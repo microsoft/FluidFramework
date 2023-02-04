@@ -787,7 +787,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						: "GC_Deleted_Blob_Requested",
 				category: shouldFail ? "error" : "generic",
 				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-				gcEnforcementDisabled: (this.runtime as ContainerRuntime).disableGcTombstoneEnforcement,
+				gcEnforcementDisabled: (this.runtime as ContainerRuntime)
+					.disableGcTombstoneEnforcement,
 			},
 			[BlobManager.basePath],
 			error,

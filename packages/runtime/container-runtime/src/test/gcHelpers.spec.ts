@@ -6,13 +6,7 @@
 import { strict as assert } from "assert";
 import { shouldDisableGcEnforcementForOldContainer } from "../garbageCollectionHelpers";
 
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-describe.only("Garbage Collection Helpers Tests", () => {
+describe("Garbage Collection Helpers Tests", () => {
 	describe("shouldDisableGcEnforcementForOldContainer", () => {
 		const testCases: {
 			description: string;
@@ -75,19 +69,26 @@ describe.only("Garbage Collection Helpers Tests", () => {
 				expectedShouldDisableValue: false,
 			},
 		];
-		testCases.forEach(({
-			description,
-			createContainerRuntimeVersion,
-			gcEnforcementMinCreateContainerRuntimeVersion,
-			expectedShouldDisableValue,
-		}) => {
-			it(description, () => {
-				const shouldDisable = shouldDisableGcEnforcementForOldContainer(
-					createContainerRuntimeVersion,
-					gcEnforcementMinCreateContainerRuntimeVersion);
-				assert.equal(shouldDisable, expectedShouldDisableValue, "sweepEnabled incorrect");
-			});
-		});
+		testCases.forEach(
+			({
+				description,
+				createContainerRuntimeVersion,
+				gcEnforcementMinCreateContainerRuntimeVersion,
+				expectedShouldDisableValue,
+			}) => {
+				it(description, () => {
+					const shouldDisable = shouldDisableGcEnforcementForOldContainer(
+						createContainerRuntimeVersion,
+						gcEnforcementMinCreateContainerRuntimeVersion,
+					);
+					assert.equal(
+						shouldDisable,
+						expectedShouldDisableValue,
+						"sweepEnabled incorrect",
+					);
+				});
+			},
+		);
 
 		it("sort test", () => {
 			function compareFn(a: string, b: string) {
