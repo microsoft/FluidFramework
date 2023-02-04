@@ -38,6 +38,7 @@
 		"test:coverage": "npm run test:mocha:coverage",
 		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
 		"test:mocha:coverage": "nyc npm run mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:mocha:multireport": "npm run test:mocha -- --reporter mocha-multi-reporters --reporter-options configFile=testConfig.json",
 		"tsc": "tsc"
 	},
 	"nyc": {
@@ -86,7 +87,9 @@
 		"eslint-config-prettier": "~8.5.0",
 		"eslint-plugin-chai-expect": "~3.0.0",
 		"events": "^3.1.0",
-		"mocha": "^10.2.0",
+        "mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",

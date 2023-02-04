@@ -42,6 +42,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\" --unhandled-rejections=strict",
+"test:mocha:multireport": "npm run test:mocha -- --reporter mocha-multi-reporters --reporter-options configFile=testConfig.json",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "nyc npm run test:mocha:report",
 		"tsc": "tsc"
@@ -94,7 +95,9 @@
 		"eslint-config-oclif": "^4",
 		"eslint-config-oclif-typescript": "^1.0.3",
 		"eslint-config-prettier": "~8.5.0",
-		"mocha": "^10.2.0",
+        "mocha": "^10.2.0",
+        "mocha-json-output-reporter": "^2.0.1",
+        "mocha-multi-reporters": "^1.5.1",
 		"nyc": "^15.1.0",
 		"oclif": "^3.7.0",
 		"prettier": "~2.6.2",
