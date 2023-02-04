@@ -33,41 +33,36 @@ global.should = chai.should();
 chai.use(sinonChai);
 chai.use(chaiAsPromised);
 
-global.PropertyFactory =
-    require("@fluid-experimental/property-properties").PropertyFactory;
+global.PropertyFactory = require("@fluid-experimental/property-properties").PropertyFactory;
 
 [
-    "HFDM.Redis.HfdmRedisClient",
-    "HFDM.ServerUtils.BaseServer",
-    "HFDM.PropertyGraphStore.DynamoDB",
-    "HFDM.PropertyGraph.BasePropertyGraph",
-    "HFDM.MaterializedHistoryServer.LoadManager",
-    "HFDM.MaterializedHistoryService.Server",
-    "HFDM.Utils.RequestUtils",
+	"HFDM.Redis.HfdmRedisClient",
+	"HFDM.ServerUtils.BaseServer",
+	"HFDM.PropertyGraphStore.DynamoDB",
+	"HFDM.PropertyGraph.BasePropertyGraph",
+	"HFDM.MaterializedHistoryServer.LoadManager",
+	"HFDM.MaterializedHistoryService.Server",
+	"HFDM.Utils.RequestUtils",
 ].forEach((loggerName) => {
-    ModuleLogger.getLogger(loggerName).setLevel("OFF");
+	ModuleLogger.getLogger(loggerName).setLevel("OFF");
 });
 
 const PluginManager = require("../src/plugins/PluginManager");
 
 let p = settings.get("pluginManager:configPath");
-let pluginManager = new PluginManager(
-    path.isAbsolute(p) ? p : path.join(__dirname, "../", p)
-);
+let pluginManager = new PluginManager(path.isAbsolute(p) ? p : path.join(__dirname, "../", p));
 const Authenticator = pluginManager.resolve("Authenticator");
 const Authorizer = pluginManager.resolve("Authorizer");
 
 PluginManager.instance = {
-    systemMonitor: pluginManager
-        .resolve("SystemMonitor")
-        .createInstance(
-            settings.get("systemMonitor"),
-            ModuleLogger.getLogger(
-                "HFDM.MaterializedHistoryService.SystemMonitor"
-            ),
-            "test_mh",
-            "test_mh"
-        ),
-    authenticator: new Authenticator(),
-    authorizer: new Authorizer(),
+	systemMonitor: pluginManager
+		.resolve("SystemMonitor")
+		.createInstance(
+			settings.get("systemMonitor"),
+			ModuleLogger.getLogger("HFDM.MaterializedHistoryService.SystemMonitor"),
+			"test_mh",
+			"test_mh",
+		),
+	authenticator: new Authenticator(),
+	authorizer: new Authorizer(),
 };
