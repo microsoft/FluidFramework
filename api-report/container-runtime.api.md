@@ -81,6 +81,8 @@ export enum ContainerMessageType {
     // (undocumented)
     FluidDataStoreOp = "component",
     // (undocumented)
+    IdAllocation = "idAllocation",
+    // (undocumented)
     Rejoin = "rejoin"
 }
 

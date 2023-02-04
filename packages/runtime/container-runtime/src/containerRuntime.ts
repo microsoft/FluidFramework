@@ -91,6 +91,7 @@ import {
 	SerializedIdCompressorWithNoSession,
 	IIdCompressor,
 	IIdCompressorCore,
+	IdCreationRange,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -193,6 +194,9 @@ export enum ContainerMessageType {
 
 	// Sets the alias of a root data store
 	Alias = "alias",
+
+	// Id allocation op
+	IdAllocation = "idAllocation",
 }
 
 export interface ContainerRuntimeMessage {
@@ -1747,6 +1751,10 @@ export class ContainerRuntime
 		this.updateDocumentDirtyState(newState);
 	}
 
+	private async applyStashedIdAllocationOp(content: any) {
+		console.log(content);
+	}
+
 	private async applyStashedOp(
 		type: ContainerMessageType,
 		op: ISequencedDocumentMessage,
@@ -1756,6 +1764,8 @@ export class ContainerRuntime
 				return this.dataStores.applyStashedOp(op);
 			case ContainerMessageType.Attach:
 				return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
+			case ContainerMessageType.IdAllocation:
+				return this.applyStashedIdAllocationOp(op);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -1909,6 +1919,9 @@ export class ContainerRuntime
 					break;
 				case ContainerMessageType.BlobAttach:
 					this.blobManager.processBlobAttachOp(message, local);
+					break;
+				case ContainerMessageType.IdAllocation:
+					this.idCompressor?.finalizeCreationRange(message.contents as IdCreationRange);
 					break;
 				case ContainerMessageType.ChunkedOp:
 				case ContainerMessageType.Rejoin:
@@ -2818,6 +2831,30 @@ export class ContainerRuntime
 			});
 		}
 
+		let idRange: IdCreationRange | undefined;
+		// Resubmited ops will already have an idRange specified and taking the next creation range
+		// again will result in finalizations out of order
+		if (this.runtimeOptions.enableRuntimeIdCompressor === true) {
+			idRange = this.idCompressor?.takeNextCreationRange();
+			// Don't include the idRange if there weren't any Ids allocated
+			idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+		}
+
+		let idAllocationBatchMessage: BatchMessage | undefined;
+		if (idRange !== undefined) {
+			const idAllocationMessage: ContainerRuntimeMessage = {
+				type: ContainerMessageType.IdAllocation,
+				contents: idRange,
+			};
+			idAllocationBatchMessage = {
+				contents: JSON.stringify(idAllocationMessage),
+				deserializedContent: idAllocationMessage,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				metadata: undefined,
+				localOpMetadata: undefined,
+			};
+		}
+
 		const message: BatchMessage = {
 			contents: serializedContent,
 			deserializedContent,
@@ -2854,6 +2891,10 @@ export class ContainerRuntime
 			) {
 				this.outbox.submitAttach(message);
 			} else {
+				if (idAllocationBatchMessage !== undefined) {
+					this.outbox.submit(idAllocationBatchMessage);
+				}
+
 				this.outbox.submit(message);
 			}
 
@@ -2958,6 +2999,7 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
+			case ContainerMessageType.IdAllocation:
 				this.submit(type, content, localOpMetadata);
 				break;
 			case ContainerMessageType.ChunkedOp:

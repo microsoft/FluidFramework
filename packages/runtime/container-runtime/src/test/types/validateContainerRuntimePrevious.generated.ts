@@ -107,6 +107,7 @@ declare function get_current_EnumDeclaration_ContainerMessageType():
 declare function use_old_EnumDeclaration_ContainerMessageType(
     use: TypeOnly<old.ContainerMessageType>);
 use_old_EnumDeclaration_ContainerMessageType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ContainerMessageType());
 
 /*
@@ -156,6 +157,7 @@ declare function get_current_InterfaceDeclaration_ContainerRuntimeMessage():
 declare function use_old_InterfaceDeclaration_ContainerRuntimeMessage(
     use: TypeOnly<old.ContainerRuntimeMessage>);
 use_old_InterfaceDeclaration_ContainerRuntimeMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerRuntimeMessage());
 
 /*
@@ -396,6 +398,7 @@ declare function get_current_InterfaceDeclaration_IChunkedOp():
 declare function use_old_InterfaceDeclaration_IChunkedOp(
     use: TypeOnly<old.IChunkedOp>);
 use_old_InterfaceDeclaration_IChunkedOp(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IChunkedOp());
 
 /*
@@ -708,6 +711,7 @@ declare function get_current_InterfaceDeclaration_IPendingLocalState():
 declare function use_old_InterfaceDeclaration_IPendingLocalState(
     use: TypeOnly<old.IPendingLocalState>);
 use_old_InterfaceDeclaration_IPendingLocalState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPendingLocalState());
 
 /*
@@ -732,6 +736,7 @@ declare function get_current_InterfaceDeclaration_IPendingMessage():
 declare function use_old_InterfaceDeclaration_IPendingMessage(
     use: TypeOnly<old.IPendingMessage>);
 use_old_InterfaceDeclaration_IPendingMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPendingMessage());
 
 /*
@@ -756,6 +761,7 @@ declare function get_current_TypeAliasDeclaration_IPendingState():
 declare function use_old_TypeAliasDeclaration_IPendingState(
     use: TypeOnly<old.IPendingState>);
 use_old_TypeAliasDeclaration_IPendingState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IPendingState());
 
 /*
