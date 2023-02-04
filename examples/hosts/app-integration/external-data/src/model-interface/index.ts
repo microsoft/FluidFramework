@@ -134,7 +134,7 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	/**
 	 * Persist the current state of the Fluid data back to the external data source.
 	 */
-	readonly saveChanges: () => Promise<void>;
+	readonly writeToExternalServer: () => Promise<void>;
 
 	/**
 	 * Kick off fetching external data directly from the TaskList.

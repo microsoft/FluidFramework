@@ -247,7 +247,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	const parsedExternalData = Object.entries(externalData as TaskData);
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
 	const taskRows = tasks.map((task) => <TaskRow key={task.id} task={task} />);
-	const saveChanges = async (): Promise<void> => {
+	const writeToExternalServer = async (): Promise<void> => {
 		const formattedTasks = {};
 		for (const task of tasks) {
 			formattedTasks[task.id] = {
@@ -288,7 +288,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				</thead>
 				<tbody>{taskRows}</tbody>
 			</table>
-			<button onClick={saveChanges}>Save changes</button>
+			<button onClick={writeToExternalServer}>Write to External Source</button>
 		</div>
 	);
 };

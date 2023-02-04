@@ -160,7 +160,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				</thead>
 				<tbody>{taskRows}</tbody>
 			</table>
-			<button onClick={taskList.saveChanges}>Save changes</button>
+			<button onClick={taskList.writeToExternalServer}>Save changes</button>
 		</div>
 	);
 };
