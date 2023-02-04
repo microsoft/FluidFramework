@@ -128,7 +128,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		approximateUnreferenceTimestampMs: number,
 		disableTombstoneFailureViaOption: boolean = false,
 	) => {
-		const container = disableTombstoneFailureViaOption ? await makeContainer(testContainerConfigWithFutureMinGcOption) : await makeContainer();
+		const container = disableTombstoneFailureViaOption
+			? await makeContainer(testContainerConfigWithFutureMinGcOption)
+			: await makeContainer();
 		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
 		await waitForContainerConnection(container);
 
