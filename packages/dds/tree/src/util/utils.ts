@@ -21,6 +21,9 @@ export function clone<T>(original: T): T {
 	return structuredClone(original);
 }
 
+/**
+ * @alpha
+ */
 export function fail(message: string): never {
 	throw new Error(message);
 }
