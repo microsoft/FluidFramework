@@ -4,9 +4,25 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import {
+	AttributionKey,
+	OpAttributionKey,
+	DetachedAttributionKey,
+} from "@fluidframework/runtime-definitions";
+import { AttributionPolicy } from "./mergeTree";
+import { Client } from "./client";
+import { UnassignedSequenceNumber } from "./constants";
+import {
+	MergeTreeDeltaCallback,
+	MergeTreeMaintenanceCallback,
+	MergeTreeMaintenanceType,
+} from "./mergeTreeDeltaCallback";
 import { ISegment } from "./mergeTreeNodes";
+import { MergeTreeDeltaType } from "./ops";
 
+/**
+ * @internal
+ */
 export interface SerializedAttributionCollection {
 	/**
 	 * Parallel array with posBreakpoints which tracks the seq of insertion.
@@ -14,10 +30,35 @@ export interface SerializedAttributionCollection {
 	 * between offsets 0 and 3 was inserted at seq 45 and the section of the string between
 	 * 3 and the length of the string was inserted at seq 46.
 	 */
-	seqs: number[];
+	seqs: (number | AttributionKey)[];
 	posBreakpoints: number[];
 	/* Total length; only necessary for validation */
 	length: number;
+}
+
+/**
+ * @internal
+ * @sealed
+ */
+export interface IAttributionCollectionSerializer {
+	/**
+	 * @internal
+	 */
+	serializeAttributionCollections(
+		segments: Iterable<{
+			attribution?: IAttributionCollection<AttributionKey>;
+			cachedLength: number;
+		}>,
+	): SerializedAttributionCollection;
+
+	/**
+	 * Populates attribution information on segments using the provided summary.
+	 * @internal
+	 */
+	populateAttributionCollections(
+		segments: Iterable<ISegment>,
+		summary: SerializedAttributionCollection,
+	): void;
 }
 
 /**
@@ -53,16 +94,19 @@ export interface IAttributionCollection<T> {
 	clone(): IAttributionCollection<T>;
 }
 
-function areEqualAttributionKeys(a: AttributionKey, b: AttributionKey): boolean {
+export function areEqualAttributionKeys(a: AttributionKey, b: AttributionKey): boolean {
 	if (a.type !== b.type) {
 		return false;
 	}
 
+	// Note: TS can't narrow the type of b inside this switch statement, hence the need for casting.
 	switch (a.type) {
 		case "op":
-			return a.seq === b.seq;
+			return a.seq === (b as OpAttributionKey).seq;
+		case "detached":
+			return a.id === (b as DetachedAttributionKey).id;
 		default:
-			unreachableCase(a.type, "Unhandled AttributionKey type");
+			unreachableCase(a, "Unhandled AttributionKey type");
 	}
 }
 
@@ -158,7 +202,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 		for (const segment of segments) {
 			const attribution = new AttributionCollection(
-				{ type: "op", seq: currentInfo },
+				typeof currentInfo === "object" ? currentInfo : { type: "op", seq: currentInfo },
 				segment.cachedLength,
 			);
 			while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
@@ -166,7 +210,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				const nextOffset = posBreakpoints[curIndex] - cumulativeSegPos;
 				if (attribution.offsets[attribution.offsets.length - 1] !== nextOffset) {
 					attribution.offsets.push(nextOffset);
-					attribution.keys.push({ type: "op", seq: currentInfo });
+					attribution.keys.push(
+						typeof currentInfo === "object"
+							? currentInfo
+							: { type: "op", seq: currentInfo },
+					);
 				}
 				curIndex++;
 			}
@@ -190,7 +238,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		}>,
 	): SerializedAttributionCollection {
 		const posBreakpoints: number[] = [];
-		const seqs: number[] = [];
+		const seqs: (number | AttributionKey)[] = [];
 		let mostRecentAttributionKey: AttributionKey | undefined;
 		let cumulativePos = 0;
 
@@ -205,7 +253,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
-						seqs.push(key.seq);
+						seqs.push(key.type === "op" ? key.seq : key);
 					}
 					mostRecentAttributionKey = key;
 				}
@@ -228,4 +276,70 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		};
 		return blobContents;
 	}
+}
+
+/**
+ * @alpha
+ * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ */
+export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
+	let unsubscribe: undefined | (() => void);
+	return {
+		attach: (client: Client) => {
+			assert(unsubscribe === undefined, "cannot attach to multiple clients at once");
+			const deltaCallback: MergeTreeDeltaCallback = (
+				opArgs,
+				{ deltaSegments, operation },
+			) => {
+				if (operation !== MergeTreeDeltaType.INSERT) {
+					return;
+				}
+
+				for (const { segment } of deltaSegments) {
+					if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
+						segment.attribution ??= new AttributionCollection(
+							{ type: "op", seq: segment.seq },
+							segment.cachedLength,
+						);
+					}
+				}
+			};
+
+			const maintenanceCallback: MergeTreeMaintenanceCallback = (
+				{ deltaSegments, operation },
+				opArgs,
+			) => {
+				if (
+					operation !== MergeTreeMaintenanceType.ACKNOWLEDGED ||
+					opArgs === undefined ||
+					opArgs.op.type !== MergeTreeDeltaType.INSERT
+				) {
+					return;
+				}
+				for (const { segment } of deltaSegments) {
+					assert(segment.seq !== undefined, "segment.seq should be set after ack.");
+					segment.attribution = new AttributionCollection(
+						{ type: "op", seq: segment.seq },
+						segment.cachedLength,
+					);
+				}
+			};
+
+			client.on("delta", deltaCallback);
+			client.on("maintenance", maintenanceCallback);
+
+			unsubscribe = () => {
+				client.off("delta", deltaCallback);
+				client.off("maintenance", maintenanceCallback);
+			};
+		},
+		detach: () => {
+			unsubscribe?.();
+			unsubscribe = undefined;
+		},
+		get isAttached() {
+			return unsubscribe !== undefined;
+		},
+		serializer: AttributionCollection,
+	};
 }

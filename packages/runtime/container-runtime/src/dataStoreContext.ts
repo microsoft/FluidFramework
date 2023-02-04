@@ -212,6 +212,9 @@ export abstract class FluidDataStoreContext
 	/** If true, throw an error when a tombstone data store is used. */
 	private readonly throwOnTombstoneUsage: boolean;
 
+	/** If true, this means that this data store context and its children have been removed from the runtime */
+	private deleted: boolean = false;
+
 	public get attachState(): AttachState {
 		return this._attachState;
 	}
@@ -254,7 +257,7 @@ export abstract class FluidDataStoreContext
 	protected _attachState: AttachState;
 	private _isInMemoryRoot: boolean = false;
 	protected readonly summarizerNode: ISummarizerNodeWithGC;
-	private readonly mc: MonitoringContext;
+	protected readonly mc: MonitoringContext;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 
@@ -347,6 +350,15 @@ export abstract class FluidDataStoreContext
 				})
 				.catch((error) => {});
 		}
+	}
+
+	/**
+	 * When delete is called, that means that the data store is permanently removed from the runtime, and will not show up in future summaries
+	 * This function is called to prevent ops from being generated from this data store once it has been deleted. Furthermore, this data store
+	 * should not receive any ops/signals.
+	 */
+	public delete() {
+		this.deleted = true;
 	}
 
 	public setTombstone(tombstone: boolean) {
@@ -818,6 +830,21 @@ export abstract class FluidDataStoreContext
 		checkTombstone = true,
 		safeTelemetryProps: ITelemetryProperties = {},
 	) {
+		if (this.deleted) {
+			const messageString = `Context is deleted! Call site [${callSite}]`;
+			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "GC_Deleted_DataStore_Changed",
+					isSummarizerClient: this.clientDetails.type === summarizerClientType,
+					callSite,
+				},
+				error,
+			);
+
+			throw error;
+		}
+
 		if (this._disposed) {
 			throw new Error(`Context is closed! Call site [${callSite}]`);
 		}
@@ -1059,6 +1086,29 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		// Local data store does not have initial summary.
 		return {};
+	}
+
+	/**
+	 * A context should only be marked as deleted when its a remote context.
+	 * Session Expiry at the runtime level should have closed the container creating the local data store context
+	 * before delete is even possible. Session Expiry is at 30 days, and sweep is done 36+ days later from the time
+	 * it was unreferenced. Thus the sweeping container should have loaded from a snapshot and thus creating a remote
+	 * context.
+	 */
+	public delete() {
+		// TODO: GC:Validation - potentially prevent this from happening or asserting. Maybe throw here.
+		sendGCUnexpectedUsageEvent(
+			this.mc,
+			{
+				eventName: "GC_Deleted_DataStore_Unexpected_Delete",
+				message: "Unexpected deletion of a local data store context",
+				category: "error",
+				isSummarizerClient:
+					this.containerRuntime.clientDetails.type === summarizerClientType,
+			},
+			this.pkg,
+		);
+		super.delete();
 	}
 }
 

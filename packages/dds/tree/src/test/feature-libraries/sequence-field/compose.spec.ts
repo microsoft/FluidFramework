@@ -14,41 +14,14 @@ import {
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { continuingAllocator, normalizeMoveIds } from "./utils";
+import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(1);
 const tag2: RevisionTag = brand(2);
 const tag3: RevisionTag = brand(3);
 const tag4: RevisionTag = brand(4);
-
-function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
-	changes.forEach(deepFreeze);
-	return SF.compose(changes, TestChange.compose, continuingAllocator(changes));
-}
-
-function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
-	changes.forEach(deepFreeze);
-	return SF.compose(
-		changes,
-		(cs: TaggedChange<TestChange>[]) => TestChange.compose(cs, false),
-		continuingAllocator(changes),
-	);
-}
-
-function shallowCompose(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
-	changes.forEach(deepFreeze);
-	return SF.sequenceFieldChangeRebaser.compose(
-		changes,
-		(children) => {
-			assert(children.length === 1, "Should only have one child to compose");
-			return children[0].change;
-		},
-		continuingAllocator(changes),
-	);
-}
 
 describe("SequenceField - Compose", () => {
 	describe("associativity of triplets", () => {

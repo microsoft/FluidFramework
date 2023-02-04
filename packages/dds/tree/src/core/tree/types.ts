@@ -50,7 +50,13 @@ export const EmptyKey: LocalFieldKey = brand("");
  * @alpha
  */
 export const rootFieldKey: GlobalFieldKey = brand("rootFieldKey");
+/**
+ * @alpha
+ */
 export const rootFieldKeySymbol: GlobalFieldKeySymbol = symbolFromKey(rootFieldKey);
+/**
+ * @alpha
+ */
 export const rootField = keyAsDetachedField(rootFieldKeySymbol);
 
 /**

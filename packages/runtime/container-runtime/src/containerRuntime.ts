@@ -2404,6 +2404,21 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * This is called to delete objects from the runtime
+	 * @param unusedRoutes - object routes and sub routes that can be deleted
+	 * @returns - routes of objects deleted from the runtime
+	 */
+	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
+		const deletedRoutes: string[] = [];
+
+		const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
+		deletedRoutes.push(...deletedDataStoreRoutes);
+
+		return deletedRoutes;
+	}
+
+	/**
 	 * This is called to update objects that are tombstones.
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
