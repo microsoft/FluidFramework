@@ -26,6 +26,7 @@ import {
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 import {
+	mapFieldChanges,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
@@ -291,6 +292,15 @@ export function spyOnMethod(
 }
 
 /**
+ * Assert two FieldChanges are equal, handling cursors.
+ */
+export function assertFieldChangesEqual(a: Delta.FieldChanges, b: Delta.FieldChanges): void {
+	const aTree = mapFieldChanges(a, mapTreeFromCursor);
+	const bTree = mapFieldChanges(b, mapTreeFromCursor);
+	assert.deepStrictEqual(aTree, bTree);
+}
+
+/**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
@@ -302,7 +312,7 @@ export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void 
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void {
+export function assertDeltaEqual(a: Delta.FieldChangeMap, b: Delta.FieldChangeMap): void {
 	const aTree = mapFieldMarks(a, mapTreeFromCursor);
 	const bTree = mapFieldMarks(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);

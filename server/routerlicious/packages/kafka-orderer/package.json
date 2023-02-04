@@ -32,7 +32,9 @@
     "@fluidframework/server-services-core": "^0.1038.3000"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.8.0",
     "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/build-tools": "^0.8.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.6.1",
     "@types/node": "^14.18.0",

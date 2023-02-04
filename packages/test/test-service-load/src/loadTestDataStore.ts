@@ -18,21 +18,23 @@ import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 
 export interface IRunConfig {
 	runId: number;
+	profileName: string;
 	testConfig: ILoadTestConfig;
 	verbose: boolean;
 	randEng: random.Engine;
+	logger: ITelemetryLogger;
 }
 
 export interface ILoadTest {
-	run(config: IRunConfig, reset: boolean, logger): Promise<boolean>;
-	detached(config: Omit<IRunConfig, "runId">, logger): Promise<LoadTestDataStoreModel>;
+	run(config: IRunConfig, reset: boolean): Promise<boolean>;
+	detached(config: Omit<IRunConfig, "runId" | "profileName">): Promise<LoadTestDataStoreModel>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
 }
 
@@ -142,7 +144,6 @@ export class LoadTestDataStoreModel {
 		root: ISharedDirectory,
 		runtime: IFluidDataStoreRuntime,
 		containerRuntime: IContainerRuntimeBase,
-		logger: TelemetryLogger,
 	) {
 		await LoadTestDataStoreModel.waitForCatchup(runtime);
 
@@ -188,7 +189,6 @@ export class LoadTestDataStoreModel {
 			sharedmap,
 			runDir,
 			gcDataStore.handle,
-			logger,
 		);
 
 		if (reset) {
@@ -222,7 +222,6 @@ export class LoadTestDataStoreModel {
 		public readonly sharedmap: ISharedMap,
 		private readonly runDir: IDirectory,
 		private readonly gcDataStoreHandle: IFluidHandle,
-		private readonly logger: TelemetryLogger,
 	) {
 		const halfClients = Math.floor(this.config.testConfig.numClients / 2);
 		// The runners are paired up and each pair shares a single taskId
@@ -237,7 +236,10 @@ export class LoadTestDataStoreModel {
 					}
 				},
 				(error) =>
-					this.logger.sendErrorEvent({ eventName: "TaskManager_OnValueChanged" }, error),
+					this.config.logger.sendErrorEvent(
+						{ eventName: "TaskManager_OnValueChanged" },
+						error,
+					),
 			);
 		};
 		this.taskManager.on("lost", changed);
@@ -284,7 +286,8 @@ export class LoadTestDataStoreModel {
 							);
 						}
 					},
-					(error) => this.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error),
+					(error) =>
+						this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error),
 				),
 			);
 		}
@@ -303,7 +306,7 @@ export class LoadTestDataStoreModel {
 					.get<IFluidHandle>(key)!
 					.get()
 					.catch((error) => {
-						this.logger.sendErrorEvent(
+						this.config.logger.sendErrorEvent(
 							{
 								eventName: "ReadBlobFailed_OnValueChanged",
 								key,
@@ -492,25 +495,23 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 	}
 
-	public async detached(config: Omit<IRunConfig, "runId">, logger) {
+	public async detached(config: Omit<IRunConfig, "runId">) {
 		return LoadTestDataStoreModel.createRunnerInstance(
 			{ ...config, runId: -1 },
 			false,
 			this.root,
 			this.runtime,
 			this.context.containerRuntime,
-			logger,
 		);
 	}
 
-	public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
+	public async run(config: IRunConfig, reset: boolean) {
 		const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
 			config,
 			reset,
 			this.root,
 			this.runtime,
 			this.context.containerRuntime,
-			logger,
 		);
 
 		const leaderElection = new LeaderElection(this.runtime);
