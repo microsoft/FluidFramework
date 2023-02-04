@@ -291,7 +291,7 @@ describe("Garbage Collection Tests", () => {
 				}) => {
 					it(description, () => {
 						gc = createGcWithPrivateMembers(
-							{ createContainerRuntimeVersion, sweepEnabled: true },
+							{ createContainerRuntimeVersion, gcFeature: 1, sweepEnabled: true },
 							{ gcEnforcementMinCreateContainerRuntimeVersion },
 						);
 						assert(gc.gcEnabled, "gcEnabled incorrect");
