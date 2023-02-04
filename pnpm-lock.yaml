@@ -15,7 +15,9 @@ importers:
       c8: ^7.7.1
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
+      jest: ^26.6.3
       lerna: ^5.1.8
+      mocha: ^10.0.0
       prettier: ~2.6.2
       rimraf: ^2.6.2
       run-script-os: ^1.1.6
@@ -29,7 +31,9 @@ importers:
       c8: 7.7.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
+      jest: 26.6.3
       lerna: 5.1.8
+      mocha: 10.2.0
       prettier: 2.6.2
       rimraf: 2.7.1
       run-script-os: 1.1.6
@@ -4426,6 +4430,89 @@ importers:
       prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
+
+  experimental/examples/bubblebench/editable-shared-tree:
+    specifiers:
+      '@fluid-example/bubblebench-common': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-example/example-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-experimental/tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-internal/tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/aqueduct': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/container-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/map': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/test-tools': ^0.2.3074
+      '@rushstack/eslint-config': ^2.5.1
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': ^14.18.36
+      '@types/puppeteer': 1.3.0
+      '@types/react': ^17.0.1
+      '@types/react-dom': ^17.0.1
+      concurrently: ^6.2.0
+      cross-env: ^7.0.2
+      eslint: ~8.6.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^4.3.0
+      puppeteer: ^1.20.0
+      react: ^17.0.1
+      rimraf: ^2.6.2
+      ts-jest: ^26.4.4
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+      typescript-formatter: 7.1.0
+      webpack: ^5.72.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-example/bubblebench-common': link:../common
+      '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
+      '@fluid-experimental/tree': link:../../../dds/tree
+      '@fluid-internal/tree': link:../../../../packages/dds/tree
+      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
+      '@fluidframework/map': link:../../../../packages/dds/map
+      react: 17.0.2
+    devDependencies:
+      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/test-tools': 0.2.3074
+      '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': 14.18.36
+      '@types/puppeteer': 1.3.0
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      concurrently: 6.3.0
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      jest: 26.6.3
+      jest-junit: 10.0.0
+      jest-puppeteer: 4.4.0_puppeteer@1.20.0
+      puppeteer: 1.20.0
+      rimraf: 2.7.1
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
+      ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
+      typescript: 4.5.5
+      typescript-formatter: 7.1.0_typescript@4.5.5
+      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
+      webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
+      webpack-merge: 5.8.0
 
   experimental/examples/bubblebench/ot:
     specifiers:
@@ -20902,7 +20989,7 @@ packages:
       webpack-cli: 4.x.x
     dependencies:
       webpack: 5.75.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_webpack@5.75.0
+      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
     dev: true
 
   /@webpack-cli/info/1.5.0_webpack-cli@4.10.0:
@@ -23798,6 +23885,10 @@ packages:
   /commander/9.4.1:
     resolution: {integrity: sha512-5EEkTNyHNGFPD2H+c/dXXfQZYa/scCKasxWcXJaWnNJ99pnQN9Vnmqow+p+PlFPE63Q6mThaZws1T+HxfpgtPw==}
     engines: {node: ^12.20.0 || >=14}
+    dev: true
+
+  /commandpost/1.4.0:
+    resolution: {integrity: sha512-aE2Y4MTFJ870NuB/+2z1cXBhSBBzRydVVjzhFC4gtenEhpnj15yu0qptWGJsO9YGrcPZ3ezX8AWb1VA391MKpQ==}
     dev: true
 
   /comment-parser/1.3.1:
@@ -39599,6 +39690,18 @@ packages:
       typescript: 3.0.3
     dev: true
 
+  /typescript-formatter/7.1.0_typescript@4.5.5:
+    resolution: {integrity: sha512-XgPUSZ3beF7Xx2ZIEngIonWpDTS0XzWqV0vjtcm6nOPONug4WFXQYjbvulCzY2T0+knceZn5CFQjVUShNkIdLA==}
+    engines: {node: '>= 4.2.0'}
+    hasBin: true
+    peerDependencies:
+      typescript: ^2.1.6 || >=2.5.0-dev || >=2.6.0-dev || >=2.7.0-dev
+    dependencies:
+      commandpost: 1.4.0
+      editorconfig: 0.15.3
+      typescript: 4.5.5
+    dev: true
+
   /typescript/3.0.3:
     resolution: {integrity: sha512-kk80vLW9iGtjMnIv11qyxLqZm20UklzuR2tL0QAnDIygIUIemcZMxlMWudl9OOt76H3ntVzcTiddQ1/pAAJMYg==}
     engines: {node: '>=4.2.0'}
@@ -41200,7 +41303,7 @@ packages:
       tapable: 2.2.1
       terser-webpack-plugin: 5.3.6_webpack@5.75.0
       watchpack: 2.4.0
-      webpack-cli: 4.10.0_jjttw5sjvzoyowuo6e4jiwo6cy
+      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
       webpack-sources: 3.2.3
     transitivePeerDependencies:
       - '@swc/core'
