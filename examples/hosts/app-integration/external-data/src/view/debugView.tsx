@@ -59,19 +59,19 @@ export interface IDebugViewProps {
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
 	return (
 		<div>
-			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
-			<TaskListView model={props.model} />
-			<ExternalDataView />
-			<SyncStatusView />
 			<ControlsView model={props.model} />
+			<ExternalDataDebugView />
+			<SyncStatusView />
 		</div>
 	);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IExternalDataViewProps {}
+interface IExternalDataDebugViewProps {}
 
-const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
+const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
+	props: IExternalDataDebugViewProps,
+) => {
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// Run once immediately to run without waiting.
@@ -162,6 +162,8 @@ function debugResetExternalData(): void {
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
 	return (
 		<div>
+			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
+			<ExternalServerTaskListView model={props.model} />
 			<h3>Debug controls</h3>
 			<div style={{ margin: "10px 0" }}>
 				<button onClick={debugResetExternalData}>Reset external data</button>
@@ -171,14 +173,16 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 	);
 };
 
-interface ITaskRowProps {
-	task: ExternalDataTask;
+interface IExternalServerTaskRowProps {
+	task: ExternalServerDataTask;
 }
 
 /**
- * The view for a single task in the TaskListView, as a table row.
+ * The view for a single task in the ExternalServerTaskListView, as a table row.
  */
-const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
+const ExternalServerTaskRow: React.FC<IExternalServerTaskRowProps> = (
+	props: IExternalServerTaskRowProps,
+) => {
 	const { task } = props;
 
 	const idChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
@@ -219,14 +223,14 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	);
 };
 
-interface ITaskListViewProps {
+interface ExternalServerTaskListViewProps {
 	model: IAppModel;
 }
 
 /**
  * Model for external task data
  */
-export interface ExternalDataTask {
+export interface ExternalServerDataTask {
 	id: string;
 	name: string;
 	priority: number;
@@ -235,7 +239,9 @@ export interface ExternalDataTask {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
+export const ExternalServerTaskListView: React.FC<
+	ExternalServerTaskListViewProps
+> = (props: ExternalServerTaskListViewProps) => {
 	const { model } = props;
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
@@ -246,7 +252,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	}, [externalData, setExternalData]);
 	const parsedExternalData = Object.entries(externalData as TaskData);
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
-	const taskRows = tasks.map((task) => <TaskRow key={task.id} task={task} />);
+	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
 	const writeToExternalServer = async (): Promise<void> => {
 		const formattedTasks = {};
 		for (const task of tasks) {
@@ -288,7 +294,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				</thead>
 				<tbody>{taskRows}</tbody>
 			</table>
-			<button onClick={writeToExternalServer}>Write to External Source</button>
+			<button onClick={writeToExternalServer}>Save Changes</button>
 		</div>
 	);
 };
