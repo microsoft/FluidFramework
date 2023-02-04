@@ -20,48 +20,48 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const { task, deleteTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
-	const [incomingName, setIncomingName] = useState<string | undefined>(task.incomingName);
-	const [incomingPriority, setIncomingPriority] = useState<number | undefined>(
-		task.incomingPriority,
+	const [sourceName, setsourceName] = useState<string | undefined>(task.sourceName);
+	const [sourcePriority, setsourcePriority] = useState<number | undefined>(
+		task.sourcePriority,
 	);
-	const [incomingType, setIncomingType] = useState<string | undefined>(task.incomingType);
+	const [changeType, setchangeType] = useState<string | undefined>(task.changeType);
 	useEffect(() => {
 		const updateFromRemotePriority = (): void => {
 			if (priorityRef.current !== null) {
 				priorityRef.current.value = task.priority.toString();
 			}
 		};
-		const showIncomingPriority = (): void => {
-			setIncomingPriority(task.incomingPriority);
-			setIncomingType(task.incomingType);
+		const showsourcePriority = (): void => {
+			setsourcePriority(task.sourcePriority);
+			setchangeType(task.changeType);
 		};
-		const showIncomingName = (): void => {
-			setIncomingName(task.incomingName);
-			setIncomingType(task.incomingType);
+		const showsourceName = (): void => {
+			setsourceName(task.sourceName);
+			setchangeType(task.changeType);
 		};
 		task.on("priorityChanged", updateFromRemotePriority);
-		task.on("incomingPriorityChanged", showIncomingPriority);
-		task.on("incomingNameChanged", showIncomingName);
+		task.on("sourcePriorityChanged", showsourcePriority);
+		task.on("sourceNameChanged", showsourceName);
 		updateFromRemotePriority();
 		return (): void => {
 			task.off("priorityChanged", updateFromRemotePriority);
-			task.off("incomingPriorityChanged", showIncomingPriority);
-			task.off("incomingNameChanged", showIncomingName);
+			task.off("sourcePriorityChanged", showsourcePriority);
+			task.off("sourceNameChanged", showsourceName);
 		};
-	}, [task, incomingName, incomingPriority, incomingType]);
+	}, [task, sourceName, sourcePriority, changeType]);
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
 		task.priority = newValue;
 	};
 
-	const diffVisible = incomingType === undefined;
-	const showPriority = !diffVisible && incomingPriority !== undefined ? "visible" : "hidden";
-	const showName = !diffVisible && incomingName !== undefined ? "visible" : "hidden";
+	const diffVisible = changeType === undefined;
+	const showPriority = !diffVisible && sourcePriority !== undefined ? "visible" : "hidden";
+	const showName = !diffVisible && sourceName !== undefined ? "visible" : "hidden";
 	const showAcceptButton = diffVisible ? "hidden" : "visible";
 
 	let diffColor: string = "white";
-	switch (incomingType) {
+	switch (changeType) {
 		case "add": {
 			diffColor = "green";
 			break;
@@ -98,13 +98,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 					❌
 				</button>
 			</td>
-			<td style={{ visibility: showName, backgroundColor: diffColor }}>{incomingName}</td>
+			<td style={{ visibility: showName, backgroundColor: diffColor }}>{sourceName}</td>
 			<td style={{ visibility: showPriority, backgroundColor: diffColor }}>
-				{incomingPriority}
+				{sourcePriority}
 			</td>
 			<td>
 				<button
-					onClick={task.overwriteWithIncomingData}
+					onClick={task.overwriteWithSourceData}
 					style={{ visibility: showAcceptButton }}
 				>
 					Accept change

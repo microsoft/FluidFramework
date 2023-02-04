@@ -37,17 +37,17 @@ export interface ITaskEvents extends IEvent {
 	 */
 	(event: "nameChanged", listener: () => void);
 	/**
-	 * Emitted when the priority has changed to either the incoming value or to the NONE default value.
+	 * Emitted when the priority has changed to either the source value or to the NONE default value.
 	 */
 	(event: "priorityChanged", listener: () => void);
 	/**
-	 * Emitted when the incomingName has changed to either the incoming value or to the NONE default value.
+	 * Emitted when the sourceName has changed to either the source value or to the NONE default value.
 	 */
-	(event: "incomingNameChanged", listener: () => void);
+	(event: "sourceNameChanged", listener: () => void);
 	/**
-	 * Emitted when incomingPriority has changed to either the incoming value or to the NONE default value.
+	 * Emitted when sourcePriority has changed to either the source value or to the NONE default value.
 	 */
-	(event: "incomingPriorityChanged", listener: () => void);
+	(event: "sourcePriorityChanged", listener: () => void);
 }
 
 /**
@@ -70,27 +70,27 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	/**
 	 * The task name coming in from the external server.
 	 */
-	readonly incomingName: string | undefined;
+	readonly sourceName: string | undefined;
 	/**
 	 * The task priority coming in from the external server.
 	 */
-	readonly incomingPriority: number | undefined;
+	readonly sourcePriority: number | undefined;
 	/**
 	 * The type of change to the task coming in from the external server.
 	 */
-	readonly incomingType: string | undefined;
+	readonly changeType: string | undefined;
 	/**
 	 * Trigger event to render change to UI.
 	 */
-	readonly incomingNameChanged: (name: string) => void;
+	readonly sourceNameChanged: (name: string) => void;
 	/**
 	 * Trigger event to render change to UI.
 	 */
-	readonly incomingPriorityChanged: (priority: number) => void;
+	readonly sourcePriorityChanged: (priority: number) => void;
 	/**
 	 * Save the proposed changes to SavedData.
 	 */
-	readonly overwriteWithIncomingData: () => void;
+	readonly overwriteWithSourceData: () => void;
 }
 
 /**

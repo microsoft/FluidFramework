@@ -28,29 +28,29 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		}
 		return cellValue;
 	}
-	public get incomingName(): string | undefined {
-		return this._incomingName;
+	public get sourceName(): string | undefined {
+		return this._sourceName;
 	}
-	public set incomingName(newValue: string | undefined) {
-		this._incomingName = newValue;
-		this.emit("incomingNameChanged");
+	public set sourceName(newValue: string | undefined) {
+		this._sourceName = newValue;
+		this.emit("sourceNameChanged");
 	}
-	public get incomingType(): string | undefined {
-		return this._incomingType;
+	public get changeType(): string | undefined {
+		return this._changeType;
 	}
-	public set incomingType(newValue: string | undefined) {
-		this._incomingType = newValue;
+	public set changeType(newValue: string | undefined) {
+		this._changeType = newValue;
 	}
-	public get incomingPriority(): number | undefined {
-		return this._incomingPriority;
+	public get sourcePriority(): number | undefined {
+		return this._sourcePriority;
 	}
-	public set incomingPriority(newValue: number | undefined) {
-		this._incomingPriority = newValue;
-		this.emit("incomingPriorityChanged");
+	public set sourcePriority(newValue: number | undefined) {
+		this._sourcePriority = newValue;
+		this.emit("sourcePriorityChanged");
 	}
-    private _incomingName: string | undefined;
-    private _incomingPriority: number | undefined;
-    private _incomingType: string | undefined;
+    private _sourceName: string | undefined;
+    private _sourcePriority: number | undefined;
+    private _changeType: string | undefined;
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: SharedString,
@@ -64,24 +64,24 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 			this.emit("priorityChanged");
 		});
 	}
-	public incomingNameChanged = (savedName: string): void => {
-		this.incomingType = "change";
-		this.incomingName = savedName;
+	public sourceNameChanged = (savedName: string): void => {
+		this.changeType = "change";
+		this.sourceName = savedName;
 	};
-	public incomingPriorityChanged = (savedPriority: number): void => {
-		this.incomingType = "change";
-		this.incomingPriority = savedPriority;
+	public sourcePriorityChanged = (savedPriority: number): void => {
+		this.changeType = "change";
+		this.sourcePriority = savedPriority;
 	};
-	public overwriteWithIncomingData = (): void => {
-		this.incomingType = undefined;
-		if (this.incomingPriority !== undefined) {
-			this._priority.set(this.incomingPriority);
-			this.incomingPriority = undefined;
+	public overwriteWithSourceData = (): void => {
+		this.changeType = undefined;
+		if (this.sourcePriority !== undefined) {
+			this._priority.set(this.sourcePriority);
+			this.sourcePriority = undefined;
 		}
-		if (this.incomingName !== undefined) {
+		if (this.sourceName !== undefined) {
 			const oldString = this._name.getText();
-			this._name.replaceText(0, oldString.length, this.incomingName);
-			this.incomingName = undefined;
+			this._name.replaceText(0, oldString.length, this.sourceName);
+			this.sourceName = undefined;
 		}
 	};
 }
@@ -212,7 +212,7 @@ export class TaskList extends DataObject implements ITaskList {
 	 *
 	 * @privateRemarks
 	 *
-	 * TODO: Make this method private - should only be triggered when incoming signal/op indicates that the data
+	 * TODO: Make this method private - should only be triggered when source signal/op indicates that the data
 	 * was updated.
 	 *
 	 * TODO: Is it useful to block further changes during the sync'ing process?
@@ -265,8 +265,8 @@ export class TaskList extends DataObject implements ITaskList {
 		const updateTaskPs = updatedExternalData.map(async ([id, { name, priority }]) => {
 			// Write external data into savedData map.
 			const currentTask = this.savedData.get<PersistedTask>(id);
-			let incomingNameDiffersFromSavedName = false;
-			let incomingPriorityDiffersFromSavedPriority = false;
+			let sourceNameDiffersFromSavedName = false;
+			let sourcePriorityDiffersFromSavedPriority = false;
 			// Create a new task because it doesn't exist already
 			if (currentTask === undefined) {
 				const savedNameString = SharedString.create(this.runtime);
@@ -286,10 +286,10 @@ export class TaskList extends DataObject implements ITaskList {
 					currentTask.priority.get(),
 				]);
 				if (savedNameString.getText() !== name) {
-					incomingNameDiffersFromSavedName = true;
+					sourceNameDiffersFromSavedName = true;
 				}
 				if (savedPriorityCell.get() !== priority) {
-					incomingPriorityDiffersFromSavedPriority = true;
+					sourcePriorityDiffersFromSavedPriority = true;
 				}
 				savedNameString.insertText(0, name);
 				savedPriorityCell.set(priority);
@@ -303,12 +303,12 @@ export class TaskList extends DataObject implements ITaskList {
 				return;
 			}
 			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (incomingNameDiffersFromSavedName && task.name.getText() !== name) {
-				task.incomingNameChanged(name);
+			if (sourceNameDiffersFromSavedName && task.name.getText() !== name) {
+				task.sourceNameChanged(name);
 			}
 			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (incomingPriorityDiffersFromSavedPriority && task.priority !== priority) {
-				task.incomingPriorityChanged(priority);
+			if (sourcePriorityDiffersFromSavedPriority && task.priority !== priority) {
+				task.sourcePriorityChanged(priority);
 			}
 		});
 		await Promise.all(updateTaskPs);
