@@ -14,9 +14,10 @@ import { isDebuggerPanelOpen } from "./Utilities";
  *
  * @internal
  */
-export async function openDebuggerPanel(): Promise<boolean> {
+export async function openDebuggerPanel(): Promise<void> {
 	if (isDebuggerPanelOpen()) {
-		return false;
+		console.error("Debugger panel is already open.");
+		return;
 	}
 
 	const debugPanel = document.createElement("div");

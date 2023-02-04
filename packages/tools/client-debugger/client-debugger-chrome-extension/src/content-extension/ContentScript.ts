@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { renderClientDebuggerView } from "@fluid-tools/client-debugger-view";
 import { debuggerPanelId } from "./Constants";
 import { isDebuggerPanelOpen } from "./Utilities";
 
@@ -23,9 +24,12 @@ function show(): void {
 	iframe.style.zIndex = "9000000000000000000"; // Ensure the panel appears on top of all other content
 	iframe.style.width = "400px";
 
-	// TODO: Resume message subscription for the debugger itself
+	renderClientDebuggerView(iframe).then(() => {
+		document.body.append(iframe);
+		console.log("CONTENT: Rendered debug view!");
+	}, console.error);
 
-	document.body.append(iframe);
+	// TODO: Resume message subscription for the debugger itself
 }
 
 function hide(): void {
