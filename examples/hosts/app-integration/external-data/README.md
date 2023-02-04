@@ -83,7 +83,7 @@ A few useful concepts to understand in implementing conflict resolution in this 
 
 Task - This is the unit that can be edited and attributed to an author. It is also the level at which conflict resolution currently takes place. The task holds knowledge of the local edits as well as the external edits and can display one or both to the screen.
 
-TaskList - This can be compared to a "board" that holds all of the tasks. It is the larger visible entity to show up in a component within the Loop app, or any similar app. The app stores two types of TaskList's - a "draft" version and a "saved version". More on these below.
+TaskList - This can be compared to a "board" that holds all of the tasks. It is the larger visible entity to show up in a component within the app The app stores two types of TaskList's - a "draft" version and a "saved version". More on these below.
 
 SavedData - Data that comes in fresh from the external data source is first stored in a SharedMap known as "SavedData".
 
