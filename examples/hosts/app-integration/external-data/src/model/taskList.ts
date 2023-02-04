@@ -48,9 +48,9 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		this._sourcePriority = newValue;
 		this.emit("sourcePriorityChanged");
 	}
-    private _sourceName: string | undefined;
-    private _sourcePriority: number | undefined;
-    private _changeType: string | undefined;
+	private _sourceName: string | undefined;
+	private _sourcePriority: number | undefined;
+	private _changeType: string | undefined;
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: SharedString,
@@ -188,11 +188,7 @@ export class TaskList extends DataObject implements ITaskList {
 		if (this._draftData?.get(id) === undefined) {
 			return;
 		}
-		const newTask = new Task(
-			id,
-			nameSharedString,
-			prioritySharedCell
-		);
+		const newTask = new Task(id, nameSharedString, prioritySharedCell);
 		this.tasks.set(id, newTask);
 		this.emit("taskAdded", newTask);
 	};
@@ -401,10 +397,7 @@ export class TaskList extends DataObject implements ITaskList {
 				typedTaskData.name.get(),
 				typedTaskData.priority.get(),
 			]);
-			this.tasks.set(
-				id,
-				new Task(id, nameSharedString, prioritySharedCell),
-			);
+			this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell));
 		}
 	}
 }

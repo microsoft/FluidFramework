@@ -21,9 +21,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const { task, deleteTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
 	const [sourceName, setsourceName] = useState<string | undefined>(task.sourceName);
-	const [sourcePriority, setsourcePriority] = useState<number | undefined>(
-		task.sourcePriority,
-	);
+	const [sourcePriority, setSourcePriority] = useState<number | undefined>(task.sourcePriority);
 	const [changeType, setchangeType] = useState<string | undefined>(task.changeType);
 	useEffect(() => {
 		const updateFromRemotePriority = (): void => {
@@ -32,7 +30,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			}
 		};
 		const showsourcePriority = (): void => {
-			setsourcePriority(task.sourcePriority);
+			setSourcePriority(task.sourcePriority);
 			setchangeType(task.changeType);
 		};
 		const showsourceName = (): void => {
@@ -160,7 +158,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				</thead>
 				<tbody>{taskRows}</tbody>
 			</table>
-			<button onClick={taskList.writeToExternalServer}>Save changes</button>
+			<button onClick={taskList.writeToExternalServer}>Write to External Source</button>
 		</div>
 	);
 };
