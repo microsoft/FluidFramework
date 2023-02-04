@@ -56,6 +56,24 @@ export class RedisCache implements ICache {
         }
     }
 
+    public async incr(key: string): Promise<number> {
+        try {
+            return this.client.incr(key);
+        } catch(error) {
+            Lumberjack.error(`Error while incrementing a counter in cache.`, undefined, error);
+            return Promise.reject(error);
+        }
+    }
+
+    public async decr(key: string): Promise<number> {
+        try {
+            return this.client.decr(key);
+        } catch(error) {
+            Lumberjack.error(`Error while decrementing a counter in cache.`, undefined, error);
+            return Promise.reject(error);
+        }
+    }
+
     /**
      * Translates the input key to the one we will actually store in redis
      */
