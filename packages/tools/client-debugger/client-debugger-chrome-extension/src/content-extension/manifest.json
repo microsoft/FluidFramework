@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "Fluid Client Debugger: Content",
 	"description": "Displays a live debug view of the Fluid client for your application.",
-	"version": "1.0",
+	"version": "0.1",
 	"permissions": ["activeTab", "scripting", "storage"],
 	"action": {
 		"default_icon": "images/icon.png"
