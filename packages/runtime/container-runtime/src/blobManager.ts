@@ -40,7 +40,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { TombstoneResponseHeaderKey } from "./containerRuntime";
+import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
 import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
@@ -225,6 +225,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Read the feature flag that tells whether to throw when a tombstone blob is requested.
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
+			!(this.runtime as ContainerRuntime).disableGcTombstoneEnforcement &&
 			this.runtime.clientDetails.type !== summarizerClientType;
 
 		this.runtime.on("disconnected", () => this.onDisconnected());
@@ -786,6 +787,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						: "GC_Deleted_Blob_Requested",
 				category: shouldFail ? "error" : "generic",
 				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+				gcEnforcementDisabled: (this.runtime as ContainerRuntime).disableGcTombstoneEnforcement,
 			},
 			[BlobManager.basePath],
 			error,

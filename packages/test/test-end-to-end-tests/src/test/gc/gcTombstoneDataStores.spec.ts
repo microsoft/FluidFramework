@@ -78,7 +78,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			gcOptions: {
 				...gcOptions,
 				// Simulate these test containers being loaded at a future time with a higher min version for GC enforcement
-				gcEnforcementMinCreateContainerRuntimeVersion: "3.0.0",
+				gcEnforcementMinCreateContainerRuntimeVersion: "999.999.999",
 			},
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
@@ -126,9 +126,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	// datastore was unreferenced in.
 	const summarizationWithUnreferencedDataStoreAfterTime = async (
 		approximateUnreferenceTimestampMs: number,
-		disableGcFailureViaOption: boolean = false,
+		disableTombstoneFailureViaOption: boolean = false,
 	) => {
-		const container = disableGcFailureViaOption ? await makeContainer(testContainerConfigWithFutureMinGcOption) : await makeContainer();
+		const container = disableTombstoneFailureViaOption ? await makeContainer(testContainerConfigWithFutureMinGcOption) : await makeContainer();
 		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
 		await waitForContainerConnection(container);
 
@@ -642,7 +642,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
 						sweepTimeoutMs,
-						true /* disableGcFailureViaOption */,
+						true /* disableTombstoneFailureViaOption */,
 					);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 

@@ -139,6 +139,8 @@ describe("Garbage Collection Tests", () => {
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),
 			closeFn,
+			//* Need to plumb through properly... or move test cases elsewhere
+			disableGcTombstoneEnforcement: false,
 		};
 
 		return GarbageCollector.create({

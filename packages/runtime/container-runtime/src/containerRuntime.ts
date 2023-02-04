@@ -168,6 +168,8 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
+import { shouldDisableGcEnforcementForOldContainer } from "./garbageCollectionHelpers";
+import { gcEnforcementMinCreateContainerRuntimeVersionOption } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -1033,6 +1035,11 @@ export class ContainerRuntime
 	private nextSummaryNumber: number;
 
 	/**
+	 * If true, loading or using a Tombstoned object should merely log, not fail
+	 */
+	public readonly disableGcTombstoneEnforcement: boolean;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1084,6 +1091,12 @@ export class ContainerRuntime
 		this.messageAtLastSummary = metadata?.message;
 
 		this._connected = this.context.connected;
+
+		const rawGcEnforcementMinVersionOption = this.runtimeOptions.gcOptions[gcEnforcementMinCreateContainerRuntimeVersionOption];
+		this.disableGcTombstoneEnforcement = shouldDisableGcEnforcementForOldContainer(
+			this.createContainerMetadata.createContainerRuntimeVersion,
+			typeof rawGcEnforcementMinVersionOption === "string" ? rawGcEnforcementMinVersionOption : undefined,
+		);
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
