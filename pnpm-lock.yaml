@@ -6769,6 +6769,7 @@ importers:
       '@fluidframework/register-collection': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.36
@@ -6792,6 +6793,7 @@ importers:
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.8.0
