@@ -22,7 +22,6 @@ module.exports = {
 
 		// The Content scripts
 		ContentScript: path.join(contentExtensionSourcePath, "ContentScript.ts"),
-		DebugPanelScript: path.join(contentExtensionSourcePath, "DebugPanelScript.tsx"),
 	},
 	output: {
 		path: contentExtensionBuildPath,

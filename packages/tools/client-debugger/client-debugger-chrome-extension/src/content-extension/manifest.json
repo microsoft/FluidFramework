@@ -15,11 +15,5 @@
 			"js": ["ContentScript.js"],
 			"matches": ["<all_urls>"]
 		}
-	],
-	"web_accessible_resources": [
-		{
-			"resources": ["DebuggerPanelScript.js"],
-			"matches": ["<all_urls>"]
-		}
 	]
 }

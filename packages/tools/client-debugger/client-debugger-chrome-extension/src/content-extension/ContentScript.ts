@@ -3,27 +3,35 @@
  * Licensed under the MIT License.
  */
 
-// TODOs:
-// * Don't render anything until after the "show" message has been received
-
-const iframe = document.createElement("iframe");
-// iframe.style.background = "green";
-iframe.style.height = "100%";
-iframe.style.width = "0px"; // Default to hidden state.
-iframe.style.position = "fixed";
-iframe.style.top = "0px";
-iframe.style.right = "0px";
-iframe.style.zIndex = "9000000000000000000"; // Ensure the panel appears on top of all other content
-// iframe.src = chrome.extension.getURL("DebugPanelScript.jsx");
+import { debuggerPanelId } from "./Constants";
+import { isDebuggerPanelOpen } from "./Utilities";
 
 function show(): void {
+	if (isDebuggerPanelOpen()) {
+		console.error("Debugger panel is already visible.");
+		return;
+	}
+
+	const iframe = document.createElement("iframe");
+	iframe.id = debuggerPanelId;
+	// iframe.style.background = "green";
+	iframe.style.height = "100%";
+	iframe.style.width = "0px"; // Default to hidden state.
+	iframe.style.position = "fixed";
+	iframe.style.top = "0px";
+	iframe.style.right = "0px";
+	iframe.style.zIndex = "9000000000000000000"; // Ensure the panel appears on top of all other content
 	iframe.style.width = "400px";
+
 	// TODO: Resume message subscription for the debugger itself
+
+	document.body.append(iframe);
 }
 
 function hide(): void {
-	iframe.style.width = "0px";
 	// TODO: suspend message subscription for the debugger itself
+
+	document.querySelector(`#${debuggerPanelId}`)?.remove();
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -45,5 +53,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		received: true,
 	});
 });
-
-document.body.append(iframe);

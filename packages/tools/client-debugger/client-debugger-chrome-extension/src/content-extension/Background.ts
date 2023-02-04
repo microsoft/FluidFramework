@@ -4,7 +4,7 @@
  */
 
 // TODOs:
-// - Confirm state resets correctly on window refresh
+// - Ensure state resets correctly on window refresh
 
 /**
  * State we store on a per-tab basis.
@@ -48,7 +48,7 @@ function getStateKey(tabId: number): string {
  */
 async function getTabState(tabId: number): Promise<TabState> {
 	const stateKey = getStateKey(tabId);
-	const storageData = await chrome.storage.local.get(stateKey);
+	const storageData = await chrome.storage.session.get(stateKey);
 	return (storageData[stateKey] as TabState) ?? getDefaultTabState(tabId);
 }
 
@@ -57,7 +57,7 @@ async function getTabState(tabId: number): Promise<TabState> {
  */
 async function updateTabState(tabId: number, newState: TabState): Promise<void> {
 	const stateKey = getStateKey(tabId);
-	await chrome.storage.local.set({ [stateKey]: newState });
+	await chrome.storage.session.set({ [stateKey]: newState });
 }
 
 /**
@@ -69,15 +69,14 @@ export async function toggleDebuggerView(tabId: number): Promise<void> {
 	const tabState = await getTabState(tabId);
 	const visible: boolean = tabState.isDebuggerVisible;
 
-	// TODO: Notify content script of state change
 	if (visible) {
 		chrome.tabs.sendMessage(tabId, "hide").then((response) => {
-			console.log(`BACKGROUND: "hide" response received: ${response}`);
+			console.log('BACKGROUND: "hide" response received:', response);
 		}, console.error);
 		console.log('BACKGROUND: "hide" message sent.');
 	} else {
 		chrome.tabs.sendMessage(tabId, "show").then((response) => {
-			console.log(`BACKGROUND: "show" response received: ${response}`);
+			console.log('BACKGROUND: "show" response received:', response);
 		}, console.error);
 		console.log('BACKGROUND: "show" message sent.');
 	}

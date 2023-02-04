@@ -17,7 +17,7 @@ chrome.action.onClicked.addListener((tab) => {
  * When local storage is updated, update any properties derived from local tab state used by the extension.
  */
 chrome.storage.onChanged.addListener((changes, areaName) => {
-	if (areaName === "local") {
+	if (areaName === "session") {
 		onStorageChange(changes).catch((error) => {
 			console.error(error);
 		});
