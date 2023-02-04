@@ -32,6 +32,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha \"dist/test/**/*.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+"test:mocha:multireport": "npm run test:mocha -- --reporter mocha-multi-reporters --reporter-options configFile=testConfig.json",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -39,7 +40,9 @@
 		"chai": "^4.2.0",
 		"chalk": "^4.1.2",
 		"easy-table": "^1.1.1",
-		"mocha": "^10.0.0"
+		"mocha": "^10.0.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
