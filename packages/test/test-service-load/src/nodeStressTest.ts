@@ -10,7 +10,7 @@ import commander from "commander";
 import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
-import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
+import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
 interface ITestUserConfig {
 	/* Credentials' key/value description:
@@ -124,7 +124,12 @@ async function orchestratorProcess(
 ) {
 	const seed = args.seed ?? Date.now();
 	const seedArg = `0x${seed.toString(16)}`;
-	const logger = await loggerP;
+	const logger = await createLogger({
+		driverType: driver,
+		driverEndpointName: endpoint,
+		profile: args.profileName,
+		runId: undefined,
+	});
 
 	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, args.browserAuth);
 
@@ -228,9 +233,6 @@ async function orchestratorProcess(
 			}),
 		);
 	} finally {
-		if (logger !== undefined) {
-			await logger.flush();
-		}
 		await safeExit(0, url);
 	}
 }
