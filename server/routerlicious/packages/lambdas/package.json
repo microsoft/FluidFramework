@@ -67,7 +67,6 @@
     "axios": "^0.26.0",
     "buffer": "^6.0.3",
     "double-ended-queue": "^2.1.0-0",
-    "ioredis": "^4.24.2",
     "json-stringify-safe": "^5.0.1",
     "lodash": "^4.17.21",
     "nconf": "^0.12.0",

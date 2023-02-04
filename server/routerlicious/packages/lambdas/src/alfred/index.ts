@@ -33,7 +33,6 @@ import {
     Lumberjack,
     getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { Redis } from "ioredis";
 import {
     createRoomJoinMessage,
     createNackMessage,
@@ -160,9 +159,9 @@ async function storeClientConnectivityTime(
 /**
  * This function will store total connection count per node to Redis and also log connectionCountPerNodeMetric.
  */
-async function logTotalConnectionsPerNode(isConnect: boolean, cache?: Redis): Promise<void> {
+async function logTotalConnectionsPerNode(isConnect: boolean, cache?: core.ICache): Promise<void> {
     const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
-    const nodeName = process.env.NODE_NAME;
+    const nodeName = process.env.NODE_NAME ?? "nodeName";
     const keyName = `totalConnections_${nodeName}`;
     if(!cache) {
         connectionCountPerNodeMetric.error(`Redis Cache not found on ${nodeName}`);
@@ -243,7 +242,7 @@ export function configureWebSocketServices(
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
     isSignalUsageCountingEnabled: boolean = false,
-    cache?: Redis,
+    cache?: core.ICache,
     connectThrottler?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
     submitSignalThrottler?: core.IThrottler,

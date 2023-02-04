@@ -23,7 +23,7 @@ import {
 import Redis from "ioredis";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { createMetricClient } from "@fluidframework/server-services";
+import { createMetricClient, RedisCache } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
@@ -84,18 +84,19 @@ export class AlfredRunner implements IRunner {
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
         const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
 
-        const redisConfigForThrottling = this.config.get("redisForThrottling");
+        const redisConfig = this.config.get("redisForThrottling");
         const redisOptions: Redis.RedisOptions = {
-            host: redisConfigForThrottling.host,
-            port: redisConfigForThrottling.port,
-            password: redisConfigForThrottling.pass,
+            host: redisConfig.host,
+            port: redisConfig.port,
+            password: redisConfig.pass,
         };
-        if (redisConfigForThrottling.tls) {
+        if (redisConfig.tls) {
             redisOptions.tls = {
-                servername: redisConfigForThrottling.host,
+                servername: redisConfig.host,
             };
         }
-        const redisCache = new Redis(redisOptions);
+        const redisClient = new Redis(redisOptions);
+        const redisCache = new RedisCache(redisClient);
 
         // Register all the socket.io stuff
         configureWebSocketServices(
