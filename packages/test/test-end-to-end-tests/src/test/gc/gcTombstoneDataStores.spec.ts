@@ -95,14 +95,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	});
 
 	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
+		return provider.loadTestContainer(testContainerConfigWithFutureMinGcOption, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
 
 	let documentAbsoluteUrl: string | undefined;
 
-	const makeContainer = async (config: ITestContainerConfig = testContainerConfig) => {
+	const makeContainer = async (config: ITestContainerConfig = testContainerConfigWithFutureMinGcOption) => {
 		const container = await provider.makeTestContainer(config);
 		documentAbsoluteUrl = await container.getAbsoluteUrl("");
 		return container;
@@ -625,22 +625,39 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			},
 		);
 
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-		itExpects(
+		itExpects.only(
 			"Requesting tombstoned datastores succeeds with future gcEnforcementMinCreateContainerRuntimeVersion",
 			[
 				// Interactive client's request that succeeds
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
 					category: "generic",
-					headers: expectedHeadersLogged.request_allowTombstone,
+					gcEnforcementDisabled: true,
 				},
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
 				},
 			],
-			async () => {
+			async function () {
+				// If pkgVersion isn't a plain semver or a -internal version, this test won't work,
+				// because the version comparison allows any persisted version like that, so Tombstone Failure wouldn't be disabled
+				if (!pkgVersion.includes("-internal") && pkgVersion.match(/^\d+\.\d+.\d+$/) === null) {
+					this.skip();
+				}
+
+				console.log(`---------${pkgVersion}`);
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
 						sweepTimeoutMs,
@@ -660,7 +677,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				assert.equal(
 					tombstoneSuccessResponse.status,
 					200,
-					"Should be able to retrieve a tombstoned datastore given the allowTombstone header",
+					"Should be able to retrieve a tombstoned datastore given gcEnforcementMinCreateContainerRuntimeVersion",
 				);
 				assert.notEqual(
 					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],

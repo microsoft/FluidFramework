@@ -100,5 +100,14 @@ export function shouldDisableGcEnforcementForOldContainer(
 	}
 
 	// If the persisted version is less than the min version according to string comparison rules, then we need to disable GC enforcement
-	return comparablePersistedVersion < comparableMinVersion;
+	const result = comparablePersistedVersion < comparableMinVersion;
+
+	console.log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	${createContainerRuntimeVersion}
+	${gcEnforcementMinCreateContainerRuntimeVersion}
+	${result}
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`)
+
+
+	return result;
 }
