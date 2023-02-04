@@ -9,32 +9,23 @@ import { FluidClientDebuggers } from "./Debugger";
 
 /**
  * Renders Fluid client debug view by appending it to the provided DOM element.
- * Will fast return false if the input is `null`.
  *
  * @param targetElement - The HTML element takes the client debugger view.
  *
  * @returns `true` if the debug view was successfully rendered, otherwise `false`.
  */
-export async function renderClientDebuggerView(
-	// eslint-disable-next-line @rushstack/no-new-null
-	targetElement: HTMLElement | null,
-): Promise<boolean> {
-	if (targetElement === null) {
-		console.warn("Caller provided null targetElement parameter.");
-		return false;
-	}
-
+export async function renderClientDebuggerView(targetElement: HTMLElement): Promise<void> {
 	const debuggerElement = document.createElement("debugger");
 	targetElement.append(debuggerElement);
 
-	return new Promise<boolean>((resolve) => {
+	return new Promise<void>((resolve, reject) => {
 		try {
 			ReactDOM.render(React.createElement(FluidClientDebuggers), debuggerElement, () => {
-				resolve(true);
+				resolve();
 			});
 		} catch (error) {
-			console.error(`Could not open the client debugger view due to an error: ${error}.`);
-			resolve(false);
+			console.error("Could not open the client debugger view due to an error", error);
+			reject(error);
 		}
 	});
 }

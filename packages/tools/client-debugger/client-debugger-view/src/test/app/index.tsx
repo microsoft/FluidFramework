@@ -17,4 +17,4 @@ ReactDOM.render(
 	document.querySelector("#content"),
 );
 
-renderClientDebuggerView(document.body).catch((error) => console.error(error));
+renderClientDebuggerView(document.body).catch(console.error);
