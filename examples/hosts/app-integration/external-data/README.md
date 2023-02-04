@@ -23,7 +23,7 @@ In order to accomplish the goals above, we have split up the responsibilities in
 Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates.
 However, they often expose third-party integration via REST APIS for querying and manipulating data, as well as webhooks for watching updates to the data.
 
-This repo contains a service that mocks the external "source of truth" data server. This mock service offers a REST API collection and webhook interfaces in ./src/mock-external-data-service. The API requests served by this "external" service are the following:
+This repo contains a service that mocks the external "source of truth" data server. This mock service offers a REST API collection and webhook interfaces in `./src/mock-external-data-service`. The API requests served by this "external" service are the following:
 
 1. POST `/register-for-webhook`: Register's the sender's URL (in this case the Customer Service's URL) to receive notifications when the external task-list data changes.
 2. GET `/fetch-tasks`: Fetches the task list from the external data store.
