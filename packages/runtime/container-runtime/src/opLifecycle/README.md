@@ -4,31 +4,18 @@
 
 There is a current limitation regarding the size of the payload a Fluid client can send and receive. [The limit is 1MB per payload](https://github.com/microsoft/FluidFramework/issues/9023) and it is currently enforced explicitly with the `BatchTooLarge` error which closes the container.
 
-Version `client_v2.0.0-internal.2.3.0` introduces two features which can be used to work around this size limit, batch compression and compressed batch chunking. This document describes the prerequisites for safely leveraging the features, how to enable/disable them and a brief description of how they work.
+There are two features which can be used to work around this size limit, batch compression and compressed batch chunking. This document describes how to enable/disable them, along with a brief description of how they work.
 
 **The features are still considered experimental and for safety and back-compat reasons they are disabled by default.**
 
 ## Table of contents
 
 -   [Introduction](#introduction)
-    -   [Prerequisites](#prerequisites)
-        -   [Update to the required Fluid version](#update-to-the-required-fluid-version)
-        -   [Ensure there is full saturation for the deployment of the Fluid version containing compression and chunking.](#ensure-there-is-full-saturation-for-the-deployment-of-the-fluid-version-containing-compression-and-chunking)
     -   [Enabling compression](#enabling-compression)
     -   [Enabling chunking for compression](#enabling-chunking-for-compression)
     -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
     -   [Example configs](#example-configs)
     -   [How it works](#how-it-works)
-
-## Prerequisites
-
-### Update to the required Fluid version
-
-`client_v2.0.0-internal.2.3.0` is the minimum version which contains compression and chunking.
-
-### Ensure there is full saturation for the deployment of the Fluid version containing compression and chunking.
-
-Compression and chunking create new types of ops which cannot be handled by older versions of the runtime. If the runtime is not able to process an op, it will close with a `DataProcessingError` with assert code `0x3ce` ("Runtime message of unknown type"). Therefore, it is important that all clients in the target distribution are on at least version `client_v2.0.0-internal.2.3.0` before enabling compression. Any client which can open a document that was created with compression must be on at least version `client_v2.0.0-internal.2.3.0` to be able to open it correctly.
 
 ## Enabling compression
 
