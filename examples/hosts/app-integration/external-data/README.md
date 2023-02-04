@@ -59,7 +59,7 @@ The "echo webhook" pattern accomplishes this by having the Fluid service subscri
 
 So, on receiving the notification from the External Server's webhook, the Customer Service makes a POST request using the `/echo-external-data-webhook` which simply echoes the information to the Fluid Service.
 
-On receiving notification from the Echo webhhooks, Alfred (the Fluid Service Front End) broadcasts a Signal to let the the clients know that there has been a changeupstream.
+On receiving notification from the Echo webhooks, Alfred (the Fluid Service Front End) broadcasts a Signal to let the the clients know that there has been a change upstream.
 
 We have a prototype of the echo webhhook and signal broadcast in Alfred in our dev branch here: https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts#L463-L508.
 
