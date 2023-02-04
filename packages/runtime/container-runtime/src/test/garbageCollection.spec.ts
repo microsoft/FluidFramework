@@ -232,7 +232,72 @@ describe("Garbage Collection Tests", () => {
 				assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
 			});
 			describe("gcEnforcementMinCreateContainerRuntimeVersion overriding sweepEnabled true for some existing containers", () => {
-				it("gcEnforcementMinCreateContainerRuntimeVersion later than persisted value: sweepEnabled false", () => {
+				const testCases: {
+					description: string;
+					createContainerRuntimeVersion: string | undefined;
+					gcEnforcementMinCreateContainerRuntimeVersion: string | undefined;
+					expectedSweepEnableValue: boolean;
+				}[] = [
+					{
+						description: "Min version undefined - DON'T disable Sweep",
+						createContainerRuntimeVersion: "0.0.0",
+						gcEnforcementMinCreateContainerRuntimeVersion: undefined,
+						expectedSweepEnableValue: true,
+					},
+					{
+						description: "Min Version invalid - DON'T disable Sweep",
+						createContainerRuntimeVersion: "0.0.0",
+						gcEnforcementMinCreateContainerRuntimeVersion: "not a valid version",
+						expectedSweepEnableValue: true,
+					},
+					{
+						description: "Persisted value unreleased; Min Version defined - DON'T disable Sweep",
+						createContainerRuntimeVersion: "2.0.0-dev.1.2.3.45678",
+						gcEnforcementMinCreateContainerRuntimeVersion: "3.0.0",
+						expectedSweepEnableValue: true,
+					},
+					{
+						description: "Persisted value newer than Min Version - DON'T disable Sweep",
+						createContainerRuntimeVersion: "2.0.0-internal.3.0.0",
+						gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0-internal.2.3.1",
+						expectedSweepEnableValue: true,
+					},
+					{
+						description: "Persisted value equal to Min Version - DON'T disable Sweep",
+						createContainerRuntimeVersion: "2.0.0",
+						gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0",
+						expectedSweepEnableValue: true,
+					},
+					{
+						description: "Persisted value older than Min Version - DO disable Sweep",
+						createContainerRuntimeVersion: "1.0.0",
+						gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0",
+						expectedSweepEnableValue: false,
+					},
+					{
+						description: "No persisted value; Min Version defined - DO disable Sweep",
+						createContainerRuntimeVersion: undefined,
+						gcEnforcementMinCreateContainerRuntimeVersion: "1.0.0",
+						expectedSweepEnableValue: false,
+					},
+				];
+				testCases.forEach(({
+					description,
+					createContainerRuntimeVersion,
+					gcEnforcementMinCreateContainerRuntimeVersion,
+					expectedSweepEnableValue: expectedSweepEnableState,
+				}) => {
+					it(description, () => {
+						gc = createGcWithPrivateMembers(
+							{ createContainerRuntimeVersion, sweepEnabled: true },
+							{ gcEnforcementMinCreateContainerRuntimeVersion },
+						);
+						assert(gc.gcEnabled, "gcEnabled incorrect");
+						assert.equal(gc.sweepEnabled, expectedSweepEnableState, "sweepEnabled incorrect");
+					});
+				});
+				//* Delete these once everything is passing (dupe of above)
+				it("Min Version later than persisted value: sweepEnabled false", () => {
 					gc = createGcWithPrivateMembers(
 						{ createContainerRuntimeVersion: "1.2.3", sweepEnabled: true },
 						{ gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0" },
