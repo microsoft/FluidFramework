@@ -65,7 +65,6 @@ describe("Routerlicious", () => {
     describe("Alfred", () => {
         describe("WebSockets", () => {
             describe("Messages", () => {
-                const testConnectDoc = "connectDoc";
                 const testTenantId = "test";
                 const testSecret = "test";
                 const testId = "test";
@@ -216,11 +215,11 @@ describe("Routerlicious", () => {
                         });
 
 
-                    it("Should throttle excess connections for tenant", async () => {
+                    it("Should throttle excess connections for the cluster", async () => {
                         for (let i = 0; i < throttleLimitConnectDoc; i++) {
                             const id = `${testId}-${i}`;
                             const socket = webSocketServer.createConnection();
-                            const connectMessage = await connectToServer(id, testConnectDoc, testSecret, socket);
+                            const connectMessage = await connectToServer(id, testTenantId, testSecret, socket);
                             assert.ok(connectMessage.clientId);
                             assert.equal(connectMessage.existing, true);
 
@@ -234,7 +233,7 @@ describe("Routerlicious", () => {
                             assert.equal(JoinMessage.clientId, connectMessage.clientId);
                         }
 
-                        const failedConnectMessage = await connectToServer(`${testId}-${throttleLimitConnectDoc + 1}`, testConnectDoc, testSecret, webSocketServer.createConnection())
+                        const failedConnectMessage = await connectToServer(`${testId}-${throttleLimitConnectDoc + 1}`, testTenantId, testSecret, webSocketServer.createConnection())
                             .then(() => {
                                 assert.fail("Connection should have failed");
                             })
@@ -245,8 +244,17 @@ describe("Routerlicious", () => {
                         assert.strictEqual(failedConnectMessage.type, NackErrorType.ThrottlingError);
                         assert.strictEqual(failedConnectMessage.retryAfter, 1);
 
-                        // A separate tenant should not be throttled
-                        // await connectToServer(testId, `${testTenantId}-2`, testSecret, webSocketServer.createConnection());
+                        // A separate tenant should also be throttled, since throttleLimitConnectDoc is reached
+                        const failedConnectMessage2 = await connectToServer(`${testId}-${throttleLimitConnectDoc + 2}`, `${testTenantId}-2`, testSecret, webSocketServer.createConnection())
+                        .then(() => {
+                            assert.fail("Connection should have failed");
+                        })
+                        .catch((err) => {
+                            return err;
+                        }) as INackContent;
+                        assert.strictEqual(failedConnectMessage2.code, 429);
+                        assert.strictEqual(failedConnectMessage2.type, NackErrorType.ThrottlingError);
+                        assert.strictEqual(failedConnectMessage2.retryAfter, 1);
                     });
                 });
 
