@@ -94,6 +94,7 @@ describe.only("Garbage Collection Helpers Tests", () => {
 				return shouldDisableGcEnforcementForOldContainer(a, b) ? -1 : 1;
 			}
 			const inputs = [
+				"999.999.999",
 				"2.0.0-internal.1.2.3",
 				"1.2.3",
 				"2.0.0-internal.1.2.4",
@@ -122,9 +123,11 @@ describe.only("Garbage Collection Helpers Tests", () => {
 				"2.2.2",
 				"3.0.0-internal.0.0.1",
 				"3.0.0",
+				"999.999.999",
 			];
 			const output = inputs.sort(compareFn);
 			assert.deepEqual(output, sorted, "Sort didn't go as expected");
-		})
+		});
+		//* Add a test case that compares 2.0.0-internal.2.3.1 with the current pkgVersion to ensure it's always good
 	});
 });
