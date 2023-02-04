@@ -85,7 +85,7 @@ Task - This is the unit that can be edited and attributed to an author. It is al
 
 TaskList - This can be compared to a "board" that holds all of the tasks. It is the larger visible entity to show up in a component within the app The app stores two types of TaskList's - a "draft" version and a "saved version". More on these below.
 
-SavedData - Data that comes in fresh from the external data source is first stored in a SharedMap known as "SavedData".
+SavedData - Data that comes in fresh from the external data source is first stored in a [SharedMap](https://fluidframework.com/docs/data-structures/map/) known as "SavedData".
 
 DraftData - Local collaboration state between the Fluid clients is stored in a SharedMap known as "DraftData". This is known as draft data because we are treating the Fluid collaboration session as a drafting surface.
 
