@@ -343,15 +343,19 @@ export class LocalOrderer implements IOrderer {
             this.tenantId,
             this.documentId,
             this.gitManager,
+            null,
             scribeMessagesCollection,
             false,
-            latestSummary.messages);
+            latestSummary.messages,
+            false);
         const checkpointManager = new CheckpointManager(
             context,
             this.tenantId,
             this.documentId,
             documentCollection,
-            scribeMessagesCollection);
+            scribeMessagesCollection,
+            null,
+            false);
         return new ScribeLambda(
             context,
             this.tenantId,

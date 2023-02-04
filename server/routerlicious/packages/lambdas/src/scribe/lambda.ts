@@ -391,12 +391,12 @@ export class ScribeLambda implements IPartitionLambda {
             message,
             this.clearCache);
         this.lastOffset = message.offset;
-        Lumberjack.info(`Last offset: ${this.lastOffset}`, getLumberBaseProperties(this.documentId, this.tenantId));
         const reason = CheckpointReason[checkpointReason];
         const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
         const lumberjackProperties = {
             ...getLumberBaseProperties(this.documentId, this.tenantId),
             checkpointReason: reason,
+            lastOffset: this.lastOffset,
         };
         Lumberjack.info(checkpointResult, lumberjackProperties);
     }
@@ -506,7 +506,7 @@ export class ScribeLambda implements IPartitionLambda {
             },
             (error) => {
                 this.context.error(error, {
-                    restart: true,
+                    restart: false,
                     tenantId: this.tenantId,
                     documentId: this.documentId,
                 });
@@ -680,6 +680,7 @@ export class ScribeLambda implements IPartitionLambda {
                     const lumberjackProperties = {
                         ...getLumberBaseProperties(this.documentId, this.tenantId),
                         checkpointReason: "IdleTime",
+                        lastOffset: initialScribeCheckpointMessage.offset
                     };
                     Lumberjack.info(checkpointResult, lumberjackProperties);
                 }
