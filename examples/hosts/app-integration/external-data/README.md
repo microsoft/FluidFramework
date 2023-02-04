@@ -34,7 +34,7 @@ Find the details of the API in the [External Data Service README](./src/mock-ext
 
 **Customer Service**
 
-Next we need a customer service that functions as the intermediary between the External Data Service and the Fluid Service. This server is responsible for authenticating to the external service on the customer's behalf. It registers to the External Data Service webhooks and listens for incoming changes. It also acts as a translation layer, tasnlating to and from the External Data Service expected format and the Fluid Service's expected format.
+Next we need a customer service that functions as the intermediary between the External Data Service and the Fluid Service. This server is responsible for authenticating to the external service on the customer's behalf. It registers to the External Data Service webhooks and listens for incoming changes. It also acts as a translation layer, translating to and from the External Data Service expected format and the Fluid Service's expected format.
 
 In this example, the Customer Service contains the following endpoints:
 
