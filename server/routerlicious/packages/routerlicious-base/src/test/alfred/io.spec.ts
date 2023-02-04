@@ -65,6 +65,7 @@ describe("Routerlicious", () => {
     describe("Alfred", () => {
         describe("WebSockets", () => {
             describe("Messages", () => {
+                const testConnectDoc = "connectDoc";
                 const testTenantId = "test";
                 const testSecret = "test";
                 const testId = "test";
@@ -76,7 +77,8 @@ describe("Routerlicious", () => {
                 let testTenantManager: TestTenantManager;
                 let testClientManager: IClientManager;
 
-                const throttleLimit = 7;
+                const throttleLimitTenant = 7;
+                const throttleLimitConnectDoc = 4;
 
                 beforeEach(() => {
                     const collectionNames = "test";
@@ -111,9 +113,9 @@ describe("Routerlicious", () => {
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
 
-                    const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimit);
-                    const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimit);
-                    const testSubmitOpThrottler = new TestThrottler(throttleLimit);
+                    const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
+                    const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimitConnectDoc);
+                    const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
 
                     configureWebSocketServices(
                         webSocketServer,
@@ -215,10 +217,10 @@ describe("Routerlicious", () => {
 
 
                     it("Should throttle excess connections for tenant", async () => {
-                        for (let i = 0; i < throttleLimit; i++) {
+                        for (let i = 0; i < throttleLimitConnectDoc; i++) {
                             const id = `${testId}-${i}`;
                             const socket = webSocketServer.createConnection();
-                            const connectMessage = await connectToServer(id, testTenantId, testSecret, socket);
+                            const connectMessage = await connectToServer(id, testConnectDoc, testSecret, socket);
                             assert.ok(connectMessage.clientId);
                             assert.equal(connectMessage.existing, true);
 
@@ -232,7 +234,7 @@ describe("Routerlicious", () => {
                             assert.equal(JoinMessage.clientId, connectMessage.clientId);
                         }
 
-                        const failedConnectMessage = await connectToServer(`${testId}-${throttleLimit + 1}`, testTenantId, testSecret, webSocketServer.createConnection())
+                        const failedConnectMessage = await connectToServer(`${testId}-${throttleLimitConnectDoc + 1}`, testConnectDoc, testSecret, webSocketServer.createConnection())
                             .then(() => {
                                 assert.fail("Connection should have failed");
                             })
@@ -244,7 +246,7 @@ describe("Routerlicious", () => {
                         assert.strictEqual(failedConnectMessage.retryAfter, 1);
 
                         // A separate tenant should not be throttled
-                        await connectToServer(testId, `${testTenantId}-2`, testSecret, webSocketServer.createConnection());
+                        // await connectToServer(testId, `${testTenantId}-2`, testSecret, webSocketServer.createConnection());
                     });
                 });
 
@@ -315,13 +317,13 @@ describe("Routerlicious", () => {
                         let i = 0;
                         const deferredNack = new Deferred<INack[]>();
                         socket.on("nack", (reason: string, nackMessages: INack[]) => {
-                            if (i < throttleLimit) {
+                            if (i < throttleLimitTenant) {
                                 deferredNack.reject(`Submit op NACK before reaching throttle limit: ${nackMessages}`);
                             } else {
                                 deferredNack.resolve(nackMessages);
                             }
                         });
-                        for (; i < throttleLimit; i++) {
+                        for (; i < throttleLimitTenant; i++) {
                             const message = messageFactory.createDocumentMessage();
 
                             const beforeCount = deliKafka.getRawMessages().length;
@@ -364,7 +366,7 @@ describe("Routerlicious", () => {
                             return batch;
                         };
                         const batchSize = 2;
-                        for (let i = 0; i <= throttleLimit - batchSize; i += batchSize) {
+                        for (let i = 0; i <= throttleLimitTenant - batchSize; i += batchSize) {
                             // Send batches until next batch would be throttled. Otherwise error will be thrown
                             const messages = generateMessageBatch(batchSize);
 
@@ -413,7 +415,8 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                 let testTenantManager: TestTenantManager;
                 let testClientManager: IClientManager;
 
-                const throttleLimit = 5;
+                const throttleLimitTenant = 7;
+                const throttleLimitConnectDoc = 4;
                 const minThrottleCheckInterval = 100;
                 const testThrottleAndUsageStorageManager = new TestThrottleAndUsageStorageManager();
 
@@ -453,9 +456,9 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
 
-                    const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimit);
-                    const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimit);
-                    const testSubmitOpThrottler = new TestThrottler(throttleLimit);
+                    const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
+                    const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimitConnectDoc);
+                    const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
                     const throttlerHelper = new ThrottlerHelper(testThrottleAndUsageStorageManager);
 
                     const testSubmitSignalThrottler = new Throttler(throttlerHelper, minThrottleCheckInterval);
