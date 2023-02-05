@@ -177,10 +177,18 @@ class RuntimeAttributor implements IRuntimeAttributor {
 			0x509 /* RuntimeAttributor must be initialized before getAttributionInfo can be called */,
 		);
 
+		if (key.type === "detached") {
+			throw new Error("Attribution of detached keys is not yet supported.");
+		}
+
 		return this.opAttributor.getAttributionInfo(key.seq);
 	}
 
 	public has(key: AttributionKey): boolean {
+		if (key.type === "detached") {
+			return false;
+		}
+
 		return this.opAttributor?.tryGetAttributionInfo(key.seq) !== undefined;
 	}
 

@@ -117,6 +117,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
+    deleteUnusedNodes(unusedRoutes: string[]): string[];
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -423,12 +424,12 @@ export interface IPendingFlush {
     type: "flush";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPendingLocalState {
     pendingStates: IPendingState[];
 }
 
-// @public
+// @public @deprecated
 export interface IPendingMessage {
     // (undocumented)
     clientSequenceNumber: number;
@@ -446,7 +447,7 @@ export interface IPendingMessage {
     type: "message";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type IPendingState = IPendingMessage | IPendingFlush;
 
 // @public @deprecated (undocumented)
