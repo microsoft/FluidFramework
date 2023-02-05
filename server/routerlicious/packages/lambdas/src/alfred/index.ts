@@ -162,7 +162,7 @@ async function storeClientConnectivityTime(
  */
 async function logConnectionCount(isConnect: boolean, cache?: core.ICache): Promise<void> {
     const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
-    const totalConnectionCountMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
+    const totalConnectionCountMetric = Lumberjack.newLumberMetric(LumberEventName.TotalConnectionCount);
     const nodeName = process.env.NODE_NAME ?? "nodeName";
     const perNodeKeyName = `totalConnections_${nodeName}`;
     const perClusterKeyName = `totalConnections`;

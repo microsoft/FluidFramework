@@ -83,20 +83,22 @@ export class AlfredRunner implements IRunner {
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
         const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
-
-        const redisConfig = this.config.get("redis");
-        const redisOptions: Redis.RedisOptions = {
-            host: redisConfig.host,
-            port: redisConfig.port,
-            password: redisConfig.pass,
-        };
-        if (redisConfig.tls) {
-            redisOptions.tls = {
-                servername: redisConfig.host,
+        let redisCache: ICache;
+        if (this.config.get("alfred:enableConnectionCountLogging")) {
+            const redisConfig = this.config.get("redis");
+            const redisOptions: Redis.RedisOptions = {
+                host: redisConfig.host,
+                port: redisConfig.port,
+                password: redisConfig.pass,
             };
+            if (redisConfig.tls) {
+                redisOptions.tls = {
+                    servername: redisConfig.host,
+                };
+            }
+            const redisClient = new Redis(redisOptions);
+            redisCache = new RedisCache(redisClient);
         }
-        const redisClient = new Redis(redisOptions);
-        const redisCache = new RedisCache(redisClient);
 
         // Register all the socket.io stuff
         configureWebSocketServices(
