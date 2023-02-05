@@ -42,5 +42,6 @@ export enum LumberEventName {
     CreateDocInitialSummaryWrite = "CreateDocInitialSummaryWrite",
     RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
     HttpRequest = "HttpRequest",
+    TotalConnectionCount = "TotalConnectionCount",
     ConnectionCountPerNode = "ConnectionCountPerNode",
 }

@@ -60,7 +60,7 @@ export class RedisCache implements ICache {
         try {
             return this.client.incr(key);
         } catch(error) {
-            Lumberjack.error(`Error while incrementing a counter in cache.`, undefined, error);
+            Lumberjack.error(`Error while incrementing a counter for ${key} in cache.`, undefined, error);
             return Promise.reject(error);
         }
     }
@@ -69,7 +69,7 @@ export class RedisCache implements ICache {
         try {
             return this.client.decr(key);
         } catch(error) {
-            Lumberjack.error(`Error while decrementing a counter in cache.`, undefined, error);
+            Lumberjack.error(`Error while decrementing a counter for ${key} in cache.`, undefined, error);
             return Promise.reject(error);
         }
     }
