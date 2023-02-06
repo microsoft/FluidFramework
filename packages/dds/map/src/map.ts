@@ -12,11 +12,11 @@ import {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IMapOptions, ISharedMap, ISharedMapEvents, AttributionKey } from "./interfaces";
+import { IMapOptions, ISharedMap, ISharedMapEvents } from "./interfaces";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 

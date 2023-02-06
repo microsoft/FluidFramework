@@ -11,7 +11,8 @@ import {
 	serializeHandles,
 	ValueType,
 } from "@fluidframework/shared-object-base";
-import { ISerializableValue, ISerializedValue, AttributionKey } from "./interfaces";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { ISerializableValue, ISerializedValue } from "./interfaces";
 
 /**
  * A local value to be stored in a container type Distributed Data Store (DDS).

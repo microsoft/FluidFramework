@@ -41,7 +41,6 @@ export {
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
-	AttributionKey,
 	IMapAttributionOptions,
 	IMapOptions,
 } from "./interfaces";

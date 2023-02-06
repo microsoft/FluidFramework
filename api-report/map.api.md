@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -21,12 +22,6 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-
-// @alpha
-export interface AttributionKey {
-    seq: number;
-    type: "op";
-}
 
 // @public @sealed
 export class DirectoryFactory implements IChannelFactory {

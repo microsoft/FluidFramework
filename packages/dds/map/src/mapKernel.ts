@@ -7,13 +7,8 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	AttributionKey,
-	IMapOptions,
-	ISerializableValue,
-	ISerializedValue,
-	ISharedMapEvents,
-} from "./interfaces";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { IMapOptions, ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
