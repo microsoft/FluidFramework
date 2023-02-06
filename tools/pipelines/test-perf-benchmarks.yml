@@ -72,6 +72,8 @@ stages:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactPipeline: ${{ variables.artifactPipeline }}
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         customSteps:
 
         # Download artifact with test files
@@ -311,6 +313,8 @@ stages:
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
               script: |
                 echo "Run memory performance test for ${{ testPackage }}"
+                FLUID_TEST_LOGGER_PKG_PATH=`${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`
+                echo "PKG PATH= ${{ FLUID_TEST_LOGGER_PKG_PATH }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
                 npm run test:memory-profiling:report;
