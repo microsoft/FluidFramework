@@ -327,7 +327,7 @@ export class DocumentDeltaConnection
 					driverVersion,
 					details: JSON.stringify({
 						disposed: this._disposed,
-						socketConnected: this.socket.connected,
+						socketConnected: this.socket?.connected,
 						trackedListenerCount: this.trackedListeners.size,
 					}),
 				},
