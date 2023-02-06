@@ -11,15 +11,14 @@ import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
  * This one writes to the console on every send() call.
  */
 export class ConsoleLogger implements ITelemetryBufferedLogger {
-    public constructor() {
-    }
+	public constructor() {}
 
-    async flush(): Promise<void> {
-        return;
-    }
+	async flush(): Promise<void> {
+		return;
+	}
 
-    send(event: ITelemetryBaseEvent): void {
-        event.Event_Time = Date.now();
-        console.log(JSON.stringify(event));
-    }
+	send(event: ITelemetryBaseEvent): void {
+		event.Event_Time = Date.now();
+		console.log(JSON.stringify(event));
+	}
 }

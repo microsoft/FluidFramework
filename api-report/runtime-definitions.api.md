@@ -27,11 +27,21 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
+import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
+
+// @alpha
+export interface AttributionInfo {
+    timestamp: number;
+    user: IUser;
+}
+
+// @alpha
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey;
 
 // @public @deprecated (undocumented)
 export enum BindState {
@@ -74,6 +84,13 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
+// @alpha
+export interface DetachedAttributionKey {
+    id: 0;
+    // (undocumented)
+    type: "detached";
+}
+
 // @public
 export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
 
@@ -83,13 +100,16 @@ export enum FlushMode {
     TurnBased = 1
 }
 
-// @public (undocumented)
+// @public
 export const gcBlobPrefix = "__gc";
 
-// @public (undocumented)
+// @public
+export const gcDeletedBlobKey = "__deletedNodes";
+
+// @public
 export const gcTombstoneBlobKey = "__tombstones";
 
-// @public (undocumented)
+// @public
 export const gcTreeKey = "gc";
 
 // @public
@@ -187,6 +207,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly createProps?: any;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
@@ -264,6 +285,8 @@ export interface IGarbageCollectionNodeData {
 
 // @public
 export interface IGarbageCollectionSnapshotData {
+    // (undocumented)
+    deletedNodes: string[] | undefined;
     // (undocumented)
     gcState: IGarbageCollectionState;
     // (undocumented)
@@ -368,7 +391,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
-    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
+    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+    getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
@@ -409,6 +433,12 @@ export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreReg
 
 // @public
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+// @alpha
+export interface OpAttributionKey {
+    seq: number;
+    type: "op";
+}
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;

@@ -4,19 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IHostLoader,
+	ILoaderOptions,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    createAndAttachContainer,
-    createLoader,
-    LoaderContainerTracker,
-    ITestFluidObject,
-    TestFluidObjectFactory,
+	LocalDeltaConnectionServer,
+	ILocalDeltaConnectionServer,
+} from "@fluidframework/server-local-server";
+import {
+	createAndAttachContainer,
+	createLoader,
+	LoaderContainerTracker,
+	ITestFluidObject,
+	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 /**
@@ -25,132 +33,141 @@ import {
  * @param deltaConnectionServer - The delta connection server to use as the server.
  */
 function createLocalLoader(
-    packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: IUrlResolver,
-    options?: ILoaderOptions,
+	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+	deltaConnectionServer: ILocalDeltaConnectionServer,
+	urlResolver: IUrlResolver,
+	options?: ILoaderOptions,
 ): IHostLoader {
-    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
-    return createLoader(
-        packageEntries,
-        documentServiceFactory,
-        urlResolver,
-        undefined,
-        options,
-    );
+	return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
 }
 
 describe("LocalTestServer", () => {
-    const documentId = "localServerTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const stringId = "stringKey";
-    const codeDetails: IFluidCodeDetails = {
-        package: "localServerTestPackage",
-        config: {},
-    };
-    const factory = new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]);
+	const documentId = "localServerTest";
+	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const stringId = "stringKey";
+	const codeDetails: IFluidCodeDetails = {
+		package: "localServerTestPackage",
+		config: {},
+	};
+	const factory = new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]);
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
-    let loaderContainerTracker: LoaderContainerTracker;
-    let container1: IContainer;
-    let container2: IContainer;
-    let dataObject1: ITestFluidObject;
-    let dataObject2: ITestFluidObject;
-    let sharedString1: SharedString;
-    let sharedString2: SharedString;
+	let deltaConnectionServer: ILocalDeltaConnectionServer;
+	let urlResolver: LocalResolver;
+	let loaderContainerTracker: LoaderContainerTracker;
+	let container1: IContainer;
+	let container2: IContainer;
+	let dataObject1: ITestFluidObject;
+	let dataObject2: ITestFluidObject;
+	let sharedString1: SharedString;
+	let sharedString2: SharedString;
 
-    async function createContainer(): Promise<IContainer> {
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        loaderContainerTracker.add(loader);
-        return createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
-    }
+	async function createContainer(): Promise<IContainer> {
+		const loader = createLocalLoader(
+			[[codeDetails, factory]],
+			deltaConnectionServer,
+			urlResolver,
+		);
+		loaderContainerTracker.add(loader);
+		return createAndAttachContainer(
+			codeDetails,
+			loader,
+			urlResolver.createCreateNewRequest(documentId),
+		);
+	}
 
-    async function loadContainer(): Promise<IContainer> {
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        loaderContainerTracker.add(loader);
-        return loader.resolve({ url: documentLoadUrl });
-    }
+	async function loadContainer(): Promise<IContainer> {
+		const loader = createLocalLoader(
+			[[codeDetails, factory]],
+			deltaConnectionServer,
+			urlResolver,
+		);
+		loaderContainerTracker.add(loader);
+		return loader.resolve({ url: documentLoadUrl });
+	}
 
-    beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-        loaderContainerTracker = new LoaderContainerTracker();
+	beforeEach(async () => {
+		deltaConnectionServer = LocalDeltaConnectionServer.create();
+		urlResolver = new LocalResolver();
+		loaderContainerTracker = new LoaderContainerTracker();
 
-        // Create a Container for the first client.
-        container1 = await createContainer();
-        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-        sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+		// Create a Container for the first client.
+		container1 = await createContainer();
+		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
-        // Load the Container that was created by the first client.
-        container2 = await loadContainer();
-        dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
-    });
+		// Load the Container that was created by the first client.
+		container2 = await loadContainer();
+		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+	});
 
-    afterEach(() => {
-        loaderContainerTracker.reset();
-    });
+	afterEach(() => {
+		loaderContainerTracker.reset();
+	});
 
-    describe("Attach Op Handlers on Both Clients", () => {
-        it("Validate messaging", async () => {
-            let user1ReceivedMsgCount: number = 0;
-            let user2ReceivedMsgCount: number = 0;
+	describe("Attach Op Handlers on Both Clients", () => {
+		it("Validate messaging", async () => {
+			let user1ReceivedMsgCount: number = 0;
+			let user2ReceivedMsgCount: number = 0;
 
-            // Perform couple of bugs in sharedString1. The first Container is in read-only mode so the first op it
-            // sends will get nack'd and is re-sent. Do it here so that this does not mess with rest of the test.
-            // sharedString1.insertText(0, "A");
-            // sharedString1.removeText(0, 1);
-            // await opProcessingController.process();
+			// Perform couple of bugs in sharedString1. The first Container is in read-only mode so the first op it
+			// sends will get nack'd and is re-sent. Do it here so that this does not mess with rest of the test.
+			// sharedString1.insertText(0, "A");
+			// sharedString1.removeText(0, 1);
+			// await opProcessingController.process();
 
-            sharedString1.on("op", (msg, local) => {
-                if (!local) {
-                    if (msg.type === MessageType.Operation) {
-                        user1ReceivedMsgCount = user1ReceivedMsgCount + 1;
-                    }
-                }
-            });
+			sharedString1.on("op", (msg, local) => {
+				if (!local) {
+					if (msg.type === MessageType.Operation) {
+						user1ReceivedMsgCount = user1ReceivedMsgCount + 1;
+					}
+				}
+			});
 
-            sharedString2.on("op", (msg, local) => {
-                if (!local) {
-                    if (msg.type === MessageType.Operation) {
-                        user2ReceivedMsgCount = user2ReceivedMsgCount + 1;
-                    }
-                }
-            });
+			sharedString2.on("op", (msg, local) => {
+				if (!local) {
+					if (msg.type === MessageType.Operation) {
+						user2ReceivedMsgCount = user2ReceivedMsgCount + 1;
+					}
+				}
+			});
 
-            await loaderContainerTracker.pauseProcessing();
+			await loaderContainerTracker.pauseProcessing();
 
-            sharedString1.insertText(0, "A");
-            sharedString2.insertText(0, "C");
-            assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
-            assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
+			sharedString1.insertText(0, "A");
+			sharedString2.insertText(0, "C");
+			assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
+			assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await loaderContainerTracker.ensureSynchronized(container1);
-            assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
-            assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
+			await loaderContainerTracker.ensureSynchronized(container1);
+			assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
+			assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await loaderContainerTracker.ensureSynchronized(container2);
-            assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
-            assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
+			await loaderContainerTracker.ensureSynchronized(container2);
+			assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
+			assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-            await loaderContainerTracker.processIncoming(container1);
-            assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
-            assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
+			await loaderContainerTracker.processIncoming(container1);
+			assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
+			assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-            sharedString1.insertText(0, "B");
-            await loaderContainerTracker.ensureSynchronized();
+			sharedString1.insertText(0, "B");
+			await loaderContainerTracker.ensureSynchronized();
 
-            assert.equal(sharedString1.getText(), sharedString2.getText(), "Shared string not synced");
-            assert.equal(sharedString1.getText().length, 3, sharedString1.getText());
-            assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
-            assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");
-        });
-    });
+			assert.equal(
+				sharedString1.getText(),
+				sharedString2.getText(),
+				"Shared string not synced",
+			);
+			assert.equal(sharedString1.getText().length, 3, sharedString1.getText());
+			assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
+			assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");
+		});
+	});
 
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
-    });
+	afterEach(async () => {
+		await deltaConnectionServer.webSocketServer.close();
+	});
 });

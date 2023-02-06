@@ -7,52 +7,49 @@ import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 // Re-export so developers can build loggers without pulling in common-definitions
-export {
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
-} from "@fluidframework/common-definitions";
+export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
  * Props for initializing a {@link TinyliciousClient}
  */
 export interface TinyliciousClientProps {
-    /**
-     * Optional. Configuration for establishing a connection with the Tinylicious.
-     * If not specified, will use {@link TinyliciousConnectionConfig}'s default values.
-     */
-    connection?: TinyliciousConnectionConfig;
-    /**
-     * Optional. A logger instance to receive diagnostic messages.
-     */
-    logger?: ITelemetryBaseLogger;
+	/**
+	 * Optional. Configuration for establishing a connection with the Tinylicious.
+	 * If not specified, will use {@link TinyliciousConnectionConfig}'s default values.
+	 */
+	connection?: TinyliciousConnectionConfig;
+	/**
+	 * Optional. A logger instance to receive diagnostic messages.
+	 */
+	logger?: ITelemetryBaseLogger;
 }
 
 /**
  * Parameters for establishing a connection with the a Tinylicious service.
  */
 export interface TinyliciousConnectionConfig {
-    /**
-     * Optional. Override of the port.
-     *
-     * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousPort}
-     */
-    port?: number;
+	/**
+	 * Optional. Override of the port.
+	 *
+	 * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousPort}
+	 */
+	port?: number;
 
-    /**
-     * Optional. Override of the domain.
-     *
-     * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
-     */
-    domain?: string;
+	/**
+	 * Optional. Override of the domain.
+	 *
+	 * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
+	 */
+	domain?: string;
 
-    /**
-     * Optional. Override of tokenProvider. If a param is not provided, TinyliciousConnectionConfig
-     * will use the default tokenProvider which is InsecureTinyliciousTokenProvider with default scopes,
-     * which are document read, write and summarizer write.
-     *
-     * @defaultValue {@link @fluidframework/tinylicious-driver#InsecureTinyliciousTokenProvider}
-     */
-    tokenProvider?: ITokenProvider;
+	/**
+	 * Optional. Override of tokenProvider. If a param is not provided, TinyliciousConnectionConfig
+	 * will use the default tokenProvider which is InsecureTinyliciousTokenProvider with default scopes,
+	 * which are document read, write and summarizer write.
+	 *
+	 * @defaultValue {@link @fluidframework/tinylicious-driver#InsecureTinyliciousTokenProvider}
+	 */
+	tokenProvider?: ITokenProvider;
 }
 
 /**
@@ -63,11 +60,11 @@ export interface TinyliciousConnectionConfig {
  * will not be included here but rather on the FluidContainer class itself.
  */
 export interface TinyliciousContainerServices {
-    /**
-     * Provides an object that can be used to get the users that are present in this Fluid session and
-     * listeners for when the roster has any changes from users joining/leaving the session
-     */
-    audience: ITinyliciousAudience;
+	/**
+	 * Provides an object that can be used to get the users that are present in this Fluid session and
+	 * listeners for when the roster has any changes from users joining/leaving the session
+	 */
+	audience: ITinyliciousAudience;
 }
 
 /**
@@ -75,10 +72,10 @@ export interface TinyliciousContainerServices {
  * this service-specific value.
  */
 export interface TinyliciousUser extends IUser {
-    /**
-     * The user's name
-     */
-    name: string;
+	/**
+	 * The user's name
+	 */
+	name: string;
 }
 
 /**
@@ -86,10 +83,10 @@ export interface TinyliciousUser extends IUser {
  * this service-specific value. It will be returned for all audience members connected to Tinylicious.
  */
 export interface TinyliciousMember extends IMember {
-    /**
-     * {@inheritDoc TinyliciousUser.name}
-     */
-    userName: string;
+	/**
+	 * {@inheritDoc TinyliciousUser.name}
+	 */
+	userName: string;
 }
 
 /**

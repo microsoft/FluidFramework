@@ -9,5 +9,5 @@
  * to ensure that all cases are explicitly handled.
  */
 export function unreachableCase(_: never, message = "Unreachable Case"): never {
-    throw new Error(message);
+	throw new Error(message);
 }

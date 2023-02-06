@@ -24,7 +24,9 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
  */
-export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable> =
+	| DataObjectClass<T>
+	| SharedObjectClass<T>;
 
 /**
  * A class that has a factory that can create a `DataObject` and a
@@ -32,8 +34,9 @@ export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> |
  *
  * @typeParam T - The class of the `DataObject`.
  */
-export type DataObjectClass<T extends IFluidLoadable>
-    = { readonly factory: IFluidDataStoreFactory; } & LoadableObjectCtor<T>;
+export type DataObjectClass<T extends IFluidLoadable> = {
+	readonly factory: IFluidDataStoreFactory;
+} & LoadableObjectCtor<T>;
 
 /**
  * A class that has a factory that can create a DDSes (`SharedObject`s) and a
@@ -41,15 +44,16 @@ export type DataObjectClass<T extends IFluidLoadable>
  *
  * @typeParam T - The class of the `SharedObject`.
  */
-export type SharedObjectClass<T extends IFluidLoadable>
-    = { readonly getFactory: () => IChannelFactory; } & LoadableObjectCtor<T>;
+export type SharedObjectClass<T extends IFluidLoadable> = {
+	readonly getFactory: () => IChannelFactory;
+} & LoadableObjectCtor<T>;
 
 /**
  * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
  *
  * @typeParam T - The class of the loadable object.
  */
-export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
+export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
 /**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
@@ -60,37 +64,37 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) =
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
  */
 export interface ContainerSchema {
-    /**
-     * Defines loadable objects that will be created when the {@link IFluidContainer | Container} is first created.
-     *
-     * @remarks It uses the key as the id and the value as the loadable object to create.
-     *
-     * @example
-     *
-     * In the example below two objects will be created when the `Container` is first
-     * created. One with id "map1" that will return a `SharedMap` and the other with
-     * id "pair1" that will return a `KeyValueDataObject`.
-     *
-     * ```typescript
-     * {
-     *   map1: SharedMap,
-     *   pair1: KeyValueDataObject,
-     * }
-     * ```
-     */
-    initialObjects: LoadableObjectClassRecord;
+	/**
+	 * Defines loadable objects that will be created when the {@link IFluidContainer | Container} is first created.
+	 *
+	 * @remarks It uses the key as the id and the value as the loadable object to create.
+	 *
+	 * @example
+	 *
+	 * In the example below two objects will be created when the `Container` is first
+	 * created. One with id "map1" that will return a `SharedMap` and the other with
+	 * id "pair1" that will return a `KeyValueDataObject`.
+	 *
+	 * ```typescript
+	 * {
+	 *   map1: SharedMap,
+	 *   pair1: KeyValueDataObject,
+	 * }
+	 * ```
+	 */
+	initialObjects: LoadableObjectClassRecord;
 
-    /**
-     * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
-     *
-     * @remarks
-     *
-     * Types defined in `initialObjects` will always be available and are not required to be provided here.
-     *
-     * For best practice it's recommended to define all the dynamic types you create even if they are
-     * included via initialObjects.
-     */
-    dynamicObjectTypes?: LoadableObjectClass<any>[];
+	/**
+	 * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
+	 *
+	 * @remarks
+	 *
+	 * Types defined in `initialObjects` will always be available and are not required to be provided here.
+	 *
+	 * For best practice it's recommended to define all the dynamic types you create even if they are
+	 * included via initialObjects.
+	 */
+	dynamicObjectTypes?: LoadableObjectClass<any>[];
 }
 
 /**
@@ -98,19 +102,19 @@ export interface ContainerSchema {
  * to dynamically create further objects during usage.
  */
 export interface IRootDataObject {
-    /**
-     * Provides a record of the initial objects defined on creation.
-     */
-    readonly initialObjects: LoadableObjectRecord;
+	/**
+	 * Provides a record of the initial objects defined on creation.
+	 */
+	readonly initialObjects: LoadableObjectRecord;
 
-    /**
-     * Dynamically creates a new detached collaborative object (DDS/DataObject).
-     *
-     * @param objectClass - Type of the collaborative object to be created.
-     *
-     * @typeParam T - The class of the `DataObject` or `SharedObject`.
-     */
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+	/**
+	 * Dynamically creates a new detached collaborative object (DDS/DataObject).
+	 *
+	 * @param objectClass - Type of the collaborative object to be created.
+	 *
+	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
+	 */
+	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
 }
 
 /**
@@ -134,26 +138,26 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
  * @typeParam M - A service-specific {@link IMember} implementation.
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
-    /**
-     * Emitted when a {@link IMember | member}(s) are either added or removed.
-     *
-     * @eventProperty
-     */
-    (event: "membersChanged", listener: () => void): void;
+	/**
+	 * Emitted when a {@link IMember | member}(s) are either added or removed.
+	 *
+	 * @eventProperty
+	 */
+	(event: "membersChanged", listener: () => void): void;
 
-    /**
-     * Emitted when a {@link IMember | member} joins the audience.
-     *
-     * @eventProperty
-     */
-    (event: "memberAdded", listener: MemberChangedListener<M>): void;
+	/**
+	 * Emitted when a {@link IMember | member} joins the audience.
+	 *
+	 * @eventProperty
+	 */
+	(event: "memberAdded", listener: MemberChangedListener<M>): void;
 
-    /**
-     * Emitted when a {@link IMember | member} leaves the audience.
-     *
-     * @eventProperty
-     */
-    (event: "memberRemoved", listener: MemberChangedListener<M>): void;
+	/**
+	 * Emitted when a {@link IMember | member} leaves the audience.
+	 *
+	 * @eventProperty
+	 */
+	(event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
 /**
@@ -167,18 +171,18 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
  * @typeParam M - A service-specific {@link IMember} type.
  */
 export interface IServiceAudience<M extends IMember>
-    extends IEventProvider<IServiceAudienceEvents<M>> {
-    /**
-     * Returns an map of all users currently in the Fluid session where key is the userId and the value is the
-     * member object.  The implementation may choose to exclude certain connections from the returned map.
-     * E.g. ServiceAudience excludes non-interactive connections to represent only the roster of live users.
-     */
-    getMembers(): Map<string, M>;
+	extends IEventProvider<IServiceAudienceEvents<M>> {
+	/**
+	 * Returns an map of all users currently in the Fluid session where key is the userId and the value is the
+	 * member object.  The implementation may choose to exclude certain connections from the returned map.
+	 * E.g. ServiceAudience excludes non-interactive connections to represent only the roster of live users.
+	 */
+	getMembers(): Map<string, M>;
 
-    /**
-     * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
-     */
-    getMyself(): Myself<M> | undefined;
+	/**
+	 * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
+	 */
+	getMyself(): Myself<M> | undefined;
 }
 
 /**
@@ -187,15 +191,15 @@ export interface IServiceAudience<M extends IMember>
  * @remarks This interface can be extended to provide additional information specific to each service.
  */
 export interface IConnection {
-    /**
-     * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
-     */
-    id: string;
+	/**
+	 * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
+	 */
+	id: string;
 
-    /**
-     * Whether the connection is in read or read/write mode.
-     */
-    mode: "write" | "read";
+	/**
+	 * Whether the connection is in read or read/write mode.
+	 */
+	mode: "write" | "read";
 }
 
 /**
@@ -204,18 +208,18 @@ export interface IConnection {
  * @remarks This interface can be extended by each service to provide additional service-specific user metadata.
  */
 export interface IMember {
-    /**
-     * An ID for the user, unique among each individual user connecting to the session.
-     */
-    userId: string;
+	/**
+	 * An ID for the user, unique among each individual user connecting to the session.
+	 */
+	userId: string;
 
-    /**
-     * The set of connections the user has made, e.g. from multiple tabs or devices.
-     */
-    connections: IConnection[];
+	/**
+	 * The set of connections the user has made, e.g. from multiple tabs or devices.
+	 */
+	connections: IConnection[];
 }
 
 /**
  * An extended member object that includes currentConnection
  */
-export type Myself<M extends IMember = IMember> = M & { currentConnection: string; };
+export type Myself<M extends IMember = IMember> = M & { currentConnection: string };
