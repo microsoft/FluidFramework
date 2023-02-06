@@ -27,7 +27,7 @@ const split = require("split");
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
  */
 const stream = split().on("data", (message) => {
-    winston.info(message);
+	winston.info(message);
 });
 
 export function create(
@@ -39,41 +39,39 @@ export function create(
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
-    // Express app configuration
-    const app = express();
+	// Express app configuration
+	const app = express();
 
-    // initialize RestLess server translation
-    const restLessMiddleware: () => express.RequestHandler = () => {
-        const restLessServer = new RestLessServer();
-        return (req, res, next) => {
-            restLessServer
-                .translate(req, res)
-                .then(() => next())
-                .catch(next);
-        };
-    };
-    app.use(restLessMiddleware());
+	// initialize RestLess server translation
+	const restLessMiddleware: () => express.RequestHandler = () => {
+		const restLessServer = new RestLessServer();
+		return (req, res, next) => {
+			restLessServer
+				.translate(req, res)
+				.then(() => next())
+				.catch(next);
+		};
+	};
+	app.use(restLessMiddleware());
 
-    // Running behind iisnode
-    app.set("trust proxy", 1);
+	// Running behind iisnode
+	app.set("trust proxy", 1);
 
-    app.use(compression());
-    app.use(morgan(config.get("logger:morganFormat"), { stream }));
+	app.use(compression());
+	app.use(morgan(config.get("logger:morganFormat"), { stream }));
 
-    app.use(cookieParser());
-    app.use(json({ limit: requestSize }));
-    app.use(urlencoded({ limit: requestSize, extended: false }));
+	app.use(cookieParser());
+	app.use(json({ limit: requestSize }));
+	app.use(urlencoded({ limit: requestSize, extended: false }));
 
-    // Bind routes
-    const routes = createRoutes(
-        config,
-        mongoManager,
-        storage);
+	// Bind routes
+	const routes = createRoutes(config, mongoManager, storage);
 
-    app.use(cors());
-    app.use(routes.storage);
-    app.use(routes.ordering);
+	app.use(cors());
+	app.use(routes.storage);
+	app.use(routes.ordering);
 
+<<<<<<< HEAD
     // Basic Help Message
     app.use(Router().get("/", (req, res) => {
         res.status(200).send("This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious");
@@ -82,19 +80,29 @@ export function create(
         eventEmitter.emit('task-list-hook');
         res.status(200).send("Triggering debug signal from tinylicious");
     }));
+=======
+	// Basic Help Message
+	app.use(
+		Router().get("/", (req, res) => {
+			res.status(200).send(
+				"This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious",
+			);
+		}),
+	);
+>>>>>>> main
 
-    // Catch 404 and forward to error handler
-    app.use((req, res, next) => {
-        const err = new Error("Not Found");
-        (err as any).status = 404;
-        next(err);
-    });
+	// Catch 404 and forward to error handler
+	app.use((req, res, next) => {
+		const err = new Error("Not Found");
+		(err as any).status = 404;
+		next(err);
+	});
 
-    // Error handlers
-    app.use((err, req, res, next) => {
-        res.status(err.status || 500);
-        res.json({ error: safeStringify(err), message: err.message });
-    });
+	// Error handlers
+	app.use((err, req, res, next) => {
+		res.status(err.status || 500);
+		res.json({ error: safeStringify(err), message: err.message });
+	});
 
-    return app;
+	return app;
 }

@@ -73,10 +73,6 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     handle: IFluidHandle;
 }
 
-// @public @deprecated (undocumented)
-export interface IFluidObject {
-}
-
 // @public @deprecated
 export interface IFluidPackage {
     [key: string]: unknown;
