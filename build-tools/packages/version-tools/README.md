@@ -4,12 +4,11 @@ The version-tools package provides APIs and a CLI to parse and transform version
 Fluid Framework.
 
 <!-- toc -->
-
--   [@fluid-tools/version-tools](#fluid-toolsversion-tools)
--   [Version schemes](#version-schemes)
--   [General API](#general-api)
--   [CLI Usage](#cli-usage)
--   [Commands](#commands)
+* [@fluid-tools/version-tools](#fluid-toolsversion-tools)
+* [Version schemes](#version-schemes)
+* [General API](#general-api)
+* [CLI Usage](#cli-usage)
+* [Commands](#commands)
 <!-- tocstop -->
 
 # Version schemes
@@ -71,7 +70,6 @@ also available in the Fluid build and release tool (`flub`). This is accomplishe
 [oclif's plugin system](https://oclif.io/docs/plugins).
 
 <!-- usage -->
-
 ```sh-session
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
@@ -83,17 +81,15 @@ USAGE
   $ fluv COMMAND
 ...
 ```
-
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
-
--   [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
--   [`fluv help [COMMAND]`](#fluv-help-command)
--   [`fluv version VERSION`](#fluv-version-version)
--   [`fluv version latest`](#fluv-version-latest)
+* [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
+* [`fluv help [COMMAND]`](#fluv-help-command)
+* [`fluv version VERSION`](#fluv-version-version)
+* [`fluv version latest`](#fluv-version-latest)
 
 ## `fluv autocomplete [SHELL]`
 
@@ -219,7 +215,6 @@ EXAMPLES
 
     $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
 ```
-
 <!-- commandsstop -->
 
 ## Developer notes
