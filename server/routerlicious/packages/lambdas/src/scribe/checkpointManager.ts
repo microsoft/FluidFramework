@@ -52,33 +52,7 @@ export class CheckpointManager implements ICheckpointManager {
         //
         // And last we delete all mesages in the list prior to the summaryprotocol sequence number. From now on these
         // will no longer be referenced.
-        if (!this.getDeltasViaAlfred) {
-            const dbOps = pending.map((message) => ({
-                ...message,
-                mongoTimestamp: new Date(message.operation.timestamp)
-            }));
-            if (dbOps.length > 0) {
-                await runWithRetry(
-                    async () => this.opCollection.insertMany(dbOps, false),
-                    "writeCheckpointScribe",
-                    3 /* maxRetries */,
-                    1000 /* retryAfterMs */,
-                    getLumberBaseProperties(this.documentId, this.tenantId),
-                    (error) => error.code === 11000 /* shouldIgnoreError */,
-                    (error) => !this.clientFacadeRetryEnabled, /* shouldRetry */
-                );
-            }
-
-            // Write out the full state first that we require
-            await this.writeScribeCheckpointState(checkpoint);
-
-            // And then delete messagses that were already summarized.
-            await this.opCollection.deleteMany({
-                "documentId": this.documentId,
-                "operation.sequenceNumber": { $lte: protocolHead },
-                "tenantId": this.tenantId,
-            });
-        } else {
+        if (this.getDeltasViaAlfred) {
             if (pending.length > 0) {
                 // Verify that the last pending op has been persisted to op storage
                 // If it is, we can checkpoint
@@ -105,6 +79,32 @@ export class CheckpointManager implements ICheckpointManager {
             }
 
             await this.writeScribeCheckpointState(checkpoint);
+        } else {
+            const dbOps = pending.map((message) => ({
+                ...message,
+                mongoTimestamp: new Date(message.operation.timestamp)
+            }));
+            if (dbOps.length > 0) {
+                await runWithRetry(
+                    async () => this.opCollection.insertMany(dbOps, false),
+                    "writeCheckpointScribe",
+                    3 /* maxRetries */,
+                    1000 /* retryAfterMs */,
+                    getLumberBaseProperties(this.documentId, this.tenantId),
+                    (error) => error.code === 11000 /* shouldIgnoreError */,
+                    (error) => !this.clientFacadeRetryEnabled, /* shouldRetry */
+                );
+            }
+
+            // Write out the full state first that we require
+            await this.writeScribeCheckpointState(checkpoint);
+
+            // And then delete messagses that were already summarized.
+            await this.opCollection.deleteMany({
+                "documentId": this.documentId,
+                "operation.sequenceNumber": { $lte: protocolHead },
+                "tenantId": this.tenantId,
+            });
         }
     }
 

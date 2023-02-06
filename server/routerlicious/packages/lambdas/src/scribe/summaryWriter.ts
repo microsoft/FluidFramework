@@ -616,13 +616,13 @@ export class SummaryWriter implements ISummaryWriter {
 
         // If the db is not updated with all logs yet, get them from checkpoint messages.
         if (logTail.length !== (lt - gt - 1)) {
-            Lumberjack.info(`Populating logtail gaps`, this.lumberProperties);
             const nextSeq = logTail.length === 0 ? gt : logTail[logTail.length - 1].sequenceNumber + 1;
             for (const message of pending) {
                 if (message.operation.sequenceNumber >= nextSeq && message.operation.sequenceNumber < lt) {
                     logTail.push(message.operation);
                 }
             }
+            Lumberjack.info(`Populated logtail gaps. nextSeq: ${nextSeq} LogtailLength: ${logTail.length}`, this.lumberProperties);
         }
         return logTail;
     }
