@@ -81,7 +81,7 @@ export interface ILoadTestConfig {
 	useVariableOpSize?: boolean;
 	/**
 	 * Once every `largeOpRate` ops, a large op will be sent if `opSizeinBytes` is specified.
-	 * By default, if unspecified, all ops will be large ops (`largeOpRate` is 1).
+	 * By default, all ops will be large ops (`largeOpRate` is 1).
 	 */
 	largeOpRate?: number;
 }
