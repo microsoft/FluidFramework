@@ -97,9 +97,9 @@ export function create(
     router.get(
         "/:tenantId/:id",
         validateRequestParams("tenantId", "id"),
-        verifyStorageToken(tenantManager, config),
         throttle(clusterThrottlers.get(Constants.alfredRestThrottleIdGetDeltas), winston, getDeltasThrottleOptions),
         throttle(throttler, winston, tenantThrottleOptions),
+        verifyStorageToken(tenantManager, config),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);
             const to = stringToSequenceNumber(request.query.to);

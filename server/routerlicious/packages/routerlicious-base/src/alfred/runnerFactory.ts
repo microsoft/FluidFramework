@@ -268,11 +268,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
 
         const restApiCreateDocThrottleConfig: Partial<IThrottleConfig> =
-        config.get("alfred:throttling:restCallsCreateDoc") ?? {};
+        config.get("alfred:throttling:restCallsPerClusterCreateDoc") ?? {};
         const restCreateDocThrottler = configureThrottler(restApiCreateDocThrottleConfig);
 
         const restApiGetDeltasThrottleConfig: Partial<IThrottleConfig> =
-        config.get("alfred:throttling:restCallsGetDeltas") ?? {};
+        config.get("alfred:throttling:restCallsPerClusterGetDeltas") ?? {};
         const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
 
         const restClusterThrottlers = new Map<string, core.IThrottler>();
