@@ -327,6 +327,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					disposed: this._disposed,
 					socketConnected: this.socket.connected,
+					trackedListenerCount: this.trackedListeners.size,
 				})},
 				error,
 			);
