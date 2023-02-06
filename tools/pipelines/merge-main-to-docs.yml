@@ -1,0 +1,18 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# merge-main-docs pipeline
+# This pipeline merges the main branch into the private-docs branch
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - test/api-docs-pipeline
+pr: none
+
+steps:
+  - task: MergeTask@2
+    inputs:
+      targetBranch: "private-docs"
+      sourceBranch: "test/api-docs-pipeline"
