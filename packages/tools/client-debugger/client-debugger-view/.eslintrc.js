@@ -4,7 +4,13 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	plugins: ["react", "react-hooks"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/strict"),
+		"plugin:react/recommended",
+		"plugin:react-hooks/recommended",
+		"prettier",
+	],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
@@ -28,4 +34,9 @@ module.exports = {
 			},
 		},
 	],
+	settings: {
+		react: {
+			version: "detect",
+		},
+	},
 };
