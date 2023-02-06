@@ -59,7 +59,7 @@
 		"applicationinsights": "^2.1.9"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.8.0",
+		"@fluid-tools/build-cli": "^0.9.0-127618",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
