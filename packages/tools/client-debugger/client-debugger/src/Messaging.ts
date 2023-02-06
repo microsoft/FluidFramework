@@ -33,6 +33,36 @@ export interface IInboundMessage extends IDebuggerMessage {}
 export interface IOutboundMessage extends IDebuggerMessage {}
 
 /**
+ * Inbound event requesting the list of Container IDs for which debuggers have been registered.
+ * Will result in the {@link RegistryChangeMessage} message being posted.
+ *
+ * @privateRemarks TODO: do we want separate on-add / on-remove events (let subscribers manage their own lists)?
+ *
+ * @public
+ */
+export interface GetContainerListMessage extends IInboundMessage {
+	type: "GET_CONTAINER_LIST";
+	data: undefined;
+}
+
+/**
+ * Metadata describing a {@link @fluidframework/container-definitions#IContainer} registered with a debugger.
+ *
+ * @public
+ */
+export interface ContainerMetadata {
+	/**
+	 * The Container ID.
+	 */
+	id: string;
+
+	/**
+	 * Optional Container nickname.
+	 */
+	nickname?: string;
+}
+
+/**
  * Outbound event indicating a change in the debugger registry (i.e. a debugger has been registered or closed).
  * Includes the new list of active debugger Container IDs.
  *
@@ -43,7 +73,7 @@ export interface IOutboundMessage extends IDebuggerMessage {}
 export interface RegistryChangeMessage extends IOutboundMessage {
 	type: "REGISTRY_CHANGE";
 	data: {
-		containerIds: string[];
+		containers: ContainerMetadata[];
 	};
 }
 

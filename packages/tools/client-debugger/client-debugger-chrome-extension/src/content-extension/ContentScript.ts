@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { renderClientDebuggerView } from "@fluid-tools/client-debugger-view";
+import React from "react";
+import ReactDOM from "react-dom";
+
 import { debuggerPanelId } from "./Constants";
 import { isDebuggerPanelOpen } from "./Utilities";
+import { TestView } from "./TestView";
 
 function show(): void {
 	if (isDebuggerPanelOpen()) {
@@ -23,12 +26,10 @@ function show(): void {
 	panelElement.style.zIndex = "9000000000000000000"; // Ensure the panel appears on top of all other content
 	panelElement.style.width = "400px";
 
-	renderClientDebuggerView(panelElement).then(() => {
+	ReactDOM.render(React.createElement(TestView), panelElement, () => {
 		document.body.append(panelElement);
 		console.log("CONTENT: Rendered debug view!");
-	}, console.error);
-
-	// TODO: Resume message subscription for the debugger itself
+	});
 }
 
 function hide(): void {
@@ -37,6 +38,9 @@ function hide(): void {
 	document.querySelector(`#${debuggerPanelId}`)?.remove();
 }
 
+// #region Background <- -> Content script messaging
+
+// TODO: differentiate senders (registry / debugger or background script)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	// TODO: validate sender
 
@@ -56,3 +60,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		received: true,
 	});
 });
+
+// #endregion

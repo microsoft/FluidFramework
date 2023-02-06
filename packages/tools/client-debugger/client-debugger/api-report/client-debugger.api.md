@@ -32,6 +32,12 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
     clientId: string | undefined;
 }
 
+// @public
+export interface ContainerMetadata {
+    id: string;
+    nickname?: string;
+}
+
 // @internal
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
     constructor();
@@ -54,6 +60,14 @@ export interface FluidClientDebuggerProps {
     containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
     containerId: string;
     containerNickname?: string;
+}
+
+// @public
+export interface GetContainerListMessage extends IInboundMessage {
+    // (undocumented)
+    data: undefined;
+    // (undocumented)
+    type: "GET_CONTAINER_LIST";
 }
 
 // @internal
@@ -116,7 +130,7 @@ export enum MemberChangeKind {
 export interface RegistryChangeMessage extends IOutboundMessage {
     // (undocumented)
     data: {
-        containerIds: string[];
+        containers: ContainerMetadata[];
     };
     // (undocumented)
     type: "REGISTRY_CHANGE";

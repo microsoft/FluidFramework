@@ -85,14 +85,25 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 			// Ignore events coming from outside of this window / global context
 			return;
 		}
-		console.log("REGISTRY: Received message!");
 
 		if (event.data?.type === undefined) {
-			console.warn("REGISTRY: Incoming message did not supply a type.");
 			return;
 		}
 
-		// TODO: handle message types
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		function log(message: string): void {
+			console.log(`REGISTRY: ${message}`);
+		}
+
+		switch (event.data.type) {
+			case "GET_CONTAINER_LIST":
+				log('"GET_CONTAINER_LIST" message received!');
+				this.postRegistryChange();
+				break;
+			default:
+				log(`Unhandled inbound message type received: "${event.data.type}".`);
+				break;
+		}
 	};
 
 	/**
@@ -102,9 +113,10 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 		postWindowMessage<RegistryChangeMessage>({
 			type: "REGISTRY_CHANGE",
 			data: {
-				containerIds: [...this.registeredDebuggers.values()].map(
-					(clientDebugger) => clientDebugger.containerId,
-				),
+				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
+					id: clientDebugger.containerId,
+					nickname: clientDebugger.containerNickname,
+				})),
 			},
 		});
 	};

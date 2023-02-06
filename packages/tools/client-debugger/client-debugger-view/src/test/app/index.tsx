@@ -5,7 +5,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { renderClientDebuggerView } from "../../RenderClientDebugger";
+// import { renderClientDebuggerView } from "../../RenderClientDebugger";
 import { App } from "./App";
 
 console.log("Rendering app!");
@@ -17,4 +17,4 @@ ReactDOM.render(
 	document.querySelector("#content"),
 );
 
-renderClientDebuggerView(document.body).catch(console.error);
+// renderClientDebuggerView(document.body).catch(console.error);

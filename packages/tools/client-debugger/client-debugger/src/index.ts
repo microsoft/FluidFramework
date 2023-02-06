@@ -55,6 +55,8 @@ export {
 } from "./Logs";
 
 export {
+	ContainerMetadata,
+	GetContainerListMessage,
 	IDebuggerMessage,
 	IInboundMessage,
 	IOutboundMessage,

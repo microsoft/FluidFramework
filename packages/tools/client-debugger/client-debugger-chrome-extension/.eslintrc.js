@@ -9,6 +9,10 @@ module.exports = {
 		project: ["./tsconfig.json"],
 	},
 	rules: {
+		// Disabled because they disagrees with React common patterns / best practices.
+		"@typescript-eslint/unbound-method": "off",
+		"unicorn/consistent-function-scoping": "off",
+
 		// Disabled because it conflicts with Prettier.
 		"unicorn/no-nested-ternary": "off",
 	},

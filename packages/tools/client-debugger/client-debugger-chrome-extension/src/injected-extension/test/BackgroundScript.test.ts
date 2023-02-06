@@ -4,8 +4,6 @@
  */
 
 it("Verify that listeners are registered by BackgroundScript.", () => {
-	/* eslint-disable @typescript-eslint/unbound-method */
-
 	expect(chrome.action.onClicked.addListener).not.toHaveBeenCalled();
 	expect(chrome.storage.onChanged.addListener).not.toHaveBeenCalled();
 
@@ -14,6 +12,4 @@ it("Verify that listeners are registered by BackgroundScript.", () => {
 
 	expect(chrome.action.onClicked.addListener).toHaveBeenCalledTimes(1);
 	expect(chrome.storage.onChanged.addListener).toHaveBeenCalledTimes(1);
-
-	/* eslint-enable @typescript-eslint/unbound-method */
 });
