@@ -203,8 +203,8 @@ stages:
             targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
             artifactName: 'perf-test-outputs_execution-time'
           condition: succeededOrFailed()
-      env:
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+    env:
+      FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # Performance unit tests - memory
   - stage: perf_unit_tests_memory
