@@ -496,14 +496,18 @@ export class DataStores implements IDisposable {
 					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
 					headers: JSON.stringify(requestHeaderData),
 				},
-				undefined, /** packagePath */
+				undefined /** packagePath */,
 				error,
 			);
 			throw error;
 		}
 	}
 
-	private checkTombstoned(context: FluidDataStoreContext, request: IRequest, headerData: RuntimeHeaderData) {
+	private checkTombstoned(
+		context: FluidDataStoreContext,
+		request: IRequest,
+		headerData: RuntimeHeaderData,
+	) {
 		if (context.tombstoned) {
 			const shouldFail = this.throwOnTombstoneLoad && !headerData.allowTombstone;
 
