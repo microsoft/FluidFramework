@@ -314,6 +314,7 @@ stages:
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
                 npm run test:memory-profiling:report;
+                npm run test:memory-profiling:report:odsp;
 
           # Consolidate output files
           - task: CopyFiles@2
@@ -442,24 +443,41 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
+              echo OPANICHOC
+              FLUID_TEST_LOGGER_PKG_PATH=`${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`
 
               # Run execution time tests
               npm run test:benchmark:report;
               executionTimeTestsExitCode=$?;
 
+              npm run test:benchmark:report:odsp;
+              executionTimeTestsExitCodeOdsp=$?;
+
+
               # Run memory tests
               npm run test:memory-profiling:report;
               memoryTestsExitCode=$?;
 
+              npm run test:memory-profiling:report:odsp;
+              memoryTestsExitCodeOdsp=$?;
+
               if [[ $executionTimeTestsExitCode -ne 0 ]]; then
                 echo "##vso[task.logissue type=error]Exit code for runtime tests execution = $executionTimeTestsExitCode"
+              fi
+
+              if [[ $executionTimeTestsExitCodeOdsp -ne 0 ]]; then
+                echo "##vso[task.logissue type=error]Exit code for runtime tests execution Odsp= $executionTimeTestsExitCodeOdsp"
               fi
 
               if [[ $memoryTestsExitCode -ne 0 ]]; then
                 echo "##vso[task.logissue type=error]Exit code for memory tests execution = $memoryTestsExitCode"
               fi
 
-              if [[ $executionTimeTestsExitCode -ne 0 ]] || [[ $memoryTestsExitCode -ne 0 ]]; then
+              if [[ $memoryTestsExitCodeOdsp -ne 0 ]]; then
+                echo "##vso[task.logissue type=error]Exit code for memory tests execution Odsp = $memoryTestsExitCodeOdsp"
+              fi
+
+              if [[ $executionTimeTestsExitCode -ne 0 ]] ||  [[ $executionTimeTestsExitCodeOdsp -ne 0 ]] || [[ $memoryTestsExitCode -ne 0 ]] ||  [[ $memoryTestsExitCodeOdsp -ne 0 ]]; then
                 exit 1;
               fi
 
