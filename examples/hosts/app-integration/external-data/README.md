@@ -47,11 +47,11 @@ Next we come to how the Fluid collaboration session and clients will consume the
 
 ### Echo Webhook Pattern
 
-<img width="1356" alt="image" src="https://user-images.githubusercontent.com/6777404/216415477-14d0b193-29c9-48e5-8b6b-0a549a5dde58.png">
+<img width="1356" alt="Scenario: Collaboration gets an update from outside of Fluid" src="https://user-images.githubusercontent.com/6777404/216415477-14d0b193-29c9-48e5-8b6b-0a549a5dde58.png">
 
-<img width="1404" alt="image" src="https://user-images.githubusercontent.com/6777404/216417448-2a43db3e-12a2-48a6-b6d0-a6c4a95e27d1.png">
+<img width="1404" alt="Scenario: Collaboration gets an update from outside of Fluid" src="https://user-images.githubusercontent.com/6777404/216417448-2a43db3e-12a2-48a6-b6d0-a6c4a95e27d1.png">
 
-<img width="1374" alt="image" src="https://user-images.githubusercontent.com/6777404/216417779-12861504-7909-489c-b7a2-4d75814a396f.png">
+<img width="1374" alt="Scenario: EXternal data is updated from within Fluid,if only authenticated users are able to write" src="https://user-images.githubusercontent.com/6777404/216417779-12861504-7909-489c-b7a2-4d75814a396f.png">
 
 Since the Customer Service is registered to the webhooks and listening for incoming changes, the clients do not have a way to know that there has been a change upstream.
 
