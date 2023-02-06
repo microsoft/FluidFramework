@@ -19,7 +19,6 @@ import { MountableView } from "@fluidframework/view-adapters";
 import React from "react";
 
 import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror";
-
 export { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror";
 
 const defaultComponentId = "default";
