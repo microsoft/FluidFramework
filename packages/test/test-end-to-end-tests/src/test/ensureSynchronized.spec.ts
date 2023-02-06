@@ -87,7 +87,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				Promise.resolve().then(async () => {
 					dataObject1map.set("key3", "3");
 				}),
-				void Promise.resolve().then(async () => {
+				Promise.resolve().then(async () => {
 					dataObject1map.set("key4", "4");
 					await Promise.resolve().then(async () => {
 						dataObject1map.set("key5", "5");
