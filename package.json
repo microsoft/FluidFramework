@@ -25,6 +25,7 @@
     "bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
     "ci:build:docs": "lerna run ci:build:docs --stream --parallel",
+    "ci:build:private-docs": "lerna run ci:build:private-docs --stream --parallel",
     "ci:test:jest": "npm run test:jest:report",
     "ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
     "ci:test:mocha": "npm run test:mocha:report",
