@@ -2007,6 +2007,15 @@ export class ContainerRuntime
 
 			this._orderSequentiallyFlushing = true;
 			this.flush();
+
+			flush.promise
+			.then(() => {
+				this.flush();
+				this._orderSequentiallyFlushing = false;
+			})
+			.catch((error) => {
+				this.closeFn(error as GenericError);
+			});
 		}
 
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
@@ -2049,19 +2058,9 @@ export class ContainerRuntime
 			this._orderSequentiallyCalls--;
 		}
 
-		if (this._orderSequentiallyCalls > 0) {
-			return result;
-		}
-
-		if (flush !== undefined) {
-			flush.promise
-				.then(() => {
-					this.flush();
-					this._orderSequentiallyFlushing = false;
-				})
-				.catch((error) => {
-					this.closeFn(error as GenericError);
-				});
+		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
+		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0 && flush === undefined) {
+			this.flush();
 		}
 
 		return result;
