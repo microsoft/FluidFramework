@@ -83,10 +83,6 @@ SavedData - Data that comes in fresh from the external data source is first stor
 
 DraftData - Local collaboration state between the Fluid clients is stored in a SharedMap known as "DraftData". This is known as draft data because we are treating the Fluid collaboration session as a drafting surface.
 
-To get to a state in which DraftData and SavedData are the same again, the DraftData needs to get pushed back to the External Data Server for longer term storage.
-
-Upon receipt of new external data, the external data is written immediately into the "SavedData" map, and a check occurs comparing the SavedData to the DraftData. If there are differences between the two, these are displayed on screen and the clients can (currently) only choose to consume the changes and overwrite their local data, via using regular ops mechanism. The first client to overwrite will use regular ops to write into the FluidData and the change will be attributed to them.
-
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
 
 <!-- prettier-ignore-start -->
