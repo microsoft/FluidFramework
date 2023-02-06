@@ -765,6 +765,9 @@ interface MoveOut {
     readonly type: typeof MarkType.MoveOut;
 }
 
+// @alpha (undocumented)
+export function moveToDetachedField(forest: IForestSubscription, cursorToMove: ITreeSubscriptionCursor, field?: DetachedField): void;
+
 // @alpha
 export enum Multiplicity {
     Forbidden = 3,

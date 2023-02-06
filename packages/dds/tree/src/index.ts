@@ -82,6 +82,7 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
+	moveToDetachedField,
 } from "./core";
 
 export {
