@@ -282,7 +282,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
  * @alpha
  * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
  * Content is only attributed at ack time, unless the container is in a detached state.
- * Detached content is attributed with a {@link DetachedAttributionKey}.
+ * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
