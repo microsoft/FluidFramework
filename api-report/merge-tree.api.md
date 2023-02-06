@@ -1200,7 +1200,7 @@ export interface SerializedAttributionCollection {
     length: number;
     // (undocumented)
     posBreakpoints: number[];
-    seqs: number[];
+    seqs: (number | AttributionKey)[];
 }
 
 // @internal (undocumented)

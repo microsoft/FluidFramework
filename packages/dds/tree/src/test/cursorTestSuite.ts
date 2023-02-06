@@ -143,13 +143,13 @@ export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>
 	cursorFactory: (data: TData) => TCursor,
 	dataFromCursor: (cursor: ITreeCursor) => TData,
 	extraRoot?: true,
-): Mocha.Suite {
+): void {
 	function dataFromJsonableTree(data: JsonableTree): TData {
 		// Use text cursor to provide input data
 		return dataFromCursor(singleTextCursor(data));
 	}
 
-	return testTreeCursor<TData, TCursor>({
+	testTreeCursor<TData, TCursor>({
 		cursorName,
 		cursorFactory,
 		builders: dataFromJsonableTree,
