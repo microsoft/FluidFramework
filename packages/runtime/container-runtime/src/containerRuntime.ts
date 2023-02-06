@@ -903,6 +903,7 @@ export class ContainerRuntime
 	private readonly defaultMaxConsecutiveReconnects = 7;
 
 	private _orderSequentiallyCalls: number = 0;
+	private _orderSequentiallyFlushing: boolean = false;
 	private readonly _flushMode: FlushMode;
 	private flushMicroTaskExists = false;
 
@@ -1987,10 +1988,12 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
-	public orderSequentially<T>(callback: () => T): T {
+	public orderSequentially<T>(callback: () => T, flush?: boolean): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
-		if (this._orderSequentiallyCalls === 0) {
+
+		this._orderSequentiallyFlushing = flush === true;
+		if (this._orderSequentiallyFlushing && this._orderSequentiallyCalls === 0) {
 			this.flush();
 		}
 
@@ -2034,10 +2037,15 @@ export class ContainerRuntime
 			this._orderSequentiallyCalls--;
 		}
 
-		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
-		if (this._orderSequentiallyCalls === 0) {
-			this.flush();
+		if (this._orderSequentiallyCalls > 0) {
+			return result;
 		}
+
+		if (this._orderSequentiallyFlushing || this.flushMode !== FlushMode.TurnBased) {
+			this.flush();
+			this._orderSequentiallyFlushing = false;
+		}
+
 		return result;
 	}
 
@@ -2833,7 +2841,7 @@ export class ContainerRuntime
 
 			if (!this.currentlyBatching()) {
 				this.flush();
-			} else if (!this.flushMicroTaskExists && this._orderSequentiallyCalls === 0) {
+			} else if (!this.flushMicroTaskExists && !this._orderSequentiallyFlushing) {
 				this.flushMicroTaskExists = true;
 				// Queue a microtask to detect the end of the turn and force a flush.
 				Promise.resolve()
