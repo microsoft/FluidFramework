@@ -21,6 +21,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
 -   [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
+-   [Deprecated compareArrays and core-utils package](#Deprecated-compareArrays-and-core-utils-package)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -39,6 +40,10 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 -   `IPendingFlush`
 -   `IPendingState`
 -   `IPendingLocalState`
+
+### Deprecated compareArrays and core-utils package
+
+The compareArrays function has been deprecated with no replacement.  As this was the only member of the core-utils package, the core-utils package has also been deprecated.  Both will be removed in an upcoming release.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

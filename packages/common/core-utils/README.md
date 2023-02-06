@@ -1,5 +1,7 @@
 # @fluidframework/core-utils
 
+DEPRECATED: The @fluidframework/core-utils package is deprecated and will be removed in an upcoming release.
+
 Fluid agnostic utility functions with zero-dependencies
 
 ## Trademark

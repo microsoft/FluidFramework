@@ -10,6 +10,7 @@
  * @param right - The second array to compare
  * @param comparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare where NaN = NaN and -0 ≠ 0)
+ * @deprecated compareArrays is deprecated with no replacement and will be removed in an upcoming release.
  */
 export const compareArrays = <T>(
 	left: readonly T[],
