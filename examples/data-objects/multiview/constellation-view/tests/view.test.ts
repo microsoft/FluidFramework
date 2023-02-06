@@ -6,5 +6,5 @@
 // import { ConstellationView } from "..";
 
 describe("ConstellationView", function () {
-    it("Runs this test", function () {});
+	it("Runs this test", function () {});
 });
