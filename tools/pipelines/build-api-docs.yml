@@ -1,0 +1,148 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-api-docs pipeline
+# This pipeline builds the private API docs for the tree package
+# TODO: template this so it can be run for other packages
+
+parameters:
+  - name: buildDirectory
+    type: string
+
+  - name: poolBuild
+    type: object
+    default: Small
+
+  - name: packageManager
+    type: string
+    default: pnpm
+
+  - name: packageManagerInstallCommand
+    type: string
+    default: 'pnpm ci --unsafe-perm'
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - private-docs
+pr: none
+
+variables:
+  - name: buildDirectory
+    value: $(Build.SourcesDirectory)/packages/dds/tree
+
+- template: include-vars.yml
+
+stages:
+  # Install / Build Stage
+  - stage: build
+    displayName: Build Stage
+    jobs:
+      # Job - Build
+      - job: build-api-docs
+        displayName: Build API Docs
+        pool: ${{ parameters.poolBuild }}
+        steps:
+          # Setup
+          - checkout: self
+            clean: true
+
+          - task: Bash@3
+            displayName: Parameters
+            inputs:
+              targetType: "inline"
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                # Show all task group conditions
+
+                echo "
+                Tasks Parameters:
+                  BuildDir=${{ parameters.buildDirectory }}
+
+          # Install
+          - task: UseNode@1
+            displayName: Use Node 14.x
+            inputs:
+              version: 14.x
+
+          - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+              - task: Cache@2
+                displayName: Cache pnpm store
+                inputs:
+                  key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+                  path: ${{ variables.pnpmStorePath }}
+
+              - task: Bash@3
+                displayName: Install and configure pnpm
+                inputs:
+                  targetType: "inline"
+                  workingDirectory: ${{ parameters.buildDirectory }}
+                  script: |
+                    npm i -g pnpm
+                    pnpm config set store-dir $(pnpmStorePath)
+
+          - task: Bash@3
+            displayName: Install dependencies
+            inputs:
+              targetType: "inline"
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                ${{ parameters.packageManagerInstallCommand }}
+
+          # Set version
+          - template: include-set-package-version.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+              tagName: ${{ parameters.tagName }}
+
+          # Lint
+          - ${{ if ne(parameters.taskLint, false) }}:
+              - task: Npm@1
+                displayName: npm run lint
+                inputs:
+                  command: "custom"
+                  workingDir: ${{ parameters.buildDirectory }}
+                  customCommand: "run lint"
+
+          # Docs
+          - task: Npm@1
+            displayName: npm run ci:build:docs
+            inputs:
+              command: "custom"
+              workingDir: $(Build.SourcesDirectory)/packages/dds/tree
+              customCommand: "run ci:build:private-docs"
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Artifact - _api-extractor-temp
+            inputs:
+              targetPath: "${{ parameters.buildDirectory }}/docs/api"
+              artifactName: "api-docs"
+              publishLocation: "pipeline"
+
+          - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+              # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
+              # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
+              # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
+              # at the beginning of the CI job.
+              - task: Bash@3
+                displayName: Reset lockfile
+                inputs:
+                  targetType: "inline"
+                  workingDirectory: ${{ parameters.buildDirectory }}
+                  script: |
+                    git checkout HEAD -- pnpm-lock.yaml
+
+          - task: Bash@3
+            displayName: Check for extraneous modified files
+            inputs:
+              targetType: "inline"
+              script: |
+                git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
+                if [ `cat git_status.log | wc -l` != "0" ]; then
+                  cat git_status.log
+                  echo "##vso[task.logissue type=error]Build should not create extraneous files"
+                  exit -1;
+                fi
