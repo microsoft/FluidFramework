@@ -118,7 +118,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 				right: "0px",
 				bottom: "0px",
 				zIndex: "2",
-				backgroundColor: "rgba(60, 60, 60, 0.8)",
+				backgroundColor: "rgba(180, 180, 180, 0.85)",
 			}}
 			defaultSize={{ width: 400, height: "100%" }}
 			className={"debugger-panel"}
