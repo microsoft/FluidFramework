@@ -18,14 +18,17 @@ jobs:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
           submodules: false
+      - uses: pnpm/action-setup@v2
+        with:
+          version: "^7"
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
         with:
           node-version: "14"
-          cache: "npm"
-          cache-dependency-path: docs/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: docs/pnpm-lock.yaml
       - name: Build site artifact
         run: |
-          npm ci
+          pnpm i --frozen-lockfile
           npm run ci:build
       - name: Upload site artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
@@ -42,11 +45,14 @@ jobs:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
           submodules: false
+      - uses: pnpm/action-setup@v2
+        with:
+          version: "^7"
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
         with:
           node-version: "14"
-          cache: "npm"
-          cache-dependency-path: docs/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: docs/pnpm-lock.yaml
       - name: Create results folder
         run: mkdir -p ./results
 
@@ -56,11 +62,9 @@ jobs:
           name: fluidframework-site
           path: docs/public
       - name: Install dependencies
-        run: |
-          npm install pm2 -g
-          npm ci
+        run: "pnpm i --frozen-lockfile"
       - name: Start server in background
-        run: pm2 start $GITHUB_WORKSPACE/docs/serve.js
+        run: pnpm ci:start
       - name: Check for broken links
         id: linkcheck
         continue-on-error: true

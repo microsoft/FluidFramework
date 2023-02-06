@@ -342,6 +342,7 @@ The following npm scripts are supported in this directory:
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo` |
 | `ci:build` | `npm run download && npm run build` |
+| `ci:start` | `pm2 serve.js` |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |

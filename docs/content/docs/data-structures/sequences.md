@@ -20,20 +20,20 @@ Its main export is [SharedString][], a DDS for storing and simultaneously editin
 Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for working with text.
 
 This package historically contained several other sequence-based DDSes, but because they have unintuitive behaviors,
-they are deprecated and being moved to the *experimental* folder.
+they are deprecated and being moved to the _experimental_ folder.
 
-The main reason for this is the lack of *move* semantics within the sequence, which becomes crucial when dealing with sequences of
+The main reason for this is the lack of _move_ semantics within the sequence, which becomes crucial when dealing with sequences of
 complex content.
 For that reason, all of the examples in this README use `SharedString`. However, the APIs discussed are available on the common base class: `SharedSegmentSequence`.
 
-For the remainder of this document, the term *sequence* will refer to this base class.
+For the remainder of this document, the term _sequence_ will refer to this base class.
 
 *Item*s are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
-but regardless of the type of data stored in the sequence, every item in a sequence is at a specific *position* starting
+but regardless of the type of data stored in the sequence, every item in a sequence is at a specific _position_ starting
 at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
 editors make modifications to the sequence.
 
-As its name suggests, SharedSegmentSequence is composed of *segments*. Segments are the unit that the sequence works
+As its name suggests, SharedSegmentSequence is composed of _segments_. Segments are the unit that the sequence works
 with internally, and contain items within them. Thus, every segment has a length of at least 1 -- that is, it contains
 at least one item -- and segments may be split and merged arbitrarily as the sequence is edited. This means the length
 of the sequence is not the number of segments, but rather the sum of the length of all the segments.
@@ -77,49 +77,45 @@ can be any position in the sequence including 0, to insert at the beginning of t
 sequence, to insert at the end.
 
 ```typescript
-    //   content:
-    // positions:
+//   content:
+// positions:
 
-    // insert text at position 0
-    sharedString.insertText(0, "hi");
-    //   content: hi
-    // positions: 01
+// insert text at position 0
+sharedString.insertText(0, "hi");
+//   content: hi
+// positions: 01
 
-    // insert text at the end position
-    sharedString.insertText(
-        sharedString.getLength(),
-        "!");
-    //   content: hi!
-    // positions: 012
+// insert text at the end position
+sharedString.insertText(sharedString.getLength(), "!");
+//   content: hi!
+// positions: 012
 
-    // insert text at position 2
-    sharedString.insertText(
-        2,
-        " world");
-    //   content: hi world!
-    // positions: 012345678
+// insert text at position 2
+sharedString.insertText(2, " world");
+//   content: hi world!
+// positions: 012345678
 ```
 
 ### Remove
 
-Remove operations take a start and an end position, referred to as a *range*. The start position is inclusive and can be
+Remove operations take a start and an end position, referred to as a _range_. The start position is inclusive and can be
 any position in the sequence from 0 to its `length - 1`. The start position cannot be the length of the sequence like it
 can in insert, because there is nothing at that position. The end position is exclusive and must be greater than the
-start, so it can be any value from 1 to *n* (where *n* is the length of the sequence).
+start, so it can be any value from 1 to _n_ (where _n_ is the length of the sequence).
 
 ```typescript
-    //   content: hi world!
-    // positions: 012345678
+//   content: hi world!
+// positions: 012345678
 
-    // remove the first 3 characters
-    sharedString.removeRange(0, 3);
-    //   content: world!
-    // positions: 012345
+// remove the first 3 characters
+sharedString.removeRange(0, 3);
+//   content: world!
+// positions: 012345
 
-    // remove all the characters
-    sharedString.removeRange(0, sharedString.getLength());
-    //   content:
-    // positions:
+// remove all the characters
+sharedString.removeRange(0, sharedString.getLength());
+//   content:
+// positions:
 ```
 
 ### Annotate
@@ -131,64 +127,58 @@ also takes a map-like properties object. Each key of the provided properties obj
 specified range. Setting a property key to null will remove that property from the positions in the range.
 
 ```typescript
-    //   content: hi world
-    // positions: 01234567
+//   content: hi world
+// positions: 01234567
 
-    let props1 = sharedString.getPropertiesAtPosition(1);
-    let props5 = sharedString.getPropertiesAtPosition(5);
-    // props1 = {}
-    // props5 = {}
+let props1 = sharedString.getPropertiesAtPosition(1);
+let props5 = sharedString.getPropertiesAtPosition(5);
+// props1 = {}
+// props5 = {}
 
-    // set property called weight on positions 0 and 1
-    sharedString.annotateRange(0, 2, { weight: 5 });
-    props1 = sharedString.getPropertiesAtPosition(1);
-    props5 = sharedString.getPropertiesAtPosition(5);
-    // props1 = { weight: 5 }
-    // props5 = {}
+// set property called weight on positions 0 and 1
+sharedString.annotateRange(0, 2, { weight: 5 });
+props1 = sharedString.getPropertiesAtPosition(1);
+props5 = sharedString.getPropertiesAtPosition(5);
+// props1 = { weight: 5 }
+// props5 = {}
 
-    // set property called decoration on all positions
-    sharedString.annotateRange(
-        0,
-        sharedString.getLength(),
-        { decoration: "underline" });
-    props1 = sharedString.getPropertiesAtPosition(1);
-    props5 = sharedString.getPropertiesAtPosition(5);
-    // props1 = { weight: 5, decoration: "underline" }
-    // props5 = { decoration: "underline" }
+// set property called decoration on all positions
+sharedString.annotateRange(0, sharedString.getLength(), { decoration: "underline" });
+props1 = sharedString.getPropertiesAtPosition(1);
+props5 = sharedString.getPropertiesAtPosition(5);
+// props1 = { weight: 5, decoration: "underline" }
+// props5 = { decoration: "underline" }
 
-    // remove property called weight on all positions
-    sharedString.annotateRange(
-        0,
-        sharedString.getLength(),
-        { weight: null });
-    props1 = sharedString.getPropertiesAtPosition(1);
-    props5 = sharedString.getPropertiesAtPosition(5);
-    // props1 = { decoration: "underline" }
-    // props5 = { decoration: "underline" }
+// remove property called weight on all positions
+sharedString.annotateRange(0, sharedString.getLength(), { weight: null });
+props1 = sharedString.getPropertiesAtPosition(1);
+props5 = sharedString.getPropertiesAtPosition(5);
+// props1 = { decoration: "underline" }
+// props5 = { decoration: "underline" }
 ```
 
 ### Sequence delta event
 
-Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This event provides the ranges
+Whenever an operation is performed on a sequence a _sequenceDelta_ event will be raised. This event provides the ranges
 affected by the operation, the type of the operation, and the properties that were changed by the operation.
 
 ```typescript
 sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
-    if (isLocal) {
-        // undo-redo implementations frequently will only concern themselves with local ops: only operations submitted
-        // by the local client should be undoable by the current user
-        addOperationToUndoStack(deltaOperation, ranges);
-    }
+	if (isLocal) {
+		// undo-redo implementations frequently will only concern themselves with local ops: only operations submitted
+		// by the local client should be undoable by the current user
+		addOperationToUndoStack(deltaOperation, ranges);
+	}
 
-    if (deltaOperation === MergeTreeDeltaType.INSERT) {
-        syncInsertSegmentToModel(deltaOperation, ranges);
-    }
+	if (deltaOperation === MergeTreeDeltaType.INSERT) {
+		syncInsertSegmentToModel(deltaOperation, ranges);
+	}
 
-    // realistic app code would likely handle the other deltaOperation types as well here.
+	// realistic app code would likely handle the other deltaOperation types as well here.
 });
 ```
 
-Internally, the sequence package depends on `@fluidframework/merge-tree`, and also raises `MergeTreeMaintenance` events on that tree as *maintenance* events.
+Internally, the sequence package depends on `@fluidframework/merge-tree`, and also raises `MergeTreeMaintenance` events on that tree as _maintenance_ events.
 These events don't correspond directly to APIs invoked on a sequence DDS, but may be useful for advanced users.
 
 Both sequenceDelta and maintenance events are commonly used to synchronize or invalidate a view an application might have over a backing sequence DDS.
@@ -210,7 +200,7 @@ Consider a sequence like this:
 ```
 
 Now two users simultaneously insert characters at the end of the sequence. One inserts `k` and the other inserts a `c`.
-This is an *insert conflict*. The basic strategy for insert conflict resolution in the sequence is to merge *far*,
+This is an _insert conflict_. The basic strategy for insert conflict resolution in the sequence is to merge _far_,
 closer to the end of the sequence.
 
 This merge strategy is possible because of a fundamental property of the Fluid Framework, which is guaranteed ordering.
@@ -292,53 +282,53 @@ determine the value.
 
 ## Local references
 
-Sequences support addition and manipulation of *local references* to locally track positions in the sequence over time.
+Sequences support addition and manipulation of _local references_ to locally track positions in the sequence over time.
 As the name suggests, any created references will only exist locally; other clients will not see them.
 This can be used to implement user interactions with sequence data in a way that is robust to concurrent editing.
 For example, consider a text editor which tracks a user's cursor state.
 The application can store a local reference to the character after the cursor position:
 
 ```typescript
-    //   content: hi world!
-    // positions: 012345678
-    const { segment, offset } = sharedString.getContainingSegment(5)
-    const cursor = sharedString.createLocalReferencePosition(
-        segment,
-        offset,
-        ReferenceType.SlideOnRemove,
-        /* any additional properties */ { cursorColor: 'blue' }
-    );
+//   content: hi world!
+// positions: 012345678
+const { segment, offset } = sharedString.getContainingSegment(5);
+const cursor = sharedString.createLocalReferencePosition(
+	segment,
+	offset,
+	ReferenceType.SlideOnRemove,
+	/* any additional properties */ { cursorColor: "blue" },
+);
 
-    //    cursor:      x
-    //   content: hi world!
-    // positions: 012345678
+//    cursor:      x
+//   content: hi world!
+// positions: 012345678
 
-    // ... in some view code, retrieve the position of the local reference for rendering:
-    const pos = sharedString.localReferencePositionToPosition(cursor); // 5
+// ... in some view code, retrieve the position of the local reference for rendering:
+const pos = sharedString.localReferencePositionToPosition(cursor); // 5
 
-    // meanwhile, some other client submits an edit which gets applied to our string:
-    otherSharedString.replaceText(1, 2, "ello");
+// meanwhile, some other client submits an edit which gets applied to our string:
+otherSharedString.replaceText(1, 2, "ello");
 
-    // The local sharedString state will now look like this:
-    //    cursor:         x
-    //   content: hello world!
-    // positions: 0123456789AB (hex)
+// The local sharedString state will now look like this:
+//    cursor:         x
+//   content: hello world!
+// positions: 0123456789AB (hex)
 
-    // ... in some view code, retrieve the position of the local reference for rendering:
-    const pos = sharedString.localReferencePositionToPosition(cursor); // 8
+// ... in some view code, retrieve the position of the local reference for rendering:
+const pos = sharedString.localReferencePositionToPosition(cursor); // 8
 ```
 
 Notice that even though another client concurrently edited the string, the local reference representing the cursor is still in the correct location with no further work for the API consumer.
 The `ReferenceType.SlideOnRemove` parameter changes what happens when the segment that reference is associated with is removed.
-`SlideOnRemove` instructs the sequence to attempt to *slide* the reference to the start of the next furthest segment, or if no such segment exists (i.e. the end of the string has been removed), the end of the next nearest one.
+`SlideOnRemove` instructs the sequence to attempt to _slide_ the reference to the start of the next furthest segment, or if no such segment exists (i.e. the end of the string has been removed), the end of the next nearest one.
 
 The [webflow](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/webflow/src/editor/caret.ts) example demonstrates this idea in more detail.
 
-Unlike segments, it *is* safe to persist local references in auxiliary data structures, such as an undo-redo stack.
+Unlike segments, it _is_ safe to persist local references in auxiliary data structures, such as an undo-redo stack.
 
 ## Interval collections
 
-Sequences support creation of *interval collections*, an auxiliary collection of intervals associated with positions in the sequence.
+Sequences support creation of _interval collections_, an auxiliary collection of intervals associated with positions in the sequence.
 Like segments, intervals support adding arbitrary properties, including handles (references) to other DDSes.
 The interval collection implementation uses local references, and so benefits from all of the robustness to concurrent editing
 described in the previous section.
@@ -346,49 +336,59 @@ Unlike local references, operations on interval collections are sent to all clie
 This makes them suitable for implementing features like comment threads on a text-based documents.
 The following example illustrates these properties and highlights the major APIs supported by IntervalCollection.
 
-
 ```typescript
-    //   content: hi world!
-    // positions: 012345678
+//   content: hi world!
+// positions: 012345678
 
-    const comments = sharedString.getIntervalCollection("comments");
-    const comment = comments.add(
-        3,
-        7, // (inclusive range): references "world"
-        IntervalType.SlideOnRemove,
-        {
-            creator: 'my-user-id',
-            handle: myCommentThreadDDS.handle
-        }
-    );
-    //   content: hi world!
-    // positions: 012345678
-    //   comment:    [   ]
+const comments = sharedString.getIntervalCollection("comments");
+const comment = comments.add(
+	3,
+	7, // (inclusive range): references "world"
+	IntervalType.SlideOnRemove,
+	{
+		creator: "my-user-id",
+		handle: myCommentThreadDDS.handle,
+	},
+);
+//   content: hi world!
+// positions: 012345678
+//   comment:    [   ]
 
-    // Interval collection supports iterating over all intervals via Symbol.iterator or `.map()`:
-    const allIntervalsInCollection = Array.from(comments);
-    const allProperties = comments.map((comment) => comment.properties);
-    // or iterating over intervals overlapping a region:
-    const intervalsOverlappingFirstHalf = comments.findOverlappingIntervals(0, 4);
+// Interval collection supports iterating over all intervals via Symbol.iterator or `.map()`:
+const allIntervalsInCollection = Array.from(comments);
+const allProperties = comments.map((comment) => comment.properties);
+// or iterating over intervals overlapping a region:
+const intervalsOverlappingFirstHalf = comments.findOverlappingIntervals(0, 4);
 
-    // Interval endpoints are LocalReferencePositions, so all APIs in the above section can be used:
-    const startPosition = sharedString.localReferencePositionToPosition(comment.start);
-    const endPosition = sharedString.localReferencePositionToPosition(comment.end);
+// Interval endpoints are LocalReferencePositions, so all APIs in the above section can be used:
+const startPosition = sharedString.localReferencePositionToPosition(comment.start);
+const endPosition = sharedString.localReferencePositionToPosition(comment.end);
 
-    // Intervals can be modified:
-    comments.change(comment.getIntervalId(), 0, 1);
-    //   content: hi world!
-    // positions: 012345678
-    //   comment: []
+// Intervals can be modified:
+comments.change(comment.getIntervalId(), 0, 1);
+//   content: hi world!
+// positions: 012345678
+//   comment: []
 
-    // their properties can be changed:
-    comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
-    // comment.properties === { creator: 'my-user-id', handle: <some DDS handle object>, status: "resolved" }
+// their properties can be changed:
+comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
+// comment.properties === { creator: 'my-user-id', handle: <some DDS handle object>, status: "resolved" }
 
-    // and they can be removed:
-    comments.removeIntervalById(comment.getIntervalId());
+// and they can be removed:
+comments.removeIntervalById(comment.getIntervalId());
 ```
 
+## SharedString
+
+SharedString is a specialized data structure for handling collaborative text. It is based on a more general
+Sequence data structure but has additional features that make working with text easier.
+
+In addition to text, a SharedString can also contain markers.
+Markers can be used to store metadata at positions within the text, like a reference to an image or Fluid object that should be rendered with the text.
+
+Both markers and text are stored as segments in the SharedString.
+Text segments will be split and merged when modifications are made to the SharedString and will therefore have variable length
+matching the length of the text content they contain.
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

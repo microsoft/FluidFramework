@@ -66,20 +66,20 @@ efficient spatial querying of the nearest Marker to a given position. -->
 <!-- prettier-ignore-start -->
 
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
-- Rich Text Editor Implementations
-  - [webflow](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/webflow)
-  - [flowView](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/shared-text/src/client-ui-lib/controls/flowView.ts)
 
-- Integrations with Open Source Rich Text Editors
-  - [prosemirror](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/prosemirror)
-  - [smde](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/smde)
+For further reading on attribution, see the [@fluidframework/attributor README](../../framework/attributor/README.md).
 
-- Plain Text Editor Implementations
-  - [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeTextArea.tsx)
-  - [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeInput.tsx)
+There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
 
-[SharedMap]: https://fluidframework.com/docs/data-structures/map/
-[SharedString]: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts
+### Examples
+
+-   Rich Text Editor Implementations
+
+    -   [webflow](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/webflow)
+    -   [flowView](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/shared-text/src/client-ui-lib/controls/flowView.ts)
+
+-   Integrations with Open Source Rich Text Editors
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
