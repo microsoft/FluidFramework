@@ -72,8 +72,6 @@ stages:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactPipeline: ${{ variables.artifactPipeline }}
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         customSteps:
 
         # Download artifact with test files
@@ -205,6 +203,8 @@ stages:
             targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
             artifactName: 'perf-test-outputs_execution-time'
           condition: succeededOrFailed()
+      env:
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # Performance unit tests - memory
   - stage: perf_unit_tests_memory
@@ -313,7 +313,6 @@ stages:
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
               script: |
                 echo "Run memory performance test for ${{ testPackage }}"
-                FLUID_TEST_LOGGER_PKG_PATH=`${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`
                 echo "PKG PATH= ${{ FLUID_TEST_LOGGER_PKG_PATH }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
