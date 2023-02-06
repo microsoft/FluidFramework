@@ -31,18 +31,33 @@ function createConnectedMap(
 	options?: IMapOptions,
 ): SharedMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	if (options?.attribution?.track) {
+		dataStoreRuntime.options = {
+			attribution: {
+				track: true,
+			},
+		};
+	}
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes, options);
+	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
 	map.connect(services);
 	return map;
 }
 
 function createLocalMap(id: string, options?: IMapOptions): SharedMap {
-	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes, options);
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	if (options?.attribution?.track) {
+		dataStoreRuntime.options = {
+			attribution: {
+				track: true,
+			},
+		};
+	}
+	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
 	return map;
 }
 

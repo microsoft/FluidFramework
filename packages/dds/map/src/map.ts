@@ -4,7 +4,6 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -126,7 +125,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 */
 	private readonly kernel: MapKernel;
 
-	private readonly options: IMapOptions | undefined;
+	// private readonly options: IMapOptions | undefined;
 
 	/**
 	 * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
@@ -141,24 +140,16 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		options?: IMapOptions,
 	) {
 		super(id, runtime, attributes, "fluid_map_");
-		this.options ??= options;
 
-		const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean(
-			"Fluid.Attribution.EnableOnNewFile",
-		);
-		if (configSetAttribution !== undefined) {
-			(this.options ?? (this.options = {})).attribution = { track: configSetAttribution };
-		}
 		this.kernel = new MapKernel(
 			this.serializer,
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			() => this.isAttached(),
 			this,
-			options,
+			runtime.options as IMapOptions,
 		);
 	}
 
