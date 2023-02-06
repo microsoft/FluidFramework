@@ -187,6 +187,9 @@ export {
 	prefixFieldPath,
 	singleTextCursor,
 	namedTreeSchema,
+	singleStackTreeCursor,
+	CursorAdapter,
+	CursorWithNode,
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:
