@@ -102,9 +102,17 @@ export interface ITask extends IEventProvider<ITaskEvents> {
  */
 export interface ITaskListEvents extends IEvent {
 	/**
-	 * Emitted when a task is added/removed respectively.
+	 * Emitted when a task is added.
 	 */
-	(event: "taskAdded" | "taskDeleted" | "taskChanged", listener: (task: ITask) => void);
+	(event: "taskAdded", listener: (task: ITask) => void);
+	/**
+	 * Emitted when a task is removed.
+	 */
+	(event: "taskDeleted", listener: (task: ITask) => void);
+	/**
+	 * Emitted when a task's name or priority are changed locally.
+	 */
+	(event: "taskChanged", listener: (task: ITask) => void);
 }
 
 /**
