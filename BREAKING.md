@@ -43,7 +43,7 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 
 ### Deprecated compareArrays and core-utils package
 
-The compareArrays function has been deprecated with no replacement.  As this was the only member of the core-utils package, the core-utils package has also been deprecated.  Both will be removed in an upcoming release.
+The compareArrays function has been deprecated with no replacement. As this was the only member of the core-utils package, the core-utils package has also been deprecated. Both will be removed in an upcoming release.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
