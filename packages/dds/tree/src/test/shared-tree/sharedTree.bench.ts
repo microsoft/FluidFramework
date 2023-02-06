@@ -10,7 +10,6 @@ import {
 	FieldKinds,
 	getField,
 	isUnwrappedNode,
-	jsonableTreeFromCursor,
 	namedTreeSchema,
 	singleTextCursor,
 } from "../../feature-libraries";
@@ -27,7 +26,6 @@ import {
 	GlobalFieldKey,
 	JsonableTree,
 	LocalFieldKey,
-	mapCursorField,
 	moveToDetachedField,
 	rootFieldKey,
 	rootFieldKeySymbol,
@@ -98,8 +96,8 @@ const dataSchema = namedTreeSchema({
     value: ValueSchema.Number,
 });
 
-const wideTestSizes = [1, 100]
-const deepTestSizes = [1, 10, 100]
+const wideTestSizes = [5, 100, 500]
+const deepTestSizes = [5, 10, 100]
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
@@ -118,151 +116,9 @@ const testSchema: SchemaData = {
 		[globalFieldKey, globalFieldSchema],
 	]),
 };
-function initializeTestTree(
-	tree: ISharedTree,
-	state: JsonableTree,
-	schema: SchemaData = testSchema,
-): void {
-	tree.storedSchema.update(schema);
-
-	// Apply an edit to the tree which inserts a node with a value
-	tree.runTransaction((forest, editor) => {
-		const writeCursor = singleTextCursor(state);
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
-
-		return TransactionResult.Apply;
-	});
-}
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
-	it("create editableTree and insert", async () => {
-		const provider = await TestTreeProvider.create(2);
-        const [tree, tree2] = provider.trees;
-
-        initializeTestTree(tree, singleTextCursor({ type: brand("Test"), value: 1 }))
-        // Insert nodes
-        let path: UpPath = {
-            parent:undefined,
-            parentField:rootFieldKeySymbol,
-            parentIndex: 0
-        };
-        tree.runTransaction((forest, editor) => {
-            const field = editor.sequenceField(path, localFieldKey);
-            field.insert(0, singleTextCursor({ type: brand("Test"), value: 1 }));
-            return TransactionResult.Apply;
-        });
-        tree.runTransaction((forest, editor) => {
-            const field = editor.sequenceField(path, localFieldKey);
-            field.insert(1, singleTextCursor({ type: brand("Test"), value: 2 }));
-            return TransactionResult.Apply;
-        });
-        let readCursor1 = tree.forest.allocateCursor();
-        moveToDetachedField(tree.forest, readCursor1);
-        let actual = mapCursorField(readCursor1, jsonableTreeFromCursor);
-        readCursor1.free();
-        path = {
-            parent:{
-                parent:undefined,
-                parentField:rootFieldKeySymbol,
-                parentIndex: 0
-            },
-            parentField:localFieldKey,
-            parentIndex:0
-        }
-        tree.runTransaction((forest, editor) => {
-            editor.setValue(path, { type: brand("Test"), value: 123 });
-            return TransactionResult.Apply;
-        });
-
-        readCursor1 = tree.forest.allocateCursor();
-        moveToDetachedField(tree.forest, readCursor1);
-        actual = mapCursorField(readCursor1, jsonableTreeFromCursor);
-        readCursor1.free();
-
-        path = {
-            parent:{
-                parent:undefined,
-                parentField:rootFieldKeySymbol,
-                parentIndex: 0
-            },
-            parentField:localFieldKey,
-            parentIndex:1
-        }
-        tree.runTransaction((forest, editor) => {
-            editor.setValue(path, { type: brand("Test"), value: 123 });
-            return TransactionResult.Apply;
-        });
-        readCursor1 = tree.forest.allocateCursor();
-        moveToDetachedField(tree.forest, readCursor1);
-        actual = mapCursorField(readCursor1, jsonableTreeFromCursor);
-        readCursor1.free();
-
-        const testTree = await generateTestTree(5, TreeShape.Wide, TestPrimitives.String, makeRandom(0));
-        readCursor1 = testTree.forest.allocateCursor();
-        moveToDetachedField(testTree.forest, readCursor1);
-        actual = mapCursorField(readCursor1, jsonableTreeFromCursor);
-        readCursor1.free();
-
-        testManipulate(testTree)
-        function testManipulate(testManipTree:ISharedTree){
-            for (let i = 0; i<numberOfNodes-1; i++)
-            path = {
-                parent:{
-                    parent:undefined,
-                    parentField:rootFieldKeySymbol,
-                    parentIndex: 0
-                },
-                parentField:localFieldKey,
-                parentIndex:i
-            }
-            testManipTree.runTransaction((forest, editor) => {
-                editor.setValue(path, { type: brand("Test"), value: 123 });
-                return TransactionResult.Apply;
-            });
-        }
-
-        // path = {
-        //     parent:{
-        //         parent:undefined,
-        //         parentField:rootFieldKeySymbol,
-        //         parentIndex: 0
-        //     },
-        //     parentField:localFieldKey,
-        //     parentIndex:1
-        // }
-        // testTree.runTransaction((forest, editor) => {
-        //     editor.setValue(path, { type: brand("Test"), value: 123 });
-        //     return TransactionResult.Apply;
-        // });
-        // path = {
-        //     parent:{
-        //         parent:undefined,
-        //         parentField:rootFieldKeySymbol,
-        //         parentIndex: 0
-        //     },
-        //     parentField:localFieldKey,
-        //     parentIndex:2
-        // }
-        // testTree.runTransaction((forest, editor) => {
-        //     editor.setValue(path, { type: brand("Test"), value: 123 });
-        //     return TransactionResult.Apply;
-        // });
-
-        // const readCursor = testTree.forest.allocateCursor();
-        // moveToDetachedField(testTree.forest, readCursor);
-        // const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-        // readCursor.free();
-        // readTree(testTree.forest, 5, TreeShape.Wide);
-
-        const treeJS = getTestTreeAsJSObject(5, TreeShape.Deep, TestPrimitives.Map);
-        const after = manipulateTreeAsJSObject(treeJS, TestPrimitives.Map, makeRandom(0));
-        const treeJSWide = getTestTreeAsJSObject(5, TreeShape.Wide, TestPrimitives.Boolean);
-        const after2 = manipulateTreeAsJSObject(treeJS, TestPrimitives.Map, makeRandom(0));
-        const test = 123;
-
-	});
 	describe("Direct JS Object", () => {
         const random = makeRandom(0);
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
@@ -747,12 +603,12 @@ function readCursorTree(forest: any, numberOfNodes: number, shape: TreeShape) {
 	switch (shape) {
 		case TreeShape.Deep:
 			for (let i = 0; i < numberOfNodes - 1; i++) {
-				readCursor.enterField(localFieldKey);
+				readCursor.firstField();
 				assert(readCursor.firstNode());
 			}
 			break;
 		case TreeShape.Wide:
-            readCursor.enterField(localFieldKey);
+            readCursor.firstField();
             readCursor.firstNode();
 			for (let j = 0; j < numberOfNodes-1; j++) {
 				readCursor.nextNode();
@@ -765,43 +621,46 @@ function readCursorTree(forest: any, numberOfNodes: number, shape: TreeShape) {
 }
 
 function manipulateTree(tree: ISharedTree, numberOfNodes: number, shape: TreeShape, dataType:TestPrimitives, random:IRandom) {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
     let path: UpPath;
-	assert(readCursor.firstNode());
 	switch (shape) {
 		case TreeShape.Deep:
-			for (let i = 0; i < numberOfNodes - 1; i++) {
-				readCursor.enterField(localFieldKey);
-				assert(readCursor.firstNode());
-			}
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            path = readCursor.getPath()!;
-            tree.runTransaction((forest, editor) => {
-				const field = editor.optionalField(path, localFieldKey);
-				field.set(singleTextCursor(generateTreeData(dataType, random)), false);
-				return TransactionResult.Apply;
-			});
-			break;
-		case TreeShape.Wide:
 			path = {
-                parent:{
-                    parent:undefined,
-                    parentField:rootFieldKeySymbol,
-                    parentIndex: 0
-                },
-                parentField:localFieldKey,
-                parentIndex:0
+                parent: undefined,
+                parentField: rootFieldKeySymbol,
+                parentIndex: 0
             }
+            for (let i=0; i<numberOfNodes-1; i++) {
+                path = {
+                    parent: path,
+                    parentField: localFieldKey,
+                    parentIndex: 0
+                }
+            };
             tree.runTransaction((forest, editor) => {
                 editor.setValue(path, { type: brand("Test"), value: 123 });
                 return TransactionResult.Apply;
             });
 			break;
+		case TreeShape.Wide:
+			for (let i = 0; i<numberOfNodes-1; i++){
+				path = {
+					parent:{
+						parent:undefined,
+						parentField:rootFieldKeySymbol,
+						parentIndex: 0
+					},
+					parentField:localFieldKey,
+					parentIndex:i
+				}
+				tree.runTransaction((forest, editor) => {
+					editor.setValue(path, { type: brand("Test"), value: 123 });
+					return TransactionResult.Apply;
+				});
+			}
+			break;
 		default:
 			unreachableCase(shape);
 	}
-	readCursor.free();
 }
 
 function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeShape, replaceNodes=false) {
