@@ -318,7 +318,24 @@ export class DocumentDeltaConnection
 	/**
 	 * Disconnect from the websocket and close the websocket too.
 	 */
-	protected closeSocket(error: IAnyDriverError) {
+	private closeSocket(error: IAnyDriverError) {
+		if (this._disposed) {
+			// This would be rare situation due to complexity around socket emitting events.
+			this.logger.sendTelemetryEvent({
+				eventName: "SocketCloseOnDisposedConnection",
+				driverVersion,
+				details: JSON.stringify({
+					disposed: this._disposed,
+					socketConnected: this.socket.connected,
+				})},
+				error,
+			);
+			return;
+		}
+		this.closeSocketCore(error);
+	}
+
+	protected closeSocketCore(error: IAnyDriverError) {
 		this.disconnect(error);
 	}
 
