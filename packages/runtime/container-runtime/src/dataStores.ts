@@ -8,7 +8,7 @@ import {
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -129,6 +129,7 @@ export class DataStores implements IDisposable {
 			timestampMs: number,
 			packagePath?: readonly string[],
 		) => void,
+		private readonly isNodeDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
 	) {
@@ -464,14 +465,45 @@ export class DataStores implements IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 	): Promise<FluidDataStoreContext> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+		const request = { url: id };
+
+		this.checkDeleted(id, request, headerData);
 
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
-		const request = { url: id };
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
 			throw responseToException(create404Response(request), request);
 		}
 
+		this.checkTombstoned(context, request, requestHeaderData);
+
+		return context;
+	}
+
+	private checkDeleted(id: string, request: IRequest, requestHeaderData: RuntimeHeaderData) {
+		const dataStoreNodePath = `/${id}`;
+		if (this.isNodeDeleted(dataStoreNodePath)) {
+			// The requested data store is removed by gc. Create a 404 gc response exception.
+			const error = responseToException(
+				createResponseError(404, "DataStore was deleted", request),
+				request,
+			);
+			sendGCUnexpectedUsageEvent(
+				this.mc,
+				{
+					eventName: "GC_Deleted_DataStore_Requested",
+					category: "error",
+					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+					headers: JSON.stringify(requestHeaderData),
+				},
+				undefined, /** packagePath */
+				error,
+			);
+			throw error;
+		}
+	}
+
+	private checkTombstoned(context: FluidDataStoreContext, request: IRequest, headerData: RuntimeHeaderData) {
 		if (context.tombstoned) {
 			const shouldFail = this.throwOnTombstoneLoad && !headerData.allowTombstone;
 
@@ -488,7 +520,7 @@ export class DataStores implements IDisposable {
 					eventName: "GC_Tombstone_DataStore_Requested",
 					category: shouldFail ? "error" : "generic",
 					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-					headers: JSON.stringify(requestHeaderData),
+					headers: JSON.stringify(headerData),
 				},
 				context.isLoaded ? context.packagePath : undefined,
 				error,
@@ -498,8 +530,6 @@ export class DataStores implements IDisposable {
 				throw error;
 			}
 		}
-
-		return context;
 	}
 
 	public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
