@@ -16,5 +16,3 @@ ReactDOM.render(
 	</React.StrictMode>,
 	document.querySelector("#content"),
 );
-
-// renderClientDebuggerView(document.body).catch(console.error);

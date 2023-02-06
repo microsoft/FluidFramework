@@ -29,6 +29,7 @@ import {
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
 import { CounterWidget } from "../widgets";
+import { DebuggerPanel } from "./DebuggerPanel";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -221,28 +222,31 @@ export function App(): React.ReactElement {
 	}
 
 	const view = (
-		<Stack horizontal>
-			<StackItem>
-				{containers[0] === undefined ? (
-					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-						<Spinner />
-						<div>Loading Fluid container...</div>
-					</Stack>
-				) : (
-					<AppView containerInfo={containers[0]} />
-				)}
-			</StackItem>
-			<StackItem>
-				{containers[1] === undefined ? (
-					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-						<Spinner />
-						<div>Loading Fluid container...</div>
-					</Stack>
-				) : (
-					<AppView containerInfo={containers[1]} />
-				)}
-			</StackItem>
-		</Stack>
+		<>
+			<Stack horizontal>
+				<StackItem>
+					{containers[0] === undefined ? (
+						<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+							<Spinner />
+							<div>Loading Fluid container...</div>
+						</Stack>
+					) : (
+						<AppView containerInfo={containers[0]} />
+					)}
+				</StackItem>
+				<StackItem>
+					{containers[1] === undefined ? (
+						<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+							<Spinner />
+							<div>Loading Fluid container...</div>
+						</Stack>
+					) : (
+						<AppView containerInfo={containers[1]} />
+					)}
+				</StackItem>
+			</Stack>
+			<DebuggerPanel />
+		</>
 	);
 
 	return <ThemeProvider theme={appTheme}>{view}</ThemeProvider>;
