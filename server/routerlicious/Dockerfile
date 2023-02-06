@@ -28,7 +28,7 @@ WORKDIR /usr/src/server
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY package*.json ./
 COPY pnpm*.yaml ./
-COPY scripts ./
+COPY scripts/*.* ./scripts/
 
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
