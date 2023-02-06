@@ -13,19 +13,18 @@ function show(): void {
 		return;
 	}
 
-	const iframe = document.createElement("iframe");
-	iframe.id = debuggerPanelId;
+	const panelElement = document.createElement("div");
+	panelElement.id = debuggerPanelId;
 	// iframe.style.background = "green";
-	iframe.style.height = "100%";
-	iframe.style.width = "0px"; // Default to hidden state.
-	iframe.style.position = "fixed";
-	iframe.style.top = "0px";
-	iframe.style.right = "0px";
-	iframe.style.zIndex = "9000000000000000000"; // Ensure the panel appears on top of all other content
-	iframe.style.width = "400px";
+	panelElement.style.height = "100%";
+	panelElement.style.position = "fixed";
+	panelElement.style.top = "0px";
+	panelElement.style.right = "0px";
+	panelElement.style.zIndex = "9000000000000000000"; // Ensure the panel appears on top of all other content
+	panelElement.style.width = "400px";
 
-	renderClientDebuggerView(iframe).then(() => {
-		document.body.append(iframe);
+	renderClientDebuggerView(panelElement).then(() => {
+		document.body.append(panelElement);
 		console.log("CONTENT: Rendered debug view!");
 	}, console.error);
 
