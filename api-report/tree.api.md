@@ -1019,6 +1019,9 @@ export class SimpleDependee implements Dependee {
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
 
 // @alpha (undocumented)
+export function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
+
+// @alpha (undocumented)
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
 // @alpha
