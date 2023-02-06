@@ -11,17 +11,17 @@ import {
 import React from "react";
 
 /**
- * {@link TestView} input props.
+ * {@link DebuggerPanel} input props.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface TestViewProps {
+export interface DebuggerPanelProps {
 	// TODO
 }
 
 /**
  * Temporary test view while prototyping message-passing
  */
-export function TestView(props: TestViewProps): React.ReactElement {
+export function DebuggerPanel(props: DebuggerPanelProps): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
 
 	React.useEffect(() => {
