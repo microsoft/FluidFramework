@@ -119,7 +119,7 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
 					));
 				}
 
-				return { container, audience, containerId };
+				return { container, audience, containerId, containerNickname: "Shared" };
 			}
 
 			getFluidData().then(
@@ -139,7 +139,11 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
 			async function getPrivateContainerData(): Promise<ContainerInfo> {
 				// Always create a new container for the private view.
 				// This isn't shared with other collaborators.
-				return createFluidContainer(containerSchema, populateRootMap);
+				const containerInfo = await createFluidContainer(containerSchema, populateRootMap);
+				return {
+					...containerInfo,
+					containerNickname: "Private",
+				};
 			}
 
 			getPrivateContainerData().then(
@@ -266,7 +270,7 @@ interface AppViewProps {
  */
 function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
-	const { container } = containerInfo;
+	const { container, containerId, containerNickname } = containerInfo;
 
 	const rootMap = container.initialObjects.rootMap as SharedMap;
 	if (rootMap === undefined) {
@@ -286,6 +290,10 @@ function AppView(props: AppViewProps): React.ReactElement {
 	return (
 		<Stack horizontal className={rootStackStyles}>
 			<StackItem className={appViewPaneStackStyles}>
+				<h4>
+					{containerId}
+					{containerNickname === undefined ? "" : ` (${containerNickname})`}
+				</h4>
 				<Stack>
 					<StackItem>
 						<CounterView sharedCounterHandle={sharedCounterHandle} />
