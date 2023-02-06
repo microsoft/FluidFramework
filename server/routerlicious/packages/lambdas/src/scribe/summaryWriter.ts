@@ -608,6 +608,7 @@ export class SummaryWriter implements ISummaryWriter {
                 },
             };
 
+            // Fetching ops from the local db
             const logTailOpMessage = await this.opStorage.find(query, { "operation.sequenceNumber": 1 });
             logTail = logTailOpMessage.map((log) => log.operation);
         }

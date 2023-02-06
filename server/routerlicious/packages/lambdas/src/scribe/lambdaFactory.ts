@@ -72,7 +72,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         let lastCheckpoint: IScribe;
         let summaryReader: SummaryReader;
         let latestSummary: ILatestSummaryState;
-        let opMessages: ISequencedDocumentMessage[];
+        let opMessages: ISequencedDocumentMessage[] = [];
 
         const { tenantId, documentId } = config;
         const messageMetaData = {
@@ -126,8 +126,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
             throw error;
         }
-
-        opMessages = [];
 
         // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
