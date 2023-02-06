@@ -25,10 +25,10 @@ However, they often expose third-party integration via REST APIS for querying an
 
 This repo contains a service that mocks the external "source of truth" data server. This mock service offers a REST API collection and webhook interfaces in `./src/mock-external-data-service`. The API requests served by this "external" service are the following:
 
-1. POST `/register-for-webhook`: Register's the sender's URL (in this case the Customer Service's URL) to receive notifications when the external task-list data changes.
-2. GET `/fetch-tasks`: Fetches the task list from the external data store.
-3. POST `/set-tasks`: Updates external data store with new tasks list (complete override).
-4. POST `/debug-reset-task-list`: Resets the external data to its original contents.
+1. POST `/register-for-webhook`: Register's the sender's URL to receive notifications when the external task-list data changes.
+2. GET `/fetch-tasks`: Fetches the task list from the external data store. Called by the Fluid client.
+3. POST `/set-tasks`: Updates external data store with new tasks list (complete override). Called by the Fluid client.
+4. POST `/debug-reset-task-list`: Resets the external data to its original contents. Called by the Fluid client.
 
 Find the details of the API in the [External Data Service README](./src/mock-external-data-service/README.md)
 
@@ -38,8 +38,8 @@ Next we need a customer service that functions as the intermediary between the E
 
 In this example, the Customer Service contains the following endpoints:
 
-1. POST `/register-for-webhook`: Register's the sender's URL (in this case, the Fluid Service's URL) to receive notifications when the external task-list data changes.
-2. POST `/echo-external-data-webhook`: "Echoes" the external data services data update notifications to our own webhook subscribers. This data will be forwarded to our own subscribers.
+1. POST `/register-for-webhook`: Register's the sender's URL to receive notifications when the external task-list data changes. Currently, Alfred registers it's `/task-list-hook` endpoint to this URL.
+2. POST `/echo-external-data-webhook`: "Echoes" the external data services data update notifications to our own webhook subscribers. This data will be forwarded to our own subscribers. Registered to be called by the External Data Service when there's been a change to data upstream.
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
 
@@ -47,21 +47,15 @@ Next we come to how the Fluid collaboration session and clients will consume the
 
 ### Echo Webhook Pattern
 
-<img width="1356" alt="Scenario: Collaboration gets an update from outside of Fluid" src="https://user-images.githubusercontent.com/6777404/216415477-14d0b193-29c9-48e5-8b6b-0a549a5dde58.png">
+<img width="1356" alt="Scenario: Collaboration session gets an update from outside of Fluid" src="https://user-images.githubusercontent.com/6777404/216415477-14d0b193-29c9-48e5-8b6b-0a549a5dde58.png">
 
-<img width="1404" alt="Scenario: Collaboration gets an update from outside of Fluid" src="https://user-images.githubusercontent.com/6777404/216417448-2a43db3e-12a2-48a6-b6d0-a6c4a95e27d1.png">
+<img width="1404" alt="Scenario: Collaboration session gets an update from outside of Fluid" src="https://user-images.githubusercontent.com/6777404/216417448-2a43db3e-12a2-48a6-b6d0-a6c4a95e27d1.png">
 
 <img width="1374" alt="Scenario: EXternal data is updated from within Fluid,if only authenticated users are able to write" src="https://user-images.githubusercontent.com/6777404/216417779-12861504-7909-489c-b7a2-4d75814a396f.png">
 
 Since the Customer Service is registered to the webhooks and listening for incoming changes, the clients do not have a way to know that there has been a change upstream.
 
-The "echo webhook" pattern accomplishes this by having the Fluid service subscribe to "echo webhooks" in the Customer Service, listening for the webhook notifications there, and then sending a Signal to the clients to alert them of this upstream change.
-
-So, on receiving the notification from the External Server's webhook, the Customer Service makes a POST request using the `/echo-external-data-webhook` which simply echoes the information to the Fluid Service.
-
-On receiving notification from the Echo webhooks, Alfred (the Fluid Service Front End) broadcasts a Signal to let the the clients know that there has been a change upstream.
-
-We have a prototype of the echo webhhook and signal broadcast in Alfred in our dev branch here: https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts#L463-L508.
+The Fluid service receives notifications from the Customer Service whenever the Customer Service receives webhook updates from the external data provider. The Fluid Service then sends a Signal to the clients to alert them of this upstream change. A prototype of the webhook subscription and signal broadcast lives is currently prototyped in Alfred [in a dev branch](https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts).
 
 On receiving the signal, the clients (or elected leader client) can then send a fetch call to retrieve the information and display it to screen by making a call to the external data server's GET `/fetch-tasks` endpoint.
 
