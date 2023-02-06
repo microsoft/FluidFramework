@@ -49,6 +49,7 @@ export {
 	CursorAdapter,
 	prefixPath,
 	prefixFieldPath,
+	CursorWithNode,
 } from "./treeCursorUtils";
 export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 
