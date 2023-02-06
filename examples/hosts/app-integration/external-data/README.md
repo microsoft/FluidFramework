@@ -25,7 +25,7 @@ However, they often expose third-party integration via REST APIS for querying an
 
 This repo contains a service that mocks the external "source of truth" data server. This mock service offers a REST API collection and webhook interfaces in `./src/mock-external-data-service`. The API requests served by this "external" service are the following:
 
-1. POST `/register-for-webhook`: Register's the sender's URL to receive notifications when the external task-list data changes.
+1. POST `/register-for-webhook`: Register's the sender's URL to receive notifications when the external task-list data changes. Currently, the Customer Service registers its `/echo-external-data-webhook` endpoint here to be called when data changes.
 2. GET `/fetch-tasks`: Fetches the task list from the external data store. Called by the Fluid client.
 3. POST `/set-tasks`: Updates external data store with new tasks list (complete override). Called by the Fluid client.
 4. POST `/debug-reset-task-list`: Resets the external data to its original contents. Called by the Fluid client.
@@ -38,7 +38,7 @@ Next we need a customer service that functions as the intermediary between the E
 
 In this example, the Customer Service contains the following endpoints:
 
-1. POST `/register-for-webhook`: Register's the sender's URL to receive notifications when the external task-list data changes. Currently, Alfred registers it's `/task-list-hook` endpoint to this URL.
+1. POST `/register-for-webhook`: Registers the sender's URL to receive notifications when the external task-list data changes. Currently, Alfred registers it's `/task-list-hook` endpoint to this URL to be called when the Customer Service receives a notification on its `/echo-external-data-webhook` endpoint.
 2. POST `/echo-external-data-webhook`: "Echoes" the external data services data update notifications to our own webhook subscribers. This data will be forwarded to our own subscribers. Registered to be called by the External Data Service when there's been a change to data upstream.
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
