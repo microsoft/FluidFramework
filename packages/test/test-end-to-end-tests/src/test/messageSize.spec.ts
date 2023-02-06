@@ -143,6 +143,32 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		assertMapValues(dataObject2map, messageCount, largeString);
 	});
 
+	itExpects(
+		"Small batches pass while disconnected, fails when the container connects",
+		[
+			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
+		],
+		async () => {
+			const maxMessageSizeInBytes = 800 * 1024; // slightly below 1Mb
+			await setupContainers(testContainerConfig);
+			const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
+			const messageCount = 10;
+			localContainer.disconnect();
+			for (let i = 0; i < 3; i++) {
+				setMapKeys(dataObject1map, messageCount, largeString);
+				await new Promise<void>((resolve) => setTimeout(resolve));
+				// Individual small batches will pass, as the container is disconnected and
+				// batches will be stored as pending
+				assert.equal(localContainer.closed, false);
+			}
+
+			// On reconnect, all small batches will be sent at once
+			localContainer.connect();
+			await provider.ensureSynchronized();
+		},
+	);
+
 	it("Batched small ops pass when batch is larger than max op size", async function () {
 		// flush mode is not applicable for the local driver
 		if (provider.driver.type === "local") {

@@ -31,7 +31,13 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import {
+	assert,
+	Deferred,
+	Trace,
+	TypedEventEmitter,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -1988,12 +1994,18 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
-	public orderSequentially<T>(callback: () => T, flush?: boolean): T {
+	public orderSequentially<T>(callback: () => T, flush?: Deferred<void>): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
 
-		this._orderSequentiallyFlushing = flush === true;
-		if (this._orderSequentiallyFlushing && this._orderSequentiallyCalls === 0) {
+		if (flush !== undefined) {
+			if (this._orderSequentiallyCalls > 0) {
+				throw new UsageError(
+					"Reentrancy is not supported for flushing inside `orderSequentially` calls",
+				);
+			}
+
+			this._orderSequentiallyFlushing = true;
 			this.flush();
 		}
 
@@ -2041,9 +2053,15 @@ export class ContainerRuntime
 			return result;
 		}
 
-		if (this._orderSequentiallyFlushing || this.flushMode !== FlushMode.TurnBased) {
-			this.flush();
-			this._orderSequentiallyFlushing = false;
+		if (flush !== undefined) {
+			flush.promise
+				.then(() => {
+					this.flush();
+					this._orderSequentiallyFlushing = false;
+				})
+				.catch((error) => {
+					this.closeFn(error as GenericError);
+				});
 		}
 
 		return result;
