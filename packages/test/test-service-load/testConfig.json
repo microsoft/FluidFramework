@@ -36,11 +36,7 @@
 						"Fluid.Container.summarizeProtocolTree2": [true, false]
 					}
 				}
-			},
-			"useRandomContent": true,
-			"useVariableOpSize": true,
-			"opSizeinBytes": 2172864,
-			"largeOpRate": 500
+			}
 		},
 		"ci_frs": {
 			"opRatePerMin": 10,

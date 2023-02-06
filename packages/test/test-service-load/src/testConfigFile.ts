@@ -75,14 +75,10 @@ export interface ILoadTestConfig {
 	 */
 	useRandomContent?: boolean;
 	/**
-	 * If enabled, for each op with content, the test will generate content of random size
+	 * If enabled, for each op, the test will generate content of random size
 	 * between 0 and `opSizeinBytes`
 	 */
 	useVariableOpSize?: boolean;
-	/**
-	 * If configured, once every `largeOpRate`, a large op will be sent
-	 */
-	largeOpRate?: number;
 }
 
 export interface OptionOverride {
