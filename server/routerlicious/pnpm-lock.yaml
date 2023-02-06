@@ -2719,7 +2719,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor-model': 7.17.1
       '@microsoft/tsdoc': 0.14.1
-      '@microsoft/tsdoc-config': 0.16.1
+      '@microsoft/tsdoc-config': 0.16.2
       '@rushstack/node-core-library': 3.45.3
       '@rushstack/rig-package': 0.3.10
       '@rushstack/ts-command-line': 4.10.9
@@ -2729,15 +2729,6 @@ packages:
       semver: 7.3.8
       source-map: 0.6.1
       typescript: 4.5.5
-    dev: true
-
-  /@microsoft/tsdoc-config/0.16.1:
-    resolution: {integrity: sha512-2RqkwiD4uN6MLnHFljqBlZIXlt/SaUT6cuogU1w2ARw4nKuuppSmR0+s+NC+7kXBQykd9zzu0P4HtBpZT5zBpQ==}
-    dependencies:
-      '@microsoft/tsdoc': 0.14.1
-      ajv: 6.12.6
-      jju: 1.4.0
-      resolve: 1.19.0
     dev: true
 
   /@microsoft/tsdoc-config/0.16.2:
@@ -3257,6 +3248,7 @@ packages:
   /@oclif/screen/3.0.3:
     resolution: {integrity: sha512-KX8gMYA9ujBPOd1HFsV9e0iEx7Uoj8AG/3YsW4TtWQTg4lJvr82qNm7o/cFQfYRIt+jw7Ew/4oL4A22zOT+IRA==}
     engines: {node: '>=12.0.0'}
+    deprecated: Deprecated in favor of @oclif/core
     dev: true
 
   /@oclif/test/2.1.1:
@@ -6047,7 +6039,7 @@ packages:
       spawn-command: 0.0.2-1
       supports-color: 8.1.1
       tree-kill: 1.2.2
-      yargs: 17.5.1
+      yargs: 17.6.2
     dev: true
 
   /config-chain/1.1.13:
@@ -10194,19 +10186,9 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /mime-db/1.44.0:
-    resolution: {integrity: sha512-/NOTfLrsPBVeH7YtFPgsVWveuL+4SjjYxaQ1xtM1KMFj7HdxlBlxeyNLzhyJVx7r4rZGJAZ/6lkKCitSc/Nmpg==}
-    engines: {node: '>= 0.6'}
-
   /mime-db/1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
     engines: {node: '>= 0.6'}
-
-  /mime-types/2.1.27:
-    resolution: {integrity: sha512-JIhqnCasI9yD+SsmkquHBxTSEuZdQX5BuQnS2Vc7puQQQ+8yiP5AY5uWhpdv4YL4VM5c6iliiYWPgJ/nJQLp7w==}
-    engines: {node: '>= 0.6'}
-    dependencies:
-      mime-db: 1.44.0
 
   /mime-types/2.1.35:
     resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
@@ -12459,7 +12441,7 @@ packages:
       is-typedarray: 1.0.0
       isstream: 0.1.2
       json-stringify-safe: 5.0.1
-      mime-types: 2.1.27
+      mime-types: 2.1.35
       oauth-sign: 0.9.0
       performance-now: 2.1.0
       qs: 6.5.2
@@ -14313,7 +14295,7 @@ packages:
       graceful-fs: 4.2.10
       json-parse-even-better-errors: 2.3.1
       loader-runner: 4.3.0
-      mime-types: 2.1.27
+      mime-types: 2.1.35
       neo-async: 2.6.2
       schema-utils: 3.1.1
       tapable: 2.2.1
@@ -14353,7 +14335,7 @@ packages:
       graceful-fs: 4.2.10
       json-parse-even-better-errors: 2.3.1
       loader-runner: 4.3.0
-      mime-types: 2.1.27
+      mime-types: 2.1.35
       neo-async: 2.6.2
       schema-utils: 3.1.1
       tapable: 2.2.1
@@ -14739,19 +14721,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 20.2.9
-
-  /yargs/17.5.1:
-    resolution: {integrity: sha512-t6YAJcxDkNX7NFYiVtKvWUz8l+PaKTLiL63mJYWR2GnHq2gjEWISzsLp9wg3aY36dY1j+gfIEL3pIF+XlJJfbA==}
-    engines: {node: '>=12'}
-    dependencies:
-      cliui: 7.0.4
-      escalade: 3.1.1
-      get-caller-file: 2.0.5
-      require-directory: 2.1.1
-      string-width: 4.2.3
-      y18n: 5.0.8
-      yargs-parser: 21.1.1
-    dev: true
 
   /yargs/17.6.2:
     resolution: {integrity: sha512-1/9UrdHjDZc0eOU0HxOHoS78C69UD3JRMvzlJ7S79S2nTaWRA/whGCTV8o9e/N/1Va9YIV7Q4sOxD8VV4pCWOw==}
