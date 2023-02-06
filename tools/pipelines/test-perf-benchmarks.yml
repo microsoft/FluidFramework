@@ -38,6 +38,7 @@ parameters:
     - "@fluid-experimental/tree"
 
 variables:
+  - group: prague-key-vault
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
   # basic ANSI color support though, so force that in the pipeline
