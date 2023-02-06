@@ -18,11 +18,11 @@ function show(): void {
 
 	const panelElement = document.createElement("div");
 	panelElement.id = debuggerPanelId;
-	// iframe.style.background = "green";
 	panelElement.style.height = "100%";
 	panelElement.style.position = "fixed";
 	panelElement.style.top = "0px";
 	panelElement.style.right = "0px";
+	panelElement.style.backgroundColor = "rgba(180, 180, 180, 0.85)";
 	panelElement.style.zIndex = "9000000000000000000"; // Ensure the panel appears on top of all other content
 	panelElement.style.width = "400px";
 
