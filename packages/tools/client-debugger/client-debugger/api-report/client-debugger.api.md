@@ -65,6 +65,14 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 // @internal
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
+// @public
+export interface IDebuggerMessage {
+    // (undocumented)
+    data?: unknown;
+    // (undocumented)
+    type?: string;
+}
+
 // @internal
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     readonly audience: IAudience;
@@ -83,7 +91,15 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 }
 
 // @public
+export interface IInboundMessage extends IDebuggerMessage {
+}
+
+// @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
+
+// @public
+export interface IOutboundMessage extends IDebuggerMessage {
+}
 
 // @internal
 export interface LogEntry {
@@ -94,6 +110,16 @@ export interface LogEntry {
 export enum MemberChangeKind {
     Added = "Added",
     Removed = "Removed"
+}
+
+// @public
+export interface RegistryChangeMessage extends IOutboundMessage {
+    // (undocumented)
+    data: {
+        containerIds: string[];
+    };
+    // (undocumented)
+    type: "REGISTRY_CHANGE";
 }
 
 // @internal

@@ -55,6 +55,13 @@ export {
 } from "./Logs";
 
 export {
+	IDebuggerMessage,
+	IInboundMessage,
+	IOutboundMessage,
+	RegistryChangeMessage,
+} from "./Messaging";
+
+export {
 	DebuggerRegistry,
 	DebuggerRegistryEvents,
 	clearDebuggerRegistry,

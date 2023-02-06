@@ -9,6 +9,7 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
+import { IInboundMessage, postWindowMessage, RegistryChangeMessage } from "./Messaging";
 
 /**
  * Properties for configuring a {@link IFluidClientDebugger}.
@@ -74,8 +75,52 @@ export interface DebuggerRegistryEvents extends IEvent {
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
 	private readonly registeredDebuggers: Map<string, FluidClientDebugger> = new Map();
 
+	// #region Event handlers
+
+	/**
+	 * Event handler for messages coming from the window (globalThis).
+	 */
+	private readonly windowMessageHandler = (event: MessageEvent<IInboundMessage>): void => {
+		if ((event.source as unknown) !== globalThis) {
+			// Ignore events coming from outside of this window / global context
+			return;
+		}
+		console.log("REGISTRY: Received message!");
+
+		if (event.data?.type === undefined) {
+			console.warn("REGISTRY: Incoming message did not supply a type.");
+			return;
+		}
+
+		// TODO: handle message types
+	};
+
+	/**
+	 * Posts a {@link RegistryChangeMessage} to the window (globalThis).
+	 */
+	private readonly postRegistryChange = (): void => {
+		postWindowMessage<RegistryChangeMessage>({
+			type: "REGISTRY_CHANGE",
+			data: {
+				containerIds: [...this.registeredDebuggers.values()].map(
+					(clientDebugger) => clientDebugger.containerId,
+				),
+			},
+		});
+	};
+
+	// #endregion
+
 	public constructor() {
 		super();
+
+		// Register listener for inbound messages from the window (globalThis)
+		globalThis.addEventListener("message", this.windowMessageHandler);
+
+		// Initiate message posting of registry updates.
+		// TODO: Only do this after some external request?
+		this.on("debuggerClosed", this.postRegistryChange);
+		this.on("debuggerClosed", this.postRegistryChange);
 	}
 
 	/**
