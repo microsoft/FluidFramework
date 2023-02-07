@@ -13,6 +13,7 @@ import {
 import { ContainerSelectionDropdown } from "@fluid-tools/client-debugger-view";
 
 import { ContainerStateView } from "./ContainerStateView";
+import { Waiting } from "./Waiting";
 
 /**
  * TODO
@@ -22,29 +23,35 @@ export function DebuggerPanel(): React.ReactElement {
 
 	React.useEffect(() => {
 		function handleMessage(event: MessageEvent<IDebuggerMessage>): void {
+			function formatLogMessage(message: string): string {
+				return `CONTENT(DebuggerPanel): ${message}`;
+			}
+
 			if ((event.source as unknown) !== globalThis) {
 				// Ignore events coming from outside of this window / global context
+				console.debug(formatLogMessage("Ignoring incoming message from unknown source."));
 				return;
 			}
 
 			if (event.data?.type === undefined) {
+				console.debug(formatLogMessage("Ignoring incoming message of unknown format."));
 				return;
-			}
-
-			function log(message: string): void {
-				console.log(`CONTENT(DebuggerPanel): ${message}`);
 			}
 
 			switch (event.data.type) {
 				case "REGISTRY_CHANGE":
-					log('"REGISTRY_CHANGE" message received!');
+					console.log(formatLogMessage('"REGISTRY_CHANGE" message received!'));
 
 					// eslint-disable-next-line no-case-declarations
 					const message = event.data as RegistryChangeMessage;
 					setContainers(message.data.containers);
 					break;
 				default:
-					log(`Unhandled inbound message type received: "${event.data.type}".`);
+					console.log(
+						formatLogMessage(
+							`Unhandled inbound message type received: "${event.data.type}".`,
+						),
+					);
 					break;
 			}
 		}
@@ -61,15 +68,10 @@ export function DebuggerPanel(): React.ReactElement {
 	}, [setContainers]);
 
 	return containers === undefined ? (
-		<WaitingView />
+		<Waiting />
 	) : (
 		<PopulatedDebuggerPanel containers={containers} />
 	);
-}
-
-function WaitingView(): React.ReactElement {
-	// TODO: spinner
-	return <div>Waiting for initial response from webpage...</div>;
 }
 
 /**
