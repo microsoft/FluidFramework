@@ -10,6 +10,7 @@ import {
 	createTheme,
 	mergeStyles,
 } from "@fluentui/react";
+import { Resizable } from "re-resizable";
 import React from "react";
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -29,7 +30,7 @@ import {
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
 import { CounterWidget } from "../widgets";
-import { DebuggerPanel } from "./DebuggerPanel";
+import { FluidClientDebuggers } from "../../Debugger";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -226,31 +227,31 @@ export function App(): React.ReactElement {
 	}
 
 	const view = (
-		<>
-			<Stack horizontal>
-				<StackItem>
-					{containers[0] === undefined ? (
-						<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-							<Spinner />
-							<div>Loading Fluid container...</div>
-						</Stack>
-					) : (
-						<AppView containerInfo={containers[0]} />
-					)}
-				</StackItem>
-				<StackItem>
-					{containers[1] === undefined ? (
-						<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-							<Spinner />
-							<div>Loading Fluid container...</div>
-						</Stack>
-					) : (
-						<AppView containerInfo={containers[1]} />
-					)}
-				</StackItem>
-			</Stack>
-			<DebuggerPanel />
-		</>
+		<Stack horizontal style={{ height: "100%" }}>
+			<StackItem style={{ height: "100%" }}>
+				<DebuggerPanel />
+			</StackItem>
+			<StackItem style={{ height: "100%" }}>
+				{containers[0] === undefined ? (
+					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+						<Spinner />
+						<div>Loading Fluid container...</div>
+					</Stack>
+				) : (
+					<AppView containerInfo={containers[0]} />
+				)}
+			</StackItem>
+			<StackItem style={{ height: "100%" }}>
+				{containers[1] === undefined ? (
+					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+						<Spinner />
+						<div>Loading Fluid container...</div>
+					</Stack>
+				) : (
+					<AppView containerInfo={containers[1]} />
+				)}
+			</StackItem>
+		</Stack>
 	);
 
 	return <ThemeProvider theme={appTheme}>{view}</ThemeProvider>;
@@ -347,4 +348,26 @@ function CounterView(props: CounterViewProps): React.ReactElement {
 	}, [sharedCounterHandle, setSharedCounter]);
 
 	return sharedCounter === undefined ? <Spinner /> : <CounterWidget counter={sharedCounter} />;
+}
+
+/**
+ * Renders drop down to show more than 2 containers and manage the selected container in the debug view for an active
+ * debugger session registered using {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
+ *
+ * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
+ */
+function DebuggerPanel(): React.ReactElement {
+	return (
+		<Resizable
+			style={{
+				backgroundColor: "rgba(180, 180, 180, 0.85)",
+			}}
+			defaultSize={{ width: 400, height: "100%" }}
+			minHeight="100%"
+			enable={{ right: true }}
+			className={"debugger-panel"}
+		>
+			<FluidClientDebuggers />
+		</Resizable>
+	);
 }
