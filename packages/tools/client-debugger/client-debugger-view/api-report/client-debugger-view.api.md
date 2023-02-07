@@ -4,9 +4,8 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionState } from '@fluidframework/container-loader';
 import { ContainerMetadata } from '@fluid-tools/client-debugger';
+import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -46,18 +45,19 @@ export interface ContainerSelectionDropdownProps {
     options: ContainerMetadata[];
 }
 
-// @internal
-export function _ContainerStateView(props: _ContainerStateViewProps): React_2.ReactElement;
+// @public
+export function ContainerSummaryView(props: ContainerSummaryViewProps): React_2.ReactElement;
 
 // @internal
-export interface _ContainerStateViewProps {
-    // (undocumented)
-    attachState: AttachState;
-    // (undocumented)
-    connectionState: ConnectionState;
-    // (undocumented)
-    disposed: boolean;
-}
+export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_2.ReactElement;
+
+// Warning: (ae-incompatible-release-tags) The symbol "ContainerSummaryViewProps" is marked as @public, but its signature references "HasClientDebugger" which is marked as @internal
+//
+// @public
+export type ContainerSummaryViewProps = HasClientDebugger;
+
+// @public
+export type _ContainerSummaryViewProps = ContainerStateMetadata;
 
 // @public
 export const defaultRenderOptions: Required<RenderOptions>;

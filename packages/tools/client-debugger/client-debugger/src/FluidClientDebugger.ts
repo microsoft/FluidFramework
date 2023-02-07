@@ -7,6 +7,7 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ContainerStateMetadata } from "./ContainerMetadata";
 
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
@@ -72,7 +73,12 @@ export class FluidClientDebugger
 
 	// #region Container-related event handlers
 
+	private readonly containerAttachedHandler = (): void => {
+		this.postContainerStateChange();
+	};
+
 	private readonly containerConnectedHandler = (clientId: string): void => {
+		this.postContainerStateChange();
 		this._connectionStateLog.push({
 			newState: ConnectionState.Connected,
 			timestamp: Date.now(),
@@ -81,11 +87,16 @@ export class FluidClientDebugger
 	};
 
 	private readonly containerDisconnectedHandler = (): void => {
+		this.postContainerStateChange();
 		this._connectionStateLog.push({
 			newState: ConnectionState.Disconnected,
 			timestamp: Date.now(),
 			clientId: undefined,
 		});
+	};
+
+	private readonly containerClosedHandler = (): void => {
+		this.postContainerStateChange();
 	};
 
 	// #endregion
@@ -154,13 +165,7 @@ export class FluidClientDebugger
 		postWindowMessage<ContainerStateChangeMessage>({
 			type: "CONTAINER_STATE_CHANGE",
 			data: {
-				containerState: {
-					id: this.containerId,
-					nickname: this.containerNickname,
-					closed: this.container.closed,
-					attachState: this.container.attachState,
-					connectionState: this.container.connectionState,
-				},
+				containerState: this.getContainerState(),
 			},
 		});
 	};
@@ -191,8 +196,10 @@ export class FluidClientDebugger
 		this._audienceChangeLog = [];
 
 		// Bind Container events required for change-logging
+		this.container.on("attached", this.containerAttachedHandler);
 		this.container.on("connected", this.containerConnectedHandler);
 		this.container.on("disconnected", this.containerDisconnectedHandler);
+		this.container.on("closed", this.containerClosedHandler);
 
 		// Bind Audience events required for change-logging
 		this.audience.on("addMember", this.audienceMemberAddedHandler);
@@ -242,5 +249,19 @@ export class FluidClientDebugger
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
+	}
+
+	private getContainerState(): ContainerStateMetadata {
+		const clientId = this.container.clientId;
+		return {
+			id: this.containerId,
+			nickname: this.containerNickname,
+			attachState: this.container.attachState,
+			connectionState: this.container.connectionState,
+			closed: this.container.closed,
+			clientId: this.container.clientId,
+			audienceId:
+				clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
+		};
 	}
 }

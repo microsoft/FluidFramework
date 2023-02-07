@@ -50,17 +50,17 @@ export function ContainerSelectionDropdown(
 	const dropdownOptions: IDropdownOption[] = options.map((option) => ({
 		key: option.id,
 		text: option.nickname ?? option.id,
+		selected: option.id === initialSelection,
 	}));
 
 	return (
 		<Stack tokens={stackTokens}>
 			<Dropdown
-				placeholder="Select an option"
+				placeholder="Select an Fluid Container"
 				selectedKey={initialSelection}
 				options={dropdownOptions}
 				styles={dropdownStyles}
 				onChange={(event, option): void => onChangeSelection(option?.key as string)}
-				disabled={options.length < 2}
 			/>
 		</Stack>
 	);

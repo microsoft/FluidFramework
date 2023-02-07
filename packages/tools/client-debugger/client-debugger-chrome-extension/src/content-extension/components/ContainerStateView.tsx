@@ -9,11 +9,11 @@ import {
 	ContainerStateChangeMessage,
 	IDebuggerMessage,
 } from "@fluid-tools/client-debugger";
-import { HasContainerId, _ContainerStateView } from "@fluid-tools/client-debugger-view";
+import { HasContainerId, _ContainerSummaryView } from "@fluid-tools/client-debugger-view";
 import { Waiting } from "./Waiting";
 
 /**
- * {@link ContainerStateView} input props.
+ * {@link ContainerSummaryView} input props.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface ContainerStateViewProps extends HasContainerId {}
@@ -22,7 +22,7 @@ interface ContainerStateViewProps extends HasContainerId {}
  * Displays information about the container's internal state, including its disposal status,
  * connection state, attach state, etc.
  */
-export function ContainerStateView(props: ContainerStateViewProps): React.ReactElement {
+export function ContainerSummaryView(props: ContainerStateViewProps): React.ReactElement {
 	const { containerId } = props;
 
 	const [containerState, setContainerState] = React.useState<
@@ -83,11 +83,5 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 		return <Waiting />;
 	}
 
-	return (
-		<_ContainerStateView
-			disposed={containerState.closed}
-			attachState={containerState.attachState}
-			connectionState={containerState.connectionState}
-		/>
-	);
+	return <_ContainerSummaryView {...containerState} />;
 }

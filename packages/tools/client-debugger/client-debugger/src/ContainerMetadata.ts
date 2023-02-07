@@ -43,4 +43,16 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.connectionState}
 	 */
 	connectionState: ConnectionState;
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.clientId}
+	 */
+	clientId?: string;
+
+	/**
+	 * The active audience identifier when the Container is connected.
+	 *
+	 * @remarks Will be undefined when the Container is not connected.
+	 */
+	audienceId?: string;
 }

@@ -105,7 +105,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 				id: clientDebugger.containerId,
 				nickname: clientDebugger.containerNickname,
 			}))}
-			onChangeSelection={(containerId): void => setSelectedContainerId(containerId)}
+			onChangeSelection={setSelectedContainerId}
 		/>
 	);
 

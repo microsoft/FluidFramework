@@ -21,14 +21,16 @@
  */
 
 export {
-	_ContainerStateView,
-	_ContainerStateViewProps,
+	_ContainerSummaryView,
+	_ContainerSummaryViewProps,
 	AudienceMemberViewProps,
 	ClientDebugView,
 	clientDebugViewClassName,
 	ClientDebugViewProps,
 	ContainerSelectionDropdownProps,
 	ContainerSelectionDropdown,
+	ContainerSummaryView,
+	ContainerSummaryViewProps,
 } from "./components";
 
 export { AudienceMember } from "./Audience";

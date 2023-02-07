@@ -12,7 +12,7 @@ import {
 } from "@fluid-tools/client-debugger";
 import { ContainerSelectionDropdown } from "@fluid-tools/client-debugger-view";
 
-import { ContainerStateView } from "./ContainerStateView";
+import { ContainerSummaryView } from "./ContainerStateView";
 import { Waiting } from "./Waiting";
 
 /**
@@ -111,7 +111,7 @@ function PopulatedDebuggerPanel(props: PopulatedDebuggerPanelProps): React.React
 		selectedContainerId === undefined ? (
 			<div>Select a Container to view its state.</div>
 		) : (
-			<ContainerStateView containerId={selectedContainerId} />
+			<ContainerSummaryView containerId={selectedContainerId} />
 		);
 
 	return (

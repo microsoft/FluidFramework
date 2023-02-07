@@ -53,6 +53,9 @@ export interface ContainerStateChangeMessage extends IOutboundMessage {
 export interface ContainerStateMetadata extends ContainerMetadata {
     // (undocumented)
     attachState: AttachState;
+    audienceId?: string;
+    // (undocumented)
+    clientId?: string;
     closed: boolean;
     // (undocumented)
     connectionState: ConnectionState;

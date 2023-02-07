@@ -93,7 +93,10 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(): (ContainerInfo | undefined)[] {
+function useContainerInfo(): {
+	privateContainer: ContainerInfo | undefined;
+	sharedContainer: ContainerInfo | undefined;
+} {
 	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
 		ContainerInfo | undefined
 	>();
@@ -120,7 +123,7 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
 					));
 				}
 
-				return { container, audience, containerId, containerNickname: "Shared" };
+				return { container, audience, containerId, containerNickname: "Shared Container" };
 			}
 
 			getFluidData().then(
@@ -143,7 +146,7 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
 				const containerInfo = await createFluidContainer(containerSchema, populateRootMap);
 				return {
 					...containerInfo,
-					containerNickname: "Private",
+					containerNickname: "Private Container",
 				};
 			}
 
@@ -171,7 +174,7 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
 		[],
 	);
 
-	return [sharedContainerInfo, privateContainerInfo];
+	return { sharedContainer: sharedContainerInfo, privateContainer: privateContainerInfo };
 }
 
 const appTheme = createTheme({
@@ -218,13 +221,7 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Load the collaborative SharedString object
-	const containers = useContainerInfo();
-
-	if (containers.length !== 2) {
-		console.error(
-			`Initialization created an unexpected number of containers: ${containers.length}`,
-		);
-	}
+	const { privateContainer, sharedContainer } = useContainerInfo();
 
 	const view = (
 		<Stack horizontal style={{ height: "100%" }}>
@@ -232,23 +229,23 @@ export function App(): React.ReactElement {
 				<DebuggerPanel />
 			</StackItem>
 			<StackItem style={{ height: "100%" }}>
-				{containers[0] === undefined ? (
+				{sharedContainer === undefined ? (
 					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 						<Spinner />
-						<div>Loading Fluid container...</div>
+						<div>Loading Shared container...</div>
 					</Stack>
 				) : (
-					<AppView containerInfo={containers[0]} />
+					<AppView containerInfo={sharedContainer} />
 				)}
 			</StackItem>
 			<StackItem style={{ height: "100%" }}>
-				{containers[1] === undefined ? (
+				{privateContainer === undefined ? (
 					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 						<Spinner />
-						<div>Loading Fluid container...</div>
+						<div>Loading Private container...</div>
 					</Stack>
 				) : (
-					<AppView containerInfo={containers[1]} />
+					<AppView containerInfo={privateContainer} />
 				)}
 			</StackItem>
 		</Stack>
@@ -292,8 +289,15 @@ function AppView(props: AppViewProps): React.ReactElement {
 		<Stack horizontal className={rootStackStyles}>
 			<StackItem className={appViewPaneStackStyles}>
 				<h4>
+					{containerNickname === undefined ? (
+						<></>
+					) : (
+						<>
+							{containerNickname}
+							<br />
+						</>
+					)}
 					{containerId}
-					{containerNickname === undefined ? "" : ` (${containerNickname})`}
 				</h4>
 				<Stack>
 					<StackItem>

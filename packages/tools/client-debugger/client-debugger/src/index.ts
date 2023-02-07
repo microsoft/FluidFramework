@@ -46,7 +46,7 @@
 // TODO: re-enable this once the API surface has settled
 /* eslint-disable no-restricted-syntax */
 
-export { MemberChangeKind } from "./Audience";
+export * from "./AudienceMetadata";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 export {
 	AudienceChangeLogEntry,
