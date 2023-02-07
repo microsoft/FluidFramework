@@ -31,17 +31,19 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 
 	React.useEffect(() => {
 		function handleMessage(event: MessageEvent<IDebuggerMessage>): void {
+			function formatLogMessage(message: string): string {
+				return `CONTENT(ContainerStateView): ${message}`;
+			}
+
 			if ((event.source as unknown) !== globalThis) {
 				// Ignore events coming from outside of this window / global context
+				console.debug(formatLogMessage("Ignoring incoming message from unknown source."));
 				return;
 			}
 
 			if (event.data?.type === undefined) {
+				console.debug(formatLogMessage("Ignoring incoming message of unknown format."));
 				return;
-			}
-
-			function log(message: string): void {
-				console.log(`CONTENT(ContainerStateView): ${message}`);
 			}
 
 			switch (event.data.type) {
@@ -49,12 +51,16 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 					// eslint-disable-next-line no-case-declarations
 					const message = event.data as ContainerStateChangeMessage;
 					if (message.data.containerState.id === containerId) {
-						log('"CONTAINER_STATE_CHANGE" message received!');
+						console.log(formatLogMessage('"CONTAINER_STATE_CHANGE" message received!'));
 						setContainerState(message.data.containerState);
 					}
 					break;
 				default:
-					log(`Unhandled inbound message type received: "${event.data.type}".`);
+					console.debug(
+						formatLogMessage(
+							`Unhandled inbound message type received: "${event.data.type}".`,
+						),
+					);
 					break;
 			}
 		}
@@ -62,7 +68,10 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 		globalThis.addEventListener("message", handleMessage);
 
 		globalThis.postMessage({
-			type: "GET_CONTAINER_LIST",
+			type: "GET_CONTAINER_STATE",
+			data: {
+				containerId,
+			},
 		});
 
 		return (): void => {
