@@ -112,6 +112,30 @@ use_old_ClassDeclaration_GCDataBuilder(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getGCDataFromSnapshot": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getGCDataFromSnapshot():
+    TypeOnly<typeof old.getGCDataFromSnapshot>;
+declare function use_current_FunctionDeclaration_getGCDataFromSnapshot(
+    use: TypeOnly<typeof current.getGCDataFromSnapshot>);
+use_current_FunctionDeclaration_getGCDataFromSnapshot(
+    get_old_FunctionDeclaration_getGCDataFromSnapshot());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getGCDataFromSnapshot": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getGCDataFromSnapshot():
+    TypeOnly<typeof current.getGCDataFromSnapshot>;
+declare function use_old_FunctionDeclaration_getGCDataFromSnapshot(
+    use: TypeOnly<typeof old.getGCDataFromSnapshot>);
+use_old_FunctionDeclaration_getGCDataFromSnapshot(
+    get_current_FunctionDeclaration_getGCDataFromSnapshot());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGCResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGCResult():

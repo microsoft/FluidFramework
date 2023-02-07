@@ -159,9 +159,11 @@ export class ScribeLambda implements IPartitionLambda {
                 }
 
                 // Ensure protocol handler sequence numbers are monotonically increasing
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
                     // unexpected sequence number. if a pending message reader is available, ask for those ops
                     if (this.pendingMessageReader !== undefined) {
+                        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                         const from = lastProtocolHandlerSequenceNumber + 1;
                         const to = value.operation.sequenceNumber - 1;
                         const additionalPendingMessages = await this.pendingMessageReader.readMessages(from, to);
@@ -198,86 +200,92 @@ export class ScribeLambda implements IPartitionLambda {
 
                 // skip summarize messages that deli already acked
                 if (value.operation.type === MessageType.Summarize && !value.operation.serverMetadata?.deliAcked) {
-                    // Process up to the summary op ref seq to get the protocol state at the summary op.
-                    // Capture state first in case the summary is nacked.
-                    const prevState = {
-                        protocolState: this.protocolHandler.getProtocolState(),
-                        pendingOps: this.pendingMessages.toArray(),
-                    };
-                    this.processFromPending(value.operation.referenceSequenceNumber);
+                    // ensure the client is requesting a summary for a state that scribe can achieve
+                    // the clients summary state (ref seq num) must be at least as high as scribes (protocolHandler.sequenceNumber)
+                    if (!this.summaryWriter.isExternal ||
+                        value.operation.referenceSequenceNumber >= this.protocolHandler.sequenceNumber) {
+                        // Process up to the summary op ref seq to get the protocol state at the summary op.
+                        // Capture state first in case the summary is nacked.
+                        const prevState = {
+                            protocolState: this.protocolHandler.getProtocolState(),
+                            pendingOps: this.pendingMessages.toArray(),
+                        };
+                        this.processFromPending(value.operation.referenceSequenceNumber);
 
-                    // Only process the op if the protocol state advances. This eliminates the corner case where we have
-                    // already captured this summary and are processing this message due to a replay of the stream.
-                    if (this.protocolHead < this.protocolHandler.sequenceNumber) {
-                        try {
-                            const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);
-                            const operation = value.operation as ISequencedDocumentAugmentedMessage;
-                            const summaryResponse = await this.summaryWriter.writeClientSummary(
-                                operation,
-                                this.lastClientSummaryHead,
-                                scribeCheckpoint,
-                                this.pendingCheckpointMessages.toArray(),
-                            );
-
-                            // This block is only executed if the writer is not external. For an external writer,
-                            // (e.g., job queue) the responsibility of sending ops to the stream is up to the
-                            // external writer.
-                            if (!this.summaryWriter.isExternal) {
-                                // On a successful write, send an ack message to clients and a control message to deli.
-                                // Otherwise send a nack and revert the protocol state back to pre summary state.
-                                if (summaryResponse.status) {
-                                    await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
-                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, true, false);
-                                    this.updateProtocolHead(this.protocolHandler.sequenceNumber);
-                                    this.updateLastSummarySequenceNumber(this.protocolHandler.sequenceNumber);
-                                    const summaryResult = `Client summary success @${value.operation.sequenceNumber}`;
-                                    this.context.log?.info(
-                                        summaryResult,
-                                        {
-                                            messageMetaData: {
-                                                documentId: this.documentId,
-                                                tenantId: this.tenantId,
-                                            },
-                                        },
-                                    );
-                                    Lumberjack.info(summaryResult,
-                                        getLumberBaseProperties(this.documentId, this.tenantId));
-                                } else {
-                                    const nackMessage = summaryResponse.message as ISummaryNack;
-                                    await this.sendSummaryNack(nackMessage);
-                                    const errorMsg = `Client summary failure @${value.operation.sequenceNumber}. `
-                                        + `Error: ${nackMessage.message}`;
-                                    this.context.log?.error(
-                                        errorMsg,
-                                        {
-                                            messageMetaData: {
-                                                documentId: this.documentId,
-                                                tenantId: this.tenantId,
-                                            },
-                                        },
-                                    );
-                                    Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId));
-                                    this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
-                                }
-                            }
-                        } catch (ex) {
-                            const errorMsg = `Client summary failure @${value.operation.sequenceNumber}`;
-                            this.context.log?.error(`${errorMsg} Exception: ${inspect(ex)}`);
-                            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), ex);
-                            this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
-                            // If this flag is set, we should ignore any storage specific error and move forward
-                            // to process the next message.
-                            if (this.serviceConfiguration.scribe.ignoreStorageException) {
-                                await this.sendSummaryNack(
-                                    {
-                                        message: "Failed to summarize the document.",
-                                        summaryProposal: {
-                                            summarySequenceNumber: value.operation.sequenceNumber,
-                                        },
-                                    },
+                        // When external, only process the op if the protocol state advances.
+                        // This eliminates the corner case where we have
+                        // already captured this summary and are processing this message due to a replay of the stream.
+                        if (this.protocolHead < this.protocolHandler.sequenceNumber) {
+                            try {
+                                const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);
+                                const operation = value.operation as ISequencedDocumentAugmentedMessage;
+                                const summaryResponse = await this.summaryWriter.writeClientSummary(
+                                    operation,
+                                    this.lastClientSummaryHead,
+                                    scribeCheckpoint,
+                                    this.pendingCheckpointMessages.toArray(),
                                 );
-                            } else {
-                                throw ex;
+
+                                // This block is only executed if the writer is not external. For an external writer,
+                                // (e.g., job queue) the responsibility of sending ops to the stream is up to the
+                                // external writer.
+                                if (!this.summaryWriter.isExternal) {
+                                    // On a successful write, send an ack message to clients and a control message to deli.
+                                    // Otherwise send a nack and revert the protocol state back to pre summary state.
+                                    if (summaryResponse.status) {
+                                        await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
+                                        await this.sendSummaryConfirmationMessage(operation.sequenceNumber, true, false);
+                                        this.updateProtocolHead(this.protocolHandler.sequenceNumber);
+                                        this.updateLastSummarySequenceNumber(this.protocolHandler.sequenceNumber);
+                                        const summaryResult = `Client summary success @${value.operation.sequenceNumber}`;
+                                        this.context.log?.info(
+                                            summaryResult,
+                                            {
+                                                messageMetaData: {
+                                                    documentId: this.documentId,
+                                                    tenantId: this.tenantId,
+                                                },
+                                            },
+                                        );
+                                        Lumberjack.info(summaryResult,
+                                            getLumberBaseProperties(this.documentId, this.tenantId));
+                                    } else {
+                                        const nackMessage = summaryResponse.message as ISummaryNack;
+                                        await this.sendSummaryNack(nackMessage);
+                                        const errorMsg = `Client summary failure @${value.operation.sequenceNumber}. `
+                                            + `Error: ${nackMessage.message}`;
+                                        this.context.log?.error(
+                                            errorMsg,
+                                            {
+                                                messageMetaData: {
+                                                    documentId: this.documentId,
+                                                    tenantId: this.tenantId,
+                                                },
+                                            },
+                                        );
+                                        Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId));
+                                        this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
+                                    }
+                                }
+                            } catch (ex) {
+                                const errorMsg = `Client summary failure @${value.operation.sequenceNumber}`;
+                                this.context.log?.error(`${errorMsg} Exception: ${inspect(ex)}`);
+                                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), ex);
+                                this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
+                                // If this flag is set, we should ignore any storage specific error and move forward
+                                // to process the next message.
+                                if (this.serviceConfiguration.scribe.ignoreStorageException) {
+                                    await this.sendSummaryNack(
+                                        {
+                                            message: "Failed to summarize the document.",
+                                            summaryProposal: {
+                                                summarySequenceNumber: value.operation.sequenceNumber,
+                                            },
+                                        },
+                                    );
+                                } else {
+                                    throw ex;
+                                }
                             }
                         }
                     }

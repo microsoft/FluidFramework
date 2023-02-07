@@ -8,56 +8,56 @@ import { SinonFakeTimers, useFakeTimers, fake, match } from "sinon";
 import * as idleTask from "../../idleTaskScheduler";
 
 describe("Idle task scheduler", () => {
-    let clock: SinonFakeTimers;
+	let clock: SinonFakeTimers;
 
-    beforeEach(() => {
-        clock = useFakeTimers();
-        (globalThis as any).requestIdleCallback = undefined;
-    });
+	beforeEach(() => {
+		clock = useFakeTimers();
+		(globalThis as any).requestIdleCallback = undefined;
+	});
 
-    afterEach(() => {
-        clock.reset();
-    });
+	afterEach(() => {
+		clock.reset();
+	});
 
-    after(() => {
-        clock.restore();
-    });
+	after(() => {
+		clock.restore();
+	});
 
-    function someTask(x: number): boolean {
-        return x > 3 ? true : false;
-    }
+	function someTask(x: number): boolean {
+		return x > 3 ? true : false;
+	}
 
-    it("Should schedule and run a synchronous task during idle time", async () => {
-        const requestIdleCallbackMock = fake((callback, timeout) => {
-            callback(timeout);
-        });
-        (globalThis as any).requestIdleCallback = requestIdleCallbackMock;
+	it("Should schedule and run a synchronous task during idle time", async () => {
+		const requestIdleCallbackMock = fake((callback, timeout) => {
+			callback(timeout);
+		});
+		(globalThis as any).requestIdleCallback = requestIdleCallbackMock;
 
-        await idleTask.scheduleIdleTask(() => {
-            someTask(5);
-        }, 1000);
+		await idleTask.scheduleIdleTask(() => {
+			someTask(5);
+		}, 1000);
 
-        assert(requestIdleCallbackMock.calledOnce);
-        assert(requestIdleCallbackMock.calledWith(match.func, { timeout: 1000 }));
-    });
+		assert(requestIdleCallbackMock.calledOnce);
+		assert(requestIdleCallbackMock.calledWith(match.func, { timeout: 1000 }));
+	});
 
-    it("Should fall back to setTimeout when idle Task API is not available", async () => {
-        let success = false;
-        assert((globalThis as any).requestIdleCallback === undefined);
-        await new Promise((resolve, reject) => {
-            try {
-                resolve(async () => {
-                    await idleTask.scheduleIdleTask(() => {
-                        someTask(5);
-                    }, 1000);
-                });
-            } catch (e) {
-                reject(e);
-            }
-        }).then(() => {
-            success = true;
-        });
-        clock.tick(1100);
-        assert(success);
-    });
+	it("Should fall back to setTimeout when idle Task API is not available", async () => {
+		let success = false;
+		assert((globalThis as any).requestIdleCallback === undefined);
+		await new Promise((resolve, reject) => {
+			try {
+				resolve(async () => {
+					await idleTask.scheduleIdleTask(() => {
+						someTask(5);
+					}, 1000);
+				});
+			} catch (e) {
+				reject(e);
+			}
+		}).then(() => {
+			success = true;
+		});
+		clock.tick(1100);
+		assert(success);
+	});
 });

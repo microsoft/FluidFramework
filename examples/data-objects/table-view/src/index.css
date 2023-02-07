@@ -1,106 +1,124 @@
-*, *:before, *:after {
-    box-sizing: border-box;
+*,
+*:before,
+*:after {
+	box-sizing: border-box;
 }
 
 .view {
-    background-color: transparent;
+	background-color: transparent;
 }
 
 table.view {
-    font: normal 11pt sanserif;
-    margin: auto;
-    border-collapse: separate;
-    border-spacing: 0px;
-    --select-border: ridge thin #88F;
-    user-select: none;
+	font: normal 11pt sanserif;
+	margin: auto;
+	border-collapse: separate;
+	border-spacing: 0px;
+	--select-border: ridge thin #88f;
+	user-select: none;
 }
 
 table.view tbody tr:nth-child(odd) td {
-    background: rgba(0, 0, 0, 0.05);
+	background: rgba(0, 0, 0, 0.05);
 }
 
 table.view:focus {
-    outline: none;
+	outline: none;
 }
 
 table.view:focus-within tfoot tr {
-    visibility: visible;
-    transition-duration: 0.5s;
+	visibility: visible;
+	transition-duration: 0.5s;
 }
 
 table.view th {
-    font: normal 8pt sanserif;
-    border: solid transparent thin;
-    margin: 0px;
-    padding: 0px 4px;
-    text-align: center;
-    opacity: 0;
-    transition-duration: 0.5s;
+	font: normal 8pt sanserif;
+	border: solid transparent thin;
+	margin: 0px;
+	padding: 0px 4px;
+	text-align: center;
+	opacity: 0;
+	transition-duration: 0.5s;
 }
 
 table.view:focus-within th {
-    opacity: 1;
-    border: solid lightgray thin;
-    transition-duration: 0.5s;
+	opacity: 1;
+	border: solid lightgray thin;
+	transition-duration: 0.5s;
 }
 
 table.view:focus-within table {
-    background-color: white;
-    transition-duration: 0.5s;
+	background-color: white;
+	transition-duration: 0.5s;
 }
 
 table.view td {
-    position: relative;
-    padding: 4px;
-    border: solid lightgray thin;
-    white-space: pre;
-    min-width: 63px;
+	position: relative;
+	padding: 4px;
+	border: solid lightgray thin;
+	white-space: pre;
+	min-width: 63px;
 }
 
 .inputBox {
-    position: absolute;
-    padding: 4px;
-    top: 0px;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
-    background-color: transparent;
-    border: none;
-    font: normal 11pt sanserif;
-    width: 100%;
-    border: 0px;
+	position: absolute;
+	padding: 4px;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	background-color: transparent;
+	border: none;
+	font: normal 11pt sanserif;
+	width: 100%;
+	border: 0px;
 }
 
 table.view caption {
-    text-align: center;
-    padding: 4px 0px 0px 0px;
+	text-align: center;
+	padding: 4px 0px 0px 0px;
 }
 
 /* Note: Must use 'table.view td.' in selector to override default style (more specific styles win). */
 /* Note: Border must be at least 2px to avoid gaps. */
-table.view:focus-within td.selectedTL, table.view:focus-within td.selectedT, table.view:focus-within td.selectedTR {
-    border-top: var(--select-border);
+table.view:focus-within td.selectedTL,
+table.view:focus-within td.selectedT,
+table.view:focus-within td.selectedTR {
+	border-top: var(--select-border);
 }
 
-table.view:focus-within td.selectedTL, table.view:focus-within td.selectedL, table.view:focus-within td.selectedBL {
-    border-left: var(--select-border);
+table.view:focus-within td.selectedTL,
+table.view:focus-within td.selectedL,
+table.view:focus-within td.selectedBL {
+	border-left: var(--select-border);
 }
 
-table.view:focus-within td.selectedTR, table.view:focus-within td.selectedR, table.view:focus-within td.selectedBR {
-    border-right: var(--select-border);
+table.view:focus-within td.selectedTR,
+table.view:focus-within td.selectedR,
+table.view:focus-within td.selectedBR {
+	border-right: var(--select-border);
 }
 
-table.view:focus-within td.selectedBL, table.view:focus-within td.selectedB, table.view:focus-within td.selectedBR {
-    border-bottom: var(--select-border);
+table.view:focus-within td.selectedBL,
+table.view:focus-within td.selectedB,
+table.view:focus-within td.selectedBR {
+	border-bottom: var(--select-border);
 }
 
-table.view:focus-within td.selectedTL, table.view:focus-within td.selectedT, table.view:focus-within td.selectedTR, table.view:focus-within td.selectedL, table.view:focus-within td.selected, table.view:focus-within td.selectedR, table.view:focus-within td.selectedBL, table.view:focus-within td.selectedB, table.view:focus-within td.selectedBR {
-    background-color: rgba(17, 102, 238, 0.1);
+table.view:focus-within td.selectedTL,
+table.view:focus-within td.selectedT,
+table.view:focus-within td.selectedTR,
+table.view:focus-within td.selectedL,
+table.view:focus-within td.selected,
+table.view:focus-within td.selectedR,
+table.view:focus-within td.selectedBL,
+table.view:focus-within td.selectedB,
+table.view:focus-within td.selectedBR {
+	background-color: rgba(17, 102, 238, 0.1);
 }
 
 .grid {
-    max-width: 100%;
-    max-height: 50%;
-    padding: 0px 0px 8px 0px;
-    overflow: auto;
+	max-width: 100%;
+	max-height: 50%;
+	padding: 0px 0px 8px 0px;
+	overflow: auto;
 }
