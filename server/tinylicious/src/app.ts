@@ -77,8 +77,8 @@ export function create(
 		}),
 	);
 	app.use(
-		Router().post("/task-list-hook", (req, res) => {
-			eventEmitter.emit("task-list-hook");
+		Router().post("/broadcast-signal", (req, res) => {
+			eventEmitter.emit("broadcast-signal");
 			res.status(200).send("Triggering debug signal from tinylicious");
 		}),
 	);

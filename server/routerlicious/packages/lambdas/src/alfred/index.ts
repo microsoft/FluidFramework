@@ -462,32 +462,10 @@ export function configureWebSocketServices(
 
             // TODO: KLUDGE webhook connection
             if(httpServer !== undefined && eventEmitter !== undefined) {
-                const customerServicePort = 5237;
-
-                const url = `http://localhost:${httpServer.address().port}/task-list-hook`; // TODO: verify this
-                console.log(`ALFRED: Registering for webhook at "${url}"...`);
-
-                request({
-                    method: 'POST',
-                    uri: `http://localhost:${customerServicePort}/register-for-webhook`,
-                    strictSSL: false,
-                    body: JSON.stringify({url}),
-                    headers: {
-                        "Access-Control-Allow-Origin": "*",
-                        "Content-Type": "application/json",
-                    }
-                }, (error, response) => {
-                    if(error) {
-                        console.error("ALFRED: Registering for webhook failed due to an error:");
-                        console.error(error);
-                    } else {
-                        console.log(`ALFRED: Got webhook registration response: ${response.statusCode}!`);
-                    }
-                });
 
                 // Only for debugging purposes
-                eventEmitter.on('task-list-hook', () => {
-                    console.log(`ALFRED: Trigger task-list-hook event`);
+                eventEmitter.on('broadcast-signal', () => {
+                    console.log(`ALFRED: Trigger broadcast-signal event`);
                     const signalMessageRuntimeMessage : ISignalMessage = {
                         clientId: null, // system signal
                         content: JSON.stringify({
