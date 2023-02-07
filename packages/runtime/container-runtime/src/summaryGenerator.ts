@@ -194,6 +194,10 @@ export class SummaryGenerator {
 		cancellationToken: ISummaryCancellationToken,
 		resultsBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
+		this.logger.sendTelemetryEvent({
+			eventName: "Summarize_start",
+			...summarizeProps,
+		});
 		this.summarizeCore(summarizeProps, options, resultsBuilder, cancellationToken).catch(
 			(error) => {
 				const message = "UnexpectedSummarizeError";
@@ -410,12 +414,13 @@ export class SummaryGenerator {
 				// Check for retryDelay in summaryNack response.
 				assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
 				const summaryNack = ackNackOp.contents;
-				const message = summaryNack?.message;
+				const errorMessage = summaryNack?.message;
 				const retryAfterSeconds = summaryNack?.retryAfter;
 
 				// pre-0.58 error message prefix: summaryNack
-				const error = new LoggingError(`Received summaryNack: ${message}`, {
+				const error = new LoggingError(`Received summaryNack`, {
 					retryAfterSeconds,
+					errorMessage,
 				});
 
 				assert(

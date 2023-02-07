@@ -41,6 +41,7 @@ import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonableTree}.
+ * @alpha
  */
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous {
 	return singleStackTreeCursor(root, adapter);
@@ -55,6 +56,7 @@ const adapter: CursorAdapter<JsonableTree> = {
 
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
+ * @alpha
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);

@@ -5,7 +5,7 @@
 
 module.exports = {
 	server: {
-		command: `start-server-and-test start:mock-service 5237 "webpack serve  --config webpack.test.js --no-live-reload --port ${process.env["PORT"]}"`,
+		command: `npm run start:client:test -- --port ${process.env["PORT"]}`,
 		port: process.env["PORT"],
 		launchTimeout: 10000,
 		usedPortAction: "error",

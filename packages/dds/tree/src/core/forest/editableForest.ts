@@ -16,6 +16,7 @@ import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
  * Editing APIs.
+ * @alpha
  */
 export interface IEditableForest extends IForestSubscription {
 	/**
@@ -38,16 +39,20 @@ export interface IEditableForest extends IForestSubscription {
 export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
 	// TODO: maybe assert forest is empty?
 	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-	forest.applyDelta(new Map([[rootFieldKeySymbol, [insert]]]));
+	forest.applyDelta(new Map([[rootFieldKeySymbol, { shallow: [insert] }]]));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.
 
 /**
  * Ways to refer to a node in an IEditableForest.
+ * @alpha
  */
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
+/**
+ * @alpha
+ */
 export interface TreeLocation {
 	readonly range: FieldLocation | DetachedField;
 	readonly index: number;
@@ -59,6 +64,7 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
 
 /**
  * Wrapper around DetachedField that can be detected at runtime.
+ * @alpha
  */
 export interface FieldLocation {
 	readonly key: FieldKey;

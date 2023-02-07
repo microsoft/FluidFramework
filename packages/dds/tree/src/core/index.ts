@@ -37,6 +37,7 @@ export {
 	JsonableTree,
 	Delta,
 	rootFieldKey,
+	rootField,
 	FieldScope,
 	GlobalFieldKeySymbol,
 	symbolFromKey,
@@ -44,6 +45,7 @@ export {
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
+	castCursorToSynchronous,
 	GenericFieldsNode,
 	AnchorLocator,
 	genericTreeKeys,
@@ -71,6 +73,8 @@ export {
 	forEachNode,
 	forEachField,
 	PathRootPrefix,
+	isSkipMark,
+	emptyDelta,
 } from "./tree";
 
 export {

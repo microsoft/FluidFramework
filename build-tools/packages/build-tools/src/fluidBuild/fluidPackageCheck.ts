@@ -486,36 +486,64 @@ export class FluidPackageCheck {
 	}
 
 	private static checkLintScripts(pkg: Package, fix: boolean) {
+		const verifyLintScriptStructure = (
+			pkg: Package,
+			scriptKey: string,
+			script: string,
+			fix: boolean,
+		) => {
+			const lintType = scriptKey === "lint" ? "lint" : "lint:fix";
+
+			const prettier = scriptKey === "lint" ? "npm run prettier" : "npm run prettier:fix";
+			const eslint = scriptKey === "lint" ? "npm run eslint" : "npm run eslint:fix";
+
+			const hasPrettier = script?.includes(prettier);
+			const endsWithEslint = script?.endsWith(eslint);
+
+			if (!(hasPrettier && endsWithEslint)) {
+				this.logWarn(pkg, `non-conformant ${lintType} script`, fix);
+
+				if (script === "") {
+					this.logWarn(pkg, `${lintType} script is missing!`, fix);
+					script = `${prettier} && ${eslint}`;
+				} else {
+					if (!hasPrettier) {
+						this.logWarn(pkg, `${lintType} script must include: ${prettier}`, fix);
+						script = `${prettier} && ${script}`;
+					}
+
+					if (!endsWithEslint) {
+						this.logWarn(pkg, `${lintType} script must end with: ${eslint}`, fix);
+						script = `${script} && ${eslint}`;
+					}
+				}
+			}
+
+			return script;
+		};
+
 		let fixed = false;
 		if (pkg.getScript("build")) {
 			// TODO: add prettier check comment once prettier is enforced globally, hasPrettier commented out to discard build warnings from "lint" & "lint:fix" scripts
 			// const hasPrettier = pkg.getScript("prettier");
 			// const lintChildren = hasLint ? ["prettier", "eslint"] : ["eslint"];
 
-			const lintScript = pkg.getScript("lint");
-			const lintFixScript = pkg.getScript("lint:fix");
+			/* Policy for "lint" & "lint:fix" scripts
+                1. Must end with "npm run eslint" / "npm run eslint:fix" respectively
+                2. Must contain "npm run prettier" / "npm run prettier:fix" respectively
+            */
+			const scripts = ["lint", "lint:fix"];
 
-			const expectedEndScript = "npm run eslint";
-			const expectedEndScriptFix = "npm run eslint:fix";
+			for (const scriptKey of scripts) {
+				let script = pkg.getScript(scriptKey);
 
-			if (lintScript === undefined || !lintScript.endsWith(expectedEndScript)) {
-				this.logWarn(pkg, `non-conformant lint script`, fix);
-				this.logWarn(pkg, `expected to end with ${expectedEndScript}`, fix);
-				this.logWarn(pkg, `actual: ${lintScript}`, fix);
-
-				if (fix) {
-					pkg.packageJson.scripts["lint"] = expectedEndScript;
-					fixed = true;
+				if (script === undefined) {
+					script = "";
 				}
-			}
-
-			if (lintFixScript === undefined || !lintFixScript.endsWith(expectedEndScriptFix)) {
-				this.logWarn(pkg, `non-conformant lint:fix script`, fix);
-				this.logWarn(pkg, `expected to end with ${expectedEndScriptFix}`, fix);
-				this.logWarn(pkg, `actual: ${lintFixScript}`, fix);
+				const expectedScript = verifyLintScriptStructure(pkg, scriptKey, script, fix);
 
 				if (fix) {
-					pkg.packageJson.scripts["lint:fix"] = expectedEndScriptFix;
+					pkg.packageJson.scripts[scriptKey] = expectedScript;
 					fixed = true;
 				}
 			}

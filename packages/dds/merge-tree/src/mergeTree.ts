@@ -10,7 +10,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { AttributionCollection } from "./attributionCollection";
+import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
 	LocalClientId,
@@ -83,6 +83,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
+import { Client } from ".";
 
 const minListenerComparer: Comparer<MinListener> = {
 	min: {
@@ -534,8 +535,49 @@ export interface IMergeTreeAttributionOptions {
 	 * are tracked is determined by the presence of existing attribution keys in the snapshot.
 	 *
 	 * default: false
+	 * @alpha
 	 */
 	track?: boolean;
+
+	/**
+	 * Provides a policy for how to track attribution data on segments.
+	 * This option must be provided if either:
+	 * - `track` is set to true
+	 * - a document containing existing attribution information is loaded
+	 * @alpha
+	 */
+	policyFactory?: () => AttributionPolicy;
+}
+
+/**
+ * Implements policy dictating which kinds of operations should be attributed and how.
+ * @alpha
+ * @sealed
+ */
+export interface AttributionPolicy {
+	/**
+	 * Enables tracking attribution information for operations on this merge-tree.
+	 * This function is expected to subscribe to appropriate change events in order
+	 * to manage any attribution data it stores on segments.
+	 *
+	 * This must be done in an eventually consistent fashion.
+	 * @internal
+	 */
+	attach: (client: Client) => void;
+	/**
+	 * Disables tracking attribution information on segments.
+	 * @internal
+	 */
+	detach: () => void;
+	/**
+	 * @internal
+	 */
+	isAttached: boolean;
+	/**
+	 * Serializer capable of serializing any attribution data this policy stores on segments.
+	 * @internal
+	 */
+	serializer: IAttributionCollectionSerializer;
 }
 
 /**
@@ -582,6 +624,8 @@ export class MergeTree {
 		return this.segmentsToScour;
 	}
 
+	public readonly attributionPolicy: AttributionPolicy | undefined;
+
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
 	 * This information is only necessary on reconnect, and otherwise costly to bookkeep.
@@ -599,6 +643,7 @@ export class MergeTree {
 	public constructor(public options?: IMergeTreeOptions) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
+		this.attributionPolicy = options?.attribution?.policyFactory?.();
 	}
 
 	private _root: IRootMergeBlock;
@@ -1408,20 +1453,6 @@ export class MergeTree {
 				const localMovedSeq = pendingSegment.localMovedSeq;
 				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
 
-				// TODO: This work should likely be done as part of the above `ack` call. However the exact format
-				// of the argument to pass isn't obvious given some planned extensibility points around customizing
-				// what types of operations are attributed and how. Since `ack` is in the public API, leaving it
-				// here for now should reduce future breaking changes.
-				if (
-					opArgs.op.type === MergeTreeDeltaType.INSERT &&
-					this.options?.attribution?.track
-				) {
-					pendingSegment.attribution = new AttributionCollection(
-						{ type: "op", seq },
-						pendingSegment.cachedLength,
-					);
-				}
-
 				if (
 					opArgs.op.type === MergeTreeDeltaType.OBLITERATE &&
 					localMovedSeq !== undefined
@@ -1860,13 +1891,6 @@ export class MergeTree {
 				newSegment.seq = seq;
 				newSegment.localSeq = localSeq;
 				newSegment.clientId = clientId;
-				if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
-					newSegment.attribution ??= new AttributionCollection(
-						{ type: "op", seq },
-						newSegment.cachedLength,
-					);
-				}
-
 				if (Marker.is(newSegment)) {
 					const markerId = newSegment.getId();
 					if (markerId) {
@@ -1881,13 +1905,11 @@ export class MergeTree {
 				});
 
 				if (newSegment.parent === undefined) {
-					throw new Error(
-						`MergeTree insert failed: ${JSON.stringify({
-							currentSeq: this.collabWindow.currentSeq,
-							minSeq: this.collabWindow.minSeq,
-							segSeq: newSegment.seq,
-						})}`,
-					);
+					throw new UsageError("MergeTree insert failed", {
+						currentSeq: this.collabWindow.currentSeq,
+						minSeq: this.collabWindow.minSeq,
+						segSeq: newSegment.seq,
+					});
 				}
 
 				this.updateRoot(splitNode);

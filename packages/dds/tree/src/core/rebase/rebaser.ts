@@ -8,6 +8,7 @@ import { AnchorSet } from "../tree";
 
 /**
  * A way to refer to a particular revision within a given `Rebaser` instance.
+ * @alpha
  */
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
@@ -134,6 +135,8 @@ export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>
  * Would this cause decoherence (and thus be absolutely not ok),
  * or just minor semantic precision issues, which could be tolerated.
  * For now assume that such issues are not ok.
+ *
+ * @alpha
  */
 export interface ChangeRebaser<TChangeset> {
 	_typeCheck?: Invariant<TChangeset>;
@@ -174,6 +177,9 @@ export interface ChangeRebaser<TChangeset> {
 	rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
 }
 
+/**
+ * @alpha
+ */
 export interface TaggedChange<TChangeset> {
 	readonly revision: RevisionTag | undefined;
 
