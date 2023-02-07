@@ -832,8 +832,8 @@ export class Container
 	public close(error?: ICriticalContainerError) {
 		// 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
-		//  handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
-		//  "closing" will lose that info (can also solve by tracking extra state).
+		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
+		//    "closing" will lose that info (can also solve by tracking extra state).
 		this._deltaManager.close(error);
 		this.verifyClosed();
 	}
@@ -2035,17 +2035,17 @@ export class Container
 	}
 
     private processSignal(message: ISignalMessage) {
-        console.log("container-loader:container.ts:processSignal -- message");
-        console.log(message);
-        if (message.clientId === null && message.content.type === SignalType.RuntimeMessage) {
-            const local = this.clientId === message.clientId;
-            this.context.processSignal(message, local);
-        } else if (message.clientId === null) {
-            this.protocolHandler.processSignal(message);
-        } else {
-            const local = this.clientId === message.clientId;
-            this.context.processSignal(message, local);
-        }
+    console.log("container-loader:container.ts:processSignal -- message");
+    console.log(message);
+    if (message.clientId === null && message.content.type === SignalType.RuntimeMessage) {
+        const local = this.clientId === message.clientId;
+        this.context.processSignal(message, local);
+    } else if (message.clientId === null) {
+        this.protocolHandler.processSignal(message);
+    } else {
+        const local = this.clientId === message.clientId;
+        this.context.processSignal(message, local);
+    }
     }
 
 	/**

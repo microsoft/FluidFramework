@@ -4,10 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    IDocumentStorage,
-    MongoManager,
-} from "@fluidframework/server-services-core";
+import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -31,13 +28,13 @@ const stream = split().on("data", (message) => {
 });
 
 export function create(
-    config: Provider,
-    storage: IDocumentStorage,
-    mongoManager: MongoManager,
-    eventEmitter: EventEmitter,
+	config: Provider,
+	storage: IDocumentStorage,
+	mongoManager: MongoManager,
+	eventEmitter: EventEmitter,
 ) {
-    // Maximum REST request size
-    const requestSize = config.get("alfred:restJsonSize");
+	// Maximum REST request size
+	const requestSize = config.get("alfred:restJsonSize");
 
 	// Express app configuration
 	const app = express();
@@ -72,15 +69,18 @@ export function create(
 	app.use(routes.ordering);
 
 <<<<<<< HEAD
-    // Basic Help Message
-    app.use(Router().get("/", (req, res) => {
-        res.status(200).send("This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious");
-    }));
-    app.use(Router().post("/task-list-hook", (req, res) => {
-        eventEmitter.emit('task-list-hook');
-        res.status(200).send("Triggering debug signal from tinylicious");
-    }));
+<<<<<<< HEAD
+	// Basic Help Message
+	app.use(Router().get("/", (req, res) => {
+		res.status(200).send("This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious");
+	}));
+	app.use(Router().post("/task-list-hook", (req, res) => {
+		eventEmitter.emit('task-list-hook');
+		res.status(200).send("Triggering debug signal from tinylicious");
+	}));
 =======
+=======
+>>>>>>> main
 	// Basic Help Message
 	app.use(
 		Router().get("/", (req, res) => {
@@ -89,6 +89,9 @@ export function create(
 			);
 		}),
 	);
+<<<<<<< HEAD
+>>>>>>> main
+=======
 >>>>>>> main
 
 	// Catch 404 and forward to error handler

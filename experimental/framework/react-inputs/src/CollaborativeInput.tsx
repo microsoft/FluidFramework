@@ -60,7 +60,7 @@ export class CollaborativeInput extends React.Component<
 		// Sets an event listener so we can update our state as the value changes
 		this.props.sharedString.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
 			// if (!ev.isLocal) {
-            this.updateInputFromSharedString();
+			this.updateInputFromSharedString();
 			// }
 		});
 		this.updateInputFromSharedString();
