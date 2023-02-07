@@ -4,6 +4,6 @@
  */
 
 /**
- * The port used by the fluid service.
+ * The port used by the Fluid Service.
  */
 export const fluidServicePort = process.env.FLUID_SERVICE_PORT ?? 7070;
