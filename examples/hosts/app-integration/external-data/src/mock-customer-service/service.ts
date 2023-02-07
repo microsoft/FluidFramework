@@ -11,7 +11,6 @@ import fetch from "node-fetch";
 
 import { assertValidTaskData, TaskData } from "../model-interface";
 
-export const fluidServicePort = 7070;
 /**
  * Submits notifications of changes to Fluid Service.
  */
