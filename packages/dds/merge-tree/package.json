@@ -116,6 +116,39 @@
 			"RemovedInterfaceDeclaration_AttributionKey": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_Client": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeDelta": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_IMergeTreeDeltaOp": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeDeltaOpArgs": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeGroupMsg": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_IMergeTreeOp": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaOperationType": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaOperationTypes": {
+				"backCompat": false
+			},
+			"VariableDeclaration_MergeTreeDeltaType": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaType": {
+				"backCompat": false
 			}
 		}
 	}

@@ -118,6 +118,31 @@
 		"previousVersionStyle": "^previousMajor",
 		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
 		"baselineVersion": "2.0.0-internal.3.0.0",
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISequenceDeltaRange": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISharedString": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceDeltaEvent": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SequenceEvent": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SequenceMaintenanceEvent": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedSegmentSequence": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedSequence": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedString": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
