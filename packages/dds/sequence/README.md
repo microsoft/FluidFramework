@@ -433,7 +433,7 @@ const key = segment.attribution.getAtOffset(offset);
 // See the @fluidframework/attributor package for more details.
 ```
 
-For further reading on attribution, see the [@fluidframework/attributor README](../../framework/attributor/README.md).
+For further reading on attribution, see the [@fluidframework/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
 
 There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
 
