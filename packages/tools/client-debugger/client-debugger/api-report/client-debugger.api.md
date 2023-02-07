@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
@@ -38,6 +39,25 @@ export interface ContainerMetadata {
     nickname?: string;
 }
 
+// @public
+export interface ContainerStateChangeMessage extends IOutboundMessage {
+    // (undocumented)
+    data: {
+        containerState: ContainerStateMetadata;
+    };
+    // (undocumented)
+    type: "CONTAINER_STATE_CHANGE";
+}
+
+// @public
+export interface ContainerStateMetadata extends ContainerMetadata {
+    // (undocumented)
+    attachState: AttachState;
+    closed: boolean;
+    // (undocumented)
+    connectionState: ConnectionState;
+}
+
 // @internal
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
     constructor();
@@ -68,6 +88,16 @@ export interface GetContainerListMessage extends IInboundMessage {
     data: undefined;
     // (undocumented)
     type: "GET_CONTAINER_LIST";
+}
+
+// @public
+export interface GetContainerStateMessage extends IInboundMessage {
+    // (undocumented)
+    data: {
+        containerId: string;
+    };
+    // (undocumented)
+    type: "GET_CONTAINER_STATE";
 }
 
 // @internal
@@ -125,6 +155,9 @@ export enum MemberChangeKind {
     Added = "Added",
     Removed = "Removed"
 }
+
+// @internal
+export function postWindowMessage<TMessage extends IOutboundMessage>(message: TMessage): void;
 
 // @public
 export interface RegistryChangeMessage extends IOutboundMessage {

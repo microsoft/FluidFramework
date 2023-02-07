@@ -9,7 +9,7 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
-import { IInboundMessage, postWindowMessage, RegistryChangeMessage } from "./Messaging";
+import { IInboundMessage, postWindowMessage, RegistryChangeMessage } from "./messaging";
 
 /**
  * Properties for configuring a {@link IFluidClientDebugger}.

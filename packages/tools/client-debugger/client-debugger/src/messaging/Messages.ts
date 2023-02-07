@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerMetadata, ContainerStateMetadata } from "../ContainerMetadata";
+
 // TODOs:
-// - Differentiate inbound vs outbound message kinds (from the perspective of this library)
+// - Pass diffs instead of all data in change events (probably requires defining separate full-dump messages from delta messages)
 
 /**
  * Message structure expected for window event listeners used by the Fluid Client Debugger.
@@ -46,20 +48,19 @@ export interface GetContainerListMessage extends IInboundMessage {
 }
 
 /**
- * Metadata describing a {@link @fluidframework/container-definitions#IContainer} registered with a debugger.
+ * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
+ * Will result in the {@link ContainerStateChangeMessage} message being posted.
  *
  * @public
  */
-export interface ContainerMetadata {
-	/**
-	 * The Container ID.
-	 */
-	id: string;
-
-	/**
-	 * Optional Container nickname.
-	 */
-	nickname?: string;
+export interface GetContainerStateMessage extends IInboundMessage {
+	type: "GET_CONTAINER_STATE";
+	data: {
+		/**
+		 * The ID of the Container whose metadata is being requested.
+		 */
+		containerId: string;
+	};
 }
 
 /**
@@ -78,10 +79,18 @@ export interface RegistryChangeMessage extends IOutboundMessage {
 }
 
 /**
- * Posts the provided message to the window (globalThis).
+ * Outbound event indicating a state change within a Container.
  *
- * @remarks Thin wrapper to provide some message-wise type-safety.
+ * @public
  */
-export function postWindowMessage<TMessage extends IOutboundMessage>(message: TMessage): void {
-	globalThis.postMessage(message, "*"); // TODO: verify target is okay
+export interface ContainerStateChangeMessage extends IOutboundMessage {
+	type: "CONTAINER_STATE_CHANGE";
+	data: {
+		/**
+		 * Updated Container state metadata.
+		 */
+		containerState: ContainerStateMetadata;
+
+		// TODO: change logs
+	};
 }

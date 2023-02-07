@@ -4,6 +4,9 @@
 
 ```ts
 
+import { AttachState } from '@fluidframework/container-definitions';
+import { ConnectionState } from '@fluidframework/container-loader';
+import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -33,6 +36,29 @@ export interface ClientDebugViewProps extends HasClientDebugger {
     renderOptions?: RenderOptions;
 }
 
+// @internal
+export function ContainerSelectionDropdown(props: ContainerSelectionDropdownProps): React_2.ReactElement;
+
+// @internal
+export interface ContainerSelectionDropdownProps {
+    initialSelection?: string;
+    onChangeSelection(containerId: string | undefined): void;
+    options: ContainerMetadata[];
+}
+
+// @internal
+export function _ContainerStateView(props: _ContainerStateViewProps): React_2.ReactElement;
+
+// @internal
+export interface _ContainerStateViewProps {
+    // (undocumented)
+    attachState: AttachState;
+    // (undocumented)
+    connectionState: ConnectionState;
+    // (undocumented)
+    disposed: boolean;
+}
+
 // @public
 export const defaultRenderOptions: Required<RenderOptions>;
 
@@ -40,12 +66,12 @@ export const defaultRenderOptions: Required<RenderOptions>;
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 
 // @public
-export interface FluidClientDebuggerProps {
-    renderOptions?: RenderOptions;
-}
+export function FluidClientDebuggers(props: FluidClientDebuggersProps): React_2.ReactElement;
 
 // @public
-export function FluidClientDebuggers(props: FluidClientDebuggerProps): React_2.ReactElement;
+export interface FluidClientDebuggersProps {
+    renderOptions?: RenderOptions;
+}
 
 // @internal
 export interface HasClientDebugger {

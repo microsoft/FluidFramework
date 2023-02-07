@@ -10,6 +10,12 @@ import { IClient } from "@fluidframework/protocol-definitions";
 
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
+import {
+	ContainerStateChangeMessage,
+	GetContainerStateMessage,
+	IInboundMessage,
+	postWindowMessage,
+} from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
 /**
@@ -106,6 +112,61 @@ export class FluidClientDebugger
 
 	// #endregion
 
+	// #region Window event handlers
+
+	/**
+	 * Event handler for messages coming from the window (globalThis).
+	 */
+	private readonly windowMessageHandler = (event: MessageEvent<IInboundMessage>): void => {
+		if ((event.source as unknown) !== globalThis) {
+			// Ignore events coming from outside of this window / global context
+			return;
+		}
+
+		if (event.data?.type === undefined) {
+			return;
+		}
+
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		const log = (message: string): void => {
+			console.log(`Debugger(${this.containerNickname ?? this.containerId}): ${message}`);
+		};
+
+		switch (event.data.type) {
+			case "GET_CONTAINER_STATE":
+				// eslint-disable-next-line no-case-declarations
+				const message = event.data as GetContainerStateMessage;
+				if (message.data.containerId === this.containerId) {
+					log('"GET_CONTAINER_STATE" message received!');
+					this.postContainerStateChange();
+				}
+				break;
+			default:
+				log(`Unhandled inbound message type received: "${event.data.type}".`);
+				break;
+		}
+	};
+
+	/**
+	 * Posts a {@link ContainerStateChangeMessage} to the window (globalThis).
+	 */
+	private readonly postContainerStateChange = (): void => {
+		postWindowMessage<ContainerStateChangeMessage>({
+			type: "CONTAINER_STATE_CHANGE",
+			data: {
+				containerState: {
+					id: this.containerId,
+					nickname: this.containerNickname,
+					closed: this.container.closed,
+					attachState: this.container.attachState,
+					connectionState: this.container.connectionState,
+				},
+			},
+		});
+	};
+
+	// #endregion
+
 	private readonly debuggerDisposedHandler = (): boolean => this.emit("disposed");
 
 	/**
@@ -136,6 +197,9 @@ export class FluidClientDebugger
 		// Bind Audience events required for change-logging
 		this.audience.on("addMember", this.audienceMemberAddedHandler);
 		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
+
+		// Register listener for inbound messages from the window (globalThis)
+		globalThis.addEventListener("message", this.windowMessageHandler);
 
 		this._disposed = false;
 	}

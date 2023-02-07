@@ -21,18 +21,19 @@
  */
 
 export {
+	_ContainerStateView,
+	_ContainerStateViewProps,
 	AudienceMemberViewProps,
 	ClientDebugView,
 	clientDebugViewClassName,
 	ClientDebugViewProps,
+	ContainerSelectionDropdownProps,
+	ContainerSelectionDropdown,
 } from "./components";
 
 export { AudienceMember } from "./Audience";
 export { HasClientDebugger, HasContainerId } from "./CommonProps";
-export {
-	FluidClientDebuggers,
-	FluidClientDebuggersProps as FluidClientDebuggerProps,
-} from "./Debugger";
+export { FluidClientDebuggers, FluidClientDebuggersProps } from "./Debugger";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {
 	defaultRenderOptions,

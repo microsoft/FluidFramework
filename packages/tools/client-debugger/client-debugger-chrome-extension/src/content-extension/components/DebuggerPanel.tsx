@@ -3,25 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import React from "react";
+
 import {
 	ContainerMetadata,
 	IDebuggerMessage,
 	RegistryChangeMessage,
 } from "@fluid-tools/client-debugger";
-import React from "react";
+import { ContainerSelectionDropdown } from "@fluid-tools/client-debugger-view";
+
+import { ContainerStateView } from "./ContainerStateView";
 
 /**
- * {@link DebuggerPanel} input props.
+ * TODO
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface DebuggerPanelProps {
-	// TODO
-}
-
-/**
- * Temporary test view while prototyping message-passing
- */
-export function DebuggerPanel(props: DebuggerPanelProps): React.ReactElement {
+export function DebuggerPanel(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
 
 	React.useEffect(() => {
@@ -36,7 +32,7 @@ export function DebuggerPanel(props: DebuggerPanelProps): React.ReactElement {
 			}
 
 			function log(message: string): void {
-				console.log(`CONTENT: ${message}`);
+				console.log(`CONTENT(DebuggerPanel): ${message}`);
 			}
 
 			switch (event.data.type) {
@@ -58,26 +54,72 @@ export function DebuggerPanel(props: DebuggerPanelProps): React.ReactElement {
 		globalThis.postMessage({
 			type: "GET_CONTAINER_LIST",
 		});
+
+		return (): void => {
+			globalThis.removeEventListener("message", handleMessage);
+		};
 	}, [setContainers]);
 
-	if (containers === undefined) {
-		return <div>Loading...</div>;
-	}
+	return containers === undefined ? (
+		<WaitingView />
+	) : (
+		<PopulatedDebuggerPanel containers={containers} />
+	);
+}
+
+function WaitingView(): React.ReactElement {
+	// TODO: spinner
+	return <div>Waiting for initial response from webpage...</div>;
+}
+
+/**
+ * {@link PopulatedDebuggerPanel} input props.
+ */
+interface PopulatedDebuggerPanelProps {
+	containers: ContainerMetadata[];
+}
+
+function PopulatedDebuggerPanel(props: PopulatedDebuggerPanelProps): React.ReactElement {
+	const { containers } = props;
+
+	const [selectedContainerId, setSelectedContainerId] = React.useState<string | undefined>();
+
+	React.useEffect(() => {
+		function getDefaultSelection(): string | undefined {
+			return containers.length === 0 ? undefined : containers[0].id;
+		}
+
+		if (
+			selectedContainerId !== undefined &&
+			!containers.some((container) => container.id === selectedContainerId)
+		) {
+			// If the selected debugger no longer exists in the list, reset to default.
+			setSelectedContainerId(getDefaultSelection());
+		} else if (selectedContainerId === undefined && containers.length > 0) {
+			// If there is no current selection, but 1+ containers, set selection to default.
+			setSelectedContainerId(containers[0].id);
+		}
+	}, [containers, setSelectedContainerId]);
+
 	if (containers.length === 0) {
 		return <div>No debuggers registered.</div>;
 	}
+
+	const innerView =
+		selectedContainerId === undefined ? (
+			<div>Select a Container to view its state.</div>
+		) : (
+			<ContainerStateView containerId={selectedContainerId} />
+		);
+
 	return (
 		<div>
-			<ul>
-				{containers.map((containerMetadata) => (
-					<li key={`container-list-${containerMetadata.id}`}>
-						{containerMetadata.id}
-						{containerMetadata.nickname === undefined
-							? ""
-							: `(${containerMetadata.nickname})`}
-					</li>
-				))}
-			</ul>
+			<ContainerSelectionDropdown
+				initialSelection={selectedContainerId}
+				options={containers}
+				onChangeSelection={setSelectedContainerId}
+			/>
+			{innerView}
 		</div>
 	);
 }

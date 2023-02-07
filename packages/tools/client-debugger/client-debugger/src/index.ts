@@ -43,26 +43,19 @@
  * @packageDocumentation
  */
 
+// TODO: re-enable this once the API surface has settled
+/* eslint-disable no-restricted-syntax */
+
 export { MemberChangeKind } from "./Audience";
-
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
-
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
 	LogEntry,
 	StateChangeLogEntry,
 } from "./Logs";
-
-export {
-	ContainerMetadata,
-	GetContainerListMessage,
-	IDebuggerMessage,
-	IInboundMessage,
-	IOutboundMessage,
-	RegistryChangeMessage,
-} from "./Messaging";
-
+export * from "./messaging";
+export * from "./ContainerMetadata";
 export {
 	DebuggerRegistry,
 	DebuggerRegistryEvents,
@@ -74,3 +67,5 @@ export {
 	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";
+
+/* eslint-enable no-restricted-syntax */

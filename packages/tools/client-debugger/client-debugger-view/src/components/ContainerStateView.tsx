@@ -58,17 +58,47 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 		};
 	}, [container, setContainerAttachState, setContainerConnectionState, setIsContainerDisposed]);
 
+	return (
+		<_ContainerStateView
+			disposed={isContainerDisposed}
+			attachState={containerAttachState}
+			connectionState={containerConnectionState}
+		/>
+	);
+}
+
+/**
+ * {@link _ContainerStateView} input props.
+ *
+ * @internal
+ */
+export interface _ContainerStateViewProps {
+	// TODO: rename to "closed"
+	disposed: boolean;
+	attachState: AttachState;
+	connectionState: ConnectionState;
+}
+
+/**
+ * Displays information about the container's internal state, including its disposal status,
+ * connection state, attach state, etc.
+ *
+ * @internal
+ */
+export function _ContainerStateView(props: _ContainerStateViewProps): React.ReactElement {
+	const { disposed, attachState, connectionState } = props;
+
 	const children: React.ReactElement[] = [
 		<span key="status-span">
 			<b>Status: </b>
 		</span>,
 	];
-	if (isContainerDisposed) {
+	if (disposed) {
 		children.push(<span>Disposed</span>);
 	} else {
-		children.push(<span>{containerAttachState}</span>);
-		if (containerAttachState === AttachState.Attached) {
-			children.push(<span>{connectionStateToString(containerConnectionState)}</span>);
+		children.push(<span>{attachState}</span>);
+		if (attachState === AttachState.Attached) {
+			children.push(<span>{connectionStateToString(connectionState)}</span>);
 		}
 	}
 

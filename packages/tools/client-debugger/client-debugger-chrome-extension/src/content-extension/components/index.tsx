@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { DebuggerPanel, DebuggerPanelProps } from "./DebuggerPanel";
+export { DebuggerPanel } from "./DebuggerPanel";

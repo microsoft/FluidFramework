@@ -5,22 +5,35 @@
 import { Dropdown, IDropdownOption, IDropdownStyles, IStackTokens, Stack } from "@fluentui/react";
 import React from "react";
 
-import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
-import { HasClientDebuggers, HasContainerId } from "../CommonProps";
+import { ContainerMetadata } from "@fluid-tools/client-debugger";
 
 /**
  * {@link ContainerSelectionDropdownProps} input props.
+ *
+ * @internal
  */
-export interface ContainerSelectionDropdownProps extends HasClientDebuggers, HasContainerId {
+export interface ContainerSelectionDropdownProps {
 	/**
-	 * Take the selected container id to set as current viewed container id.
-	 * @param containerId - current selected container id.
+	 * The Container ID of the current selection.
 	 */
-	onChangeSelection(containerId: string): void;
+	initialSelection?: string;
+
+	/**
+	 * Drop-down options.
+	 */
+	options: ContainerMetadata[];
+
+	/**
+	 * Take the selected container id to set as current viewed container ID.
+	 * @param containerId - The newly selected Container ID.
+	 */
+	onChangeSelection(containerId: string | undefined): void;
 }
 
 /**
  * A dropdown menu for selecting the Fluid Container to display debug information about.
+ *
+ * @internal
  */
 export function ContainerSelectionDropdown(
 	props: ContainerSelectionDropdownProps,
@@ -31,47 +44,23 @@ export function ContainerSelectionDropdown(
 
 	const stackTokens: IStackTokens = { childrenGap: 20 };
 
-	const { clientDebuggers, containerId } = props;
+	const { options, initialSelection, onChangeSelection } = props;
 
-	function renewContainerOptions(debuggers: IFluidClientDebugger[]): IDropdownOption[] {
-		const options: IDropdownOption[] = [];
-		for (const each_debugger of debuggers) {
-			options.push({
-				key: each_debugger.containerId,
-				text: each_debugger.containerNickname ?? each_debugger.containerId,
-			});
-		}
-		return options;
-	}
-
-	const clientDebuggerOptions = renewContainerOptions(clientDebuggers);
-
-	const _onClientDebuggerDropdownChange = (
-		event: React.FormEvent<HTMLDivElement>,
-		option?: IDropdownOption,
-	): void => {
-		if (option !== undefined) {
-			const selectedDebugger = clientDebuggers.find((clientDebugger) => {
-				return clientDebugger.containerId === (option.key as string);
-			});
-
-			if (selectedDebugger === undefined) {
-				throw new Error(
-					`Could not find a debugger associated with Container ID "${option.key}". This likely indicates an internal state issue.`,
-				);
-			}
-			props.onChangeSelection(selectedDebugger.containerId);
-		}
-	};
+	// Options formatted for the Fluent Dropdown component
+	const dropdownOptions: IDropdownOption[] = options.map((option) => ({
+		key: option.id,
+		text: option.nickname ?? option.id,
+	}));
 
 	return (
 		<Stack tokens={stackTokens}>
 			<Dropdown
 				placeholder="Select an option"
-				selectedKey={containerId}
-				options={clientDebuggerOptions}
+				selectedKey={initialSelection}
+				options={dropdownOptions}
 				styles={dropdownStyles}
-				onChange={_onClientDebuggerDropdownChange}
+				onChange={(event, option): void => onChangeSelection(option?.key as string)}
+				disabled={options.length < 2}
 			/>
 		</Stack>
 	);
