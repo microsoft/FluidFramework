@@ -45,6 +45,8 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
+		// A package or workspace that uses pnpm must have a pnpm-workspace.yaml file, even if it is just a single package.
+		// This is needed because we have a workspace in the root so independent packages need one at the package level to override it.
 		name: "pnpm-lock-workspace",
 		match,
 		handler: (file) => {
