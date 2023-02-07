@@ -115,8 +115,10 @@ async function createSummary(
     payload: IWholeSummaryPayload,
     repoManagerParams: IRepoManagerParams,
     externalWriterConfig?: IExternalWriterConfig,
+    isInitialSummary?: boolean,
     persistLatestFullSummary = false,
-    enableLowIoWrite: "initial" | boolean = false
+    enableLowIoWrite: "initial" | boolean = false,
+    optimizeForInitialSummary: boolean = false,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -128,12 +130,15 @@ async function createSummary(
         repoManager,
         lumberjackProperties,
         externalWriterConfig?.enabled ?? false,
-        { enableLowIoWrite },
+        {
+            enableLowIoWrite,
+            optimizeForInitialSummary,
+        },
     );
 
     Lumberjack.info("Creating summary", lumberjackProperties);
 
-    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload);
+    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload, isInitialSummary);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
     // so skip this step if it is a new document.
@@ -234,6 +239,7 @@ export function create(
     const router: Router = Router();
     const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
     const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
+    const enableOptimizedInitialSummary: boolean = store.get("git:enableOptimizedInitialSummary") ?? false;
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     /**
@@ -269,6 +275,13 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        // request.query type is { [string]: string } but it's actually { [string]: any }
+        // Account for possibilities of undefined, boolean, or string types. A number will be false.
+        const isInitialSummary: boolean | undefined = typeof request.query.initial === "undefined"
+            ? undefined
+            : typeof request.query.initial === "boolean"
+                ? request.query.initial
+                : request.query.initial === "true";
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
@@ -277,20 +290,29 @@ export function create(
             return;
         }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
-        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
-            .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => {
-                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+        const resultP = (async () => {
+            // There are possible optimizations we can make throughout the summary write process
+            // if we are using repoPerDoc model and it is the first summary for that document.
+            const optimizeForInitialSummary = enableOptimizedInitialSummary && isInitialSummary && repoPerDocEnabled;
+            // If creating a repo per document, we do not need to check for an existing repo on initial summary write.
+            const repoManager = await getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled, optimizeForInitialSummary);
+            const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+            // A new document cannot already be soft-deleted.
+            if (!optimizeForInitialSummary) {
                 await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
-                return createSummary(
-                    repoManager,
-                    fsManager,
-                    wholeSummaryPayload,
-                    repoManagerParams,
-                    getExternalWriterParams(request.query?.config as string | undefined),
-                    persistLatestFullSummary,
-                    enableLowIoWrite,
-                );
-            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            }
+            return createSummary(
+                repoManager,
+                fsManager,
+                wholeSummaryPayload,
+                repoManagerParams,
+                getExternalWriterParams(request.query?.config as string | undefined),
+                isInitialSummary,
+                persistLatestFullSummary,
+                enableLowIoWrite,
+                optimizeForInitialSummary,
+            );
+        })().catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 

@@ -1,5 +1,5 @@
 {
-  "rules": {
-    "valid-values-name-scope": "off"
-  }
+	"rules": {
+		"valid-values-name-scope": "off"
+	}
 }

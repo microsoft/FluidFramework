@@ -14,19 +14,21 @@ export const neverField = fieldSchema(value, []);
 
 /**
  * FieldSchema which is impossible to put anything in.
+ * @alpha
  */
 
 export const emptyField = fieldSchema(forbidden, []);
 
 /**
  * TreeSchema which is impossible for any data to be in schema with.
+ * @alpha
  */
 export const neverTree: TreeSchema = {
-    localFields: emptyMap,
-    globalFields: emptySet,
-    extraLocalFields: neverField,
-    extraGlobalFields: false,
-    value: ValueSchema.Nothing,
+	localFields: emptyMap,
+	globalFields: emptySet,
+	extraLocalFields: neverField,
+	extraGlobalFields: false,
+	value: ValueSchema.Nothing,
 };
 
 /**
@@ -34,9 +36,10 @@ export const neverTree: TreeSchema = {
  *
  * This requires new node types to have explicit stored schema to exist in documents,
  * and allows adding new global fields along with their schema at any point.
+ * @alpha
  */
 export const defaultSchemaPolicy: FullSchemaPolicy = {
-    fieldKinds,
-    defaultTreeSchema: neverTree,
-    defaultGlobalFieldSchema: emptyField,
+	fieldKinds,
+	defaultTreeSchema: neverTree,
+	defaultGlobalFieldSchema: emptyField,
 };

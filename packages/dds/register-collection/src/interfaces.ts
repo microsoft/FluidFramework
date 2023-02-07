@@ -4,10 +4,10 @@
  */
 
 import {
-    IFluidDataStoreRuntime,
-    IChannelServices,
-    IChannelAttributes,
-    IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+	IChannelAttributes,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
@@ -18,20 +18,24 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
  * Use for the runtime to create and load distributed data structure by type name of each channel
  */
 export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
-    /**
-     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-     */
-    load(
-        document: IFluidDataStoreRuntime,
-        id: string,
-        services: IChannelServices,
-        attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+	 */
+	load(
+		document: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<IConsensusRegisterCollection>;
 
-    create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
+	create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
 }
 
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
-    (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void);
+	(
+		event: "atomicChanged" | "versionChanged",
+		listener: (key: string, value: any, local: boolean) => void,
+	);
 }
 
 /**
@@ -54,38 +58,39 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
  * LWW: The last write to a key always wins.
  *
  */
-export interface IConsensusRegisterCollection<T = any> extends ISharedObject<IConsensusRegisterCollectionEvents> {
-    /**
-     * Attempts to write a register with a value. Returns a promise to indicate the roundtrip completion.
-     * For a non existent register, it will attempt to create a new register with the specified value.
-     *
-     * @returns Promise<true> if write was non-concurrent
-     */
-    write(key: string, value: T): Promise<boolean>;
+export interface IConsensusRegisterCollection<T = any>
+	extends ISharedObject<IConsensusRegisterCollectionEvents> {
+	/**
+	 * Attempts to write a register with a value. Returns a promise to indicate the roundtrip completion.
+	 * For a non existent register, it will attempt to create a new register with the specified value.
+	 *
+	 * @returns Promise<true> if write was non-concurrent
+	 */
+	write(key: string, value: T): Promise<boolean>;
 
-    /**
-     * Retrieves the agreed upon value for the register based on policy. Returns undefined if not present.
-     */
-    read(key: string, policy?: ReadPolicy): T | undefined;
+	/**
+	 * Retrieves the agreed upon value for the register based on policy. Returns undefined if not present.
+	 */
+	read(key: string, policy?: ReadPolicy): T | undefined;
 
-    /**
-     * Retrives all concurrent versions. Undefined if not present.
-     */
-    readVersions(key: string): T[] | undefined;
+	/**
+	 * Retrives all concurrent versions. Undefined if not present.
+	 */
+	readVersions(key: string): T[] | undefined;
 
-    /**
-     * Returns the keys.
-     */
-    keys(): string[];
+	/**
+	 * Returns the keys.
+	 */
+	keys(): string[];
 }
 
 /**
  * Read policies used when reading the map value.
  */
 export enum ReadPolicy {
-    // On a concurrent update, returns the first agreed upon value amongst all clients.
-    Atomic,
+	// On a concurrent update, returns the first agreed upon value amongst all clients.
+	Atomic,
 
-    // Last writer wins. Simply returns the last written value.
-    LWW,
+	// Last writer wins. Simply returns the last written value.
+	LWW,
 }

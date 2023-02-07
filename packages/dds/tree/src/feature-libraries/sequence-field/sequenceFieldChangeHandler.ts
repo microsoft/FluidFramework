@@ -13,8 +13,8 @@ import { sequenceFieldToDelta } from "./sequenceFieldToDelta";
 export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset, SequenceFieldEditor>;
 
 export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
-    rebaser: sequenceFieldChangeRebaser,
-    encoder: sequenceFieldChangeEncoder,
-    editor: sequenceFieldEditor,
-    intoDelta: sequenceFieldToDelta,
+	rebaser: sequenceFieldChangeRebaser,
+	encoder: sequenceFieldChangeEncoder,
+	editor: sequenceFieldEditor,
+	intoDelta: sequenceFieldToDelta,
 };

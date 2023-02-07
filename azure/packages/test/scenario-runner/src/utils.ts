@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 import {
-    AzureClient,
-    AzureFunctionTokenProvider,
-    AzureLocalConnectionConfig,
-    AzureRemoteConnectionConfig,
+	AzureClient,
+	AzureFunctionTokenProvider,
+	AzureLocalConnectionConfig,
+	AzureRemoteConnectionConfig,
+	IUser,
 } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
@@ -17,39 +18,55 @@ import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import { ContainerFactorySchema } from "./interface";
 
 export interface AzureClientConfig {
-    connType: string;
-    connEndpoint: string;
-    userId?: string;
-    userName?: string;
-    logger?: TelemetryLogger;
+	connType: string;
+	connEndpoint?: string;
+	userId?: string;
+	userName?: string;
+	logger?: TelemetryLogger;
+	tenantId?: string;
+	tenantKey?: string;
+	functionUrl?: string;
+	secureTokenProvider?: boolean; // defaults to Insecure
 }
 
 export const delay = async (timeMs: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(() => resolve(), timeMs));
+	new Promise((resolve) => setTimeout(() => resolve(), timeMs));
 
 export function loadInitialObjSchema(source: ContainerFactorySchema): ContainerSchema {
-    const schema: ContainerSchema = {
-        initialObjects: {},
-    };
+	const schema: ContainerSchema = {
+		initialObjects: {},
+	};
 
-    for (const k of Object.keys(source.initialObjects)) {
-        // Todo: more DDS types to add.
-        if (source.initialObjects[k] === "SharedMap") {
-            schema.initialObjects[k] = SharedMap;
-        }
-    }
-    return schema;
+	for (const k of Object.keys(source.initialObjects)) {
+		// Todo: more DDS types to add.
+		if (source.initialObjects[k] === "SharedMap") {
+			schema.initialObjects[k] = SharedMap;
+		}
+	}
+	return schema;
 }
 
 export function createAzureTokenProvider(
-    fnUrl: string,
-    userID?: string,
-    userName?: string,
+	fnUrl: string,
+	userID?: string,
+	userName?: string,
 ): AzureFunctionTokenProvider {
-    return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
-        userId: userID ?? "foo",
-        userName: userName ?? "bar",
-    });
+	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
+		userId: userID ?? "foo",
+		userName: userName ?? "bar",
+	});
+}
+
+export function createInsecureTokenProvider(
+	tenantKey: string,
+	userID?: string,
+	userName?: string,
+): InsecureTokenProvider {
+	const user: IUser & { name: string } = {
+		id: userID ?? "foo",
+		name: userName ?? "bar",
+	};
+	return new InsecureTokenProvider(tenantKey, user);
 }
 
 /**
@@ -57,47 +74,66 @@ export function createAzureTokenProvider(
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
  */
 export async function createAzureClient(config: AzureClientConfig): Promise<AzureClient> {
-    const useAzure = config.connType === "remote";
-    const configStr = process.env.fluid__scenario__runner;
+	const useAzure = config.connType === "remote";
 
-    let frsConfig;
-    if (useAzure) {
-        if (!configStr) {
-            throw new Error("Missing FRS env configuration.");
-        }
+	if (!config.connEndpoint) {
+		throw new Error("Missing FRS configuration: Relay Service Endpoint URL.");
+	}
 
-        frsConfig = JSON.parse(configStr);
-        if (!frsConfig.tenantId) {
-            throw new Error("Missing FRS env configuration: Tenant ID.");
-        }
-        if (!frsConfig.fnUrl) {
-            throw new Error("Missing FRS env configuration: Secret.");
-        }
-    }
+	let connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
 
-    const tenantId = useAzure ? (frsConfig.tenantId as string) : "frs-client-tenant";
-    const fnUrl = useAzure ? (frsConfig.fnUrl as string) : "";
-    const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
-        ? {
-              tenantId,
-              tokenProvider: createAzureTokenProvider(fnUrl, config.userId, config.userName),
-              endpoint: config.connEndpoint,
-              type: "remote",
-          }
-        : {
-              tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-              endpoint: config.connEndpoint,
-              type: "local",
-          };
+	if (useAzure) {
+		if (!config.tenantId) {
+			throw new Error("Missing FRS configuration: Tenant ID.");
+		}
 
-    return new AzureClient({ connection: connectionProps, logger: config.logger });
+		/* Insecure Token Provider */
+		if (!config.secureTokenProvider) {
+			if (!config.tenantKey) {
+				throw new Error("Missing FRS configuration: Tenant Primary Key.");
+			}
+			connectionProps = {
+				tenantId: config.tenantId,
+				tokenProvider: createInsecureTokenProvider(
+					config.tenantKey,
+					config.userId,
+					config.userName,
+				),
+				endpoint: config.connEndpoint,
+				type: "remote",
+			};
+		} else {
+			/* Secure Token Provider (Azure Function) */
+			if (!config.functionUrl) {
+				throw new Error("Missing FRS configuration: Function URL.");
+			}
+			connectionProps = {
+				tenantId: config.tenantId,
+				tokenProvider: createAzureTokenProvider(
+					config.functionUrl,
+					config.userId,
+					config.userName,
+				),
+				endpoint: config.connEndpoint,
+				type: "remote",
+			};
+		}
+	} else {
+		connectionProps = {
+			tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
+			endpoint: config.connEndpoint,
+			type: "local",
+		};
+	}
+
+	return new AzureClient({ connection: connectionProps, logger: config.logger });
 }
 
 export async function createContainer(
-    ac: AzureClient,
-    s: ContainerFactorySchema,
+	ac: AzureClient,
+	s: ContainerFactorySchema,
 ): Promise<IFluidContainer> {
-    const schema = loadInitialObjSchema(s);
-    const r = await ac.createContainer(schema);
-    return r.container;
+	const schema = loadInitialObjSchema(s);
+	const r = await ac.createContainer(schema);
+	return r.container;
 }
