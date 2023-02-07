@@ -34,6 +34,7 @@ function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string)
 		console.error("WEBHOOK: Encountered an error while notifying Fluid Service:", error);
 	});
 }
+
 /**
  * {@link initializeCustomerService} input properties.
  */

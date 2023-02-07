@@ -68,9 +68,9 @@ describe("mock-customer-service", () => {
 		localServiceApp.use(cors());
 
 		// Bind listener
-		let wasHookNotifiedForChange = false;
+		let wasFluidNotifiedForChange = false;
 		localServiceApp.post("/broadcast-signal", (_, result) => {
-			wasHookNotifiedForChange = true;
+			wasFluidNotifiedForChange = true;
 			result.send();
 		});
 
@@ -105,7 +105,7 @@ describe("mock-customer-service", () => {
 			await delay(1000);
 
 			// Verify our listener was notified of data change.
-			expect(wasHookNotifiedForChange).toBe(true);
+			expect(wasFluidNotifiedForChange).toBe(true);
 		} catch (error) {
 			fail(error);
 		} finally {
