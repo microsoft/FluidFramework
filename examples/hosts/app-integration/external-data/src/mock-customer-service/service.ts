@@ -11,20 +11,17 @@ import fetch from "node-fetch";
 
 import { assertValidTaskData, TaskData } from "../model-interface";
 
-
+export const fluidServicePort = 7070;
 /**
  * Submits notifications of changes to Fluid Service.
  */
-export function notifyFluidService(data: TaskData): void {
-	const tinyliciousServicePort = 7070;
-
-	const fluidServiceUrl = `http://localhost:${tinyliciousServicePort}/task-list-hook`;
-	console.log(`CUSTOMER SERVICE: Fluid Serice URL is "${fluidServiceUrl}"`);
-
+function echoTaskWebhookToFluid(data: TaskData, fluidServiceUrl: string): void {
 	console.log(
 		`WEBHOOK: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
+	// TODO: we will need to add details (like ContainerId) to the message body or the url,
+	// so this message body format will evolve
 	const messageBody = JSON.stringify({ data });
 	fetch(fluidServiceUrl, {
 		method: "POST",
@@ -56,13 +53,24 @@ export interface ServiceProps {
 	 * any time the external data service communicates them.
 	 */
 	externalDataServiceWebhookRegistrationUrl: string;
+
+	/**
+	 * URL of the Fluid Service to notify when external data notification comes in.
+	 *
+	 * @remarks
+	 *
+	 * Once the notification comes in from the external data service that data
+	 * has changed on it, this service needs to let the Fluid Service know on this URL
+	 * that there has been a change.
+	 */
+	fluidServiceUrl: string;
 }
 
 /**
  * Initializes the mock customer service.
  */
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
-	const { port, externalDataServiceWebhookRegistrationUrl } = props;
+	const { port, externalDataServiceWebhookRegistrationUrl, fluidServiceUrl } = props;
 
 	/**
 	 * Helper function to prepend service-specific metadata to messages logged by this service.
@@ -147,7 +155,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			notifyFluidService(taskData);
+			echoTaskWebhookToFluid(taskData, fluidServiceUrl);
 			result.send();
 		}
 	});
