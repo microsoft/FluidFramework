@@ -23,7 +23,7 @@ Open <http://localhost:1313> to preview the site.
 
 ### API documentation and Playground
 
-The steps above won't include API documentation (the TSDoc JSON files) or the Playground by default.
+The steps above won't include API documentation (the TSDoc JSON files) by default.
 
 To include generated API documentation in your local preview, you can run a complete build from the repo root.
 Then run the `build:api` script from this directory.
@@ -346,9 +346,9 @@ The following npm scripts are supported in this directory:
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `linkcheck` | `start-server-and-test start 1313 linkcheck:full` |
-| `linkcheck:fast` | `linkcheck http://localhost:1313 --skip-file skipped-urls.txt` |
-| `linkcheck:full` | `npm run linkcheck:fast -- --external` |
+| `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
+| `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
+| `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
