@@ -193,6 +193,59 @@ function checkThrottleAndUsage(
     }
 }
 
+/**
+ * This function will store total connection count per node and per cluster in Redis, and
+ * will also log these counters using ConnectionCountPerNode and TotalConnectionCount metrics respectively.
+ */
+async function logConnectionCount(isConnect: boolean, cache?: core.ICache): Promise<void> {
+    const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
+    const totalConnectionCountMetric = Lumberjack.newLumberMetric(LumberEventName.TotalConnectionCount);
+    const nodeName = process.env.NODE_NAME ?? "nodeName";
+    const perNodeKeyName = `totalConnections_${nodeName}`;
+    const perClusterKeyName = `totalConnections`;
+    if(!cache) {
+        connectionCountPerNodeMetric.error(`Redis Cache not found.`);
+        totalConnectionCountMetric.error(`Redis Cache not found.`);
+        return;
+    }
+    if (isConnect) {
+        cache.incr(perNodeKeyName).then((val) => {
+            connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
+            connectionCountPerNodeMetric.success("Connection count incremented for node.");
+        },
+        (error) => {
+            connectionCountPerNodeMetric.error(
+                `Error while incrementing connection count for node.`, error);
+        });
+        cache.incr(perClusterKeyName).then((val) => {
+            totalConnectionCountMetric.setProperty("TotalConnectionCount", val);
+            totalConnectionCountMetric.success("Total connection count incremented.");
+        },
+        (error) => {
+            totalConnectionCountMetric.error(
+                `Error while incrementing total connection count for cluster.`, error);
+        });
+    }
+    else {
+        cache.decr(perNodeKeyName).then((val) => {
+            connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
+            connectionCountPerNodeMetric.success("Connection count decremented for node.");
+        },
+        (error) => {
+            connectionCountPerNodeMetric.error(
+                `Error while decrementing connection count for node`, error);
+        });
+        cache.decr(perClusterKeyName).then((val) => {
+            totalConnectionCountMetric.setProperty("TotalConnectionCount", val);
+            totalConnectionCountMetric.success("Total connection count decremented.");
+        },
+        (error) => {
+            totalConnectionCountMetric.error(
+                `Error while decrementing total connection count for cluster.`, error);
+        });
+    }
+}
+
 export function configureWebSocketServices(
     webSocketServer: core.IWebSocketServer,
     orderManager: core.IOrdererManager,
@@ -207,6 +260,7 @@ export function configureWebSocketServices(
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
     isSignalUsageCountingEnabled: boolean = false,
+    cache?: core.ICache,
     connectThrottler?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
     submitSignalThrottler?: core.IThrottler,
@@ -482,6 +536,11 @@ export function configureWebSocketServices(
                             "signal",
                             createRoomJoinMessage(message.connection.clientId, message.details));
                     }
+                    // excluding summarizer for total client count.
+                    if (message?.details?.details?.type !== "summarizer") {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        logConnectionCount(true, cache);
+                    }
 
                     connectMetric.setProperties({
                         [CommonProperties.clientId]: message.connection.clientId,
@@ -683,6 +742,11 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the room map
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
+                // excluding summarizer for total client count.
+                if (connectionTimeMap.has(clientId)) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    logConnectionCount(false, cache);
+                }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId} from room`,
