@@ -4,9 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import { shouldDisableGcEnforcementForOldContainer } from "../garbageCollectionHelpers";
+import { makeVersionComparableAsString, shouldDisableGcEnforcementForOldContainer } from "../garbageCollectionHelpers";
+import { pkgVersion } from "../packageVersion";
 
 describe("Garbage Collection Helpers Tests", () => {
+	describe("makeVersionComparableAsString", () => {
+		it("Current version can be made comparable", function () {
+			// The only accepted pre-release version format is -internal (e.g 2.0.0-internal.1.2.3)
+			// We do use other pre-release versions in some non-publishing pipelines, so exclude those known cases
+			if (pkgVersion.includes("-") && !pkgVersion.includes("-internal.")) {
+				this.skip();
+			}
+
+			assert.notEqual(makeVersionComparableAsString(pkgVersion), undefined, "pkgVersion should be parsed properly");
+		});
+		it("hello", () => {
+			assert.equal(makeVersionComparableAsString("2.0.0-internal.1.4.18"), "0002.0000.0000-internal.0001.0004.0018");
+			assert.equal(makeVersionComparableAsString("2.0.0-internal.1.4.1"),  "0002.0000.0000-internal.0001.0004.0008");
+		});
+	});
 	describe("shouldDisableGcEnforcementForOldContainer", () => {
 		const testCases: {
 			description: string;
@@ -130,5 +146,6 @@ describe("Garbage Collection Helpers Tests", () => {
 			assert.deepEqual(output, sorted, "Sort didn't go as expected");
 		});
 		//* Add a test case that compares 2.0.0-internal.2.3.1 with the current pkgVersion to ensure it's always good
+		//* Double digits
 	});
 });
