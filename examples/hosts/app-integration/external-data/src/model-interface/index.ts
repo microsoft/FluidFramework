@@ -123,11 +123,7 @@ export interface ITaskListEvents extends IEvent {
  */
 export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	/**
-	 * A variable tracking the number of local unsaved changes.
-	 */
-	localUnsavedChanges: number;
-	/**
-	 * Tracks the number of local unsaved changes.
+	 * Updates a task's property to indicate that it's been changed.
 	 */
 	readonly taskChangedLocally: (id: string) => void;
 	/**

@@ -118,14 +118,6 @@ export class TaskList extends DataObject implements ITaskList {
 	 */
 	private readonly tasks = new Map<string, Task>();
 
-	private _localUnsavedChanges: number = 0;
-
-	public get localUnsavedChanges(): number {
-		return this._localUnsavedChanges;
-	}
-	public set localUnsavedChanges(newValue: number) {
-		this._localUnsavedChanges = newValue;
-	}
 	/*
 	 * savedData stores data retrieved from the external source.
 	 */
@@ -403,7 +395,6 @@ export class TaskList extends DataObject implements ITaskList {
 
 			// TODO: display error status to user?
 		}
-		this.localUnsavedChanges = 0;
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
