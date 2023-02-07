@@ -545,8 +545,10 @@ export enum LoaderHeader {
 	 */
 	version = "version",
 
-	// TODO #AB3350: This is a breaking change; it will be enabled in the "next" branch
-	// baseLogger = "fluid-base-logger"
+	/**
+	 * Header used to pass a logger for containers to use on load.
+	 */
+	baseLogger = "fluid-base-logger",
 }
 
 export interface IContainerLoadMode {

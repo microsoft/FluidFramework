@@ -535,6 +535,7 @@ export interface IUsageError extends IErrorBase {
 
 // @public
 export enum LoaderHeader {
+    baseLogger = "fluid-base-logger",
     cache = "fluid-cache",
     // (undocumented)
     clientDetails = "fluid-client-details",

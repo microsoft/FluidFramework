@@ -71,6 +71,9 @@
 		"broken": {
 			"InterfaceDeclaration_IConnectionDetails": {
 				"backCompat": false
+			},
+			"EnumDeclaration_LoaderHeader": {
+				"backCompat": false
 			}
 		}
 	}

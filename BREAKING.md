@@ -15,6 +15,25 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.4.0.0
+
+## 2.0.0-internal.4.0.0 Upcoming changes
+
+_None yet._
+
+## 2.0.0-internal.4.0.0 Breaking changes
+
+- [container-runtime: LoaderHeader enum changes](#containerruntime-loaderheader-enum-changes)
+
+### container-runtime: LoaderHeader enum changes
+
+The LoaderHeader enum in the container-runtime library has a new enum value, `baseLogger`, which is a header that can be
+used to override the base logger used by a Fluid Container on load. This is a breaking change because TypeScript enums
+are not compatible when new enum values are added.
+
+This change was originally made in 2.0.0-internal.3.0.1 as a backwards-compatible change using a hard-coded header
+value.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
