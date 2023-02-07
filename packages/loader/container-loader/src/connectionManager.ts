@@ -355,13 +355,10 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		const disconnectReason =
-			error !== undefined
-				? `Closing DeltaManager (${error.message})`
-				: "Closing DeltaManager";
+		const disconnectReason = "Closing DeltaManager";
 
 		// This raises "disconnect" event if we have active connection.
-		this.disconnectFromDeltaStream(disconnectReason);
+		this.disconnectFromDeltaStream(disconnectReason, error?.message);
 
 		if (switchToReadonly) {
 			// Notify everyone we are in read-only state.
@@ -631,9 +628,10 @@ export class ConnectionManager implements IConnectionManager {
 	/**
 	 * Disconnect the current connection.
 	 * @param reason - Text description of disconnect reason to emit with disconnect event
+	 * @param errorMessage - if deltaManager was closed due to error, log the error message
 	 * @returns A boolean that indicates if there was an existing connection (or pending connection) to disconnect
 	 */
-	private disconnectFromDeltaStream(reason: string): boolean {
+	private disconnectFromDeltaStream(reason: string, errorMessage?: string): boolean {
 		this.pendingReconnect = false;
 
 		if (this.connection === undefined) {
@@ -664,7 +662,7 @@ export class ConnectionManager implements IConnectionManager {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this._outbound.pause();
 		this._outbound.clear();
-		this.props.disconnectHandler(reason);
+		this.props.disconnectHandler(reason, errorMessage);
 
 		connection.dispose();
 

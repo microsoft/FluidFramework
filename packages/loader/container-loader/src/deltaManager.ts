@@ -357,7 +357,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
+			disconnectHandler: (reason: string, errorMessage?: string) =>
+				this.disconnectHandler(reason, errorMessage),
 			connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
@@ -701,9 +702,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: string) {
+	private disconnectHandler(reason: string, errorMessage?: string) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", { reason, errorMessage });
 	}
 
 	/**

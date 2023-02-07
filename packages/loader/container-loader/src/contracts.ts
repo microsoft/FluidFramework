@@ -139,7 +139,7 @@ export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called whenever connection to relay service is lost.
 	 */
-	readonly disconnectHandler: (reason: string) => void;
+	readonly disconnectHandler: (reason: string, errorMessage?: string) => void;
 
 	/**
 	 * Called whenever new connection to rely service is established
