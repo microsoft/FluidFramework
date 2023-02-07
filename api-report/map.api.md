@@ -132,7 +132,6 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 // @public
 export interface ILocalValue {
-    // @alpha
     makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle, attribution?: AttributionKey): ISerializedValue;
     readonly type: string;
     readonly value: any;

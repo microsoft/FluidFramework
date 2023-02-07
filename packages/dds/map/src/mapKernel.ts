@@ -386,13 +386,13 @@ export class MapKernel {
 	}
 
 	private setAttribution(message: ISequencedDocumentMessage, key: string): void {
-		if (this.options?.attribution?.track ?? false) {
+		if (this.options?.attribution?.track) {
 			this.attribution?.set(key, { type: "op", seq: message.sequenceNumber });
 		}
 	}
 
 	private clearAttribution(): void {
-		if (this.options?.attribution?.track ?? false) {
+		if (this.options?.attribution?.track) {
 			this.attribution?.clear();
 		}
 	}

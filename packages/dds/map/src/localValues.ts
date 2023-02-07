@@ -31,7 +31,6 @@ export interface ILocalValue {
 	readonly value: any;
 
 	/**
-	 * @alpha
 	 * Retrieve the serialized form of the value stored within.
 	 * @param serializer - Data store runtime's serializer
 	 * @param bind - Container type's handle
@@ -85,7 +84,6 @@ export class PlainLocalValue implements ILocalValue {
 
 	/**
 	 * {@inheritDoc ILocalValue.makeSerialized}
-	 * @alpha
 	 */
 	public makeSerialized(
 		serializer: IFluidSerializer,
