@@ -23,7 +23,7 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
         const totalConnectionCountMetric = Lumberjack.newLumberMetric(LumberEventName.TotalConnectionCount);
         const perNodeKeyName = `totalConnections_${this.nodeName}`;
         const perClusterKeyName = `totalConnections`;
-        if(!this.cache) {
+        if (!this.cache || !this.cache.incr || !this.cache.decr) {
             connectionCountPerNodeMetric.error(`Redis Cache not found.`);
             totalConnectionCountMetric.error(`Redis Cache not found.`);
             return;
