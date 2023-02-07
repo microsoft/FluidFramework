@@ -59,6 +59,7 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
+		// A package or workspace that uses pnpm must not have an npm package-lock.json file.
 		name: "pnpm-lock-no-package-lock",
 		match,
 		handler: (file) => {
