@@ -39,7 +39,7 @@ Next we need a customer service that functions as the intermediary between the E
 In this example, the Customer Service contains the following endpoints:
 
 1. POST `/register-for-webhook`: Registers the sender's URL to receive notifications when the external task-list data changes. Currently, Alfred registers it's `/task-list-hook` endpoint to this URL to be called when the Customer Service receives a notification on its `/echo-external-data-webhook` endpoint.
-2. POST `/echo-external-data-webhook`: "Echoes" the external data services data update notifications to our own webhook subscribers. This data will be forwarded to our own subscribers. Registered to be called by the External Data Service when there's been a change to data upstream.
+2. POST `/external-data-webhook`: Registered to be called by the External Data Service webhook when there's been a change to data upstream.
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
 
