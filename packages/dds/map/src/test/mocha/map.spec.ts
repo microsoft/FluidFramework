@@ -802,9 +802,9 @@ describe("Map", () => {
 			});
 
 			it("Should not generate attribution in local state", () => {
-				map.set("first", "second");
-				map.set("third", "fourth");
-				map.set("fifth", "sixth");
+				map.set("first", "value1");
+				map.set("second", "value2");
+				map.set("third", "value3");
 
 				const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob)
 					.content;
@@ -816,7 +816,7 @@ describe("Map", () => {
 				);
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"value1"},"second":{"type":"Plain","value":"value2"},"third":{"type":"Plain","value":"value3"}}}`,
 				);
 			});
 		});
@@ -835,38 +835,116 @@ describe("Map", () => {
 				map2 = createConnectedMap("map2", containerRuntimeFactory, options);
 			});
 
-			it("Can generate proper attribution in connected state", () => {
+			it("Can generate proper attribution without key-value overwriting", () => {
+				map1.set("first", "value1");
+				map1.set("second", "value2");
+				map2.set("third", "value3");
+
+				containerRuntimeFactory.processAllMessages();
+
+				assert.equal(
+					map1.getAttribution("first")?.seq,
+					1,
+					"map1 did not generate correct attribution for the first key",
+				);
+				assert.equal(
+					map2.getAttribution("first")?.seq,
+					1,
+					"map2 did not generate correct attribution for the first key",
+				);
+				assert.equal(
+					map1.getAttribution("second")?.seq,
+					2,
+					"map1 did not generate correct attribution for the second key",
+				);
+				assert.equal(
+					map2.getAttribution("second")?.seq,
+					2,
+					"map2 did not generate correct attribution for the second key",
+				);
+				assert.equal(
+					map1.getAttribution("third")?.seq,
+					3,
+					"map1 did not generate correct attribution for the third key",
+				);
+				assert.equal(
+					map2.getAttribution("third")?.seq,
+					3,
+					"map2 did not generate correct attribution for the third key",
+				);
+			});
+
+			it("Can generate proper attribution with the whole map clearing", () => {
+				map1.set("first", "value1");
+				map1.set("second", "value2");
+				map2.set("third", "value3");
+				map2.clear();
+
+				containerRuntimeFactory.processAllMessages();
+
+				assert.equal(
+					map1.getAllAttribution()?.size,
+					0,
+					"The map1 attribution table was not cleared",
+				);
+				assert.equal(
+					map2.getAllAttribution()?.size,
+					0,
+					"The map2 attribution table was not cleared",
+				);
+			});
+
+			it("Can generate proper attribution with key-value overwriting", () => {
 				map1.set("first", "value1");
 				map1.set("second", "value2");
 				map2.set("first", "value3");
 
 				containerRuntimeFactory.processSomeMessages(1);
 
-				assert.notEqual(
-					map1.getAttribution("first"),
-					undefined,
-					"map1 did not generate correct attribution",
+				assert.equal(
+					map1.getAttribution("first")?.seq,
+					1,
+					"map1 did not generate correct attribution for the first key",
 				);
 
-				containerRuntimeFactory.processAllMessages();
+				assert.equal(
+					map2.getAttribution("first"),
+					undefined,
+					"map2 generated the attribution with a pending local edit",
+				);
+
+				containerRuntimeFactory.processSomeMessages(1);
+
+				assert.equal(
+					map1.getAttribution("second")?.seq,
+					2,
+					"map1 did not generate correct attribution for the second key",
+				);
+
+				assert.equal(
+					map2.getAttribution("second")?.seq,
+					2,
+					"map2 did not generate correct attribution for the second key",
+				);
+
+				containerRuntimeFactory.processSomeMessages(1);
+
+				assert.equal(
+					map1.getAttribution("first")?.seq,
+					3,
+					"map1 did not generate correct attribution for the first key after a local edit",
+				);
+
+				assert.equal(
+					map2.getAttribution("first")?.seq,
+					3,
+					"map2 did not generate correct attribution for the first key after a remote edit",
+				);
 
 				assert.deepEqual(
 					map1.getAllAttribution(),
 					map2.getAllAttribution(),
 					"map1 and map2 do not have consistent attribution",
-				);
-
-				map1.clear();
-				containerRuntimeFactory.processAllMessages();
-				assert.equal(
-					map1.getAllAttribution()?.size,
-					0,
-					"the attribution of map1 was not cleared",
-				);
-				assert.equal(
-					map2.getAllAttribution()?.size,
-					0,
-					"the attribution of map2 was not cleared",
 				);
 			});
 		});
