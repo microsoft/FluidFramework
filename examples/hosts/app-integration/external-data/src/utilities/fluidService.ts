@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { MockWebhook, SubscriberUrl } from "./webhook";
-export { fluidServicePort } from "./fluidService";
+/**
+ * The port used by the fluid service.
+ */
+export const fluidServicePort = process.env.FLUID_SERVICE_PORT ?? 7070;
