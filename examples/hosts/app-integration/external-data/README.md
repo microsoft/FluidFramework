@@ -38,7 +38,7 @@ Next we need a customer service that functions as the intermediary between the E
 
 In this example, the Customer Service contains the following endpoints:
 
-1. POST `/external-data-webhook`: Registered to be called by the External Data Service webhook when there's been a change to data upstream. On being called, the Customer Service behaves in different ways given the two patterns listed elow. For the echo webhook pattern, it calls the `broadcast-signal` endpoint in the Fluid Service. More details below in the Echo Webhook Pattern section.
+1. POST `/external-data-webhook`: Registered to be called by the External Data Service webhook when there's been a change to data upstream. On being called, the Customer Service behaves in different ways given the two patterns listed below. For the echo webhook pattern, it calls the `broadcast-signal` endpoint in the Fluid Service. More details below in the Echo Webhook Pattern section. Note that this is a route established by the customer service to be used exclusively as a subscription endpoint for the external data service's webhook, and should be considered a private implementation detail to the service. Customers may choose to implement this differently.
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
 
