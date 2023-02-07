@@ -225,8 +225,7 @@ async function logConnectionCount(isConnect: boolean, cache?: core.ICache): Prom
             totalConnectionCountMetric.error(
                 `Error while incrementing total connection count for cluster.`, error);
         });
-    }
-    else {
+    } else {
         cache.decr(perNodeKeyName).then((val) => {
             connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
             connectionCountPerNodeMetric.success("Connection count decremented for node.");
