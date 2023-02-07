@@ -2,7 +2,7 @@
 
 This is about the "loader layer" of the Fluid Framework, not to be confused with the `Loader` class (which is part of this layer).
 
-The `loader` layer contains code which gets directly included into fluid applications.
+The `loader` layer contains code which gets directly included into Fluid applications.
 This layer is kept minimal to reduce the need to update the application when the Fluid Framework changes,
 as well as keep the size application small.
 Instead most of the code is placed in either the `runtime` or `driver` layers and dynamically loaded by the `loader`.
