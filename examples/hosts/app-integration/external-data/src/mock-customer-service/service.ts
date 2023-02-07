@@ -15,7 +15,7 @@ export const fluidServicePort = 7070;
 /**
  * Submits notifications of changes to Fluid Service.
  */
-function echoTaskWebhookToFluid(data: TaskData, fluidServiceUrl: string): void {
+function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string): void {
 	console.log(
 		`WEBHOOK: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
@@ -89,7 +89,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			},
 			body: JSON.stringify({
 				// External data service will call our webhook echoer to notify our subscribers of the data changes.
-				url: `http://localhost:${port}/echo-external-data-webhook`,
+				url: `http://localhost:${port}/external-data-webhook`,
 			}),
 		});
 	} catch (error) {
@@ -131,7 +131,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *
 	 * This data will be forwarded to our own subscribers.
 	 */
-	expressApp.post("/echo-external-data-webhook", (request, result) => {
+	expressApp.post("/external-data-webhook", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const messageData = request.body?.data as unknown;
 		if (messageData === undefined) {
@@ -155,7 +155,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			echoTaskWebhookToFluid(taskData, fluidServiceUrl);
+			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl);
 			result.send();
 		}
 	});
