@@ -76,6 +76,7 @@ export function create(
 			);
 		}),
 	);
+	// API to broadcast a signal to a container
 	app.use(
 		Router().post("/broadcast-signal", (req, res) => {
 			eventEmitter.emit("broadcast-signal");
