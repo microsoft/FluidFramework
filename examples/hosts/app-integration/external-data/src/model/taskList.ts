@@ -133,29 +133,29 @@ export class TaskList extends DataObject implements ITaskList {
 	}
 
 	public readonly addTask = (id: string, name: string, priority: number): void => {
-	if (this.tasks.get(id) !== undefined) {
-	    throw new Error("Task already exists");
-	}
-	const draftNameString = SharedString.create(this.runtime);
+		if (this.tasks.get(id) !== undefined) {
+			throw new Error("Task already exists");
+		}
+		const draftNameString = SharedString.create(this.runtime);
 
-	// TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
-	// savedMap will get updated when the data syncs back
-	draftNameString.insertText(0, name);
+		// TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
+		// savedMap will get updated when the data syncs back
+		draftNameString.insertText(0, name);
 
-	const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+		const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
 
-	draftPriorityCell.set(priority);
+		draftPriorityCell.set(priority);
 
-	// To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
-	// and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
-	// the this.tasks collection.
-	const draftDataPT: PersistedTask = {
-	    id,
-	    name: draftNameString.handle as IFluidHandle<SharedString>,
-	    priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+		// To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
+		// and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
+		// the this.tasks collection.
+		const draftDataPT: PersistedTask = {
+			id,
+			name: draftNameString.handle as IFluidHandle<SharedString>,
+			priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+		};
+		this.draftData.set(id, draftDataPT);
 	};
-	this.draftData.set(id, draftDataPT);
-    };
 
 	public readonly deleteTask = (id: string): void => {
 		this.draftData.delete(id);
@@ -194,8 +194,8 @@ export class TaskList extends DataObject implements ITaskList {
 			nameSharedString,
 			prioritySharedCell,
 			undefined,
-	    undefined,
-	    undefined,
+			undefined,
+			undefined,
 		);
 		this.tasks.set(id, newTask);
 		this.emit("taskAdded", newTask);
