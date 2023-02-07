@@ -108,8 +108,8 @@ describe("Routerlicious", () => {
                     const restCreateDocThrottler = new TestThrottler(limitCreateDoc);
                     const restGetDeltasThrottler = new TestThrottler(limitGetDeltas);
                     const restClusterThrottlers = new Map<string, TestThrottler>();
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
@@ -205,8 +205,8 @@ describe("Routerlicious", () => {
                     const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
                     const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
                     const restClusterThrottlers = new Map<string, TestThrottler>();
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
@@ -277,8 +277,8 @@ describe("Routerlicious", () => {
                     const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
                     const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
                     const restClusterThrottlers = new Map<string, TestThrottler>();
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
@@ -345,8 +345,8 @@ describe("Routerlicious", () => {
                     const restCreateDocThrottler = new TestThrottler(limit);
                     const restGetDeltasThrottler = new TestThrottler(limit);
                     const restClusterThrottlers = new Map<string, TestThrottler>();
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
@@ -389,8 +389,8 @@ describe("Routerlicious", () => {
                     const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
                     const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
                     const restClusterThrottlers = new Map<string, TestThrottler>();
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdCreateDoc, restCreateDocThrottler);
-                    restClusterThrottlers.set(Constants.alfredRestThrottleIdGetDeltas, restGetDeltasThrottler);
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
 
                     spyGetSession = Sinon.spy(SessionHelper, "getSession")
 

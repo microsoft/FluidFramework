@@ -5,6 +5,6 @@
 
 export const Constants = Object.freeze({
     alfredRestThrottleIdSuffix: "AlfredRest",
-    alfredRestThrottleIdCreateDoc: "createDoc",
-    alfredRestThrottleIdGetDeltas: "getDeltas",
+    createDocThrottleIdPrefix: "createDoc",
+    getDeltasThrottleIdPrefix: "getDeltas",
 });
