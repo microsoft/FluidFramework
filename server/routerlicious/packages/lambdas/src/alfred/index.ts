@@ -719,11 +719,6 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
-                // excluding summarizer for total client count.
-                if (connectionTimeMap.has(clientId)) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    logConnectionCount(false, cache);
-                }
                 logger.info(`Disconnect of ${clientId}`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId}`,
@@ -747,6 +742,11 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the room map
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
+                // excluding summarizer for total client count.
+                if (connectionTimeMap.has(clientId)) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    logConnectionCount(false, cache);
+                }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId} from room`,
