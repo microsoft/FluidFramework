@@ -38,7 +38,7 @@ Next we need a customer service that functions as the intermediary between the E
 
 In this example, the Customer Service contains the following endpoints:
 
-1. POST `/external-data-webhook`: Registered to be called by the External Data Service webhook when there's been a change to data upstream.
+1. POST `/external-data-webhook`: Registered to be called by the External Data Service webhook when there's been a change to data upstream. On being called, the Customer Service behaves in different ways given the two patterns listed elow. For the echo webhook pattern, it calls the `broadcast-signal` endpoint in the Fluid Service. More details below in the Echo Webhook Pattern section.
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
 
@@ -56,7 +56,7 @@ In the architecture so far, since the Customer Service is registered to the webh
 
 1. POST `broadcast-signal`: Broadcasts a Signal to the clients to alert them of an upstream change. Called by the Customer Service to let the Fluid service know that there has been a change in the data.
 
-In this way, it "echos" the webhook from the External Data Service to the Customer Service. A prototype of the webhook subscription and signal broadcast lives is currently prototyped in Alfred [in a dev branch](https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts).
+In this way, it "echoes" the webhook from the External Data Service to the Customer Service. A prototype of the webhook subscription and signal broadcast lives is currently prototyped in Alfred [in a dev branch](https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts).
 
 On receiving the signal, the clients (or elected leader client) can then send a fetch call to retrieve the information and display it to screen by making a call to the external data server's GET `/fetch-tasks` endpoint.
 
