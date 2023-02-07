@@ -42,7 +42,7 @@ describe("mock-customer-service", () => {
 		customerService = await initializeCustomerService({
 			port: customerServicePort,
 			externalDataServiceWebhookRegistrationUrl: `http://localhost:${externalDataServicePort}/register-for-webhook`,
-			fluidServiceUrl: `http://localhost:${localServicePort}/task-list-hook`,
+			fluidServiceUrl: `http://localhost:${localServicePort}/broadcast-signal`,
 		});
 	});
 
@@ -69,7 +69,7 @@ describe("mock-customer-service", () => {
 
 		// Bind listener
 		let wasHookNotifiedForChange = false;
-		localServiceApp.post("/task-list-hook", (_, result) => {
+		localServiceApp.post("/broadcast-signal", (_, result) => {
 			wasHookNotifiedForChange = true;
 			result.send();
 		});

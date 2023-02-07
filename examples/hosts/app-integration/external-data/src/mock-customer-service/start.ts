@@ -13,7 +13,7 @@ import { initializeCustomerService, fluidServicePort } from "./service";
 initializeCustomerService({
 	port: customerServicePort,
 	externalDataServiceWebhookRegistrationUrl: `http://localhost:${externalDataServicePort}/register-for-webhook`,
-	fluidServiceUrl: `http://localhost:${fluidServicePort}/task-list-hook`,
+	fluidServiceUrl: `http://localhost:${fluidServicePort}/broadcast-signal`,
 }).catch((error) => {
 	console.error(`There was an error initializing the mock customer service:\n${error}`);
 
