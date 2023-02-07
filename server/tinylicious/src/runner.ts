@@ -52,35 +52,35 @@ export class TinyliciousRunner implements IRunner {
 			throw e;
 		}
 
-	const eventEmitter = new EventEmitter();
-	const alfred = app.create(this.config, this.storage, this.mongoManager, eventEmitter);
-	alfred.set("port", this.port);
+		const eventEmitter = new EventEmitter();
+		const alfred = app.create(this.config, this.storage, this.mongoManager, eventEmitter);
+		alfred.set("port", this.port);
 
 		this.server = this.serverFactory.create(alfred);
 		const httpServer = this.server.httpServer;
 
-	configureWebSocketServices(
-	    this.server.webSocketServer,
-	    this.orderManager,
-	    this.tenantManager,
-	    this.storage,
-	    new TestClientManager(),
-	    new DefaultMetricClient(),
-	    winston,
-	    undefined,
-	    undefined,
-	    undefined,
-	    undefined,
-	    undefined,
-	    undefined,
-	    undefined,
-	    undefined,
-	    undefined,
-	    undefined,
-	    undefined,
-	    httpServer,
-	    eventEmitter,
-	);
+		configureWebSocketServices(
+			this.server.webSocketServer,
+			this.orderManager,
+			this.tenantManager,
+			this.storage,
+			new TestClientManager(),
+			new DefaultMetricClient(),
+			winston,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			httpServer,
+			eventEmitter,
+		);
 
 		// Listen on provided port, on all network interfaces.
 		httpServer.listen(this.port);
