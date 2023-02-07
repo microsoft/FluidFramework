@@ -25,8 +25,6 @@ import {
     validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
 
-import request from "request";
-
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@fluidframework/server-services-core";
