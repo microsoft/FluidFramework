@@ -487,7 +487,7 @@ export function configureWebSocketServices(
                             createRoomJoinMessage(message.connection.clientId, message.details));
                     }
                     // excluding summarizer for total client count.
-                    if (message?.details?.details?.type !== "summarizer") {
+                    if (message?.details?.details?.type !== summarizerClientType) {
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         connectionCountLogger.logConnectionCount(true);
                     }
