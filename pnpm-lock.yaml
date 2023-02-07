@@ -19,6 +19,7 @@ importers:
       lerna: ^5.1.8
       mocha: ^10.0.0
       prettier: ~2.6.2
+      pretty-quick: ^3.1.3
       rimraf: ^2.6.2
       run-script-os: ^1.1.6
       typescript: ~4.5.5
@@ -35,6 +36,7 @@ importers:
       lerna: 5.1.8
       mocha: 10.2.0
       prettier: 2.6.2
+      pretty-quick: 3.1.3_prettier@2.6.2
       rimraf: 2.7.1
       run-script-os: 1.1.6
       typescript: 4.5.5
@@ -242,7 +244,6 @@ importers:
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-tools': ^0.2.3074
-      '@fluidframework/view-adapters': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -300,7 +301,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       office-ui-fabric-react: 7.199.6_74b3ggvk3akyhuq4eydyx3fqim
       prop-types: 15.8.1
       react: 17.0.2
@@ -691,17 +691,18 @@ importers:
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/view-adapters': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/view-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
-      '@types/codemirror': 0.0.76
+      '@types/codemirror': ^5.60.7
       '@types/node': ^14.18.36
-      codemirror: ^5.48.4
+      '@types/react': ^17.0.44
+      codemirror: ^5.65.11
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
       prettier: ~2.6.2
+      react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -725,16 +726,17 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
-      codemirror: 5.65.9
+      codemirror: 5.65.11
       events: 3.3.0
+      react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/codemirror': 0.0.76
+      '@types/codemirror': 5.60.7
       '@types/node': 14.18.36
+      '@types/react': 17.0.52
       concurrently: 6.3.0
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.75.0
@@ -1543,14 +1545,14 @@ importers:
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/view-adapters': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/view-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/node': ^14.18.36
       '@types/orderedmap': ^1.0.0
-      '@types/prosemirror-model': ^1.16.2
-      '@types/prosemirror-schema-list': ^1.0.3
-      '@types/prosemirror-state': ^1.3.0
-      '@types/prosemirror-view': ^1.23.3
+      '@types/prosemirror-model': ^1.17.0
+      '@types/prosemirror-schema-list': ^1.2.0
+      '@types/prosemirror-state': ^1.4.0
+      '@types/prosemirror-view': ^1.24.0
+      '@types/react': ^17.0.44
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
@@ -1562,11 +1564,12 @@ importers:
       prosemirror-history: ^1.3.0
       prosemirror-keymap: ^1.2.0
       prosemirror-menu: ^1.2.1
-      prosemirror-model: ^1.18.1
+      prosemirror-model: ^1.19.0
       prosemirror-schema-list: ^1.2.2
-      prosemirror-state: ^1.4.1
-      prosemirror-transform: ^1.7.0
-      prosemirror-view: ^1.28.3
+      prosemirror-state: ^1.4.2
+      prosemirror-transform: ^1.7.1
+      prosemirror-view: ^1.30.0
+      react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -1591,18 +1594,18 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       events: 3.3.0
       orderedmap: 2.1.0
       prosemirror-example-setup: 1.2.1
       prosemirror-history: 1.3.0
       prosemirror-keymap: 1.2.0
       prosemirror-menu: 1.2.1
-      prosemirror-model: 1.18.2
+      prosemirror-model: 1.19.0
       prosemirror-schema-list: 1.2.2
       prosemirror-state: 1.4.2
-      prosemirror-transform: 1.7.0
-      prosemirror-view: 1.29.1
+      prosemirror-transform: 1.7.1
+      prosemirror-view: 1.30.0
+      react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
@@ -1614,6 +1617,7 @@ importers:
       '@types/prosemirror-schema-list': 1.2.0
       '@types/prosemirror-state': 1.4.0
       '@types/prosemirror-view': 1.24.0
+      '@types/react': 17.0.52
       concurrently: 6.3.0
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.75.0
@@ -1649,7 +1653,6 @@ importers:
       '@fluidframework/sequence': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-tools': ^0.2.3074
       '@fluidframework/undo-redo': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/view-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -1703,7 +1706,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/undo-redo': link:../../../packages/framework/undo-redo
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       bootstrap: 3.4.1
       debug: 4.3.4
       events: 3.3.0
@@ -19580,8 +19582,8 @@ packages:
       '@types/har-format': 1.2.10
     dev: true
 
-  /@types/codemirror/0.0.76:
-    resolution: {integrity: sha512-k/hpUb+Ebyn9z63qM8IbsRiW0eYHZ+pi/1e2reGzBKAZJzkjWmNTXXqLLiNv5d9ekyxkajxRBr5Hu2WZq/nokw==}
+  /@types/codemirror/5.60.7:
+    resolution: {integrity: sha512-QXIC+RPzt/1BGSuD6iFn6UMC9TDp+9hkOANYNPVsjjrDdzKphfRkwQDKGp2YaC54Yhz0g6P5uYTCCibZZEiMAA==}
     dependencies:
       '@types/tern': 0.23.4
     dev: true
@@ -19936,7 +19938,7 @@ packages:
     resolution: {integrity: sha512-lG5xEMkE8r8Soa80KdWPTbCLUaSHBHVHpTIEsQiebfONpvmS5061IMGzHUdb1oWjgrwh8EJq0GgMNwXHUx5mVg==}
     deprecated: This is a stub types definition. prosemirror-model provides its own type definitions, so you do not need this installed.
     dependencies:
-      prosemirror-model: 1.18.2
+      prosemirror-model: 1.19.0
     dev: true
 
   /@types/prosemirror-schema-list/1.2.0:
@@ -19957,7 +19959,7 @@ packages:
     resolution: {integrity: sha512-Swn08/O+QIOKOSfFFa+KKF19eeHetwA+pBMAHZ7wbF0wPrMS3zJ+G9wbOGqSkUv6JOVpuhlOP8Xg5nA3MyIXgQ==}
     deprecated: This is a stub types definition. prosemirror-view provides its own type definitions, so you do not need this installed.
     dependencies:
-      prosemirror-view: 1.29.1
+      prosemirror-view: 1.30.0
     dev: true
 
   /@types/puppeteer/1.3.0:
@@ -23704,8 +23706,8 @@ packages:
       typo-js: 1.2.2
     dev: false
 
-  /codemirror/5.65.9:
-    resolution: {integrity: sha512-19Jox5sAKpusTDgqgKB5dawPpQcY+ipQK7xoEI+MVucEF9qqFaXpeqY1KaoyGBso/wHQoDa4HMMxMjdsS3Zzzw==}
+  /codemirror/5.65.11:
+    resolution: {integrity: sha512-Gp62g2eKSCHYt10axmGhKq3WoJSvVpvhXmowNq7pZdRVowwtvBR/hi2LSP5srtctKkRT33T6/n8Kv1UGp7JW4A==}
     dev: false
 
   /codemirror/6.0.1:
@@ -32944,6 +32946,11 @@ packages:
       run-queue: 1.0.3
     dev: true
 
+  /mri/1.2.0:
+    resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
+    engines: {node: '>=4'}
+    dev: true
+
   /mrmime/1.0.1:
     resolution: {integrity: sha512-hzzEagAgDyoU1Q6yg5uI+AorQgdvMCur3FcKf7NhMKWsaYg+RnbTyHRa/9IlLF9rf455MOCtcqqrQQ83pPP7Uw==}
     engines: {node: '>=10'}
@@ -35247,6 +35254,22 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
+  /pretty-quick/3.1.3_prettier@2.6.2:
+    resolution: {integrity: sha512-kOCi2FJabvuh1as9enxYmrnBC6tVMoVOenMaBqRfsvBHB0cbpYHjdQEpSglpASDFEXVwplpcGR4CLEaisYAFcA==}
+    engines: {node: '>=10.13'}
+    hasBin: true
+    peerDependencies:
+      prettier: '>=2.0.0'
+    dependencies:
+      chalk: 3.0.0
+      execa: 4.1.0
+      find-up: 4.1.0
+      ignore: 5.2.0
+      mri: 1.2.0
+      multimatch: 4.0.0
+      prettier: 2.6.2
+    dev: true
+
   /prettyjson/1.2.5:
     resolution: {integrity: sha512-rksPWtoZb2ZpT5OVgtmy0KHVM+Dca3iVwWY9ifwhcexfjebtgjg3wmrUt9PvJ59XIYBcknQeYHD8IAnVlh9lAw==}
     hasBin: true
@@ -35414,17 +35437,17 @@ packages:
   /prosemirror-commands/1.3.1:
     resolution: {integrity: sha512-XTporPgoECkOQACVw0JTe3RZGi+fls3/byqt+tXwGTkD7qLuB4KdVrJamDMJf4kfKga3uB8hZ+kUUyZ5oWpnfg==}
     dependencies:
-      prosemirror-model: 1.18.2
+      prosemirror-model: 1.19.0
       prosemirror-state: 1.4.2
-      prosemirror-transform: 1.7.0
+      prosemirror-transform: 1.7.1
     dev: false
 
   /prosemirror-dropcursor/1.6.1:
     resolution: {integrity: sha512-LtyqQpkIknaT7NnZl3vDr3TpkNcG4ABvGRXx37XJ8tJNUGtcrZBh40A0344rDwlRTfUEmynQS/grUsoSWz+HgA==}
     dependencies:
       prosemirror-state: 1.4.2
-      prosemirror-transform: 1.7.0
-      prosemirror-view: 1.29.1
+      prosemirror-transform: 1.7.1
+      prosemirror-view: 1.30.0
     dev: false
 
   /prosemirror-example-setup/1.2.1:
@@ -35445,16 +35468,16 @@ packages:
     resolution: {integrity: sha512-GKTeE7ZoMsx5uVfc51/ouwMFPq0o8YrZ7Hx4jTF4EeGbXxBveUV8CGv46mSHuBBeXGmvu50guoV2kSnOeZZnUA==}
     dependencies:
       prosemirror-keymap: 1.2.0
-      prosemirror-model: 1.18.2
+      prosemirror-model: 1.19.0
       prosemirror-state: 1.4.2
-      prosemirror-view: 1.29.1
+      prosemirror-view: 1.30.0
     dev: false
 
   /prosemirror-history/1.3.0:
     resolution: {integrity: sha512-qo/9Wn4B/Bq89/YD+eNWFbAytu6dmIM85EhID+fz9Jcl9+DfGEo8TTSrRhP15+fFEoaPqpHSxlvSzSEbmlxlUA==}
     dependencies:
       prosemirror-state: 1.4.2
-      prosemirror-transform: 1.7.0
+      prosemirror-transform: 1.7.1
       rope-sequence: 1.3.3
     dev: false
 
@@ -35462,7 +35485,7 @@ packages:
     resolution: {integrity: sha512-eAW/M/NTSSzpCOxfR8Abw6OagdG0MiDAiWHQMQveIsZtoKVYzm0AflSPq/ymqJd56/Su1YPbwy9lM13wgHOFmQ==}
     dependencies:
       prosemirror-state: 1.4.2
-      prosemirror-transform: 1.7.0
+      prosemirror-transform: 1.7.1
     dev: false
 
   /prosemirror-keymap/1.2.0:
@@ -35481,36 +35504,36 @@ packages:
       prosemirror-state: 1.4.2
     dev: false
 
-  /prosemirror-model/1.18.2:
-    resolution: {integrity: sha512-uOQorJr20qVvqp2hs2RdWtWoidQxJ1ceE11bSmkf57XS989mdg1zKPJIp5HOHfY8/KjXPn3cLZqUYYwRrfBBPw==}
+  /prosemirror-model/1.19.0:
+    resolution: {integrity: sha512-/CvFGJnwc41EJSfDkQLly1cAJJJmBpZwwUJtwZPTjY2RqZJfM8HVbCreOY/jti8wTRbVyjagcylyGoeJH/g/3w==}
     dependencies:
       orderedmap: 2.1.0
 
   /prosemirror-schema-list/1.2.2:
     resolution: {integrity: sha512-rd0pqSDp86p0MUMKG903g3I9VmElFkQpkZ2iOd3EOVg1vo5Cst51rAsoE+5IPy0LPXq64eGcCYlW1+JPNxOj2w==}
     dependencies:
-      prosemirror-model: 1.18.2
+      prosemirror-model: 1.19.0
       prosemirror-state: 1.4.2
-      prosemirror-transform: 1.7.0
+      prosemirror-transform: 1.7.1
 
   /prosemirror-state/1.4.2:
     resolution: {integrity: sha512-puuzLD2mz/oTdfgd8msFbe0A42j5eNudKAAPDB0+QJRw8cO1ygjLmhLrg9RvDpf87Dkd6D4t93qdef00KKNacQ==}
     dependencies:
-      prosemirror-model: 1.18.2
-      prosemirror-transform: 1.7.0
-      prosemirror-view: 1.29.1
+      prosemirror-model: 1.19.0
+      prosemirror-transform: 1.7.1
+      prosemirror-view: 1.30.0
 
-  /prosemirror-transform/1.7.0:
-    resolution: {integrity: sha512-O4T697Cqilw06Zvc3Wm+e237R6eZtJL/xGMliCi+Uo8VL6qHk6afz1qq0zNjT3eZMuYwnP8ZS0+YxX/tfcE9TQ==}
+  /prosemirror-transform/1.7.1:
+    resolution: {integrity: sha512-VteoifAfpt46z0yEt6Fc73A5OID9t/y2QIeR5MgxEwTuitadEunD/V0c9jQW8ziT8pbFM54uTzRLJ/nLuQjMxg==}
     dependencies:
-      prosemirror-model: 1.18.2
+      prosemirror-model: 1.19.0
 
-  /prosemirror-view/1.29.1:
-    resolution: {integrity: sha512-OhujVZSDsh0l0PyHNdfaBj6DBkbhYaCfbaxmTeFrMKd/eWS+G6IC+OAbmR9IsLC8Se1HSbphMaXnsXjupHL3UQ==}
+  /prosemirror-view/1.30.0:
+    resolution: {integrity: sha512-z6RXp2GFH8mk7+LWCGWvdpOIpf5o5UwIB6SiBiTFe6eA8H8qwFDW0EkiIfohlATHoSGXvlHtD+hfpAHdfO5fvQ==}
     dependencies:
-      prosemirror-model: 1.18.2
+      prosemirror-model: 1.19.0
       prosemirror-state: 1.4.2
-      prosemirror-transform: 1.7.0
+      prosemirror-transform: 1.7.1
 
   /proto-list/1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
