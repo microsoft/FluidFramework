@@ -7,53 +7,13 @@ import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IMergeTreeDeltaOp } from "../ops";
-import { depthFirstNodeWalk } from "../mergeTreeNodeWalk";
-import { Client, SegmentGroup } from "..";
+import { SegmentGroup } from "..";
 import { PartialSequenceLengths, verify } from "../partialLengths";
 import { MergeTree } from "../mergeTree";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
 type ClientName = typeof ClientIds[number];
-
-function compareLens(client: Client, node: any, refSeq: number, clientId: number) {
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const tree = client["_mergeTree"];
-	let sum = 0;
-	for (let i = 0; i < node.childCount; i++) {
-		if (node.children[i].seq === -1 || node.children[i].movedSeq === -1) {
-			continue;
-		}
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		sum += tree["nodeLength"](node.children[i], refSeq, clientId) ?? 0;
-	}
-
-	const partialLen = node.partialLengths?.getPartialLength(refSeq, clientId);
-
-	if (sum !== (partialLen ?? 0)) {
-		node.partialLengths?.getPartialLength(refSeq, clientId);
-		throw new Error(
-			`expected ${sum} but found ${partialLen} for client ${client.longClientId} (${clientId}) at seq ${refSeq}`,
-		);
-	}
-}
-
-function validatePartialLengths(client: Client, seq: number) {
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const tree = client["_mergeTree"];
-	depthFirstNodeWalk(tree.root, tree.root.children[0], (node) => {
-		for (let i = 0; i <= 4; i++) {
-			compareLens(client, node, seq, i);
-		}
-	});
-}
-
-// todo: this is to workaround unused lint. i want this function to stay around,
-// but i can't just prefix it with underscore
-const x = false;
-if (x) {
-	validatePartialLengths(undefined as any, 0);
-}
 
 class ReconnectTestHelper {
 	clients = createClientsAtInitialState(
@@ -2043,23 +2003,23 @@ for (const incremental of [true, false]) {
 				helper.logger.validate();
 			});
 
-			// fails for incremental
-			it.skip("...", () => {
+			it("combines remote obliterated length for parent node of tree with depth >=3", () => {
 				const helper = new ReconnectTestHelper();
 
 				// VWXYZ0-(K)-[L]-M-[N]-O-EFGHIJ-[A]-B-P-TU-QRS-CD
 				//                                      v-v------v------------v
 				//                                            v--------------------v
-				//       v----v---------v-v-----v-----v------------------------------v----v
-				// V-c-W-[XYZ0]-(K)-[L]-[M]-[N]-[O-EFG]-[H]-a-[b-[IJ-[A]-B-P-T]-U-Q]-[RS-C]-d-f-e-D
+				//       v----v---------v-v-----v-----v------------------------------v-v
+				// V-c-W-[XYZ0]-(K)-[L]-[M]-[N]-[O-EFG]-[H]-a-[b-[IJ-[A]-B-P-T]-U-Q]-[R]-S-C-d-f-e-D
 
 				//                                                  v-v------v-v---v-----------v
 				//                                                        v-------------------------v
-				//            v------v---------v-v-----v---v---v-v------------------------------------v----v
+				//            v------v---------v-v-----v---v---v--v-----------------------------------v-v
 				//     v---------v
-				// j-i-(V-c-W-[XY)-Z0]-(K)-[L]-[M]-[N]-[O-E]-h-[FG]-[H]-a-[b-[I]-g-[J-[A]-B-P-T]-U-Q]-[RS-C]-d-f-e-D
+				// j-i-(V-c-W-[XY)-Z0]-(K)-[L]-[M]-[N]-[O-E]-h-[FG]-[H]-a-[b-[I]-g-[J-[A]-B-P-T]-U-Q]-[R]-S-C-d-f-e-D
 
 				// problem segment: j-i-(V-c-W-[XY)-Z0]-(K)-[L]-[M]-[N]-[O-E]-h-[FG]-[H]-a-[b]
+				// specifically: j-(V-c-W
 
 				helper.insertText("C", 0, "ABCD");
 				helper.removeRange("C", 0, 1);
@@ -2070,7 +2030,7 @@ for (const incremental of [true, false]) {
 				helper.insertText("C", 1, "PQRS");
 				helper.insertText("C", 2, "TU");
 				helper.removeRange("A", 1, 2);
-				helper.insertText("A", 0, "VWXYZ0");
+				helper.insertText("A", 0, "VWXYZ0"); // seq: 10, len: 2
 				helper.processAllOps();
 
 				assert.equal(helper.clients.A.getText(), "VWXYZ0MOEFGHIJBPTUQRSCD");
@@ -2079,16 +2039,19 @@ for (const incremental of [true, false]) {
 				helper.insertText("C", 12, "ab");
 				helper.removeRange("B", 11, 17);
 				helper.removeRange("C", 13, 21);
-				helper.insertText("B", 1, "c");
+				helper.insertText("B", 1, "c"); // seq: 14, len: 3
 				helper.insertText("C", 16, "de");
 				helper.insertText("C", 17, "f");
 				helper.removeRange("B", 3, 15);
 				helper.insertText("A", 13, "g");
 				helper.insertText("A", 9, "h");
-				helper.obliterateRange("C", 0, 4);
+				helper.obliterateRange("C", 0, 4); // seq: 20, len: 0
 				helper.insertText("C", 0, "i");
-				helper.insertText("A", 0, "j");
+				helper.insertText("A", 0, "j"); // seq: 22, len: 1
 				helper.processAllOps();
+
+				assert.equal(helper.clients.A.getText(), "jihagSCdfeD");
+
 				helper.logger.validate();
 			});
 		});

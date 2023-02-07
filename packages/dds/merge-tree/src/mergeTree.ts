@@ -1028,7 +1028,7 @@ export class MergeTree {
 					if (expected !== partialLen) {
 						node.partialLengths!.getPartialLength(refSeq, clientId);
 						throw new Error(
-							`expected partial length of ${expected} but found ${partialLen}. ${refSeq} ${clientId}`,
+							`expected partial length of ${expected} but found ${partialLen}. refSeq: ${refSeq}, clientId: ${clientId}`,
 						);
 					}
 				}

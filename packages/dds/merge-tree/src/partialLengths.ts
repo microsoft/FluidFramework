@@ -881,10 +881,9 @@ export class PartialSequenceLengths {
 				const branchPartialLengths = childBlock.partialLengths!;
 				const partialLengths = branchPartialLengths.partialLengths;
 				const leqPartial = partialLengths.latestLeq(seq);
-				if (leqPartial) {
-					if (leqPartial.seq === seq) {
-						seqSeglen += leqPartial.seglen;
-					}
+				if (leqPartial && leqPartial.seq === seq) {
+					seqSeglen += leqPartial.seglen;
+					remoteObliteratedLen += leqPartial.remoteObliteratedLen ?? 0;
 				}
 				segCount += branchPartialLengths.segmentCount;
 			} else {
@@ -954,7 +953,7 @@ export class PartialSequenceLengths {
 			this.clientSeqNumbers[clientId],
 			seq,
 			seqSeglen + remoteObliteratedLen,
-			remoteObliteratedLen,
+			undefined,
 			clientId,
 		);
 		if (PartialSequenceLengths.options.zamboni) {
