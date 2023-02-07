@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect } from "react";
+import React from "react";
 import { RecoilRoot } from "recoil";
 import type { IAppModel } from "../model-interface";
 import { DebugView } from "./debugView";
@@ -28,7 +28,6 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 	// would be some external system or arbitrarily occurring.
 	const showExternalServerView: boolean = true;
 	const debugView = <DebugView model={model} />;
-	useEffect(() => {}, [model]);
 	return (
 		<RecoilRoot>
 			{showExternalServerView && debugView}

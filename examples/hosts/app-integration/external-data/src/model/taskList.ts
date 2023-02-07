@@ -31,12 +31,6 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public set priority(newPriority: number) {
 		this._priority.set(newPriority);
 	}
-	public get localChange(): boolean {
-		return this._localChange;
-	}
-	public set localChange(changed: boolean) {
-		this._localChange = changed;
-	}
 	public get incomingName(): string | undefined {
 		return this._incomingName;
 	}
@@ -61,7 +55,6 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		private readonly _id: string,
 		private readonly _name: SharedString,
 		private readonly _priority: ISharedCell<number>,
-		private _localChange: boolean,
 		private _incomingName: string | undefined,
 		private _incomingPriority: number | undefined,
 		private _incomingType: string | undefined,
@@ -172,26 +165,6 @@ export class TaskList extends DataObject implements ITaskList {
 		this.draftData.set(id, draftDataPT);
 	};
 
-	public readonly taskChangedLocally = async (id: string): Promise<void> => {
-		const changedTask = this.getTask(id);
-		if (changedTask !== undefined) {
-			const savedTaskData = this._savedData?.get(id) as PersistedTask;
-			if (savedTaskData === undefined) {
-				throw new Error("There are no existing tasks with this ID.");
-			}
-			const [savedNameSharedString, savedPrioritySharedCell] = await Promise.all([
-				savedTaskData.name.get(),
-				savedTaskData.priority.get(),
-			]);
-			changedTask.localChange =
-				changedTask.name.getText() !== savedNameSharedString.getText() ||
-				changedTask.priority !== savedPrioritySharedCell.get()
-					? true
-					: false;
-		}
-		this.emit("taskChanged");
-	};
-
 	public readonly deleteTask = (id: string): void => {
 		this.draftData.delete(id);
 	};
@@ -233,7 +206,6 @@ export class TaskList extends DataObject implements ITaskList {
 			id,
 			nameSharedString,
 			prioritySharedCell,
-			false,
 			savedNameSharedString.getText(),
 			savedPrioritySharedCell.get(),
 			"add",
@@ -448,15 +420,7 @@ export class TaskList extends DataObject implements ITaskList {
 			]);
 			this.tasks.set(
 				id,
-				new Task(
-					id,
-					nameSharedString,
-					prioritySharedCell,
-					false,
-					undefined,
-					undefined,
-					undefined,
-				),
+				new Task(id, nameSharedString, prioritySharedCell, undefined, undefined, undefined),
 			);
 		}
 	}

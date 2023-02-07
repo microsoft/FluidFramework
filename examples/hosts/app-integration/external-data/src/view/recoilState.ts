@@ -5,7 +5,12 @@
 
 import { atom } from "recoil";
 
-export const localUnsavedChangesState = atom({
-	key: "localUnsavedChanges",
-	default: 0,
+export const fetchingExternalData = atom({
+	key: "fetchingExternalData",
+	default: false,
+});
+
+export const unresolvedConflicts = atom({
+	key: "unresolvedConflicts",
+	default: false,
 });

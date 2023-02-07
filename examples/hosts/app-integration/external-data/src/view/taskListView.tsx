@@ -4,25 +4,24 @@
  */
 
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-import { SharedString } from "@fluidframework/sequence";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useRecoilState } from "recoil";
+import { useSetRecoilState } from "recoil";
 
 import type { ITask, ITaskList } from "../model-interface";
-import { localUnsavedChangesState } from "./recoilState";
+import { unresolvedConflicts } from "./recoilState";
 
 interface ITaskRowProps {
 	readonly task: ITask;
 	readonly deleteTask: () => void;
-	readonly taskChangedLocally: () => void;
+	readonly trackChanges: () => void;
 }
 
 /**
  * The view for a single task in the TaskListView, as a table row.
  */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-	const { task, deleteTask, taskChangedLocally } = props;
+	const { task, deleteTask, trackChanges } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
 	const [incomingName, setIncomingName] = useState<string | undefined>(task.incomingName);
 	const [incomingPriority, setIncomingPriority] = useState<number | undefined>(
@@ -38,10 +37,12 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 		const showIncomingPriority = (): void => {
 			setIncomingPriority(task.incomingPriority);
 			setIncomingType(task.incomingType);
+			trackChanges();
 		};
 		const showIncomingName = (): void => {
 			setIncomingName(task.incomingName);
 			setIncomingType(task.incomingType);
+			trackChanges();
 		};
 		task.on("priorityChanged", updateFromRemotePriority);
 		task.on("incomingPriorityChanged", showIncomingPriority);
@@ -52,16 +53,11 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			task.off("incomingPriorityChanged", showIncomingPriority);
 			task.off("incomingNameChanged", showIncomingName);
 		};
-	}, [task, incomingName, incomingPriority, incomingType]);
-
-	const nameChangeHandler = (_: SharedString): void => {
-		taskChangedLocally();
-	};
+	}, [task, incomingName, incomingPriority, incomingType, trackChanges]);
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
 		task.priority = newValue;
-		taskChangedLocally();
 	};
 
 	const diffVisible = incomingType === undefined;
@@ -92,7 +88,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 				<CollaborativeInput
 					sharedString={task.name}
 					style={{ width: "200px" }}
-					onInput={nameChangeHandler}
 				></CollaborativeInput>
 			</td>
 			<td>
@@ -137,46 +132,40 @@ export interface ITaskListViewProps {
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
 	const { taskList } = props;
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
-	const [localUnsavedChanges, setLocalUnsavedChanges] = useRecoilState(localUnsavedChangesState);
+	const setUnresolved = useSetRecoilState(unresolvedConflicts);
+
+	const trackChanges = (): void => {
+		let unresolved = false;
+		for (const task of taskList.getTasks()) {
+			if (task.incomingType !== undefined) {
+				unresolved = true;
+			}
+		}
+		setUnresolved(unresolved);
+	};
 	useEffect(() => {
 		const updateTasks = (): void => {
 			setTasks(taskList.getTasks());
 		};
-		const updateLocalChangeTracker = (): void => {
-			let changedTasks = 0;
-			for (const task of taskList.getTasks()) {
-				if (task.localChange) changedTasks++;
-			}
-			setLocalUnsavedChanges(changedTasks);
-		};
-
-		taskList.on("taskChanged", updateLocalChangeTracker);
 		taskList.on("taskAdded", updateTasks);
 		taskList.on("taskDeleted", updateTasks);
+
 		return (): void => {
 			taskList.off("taskAdded", updateTasks);
 			taskList.off("taskDeleted", updateTasks);
-
-			taskList.off("taskChanged", updateLocalChangeTracker);
 		};
-	}, [taskList, setLocalUnsavedChanges]);
+	}, [taskList]);
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow
 			key={task.id}
 			task={task}
-			taskChangedLocally={(): void => taskList.taskChangedLocally(task.id)}
 			deleteTask={(): void => {
-				setLocalUnsavedChanges(localUnsavedChanges + 1);
 				taskList.deleteTask(task.id);
 			}}
+			trackChanges={trackChanges}
 		/>
 	));
-
-	const saveChangesHandler = async (): Promise<void> => {
-		setLocalUnsavedChanges(0);
-		await taskList.saveChanges();
-	};
 
 	return (
 		// TODO: Gray button if not "authenticated" via debug controls
@@ -193,7 +182,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				</thead>
 				<tbody>{taskRows}</tbody>
 			</table>
-			<button onClick={saveChangesHandler}>Save changes</button>
+			<button onClick={taskList.saveChanges}>Save changes</button>
 		</div>
 	);
 };

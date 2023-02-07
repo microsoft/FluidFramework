@@ -4,12 +4,12 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
+import { SetterOrUpdater, useRecoilValue, useSetRecoilState } from "recoil";
 import isEqual from "lodash.isequal";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import type { IAppModel, TaskData } from "../model-interface";
-import { localUnsavedChangesState } from "./recoilState";
+import { fetchingExternalData, unresolvedConflicts } from "./recoilState";
 
 /**
  * Helper function used in several of the views to fetch data form the external app
@@ -17,8 +17,10 @@ import { localUnsavedChangesState } from "./recoilState";
 async function pollForServiceUpdates(
 	externalData: Record<string, unknown>,
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
+	setFetchingExternalData: SetterOrUpdater<boolean>,
 ): Promise<void> {
 	try {
+		setFetchingExternalData(true);
 		const response = await fetch(`http://localhost:${externalDataServicePort}/fetch-tasks`, {
 			method: "GET",
 			headers: {
@@ -29,6 +31,7 @@ async function pollForServiceUpdates(
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
 		const newData = responseBody.taskList as TaskData;
+		setFetchingExternalData(false);
 		if (newData !== undefined && !isEqual(newData, externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
 			setExternalData(newData);
@@ -64,7 +67,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
 			<ExternalAppForm model={props.model} />
 			<ExternalDataView />
-			<SyncStatusView model={props.model} />
+			<SyncStatusView />
 			<ControlsView model={props.model} />
 		</div>
 	);
@@ -75,19 +78,24 @@ interface IExternalDataViewProps {}
 
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
 	const [externalData, setExternalData] = useState({});
+	const setFetchingExternalData = useSetRecoilState(fetchingExternalData);
 	useEffect(() => {
 		// Run once immediately to run without waiting.
-		pollForServiceUpdates(externalData, setExternalData).catch(console.error);
+		pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
+			console.error,
+		);
 
 		// HACK: Poll every 3 seconds
 		const timer = setInterval(() => {
-			pollForServiceUpdates(externalData, setExternalData).catch(console.error);
+			pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
+				console.error,
+			);
 		}, 3000);
 
 		return (): void => {
 			clearInterval(timer);
 		};
-	}, [externalData, setExternalData]);
+	}, [externalData, setExternalData, setFetchingExternalData]);
 	const parsedExternalData = isEqual(externalData, {})
 		? []
 		: Object.entries(externalData as TaskData);
@@ -118,22 +126,18 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 	);
 };
 
-interface ISyncStatusViewProps {
-	model: IAppModel;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface ISyncStatusViewProps {}
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
-	const localUnsavedChanges = useRecoilValue(localUnsavedChangesState);
+	const unresolvedChanges = useRecoilValue(unresolvedConflicts);
+	const fetchingData = useRecoilValue(fetchingExternalData);
 	return (
 		<div>
 			<h3>Sync status</h3>
 			<div style={{ margin: "10px 0" }}>
-				Fluid has [no] unsync&apos;d changes (not implemented)
-				<br />
-				External data source has {localUnsavedChanges} unsync &apos;d changes.
-				<br />
-				Current sync activity: [idle | fetching | writing | resolving conflicts?] (not
-				implemented)
+				Current sync activity:{" "}
+				{fetchingData ? "fetching" : unresolvedChanges ? "resolving conflicts" : "idle"}
 				<br />
 			</div>
 		</div>
@@ -241,12 +245,15 @@ export interface ExternalDataTask {
 export const ExternalAppForm: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
 	const { model } = props;
 	const [externalData, setExternalData] = useState({});
+	const setFetchingExternalData = useSetRecoilState(fetchingExternalData);
 	useEffect(() => {
 		// HACK: Populate the external view form with the data in the external server to start off with
-		pollForServiceUpdates(externalData, setExternalData).catch(console.error);
+		pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
+			console.error,
+		);
 
 		return (): void => {};
-	}, [externalData, setExternalData]);
+	}, [externalData, setExternalData, setFetchingExternalData]);
 	const parsedExternalData = Object.entries(externalData as TaskData);
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
 	const taskRows = tasks.map((task) => <TaskRow key={task.id} task={task} />);
