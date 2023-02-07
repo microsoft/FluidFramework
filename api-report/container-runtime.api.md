@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { Deferred } from '@fluidframework/common-utils';
 import { EventEmitter } from 'events';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
@@ -175,7 +176,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
-    orderSequentially<T>(callback: () => T): T;
+    orderSequentially<T>(callback: () => T, flush?: Deferred<void>): T;
     // (undocumented)
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
