@@ -145,7 +145,7 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
 	 * Determines if the `candidate` code details satisfy the constraints specified in `constraint` code details.
 	 *
 	 * Similar semantics to:
-	 * {@link https://github.com/npm/node-semver#Usage}
+	 * {@link https://github.com/npm/node-semver#usage}
 	 */
 	satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 
