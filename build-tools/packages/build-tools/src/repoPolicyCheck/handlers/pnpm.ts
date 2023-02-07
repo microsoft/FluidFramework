@@ -11,6 +11,7 @@ import { Handler, readFile } from "../common";
 const match = /(?:^|\/)pnpm-lock\.yaml$/i;
 export const handlers: Handler[] = [
 	{
+		// A package or workspace that uses pnpm must also have a preinstall script that tells the user to use pnpm.
 		name: "pnpm-npm-package-json-preinstall",
 		match,
 		handler: (file) => {
