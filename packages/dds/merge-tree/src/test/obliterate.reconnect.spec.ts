@@ -1340,7 +1340,7 @@ for (const incremental of [true, false]) {
 		});
 
 		// reduced from seed 30
-		it("...", () => {
+		it("obliterates entire string when concurrent inserts inside range", () => {
 			const helper = new ReconnectTestHelper();
 
 			// GT
@@ -1878,7 +1878,7 @@ for (const incremental of [true, false]) {
 				helper.logger.validate();
 			});
 
-			it("...", () => {
+			it("obliterates 4 concurrently inserted segments", () => {
 				const helper = new ReconnectTestHelper();
 
 				// I-F-(G-D-H-E-C-A)-B

@@ -807,7 +807,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						segInsertOp = segment.clone();
 						segInsertOp.properties = resetOp.seg.props;
 					}
-					if (segment.movedSeq !== -1) {
+					if (segment.movedSeq !== UnassignedSequenceNumber) {
 						removeMoveInfo(segment);
 					}
 					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);

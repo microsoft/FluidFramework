@@ -658,9 +658,9 @@ export class MergeTree {
 		const removalInfo = toRemovalInfo(segment);
 		const moveInfo = toMoveInfo(segment);
 		if (localSeq === undefined) {
-			// todo: we require this to be true for obliterate
 			if (
 				(removalInfo || moveInfo) &&
+				// todo: we require this to be true for obliterate
 				this.options?.mergeTreeUseNewLengthCalculations === true
 			) {
 				return 0;
