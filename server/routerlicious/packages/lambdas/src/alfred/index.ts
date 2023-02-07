@@ -39,6 +39,7 @@ import {
     createRoomLeaveMessage,
     generateClientId,
     getRandomInt,
+    ConnectionCountLogger,
 } from "../utils";
 
 const summarizerClientType = "summarizer";
@@ -193,58 +194,6 @@ function checkThrottleAndUsage(
     }
 }
 
-/**
- * This function will store total connection count per node and per cluster in Redis, and
- * will also log these counters using ConnectionCountPerNode and TotalConnectionCount metrics respectively.
- */
-async function logConnectionCount(isConnect: boolean, cache?: core.ICache): Promise<void> {
-    const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
-    const totalConnectionCountMetric = Lumberjack.newLumberMetric(LumberEventName.TotalConnectionCount);
-    const nodeName = process.env.NODE_NAME ?? "nodeName";
-    const perNodeKeyName = `totalConnections_${nodeName}`;
-    const perClusterKeyName = `totalConnections`;
-    if(!cache) {
-        connectionCountPerNodeMetric.error(`Redis Cache not found.`);
-        totalConnectionCountMetric.error(`Redis Cache not found.`);
-        return;
-    }
-    if (isConnect) {
-        cache.incr(perNodeKeyName).then((val) => {
-            connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
-            connectionCountPerNodeMetric.success("Connection count incremented for node.");
-        },
-        (error) => {
-            connectionCountPerNodeMetric.error(
-                `Error while incrementing connection count for node.`, error);
-        });
-        cache.incr(perClusterKeyName).then((val) => {
-            totalConnectionCountMetric.setProperty("TotalConnectionCount", val);
-            totalConnectionCountMetric.success("Total connection count incremented.");
-        },
-        (error) => {
-            totalConnectionCountMetric.error(
-                `Error while incrementing total connection count for cluster.`, error);
-        });
-    } else {
-        cache.decr(perNodeKeyName).then((val) => {
-            connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
-            connectionCountPerNodeMetric.success("Connection count decremented for node.");
-        },
-        (error) => {
-            connectionCountPerNodeMetric.error(
-                `Error while decrementing connection count for node`, error);
-        });
-        cache.decr(perClusterKeyName).then((val) => {
-            totalConnectionCountMetric.setProperty("TotalConnectionCount", val);
-            totalConnectionCountMetric.success("Total connection count decremented.");
-        },
-        (error) => {
-            totalConnectionCountMetric.error(
-                `Error while decrementing total connection count for cluster.`, error);
-        });
-    }
-}
-
 export function configureWebSocketServices(
     webSocketServer: core.IWebSocketServer,
     orderManager: core.IOrdererManager,
@@ -278,6 +227,8 @@ export function configureWebSocketServices(
 
         // Timer to check token expiry for this socket connection
         let expirationTimer: NodeJS.Timer | undefined;
+
+        const connectionCountLogger = new ConnectionCountLogger(process.env.NODE_NAME, cache);
 
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
@@ -538,7 +489,7 @@ export function configureWebSocketServices(
                     // excluding summarizer for total client count.
                     if (message?.details?.details?.type !== "summarizer") {
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        logConnectionCount(true, cache);
+                        connectionCountLogger.logConnectionCount(true);
                     }
 
                     connectMetric.setProperties({
@@ -744,7 +695,7 @@ export function configureWebSocketServices(
                 // excluding summarizer for total client count.
                 if (connectionTimeMap.has(clientId)) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    logConnectionCount(false, cache);
+                    connectionCountLogger.logConnectionCount(false);
                 }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
