@@ -13,19 +13,19 @@ export { AzureAudience } from "./AzureAudience";
 export { AzureClient } from "./AzureClient";
 export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 export {
-    AzureClientProps,
-    AzureConnectionConfig,
-    AzureConnectionConfigType,
-    AzureContainerServices,
-    AzureContainerVersion,
-    AzureGetVersionsOptions,
-    AzureLocalConnectionConfig,
-    AzureMember,
-    AzureRemoteConnectionConfig,
-    AzureUser,
-    IAzureAudience,
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
+	AzureClientProps,
+	AzureConnectionConfig,
+	AzureConnectionConfigType,
+	AzureContainerServices,
+	AzureContainerVersion,
+	AzureGetVersionsOptions,
+	AzureLocalConnectionConfig,
+	AzureMember,
+	AzureRemoteConnectionConfig,
+	AzureUser,
+	IAzureAudience,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
 } from "./interfaces";
 
 export { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
