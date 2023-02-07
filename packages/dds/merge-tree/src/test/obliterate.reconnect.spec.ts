@@ -8,7 +8,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IMergeTreeDeltaOp } from "../ops";
 import { SegmentGroup } from "..";
-import { PartialSequenceLengths, verify } from "../partialLengths";
+import { PartialSequenceLengths, verify, verifyExpected } from "../partialLengths";
 import { MergeTree } from "../mergeTree";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
@@ -120,11 +120,13 @@ for (const incremental of [true, false]) {
 	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
 		beforeEach(() => {
 			PartialSequenceLengths.options.verifier = verify;
+			PartialSequenceLengths.options.verifyExpected = verifyExpected;
 			MergeTree.options.incrementalUpdate = incremental;
 		});
 
 		afterEach(() => {
 			PartialSequenceLengths.options.verifier = undefined;
+			PartialSequenceLengths.options.verifyExpected = undefined;
 			MergeTree.options.incrementalUpdate = true;
 		});
 

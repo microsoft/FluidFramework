@@ -997,20 +997,13 @@ export class MergeTree {
 					localSeq,
 				);
 
-				if (PartialSequenceLengths.options.verifier) {
-					let expected = 0;
-					for (let i = 0; i < node.childCount; i++) {
-						expected +=
-							this.nodeLength(node.children[i], refSeq, clientId, localSeq) ?? 0;
-					}
-
-					if (expected !== partialLen) {
-						node.partialLengths!.getPartialLength(refSeq, clientId);
-						throw new Error(
-							`expected partial length of ${expected} but found ${partialLen}. ${refSeq} ${clientId}`,
-						);
-					}
-				}
+				PartialSequenceLengths.options.verifyExpected?.(
+					this,
+					node,
+					refSeq,
+					clientId,
+					localSeq,
+				);
 
 				return partialLen;
 			}
@@ -1019,19 +1012,7 @@ export class MergeTree {
 			if (!node.isLeaf()) {
 				const partialLen = node.partialLengths!.getPartialLength(refSeq, clientId);
 
-				if (PartialSequenceLengths.options.verifier) {
-					let expected = 0;
-					for (let i = 0; i < node.childCount; i++) {
-						expected += this.nodeLength(node.children[i], refSeq, clientId) ?? 0;
-					}
-
-					if (expected !== partialLen) {
-						node.partialLengths!.getPartialLength(refSeq, clientId);
-						throw new Error(
-							`expected partial length of ${expected} but found ${partialLen}. refSeq: ${refSeq}, clientId: ${clientId}`,
-						);
-					}
-				}
+				PartialSequenceLengths.options.verifyExpected?.(this, node, refSeq, clientId);
 
 				return partialLen;
 			} else {
@@ -2206,10 +2187,13 @@ export class MergeTree {
 				// Don't update ordinals because higher block will do it
 				const newNodeFromSplit = this.split(block);
 
-				if (PartialSequenceLengths.options.verifier) {
-					this.nodeLength(block, refSeq, clientId);
-					this.nodeLength(newNodeFromSplit, refSeq, clientId);
-				}
+				PartialSequenceLengths.options.verifyExpected?.(this, block, refSeq, clientId);
+				PartialSequenceLengths.options.verifyExpected?.(
+					this,
+					newNodeFromSplit,
+					refSeq,
+					clientId,
+				);
 
 				return newNodeFromSplit;
 			}
@@ -2945,9 +2929,7 @@ export class MergeTree {
 				);
 			}
 
-			if (PartialSequenceLengths.options.verifier) {
-				this.nodeLength(node, seq, clientId);
-			}
+			PartialSequenceLengths.options.verifyExpected?.(this, node, seq, clientId);
 		}
 	}
 

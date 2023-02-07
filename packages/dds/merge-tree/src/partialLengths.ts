@@ -6,10 +6,12 @@
 import { assert } from "@fluidframework/common-utils";
 import { Property, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
+import { MergeTree } from "./mergeTree";
 import {
 	CollaborationWindow,
 	compareNumbers,
 	IMergeBlock,
+	IMergeNode,
 	IMoveInfo,
 	IRemovalInfo,
 	ISegment,
@@ -203,6 +205,13 @@ interface LocalPartialSequenceLength extends PartialSequenceLength {
 
 export interface PartialSequenceLengthsOptions {
 	verifier?: (partialLengths: PartialSequenceLengths) => void;
+	verifyExpected?: (
+		mergeTree: MergeTree,
+		node: IMergeBlock,
+		refSeq: number,
+		clientId: number,
+		localSeq?: number,
+	) => void;
 	zamboni: boolean;
 }
 
@@ -1214,6 +1223,45 @@ function verifyPartialLengths(
 		}
 	}
 	return count;
+}
+
+export function verifyExpected(
+	mergeTree: MergeTree,
+	node: IMergeBlock,
+	refSeq: number,
+	clientId: number,
+	localSeq?: number,
+) {
+	if (
+		(!mergeTree.collabWindow.collaborating || mergeTree.collabWindow.clientId === clientId) &&
+		(node.isLeaf() || localSeq === undefined)
+	) {
+		return;
+	}
+
+	const partialLen = node.partialLengths?.getPartialLength(refSeq, clientId, localSeq);
+
+	let expected = 0;
+	const nodesToVisit: IMergeNode[] = [node];
+
+	while (nodesToVisit.length > 0) {
+		const thisNode = nodesToVisit.pop();
+		if (!thisNode) {
+			continue;
+		}
+		if (thisNode.isLeaf()) {
+			expected += mergeTree["nodeLength"](thisNode, refSeq, clientId, localSeq) ?? 0;
+		} else {
+			nodesToVisit.push(...thisNode.children.slice(0, thisNode.childCount));
+		}
+	}
+
+	if (expected !== partialLen) {
+		node.partialLengths?.getPartialLength(refSeq, clientId, localSeq);
+		throw new Error(
+			`expected partial length of ${expected} but found ${partialLen}. refSeq: ${refSeq}, clientId: ${clientId}`,
+		);
+	}
 }
 
 export function verify(partialSeqLengths: PartialSequenceLengths) {
