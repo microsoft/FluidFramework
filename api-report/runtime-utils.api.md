@@ -109,8 +109,10 @@ export interface ISummarizerNodeRootContract {
     clearSummary(): void;
     // (undocumented)
     completeSummary(proposalHandle: string): void;
+    // Warning: (ae-forgotten-export) The symbol "IFetchSnapshotResult" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, getSnapshot: () => Promise<ISnapshotTree>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
+    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, getSnapshot: () => Promise<IFetchSnapshotResult>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
     // (undocumented)
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 }
@@ -144,10 +146,12 @@ export type RefreshSummaryResult = {
 } | {
     latestSummaryUpdated: true;
     wasSummaryTracked: true;
+    summaryRefSeq: number;
 } | {
     latestSummaryUpdated: true;
     wasSummaryTracked: false;
-    snapshot: ISnapshotTree;
+    snapshotTree: ISnapshotTree;
+    summaryRefSeq: number;
 };
 
 // @public (undocumented)
