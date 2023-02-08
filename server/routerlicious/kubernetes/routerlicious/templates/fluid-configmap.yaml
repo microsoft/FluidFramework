@@ -67,6 +67,7 @@ data:
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
+            "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
                 "restCalls": {
                     "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},

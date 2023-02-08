@@ -141,14 +141,14 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 						proposeVersion("one");
 					}}
 				>
-					"one"
+					&quot;one&quot;
 				</button>
 				<button
 					onClick={() => {
 						proposeVersion("two");
 					}}
 				>
-					"two"
+					&quot;two&quot;
 				</button>
 			</div>
 			<div style={{ margin: "10px 0" }}>

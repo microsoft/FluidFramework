@@ -27,7 +27,7 @@ const pointShape = new TreeShape(jsonObject.name, false, [
 	[yField, numberShape, 1],
 ]);
 
-const sides = 100000;
+const sides = 100;
 const polygon = new TreeShape(jsonArray.name, false, [
 	[EmptyKey, pointShape, sides],
 ]).withTopLevelLength(1);
@@ -114,6 +114,10 @@ const testTrees = [
 				},
 			},
 		],
+	},
+	{
+		...polygonTree,
+		reference: [polygonTree.reference],
 	},
 ];
 
