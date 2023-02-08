@@ -100,8 +100,19 @@ interface WithChunk {
 	 * When in nodes mode, if a value is returned, it is a TreeChunk who's top level nodes are the
 	 * chunkLength nodes starting from chunkStart.
 	 *
+	 *
+	 * @remarks
 	 * Note that there may be other tree representations which different chunk APIs and thus different ways to query them.
 	 * The chunkStart and chunkLength values thus to not uniquely apply to the chunks accessed through this field.
+	 *
+	 * TODO:
+	 * This API (including the chunk start and end on ITreeCUrsor) have some issues:
+	 * 1. There are cases where multiple possible chunks could be considered.
+	 * For example, when in a SequenceChunk, it could be returned, or the chunk withing it could be.
+	 * 2. When in a location other than the root of a chunk,
+	 * it can't provide information about the containing chunk other than by allocating a new chunk that just represents that field.
+	 *
+	 * As more optimizations get implemented, this API may need to change to better address these issues.
 	 */
 	readonly [cursorChunk]?: TreeChunk;
 }

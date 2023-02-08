@@ -17,7 +17,7 @@ import {
 } from "../../core";
 import { fail } from "../../util";
 import { prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, cursorChunk, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * General purpose one node chunk.
@@ -102,7 +102,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	 * it creates the `nestedCursor` over that chunk, and delegates all operations to it.
 	 */
 	public constructor(
-		protected root: TreeChunk[],
+		protected root: readonly TreeChunk[],
 		protected readonly siblingStack: SiblingsOrKey[],
 		protected readonly indexStack: number[],
 		protected readonly indexOfChunkStack: number[],
@@ -118,11 +118,13 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		super();
 	}
 
-	// TODO implements `[cursorChunk]`, handling:
-	// 1. root chunk
-	// 2. nested basic chunk
-	// 3. inner chunks
-	// public readonly get [cursorChunk](): TreeChunk ;
+	public get [cursorChunk](): TreeChunk | undefined {
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor[cursorChunk];
+		}
+		assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
+		return (this.siblings as TreeChunk[])[this.indexOfChunk];
+	}
 
 	public atChunkRoot(): boolean {
 		return (

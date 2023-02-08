@@ -267,7 +267,7 @@ export function chunkRange(
 		// return existing chunk with a increased ref count if possible.
 		if (start === cursor.fieldIndex) {
 			const chunkLength = cursor.chunkLength;
-			if (chunkLength < remaining) {
+			if (chunkLength <= remaining) {
 				const chunk = tryGetChunk(cursor);
 				if (chunk !== undefined) {
 					if (

@@ -9,10 +9,13 @@ import { jsonNull, jsonObject } from "../../../domains";
 import { jsonableTreeFromCursor, singleTextCursor, TreeChunk } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
+// eslint-disable-next-line import/no-internal-modules
+import { tryGetChunk } from "../../../feature-libraries/chunked-forest/chunk";
 import {
 	basicOnlyChunkPolicy,
 	ChunkPolicy,
 	chunkRange,
+	defaultChunkPolicy,
 	insertValues,
 	polymorphic,
 	uniformChunkFromCursor,
@@ -22,6 +25,7 @@ import {
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeShape } from "../../../feature-libraries/chunked-forest/uniformChunk";
+import { brand } from "../../../util";
 import {
 	assertChunkCursorEquals,
 	fieldCursorFromJsonableTrees,
@@ -225,6 +229,17 @@ describe("chunkTree", () => {
 					);
 				});
 			}
+		});
+
+		it("reuses chunks", () => {
+			const chunk = new BasicChunk(brand("Foo"), new Map());
+			const cursor = chunk.cursor();
+			cursor.firstNode();
+			assert.equal(tryGetChunk(cursor), chunk);
+			assert(!chunk.isShared());
+			const chunks = chunkRange(cursor, defaultChunkPolicy, 1, false);
+			assert(chunk.isShared());
+			assert.equal(chunks[0], chunk);
 		});
 	});
 });

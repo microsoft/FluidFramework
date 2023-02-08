@@ -315,7 +315,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 	public constructor(
 		public readonly forest: ChunkedForest,
 		public state: ITreeSubscriptionCursorState,
-		root: TreeChunk[],
+		root: readonly TreeChunk[],
 		siblingStack: SiblingsOrKey[],
 		indexStack: number[],
 		indexOfChunkStack: number[],
