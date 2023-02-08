@@ -102,7 +102,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	 * it creates the `nestedCursor` over that chunk, and delegates all operations to it.
 	 */
 	public constructor(
-		protected root: BasicChunk[],
+		protected root: TreeChunk[],
 		protected readonly siblingStack: SiblingsOrKey[],
 		protected readonly indexStack: number[],
 		protected readonly indexOfChunkStack: number[],
@@ -125,8 +125,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	// public readonly get [cursorChunk](): TreeChunk ;
 
 	public atChunkRoot(): boolean {
-		// TODO: test/confirm this is right
-		return this.siblingStack.length > 2;
+		return (
+			this.siblingStack.length < 2 &&
+			(this.nestedCursor === undefined || this.nestedCursor.atChunkRoot())
+		);
 	}
 
 	public fork(): BasicChunkCursor {

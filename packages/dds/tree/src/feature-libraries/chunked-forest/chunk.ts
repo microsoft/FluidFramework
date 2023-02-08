@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+	CursorLocationType,
 	GlobalFieldKeySymbol,
 	ITreeCursor,
 	ITreeCursorSynchronous,
@@ -99,13 +100,17 @@ interface WithChunk {
 	 * When in nodes mode, if a value is returned, it is a TreeChunk who's top level nodes are the
 	 * chunkLength nodes starting from chunkStart.
 	 *
-	 * Note that there may be other tree representations which different chunk APS and thus different ways to query them.
+	 * Note that there may be other tree representations which different chunk APIs and thus different ways to query them.
 	 * The chunkStart and chunkLength values thus to not uniquely apply to the chunks accessed through this field.
 	 */
 	readonly [cursorChunk]?: TreeChunk;
 }
 
+/**
+ * See {@link WithChunk}.
+ */
 export function tryGetChunk(cursor: ITreeCursor): undefined | TreeChunk {
+	assert(cursor.mode === CursorLocationType.Nodes, "cursorChunk only accessible in nodes mode");
 	return (cursor as WithChunk)[cursorChunk];
 }
 

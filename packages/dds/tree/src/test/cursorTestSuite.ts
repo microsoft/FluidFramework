@@ -708,7 +708,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
  * This does NOT test that the data the cursor exposes is correct,
  * it simply checks that the traversal APIs function, and that a few aspects of them conform with the spec.
  */
-function checkFieldTraversal(cursor: ITreeCursor, expectedPath: FieldUpPath): void {
+export function checkFieldTraversal(cursor: ITreeCursor, expectedPath: FieldUpPath): void {
 	assert.equal(cursor.mode, CursorLocationType.Fields);
 	assert.equal(cursor.pending, false);
 	const expectedFieldLength = cursor.getFieldLength();

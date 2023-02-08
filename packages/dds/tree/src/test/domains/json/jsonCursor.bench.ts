@@ -22,7 +22,6 @@ import {
 	singleMapTreeCursor,
 	singleTextCursor,
 	buildChunkedForest,
-	chunkTree,
 } from "../../../feature-libraries";
 import {
 	initializeForest,
@@ -30,6 +29,11 @@ import {
 	JsonableTree,
 	moveToDetachedField,
 } from "../../../core";
+import {
+	basicChunkTree,
+	defaultChunkPolicy,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunkTree";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
@@ -126,7 +130,7 @@ function bench(
 					"BasicChunkCursor",
 					() => {
 						const input = singleTextCursor(encodedTree);
-						const chunk = chunkTree(input);
+						const chunk = basicChunkTree(input, defaultChunkPolicy);
 						const cursor = chunk.cursor();
 						cursor.enterNode(0);
 						return cursor;
