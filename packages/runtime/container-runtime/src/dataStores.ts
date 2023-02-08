@@ -129,7 +129,7 @@ export class DataStores implements IDisposable {
 			timestampMs: number,
 			packagePath?: readonly string[],
 		) => void,
-		private readonly isNodeDeleted: (nodePath: string) => boolean,
+		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
 	) {
@@ -467,7 +467,7 @@ export class DataStores implements IDisposable {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		const request = { url: id };
 
-		this.checkDeleted(id, request, headerData);
+		this.validateNotDeleted(id, request, headerData);
 
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
@@ -475,14 +475,22 @@ export class DataStores implements IDisposable {
 			throw responseToException(create404Response(request), request);
 		}
 
-		this.checkTombstoned(context, request, requestHeaderData);
+		this.validateNotTombstoned(context, request, requestHeaderData);
 
 		return context;
 	}
 
-	private checkDeleted(id: string, request: IRequest, requestHeaderData: RuntimeHeaderData) {
+	/**
+	 * Validate that the data store had not been deleted by GC.
+	 * 
+	 * @param id - data store id
+	 * @param request - the request information to log if the validation detects the data store has been deleted
+	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been deleted
+	 */
+	private validateNotDeleted(id: string, request: IRequest, requestHeaderData: RuntimeHeaderData) {
 		const dataStoreNodePath = `/${id}`;
-		if (this.isNodeDeleted(dataStoreNodePath)) {
+		if (this.isDataStoreDeleted(dataStoreNodePath)) {
+			assert(!this.contexts.has(id), "Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime.");
 			// The requested data store is removed by gc. Create a 404 gc response exception.
 			const error = responseToException(
 				createResponseError(404, "DataStore was deleted", request),
@@ -503,7 +511,14 @@ export class DataStores implements IDisposable {
 		}
 	}
 
-	private checkTombstoned(
+	/**
+	 * Validates that the data store context requested has not been marked as tombstone by GC.
+	 * 
+	 * @param context - the data store context in question
+	 * @param request - the request information to log if the validation detects the data store has been tombstoned
+	 * @param headerData - the request header information to log if the validation detects the data store has been tombstoned
+	 */
+	private validateNotTombstoned(
 		context: FluidDataStoreContext,
 		request: IRequest,
 		headerData: RuntimeHeaderData,

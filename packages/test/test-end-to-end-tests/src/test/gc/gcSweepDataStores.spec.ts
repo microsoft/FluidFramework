@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IGCRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import { IGCRuntimeOptions, ISummarizer, TombstoneResponseHeaderKey } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
@@ -60,7 +60,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		}
 		settings["Fluid.GarbageCollection.Test.SweepDataStores"] = true;
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
-		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
@@ -256,6 +255,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 					`DataStore was deleted: ${unreferencedId}`,
 					"Expected the Sweep error message",
 				);
+				assert.equal(
+					errorResponse.headers?.[TombstoneResponseHeaderKey],
+					undefined,
+					"DID NOT Expect tombstone header to be set on the response",
+				);
 
 				// This request fails since the datastore is swept
 				const summarizerResponse = await containerRuntime_resolveHandle(
@@ -268,9 +272,14 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 					"Should not be able to retrieve a swept datastore from a summarizer client",
 				);
 				assert.equal(
-					errorResponse.value,
+					summarizerResponse.value,
 					`DataStore was deleted: ${unreferencedId}`,
 					"Expected the Sweep error message",
+				);
+				assert.equal(
+					summarizerResponse.headers?.[TombstoneResponseHeaderKey],
+					undefined,
+					"DID NOT Expect tombstone header to be set on the response",
 				);
 			},
 		);
