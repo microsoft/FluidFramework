@@ -53,7 +53,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
-		gcEnforcementCurrentValue: undefined,
 	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -75,8 +74,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			},
 			gcOptions: {
 				...gcOptions,
-				// Simulate these test containers being loaded at a future time with a higher min version for GC enforcement
-				gcEnforcementCurrentValue: "999.999.999",
+				// Different from undefined (the persisted value) so will disable GC enforcement
+				gcEnforcementCurrentValue: 1,
 			},
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
@@ -97,8 +96,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		disableTombstoneFailureViaOption: boolean = false,
 	) {
 		const config = disableTombstoneFailureViaOption
-			? testContainerConfig
-			: testContainerConfigWithFutureMinGcOption;
+			? testContainerConfigWithFutureMinGcOption
+			: testContainerConfig;
 		return provider.loadTestContainer(config, {
 			[LoaderHeader.version]: summaryVersion,
 		});
@@ -130,12 +129,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	// datastore was unreferenced in.
 	const summarizationWithUnreferencedDataStoreAfterTime = async (
 		approximateUnreferenceTimestampMs: number,
-		disableTombstoneFailureViaOption: boolean = false,
 	) => {
-		const config = disableTombstoneFailureViaOption
-			? testContainerConfig
-			: testContainerConfigWithFutureMinGcOption;
-		const container = await makeContainer(config);
+		const container = await makeContainer(testContainerConfig);
 		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
 		await waitForContainerConnection(container);
 
@@ -630,18 +625,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			},
 		);
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-		itExpects.only(
+		itExpects(
 			"Requesting tombstoned datastores succeeds with future gcEnforcementCurrentValue",
 			[
 				// Interactive client's request that succeeds
@@ -656,11 +641,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 			],
 			async function () {
+				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(
-						sweepTimeoutMs,
-						true /* disableTombstoneFailureViaOption */,
-					);
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
 				// The datastore should be tombstoned now
