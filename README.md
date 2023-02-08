@@ -221,6 +221,8 @@ Notable setting options:
 -   `format on save`
 -   `format on paste`
 
+<img src="https://user-images.githubusercontent.com/54606601/217620203-0cb07007-0aaa-4e57-bc83-973ed4a3f2d7.png" alt="User editor formatting setting options" style="height:400px;"/>
+
 ### Git Configuration
 
 Run the following command in each of your repositories to ignore formatting changes in git blame commands: `git config --local blame.ignoreRevsFile .git-blame-ignore-revs`
