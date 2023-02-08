@@ -4,27 +4,29 @@ The version-tools package provides APIs and a CLI to parse and transform version
 Fluid Framework.
 
 <!-- toc -->
-* [@fluid-tools/version-tools](#fluid-toolsversion-tools)
-* [Version schemes](#version-schemes)
-* [General API](#general-api)
-* [CLI Usage](#cli-usage)
-* [Commands](#commands)
+
+-   [@fluid-tools/version-tools](#fluid-toolsversion-tools)
+-   [Version schemes](#version-schemes)
+-   [General API](#general-api)
+-   [CLI Usage](#cli-usage)
+-   [Commands](#commands)
 <!-- tocstop -->
 
 # Version schemes
 
 Fluid Framework packages sometimes use version schemes that diverge from standard semantic versioning. By default, a new
-package should use standard semantic versioning. However, there are also two other versioning schemes: *internal* and
-*virtualPatch*.
+package should use standard semantic versioning. However, there are also two other versioning schemes: _internal_ and
+_virtualPatch_.
+
 ## internal version scheme
 
 The Fluid internal version scheme consists of two semver "triplets" of major/minor/patch. The first triplet is called
-the *public version*, and is stored in the typical semver positions in the version string.
+the _public version_, and is stored in the typical semver positions in the version string.
 
-The second triplet is called the *internal version*, and is found at the end of the pre-release section of the
+The second triplet is called the _internal version_, and is found at the end of the pre-release section of the
 version string.
 
-Fluid internal version strings *always* include the string `internal` in the first position of the pre-release
+Fluid internal version strings _always_ include the string `internal` in the first position of the pre-release
 section.
 
 In the following example, the public version is `a.b.c`, while the internal version is `x.y.z`.
@@ -33,14 +35,14 @@ In the following example, the public version is `a.b.c`, while the internal vers
 
 ### API
 
-* `isInternalVersionScheme` -- Returns true if a string represents an internal version number.
-* `isInternalVersionRange` -- Returns true if a string represents an internal version range.
-* `toInternalScheme` -- Converts a standard semver version string to the internal version scheme.
-* `fromInternalScheme` -- Converts an internal version scheme string into two standard semvers -- one for the public
-  version and one for the internal version.
-* `bumpInternalVersion` -- Given an internal version and a bump type, returns the bumped version.
-* `getVersionRange` -- Given an internal version and a constraint type, returns a dependency version range that enforces
-  the constraint.
+-   `isInternalVersionScheme` -- Returns true if a string represents an internal version number.
+-   `isInternalVersionRange` -- Returns true if a string represents an internal version range.
+-   `toInternalScheme` -- Converts a standard semver version string to the internal version scheme.
+-   `fromInternalScheme` -- Converts an internal version scheme string into two standard semvers -- one for the public
+    version and one for the internal version.
+-   `bumpInternalVersion` -- Given an internal version and a bump type, returns the bumped version.
+-   `getVersionRange` -- Given an internal version and a constraint type, returns a dependency version range that enforces
+    the constraint.
 
 ## virtualPatch version scheme
 
@@ -55,12 +57,12 @@ Minor versions always start at 1 instead of 0. That is, the first release of a m
 
 ### API
 
-* `isVirtualPatch` -- Returns true if a string represents an internal version number.
+-   `isVirtualPatch` -- Returns true if a string represents an internal version number.
 
 # General API
 
-* `detectVersionScheme` -- Given a version or a range string, determines what version scheme the string is using.
-* `incRange` -- Increments a _range_ by the bump type (major, minor, or patch), maintaining the existing constraint.
+-   `detectVersionScheme` -- Given a version or a range string, determines what version scheme the string is using.
+-   `incRange` -- Increments a _range_ by the bump type (major, minor, or patch), maintaining the existing constraint.
 
 # CLI Usage
 
@@ -69,26 +71,29 @@ also available in the Fluid build and release tool (`flub`). This is accomplishe
 [oclif's plugin system](https://oclif.io/docs/plugins).
 
 <!-- usage -->
+
 ```sh-session
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/0.7.1
+@fluid-tools/version-tools/0.9.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
 ...
 ```
+
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
-* [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
-* [`fluv help [COMMAND]`](#fluv-help-command)
-* [`fluv version VERSION`](#fluv-version-version)
-* [`fluv version latest`](#fluv-version-latest)
+
+-   [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
+-   [`fluv help [COMMAND]`](#fluv-help-command)
+-   [`fluv version VERSION`](#fluv-version-version)
+-   [`fluv version latest`](#fluv-version-latest)
 
 ## `fluv autocomplete [SHELL]`
 
@@ -214,6 +219,7 @@ EXAMPLES
 
     $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
 ```
+
 <!-- commandsstop -->
 
 ## Developer notes

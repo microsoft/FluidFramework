@@ -109,13 +109,15 @@ export interface IConnectionDetails {
     // (undocumented)
     clientId: string;
     // (undocumented)
-    existing: boolean;
+    serviceConfiguration: IClientConfiguration;
+}
+
+// @public
+export interface IConnectionDetailsInternal extends IConnectionDetails {
     // (undocumented)
     initialClients: ISignalClient[];
     // (undocumented)
     mode: ConnectionMode;
-    // (undocumented)
-    serviceConfiguration: IClientConfiguration;
     // (undocumented)
     version: string;
 }

@@ -17,7 +17,11 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { buildHierarchy } from "@fluidframework/protocol-base";
-import { GitManager, ISummaryUploadManager, SummaryTreeUploadManager } from "@fluidframework/server-services-client";
+import {
+	GitManager,
+	ISummaryUploadManager,
+	SummaryTreeUploadManager,
+} from "@fluidframework/server-services-client";
 
 export class LocalDocumentStorageService implements IDocumentStorageService {
 	// The values of this cache is useless. We only need the keys. So we are always putting
@@ -74,7 +78,10 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		return bufferContent;
 	}
 
-	public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
+	public async uploadSummaryWithContext(
+		summary: ISummaryTree,
+		context: ISummaryContext,
+	): Promise<string> {
 		return this.summaryTreeUploadManager.writeSummaryTree(
 			summary,
 			context.ackHandle ?? "",
@@ -84,24 +91,24 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		const uint8ArrayFile = new Uint8Array(file);
-		return this.manager.createBlob(
-			Uint8ArrayToString(
-				uint8ArrayFile, "base64"),
-			"base64").then((r) => ({ id: r.sha, url: r.url }));
+		return this.manager
+			.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
+			.then((r) => ({ id: r.sha, url: r.url }));
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		throw new Error("NOT IMPLEMENTED!");
 	}
 
-	private async getPreviousFullSnapshot(parentHandle: string): Promise<ISnapshotTreeEx | null | undefined> {
+	private async getPreviousFullSnapshot(
+		parentHandle: string,
+	): Promise<ISnapshotTreeEx | null | undefined> {
 		return parentHandle
-			? this.getVersions(parentHandle, 1)
-				.then(async (versions) => {
+			? this.getVersions(parentHandle, 1).then(async (versions) => {
 					// Clear the cache as the getSnapshotTree call will fill the cache.
 					this.blobsShaCache.clear();
 					return this.getSnapshotTree(versions[0]);
-				})
+			  })
 			: undefined;
 	}
 }

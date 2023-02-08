@@ -4,17 +4,15 @@
  */
 
 class MockAsyncContext {
-    incrementInContext(key, count) {
+	incrementInContext(key, count) {}
 
-    }
+	runInNewContext(callback) {
+		return callback();
+	}
 
-    runInNewContext(callback) {
-        return callback();
-    }
-
-    getDBStats() {
-        return {};
-    }
+	getDBStats() {
+		return {};
+	}
 }
 
 module.exports = MockAsyncContext;

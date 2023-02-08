@@ -14,15 +14,15 @@ import { Utils } from "./utils";
 const { TraversalContext } = Utils;
 
 export {
-    TemplateSchema,
-    TemplateValidator,
-    TypeIdHelper,
-    ChangeSet,
-    Utils,
-    PathHelper,
-    ArrayChangeSetIterator,
-    rebaseToRemoteChanges,
-    SerializedChangeSet,
-    TraversalContext,
-    ExtractedContext,
+	TemplateSchema,
+	TemplateValidator,
+	TypeIdHelper,
+	ChangeSet,
+	Utils,
+	PathHelper,
+	ArrayChangeSetIterator,
+	rebaseToRemoteChanges,
+	SerializedChangeSet,
+	TraversalContext,
+	ExtractedContext,
 };

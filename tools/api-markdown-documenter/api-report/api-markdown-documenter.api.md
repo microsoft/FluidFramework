@@ -229,7 +229,7 @@ export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
 export function getFileNameForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
 
 // @public
-export function getFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
+export function getFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
 
 // @public
 export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined;
