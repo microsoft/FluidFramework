@@ -169,9 +169,8 @@ export interface IGarbageCollector {
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
 	refreshLatestSummary(
-		result: RefreshSummaryResult,
 		proposalHandle: string | undefined,
-		summaryRefSeq: number,
+		result: RefreshSummaryResult,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<void>;
 	/** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
@@ -1278,9 +1277,8 @@ export class GarbageCollector implements IGarbageCollector {
 	 * is downloaded and should be used to update the state.
 	 */
 	public async refreshLatestSummary(
-		result: RefreshSummaryResult,
 		proposalHandle: string | undefined,
-		summaryRefSeq: number,
+		result: RefreshSummaryResult,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<void> {
 		// If the latest summary was updated and the summary was tracked, this client is the one that generated this
@@ -1307,8 +1305,8 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// If the summary was not tracked by this client, the state should be updated from the downloaded snapshot.
-		const snapshot = result.snapshot;
-		const metadataBlobId = snapshot.blobs[metadataBlobName];
+		const snapshotTree = result.snapshotTree;
+		const metadataBlobId = snapshotTree.blobs[metadataBlobName];
 		if (metadataBlobId) {
 			const metadata = await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId);
 			this.latestSummaryGCVersion = getGCVersion(metadata);
@@ -1322,10 +1320,14 @@ export class GarbageCollector implements IGarbageCollector {
 				"No reference timestamp when updating GC state from snapshot",
 				"refreshLatestSummary",
 				undefined,
-				{ proposalHandle, summaryRefSeq, details: JSON.stringify(this.configs) },
+				{
+					proposalHandle,
+					summaryRefSeq: result.summaryRefSeq,
+					details: JSON.stringify(this.configs),
+				},
 			);
 		}
-		const gcSnapshotTree = snapshot.trees[gcTreeKey];
+		const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
 		// If GC ran in the container that generated this snapshot, it will have a GC tree.
 		this.wasGCRunInLatestSummary = gcSnapshotTree !== undefined;
 		let latestGCData: IGarbageCollectionSnapshotData | undefined;
