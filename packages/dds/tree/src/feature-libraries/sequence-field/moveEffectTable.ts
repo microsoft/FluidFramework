@@ -245,7 +245,10 @@ function applyMoveEffectsToDest<T>(
 		};
 
 		if (mark.type === "ReturnTo" && mark.detachIndex !== undefined) {
-			assert(effect.count !== undefined, 0x568 /* Should define count when splitting a mark */);
+			assert(
+				effect.count !== undefined,
+				0x568 /* Should define count when splitting a mark */,
+			);
 			(newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
 		}
 
@@ -292,7 +295,10 @@ function applyMoveEffectsToSource<T>(
 			}
 		}
 		if (effect.pairedMarkStatus !== undefined) {
-			assert(newMark.type === "ReturnFrom", 0x56a /* TODO: support updating MoveOut.isSrcConflicted */);
+			assert(
+				newMark.type === "ReturnFrom",
+				0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
+			);
 			if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
 				newMark.isDstConflicted = true;
 			} else {
@@ -316,7 +322,10 @@ function applyMoveEffectsToSource<T>(
 			count: childEffect.count,
 		};
 		if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
-			assert(effect.count !== undefined, 0x56c /* Should define count when splitting a mark */);
+			assert(
+				effect.count !== undefined,
+				0x56c /* Should define count when splitting a mark */,
+			);
 			(newMark as ReturnFrom).detachIndex = mark.detachIndex + effect.count;
 		}
 		result.push(

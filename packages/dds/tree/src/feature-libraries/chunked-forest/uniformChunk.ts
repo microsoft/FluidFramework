@@ -303,7 +303,10 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.positionIndex = positionIndex;
 		if (this.nodePositionInfo === undefined) {
 			assert(positionIndex === 0, 0x561 /* expected root at start */);
-			assert(this.mode === CursorLocationType.Fields, 0x562 /* expected root to be a field */);
+			assert(
+				this.mode === CursorLocationType.Fields,
+				0x562 /* expected root to be a field */,
+			);
 		}
 	}
 

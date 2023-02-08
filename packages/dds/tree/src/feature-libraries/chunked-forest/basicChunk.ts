@@ -440,7 +440,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	}
 
 	private initNestedCursor(): void {
-		assert(this.mode === CursorLocationType.Nodes, 0x55d /* can only initNestedCursor when in Nodes */);
+		assert(
+			this.mode === CursorLocationType.Nodes,
+			0x55d /* can only initNestedCursor when in Nodes */,
+		);
 		const chunk = (this.siblings as TreeChunk[])[this.indexOfChunk];
 		this.nestedCursor = !(chunk instanceof BasicChunk) ? chunk.cursor() : undefined;
 		this.nestedCursor?.enterNode(this.indexWithinChunk);
