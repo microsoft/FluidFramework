@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { IGCRuntimeOptions, ISummarizer, TombstoneResponseHeaderKey } from "@fluidframework/container-runtime";
+import {
+	IGCRuntimeOptions,
+	ISummarizer,
+	TombstoneResponseHeaderKey,
+} from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
