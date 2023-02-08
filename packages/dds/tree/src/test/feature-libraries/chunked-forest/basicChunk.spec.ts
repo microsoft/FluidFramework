@@ -204,6 +204,16 @@ describe("basic chunk", () => {
 				numberSequenceField(2),
 			);
 		});
+
+		it("double nested at offset", () => {
+			validateChunkCursor(
+				new SequenceChunk([
+					numericBasicChunk(0),
+					new SequenceChunk([new SequenceChunk([numericBasicChunk(1)])]),
+				]),
+				numberSequenceField(2),
+			);
+		});
 	});
 });
 

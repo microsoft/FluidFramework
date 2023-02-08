@@ -217,15 +217,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	public getPath(prefix?: PathRootPrefix): UpPath {
 		if (this.nestedCursor !== undefined) {
-			// TODO: this uses index offset for actual node, when it should use offset for start of chunk
-			const rootPath: UpPath =
-				this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
 			return (
-				this.nestedCursor.getPath({
-					indexOffset: this.nestedOffset(),
-					rootFieldOverride: rootPath.parentField,
-					parent: rootPath.parent,
-				}) ?? fail("nested cursors should not be root")
+				this.nestedCursor.getPath(this.nestedPathPrefix(prefix)) ??
+				fail("nested cursors should not be root")
 			);
 		}
 		assert(this.mode === CursorLocationType.Nodes, 0x524 /* must be in nodes mode */);
@@ -234,16 +228,21 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return path;
 	}
 
+	private nestedPathPrefix(prefix?: PathRootPrefix): PathRootPrefix {
+		// This uses index offset for actual node, when it should use offset for start of chunk.
+		// To compensate, subtract this.indexWithinChunk below.
+		const rootPath: UpPath =
+			this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
+		return {
+			indexOffset: rootPath.parentIndex - this.indexWithinChunk,
+			rootFieldOverride: rootPath.parentField,
+			parent: rootPath.parent,
+		};
+	}
+
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
 		if (this.nestedCursor !== undefined) {
-			// TODO: this uses index offset for actual node, when it should use offset for start of chunk
-			const rootPath: UpPath =
-				this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
-			return this.nestedCursor.getFieldPath({
-				indexOffset: this.nestedOffset(),
-				rootFieldOverride: rootPath.parentField,
-				parent: rootPath.parent,
-			});
+			return this.nestedCursor.getFieldPath(this.nestedPathPrefix(prefix));
 		}
 		assert(this.mode === CursorLocationType.Fields, 0x525 /* must be in fields mode */);
 		return {
@@ -527,6 +526,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return this.index;
 	}
 
+	/**
+	 * Withing the field that `nestedCursor` is nested in:
+	 * returns the index withing that field od the first node that is part of the chunk nestedCursor traverses.
+	 */
 	private nestedOffset(): number {
 		assert(this.nestedCursor !== undefined, "nested offset requires nested cursor");
 		assert(
