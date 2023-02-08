@@ -76,6 +76,7 @@ scriptorium:
 scribe:
   name: scribe
   replicas: 8
+  getDeltasViaAlfred: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000
