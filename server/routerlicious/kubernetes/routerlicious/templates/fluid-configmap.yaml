@@ -67,6 +67,7 @@ data:
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
+            "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
                 "restCallsPerTenant": {
                     "maxPerMs": {{ .Values.alfred.throttling.restCallsPerTenant.maxPerMs }},
@@ -174,7 +175,8 @@ data:
                 "idleTime": {{ .Values.scribe.checkpointHeuristics.idleTime }},
                 "maxTime": {{ .Values.scribe.checkpointHeuristics.maxTime }},
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
-            }
+            },
+            "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }}
         },
         "system": {
             "httpServer": {

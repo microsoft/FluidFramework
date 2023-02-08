@@ -18,6 +18,7 @@ alfred:
   maxNumberOfClientsPerDocument: 1000000
   numberOfMessagesPerTrace: 100
   sessionStickinessDurationMs: 3600000
+  enableConnectionCountLogging: false
   throttling:
     restCallsPerTenant:
         maxPerMs: 1000000
@@ -100,6 +101,7 @@ scriptorium:
 scribe:
   name: scribe
   replicas: 8
+  getDeltasViaAlfred: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000

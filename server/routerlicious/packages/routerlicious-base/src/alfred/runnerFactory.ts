@@ -103,6 +103,7 @@ export class AlfredResources implements core.IResources {
         public documentsCollection: core.ICollection<core.IDocument>,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
         public verifyMaxMessageSize?: boolean,
+        public redisCache?: core.ICache,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -316,6 +317,23 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
         const address = `${await utils.getHostIp()}:4000`;
 
+        // This cache will be used to store connection counts for logging connectionCount metrics.
+        let redisCache: core.ICache;
+        if (config.get("alfred:enableConnectionCountLogging")) {
+            const redisOptions: Redis.RedisOptions = {
+                host: redisConfig.host,
+                port: redisConfig.port,
+                password: redisConfig.pass,
+            };
+            if (redisConfig.tls) {
+                redisOptions.tls = {
+                    servername: redisConfig.host,
+                };
+            }
+            const redisClientForLogging = new Redis(redisOptions);
+            redisCache = new services.RedisCache(redisClientForLogging);
+        }
+
         const nodeFactory = new LocalNodeFactory(
             os.hostname(),
             address,
@@ -375,7 +393,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             metricClientConfig,
             documentsCollection,
             redisThrottleAndUsageStorageManager,
-            verifyMaxMessageSize);
+            verifyMaxMessageSize,
+            redisCache);
     }
 }
 
@@ -402,6 +421,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.metricClientConfig,
             resources.documentsCollection,
             resources.throttleAndUsageStorageManager,
-            resources.verifyMaxMessageSize);
+            resources.verifyMaxMessageSize,
+            resources.redisCache);
     }
 }
