@@ -558,7 +558,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
 					category: "generic",
 					headers: expectedHeadersLogged.request,
-					isSummarizerClient: true,
+					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {

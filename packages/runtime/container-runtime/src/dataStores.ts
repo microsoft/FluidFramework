@@ -488,9 +488,8 @@ export class DataStores implements IDisposable {
 				{
 					eventName: "GC_Tombstone_DataStore_Requested",
 					category: shouldFail ? "error" : "generic",
-					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
 					headers: JSON.stringify(requestHeaderData),
-					gcEnforcementDisabled: this.runtime.disableGcTombstoneEnforcement,
+					gcTombstoneEnforcementDisabled: this.runtime.disableGcTombstoneEnforcement,
 				},
 				context.isLoaded ? context.packagePath : undefined,
 				error,

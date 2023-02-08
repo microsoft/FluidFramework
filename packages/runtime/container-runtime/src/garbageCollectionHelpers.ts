@@ -21,7 +21,7 @@ export function sendGCUnexpectedUsageEvent(
 	mc: MonitoringContext,
 	event: ITelemetryGenericEvent & {
 		category: "error" | "generic";
-		gcEnforcementDisabled: boolean;
+		gcTombstoneEnforcementDisabled: boolean;
 	},
 	packagePath: readonly string[] | undefined,
 	error?: unknown,

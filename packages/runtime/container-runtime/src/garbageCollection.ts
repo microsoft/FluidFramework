@@ -1417,10 +1417,9 @@ export class GarbageCollector implements IGarbageCollector {
 				{
 					eventName,
 					category: "generic",
-					isSummarizerClient: this.isSummarizerClient,
 					url: trimLeadingSlashes(toNodePath),
 					nodeType,
-					gcEnforcementDisabled: false,
+					gcTombstoneEnforcementDisabled: false,
 				},
 				undefined /* packagePath */,
 			);

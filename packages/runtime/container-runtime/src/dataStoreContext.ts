@@ -831,7 +831,6 @@ export abstract class FluidDataStoreContext
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "GC_Deleted_DataStore_Changed",
-					isSummarizerClient: this.clientDetails.type === summarizerClientType,
 					callSite,
 				},
 				error,
@@ -853,8 +852,7 @@ export abstract class FluidDataStoreContext
 				{
 					eventName: "GC_Tombstone_DataStore_Changed",
 					category: this.throwOnTombstoneUsage ? "error" : "generic",
-					isSummarizerClient: this.clientDetails.type === summarizerClientType,
-					gcEnforcementDisabled: (this.containerRuntime as ContainerRuntime)
+					gcTombstoneEnforcementDisabled: (this.containerRuntime as ContainerRuntime)
 						.disableGcTombstoneEnforcement,
 					callSite,
 				},
@@ -1100,9 +1098,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 				eventName: "GC_Deleted_DataStore_Unexpected_Delete",
 				message: "Unexpected deletion of a local data store context",
 				category: "error",
-				isSummarizerClient:
-					this.containerRuntime.clientDetails.type === summarizerClientType,
-				gcEnforcementDisabled: (this.containerRuntime as ContainerRuntime)
+				gcTombstoneEnforcementDisabled: (this.containerRuntime as ContainerRuntime)
 					.disableGcTombstoneEnforcement,
 			},
 			this.pkg,
