@@ -51,7 +51,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	);
 	const settings = {};
 
-	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -59,7 +58,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					state: "disabled",
 				},
 			},
-			gcOptions,
+			gcOptions: { inactiveTimeoutMs: 0 },
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
 	};
@@ -67,9 +66,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		runtimeOptions: {
 			summaryOptions: testContainerConfig.runtimeOptions?.summaryOptions,
 			gcOptions: {
-				...gcOptions,
+				...testContainerConfig.runtimeOptions?.gcOptions,
 				// Different from undefined (the persisted value) so will disable GC enforcement
-				gcTombstoneGeneration: 1,
+				gcTombstoneGeneration: 2,
 			},
 		},
 		loaderProps: testContainerConfig.loaderProps,
@@ -110,7 +109,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			provider,
 			documentAbsoluteUrl,
 			summaryVersion,
-			gcOptions,
+			testContainerConfig.runtimeOptions?.gcOptions,
 			mockConfigProvider(settings),
 		);
 	};
@@ -620,7 +619,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
-			"Requesting tombstoned datastores succeeds with future gcTombstoneGeneration",
+			"Requesting tombstoned datastores succeeds for legacy document given gcTombtoneGeneration option is defined",
 			[
 				// Interactive client's request that succeeds
 				{
@@ -634,6 +633,56 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 			],
 			async function () {
+				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
+				const { unreferencedId, summarizingContainer, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+				// The datastore should be tombstoned now
+				const { summaryVersion } = await summarize(summarizer);
+				const container = await loadContainer(
+					summaryVersion,
+					true /* disableTombstoneFailureViaOption */,
+				);
+
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombtoneGeneration passed in
+				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
+					url: unreferencedId,
+				});
+				assert.equal(
+					tombstoneSuccessResponse.status,
+					200,
+					"Should be able to retrieve a tombstoned datastore given gcTombtoneGeneration",
+				);
+				assert.notEqual(
+					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
+					true,
+					"DID NOT Expect tombstone header to be set on the response",
+				);
+			},
+		);
+
+		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+		itExpects(
+			"Requesting tombstoned datastores succeeds with when gcTombtoneGeneration differs from persisted value",
+			[
+				// Interactive client's request that succeeds
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					category: "generic",
+					gcTombstoneEnforcementAllowed: false,
+				},
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+				},
+			],
+			async function () {
+				// This will become the persisted value in the container(s) created below (except the one with disableTombstoneFailureViaOption)
+				// NOTE: IT IS RESET AT THE END OF THE TEST
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				testContainerConfig.runtimeOptions!.gcOptions!.gcTombstoneGeneration = 1;
+
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
@@ -660,6 +709,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					true,
 					"DID NOT Expect tombstone header to be set on the response",
 				);
+
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				testContainerConfig.runtimeOptions!.gcOptions!.gcTombstoneGeneration = undefined;
 			},
 		);
 
@@ -1029,7 +1081,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
-				gcOptions,
+				testContainerConfig.runtimeOptions?.gcOptions,
 				mockConfigProvider(settings),
 			);
 
@@ -1086,7 +1138,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
-				gcOptions,
+				testContainerConfig.runtimeOptions?.gcOptions,
 				mockConfigProvider(settings),
 			);
 
@@ -1157,7 +1209,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
-					gcOptions,
+					testContainerConfig.runtimeOptions?.gcOptions,
 					mockConfigProvider(settings),
 					mockLogger,
 				);
@@ -1265,7 +1317,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
-				gcOptions,
+				testContainerConfig.runtimeOptions?.gcOptions,
 				mockConfigProvider(settings),
 			);
 
@@ -1336,7 +1388,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
-					gcOptions,
+					testContainerConfig.runtimeOptions?.gcOptions,
 					mockConfigProvider(settings),
 				);
 
