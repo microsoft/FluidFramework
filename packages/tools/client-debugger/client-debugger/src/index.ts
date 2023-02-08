@@ -54,7 +54,12 @@ export {
 	LogEntry,
 	StateChangeLogEntry,
 } from "./Logs";
-export * from "./messaging";
+export {
+	ContainerStateChangeMessage,
+	IDebuggerMessage,
+	IOutboundMessage,
+	RegistryChangeMessage,
+} from "./messaging";
 export * from "./ContainerMetadata";
 export {
 	DebuggerRegistry,

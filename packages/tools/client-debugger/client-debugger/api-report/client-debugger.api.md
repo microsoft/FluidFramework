@@ -85,24 +85,6 @@ export interface FluidClientDebuggerProps {
     containerNickname?: string;
 }
 
-// @public
-export interface GetContainerListMessage extends IInboundMessage {
-    // (undocumented)
-    data: undefined;
-    // (undocumented)
-    type: "GET_CONTAINER_LIST";
-}
-
-// @public
-export interface GetContainerStateMessage extends IInboundMessage {
-    // (undocumented)
-    data: {
-        containerId: string;
-    };
-    // (undocumented)
-    type: "GET_CONTAINER_STATE";
-}
-
 // @internal
 export function getDebuggerRegistry(): DebuggerRegistry;
 
@@ -138,10 +120,6 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 }
 
 // @public
-export interface IInboundMessage extends IDebuggerMessage {
-}
-
-// @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
 
 // @public
@@ -158,9 +136,6 @@ export enum MemberChangeKind {
     Added = "Added",
     Removed = "Removed"
 }
-
-// @internal
-export function postWindowMessage<TMessage extends IOutboundMessage>(message: TMessage): void;
 
 // @public
 export interface RegistryChangeMessage extends IOutboundMessage {

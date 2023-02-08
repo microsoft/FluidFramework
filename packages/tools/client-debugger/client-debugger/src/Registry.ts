@@ -9,7 +9,13 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
-import { IInboundMessage, postWindowMessage, RegistryChangeMessage } from "./messaging";
+import {
+	handleWindowMessage,
+	IInboundMessage,
+	InboundHandlers,
+	postWindowMessage,
+	RegistryChangeMessage,
+} from "./messaging";
 
 /**
  * Properties for configuring a {@link IFluidClientDebugger}.
@@ -78,32 +84,22 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	// #region Event handlers
 
 	/**
+	 * Handlers for inbound messages related to the registry.
+	 */
+	private readonly inboundMessageHandlers: InboundHandlers = {
+		["GET_CONTAINER_LIST"]: () => {
+			this.postRegistryChange();
+			return true;
+		},
+	};
+
+	/**
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (event: MessageEvent<IInboundMessage>): void => {
-		if ((event.source as unknown) !== globalThis) {
-			// Ignore events coming from outside of this window / global context
-			return;
-		}
-
-		if (event.data?.type === undefined) {
-			return;
-		}
-
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		function log(message: string): void {
-			console.log(`REGISTRY: ${message}`);
-		}
-
-		switch (event.data.type) {
-			case "GET_CONTAINER_LIST":
-				log('"GET_CONTAINER_LIST" message received!');
-				this.postRegistryChange();
-				break;
-			default:
-				log(`Unhandled inbound message type received: "${event.data.type}".`);
-				break;
-		}
+		handleWindowMessage(event, this.inboundMessageHandlers, {
+			context: "DEBUGGER REGISTRY",
+		});
 	};
 
 	/**

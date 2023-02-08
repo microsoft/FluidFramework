@@ -30,6 +30,8 @@ export interface IFluidClientDebuggerEvents extends IEvent {
  * {@link @fluidframework/container-definitions#IContainer} and
  * {@link @fluidframework/container-definitions#IAudience}.
  *
+ * TODO: document window messaging API
+ *
  * @internal
  */
 export interface IFluidClientDebugger

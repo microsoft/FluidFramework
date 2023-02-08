@@ -14,16 +14,15 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
 	ContainerStateChangeMessage,
 	GetContainerStateMessage,
+	handleWindowMessage,
 	IInboundMessage,
+	InboundHandlers,
 	postWindowMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
 /**
- * {@link IFluidClientDebugger} implementation.
- *
- * @remarks This class is not intended for external use. Only its interface is exported by the library.
- *
+ * {@inheritDoc IFluidClientDebugger}
  * @internal
  */
 export class FluidClientDebugger
@@ -126,36 +125,26 @@ export class FluidClientDebugger
 	// #region Window event handlers
 
 	/**
+	 * Handlers for inbound messages related to the debugger.
+	 */
+	private readonly inboundMessageHandlers: InboundHandlers = {
+		["GET_CONTAINER_STATE"]: (untypedMessage) => {
+			const message = untypedMessage as GetContainerStateMessage;
+			if (message.data.containerId === this.containerId) {
+				this.postContainerStateChange();
+				return true;
+			}
+			return false;
+		},
+	};
+
+	/**
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (event: MessageEvent<IInboundMessage>): void => {
-		if ((event.source as unknown) !== globalThis) {
-			// Ignore events coming from outside of this window / global context
-			return;
-		}
-
-		if (event.data?.type === undefined) {
-			return;
-		}
-
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		const log = (message: string): void => {
-			console.log(`Debugger(${this.containerNickname ?? this.containerId}): ${message}`);
-		};
-
-		switch (event.data.type) {
-			case "GET_CONTAINER_STATE":
-				// eslint-disable-next-line no-case-declarations
-				const message = event.data as GetContainerStateMessage;
-				if (message.data.containerId === this.containerId) {
-					log('"GET_CONTAINER_STATE" message received!');
-					this.postContainerStateChange();
-				}
-				break;
-			default:
-				log(`Unhandled inbound message type received: "${event.data.type}".`);
-				break;
-		}
+		handleWindowMessage(event, this.inboundMessageHandlers, {
+			context: `Debugger(${this.containerId})`,
+		});
 	};
 
 	/**
