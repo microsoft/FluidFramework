@@ -2871,7 +2871,11 @@ export class ContainerRuntime
 				}, 0);
 				break;
 			default:
-				assert(false, "Unreachable case");
+				assert(
+					this._orderSequentiallyCalls > 0,
+					"Unreachable unless running under orderSequentially",
+				);
+				break;
 		}
 	}
 

@@ -96,6 +96,7 @@ export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStor
 
 // @public
 export enum FlushMode {
+    Async = 2,
     Immediate = 0,
     TurnBased = 1
 }
