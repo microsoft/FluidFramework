@@ -31,13 +31,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import {
-	assert,
-	Deferred,
-	Trace,
-	TypedEventEmitter,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -909,7 +903,6 @@ export class ContainerRuntime
 	private readonly defaultMaxConsecutiveReconnects = 7;
 
 	private _orderSequentiallyCalls: number = 0;
-	private _orderSequentiallyFlushing: boolean = false;
 	private readonly _flushMode: FlushMode;
 	private flushMicroTaskExists = false;
 
@@ -1994,30 +1987,9 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
-	public orderSequentially<T>(callback: () => T, flush?: Deferred<void>): T {
+	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
-
-		if (flush !== undefined) {
-			if (this._orderSequentiallyCalls > 0) {
-				throw new UsageError(
-					"Reentrancy is not supported for flushing inside `orderSequentially` calls",
-				);
-			}
-
-			this._orderSequentiallyFlushing = true;
-			this.flush();
-
-			flush.promise
-				.then(() => {
-					this.flush();
-					this._orderSequentiallyFlushing = false;
-				})
-				.catch((error) => {
-					this.closeFn(error as GenericError);
-				});
-		}
-
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
 			// Note: we are not touching this.pendingAttachBatch here, for two reasons:
 			// 1. It would not help, as we flush attach ops as they become available.
@@ -2059,14 +2031,9 @@ export class ContainerRuntime
 		}
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
-		if (
-			this.flushMode !== FlushMode.TurnBased &&
-			this._orderSequentiallyCalls === 0 &&
-			flush === undefined
-		) {
+		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
 			this.flush();
 		}
-
 		return result;
 	}
 
@@ -2862,7 +2829,7 @@ export class ContainerRuntime
 
 			if (!this.currentlyBatching()) {
 				this.flush();
-			} else if (!this.flushMicroTaskExists && !this._orderSequentiallyFlushing) {
+			} else if (!this.flushMicroTaskExists) {
 				this.flushMicroTaskExists = true;
 				// Queue a microtask to detect the end of the turn and force a flush.
 				Promise.resolve()
