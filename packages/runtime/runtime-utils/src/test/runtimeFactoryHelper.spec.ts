@@ -9,77 +9,49 @@ import Sinon from "sinon";
 import { RuntimeFactoryHelper } from "../runtimeFactoryHelper";
 
 class TestRuntimeFactoryHelper extends RuntimeFactoryHelper {
-    constructor(
-        private readonly runtime: IRuntime & IContainerRuntime,
-    ) {
-        super();
-    }
+	constructor(private readonly runtime: IRuntime & IContainerRuntime) {
+		super();
+	}
 
-    public async preInitialize(
-        _context: IContainerContext,
-        _existing: boolean,
-    ): Promise<IRuntime & IContainerRuntime> {
-        return this.runtime;
-    }
+	public async preInitialize(
+		_context: IContainerContext,
+		_existing: boolean,
+	): Promise<IRuntime & IContainerRuntime> {
+		return this.runtime;
+	}
 }
 
 describe("RuntimeFactoryHelper", () => {
-    const sandbox: Sinon.SinonSandbox = Sinon.createSandbox();
-    const context: Partial<IContainerContext> = {};
-    const runtime: Partial<IRuntime & IContainerRuntime> = {};
-    let helper: TestRuntimeFactoryHelper;
-    let unit: Sinon.SinonMock;
+	const sandbox: Sinon.SinonSandbox = Sinon.createSandbox();
+	const context: Partial<IContainerContext> = {};
+	const runtime: Partial<IRuntime & IContainerRuntime> = {};
+	let helper: TestRuntimeFactoryHelper;
+	let unit: Sinon.SinonMock;
 
-    beforeEach(() => {
-        helper = new TestRuntimeFactoryHelper(runtime as IRuntime & IContainerRuntime);
-        unit = sandbox.mock(helper);
-        unit.expects("preInitialize").once();
-        unit.expects("hasInitialized").once();
-    });
+	beforeEach(() => {
+		helper = new TestRuntimeFactoryHelper(runtime as IRuntime & IContainerRuntime);
+		unit = sandbox.mock(helper);
+		unit.expects("preInitialize").once();
+		unit.expects("hasInitialized").once();
+	});
 
-    afterEach(() => {
-        sandbox.restore();
-    });
+	afterEach(() => {
+		sandbox.restore();
+	});
 
-    it("Instantiate when existing flag is `true`", async () => {
-        unit.expects("instantiateFirstTime").never();
-        unit.expects("instantiateFromExisting").once();
-        await helper.instantiateRuntime(context as IContainerContext, /* existing */ true);
+	it("Instantiate when existing flag is `true`", async () => {
+		unit.expects("instantiateFirstTime").never();
+		unit.expects("instantiateFromExisting").once();
+		await helper.instantiateRuntime(context as IContainerContext, /* existing */ true);
 
-        unit.verify();
-    });
+		unit.verify();
+	});
 
-    it("Instantiate when existing flag is `false`", async () => {
-        unit.expects("instantiateFirstTime").once();
-        unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(context as IContainerContext, /* existing */ false);
+	it("Instantiate when existing flag is `false`", async () => {
+		unit.expects("instantiateFirstTime").once();
+		unit.expects("instantiateFromExisting").never();
+		await helper.instantiateRuntime(context as IContainerContext, /* existing */ false);
 
-        unit.verify();
-    });
-
-    it("Instantiate when existing flag is unset", async () => {
-        unit.expects("instantiateFirstTime").once();
-        unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(context as IContainerContext);
-
-        unit.verify();
-    });
-
-    it("Instantiate when existing flag is unset and context is existing", async () => {
-        const existingContext: Partial<IContainerContext> = { existing: true };
-        unit.expects("instantiateFirstTime").never();
-        unit.expects("instantiateFromExisting").once();
-        await helper.instantiateRuntime(existingContext as IContainerContext);
-
-        unit.verify();
-    });
-
-    it("Instantiate when existing flag takes precedence over context", async () => {
-        const existingContext: Partial<IContainerContext> = { existing: true };
-        unit.expects("instantiateFirstTime").once();
-        unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(existingContext as IContainerContext, /* existing */ false);
-
-        unit.verify();
-    });
+		unit.verify();
+	});
 });

@@ -53,9 +53,9 @@ It's position is defined to be `LocalReference.DetachedPosition` (-1).
 
 LocalReferences may reference removed segments:
 
-* SlideOnRemove references may reference a removed segment which is pending (not acknowledged)
-* StayOnRemove references may reference removed segments
-* Transient references may reference removed segments
+-   SlideOnRemove references may reference a removed segment which is pending (not acknowledged)
+-   StayOnRemove references may reference removed segments
+-   Transient references may reference removed segments
 
 The numerical position of a reference which is on a removed segment will be one more than the previous (nearer) segment.
 If there is a farther segment that is not removed, this will be the same as the position of the start of that segment.
@@ -75,14 +75,14 @@ To implement an operation which creates LocalReferences which will have an event
 1. Locally create the reference as StayOnRemove
 2. Send the reference numerical position in an op
 3. On acknowledgement of the local create:
-   1. set the `refType` of the reference to include `SlideOnRemove`
-   2. call `Client.getSlideToSegment` with the references current segment and offset to get the proper new location
-   3. Delete the old reference and create a new one with the returned values
+    1. set the `refType` of the reference to include `SlideOnRemove`
+    2. call `Client.getSlideToSegment` with the references current segment and offset to get the proper new location
+    3. Delete the old reference and create a new one with the returned values
 4. Remote clients, on receiving the op, call `Client.getContainingSegment` followed by `Client.getSlideToSegment`
-on the result. Call `Client.createLocalReferencePosition` with the result to create a `SlideOnRemove` reference.
+   on the result. Call `Client.createLocalReferencePosition` with the result to create a `SlideOnRemove` reference.
 5. If there is a dependency on the comparison of reference positions (such as the index in IntervalCollections)
-must listen to the `beforeSlide` and `afterSlide` events on `IReferencePositionEvents`. When slide occurs the
-relative position of references may have changed.
+   must listen to the `beforeSlide` and `afterSlide` events on `IReferencePositionEvents`. When slide occurs the
+   relative position of references may have changed.
 
 ### Implementation Notes
 
@@ -135,14 +135,14 @@ When sliding we do not consider any local (unacknowledged) ops.
 Keeping references on removed segments until they can be slid works well in most cases because of these properties:
 
 1. Interval positions on removed segments appear as if they were on the following position in the string.
-If the removed segment is between positions 5 and 6, the interval positions on the removed segment appear to be at
-position 6. This matches where they will eventually slide, so slide will not cause a change in position as long as
-segments are not slid over and it is not necessary to slide to the near end of the string.
+   If the removed segment is between positions 5 and 6, the interval positions on the removed segment appear to be at
+   position 6. This matches where they will eventually slide, so slide will not cause a change in position as long as
+   segments are not slid over and it is not necessary to slide to the near end of the string.
 2. Text inserted at the same location as the removed segment is inserted before the removed segment.
-So if the removed segment is between 0 and 1 (“A[removed]B”), insertText(1, “X”) inserts before the removed segment
-(“AX[removed]B”). This makes it hard to end up with local only segments to be slid over, which will mean it is rare
-that slide visibly changes the interval position. It can still happen if there is a conflicting remove, but that is
-much less likely.
+   So if the removed segment is between 0 and 1 (“A[removed]B”), insertText(1, “X”) inserts before the removed segment
+   (“AX[removed]B”). This makes it hard to end up with local only segments to be slid over, which will mean it is rare
+   that slide visibly changes the interval position. It can still happen if there is a conflicting remove, but that is
+   much less likely.
 
 #### Conflict Scenarios
 
@@ -152,9 +152,9 @@ Considering Create Interval / Remove Range conflicts, here are the scenarios
 1. Local create before local remove. Interval position needs to slide on ack of the local remove.
 2. Remote create before remote remove. Slide on receiving the remove.
 3. Local remove before local create. This is impossible – once the segment is removed locally an
-interval position can’t be created on it.
+   interval position can’t be created on it.
 4. Remote remove before remote create. (Possible if ops are from different remote clients).
-Slide on receiving the remote create.
+   Slide on receiving the remote create.
 5. Remote create before local remove. Slide on the ack of the local remove.
 6. Local create before remote remove. Slide on receiving the remove.
 7. Local remove before remote create. Slide on receiving the create.
@@ -165,9 +165,9 @@ Slide on receiving the remote create.
 In an ideal system reference positions would have stable order. Specifically:
 
 1. If in any client state the position of a reference is less than the position of a specific item in the sequence,
-then the position of that reference would always be less than or equal to the position of that item.
+   then the position of that reference would always be less than or equal to the position of that item.
 2. If in any client state the position of reference A is less than the position of reference B,
-then the position of reference A would always be less than or equal to the position of reference B.
+   then the position of reference A would always be less than or equal to the position of reference B.
 
 Neither of these properties is true for SlideOnRemove references. This is a result of them sliding over local
 only segments. This could change the relative positions of the sliding reference at items that are slide over,
@@ -177,23 +177,23 @@ once the creation has been acknowledged (sequenced by the server).
 Supporting stable order is not possible in the current system because:
 
 1. Removing a range may cause an multiple references that had been at different positions to all be at the same
-position.
+   position.
 2. To preserve stable ordering, an insert that conflicts with that remove would need to be after some of those
-references and before others.
+   references and before others.
 3. Insertion position is specified as a numerical offset in the sequence, so can't specify where in the set
-of references at a position to be inserted. (Technically there is enough information to do this within the
-collab window. But that information is lost if reconnect/resubmit is required.)
+   of references at a position to be inserted. (Technically there is enough information to do this within the
+   collab window. But that information is lost if reconnect/resubmit is required.)
 
 Therefore implementing eventually consistent references with stable order would require adding additional
 information to insert ops.
 
 ## Tests
 
-* `packages\dds\merge-tree\src\test\client.localReference.spec.ts`
-unit tests for LocalReferences
-* `packages\dds\sequence\src\test\intervalCollection.spec.ts`
-test LocalReferences as used in interval collections (including eventual consistency)
-* `packages\test\test-end-to-end-tests\src\test\sharedInterval.spec.ts`
-end-to-end tests using LocalReferences for interval collections.
-These tests have only been minimally updated to reflect this implementation,
-so they do not comprehensively test LocalReferences.
+-   `packages\dds\merge-tree\src\test\client.localReference.spec.ts`
+    unit tests for LocalReferences
+-   `packages\dds\sequence\src\test\intervalCollection.spec.ts`
+    test LocalReferences as used in interval collections (including eventual consistency)
+-   `packages\test\test-end-to-end-tests\src\test\sharedInterval.spec.ts`
+    end-to-end tests using LocalReferences for interval collections.
+    These tests have only been minimally updated to reflect this implementation,
+    so they do not comprehensively test LocalReferences.

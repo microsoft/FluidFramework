@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { IDebugViewProps, DebugView } from "./debugView";
 export { IAppViewProps, AppView } from "./appView";
+export { IDebugViewProps, DebugView } from "./debugView";
+export { ITaskListViewProps, TaskListView } from "./taskListView";

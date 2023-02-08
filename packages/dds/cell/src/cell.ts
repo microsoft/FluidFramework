@@ -5,21 +5,28 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
-    IChannelAttributes,
-    IFluidDataStoreRuntime,
-    IChannelStorageService,
-    IChannelFactory,
-    Serializable,
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+	IChannelFactory,
+	Serializable,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import {
+	createSingleBlobSummary,
+	IFluidSerializer,
+	SharedObject,
+} from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import {
-    ISharedCell,
-    ISharedCellEvents,
-    ICellLocalOpMetadata,
+	ISharedCell,
+	ISharedCellEvents,
+	ICellLocalOpMetadata,
+	AttributionKey,
+	ICellOptions,
 } from "./interfaces";
 
 /**
@@ -28,324 +35,357 @@ import {
 type ICellOperation = ISetCellOperation | IDeleteCellOperation;
 
 interface ISetCellOperation {
-    type: "setCell";
-    value: ICellValue;
+	type: "setCell";
+	value: ICellValue;
 }
 
 interface IDeleteCellOperation {
-    type: "deleteCell";
+	type: "deleteCell";
 }
 
 interface ICellValue {
-    // The actual value contained in the cell which needs to be wrapped to handle undefined
-    value: any;
+	/**
+	 * The actual value contained in the `Cell`, which needs to be wrapped to handle `undefined`.
+	 */
+	value: unknown;
+	/**
+	 * The attribution key contained in the `Cell`.
+	 * @alpha
+	 */
+	attribution?: AttributionKey;
 }
 
 const snapshotFileName = "header";
 
 /**
- * The SharedCell distributed data structure can be used to store a single serializable value.
- *
- * @remarks
- * ### Creation
- *
- * To create a `SharedCell`, call the static create method:
- *
- * ```typescript
- * const myCell = SharedCell.create(this.runtime, id);
- * ```
- *
- * ### Usage
- *
- * The value stored in the cell can be set with the `.set()` method and retrieved with the `.get()` method:
- *
- * ```typescript
- * myCell.set(3);
- * console.log(myCell.get()); // 3
- * ```
- *
- * The value must only be plain JS objects or `SharedObject` handles (e.g. to another DDS or Fluid object).
- * In collaborative scenarios, the value is settled with a policy of _last write wins_.
- *
- * The `.delete()` method will delete the stored value from the cell:
- *
- * ```typescript
- * myCell.delete();
- * console.log(myCell.get()); // undefined
- * ```
- *
- * The `.empty()` method will check if the value is undefined.
- *
- * ```typescript
- * if (myCell.empty()) {
- *   // myCell.get() will return undefined
- * } else {
- *   // myCell.get() will return a non-undefined value
- * }
- * ```
- *
- * ### Eventing
- *
- * `SharedCell` is an `EventEmitter`, and will emit events when other clients make modifications. You should
- * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted
- * in response to a `set`, and `delete` will be emitted in response to a `delete`.
+ * {@inheritDoc ISharedCell}
  */
-export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
-    implements ISharedCell<T> {
-    /**
-     * Create a new shared cell
-     *
-     * @param runtime - data store runtime the new shared map belongs to
-     * @param id - optional name of the shared map
-     * @returns newly create shared map (but not attached yet)
-     */
-    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
-        return runtime.createChannel(id, CellFactory.Type) as SharedCell;
-    }
+// TODO: use `unknown` instead (breaking change).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class SharedCell<T = any>
+	extends SharedObject<ISharedCellEvents<T>>
+	implements ISharedCell<T>
+{
+	/**
+	 * Create a new `SharedCell`.
+	 *
+	 * @param runtime - The data store runtime to which the `SharedCell` belongs.
+	 * @param id - Unique identifier for the `SharedCell`.
+	 *
+	 * @returns The newly create `SharedCell`. Note that it will not yet be attached.
+	 */
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell {
+		return runtime.createChannel(id, CellFactory.Type) as SharedCell;
+	}
 
-    /**
-     * Get a factory for SharedCell to register with the data store.
-     *
-     * @returns a factory that creates and load SharedCell
-     */
-    public static getFactory(): IChannelFactory {
-        return new CellFactory();
-    }
-    /**
-     * The data held by this cell.
-     */
-    private data: Serializable<T> | undefined;
+	/**
+	 * Gets the factory for the `SharedCell` to register with the data store.
+	 *
+	 * @returns A factory that creates and loads `SharedCell`s.
+	 */
+	public static getFactory(): IChannelFactory {
+		return new CellFactory();
+	}
 
-    /**
-     * This is used to assign a unique id to outgoing messages. It is used to track messages until
-     * they are ack'd.
-     */
-    private messageId: number = -1;
+	/**
+	 * The data held by this cell.
+	 */
+	private data: Serializable<T> | undefined;
 
-    /**
-     * This keeps track of the messageId of messages that have been ack'd. It is updated every time
-     * we a message is ack'd with it's messageId.
-     */
-    private messageIdObserved: number = -1;
+	/**
+	 * This is used to assign a unique id to outgoing messages. It is used to track messages until
+	 * they are ack'd.
+	 */
+	private messageId: number = -1;
 
-    private readonly pendingMessageIds: number[] = [];
+	/**
+	 * This keeps track of the messageId of messages that have been ack'd. It is updated every time
+	 * we a message is ack'd with it's messageId.
+	 */
+	private messageIdObserved: number = -1;
 
-    /**
-     * Constructs a new shared cell. If the object is non-local an id and service interfaces will
-     * be provided
-     *
-     * @param runtime - data store runtime the shared map belongs to
-     * @param id - optional name of the shared map
-     */
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes, "fluid_cell_");
-    }
+	private readonly pendingMessageIds: number[] = [];
 
-    /**
-     * {@inheritDoc ISharedCell.get}
-     */
-    public get(): Serializable<T> | undefined {
-        return this.data;
-    }
+	private attribution: AttributionKey | undefined;
 
-    /**
-     * {@inheritDoc ISharedCell.set}
-     */
-    public set(value: Serializable<T>) {
-        // Serialize the value if required.
-        const operationValue: ICellValue = {
-            value: this.serializer.encode(value, this.handle),
-        };
+	private readonly options: ICellOptions | undefined;
 
-        // Set the value locally.
-        const previousValue = this.setCore(value);
+	/**
+	 * Constructs a new `SharedCell`.
+	 * If the object is non-local an id and service interfaces will be provided.
+	 *
+	 * @alpha
+	 *
+	 * @param runtime - The data store runtime to which the `SharedCell` belongs.
+	 * @param id - Unique identifier for the `SharedCell`.
+	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+	constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+		options?: ICellOptions,
+	) {
+		super(id, runtime, attributes, "fluid_cell_");
 
-        // If we are not attached, don't submit the op.
-        if (!this.isAttached()) {
-            return;
-        }
+		this.options ??= options;
 
-        const op: ISetCellOperation = {
-            type: "setCell",
-            value: operationValue,
-        };
-        this.submitCellMessage(op, previousValue);
-    }
+		const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean(
+			"Fluid.Attribution.EnableOnNewFile",
+		);
+		if (configSetAttribution !== undefined) {
+			(this.options ?? (this.options = {})).attribution = { track: configSetAttribution };
+		}
+	}
 
-    /**
-     * {@inheritDoc ISharedCell.delete}
-     */
-    public delete() {
-        // Delete the value locally.
-        const previousValue = this.deleteCore();
+	/**
+	 * {@inheritDoc ISharedCell.get}
+	 */
+	public get(): Serializable<T> | undefined {
+		return this.data;
+	}
 
-        // If we are not attached, don't submit the op.
-        if (!this.isAttached()) {
-            return;
-        }
+	/**
+	 * {@inheritDoc ISharedCell.set}
+	 */
+	public set(value: Serializable<T>): void {
+		// Serialize the value if required.
+		const operationValue: ICellValue = {
+			value: this.serializer.encode(value, this.handle),
+		};
 
-        const op: IDeleteCellOperation = {
-            type: "deleteCell",
-        };
-        this.submitCellMessage(op, previousValue);
-    }
+		// Set the value locally.
+		const previousValue = this.setCore(value);
 
-    /**
-     * {@inheritDoc ISharedCell.empty}
-     */
-    public empty() {
-        return this.data === undefined;
-    }
+		// If we are not attached, don't submit the op.
+		if (!this.isAttached()) {
+			return;
+		}
 
-    /**
-     * Create a summary for the cell
-     *
-     * @returns the summary of the current state of the cell
-     */
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        const content: ICellValue = { value: this.data };
-        return createSingleBlobSummary(snapshotFileName, serializer.stringify(content, this.handle));
-    }
+		const op: ISetCellOperation = {
+			type: "setCell",
+			value: operationValue,
+		};
+		this.submitCellMessage(op, previousValue);
+	}
 
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-     */
-    protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<ICellValue>(storage, snapshotFileName);
+	/**
+	 * {@inheritDoc ISharedCell.delete}
+	 */
+	public delete(): void {
+		// Delete the value locally.
+		const previousValue = this.deleteCore();
 
-        this.data = this.decode(content);
-    }
+		// If we are not attached, don't submit the op.
+		if (!this.isAttached()) {
+			return;
+		}
 
-    /**
-     * Initialize a local instance of cell
-     */
-    protected initializeLocalCore() {
-        this.data = undefined;
-    }
+		const op: IDeleteCellOperation = {
+			type: "deleteCell",
+		};
+		this.submitCellMessage(op, previousValue);
+	}
 
-    /**
-     * Call back on disconnect
-     */
-    protected onDisconnect() { }
+	/**
+	 * {@inheritDoc ISharedCell.empty}
+	 */
+	public empty(): boolean {
+		return this.data === undefined;
+	}
 
-    /**
-     * Apply inner op
-     * @param content - ICellOperation content
-     */
-    private applyInnerOp(content: ICellOperation) {
-        switch (content.type) {
-            case "setCell":
-                return this.setCore(this.decode(content.value));
+	/**
+	 * {@inheritDoc ISharedCell.getAttribution}
+	 * @alpha
+	 */
+	public getAttribution(): AttributionKey | undefined {
+		return this.attribution;
+	}
 
-            case "deleteCell":
-                return this.deleteCore();
+	/**
+	 * Set the attribution through the SequencedDocumentMessage
+	 */
+	private setAttribution(message: ISequencedDocumentMessage): void {
+		if (this.options?.attribution?.track ?? false) {
+			this.attribution = { type: "op", seq: message.sequenceNumber };
+		}
+	}
 
-            default:
-                throw new Error("Unknown operation");
-        }
-    }
+	/**
+	 * Creates a summary for the Cell.
+	 *
+	 * @returns The summary of the current state of the Cell.
+	 */
+	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		const content: ICellValue = { value: this.data, attribution: this.attribution };
+		return createSingleBlobSummary(
+			snapshotFileName,
+			serializer.stringify(content, this.handle),
+		);
+	}
 
-    /**
-     * Process a cell operation
-     *
-     * @param message - the message to prepare
-     * @param local - whether the message was sent by the local client
-     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-     * For messages from a remote client, this will be undefined.
-     */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
-        if (this.messageId !== this.messageIdObserved) {
-            // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
-            if (local) {
-                const messageIdReceived = cellOpMetadata.pendingMessageId;
-                assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
-                    0x00c /* "messageId is incorrect from from the local client's ACK" */);
-                assert(this.pendingMessageIds !== undefined &&
-                    this.pendingMessageIds[0] === cellOpMetadata.pendingMessageId,
-                    0x471 /* Unexpected pending message received */);
-                this.pendingMessageIds.shift();
-                // We got an ACK. Update messageIdObserved.
-                this.messageIdObserved = cellOpMetadata.pendingMessageId;
-            }
-            return;
-        }
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+	 */
+	protected async loadCore(storage: IChannelStorageService): Promise<void> {
+		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-        if (message.type === MessageType.Operation && !local) {
-            const op = message.contents as ICellOperation;
-            this.applyInnerOp(op);
-        }
-    }
+		this.data = this.decode(content);
+		this.attribution = content.attribution;
+	}
 
-    private setCore(value: Serializable<T>): Serializable<T> | undefined {
-        const previousLocalValue = this.get();
-        this.data = value;
-        this.emit("valueChanged", value);
-        return previousLocalValue;
-    }
+	/**
+	 * Initialize a local instance of cell.
+	 */
+	protected initializeLocalCore(): void {
+		this.data = undefined;
+	}
 
-    private deleteCore(): Serializable<T> | undefined {
-        const previousLocalValue = this.get();
-        this.data = undefined;
-        this.emit("delete");
-        return previousLocalValue;
-    }
+	/**
+	 * Call back on disconnect.
+	 */
+	protected onDisconnect(): void {}
 
-    private decode(cellValue: ICellValue) {
-        const value = cellValue.value;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.serializer.decode(value);
-    }
+	/**
+	 * Apply inner op.
+	 *
+	 * @param content - ICellOperation content
+	 */
+	private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
+		switch (content.type) {
+			case "setCell":
+				return this.setCore(this.decode(content.value));
 
-    private createLocalOpMetadata(op: ICellOperation, previousValue?: Serializable<T>): ICellLocalOpMetadata {
-        const pendingMessageId = ++this.messageId;
-        this.pendingMessageIds.push(pendingMessageId);
-        const localMetadata: ICellLocalOpMetadata = {
-            pendingMessageId, previousValue,
-        };
-        return localMetadata;
-    }
+			case "deleteCell":
+				return this.deleteCore();
 
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
-     * @internal
-     */
-    protected applyStashedOp(content: unknown): unknown {
-        const cellContent = content as ICellOperation;
-        const previousValue = this.applyInnerOp(cellContent);
-        return this.createLocalOpMetadata(cellContent, previousValue);
-    }
+			default:
+				throw new Error("Unknown operation");
+		}
+	}
 
-    /**
-     * Rollback a local op
-     * @param content - The operation to rollback
-     * @param localOpMetadata - The local metadata associated with the op.
-     */
-    protected rollback(content: any, localOpMetadata: unknown) {
-        const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
-        if (content.type === "setCell" || content.type === "deleteCell") {
-            if (cellOpMetadata.previousValue === undefined) {
-                this.deleteCore();
-            } else {
-                this.setCore(cellOpMetadata.previousValue);
-            }
+	/**
+	 * Process a cell operation (op).
+	 *
+	 * @param message - The message to prepare.
+	 * @param local - Whether or not the message was sent by the local client.
+	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+	 * For messages from a remote client, this will be `undefined`.
+	 */
+	protected processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): void {
+		const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+		if (this.messageId !== this.messageIdObserved) {
+			// We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
+			if (local) {
+				const messageIdReceived = cellOpMetadata.pendingMessageId;
+				assert(
+					messageIdReceived !== undefined && messageIdReceived <= this.messageId,
+					0x00c /* "messageId is incorrect from from the local client's ACK" */,
+				);
+				assert(
+					this.pendingMessageIds !== undefined &&
+						this.pendingMessageIds[0] === cellOpMetadata.pendingMessageId,
+					0x471 /* Unexpected pending message received */,
+				);
+				this.pendingMessageIds.shift();
+				// We got an ACK. Update messageIdObserved.
+				this.messageIdObserved = cellOpMetadata.pendingMessageId;
+				// update the attributor
+				this.setAttribution(message);
+			}
+			return;
+		}
 
-            const lastPendingMessageId = this.pendingMessageIds.pop();
-            if (lastPendingMessageId !== cellOpMetadata.pendingMessageId) {
-                throw new Error("Rollback op does not match last pending");
-            }
-        } else {
-            throw new Error("Unsupported op for rollback");
-        }
-    }
+		if (message.type === MessageType.Operation && !local) {
+			const op = message.contents as ICellOperation;
+			// update the attributor
+			this.setAttribution(message);
+			this.applyInnerOp(op);
+		}
+	}
 
-     /**
-     * Submit a cell message to remote clients.
-     * @param op - The cell message
-     * @param previousValue - The value of the cell before this op
-     */
-    private submitCellMessage(op: ICellOperation, previousValue?: any): void {
-        const localMetadata = this.createLocalOpMetadata(op, previousValue);
-        this.submitLocalMessage(op, localMetadata);
-    }
+	private setCore(value: Serializable<T>): Serializable<T> | undefined {
+		const previousLocalValue = this.get();
+		this.data = value;
+		this.emit("valueChanged", value);
+		return previousLocalValue;
+	}
+
+	private deleteCore(): Serializable<T> | undefined {
+		const previousLocalValue = this.get();
+		this.data = undefined;
+		this.emit("delete");
+		return previousLocalValue;
+	}
+
+	private decode(cellValue: ICellValue): Serializable<T> {
+		const value = cellValue.value;
+		return this.serializer.decode(value) as Serializable<T>;
+	}
+
+	private createLocalOpMetadata(
+		op: ICellOperation,
+		previousValue?: Serializable<T>,
+	): ICellLocalOpMetadata {
+		const pendingMessageId = ++this.messageId;
+		this.pendingMessageIds.push(pendingMessageId);
+		const localMetadata: ICellLocalOpMetadata = {
+			pendingMessageId,
+			previousValue,
+		};
+		return localMetadata;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+	 *
+	 * @internal
+	 */
+	protected applyStashedOp(content: unknown): unknown {
+		const cellContent = content as ICellOperation;
+		const previousValue = this.applyInnerOp(cellContent);
+		return this.createLocalOpMetadata(cellContent, previousValue);
+	}
+
+	/**
+	 * Rollback a local op.
+	 *
+	 * @param content - The operation to rollback.
+	 * @param localOpMetadata - The local metadata associated with the op.
+	 */
+	// TODO: use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+	protected rollback(content: any, localOpMetadata: unknown): void {
+		const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		if (content.type === "setCell" || content.type === "deleteCell") {
+			if (cellOpMetadata.previousValue === undefined) {
+				this.deleteCore();
+			} else {
+				this.setCore(cellOpMetadata.previousValue as Serializable<T>);
+			}
+
+			const lastPendingMessageId = this.pendingMessageIds.pop();
+			if (lastPendingMessageId !== cellOpMetadata.pendingMessageId) {
+				throw new Error("Rollback op does not match last pending");
+			}
+		} else {
+			throw new Error("Unsupported op for rollback");
+		}
+	}
+
+	/**
+	 * Submit a cell message to remote clients.
+	 *
+	 * @param op - The cell message.
+	 * @param previousValue - The value of the cell before this op.
+	 */
+	private submitCellMessage(op: ICellOperation, previousValue?: Serializable<T>): void {
+		const localMetadata = this.createLocalOpMetadata(op, previousValue);
+		this.submitLocalMessage(op, localMetadata);
+	}
 }

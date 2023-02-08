@@ -4,18 +4,6 @@
             "mode": "auto"
         }
     ],
-    "typescript.format.enable": true,
-    "typescript.format.insertSpaceAfterCommaDelimiter": true,
-    "typescript.format.insertSpaceAfterSemicolonInForStatements": true,
-    "typescript.format.insertSpaceBeforeAndAfterBinaryOperators": true,
-    "typescript.format.insertSpaceAfterKeywordsInControlFlowStatements": true,
-    "typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": false,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": false,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": false,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": false,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces": false,
-    "typescript.format.placeOpenBraceOnNewLineForFunctions": false,
-    "typescript.format.placeOpenBraceOnNewLineForControlBlocks": false,
     "typescript.tsdk": "node_modules/typescript/lib",
 
     // Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
@@ -26,7 +14,8 @@
     "files.associations": {
         "tools/pipelines/*.yml": "azure-pipelines",
         // good-fences' fence files support comments, so detect them as "jsonc" instead of "json":
-        "fence.json": "jsonc"
+        "fence.json": "jsonc",
+        ".git-blame-ignore-revs": "ignore"
     },
     "[azure-pipelines].customSchemaFile": "",
     "deno.enable": false,
@@ -35,15 +24,19 @@
 
     // Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
     "cSpell.words": [
+        "endregion",
         "injective",
         "losslessly",
         "mitigations",
         "multinomial",
         "nonfinite",
         "pseudorandomly",
+        "Tinylicious",
         "tombstoned",
         "unaugmented"
     ],
-    "editor.detectIndentation": true,
-    "editor.insertSpaces": true, // Use detectIndentation instead
+
+    // Enable prettier as default formatter, and disable rules that disagree with it
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.insertSpaces": false
 }

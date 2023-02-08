@@ -4,23 +4,22 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 export const connectedEventName = "connected";
 export const disconnectedEventName = "disconnected";
 
 export function safeRaiseEvent(
-    emitter: EventEmitter,
-    logger: ITelemetryLogger,
-    event: string,
-    ...args) {
-    try {
-        emitter.emit(event, ...args);
-    } catch (error) {
-        logger.sendErrorEvent({ eventName: "RaiseEventError", event }, error);
-    }
+	emitter: EventEmitter,
+	logger: ITelemetryLogger,
+	event: string,
+	...args
+) {
+	try {
+		emitter.emit(event, ...args);
+	} catch (error) {
+		logger.sendErrorEvent({ eventName: "RaiseEventError", event }, error);
+	}
 }
 
 /**
@@ -32,18 +31,19 @@ export function safeRaiseEvent(
  * @param disconnectedReason - The reason for the connection to be disconnected (Used for telemetry purposes only)
  */
 export function raiseConnectedEvent(
-    logger: ITelemetryLogger,
-    emitter: EventEmitter,
-    connected: boolean,
-    clientId?: string,
-    disconnectedReason?: string) {
-    try {
-        if (connected) {
-            emitter.emit(connectedEventName, clientId);
-        } else {
-            emitter.emit(disconnectedEventName, disconnectedReason);
-        }
-    } catch (error) {
-        logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
-    }
+	logger: ITelemetryLogger,
+	emitter: EventEmitter,
+	connected: boolean,
+	clientId?: string,
+	disconnectedReason?: string,
+) {
+	try {
+		if (connected) {
+			emitter.emit(connectedEventName, clientId);
+		} else {
+			emitter.emit(disconnectedEventName, disconnectedReason);
+		}
+	} catch (error) {
+		logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
+	}
 }

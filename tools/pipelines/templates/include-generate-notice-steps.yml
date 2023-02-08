@@ -8,21 +8,6 @@ parameters:
   type: boolean
 
 steps:
-# special case server/routerlicious
-- ${{ if eq(parameters.buildDirectory, 'server/routerlicious') }}:
-  - task: Npm@1
-    displayName: npm ci
-    inputs:
-      command: 'custom'
-      customCommand: 'ci --ignore-scripts'
-      customRegistry: 'useNpmrc'
-  - bash: |
-      # Generate the package/package lock for the lerna project so we would scan it.
-      node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --server
-      cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
-      cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
-    displayName: 'Generate Mono repo package json'
-
 - task: ComponentGovernanceComponentDetection@0
   displayName: Component Detection
   inputs:
@@ -41,10 +26,3 @@ steps:
   inputs:
     artifact: NOTICE.txt
     path: ${{ parameters.buildDirectory }}
-
-# clean up for special case server/routerlicious
-- ${{ if eq(parameters.buildDirectory, 'server/routerlicious') }}:
-  - bash: |
-      rm server/routerlicious/packages/package.json
-      rm server/routerlicious/packages/package-lock.json
-    displayName: 'Cleanup mono repo package json'

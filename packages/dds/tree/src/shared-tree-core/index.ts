@@ -4,10 +4,11 @@
  */
 
 export {
-    Index,
-    ISharedTreeCoreEvents,
-    SharedTreeCore,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
+	Index,
+	IndexEvents,
+	ISharedTreeCoreEvents,
+	SharedTreeCore,
+	SummaryElement,
+	SummaryElementParser,
+	SummaryElementStringifier,
 } from "./sharedTreeCore";

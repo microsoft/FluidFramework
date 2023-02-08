@@ -1,6 +1,6 @@
 # @fluid-internal/tree
 
-This DDS is not yet ready for public consumption. See [roadmap.md](docs/roadmap.md).
+This DDS is not yet ready for public consumption. For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
 
 ## Motivation
 
@@ -111,10 +111,10 @@ The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree
 
 See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
 
-When applications want access to the `tree`'s data, they do so through a [`checkout`](./src/checkout/README.md) which abstracts the indexes into nice application facing APIs.
+When applications want access to the `tree`'s data, they do so through a [`checkout`](./src/core/checkout/README.md) which abstracts the indexes into nice application facing APIs.
 Checkouts may also have state from the application, including:
 
--   [`view-schema`](./src/schema-view/README.md)
+-   [`view-schema`](./src/core/schema-view/README.md)
 -   adapters for out-of-schema data
 -   request or hints for what subsets of the tree to keep in memory
 -   pending transactions
@@ -123,7 +123,7 @@ Checkouts may also have state from the application, including:
 [`shared-tree`](./src/shared-tree/) provides a default checkout which it owns, but applications can create more if desired, which they will own.
 Since checkouts subscribe to events from `shared-tree`, explicitly disposing any additionally created ones of is required to avoid leaks.
 
-[transactions](./src/transaction/README.md) are created from `checkouts` and are currently synchronous.
+[transactions](./src/core/transaction/README.md) are created from `checkouts` and are currently synchronous.
 Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the checkout,
 could be added in the future.
 
@@ -159,7 +159,7 @@ TODO: Eventually these two approaches should be able to be mixed and matched for
 For now deltas are global.
 
 Note that the first pattern is implemented using the second.
-It works by storing the tree data in a [`forest`](./src/forest/README.md) which updates itself using deltas.
+It works by storing the tree data in a [`forest`](./src/core/forest/README.md) which updates itself using deltas.
 When an application chooses to use the second pattern,
 it can be thought of as opting into a specialized application (or domain) specific tree representation.
 From that perspective the first pattern amounts to using the platform-provided general purpose tree representation:
@@ -168,7 +168,7 @@ this should usually be easier, but may incur some performance overhead in specif
 When views want to hold onto part of the tree (for the first pattern),
 they do so with "anchors" which have well defined behavior across edits.
 
-TODO: Note that as some point the application will want their [`view-schema`](./src/schema-view/README.md) applied to the tree from the checkout.
+TODO: Note that as some point the application will want their [`view-schema`](./src/core/schema-view/README.md) applied to the tree from the checkout.
 The system for doing this is called "schematize" and is currently not implemented.
 When it is more designed, some details for how it works belong in this section (as well as the section below).
 
@@ -273,7 +273,7 @@ Some of the principles used to guide this are:
     Try to keep the total number of dependencies of a given component small when possible.
     This applies both at the module level, but also for the actual object defined by those modules.
     One particular kind of dependency we make a particular effort to avoid are dependencies on stateful systems from code that has complex conditional logic.
-    One example of this is in [rebase](./src/rebase/README.md) where we ensured that the stateful system, `Rebaser` is not depended on by the actual change specific rebase policy.
+    One example of this is in [rebase](./src/core/rebase/README.md) where we ensured that the stateful system, `Rebaser` is not depended on by the actual change specific rebase policy.
     Instead the actual replace policy logic for changes is behind the `ChangeRebaser` interface, which does not depend on `Rebaser` and exposes the policy as pure functions (and thus is stateless).
     This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
     which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
@@ -303,10 +303,10 @@ flowchart
         subgraph core ["core libraries"]
             direction TB
             checkout-->forest
-            shared-tree-core-->change-family
             forest-->schema-stored
-            change-family-->rebase
+            change-family-->repair
             edit-manager-->change-family
+            repair-->rebase
             rebase-->tree
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
@@ -315,8 +315,10 @@ flowchart
             dependency-tracking
             forest-->tree
         end
-        core-->util
-        feature-->core
+        core-->events-->util
+        id-compressor-->util
+        feature-->shared-tree-core
+        shared-tree-core-->core
         shared-tree-->feature
         subgraph feature ["feature-libraries"]
             direction TB
@@ -325,7 +327,8 @@ flowchart
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
             modular-schema
-            object-forest-->treeTextCursor
+            object-forest-->mapTreeCursor-->treeCursorUtils
+            chunked-forest-->treeCursorUtils
             schemaIndex
             sequence-change-family-->treeTextCursor
         end
@@ -350,4 +353,4 @@ This is important for performance/scalability and might be how we do virtualizat
 This might also be the layer at which we hook up schematize.
 Alternatively, it might be an explicitly two-phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
 
-How all this relates to [dependency-tracking](./src/dependency-tracking/README.md) is to be determined.
+How all this relates to [dependency-tracking](./src/core/dependency-tracking/README.md) is to be determined.
