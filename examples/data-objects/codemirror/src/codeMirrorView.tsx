@@ -11,8 +11,8 @@ import {
 	Marker,
 } from "@fluidframework/merge-tree";
 import { getTextAndMarkers, SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
-import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
+import React, { useEffect, useRef } from "react";
 
 /* eslint-disable @typescript-eslint/no-require-imports,
 import/no-internal-modules, import/no-unassigned-import */
@@ -24,7 +24,7 @@ import/no-internal-modules, import/no-unassigned-import */
 
 import { CodeMirrorPresenceManager, PresenceManager } from "./presence";
 
-export class CodeMirrorView implements IFluidHTMLView {
+class CodeMirrorView {
 	private textArea: HTMLTextAreaElement | undefined;
 	private codeMirror: CodeMirror.EditorFromTextArea | undefined;
 	private codeMirrorPresenceManager: CodeMirrorPresenceManager | undefined;
@@ -35,10 +35,6 @@ export class CodeMirrorView implements IFluidHTMLView {
 	private updatingCodeMirror: boolean = false;
 
 	private sequenceDeltaCb: any;
-
-	public get IFluidHTMLView() {
-		return this;
-	}
 
 	constructor(
 		private readonly text: SharedString,
@@ -60,7 +56,7 @@ export class CodeMirrorView implements IFluidHTMLView {
 		}
 	}
 
-	public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+	public render(elm: HTMLElement): void {
 		// Create base textarea
 		if (!this.textArea) {
 			this.textArea = document.createElement("textarea");
@@ -182,3 +178,24 @@ export class CodeMirrorView implements IFluidHTMLView {
 		this.text.on("sequenceDelta", this.sequenceDeltaCb);
 	}
 }
+
+export interface ICodeMirrorReactViewProps {
+	readonly text: SharedString;
+	readonly presenceManager: PresenceManager;
+}
+
+export const CodeMirrorReactView: React.FC<ICodeMirrorReactViewProps> = (
+	props: ICodeMirrorReactViewProps,
+) => {
+	const { text, presenceManager } = props;
+	const htmlView = useRef<CodeMirrorView>(new CodeMirrorView(text, presenceManager));
+	const divRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (divRef.current !== null) {
+			htmlView.current.render(divRef.current);
+		} else {
+			htmlView.current.remove();
+		}
+	}, [divRef.current]);
+	return <div ref={divRef}></div>;
+};
