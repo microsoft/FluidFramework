@@ -3089,7 +3089,6 @@ export class ContainerRuntime
 		logger: ITelemetryLogger,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
-		versionId?: string,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
@@ -3111,7 +3110,7 @@ export class ContainerRuntime
 				const trace = Trace.start();
 
 				const versions = await this.storage.getVersions(
-					versionId ?? null,
+					null,
 					1,
 					"refreshLatestSummaryAckFromServer",
 					FetchSource.noCache,
