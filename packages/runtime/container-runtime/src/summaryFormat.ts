@@ -119,12 +119,15 @@ export interface IGCMetadata {
 	readonly gcFeature?: GCVersion;
 
 	/**
-	 * Numerical indication of feature support as of file creation time, used to determine feature availability over time.
+	 * A collection of different numerical "Generations" for different features,
+	 * used to determine feature availability over time.
 	 * This info may come from multiple sources (FF code, config service, app via Container Runtime Options),
 	 * and pertains to aspects of the document that may be fixed for its lifetime.
 	 *
-	 * For each dimension, if the persisted value is less than the currently provided value,
+	 * For each dimension, if the persisted value doesn't match the currently provided value,
 	 * then this file does not support the corresponding feature as currently implemented.
+	 *
+	 * Guidance is that if no value is provided at runtime, it should result in the current default behavior.
 	 */
 	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
