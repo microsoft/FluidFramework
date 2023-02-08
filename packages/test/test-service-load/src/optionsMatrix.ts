@@ -97,6 +97,7 @@ export function generateRuntimeOptions(
 		enableOpReentryCheck: [true],
 		// Compressed payloads over 1MB will be split into chunked ops of this size
 		chunkSizeInBytes: [307200, 614400, 706800],
+		flushWithMacroTask: [undefined, true],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(
