@@ -569,7 +569,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
 				const container = await loadContainer(summaryVersion);
-				await sendOpToUpdateSummaryTimestampToNow(container);
 
 				// This request fails since the datastore is tombstoned
 				const tombstoneErrorResponse = await containerRuntime_resolveHandle(container, {
@@ -652,7 +651,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					summaryVersion,
 					true /* disableTombstoneFailureViaOption */,
 				);
-				await sendOpToUpdateSummaryTimestampToNow(container);
 
 				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
 				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
