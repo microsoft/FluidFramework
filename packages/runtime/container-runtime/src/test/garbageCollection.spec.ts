@@ -260,7 +260,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 					sweepTimeoutMs: 123,
-					gcFeatureSupportInfo: { appTombstoneReadiness: 1 },
+					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
 				gc = createGcWithPrivateMembers(inputMetadata, {
 					[gcTombstoneEnforcementValueOptionName]: 2,
@@ -283,7 +283,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 					sweepTimeoutMs: 123,
-					gcFeatureSupportInfo: { appTombstoneReadiness: 1 },
+					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
 				gc = createGcWithPrivateMembers(inputMetadata, {
 					[gcTombstoneEnforcementValueOptionName]: 2,
@@ -398,7 +398,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 					sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
-					gcFeatureSupportInfo: { appTombstoneReadiness: 2 },
+					gcFeatureMatrix: { tombstoneGeneration: 2 },
 				};
 				gc = createGcWithPrivateMembers(undefined /* metadata */, {
 					sweepAllowed: true,
@@ -419,7 +419,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: currentGCVersion,
 					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 					sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
-					gcFeatureSupportInfo: undefined,
+					gcFeatureMatrix: undefined,
 				};
 				gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
 				const outputMetadata = gc.getMetadata();
@@ -549,7 +549,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 					sweepTimeoutMs: expectedSweepTimeoutMs,
-					gcFeatureSupportInfo: undefined,
+					gcFeatureMatrix: undefined,
 				};
 				const outputMetadata = gc.getMetadata();
 				assert.deepEqual(

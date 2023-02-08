@@ -81,7 +81,7 @@ import {
 	dataStoreAttributesBlobName,
 	IGCMetadata,
 	ICreateContainerMetadata,
-	GcFeatureSupportDimensions,
+	GcFeatureMatrix,
 } from "./summaryFormat";
 
 /** The statistics of the system state after a garbage collection run. */
@@ -437,7 +437,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private latestSummaryGCVersion: GCVersion;
 
 	// Feature Support info persisted to this container's summary
-	private readonly persistedGcFeatureSupportInfo: GcFeatureSupportDimensions | undefined;
+	private readonly persistedGcFeatureSupportInfo: GcFeatureMatrix | undefined;
 
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
@@ -585,7 +585,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 			this.sweepTimeoutMs =
 				metadata?.sweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
-			this.persistedGcFeatureSupportInfo = metadata?.gcFeatureSupportInfo;
+			this.persistedGcFeatureSupportInfo = metadata?.gcFeatureMatrix;
 		} else {
 			// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
 			// scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -615,7 +615,7 @@ export class GarbageCollector implements IGarbageCollector {
 				testOverrideSweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
 			if (this.gcOptions[gcTombstoneEnforcementValueOptionName] !== undefined) {
 				this.persistedGcFeatureSupportInfo = {
-					appTombstoneReadiness: this.gcOptions[gcTombstoneEnforcementValueOptionName],
+					tombstoneGeneration: this.gcOptions[gcTombstoneEnforcementValueOptionName],
 				};
 			}
 		}
@@ -1270,7 +1270,7 @@ export class GarbageCollector implements IGarbageCollector {
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
 			gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
-			gcFeatureSupportInfo: this.persistedGcFeatureSupportInfo,
+			gcFeatureMatrix: this.persistedGcFeatureSupportInfo,
 			sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
 			sweepEnabled: this.sweepEnabled,
 			sweepTimeoutMs: this.sweepTimeoutMs,

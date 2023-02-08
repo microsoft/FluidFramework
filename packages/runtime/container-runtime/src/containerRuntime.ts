@@ -1093,7 +1093,7 @@ export class ContainerRuntime
 		this._connected = this.context.connected;
 
 		this.disableGcTombstoneEnforcement = shouldDisableGcEnforcement(
-			metadata?.gcFeatureSupportInfo?.appTombstoneReadiness,
+			metadata?.gcFeatureMatrix?.tombstoneGeneration,
 			this.runtimeOptions.gcOptions[gcTombstoneEnforcementValueOptionName],
 		);
 
@@ -1101,7 +1101,7 @@ export class ContainerRuntime
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "FeatureSupportInfo",
-			info: JSON.stringify(metadata?.gcFeatureSupportInfo),
+			info: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
 				gcOptions_gcTombstoneEnforcementValue:
 					this.runtimeOptions.gcOptions[gcTombstoneEnforcementValueOptionName],

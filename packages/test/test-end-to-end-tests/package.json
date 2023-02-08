@@ -49,7 +49,7 @@
 		"test:realsvc:tinylicious": "npm run test:realsvc:t9s",
 		"test:realsvc:tinylicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:t9s",
 		"test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s",
-		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc:local"
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
 	"nyc": {
 		"all": true,
