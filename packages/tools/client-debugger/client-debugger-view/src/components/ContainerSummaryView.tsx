@@ -75,7 +75,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		container.on("dirty", onContainerDirty);
 		container.on("saved", onContainerSaved);
 		container.on("closed", onContainerClosed);
-		
+
 		setContainerAttachState(container.attachState);
 		setContainerConnectionState(container.connectionState);
 		setIsContainerDirty(container.isDirty);
@@ -150,7 +150,9 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 				</StackItem>
 				<StackItem align="end">
 					<ActionsBar
-						isContainerConnected={containerConnectionState === ConnectionState.Connected}
+						isContainerConnected={
+							containerConnectionState === ConnectionState.Connected
+						}
 						tryConnect={(): void => container.connect()}
 						forceDisconnect={(): void => container.disconnect()}
 						closeContainer={(): void => container.close()}
