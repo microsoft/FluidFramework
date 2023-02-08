@@ -1093,7 +1093,7 @@ export class ContainerRuntime
 		this._connected = this.context.connected;
 
 		this.disableGcTombstoneEnforcement = shouldDisableGcEnforcement(
-			metadata?.gcFeatureSupport?.appTombstoneReadiness,
+			metadata?.gcFeatureSupportInfo?.appTombstoneReadiness,
 			this.runtimeOptions.gcOptions[gcEnforcementCurrentValue],
 		);
 

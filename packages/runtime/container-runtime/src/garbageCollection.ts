@@ -68,6 +68,7 @@ import {
 	runSweepKey,
 	stableGCVersion,
 	trackGCStateKey,
+	gcEnforcementCurrentValue,
 } from "./garbageCollectionConstants";
 import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
@@ -80,6 +81,7 @@ import {
 	dataStoreAttributesBlobName,
 	IGCMetadata,
 	ICreateContainerMetadata,
+	GcFeatureSupportDimensions,
 } from "./summaryFormat";
 
 /** The statistics of the system state after a garbage collection run. */
@@ -434,6 +436,9 @@ export class GarbageCollector implements IGarbageCollector {
 	// This is the version of GC data in the latest summary being tracked.
 	private latestSummaryGCVersion: GCVersion;
 
+	// Feature Support info persisted to this container's summary
+	private readonly persistedGcFeatureSupportInfo: GcFeatureSupportDimensions;
+
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
 	// Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
@@ -580,6 +585,9 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 			this.sweepTimeoutMs =
 				metadata?.sweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
+			this.persistedGcFeatureSupportInfo = metadata?.gcFeatureSupportInfo ?? {
+				appTombstoneReadiness: undefined,
+			};
 		} else {
 			// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
 			// scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -607,6 +615,9 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 			this.sweepTimeoutMs =
 				testOverrideSweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
+			this.persistedGcFeatureSupportInfo = {
+				appTombstoneReadiness: this.gcOptions[gcEnforcementCurrentValue],
+			};
 		}
 
 		// If session expiry is enabled, we need to close the container when the session expiry timeout expires.
@@ -1259,6 +1270,7 @@ export class GarbageCollector implements IGarbageCollector {
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
 			gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
+			gcFeatureSupportInfo: this.persistedGcFeatureSupportInfo,
 			sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
 			sweepEnabled: this.sweepEnabled,
 			sweepTimeoutMs: this.sweepTimeoutMs,

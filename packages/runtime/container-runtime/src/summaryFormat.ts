@@ -97,6 +97,15 @@ export interface ICreateContainerMetadata {
 	createContainerTimestamp?: number;
 }
 
+/** @see IGCMetadata.gcFeatureSupportInfo */
+export interface GcFeatureSupportDimensions {
+	/**
+	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement
+	 * Provided via Container Runtime Options
+	 */
+	appTombstoneReadiness?: number;
+}
+
 export type GCVersion = number;
 export interface IGCMetadata {
 	/**
@@ -116,13 +125,7 @@ export interface IGCMetadata {
 	 * For each dimension, if the persisted value is less than the currently provided value,
 	 * then this file does not support the corresponding feature as currently implemented.
 	 */
-	readonly gcFeatureSupport?: {
-		/**
-		 * Gives a way for an app to disqualify old files from GC Tombstone enforcement
-		 * Provided via Container Runtime Options
-		 */
-		appTombstoneReadiness: number;
-	};
+	readonly gcFeatureSupportInfo?: GcFeatureSupportDimensions;
 	/**
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
