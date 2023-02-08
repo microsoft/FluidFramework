@@ -159,9 +159,11 @@ export class ScribeLambda implements IPartitionLambda {
                 }
 
                 // Ensure protocol handler sequence numbers are monotonically increasing
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
                     // unexpected sequence number. if a pending message reader is available, ask for those ops
                     if (this.pendingMessageReader !== undefined) {
+                        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                         const from = lastProtocolHandlerSequenceNumber + 1;
                         const to = value.operation.sequenceNumber - 1;
                         const additionalPendingMessages = await this.pendingMessageReader.readMessages(from, to);
@@ -391,12 +393,12 @@ export class ScribeLambda implements IPartitionLambda {
             message,
             this.clearCache);
         this.lastOffset = message.offset;
-        Lumberjack.info(`Last offset: ${this.lastOffset}`, getLumberBaseProperties(this.documentId, this.tenantId));
         const reason = CheckpointReason[checkpointReason];
         const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
         const lumberjackProperties = {
             ...getLumberBaseProperties(this.documentId, this.tenantId),
             checkpointReason: reason,
+            lastOffset: this.lastOffset,
         };
         Lumberjack.info(checkpointResult, lumberjackProperties);
     }
@@ -506,7 +508,7 @@ export class ScribeLambda implements IPartitionLambda {
             },
             (error) => {
                 this.context.error(error, {
-                    restart: true,
+                    restart: false,
                     tenantId: this.tenantId,
                     documentId: this.documentId,
                 });
@@ -680,6 +682,7 @@ export class ScribeLambda implements IPartitionLambda {
                     const lumberjackProperties = {
                         ...getLumberBaseProperties(this.documentId, this.tenantId),
                         checkpointReason: "IdleTime",
+                        lastOffset: initialScribeCheckpointMessage.offset
                     };
                     Lumberjack.info(checkpointResult, lumberjackProperties);
                 }

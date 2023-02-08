@@ -146,6 +146,18 @@ export enum CrossFieldTarget {
     Source = 0
 }
 
+// @alpha
+export interface CursorAdapter<TNode> {
+    // (undocumented)
+    getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
+    // (undocumented)
+    keysFromNode(node: TNode): readonly FieldKey[];
+    // (undocumented)
+    type(node: TNode): TreeType;
+    // (undocumented)
+    value(node: TNode): Value;
+}
+
 // @alpha (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -154,6 +166,12 @@ export const enum CursorLocationType {
 
 // @alpha
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
+
+// @alpha
+export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
+    fork(): CursorWithNode<TNode>;
+    getNode(): TNode;
+}
 
 // @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
@@ -1002,6 +1020,9 @@ export class SimpleDependee implements Dependee {
 
 // @alpha
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
+
+// @alpha (undocumented)
+export function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
 
 // @alpha (undocumented)
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;

@@ -3,6 +3,7 @@
 The version-tools package provides APIs and a CLI to parse and transform version numbers and ranges that are used by the
 Fluid Framework.
 
+<!-- prettier-ignore-start -->
 <!-- toc -->
 
 -   [@fluid-tools/version-tools](#fluid-toolsversion-tools)
@@ -10,7 +11,9 @@ Fluid Framework.
 -   [General API](#general-api)
 -   [CLI Usage](#cli-usage)
 -   [Commands](#commands)
+
 <!-- tocstop -->
+<!-- prettier-ignore-stop -->
 
 # Version schemes
 
@@ -70,6 +73,7 @@ version-tools provides a command-line interface (`fluv`) when installed directly
 also available in the Fluid build and release tool (`flub`). This is accomplished using
 [oclif's plugin system](https://oclif.io/docs/plugins).
 
+<!-- prettier-ignore-start -->
 <!-- usage -->
 
 ```sh-session
@@ -85,9 +89,11 @@ USAGE
 ```
 
 <!-- usagestop -->
+<!-- prettier-ignore-stop -->
 
 # Commands
 
+<!-- prettier-ignore-start -->
 <!-- commands -->
 
 -   [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
@@ -221,6 +227,7 @@ EXAMPLES
 ```
 
 <!-- commandsstop -->
+<!-- prettier-ignore-stop -->
 
 ## Developer notes
 

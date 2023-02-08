@@ -8,10 +8,31 @@ import { Server } from "http";
 import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
-import { isWebUri } from "valid-url";
 
-import { MockWebhook } from "../utilities";
 import { assertValidTaskData, TaskData } from "../model-interface";
+
+/**
+ * Submits notifications of changes to Fluid Service.
+ */
+function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string): void {
+	console.log(
+		`WEBHOOK: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
+	);
+
+	// TODO: we will need to add details (like ContainerId) to the message body or the url,
+	// so this message body format will evolve
+	const messageBody = JSON.stringify({ data });
+	fetch(fluidServiceUrl, {
+		method: "POST",
+		headers: {
+			"Access-Control-Allow-Origin": "*",
+			"Content-Type": "application/json",
+		},
+		body: messageBody,
+	}).catch((error) => {
+		console.error("WEBHOOK: Encountered an error while notifying Fluid Service:", error);
+	});
+}
 
 /**
  * {@link initializeCustomerService} input properties.
@@ -32,13 +53,24 @@ export interface ServiceProps {
 	 * any time the external data service communicates them.
 	 */
 	externalDataServiceWebhookRegistrationUrl: string;
+
+	/**
+	 * URL of the Fluid Service to notify when external data notification comes in.
+	 *
+	 * @remarks
+	 *
+	 * Once the notification comes in from the external data service that data
+	 * has changed on it, this service needs to let the Fluid Service know on this URL
+	 * that there has been a change.
+	 */
+	fluidServiceUrl: string;
 }
 
 /**
  * Initializes the mock customer service.
  */
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
-	const { port, externalDataServiceWebhookRegistrationUrl } = props;
+	const { port, externalDataServiceWebhookRegistrationUrl, fluidServiceUrl } = props;
 
 	/**
 	 * Helper function to prepend service-specific metadata to messages logged by this service.
@@ -46,11 +78,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	function formatLogMessage(message: string): string {
 		return `CUSTOMER SERVICE (${port}): ${message}`;
 	}
-
-	/**
-	 * Mock webhook for echoing webhook notifications from the external data service.
-	 */
-	const webhook = new MockWebhook<TaskData>();
 
 	// Register with external data service for webhook notifications.
 	try {
@@ -62,7 +89,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			},
 			body: JSON.stringify({
 				// External data service will call our webhook echoer to notify our subscribers of the data changes.
-				url: `http://localhost:${port}/echo-external-data-webhook`,
+				url: `http://localhost:${port}/external-data-webhook`,
 			}),
 		});
 	} catch (error) {
@@ -87,52 +114,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	});
 
 	/**
-	 * Register's the sender's URL to receive notifications when the external task-list data changes.
-	 *
-	 * Expected input data format:
-	 *
-	 * ```json
-	 * {
-	 *  url: string // The target URL to receive change notification
-	 * }
-	 * ```
-	 *
-	 * Notifications sent to subscribers will contain the updated task-list data in the form of:
-	 *
-	 * ```json
-	 * {
-	 *  taskList: {
-	 *      [id: string]: {
-	 *          name: string,
-	 *          priority: number
-	 *      }
-	 *  }
-	 * }
-	 * ```
-	 */
-	expressApp.post("/register-for-webhook", (request, result) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const subscriberUrl = request.body?.url as string;
-		if (subscriberUrl === undefined) {
-			const errorMessage = 'No subscription URL provided. Expected under "url" property.';
-			console.error(formatLogMessage(errorMessage));
-			result.status(400).json({ message: errorMessage });
-		} else if (isWebUri(subscriberUrl) === undefined) {
-			const errorMessage = "Provided subscription URL is invalid.";
-			console.error(formatLogMessage(errorMessage));
-			result.status(400).json({ message: errorMessage });
-		} else {
-			webhook.registerSubscriber(subscriberUrl);
-			console.log(
-				formatLogMessage(
-					`Registered for webhook notifications at URL: "${subscriberUrl}".`,
-				),
-			);
-			result.send();
-		}
-	});
-
-	/**
 	 * "Echoes" the external data services data update notifications to our own webhook subscribers.
 	 *
 	 * Expected input data format:
@@ -150,7 +131,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *
 	 * This data will be forwarded to our own subscribers.
 	 */
-	expressApp.post("/echo-external-data-webhook", (request, result) => {
+	expressApp.post("/external-data-webhook", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const messageData = request.body?.data as unknown;
 		if (messageData === undefined) {
@@ -174,7 +155,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			webhook.notifySubscribers(taskData);
+			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl);
 			result.send();
 		}
 	});
