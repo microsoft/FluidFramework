@@ -130,8 +130,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
 	 *
-	 * @alpha
-	 *
 	 * @param id - String identifier.
 	 * @param runtime - Data store runtime.
 	 * @param attributes - The attributes for the map.
