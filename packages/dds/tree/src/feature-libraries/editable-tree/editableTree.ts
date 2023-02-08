@@ -106,7 +106,7 @@ export const createField: unique symbol = Symbol("editable-tree:createField()");
 export const replaceField: unique symbol = Symbol("editable-tree:replaceField()");
 
 /**
- * A symbol to get the function, which access parent information of an {@link EditableTree},
+ * A symbol to get information about where an {@link EditableTree} is parented in contexts where string keys are already in use for fields.
  * in contexts where string keys are already in use for fields.
  * @alpha
  */
