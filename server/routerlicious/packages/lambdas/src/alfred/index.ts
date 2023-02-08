@@ -39,6 +39,7 @@ import {
     createRoomLeaveMessage,
     generateClientId,
     getRandomInt,
+    ConnectionCountLogger,
 } from "../utils";
 
 const summarizerClientType = "summarizer";
@@ -207,6 +208,7 @@ export function configureWebSocketServices(
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
     isSignalUsageCountingEnabled: boolean = false,
+    cache?: core.ICache,
     connectThrottler?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
     submitSignalThrottler?: core.IThrottler,
@@ -225,6 +227,8 @@ export function configureWebSocketServices(
 
         // Timer to check token expiry for this socket connection
         let expirationTimer: NodeJS.Timer | undefined;
+
+        const connectionCountLogger = new ConnectionCountLogger(process.env.NODE_NAME, cache);
 
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
@@ -482,6 +486,11 @@ export function configureWebSocketServices(
                             "signal",
                             createRoomJoinMessage(message.connection.clientId, message.details));
                     }
+                    // excluding summarizer for total client count.
+                    if (message?.details?.details?.type !== summarizerClientType) {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        connectionCountLogger.incrementConnectionCount();
+                    }
 
                     connectMetric.setProperties({
                         [CommonProperties.clientId]: message.connection.clientId,
@@ -492,6 +501,9 @@ export function configureWebSocketServices(
                 },
                 (error) => {
                     socket.emit("connect_document_error", error);
+                    if (isNetworkError(error)) {
+                        connectMetric.setProperty(CommonProperties.errorCode, error.code);
+                    }
                     connectMetric.error(`Connect document failed`, error);
                 });
         });
@@ -680,6 +692,11 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the room map
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
+                // excluding summarizer for total client count.
+                if (connectionTimeMap.has(clientId)) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    connectionCountLogger.decrementConnectionCount();
+                }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId} from room`,

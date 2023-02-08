@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-utils",
-	"version": "2.0.0-internal.2.4.0",
+	"version": "2.0.0-internal.3.1.0",
 	"description": "Fluid agnostic utility functions with zero-dependencies",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -17,7 +17,7 @@
 	"scripts": {
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\"",
 		"bench:profile": "mocha --v8-prof --timeout 999999 --perfMode --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\" && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
-    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
@@ -30,8 +30,8 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run eslint",
-		"lint:fix": "npm run eslint:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
@@ -65,11 +65,11 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/benchmark": "^0.45.0",
-    "@fluid-tools/build-cli": "^0.8.0",
+		"@fluid-tools/build-cli": "^0.9.0-127618",
 		"@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "^0.8.0",
+		"@fluidframework/build-tools": "^0.9.0-127618",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/mocha": "^9.1.1",
@@ -86,7 +86,7 @@
 		"source-map-support": "^0.5.16",
 		"typescript": "~4.5.5"
 	},
-  "typeValidation": {
-    "disabled": true
-  }
+	"typeValidation": {
+		"disabled": true
+	}
 }

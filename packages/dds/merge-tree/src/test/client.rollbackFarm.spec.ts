@@ -5,78 +5,74 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import random from "random-js";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
-    annotateRange,
-    applyMessages,
-    doOverRanges,
-    generateOperationMessagesForClients,
-    insertAtRefPos,
-    removeRange,
-    TestOperation,
+	annotateRange,
+	applyMessages,
+	doOverRanges,
+	generateOperationMessagesForClients,
+	insertAtRefPos,
+	removeRange,
+	TestOperation,
 } from "./mergeTreeOperationRunner";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
-const allOperations: TestOperation[] = [
-    removeRange,
-    annotateRange,
-    insertAtRefPos,
-];
+const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 
 const defaultOptions = {
-    minLength: { min: 1, max: 32 },
-    opsPerRollbackRange: { min: 1, max: 32 },
-    rounds: 10,
-    opsPerRound: 10,
-    operations: allOperations,
-    growthFunc: (input: number) => input * 2,
+	minLength: { min: 1, max: 32 },
+	opsPerRollbackRange: { min: 1, max: 32 },
+	rounds: 10,
+	opsPerRound: 10,
+	operations: allOperations,
+	growthFunc: (input: number) => input * 2,
 };
 
 describe("MergeTree.Client", () => {
-    doOverRanges(defaultOptions, ({ minLength, opsPerRollbackRange: opsPerRollback }) => {
-        it(`RollbackFarm_${minLength} OpsPerRollback: ${opsPerRollback}`, async () => {
-            const mt = random.engines.mt19937();
-            mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength, opsPerRollback]);
+	doOverRanges(defaultOptions, ({ minLength, opsPerRollbackRange: opsPerRollback }) => {
+		it(`RollbackFarm_${minLength} OpsPerRollback: ${opsPerRollback}`, async () => {
+			const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, opsPerRollback);
 
-            // A: readonly, B: rollback, C: rollback + edit, D: edit
-            const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
-            let seq = 0;
+			// A: readonly, B: rollback, C: rollback + edit, D: edit
+			const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
+			let seq = 0;
 
-            for (let round = 0; round < defaultOptions.rounds; round++) {
-                clients.all.forEach((c) => c.updateMinSeq(seq));
+			for (let round = 0; round < defaultOptions.rounds; round++) {
+				clients.all.forEach((c) => c.updateMinSeq(seq));
 
-                const logger = new TestClientLogger(clients.all, `Round ${round}`);
+				const logger = new TestClientLogger(clients.all, `Round ${round}`);
 
-                // initialize and ack 10 random actions on either C or D
-                const initialMsgs = generateOperationMessagesForClients(
-                    mt,
-                    seq,
-                    [clients.A, clients.C, clients.D],
-                    logger,
-                    defaultOptions.opsPerRound,
-                    minLength,
-                    defaultOptions.operations);
-                seq = applyMessages(seq, initialMsgs, clients.all, logger);
+				// initialize and ack 10 random actions on either C or D
+				const initialMsgs = generateOperationMessagesForClients(
+					random,
+					seq,
+					[clients.A, clients.C, clients.D],
+					logger,
+					defaultOptions.opsPerRound,
+					minLength,
+					defaultOptions.operations,
+				);
+				seq = applyMessages(seq, initialMsgs, clients.all, logger);
 
-                logger.validate();
+				logger.validate();
 
-                // generate messages to rollback on B or C, then rollback
-                const rollbackMsgs = generateOperationMessagesForClients(
-                    mt,
-                    seq,
-                    [clients.A, clients.B, clients.C],
-                    logger,
-                    opsPerRollback,
-                    minLength,
-                    defaultOptions.operations);
-                while (rollbackMsgs.length > 0) {
-                    const msg = rollbackMsgs.pop();
-                    clients[msg![0].clientId].rollback?.({ type: msg![0].contents.type }, msg![1]);
-                }
+				// generate messages to rollback on B or C, then rollback
+				const rollbackMsgs = generateOperationMessagesForClients(
+					random,
+					seq,
+					[clients.A, clients.B, clients.C],
+					logger,
+					opsPerRollback,
+					minLength,
+					defaultOptions.operations,
+				);
+				while (rollbackMsgs.length > 0) {
+					const msg = rollbackMsgs.pop();
+					clients[msg![0].clientId].rollback?.({ type: msg![0].contents.type }, msg![1]);
+				}
 
-                logger.validate();
-            }
-        })
-        .timeout(30 * 10000);
-    });
+				logger.validate();
+			}
+		}).timeout(30 * 10000);
+	});
 });

@@ -77,6 +77,7 @@ export enum CommonProperties {
     statusCode = "statusCode",
 
     // Miscellaneous properties
+    errorCode = "errorCode",
     restart = "restart",
     serviceName = "serviceName",
     telemetryGroupName = "telemetryGroupName",
