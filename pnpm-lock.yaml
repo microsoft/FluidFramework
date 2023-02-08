@@ -7950,6 +7950,7 @@ importers:
       rimraf: ^2.6.2
       source-map-loader: ^2.0.0
       typescript: ~4.5.5
+      webpack: ^5.72.0
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7968,8 +7969,9 @@ importers:
       eslint: 8.6.0
       prettier: 2.6.2
       rimraf: 2.7.1
-      source-map-loader: 2.0.2
+      source-map-loader: 2.0.2_webpack@5.75.0
       typescript: 4.5.5
+      webpack: 5.75.0
 
   packages/runtime/container-runtime:
     specifiers:
@@ -22766,7 +22768,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -22774,7 +22776,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
