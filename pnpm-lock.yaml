@@ -4433,6 +4433,101 @@ importers:
       rimraf: 2.7.1
       typescript: 4.5.5
 
+  experimental/examples/bubblebench/cursor-shared-tree:
+    specifiers:
+      '@fluid-example/bubblebench-common': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-example/example-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-experimental/tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-internal/tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/aqueduct': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/container-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/container-loader': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/container-runtime': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/map': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/runtime-utils': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/test-drivers': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-utils': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
+      '@rushstack/eslint-config': ^2.5.1
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': ^14.18.36
+      '@types/puppeteer': 1.3.0
+      '@types/react': ^17.0.1
+      '@types/react-dom': ^17.0.1
+      concurrently: ^6.2.0
+      cross-env: ^7.0.2
+      eslint: ~8.6.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^4.3.0
+      puppeteer: ^1.20.0
+      react: ^17.0.1
+      rimraf: ^2.6.2
+      ts-jest: ^26.4.4
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+      typescript-formatter: 7.1.0
+      webpack: ^5.72.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-example/bubblebench-common': link:../common
+      '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
+      '@fluid-experimental/tree': link:../../../dds/tree
+      '@fluid-internal/tree': link:../../../../packages/dds/tree
+      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
+      '@fluidframework/map': link:../../../../packages/dds/map
+      react: 17.0.2
+    devDependencies:
+      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/container-loader': 2.0.0-internal.2.2.0
+      '@fluidframework/container-runtime': 2.0.0-internal.2.2.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/runtime-utils': 2.0.0-internal.2.2.0
+      '@fluidframework/test-drivers': 2.0.0-internal.2.4.0
+      '@fluidframework/test-runtime-utils': 2.0.0-internal.2.4.0
+      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-utils': 2.0.0-internal.2.4.0
+      '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': 14.18.36
+      '@types/puppeteer': 1.3.0
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      concurrently: 6.3.0
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      jest: 26.6.3
+      jest-junit: 10.0.0
+      jest-puppeteer: 4.4.0_puppeteer@1.20.0
+      puppeteer: 1.20.0
+      rimraf: 2.7.1
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
+      ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
+      typescript: 4.5.5
+      typescript-formatter: 7.1.0_typescript@4.5.5
+      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
+      webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
+      webpack-merge: 5.8.0
+
   experimental/examples/bubblebench/editable-shared-tree:
     specifiers:
       '@fluid-example/bubblebench-common': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
@@ -4594,101 +4689,6 @@ importers:
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
       typescript: 4.5.5
-      webpack: 5.75.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
-      webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
-      webpack-merge: 5.8.0
-
-  experimental/examples/bubblebench/shared-tree:
-    specifiers:
-      '@fluid-example/bubblebench-common': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluid-example/example-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluid-experimental/tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluid-internal/tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/aqueduct': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/container-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/container-loader': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
-      '@fluidframework/container-runtime': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
-      '@fluidframework/core-interfaces': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/map': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/runtime-utils': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
-      '@fluidframework/test-drivers': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
-      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
-      '@fluidframework/test-tools': ^0.2.3074
-      '@fluidframework/test-utils': '>=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0'
-      '@rushstack/eslint-config': ^2.5.1
-      '@types/expect-puppeteer': 2.2.1
-      '@types/jest': 22.2.3
-      '@types/jest-environment-puppeteer': 2.2.0
-      '@types/node': ^14.18.36
-      '@types/puppeteer': 1.3.0
-      '@types/react': ^17.0.1
-      '@types/react-dom': ^17.0.1
-      concurrently: ^6.2.0
-      cross-env: ^7.0.2
-      eslint: ~8.6.0
-      jest: ^26.6.3
-      jest-junit: ^10.0.0
-      jest-puppeteer: ^4.3.0
-      puppeteer: ^1.20.0
-      react: ^17.0.1
-      rimraf: ^2.6.2
-      ts-jest: ^26.4.4
-      ts-loader: ^9.3.0
-      typescript: ~4.5.5
-      typescript-formatter: 7.1.0
-      webpack: ^5.72.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
-    dependencies:
-      '@fluid-example/bubblebench-common': link:../common
-      '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
-      '@fluid-experimental/tree': link:../../../dds/tree
-      '@fluid-internal/tree': link:../../../../packages/dds/tree
-      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
-      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map': link:../../../../packages/dds/map
-      react: 17.0.2
-    devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
-      '@fluidframework/build-common': 1.1.0
-      '@fluidframework/container-loader': 2.0.0-internal.2.2.0
-      '@fluidframework/container-runtime': 2.0.0-internal.2.2.0
-      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/runtime-utils': 2.0.0-internal.2.2.0
-      '@fluidframework/test-drivers': 2.0.0-internal.2.4.0
-      '@fluidframework/test-runtime-utils': 2.0.0-internal.2.4.0
-      '@fluidframework/test-tools': 0.2.3074
-      '@fluidframework/test-utils': 2.0.0-internal.2.4.0
-      '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/expect-puppeteer': 2.2.1
-      '@types/jest': 22.2.3
-      '@types/jest-environment-puppeteer': 2.2.0
-      '@types/node': 14.18.36
-      '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
-      concurrently: 6.3.0
-      cross-env: 7.0.3
-      eslint: 8.6.0
-      jest: 26.6.3
-      jest-junit: 10.0.0
-      jest-puppeteer: 4.4.0_puppeteer@1.20.0
-      puppeteer: 1.20.0
-      rimraf: 2.7.1
-      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
-      ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
-      typescript: 4.5.5
-      typescript-formatter: 7.1.0_typescript@4.5.5
       webpack: 5.75.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
       webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
@@ -12713,13 +12713,13 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.0.0
-      '@fluidframework/container-definitions': 2.0.0-internal.2.2.0
+      '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.2.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.2.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.2.2.0
-      '@fluidframework/driver-utils': 2.0.0-internal.2.2.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
+      '@fluidframework/datastore-definitions': 2.0.0-internal.2.4.0
+      '@fluidframework/driver-utils': 2.0.0-internal.2.4.0
       '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.2.2.0
+      '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/shared-object-base': 2.0.0-internal.2.2.0
     transitivePeerDependencies:
       - debug
@@ -13370,14 +13370,14 @@ packages:
       '@fluidframework/container-utils': 2.0.0-internal.2.2.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.2.0
       '@fluidframework/datastore': 2.0.0-internal.2.2.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.2.2.0
-      '@fluidframework/driver-utils': 2.0.0-internal.2.2.0
+      '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
+      '@fluidframework/driver-utils': 2.0.0-internal.2.4.0
       '@fluidframework/garbage-collector': 2.0.0-internal.2.2.0
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.2.2.0
-      '@fluidframework/runtime-utils': 2.0.0-internal.2.2.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.2.2.0
+      '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
+      '@fluidframework/runtime-utils': 2.0.0-internal.2.4.0
+      '@fluidframework/telemetry-utils': 2.0.0-internal.2.4.0
       double-ended-queue: 2.1.0-0
       lz4js: 0.2.0
       uuid: 8.3.2
@@ -15080,7 +15080,7 @@ packages:
       '@fluidframework/common-utils': 1.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-runtime': 2.0.0-internal.2.4.0
-      '@fluidframework/container-utils': 2.0.0-internal.2.4.0
+      '@fluidframework/container-utils': 2.0.0-internal.2.2.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/datastore': 2.0.0-internal.2.4.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.2.4.0
