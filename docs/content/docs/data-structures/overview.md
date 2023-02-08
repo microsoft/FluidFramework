@@ -102,7 +102,7 @@ Consensus data structures have one or both of these characteristics:
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-- [TaskManager][] -- Tracks queues of clients that want to exclusively run a task.
+- TaskManager (experimental) -- Tracks queues of clients that want to exclusively run a task.
 
 ### Consensus scenarios
 
@@ -112,8 +112,35 @@ Typical scenarios require the connected clients to "agree" on some course of act
 - Upgrade a data schema. (All clients agree to simultaneously make the change.)
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
-[SharedCounter]: {{< relref "counter.md" >}}
-[SharedMap]: {{< relref "map.md" >}}
-[SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "task-manager.md" >}}
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Distributed Data Structures -->
+
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
+
+<!-- API links -->
+
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+
+[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
