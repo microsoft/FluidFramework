@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { MockWebhook, SubscriberUrl } from "./webhook";
-export { fluidServicePort } from "./fluidService";
+// This file is used only to run `eslint --print-config`. See the README for this project for more information.

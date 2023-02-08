@@ -16,6 +16,7 @@ import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerlici
 
 export class TinyliciousTestDriver implements ITestDriver {
 	public readonly type = "tinylicious";
+	public readonly endpointName = "local";
 	public get version() {
 		return this.api.version;
 	}
