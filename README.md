@@ -199,9 +199,10 @@ Then:
 This repository uses [prettier](https://prettier.io/) as its code formatter.
 Right now, this is implemented on a per-package basis, with a [shared base configuration](./common/build/build-common/prettier.config.cjs).
 
-To run `prettier` on your code, run `npm run format` from the appropriate package or release group.
-
--   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the script argument (e.g. `fluid-build -s format`).
+-   To run `prettier` on your code, run `npm run format` from the appropriate package or release group, or run `npm run format:changed` from the root of the repo to format only files changed since the main branch. If your change is for the
+    next branch instead, you can run `npm run format:changed:next`.
+-   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
+    script argument: `fluid-build -s format` or `npm run build:fast -- -s format`
 
 To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
 
