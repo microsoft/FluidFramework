@@ -24,78 +24,75 @@ import {
  * point in time at which the operation was applied.
  * They will not take into any future modifications performed to the underlying sequence and merge tree.
  */
-export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
-    /**
-     * @deprecated - Events no longer fire when the change they correspond to had no impact (e.g. a remote delete
-     * event for a range that had already been deleted locally).
-     * Clients can therefore assume this property is false.
-     */
-    public readonly isEmpty: boolean;
-    public readonly deltaOperation: TOperation;
-    private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
-    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
-    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
+export abstract class SequenceEvent<
+	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
+> {
+	public readonly deltaOperation: TOperation;
+	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
+	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
+	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
-    constructor(
-        public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
-        private readonly mergeTreeClient: Client,
-    ) {
-        assert(deltaArgs.deltaSegments.length > 0, 0x2d8 /* "Empty change event should not be emitted." */);
-        this.isEmpty = false;
-        this.deltaOperation = deltaArgs.operation;
+	constructor(
+		public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
+		private readonly mergeTreeClient: Client,
+	) {
+		assert(
+			deltaArgs.deltaSegments.length > 0,
+			0x2d8 /* "Empty change event should not be emitted." */,
+		);
+		this.deltaOperation = deltaArgs.operation;
 
-        this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(
-            () => {
-                const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
-                this.deltaArgs.deltaSegments.forEach((delta) => {
-                    const newRange: ISequenceDeltaRange<TOperation> = {
-                        operation: this.deltaArgs.operation,
-                        position: this.mergeTreeClient.getPosition(delta.segment),
-                        propertyDeltas: delta.propertyDeltas,
-                        segment: delta.segment,
-                    };
-                    set.addOrUpdate(newRange);
-                });
-                return set;
-            });
+		this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(() => {
+			const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
+			this.deltaArgs.deltaSegments.forEach((delta) => {
+				const newRange: ISequenceDeltaRange<TOperation> = {
+					operation: this.deltaArgs.operation,
+					position: this.mergeTreeClient.getPosition(delta.segment),
+					propertyDeltas: delta.propertyDeltas ?? {},
+					segment: delta.segment,
+				};
+				set.addOrUpdate(newRange);
+			});
+			return set;
+		});
 
-        this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
-            () => this.sortedRanges.value.items[0],
-        );
+		this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
+			() => this.sortedRanges.value.items[0],
+		);
 
-        this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
-            () => this.sortedRanges.value.items[this.sortedRanges.value.size - 1],
-        );
-    }
+		this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
+			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1],
+		);
+	}
 
-    /**
-     * The in-order ranges affected by this delta.
-     * These may not be continuous.
-     */
-    public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
-        return this.sortedRanges.value.items;
-    }
+	/**
+	 * The in-order ranges affected by this delta.
+	 * These may not be continuous.
+	 */
+	public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
+		return this.sortedRanges.value.items;
+	}
 
-    /**
-     * The client id of the client that made the change which caused the delta event
-     */
-    public get clientId(): string {
-        return this.mergeTreeClient.longClientId;
-    }
+	/**
+	 * The client id of the client that made the change which caused the delta event
+	 */
+	public get clientId(): string | undefined {
+		return this.mergeTreeClient.longClientId;
+	}
 
-    /**
-     * The first of the modified ranges.
-     */
-    public get first(): Readonly<ISequenceDeltaRange<TOperation>> {
-        return this.pFirst.value;
-    }
+	/**
+	 * The first of the modified ranges.
+	 */
+	public get first(): Readonly<ISequenceDeltaRange<TOperation>> {
+		return this.pFirst.value;
+	}
 
-    /**
-     * The last of the modified ranges.
-     */
-    public get last(): Readonly<ISequenceDeltaRange<TOperation>> {
-        return this.pLast.value;
-    }
+	/**
+	 * The last of the modified ranges.
+	 */
+	public get last(): Readonly<ISequenceDeltaRange<TOperation>> {
+		return this.pLast.value;
+	}
 }
 
 /**
