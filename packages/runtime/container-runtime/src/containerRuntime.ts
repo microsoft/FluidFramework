@@ -168,7 +168,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
-import { shouldDisableGcEnforcement } from "./garbageCollectionHelpers";
+import { shouldAllowGcTombstoneEnforcement } from "./garbageCollectionHelpers";
 import { gcTombstoneGenerationOptionName } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
@@ -1092,7 +1092,7 @@ export class ContainerRuntime
 
 		this._connected = this.context.connected;
 
-		this.gcTombstoneEnforcementAllowed = shouldDisableGcEnforcement(
+		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
 			metadata?.gcFeatureMatrix?.tombstoneGeneration,
 			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
 		);

@@ -633,7 +633,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
 					category: "generic",
-					gcEnforcementDisabled: true,
+					gcTombstoneEnforcementAllowed: false,
 				},
 				{
 					eventName:

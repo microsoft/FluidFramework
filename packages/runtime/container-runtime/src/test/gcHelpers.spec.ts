@@ -4,50 +4,50 @@
  */
 
 import { strict as assert } from "assert";
-import { shouldDisableGcEnforcement } from "../garbageCollectionHelpers";
+import { shouldAllowGcTombstoneEnforcement } from "../garbageCollectionHelpers";
 
 describe("Garbage Collection Helpers Tests", () => {
 	describe("shouldDisableGcEnforcement", () => {
 		const testCases: {
 			persisted: number | undefined;
 			current: number | undefined;
-			expectedShouldDisableValue: boolean;
+			expectedShouldAllowValue: boolean;
 		}[] = [
 			{
 				persisted: undefined,
 				current: undefined,
-				expectedShouldDisableValue: false,
+				expectedShouldAllowValue: true,
 			},
 			{
 				persisted: undefined,
 				current: 1,
-				expectedShouldDisableValue: true,
+				expectedShouldAllowValue: false,
 			},
 			{
 				persisted: 1,
 				current: undefined,
-				expectedShouldDisableValue: true,
+				expectedShouldAllowValue: true,
 			},
 			{
 				persisted: 1,
 				current: 1,
-				expectedShouldDisableValue: false,
+				expectedShouldAllowValue: true,
 			},
 			{
 				persisted: 1,
 				current: 2,
-				expectedShouldDisableValue: true,
+				expectedShouldAllowValue: false,
 			},
 			{
 				persisted: 2,
 				current: 1,
-				expectedShouldDisableValue: true,
+				expectedShouldAllowValue: false,
 			},
 		];
-		testCases.forEach(({ persisted, current, expectedShouldDisableValue }) => {
+		testCases.forEach(({ persisted, current, expectedShouldAllowValue }) => {
 			it(`persisted=${persisted}, current=${current}`, () => {
-				const shouldDisable = shouldDisableGcEnforcement(persisted, current);
-				assert.equal(shouldDisable, expectedShouldDisableValue);
+				const shouldAllow = shouldAllowGcTombstoneEnforcement(persisted, current);
+				assert.equal(shouldAllow, expectedShouldAllowValue);
 			});
 		});
 	});

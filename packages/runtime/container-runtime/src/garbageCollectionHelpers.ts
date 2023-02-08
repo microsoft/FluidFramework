@@ -42,15 +42,19 @@ export function sendGCUnexpectedUsageEvent(
 /**
  * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
  * such that enforcing GC (Fail on Tombstone load/usage, GC Sweep) would cause legitimate data loss,
- * the container author may increment the feature support value for Tombstone such that containers created
+ * the container author may increment the generation value for Tombstone such that containers created
  * with a different value will not be subjected to GC enforcement.
- * @param persistedValue - The persisted feature support value
- * @param currentValue - The current app-provided feature support value
- * @returns true if GC Enforcement (Fail on Tombstone load/usage, GC Sweep) should be disabled
+ * @param persistedGeneration - The persisted feature support value
+ * @param currentGeneration - The current app-provided feature support value
+ * @returns true if GC Enforcement (Fail on Tombstone load/usage) should be allowed
  */
-export function shouldDisableGcEnforcement(
-	persistedValue: number | undefined,
-	currentValue: number | undefined,
+export function shouldAllowGcTombstoneEnforcement(
+	persistedGeneration: number | undefined,
+	currentGeneration: number | undefined,
 ): boolean {
-	return persistedValue !== currentValue;
+	// If no Generation value is provided for this session, then we should default to letting Tombstone feature behave as intended.
+	if (currentGeneration === undefined) {
+		return true;
+	}
+	return persistedGeneration === currentGeneration;
 }
