@@ -27,6 +27,7 @@ export function sendGCUnexpectedUsageEvent(
 		gcEnforcementDisabled: boolean;
 	},
 	packagePath: readonly string[] | undefined,
+	details: { isSummarizerClient: boolean; },
 	error?: unknown,
 ) {
 	event.pkg = packagePathToTelemetryProperty(packagePath);
@@ -50,10 +51,10 @@ export function sendGCUnexpectedUsageEvent(
  * the container author may increment the feature support value for Tombstone such that containers created
  * with a different value will not be subjected to GC enforcement.
  * @param persistedValue - The persisted feature support value
- * @param currentValue - The app-provided feature support value
+ * @param currentValue - The current app-provided feature support value
  * @returns true if GC Enforcement (Fail on Tombstone load/usage, GC Sweep) should be disabled
  */
-export function shouldDisableGcEnforcementForOldContainer(
+export function shouldDisableGcEnforcement(
 	persistedValue: number | undefined,
 	currentValue: number | undefined,
 ): boolean {
