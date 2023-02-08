@@ -51,9 +51,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	);
 	const settings = {};
 
-	const gcOptions: IGCRuntimeOptions = {
-		inactiveTimeoutMs: 0,
-	};
+	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -67,18 +65,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	};
 	const testContainerConfigWithFutureMinGcOption: ITestContainerConfig = {
 		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					state: "disabled",
-				},
-			},
+			summaryOptions: testContainerConfig.runtimeOptions?.summaryOptions,
 			gcOptions: {
 				...gcOptions,
 				// Different from undefined (the persisted value) so will disable GC enforcement
 				gcTombstoneGeneration: 1,
 			},
 		},
-		loaderProps: { configProvider: mockConfigProvider(settings) },
+		loaderProps: testContainerConfig.loaderProps,
 	};
 
 	let provider: ITestObjectProvider;
@@ -130,7 +124,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	const summarizationWithUnreferencedDataStoreAfterTime = async (
 		approximateUnreferenceTimestampMs: number,
 	) => {
-		const container = await makeContainer(testContainerConfig);
+		const container = await makeContainer();
 		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
 		await waitForContainerConnection(container);
 

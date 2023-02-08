@@ -1095,15 +1095,15 @@ export class ContainerRuntime
 		this._connected = this.context.connected;
 
 		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
-			metadata?.gcFeatureMatrix?.tombstoneGeneration,
-			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
+			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName] /* current */,
 		);
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
-			info: JSON.stringify(metadata?.gcFeatureMatrix),
+			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
 				gcOptions_gcTombstoneGeneration:
 					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],

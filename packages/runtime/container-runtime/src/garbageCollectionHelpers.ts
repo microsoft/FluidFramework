@@ -21,7 +21,7 @@ export function sendGCUnexpectedUsageEvent(
 	mc: MonitoringContext,
 	event: ITelemetryGenericEvent & {
 		category: "error" | "generic";
-		gcTombstoneEnforcementAllowed: boolean;
+		gcTombstoneEnforcementAllowed: boolean | undefined;
 	},
 	packagePath: readonly string[] | undefined,
 	error?: unknown,
@@ -44,6 +44,7 @@ export function sendGCUnexpectedUsageEvent(
  * such that enforcing GC (Fail on Tombstone load/usage, GC Sweep) would cause legitimate data loss,
  * the container author may increment the generation value for Tombstone such that containers created
  * with a different value will not be subjected to GC enforcement.
+ * If no generation is provided at runtime, this defaults to return true to maintain expected default behavior
  * @param persistedGeneration - The persisted feature support value
  * @param currentGeneration - The current app-provided feature support value
  * @returns true if GC Enforcement (Fail on Tombstone load/usage) should be allowed
