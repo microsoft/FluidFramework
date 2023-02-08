@@ -81,7 +81,7 @@ import {
 	dataStoreAttributesBlobName,
 	IGCMetadata,
 	ICreateContainerMetadata,
-	GcFeatureMatrix,
+	GCFeatureMatrix,
 } from "./summaryFormat";
 
 /** The statistics of the system state after a garbage collection run. */
@@ -437,7 +437,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private latestSummaryGCVersion: GCVersion;
 
 	// Feature Support info persisted to this container's summary
-	private readonly persistedGcFeatureSupportInfo: GcFeatureMatrix | undefined;
+	private readonly persistedGcFeatureSupportInfo: GCFeatureMatrix | undefined;
 
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;

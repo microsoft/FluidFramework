@@ -98,8 +98,9 @@ export interface ICreateContainerMetadata {
 }
 
 /** @see IGCMetadata.gcFeatureMatrix */
-export interface GcFeatureMatrix {
+export interface GCFeatureMatrix {
 	/**
+	 * The Tombstone Generation value in effect when this file was created.
 	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement
 	 * Provided via Container Runtime Options
 	 */
@@ -125,7 +126,7 @@ export interface IGCMetadata {
 	 * For each dimension, if the persisted value is less than the currently provided value,
 	 * then this file does not support the corresponding feature as currently implemented.
 	 */
-	readonly gcFeatureMatrix?: GcFeatureMatrix;
+	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
