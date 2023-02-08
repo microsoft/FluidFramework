@@ -140,10 +140,6 @@ export interface IGarbageCollectionRuntime {
 	getNodeType(nodePath: string): GCNodeType;
 	/** Called when the runtime should close because of an error. */
 	closeFn: (error?: ICriticalContainerError) => void;
-
-	//* Unsure about the naming/semantics here. In here, this applies to Sweep not Tombstone. Maybe just remove "Tombstone" and it's ok.
-	/** If true, loading or using a Tombstoned object should merely log, not fail */
-	disableGcTombstoneEnforcement: boolean;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -580,8 +576,7 @@ export class GarbageCollector implements IGarbageCollector {
 			// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
 			// other existing documents, GC is enabled.
 			this.gcEnabled = prevSummaryGCVersion > 0;
-			this.sweepEnabled =
-				(metadata?.sweepEnabled ?? false) && !this.runtime.disableGcTombstoneEnforcement;
+			this.sweepEnabled = metadata?.sweepEnabled ?? false;
 			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 			this.sweepTimeoutMs =
 				metadata?.sweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
@@ -1413,7 +1408,7 @@ export class GarbageCollector implements IGarbageCollector {
 					isSummarizerClient: this.isSummarizerClient,
 					url: trimLeadingSlashes(toNodePath),
 					nodeType,
-					gcEnforcementDisabled: this.runtime.disableGcTombstoneEnforcement,
+					gcEnforcementDisabled: false,
 				},
 				undefined /* packagePath */,
 			);

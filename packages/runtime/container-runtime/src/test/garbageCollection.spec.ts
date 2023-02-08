@@ -53,7 +53,6 @@ import {
 	dataStoreAttributesBlobName,
 	GCVersion,
 	IContainerRuntimeMetadata,
-	ICreateContainerMetadata,
 	IGCMetadata,
 } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
@@ -93,9 +92,6 @@ describe("Garbage Collection Tests", () => {
 
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
 	let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
-
-	// Used in the mock IGarbageCollectionRuntime provided to GC constructor
-	let disableGcTombstoneEnforcement: boolean = false;
 
 	// Returns a dummy snapshot tree to be built upon.
 	const getDummySnapshotTree = (): ISnapshotTree => {
@@ -142,7 +138,6 @@ describe("Garbage Collection Tests", () => {
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),
 			closeFn,
-			disableGcTombstoneEnforcement, // global - can be changed by individual tests
 		};
 
 		return GarbageCollector.create({
@@ -194,15 +189,15 @@ describe("Garbage Collection Tests", () => {
 		const testOverrideSessionExpiryMsKey =
 			"Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
 		const createGcWithPrivateMembers = (
-			metadata?: IGCMetadata & ICreateContainerMetadata,
+			gcMetadata?: IGCMetadata,
 			gcOptions?: IGCRuntimeOptions,
 		): GcWithPrivates => {
-			const allMetadata: IContainerRuntimeMetadata | undefined = metadata && {
+			const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && {
 				summaryFormatVersion: 1,
 				message: undefined,
-				...metadata,
+				...gcMetadata,
 			};
-			return createGarbageCollector({ metadata: allMetadata, gcOptions }) as GcWithPrivates;
+			return createGarbageCollector({ metadata, gcOptions }) as GcWithPrivates;
 		};
 		const customSessionExpiryDurationMs = defaultSessionExpiryDurationMs + 1;
 
@@ -234,15 +229,6 @@ describe("Garbage Collection Tests", () => {
 				gc = createGcWithPrivateMembers({ gcFeature: 1 });
 				assert(gc.gcEnabled, "gcEnabled incorrect");
 				assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
-			});
-			it("sweepEnabled true, disableGcTombstoneEnforcement true", () => {
-				disableGcTombstoneEnforcement = true;
-
-				gc = createGcWithPrivateMembers({ gcFeature: 1, sweepEnabled: true });
-				assert(gc.gcEnabled, "gcEnabled incorrect");
-				assert(!gc.sweepEnabled, "sweepEnabled incorrect");
-
-				disableGcTombstoneEnforcement = false;
 			});
 			it("sweepEnabled false", () => {
 				gc = createGcWithPrivateMembers({ sweepEnabled: false });
