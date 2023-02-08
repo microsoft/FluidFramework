@@ -203,6 +203,10 @@ export class TaskList extends DataObject implements ITaskList {
 
 	/**
 	 * Fetch any updated data from the external data source and sync local state to it.
+	 * Upon receipt of new external data, the external data is written immediately into
+	 * the "SavedData" map, and a check occurs comparing the SavedData to the DraftData.
+	 * If there are differences between the two, this function kicks off Task functions
+	 * that displays conflict resolution UI to the screen.
 	 *
 	 * @returns A promise that resolves when the external data fetch and Fluid data update complete.
 	 *

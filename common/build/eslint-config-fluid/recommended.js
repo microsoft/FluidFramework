@@ -12,8 +12,8 @@
  * For packages whose APIs are intended for wide use, the "Strict" configuration should be used instead.
  */
 module.exports = {
-	extends: ["./minimal.js", "plugin:unicorn/recommended", "plugin:editorconfig/all"],
-	plugins: ["editorconfig", "eslint-plugin-tsdoc"],
+	extends: ["./minimal.js", "plugin:unicorn/recommended"],
+	plugins: ["eslint-plugin-tsdoc"],
 	rules: {
 		// RECOMMENDED RULES
 		"@rushstack/no-new-null": "error",
@@ -122,7 +122,6 @@ module.exports = {
 			// Rules only for TypeScript files
 			files: ["**/*.{ts,tsx}"],
 			rules: {
-				"editorconfig/indent": "off",
 			},
 		},
 		{
