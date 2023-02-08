@@ -142,6 +142,8 @@ export interface IGarbageCollectionRuntime {
 	getNodeType(nodePath: string): GCNodeType;
 	/** Called when the runtime should close because of an error. */
 	closeFn: (error?: ICriticalContainerError) => void;
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	gcTombstoneEnforcementAllowed: boolean;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -1419,7 +1421,7 @@ export class GarbageCollector implements IGarbageCollector {
 					category: "generic",
 					url: trimLeadingSlashes(toNodePath),
 					nodeType,
-					gcTombstoneEnforcementDisabled: false,
+					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,
 			);

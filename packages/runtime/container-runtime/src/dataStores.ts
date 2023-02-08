@@ -151,7 +151,7 @@ export class DataStores implements IDisposable {
 		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
-			!this.runtime.disableGcTombstoneEnforcement &&
+			this.runtime.gcTombstoneEnforcementAllowed &&
 			this.runtime.clientDetails.type !== summarizerClientType;
 
 		// Extract stores stored inside the snapshot
@@ -489,7 +489,7 @@ export class DataStores implements IDisposable {
 					eventName: "GC_Tombstone_DataStore_Requested",
 					category: shouldFail ? "error" : "generic",
 					headers: JSON.stringify(requestHeaderData),
-					gcTombstoneEnforcementDisabled: this.runtime.disableGcTombstoneEnforcement,
+					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 				},
 				context.isLoaded ? context.packagePath : undefined,
 				error,

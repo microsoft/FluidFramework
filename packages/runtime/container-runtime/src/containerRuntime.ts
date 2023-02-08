@@ -1035,9 +1035,9 @@ export class ContainerRuntime
 	private nextSummaryNumber: number;
 
 	/**
-	 * If true, loading or using a Tombstoned object should merely log, not fail
+	 * If false, loading or using a Tombstoned object should merely log, not fail
 	 */
-	public readonly disableGcTombstoneEnforcement: boolean;
+	public readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/**
 	 * @internal
@@ -1092,7 +1092,7 @@ export class ContainerRuntime
 
 		this._connected = this.context.connected;
 
-		this.disableGcTombstoneEnforcement = shouldDisableGcEnforcement(
+		this.gcTombstoneEnforcementAllowed = shouldDisableGcEnforcement(
 			metadata?.gcFeatureMatrix?.tombstoneGeneration,
 			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
 		);

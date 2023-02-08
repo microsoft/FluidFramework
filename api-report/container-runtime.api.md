@@ -120,7 +120,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteUnusedNodes(unusedRoutes: string[]): string[];
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly disableGcTombstoneEnforcement: boolean;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -132,6 +131,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
+    readonly gcTombstoneEnforcementAllowed: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
