@@ -1629,11 +1629,11 @@ describe("Garbage Collection Tests", () => {
 			const refreshSummaryResult: RefreshSummaryResult = {
 				latestSummaryUpdated: true,
 				wasSummaryTracked: true,
+				summaryRefSeq: 0,
 			};
 			await garbageCollector.refreshLatestSummary(
-				refreshSummaryResult,
 				undefined,
-				0,
+				refreshSummaryResult,
 				parseNothing,
 			);
 
@@ -2224,9 +2224,8 @@ describe("Garbage Collection Tests", () => {
 			checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
 			await garbageCollector.refreshLatestSummary(
-				{ wasSummaryTracked: true, latestSummaryUpdated: true },
 				undefined,
-				0,
+				{ wasSummaryTracked: true, latestSummaryUpdated: true, summaryRefSeq: 0 },
 				parseNothing,
 			);
 

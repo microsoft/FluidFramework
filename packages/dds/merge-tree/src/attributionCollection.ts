@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { AttributionPolicy } from "./mergeTree";
 import { Client } from "./client";
-import { UnassignedSequenceNumber } from "./constants";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import {
 	MergeTreeDeltaCallback,
 	MergeTreeMaintenanceCallback,
@@ -281,6 +281,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 /**
  * @alpha
  * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ * Content is only attributed at ack time, unless the container is in a detached state.
+ * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
@@ -297,8 +299,12 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 
 				for (const { segment } of deltaSegments) {
 					if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
+						const key: AttributionKey =
+							segment.seq === UniversalSequenceNumber
+								? { type: "detached", id: 0 }
+								: { type: "op", seq: segment.seq };
 						segment.attribution ??= new AttributionCollection(
-							{ type: "op", seq: segment.seq },
+							key,
 							segment.cachedLength,
 						);
 					}
