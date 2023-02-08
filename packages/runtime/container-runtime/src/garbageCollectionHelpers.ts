@@ -23,11 +23,9 @@ export function sendGCUnexpectedUsageEvent(
 	mc: MonitoringContext,
 	event: ITelemetryGenericEvent & {
 		category: "error" | "generic";
-		isSummarizerClient: boolean;
 		gcEnforcementDisabled: boolean;
 	},
 	packagePath: readonly string[] | undefined,
-	//* details: { isSummarizerClient: boolean; },
 	error?: unknown,
 ) {
 	event.pkg = packagePathToTelemetryProperty(packagePath);

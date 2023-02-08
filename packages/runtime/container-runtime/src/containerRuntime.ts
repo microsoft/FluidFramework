@@ -1099,6 +1099,15 @@ export class ContainerRuntime
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "FeatureSupportInfo",
+			info: JSON.stringify(metadata?.gcFeatureSupportInfo),
+			inputs: JSON.stringify({
+				gcOptions_gcEnforcementCurrentValue:
+					this.runtimeOptions.gcOptions[gcEnforcementCurrentValue],
+			}),
+		});
+
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.context.submitBatchFn,
