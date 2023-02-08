@@ -52,6 +52,7 @@ export class AlfredRunner implements IRunner {
         private readonly documentsCollection: ICollection<IDocument>,
         private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
         private readonly verifyMaxMessageSize?: boolean,
+        private readonly redisCache?: ICache,
     ) {
     }
 
@@ -82,6 +83,7 @@ export class AlfredRunner implements IRunner {
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
         const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
+
         // Register all the socket.io stuff
         configureWebSocketServices(
             this.server.webSocketServer,
@@ -97,6 +99,7 @@ export class AlfredRunner implements IRunner {
             isTokenExpiryEnabled,
             isClientConnectivityCountingEnabled,
             isSignalUsageCountingEnabled,
+            this.redisCache,
             this.socketConnectThrottler,
             this.socketSubmitOpThrottler,
             this.socketSubmitSignalThrottler,
