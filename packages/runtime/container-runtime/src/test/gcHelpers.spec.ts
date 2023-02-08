@@ -36,12 +36,12 @@ describe("Garbage Collection Helpers Tests", () => {
 			{
 				persisted: 1,
 				current: 2,
-				expectedShouldDisableValue: false,
+				expectedShouldDisableValue: true,
 			},
 			{
 				persisted: 2,
 				current: 1,
-				expectedShouldDisableValue: false,
+				expectedShouldDisableValue: true,
 			},
 		];
 		testCases.forEach(({ persisted, current, expectedShouldDisableValue }) => {
