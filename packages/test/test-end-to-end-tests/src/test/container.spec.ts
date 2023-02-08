@@ -233,6 +233,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		} finally {
 			deltaConnection.removeAllListeners();
 			container.close();
+			container.dispose();
 		}
 	});
 
@@ -277,6 +278,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		} finally {
 			deltaConnection.removeAllListeners();
 			container.close();
+			container.dispose();
 		}
 	});
 

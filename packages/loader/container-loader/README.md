@@ -79,7 +79,7 @@ The "closed" state effectively means the container is disconnected forever and c
 
 If after some time a closed container is no longer needed, calling `Container.dispose()` will dispose the runtime resources.
 
-Container can also be closed and disposed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details
+Container can also be closed and disposed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details.
 
 When container is closed, the following is true (in no particular order):
 

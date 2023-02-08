@@ -117,6 +117,9 @@
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerRuntime": {
+				"forwardCompat": false
 			}
 		}
 	}

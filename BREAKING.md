@@ -15,6 +15,23 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.4.0.0
+
+## 2.0.0-internal.4.0.0 Upcoming changes
+
+## 2.0.0-internal.4.0.0 Breaking changes
+
+-   [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
+
+### Closing Container no longer disposes
+
+Calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service.
+
+If the container is not expected to be used after the `close(...)` call, replace it instead with a `IContainer.dispose(...)` call. Using `IContainer.dispose(...)` will no longer switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
+Otherwise, to retain all previous behavior, add a call to `IContainer.dispose(...)` after every `close(...)` call (passing the same error object if present).
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes

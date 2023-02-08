@@ -166,7 +166,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		// This will result in "summarizerClientDisconnected" stop reason recorded in telemetry,
 		// unless stop() was called earlier
 		this.dispose();
-		(this.runtime.disposeFn ?? this.runtime.closeFn)();
+		this.runtime.disposeFn();
 	}
 
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
