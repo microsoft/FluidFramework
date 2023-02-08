@@ -18,7 +18,6 @@ maintainable CLI using [oclif](https://oclif.io).
 
 <!-- prettier-ignore-start -->
 <!-- usage -->
-
 ```sh-session
 $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
@@ -30,25 +29,23 @@ USAGE
   $ flub COMMAND
 ...
 ```
-
 <!-- usagestop -->
 <!-- prettier-ignore-stop -->
 
 <!-- prettier-ignore-start -->
 <!-- commands -->
-
 # Command Topics
 
--   [`flub autocomplete`](docs/autocomplete.md) - display autocomplete installation instructions
--   [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
--   [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
--   [`flub commands`](docs/commands.md) - list all the commands
--   [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
--   [`flub help`](docs/help.md) - Display help for flub.
--   [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
--   [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
--   [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
--   [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
+* [`flub autocomplete`](docs/autocomplete.md) - display autocomplete installation instructions
+* [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
+* [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
+* [`flub commands`](docs/commands.md) - list all the commands
+* [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
+* [`flub help`](docs/help.md) - Display help for flub.
+* [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
+* [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
+* [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
+* [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
