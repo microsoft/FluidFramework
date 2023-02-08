@@ -1227,6 +1227,7 @@ export class ContainerRuntime
 			async () => this.garbageCollector.getBaseGCDetails(),
 			(path: string, timestampMs: number, packagePath?: readonly string[]) =>
 				this.garbageCollector.nodeUpdated(path, "Changed", timestampMs, packagePath),
+			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 		);
 
