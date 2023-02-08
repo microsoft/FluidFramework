@@ -186,167 +186,178 @@ describe("runWithRetry Tests", () => {
 });
 
 describe("runWithRetry2 Tests", () => {
-    const logger = new TelemetryNullLogger();
+	const logger = new TelemetryNullLogger();
 
-    it("Should succeed at first time", async () => {
-        let retryTimes: number = 1;
-        const api = async () => {
-            retryTimes -= 1;
-            return true;
-        };
+	it("Should succeed at first time", async () => {
+		let retryTimes: number = 1;
+		const api = async () => {
+			retryTimes -= 1;
+			return true;
+		};
 
-        let emitDelayInfoTimes: number = 0;
-        const runResult = await runWithFastSetTimeout(async () => runWithRetry2(
-            api,
-            "test",
-            logger,
-            {
-                onRetry: () => { emitDelayInfoTimes += 1; },
-            },
-        ));
+		let emitDelayInfoTimes: number = 0;
+		const runResult = await runWithFastSetTimeout(async () =>
+			runWithRetry2(api, "test", logger, {
+				onRetry: () => {
+					emitDelayInfoTimes += 1;
+				},
+			}),
+		);
 
-        assert.strictEqual(retryTimes, 0, "Should succeed at first time");
-        assert.strictEqual(runResult.status, "succeeded", "Retry should succeed");
-        assert.strictEqual(emitDelayInfoTimes, 0, "Should not emit delay at first time");
-    });
+		assert.strictEqual(retryTimes, 0, "Should succeed at first time");
+		assert.strictEqual(runResult.status, "succeeded", "Retry should succeed");
+		assert.strictEqual(emitDelayInfoTimes, 0, "Should not emit delay at first time");
+	});
 
-    it("Check that it retries infinitely", async () => {
-        const maxTries: number = 5;
-        let retryTimes: number = maxTries;
-        const api = async () => {
-            if (retryTimes > 0) {
-                retryTimes -= 1;
-                const error = new Error("Throw error");
-                (error as any).retryAfterSeconds = 10;
-                (error as any).canRetry = true;
-                throw error;
-            }
-            return true;
-        };
+	it("Check that it retries infinitely", async () => {
+		const maxTries: number = 5;
+		let retryTimes: number = maxTries;
+		const api = async () => {
+			if (retryTimes > 0) {
+				retryTimes -= 1;
+				const error = new Error("Throw error");
+				(error as any).retryAfterSeconds = 10;
+				(error as any).canRetry = true;
+				throw error;
+			}
+			return true;
+		};
 
-        let emitDelayInfoTimes: number = 0;
-        const runResult = await runWithFastSetTimeout(async () => runWithRetry2(
-            api,
-            "test",
-            logger,
-            {
-                onRetry: () => { emitDelayInfoTimes += 1; },
-            },
-        ));
+		let emitDelayInfoTimes: number = 0;
+		const runResult = await runWithFastSetTimeout(async () =>
+			runWithRetry2(api, "test", logger, {
+				onRetry: () => {
+					emitDelayInfoTimes += 1;
+				},
+			}),
+		);
 
-        assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
-        assert.strictEqual(runResult.status, "succeeded", "Retry should succeed");
-        assert.strictEqual(emitDelayInfoTimes, maxTries, "Should emit delay at each try");
-    });
+		assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
+		assert.strictEqual(runResult.status, "succeeded", "Retry should succeed");
+		assert.strictEqual(emitDelayInfoTimes, maxTries, "Should emit delay at each try");
+	});
 
-    it("Check that it retries after retry seconds", async () => {
-        let retryTimes: number = 1;
-        let timerFinished = false;
-        setTimeout(() => {
-            timerFinished = true;
-        }, 200);
-        const api = async () => {
-            if (retryTimes > 0) {
-                retryTimes -= 1;
-                const error = new Error("Throttle Error");
-                (error as any).errorType = DriverErrorType.throttlingError;
-                (error as any).retryAfterSeconds = 400;
-                (error as any).canRetry = true;
-                throw error;
-            }
-            return true;
-        };
-        const runResult = await runWithFastSetTimeout(
-            async () => runWithRetry2(api, "test", logger, {}));
+	it("Check that it retries after retry seconds", async () => {
+		let retryTimes: number = 1;
+		let timerFinished = false;
+		setTimeout(() => {
+			timerFinished = true;
+		}, 200);
+		const api = async () => {
+			if (retryTimes > 0) {
+				retryTimes -= 1;
+				const error = new Error("Throttle Error");
+				(error as any).errorType = DriverErrorType.throttlingError;
+				(error as any).retryAfterSeconds = 400;
+				(error as any).canRetry = true;
+				throw error;
+			}
+			return true;
+		};
+		const runResult = await runWithFastSetTimeout(async () =>
+			runWithRetry2(api, "test", logger, {}),
+		);
 
-        assert.strictEqual(timerFinished, true, "Timer should be destroyed");
-        assert.strictEqual(retryTimes, 0, "Should retry once");
-        assert.strictEqual(runResult.status, "succeeded", "Retry should succeed");
-    });
+		assert.strictEqual(timerFinished, true, "Timer should be destroyed");
+		assert.strictEqual(retryTimes, 0, "Should retry once");
+		assert.strictEqual(runResult.status, "succeeded", "Retry should succeed");
+	});
 
-    it("If error is just a string, should retry as canRetry is not false", async () => {
-        let retryTimes: number = 1;
-        const api = async () => {
-            if (retryTimes > 0) {
-                retryTimes -= 1;
-                const err = new Error("error");
-                (err as any).canRetry = true;
-                throw err;
-            }
-            return true;
-        };
-        const runResult = await runWithFastSetTimeout(
-            async () => runWithRetry2(api, "test", logger, {}));
+	it("If error is just a string, should retry as canRetry is not false", async () => {
+		let retryTimes: number = 1;
+		const api = async () => {
+			if (retryTimes > 0) {
+				retryTimes -= 1;
+				const err = new Error("error");
+				(err as any).canRetry = true;
+				throw err;
+			}
+			return true;
+		};
+		const runResult = await runWithFastSetTimeout(async () =>
+			runWithRetry2(api, "test", logger, {}),
+		);
 
-        assert.strictEqual(retryTimes, 0, "Should retry");
-        assert.strictEqual(runResult.status, "succeeded", "Retry should succeed");
-    });
+		assert.strictEqual(retryTimes, 0, "Should retry");
+		assert.strictEqual(runResult.status, "succeeded", "Retry should succeed");
+	});
 
-    it("Should not retry if canRetry is set as false", async () => {
-        let retryTimes: number = 1;
-        const api = async () => {
-            if (retryTimes > 0) {
-                retryTimes -= 1;
-                const error = new Error("error");
-                (error as any).canRetry = false;
-                throw error;
-            }
-            return true;
-        };
-        const runResult = await runWithFastSetTimeout(
-            async () => runWithRetry2(api, "test", logger, {}));
+	it("Should not retry if canRetry is set as false", async () => {
+		let retryTimes: number = 1;
+		const api = async () => {
+			if (retryTimes > 0) {
+				retryTimes -= 1;
+				const error = new Error("error");
+				(error as any).canRetry = false;
+				throw error;
+			}
+			return true;
+		};
+		const runResult = await runWithFastSetTimeout(async () =>
+			runWithRetry2(api, "test", logger, {}),
+		);
 
-        assert.strictEqual(retryTimes, 0, "Should not retry");
-        assert.strictEqual(runResult.status, "failed", "Should not succeed as canRetry was not set");
-    });
+		assert.strictEqual(retryTimes, 0, "Should not retry");
+		assert.strictEqual(
+			runResult.status,
+			"failed",
+			"Should not succeed as canRetry was not set",
+		);
+	});
 
-    it("Should not retry if canRetry is not set", async () => {
-        let retryTimes: number = 1;
-        const api = async () => {
-            if (retryTimes > 0) {
-                retryTimes -= 1;
-                const error = new Error("error");
-                throw error;
-            }
-            return true;
-        };
-        const runResult = await runWithFastSetTimeout(
-            async () => runWithRetry2(api, "test", logger, {}));
+	it("Should not retry if canRetry is not set", async () => {
+		let retryTimes: number = 1;
+		const api = async () => {
+			if (retryTimes > 0) {
+				retryTimes -= 1;
+				const error = new Error("error");
+				throw error;
+			}
+			return true;
+		};
+		const runResult = await runWithFastSetTimeout(async () =>
+			runWithRetry2(api, "test", logger, {}),
+		);
 
-        assert.strictEqual(retryTimes, 0, "Should not retry");
-        assert.strictEqual(runResult.status, "failed", "Should not succeed as canRetry was not set");
-    });
+		assert.strictEqual(retryTimes, 0, "Should not retry");
+		assert.strictEqual(
+			runResult.status,
+			"failed",
+			"Should not succeed as canRetry was not set",
+		);
+	});
 
-    it("Should not retry if it is disabled", async () => {
-        let retryTimes: number = 1;
-        const api = async () => {
-            if (retryTimes > 0) {
-                retryTimes -= 1;
-                const error = new Error("error");
-                (error as any).canRetry = true;
-                throw error;
-            }
-            return true;
-        };
+	it("Should not retry if it is disabled", async () => {
+		let retryTimes: number = 1;
+		const api = async () => {
+			if (retryTimes > 0) {
+				retryTimes -= 1;
+				const error = new Error("error");
+				(error as any).canRetry = true;
+				throw error;
+			}
+			return true;
+		};
 
-        const mockAbort = {
-            signal: {
-                aborted: false
-            },
-            abort: () => { mockAbort.signal.aborted = true },
-        }
+		const mockAbort = {
+			signal: {
+				aborted: false,
+			},
+			abort: () => {
+				mockAbort.signal.aborted = true;
+			},
+		};
 
-        const runResult = await runWithFastSetTimeout(async () => runWithRetry2(
-            api,
-            "test",
-            logger,
-            {
-                cancel: mockAbort.signal as AbortSignal,
-                onRetry: () => { mockAbort.abort(); },
-            },
-        ));
+		const runResult = await runWithFastSetTimeout(async () =>
+			runWithRetry2(api, "test", logger, {
+				cancel: mockAbort.signal as AbortSignal,
+				onRetry: () => {
+					mockAbort.abort();
+				},
+			}),
+		);
 
-        assert.strictEqual(retryTimes, 0, "Should not retry");
-        assert.strictEqual(runResult.status, "aborted", "Should abort as object was disabled");
-    });
+		assert.strictEqual(retryTimes, 0, "Should not retry");
+		assert.strictEqual(runResult.status, "aborted", "Should abort as object was disabled");
+	});
 });

@@ -23,6 +23,15 @@ import { runWithRetry2 } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;
+	// ! Cannot explicitly use AbortController as this may not always be used in browser
+	private readonly _disposedController = {
+		signal: {
+			aborted: false,
+		},
+		abort: () => {
+			this._disposedController.signal.aborted = true;
+		},
+	};
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService,
 		private readonly logger: ITelemetryLogger,
@@ -36,6 +45,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	}
 	public dispose() {
 		this._disposed = true;
+		this._disposedController.abort();
 	}
 
 	public get repositoryUrl(): string {
@@ -119,27 +129,29 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		);
 	}
 
-	private checkStorageDisposed(callName: string, error: unknown) {
-		if (this._disposed) {
-			this.logger.sendTelemetryEvent(
-				{
+	private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
+		const runResult = await runWithRetry2(api, callName, this.logger, {
+			cancel: this._disposedController.signal as AbortSignal,
+		});
+
+		switch (runResult.status) {
+			case "succeeded":
+				return runResult.result;
+			case "failed":
+				throw runResult.error;
+			case "aborted": {
+				this.logger.sendTelemetryEvent({
 					eventName: `${callName}_abortedStorageDisposed`,
 					fetchCallName: callName, // fetchCallName matches logs in runWithRetry.ts
-				},
-				error,
-			);
-			// pre-0.58 error message: storageServiceDisposedCannotRetry
-			throw new GenericError("Storage Service is disposed. Cannot retry", {
-				canRetry: false,
-			});
+					reason: runResult.reason,
+				});
+				// pre-0.58 error message: storageServiceDisposedCannotRetry
+				throw new GenericError("Storage Service is disposed. Cannot retry", undefined, {
+					reason: runResult.reason,
+				});
+			}
+			default:
+				unreachableCase(runResult);
 		}
-		return;
-	}
-
-	private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-		return runWithRetry(api, callName, this.logger, {
-			onRetry: (_delayInMs: number, error: unknown) =>
-				this.checkStorageDisposed(callName, error),
-		});
 	}
 }

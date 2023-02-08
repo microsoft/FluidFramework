@@ -43,7 +43,7 @@ import {
 	isOnline,
 	ensureFluidResolvedUrl,
 	combineAppAndProtocolSummary,
-	runWithRetry,
+	runWithRetry2,
 	isFluidResolvedUrl,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
@@ -1062,7 +1062,7 @@ export class Container
 							this.client.details.type !== summarizerClientType,
 							0x2c4 /* "client should not be summarizer before container is created" */,
 						);
-						this.service = await runWithRetry(
+						const runResult = await runWithRetry2(
 							async () =>
 								this.serviceFactory.createContainer(
 									summary,
@@ -1076,6 +1076,24 @@ export class Container
 								cancel: this.closeSignal,
 							}, // progress
 						);
+						switch (runResult.status) {
+							case "succeeded":
+								this.service = runResult.result;
+								break;
+							case "failed":
+								throw runResult.error;
+							case "aborted":
+								throw new GenericError(
+									// We know the reason since we use closeSignal above but don't pass an onRetry callback
+									this.closed
+										? "Container.attach() was aborted because the container was closed"
+										: "Container.attach() was aborted",
+									undefined,
+									{ reason: runResult.reason },
+								);
+							default:
+								unreachableCase(runResult);
+						}
 					}
 					const resolvedUrl = this.service.resolvedUrl;
 					ensureFluidResolvedUrl(resolvedUrl);

@@ -15,6 +15,16 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.1.0
+
+## 2.0.0-internal.3.1.0 Upcoming changes
+
+-   [Upcoming change to runWithRetry](#Upcoming-change-to-runWithRetry)
+
+### Upcoming change to `runWithRetry`
+
+`runWithRetry` in `@fluidframework/driver-utils` will be replaced by the implementation of `runWithRetry2` in the same package. Please prepare all usage for the `runWithRetry2` implementation (see [`Container.attach`](./packages/loader/container-loader/src/container.ts#L1065-L1097) for reference).
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
@@ -184,9 +194,8 @@ Please see the [Closure](packages/loader/container-loader/README.md#Closure) sec
 # 2.0.0-internal.2.2.0
 
 ## 2.0.0-internal.2.2.0 Upcoming changes
-- [Deprecated events and event parameters on IContainer and IDeltaManager](#Deprecated-events-and-event-parameters-on-IContainer-and-IDeltaManager)
-- [Upcoming change to runWithRetry](#Upcoming-change-to-runWithRetry)
 
+-   [Deprecated events and event parameters on IContainer and IDeltaManager](#Deprecated-events-and-event-parameters-on-IContainer-and-IDeltaManager)
 -   [Deprecated events and event parameters on IContainer and IDeltaManager](#deprecated-events-and-event-parameters-on-icontainer-and-ideltamanager)
 -   [Added fileIsLocked errorType to DriverErrorType enum](#Added-fileIsLocked-errorType-to-DriverErrorType-enum)
 
@@ -224,9 +233,6 @@ The following legacy events and event parameters have been marked as deprecated 
 Added `fileIsLocked` errorType in DriverErrorType enum. This error happens when file is locked for read/write by storage, e.g. whole collection is locked and access is denied, or file is locked for editing.
 
 This is not breaking change yet. But if application uses dynamic driver loading, current version of application may start receiving these errors from future versions of driver.
-
-### Upcoming change to `runWithRetry`
-`runWithRetry` in `@fluidframework/driver-utils` will be replaced by the implementation of `runWithRetry2` in the same package. Please prepare all usage for the `runWithRetry2` implementation (see [`Container.attach`](./packages/loader/container-loader/src/container.ts#L892-L923) for reference).
 
 # 2.0.0-internal.2.1.0
 
