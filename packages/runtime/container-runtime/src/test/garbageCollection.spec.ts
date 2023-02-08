@@ -419,7 +419,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: currentGCVersion,
 					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 					sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
-					gcFeatureSupportInfo: { appTombstoneReadiness: undefined },
+					gcFeatureSupportInfo: undefined,
 				};
 				gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
 				const outputMetadata = gc.getMetadata();
@@ -549,7 +549,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 					sweepTimeoutMs: expectedSweepTimeoutMs,
-					gcFeatureSupportInfo: { appTombstoneReadiness: undefined },
+					gcFeatureSupportInfo: undefined,
 				};
 				const outputMetadata = gc.getMetadata();
 				assert.deepEqual(

@@ -437,7 +437,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private latestSummaryGCVersion: GCVersion;
 
 	// Feature Support info persisted to this container's summary
-	private readonly persistedGcFeatureSupportInfo: GcFeatureSupportDimensions;
+	private readonly persistedGcFeatureSupportInfo: GcFeatureSupportDimensions | undefined;
 
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
@@ -585,9 +585,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 			this.sweepTimeoutMs =
 				metadata?.sweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
-			this.persistedGcFeatureSupportInfo = metadata?.gcFeatureSupportInfo ?? {
-				appTombstoneReadiness: undefined,
-			};
+			this.persistedGcFeatureSupportInfo = metadata?.gcFeatureSupportInfo;
 		} else {
 			// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
 			// scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -615,9 +613,11 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 			this.sweepTimeoutMs =
 				testOverrideSweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
-			this.persistedGcFeatureSupportInfo = {
-				appTombstoneReadiness: this.gcOptions[gcTombstoneEnforcementValueOptionName],
-			};
+			if (this.gcOptions[gcTombstoneEnforcementValueOptionName] !== undefined) {
+				this.persistedGcFeatureSupportInfo = {
+					appTombstoneReadiness: this.gcOptions[gcTombstoneEnforcementValueOptionName],
+				};
+			}
 		}
 
 		// If session expiry is enabled, we need to close the container when the session expiry timeout expires.
