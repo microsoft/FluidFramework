@@ -121,7 +121,7 @@ export class FluidRepoBuild extends FluidRepo {
 				continue;
 			}
 			// TODO: Make this configurable and/or teach fluid-build about new scripts
-			
+
 			if (uncheckedPackages.includes(pkg.name)) {
 				verbose(`Skipping ${pkg.nameColored} because it's ignored.`);
 				continue;
