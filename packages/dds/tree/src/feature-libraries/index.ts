@@ -39,6 +39,7 @@ export {
 	MarkedArrayLike,
 	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
+	parentField,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
@@ -49,6 +50,7 @@ export {
 	CursorAdapter,
 	prefixPath,
 	prefixFieldPath,
+	CursorWithNode,
 } from "./treeCursorUtils";
 export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 

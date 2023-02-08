@@ -4,6 +4,7 @@
  */
 
 import {
+	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
@@ -241,8 +242,13 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 	public get repositoryUrl() {
 		return this.storage.repositoryUrl;
 	}
-	public async getVersions(versionId: string | null, count: number) {
-		return this.storage.getVersions(versionId, count);
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+		scenarioName?: string,
+		fetchSource?: FetchSource,
+	) {
+		return this.storage.getVersions(versionId, count, scenarioName, fetchSource);
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {

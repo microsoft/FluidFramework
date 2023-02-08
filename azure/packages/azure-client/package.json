@@ -60,6 +60,7 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
+		"@fluid-tools/build-cli": "^0.8.0",
 		"@fluidframework/aqueduct": "^1.4.0-121020",
 		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@1.1.1",
 		"@fluidframework/azure-local-service": "^1.2.0",

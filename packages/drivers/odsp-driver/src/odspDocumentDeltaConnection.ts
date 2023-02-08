@@ -652,7 +652,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Critical path where we need to also close the socket for an error.
 	 * @param error - Error causing the socket to close.
 	 */
-	protected closeSocket(error: IAnyDriverError) {
+	protected closeSocketCore(error: IAnyDriverError) {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x416 /* reentrancy not supported in close socket */);
 		socket.closeSocket(error);

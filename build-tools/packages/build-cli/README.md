@@ -4,47 +4,51 @@ flub is a build and release tool for the Fluid Framework GitHub repositories. fl
 fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
 maintainable CLI using [oclif](https://oclif.io).
 
+<!-- prettier-ignore-start -->
 <!-- toc -->
 
 -   [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
 -   [Usage](#usage)
 -   [Command Topics](#command-topics)
+
 <!-- tocstop -->
+<!-- prettier-ignore-stop -->
 
 # Usage
 
+<!-- prettier-ignore-start -->
 <!-- usage -->
-
 ```sh-session
 $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.8.0
+@fluid-tools/build-cli/0.9.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
 ...
 ```
-
 <!-- usagestop -->
+<!-- prettier-ignore-stop -->
 
+<!-- prettier-ignore-start -->
 <!-- commands -->
-
 # Command Topics
 
--   [`flub autocomplete`](docs/autocomplete.md) - display autocomplete installation instructions
--   [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
--   [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
--   [`flub commands`](docs/commands.md) - list all the commands
--   [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
--   [`flub help`](docs/help.md) - Display help for flub.
--   [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
--   [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
--   [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
--   [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
+* [`flub autocomplete`](docs/autocomplete.md) - display autocomplete installation instructions
+* [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
+* [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
+* [`flub commands`](docs/commands.md) - list all the commands
+* [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
+* [`flub help`](docs/help.md) - Display help for flub.
+* [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
+* [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
+* [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
+* [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 
 <!-- commandsstop -->
+<!-- prettier-ignore-stop -->
 
 ## Developer notes
 
