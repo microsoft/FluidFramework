@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/common-utils",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "Collection of utility functions for Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
