@@ -13,8 +13,6 @@ import {
 	throwOnTombstoneUsageKey,
 } from "./garbageCollectionConstants";
 
-//* Log the versions as well?
-
 /**
  * Consolidates info / logic for logging when we encounter unexpected usage of GC'd objects. For example, when a
  * tombstoned or deleted object is loaded.
@@ -40,8 +38,6 @@ export function sendGCUnexpectedUsageEvent(
 
 	mc.logger.sendTelemetryEvent(event, error);
 }
-
-//* Maybe flip boolean value of this to be "can run" instead of "should disable" -- "allow"
 
 /**
  * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
