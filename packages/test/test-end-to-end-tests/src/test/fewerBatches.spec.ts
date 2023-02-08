@@ -76,7 +76,9 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 			batchCount: 1,
 		},
 	].forEach((test) => {
-		it(`With runtime option ${test.flushMode} ops across JS turns produce ${test.batchCount} batches`, async () => {
+		it(`With runtime flushMode=FlushMode.${
+			FlushMode[test.flushMode]
+		}, ops across JS turns produce ${test.batchCount} batches`, async () => {
 			await setupContainers({
 				...testContainerConfig,
 				runtimeOptions: {
