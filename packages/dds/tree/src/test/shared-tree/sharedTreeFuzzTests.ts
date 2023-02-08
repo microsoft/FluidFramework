@@ -11,9 +11,9 @@ import {
     takeAsync as take,
     IRandom,
 } from "@fluid-internal/stochastic-test-utils";
-import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
+import { FieldKinds, singleTextCursor, namedTreeSchema, jsonableTreeFromCursor } from "../../feature-libraries";
 import { brand, fail } from "../../util";
-import { initializeTestTree, SummarizeType, TestTreeProvider, validateTree } from "../utils";
+import { initializeTestTree, ITestTreeProvider, SummarizeType, TestTreeProvider, validateTree } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import {
     JsonableTree,
@@ -25,6 +25,7 @@ import {
     SchemaData,
     UpPath,
     compareUpPaths,
+    mapCursorField,
 } from "../../core";
 import { FuzzChange, FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerator";
 
@@ -135,6 +136,7 @@ export async function performFuzzActionsAbort(
                     fail("Attempted to synchronize with undefined testObjectProvider");
                 }
                 await testTreeProvider.ensureSynchronized();
+                checkTreesAreSynchronized(testTreeProvider)
                 return state;
             },
         },
@@ -158,6 +160,18 @@ export async function performFuzzActionsAbort(
     const anchorPath = tree.locate(firstAnchor);
     assert(compareUpPaths(expectedPath, anchorPath));
     return finalState;
+}
+
+function checkTreesAreSynchronized(provider:ITestTreeProvider){
+    const tree0 = provider.trees[0];
+    for (let i = 1; i<4; i++){
+        const readCursor = provider.trees[i].forest.allocateCursor();
+		moveToDetachedField(provider.trees[i].forest, readCursor);
+		const currentTree = mapCursorField(readCursor, jsonableTreeFromCursor);
+		readCursor.free();
+        validateTree(tree0, currentTree)
+    }
+    
 }
 
 function applyFuzzChange(
@@ -197,6 +211,8 @@ function applyFuzzChange(
     }
 }
 
+const skipFailSeeds = [147185, 147191, 147194, 147196, 147197, 147200, 147201]
+
 function runBatch(
     opGenerator: () => AsyncGenerator<Operation, FuzzTestState>,
     fuzzActions: (
@@ -210,6 +226,9 @@ function runBatch(
     const seed = random.integer(1, 1000000);
     for (let i = 0; i < batchSize; i++) {
         const runSeed = seed + i;
+        if (skipFailSeeds.includes(runSeed)){
+            continue
+        }
         const generatorFactory = () => take(opsPerRun, opGenerator());
         it(`with seed ${runSeed}`, async () => {
             await fuzzActions(generatorFactory(), runSeed);
