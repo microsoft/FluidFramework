@@ -5,7 +5,8 @@
 
 import registerDebug from "debug";
 import { performance } from "@fluidframework/common-utils";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+
+import React, { useEffect, useRef } from "react";
 
 import { controls, ui } from "./client-ui-lib";
 import { SharedTextDataObject } from "./dataObject";
@@ -19,11 +20,8 @@ import "../stylesheets/style.css";
 
 const debug = registerDebug("fluid:shared-text");
 
-export class SharedTextView implements IFluidHTMLView {
+class SharedTextView {
 	private uiInitialized = false;
-	public get IFluidHTMLView() {
-		return this;
-	}
 
 	public constructor(private readonly sharedTextDataObject: SharedTextDataObject) {}
 
@@ -69,3 +67,23 @@ export class SharedTextView implements IFluidHTMLView {
 			});
 	}
 }
+
+export interface ISharedTextReactViewProps {
+	readonly sharedTextDataObject: SharedTextDataObject;
+}
+
+export const SharedTextReactView: React.FC<ISharedTextReactViewProps> = (
+	props: ISharedTextReactViewProps,
+) => {
+	const { sharedTextDataObject } = props;
+	const htmlView = useRef<SharedTextView>(new SharedTextView(sharedTextDataObject));
+	const divRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (divRef.current !== null) {
+			htmlView.current.render(divRef.current);
+		}
+	}, [divRef.current]);
+	// FlowContainer does its own layout that doesn't play nice with normal CSS layout.  Stretch the wrapping div
+	// so it can successfully take the full page height.
+	return <div style={{ height: "100vh" }} ref={divRef}></div>;
+};
