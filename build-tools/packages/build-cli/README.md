@@ -4,27 +4,35 @@ flub is a build and release tool for the Fluid Framework GitHub repositories. fl
 fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
 maintainable CLI using [oclif](https://oclif.io).
 
+<!-- prettier-ignore-start -->
 <!-- toc -->
-* [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
-* [Usage](#usage)
-* [Command Topics](#command-topics)
+
+-   [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
+-   [Usage](#usage)
+-   [Command Topics](#command-topics)
+
 <!-- tocstop -->
+<!-- prettier-ignore-stop -->
 
 # Usage
+
+<!-- prettier-ignore-start -->
 <!-- usage -->
 ```sh-session
 $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.8.0
+@fluid-tools/build-cli/0.9.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
 ...
 ```
 <!-- usagestop -->
+<!-- prettier-ignore-stop -->
 
+<!-- prettier-ignore-start -->
 <!-- commands -->
 # Command Topics
 
@@ -40,6 +48,7 @@ USAGE
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 
 <!-- commandsstop -->
+<!-- prettier-ignore-stop -->
 
 ## Developer notes
 

@@ -73,7 +73,7 @@ import {
 } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType } from "./garbageCollection";
-import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
+import { sweepDatastoresKey, throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
 import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 
@@ -151,6 +151,7 @@ export class DataStores implements IDisposable {
 		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
+			this.runtime.gcTombstoneEnforcementAllowed &&
 			this.runtime.clientDetails.type !== summarizerClientType;
 
 		// Extract stores stored inside the snapshot
@@ -487,8 +488,8 @@ export class DataStores implements IDisposable {
 				{
 					eventName: "GC_Tombstone_DataStore_Requested",
 					category: shouldFail ? "error" : "generic",
-					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
 					headers: JSON.stringify(requestHeaderData),
+					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 				},
 				context.isLoaded ? context.packagePath : undefined,
 				error,
@@ -721,6 +722,46 @@ export class DataStores implements IDisposable {
 			// Delete the summarizer node of the unused data stores.
 			this.deleteChildSummarizerNodeFn(dataStoreId);
 		}
+	}
+
+	/**
+	 * This is called to delete unused nodes and returns that list so that other
+	 * systems can remove those nodes from their states (i.e. garbage collection when sweep is run)
+	 * @param unusedRoutes - The routes of data stores and DDSes that should be deleted
+	 * @returns - routes of deleted nodes such that garbage collection can delete those nodes from its reference graph
+	 * and other state
+	 */
+	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+		if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
+			return [];
+		}
+		const deletedRoutes = new Set<string>();
+
+		for (const route of unusedRoutes) {
+			const pathParts = route.split("/");
+			const dataStoreId = pathParts[1];
+
+			// TODO: GC:Validation - Skip any routes already deleted
+
+			// Push all deleted DataStore (/datastoreId) and sub DataStore (/datastoreId/...) routes to deleted routes
+			deletedRoutes.add(route);
+
+			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only need to delete the data store.
+			if (pathParts.length > 2) {
+				continue;
+			}
+
+			const dataStore = this.contexts.get(dataStoreId);
+			assert(dataStore !== undefined, "Attempting to delete unknown dataStore");
+			dataStore.delete();
+
+			// Delete the contexts of unused data stores.
+			this.contexts.delete(dataStoreId);
+			// Delete the summarizer node of the unused data stores.
+			this.deleteChildSummarizerNodeFn(dataStoreId);
+		}
+
+		return Array.from(deletedRoutes);
 	}
 
 	/**
