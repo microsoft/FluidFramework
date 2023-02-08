@@ -75,7 +75,6 @@ also available in the Fluid build and release tool (`flub`). This is accomplishe
 
 <!-- prettier-ignore-start -->
 <!-- usage -->
-
 ```sh-session
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
@@ -87,7 +86,6 @@ USAGE
   $ fluv COMMAND
 ...
 ```
-
 <!-- usagestop -->
 <!-- prettier-ignore-stop -->
 
@@ -95,11 +93,10 @@ USAGE
 
 <!-- prettier-ignore-start -->
 <!-- commands -->
-
--   [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
--   [`fluv help [COMMAND]`](#fluv-help-command)
--   [`fluv version VERSION`](#fluv-version-version)
--   [`fluv version latest`](#fluv-version-latest)
+* [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
+* [`fluv help [COMMAND]`](#fluv-help-command)
+* [`fluv version VERSION`](#fluv-version-version)
+* [`fluv version latest`](#fluv-version-latest)
 
 ## `fluv autocomplete [SHELL]`
 
@@ -225,7 +222,6 @@ EXAMPLES
 
     $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
 ```
-
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
 

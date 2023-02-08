@@ -647,6 +647,7 @@ declare function get_old_TypeAliasDeclaration_RefreshSummaryResult():
 declare function use_current_TypeAliasDeclaration_RefreshSummaryResult(
     use: TypeOnly<current.RefreshSummaryResult>);
 use_current_TypeAliasDeclaration_RefreshSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_RefreshSummaryResult());
 
 /*
@@ -659,6 +660,7 @@ declare function get_current_TypeAliasDeclaration_RefreshSummaryResult():
 declare function use_old_TypeAliasDeclaration_RefreshSummaryResult(
     use: TypeOnly<old.RefreshSummaryResult>);
 use_old_TypeAliasDeclaration_RefreshSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_RefreshSummaryResult());
 
 /*

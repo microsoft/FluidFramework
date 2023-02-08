@@ -10,6 +10,7 @@ import {
 	ISummaryContext,
 	LoaderCachingPolicy,
 	FiveDaysMs,
+	FetchSource,
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";
@@ -226,6 +227,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,
+		fetchSource?: FetchSource,
 	): Promise<api.IVersion[]>;
 
 	public abstract uploadSummaryWithContext(
