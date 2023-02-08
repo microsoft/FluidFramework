@@ -41,17 +41,6 @@ export class CheckpointManager implements ICheckpointManager {
         checkpoint: IScribe,
         protocolHead: number,
         pending: ISequencedOperationMessage[]) {
-        // The order of the three operations below is important.
-        // We start by writing out all pending messages to the database. This may be more messages that we would
-        // have seen at the current checkpoint we are trying to write (because we continue process messages while
-        // waiting to write a checkpoint) but is more efficient and simplifies the code path.
-        //
-        // We then write the update to the document collection. This marks a log offset inside of MongoDB at which
-        // point if Kafka restartes we will not do work prior to this logOffset. At this point the snapshot
-        // history has been written, all ops needed are written, and so we can store the final mark.
-        //
-        // And last we delete all mesages in the list prior to the summaryprotocol sequence number. From now on these
-        // will no longer be referenced.
         if (this.getDeltasViaAlfred) {
             if (pending.length > 0) {
                 // Verify that the last pending op has been persisted to op storage
@@ -71,7 +60,9 @@ export class CheckpointManager implements ICheckpointManager {
                     const lastDelta1 = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber-1, expectedSequenceNumber + 1);
 
                     if (lastDelta1.length === 0 || lastDelta1[0].sequenceNumber < expectedSequenceNumber) {
-                        throw new Error("Pending ops were not been persisted to op storage. Checkpointing failed");
+                        const errMsg = "Pending ops were not been persisted to op storage. Checkpointing failed";
+                        Lumberjack.info(errMsg, lumberjackProperties);
+                        throw new Error(errMsg);
                     }
 
                     Lumberjack.info(`Verified on retry that pending ops are persisted`, getLumberBaseProperties(this.documentId, this.tenantId));
@@ -80,6 +71,17 @@ export class CheckpointManager implements ICheckpointManager {
 
             await this.writeScribeCheckpointState(checkpoint);
         } else {
+            // The order of the three operations below is important.
+            // We start by writing out all pending messages to the database. This may be more messages that we would
+            // have seen at the current checkpoint we are trying to write (because we continue process messages while
+            // waiting to write a checkpoint) but is more efficient and simplifies the code path.
+            //
+            // We then write the update to the document collection. This marks a log offset inside of MongoDB at which
+            // point if Kafka restartes we will not do work prior to this logOffset. At this point the snapshot
+            // history has been written, all ops needed are written, and so we can store the final mark.
+            //
+            // And last we delete all mesages in the list prior to the summaryprotocol sequence number. From now on these
+            // will no longer be referenced.
             const dbOps = pending.map((message) => ({
                 ...message,
                 mongoTimestamp: new Date(message.operation.timestamp)
