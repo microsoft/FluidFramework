@@ -39,7 +39,9 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		return this._changeType;
 	}
 	public set changeType(newValue: string | undefined) {
+		const showConflictUI = newValue !== undefined;
 		this._changeType = newValue;
+		this.emit("showConflictUI", showConflictUI);
 	}
 	public get sourcePriority(): number | undefined {
 		return this._sourcePriority;
@@ -76,12 +78,10 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		this.changeType = undefined;
 		if (this.sourcePriority !== undefined) {
 			this._priority.set(this.sourcePriority);
-			this.sourcePriority = undefined;
 		}
 		if (this.sourceName !== undefined) {
 			const oldString = this._name.getText();
 			this._name.replaceText(0, oldString.length, this.sourceName);
-			this.sourceName = undefined;
 		}
 	};
 }

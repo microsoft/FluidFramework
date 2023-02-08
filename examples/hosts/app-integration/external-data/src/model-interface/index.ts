@@ -48,6 +48,10 @@ export interface ITaskEvents extends IEvent {
 	 * Emitted when sourcePriority has changed to either the source value or to the NONE default value.
 	 */
 	(event: "sourcePriorityChanged", listener: () => void);
+	/**
+	 * Emitted when changeType is updated and the conflict UI needs to be displayed.
+	 */
+	(event: "showConflictUI", listener: (value: boolean) => boolean);
 }
 
 /**

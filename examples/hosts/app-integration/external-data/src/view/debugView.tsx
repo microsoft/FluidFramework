@@ -239,9 +239,9 @@ export interface ExternalServerDataTask {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const ExternalServerTaskListView: React.FC<
-	ExternalServerTaskListViewProps
-> = (props: ExternalServerTaskListViewProps) => {
+export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProps> = (
+	props: ExternalServerTaskListViewProps,
+) => {
 	const { model } = props;
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {

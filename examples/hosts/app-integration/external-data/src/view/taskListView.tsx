@@ -23,40 +23,49 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const [sourceName, setSourceName] = useState<string | undefined>(task.sourceName);
 	const [sourcePriority, setSourcePriority] = useState<number | undefined>(task.sourcePriority);
 	const [changeType, setChangeType] = useState<string | undefined>(task.changeType);
+	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
 		const updateFromRemotePriority = (): void => {
 			if (priorityRef.current !== null) {
 				priorityRef.current.value = task.priority.toString();
 			}
 		};
-		const showSourcePriority = (): void => {
+		const updateSourcePriority = (): void => {
 			setSourcePriority(task.sourcePriority);
 			setChangeType(task.changeType);
 		};
-		const showsourceName = (): void => {
+		const updateSourceName = (): void => {
 			setSourceName(task.sourceName);
 			setChangeType(task.changeType);
 		};
+		const updateShowConflictUI = (value: boolean): void => {
+			setShowConflictUI(value);
+		};
 		task.on("priorityChanged", updateFromRemotePriority);
-		task.on("sourcePriorityChanged", showSourcePriority);
-		task.on("sourceNameChanged", showsourceName);
+		task.on("sourcePriorityChanged", updateSourcePriority);
+		task.on("sourceNameChanged", updateSourceName);
+		task.on("showConflictUI", updateShowConflictUI);
 		updateFromRemotePriority();
 		return (): void => {
 			task.off("priorityChanged", updateFromRemotePriority);
-			task.off("sourcePriorityChanged", showSourcePriority);
-			task.off("sourceNameChanged", showsourceName);
+			task.off("sourcePriorityChanged", updateSourcePriority);
+			task.off("sourceNameChanged", updateSourceName);
+			task.off("showConflictUI", updateShowConflictUI);
 		};
-	}, [task, sourceName, sourcePriority, changeType]);
+	}, [task, priorityRef]);
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
 		task.priority = newValue;
 	};
 
-	const diffVisible = changeType === undefined;
-	const showPriority = !diffVisible && sourcePriority !== undefined ? "visible" : "hidden";
-	const showName = !diffVisible && sourceName !== undefined ? "visible" : "hidden";
-	const showAcceptButton = diffVisible ? "hidden" : "visible";
+	const showPriorityDiff =
+		showConflictUI &&
+		task.sourcePriority !== undefined &&
+		task.sourcePriority !== task.priority;
+	const showNameDiff =
+		showConflictUI && task.sourceName !== undefined && task.sourceName !== task.name.getText();
+	const showAcceptButton = showConflictUI ? "visible" : "hidden";
 
 	let diffColor: string = "white";
 	switch (changeType) {
@@ -96,10 +105,10 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 					❌
 				</button>
 			</td>
-			<td style={{ visibility: showName, backgroundColor: diffColor }}>{sourceName}</td>
-			<td style={{ visibility: showPriority, backgroundColor: diffColor }}>
-				{sourcePriority}
-			</td>
+			{showNameDiff && <td style={{ backgroundColor: diffColor }}>{sourceName}</td>}
+			{showPriorityDiff && (
+				<td style={{ backgroundColor: diffColor, width: "30px" }}>{sourcePriority}</td>
+			)}
 			<td>
 				<button
 					onClick={task.overwriteWithSourceData}
