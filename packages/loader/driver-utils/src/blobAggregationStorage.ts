@@ -242,7 +242,12 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 	public get repositoryUrl() {
 		return this.storage.repositoryUrl;
 	}
-	public async getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource) {
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+		scenarioName?: string,
+		fetchSource?: FetchSource,
+	) {
 		return this.storage.getVersions(versionId, count, scenarioName, fetchSource);
 	}
 
