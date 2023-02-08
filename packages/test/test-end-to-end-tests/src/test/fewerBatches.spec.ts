@@ -62,16 +62,20 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 	};
 
-	[{
-		flushMode: FlushMode.TurnBased,
-		batchCount: 5,
-	}, {
-		flushMode: FlushMode.Immediate,
-		batchCount: 5,
-	}, {
-		flushMode: FlushMode.Async,
-		batchCount: 1,
-	}].forEach((test) => {
+	[
+		{
+			flushMode: FlushMode.TurnBased,
+			batchCount: 5,
+		},
+		{
+			flushMode: FlushMode.Immediate,
+			batchCount: 5,
+		},
+		{
+			flushMode: FlushMode.Async,
+			batchCount: 1,
+		},
+	].forEach((test) => {
 		it(`With runtime option ${test.flushMode} ops across JS turns produce ${test.batchCount} batches`, async () => {
 			await setupContainers({
 				...testContainerConfig,
