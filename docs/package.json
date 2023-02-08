@@ -28,6 +28,10 @@
     "hugo": "hugo",
     "linkcheck": "npm run linkcheck:fast -- --external",
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
+    "linkcheck:full": "npm run linkcheck:fast -- --external",
+    "linkcheck:reflinks": "run-script-os",
+    "linkcheck:reflinks:default": "./node_modules/@vscode/ripgrep/bin/rg '\\[[\\w\\s]+\\]\\[.*?\\]' public --type=html",
+    "linkcheck:reflinks:win32": "./node_modules/@vscode/ripgrep/bin/rg.exe '\\[[\\w\\s]+\\]\\[.*?\\]' public --type=html",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
     "start": "hugo server"
@@ -38,6 +42,7 @@
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",
+    "@vscode/ripgrep": "^1.14.2",
     "broken-link-checker": "^0.7.8",
     "chalk": "^2.4.2",
     "concurrently": "^6.2.0",
@@ -58,6 +63,7 @@
     "node-fetch": "^2.6.7",
     "replace-in-file": "^6.2.0",
     "rimraf": "^2.6.2",
+    "run-script-os": "^1.1.6",
     "serve": "^14.1.2",
     "shelljs": "^0.8.5"
   }
