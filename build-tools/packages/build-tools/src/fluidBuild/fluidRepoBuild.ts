@@ -116,7 +116,12 @@ export class FluidRepoBuild extends FluidRepo {
 
 	public async checkPackages(fix: boolean) {
 		for (const pkg of this.packages.packages) {
+			if (!pkg.matched) {
+				// Only check package that matched to build
+				continue;
+			}
 			// TODO: Make this configurable and/or teach fluid-build about new scripts
+			
 			if (uncheckedPackages.includes(pkg.name)) {
 				verbose(`Skipping ${pkg.nameColored} because it's ignored.`);
 				continue;
