@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
-	IGCRuntimeOptions,
 	ISummarizer,
 	RuntimeHeaders,
 	TombstoneResponseHeaderKey,
