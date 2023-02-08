@@ -229,6 +229,9 @@ export interface ISummarizerNode {
 	): ISummarizerNode;
 
 	getChild(id: string): ISummarizerNode | undefined;
+
+	/** True if a summary is currently in progress */
+	isSummaryInProgress?(): boolean;
 }
 
 /**

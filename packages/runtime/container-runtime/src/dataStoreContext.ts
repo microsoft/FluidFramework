@@ -53,6 +53,7 @@ import {
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
+	generateStack,
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
@@ -254,6 +255,7 @@ export abstract class FluidDataStoreContext
 	protected readonly mc: MonitoringContext;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
+	protected readonly isSummarizerClient: boolean;
 
 	// The used routes of this node as per the last GC run. This is used to update the used routes of the channel
 	// if it realizes after GC is run.
@@ -279,6 +281,7 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
+		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -327,7 +330,7 @@ export abstract class FluidDataStoreContext
 		this.throwOnTombstoneUsage =
 			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
 			this._containerRuntime.gcTombstoneEnforcementAllowed &&
-			this.clientDetails.type !== summarizerClientType;
+			!this.isSummarizerClient;
 	}
 
 	public dispose(): void {
@@ -364,9 +367,17 @@ export abstract class FluidDataStoreContext
 		this._tombstoned = tombstone;
 	}
 
-	private rejectDeferredRealize(reason: string, packageName?: string): never {
+	private rejectDeferredRealize(
+		reason: string,
+		failedPkgPath?: string,
+		fullPackageName?: readonly string[],
+	): never {
 		throw new LoggingError(reason, {
-			packageName: { value: packageName, tag: TelemetryDataTag.CodeArtifact },
+			failedPkgPath: { value: failedPkgPath, tag: TelemetryDataTag.CodeArtifact },
+			packageName: {
+				value: JSON.stringify(fullPackageName),
+				tag: TelemetryDataTag.CodeArtifact,
+			},
 		});
 	}
 
@@ -384,6 +395,11 @@ export abstract class FluidDataStoreContext
 						value: this.id,
 						tag: TelemetryDataTag.CodeArtifact,
 					},
+					packageName: {
+						value: JSON.stringify(this.pkg),
+						tag: TelemetryDataTag.CodeArtifact,
+					},
+					stack: generateStack(),
 				});
 				this.channelDeferred?.reject(errorWrapped);
 				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
@@ -404,18 +420,22 @@ export abstract class FluidDataStoreContext
 		let lastPkg: string | undefined;
 		for (const pkg of packages) {
 			if (!registry) {
-				this.rejectDeferredRealize("No registry for package", lastPkg);
+				this.rejectDeferredRealize("No registry for package", lastPkg, packages);
 			}
 			lastPkg = pkg;
 			entry = await registry.get(pkg);
 			if (!entry) {
-				this.rejectDeferredRealize("Registry does not contain entry for the package", pkg);
+				this.rejectDeferredRealize(
+					"Registry does not contain entry for the package",
+					pkg,
+					packages,
+				);
 			}
 			registry = entry.IFluidDataStoreRegistry;
 		}
 		const factory = entry?.IFluidDataStoreFactory;
 		if (factory === undefined) {
-			this.rejectDeferredRealize("Can't find factory for package", lastPkg);
+			this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
 		}
 
 		return { factory, registry };
@@ -671,6 +691,10 @@ export abstract class FluidDataStoreContext
 			content,
 			type,
 		};
+
+		// Summarizer clients should not submit messages.
+		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
+
 		this._containerRuntime.submitDataStoreOp(this.id, fluidDataStoreContent, localOpMetadata);
 	}
 
@@ -831,6 +855,7 @@ export abstract class FluidDataStoreContext
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "GC_Deleted_DataStore_Changed",
+					isSummarizerClient: this.isSummarizerClient,
 					callSite,
 				},
 				error,
@@ -854,6 +879,7 @@ export abstract class FluidDataStoreContext
 					category: this.throwOnTombstoneUsage ? "error" : "generic",
 					gcTombstoneEnforcementAllowed: (this.containerRuntime as ContainerRuntime)
 						.gcTombstoneEnforcementAllowed,
+					isSummarizerClient: this.isSummarizerClient,
 					callSite,
 				},
 				this.pkg,
@@ -862,6 +888,33 @@ export abstract class FluidDataStoreContext
 			if (this.throwOnTombstoneUsage) {
 				throw error;
 			}
+		}
+	}
+
+	/**
+	 * Summarizer client should not have local changes. These changes can become part of the summary and can break
+	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
+	 * other clients that are up-to-date till seq# 100 may not have them yet.
+	 */
+	protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
+		if (this.isSummarizerClient) {
+			// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+			// this is happening and which data stores do this. The eventual goal is to disallow local changes
+			// in the summarizer and the data will help us plan this.
+			this.mc.logger.sendTelemetryEvent({
+				eventName,
+				type,
+				fluidDataStoreId: {
+					value: this.id,
+					tag: TelemetryDataTag.CodeArtifact,
+				},
+				packageName: {
+					value: JSON.stringify(this.pkg),
+					tag: TelemetryDataTag.CodeArtifact,
+				},
+				isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
+				stack: generateStack(),
+			});
 		}
 	}
 
@@ -987,6 +1040,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			props.makeLocallyVisibleFn,
 		);
 
+		// Summarizer client should not create local data stores.
+		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
+
 		this.snapshotTree = props.snapshotTree;
 		if (props.isRootDataStore === true) {
 			this.setInMemoryRoot();
@@ -1100,6 +1156,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 				category: "error",
 				gcTombstoneEnforcementAllowed: (this.containerRuntime as ContainerRuntime)
 					.gcTombstoneEnforcementAllowed,
+				isSummarizerClient: this.isSummarizerClient,
 			},
 			this.pkg,
 		);

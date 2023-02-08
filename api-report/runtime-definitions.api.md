@@ -367,6 +367,7 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
+    isSummaryInProgress?(): boolean;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
