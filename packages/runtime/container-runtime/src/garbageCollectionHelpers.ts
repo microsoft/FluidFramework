@@ -27,7 +27,7 @@ export function sendGCUnexpectedUsageEvent(
 		gcEnforcementDisabled: boolean;
 	},
 	packagePath: readonly string[] | undefined,
-	details: { isSummarizerClient: boolean; },
+	//* details: { isSummarizerClient: boolean; },
 	error?: unknown,
 ) {
 	event.pkg = packagePathToTelemetryProperty(packagePath);

@@ -120,6 +120,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteUnusedNodes(unusedRoutes: string[]): string[];
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly disableGcTombstoneEnforcement: boolean;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)

@@ -44,23 +44,11 @@ describe("Garbage Collection Helpers Tests", () => {
 				expectedShouldDisableValue: false,
 			},
 		];
-		testCases.forEach(
-			({
-				persisted,
-				current,
-				expectedShouldDisableValue,
-			}) => {
-				it(`persisted=${persisted}, current=${current}`, () => {
-					const shouldDisable = shouldDisableGcEnforcement(
-						persisted,
-						current,
-					);
-					assert.equal(
-						shouldDisable,
-						expectedShouldDisableValue,
-					);
-				});
-			},
-		);
+		testCases.forEach(({ persisted, current, expectedShouldDisableValue }) => {
+			it(`persisted=${persisted}, current=${current}`, () => {
+				const shouldDisable = shouldDisableGcEnforcement(persisted, current);
+				assert.equal(shouldDisable, expectedShouldDisableValue);
+			});
+		});
 	});
 });

@@ -96,7 +96,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		summaryVersion: string,
 		disableTombstoneFailureViaOption: boolean = false,
 	) {
-		const config = disableTombstoneFailureViaOption ? testContainerConfig : testContainerConfigWithFutureMinGcOption;
+		const config = disableTombstoneFailureViaOption
+			? testContainerConfig
+			: testContainerConfigWithFutureMinGcOption;
 		return provider.loadTestContainer(config, {
 			[LoaderHeader.version]: summaryVersion,
 		});
@@ -130,7 +132,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		approximateUnreferenceTimestampMs: number,
 		disableTombstoneFailureViaOption: boolean = false,
 	) => {
-		const config = disableTombstoneFailureViaOption ? testContainerConfig : testContainerConfigWithFutureMinGcOption;
+		const config = disableTombstoneFailureViaOption
+			? testContainerConfig
+			: testContainerConfigWithFutureMinGcOption;
 		const container = await makeContainer(config);
 		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
 		await waitForContainerConnection(container);
