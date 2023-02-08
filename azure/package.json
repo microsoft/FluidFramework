@@ -105,5 +105,12 @@
 			"lts": "minor",
 			"release/azure/*": "patch"
 		}
+	},
+	"pnpm": {
+		"peerDependencyRules": {
+			"ignoreMissing": [
+				"fluid-framework"
+			]
+		}
 	}
 }
