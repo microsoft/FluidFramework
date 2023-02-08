@@ -389,7 +389,7 @@ export interface ISerializableValue {
 	 * @alpha
 	 * The attribution key attached with the entry
 	 */
-	attribution?: AttributionKey;
+	attribution?: AttributionKey | number;
 }
 
 /**
@@ -410,7 +410,7 @@ export interface ISerializedValue {
 
 	/**
 	 * @alpha
-	 * The attribution key attached with the entry
+	 * The attribution key or seq number attached with the entry
 	 */
 	attribution?: string;
 }

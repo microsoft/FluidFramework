@@ -409,7 +409,11 @@ export class MapKernel {
 			serializableMapData[key] = localValue.makeSerialized(
 				serializer,
 				this.handle,
-				track ? this.attribution?.get(key) : undefined,
+				track
+					? this.attribution?.get(key)?.type === "op"
+						? this.attribution?.get(key)?.seq
+						: this.attribution?.get(key)
+					: undefined,
 			);
 		}
 		return serializableMapData;
@@ -440,7 +444,14 @@ export class MapKernel {
 
 			this.data.set(localValue.key, localValue.value);
 			if (serializable.attribution) {
-				this.attribution?.set(localValue.key, serializable.attribution);
+				if (typeof serializable.attribution === "number") {
+					this.attribution?.set(localValue.key, {
+						type: "op",
+						seq: serializable.attribution,
+					});
+				} else {
+					this.attribution?.set(localValue.key, serializable.attribution);
+				}
 			}
 		}
 	}

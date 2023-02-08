@@ -39,7 +39,7 @@ export interface ILocalValue {
 	makeSerialized(
 		serializer: IFluidSerializer,
 		bind: IFluidHandle,
-		attribution?: AttributionKey,
+		attribution?: AttributionKey | number,
 	): ISerializedValue;
 }
 
@@ -88,7 +88,7 @@ export class PlainLocalValue implements ILocalValue {
 	public makeSerialized(
 		serializer: IFluidSerializer,
 		bind: IFluidHandle,
-		attribution?: AttributionKey,
+		attribution?: AttributionKey | number,
 	): ISerializedValue {
 		// Stringify to convert to the serialized handle values - and then parse in order to create
 		// a POJO for the op

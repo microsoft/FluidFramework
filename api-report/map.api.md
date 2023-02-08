@@ -132,7 +132,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 // @public
 export interface ILocalValue {
-    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle, attribution?: AttributionKey): ISerializedValue;
+    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle, attribution?: AttributionKey | number): ISerializedValue;
     readonly type: string;
     readonly value: any;
 }
@@ -152,7 +152,7 @@ export interface IMapOptions {
 // @public @deprecated
 export interface ISerializableValue {
     // @alpha
-    attribution?: AttributionKey;
+    attribution?: AttributionKey | number;
     type: string;
     value: any;
 }

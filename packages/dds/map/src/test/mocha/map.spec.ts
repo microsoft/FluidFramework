@@ -31,13 +31,8 @@ function createConnectedMap(
 	options?: IMapOptions,
 ): SharedMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	if (options?.attribution?.track) {
-		dataStoreRuntime.options = {
-			attribution: {
-				track: true,
-			},
-		};
-	}
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
+
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime.createDeltaConnection(),
@@ -50,13 +45,7 @@ function createConnectedMap(
 
 function createLocalMap(id: string, options?: IMapOptions): SharedMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	if (options?.attribution?.track) {
-		dataStoreRuntime.options = {
-			attribution: {
-				track: true,
-			},
-		};
-	}
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
 	return map;
 }
@@ -979,7 +968,7 @@ describe("Map", () => {
 				);
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"value1","attribution":{"type":"op","seq":1}},"second":{"type":"Plain","value":"value2","attribution":{"type":"op","seq":2}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"value1","attribution":1},"second":{"type":"Plain","value":"value2","attribution":2}}}`,
 					"the serialized data is not consistent",
 				);
 
