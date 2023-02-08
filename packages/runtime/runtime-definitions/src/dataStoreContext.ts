@@ -57,6 +57,14 @@ export enum FlushMode {
 	 * batch at the end of the turn. The flush call on the runtime can be used to force send the current batch.
 	 */
 	TurnBased,
+
+	/**
+	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
+	 * batch when all micro-tasks are complete.
+	 *
+	 * @experimental - Not ready for use
+	 */
+	Async,
 }
 
 /**

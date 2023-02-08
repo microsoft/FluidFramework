@@ -904,7 +904,7 @@ export class ContainerRuntime
 
 	private _orderSequentiallyCalls: number = 0;
 	private readonly _flushMode: FlushMode;
-	private flushMicroTaskExists = false;
+	private flushTaskExists = false;
 
 	private _connected: boolean;
 
@@ -2091,7 +2091,7 @@ export class ContainerRuntime
 	 * Are we in the middle of batching ops together?
 	 */
 	private currentlyBatching() {
-		return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
+		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
 	}
 
 	public getQuorum(): IQuorumClients {
@@ -2829,17 +2829,8 @@ export class ContainerRuntime
 
 			if (!this.currentlyBatching()) {
 				this.flush();
-			} else if (!this.flushMicroTaskExists) {
-				this.flushMicroTaskExists = true;
-				// Queue a microtask to detect the end of the turn and force a flush.
-				Promise.resolve()
-					.then(() => {
-						this.flushMicroTaskExists = false;
-						this.flush();
-					})
-					.catch((error) => {
-						this.closeFn(error as GenericError);
-					});
+			} else {
+				this.scheduleFlush();
 			}
 		} catch (error) {
 			this.closeFn(error as GenericError);
@@ -2848,6 +2839,39 @@ export class ContainerRuntime
 
 		if (this.isContainerMessageDirtyable(type, contents)) {
 			this.updateDocumentDirtyState(true);
+		}
+	}
+
+	private scheduleFlush() {
+		if (this.flushTaskExists) {
+			return;
+		}
+
+		this.flushTaskExists = true;
+		const flush = () => {
+			this.flushTaskExists = false;
+			this.flush();
+		};
+
+		switch (this.flushMode) {
+			case FlushMode.TurnBased:
+				Promise.resolve()
+					.then(() => flush())
+					.catch((error) => {
+						this.closeFn(error as GenericError);
+					});
+				break;
+			case FlushMode.Async:
+				setTimeout(() => {
+					try {
+						flush();
+					} catch (error) {
+						this.closeFn(error as GenericError);
+					}
+				}, 0);
+				break;
+			default:
+				assert(false, "Unreachable case");
 		}
 	}
 

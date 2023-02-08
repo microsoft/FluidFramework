@@ -116,7 +116,11 @@
 		"baselineVersion": "2.0.0-internal.3.0.0",
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeOptions": {
+				"backCompat": false
 			}
 		}
 	}

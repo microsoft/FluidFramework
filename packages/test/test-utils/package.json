@@ -118,6 +118,10 @@
 		"previousVersionStyle": "^previousMajor",
 		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
 		"baselineVersion": "2.0.0-internal.3.0.0",
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ITestContainerConfig": {
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -227,6 +227,7 @@ declare function get_current_EnumDeclaration_FlushMode():
 declare function use_old_EnumDeclaration_FlushMode(
     use: TypeOnly<old.FlushMode>);
 use_old_EnumDeclaration_FlushMode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_FlushMode());
 
 /*
