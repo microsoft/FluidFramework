@@ -23,7 +23,7 @@ _None yet._
 
 ## 2.0.0-internal.4.0.0 Breaking changes
 
-- [container-runtime: LoaderHeader enum changes](#containerruntime-loaderheader-enum-changes)
+-   [container-runtime: LoaderHeader enum changes](#containerruntime-loaderheader-enum-changes)
 
 ### container-runtime: LoaderHeader enum changes
 
