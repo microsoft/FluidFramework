@@ -20,10 +20,9 @@ import {
     IWebServer,
     IWebServerFactory,
 } from "@fluidframework/server-services-core";
-import Redis from "ioredis";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { createMetricClient, RedisCache } from "@fluidframework/server-services";
+import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
@@ -53,6 +52,7 @@ export class AlfredRunner implements IRunner {
         private readonly documentsCollection: ICollection<IDocument>,
         private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
         private readonly verifyMaxMessageSize?: boolean,
+        private readonly redisCache?: ICache,
     ) {
     }
 
@@ -83,22 +83,7 @@ export class AlfredRunner implements IRunner {
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
         const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
-        let redisCache: ICache;
-        if (this.config.get("alfred:enableConnectionCountLogging")) {
-            const redisConfig = this.config.get("redis");
-            const redisOptions: Redis.RedisOptions = {
-                host: redisConfig.host,
-                port: redisConfig.port,
-                password: redisConfig.pass,
-            };
-            if (redisConfig.tls) {
-                redisOptions.tls = {
-                    servername: redisConfig.host,
-                };
-            }
-            const redisClient = new Redis(redisOptions);
-            redisCache = new RedisCache(redisClient);
-        }
+
         // Register all the socket.io stuff
         configureWebSocketServices(
             this.server.webSocketServer,
@@ -114,7 +99,7 @@ export class AlfredRunner implements IRunner {
             isTokenExpiryEnabled,
             isClientConnectivityCountingEnabled,
             isSignalUsageCountingEnabled,
-            redisCache,
+            this.redisCache,
             this.socketConnectThrottler,
             this.socketSubmitOpThrottler,
             this.socketSubmitSignalThrottler,

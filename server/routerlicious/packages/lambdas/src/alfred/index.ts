@@ -489,7 +489,7 @@ export function configureWebSocketServices(
                     // excluding summarizer for total client count.
                     if (message?.details?.details?.type !== summarizerClientType) {
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        connectionCountLogger.logConnectionCount(true);
+                        connectionCountLogger.incrementConnectionCount();
                     }
 
                     connectMetric.setProperties({
@@ -695,7 +695,7 @@ export function configureWebSocketServices(
                 // excluding summarizer for total client count.
                 if (connectionTimeMap.has(clientId)) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    connectionCountLogger.logConnectionCount(false);
+                    connectionCountLogger.decrementConnectionCount();
                 }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
