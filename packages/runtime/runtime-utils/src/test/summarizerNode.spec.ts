@@ -19,11 +19,13 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
-import { createRootSummarizerNode, IRootSummarizerNode } from "../summarizerNode";
+import {
+	createRootSummarizerNode,
+	IFetchSnapshotResult,
+	IRootSummarizerNode,
+} from "../summarizerNode";
 // eslint-disable-next-line import/no-internal-modules
 import { SummarizerNode } from "../summarizerNode/summarizerNode";
-// eslint-disable-next-line import/no-internal-modules
-import { IFetchSnapshotResult } from "../summarizerNode/summarizerNodeUtils";
 import { mergeStats } from "../summaryUtils";
 
 describe("Runtime", () => {
@@ -175,7 +177,7 @@ describe("Runtime", () => {
 
 			// The reference sequence number of the fetched snapshot.
 			let snapshotRefSeq = summaryRefSeq;
-			const fetchSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
+			const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
 				return {
 					snapshotTree: simpleSnapshot,
 					snapshotRefSeq,
@@ -352,7 +354,7 @@ describe("Runtime", () => {
 					const result = await rootNode.refreshLatestSummary(
 						undefined,
 						summaryRefSeq,
-						fetchSnapshot,
+						fetchLatestSnapshot,
 						readAndParseBlob,
 						logger,
 					);
@@ -371,7 +373,7 @@ describe("Runtime", () => {
 					const result = await rootNode.refreshLatestSummary(
 						undefined,
 						summaryRefSeq,
-						fetchSnapshot,
+						fetchLatestSnapshot,
 						readAndParseBlob,
 						logger,
 					);
@@ -389,7 +391,7 @@ describe("Runtime", () => {
 					const result = await rootNode.refreshLatestSummary(
 						"test-handle",
 						summaryRefSeq,
-						fetchSnapshot,
+						fetchLatestSnapshot,
 						readAndParseBlob,
 						logger,
 					);
@@ -407,7 +409,7 @@ describe("Runtime", () => {
 					const result = await rootNode.refreshLatestSummary(
 						undefined,
 						summaryRefSeq,
-						fetchSnapshot,
+						fetchLatestSnapshot,
 						readAndParseBlob,
 						logger,
 					);
@@ -425,7 +427,7 @@ describe("Runtime", () => {
 					const result = await rootNode.refreshLatestSummary(
 						proposalHandle,
 						summaryRefSeq,
-						fetchSnapshot,
+						fetchLatestSnapshot,
 						readAndParseBlob,
 						logger,
 					);

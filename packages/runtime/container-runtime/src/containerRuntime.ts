@@ -93,6 +93,7 @@ import {
 	addSummarizeResultToSummary,
 	addTreeToSummary,
 	createRootSummarizerNodeWithGC,
+	IFetchSnapshotResult,
 	IRootSummarizerNodeWithGC,
 	RequestParser,
 	create404Response,
@@ -2983,7 +2984,7 @@ export class ContainerRuntime
 		// The call to fetch the snapshot is very expensive and not always needed.
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
-		const snapshotTreeFetcher = async () => {
+		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
 			const fetchResult = await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
@@ -3035,7 +3036,7 @@ export class ContainerRuntime
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
-			snapshotTreeFetcher,
+			fetchLatestSnapshot,
 			readAndParseBlob,
 			summaryLogger,
 		);
@@ -3062,12 +3063,14 @@ export class ContainerRuntime
 				},
 				readAndParseBlob,
 			);
+		const fetchLatestSnapshot: IFetchSnapshotResult = {
+			snapshotTree,
+			snapshotRefSeq: latestSnapshotRefSeq,
+		};
 		const result = await this.summarizerNode.refreshLatestSummary(
 			undefined /* proposalHandle */,
 			latestSnapshotRefSeq,
-			async () => {
-				return { snapshotTree, snapshotRefSeq: latestSnapshotRefSeq };
-			},
+			async () => fetchLatestSnapshot,
 			readAndParseBlob,
 			summaryLogger,
 		);

@@ -49,7 +49,7 @@ export interface ISummarizerNodeRootContract {
 	refreshLatestSummary(
 		proposalHandle: string | undefined,
 		summaryRefSeq: number,
-		getSnapshot: () => Promise<IFetchSnapshotResult>,
+		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
 		readAndParseBlob: ReadAndParseBlob,
 		correlatedSummaryLogger: ITelemetryLogger,
 	): Promise<RefreshSummaryResult>;

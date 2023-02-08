@@ -95,6 +95,14 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 // @public (undocumented)
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
+// @public
+export interface IFetchSnapshotResult {
+    // (undocumented)
+    snapshotRefSeq: number;
+    // (undocumented)
+    snapshotTree: ISnapshotTree;
+}
+
 // @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
@@ -109,10 +117,8 @@ export interface ISummarizerNodeRootContract {
     clearSummary(): void;
     // (undocumented)
     completeSummary(proposalHandle: string): void;
-    // Warning: (ae-forgotten-export) The symbol "IFetchSnapshotResult" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, getSnapshot: () => Promise<IFetchSnapshotResult>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
+    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
     // (undocumented)
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 }
