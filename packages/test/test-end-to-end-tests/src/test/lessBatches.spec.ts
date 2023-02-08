@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
 import { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -18,7 +17,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { Deferred } from "@fluidframework/common-utils";
 
 describeNoCompat("Less batches", (getTestObjectProvider) => {
 	const mapId = "mapId";
