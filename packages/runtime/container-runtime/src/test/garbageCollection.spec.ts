@@ -284,6 +284,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 					sweepTimeoutMs: 123,
+					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
 				gc = createGcWithPrivateMembers(inputMetadata);
 				const outputMetadata = gc.getMetadata();
