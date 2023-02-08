@@ -70,6 +70,8 @@ class MockRuntime
 		);
 	}
 
+	public gcTombstoneEnforcementAllowed: boolean = true;
+
 	public get storage() {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
