@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/bubblebench-shared-tree",
+  "name": "@fluid-example/bubblebench-cursor-shared-tree",
   "version": "2.0.0-internal.2.1.0",
   "private": true,
   "description": "Bubblemark inspired DDS benchmark",
@@ -7,7 +7,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "experimental/examples/bubblebench/shared-tree"
+    "directory": "experimental/examples/bubblebench/cursor-shared-tree"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",

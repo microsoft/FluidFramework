@@ -36,10 +36,9 @@ export class AppState implements IAppState {
         );
         cursor.free();
 
-        // Create the initial JsonableTree for the new local client
+        // Create the initial JsonableTree for the new local client and insert into the shared tree
         const initialClientJson = this.makeClientInitialJsonTree(numBubbles);
         this.localClientId = initialClientJson.clientId;
-        // Insert it the local client the shared tree
         this.clientsSequenceHelper.push(initialClientJson.tree);
 
         console.log(`created client with id ${this.localClient.clientId} and color ${this.localClient.color}`);

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
+    fail,
     ISharedTree,
     rootFieldKeySymbol,
     SharedTreeFactory,
@@ -100,14 +101,20 @@ export class Bubblebench extends DataObject {
         });
     }
 
-    private get tree() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.maybeTree!;
+    /**
+     * Get the SharedTree.
+     * Cannot be accessed until after initialization has complected.
+     */
+    private get tree(): ISharedTree  {
+        return this.maybeTree  ?? fail("not initialized");;
     }
 
-    public get appState() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.maybeAppState!;
+    /**
+     * Get the AppState.
+     * Cannot be accessed until after initialization has complected.
+     */
+    public get appState(): AppState {
+        return this.maybeAppState ?? fail("not initialized");
     }
 }
 
