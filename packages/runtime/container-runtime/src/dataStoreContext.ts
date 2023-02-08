@@ -255,7 +255,6 @@ export abstract class FluidDataStoreContext
 	protected readonly mc: MonitoringContext;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
-	protected readonly isSummarizerClient: boolean;
 
 	// The used routes of this node as per the last GC run. This is used to update the used routes of the channel
 	// if it realizes after GC is run.
@@ -281,7 +280,6 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
-		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -330,7 +328,7 @@ export abstract class FluidDataStoreContext
 		this.throwOnTombstoneUsage =
 			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
 			this._containerRuntime.gcTombstoneEnforcementAllowed &&
-			!this.isSummarizerClient;
+			this.clientDetails.type !== summarizerClientType;
 	}
 
 	public dispose(): void {
@@ -855,7 +853,6 @@ export abstract class FluidDataStoreContext
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "GC_Deleted_DataStore_Changed",
-					isSummarizerClient: this.isSummarizerClient,
 					callSite,
 				},
 				error,
@@ -879,7 +876,6 @@ export abstract class FluidDataStoreContext
 					category: this.throwOnTombstoneUsage ? "error" : "generic",
 					gcTombstoneEnforcementAllowed: (this.containerRuntime as ContainerRuntime)
 						.gcTombstoneEnforcementAllowed,
-					isSummarizerClient: this.isSummarizerClient,
 					callSite,
 				},
 				this.pkg,
@@ -897,7 +893,7 @@ export abstract class FluidDataStoreContext
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
 	protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
-		if (this.isSummarizerClient) {
+		if (this.clientDetails.type === summarizerClientType) {
 			// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
 			// this is happening and which data stores do this. The eventual goal is to disallow local changes
 			// in the summarizer and the data will help us plan this.
@@ -1156,7 +1152,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 				category: "error",
 				gcTombstoneEnforcementAllowed: (this.containerRuntime as ContainerRuntime)
 					.gcTombstoneEnforcementAllowed,
-				isSummarizerClient: this.isSummarizerClient,
 			},
 			this.pkg,
 		);
