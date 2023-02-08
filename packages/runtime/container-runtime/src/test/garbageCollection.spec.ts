@@ -47,7 +47,7 @@ import {
 	currentGCVersion,
 	stableGCVersion,
 	gcVersionUpgradeToV2Key,
-	gcEnforcementCurrentValue,
+	gcTombstoneEnforcementValueOptionName,
 } from "../garbageCollectionConstants";
 
 import {
@@ -262,7 +262,9 @@ describe("Garbage Collection Tests", () => {
 					sweepTimeoutMs: 123,
 					gcFeatureSupportInfo: { appTombstoneReadiness: 1 },
 				};
-				gc = createGcWithPrivateMembers(inputMetadata, { [gcEnforcementCurrentValue]: 2 }); // 2 should not be persisted
+				gc = createGcWithPrivateMembers(inputMetadata, {
+					[gcTombstoneEnforcementValueOptionName]: 2,
+				}); // 2 should not be persisted
 				const outputMetadata = gc.getMetadata();
 				const expectedOutputMetadata: IGCMetadata = {
 					...inputMetadata,
@@ -283,7 +285,9 @@ describe("Garbage Collection Tests", () => {
 					sweepTimeoutMs: 123,
 					gcFeatureSupportInfo: { appTombstoneReadiness: 1 },
 				};
-				gc = createGcWithPrivateMembers(inputMetadata, { [gcEnforcementCurrentValue]: 2 }); // 2 should not be persisted
+				gc = createGcWithPrivateMembers(inputMetadata, {
+					[gcTombstoneEnforcementValueOptionName]: 2,
+				}); // 2 should not be persisted
 				const outputMetadata = gc.getMetadata();
 				const expectedOutputMetadata: IGCMetadata = {
 					...inputMetadata,
@@ -398,7 +402,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				gc = createGcWithPrivateMembers(undefined /* metadata */, {
 					sweepAllowed: true,
-					[gcEnforcementCurrentValue]: 2,
+					[gcTombstoneEnforcementValueOptionName]: 2,
 				});
 				const outputMetadata = gc.getMetadata();
 				assert.deepEqual(

@@ -68,7 +68,7 @@ import {
 	runSweepKey,
 	stableGCVersion,
 	trackGCStateKey,
-	gcEnforcementCurrentValue,
+	gcTombstoneEnforcementValueOptionName,
 } from "./garbageCollectionConstants";
 import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
@@ -616,7 +616,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sweepTimeoutMs =
 				testOverrideSweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
 			this.persistedGcFeatureSupportInfo = {
-				appTombstoneReadiness: this.gcOptions[gcEnforcementCurrentValue],
+				appTombstoneReadiness: this.gcOptions[gcTombstoneEnforcementValueOptionName],
 			};
 		}
 

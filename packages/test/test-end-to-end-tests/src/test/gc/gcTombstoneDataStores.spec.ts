@@ -75,7 +75,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			gcOptions: {
 				...gcOptions,
 				// Different from undefined (the persisted value) so will disable GC enforcement
-				gcEnforcementCurrentValue: 1,
+				gcTombstoneEnforcementValue: 1,
 			},
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
@@ -627,7 +627,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
-			"Requesting tombstoned datastores succeeds with future gcEnforcementCurrentValue",
+			"Requesting tombstoned datastores succeeds with future gcTombstoneEnforcementValue",
 			[
 				// Interactive client's request that succeeds
 				{
@@ -654,14 +654,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				);
 				await sendOpToUpdateSummaryTimestampToNow(container);
 
-				// This request succeeds even though the datastore is tombstoned, on account of the later gcEnforcementCurrentValue passed in
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneEnforcementValue passed in
 				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
 					url: unreferencedId,
 				});
 				assert.equal(
 					tombstoneSuccessResponse.status,
 					200,
-					"Should be able to retrieve a tombstoned datastore given gcEnforcementCurrentValue",
+					"Should be able to retrieve a tombstoned datastore given gcTombstoneEnforcementValue",
 				);
 				assert.notEqual(
 					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],

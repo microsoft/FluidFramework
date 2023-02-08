@@ -11,7 +11,7 @@ export const stableGCVersion: GCVersion = 1;
 export const currentGCVersion: GCVersion = 2;
 
 /** This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value */
-export const gcEnforcementCurrentValue = "gcEnforcementCurrentValue";
+export const gcTombstoneEnforcementValueOptionName = "gcTombstoneEnforcementValue";
 
 // Feature gate key to turn GC on / off.
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
