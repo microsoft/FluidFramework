@@ -322,6 +322,13 @@ export function configureWebSocketServices(
 
             // Join the room to receive signals.
             roomMap.set(clientId, room);
+
+            // increment connection count after the client is added to the room.
+            // excluding summarizer for total client count.
+            if (!isSummarizer) {
+                connectionCountLogger.incrementConnectionCount();
+            }
+
             // Iterate over the version ranges provided by the client and select the best one that works
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
@@ -485,11 +492,6 @@ export function configureWebSocketServices(
                             getRoomId(room),
                             "signal",
                             createRoomJoinMessage(message.connection.clientId, message.details));
-                    }
-                    // excluding summarizer for total client count.
-                    if (message?.details?.details?.type !== summarizerClientType) {
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        connectionCountLogger.incrementConnectionCount();
                     }
 
                     connectMetric.setProperties({
@@ -694,7 +696,6 @@ export function configureWebSocketServices(
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
                 // excluding summarizer for total client count.
                 if (connectionTimeMap.has(clientId)) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     connectionCountLogger.decrementConnectionCount();
                 }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
