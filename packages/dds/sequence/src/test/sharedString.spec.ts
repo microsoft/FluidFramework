@@ -243,7 +243,7 @@ describe("SharedString", () => {
 				sharedString.insertText(0, `${insertText}${i}`);
 			}
 
-			// Verify that summary data is correcy.
+			// Verify that summary data is correct.
 			let summaryTree = verifyAndReturnSummaryTree();
 
 			// Load a new SharedString from the snapshot and verify it is loaded correctly.
@@ -251,6 +251,38 @@ describe("SharedString", () => {
 
 			for (let i = 0; i < segmentCount; i = i + 1) {
 				sharedString.insertText(0, `${insertText}-${i}`);
+			}
+
+			// TODO: Due to segment packing, we have only "header" and no body
+			// Need to change test to include other types of segments (like marker) to exercise "body".
+
+			// Verify summary after changes.
+			summaryTree = verifyAndReturnSummaryTree();
+
+			// Load a new SharedString from the snapshot and verify it is loaded correctly.
+			await CreateStringAndCompare(summaryTree);
+		});
+
+		it("can load a SharedString with segments having empty props", async () => {
+			const insertText = "text";
+			const segmentCount = 1000;
+
+			sharedString.initializeLocal();
+
+			for (let i = 0; i < segmentCount; i = i + 1) {
+				sharedString.insertText(0, `${insertText}${i}`);
+				sharedString.annotateRange(i, i + 1, {});
+			}
+
+			// Verify that summary data is correct.
+			let summaryTree = verifyAndReturnSummaryTree();
+
+			// Load a new SharedString from the snapshot and verify it is loaded correctly.
+			await CreateStringAndCompare(summaryTree);
+
+			for (let i = 0; i < segmentCount; i = i + 1) {
+				sharedString.insertText(0, `${insertText}-${i}`);
+				sharedString.annotateRange(i, i + 1, {});
 			}
 
 			// TODO: Due to segment packing, we have only "header" and no body
