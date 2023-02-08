@@ -55,7 +55,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		// Default to the current version to match createContainerRuntimeVersion metadata in test containers created here
-		gcEnforcementMinCreateContainerRuntimeVersion: pkgVersion,
+		gcEnforcementCurrentValue: pkgVersion,
 	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -78,7 +78,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			gcOptions: {
 				...gcOptions,
 				// Simulate these test containers being loaded at a future time with a higher min version for GC enforcement
-				gcEnforcementMinCreateContainerRuntimeVersion: "999.999.999",
+				gcEnforcementCurrentValue: "999.999.999",
 			},
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
@@ -637,7 +637,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		//* ONLY
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects.only(
-			"Requesting tombstoned datastores succeeds with future gcEnforcementMinCreateContainerRuntimeVersion",
+			"Requesting tombstoned datastores succeeds with future gcEnforcementCurrentValue",
 			[
 				// Interactive client's request that succeeds
 				{
@@ -670,14 +670,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const container = await loadContainer(summaryVersion);
 				await sendOpToUpdateSummaryTimestampToNow(container);
 
-				// This request succeeds even though the datastore is tombstoned, on account of the later gcEnforcementMinCreateContainerRuntimeVersion passed in
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcEnforcementCurrentValue passed in
 				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
 					url: unreferencedId,
 				});
 				assert.equal(
 					tombstoneSuccessResponse.status,
 					200,
-					"Should be able to retrieve a tombstoned datastore given gcEnforcementMinCreateContainerRuntimeVersion",
+					"Should be able to retrieve a tombstoned datastore given gcEnforcementCurrentValue",
 				);
 				assert.notEqual(
 					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],

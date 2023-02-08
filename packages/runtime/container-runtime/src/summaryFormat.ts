@@ -107,6 +107,22 @@ export interface IGCMetadata {
 	 * - A value greater than 0 means GC is enabled.
 	 */
 	readonly gcFeature?: GCVersion;
+
+	/**
+	 * Numerical indication of feature support as of file creation time, used to determine feature availability over time.
+	 * This info may come from multiple sources (FF code, config service, app via Container Runtime Options),
+	 * and pertains to aspects of the document that may be fixed for its lifetime.
+	 * 
+	 * For each dimension, if the persisted value is less than the currently provided value,
+	 * then this file does not support the corresponding feature as currently implemented.
+	*/
+	readonly gcFeatureSupport?: {
+		/**
+		 * Gives a way for an app to disqualify old files from GC Tombstone enforcement
+		 * Provided via Container Runtime Options
+		 */
+		appTombstoneReadiness: number;
+	};
 	/**
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.

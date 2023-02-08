@@ -27,61 +27,61 @@ describe("Garbage Collection Helpers Tests", () => {
 		const testCases: {
 			description: string;
 			createContainerRuntimeVersion: string | undefined;
-			gcEnforcementMinCreateContainerRuntimeVersion: string | undefined;
+			gcEnforcementCurrentValue: string | undefined;
 			expectedShouldDisableValue: boolean;
 		}[] = [
 			{
 				description: "Both versions undefined - DON'T disable",
 				createContainerRuntimeVersion: undefined,
-				gcEnforcementMinCreateContainerRuntimeVersion: undefined,
+				gcEnforcementCurrentValue: undefined,
 				expectedShouldDisableValue: false,
 			},
 			{
 				description: "Min version undefined - DON'T disable",
 				createContainerRuntimeVersion: "0.0.0",
-				gcEnforcementMinCreateContainerRuntimeVersion: undefined,
+				gcEnforcementCurrentValue: undefined,
 				expectedShouldDisableValue: false,
 			},
 			{
 				description: "Min Version invalid - DON'T disable",
 				createContainerRuntimeVersion: "0.0.0",
-				gcEnforcementMinCreateContainerRuntimeVersion: "not a valid version",
+				gcEnforcementCurrentValue: "not a valid version",
 				expectedShouldDisableValue: false,
 			},
 			{
 				description: "Persisted value unreleased; Min Version defined - DON'T disable",
 				createContainerRuntimeVersion: "2.0.0-dev.1.2.3.45678",
-				gcEnforcementMinCreateContainerRuntimeVersion: "3.0.0",
+				gcEnforcementCurrentValue: "3.0.0",
 				expectedShouldDisableValue: false,
 			},
 			{
 				description: "Persisted value newer than Min Version - DON'T disable",
 				createContainerRuntimeVersion: "2.0.0-internal.3.0.0",
-				gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0-internal.2.3.1",
+				gcEnforcementCurrentValue: "2.0.0-internal.2.3.1",
 				expectedShouldDisableValue: false,
 			},
 			{
 				description: "Persisted value equal to Min Version - DON'T disable",
 				createContainerRuntimeVersion: "2.0.0",
-				gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0",
+				gcEnforcementCurrentValue: "2.0.0",
 				expectedShouldDisableValue: false,
 			},
 			{
 				description: "Persisted value older than Min Version - DO disable",
 				createContainerRuntimeVersion: "1.0.0",
-				gcEnforcementMinCreateContainerRuntimeVersion: "2.0.0",
+				gcEnforcementCurrentValue: "2.0.0",
 				expectedShouldDisableValue: true,
 			},
 			{
 				description: "No persisted value; Min Version defined - DO disable",
 				createContainerRuntimeVersion: undefined,
-				gcEnforcementMinCreateContainerRuntimeVersion: "1.0.0",
+				gcEnforcementCurrentValue: "1.0.0",
 				expectedShouldDisableValue: true,
 			},
 			{
 				description: "Invalid persisted value - DON'T disable",
 				createContainerRuntimeVersion: "2.0.0-dev.3.0.0",
-				gcEnforcementMinCreateContainerRuntimeVersion: "3.0.0",
+				gcEnforcementCurrentValue: "3.0.0",
 				expectedShouldDisableValue: false,
 			},
 		];
@@ -89,13 +89,13 @@ describe("Garbage Collection Helpers Tests", () => {
 			({
 				description,
 				createContainerRuntimeVersion,
-				gcEnforcementMinCreateContainerRuntimeVersion,
+				gcEnforcementCurrentValue,
 				expectedShouldDisableValue,
 			}) => {
 				it(description, () => {
 					const shouldDisable = shouldDisableGcEnforcementForOldContainer(
 						createContainerRuntimeVersion,
-						gcEnforcementMinCreateContainerRuntimeVersion,
+						gcEnforcementCurrentValue,
 					);
 					assert.equal(
 						shouldDisable,
