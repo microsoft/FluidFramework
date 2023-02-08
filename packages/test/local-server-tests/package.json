@@ -91,7 +91,6 @@
 		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-loader-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-pairwise-generator": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
