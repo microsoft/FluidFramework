@@ -27,9 +27,7 @@ _None yet._
 
 ### container-runtime: LoaderHeader enum changes
 
-The LoaderHeader enum in the container-runtime library has a new enum value, `baseLogger`, which is a header that can be
-used to override the base logger used by a Fluid Container on load. This is a breaking change because TypeScript enums
-are not compatible when new enum values are added.
+The LoaderHeader enum in the container-runtime library has a new enum value, `baseLogger`, which is a header that can be used to override the base logger used by a Fluid Container on load. This is a breaking change because TypeScript enums are not compatible when new enum values are added.
 
 This change was originally made in 2.0.0-internal.3.0.1 as a backwards-compatible change using a hard-coded header
 value.
