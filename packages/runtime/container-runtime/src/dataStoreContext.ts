@@ -326,6 +326,7 @@ export abstract class FluidDataStoreContext
 		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
 		this.throwOnTombstoneUsage =
 			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+			this._containerRuntime.gcTombstoneEnforcementAllowed &&
 			this.clientDetails.type !== summarizerClientType;
 	}
 
@@ -830,7 +831,6 @@ export abstract class FluidDataStoreContext
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "GC_Deleted_DataStore_Changed",
-					isSummarizerClient: this.clientDetails.type === summarizerClientType,
 					callSite,
 				},
 				error,
@@ -852,7 +852,8 @@ export abstract class FluidDataStoreContext
 				{
 					eventName: "GC_Tombstone_DataStore_Changed",
 					category: this.throwOnTombstoneUsage ? "error" : "generic",
-					isSummarizerClient: this.clientDetails.type === summarizerClientType,
+					gcTombstoneEnforcementAllowed: (this.containerRuntime as ContainerRuntime)
+						.gcTombstoneEnforcementAllowed,
 					callSite,
 				},
 				this.pkg,
@@ -1097,8 +1098,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 				eventName: "GC_Deleted_DataStore_Unexpected_Delete",
 				message: "Unexpected deletion of a local data store context",
 				category: "error",
-				isSummarizerClient:
-					this.containerRuntime.clientDetails.type === summarizerClientType,
+				gcTombstoneEnforcementAllowed: (this.containerRuntime as ContainerRuntime)
+					.gcTombstoneEnforcementAllowed,
 			},
 			this.pkg,
 		);
