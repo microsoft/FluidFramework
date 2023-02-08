@@ -20,30 +20,30 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const { task, deleteTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
-	const [sourceName, setsourceName] = useState<string | undefined>(task.sourceName);
+	const [sourceName, setSourceName] = useState<string | undefined>(task.sourceName);
 	const [sourcePriority, setSourcePriority] = useState<number | undefined>(task.sourcePriority);
-	const [changeType, setchangeType] = useState<string | undefined>(task.changeType);
+	const [changeType, setChangeType] = useState<string | undefined>(task.changeType);
 	useEffect(() => {
 		const updateFromRemotePriority = (): void => {
 			if (priorityRef.current !== null) {
 				priorityRef.current.value = task.priority.toString();
 			}
 		};
-		const showsourcePriority = (): void => {
+		const showSourcePriority = (): void => {
 			setSourcePriority(task.sourcePriority);
-			setchangeType(task.changeType);
+			setChangeType(task.changeType);
 		};
 		const showsourceName = (): void => {
-			setsourceName(task.sourceName);
-			setchangeType(task.changeType);
+			setSourceName(task.sourceName);
+			setChangeType(task.changeType);
 		};
 		task.on("priorityChanged", updateFromRemotePriority);
-		task.on("sourcePriorityChanged", showsourcePriority);
+		task.on("sourcePriorityChanged", showSourcePriority);
 		task.on("sourceNameChanged", showsourceName);
 		updateFromRemotePriority();
 		return (): void => {
 			task.off("priorityChanged", updateFromRemotePriority);
-			task.off("sourcePriorityChanged", showsourcePriority);
+			task.off("sourcePriorityChanged", showSourcePriority);
 			task.off("sourceNameChanged", showsourceName);
 		};
 	}, [task, sourceName, sourcePriority, changeType]);
