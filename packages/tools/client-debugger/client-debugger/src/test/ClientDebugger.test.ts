@@ -14,7 +14,10 @@ import {
 	getFluidClientDebuggers,
 	getFluidClientDebugger,
 	initializeFluidClientDebugger,
+	getDebuggerRegistry,
+	DebuggerRegistry,
 } from "../Registry";
+
 import { createMockContainer } from "./Utilities";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -26,9 +29,20 @@ describe("ClientDebugger unit tests", () => {
 	const otherContainerId = "test-container-id-other";
 	let otherContainer: IContainer | undefined;
 
+	const registry: DebuggerRegistry = getDebuggerRegistry();
+	let debuggerRegistered = false;
+	let debuggerClosed = false;
+
 	beforeEach(async () => {
 		container = createMockContainer();
 		otherContainer = createMockContainer();
+
+		registry.on("debuggerRegistered", () => {
+			debuggerRegistered = true;
+		});
+		registry.on("debuggerClosed", () => {
+			debuggerClosed = true;
+		});
 	});
 
 	afterEach(() => {
@@ -47,7 +61,12 @@ describe("ClientDebugger unit tests", () => {
 		let debuggers = getFluidClientDebuggers();
 		expect(debuggers.length).to.equal(0); // There should be no registered debuggers yet.
 
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(debuggerRegistered).to.be.false;
 		initializeDebugger(containerId, container!);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(debuggerRegistered).to.be.true;
+
 		initializeDebugger(otherContainerId, otherContainer!);
 
 		debuggers = getFluidClientDebuggers();
@@ -72,6 +91,8 @@ describe("ClientDebugger unit tests", () => {
 		expect(clientDebugger.disposed).to.be.false;
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(otherClientDebugger.disposed).to.be.false;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(debuggerClosed).to.be.false;
 
 		let debuggers = getFluidClientDebuggers();
 		expect(debuggers.length).to.equal(2);
@@ -79,6 +100,8 @@ describe("ClientDebugger unit tests", () => {
 		closeFluidClientDebugger(containerId);
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(clientDebugger.disposed).to.be.true;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(debuggerClosed).to.be.true;
 
 		closeFluidClientDebugger(otherContainerId);
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
