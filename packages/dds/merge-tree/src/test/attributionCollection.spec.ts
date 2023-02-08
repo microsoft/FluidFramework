@@ -251,6 +251,15 @@ describe("AttributionCollection", () => {
 				},
 				segments: [seg(3), seg(4)],
 			},
+			{
+				name: "detached attribution keys",
+				blob: {
+					length: 7,
+					posBreakpoints: [0, 3],
+					seqs: [1, { type: "detached", id: 0 }],
+				},
+				segments: [seg(3), seg(4)],
+			},
 		];
 
 		for (const { name, blob, segments } of testCases) {

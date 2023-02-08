@@ -146,6 +146,18 @@ export enum CrossFieldTarget {
     Source = 0
 }
 
+// @alpha
+export interface CursorAdapter<TNode> {
+    // (undocumented)
+    getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
+    // (undocumented)
+    keysFromNode(node: TNode): readonly FieldKey[];
+    // (undocumented)
+    type(node: TNode): TreeType;
+    // (undocumented)
+    value(node: TNode): Value;
+}
+
 // @alpha (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -154,6 +166,12 @@ export const enum CursorLocationType {
 
 // @alpha
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
+
+// @alpha
+export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
+    fork(): CursorWithNode<TNode>;
+    getNode(): TNode;
+}
 
 // @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
@@ -274,6 +292,9 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaqu
 // @alpha
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
+// @alpha (undocumented)
+export function fail(message: string): never;
+
 // @alpha
 export interface FieldAnchor {
     // (undocumented)
@@ -363,6 +384,19 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
 // @alpha
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
+// @alpha (undocumented)
+export interface FieldKinds {
+    // (undocumented)
+    optional: FieldKind;
+    // (undocumented)
+    sequence: FieldKind;
+    // (undocumented)
+    value: FieldKind;
+}
+
+// @alpha (undocumented)
+export const FieldKinds: FieldKinds;
+
 // @alpha
 export interface FieldLocation {
     // (undocumented)
@@ -386,6 +420,11 @@ export interface FieldSchema {
     readonly kind: FieldKindIdentifier;
     readonly types?: TreeTypeSet;
 }
+
+// @alpha
+export function fieldSchema(kind: {
+    identifier: FieldKindIdentifier;
+}, types?: Iterable<TreeSchemaIdentifier>): FieldSchema;
 
 // @alpha
 export const enum FieldScope {
@@ -769,6 +808,9 @@ export interface NamedComputation {
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 
 // @alpha
+export function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<TreeSchemaIdentifier>): NamedTreeSchema;
+
+// @alpha
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
 // @alpha (undocumented)
@@ -905,8 +947,14 @@ export interface RootField {
     readonly key: DetachedField;
 }
 
+// @alpha (undocumented)
+export const rootField: DetachedField;
+
 // @alpha
 export const rootFieldKey: GlobalFieldKey;
+
+// @alpha (undocumented)
+export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
 export interface SchemaData {
@@ -970,6 +1018,12 @@ export class SimpleDependee implements Dependee {
 // @alpha
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
 
+// @alpha (undocumented)
+export function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
+
+// @alpha (undocumented)
+export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
+
 // @alpha
 type Skip = number;
 
@@ -1026,6 +1080,22 @@ export interface TreeSchema {
     readonly globalFields: ReadonlySet<GlobalFieldKey>;
     readonly localFields: ReadonlyMap<LocalFieldKey, FieldSchema>;
     readonly value: ValueSchema;
+}
+
+// @alpha
+export interface TreeSchemaBuilder {
+    // (undocumented)
+    readonly extraGlobalFields?: boolean;
+    // (undocumented)
+    readonly extraLocalFields: FieldSchema;
+    // (undocumented)
+    readonly globalFields?: Iterable<GlobalFieldKey>;
+    // (undocumented)
+    readonly localFields?: {
+        [key: string]: FieldSchema;
+    };
+    // (undocumented)
+    readonly value?: ValueSchema;
 }
 
 // @alpha

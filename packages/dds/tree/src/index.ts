@@ -30,6 +30,9 @@ export {
 	JsonableTree,
 	Delta,
 	rootFieldKey,
+	rootField,
+	rootFieldKeySymbol,
+	fieldSchema,
 	FieldScope,
 	GlobalFieldKeySymbol,
 	symbolFromKey,
@@ -52,6 +55,7 @@ export {
 	LocalFieldKey,
 	GlobalFieldKey,
 	TreeSchemaIdentifier,
+	TreeSchemaBuilder,
 	NamedTreeSchema,
 	Named,
 	FieldSchema,
@@ -99,6 +103,7 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	NestedMap,
+	fail,
 } from "./util";
 
 export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
@@ -180,6 +185,30 @@ export {
 	SequenceFieldEditBuilder,
 	prefixPath,
 	prefixFieldPath,
+	singleTextCursor,
+	namedTreeSchema,
+	singleStackTreeCursor,
+	CursorAdapter,
+	CursorWithNode,
 } from "./feature-libraries";
+
+// Export subset of FieldKinds in an API-Extractor compatible way:
+import { FieldKind, FieldKinds as FieldKindsOriginal } from "./feature-libraries";
+/**
+ * @alpha
+ */
+interface FieldKinds {
+	value: FieldKind;
+	optional: FieldKind;
+	sequence: FieldKind;
+}
+/**
+ * @alpha
+ */
+const FieldKinds: FieldKinds = FieldKindsOriginal;
+/**
+ * @alpha
+ */
+export { FieldKinds };
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

@@ -1669,13 +1669,11 @@ export class MergeTree {
 				});
 
 				if (newSegment.parent === undefined) {
-					throw new Error(
-						`MergeTree insert failed: ${JSON.stringify({
-							currentSeq: this.collabWindow.currentSeq,
-							minSeq: this.collabWindow.minSeq,
-							segSeq: newSegment.seq,
-						})}`,
-					);
+					throw new UsageError("MergeTree insert failed", {
+						currentSeq: this.collabWindow.currentSeq,
+						minSeq: this.collabWindow.minSeq,
+						segSeq: newSegment.seq,
+					});
 				}
 
 				this.updateRoot(splitNode);
