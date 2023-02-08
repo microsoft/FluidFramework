@@ -100,7 +100,6 @@ import {
     exceptionToResponse,
     requestFluidObject,
     responseToException,
-    seqFromTree,
     calculateStats,
     TelemetryContext,
 } from "@fluidframework/runtime-utils";
@@ -2328,11 +2327,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (refreshLatestAck) {
             const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
                 ChildLogger.create(summaryNumberLogger, undefined, { all: { safeSummary: true } }));
-            const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
             latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;
 
             // We might need to catch up to the latest summary's reference sequence number before pausing.
-            await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq,
+            await this.waitForDeltaManagerToCatchup(latestSnapshotInfo.referenceSequenceNumber,
                 summaryNumberLogger);
         }
 
@@ -2768,18 +2766,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     fetchLatest: true,
                 });
 
-            const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
             summaryLogger.sendTelemetryEvent(
                 {
                     eventName: "LatestSummaryRetrieved",
                     ackHandle,
-                    lastSequenceNumber: latestSnapshotRefSeq,
+                    lastSequenceNumber: fetchResult.referenceSequenceNumber,
                     targetSequenceNumber: summaryRefSeq,
                 });
 
             // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
             // wait for the delta manager to catch up before refreshing the latest Summary.
-            await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq,
+            await this.waitForDeltaManagerToCatchup(fetchResult.referenceSequenceNumber,
                 summaryLogger);
 
             return fetchResult.snapshotTree;
@@ -2810,8 +2807,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async refreshLatestSummaryAckFromServer(
         summaryLogger: ITelemetryLogger,
-    ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined; }> {
-        const { snapshotTree, versionId } = await this.fetchSnapshotFromStorage(null, summaryLogger, {
+    ): Promise<{ referenceSequenceNumber: number; latestSnapshotVersionId: string | undefined; }> {
+        const { snapshotTree, versionId, referenceSequenceNumber } = await this.fetchSnapshotFromStorage(null, summaryLogger, {
             eventName: "RefreshLatestSummaryGetSnapshot",
             fetchLatest: true,
         },
@@ -2819,11 +2816,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        const latestSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
 
         const result = await this.summarizerNode.refreshLatestSummary(
             undefined,
-            latestSnapshotRefSeq,
+            referenceSequenceNumber,
             async () => snapshotTree,
             readAndParseBlob,
             summaryLogger,
@@ -2833,11 +2829,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         await this.garbageCollector.refreshLatestSummary(
             result,
             undefined,
-            latestSnapshotRefSeq,
+            referenceSequenceNumber,
             readAndParseBlob,
         )
 
-        return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
+        return { referenceSequenceNumber, latestSnapshotVersionId: versionId };
     }
 
     private async fetchSnapshotFromStorage(
@@ -2845,7 +2841,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         fetchSource?: FetchSource,
-    ): Promise<{ snapshotTree: ISnapshotTree; versionId: string; }> {
+    ): Promise<{ snapshotTree: ISnapshotTree; versionId: string; referenceSequenceNumber: number; }> {
         return PerformanceEvent.timedExecAsync(
             logger, event, async (perfEvent: {
                 end: (arg0: {
@@ -2865,8 +2861,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
             stats.getSnapshotDuration = trace.trace().duration;
 
+            const referenceSequenceNumber = (await this.storage.getSequenceNumberFromTree?.(maybeSnapshot)) ?? 0;
+
             perfEvent.end(stats);
-            return { snapshotTree: maybeSnapshot, versionId: versions[0].id };
+            return { snapshotTree: maybeSnapshot, versionId: versions[0].id, referenceSequenceNumber };
         });
     }
 

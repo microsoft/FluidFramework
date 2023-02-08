@@ -177,6 +177,11 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * server has deleted it this call may result in a broken promise.
      */
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+
+    /**
+     * TODO: left as optional for now to keep implementing classes cleaner
+     */
+    getSequenceNumberFromTree?(tree: ISnapshotTree): Promise<number>;
 }
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {

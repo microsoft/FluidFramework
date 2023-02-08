@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { IConnectionDetails, IDeltaHandlerStrategy, IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
 import { IDocumentService } from "@fluidframework/driver-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaManager } from "./deltaManager";
 
@@ -203,34 +203,71 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
         super.connectHandler(connection);
     }
 
+    private _canIncrementClientSequenceNumber = true;
+    protected prepareMessageToSend(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined {
+        const superMessage = super.prepareMessageToSend(message);
+        if (superMessage === undefined) {
+            return superMessage;
+        }
+
+        // Note: This ONLY works if all batches (multiple messages) are grouped to service
+        if (this._canIncrementClientSequenceNumber) {
+            this._clientSequenceNumber++;
+            this._canIncrementClientSequenceNumber = false;
+        }
+
+        return {
+            ...superMessage,
+            clientSequenceNumber: this._clientSequenceNumber,
+        }
+    }
+
     protected sendMessageToConnectionManager(messages: Readonly<IDocumentMessage[]>): void {
+        // TODO: remove this (for debugging)
+        const newMessages = this.addNoOpToBatch(messages);
+
+        this._canIncrementClientSequenceNumber = true;
+
         // If we are sending a batch (more than one message), group the messages together into a single op
-        if (messages.length >= 2) {
+        if (newMessages.length >= 2) {
             // Note: we don't need to store clientSequenceNumber in the map since this op will be forgotten
             // All the "subMessages" already have their virtual clientSequenceNumbers
             super.sendMessageToConnectionManager([{
                 type: GroupedBatchOpType,
-                clientSequenceNumber: ++this._clientSequenceNumber,
-                referenceSequenceNumber: messages[0].referenceSequenceNumber, // use oldest referenceSequenceNumber
-                contents: messages,
+                clientSequenceNumber: newMessages[0].clientSequenceNumber,
+                referenceSequenceNumber: newMessages[0].referenceSequenceNumber, // use oldest referenceSequenceNumber
+                contents: newMessages,
             }]);
         } else {
-            super.sendMessageToConnectionManager(messages.map((it: IDocumentMessage) => {
-                return {...it, clientSequenceNumber: ++this._clientSequenceNumber};
-            }));
+            super.sendMessageToConnectionManager(newMessages);
         }
     }
 
     protected processMessage(message: Readonly<ISequencedDocumentMessage>, startTime: number): void {
         for (const subMessage of this.ungroupAndVirtualizeSequencedMessage(message)) {
-            super.processMessage(subMessage, startTime);
+            switch (subMessage.type) {
+                case MessageType.SummaryAck:
+                case MessageType.SummaryNack:
+                    // Old files (prior to PR #10077) may not contain this info
+                    // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
+                    if ((subMessage as any).data !== undefined) {
+                        subMessage.contents = JSON.parse((subMessage as any).data);
+                    } else if (typeof subMessage.contents === "string") {
+                        subMessage.contents = JSON.parse(subMessage.contents);
+                    }
+                    // eslint-disable-next-line no-case-declarations
+                    const summarySequenceNumber = subMessage.contents.summaryProposal.summarySequenceNumber as number;
+                    subMessage.contents.summaryProposal.summarySequenceNumber = this.virtualizeSequenceNumber(summarySequenceNumber);
+                default:
+                    super.processMessage(subMessage, startTime);
+            }
         }
     }
 
     /**
      * Provided "real" sequence number (one sent over the wire), return its "virtual" counter-part for use by other consumers
      */
-    private virtualizeSequenceNumber(sequenceNumber: number): number {
+    public virtualizeSequenceNumber(sequenceNumber: number): number {
         if (sequenceNumber < 0) {
             return sequenceNumber;
         }
@@ -306,6 +343,18 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
         }
     }
 
+    /**
+     * Given virtual sequence number, return the corresponding real sequence number
+     */
+    public getRealSequenceNumber(virtualSequenceNumber: number): number {
+        for (const [key, value] of this._sequenceNumberMap.entries()) {
+            if (value === virtualSequenceNumber) {
+                return key;
+            }
+        }
+        assert(false, "virtual sequence number not found"); // TODO: https://github.com/microsoft/FluidFramework/pull/13963 if merged
+    }
+
     // TODO: need to review how these numbers are being used in other layers
     // there is currently some mix and match happening
 
@@ -332,5 +381,21 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
 
     public get minimumSequenceNumber(): number {
         return this.virtualizeSequenceNumber(this.minSequenceNumber);
+    }
+
+    /** TODO: remove this (for debugging) */
+    private addNoOpToBatch(messages: Readonly<IDocumentMessage[]>): IDocumentMessage[] {
+        const newMessages = [...messages];
+        const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
+            contents: undefined,
+            metadata: undefined,
+            referenceSequenceNumber: this.lastProcessedSequenceNumber,
+            type: MessageType.NoOp,
+            compression: undefined,
+        };
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        newMessages.push(this.connectionManager.prepareMessageToSend(messagePartial)!);
+
+        return newMessages;
     }
 }

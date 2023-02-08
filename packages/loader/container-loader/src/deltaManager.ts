@@ -222,7 +222,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (!batch) {
             this.flush();
         }
-        const message = this.connectionManager.prepareMessageToSend(messagePartial);
+        const message = this.prepareMessageToSend(messagePartial);
         if (message === undefined) {
             return -1;
         }
@@ -241,6 +241,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.flush();
         }
         return message.clientSequenceNumber;
+    }
+
+    protected prepareMessageToSend(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined {
+        return this.connectionManager.prepareMessageToSend(message);
     }
 
     public submitSignal(content: any) { return this.connectionManager.submitSignal(content); }

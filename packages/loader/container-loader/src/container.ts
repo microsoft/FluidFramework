@@ -108,6 +108,7 @@ import {
     ProtocolHandlerBuilder,
 } from "./protocol";
 import { VirtualDeltaManager } from "./virtualDeltaManager";
+import { VirtualContainerStorageAdapter } from "./virtualContainerStorageAdapter";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -626,7 +627,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             summarizeProtocolTree,
         };
 
-        this._deltaManager = this.createDeltaManager();
+        const virtualDeltaManager = this.createDeltaManager();
+        this._deltaManager = virtualDeltaManager;
 
         this._clientId = config.serializedContainerState?.clientId;
         this.connectionStateHandler = createConnectionStateHandler(
@@ -679,7 +681,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.containerSaved();
         });
 
-        this.storageService = new ContainerStorageAdapter(
+        this.storageService = new VirtualContainerStorageAdapter(
+            (virtualSequenceNumber: number) => virtualDeltaManager.getRealSequenceNumber(virtualSequenceNumber),
+            (sequenceNumber: number) => virtualDeltaManager.virtualizeSequenceNumber(sequenceNumber),
             this.loader.services.detachedBlobStorage,
             this.mc.logger,
             this.options.summarizeProtocolTree === true
@@ -1170,6 +1174,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes: IDocumentAttributes = pendingLocalState === undefined
             ? await this.getDocumentAttributes(this.storageService, snapshot)
             : {
+                // TODO
                 sequenceNumber: pendingLocalState.protocol.sequenceNumber,
                 minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
                 term: pendingLocalState.term,

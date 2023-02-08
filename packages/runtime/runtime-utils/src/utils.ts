@@ -9,6 +9,7 @@ import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-def
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
 /**
+ * TODO: potentially remove
  * Fetches the sequence number of the snapshot tree by examining the protocol.
  * @param tree - snapshot tree to examine
  * @param readAndParseBlob - function to read blob contents from storage
