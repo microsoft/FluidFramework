@@ -47,7 +47,7 @@ import {
 	currentGCVersion,
 	stableGCVersion,
 	gcVersionUpgradeToV2Key,
-	gcTombstoneEnforcementValueOptionName,
+	gcTombstoneGenerationOptionName,
 } from "../garbageCollectionConstants";
 
 import {
@@ -263,7 +263,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
 				gc = createGcWithPrivateMembers(inputMetadata, {
-					[gcTombstoneEnforcementValueOptionName]: 2,
+					[gcTombstoneGenerationOptionName]: 2,
 				}); // 2 should not be persisted
 				const outputMetadata = gc.getMetadata();
 				const expectedOutputMetadata: IGCMetadata = {
@@ -286,7 +286,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
 				gc = createGcWithPrivateMembers(inputMetadata, {
-					[gcTombstoneEnforcementValueOptionName]: 2,
+					[gcTombstoneGenerationOptionName]: 2,
 				}); // 2 should not be persisted
 				const outputMetadata = gc.getMetadata();
 				const expectedOutputMetadata: IGCMetadata = {
@@ -402,7 +402,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				gc = createGcWithPrivateMembers(undefined /* metadata */, {
 					sweepAllowed: true,
-					[gcTombstoneEnforcementValueOptionName]: 2,
+					[gcTombstoneGenerationOptionName]: 2,
 				});
 				const outputMetadata = gc.getMetadata();
 				assert.deepEqual(

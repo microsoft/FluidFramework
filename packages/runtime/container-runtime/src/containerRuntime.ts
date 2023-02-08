@@ -169,7 +169,7 @@ import {
 	RemoteMessageProcessor,
 } from "./opLifecycle";
 import { shouldDisableGcEnforcement } from "./garbageCollectionHelpers";
-import { gcTombstoneEnforcementValueOptionName } from "./garbageCollectionConstants";
+import { gcTombstoneGenerationOptionName } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -1094,17 +1094,17 @@ export class ContainerRuntime
 
 		this.disableGcTombstoneEnforcement = shouldDisableGcEnforcement(
 			metadata?.gcFeatureMatrix?.tombstoneGeneration,
-			this.runtimeOptions.gcOptions[gcTombstoneEnforcementValueOptionName],
+			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
 		);
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
 		this.mc.logger.sendTelemetryEvent({
-			eventName: "FeatureSupportInfo",
+			eventName: "GCFeatureMatrix",
 			info: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
-				gcOptions_gcTombstoneEnforcementValue:
-					this.runtimeOptions.gcOptions[gcTombstoneEnforcementValueOptionName],
+				gcOptions_gcTombstoneGeneration:
+					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
 			}),
 		});
 
