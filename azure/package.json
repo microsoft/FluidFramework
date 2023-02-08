@@ -17,7 +17,7 @@
 		"build:docs": "npm run build:docs:api-extractor && npm run build:docs:copy-metadata",
 		"build:docs:api-extractor": "lerna run build:docs --stream --parallel",
 		"build:docs:copy-metadata": "copyfiles \"**/_api-extractor-temp/**\" ../",
-		"build:fast": "fluid-build --root ..",
+		"build:fast": "fluid-build --root .. --azure",
 		"build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
 		"build:full:compile": "lerna run build:full:compile --stream",
 		"build:genver": "lerna run build:genver --stream --parallel",

@@ -233,6 +233,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				// Summarizer client's request
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
