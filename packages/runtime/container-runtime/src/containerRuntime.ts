@@ -411,6 +411,7 @@ export interface IContainerRuntimeOptions {
 	 * By default, flush mode is TurnBased.
 	 */
 	readonly flushMode?: FlushMode;
+	readonly flushWithMacroTask?: boolean;
 	/**
 	 * Save enough runtime state to be able to serialize upon request and load to the same state in a new container.
 	 */
@@ -710,6 +711,7 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes = Number.POSITIVE_INFINITY,
 			enableOpReentryCheck = false,
+			flushWithMacroTask = false,
 		} = runtimeOptions;
 
 		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -800,6 +802,7 @@ export class ContainerRuntime
 				maxBatchSizeInBytes,
 				chunkSizeInBytes,
 				enableOpReentryCheck,
+				flushWithMacroTask,
 			},
 			containerScope,
 			logger,
@@ -904,7 +907,7 @@ export class ContainerRuntime
 
 	private _orderSequentiallyCalls: number = 0;
 	private readonly _flushMode: FlushMode;
-	private flushMicroTaskExists = false;
+	private flushTaskExists = false;
 
 	private _connected: boolean;
 
@@ -963,6 +966,7 @@ export class ContainerRuntime
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
+	private readonly flushWithMacroTask: boolean;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private _perfSignalData: IPerfSignalReport = {
@@ -1084,6 +1088,7 @@ export class ContainerRuntime
 		this.messageAtLastSummary = metadata?.message;
 
 		this._connected = this.context.connected;
+		this.flushWithMacroTask = runtimeOptions.flushWithMacroTask;
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
@@ -2829,17 +2834,8 @@ export class ContainerRuntime
 
 			if (!this.currentlyBatching()) {
 				this.flush();
-			} else if (!this.flushMicroTaskExists) {
-				this.flushMicroTaskExists = true;
-				// Queue a microtask to detect the end of the turn and force a flush.
-				Promise.resolve()
-					.then(() => {
-						this.flushMicroTaskExists = false;
-						this.flush();
-					})
-					.catch((error) => {
-						this.closeFn(error as GenericError);
-					});
+			} else {
+				this.scheduleFlush();
 			}
 		} catch (error) {
 			this.closeFn(error as GenericError);
@@ -2848,6 +2844,30 @@ export class ContainerRuntime
 
 		if (this.isContainerMessageDirtyable(type, contents)) {
 			this.updateDocumentDirtyState(true);
+		}
+	}
+
+	private scheduleFlush() {
+		if (this.flushTaskExists) {
+			return;
+		}
+
+		this.flushTaskExists = true;
+		const flush = () => {
+			this.flushTaskExists = false;
+			this.flush();
+		};
+
+		if (this.flushWithMacroTask) {
+			// Queue a macrotask to detect the end of the turn and force a flush.
+			setTimeout(() => flush(), 0);
+		} else {
+			// Queue a microtask to detect the end of the turn and force a flush.
+			Promise.resolve()
+				.then(() => flush())
+				.catch((error) => {
+					this.closeFn(error as GenericError);
+				});
 		}
 	}
 

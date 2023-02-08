@@ -349,6 +349,8 @@ export interface IContainerRuntimeOptions {
     readonly enableOpReentryCheck?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
+    readonly flushWithMacroTask?: boolean;
+    // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     readonly maxBatchSizeInBytes?: number;

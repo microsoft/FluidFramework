@@ -20,7 +20,7 @@ import {
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { Deferred } from "@fluidframework/common-utils";
 
-describeNoCompat("Message size", (getTestObjectProvider) => {
+describeNoCompat("Less batches", (getTestObjectProvider) => {
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -63,8 +63,13 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 	};
 
-	it("Ops from within `orderSequentially` with flushing will be in the same batch", async () => {
-		await setupContainers(testContainerConfig);
+	it("With runtime option `flushAfterMacroTask`, ops across JS turns are in the same batch", async () => {
+		await setupContainers({
+			...testContainerConfig,
+			runtimeOptions: {
+				flushWithMacroTask: true,
+			},
+		});
 
 		// Force the container into write-mode before testing `orderSequentially`
 		dataObject1map.set("key0", "0");
@@ -72,31 +77,21 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 		// Ignore the batch we just sent
 		capturedBatches.splice(0);
-
-		const runtime = dataObject1.context.containerRuntime as ContainerRuntime;
 		const count = 5;
-		const flush = new Deferred<void>();
-		runtime.orderSequentially(() => {
-			dataObject1map.set("key1", "1");
-			const promises = [
-				Promise.resolve()
-					.then(async () => {
-						dataObject1map.set("key2", "2");
-					})
-					.catch((error) => console.error(error)),
-				Promise.resolve().then(async () => {
-					dataObject1map.set("key3", "3");
-				}),
-				Promise.resolve().then(async () => {
-					dataObject1map.set("key4", "4");
-					await Promise.resolve().then(async () => {
-						dataObject1map.set("key5", "5");
-					});
-				}),
-			];
+		dataObject1map.set("key1", "1");
 
-			void Promise.all(promises).then(() => flush.resolve());
-		}, flush);
+		await Promise.resolve().then(async () => {
+			dataObject1map.set("key2", "2");
+		});
+		await Promise.resolve().then(async () => {
+			dataObject1map.set("key3", "3");
+		});
+		await Promise.resolve().then(async () => {
+			dataObject1map.set("key4", "4");
+			await Promise.resolve().then(async () => {
+				dataObject1map.set("key5", "5");
+			});
+		});
 
 		await provider.ensureSynchronized();
 
@@ -109,7 +104,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		}
 	});
 
-	it("Ops from within `orderSequentially` without flushing will not be in the same batch", async () => {
+	it("Without runtime option `flushAfterMacroTask`, ops across JS turns are in the same batch", async () => {
 		await setupContainers(testContainerConfig);
 
 		// Force the container into write-mode before testing `orderSequentially`
@@ -118,28 +113,24 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 		// Ignore the batch we just sent
 		capturedBatches.splice(0);
-
-		const runtime = dataObject1.context.containerRuntime as ContainerRuntime;
 		const count = 5;
-		runtime.orderSequentially(() => {
-			dataObject1map.set("key1", "1");
+		dataObject1map.set("key1", "1");
 
-			void Promise.resolve().then(async () => {
-				dataObject1map.set("key2", "2");
-			});
-			void Promise.resolve().then(async () => {
-				dataObject1map.set("key3", "3");
-			});
-			void Promise.resolve().then(async () => {
-				dataObject1map.set("key4", "4");
-				await Promise.resolve().then(async () => {
-					dataObject1map.set("key5", "5");
-				});
+		await Promise.resolve().then(async () => {
+			dataObject1map.set("key2", "2");
+		});
+		await Promise.resolve().then(async () => {
+			dataObject1map.set("key3", "3");
+		});
+		await Promise.resolve().then(async () => {
+			dataObject1map.set("key4", "4");
+			await Promise.resolve().then(async () => {
+				dataObject1map.set("key5", "5");
 			});
 		});
 
 		await provider.ensureSynchronized();
-		assert.strictEqual(capturedBatches.length, 3);
+		assert.strictEqual(capturedBatches.length, 5);
 
 		for (let i = 1; i <= count; i++) {
 			const value = dataObject2map.get(`key${i}`);
