@@ -117,16 +117,6 @@ export class SharedCell<T = any>
 		super(id, runtime, attributes, "fluid_cell_");
 
 		this.options = runtime.options as ICellOptions;
-
-		/*
-		this.options ??= options;
-
-		const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean(
-			"Fluid.Attribution.EnableOnNewFile",
-		);
-		if (configSetAttribution !== undefined) {
-			(this.options ?? (this.options = {})).attribution = { track: configSetAttribution };
-		} */
 	}
 
 	/**

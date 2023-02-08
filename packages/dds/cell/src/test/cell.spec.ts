@@ -24,13 +24,8 @@ function createConnectedCell(
 ): ISharedCell {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	if (options?.attribution?.track ?? false) {
-		dataStoreRuntime.options = {
-			attribution: {
-				track: true,
-			},
-		};
-	}
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
+
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime.createDeltaConnection(),
@@ -44,13 +39,7 @@ function createConnectedCell(
 
 function createLocalCell(id: string, options?: ICellOptions): ISharedCell {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	if (options?.attribution?.track ?? false) {
-		dataStoreRuntime.options = {
-			attribution: {
-				track: true,
-			},
-		};
-	}
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 	const subCell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
 	return subCell;
 }
@@ -318,7 +307,7 @@ describe("Cell", () => {
 				containerRuntimeFactory.processSomeMessages(1);
 
 				assert.equal(
-					cell1.getAttribution()?.seq,
+					cell1.getAttribution()?.type === "op" && cell1.getAttribution()?.seq,
 					1,
 					"the first cell does not have valid attribution",
 				);
@@ -332,13 +321,13 @@ describe("Cell", () => {
 				containerRuntimeFactory.processSomeMessages(1);
 
 				assert.equal(
-					cell1.getAttribution()?.seq,
+					cell1.getAttribution()?.type === "op" && cell1.getAttribution()?.seq,
 					2,
 					"the first cell does not have valid attribution",
 				);
 
 				assert.equal(
-					cell2.getAttribution()?.seq,
+					cell2.getAttribution()?.type === "op" && cell2.getAttribution()?.seq,
 					2,
 					"the second cell does not have valid attribution",
 				);
@@ -346,13 +335,13 @@ describe("Cell", () => {
 				containerRuntimeFactory.processSomeMessages(1);
 
 				assert.equal(
-					cell1.getAttribution()?.seq,
+					cell1.getAttribution()?.type === "op" && cell1.getAttribution()?.seq,
 					3,
 					"the first cell does not have valid attribution after clearing",
 				);
 
 				assert.equal(
-					cell2.getAttribution()?.seq,
+					cell2.getAttribution()?.type === "op" && cell2.getAttribution()?.seq,
 					3,
 					"the second cell does not have valid attribution after clearing",
 				);
