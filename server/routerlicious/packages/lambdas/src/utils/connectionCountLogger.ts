@@ -11,13 +11,13 @@ export interface IConnectionCountLogger {
      * This function will increment and store total connection count per node and per cluster in Redis, and
      * will also log these counters using ConnectionCountPerNode and TotalConnectionCount metrics respectively.
      */
-    incrementConnectionCount(): any;
+    incrementConnectionCount(): Promise<void>;
 
     /**
      * This function will decrement and store total connection count per node and per cluster in Redis, and
      * will also log these counters using ConnectionCountPerNode and TotalConnectionCount metrics respectively.
      */
-    decrementConnectionCount(): any;
+    decrementConnectionCount(): Promise<void>;
 }
 
 export class ConnectionCountLogger implements IConnectionCountLogger {
