@@ -983,6 +983,89 @@ describe("Map", () => {
 					"map1 and map2 do not have consistent attribution",
 				);
 			});
+
+			it("Can serialize correctly for big summary with attribution", async () => {
+				map1.set("first", "value1");
+
+				// 40k char string
+				let longString = "01234567890";
+				for (let i = 0; i < 12; i++) {
+					longString = longString + longString;
+				}
+				map1.set("second", longString);
+				map1.set("third", "the end");
+
+				containerRuntimeFactory.processAllMessages();
+
+				const summaryTree = map1.getAttachSummary().summary;
+				assert.strictEqual(
+					Object.keys(summaryTree.tree).length,
+					2,
+					"There should be 2 entries in the summary tree",
+				);
+				const expectedContent1 = JSON.stringify({
+					blobs: ["blob0"],
+					content: {
+						first: {
+							type: "Plain",
+							value: "value1",
+							attribution: 1,
+						},
+						third: {
+							type: "Plain",
+							value: "the end",
+							attribution: 3,
+						},
+					},
+				});
+				const expectedContent2 = JSON.stringify({
+					second: {
+						type: "Plain",
+						value: longString,
+						attribution: 2,
+					},
+				});
+
+				const header = summaryTree.tree.header as ISummaryBlob;
+				const blob0 = summaryTree.tree.blob0 as ISummaryBlob;
+				assert.strictEqual(
+					header?.content,
+					expectedContent1,
+					"header content is not as expected",
+				);
+				assert.strictEqual(
+					blob0?.content,
+					expectedContent2,
+					"blob0 content is not as expected",
+				);
+
+				const services = new MockSharedObjectServices({
+					header: header.content,
+					blob0: blob0.content,
+				});
+				await map2.load(services);
+
+				assert.equal(
+					map2.get("first"),
+					"value1",
+					"map2 does not load correct entry for the first key",
+				);
+				assert.equal(
+					map2.get("second"),
+					longString,
+					"map2 does not load correct entry for the second key",
+				);
+				assert.equal(
+					map2.get("third"),
+					"the end",
+					"map2 does not load correct entry for the third key",
+				);
+				assert.deepEqual(
+					map1.getAllAttribution(),
+					map2.getAllAttribution(),
+					"map1 and map2 do not have consistent attribution",
+				);
+			});
 		});
 	});
 

@@ -315,6 +315,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					[key]: {
 						type: value.type,
 						value: JSON.parse(value.value) as unknown,
+						attribution:
+							value.attribution === undefined
+								? undefined
+								: JSON.parse(value.attribution),
 					},
 				};
 				builder.addBlob(blobName, JSON.stringify(content));
