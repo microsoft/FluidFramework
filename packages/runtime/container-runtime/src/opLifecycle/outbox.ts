@@ -75,7 +75,7 @@ export class Outbox {
 
 		const batchReference = batchManager.referenceSequenceNumber;
 		if (batchReference !== undefined && batchReference !== message.referenceSequenceNumber) {
-			this.mc.logger.sendTelemetryEvent(
+			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "ReferenceSequenceNumberMismatch",
 					referenceSequenceNumber: batchReference,

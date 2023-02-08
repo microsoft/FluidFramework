@@ -8,10 +8,11 @@ import { Container } from "@fluidframework/container-loader";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
+	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { SharedMap } from "@fluidframework/map";
+import { IValueChanged, SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -22,6 +23,7 @@ import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
@@ -113,6 +115,8 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
+		dataObject1map1.set("key1", "value1");
+		await waitForContainerConnection(container1);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(configCopy);
@@ -133,6 +137,62 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 				await setupContainers(options);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
+			});
+
+			it.only("should not send out of order ops", async () => {
+				assert(container1.clientId !== undefined);
+				// An op crafted to set a map value of "mockKey".
+				const op1: ISequencedDocumentMessage = {
+					clientId: container1.clientId,
+					clientSequenceNumber: 1,
+					contents: {
+						type: "component",
+						contents: {
+							address: "default",
+							contents: {
+								content: {
+									address: "map1Key",
+									contents: {
+										key: "mockKey",
+										type: "set",
+										value: {
+											type: "Plain",
+											value: "value3",
+										},
+									},
+								},
+								type: "op",
+							},
+						},
+					},
+					metadata: { batch: true },
+					minimumSequenceNumber: 0,
+					referenceSequenceNumber: 2,
+					sequenceNumber: 3,
+					term: 1,
+					timestamp: 1675197275171,
+					type: "op",
+					expHash1: "4d1a6431",
+				};
+
+				// Queue a microtask to process the above op.
+				Promise.resolve()
+					.then(() => {
+						// Increment the last sequence number in delta manager to mimic it processing this op. This is
+						// a hack which could be avoided by calling process on delta manager directly. But delta manager
+						// does sequence number validations which will fail.
+						(container1.deltaManager as any).lastProcessedSequenceNumber += 1;
+						(dataObject1.context.containerRuntime as ContainerRuntime).process(
+							op1,
+							false,
+						);
+						dataObject1map1.set("key2", "value2");
+					})
+					.catch((error) => {});
+
+				dataObject1map1.set("key1", "value1");
+				// Wait for the ops to get processed by both the containers.
+				await provider.ensureSynchronized();
 			});
 
 			it("can send and receive multiple batch ops correctly", async () => {
