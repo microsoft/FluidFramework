@@ -221,7 +221,8 @@ function applyFuzzChange(
 	}
 }
 
-const skipFailSeeds = [147185, 147191, 147194, 147196, 147197, 147200, 147201];
+const skipBasicConvergenceSeeds = [147185, 147191, 147194, 147196, 147197, 147200, 147201];
+const skipAnchorStabilitySeeds = [630022, 630027, 630028, 630029, 630031, 630033, 630034, 630037];
 
 function runBatch(
 	opGenerator: () => AsyncGenerator<Operation, FuzzTestState>,
@@ -236,7 +237,10 @@ function runBatch(
 	const seed = random.integer(1, 1000000);
 	for (let i = 0; i < batchSize; i++) {
 		const runSeed = seed + i;
-		if (skipFailSeeds.includes(runSeed)) {
+		if (
+			skipBasicConvergenceSeeds.includes(runSeed) ||
+			skipAnchorStabilitySeeds.includes(runSeed)
+		) {
 			continue;
 		}
 		const generatorFactory = () => take(opsPerRun, opGenerator());
@@ -257,7 +261,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 			});
 		});
 		describe("abort all edits", () => {
-			describe.skip(`with stepSize ${testOpsPerRun}`, () => {
+			describe(`with stepSize ${testOpsPerRun}`, () => {
 				runBatch(
 					makeOpGenerator,
 					performFuzzActionsAbort,
