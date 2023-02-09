@@ -96,8 +96,10 @@ const dataSchema = namedTreeSchema({
 	value: ValueSchema.Number,
 });
 
-const wideTestSizes = [5, 100, 500];
-const deepTestSizes = [5, 10, 100];
+// number of nodes in test for wide trees
+const nodesCountWide = [5, 100, 500];
+// number of nodes in test for deep trees
+const nodesCountDeep = [5, 10, 100];
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
@@ -122,7 +124,7 @@ describe("SharedTree benchmarks", () => {
 	describe("Direct JS Object", () => {
 		const random = makeRandom(0);
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -135,7 +137,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -148,7 +150,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -159,7 +161,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -170,7 +172,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -183,7 +185,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -200,7 +202,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				let tree: ISharedTree;
 				const random = makeRandom(0);
 				benchmark({
@@ -214,7 +216,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				let tree: ISharedTree;
 				const random = makeRandom(0);
 				benchmark({
@@ -228,7 +230,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				let tree: ISharedTree;
 				const random = makeRandom(0);
 				benchmark({
@@ -240,7 +242,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				let tree: ISharedTree;
 				const random = makeRandom(0);
 				benchmark({
@@ -252,7 +254,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				let tree: ISharedTree;
 				const random = makeRandom(0);
 				benchmark({
@@ -266,7 +268,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				let tree: ISharedTree;
 				const random = makeRandom(0);
 				benchmark({
@@ -285,7 +287,7 @@ describe("SharedTree benchmarks", () => {
 	describe("EditableTree", () => {
 		const random = makeRandom(0);
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -298,7 +300,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -311,7 +313,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				benchmark({
 					type: BenchmarkType.Measurement,
 					title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: writes ${i} nodes`,
@@ -326,7 +328,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				benchmark({
 					type: BenchmarkType.Measurement,
 					title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: writes ${i} nodes`,
@@ -341,7 +343,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of deepTestSizes) {
+			for (const i of nodesCountDeep) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
@@ -354,7 +356,7 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of wideTestSizes) {
+			for (const i of nodesCountWide) {
 				let tree: ISharedTree;
 				benchmark({
 					type: BenchmarkType.Measurement,
