@@ -50,7 +50,11 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import {
+	addBlobToSummary,
+	convertSummaryTreeToITree,
+	packagePathToTelemetryProperty,
+} from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
 	generateStack,
@@ -372,10 +376,7 @@ export abstract class FluidDataStoreContext
 	): never {
 		throw new LoggingError(reason, {
 			failedPkgPath: { value: failedPkgPath, tag: TelemetryDataTag.CodeArtifact },
-			packageName: {
-				value: JSON.stringify(fullPackageName),
-				tag: TelemetryDataTag.CodeArtifact,
-			},
+			fullPackageName: packagePathToTelemetryProperty(fullPackageName),
 		});
 	}
 
@@ -393,10 +394,7 @@ export abstract class FluidDataStoreContext
 						value: this.id,
 						tag: TelemetryDataTag.CodeArtifact,
 					},
-					packageName: {
-						value: JSON.stringify(this.pkg),
-						tag: TelemetryDataTag.CodeArtifact,
-					},
+					packageName: packagePathToTelemetryProperty(this.pkg),
 				});
 				this.channelDeferred?.reject(errorWrapped);
 				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
@@ -903,10 +901,7 @@ export abstract class FluidDataStoreContext
 					value: this.id,
 					tag: TelemetryDataTag.CodeArtifact,
 				},
-				packageName: {
-					value: JSON.stringify(this.pkg),
-					tag: TelemetryDataTag.CodeArtifact,
-				},
+				packageName: packagePathToTelemetryProperty(this.pkg),
 				isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 				stack: generateStack(),
 			});
