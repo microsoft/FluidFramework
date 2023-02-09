@@ -162,7 +162,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	const setupContainerCloseErrorValidation = (container: IContainer) => {
 		container.on("closed", (error) => {
 			assert(error !== undefined, `Expecting an error!`);
-			assert(error.errorType === "dataProcessingError");
 			assert(error.message.startsWith("DataStore was deleted:"));
 		});
 	};
@@ -338,6 +337,62 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 
 				// Send an op to the swept data store
 				dataObject._root.set("send", "op");
+				await provider.ensureSynchronized();
+
+				// The containers should fail
+				assert(
+					summarizingContainer.closed,
+					"Summarzing container with deleted datastore should close on receiving an op for it",
+				);
+				assert(
+					container.closed,
+					"Container with deleted datastore should close on receiving an op for it",
+				);
+			},
+		);
+
+		itExpects(
+			"Receiving ops for swept datastores fails in client after sweep timeout and summarizing container",
+			[
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+				},
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+				},
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+				},
+			],
+			async () => {
+				const {
+					unreferencedId,
+					summarizingContainer,
+					summarizer,
+					summaryVersion: unreferencedSummaryVersion,
+				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
+				const response = await containerRuntime_resolveHandle(sendingContainer, {
+					url: unreferencedId,
+				});
+				const dataObject = response.value as ITestDataObject;
+
+				// The datastore should be swept now
+				const { summaryVersion } = await summarize(summarizer);
+				const container = await loadContainer(summaryVersion);
+				setupContainerCloseErrorValidation(summarizingContainer);
+				setupContainerCloseErrorValidation(container);
+
+				// Send an op to the swept data store
+				dataObject._runtime.submitSignal("a", "signal");
 				await provider.ensureSynchronized();
 
 				// The containers should fail

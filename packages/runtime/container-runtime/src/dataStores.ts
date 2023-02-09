@@ -564,6 +564,8 @@ export class DataStores implements IDisposable {
 	}
 
 	public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
+		const request = { url: address };
+		this.validateNotDeleted(address, request);
 		const context = this.contexts.get(address);
 		if (!context) {
 			// Attach message may not have been processed yet
