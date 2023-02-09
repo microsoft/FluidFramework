@@ -37449,7 +37449,7 @@ packages:
   /simplemde/1.11.2:
     resolution: {integrity: sha512-AUXuHJ/tEEDEcN/MTitHIw3AuBcheizJt7SVwtyn00B0UK5RKZ3GB+JndmRcJ5wfYGCIL0O2yJm/uz0sJOFSLg==}
     dependencies:
-      codemirror: 6.0.1
+      codemirror: 5.65.11
       codemirror-spell-checker: 1.1.2
       marked: 2.1.3
     dev: false
