@@ -2533,11 +2533,13 @@ export class ContainerRuntime
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
-		const disableInboundSignalPauseKey =
-			"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause";
+		const shouldPauseInboundSignal =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
+			) !== true;
 		try {
 			await this.deltaManager.inbound.pause();
-			if (this.mc.config.getBoolean(disableInboundSignalPauseKey) !== true) {
+			if (shouldPauseInboundSignal) {
 				await this.deltaManager.inboundSignal.pause();
 			}
 
@@ -2738,7 +2740,7 @@ export class ContainerRuntime
 
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();
-			if (this.mc.config.getBoolean(disableInboundSignalPauseKey) !== true) {
+			if (shouldPauseInboundSignal) {
 				this.deltaManager.inboundSignal.resume();
 			}
 		}
