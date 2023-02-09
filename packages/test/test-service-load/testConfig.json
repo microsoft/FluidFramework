@@ -41,7 +41,8 @@
 				"useRandomContent": true,
 				"useVariableOpSize": true,
 				"opSizeinBytes": 1272864,
-				"largeOpRate": 1000
+				"largeOpRate": 1000,
+				"numClients": 2
 			}
 		},
 		"ci_frs": {
@@ -58,7 +59,8 @@
 				"useRandomContent": true,
 				"useVariableOpSize": true,
 				"opSizeinBytes": 1272864,
-				"largeOpRate": 1000
+				"largeOpRate": 1000,
+				"numClients": 2
 			}
 		},
 		"full": {
