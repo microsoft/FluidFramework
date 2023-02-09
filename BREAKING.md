@@ -145,7 +145,7 @@ The @fluid-experimental/get-container package was deprecated in version 0.39 and
 
 ### test-drivers and test-pairwise-generator packages no longer published
 
-These packages were previously published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`.  These have been moved to the `@fluid-internal` scope and are no longer published.
+These packages were previously published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These have been moved to the `@fluid-internal` scope and are no longer published.
 
 # 2.0.0-internal.2.4.0
 
