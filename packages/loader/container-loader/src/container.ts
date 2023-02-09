@@ -1172,9 +1172,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(snapshot !== undefined || pendingLocalState !== undefined, 0x237 /* "Snapshot should exist" */);
 
         const attributes: IDocumentAttributes = pendingLocalState === undefined
-            ? await this.getDocumentAttributes(this.storageService, snapshot)
+            ? await this.getDocumentAttributes(snapshot)
             : {
-                // TODO
                 sequenceNumber: pendingLocalState.protocol.sequenceNumber,
                 minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
                 term: pendingLocalState.term,
@@ -1317,7 +1316,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         this.storageService.loadSnapshotForRehydratingContainer(snapshotTree);
-        const attributes = await this.getDocumentAttributes(this.storageService, snapshotTree);
+        const attributes = await this.getDocumentAttributes(snapshotTree);
 
         await this.attachDeltaManagerOpHandler(attributes);
 
@@ -1346,30 +1345,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getDocumentAttributes(
-        storage: IDocumentStorageService,
         tree: ISnapshotTree | undefined,
     ): Promise<IDocumentAttributes> {
+        const defaultAttributes: IDocumentAttributes = {
+            minimumSequenceNumber: 0,
+            sequenceNumber: 0,
+            term: 1,
+        };
+
         if (tree === undefined) {
-            return {
-                minimumSequenceNumber: 0,
-                sequenceNumber: 0,
-                term: 1,
-            };
+            return defaultAttributes;
         }
 
-        // Backward compatibility: old docs would have ".attributes" instead of "attributes"
-        const attributesHash = ".protocol" in tree.trees
-            ? tree.trees[".protocol"].blobs.attributes
-            : tree.blobs[".attributes"];
-
-        const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-
-        // Backward compatibility for older summaries with no term
-        if (attributes.term === undefined) {
-            attributes.term = 1;
-        }
-
-        return attributes;
+        // TODO: probably makes sense to have "getDocumentAttributesFromTree" be an independent method
+        const attributes = await this.storage.getDocumentAttributesFromTree?.(tree);
+        return attributes ?? defaultAttributes;
     }
 
     private async initializeProtocolStateFromSnapshot(

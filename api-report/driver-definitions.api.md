@@ -9,6 +9,7 @@ import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
+import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -171,7 +172,7 @@ export interface IDocumentServicePolicies {
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    getSequenceNumberFromTree?(tree: ISnapshotTree): Promise<number>;
+    getDocumentAttributesFromTree?(tree: ISnapshotTree): Promise<IDocumentAttributes>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;

@@ -9,6 +9,7 @@ import {
     IClient,
     IClientConfiguration,
     ICreateBlobResponse,
+    IDocumentAttributes,
     IDocumentMessage,
     INack,
     ISequencedDocumentMessage,
@@ -181,7 +182,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     /**
      * TODO: left as optional for now to keep implementing classes cleaner
      */
-    getSequenceNumberFromTree?(tree: ISnapshotTree): Promise<number>;
+    getDocumentAttributesFromTree?(tree: ISnapshotTree): Promise<IDocumentAttributes>;
 }
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {

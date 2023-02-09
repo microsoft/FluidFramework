@@ -36,9 +36,13 @@ export class VirtualContainerStorageAdapter extends ContainerStorageAdapter {
      * TODO: moving method somewhere else might make more sense (changing IDocumentService affects a lot)
      * - could create new interface for context that will include IDocumentService along with some other methods
      */
-    public async getSequenceNumberFromTree(tree: ISnapshotTree): Promise<number> {
+    public async getDocumentAttributesFromTree(tree: ISnapshotTree): Promise<IDocumentAttributes> {
         const attributesHash = tree.trees[".protocol"].blobs.attributes;
         const attrib = await readAndParse<IDocumentAttributes>(this, attributesHash);
-        return this.getVirtualSequenceNumber(attrib.sequenceNumber);
+        return {
+            ...attrib,
+            sequenceNumber: this.getVirtualSequenceNumber(attrib.sequenceNumber),
+            minimumSequenceNumber: this.getVirtualSequenceNumber(attrib.minimumSequenceNumber),
+        }
     }
 }

@@ -2861,7 +2861,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
             stats.getSnapshotDuration = trace.trace().duration;
 
-            const referenceSequenceNumber = (await this.storage.getSequenceNumberFromTree?.(maybeSnapshot)) ?? 0;
+            const attributes = await this.storage.getDocumentAttributesFromTree?.(maybeSnapshot);
+            const referenceSequenceNumber = attributes?.sequenceNumber ?? 0;
 
             perfEvent.end(stats);
             return { snapshotTree: maybeSnapshot, versionId: versions[0].id, referenceSequenceNumber };
