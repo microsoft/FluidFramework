@@ -289,7 +289,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		deltaConnection.removeAllListeners();
 	});
 
-	it("Delta manager receives readonly event when calling container.forceReadonly?.()", async () => {
+	it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
