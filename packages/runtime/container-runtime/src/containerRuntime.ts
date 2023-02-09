@@ -2859,10 +2859,15 @@ export class ContainerRuntime
 
 		switch (this.flushMode) {
 			case FlushMode.TurnBased:
+				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
+				// batch at the end of the turn
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				Promise.resolve().then(flush);
 				break;
 			case FlushMode.Async:
+				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
+				// batch when all micro-tasks are complete.
+				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
 				setTimeout(flush, 0);
 				break;
 			default:
