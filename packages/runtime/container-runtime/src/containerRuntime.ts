@@ -2535,6 +2535,7 @@ export class ContainerRuntime
 
 		try {
 			await this.deltaManager.inbound.pause();
+			await this.deltaManager.inboundSignal.pause();
 
 			const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
@@ -2732,6 +2733,7 @@ export class ContainerRuntime
 			this.summarizerNode.clearSummary();
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();
+			this.deltaManager.inboundSignal.resume();
 		}
 	}
 
