@@ -12,6 +12,7 @@ import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
+import { createClientsAtInitialState } from "./testClientLogger";
 import { TestSerializer } from "./testSerializer";
 import { ISegment, TestClient } from ".";
 
@@ -40,8 +41,12 @@ export class TestString {
 	private seq = 0;
 	private minSeq = 0;
 
-	constructor(id: string, options?: IMergeTreeOptions) {
-		this.client = new TestClient(options);
+	constructor(
+		id: string,
+		private readonly options?: IMergeTreeOptions,
+		initialState: string = "",
+	) {
+		this.client = createClientsAtInitialState({ initialState, options }, id)[id];
 		this.client.startOrUpdateCollaboration(id);
 	}
 
@@ -78,7 +83,7 @@ export class TestString {
 		this.applyPendingOps();
 		const expectedAttributionKeys = this.client.getAllAttributionSeqs();
 		const summary = this.getSummary();
-		const client2 = await loadSnapshot(summary, options);
+		const client2 = await loadSnapshot(summary, options ?? this.options);
 
 		assert.equal(
 			this.client.getText(),

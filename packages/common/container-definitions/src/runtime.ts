@@ -89,14 +89,23 @@ export interface IRuntime extends IDisposable {
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
+	 * @experimental
+	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState(): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state
 	 * @param snapshot - snapshot created at attach time
+	 * @deprecated - not necessary after op replay moved to Container
 	 */
 	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+
+	/**
+	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
+	 * stashed ops) after having processed it.
+	 */
+	notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
 }
 
 /**

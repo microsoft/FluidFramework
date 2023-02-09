@@ -13,7 +13,7 @@ import {
 } from "../../feature-libraries/sequence-change-family";
 import { TreeSchemaIdentifier, FieldKey, Delta, ITreeCursorSynchronous } from "../../core";
 import { brand, brandOpaque } from "../../util";
-import { deepFreeze, assertMarkListEqual } from "../utils";
+import { deepFreeze, assertFieldChangesEqual } from "../utils";
 
 function toDelta(changeset: T.LocalChangeset): Delta.Root {
 	deepFreeze(changeset);
@@ -21,7 +21,7 @@ function toDelta(changeset: T.LocalChangeset): Delta.Root {
 	return delta;
 }
 
-function toTreeDelta(list: T.MarkList): Delta.MarkList {
+function toTreeDelta(list: T.MarkList): Delta.FieldChanges {
 	const fullDelta = toDelta({ marks: { root: list } });
 	return fullDelta.get(rootKey) ?? assert.fail("Expected changes under the root");
 }
@@ -51,7 +51,7 @@ const moveId = brandOpaque<Delta.MoveId>(opId);
 
 describe("toDelta", () => {
 	it("empty changeset", () => {
-		const expected: Delta.MarkList = [];
+		const expected: Delta.FieldChanges = {};
 		const actual = toTreeDelta([]);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -63,11 +63,9 @@ describe("toDelta", () => {
 				value: { id: 0, value: 1 },
 			},
 		];
-		const mark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, setValue: 1 }],
 		};
-		const expected: Delta.MarkList = [mark];
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -87,16 +85,12 @@ describe("toDelta", () => {
 				},
 			},
 		];
-		const mark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
+		const fooDelta: Delta.FieldChanges = {
+			beforeShallow: [{ index: 42, setValue: 1 }],
 		};
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, mark]]]),
-			},
-		];
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -107,7 +101,9 @@ describe("toDelta", () => {
 			type: Delta.MarkType.Insert,
 			content: contentCursor,
 		};
-		const expected: Delta.MarkList = [mark];
+		const expected: Delta.FieldChanges = {
+			shallow: [mark],
+		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -125,12 +121,12 @@ describe("toDelta", () => {
 			type: Delta.MarkType.Insert,
 			content: contentCursor,
 		};
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, mark]]]),
-			},
-		];
+		const fooDelta: Delta.FieldChanges = {
+			shallow: [42, mark],
+		};
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -147,7 +143,9 @@ describe("toDelta", () => {
 			type: Delta.MarkType.Delete,
 			count: 10,
 		};
-		const expected: Delta.MarkList = [mark];
+		const expected: Delta.FieldChanges = {
+			shallow: [mark],
+		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -172,12 +170,12 @@ describe("toDelta", () => {
 			type: Delta.MarkType.Delete,
 			count: 10,
 		};
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, mark]]]),
-			},
-		];
+		const fooDelta: Delta.FieldChanges = {
+			shallow: [42, mark],
+		};
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -214,12 +212,12 @@ describe("toDelta", () => {
 			moveId,
 			count: 10,
 		};
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, moveOut, 8, moveIn]]]),
-			},
-		];
+		const fooDelta: Delta.FieldChanges = {
+			shallow: [42, moveOut, 8, moveIn],
+		};
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -258,15 +256,23 @@ describe("toDelta", () => {
 			moveId,
 			count: 10,
 		};
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([
-					[fooKey, [42, moveOut]],
-					[barKey, [8, moveIn]],
-				]),
-			},
-		];
+		const fooDelta: Delta.FieldChanges = {
+			shallow: [42, moveOut],
+		};
+		const barDelta: Delta.FieldChanges = {
+			shallow: [8, moveIn],
+		};
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [
+				{
+					index: 0,
+					fields: new Map([
+						[fooKey, fooDelta],
+						[barKey, barDelta],
+					]),
+				},
+			],
+		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -309,17 +315,18 @@ describe("toDelta", () => {
 			moveId,
 			count: 10,
 		};
+		const fooDelta: Delta.FieldChanges = {
+			shallow: [42, moveOut],
+		};
+		const detachedDelta: Delta.FieldChanges = {
+			shallow: [8, moveIn],
+		};
+		const rootDelta: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+		};
 		const expected: Delta.Root = new Map([
-			[
-				rootKey,
-				[
-					{
-						type: Delta.MarkType.Modify,
-						fields: new Map([[fooKey, [42, moveOut]]]),
-					},
-				],
-			],
-			[detachedKey, [8, moveIn]],
+			[rootKey, rootDelta],
+			[detachedKey, detachedDelta],
 		]);
 		const actual = toDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -359,16 +366,13 @@ describe("toDelta", () => {
 			type: Delta.MarkType.Insert,
 			content: contentCursor,
 		};
-		const set: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
+		const fooDelta: Delta.FieldChanges = {
+			shallow: [del, 3, ins],
+			beforeShallow: [{ index: 14, setValue: 1 }],
 		};
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [del, 3, ins, 1, set]]]),
-			},
-		];
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+		};
 		const actual = toTreeDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -391,13 +395,17 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.InsertAndModify = {
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(content[0]),
-				setValue: 4242,
-				fields: new Map([[fooKey, [{ type: Delta.MarkType.Modify, setValue: 4343 }]]]),
+			const mark: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: contentCursor,
 			};
-			const expected: Delta.MarkList = [mark];
+			const fooDelta: Delta.FieldChanges = {
+				beforeShallow: [{ index: 0, setValue: 4343 }],
+			};
+			const expected: Delta.FieldChanges = {
+				shallow: [mark],
+				afterShallow: [{ index: 0, setValue: 4242, fields: new Map([[fooKey, fooDelta]]) }],
+			};
 			const actual = toTreeDelta(changeset);
 			assert.deepStrictEqual(actual, expected);
 		});
@@ -425,29 +433,29 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.InsertAndModify = {
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(content[0]),
-				fields: new Map([
-					[
-						fooKey,
-						[
-							{
-								type: Delta.MarkType.Insert,
-								content: [singleTextCursor({ type, value: 44 })],
-							},
-							1,
-							{
-								type: Delta.MarkType.Insert,
-								content: [singleTextCursor({ type, value: 45 })],
-							},
-						],
-					],
-				]),
+			const mark: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: contentCursor,
 			};
-			const expected: Delta.MarkList = [mark];
+			const fooDelta: Delta.FieldChanges = {
+				shallow: [
+					{
+						type: Delta.MarkType.Insert,
+						content: [singleTextCursor({ type, value: 44 })],
+					},
+					1,
+					{
+						type: Delta.MarkType.Insert,
+						content: [singleTextCursor({ type, value: 45 })],
+					},
+				],
+			};
+			const expected: Delta.FieldChanges = {
+				shallow: [mark],
+				afterShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+			};
 			const actual = toTreeDelta(changeset);
-			assertMarkListEqual(actual, expected);
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("modified inserts", () => {
@@ -469,26 +477,26 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.InsertAndModify = {
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(content[0]),
-				fields: new Map([
-					[
-						fooKey,
-						[
-							1,
-							{
-								type: Delta.MarkType.InsertAndModify,
-								content: singleTextCursor({ type, value: 45 }),
-								setValue: 4545,
-							},
-						],
-					],
-				]),
+			const mark: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: contentCursor,
 			};
-			const expected: Delta.MarkList = [mark];
+			const fooDelta: Delta.FieldChanges = {
+				shallow: [
+					1,
+					{
+						type: Delta.MarkType.Insert,
+						content: [singleTextCursor({ type, value: 45 })],
+					},
+				],
+				afterShallow: [{ index: 1, setValue: 4545 }],
+			};
+			const expected: Delta.FieldChanges = {
+				shallow: [mark],
+				afterShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+			};
 			const actual = toTreeDelta(changeset);
-			assertMarkListEqual(actual, expected);
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("delete", () => {
@@ -508,22 +516,22 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.InsertAndModify = {
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(content[0]),
-				fields: new Map([
-					[
-						fooKey,
-						[
-							{
-								type: Delta.MarkType.Delete,
-								count: 1,
-							},
-						],
-					],
-				]),
+			const mark: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: contentCursor,
 			};
-			const expected: Delta.MarkList = [mark];
+			const fooDelta: Delta.FieldChanges = {
+				shallow: [
+					{
+						type: Delta.MarkType.Delete,
+						count: 1,
+					},
+				],
+			};
+			const expected: Delta.FieldChanges = {
+				shallow: [mark],
+				afterShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
+			};
 			const actual = toTreeDelta(changeset);
 			assert.deepStrictEqual(actual, expected);
 		});

@@ -5,8 +5,24 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
-import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
-import { IdAllocator } from "../modular-schema";
+import {
+	addToNestedSet,
+	clone,
+	deleteFromNestedMap,
+	fail,
+	getOrAddEmptyToMap,
+	getOrAddInNestedMap,
+	NestedMap,
+	nestedSetContains,
+	StackyIterator,
+	tryGetFromNestedMap,
+} from "../../util";
+import {
+	CrossFieldManager,
+	CrossFieldQuerySet,
+	CrossFieldTarget,
+	IdAllocator,
+} from "../modular-schema";
 import {
 	Attach,
 	Detach,
@@ -32,6 +48,7 @@ import {
 	SkipLikeReattach,
 	OutputSpanningMark,
 	SkipLikeDetach,
+	MoveId,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -41,9 +58,7 @@ import {
 	getOrAddEffect,
 	makeMergeable,
 	MoveEffectTable,
-	MoveEnd,
 	MoveMark,
-	newMoveEffectTable,
 	splitMarkOnOutput,
 	splitMove,
 } from "./moveEffectTable";
@@ -344,11 +359,11 @@ export function isOutputSpanningMark<TNodeChange>(
  * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `false` is returned, `lhs` is left untouched.
  */
-export function tryExtendMark(
-	lhs: ObjectMark,
-	rhs: Readonly<ObjectMark>,
+export function tryExtendMark<T>(
+	lhs: ObjectMark<T>,
+	rhs: Readonly<ObjectMark<T>>,
 	revision: RevisionTag | undefined,
-	moveEffects: MoveEffectTable<unknown> | undefined,
+	moveEffects: MoveEffectTable<T> | undefined,
 	recordMerges: boolean,
 ): boolean {
 	if (rhs.type !== lhs.type) {
@@ -382,7 +397,14 @@ export function tryExtendMark(
 				isEqualPlace(lhsMoveIn, rhs) &&
 				moveEffects !== undefined &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
-				tryMergeMoves(MoveEnd.Dest, lhsMoveIn, rhs, revision, moveEffects, recordMerges)
+				tryMergeMoves(
+					CrossFieldTarget.Destination,
+					lhsMoveIn,
+					rhs,
+					revision,
+					moveEffects,
+					recordMerges,
+				)
 			) {
 				return true;
 			}
@@ -394,21 +416,35 @@ export function tryExtendMark(
 			return true;
 		}
 		case "MoveOut": {
-			const lhsMoveOut = lhs as MoveOut;
+			const lhsMoveOut = lhs as MoveOut<T>;
 			if (
 				moveEffects !== undefined &&
-				tryMergeMoves(MoveEnd.Source, lhsMoveOut, rhs, revision, moveEffects, recordMerges)
+				tryMergeMoves(
+					CrossFieldTarget.Source,
+					lhsMoveOut,
+					rhs,
+					revision,
+					moveEffects,
+					recordMerges,
+				)
 			) {
 				return true;
 			}
 			break;
 		}
 		case "ReturnFrom": {
-			const lhsReturn = lhs as ReturnFrom;
+			const lhsReturn = lhs as ReturnFrom<T>;
 			if (
 				areMergeableReturnFrom(lhsReturn, rhs) &&
 				moveEffects !== undefined &&
-				tryMergeMoves(MoveEnd.Source, lhsReturn, rhs, revision, moveEffects, recordMerges)
+				tryMergeMoves(
+					CrossFieldTarget.Source,
+					lhsReturn,
+					rhs,
+					revision,
+					moveEffects,
+					recordMerges,
+				)
 			) {
 				return true;
 			}
@@ -434,19 +470,20 @@ export function tryExtendMark(
 	return false;
 }
 
-function tryMergeMoves(
-	end: MoveEnd,
-	left: MoveMark<unknown>,
-	right: MoveMark<unknown>,
+function tryMergeMoves<T>(
+	target: CrossFieldTarget,
+	left: MoveMark<T>,
+	right: MoveMark<T>,
 	revision: RevisionTag | undefined,
-	moveEffects: MoveEffectTable<unknown>,
+	moveEffects: MoveEffectTable<T>,
 	recordMerges: boolean,
 ): boolean {
 	if (left.conflictsWith !== right.conflictsWith) {
 		return false;
 	}
 	const rev = left.revision ?? revision;
-	const oppEnd = end === MoveEnd.Source ? MoveEnd.Dest : MoveEnd.Source;
+	const oppEnd =
+		target === CrossFieldTarget.Source ? CrossFieldTarget.Destination : CrossFieldTarget.Source;
 	const prevMergeId = getMoveEffect(moveEffects, oppEnd, rev, left.id).mergeRight;
 	if (prevMergeId !== undefined && prevMergeId !== right.id) {
 		makeMergeable(moveEffects, oppEnd, rev, prevMergeId, right.id);
@@ -454,22 +491,22 @@ function tryMergeMoves(
 		makeMergeable(moveEffects, oppEnd, rev, left.id, right.id);
 	}
 
-	const leftEffect = getOrAddEffect(moveEffects, end, rev, left.id);
+	const leftEffect = getOrAddEffect(moveEffects, target, rev, left.id);
 	if (leftEffect.mergeRight === right.id) {
-		const rightEffect = getMoveEffect(moveEffects, end, rev, right.id);
-		assert(rightEffect.mergeLeft === left.id, 0x54b /* Inconsistent merge info */);
+		const rightEffect = getMoveEffect(moveEffects, target, rev, right.id);
+		assert(rightEffect.mergeLeft === left.id, "Inconsistent merge info");
 		const nextId = rightEffect.mergeRight;
 		if (nextId !== undefined) {
-			makeMergeable(moveEffects, end, rev, left.id, nextId);
+			makeMergeable(moveEffects, target, rev, left.id, nextId);
 		} else {
 			leftEffect.mergeRight = undefined;
 		}
 
 		if (recordMerges) {
-			splitMove(moveEffects, end, revision, left.id, right.id, left.count, right.count);
+			splitMove(moveEffects, target, revision, left.id, right.id, left.count, right.count);
 
 			// TODO: This breaks the nextId mergeability, and would also be overwritten if we merged again
-			makeMergeable(moveEffects, end, revision, left.id, right.id);
+			makeMergeable(moveEffects, target, revision, left.id, right.id);
 		}
 
 		left.count += right.count;
@@ -478,7 +515,7 @@ function tryMergeMoves(
 	return false;
 }
 
-function areMergeableReturnFrom(lhs: ReturnFrom, rhs: ReturnFrom): boolean {
+function areMergeableReturnFrom<T>(lhs: ReturnFrom<T>, rhs: ReturnFrom<T>): boolean {
 	if (
 		lhs.detachedBy !== rhs.detachedBy ||
 		lhs.conflictsWith !== rhs.conflictsWith ||
@@ -666,10 +703,10 @@ export class DetachedNodeTracker {
 		};
 	}
 
-	private updateMark(
-		mark: Reattach<unknown>,
+	private updateMark<T>(
+		mark: Reattach<T>,
 		revision: RevisionTag | undefined,
-		moveEffects: MoveEffectTable<unknown>,
+		moveEffects: MoveEffectTable<T>,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const original = { rev: mark.detachedBy!, index: mark.detachIndex };
@@ -782,4 +819,79 @@ export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): bool
 		tracker.apply(change);
 	}
 	return true;
+}
+
+/**
+ * @alpha
+ */
+export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
+	srcQueries: CrossFieldQuerySet;
+	dstQueries: CrossFieldQuerySet;
+	isInvalidated: boolean;
+	mapSrc: NestedMap<RevisionTag | undefined, MoveId, T>;
+	mapDst: NestedMap<RevisionTag | undefined, MoveId, T>;
+	reset: () => void;
+}
+
+/**
+ * @alpha
+ */
+export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
+	const srcQueries: CrossFieldQuerySet = new Map();
+	const dstQueries: CrossFieldQuerySet = new Map();
+	const mapSrc: NestedMap<RevisionTag | undefined, MoveId, T> = new Map();
+	const mapDst: NestedMap<RevisionTag | undefined, MoveId, T> = new Map();
+
+	const getMap = (target: CrossFieldTarget) =>
+		target === CrossFieldTarget.Source ? mapSrc : mapDst;
+
+	const getQueries = (target: CrossFieldTarget) =>
+		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
+
+	const table = {
+		srcQueries,
+		dstQueries,
+		isInvalidated: false,
+		mapSrc,
+		mapDst,
+
+		get: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: MoveId) => {
+			const result = tryGetFromNestedMap(getMap(target), revision, id);
+			addToNestedSet(getQueries(target), revision, id);
+			return result;
+		},
+		getOrCreate: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: MoveId,
+			defaultValue: T,
+		) => {
+			if (nestedSetContains(getQueries(target), revision, id)) {
+				table.isInvalidated = true;
+			}
+			return getOrAddInNestedMap<RevisionTag | undefined, MoveId, T>(
+				getMap(target),
+				revision,
+				id,
+				defaultValue,
+			);
+		},
+		consume: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: MoveId) =>
+			deleteFromNestedMap(getMap(target), revision, id),
+
+		reset: () => {
+			table.isInvalidated = false;
+			table.srcQueries.clear();
+			table.dstQueries.clear();
+		},
+	};
+
+	return table;
+}
+
+/**
+ * @alpha
+ */
+export function newMoveEffectTable<T>(): MoveEffectTable<T> {
+	return newCrossFieldTable();
 }
