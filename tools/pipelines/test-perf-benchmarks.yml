@@ -448,11 +448,13 @@ stages:
               echo $FLUID_TEST_LOGGER_PKG_PATH
               FLUID_BUILD_ID=${{ variables.artifactBuildId }}
               echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
+
               # Run execution time tests
               FLUID_ENDPOINTNAME="local"
               echo $FLUID_ENDPOINTNAME
               npm run test:benchmark:report;
               executionTimeTestsExitCode=$?;
+
               # Run memory tests
               echo $FLUID_ENDPOINTNAME
               npm run test:memory-profiling:report;
@@ -474,6 +476,7 @@ stages:
             login__microsoft__secret: $(login-microsoft-secret)
             login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - execution time
@@ -515,12 +518,12 @@ stages:
               echo $FLUID_TEST_LOGGER_PKG_PATH
               FLUID_BUILD_ID=${{ variables.artifactBuildId }}
               echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
+
               # Run execution time tests              
               FLUID_ENDPOINTNAME="odsp"
               echo $FLUID_ENDPOINTNAME
               npm run test:benchmark:report:odsp;
               executionTimeTestsExitCodeOdsp=$?;
-
 
               # Run memory tests
               FLUID_ENDPOINTNAME="odsp"
@@ -544,6 +547,7 @@ stages:
             login__microsoft__secret: $(login-microsoft-secret)
             login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - execution time odsp
