@@ -20,7 +20,7 @@ It is currently undecided if these low level APIs will be part of the package's 
 
 ### Low Level Data Abstraction
 
-Status: currently implemented as "ITreeCursor".
+Status: currently implemented as [ITreeCursor](../src/core/tree/cursor.ts).
 
 For performance reasons, it is desirable to support multiple tree representations with a single API to access them.
 This allows future changes to add new, more optimized tree formats without breaking APIs.
@@ -79,7 +79,7 @@ Status: currently implemented by "EditableTree".
 
 This API focuses on providing an API that is concise, intuitive and discoverable for developers familiar with JavaScript objects.
 
-It is designed so that it is possible to generate friendly schemaaware Typescript types for it.
+It is designed so that it is possible to generate friendly schema aware TypeScript types for it.
 
 Includes Editing.
 
