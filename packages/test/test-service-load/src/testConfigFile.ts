@@ -89,7 +89,7 @@ export interface ILoadTestConfig {
 		 * By default, all ops will be large ops (`largeOpRate` is 1).
 		 */
 		largeOpRate?: number;
-	},
+	};
 }
 
 export interface OptionOverride {
