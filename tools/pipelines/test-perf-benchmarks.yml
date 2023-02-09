@@ -483,11 +483,13 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
+              ls -la ${{ variables.executionTimeTestOutputFolder }};
               FLUID_ENDPOINTNAME="local"
               echo $FLUID_ENDPOINTNAME
               echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
-              ls -la ${{ variables.executionTimeTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
+          env:
+            FLUID_ENDPOINTNAME: "local"
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - memory usage
@@ -496,11 +498,13 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
+              ls -la ${{ variables.memoryUsageTestOutputFolder }};
               FLUID_ENDPOINTNAME="local"
               echo $FLUID_ENDPOINTNAME
               echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
-              ls -la ${{ variables.memoryUsageTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+          env:
+            FLUID_ENDPOINTNAME: "local"
 
         - task: Bash@3
           displayName: Run tests ODSP
@@ -544,17 +548,19 @@ stages:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto - execution time
+          displayName: Write measurements to Aria/Kusto - execution time odsp
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
+              ls -la ${{ variables.executionTimeTestOutputFolder }};
               FLUID_ENDPOINTNAME="odsp"
               echo $FLUID_ENDPOINTNAME
               echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
-              ls -la ${{ variables.executionTimeTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
+          env:
+            FLUID_ENDPOINTNAME: "odsp"
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - memory usage
@@ -563,11 +569,14 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
+              ls -la ${{ variables.memoryUsageTestOutputFolder }};
               FLUID_ENDPOINTNAME="odsp"
               echo $FLUID_ENDPOINTNAME
               echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
-              ls -la ${{ variables.memoryUsageTestOutputFolder }};
+              FLUID_ENDPOINTNAME="odsp"
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+          env:
+            FLUID_ENDPOINTNAME: "odsp"
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - execution time
