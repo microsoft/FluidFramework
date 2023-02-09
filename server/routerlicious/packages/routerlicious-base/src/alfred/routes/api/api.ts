@@ -38,7 +38,7 @@ export function create(
     throttler: core.IThrottler): Router {
     const router: Router = Router();
 
-    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+    const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
@@ -56,7 +56,7 @@ export function create(
     }
 
     router.get("/ping", throttle(throttler, winston, {
-        ...commonThrottleOptions,
+        ...tenantThrottleOptions,
         throttleIdPrefix: "ping",
     }), async (request, response) => {
         response.sendStatus(200);
@@ -65,7 +65,7 @@ export function create(
     router.patch(
         "/:tenantId/:id/root",
         validateRequestParams("tenantId", "id"),
-        throttle(throttler, winston, commonThrottleOptions),
+        throttle(throttler, winston, tenantThrottleOptions),
         async (request, response) => {
             const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
             const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
@@ -83,7 +83,7 @@ export function create(
     router.post(
         "/:tenantId/:id/blobs",
         validateRequestParams("tenantId", "id"),
-        throttle(throttler, winston, commonThrottleOptions),
+        throttle(throttler, winston, tenantThrottleOptions),
         async (request, response) => {
             const tenantId = getParam(request.params, "tenantId");
             const blobData = request.body as IBlobData;
