@@ -106,6 +106,13 @@ export const createField: unique symbol = Symbol("editable-tree:createField()");
 export const replaceField: unique symbol = Symbol("editable-tree:replaceField()");
 
 /**
+ * A symbol to get information about where an {@link EditableTree} is parented in contexts where string keys are already in use for fields.
+ * in contexts where string keys are already in use for fields.
+ * @alpha
+ */
+export const parentField: unique symbol = Symbol("editable-tree:parentField()");
+
+/**
  * A tree which can be traversed and edited.
  *
  * When iterating, only visits non-empty fields.
@@ -225,6 +232,11 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * replaced with merge semantics that is more consistent with that of optional and value fields.
 	 */
 	[replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
+
+	/**
+	 * The field this tree is in, and the index within that field.
+	 */
+	readonly [parentField]: { readonly parent: EditableField; readonly index: number };
 }
 
 /**
@@ -288,6 +300,12 @@ export interface EditableField
 	 * The `FieldKey` of this field.
 	 */
 	readonly fieldKey: FieldKey;
+
+	/**
+	 * The node which has this field on it under `fieldKey`.
+	 * `undefined` iff this field is a detached field.
+	 */
+	readonly parent?: EditableTree;
 
 	/**
 	 * The type name of the parent node.
@@ -593,6 +611,25 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				fail("`Forbidden` fields may not be replaced as they never exist.");
 		}
 	}
+
+	public get parentField(): { readonly parent: EditableField; readonly index: number } {
+		const cursor = this.cursor;
+		const index = cursor.fieldIndex;
+		cursor.exitNode();
+		const key = cursor.getFieldKey();
+		cursor.exitField();
+		const parentType = cursor.type;
+		cursor.enterField(key);
+		const fieldSchema = getFieldSchema(
+			key,
+			this.context.schema,
+			lookupTreeSchema(this.context.schema, parentType),
+		);
+		const proxifiedField = proxifyField(this.context, fieldSchema, this.cursor, false);
+		this.cursor.enterNode(index);
+
+		return { parent: proxifiedField, index };
+	}
 }
 
 /**
@@ -625,6 +662,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.createField.bind(target);
 			case replaceField:
 				return target.replaceField.bind(target);
+			case parentField:
+				return target.parentField;
 			default:
 				return undefined;
 		}
@@ -701,6 +740,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case getField:
 			case createField:
 			case replaceField:
+			case parentField:
 				return true;
 			case valueSymbol:
 				// Could do `target.value !== ValueSchema.Nothing`
@@ -791,6 +831,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.replaceField.bind(target),
 					writable: false,
 				};
+			case parentField:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: target.parentField,
+					writable: false,
+				};
 			default:
 				return undefined;
 		}
@@ -823,6 +870,18 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 
 	get [proxyTargetSymbol](): FieldProxyTarget {
 		return this;
+	}
+
+	get parent(): EditableTree | undefined {
+		if (this.getAnchor().parent === undefined) {
+			return undefined;
+		}
+
+		const cursor = this.cursor;
+		cursor.exitField();
+		const target = new NodeProxyTarget(this.context, cursor);
+		cursor.enterField(this.fieldKey);
+		return adaptWithProxy(target, nodeProxyHandler);
 	}
 
 	buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): FieldAnchor {
@@ -949,6 +1008,7 @@ const editableFieldPropertySetWithoutLength = new Set<string>([
 	"fieldKey",
 	"fieldSchema",
 	"primaryType",
+	"parent",
 ]);
 /**
  * The set of `EditableField` properties exposed by `fieldProxyHandler`.

@@ -68,6 +68,7 @@ import {
 	runSweepKey,
 	stableGCVersion,
 	trackGCStateKey,
+	gcTombstoneGenerationOptionName,
 } from "./garbageCollectionConstants";
 import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
@@ -80,6 +81,7 @@ import {
 	dataStoreAttributesBlobName,
 	IGCMetadata,
 	ICreateContainerMetadata,
+	GCFeatureMatrix,
 } from "./summaryFormat";
 
 /** The statistics of the system state after a garbage collection run. */
@@ -140,6 +142,8 @@ export interface IGarbageCollectionRuntime {
 	getNodeType(nodePath: string): GCNodeType;
 	/** Called when the runtime should close because of an error. */
 	closeFn: (error?: ICriticalContainerError) => void;
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	gcTombstoneEnforcementAllowed: boolean;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -433,6 +437,9 @@ export class GarbageCollector implements IGarbageCollector {
 	// This is the version of GC data in the latest summary being tracked.
 	private latestSummaryGCVersion: GCVersion;
 
+	// Feature Support info persisted to this container's summary
+	private readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
+
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
 	// Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
@@ -579,6 +586,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 			this.sweepTimeoutMs =
 				metadata?.sweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
+			this.persistedGcFeatureMatrix = metadata?.gcFeatureMatrix;
 		} else {
 			// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
 			// scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -606,6 +614,11 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 			this.sweepTimeoutMs =
 				testOverrideSweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
+			if (this.gcOptions[gcTombstoneGenerationOptionName] !== undefined) {
+				this.persistedGcFeatureMatrix = {
+					tombstoneGeneration: this.gcOptions[gcTombstoneGenerationOptionName],
+				};
+			}
 		}
 
 		// If session expiry is enabled, we need to close the container when the session expiry timeout expires.
@@ -1258,6 +1271,7 @@ export class GarbageCollector implements IGarbageCollector {
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
 			gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
+			gcFeatureMatrix: this.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
 			sweepEnabled: this.sweepEnabled,
 			sweepTimeoutMs: this.sweepTimeoutMs,
@@ -1407,9 +1421,9 @@ export class GarbageCollector implements IGarbageCollector {
 				{
 					eventName,
 					category: "generic",
-					isSummarizerClient: this.isSummarizerClient,
 					url: trimLeadingSlashes(toNodePath),
 					nodeType,
+					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,
 			);

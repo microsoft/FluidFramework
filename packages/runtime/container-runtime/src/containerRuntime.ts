@@ -170,6 +170,8 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
+import { shouldAllowGcTombstoneEnforcement } from "./garbageCollectionHelpers";
+import { gcTombstoneGenerationOptionName } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -1035,6 +1037,11 @@ export class ContainerRuntime
 	private nextSummaryNumber: number;
 
 	/**
+	 * If false, loading or using a Tombstoned object should merely log, not fail
+	 */
+	public readonly gcTombstoneEnforcementAllowed: boolean;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1087,7 +1094,21 @@ export class ContainerRuntime
 
 		this._connected = this.context.connected;
 
+		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
+			metadata?.gcFeatureMatrix?.tombstoneGeneration,
+			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+		);
+
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
+
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "GCFeatureMatrix",
+			info: JSON.stringify(metadata?.gcFeatureMatrix),
+			inputs: JSON.stringify({
+				gcOptions_gcTombstoneGeneration:
+					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+			}),
+		});
 
 		const opSplitter = new OpSplitter(
 			chunks,
