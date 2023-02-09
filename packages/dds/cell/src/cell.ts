@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -12,7 +13,7 @@ import {
 	IChannelFactory,
 	Serializable,
 } from "@fluidframework/datastore-definitions";
-import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
 	createSingleBlobSummary,
@@ -20,7 +21,13 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
-import { ISharedCell, ISharedCellEvents, ICellLocalOpMetadata, ICellOptions } from "./interfaces";
+import {
+	ISharedCell,
+	ISharedCellEvents,
+	ICellLocalOpMetadata,
+	AttributionKey,
+	ICellOptions,
+} from "./interfaces";
 
 /**
  * Description of a cell delta operation
@@ -113,10 +120,22 @@ export class SharedCell<T = any>
 	 * @param id - Unique identifier for the `SharedCell`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+	constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+		options?: ICellOptions,
+	) {
 		super(id, runtime, attributes, "fluid_cell_");
 
-		this.options = runtime.options as ICellOptions;
+		this.options ??= options;
+
+		const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean(
+			"Fluid.Attribution.EnableOnNewFile",
+		);
+		if (configSetAttribution !== undefined) {
+			(this.options ?? (this.options = {})).attribution = { track: configSetAttribution };
+		}
 	}
 
 	/**
