@@ -60,6 +60,19 @@ export enum FlushMode {
 }
 
 /**
+ * FlushMode extended
+ *
+ * @experimental - Not ready for use
+ */
+export enum FlushModeEx {}
+/**
+ * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
+ * batch when all micro-tasks are complete.
+ *
+ * @experimental - Not ready for use
+ */
+
+/**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
  */
