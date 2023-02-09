@@ -481,10 +481,10 @@ describe("Loader", () => {
 
 					assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
 
-					deltaManager.connectionManager.forceReadonly?.(true);
+					deltaManager.connectionManager.forceReadonly(true);
 					assert.strictEqual(deltaManager.readOnlyInfo.readonly, true);
 
-					deltaManager.connectionManager.forceReadonly?.(false);
+					deltaManager.connectionManager.forceReadonly(false);
 					assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
 				});
 
@@ -497,7 +497,7 @@ describe("Loader", () => {
 						runCount++;
 					});
 
-					deltaManager.connectionManager.forceReadonly?.(true);
+					deltaManager.connectionManager.forceReadonly(true);
 					assert.strictEqual(runCount, 1);
 				});
 
@@ -512,7 +512,7 @@ describe("Loader", () => {
 						assert.fail("Shouldn't be called");
 					});
 
-					deltaManager.connectionManager.forceReadonly?.(true);
+					deltaManager.connectionManager.forceReadonly(true);
 				});
 			});
 		});
