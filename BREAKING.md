@@ -23,6 +23,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
 -   [Deprecated IFluidHTMLView and HTMLViewAdapter](#Deprecated-IFluidHTMLView-and-HTMLViewAdapter)
 -   [test-drivers and test-pairwise-generator packages will no longer be published](test-drivers-and-test-pairwise-generator-packages-will-no-longer-be-published)
+-   [Container and RelativeLoader Deprecated](#Container-and-RelativeLoader-Deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -49,6 +50,13 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 ### test-drivers and test-pairwise-generator packages will no longer be published
 
 These packages are currently published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These will be moved to the `@fluid-internal` scope and will no longer be published.
+
+### Container and RelativeLoader Deprecated
+
+The Container and RelativeLoader classes in `@fluidframework/container-loader` have been deprecated and will be removed in the next major release.
+
+-   Container usage should be replaced with usage of the interface IContainer from `@fluidframework/container-definitions`.
+-   RelativeLoader is an internal class and should not be used directly.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
