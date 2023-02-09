@@ -83,7 +83,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		assert.equal(sharedMap3.size, size, "Incorrect map size in container 3");
 	}
 
-	it.only("should set key value in three containers correctly", async () => {
+	it("should set key value in three containers correctly", async () => {
 		expectAllAfterValues("testKey1", "testValue");
 
 		console.log(sharedMap1.idCompressor?.generateCompressedId());

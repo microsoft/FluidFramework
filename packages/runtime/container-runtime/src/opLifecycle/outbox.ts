@@ -8,7 +8,8 @@ import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { ICompressionRuntimeOptions } from "../containerRuntime";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/runtime-definitions";
+import { ContainerMessageType, ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
@@ -30,6 +31,7 @@ export interface IOutboxParameters {
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
 	readonly logger: ITelemetryLogger;
+	readonly idCompressor?: IIdCompressorCore & IIdCompressor;
 }
 
 export class Outbox {
@@ -206,6 +208,10 @@ export class Outbox {
 		// Let the PendingStateManager know that a message was submitted.
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
+			if (message.deserializedContent.type === ContainerMessageType.IdAllocation) {
+				message.deserializedContent.contents.stashedState = this.params.idCompressor?.serialize(true);
+			}
+
 			this.params.pendingStateManager.onSubmitMessage(
 				message.deserializedContent.type,
 				clientSequenceNumber,

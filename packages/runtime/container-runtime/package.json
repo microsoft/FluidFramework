@@ -120,7 +120,13 @@
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
 				"forwardCompat": false
-			}
+			},
+			"TypeAliasDeclaration_IPendingState": {"backCompat": false},
+			"EnumDeclaration_ContainerMessageType": {"backCompat": false},
+			"InterfaceDeclaration_ContainerRuntimeMessage": {"backCompat": false},
+			"InterfaceDeclaration_IChunkedOp": {"backCompat": false},
+			"InterfaceDeclaration_IPendingLocalState": {"backCompat": false},
+			"InterfaceDeclaration_IPendingMessage": {"backCompat": false}
 		}
 	}
 }

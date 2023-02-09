@@ -906,7 +906,7 @@ export class ContainerRuntime
 		return this.context.attachState;
 	}
 
-	public readonly idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this.handleContext;
@@ -1312,6 +1312,7 @@ export class ContainerRuntime
 				enableOpReentryCheck: this.enableOpReentryCheck,
 			},
 			logger: this.mc.logger,
+			idCompressor: this.idCompressor,
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1752,7 +1753,8 @@ export class ContainerRuntime
 	}
 
 	private async applyStashedIdAllocationOp(content: any) {
-		console.log(content);
+		this.idCompressor = IdCompressor.deserialize(content.stashedState);
+		delete content.stashedState;
 	}
 
 	private async applyStashedOp(
@@ -1765,7 +1767,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 				return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
 			case ContainerMessageType.IdAllocation:
-				return this.applyStashedIdAllocationOp(op);
+				return this.applyStashedIdAllocationOp(op as unknown as IdCreationRange);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -1921,6 +1923,7 @@ export class ContainerRuntime
 					this.blobManager.processBlobAttachOp(message, local);
 					break;
 				case ContainerMessageType.IdAllocation:
+					console.log(message.contents);
 					this.idCompressor?.finalizeCreationRange(message.contents as IdCreationRange);
 					break;
 				case ContainerMessageType.ChunkedOp:
@@ -2907,6 +2910,7 @@ export class ContainerRuntime
 				this.outbox.submitAttach(message);
 			} else {
 				if (idAllocationBatchMessage !== undefined) {
+					console.log("submitting message to outbox", idAllocationBatchMessage);
 					this.outbox.submit(idAllocationBatchMessage);
 				}
 
