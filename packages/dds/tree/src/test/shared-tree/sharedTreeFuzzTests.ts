@@ -171,8 +171,8 @@ export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 	const readCursor = tree0.forest.allocateCursor();
 	moveToDetachedField(tree0.forest, readCursor);
 	const tree0Jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
+	readCursor.free();
 	for (let i = 1; i < 4; i++) {
-		readCursor.free();
 		validateTree(provider.trees[i], tree0Jsonable);
 	}
 }
