@@ -5,7 +5,7 @@
 
 import { FluidObject, IRequest, IRequestHeader, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
+import type { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 

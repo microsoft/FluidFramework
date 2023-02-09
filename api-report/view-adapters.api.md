@@ -10,15 +10,17 @@ import { IFluidHTMLView } from '@fluidframework/view-interfaces';
 import { IFluidMountableView } from '@fluidframework/view-interfaces';
 import { default as React_2 } from 'react';
 
-// @public
+// @public @deprecated
 export class HTMLViewAdapter implements IFluidHTMLView {
+    // @deprecated
     constructor(view: FluidObject);
+    // @deprecated
     static canAdapt(view: FluidObject): boolean;
-    // (undocumented)
+    // @deprecated
     get IFluidHTMLView(): HTMLViewAdapter;
-    // (undocumented)
+    // @deprecated (undocumented)
     remove(): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     render(elm: HTMLElement, options?: IFluidHTMLOptions): void;
 }
 

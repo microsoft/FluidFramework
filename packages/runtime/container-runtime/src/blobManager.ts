@@ -40,7 +40,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { TombstoneResponseHeaderKey } from "./containerRuntime";
+import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
 import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
@@ -114,6 +114,7 @@ export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
 	"attachState" | "connected" | "logger" | "clientDetails"
 > &
+	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed"> &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
@@ -225,6 +226,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Read the feature flag that tells whether to throw when a tombstone blob is requested.
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
+			this.runtime.gcTombstoneEnforcementAllowed &&
 			this.runtime.clientDetails.type !== summarizerClientType;
 
 		this.runtime.on("disconnected", () => this.onDisconnected());
@@ -785,7 +787,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						? "GC_Tombstone_Blob_Requested"
 						: "GC_Deleted_Blob_Requested",
 				category: shouldFail ? "error" : "generic",
-				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 			},
 			[BlobManager.basePath],
 			error,
