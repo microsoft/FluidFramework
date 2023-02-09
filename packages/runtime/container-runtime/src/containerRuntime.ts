@@ -2835,18 +2835,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 		// The call to fetch the snapshot is very expensive and not always needed.
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
-		const snapshotTreeFetcher = async () => {
-			const fetchResult = await this.fetchLatestSnapshotFromStorage(summaryLogger, {
-				eventName: "RefreshLatestSummaryGetSnapshot",
-				ackHandle,
-				summaryRefSeq,
-				fetchLatest: true,
-			});
-
-			const latestSnapshotRefSeq = await seqFromTree(
-				fetchResult.snapshotTree,
+		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
+			const fetchResult = await this.fetchLatestSnapshotFromStorage(
+				summaryLogger,
+				{
+					eventName: "RefreshLatestSummaryAckFetch",
+					ackHandle,
+					targetSequenceNumber: summaryRefSeq,
+				},
 				readAndParseBlob,
 			);
+
 			/**
 			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
 			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
@@ -2857,7 +2856,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 			 * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
 			 * state.
 			 */
-			if (latestSnapshotRefSeq < summaryRefSeq) {
+			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
 				const error = DataProcessingError.create(
 					"Fetched snapshot is older than the received ack",
 					"RefreshLatestSummaryAck",
@@ -2865,42 +2864,36 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 					{
 						ackHandle,
 						summaryRefSeq,
-						latestSnapshotRefSeq,
+						latestSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
 					},
 				);
 				this.closeFn(error);
 				throw error;
 			}
 
-			summaryLogger.sendTelemetryEvent({
-				eventName: "LatestSummaryRetrieved",
-				ackHandle,
-				lastSequenceNumber: latestSnapshotRefSeq,
-				targetSequenceNumber: summaryRefSeq,
-			});
-
 			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
 			// wait for the delta manager to catch up before refreshing the latest Summary.
-			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryLogger);
+			await this.waitForDeltaManagerToCatchup(
+				fetchResult.latestSnapshotRefSeq,
+				summaryLogger,
+			);
 
-			return fetchResult.snapshotTree;
+			return {
+				snapshotTree: fetchResult.snapshotTree,
+				snapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+			};
 		};
 
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
-			snapshotTreeFetcher,
+			fetchLatestSnapshot,
 			readAndParseBlob,
 			summaryLogger,
 		);
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(
-			result,
-			proposalHandle,
-			summaryRefSeq,
-			readAndParseBlob,
-		);
+		await this.garbageCollector.refreshLatestSummary(proposalHandle, result, readAndParseBlob);
 	}
 
 	/**
@@ -2912,30 +2905,31 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 	private async refreshLatestSummaryAckFromServer(
 		summaryLogger: ITelemetryLogger,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
-		const { snapshotTree, versionId } = await this.fetchLatestSnapshotFromStorage(
-			summaryLogger,
-			{
-				eventName: "RefreshLatestSummaryGetSnapshot",
-				fetchLatest: true,
-			},
-		);
-
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const latestSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
-
+		const { snapshotTree, versionId, latestSnapshotRefSeq } =
+			await this.fetchLatestSnapshotFromStorage(
+				summaryLogger,
+				{
+					eventName: "RefreshLatestSummaryFromServerFetch",
+				},
+				readAndParseBlob,
+			);
+		const fetchLatestSnapshot: IFetchSnapshotResult = {
+			snapshotTree,
+			snapshotRefSeq: latestSnapshotRefSeq,
+		};
 		const result = await this.summarizerNode.refreshLatestSummary(
-			undefined,
+			undefined /* proposalHandle */,
 			latestSnapshotRefSeq,
-			async () => snapshotTree,
+			async () => fetchLatestSnapshot,
 			readAndParseBlob,
 			summaryLogger,
 		);
 
 		// Notify the garbage collector so it can update its latest summary state.
 		await this.garbageCollector.refreshLatestSummary(
+			undefined /* proposalHandle */,
 			result,
-			undefined,
-			latestSnapshotRefSeq,
 			readAndParseBlob,
 		);
 
@@ -2945,7 +2939,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLogger,
 		event: ITelemetryGenericEvent,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string }> {
+		readAndParseBlob: ReadAndParseBlob,
+	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
@@ -2953,9 +2948,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 				end: (arg0: {
 					getVersionDuration?: number | undefined;
 					getSnapshotDuration?: number | undefined;
+					snapshotRefSeq?: number | undefined;
+					snapshotVersion?: string | undefined;
 				}) => void;
 			}) => {
-				const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+				const stats: {
+					getVersionDuration?: number;
+					getSnapshotDuration?: number;
+					snapshotRefSeq?: number;
+					snapshotVersion?: string;
+				} = {};
 				const trace = Trace.start();
 
 				const versions = await this.storage.getVersions(
@@ -2973,9 +2975,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 				const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
 				assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
 				stats.getSnapshotDuration = trace.trace().duration;
+				const latestSnapshotRefSeq = await seqFromTree(maybeSnapshot, readAndParseBlob);
+				stats.snapshotRefSeq = latestSnapshotRefSeq;
+				stats.snapshotVersion = versions[0].id;
 
 				perfEvent.end(stats);
-				return { snapshotTree: maybeSnapshot, versionId: versions[0].id };
+				return {
+					snapshotTree: maybeSnapshot,
+					versionId: versions[0].id,
+					latestSnapshotRefSeq,
+				};
 			},
 		);
 	}
