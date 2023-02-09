@@ -239,6 +239,37 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.pendingMessages.shift();
 
+		if (pendingMessage.messageType !== message.type) {
+			// Close the container because this could indicate data corruption.
+			this.stateHandler.close(
+				DataProcessingError.create(
+					"pending local message type mismatch",
+					"unexpectedAckReceived",
+					message,
+					{
+						expectedMessageType: pendingMessage.messageType,
+					},
+				),
+			);
+			return;
+		}
+
+		const pendingMessageContent = JSON.stringify(pendingMessage.content);
+		const messageContent = JSON.stringify(message.contents);
+
+		// Stringified content does not match
+		if (pendingMessageContent !== messageContent) {
+			// Close the container because this could indicate data corruption.
+			this.stateHandler.close(
+				DataProcessingError.create(
+					"pending local message content mismatch",
+					"unexpectedAckReceived",
+					message,
+				),
+			);
+			return;
+		}
+
 		// Post-processing part - If we are processing a batch then this could be the last message in the batch.
 		this.maybeProcessBatchEnd(message);
 

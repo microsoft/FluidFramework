@@ -125,7 +125,6 @@ describe("Pending State Manager", () => {
 			messages.forEach((message) => {
 				pendingStateManager.onSubmitMessage(
 					message.type,
-					message.clientSequenceNumber,
 					message.referenceSequenceNumber,
 					message.contents,
 					undefined,
@@ -190,6 +189,95 @@ describe("Pending State Manager", () => {
 			assert(closeError instanceof DataProcessingError);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
+		});
+
+		describe("processing out of sync messages will call close", () => {
+			it("messageTypes do not match", () => {
+				const messages: Partial<ISequencedDocumentMessage>[] = [
+					{
+						clientId,
+						type: MessageType.Operation,
+						clientSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+					},
+				];
+
+				submitBatch(messages);
+				process(
+					messages.map((message) => ({
+						...message,
+						type: "otherType",
+					})),
+				);
+				assert(closeError instanceof DataProcessingError);
+				assert.strictEqual(
+					closeError.getTelemetryProperties().expectedMessageType,
+					MessageType.Operation,
+				);
+			});
+
+			it("only one message has undefined content", () => {
+				const messages: Partial<ISequencedDocumentMessage>[] = [
+					{
+						clientId,
+						type: MessageType.Operation,
+						clientSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+						contents: {},
+					},
+				];
+
+				submitBatch(messages);
+				process(
+					messages.map((message) => ({
+						...message,
+						contents: undefined,
+					})),
+				);
+				assert(closeError instanceof DataProcessingError);
+			});
+
+			it("stringified message content does not match", () => {
+				const messages: Partial<ISequencedDocumentMessage>[] = [
+					{
+						clientId,
+						type: MessageType.Operation,
+						clientSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+						contents: {},
+					},
+				];
+
+				submitBatch(messages);
+				process(
+					messages.map((message) => ({
+						...message,
+						contents: { prop1: true },
+					})),
+				);
+				assert(closeError instanceof DataProcessingError);
+			});
+		});
+
+		it("processing in sync messages will not call close", () => {
+			const messages: Partial<ISequencedDocumentMessage>[] = [
+				{
+					clientId,
+					type: MessageType.Operation,
+					clientSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+					contents: { prop1: true },
+				},
+			];
+
+			submitBatch(messages);
+			process(
+				messages.map((message) => ({
+					...message,
+					contents: { prop1: true },
+				})),
+			);
+			assert.strictEqual(closeError, undefined, "unexpected close");
 		});
 	});
 
