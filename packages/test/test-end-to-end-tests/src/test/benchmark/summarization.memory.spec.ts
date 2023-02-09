@@ -16,7 +16,7 @@ import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions"
 import { bufferToString } from "@fluidframework/common-utils";
 import { createLogger } from "./FileLogger";
 
-const _global: any = global;
+// const _global: any = global;
 // // _global.getTestLogger = () => logger();//
 // _global.getTestLogger = await createLogger({
 // 	runId: undefined,
