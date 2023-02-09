@@ -20,6 +20,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { v4 as uuid } from "uuid";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 
@@ -578,9 +579,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
 		const sendSingleOp = () => {
 			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === 1) {
-				const opPayload = generateContentOfSize(getOpSizeInBytes());
-				const opKey = Math.random().toString();
-				dataModel.sharedmap.set(opKey, opPayload);
+				dataModel.sharedmap.set(uuid(), generateContentOfSize(getOpSizeInBytes()));
 			} else {
 				dataModel.counter.increment(1);
 			}
