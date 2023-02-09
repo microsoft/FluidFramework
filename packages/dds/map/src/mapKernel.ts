@@ -405,14 +405,16 @@ export class MapKernel {
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
-			const track = this.options?.attribution?.track;
+			const attribution = this.options?.attribution?.track
+				? this.attribution?.get(key)
+				: undefined;
 			serializableMapData[key] = localValue.makeSerialized(
 				serializer,
 				this.handle,
-				track
-					? this.attribution?.get(key)?.type === "op"
-						? this.attribution?.get(key)?.seq
-						: this.attribution?.get(key)
+				attribution
+					? attribution.type === "op"
+						? attribution.seq
+						: attribution
 					: undefined,
 			);
 		}

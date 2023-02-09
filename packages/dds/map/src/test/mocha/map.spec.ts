@@ -831,33 +831,40 @@ describe("Map", () => {
 
 				containerRuntimeFactory.processAllMessages();
 
+				const key1OfMap1 = map1.getAttribution("first");
+				const key1OfMap2 = map2.getAttribution("first");
+				const key2OfMap1 = map1.getAttribution("second");
+				const key2OfMap2 = map2.getAttribution("second");
+				const key3OfMap1 = map1.getAttribution("third");
+				const key3OfMap2 = map2.getAttribution("third");
+
 				assert.equal(
-					map1.getAttribution("first")?.seq,
+					key1OfMap1?.type === "op" && key1OfMap1?.seq,
 					1,
 					"map1 did not generate correct attribution for the first key",
 				);
 				assert.equal(
-					map2.getAttribution("first")?.seq,
+					key1OfMap2?.type === "op" && key1OfMap2?.seq,
 					1,
 					"map2 did not generate correct attribution for the first key",
 				);
 				assert.equal(
-					map1.getAttribution("second")?.seq,
+					key2OfMap1?.type === "op" && key2OfMap1?.seq,
 					2,
 					"map1 did not generate correct attribution for the second key",
 				);
 				assert.equal(
-					map2.getAttribution("second")?.seq,
+					key2OfMap2?.type === "op" && key2OfMap2?.seq,
 					2,
 					"map2 did not generate correct attribution for the second key",
 				);
 				assert.equal(
-					map1.getAttribution("third")?.seq,
+					key3OfMap1?.type === "op" && key3OfMap1?.seq,
 					3,
 					"map1 did not generate correct attribution for the third key",
 				);
 				assert.equal(
-					map2.getAttribution("third")?.seq,
+					key3OfMap2?.type === "op" && key3OfMap2?.seq,
 					3,
 					"map2 did not generate correct attribution for the third key",
 				);
@@ -890,42 +897,51 @@ describe("Map", () => {
 
 				containerRuntimeFactory.processSomeMessages(1);
 
+				let key1OfMap1 = map1.getAttribution("first");
+				let key1OfMap2 = map2.getAttribution("first");
+
 				assert.equal(
-					map1.getAttribution("first")?.seq,
+					key1OfMap1?.type === "op" && key1OfMap1?.seq,
 					1,
 					"map1 did not generate correct attribution for the first key",
 				);
 
 				assert.equal(
-					map2.getAttribution("first"),
+					key1OfMap2,
 					undefined,
 					"map2 generated the attribution with a pending local edit",
 				);
 
 				containerRuntimeFactory.processSomeMessages(1);
 
+				const key2OfMap1 = map1.getAttribution("second");
+				const key2OfMap2 = map2.getAttribution("second");
+
 				assert.equal(
-					map1.getAttribution("second")?.seq,
+					key2OfMap1?.type === "op" && key2OfMap1?.seq,
 					2,
 					"map1 did not generate correct attribution for the second key",
 				);
 
 				assert.equal(
-					map2.getAttribution("second")?.seq,
+					key2OfMap2?.type === "op" && key2OfMap2?.seq,
 					2,
 					"map2 did not generate correct attribution for the second key",
 				);
 
 				containerRuntimeFactory.processSomeMessages(1);
 
+				key1OfMap1 = map1.getAttribution("first");
+				key1OfMap2 = map2.getAttribution("first");
+
 				assert.equal(
-					map1.getAttribution("first")?.seq,
+					key1OfMap1?.type === "op" && key1OfMap1?.seq,
 					3,
 					"map1 did not generate correct attribution for the first key after a local edit",
 				);
 
 				assert.equal(
-					map2.getAttribution("first")?.seq,
+					key1OfMap2?.type === "op" && key1OfMap2?.seq,
 					3,
 					"map2 did not generate correct attribution for the first key after a remote edit",
 				);
