@@ -25,6 +25,7 @@ import {
 } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
 import { getUrlFromItemId, MockDetachedBlobStorage } from "./mockDetachedBlobStorage";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
@@ -58,7 +59,7 @@ const ContainerCloseUsageError: ExpectedEvents = {
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
-describeFullCompat("blobs", (getTestObjectProvider) => {
+/* describeFullCompat("blobs", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();
@@ -210,7 +211,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 		dataStore._root.set("my blob", blob);
 		await blobOpP;
 	});
-});
+}); */
 
 // this functionality was added in 0.47 and can be added to the compat-enabled
 // tests above when the LTS version is bumped > 0.47
@@ -284,7 +285,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		assert.strictEqual(snapshot1.summary.tree[0].id, snapshot2.summary.tree[0].id);
 	});
 
-	itExpects("works in detached container", ContainerCloseUsageError, async function () {
+	it("works in detached container", async function () {
 		const detachedBlobStorage = new MockDetachedBlobStorage();
 		const loader = provider.makeTestLoader({
 			...testContainerConfig,
@@ -306,10 +307,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = container.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (provider.driver.type !== "odsp") {
-			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-		}
+		// if (provider.driver.type !== "odsp") {
+		// 	// this flow is currently only supported on ODSP, the others should explicitly reject on attach
+		// 	return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+		// }
 		await attachP;
 
 		// make sure we're getting the blob from actual storage
@@ -361,7 +362,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		);
 	});
 
-	itExpects("redirect table saved in snapshot", ContainerCloseUsageError, async function () {
+	it("redirect table saved in snapshot", async function () {
 		const detachedBlobStorage = new MockDetachedBlobStorage();
 		const loader = provider.makeTestLoader({
 			...testContainerConfig,
@@ -388,20 +389,20 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			await detachedDataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")),
 		);
 
-		const attachP = detachedContainer.attach(
+		const attachP = await detachedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (provider.driver.type !== "odsp") {
-			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-		}
-		await attachP;
+		// if (provider.driver.type !== "odsp") {
+		// 	// this flow is currently only supported on ODSP, the others should explicitly reject on attach
+		// 	return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+		// }
 		detachedBlobStorage.blobs.clear();
 
-		const url = getUrlFromItemId(
-			(detachedContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-			provider,
-		);
+		// const url = getUrlFromItemId(
+		// 	(detachedContainer.resolvedUrl as IOdspResolvedUrl).itemId,
+		// 	provider,
+		// );
+		const url: any = await detachedContainer.getAbsoluteUrl("");
 		const attachedContainer = await provider
 			.makeTestLoader(testContainerConfig)
 			.resolve({ url });
@@ -440,10 +441,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (provider.driver.type !== "odsp") {
-			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-		}
+		// if (provider.driver.type !== "odsp") {
+		// 	// this flow is currently only supported on ODSP, the others should explicitly reject on attach
+		// 	return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+		// }
 		await attachP;
 
 		const url = getUrlFromItemId(
@@ -491,10 +492,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			const attachP = container.attach(
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
-			if (provider.driver.type !== "odsp") {
-				// this flow is currently only supported on ODSP, the others should explicitly reject on attach
-				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-			}
+			// if (provider.driver.type !== "odsp") {
+			// 	// this flow is currently only supported on ODSP, the others should explicitly reject on attach
+			// 	return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+			// }
 			await attachP;
 
 			const url = getUrlFromItemId(

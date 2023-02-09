@@ -1115,11 +1115,15 @@ export class Container
 							getSnapshotTreeFromSerializedContainer(summary),
 						);
 
-						await this.storageService.uploadSummaryWithContext(summary, {
-							referenceSequenceNumber: 0,
-							ackHandle: undefined,
-							proposalHandle: undefined,
-						});
+						const resultupload = await this.storageService.uploadSummaryWithContext(
+							summary,
+							{
+								referenceSequenceNumber: 0,
+								ackHandle: undefined,
+								proposalHandle: undefined,
+							},
+						);
+						console.log(resultupload);
 					}
 
 					this._attachState = AttachState.Attached;

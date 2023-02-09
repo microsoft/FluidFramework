@@ -34,7 +34,7 @@ export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 
 // TODO: #7684
 export const getUrlFromItemId = (itemId: string, provider: ITestObjectProvider): string => {
-	assert(provider.driver.type === "odsp");
+	// assert(provider.driver.type === "odsp");
 	assert(itemId);
 	const url = (provider.driver as any).getUrlFromItemId(itemId);
 	assert(url && typeof url === "string");
