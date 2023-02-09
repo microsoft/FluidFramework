@@ -51,7 +51,11 @@ export function makeTreeChunker(
 }
 
 /**
- * Indicates that there are multiple possible shapes trees with a given type can have.
+ * Indicates that there are multiple possible `TreeShapes` trees with a given type can have.
+ *
+ * @remarks
+ * For example, a schema transitively containing a sequence field, optional field, or allowing multiple child types will be Polymorphic.
+ * See `tryShapeForSchema` for how to tell if a type is Polymorphic.
  *
  * TODO: cache some of the possible shapes here.
  */
@@ -234,10 +238,19 @@ function tryShapeForFieldSchema(
 	return [key, childShape, 1];
 }
 
+/**
+ * Default settings for use for ChunkPolicy/
+ * Use `makeTreeChunker` to create a policy with the defaults, but leverages to schema.
+ */
 export const defaultChunkPolicy: ChunkPolicy = {
-	sequenceChunkSplitThreshold: 256,
-	sequenceChunkInlineThreshold: 10,
+	// Currently ChunkedForest and BasicTreeCursor don't handle SequenceChunks very efficiently:
+	// they likely add more overhead than they save for now, so don't create them.
+	sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
+	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+	// Current UniformChunk handling doesn't scale well to large chunks, so set a modest size limit:
 	uniformChunkNodeCount: 400,
+	// Without knowing what the schema is, all shapes are possible.
+	// Use `makeTreeChunker` to do better.
 	schemaToShape: () => polymorphic,
 };
 
