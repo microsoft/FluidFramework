@@ -1095,15 +1095,15 @@ export class ContainerRuntime
 		this._connected = this.context.connected;
 
 		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
-			metadata?.gcFeatureMatrix?.tombstoneGeneration,
-			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
+			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName] /* current */,
 		);
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
-			info: JSON.stringify(metadata?.gcFeatureMatrix),
+			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
 				gcOptions_gcTombstoneGeneration:
 					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
@@ -1227,6 +1227,7 @@ export class ContainerRuntime
 			async () => this.garbageCollector.getBaseGCDetails(),
 			(path: string, timestampMs: number, packagePath?: readonly string[]) =>
 				this.garbageCollector.nodeUpdated(path, "Changed", timestampMs, packagePath),
+			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 		);
 
