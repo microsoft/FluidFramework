@@ -448,6 +448,8 @@ export class DataStores implements IDisposable {
 	) {
 		const envelope = message.contents as IEnvelope;
 		const transformed = { ...message, contents: envelope.contents };
+		const request = { url: envelope.address };
+		this.validateNotDeleted(envelope.address, request);
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
@@ -491,7 +493,7 @@ export class DataStores implements IDisposable {
 	private validateNotDeleted(
 		id: string,
 		request: IRequest,
-		requestHeaderData: RuntimeHeaderData,
+		requestHeaderData?: RuntimeHeaderData,
 	) {
 		const dataStoreNodePath = `/${id}`;
 		if (this.isDataStoreDeleted(dataStoreNodePath)) {
