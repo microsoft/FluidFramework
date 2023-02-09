@@ -48,7 +48,7 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 
 ### test-drivers and test-pairwise-generator packages will no longer be published
 
-These packages are currently published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These will be moved to the `@fluid-internal` scope will no longer be published.
+These packages are currently published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These will be moved to the `@fluid-internal` scope and will no longer be published.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
