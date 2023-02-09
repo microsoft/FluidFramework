@@ -38,8 +38,10 @@ export class AlfredRunner implements IRunner {
         private readonly port: string | number,
         private readonly orderManager: IOrdererManager,
         private readonly tenantManager: ITenantManager,
-        private readonly restThrottler: IThrottler,
-        private readonly socketConnectThrottler: IThrottler,
+        private readonly restTenantThrottler: IThrottler,
+        private readonly restClusterThrottlers: Map<string, IThrottler>,
+        private readonly socketConnectTenantThrottler: IThrottler,
+        private readonly socketConnectClusterThrottler: IThrottler,
         private readonly socketSubmitOpThrottler: IThrottler,
         private readonly socketSubmitSignalThrottler: IThrottler,
         private readonly singleUseTokenCache: ICache,
@@ -52,6 +54,7 @@ export class AlfredRunner implements IRunner {
         private readonly documentsCollection: ICollection<IDocument>,
         private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
         private readonly verifyMaxMessageSize?: boolean,
+        private readonly redisCache?: ICache,
     ) {
     }
 
@@ -63,7 +66,8 @@ export class AlfredRunner implements IRunner {
         const alfred = app.create(
             this.config,
             this.tenantManager,
-            this.restThrottler,
+            this.restTenantThrottler,
+            this.restClusterThrottlers,
             this.singleUseTokenCache,
             this.storage,
             this.appTenants,
@@ -82,6 +86,7 @@ export class AlfredRunner implements IRunner {
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
         const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
+
         // Register all the socket.io stuff
         configureWebSocketServices(
             this.server.webSocketServer,
@@ -97,7 +102,9 @@ export class AlfredRunner implements IRunner {
             isTokenExpiryEnabled,
             isClientConnectivityCountingEnabled,
             isSignalUsageCountingEnabled,
-            this.socketConnectThrottler,
+            this.redisCache,
+            this.socketConnectTenantThrottler,
+            this.socketConnectClusterThrottler,
             this.socketSubmitOpThrottler,
             this.socketSubmitSignalThrottler,
             this.throttleAndUsageStorageManager,

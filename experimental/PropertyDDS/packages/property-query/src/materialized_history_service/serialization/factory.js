@@ -6,8 +6,7 @@ const JSONSerializer = require("./json");
 // TODO: enable bson serialization
 // const BSONSerializer = require('./bson');
 
-const OperationError =
-    require("@fluid-experimental/property-common").OperationError;
+const OperationError = require("@fluid-experimental/property-common").OperationError;
 const HTTPStatus = require("http-status");
 
 /**
@@ -15,33 +14,32 @@ const HTTPStatus = require("http-status");
  * on the configuration for the service
  */
 class SerializerFactory {
-    /**
-     * Constructor to the backend factory
-     * @param {Settings} in_params.settings - Service settings
-     */
-    constructor({ settings }) {
-        this._settings = settings;
-    }
+	/**
+	 * Constructor to the backend factory
+	 * @param {Settings} in_params.settings - Service settings
+	 */
+	constructor({ settings }) {
+		this._settings = settings;
+	}
 
-    /**
-     * Returns the serializer based on the service configuration
-     * @return {Serializer} = The Storage Backend
-     */
-    getSerializer() {
-        switch (this._settings.get("mh:serializer")) {
-            case "JSON":
-                return new JSONSerializer();
-            //   case 'BSON':
-            //     return new BSONSerializer();
-            default:
-                throw new OperationError(
-                    "Unknown serializer: " +
-                        this._settings.get("mh:serializer"),
-                    "Initialization",
-                    HTTPStatus.INTERNAL_SERVER_ERROR
-                );
-        }
-    }
+	/**
+	 * Returns the serializer based on the service configuration
+	 * @return {Serializer} = The Storage Backend
+	 */
+	getSerializer() {
+		switch (this._settings.get("mh:serializer")) {
+			case "JSON":
+				return new JSONSerializer();
+			//   case 'BSON':
+			//     return new BSONSerializer();
+			default:
+				throw new OperationError(
+					"Unknown serializer: " + this._settings.get("mh:serializer"),
+					"Initialization",
+					HTTPStatus.INTERNAL_SERVER_ERROR,
+				);
+		}
+	}
 }
 
 module.exports = SerializerFactory;
