@@ -200,88 +200,88 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
-	/**
-	 * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
-	 * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
-	 * we skip the update. Otherwise, we fetch the latest snapshot and update latest summary based off of that.
-	 *
-	 * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
-	 *
-	 * 1. The latest summary was not updated.
-	 *
-	 * 2. The latest summary was updated and the summary corresponding to the params was being tracked.
-	 *
-	 * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this
-	 * case, the latest summary is updated based on the downloaded snapshot which is also returned.
-	 */
-	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
-		summaryRefSeq: number,
-		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
-		readAndParseBlob: ReadAndParseBlob,
-		correlatedSummaryLogger: ITelemetryLogger,
-	): Promise<RefreshSummaryResult> {
-		this.defaultLogger.sendTelemetryEvent({
-			eventName: "refreshLatestSummary_start",
-			proposalHandle,
-			referenceSequenceNumber: this.referenceSequenceNumber,
-			summaryRefSeq,
-		});
+    /**
+     * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
+     * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
+     * we skip the update. Otherwise, we fetch the latest snapshot and update latest summary based off of that.
+     *
+     * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
+     *
+     * 1. The latest summary was not updated.
+     *
+     * 2. The latest summary was updated and the summary corresponding to the params was being tracked.
+     *
+     * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this
+     * case, the latest summary is updated based on the downloaded snapshot which is also returned.
+     */
+    public async refreshLatestSummary(
+        proposalHandle: string | undefined,
+        summaryRefSeq: number,
+        fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
+        readAndParseBlob: ReadAndParseBlob,
+        correlatedSummaryLogger: ITelemetryLogger,
+    ): Promise<RefreshSummaryResult> {
+        this.defaultLogger.sendTelemetryEvent({
+            eventName: "refreshLatestSummary_start",
+            proposalHandle,
+            referenceSequenceNumber: this.referenceSequenceNumber,
+            summaryRefSeq,
+        });
 
-		if (proposalHandle !== undefined) {
-			const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
+        if (proposalHandle !== undefined) {
+            const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
 
-			if (maybeSummaryNode !== undefined) {
-				this.refreshLatestSummaryFromPending(
-					proposalHandle,
-					maybeSummaryNode.referenceSequenceNumber,
-				);
-				return { latestSummaryUpdated: true, wasSummaryTracked: true, summaryRefSeq };
-			}
+            if (maybeSummaryNode !== undefined) {
+                this.refreshLatestSummaryFromPending(
+                    proposalHandle,
+                    maybeSummaryNode.referenceSequenceNumber,
+                );
+                return { latestSummaryUpdated: true, wasSummaryTracked: true, summaryRefSeq };
+            }
 
-			const props = {
-				summaryRefSeq,
-				pendingSize: this.pendingSummaries.size ?? undefined,
-			};
-			this.defaultLogger.sendTelemetryEvent({
-				eventName: "PendingSummaryNotFound",
-				proposalHandle,
-				referenceSequenceNumber: this.referenceSequenceNumber,
-				details: JSON.stringify(props),
-			});
-		}
+            const props = {
+                summaryRefSeq,
+                pendingSize: this.pendingSummaries.size ?? undefined,
+            };
+            this.defaultLogger.sendTelemetryEvent({
+                eventName: "PendingSummaryNotFound",
+                proposalHandle,
+                referenceSequenceNumber: this.referenceSequenceNumber,
+                details: JSON.stringify(props),
+            });
+        }
 
-		// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
-		if (this.referenceSequenceNumber >= summaryRefSeq) {
-			return { latestSummaryUpdated: false };
-		}
+        // If the summary for which refresh is called is older than the latest tracked summary, ignore it.
+        if (this.referenceSequenceNumber >= summaryRefSeq) {
+            return { latestSummaryUpdated: false };
+        }
 
-		// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
-		// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
-		const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } = await fetchLatestSnapshot();
+        // Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
+        // of the fetched snapshot and not the "summaryRefSeq" that was passed in.
+        const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } = await fetchLatestSnapshot();
 
-		// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
-		// snapshot is older than the latest tracked summary, ignore it.
-		if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
-			return { latestSummaryUpdated: false };
-		}
+        // Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
+        // snapshot is older than the latest tracked summary, ignore it.
+        if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
+            return { latestSummaryUpdated: false };
+        }
 
-		await this.refreshLatestSummaryFromSnapshot(
-			fetchedSnapshotRefSeq,
-			snapshotTree,
-			undefined,
-			EscapedPath.create(""),
-			correlatedSummaryLogger,
-			readAndParseBlob,
-		);
+        await this.refreshLatestSummaryFromSnapshot(
+            fetchedSnapshotRefSeq,
+            snapshotTree,
+            undefined,
+            EscapedPath.create(""),
+            correlatedSummaryLogger,
+            readAndParseBlob,
+        );
 
-		return {
-			latestSummaryUpdated: true,
-			wasSummaryTracked: false,
-			snapshotTree,
-			summaryRefSeq: fetchedSnapshotRefSeq,
-		};
-	}
+        return {
+            latestSummaryUpdated: true,
+            wasSummaryTracked: false,
+            snapshotTree,
+            summaryRefSeq: fetchedSnapshotRefSeq,
+        };
+    }
 /**
  * Called when we get an ack from the server for a summary we've just sent. Updates the reference state of this node
  * from the state in the pending summary queue.

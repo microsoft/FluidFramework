@@ -147,13 +147,13 @@ describe("Runtime", () => {
             } };
 
             // The reference sequence number of the fetched snapshot.
-			let snapshotRefSeq = summaryRefSeq;
-			const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-				return {
-					snapshotTree: simpleSnapshot,
-					snapshotRefSeq,
-				};
-			};
+            let snapshotRefSeq = summaryRefSeq;
+            const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
+                return {
+                    snapshotTree: simpleSnapshot,
+                    snapshotRefSeq,
+                };
+            };
 
             beforeEach(() => {
                 summarizeCalls = [0, 0, 0];
@@ -311,93 +311,93 @@ describe("Runtime", () => {
                 });
             });
 
-			describe("Refresh Latest Summary", () => {
-				it("Should refresh from tree when no proposal handle provided", async () => {
-					createRoot();
-					const result = await rootNode.refreshLatestSummary(
-						undefined,
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === summaryRefSeq,
-						"summary ref seq should be the same as the one passed in",
-					);
-				});
+            describe("Refresh Latest Summary", () => {
+                it("Should refresh from tree when no proposal handle provided", async () => {
+                    createRoot();
+                    const result = await rootNode.refreshLatestSummary(
+                        undefined,
+                        summaryRefSeq,
+                        fetchLatestSnapshot,
+                        readAndParseBlob,
+                        logger,
+                    );
+                    assert(result.latestSummaryUpdated === true, "should update");
+                    assert(result.wasSummaryTracked === false, "should not be tracked");
+                    assert(result.snapshotTree !== undefined, "should have tree result");
+                    assert(
+                        result.summaryRefSeq === summaryRefSeq,
+                        "summary ref seq should be the same as the one passed in",
+                    );
+                });
 
-				it("Should use the ref seq number of the fetched snapshot", async () => {
-					createRoot();
-					snapshotRefSeq = summaryRefSeq + 1;
-					const result = await rootNode.refreshLatestSummary(
-						undefined,
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === snapshotRefSeq,
-						"summary ref seq should be the snapshot ref seq",
-					);
-				});
+                it("Should use the ref seq number of the fetched snapshot", async () => {
+                    createRoot();
+                    snapshotRefSeq = summaryRefSeq + 1;
+                    const result = await rootNode.refreshLatestSummary(
+                        undefined,
+                        summaryRefSeq,
+                        fetchLatestSnapshot,
+                        readAndParseBlob,
+                        logger,
+                    );
+                    assert(result.latestSummaryUpdated === true, "should update");
+                    assert(result.wasSummaryTracked === false, "should not be tracked");
+                    assert(result.snapshotTree !== undefined, "should have tree result");
+                    assert(
+                        result.summaryRefSeq === snapshotRefSeq,
+                        "summary ref seq should be the snapshot ref seq",
+                    );
+                });
 
-				it("Should refresh from tree when proposal handle not pending", async () => {
-					createRoot();
-					const result = await rootNode.refreshLatestSummary(
-						"test-handle",
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === summaryRefSeq,
-						"summary ref seq should be the same as the one passed in",
-					);
-				});
+                it("Should refresh from tree when proposal handle not pending", async () => {
+                    createRoot();
+                    const result = await rootNode.refreshLatestSummary(
+                        "test-handle",
+                        summaryRefSeq,
+                        fetchLatestSnapshot,
+                        readAndParseBlob,
+                        logger,
+                    );
+                    assert(result.latestSummaryUpdated === true, "should update");
+                    assert(result.wasSummaryTracked === false, "should not be tracked");
+                    assert(result.snapshotTree !== undefined, "should have tree result");
+                    assert(
+                        result.summaryRefSeq === summaryRefSeq,
+                        "summary ref seq should be the same as the one passed in",
+                    );
+                });
 
-				it("Should not refresh latest if already passed ref seq number", async () => {
-					createRoot({ refSeq: summaryRefSeq });
-					const result = await rootNode.refreshLatestSummary(
-						undefined,
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === false, "we already got this summary");
-				});
+                it("Should not refresh latest if already passed ref seq number", async () => {
+                    createRoot({ refSeq: summaryRefSeq });
+                    const result = await rootNode.refreshLatestSummary(
+                        undefined,
+                        summaryRefSeq,
+                        fetchLatestSnapshot,
+                        readAndParseBlob,
+                        logger,
+                    );
+                    assert(result.latestSummaryUpdated === false, "we already got this summary");
+                });
 
-				it("Should refresh from pending", async () => {
-					createRoot();
-					const proposalHandle = "test-handle";
+                it("Should refresh from pending", async () => {
+                    createRoot();
+                    const proposalHandle = "test-handle";
 
-					rootNode.startSummary(10, logger);
-					await rootNode.summarize(false);
-					rootNode.completeSummary(proposalHandle);
+                    rootNode.startSummary(10, logger);
+                    await rootNode.summarize(false);
+                    rootNode.completeSummary(proposalHandle);
 
-					const result = await rootNode.refreshLatestSummary(
-						proposalHandle,
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === true, "should be tracked");
-				});
-			});
+                    const result = await rootNode.refreshLatestSummary(
+                        proposalHandle,
+                        summaryRefSeq,
+                        fetchLatestSnapshot,
+                        readAndParseBlob,
+                        logger,
+                    );
+                    assert(result.latestSummaryUpdated === true, "should update");
+                    assert(result.wasSummaryTracked === true, "should be tracked");
+                });
+            });
         });
     });
 });

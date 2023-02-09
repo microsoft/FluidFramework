@@ -2828,166 +2828,166 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-	/** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
-	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
-		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
-		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		// The call to fetch the snapshot is very expensive and not always needed.
-		// It should only be done by the summarizerNode, if required.
-		// When fetching from storage we will always get the latest version and do not use the ackHandle.
-		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			const fetchResult = await this.fetchLatestSnapshotFromStorage(
-				summaryLogger,
-				{
-					eventName: "RefreshLatestSummaryAckFetch",
-					ackHandle,
-					targetSequenceNumber: summaryRefSeq,
-				},
-				readAndParseBlob,
-			);
+    /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
+    public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
+        const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
+        const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
+        // The call to fetch the snapshot is very expensive and not always needed.
+        // It should only be done by the summarizerNode, if required.
+        // When fetching from storage we will always get the latest version and do not use the ackHandle.
+        const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
+            const fetchResult = await this.fetchLatestSnapshotFromStorage(
+                summaryLogger,
+                {
+                    eventName: "RefreshLatestSummaryAckFetch",
+                    ackHandle,
+                    targetSequenceNumber: summaryRefSeq,
+                },
+                readAndParseBlob,
+            );
 
-			/**
-			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
-			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
-			 * However, there are couple of scenarios where it's possible:
-			 * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
-			 * the document being unusable and we should not proceed.
-			 * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
-			 * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
-			 * state.
-			 */
-			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				const error = DataProcessingError.create(
-					"Fetched snapshot is older than the received ack",
-					"RefreshLatestSummaryAck",
-					undefined /* sequencedMessage */,
-					{
-						ackHandle,
-						summaryRefSeq,
-						latestSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-					},
-				);
-				this.closeFn(error);
-				throw error;
-			}
+            /**
+             * If the fetched snapshot is older than the one for which the ack was received, close the container.
+             * This should never happen because an ack should be sent after the latest summary is updated in the server.
+             * However, there are couple of scenarios where it's possible:
+             * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
+             * the document being unusable and we should not proceed.
+             * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
+             * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
+             * state.
+             */
+            if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
+                const error = DataProcessingError.create(
+                    "Fetched snapshot is older than the received ack",
+                    "RefreshLatestSummaryAck",
+                    undefined /* sequencedMessage */,
+                    {
+                        ackHandle,
+                        summaryRefSeq,
+                        latestSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+                    },
+                );
+                this.closeFn(error);
+                throw error;
+            }
 
-			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
-			// wait for the delta manager to catch up before refreshing the latest Summary.
-			await this.waitForDeltaManagerToCatchup(
-				fetchResult.latestSnapshotRefSeq,
-				summaryLogger,
-			);
+            // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
+            // wait for the delta manager to catch up before refreshing the latest Summary.
+            await this.waitForDeltaManagerToCatchup(
+                fetchResult.latestSnapshotRefSeq,
+                summaryLogger,
+            );
 
-			return {
-				snapshotTree: fetchResult.snapshotTree,
-				snapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-			};
-		};
+            return {
+                snapshotTree: fetchResult.snapshotTree,
+                snapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+            };
+        };
 
-		const result = await this.summarizerNode.refreshLatestSummary(
-			proposalHandle,
-			summaryRefSeq,
-			fetchLatestSnapshot,
-			readAndParseBlob,
-			summaryLogger,
-		);
+        const result = await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            summaryRefSeq,
+            fetchLatestSnapshot,
+            readAndParseBlob,
+            summaryLogger,
+        );
 
-		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(proposalHandle, result, readAndParseBlob);
-	}
+        // Notify the garbage collector so it can update its latest summary state.
+        await this.garbageCollector.refreshLatestSummary(proposalHandle, result, readAndParseBlob);
+    }
 
-	/**
-	 * Fetches the latest snapshot from storage and uses it to refresh SummarizerNode's
-	 * internal state as it should be considered the latest summary ack.
-	 * @param summaryLogger - logger to use when fetching snapshot from storage
-	 * @returns downloaded snapshot's reference sequence number
-	 */
-	private async refreshLatestSummaryAckFromServer(
-		summaryLogger: ITelemetryLogger,
-	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
-		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const { snapshotTree, versionId, latestSnapshotRefSeq } =
-			await this.fetchLatestSnapshotFromStorage(
-				summaryLogger,
-				{
-					eventName: "RefreshLatestSummaryFromServerFetch",
-				},
-				readAndParseBlob,
-			);
-		const fetchLatestSnapshot: IFetchSnapshotResult = {
-			snapshotTree,
-			snapshotRefSeq: latestSnapshotRefSeq,
-		};
-		const result = await this.summarizerNode.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			latestSnapshotRefSeq,
-			async () => fetchLatestSnapshot,
-			readAndParseBlob,
-			summaryLogger,
-		);
+    /**
+     * Fetches the latest snapshot from storage and uses it to refresh SummarizerNode's
+     * internal state as it should be considered the latest summary ack.
+     * @param summaryLogger - logger to use when fetching snapshot from storage
+     * @returns downloaded snapshot's reference sequence number
+     */
+    private async refreshLatestSummaryAckFromServer(
+        summaryLogger: ITelemetryLogger,
+    ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
+        const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
+        const { snapshotTree, versionId, latestSnapshotRefSeq } =
+            await this.fetchLatestSnapshotFromStorage(
+                summaryLogger,
+                {
+                    eventName: "RefreshLatestSummaryFromServerFetch",
+                },
+                readAndParseBlob,
+            );
+        const fetchLatestSnapshot: IFetchSnapshotResult = {
+            snapshotTree,
+            snapshotRefSeq: latestSnapshotRefSeq,
+        };
+        const result = await this.summarizerNode.refreshLatestSummary(
+            undefined /* proposalHandle */,
+            latestSnapshotRefSeq,
+            async () => fetchLatestSnapshot,
+            readAndParseBlob,
+            summaryLogger,
+        );
 
-		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			result,
-			readAndParseBlob,
-		);
+        // Notify the garbage collector so it can update its latest summary state.
+        await this.garbageCollector.refreshLatestSummary(
+            undefined /* proposalHandle */,
+            result,
+            readAndParseBlob,
+        );
 
-		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
-	}
+        return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
+    }
 
-	private async fetchLatestSnapshotFromStorage(
-		logger: ITelemetryLogger,
-		event: ITelemetryGenericEvent,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return PerformanceEvent.timedExecAsync(
-			logger,
-			event,
-			async (perfEvent: {
-				end: (arg0: {
-					getVersionDuration?: number | undefined;
-					getSnapshotDuration?: number | undefined;
-					snapshotRefSeq?: number | undefined;
-					snapshotVersion?: string | undefined;
-				}) => void;
-			}) => {
-				const stats: {
-					getVersionDuration?: number;
-					getSnapshotDuration?: number;
-					snapshotRefSeq?: number;
-					snapshotVersion?: string;
-				} = {};
-				const trace = Trace.start();
+    private async fetchLatestSnapshotFromStorage(
+        logger: ITelemetryLogger,
+        event: ITelemetryGenericEvent,
+        readAndParseBlob: ReadAndParseBlob,
+    ): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
+        return PerformanceEvent.timedExecAsync(
+            logger,
+            event,
+            async (perfEvent: {
+                end: (arg0: {
+                    getVersionDuration?: number | undefined;
+                    getSnapshotDuration?: number | undefined;
+                    snapshotRefSeq?: number | undefined;
+                    snapshotVersion?: string | undefined;
+                }) => void;
+            }) => {
+                const stats: {
+                    getVersionDuration?: number;
+                    getSnapshotDuration?: number;
+                    snapshotRefSeq?: number;
+                    snapshotVersion?: string;
+                } = {};
+                const trace = Trace.start();
 
-				const versions = await this.storage.getVersions(
-					null,
-					1,
-					"refreshLatestSummaryAckFromServer",
-					FetchSource.noCache,
-				);
-				assert(
-					!!versions && !!versions[0],
-					0x137 /* "Failed to get version from storage" */,
-				);
-				stats.getVersionDuration = trace.trace().duration;
+                const versions = await this.storage.getVersions(
+                    null,
+                    1,
+                    "refreshLatestSummaryAckFromServer",
+                    FetchSource.noCache,
+                );
+                assert(
+                    !!versions && !!versions[0],
+                    0x137 /* "Failed to get version from storage" */,
+                );
+                stats.getVersionDuration = trace.trace().duration;
 
-				const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-				assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-				stats.getSnapshotDuration = trace.trace().duration;
-				const latestSnapshotRefSeq = await seqFromTree(maybeSnapshot, readAndParseBlob);
-				stats.snapshotRefSeq = latestSnapshotRefSeq;
-				stats.snapshotVersion = versions[0].id;
+                const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+                assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+                stats.getSnapshotDuration = trace.trace().duration;
+                const latestSnapshotRefSeq = await seqFromTree(maybeSnapshot, readAndParseBlob);
+                stats.snapshotRefSeq = latestSnapshotRefSeq;
+                stats.snapshotVersion = versions[0].id;
 
-				perfEvent.end(stats);
-				return {
-					snapshotTree: maybeSnapshot,
-					versionId: versions[0].id,
-					latestSnapshotRefSeq,
-				};
-			},
-		);
-	}
+                perfEvent.end(stats);
+                return {
+                    snapshotTree: maybeSnapshot,
+                    versionId: versions[0].id,
+                    latestSnapshotRefSeq,
+                };
+            },
+        );
+    }
 
     public notifyAttaching(snapshot: ISnapshotTreeWithBlobContents) {
         if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
