@@ -6,6 +6,7 @@
 import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
+import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
@@ -23,7 +24,6 @@ import {
 	createAndAttachContainer,
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
-import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';

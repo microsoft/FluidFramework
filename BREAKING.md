@@ -51,6 +51,7 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 -   [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
 -   [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
 -   [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
+-   [test-drivers and test-pairwise-generator packages no longer published](#test-drivers-and-test-pairwise-generator-packages-no-longer-published)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 
@@ -141,6 +142,10 @@ Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDet
 ### Remove deprecated experimental get-container package
 
 The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
+
+### test-drivers and test-pairwise-generator packages no longer published
+
+These packages were previously published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These have been moved to the `@fluid-internal` scope and are no longer published.
 
 # 2.0.0-internal.2.4.0
 

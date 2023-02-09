@@ -79,6 +79,7 @@
 	},
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/test-pairwise-generator": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-tools/benchmark": "^0.45.0",
 		"@fluid-tools/build-cli": "^0.9.0-127618",
 		"@fluidframework/build-common": "^1.1.0",
@@ -86,7 +87,6 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.3.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-pairwise-generator": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
 		"@rushstack/eslint-config": "^2.5.1",
