@@ -15,23 +15,17 @@ export function convertSortedNumberArrayToRanges(numberArray: number[]): number[
     }
     let begin: number = numberArray[0];
     let end: number = numberArray[0];
-    let count = 0;
     for (let i = 1; i < numberArray.length; i++) {
         const elem = numberArray[i];
-        count++;
-        if (elem - begin !== count) {
+        if (elem - end !== 1) {
             ranges.push([begin, end]);
-            count = 0;
             begin = elem;
             end = elem;
         } else {
             end = elem;
         }
     }
-
-    if (begin !== undefined) {
-        ranges.push([begin, end]);
-    }
-
+    // Last range
+    ranges.push([begin, end]);
     return ranges;
 }
