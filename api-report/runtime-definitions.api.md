@@ -427,6 +427,7 @@ export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    setAll(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public

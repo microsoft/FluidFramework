@@ -2303,11 +2303,13 @@ export class ContainerRuntime
 
 		const telemetryContext = new TelemetryContext();
 		// Add the options that are used to generate this summary to the telemetry context.
-		telemetryContext.set(
-			"fluid_Summarize",
-			"Options",
-			JSON.stringify({ fullTree, trackState, runGC, fullGC, runSweep }),
-		);
+		telemetryContext.setAll("fluid_Summarize", "Options", {
+			fullTree,
+			trackState,
+			runGC,
+			fullGC,
+			runSweep,
+		});
 
 		let gcStats: IGCStats | undefined;
 		if (runGC) {

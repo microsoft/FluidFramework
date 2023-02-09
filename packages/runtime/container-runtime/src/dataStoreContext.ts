@@ -397,7 +397,6 @@ export abstract class FluidDataStoreContext
 						value: JSON.stringify(this.pkg),
 						tag: TelemetryDataTag.CodeArtifact,
 					},
-					stack: generateStack(),
 				});
 				this.channelDeferred?.reject(errorWrapped);
 				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
