@@ -10,7 +10,7 @@ import {
 	TaskSubscription,
 } from "@fluidframework/agent-scheduler";
 import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
@@ -241,16 +241,16 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 	});
 
 	describe("State transitions", () => {
-		let container1: Container;
-		let container2: Container;
+		let container1: IContainer;
+		let container2: IContainer;
 		let scheduler1: IAgentScheduler;
 		let scheduler2: IAgentScheduler;
 
 		beforeEach(async () => {
-			container1 = (await createContainer()) as Container;
+			container1 = await createContainer();
 			scheduler1 = await requestFluidObject<IAgentScheduler>(container1, "default");
 
-			container2 = (await loadContainer()) as Container;
+			container2 = await loadContainer();
 			scheduler2 = await requestFluidObject<IAgentScheduler>(container2, "default");
 		});
 
@@ -288,7 +288,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 			assert.strict(taskSubscription.haveTask(), "Failed to get task in write mode");
 
 			// Forcing readonly should cause us to drop the task
-			container1.forceReadonly(true);
+			container1.forceReadonly?.(true);
 			await provider.ensureSynchronized();
 
 			assert.strict(!taskSubscription.haveTask(), "Still have task after forcing readonly");

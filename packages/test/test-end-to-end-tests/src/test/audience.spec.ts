@@ -9,7 +9,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { Container } from "@fluidframework/container-loader";
+
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
@@ -19,6 +19,7 @@ import {
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 
 class TestDataObject extends DataObject {
 	public get _root() {
@@ -44,13 +45,12 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 		},
 	);
 
-	const createContainer = async (): Promise<Container> =>
-		(await provider.createContainer(runtimeFactory)) as Container;
-	const loadContainer = async (): Promise<Container> =>
-		(await provider.loadContainer(runtimeFactory)) as Container;
+	const createContainer = async (): Promise<IContainer> =>
+		provider.createContainer(runtimeFactory);
+	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
 
 	/** Function to wait for a client with the given clientId to be added to the audience of the given container. */
-	async function waitForClientAdd(container: Container, clientId: string, errorMsg: string) {
+	async function waitForClientAdd(container: IContainer, clientId: string, errorMsg: string) {
 		if (container.audience.getMember(clientId) === undefined) {
 			return timeoutPromise(
 				(resolve) => {
@@ -74,7 +74,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	}
 
 	/** Function to wait for a client with the given clientId to be remove from the audience of the given container. */
-	async function waitForClientRemove(container: Container, clientId: string, errorMsg: string) {
+	async function waitForClientRemove(container: IContainer, clientId: string, errorMsg: string) {
 		if (container.audience.getMember(clientId) !== undefined) {
 			return timeoutPromise(
 				(resolve) => {

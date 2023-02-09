@@ -1756,7 +1756,7 @@ export class Container
 				),
 		);
 
-		// Disable inbound queues as Container is not ready to accept any ops until we are fully loaded!
+		// Disable inbound queues is not ready to accept any ops until we are fully loaded!
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		deltaManager.inbound.pause();
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises

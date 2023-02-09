@@ -4,7 +4,7 @@
  */
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {
 	IDocumentMessage,
@@ -123,7 +123,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			// Received the no op back, update the record if we are tracking
 			if (
 				canBeCoalescedByService(message) &&
-				message.clientId === (container as Container).clientId &&
+				message.clientId === container.clientId &&
 				record.trailingNoOps !== 0 &&
 				record.startTrailingNoOps <= message.clientSequenceNumber
 			) {
@@ -287,9 +287,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		// All the clientId we track should be a superset of the quorum, otherwise, we are missing
 		// leave messages
 		const openedDocuments = Array.from(this.containers.keys()).filter((c) => !c.closed);
-		const openedClientId = openedDocuments.map(
-			(container) => (container as Container).clientId,
-		);
+		const openedClientId = openedDocuments.map((container) => container.clientId);
 
 		const pendingClients: [IContainer, Set<string>][] = [];
 		containersToApply.forEach((container) => {
@@ -375,7 +373,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 */
 	private async waitForPendingClients(pendingClients: [IContainer, Set<string>][]) {
 		const unconnectedClients = Array.from(this.containers.keys()).filter(
-			(c) => !c.closed && !(c as Container).connected,
+			(c) => !c.closed && c.connectionState !== ConnectionState.Connected,
 		);
 		return Promise.all(
 			pendingClients.map(async ([container, pendingClientId]) => {
@@ -546,7 +544,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		const inHandler = (message: ISequencedDocumentMessage) => {
 			if (
 				!canBeCoalescedByService(message) &&
-				message.clientId === (container as Container).clientId &&
+				message.clientId === container.clientId &&
 				inflightTracker.get(container) === message.clientSequenceNumber
 			) {
 				inflightTracker.delete(container);
@@ -600,7 +598,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 					return `${e.message}: ${e.stack}`;
 				}
 			};
-			debugOp(`${index}: ADD: clientId: ${(container as Container).clientId}`);
+			debugOp(`${index}: ADD: clientId: ${container.clientId}`);
 			container.deltaManager.outbound.on("op", (messages) => {
 				for (const msg of messages) {
 					debugOp(
@@ -614,7 +612,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			const getInboundHandler = (type: string) => {
 				return (msg: ISequencedDocumentMessage) => {
 					const clientSeq =
-						msg.clientId === (container as Container).clientId
+						msg.clientId === container.clientId
 							? `cli: ${msg.clientSequenceNumber.toString().padStart(3)}`
 							: "        ";
 					debugOp(
