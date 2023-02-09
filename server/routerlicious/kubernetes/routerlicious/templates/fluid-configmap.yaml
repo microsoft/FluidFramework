@@ -146,7 +146,8 @@ data:
                 "idleTime": {{ .Values.scribe.checkpointHeuristics.idleTime }},
                 "maxTime": {{ .Values.scribe.checkpointHeuristics.maxTime }},
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
-            }
+            },
+            "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }}
         },
         "system": {
             "httpServer": {
