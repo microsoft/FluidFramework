@@ -177,7 +177,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 			assert(repair !== undefined, 0x47d /* No repair data found */);
 			const cursor = repair.cursor();
 			// TODO: leverage TreeChunk's ability to represent a range of contiguous nodes
-			assert(cursor.getFieldLength() === 1, "only one node should have been chunked");
+			assert(
+				cursor.getFieldLength() === 1,
+				0x55b /* only one node should have been chunked */,
+			);
 			cursor.firstNode();
 			return cursor;
 		});
