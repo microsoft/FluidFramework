@@ -168,12 +168,12 @@ export async function performFuzzActionsAbort(
 
 export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 	const tree0 = provider.trees[0];
+	const readCursor = tree0.forest.allocateCursor();
+	moveToDetachedField(tree0.forest, readCursor);
+	const tree0Jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
 	for (let i = 1; i < 4; i++) {
-		const readCursor = provider.trees[i].forest.allocateCursor();
-		moveToDetachedField(provider.trees[i].forest, readCursor);
-		const currentTree = mapCursorField(readCursor, jsonableTreeFromCursor);
 		readCursor.free();
-		validateTree(tree0, currentTree);
+		validateTree(provider.trees[i], tree0Jsonable);
 	}
 }
 
