@@ -51,7 +51,7 @@ describe("Document Dirty", () => {
 		 * Waits for the "connected" event from the given container.
 		 */
 		async function waitForContainerReconnection(c: IContainer): Promise<void> {
-			assert.equal(c.connectionState, ConnectionState.Connected);
+			assert.notStrictEqual(c.connectionState, ConnectionState.Connected);
 			return waitForContainerConnection(c, true);
 		}
 
