@@ -9,16 +9,16 @@ import { markRangeRemoved } from "./testUtils";
 import { loadSnapshot, TestString } from "./snapshot.utils";
 
 describe("removal perf", () => {
-    let summary;
+	let summary;
 
 	benchmark({
 		type: BenchmarkType.Measurement,
 		// baseline summary benchmark to compare to other remove tests. such a
-        // comparison should give a (rough) sense of overhead caused by summary
-        // loading
-        title: "baseline summary load",
-        category: "remove",
-        before: () => {
+		// comparison should give a (rough) sense of overhead caused by summary
+		// loading
+		title: "baseline summary load",
+		category: "remove",
+		before: () => {
 			const str = new TestString("id", {});
 			for (let i = 0; i < 1000; i++) {
 				str.append("a", false);
@@ -27,15 +27,15 @@ describe("removal perf", () => {
 			summary = str.getSummary();
 		},
 		benchmarkFn: async () => {
-            await loadSnapshot(summary);
+			await loadSnapshot(summary);
 		},
 	});
 
-    benchmark({
+	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "remove large range of large tree",
-        category: "remove",
-        before: () => {
+		category: "remove",
+		before: () => {
 			const str = new TestString("id", {});
 			for (let i = 0; i < 1000; i++) {
 				str.append("a", false);
@@ -44,9 +44,9 @@ describe("removal perf", () => {
 			summary = str.getSummary();
 		},
 		benchmarkFn: async () => {
-            const str = await loadSnapshot(summary);
+			const str = await loadSnapshot(summary);
 
-            markRangeRemoved({
+			markRangeRemoved({
 				mergeTree: str.mergeTree,
 				start: 0,
 				end: 1000,
@@ -62,8 +62,8 @@ describe("removal perf", () => {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "remove start of large tree",
-        category: "remove",
-        before: () => {
+		category: "remove",
+		before: () => {
 			const str = new TestString("id", {});
 			for (let i = 0; i < 1000; i++) {
 				str.append("a", false);
@@ -72,7 +72,7 @@ describe("removal perf", () => {
 			summary = str.getSummary();
 		},
 		benchmarkFn: async () => {
-            const str = await loadSnapshot(summary);
+			const str = await loadSnapshot(summary);
 
 			markRangeRemoved({
 				mergeTree: str.mergeTree,
@@ -90,8 +90,8 @@ describe("removal perf", () => {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "remove middle of large tree",
-        category: "remove",
-        before: () => {
+		category: "remove",
+		before: () => {
 			const str = new TestString("id", {});
 			for (let i = 0; i < 1000; i++) {
 				str.append("a", false);
@@ -100,7 +100,7 @@ describe("removal perf", () => {
 			summary = str.getSummary();
 		},
 		benchmarkFn: async () => {
-            const str = await loadSnapshot(summary);
+			const str = await loadSnapshot(summary);
 
 			markRangeRemoved({
 				mergeTree: str.mergeTree,
@@ -118,8 +118,8 @@ describe("removal perf", () => {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "remove end of large tree",
-        category: "remove",
-        before: () => {
+		category: "remove",
+		before: () => {
 			const str = new TestString("id", {});
 			for (let i = 0; i < 1000; i++) {
 				str.append("a", false);
@@ -128,7 +128,7 @@ describe("removal perf", () => {
 			summary = str.getSummary();
 		},
 		benchmarkFn: async () => {
-            const str = await loadSnapshot(summary);
+			const str = await loadSnapshot(summary);
 
 			markRangeRemoved({
 				mergeTree: str.mergeTree,
