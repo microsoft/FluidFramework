@@ -209,7 +209,7 @@ function applyMoveEffectsToDest<T>(
 	);
 	const result: Mark<T>[] = [];
 
-	assert(effect.modifyAfter === undefined, "Cannot modify move destination");
+	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
 	if (effect.mark !== undefined) {
 		result.push(effect.mark);
 	} else {
@@ -236,7 +236,7 @@ function applyMoveEffectsToDest<T>(
 			mark.revision ?? revision,
 			effect.child,
 		);
-		assert(childEffect.count !== undefined, "Child effects should have size");
+		assert(childEffect.count !== undefined, 0x567 /* Child effects should have size */);
 
 		const newMark: Mark<T> = {
 			...mark,
@@ -245,7 +245,10 @@ function applyMoveEffectsToDest<T>(
 		};
 
 		if (mark.type === "ReturnTo" && mark.detachIndex !== undefined) {
-			assert(effect.count !== undefined, "Should define count when splitting a mark");
+			assert(
+				effect.count !== undefined,
+				0x568 /* Should define count when splitting a mark */,
+			);
 			(newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
 		}
 
@@ -282,7 +285,7 @@ function applyMoveEffectsToSource<T>(
 		if (effect.modifyAfter !== undefined) {
 			assert(
 				composeChildren !== undefined,
-				"Must provide a change composer if modifying moves",
+				0x569 /* Must provide a change composer if modifying moves */,
 			);
 			const changes = composeChildren(newMark.changes, effect.modifyAfter);
 			if (changes !== undefined) {
@@ -292,7 +295,10 @@ function applyMoveEffectsToSource<T>(
 			}
 		}
 		if (effect.pairedMarkStatus !== undefined) {
-			assert(newMark.type === "ReturnFrom", "TODO: support updating MoveOut.isSrcConflicted");
+			assert(
+				newMark.type === "ReturnFrom",
+				0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
+			);
 			if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
 				newMark.isDstConflicted = true;
 			} else {
@@ -309,14 +315,17 @@ function applyMoveEffectsToSource<T>(
 			mark.revision ?? revision,
 			effect.child,
 		);
-		assert(childEffect.count !== undefined, "Child effects should have size");
+		assert(childEffect.count !== undefined, 0x56b /* Child effects should have size */);
 		const newMark: MoveOut<T> | ReturnFrom<T> = {
 			...mark,
 			id: effect.child,
 			count: childEffect.count,
 		};
 		if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
-			assert(effect.count !== undefined, "Should define count when splitting a mark");
+			assert(
+				effect.count !== undefined,
+				0x56c /* Should define count when splitting a mark */,
+			);
 			(newMark as ReturnFrom).detachIndex = mark.detachIndex + effect.count;
 		}
 		result.push(
