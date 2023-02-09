@@ -16,7 +16,10 @@ import {
 } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 
-import { SmdeDataObject, SmdeFactory, SmdeView } from "./smde";
+import React from "react";
+
+import { SmdeDataObject, SmdeFactory } from "./smde";
+import { SmdeReactView } from "./smdeView";
 
 const defaultComponentId = "default";
 
@@ -35,7 +38,9 @@ const viewRequestHandler = async (request: RequestParser, runtime: IContainerRun
 		return {
 			status: 200,
 			mimeType: "fluid/view",
-			value: new SmdeView(smdeDataObject),
+			value: React.createElement(SmdeReactView, {
+				smdeDataObject,
+			}),
 		};
 	}
 };
