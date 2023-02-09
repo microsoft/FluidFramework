@@ -13,6 +13,7 @@ import {
     NetworkError,
     isNetworkError,
     validateTokenClaimsExpiration,
+    canRevokeToken,
 } from "@fluidframework/server-services-client";
 import type { ICache, ITenantManager } from "@fluidframework/server-services-core";
 import type { RequestHandler, Response } from "express";
@@ -142,6 +143,14 @@ export function verifyStorageToken(
             return respondWithNetworkError(res, new NetworkError(403, "Missing access token."));
         }
         const token = tokenMatch[1];
+
+       /*
+        const token = res.locals.token;
+        if (!token) {
+            return respondWithNetworkError(res, new NetworkError(403, "Missing access token."));
+        }
+        */
+
         const tenantId = getParam(request.params, "tenantId");
         if (!tenantId) {
             return respondWithNetworkError(res, new NetworkError(403, "Missing tenantId in request."));
@@ -198,6 +207,42 @@ export function verifyStorageToken(
                     error,
                 );
             });
+        }
+        next();
+    };
+}
+
+export function getTokenFromRequest(): RequestHandler {
+    return async (request, response, next) => {
+        const authorizationHeader = request.header("Authorization");
+        if (!authorizationHeader) {
+            return respondWithNetworkError(response, new NetworkError(403, "Missing Authorization header."));
+        }
+        const tokenRegex = /Basic (.+)/;
+        const tokenMatch = tokenRegex.exec(authorizationHeader);
+        if (!tokenMatch || !tokenMatch[1]) {
+            return respondWithNetworkError(response, new NetworkError(403, "Missing access token."));
+        }
+        const token = tokenMatch[1];
+        response.locals.token = token;
+        next();
+    };
+}
+
+export function validateTokenRevocationClaims(): RequestHandler {
+    return async (request, response, next) => {
+        const token: string = response.locals.token;
+        if (!token) {
+            return respondWithNetworkError(response, new NetworkError(403, "Missing access token."));
+        }
+
+        const claims = decode(token) as ITokenClaims;
+        if (!claims) {
+            return respondWithNetworkError(response, new NetworkError(403, "Missing token claims."));
+        }
+
+        if (claims.scopes === undefined || claims.scopes.length === 0 || !canRevokeToken(claims.scopes)) {
+            return respondWithNetworkError(response, new NetworkError(403, "Missing scopes in token claims."));
         }
         next();
     };

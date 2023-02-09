@@ -18,6 +18,7 @@ import {
     throttle,
     IThrottleMiddlewareOptions,
     getParam,
+    getTokenFromRequest,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -170,6 +171,23 @@ export function create(
                 sessionStickinessDurationMs,
             );
             handleResponse(session, response, false);
+        });
+
+    /**
+     * Revoke an access token
+     */
+    router.post(
+        "/:tenantId/document/:id/revokeToken",
+        validateRequestParams("tenantId", "id"),
+        getTokenFromRequest(),
+        verifyStorageToken(tenantManager, config, {
+            requireDocumentId: false,
+            ensureSingleUseToken: true,
+            singleUseTokenCache,
+        }),
+        throttle(throttler, winston, commonThrottleOptions),
+        async (request, response, next) => {
+
         });
     return router;
 }
