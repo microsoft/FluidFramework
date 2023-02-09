@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
@@ -15,12 +16,6 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-
-// @alpha
-export interface AttributionKey {
-    seq: number;
-    type: "op";
-}
 
 // @alpha
 export interface ICellAttributionOptions {
@@ -53,7 +48,7 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 // @public
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
     // @alpha
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options?: ICellOptions);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;

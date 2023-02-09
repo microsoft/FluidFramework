@@ -13,7 +13,6 @@ export { SharedCell } from "./cell";
 export {
 	ISharedCell,
 	ISharedCellEvents,
-	AttributionKey,
 	ICellOptions,
 	ICellAttributionOptions,
 } from "./interfaces";
