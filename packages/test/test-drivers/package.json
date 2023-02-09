@@ -58,6 +58,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/test-pairwise-generator": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/common-utils": "^1.0.0",
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
@@ -71,7 +72,6 @@
 		"@fluidframework/routerlicious-driver": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/server-local-server": "^0.1038.2000",
 		"@fluidframework/test-driver-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-pairwise-generator": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/tinylicious-driver": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/tool-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
