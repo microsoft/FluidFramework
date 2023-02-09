@@ -301,66 +301,66 @@ describe("Runtime", () => {
                 });
             });
 
-            describe("Refresh Latest Summary", () => {
-                it("Should refresh from tree when no proposal handle provided", async () => {
-                    createRoot();
-                    const result = await rootNode.refreshLatestSummary(
-                        undefined,
-                        summaryRefSeq,
-                        getSnapshot,
-                        readAndParseBlob,
-                        logger,
-                    );
-                    assert(result.latestSummaryUpdated === true, "should update");
-                    assert(result.wasSummaryTracked === false, "should not be tracked");
-                    assert(result.snapshot !== undefined, "should have tree result");
-                });
+			describe("Refresh Latest Summary", () => {
+				it("Should refresh from tree when no proposal handle provided", async () => {
+					createRoot();
+					const result = await rootNode.refreshLatestSummary(
+						undefined,
+						summaryRefSeq,
+						getSnapshot,
+						readAndParseBlob,
+						logger,
+					);
+					assert(result.latestSummaryUpdated === true, "should update");
+					assert(result.wasSummaryTracked === false, "should not be tracked");
+					assert(result.snapshot !== undefined, "should have tree result");
+				});
 
-                it("Should refresh from tree when proposal handle not pending", async () => {
-                    createRoot();
-                    const result = await rootNode.refreshLatestSummary(
-                        "test-handle",
-                        summaryRefSeq,
-                        getSnapshot,
-                        readAndParseBlob,
-                        logger,
-                    );
-                    assert(result.latestSummaryUpdated === true, "should update");
-                    assert(result.wasSummaryTracked === false, "should not be tracked");
-                    assert(result.snapshot !== undefined, "should have tree result");
-                });
+				it("Should refresh from tree when proposal handle not pending", async () => {
+					createRoot();
+					const result = await rootNode.refreshLatestSummary(
+						"test-handle",
+						summaryRefSeq,
+						getSnapshot,
+						readAndParseBlob,
+						logger,
+					);
+					assert(result.latestSummaryUpdated === true, "should update");
+					assert(result.wasSummaryTracked === false, "should not be tracked");
+					assert(result.snapshot !== undefined, "should have tree result");
+				});
 
-                it("Should not refresh latest if already passed ref seq number", async () => {
-                    createRoot({ refSeq: summaryRefSeq });
-                    const result = await rootNode.refreshLatestSummary(
-                        undefined,
-                        summaryRefSeq,
-                        getSnapshot,
-                        readAndParseBlob,
-                        logger,
-                    );
-                    assert(result.latestSummaryUpdated === false, "we already got this summary");
-                });
+				it("Should not refresh latest if already passed ref seq number", async () => {
+					createRoot({ refSeq: summaryRefSeq });
+					const result = await rootNode.refreshLatestSummary(
+						undefined,
+						summaryRefSeq,
+						getSnapshot,
+						readAndParseBlob,
+						logger,
+					);
+					assert(result.latestSummaryUpdated === false, "we already got this summary");
+				});
 
-                it("Should refresh from pending", async () => {
-                    createRoot();
-                    const proposalHandle = "test-handle";
+				it("Should refresh from pending", async () => {
+					createRoot();
+					const proposalHandle = "test-handle";
 
-                    rootNode.startSummary(10, logger);
-                    await rootNode.summarize(false);
-                    rootNode.completeSummary(proposalHandle);
+					rootNode.startSummary(10, logger);
+					await rootNode.summarize(false);
+					rootNode.completeSummary(proposalHandle);
 
-                    const result = await rootNode.refreshLatestSummary(
-                        proposalHandle,
-                        summaryRefSeq,
-                        getSnapshot,
-                        readAndParseBlob,
-                        logger,
-                    );
-                    assert(result.latestSummaryUpdated === true, "should update");
-                    assert(result.wasSummaryTracked === true, "should be tracked");
-                });
-            });
+					const result = await rootNode.refreshLatestSummary(
+						proposalHandle,
+						summaryRefSeq,
+						getSnapshot,
+						readAndParseBlob,
+						logger,
+					);
+					assert(result.latestSummaryUpdated === true, "should update");
+					assert(result.wasSummaryTracked === true, "should be tracked");
+				});
+			});
         });
     });
 });
