@@ -446,19 +446,29 @@ stages:
             script: |
               echo OPANICHOC
               FLUID_TEST_LOGGER_PKG_PATH=`${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`
-
+              echo $FLUID_TEST_LOGGER_PKG_PATH
+              FLUID_BUILD_ID=${{ variables.artifactBuildId }}
+              echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
               # Run execution time tests
+              FLUID_ENDPOINTNAME="local"
+              echo $FLUID_ENDPOINTNAME
               npm run test:benchmark:report;
               executionTimeTestsExitCode=$?;
-
+              
+              FLUID_ENDPOINTNAME="odsp"
+              echo $FLUID_ENDPOINTNAME
               npm run test:benchmark:report:odsp;
               executionTimeTestsExitCodeOdsp=$?;
 
 
               # Run memory tests
+              FLUID_ENDPOINTNAME="local"
+              echo $FLUID_ENDPOINTNAME
               npm run test:memory-profiling:report;
               memoryTestsExitCode=$?;
 
+              FLUID_ENDPOINTNAME="odsp"
+              echo $FLUID_ENDPOINTNAME
               npm run test:memory-profiling:report:odsp;
               memoryTestsExitCodeOdsp=$?;
 

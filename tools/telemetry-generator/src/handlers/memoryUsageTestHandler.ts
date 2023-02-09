@@ -4,6 +4,12 @@
  */
 
 module.exports = function handler(fileData, logger) {
+	if (process.env.FLUID_ENDPOINTNAME !== undefined) {
+		console.log("Nichoc ENDPOINTNAME", process.env.FLUID_ENDPOINTNAME);
+	} else {
+		console.log("Nichoc something went south");
+	}
+
 	fileData.tests.forEach((testData) => {
 		logger.send({
 			category: "performance",
