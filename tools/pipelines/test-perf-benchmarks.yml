@@ -444,7 +444,6 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
-              echo OPANICHOC
               FLUID_TEST_LOGGER_PKG_PATH=`${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`
               echo $FLUID_TEST_LOGGER_PKG_PATH
               FLUID_BUILD_ID=${{ variables.artifactBuildId }}
@@ -512,7 +511,6 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
-              echo OPANICHOC
               FLUID_TEST_LOGGER_PKG_PATH=`${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`
               echo $FLUID_TEST_LOGGER_PKG_PATH
               FLUID_BUILD_ID=${{ variables.artifactBuildId }}
@@ -563,7 +561,7 @@ stages:
             FLUID_ENDPOINTNAME: "odsp"
 
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto - memory usage
+          displayName: Write measurements to Aria/Kusto - memory usage odsp
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'

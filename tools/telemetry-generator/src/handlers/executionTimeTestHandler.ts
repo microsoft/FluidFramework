@@ -5,9 +5,9 @@
 
 module.exports = function handler(fileData, logger) {
 	if (process.env.FLUID_ENDPOINTNAME !== undefined) {
-		console.log("Nichoc ENDPOINTNAME", process.env.FLUID_ENDPOINTNAME);
+		console.log("ENDPOINTNAME", process.env.FLUID_ENDPOINTNAME);
 	} else {
-		console.log("Nichoc something went south");
+		console.log("ENDPOINTNAME not defined using local as default.");
 	}
 	fileData.benchmarks.forEach((testData) => {
 		logger.send({
@@ -18,6 +18,7 @@ module.exports = function handler(fileData, logger) {
 			benchmarkName: testData.benchmarkName,
 			arithmeticMean: testData.stats.arithmeticMean,
 			marginOfError: testData.stats.marginOfError,
+			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 		});
 	});
 };
