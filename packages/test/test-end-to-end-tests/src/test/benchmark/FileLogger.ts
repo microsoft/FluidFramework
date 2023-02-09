@@ -17,6 +17,8 @@ const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
+		console.log("process.env.FLUID_TEST_LOGGER_PKG_PATH");
+		console.log(process.env.FLUID_TEST_LOGGER_PKG_PATH);
 		if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
 			await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
 			const logger = getTestLogger?.();
@@ -36,6 +38,8 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		if (process.env.FLUID_BUILD_ID !== undefined) {
 			dimensions.runId = parseInt(process.env.FLUID_BUILD_ID, 10);
 		}
+		console.log("process.env.FLUID_BUILD_ID");
+		console.log(process.env.FLUID_BUILD_ID);
 
 		return ChildLogger.create(await this.loggerP, undefined, {
 			all: dimensions,

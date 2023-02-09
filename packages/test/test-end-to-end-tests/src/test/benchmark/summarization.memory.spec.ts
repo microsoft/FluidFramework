@@ -16,15 +16,6 @@ import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions"
 import { bufferToString } from "@fluidframework/common-utils";
 import { createLogger } from "./FileLogger";
 
-// const _global: any = global;
-// // _global.getTestLogger = () => logger();//
-// _global.getTestLogger = await createLogger({
-// 	runId: undefined,
-// 	driverType: "local",
-// 	driverEndpointName: "endpoint",
-// 	profile: "test",
-// });
-
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
@@ -36,9 +27,6 @@ const testContainerConfig: ITestContainerConfig = {
 			},
 		},
 	},
-	// loaderProps: {
-	// 	logger: _global.getTestLogger,
-	// },
 };
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
@@ -52,6 +40,7 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 	let logger: ITelemetryLogger;
 	before(async () => {
 		provider = getTestObjectProvider();
+		console.log("Creating logger");
 		logger = await createLogger({
 			runId: undefined,
 			driverType: provider.driver.type,
