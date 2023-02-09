@@ -9,6 +9,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SnapshotLegacy } from "../snapshotlegacy";
+import { createInsertOnlyAttributionPolicy } from "../attributionCollection";
 import { TestSerializer } from "./testSerializer";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from ".";
@@ -99,7 +100,12 @@ describe("snapshot", () => {
 		const summaryTree = snapshot.emit([], serializer, undefined!);
 		const services = MockStorage.createFromSummary(summaryTree.summary);
 
-		const roundTripClient = new TestClient({ attribution: { track: true } });
+		const roundTripClient = new TestClient({
+			attribution: {
+				track: true,
+				policyFactory: createInsertOnlyAttributionPolicy,
+			},
+		});
 		const runtime: Partial<IFluidDataStoreRuntime> = {
 			logger: roundTripClient.logger,
 			clientId: "round-trips summary",
@@ -116,7 +122,12 @@ describe("snapshot", () => {
 		const clients = createClientsAtInitialState(
 			{
 				initialState: "",
-				options: { attribution: { track: true } },
+				options: {
+					attribution: {
+						track: true,
+						policyFactory: createInsertOnlyAttributionPolicy,
+					},
+				},
 			},
 			"A",
 			"B",
@@ -149,7 +160,12 @@ describe("snapshot", () => {
 		const clients = createClientsAtInitialState(
 			{
 				initialState: "",
-				options: { attribution: { track: false } },
+				options: {
+					attribution: {
+						track: false,
+						policyFactory: createInsertOnlyAttributionPolicy,
+					},
+				},
 			},
 			"A",
 		);

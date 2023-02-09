@@ -57,6 +57,7 @@
         "maxNumberOfClientsPerDocument": 1000000,
         "numberOfMessagesPerTrace": 100,
         "sessionStickinessDurationMs": 3600000,
+        "enableConnectionCountLogging": false,
         "throttling": {
             "restCalls": {
                 "maxPerMs": 1000000,
@@ -149,7 +150,8 @@
             "idleTime": 10000,
             "maxTime": 60000,
             "maxMessages": 500
-        }
+        },
+        "getDeltasViaAlfred": true
     },
     "system": {
         "httpServer": {

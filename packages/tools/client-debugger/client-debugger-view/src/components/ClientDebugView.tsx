@@ -76,7 +76,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 		return (): void => {
 			container.off("closed", onContainerClose);
 		};
-	}, [clientDebugger, container, setIsContainerClosed]);
+	}, [container, setIsContainerClosed]);
 
 	// UI state
 	const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(

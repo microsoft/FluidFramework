@@ -85,3 +85,4 @@ extends:
     test: test
     tagName: gitrest
     pack: true
+    usesPrettier: false

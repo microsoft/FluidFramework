@@ -39,6 +39,7 @@ import {
     createRoomLeaveMessage,
     generateClientId,
     getRandomInt,
+    ConnectionCountLogger,
 } from "../utils";
 
 const summarizerClientType = "summarizer";
@@ -207,6 +208,7 @@ export function configureWebSocketServices(
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
     isSignalUsageCountingEnabled: boolean = false,
+    cache?: core.ICache,
     connectThrottler?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
     submitSignalThrottler?: core.IThrottler,
@@ -225,6 +227,8 @@ export function configureWebSocketServices(
 
         // Timer to check token expiry for this socket connection
         let expirationTimer: NodeJS.Timer | undefined;
+
+        const connectionCountLogger = new ConnectionCountLogger(process.env.NODE_NAME, cache);
 
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
@@ -318,6 +322,13 @@ export function configureWebSocketServices(
 
             // Join the room to receive signals.
             roomMap.set(clientId, room);
+
+            // increment connection count after the client is added to the room.
+            // excluding summarizer for total client count.
+            if (!isSummarizer) {
+                connectionCountLogger.incrementConnectionCount();
+            }
+
             // Iterate over the version ranges provided by the client and select the best one that works
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
@@ -683,6 +694,10 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the room map
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
+                // excluding summarizer for total client count.
+                if (connectionTimeMap.has(clientId)) {
+                    connectionCountLogger.decrementConnectionCount();
+                }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId} from room`,

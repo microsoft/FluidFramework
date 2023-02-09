@@ -38,11 +38,37 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
+	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
+		if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
+			await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+			const logger = getTestLogger?.();
+			assert(logger !== undefined, "Expected getTestLogger to return something");
+			return new FileLogger(logger);
+		} else {
+			return new FileLogger();
+		}
+	});
+
+	public static async createLogger(dimensions: {
+		driverType: string;
+		driverEndpointName: string | undefined;
+		profile: string | undefined;
+		runId: number | undefined;
+	}) {
+		return ChildLogger.create(await this.loggerP, undefined, {
+			all: dimensions,
+		});
+	}
+
+	public static async flushLogger(runInfo?: { url: string; runId?: number }) {
+		await (await this.loggerP).flush(runInfo);
+	}
+
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
 
-	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
+	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
 		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
 	}
 
@@ -94,16 +120,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	}
 }
 
-export const loggerP = new LazyPromise<FileLogger>(async () => {
-	if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-		const logger = getTestLogger?.();
-		assert(logger !== undefined, "Expected getTestLogger to return something");
-		return new FileLogger(logger);
-	} else {
-		return new FileLogger();
-	}
-});
+export const createLogger = FileLogger.createLogger.bind(FileLogger);
 
 const codeDetails: IFluidCodeDetails = {
 	package: packageName,
@@ -144,6 +161,7 @@ export async function initialize(
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
 	testIdn?: string,
+	profileName?: string,
 ) {
 	const randEng = random.engines.mt19937();
 	randEng.seed(seed);
@@ -164,12 +182,13 @@ export async function initialize(
 		),
 	);
 
-	const logger = ChildLogger.create(await loggerP, undefined, {
-		all: {
-			driverType: testDriver.type,
-			driverEndpointName: testDriver.endpointName,
-		},
+	const logger = await createLogger({
+		driverType: testDriver.type,
+		driverEndpointName: testDriver.endpointName,
+		profile: profileName,
+		runId: undefined,
 	});
+
 	// Construct the loader
 	const loader = new Loader({
 		urlResolver: testDriver.createUrlResolver(),
@@ -197,7 +216,7 @@ export async function initialize(
 			"attachment blobs in detached container not supported on this service",
 		);
 		const ds = await requestFluidObject<ILoadTest>(container, "/");
-		const dsm = await ds.detached({ testConfig, verbose, randEng }, logger);
+		const dsm = await ds.detached({ testConfig, verbose, randEng, logger });
 		await Promise.all(
 			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
 		);
@@ -265,7 +284,7 @@ export async function safeExit(code: number, url: string, runId?: number) {
 		setTimeout(resolve, 1000);
 	});
 	// Flush the logs
-	await loggerP.then(async (l) => l.flush({ url, runId }));
+	await FileLogger.flushLogger({ url, runId });
 
 	process.exit(code);
 }

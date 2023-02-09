@@ -13,7 +13,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 
 const testContainerConfig: ITestContainerConfig = {
@@ -27,8 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 };
 
-// Reenable full compat ADO:2942
-describeNoCompat("Op Compression", (getTestObjectProvider) => {
+describeFullCompat("Op Compression", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let container: Container;
 	let dataObject: ITestFluidObject;

@@ -3,12 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import {
 	TestField,
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite";
-import { EmptyKey, ITreeCursor, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
+import {
+	EmptyKey,
+	ITreeCursor,
+	ITreeCursorSynchronous,
+	JsonableTree,
+	TreeSchemaIdentifier,
+} from "../../../core";
 import {
 	jsonableTreeFromCursor,
 	singleTextCursor,
@@ -22,7 +29,22 @@ import { uniformChunk } from "../../../feature-libraries/chunked-forest";
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
 import { emptyShape, testData } from "./uniformChunkTestData";
 
-describe("basicChunk", () => {
+describe("basic chunk", () => {
+	// TODO: Unskip once BasicChunk implements [cursorChunk]
+	it.skip("calling chunkTree on existing chunk adds a reference", () => {
+		const data: JsonableTree = { type: brand("Foo"), value: "test" };
+		const inputCursor = singleTextCursor(data);
+		const chunk = chunkTree(inputCursor);
+		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
+
+		const chunkCursor = chunk.cursor();
+		const newChunk = chunkTree(chunkCursor);
+		assert(
+			newChunk.isShared() && chunk.isShared(),
+			"chunk created off of existing chunk should be shared",
+		);
+	});
+
 	testGeneralPurposeTreeCursor(
 		"basic chunk cursor",
 		(data): ITreeCursor => {

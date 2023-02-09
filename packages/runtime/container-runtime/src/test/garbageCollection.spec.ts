@@ -47,6 +47,7 @@ import {
 	currentGCVersion,
 	stableGCVersion,
 	gcVersionUpgradeToV2Key,
+	gcTombstoneGenerationOptionName,
 } from "../garbageCollectionConstants";
 
 import {
@@ -131,10 +132,14 @@ describe("Garbage Collection Tests", () => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
 			updateUnusedRoutes: (unusedRoutes: string[]) => {},
+			deleteUnusedNodes: (deletableRoutes: string[]): string[] => {
+				return [];
+			},
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),
 			closeFn,
+			gcTombstoneEnforcementAllowed: true,
 		};
 
 		return GarbageCollector.create({
@@ -256,8 +261,11 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 					sweepTimeoutMs: 123,
+					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
-				gc = createGcWithPrivateMembers(inputMetadata);
+				gc = createGcWithPrivateMembers(inputMetadata, {
+					[gcTombstoneGenerationOptionName]: 2, // 2 should not be persisted
+				});
 				const outputMetadata = gc.getMetadata();
 				const expectedOutputMetadata: IGCMetadata = {
 					...inputMetadata,
@@ -276,6 +284,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 					sweepTimeoutMs: 123,
+					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
 				gc = createGcWithPrivateMembers(inputMetadata);
 				const outputMetadata = gc.getMetadata();
@@ -388,8 +397,12 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 					sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+					gcFeatureMatrix: { tombstoneGeneration: 2 },
 				};
-				gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+				gc = createGcWithPrivateMembers(undefined /* metadata */, {
+					sweepAllowed: true,
+					[gcTombstoneGenerationOptionName]: 2,
+				});
 				const outputMetadata = gc.getMetadata();
 				assert.deepEqual(
 					outputMetadata,
@@ -405,6 +418,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: currentGCVersion,
 					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 					sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+					gcFeatureMatrix: undefined,
 				};
 				gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
 				const outputMetadata = gc.getMetadata();
@@ -534,6 +548,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: 1,
 					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 					sweepTimeoutMs: expectedSweepTimeoutMs,
+					gcFeatureMatrix: undefined,
 				};
 				const outputMetadata = gc.getMetadata();
 				assert.deepEqual(
@@ -1626,11 +1641,11 @@ describe("Garbage Collection Tests", () => {
 			const refreshSummaryResult: RefreshSummaryResult = {
 				latestSummaryUpdated: true,
 				wasSummaryTracked: true,
+				summaryRefSeq: 0,
 			};
 			await garbageCollector.refreshLatestSummary(
-				refreshSummaryResult,
 				undefined,
-				0,
+				refreshSummaryResult,
 				parseNothing,
 			);
 
@@ -2221,9 +2236,8 @@ describe("Garbage Collection Tests", () => {
 			checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
 			await garbageCollector.refreshLatestSummary(
-				{ wasSummaryTracked: true, latestSummaryUpdated: true },
 				undefined,
-				0,
+				{ wasSummaryTracked: true, latestSummaryUpdated: true, summaryRefSeq: 0 },
 				parseNothing,
 			);
 

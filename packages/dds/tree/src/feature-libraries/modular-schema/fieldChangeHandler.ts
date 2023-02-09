@@ -4,7 +4,8 @@
  */
 
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
-import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
+import { Brand, fail, Invariant, JsonCompatibleReadOnly } from "../../util";
+import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -19,7 +20,11 @@ export interface FieldChangeHandler<
 	rebaser: FieldChangeRebaser<TChangeset>;
 	encoder: FieldChangeEncoder<TChangeset>;
 	editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
+	intoDelta(
+		change: TChangeset,
+		deltaFromChild: ToDelta,
+		reviver: NodeReviver,
+	): Delta.FieldChanges;
 }
 
 /**
@@ -38,6 +43,17 @@ export interface FieldChangeRebaser<TChangeset> {
 		changes: TaggedChange<TChangeset>[],
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+	): TChangeset;
+
+	/**
+	 * Amend `composedChange` with respect to new data in `crossFieldManager`.
+	 */
+	amendCompose(
+		composedChange: TChangeset,
+		composeChild: NodeChangeComposer,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
 	): TChangeset;
 
 	/**
@@ -48,6 +64,17 @@ export interface FieldChangeRebaser<TChangeset> {
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
 		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+	): TChangeset;
+
+	/**
+	 * Amend `invertedChange` with respect to new data in `crossFieldManager`.
+	 */
+	amendInvert(
+		invertedChange: TChangeset,
+		originalRevision: RevisionTag | undefined,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
 	): TChangeset;
 
 	/**
@@ -59,6 +86,17 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TaggedChange<TChangeset>,
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+	): TChangeset;
+
+	/**
+	 * Amend `rebasedChange` with respect to new data in `crossFieldManager`.
+	 */
+	amendRebase(
+		rebasedChange: TChangeset,
+		over: TaggedChange<TChangeset>,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
 	): TChangeset;
 }
 
@@ -71,10 +109,23 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
-	return {
+	return isolatedFieldChangeRebaser({
 		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
 		invert: (change, _invertChild, _genId) => data.invert(change.change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
+	});
+}
+
+export function isolatedFieldChangeRebaser<TChangeset>(data: {
+	compose: FieldChangeRebaser<TChangeset>["compose"];
+	invert: FieldChangeRebaser<TChangeset>["invert"];
+	rebase: FieldChangeRebaser<TChangeset>["rebase"];
+}): FieldChangeRebaser<TChangeset> {
+	return {
+		...data,
+		amendCompose: () => fail("Not implemented"),
+		amendInvert: () => fail("Not implemented"),
+		amendRebase: () => fail("Not implemented"),
 	};
 }
 
@@ -114,9 +165,13 @@ export interface FieldEditor<TChangeset> {
 /**
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
+ * Returns `undefined` iff the child changes amount to nothing.
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
+export type ToDelta = (
+	child: NodeChangeset,
+	index: number | undefined,
+) => Delta.NodeChanges | undefined;
 
 /**
  * @alpha
@@ -156,14 +211,6 @@ export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangese
  * @alpha
  */
 export type IdAllocator = () => ChangesetLocalId;
-
-/**
- * An ID which is unique within a revision of a `ModularChangeset`.
- * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
- * but they are unique when qualified by the revision of the change they are used in.
- * @alpha
- */
-export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
  * Changeset for a subtree rooted at a specific node.
