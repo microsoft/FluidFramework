@@ -3,15 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { RecoilRoot } from "recoil";
 import { TaskListContainerRuntimeFactory } from "../src/model";
-import type { IAppModel } from "../src/model-interface";
+import type { IAppModel, ITaskList } from "../src/model-interface";
 import { TaskListView } from "../src/view";
+
+export interface ITestViewProps {
+	/**
+	 * The Task List app model to be visualized.
+	 */
+	taskList: ITaskList;
+}
+
+export const TestView: React.FC<ITestViewProps> = (props: ITestViewProps) => {
+	const { taskList } = props;
+	const [_, setUnresolvedChanges] = useState(false);
+
+	return <TaskListView taskList={taskList} setUnresolvedChanges={setUnresolvedChanges} />;
+};
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -47,12 +60,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	document.title = id;
 
 	// Render it
-	ReactDOM.render(
-		<RecoilRoot>
-			<TaskListView taskList={model.taskList} />
-		</RecoilRoot>,
-		element,
-	);
+	ReactDOM.render(<TestView taskList={model.taskList} />, element);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation

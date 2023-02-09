@@ -101,6 +101,7 @@ export interface ITaskListEvents extends IEvent {
 	 * Emitted when a task is added.
 	 */
 	(event: "taskAdded", listener: (task: ITask) => void);
+
 	/**
 	 * Emitted when a task is removed.
 	 */

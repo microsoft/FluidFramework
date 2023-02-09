@@ -2402,7 +2402,6 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      recoil: ^0.7.6
       rimraf: ^2.6.2
       start-server-and-test: ^1.11.7
       stream-http: ^3.2.0
@@ -2448,7 +2447,6 @@ importers:
       node-fetch: 2.6.7
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      recoil: 0.7.6_sfoxds7t5ydpegc3knd667wn6m
       style-loader: 1.3.0_webpack@5.75.0
       uuid: 8.3.2
       valid-url: 1.0.9
@@ -21003,7 +21001,7 @@ packages:
         optional: true
     dependencies:
       webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
-      webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
+      webpack-dev-server: 4.6.0_yun2zgl4yozo3m574tzxmts4re
 
   /@webpack-cli/serve/1.7.0_webpack-cli@4.10.0:
     resolution: {integrity: sha512-oxnCNGj88fL+xzV+dacXs44HcDwf1ovs3AuEzvP7mqXw7fQntqIhQ1BRmynh4qEKQSSSRSWVyXRjmTbZIX9V2Q==}
@@ -28254,10 +28252,6 @@ packages:
       duplexer: 0.1.2
     dev: true
 
-  /hamt_plus/1.0.2:
-    resolution: {integrity: sha512-t2JXKaehnMb9paaYA7J0BX8QQAY8lwfQ9Gjf4pg/mk4krt+cmwmU652HOoWonf+7+EQV97ARPMhhVgU1ra2GhA==}
-    dev: false
-
   /handle-thing/2.0.1:
     resolution: {integrity: sha512-9Qn4yBxelxoh2Ow62nP+Ka/kMnOXRi8BXnRaUwezLNhqelnN49xKz4F/dPP8OYLxLxq6JDtZb2i9XznUQbNPTg==}
 
@@ -28797,6 +28791,7 @@ packages:
       micromatch: 4.0.5
     transitivePeerDependencies:
       - debug
+    dev: true
 
   /http-proxy-middleware/2.0.6_@types+express@4.17.14:
     resolution: {integrity: sha512-ya/UeJ6HVBYxrgYotAZo1KvPWlgB48kUJLDePFeneHsVujFaW5WNj2NgWCAE//B1Dl02BIfYlpNgBy8Kf8Rjmw==}
@@ -36406,23 +36401,6 @@ packages:
     dependencies:
       resolve: 1.22.1
 
-  /recoil/0.7.6_sfoxds7t5ydpegc3knd667wn6m:
-    resolution: {integrity: sha512-hsBEw7jFdpBCY/tu2GweiyaqHKxVj6EqF2/SfrglbKvJHhpN57SANWvPW+gE90i3Awi+A5gssOd3u+vWlT+g7g==}
-    peerDependencies:
-      react: '>=16.13.1'
-      react-dom: '*'
-      react-native: '*'
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
-    dependencies:
-      hamt_plus: 1.0.2
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-    dev: false
-
   /redent/1.0.0:
     resolution: {integrity: sha512-qtW5hKzGQZqKoh6JNSD+4lfitfPKGz42e6QwiRmPM5mmKtR0N41AbJRYu0xJi7nhOJ4WDgRkKvAk6tw4WIwR4g==}
     engines: {node: '>=0.10.0'}
@@ -40450,7 +40428,7 @@ packages:
       interpret: 2.2.0
       rechoir: 0.7.1
       webpack: 5.75.0_webpack-cli@4.10.0
-      webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
+      webpack-dev-server: 4.6.0_yun2zgl4yozo3m574tzxmts4re
       webpack-merge: 5.8.0
 
   /webpack-cli/4.10.0_kum7g6endz4g6iedwh2wbw2ske:
@@ -40693,6 +40671,7 @@ packages:
       - debug
       - supports-color
       - utf-8-validate
+    dev: true
 
   /webpack-dev-server/4.6.0_yun2zgl4yozo3m574tzxmts4re:
     resolution: {integrity: sha512-oojcBIKvx3Ya7qs1/AVWHDgmP1Xml8rGsEBnSobxU/UJSX1xP1GPM3MwsAnDzvqcVmVki8tV7lbcsjEjk0PtYg==}

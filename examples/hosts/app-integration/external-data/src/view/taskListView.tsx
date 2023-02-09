@@ -4,13 +4,14 @@
  */
 
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-
 import React, { useEffect, useRef, useState } from "react";
-import { useSetRecoilState } from "recoil";
-
 import type { ITask, ITaskList } from "../model-interface";
-import { unresolvedConflicts } from "./recoilState";
 
+/**
+ * task - the ITask object being rendered in the TaskRow
+ * deleteTask - taskList function used to delete the task
+ * trackChanges - taskList function used to determine if there are unresolved changes.
+ */
 interface ITaskRowProps {
 	readonly task: ITask;
 	readonly deleteTask: () => void;
@@ -124,15 +125,15 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
  */
 export interface ITaskListViewProps {
 	readonly taskList: ITaskList;
+	setUnresolvedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-	const { taskList } = props;
+	const { taskList, setUnresolvedChanges } = props;
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
-	const setUnresolved = useSetRecoilState(unresolvedConflicts);
 
 	const trackChanges = (): void => {
 		let unresolved = false;
@@ -141,7 +142,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				unresolved = true;
 			}
 		}
-		setUnresolved(unresolved);
+		setUnresolvedChanges(unresolved);
 	};
 	useEffect(() => {
 		const updateTasks = (): void => {
@@ -154,7 +155,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			taskList.off("taskAdded", updateTasks);
 			taskList.off("taskDeleted", updateTasks);
 		};
-	}, [taskList]);
+	}, [taskList, setUnresolvedChanges]);
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow

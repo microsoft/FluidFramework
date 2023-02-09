@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import { RecoilRoot } from "recoil";
+import React, { useState } from "react";
 import type { IAppModel } from "../model-interface";
 import { DebugView } from "./debugView";
 import { TaskListView } from "./taskListView";
@@ -27,11 +26,14 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 	// The DebugView is just for demo purposes, to offer manual controls and inspectability for things that normally
 	// would be some external system or arbitrarily occurring.
 	const showExternalServerView: boolean = true;
-	const debugView = <DebugView model={model} />;
+	// Flag that represents presence/absence of unresolved changes after fetching external data.
+	const [unresolvedChanges, setUnresolvedChanges] = useState(false);
+	// useEffect(() => {console.log("hooks changed")}, [unresolvedChanges, fetchingExternalData]);
+	const debugView = <DebugView model={model} unresolvedChanges={unresolvedChanges} />;
 	return (
-		<RecoilRoot>
+		<div>
 			{showExternalServerView && debugView}
-			<TaskListView taskList={model.taskList} />
-		</RecoilRoot>
+			<TaskListView taskList={model.taskList} setUnresolvedChanges={setUnresolvedChanges} />
+		</div>
 	);
 };

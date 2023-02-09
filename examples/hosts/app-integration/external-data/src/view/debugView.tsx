@@ -4,12 +4,9 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { SetterOrUpdater, useRecoilValue, useSetRecoilState } from "recoil";
 import isEqual from "lodash.isequal";
-
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import type { IAppModel, TaskData } from "../model-interface";
-import { fetchingExternalData, unresolvedConflicts } from "./recoilState";
 
 /**
  * Helper function used in several of the views to fetch data form the external app
@@ -17,7 +14,7 @@ import { fetchingExternalData, unresolvedConflicts } from "./recoilState";
 async function pollForServiceUpdates(
 	externalData: Record<string, unknown>,
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
-	setFetchingExternalData: SetterOrUpdater<boolean>,
+	setFetchingExternalData: React.Dispatch<React.SetStateAction<boolean>>,
 ): Promise<void> {
 	try {
 		setFetchingExternalData(true);
@@ -31,11 +28,11 @@ async function pollForServiceUpdates(
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
 		const newData = responseBody.taskList as TaskData;
-		setFetchingExternalData(false);
 		if (newData !== undefined && !isEqual(newData, externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
 			setExternalData(newData);
 		}
+		setFetchingExternalData(false);
 	} catch (error) {
 		console.error("APP: An error was encountered while polling external data:", error);
 	}
@@ -49,6 +46,7 @@ export interface IDebugViewProps {
 	 * The Task List app model to be visualized.
 	 */
 	model: IAppModel;
+	unresolvedChanges: boolean;
 }
 
 /**
@@ -62,23 +60,30 @@ export interface IDebugViewProps {
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+	const { model, unresolvedChanges } = props;
+	// Flag that represents the state in which clients are actively fetching external data.
+	const [fetchingExternalData, setFetchingExternalData] = useState(false);
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
-			<ExternalAppForm model={props.model} />
-			<ExternalDataView />
-			<SyncStatusView />
-			<ControlsView model={props.model} />
+			<ExternalAppForm model={model} setFetchingExternalData={setFetchingExternalData} />
+			<ExternalDataView setFetchingExternalData={setFetchingExternalData} />
+			<SyncStatusView
+				fetchingData={fetchingExternalData}
+				unresolvedChanges={unresolvedChanges}
+			/>
+			<ControlsView model={model} />
 		</div>
 	);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IExternalDataViewProps {}
+interface IExternalDataViewProps {
+	setFetchingExternalData: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
+	const { setFetchingExternalData } = props;
 	const [externalData, setExternalData] = useState({});
-	const setFetchingExternalData = useSetRecoilState(fetchingExternalData);
 	useEffect(() => {
 		// Run once immediately to run without waiting.
 		pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
@@ -87,9 +92,11 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 
 		// HACK: Poll every 3 seconds
 		const timer = setInterval(() => {
+			setFetchingExternalData(true);
 			pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
 				console.error,
 			);
+			setFetchingExternalData(false);
 		}, 3000);
 
 		return (): void => {
@@ -126,12 +133,18 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 	);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface ISyncStatusViewProps {}
+interface ISyncStatusViewProps {
+	fetchingData: boolean;
+	unresolvedChanges: boolean;
+}
+
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
-	const unresolvedChanges = useRecoilValue(unresolvedConflicts);
-	const fetchingData = useRecoilValue(fetchingExternalData);
+	const { fetchingData, unresolvedChanges } = props;
+	useEffect(() => {
+		console.log("hooks changed", fetchingData);
+	}, [unresolvedChanges, fetchingData]);
+
 	return (
 		<div>
 			<h3>Sync status</h3>
@@ -226,8 +239,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	);
 };
 
-interface ITaskListViewProps {
+interface IExternalAppFormProps {
 	model: IAppModel;
+	setFetchingExternalData: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
@@ -242,16 +256,14 @@ export interface ExternalDataTask {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const ExternalAppForm: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-	const { model } = props;
+export const ExternalAppForm: React.FC<IExternalAppFormProps> = (props: IExternalAppFormProps) => {
+	const { model, setFetchingExternalData } = props;
 	const [externalData, setExternalData] = useState({});
-	const setFetchingExternalData = useSetRecoilState(fetchingExternalData);
 	useEffect(() => {
 		// HACK: Populate the external view form with the data in the external server to start off with
 		pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
 			console.error,
 		);
-
 		return (): void => {};
 	}, [externalData, setExternalData, setFetchingExternalData]);
 	const parsedExternalData = Object.entries(externalData as TaskData);
@@ -275,7 +287,7 @@ export const ExternalAppForm: React.FC<ITaskListViewProps> = (props: ITaskListVi
 				body: JSON.stringify({ taskList: formattedTasks }),
 			});
 		} catch (error) {
-			console.error(`Task list submition failed due to an error:\n${error}`);
+			console.error(`Task list submission failed due to an error:\n${error}`);
 
 			// TODO: display error status to user?
 		}
