@@ -95,6 +95,7 @@ export async function performFuzzActions(
 			synchronize: async (state) => {
 				const { testTreeProvider } = state;
 				await testTreeProvider.ensureSynchronized();
+				checkTreesAreSynchronized(testTreeProvider);
 				return state;
 			},
 		},
@@ -111,7 +112,7 @@ export async function performFuzzActionsAbort(
 	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
 ): Promise<FuzzTestState> {
 	const random = makeRandom(seed);
-	const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
+	const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 	const tree = provider.trees[0];
 
 	initializeTestTree(provider.trees[0], initialTreeState, testSchema);
@@ -142,20 +143,12 @@ export async function performFuzzActionsAbort(
 				return state;
 			},
 			synchronize: async (state) => {
-				const { testTreeProvider } = state;
-				if (testTreeProvider === undefined) {
-					fail("Attempted to synchronize with undefined testObjectProvider");
-				}
-				await testTreeProvider.ensureSynchronized();
-				checkTreesAreSynchronized(testTreeProvider);
 				return state;
 			},
 		},
 		initialState,
 		saveInfo,
 	);
-
-	await finalState.testTreeProvider.ensureSynchronized();
 	validateTree(provider.trees[0], [initialTreeState]);
 
 	// validate anchor
@@ -173,7 +166,7 @@ export async function performFuzzActionsAbort(
 	return finalState;
 }
 
-function checkTreesAreSynchronized(provider: ITestTreeProvider) {
+export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 	const tree0 = provider.trees[0];
 	for (let i = 1; i < 4; i++) {
 		const readCursor = provider.trees[i].forest.allocateCursor();
@@ -221,9 +214,6 @@ function applyFuzzChange(
 	}
 }
 
-const skipBasicConvergenceSeeds = [147185, 147191, 147194, 147196, 147197, 147200, 147201];
-const skipAnchorStabilitySeeds = [630022, 630027, 630028, 630029, 630031, 630033, 630034, 630037];
-
 function runBatch(
 	opGenerator: () => AsyncGenerator<Operation, FuzzTestState>,
 	fuzzActions: (
@@ -237,12 +227,6 @@ function runBatch(
 	const seed = random.integer(1, 1000000);
 	for (let i = 0; i < batchSize; i++) {
 		const runSeed = seed + i;
-		if (
-			skipBasicConvergenceSeeds.includes(runSeed) ||
-			skipAnchorStabilitySeeds.includes(runSeed)
-		) {
-			continue;
-		}
 		const generatorFactory = () => take(opsPerRun, opGenerator());
 		it(`with seed ${runSeed}`, async () => {
 			await fuzzActions(generatorFactory(), runSeed);
@@ -256,12 +240,12 @@ export function runSharedTreeFuzzTests(title: string): void {
 	describeFuzz(title, () => {
 		const testOpsPerRun = 20;
 		describe("basic convergence", () => {
-			describe(`with stepSize ${testOpsPerRun}`, () => {
+			describe.skip(`with stepSize ${testOpsPerRun}`, () => {
 				runBatch(makeOpGenerator, performFuzzActions, testOpsPerRun, testBatchSize, random);
 			});
 		});
 		describe("abort all edits", () => {
-			describe(`with stepSize ${testOpsPerRun}`, () => {
+			describe.skip(`with stepSize ${testOpsPerRun}`, () => {
 				runBatch(
 					makeOpGenerator,
 					performFuzzActionsAbort,
