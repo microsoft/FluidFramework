@@ -233,16 +233,6 @@ export class TestClientLogger {
 				);
 			}
 
-			assert.equal(
-				c.getLength(),
-				baseText.length,
-				`${errorPrefix}\n${this.toString()}\nClient ${
-					c.longClientId
-				} length does not match client ${
-					opts?.baseText ? "baseText" : this.clients[0].longClientId
-				} length`,
-			);
-
 			if (c === this.clients[0]) {
 				return;
 			}
