@@ -101,6 +101,11 @@ export enum FlushMode {
 }
 
 // @public
+export enum FlushModeEx {
+    Async = 2
+}
+
+// @public
 export const gcBlobPrefix = "__gc";
 
 // @public
