@@ -335,7 +335,10 @@ export function configureWebSocketServices(
             // increment connection count after the client is added to the room.
             // excluding summarizer for total client count.
             if (!isSummarizer) {
-                connectionCountLogger.incrementConnectionCount();
+                connectionCountLogger.incrementConnectionCount()
+                .catch((error) => {
+                    Lumberjack.error("Error in connectionCountLogger on Connect.", undefined, error);
+                });
             }
 
             // Iterate over the version ranges provided by the client and select the best one that works
@@ -676,7 +679,7 @@ export function configureWebSocketServices(
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("disconnect", async () => {
             Lumberjack.info(
-                `Temp-log at disconnect. connectiontimemap = ${JSON.stringify(connectionTimeMap)}`,
+                `Temp-log at disconnect. connectiontimemap = ${JSON.stringify(connectionTimeMap.values())}`,
                 undefined,
             );
             clearExpirationTimer();
@@ -713,7 +716,10 @@ export function configureWebSocketServices(
                 );
                 // excluding summarizer for total client count.
                 if (connectionTimeMap.has(clientId)) {
-                    connectionCountLogger.decrementConnectionCount();
+                    connectionCountLogger.decrementConnectionCount()
+                    .catch((error) => {
+                        Lumberjack.error("Error in connectionCountLogger on Disconnect.", undefined, error);
+                    });
                 }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
