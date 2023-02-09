@@ -18,11 +18,11 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		return this._id;
 	}
 	// Probably would be nice to not hand out the SharedString, but the CollaborativeInput expects it.
-	public get name(): SharedString {
-		return this._name;
+	public get draftName(): SharedString {
+		return this._draftName;
 	}
-	public get priority(): number {
-		const cellValue = this._priority.get();
+	public get draftPriority(): number {
+		const cellValue = this._draftPriority.get();
 		if (cellValue === undefined) {
 			throw new Error("Expected a valid priority");
 		}
@@ -55,15 +55,15 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	private _changeType: string | undefined;
 	public constructor(
 		private readonly _id: string,
-		private readonly _name: SharedString,
-		private readonly _priority: ISharedCell<number>,
+		private readonly _draftName: SharedString,
+		private readonly _draftPriority: ISharedCell<number>,
 	) {
 		super();
-		this._name.on("sequenceDelta", () => {
+		this._draftName.on("sequenceDelta", () => {
 			this.emit("nameChanged");
 		});
-		this._priority.on("valueChanged", () => {
-			this.emit("priorityChanged");
+		this._draftPriority.on("valueChanged", () => {
+			this.emit("draftPriorityChanged");
 		});
 	}
 	public sourceNameChanged = (savedName: string): void => {
@@ -77,11 +77,11 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public overwriteWithSourceData = (): void => {
 		this.changeType = undefined;
 		if (this.sourcePriority !== undefined) {
-			this._priority.set(this.sourcePriority);
+			this._draftPriority.set(this.sourcePriority);
 		}
 		if (this.sourceName !== undefined) {
-			const oldString = this._name.getText();
-			this._name.replaceText(0, oldString.length, this.sourceName);
+			const oldString = this._draftName.getText();
+			this._draftName.replaceText(0, oldString.length, this.sourceName);
 		}
 	};
 }
@@ -303,11 +303,11 @@ export class TaskList extends DataObject implements ITaskList {
 				return;
 			}
 			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (sourceNameDiffersFromSavedName && task.name.getText() !== name) {
+			if (sourceNameDiffersFromSavedName && task.draftName.getText() !== name) {
 				task.sourceNameChanged(name);
 			}
 			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (sourcePriorityDiffersFromSavedPriority && task.priority !== priority) {
+			if (sourcePriorityDiffersFromSavedPriority && task.draftPriority !== priority) {
 				task.sourcePriorityChanged(priority);
 			}
 		});
@@ -332,8 +332,8 @@ export class TaskList extends DataObject implements ITaskList {
 		const formattedTasks = {};
 		for (const task of tasks) {
 			formattedTasks[task.id] = {
-				name: task.name.getText(),
-				priority: task.priority,
+				name: task.draftName.getText(),
+				priority: task.draftPriority,
 			};
 		}
 		try {

@@ -25,9 +25,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const [changeType, setChangeType] = useState<string | undefined>(task.changeType);
 	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
-		const updateFromRemotePriority = (): void => {
+		const updatePriorityFromUIForm = (): void => {
 			if (priorityRef.current !== null) {
-				priorityRef.current.value = task.priority.toString();
+				priorityRef.current.value = task.draftPriority.toString();
 			}
 		};
 		const updateSourcePriority = (): void => {
@@ -41,13 +41,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 		const updateShowConflictUI = (value: boolean): void => {
 			setShowConflictUI(value);
 		};
-		task.on("priorityChanged", updateFromRemotePriority);
+		task.on("draftPriorityChanged", updatePriorityFromUIForm);
 		task.on("sourcePriorityChanged", updateSourcePriority);
 		task.on("sourceNameChanged", updateSourceName);
 		task.on("changesAvailable", updateShowConflictUI);
-		updateFromRemotePriority();
+		updatePriorityFromUIForm();
 		return (): void => {
-			task.off("priorityChanged", updateFromRemotePriority);
+			task.off("draftPriorityChanged", updatePriorityFromUIForm);
 			task.off("sourcePriorityChanged", updateSourcePriority);
 			task.off("sourceNameChanged", updateSourceName);
 			task.off("changesAvailable", updateShowConflictUI);
@@ -56,15 +56,15 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
-		task.priority = newValue;
+		task.draftPriority = newValue;
 	};
 
 	const showPriorityDiff =
 		showConflictUI &&
 		task.sourcePriority !== undefined &&
-		task.sourcePriority !== task.priority;
+		task.sourcePriority !== task.draftPriority;
 	const showNameDiff =
-		showConflictUI && task.sourceName !== undefined && task.sourceName !== task.name.getText();
+		showConflictUI && task.sourceName !== undefined && task.sourceName !== task.draftName.getText();
 	const showAcceptButton = showConflictUI ? "visible" : "hidden";
 
 	let diffColor: string = "white";
@@ -88,7 +88,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			<td>{task.id}</td>
 			<td>
 				<CollaborativeInput
-					sharedString={task.name}
+					sharedString={task.draftName}
 					style={{ width: "200px" }}
 				></CollaborativeInput>
 			</td>

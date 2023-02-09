@@ -35,11 +35,11 @@ export interface ITaskEvents extends IEvent {
 	/**
 	 * Emitted when the name has changed.
 	 */
-	(event: "nameChanged", listener: () => void);
+	(event: "draftNameChanged", listener: () => void);
 	/**
 	 * Emitted when the priority has changed.
 	 */
-	(event: "priorityChanged", listener: () => void);
+	(event: "draftPriorityChanged", listener: () => void);
 	/**
 	 * Emitted when the name from the source (the external server) has changed.
 	 */
@@ -66,11 +66,11 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	/**
 	 * The task name.  Modifications are persisted in Fluid and shared amongst collaborators.
 	 */
-	readonly name: SharedString;
+	readonly draftName: SharedString;
 	/**
 	 * The task priority.  Modifications are persisted in Fluid and shared amongst collaborators.
 	 */
-	priority: number;
+	draftPriority: number;
 	/**
 	 * The task name coming in from the external server.
 	 */
