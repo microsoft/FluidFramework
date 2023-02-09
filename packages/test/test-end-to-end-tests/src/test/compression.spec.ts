@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions";
 
 const testContainerConfig: ITestContainerConfig = {
 	registry: [["mapKey", SharedMap.getFactory()]],
@@ -29,14 +30,14 @@ const testContainerConfig: ITestContainerConfig = {
 
 describeFullCompat("Op Compression", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let container: Container;
+	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let map: SharedMap;
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 
-		container = (await provider.makeTestContainer(testContainerConfig)) as Container;
+		container = await provider.makeTestContainer(testContainerConfig);
 		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 		map = await dataObject.getSharedObject<SharedMap>("mapKey");
 	});

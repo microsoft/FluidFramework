@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+
 import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import {
 	IDocumentService,
@@ -243,10 +243,10 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					provider.urlResolver,
 				);
 
-				const storageOnlyContainer = (await storageOnlyLoader.resolve({
+				const storageOnlyContainer = await storageOnlyLoader.resolve({
 					url: containerUrl,
 					headers: { [LoaderHeader.loadMode]: testConfig.loadOptions },
-				})) as Container;
+				});
 
 				storageOnlyContainer.connect();
 				const deltaManager = storageOnlyContainer.deltaManager;

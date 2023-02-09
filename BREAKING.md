@@ -15,6 +15,18 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.4.0.0
+
+## 2.0.0-internal.4.0.0 Upcoming changes
+
+## 2.0.0-internal.4.0.0 Breaking changes
+
+-   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+
+### Container and RelativeLoader no longer exported
+
+Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes

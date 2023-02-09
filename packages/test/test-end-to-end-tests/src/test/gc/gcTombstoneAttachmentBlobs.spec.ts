@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -785,7 +785,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await new Promise<void>((resolve) =>
 					container.on("connected", () => resolveIfActive(resolve)),
 				);
-				(container as Container).off("connected", resolveIfActive);
 			}
 		};
 
