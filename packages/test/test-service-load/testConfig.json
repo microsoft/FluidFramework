@@ -37,10 +37,12 @@
 					}
 				}
 			},
-			"useRandomContent": true,
-			"useVariableOpSize": true,
-			"opSizeinBytes": 2172864,
-			"largeOpRate": 500
+			"content": {
+				"useRandomContent": true,
+				"useVariableOpSize": true,
+				"opSizeinBytes": 2172864,
+				"largeOpRate": 500
+			}
 		},
 		"ci_frs": {
 			"opRatePerMin": 10,
@@ -52,10 +54,12 @@
 				"min": 0,
 				"max": 150000
 			},
-			"useRandomContent": true,
-			"useVariableOpSize": true,
-			"opSizeinBytes": 2172864,
-			"largeOpRate": 500
+			"content": {
+				"useRandomContent": true,
+				"useVariableOpSize": true,
+				"opSizeinBytes": 2172864,
+				"largeOpRate": 500
+			}
 		},
 		"full": {
 			"opRatePerMin": 1920,

@@ -20,7 +20,6 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { v4 as uuid } from "uuid";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 
@@ -557,9 +556,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
 		const opSizeinBytes =
-			typeof config.testConfig.opSizeinBytes === "undefined"
+			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
-				: config.testConfig.opSizeinBytes;
+				: config.testConfig.content.opSizeinBytes;
 		assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
 
 		const generateStringOfSize = (sizeInBytes: number): string =>
@@ -567,19 +566,19 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const generateRandomStringOfSize = (sizeInBytes: number): string =>
 			crypto.randomBytes(sizeInBytes / 2).toString("hex");
 		const generateContentOfSize =
-			config.testConfig.useRandomContent === true
+			config.testConfig.content?.useRandomContent === true
 				? generateRandomStringOfSize
 				: generateStringOfSize;
 		const getOpSizeInBytes = () =>
-			config.testConfig.useVariableOpSize === true
+			config.testConfig.content?.useVariableOpSize === true
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
-		const largeOpRate = config.testConfig.largeOpRate ?? 1;
+		const largeOpRate = config.testConfig.content?.largeOpRate ?? 1;
 		let opsSent = 0;
 
 		const sendSingleOp = () => {
 			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === 1) {
-				dataModel.sharedmap.set(uuid(), generateContentOfSize(getOpSizeInBytes()));
+				dataModel.sharedmap.set(`key${opsSent}`, generateContentOfSize(getOpSizeInBytes()));
 			} else {
 				dataModel.counter.increment(1);
 			}
