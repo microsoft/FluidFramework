@@ -5,6 +5,7 @@
 import { strict as assert } from "assert";
 import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
 	createField,
 	FieldKinds,
@@ -24,6 +25,7 @@ import {
 	FieldKindIdentifier,
 	fieldSchema,
 	GlobalFieldKey,
+	IForestSubscription,
 	JsonableTree,
 	LocalFieldKey,
 	moveToDetachedField,
@@ -534,7 +536,7 @@ function getTestTreeAsJSObject(
 	numberOfNodes: number,
 	shape: TreeShape,
 	dataType: TestPrimitives,
-): any {
+): Jsonable {
 	const seed = 0;
 	const random = makeRandom(seed);
 	let tree;
@@ -552,7 +554,7 @@ function getTestTreeAsJSObject(
 	return testTreeJS;
 }
 
-function getJSTestTreeWide(numberOfNodes: number, dataType: TestPrimitives, random: IRandom): any {
+function getJSTestTreeWide(numberOfNodes: number, dataType: TestPrimitives, random: IRandom): Jsonable {
 	const nodes = [];
 	for (let i = 0; i < numberOfNodes - 1; i++) {
 		const node = generateTreeData(dataType, random);
@@ -568,7 +570,7 @@ function getJSTestTreeWide(numberOfNodes: number, dataType: TestPrimitives, rand
 	return tree;
 }
 
-function getJSTestTreeDeep(numberOfNodes: number, dataType: TestPrimitives, random: IRandom): any {
+function getJSTestTreeDeep(numberOfNodes: number, dataType: TestPrimitives, random: IRandom): Jsonable {
 	const node = generateTreeData(dataType, random);
 	if (numberOfNodes === 1) {
 		return {
@@ -586,7 +588,7 @@ function getJSTestTreeDeep(numberOfNodes: number, dataType: TestPrimitives, rand
 	return tree;
 }
 
-function readTreeAsJSObject(tree: any) {
+function readTreeAsJSObject(tree: Jsonable) {
 	for (const key of Object.keys(tree)) {
 		if (typeof tree[key] === "object" && tree[key] !== null) readTreeAsJSObject(tree[key]);
 		if (key === "value") {
@@ -595,7 +597,7 @@ function readTreeAsJSObject(tree: any) {
 	}
 }
 
-function manipulateTreeAsJSObject(tree: any, dataType: TestPrimitives, random: IRandom): any {
+function manipulateTreeAsJSObject(tree: Jsonable, dataType: TestPrimitives, random: IRandom): void {
 	for (const key of Object.keys(tree)) {
 		if (typeof tree[key] === "object" && tree[key] !== null)
 			manipulateTreeAsJSObject(tree[key], dataType, random);
@@ -605,7 +607,7 @@ function manipulateTreeAsJSObject(tree: any, dataType: TestPrimitives, random: I
 	}
 }
 
-function readCursorTree(forest: any, numberOfNodes: number, shape: TreeShape) {
+function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shape: TreeShape) {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	assert(readCursor.firstNode());
@@ -682,7 +684,6 @@ function readEditableTree(
 	tree: ISharedTree,
 	numberOfNodes: number,
 	shape: TreeShape,
-	replaceNodes = false,
 ) {
 	assert(isUnwrappedNode(tree.root));
 	let currField;
