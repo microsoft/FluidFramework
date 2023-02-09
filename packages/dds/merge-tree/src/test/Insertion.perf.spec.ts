@@ -28,11 +28,11 @@ function constructTree(numOfSegments: number): MergeTree {
 }
 
 describe("insertion perf", () => {
-	const emptyTree = constructTree(0);
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert into empty tree",
 		benchmarkFn: () => {
+			const emptyTree = constructTree(0);
 			insertText({
 				mergeTree: emptyTree,
 				pos: 0,
