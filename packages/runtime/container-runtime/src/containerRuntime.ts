@@ -2535,7 +2535,13 @@ export class ContainerRuntime
 
 		try {
 			await this.deltaManager.inbound.pause();
-			await this.deltaManager.inboundSignal.pause();
+			if (
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
+				) !== true
+			) {
+				await this.deltaManager.inboundSignal.pause();
+			}
 
 			const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
@@ -2731,9 +2737,16 @@ export class ContainerRuntime
 		} finally {
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
+
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();
-			this.deltaManager.inboundSignal.resume();
+			if (
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
+				) !== true
+			) {
+				this.deltaManager.inboundSignal.resume();
+			}
 		}
 	}
 
