@@ -44,13 +44,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 		task.on("priorityChanged", updateFromRemotePriority);
 		task.on("sourcePriorityChanged", updateSourcePriority);
 		task.on("sourceNameChanged", updateSourceName);
-		task.on("showConflictUI", updateShowConflictUI);
+		task.on("changesAvailable", updateShowConflictUI);
 		updateFromRemotePriority();
 		return (): void => {
 			task.off("priorityChanged", updateFromRemotePriority);
 			task.off("sourcePriorityChanged", updateSourcePriority);
 			task.off("sourceNameChanged", updateSourceName);
-			task.off("showConflictUI", updateShowConflictUI);
+			task.off("changesAvailable", updateShowConflictUI);
 		};
 	}, [task, priorityRef]);
 

@@ -37,21 +37,21 @@ export interface ITaskEvents extends IEvent {
 	 */
 	(event: "nameChanged", listener: () => void);
 	/**
-	 * Emitted when the priority has changed to either the source value or to the NONE default value.
+	 * Emitted when the priority has changed.
 	 */
 	(event: "priorityChanged", listener: () => void);
 	/**
-	 * Emitted when the sourceName has changed to either the source value or to the NONE default value.
+	 * Emitted when the name from the source (the external server) has changed.
 	 */
 	(event: "sourceNameChanged", listener: () => void);
 	/**
-	 * Emitted when sourcePriority has changed to either the source value or to the NONE default value.
+	 * Emitted when priority from the source (the external server) has changed.
 	 */
 	(event: "sourcePriorityChanged", listener: () => void);
 	/**
 	 * Emitted when changeType is updated and the conflict UI needs to be displayed.
 	 */
-	(event: "showConflictUI", listener: (value: boolean) => boolean);
+	(event: "changesAvailable", listener: (value: boolean) => boolean);
 }
 
 /**

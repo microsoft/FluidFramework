@@ -39,9 +39,9 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		return this._changeType;
 	}
 	public set changeType(newValue: string | undefined) {
-		const showConflictUI = newValue !== undefined;
+		const changesAvailable = newValue !== undefined;
 		this._changeType = newValue;
-		this.emit("showConflictUI", showConflictUI);
+		this.emit("changesAvailable", changesAvailable);
 	}
 	public get sourcePriority(): number | undefined {
 		return this._sourcePriority;
