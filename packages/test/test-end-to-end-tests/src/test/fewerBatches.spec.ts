@@ -72,7 +72,7 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 			batchCount: 5,
 		},
 		{
-			flushMode: FlushModeEx.Async as FlushMode,
+			flushMode: FlushModeEx.Async as unknown as FlushMode,
 			batchCount: 1,
 		},
 	].forEach((test) => {
