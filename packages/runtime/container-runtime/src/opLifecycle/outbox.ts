@@ -68,7 +68,7 @@ export class Outbox {
 	 * @param batchManager - the batch manager where the message is supposed to be pushed to
 	 * @param message - the incoming message
 	 */
-	private flushPartialInCaseOfMismatch(batchManager: BatchManager, message: BatchMessage) {
+	private maybeFlushPartialBatch(batchManager: BatchManager, message: BatchMessage) {
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisablePartialFlush") === true) {
 			return;
 		}
@@ -91,7 +91,7 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage) {
-		this.flushPartialInCaseOfMismatch(this.mainBatch, message);
+		this.maybeFlushPartialBatch(this.mainBatch, message);
 
 		if (!this.mainBatch.push(message)) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -104,7 +104,7 @@ export class Outbox {
 	}
 
 	public submitAttach(message: BatchMessage) {
-		this.flushPartialInCaseOfMismatch(this.mainBatch, message);
+		this.maybeFlushPartialBatch(this.mainBatch, message);
 
 		if (!this.attachFlowBatch.push(message)) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
