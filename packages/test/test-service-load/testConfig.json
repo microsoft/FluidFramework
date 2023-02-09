@@ -41,7 +41,7 @@
 				"useRandomContent": true,
 				"useVariableOpSize": true,
 				"opSizeinBytes": 1272864,
-				"largeOpRate": 1000,
+				"largeOpRate": 2000,
 				"numClients": 2
 			}
 		},
@@ -59,7 +59,7 @@
 				"useRandomContent": true,
 				"useVariableOpSize": true,
 				"opSizeinBytes": 1272864,
-				"largeOpRate": 1000,
+				"largeOpRate": 2000,
 				"numClients": 2
 			}
 		},
