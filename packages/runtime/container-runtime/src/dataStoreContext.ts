@@ -852,8 +852,8 @@ export abstract class FluidDataStoreContext
 				{
 					eventName: "GC_Tombstone_DataStore_Changed",
 					category: this.throwOnTombstoneUsage ? "error" : "generic",
-					gcTombstoneEnforcementAllowed: (this.containerRuntime as ContainerRuntime)
-						.gcTombstoneEnforcementAllowed,
+					gcTombstoneEnforcementAllowed:
+						this._containerRuntime.gcTombstoneEnforcementAllowed,
 					callSite,
 				},
 				this.pkg,
@@ -1098,8 +1098,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 				eventName: "GC_Deleted_DataStore_Unexpected_Delete",
 				message: "Unexpected deletion of a local data store context",
 				category: "error",
-				gcTombstoneEnforcementAllowed: (this.containerRuntime as ContainerRuntime)
-					.gcTombstoneEnforcementAllowed,
+				gcTombstoneEnforcementAllowed: undefined,
 			},
 			this.pkg,
 		);
