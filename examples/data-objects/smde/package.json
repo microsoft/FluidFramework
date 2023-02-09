@@ -91,5 +91,14 @@
 				"library": "main"
 			}
 		}
+	},
+	"pnpm": {
+		"packageExtensions": {
+			"simplemde": {
+				"dependencies": {
+					"codemirror": "^5.65.11"
+				}
+			}
+		}
 	}
 }
