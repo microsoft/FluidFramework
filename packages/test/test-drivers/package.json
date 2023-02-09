@@ -1,7 +1,6 @@
 {
 	"name": "@fluid-internal/test-drivers",
 	"version": "2.0.0-internal.4.0.0",
-	"private": true,
 	"description": "A driver abstraction and implementations for testing against server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
