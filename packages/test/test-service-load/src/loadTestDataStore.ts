@@ -574,10 +574,12 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
 		const largeOpRate = config.testConfig.content?.largeOpRate ?? 1;
+		// To avoid having all clients send their large payloads at roughly the same time
+		const largeOpJitter = Math.floor(Math.random() * largeOpRate);
 		let opsSent = 0;
 
 		const sendSingleOp = () => {
-			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === 1) {
+			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === largeOpJitter) {
 				dataModel.sharedmap.set(`key${opsSent}`, generateContentOfSize(getOpSizeInBytes()));
 			} else {
 				dataModel.counter.increment(1);
