@@ -439,7 +439,7 @@ stages:
         # Doing this with separate ADO steps is not easy.
         # This step reports failure if either of the test runs reports failure.
         - task: Bash@3
-          displayName: Run tests
+          displayName: Run tests local
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
@@ -454,41 +454,20 @@ stages:
               echo $FLUID_ENDPOINTNAME
               npm run test:benchmark:report;
               executionTimeTestsExitCode=$?;
-              
-              FLUID_ENDPOINTNAME="odsp"
-              echo $FLUID_ENDPOINTNAME
-              npm run test:benchmark:report:odsp;
-              executionTimeTestsExitCodeOdsp=$?;
-
-
               # Run memory tests
-              FLUID_ENDPOINTNAME="local"
               echo $FLUID_ENDPOINTNAME
               npm run test:memory-profiling:report;
               memoryTestsExitCode=$?;
 
-              FLUID_ENDPOINTNAME="odsp"
-              echo $FLUID_ENDPOINTNAME
-              npm run test:memory-profiling:report:odsp;
-              memoryTestsExitCodeOdsp=$?;
-
               if [[ $executionTimeTestsExitCode -ne 0 ]]; then
                 echo "##vso[task.logissue type=error]Exit code for runtime tests execution = $executionTimeTestsExitCode"
-              fi
-
-              if [[ $executionTimeTestsExitCodeOdsp -ne 0 ]]; then
-                echo "##vso[task.logissue type=error]Exit code for runtime tests execution Odsp= $executionTimeTestsExitCodeOdsp"
               fi
 
               if [[ $memoryTestsExitCode -ne 0 ]]; then
                 echo "##vso[task.logissue type=error]Exit code for memory tests execution = $memoryTestsExitCode"
               fi
 
-              if [[ $memoryTestsExitCodeOdsp -ne 0 ]]; then
-                echo "##vso[task.logissue type=error]Exit code for memory tests execution Odsp = $memoryTestsExitCodeOdsp"
-              fi
-
-              if [[ $executionTimeTestsExitCode -ne 0 ]] ||  [[ $executionTimeTestsExitCodeOdsp -ne 0 ]] || [[ $memoryTestsExitCode -ne 0 ]] ||  [[ $memoryTestsExitCodeOdsp -ne 0 ]]; then
+              if [[ $executionTimeTestsExitCode -ne 0 ]] || [[ $memoryTestsExitCode -ne 0 ]]; then
                 exit 1;
               fi
           env:
@@ -504,7 +483,9 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo "Writing the following performance tests results to Aria/Kusto"
+              FLUID_ENDPOINTNAME="local"
+              echo $FLUID_ENDPOINTNAME
+              echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
 
@@ -515,7 +496,76 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo "Writing the following performance tests results to Aria/Kusto"
+              FLUID_ENDPOINTNAME="local"
+              echo $FLUID_ENDPOINTNAME
+              echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
+              ls -la ${{ variables.memoryUsageTestOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+
+        - task: Bash@3
+          displayName: Run tests ODSP
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
+            script: |
+              echo OPANICHOC
+              FLUID_TEST_LOGGER_PKG_PATH=`${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`
+              echo $FLUID_TEST_LOGGER_PKG_PATH
+              FLUID_BUILD_ID=${{ variables.artifactBuildId }}
+              echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
+              # Run execution time tests              
+              FLUID_ENDPOINTNAME="odsp"
+              echo $FLUID_ENDPOINTNAME
+              npm run test:benchmark:report:odsp;
+              executionTimeTestsExitCodeOdsp=$?;
+
+
+              # Run memory tests
+              FLUID_ENDPOINTNAME="odsp"
+              echo $FLUID_ENDPOINTNAME
+              npm run test:memory-profiling:report:odsp;
+              memoryTestsExitCodeOdsp=$?;
+
+              if [[ $executionTimeTestsExitCodeOdsp -ne 0 ]]; then
+                echo "##vso[task.logissue type=error]Exit code for runtime tests execution Odsp= $executionTimeTestsExitCodeOdsp"
+              fi
+
+              if [[ $memoryTestsExitCodeOdsp -ne 0 ]]; then
+                echo "##vso[task.logissue type=error]Exit code for memory tests execution Odsp = $memoryTestsExitCodeOdsp"
+              fi
+
+              if [[ $executionTimeTestsExitCodeOdsp -ne 0 ]] ||  [[ $memoryTestsExitCodeOdsp -ne 0 ]]; then
+                exit 1;
+              fi
+          env:
+            login__microsoft__clientId: $(login-microsoft-clientId)
+            login__microsoft__secret: $(login-microsoft-secret)
+            login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+        - task: Bash@3
+          displayName: Write measurements to Aria/Kusto - execution time
+          condition: succeededOrFailed()
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              FLUID_ENDPOINTNAME="odsp"
+              echo $FLUID_ENDPOINTNAME
+              echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
+              ls -la ${{ variables.executionTimeTestOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
+
+        - task: Bash@3
+          displayName: Write measurements to Aria/Kusto - memory usage
+          condition: succeededOrFailed()
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              FLUID_ENDPOINTNAME="odsp"
+              echo $FLUID_ENDPOINTNAME
+              echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
 
