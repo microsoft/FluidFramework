@@ -43,6 +43,14 @@ so the production implementation (`ModularChangeset`) is designed to be modular 
 
 Not intended to be exposed in the package API.
 
+### Low Level Editing
+
+Status: currently implemented by `ModularEditBuilder`.
+
+The low level editing API creates the rebaseable changes described above.
+Like the rebaseable changes, the low level editing API is an aspect of the `ChangeFamily` implementation.
+This means that the main implementation is the one thats part of [modular-schema](../src/feature-libraries/modular-schema/README.md) which is `ModularEditBuilder`.
+
 ### Delta
 
 Status: currently implemented `Delta` and `DeltaVisitor`.
@@ -54,8 +62,6 @@ Independent of `ChangeFamily` (meaning only a single version is needed, regardle
 
 Used to update [forest](../src/core/forest/README.md) and `AnchorSet`.
 Can also be used to update anything else that stores a copy of some of the tree data that needs to be kept up to date.
-
-### Low Level Editing
 
 ## High Level APIs
 
