@@ -36,6 +36,9 @@ export interface Disposable {
 	dispose(): void;
 }
 
+/**
+ * Creates a ChunkPolicy which responds to schema changes.
+ */
 export function makeTreeChunker(
 	schema: StoredSchemaRepository<FullSchemaPolicy>,
 ): ChunkPolicy & Disposable {
@@ -47,15 +50,31 @@ export function makeTreeChunker(
 	);
 }
 
+/**
+ * Indicates that there are multiple possible shapes trees with a given type can have.
+ *
+ * TODO: cache some of the possible shapes here.
+ */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Polymorphic {}
+
+/**
+ * See `Polymorphic`.
+ * For now Polymorphic is stateless, so just use a singleton.
+ */
 export const polymorphic = new Polymorphic();
 
+/**
+ * Information about the possible shapes a tree could take based on its type.
+ * Note that this information is for a specific version of the schema.
+ */
 type ShapeInfo = TreeShape | Polymorphic;
 
 class Chunker implements ChunkPolicy, Disposable {
 	/**
-	 * Types with only one shape.
+	 * Cache for information about possible shapes for types.
+	 * Corresponds to the version of the schema in `schema`.
+	 * Cleared when `schema` changes.
 	 */
 	private readonly typeShapes: Map<TreeSchemaIdentifier, ShapeInfo> = new Map();
 
@@ -229,6 +248,9 @@ export const basicOnlyChunkPolicy: ChunkPolicy = {
 	schemaToShape: () => polymorphic,
 };
 
+/**
+ * Policy for how to chunk a tree.
+ */
 export interface ChunkPolicy {
 	/**
 	 * Group sequences longer than this into into sequence chunks of this length or less.
@@ -237,8 +259,20 @@ export interface ChunkPolicy {
 	 * Can be set to `Number.POSITIVE_INFINITY` to never introduce extra sequence chunks.
 	 */
 	readonly sequenceChunkSplitThreshold: number;
+
+	/**
+	 * SequenceChunks this long or shorter may get inlined into their parent chunk.
+	 */
 	readonly sequenceChunkInlineThreshold: number;
+
+	/**
+	 * Maximum total nodes to put in a UniformChunk.
+	 */
 	readonly uniformChunkNodeCount: number;
+
+	/**
+	 * Returns information about the shapes trees of type `schema` can take.
+	 */
 	schemaToShape(schema: TreeSchemaIdentifier): ShapeInfo;
 }
 
