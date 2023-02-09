@@ -16,7 +16,7 @@ import { assertValidTaskData, TaskData } from "../model-interface";
  */
 function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string): void {
 	console.log(
-		`WEBHOOK: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
+		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
 	// TODO: we will need to add details (like ContainerId) to the message body or the url,
@@ -30,7 +30,7 @@ function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string)
 		},
 		body: messageBody,
 	}).catch((error) => {
-		console.error("WEBHOOK: Encountered an error while notifying Fluid Service:", error);
+		console.error("CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:", error);
 	});
 }
 

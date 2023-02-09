@@ -42,7 +42,7 @@ export class MockWebhook<TData = unknown> {
 	public registerSubscriber(subscriber: SubscriberUrl): void {
 		if (this._subscribers.has(subscriber)) {
 			console.warn(
-				`WEBHOOK: URL "${subscriber}" has already been registered for data notifications.`,
+				`EXTERNAL DATA SERVICE WEBHOOK: URL "${subscriber}" has already been registered for data notifications.`,
 			);
 		} else {
 			this._subscribers.add(subscriber);
@@ -56,7 +56,7 @@ export class MockWebhook<TData = unknown> {
 		if (this._subscribers.has(subscriber)) {
 			this._subscribers.delete(subscriber);
 		} else {
-			console.warn(`WEBHOOK: URL "${subscriber}" is not registered for data notifications.`);
+			console.warn(`EXTERNAL DATA SERVICE WEBHOOK: URL "${subscriber}" is not registered for data notifications.`);
 		}
 	}
 
@@ -65,7 +65,7 @@ export class MockWebhook<TData = unknown> {
 	 */
 	public notifySubscribers(data: TData): void {
 		console.log(
-			`WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`,
+			`EXTERNAL DATA SERVICE WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`,
 		);
 
 		const messageBody = JSON.stringify({ data });
@@ -78,7 +78,7 @@ export class MockWebhook<TData = unknown> {
 				},
 				body: messageBody,
 			}).catch((error) => {
-				console.error("WEBHOOK: Encountered an error while notifying subscribers:", error);
+				console.error("EXTERNAL DATA SERVICE WEBHOOK: Encountered an error while notifying subscribers:", error);
 			});
 		}
 	}
