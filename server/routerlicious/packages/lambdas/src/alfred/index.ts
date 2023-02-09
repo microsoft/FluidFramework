@@ -675,6 +675,10 @@ export function configureWebSocketServices(
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("disconnect", async () => {
+            Lumberjack.info(
+                `Temp-log at disconnect. connectiontimemap = ${JSON.stringify(connectionTimeMap)}`,
+                undefined,
+            );
             clearExpirationTimer();
             const removeAndStoreP: Promise<void>[] = [];
             // Send notification messages for all client IDs in the connection map
@@ -703,6 +707,10 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the room map
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
+                Lumberjack.info(
+                    `Temp-log at disconnect of room ${connectionTimeMap.has(clientId)}`,
+                    getLumberBaseProperties(room.documentId, room.tenantId),
+                );
                 // excluding summarizer for total client count.
                 if (connectionTimeMap.has(clientId)) {
                     connectionCountLogger.decrementConnectionCount();

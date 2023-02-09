@@ -57,6 +57,11 @@ class SocketIoServer implements core.IWebSocketServer {
             const webSocket = new SocketIoSocket(socket);
             this.events.emit("connection", webSocket);
         });
+        // this.io.on("close", (socket: Socket) => {
+        //     console.log("sharmak- close of server called for socket id=", socket.id);
+        //     socket.disconnect();
+        //     // this.events.emit("disconnect", socket);
+        // });
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
@@ -64,6 +69,9 @@ class SocketIoServer implements core.IWebSocketServer {
     }
 
     public async close(): Promise<void> {
+        Lumberjack.info(`Temp-log - on function close`);
+        this.io.disconnectSockets();
+        Lumberjack.info(`Temp-log - disconnecting all sockets`);
         const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as any)();
         const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as any)();
         const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
