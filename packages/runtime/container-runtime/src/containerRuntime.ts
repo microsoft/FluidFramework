@@ -94,6 +94,7 @@ import {
     addSummarizeResultToSummary,
     addTreeToSummary,
     createRootSummarizerNodeWithGC,
+    IFetchSnapshotResult,
     IRootSummarizerNodeWithGC,
     RequestParser,
     create404Response,
@@ -103,6 +104,7 @@ import {
     seqFromTree,
     calculateStats,
     TelemetryContext,
+    ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
