@@ -2850,25 +2850,20 @@ export class ContainerRuntime
 		this.flushTaskExists = true;
 		const flush = () => {
 			this.flushTaskExists = false;
-			this.flush();
+			try {
+				this.flush();
+			} catch (error) {
+				this.closeFn(error as GenericError);
+			}
 		};
 
 		switch (this.flushMode) {
 			case FlushMode.TurnBased:
-				Promise.resolve()
-					.then(() => flush())
-					.catch((error) => {
-						this.closeFn(error as GenericError);
-					});
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				Promise.resolve().then(flush);
 				break;
 			case FlushMode.Async:
-				setTimeout(() => {
-					try {
-						flush();
-					} catch (error) {
-						this.closeFn(error as GenericError);
-					}
-				}, 0);
+				setTimeout(flush, 0);
 				break;
 			default:
 				assert(
