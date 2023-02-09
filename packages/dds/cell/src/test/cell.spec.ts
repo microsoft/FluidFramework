@@ -306,42 +306,51 @@ describe("Cell", () => {
 
 				containerRuntimeFactory.processSomeMessages(1);
 
+				let key1 = cell1.getAttribution();
+				let key2 = cell2.getAttribution();
+
 				assert.equal(
-					cell1.getAttribution()?.type === "op" && cell1.getAttribution()?.seq,
+					key1?.type === "op" && key1?.seq,
 					1,
 					"the first cell does not have valid attribution",
 				);
 
 				assert.equal(
-					cell2.getAttribution(),
+					key2,
 					undefined,
 					"the second cell has attribution with a pending local edit",
 				);
 
 				containerRuntimeFactory.processSomeMessages(1);
 
+				key1 = cell1.getAttribution();
+				key2 = cell2.getAttribution();
+
 				assert.equal(
-					cell1.getAttribution()?.type === "op" && cell1.getAttribution()?.seq,
+					key1?.type === "op" && key1?.seq,
 					2,
 					"the first cell does not have valid attribution",
 				);
 
 				assert.equal(
-					cell2.getAttribution()?.type === "op" && cell2.getAttribution()?.seq,
+					key2?.type === "op" && key2?.seq,
 					2,
 					"the second cell does not have valid attribution",
 				);
 
 				containerRuntimeFactory.processSomeMessages(1);
 
+				key1 = cell1.getAttribution();
+				key2 = cell2.getAttribution();
+
 				assert.equal(
-					cell1.getAttribution()?.type === "op" && cell1.getAttribution()?.seq,
+					key1?.type === "op" && key1?.seq,
 					3,
 					"the first cell does not have valid attribution after clearing",
 				);
 
 				assert.equal(
-					cell2.getAttribution()?.type === "op" && cell2.getAttribution()?.seq,
+					key2?.type === "op" && key2?.seq,
 					3,
 					"the second cell does not have valid attribution after clearing",
 				);
