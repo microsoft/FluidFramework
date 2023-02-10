@@ -105,7 +105,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger?: ITelemetryLogger;
         runSweep?: boolean;
         fullGC?: boolean;
-    }): Promise<IGCStats | undefined>;
+    }, telemetryContext?: ITelemetryContext): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -131,6 +131,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
+    readonly gcTombstoneEnforcementAllowed: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
