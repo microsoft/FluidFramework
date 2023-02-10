@@ -131,7 +131,7 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 	});
 
 	it("attributes content created in a detached state", async () => {
-		if (provider.driver.type == "odsp") {
+		if (provider.driver.type === "odsp") {
 			// TODO:#3451: Investigate why this test fails against odsp and re-enable.
 			return;
 		}
