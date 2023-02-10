@@ -113,9 +113,10 @@ export async function fetchTokens(
 	const refreshToken = tokens.refresh_token;
 
 	if (accessToken === undefined || refreshToken === undefined) {
+		// Look up error codes at https://login.microsoftonline.com/error
 		throwOdspNetworkError(
 			// pre-0.58 error message: unableToGetAccessToken
-			"Unable to get access token",
+			`Unable to get access token. Error code: ${JSON.stringify(tokens.code ?? [])}`,
 			tokens.error === "invalid_grant" ? 401 : result.status,
 			result,
 		);
