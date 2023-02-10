@@ -126,6 +126,7 @@ export async function fetchTokens(
 			if (isFluidError(error) && isAccessTokenError(parsedResponse)) {
 				error.addTelemetryProperties({
 					error: parsedResponse.error,
+					errorDescription: parsedResponse.error_description,
 					code: JSON.stringify(parsedResponse.error_codes),
 					timestamp: parsedResponse.timestamp,
 					traceId: parsedResponse.trace_id,
@@ -147,6 +148,7 @@ export async function fetchTokens(
 interface AadOauth2TokenError {
 	error: string;
 	error_codes: string[];
+	error_description: string;
 	timestamp: string;
 	trace_id: string;
 	correlation_id: string;
