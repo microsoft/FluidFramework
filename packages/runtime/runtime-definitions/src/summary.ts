@@ -121,6 +121,7 @@ export type SummarizeInternalFn = (
 	fullTree: boolean,
 	trackState: boolean,
 	telemetryContext?: ITelemetryContext,
+	incrementalSummaryContext?: IIncrementalSummaryContext,
 ) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
@@ -190,6 +191,7 @@ export interface ISummarizerNode {
 		fullTree: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IIncrementalSummaryContext,
 	): Promise<ISummarizeResult>;
 	/**
 	 * Checks if there are any additional path parts for children that need to
@@ -311,6 +313,12 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 	 * @param usedRoutes - The routes that are used in this node.
 	 */
 	updateUsedRoutes(usedRoutes: string[]): void;
+}
+
+export interface IIncrementalSummaryContext {
+	currentSequenceNumber: number;
+	previousSequenceNumber: number;
+	parentPath: string;
 }
 
 export const channelsTreeName = ".channels";

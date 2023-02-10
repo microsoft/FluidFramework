@@ -23,6 +23,7 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
+	IIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
@@ -100,6 +101,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			fullTree: boolean,
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
+			incrementalSummaryContext?: IIncrementalSummaryContext,
 		) => Promise<ISummarizeInternalResult>,
 		config: ISummarizerNodeConfigWithGC,
 		changeSequenceNumber: number,
@@ -114,8 +116,18 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	) {
 		super(
 			logger,
-			async (fullTree: boolean, _trackState: boolean, telemetryContext?: ITelemetryContext) =>
-				summarizeFn(fullTree, true /* trackState */, telemetryContext),
+			async (
+				fullTree: boolean,
+				_trackState: boolean,
+				telemetryContext?: ITelemetryContext,
+				incrementalSummaryContext?: IIncrementalSummaryContext,
+			) =>
+				summarizeFn(
+					fullTree,
+					true /* trackState */,
+					telemetryContext,
+					incrementalSummaryContext,
+				),
 			config,
 			changeSequenceNumber,
 			latestSummary,
@@ -166,6 +178,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		fullTree: boolean,
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IIncrementalSummaryContext,
 	): Promise<ISummarizeResult> {
 		// If GC is not disabled and a summary is in progress, GC should have run and updated the used routes for this
 		// summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
@@ -179,8 +192,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		// If trackState is true, get summary from base summarizer node which tracks summary state.
 		// If trackState is false, get summary from summarizeInternal.
 		return trackState
-			? super.summarize(fullTree, true /* trackState */, telemetryContext)
-			: this.summarizeFn(fullTree, trackState, telemetryContext);
+			? super.summarize(
+					fullTree,
+					true /* trackState */,
+					telemetryContext,
+					incrementalSummaryContext,
+			  )
+			: this.summarizeFn(fullTree, trackState, telemetryContext, incrementalSummaryContext);
 	}
 
 	/**

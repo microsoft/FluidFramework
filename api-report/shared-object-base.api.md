@@ -17,6 +17,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
@@ -95,8 +96,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     // (undocumented)
-    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
+    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IIncrementalSummaryContext): ISummaryTreeWithStats;
 }
 
 // @public
@@ -139,7 +140,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected runtime: IFluidDataStoreRuntime;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     // (undocumented)
-    abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
 // @public

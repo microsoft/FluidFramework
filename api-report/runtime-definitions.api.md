@@ -319,6 +319,16 @@ export interface IInboundSignalMessage extends ISignalMessage {
     type: string;
 }
 
+// @public (undocumented)
+export interface IIncrementalSummaryContext {
+    // (undocumented)
+    currentSequenceNumber: number;
+    // (undocumented)
+    parentPath: string;
+    // (undocumented)
+    previousSequenceNumber: number;
+}
+
 // @public
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
@@ -375,7 +385,7 @@ export interface ISummarizerNode {
     isSummaryInProgress?(): boolean;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
-    summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IIncrementalSummaryContext): Promise<ISummarizeResult>;
     updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 
@@ -448,7 +458,7 @@ export interface OpAttributionKey {
 }
 
 // @public (undocumented)
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 
 // @public (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";

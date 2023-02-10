@@ -18,6 +18,7 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import {
@@ -147,6 +148,7 @@ export class SharedTreeCore<
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
 		let stats = mergeStats();
 		const summary: ISummaryTree = {
@@ -154,6 +156,16 @@ export class SharedTreeCore<
 			tree: {},
 		};
 		stats.treeNodeCount += 1;
+
+		if (incrementalSummaryContext !== undefined) {
+			// summarize incrementally!
+			assert(
+				this.detachedRevision === incrementalSummaryContext.currentSequenceNumber,
+				"test assert we should not be summarizing beyond this number",
+			);
+			// check previous sequence number as well
+			// use the path to return the proper handle
+		}
 
 		// Merge the summaries of all indexes together under a single ISummaryTree
 		const indexSummaryTree: ISummaryTree["tree"] = {};
@@ -322,6 +334,7 @@ export interface SummaryElement {
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats>;
 
 	/**
