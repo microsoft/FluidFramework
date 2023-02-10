@@ -159,7 +159,7 @@ export function initializeFluidClientDebugger(containerInfo: ContainerInfo): voi
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		container: (containerInfo.container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
 		containerData: containerInfo.container.initialObjects,
-		containerNickname: containerInfo.containerNickname
+		containerNickname: containerInfo.containerNickname,
 	});
 }
 
