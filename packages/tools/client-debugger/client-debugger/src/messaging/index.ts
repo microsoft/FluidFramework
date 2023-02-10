@@ -11,7 +11,10 @@
 // TODO: re-enable this once the API surface has settled
 /* eslint-disable no-restricted-syntax */
 
+export * from "./Constants";
+export * from "./DebuggerMessages";
 export * from "./Messages";
+export * from "./RegistryMessages";
 export * from "./Utilities";
 
 /* eslint-enable no-restricted-syntax */
