@@ -18,7 +18,7 @@ import {
 	DebuggerRegistry,
 } from "../Registry";
 
-import { createMockContainer } from "./Utilities";
+import { addAudienceMember, createMockContainer, removeAudienceMember } from "./Utilities";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
@@ -30,12 +30,24 @@ describe("ClientDebugger unit tests", () => {
 	let otherContainer: IContainer | undefined;
 
 	const registry: DebuggerRegistry = getDebuggerRegistry();
+    
+	let clientId: string | undefined;
+
 	let debuggerRegistered = false;
 	let debuggerClosed = false;
+	let audienceAdded = false;
+	let audienceRemoved = false;
 
 	beforeEach(async () => {
 		container = createMockContainer();
 		otherContainer = createMockContainer();
+
+		container.audience.on("addMember", () => {
+			audienceAdded = true;
+		});
+		container.audience.on("removeMember", () => {
+			audienceRemoved = true;
+		});
 
 		registry.on("debuggerRegistered", () => {
 			debuggerRegistered = true;
@@ -66,7 +78,6 @@ describe("ClientDebugger unit tests", () => {
 		initializeDebugger(containerId, container!);
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(debuggerRegistered).to.be.true;
-
 		initializeDebugger(otherContainerId, otherContainer!);
 
 		debuggers = getFluidClientDebuggers();
@@ -81,6 +92,27 @@ describe("ClientDebugger unit tests", () => {
 		const clientDebuggerOther = getFluidClientDebugger(otherContainerId);
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(clientDebuggerOther?.disposed).to.be.false;
+	});
+
+	it("Validate audience contents are as expected ", () => {
+		const clientDebugger = initializeDebugger(containerId, container!);
+
+		// verify audience change in container is reflecting in client debugger
+        clientId = addAudienceMember(container!);
+        expect(container?.audience.getMembers().size).to.equal(1);
+		expect(clientDebugger?.getAudienceHistory().length).to.equal(1);
+        expect(clientDebugger?.getAudienceHistory()[0].clientId).to.equal(clientId);
+        expect(clientDebugger?.getAudienceHistory()[0].changeKind).to.equal("added");
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(audienceAdded).to.be.true;
+
+        removeAudienceMember(container!, clientId);
+        expect(container!.audience.getMembers().size).to.equal(0);
+		expect(clientDebugger?.getAudienceHistory().length).to.equal(2);
+        expect(clientDebugger?.getAudienceHistory()[1].clientId).to.equal(clientId);
+        expect(clientDebugger?.getAudienceHistory()[1].changeKind).to.equal("removed");
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(audienceRemoved).to.be.true;
 	});
 
 	it("Closing debugger removes it from global (window) registry and disposes it.", () => {
