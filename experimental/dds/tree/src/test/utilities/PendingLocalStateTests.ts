@@ -5,6 +5,7 @@
 
 import { expect } from 'chai';
 import { IContainer } from '@fluidframework/container-definitions';
+import { TestObjectProvider } from '@fluidframework/test-utils';
 import { fail } from '../../Common';
 import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types';
 import type { EditLog } from '../../EditLog';
@@ -22,7 +23,6 @@ import {
 	withContainerOffline,
 } from './TestUtilities';
 import { SimpleTestTree } from './TestNode';
-import { TestObjectProvider } from '@fluidframework/test-utils';
 
 /**
  * Runs a test suite for SharedTree's ability to apply pending local state stashed by the host.
