@@ -67,6 +67,7 @@
 		"debug": "^4.1.1"
 	},
 	"devDependencies": {
+		"@fluid-internal/test-version-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-tools/build-cli": "^0.9.0-127618",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
@@ -74,7 +75,6 @@
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluid-internal/test-version-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^9.1.1",
