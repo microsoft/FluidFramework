@@ -27,13 +27,13 @@ import {
     ITestFluidObject,
     ITestObjectProvider,
     TestFluidObjectFactory,
+    wrapDocumentServiceFactory,
+    mockConfigProvider,
+    waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { mockConfigProvider } from "./gcTestConfigs";
-import { waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
   * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
