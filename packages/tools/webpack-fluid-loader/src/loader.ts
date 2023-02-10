@@ -23,7 +23,6 @@ import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import {
 	extractPackageIdentifierDetails,
@@ -392,20 +391,11 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 	// We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
 	// remove it from the DOM if needed.
 	const mountableView = fluidObject.IFluidMountableView;
-	if (mountableView !== undefined) {
-		mountableView.mount(div);
-		return;
+	if (mountableView === undefined) {
+		throw new Error("Could not mount the view");
 	}
 
-	// If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
-	// if the response is a React-based Fluid object using hooks) and is not the preferred path, but sometimes it
-	// can work.
-	console.warn(
-		`Container returned a non-IFluidMountableView.  This can cause errors when mounting Fluid objects ` +
-			`with React hooks across bundle boundaries.  URL: ${url}`,
-	);
-	const view = new HTMLViewAdapter(fluidObject);
-	view.render(div, { display: "block" });
+	mountableView.mount(div);
 }
 
 /**
