@@ -227,6 +227,13 @@ export class LoadTestDataStoreModel {
 		// The runners are paired up and each pair shares a single taskId
 		this.taskId = `op_sender${config.runId % halfClients}`;
 		this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
+
+		config.logger.sendTelemetryEvent({
+			eventName: "StressTestCanary",
+			runId: config.runId,
+			config: JSON.stringify(config.testConfig),
+		});
+
 		const changed = (taskId) => {
 			this.deferUntilConnected(
 				() => {
