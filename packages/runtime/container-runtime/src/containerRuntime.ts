@@ -68,7 +68,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
-	FlushModeEx,
+	FlushModeExperimental,
 	gcTreeKey,
 	InboundAttachMessage,
 	IFluidDataStoreContextDetached,
@@ -2916,8 +2916,8 @@ export class ContainerRuntime
 				Promise.resolve().then(flush);
 				break;
 
-			// FlushModeEx is experimental and not exposed directly in the runtime APIs
-			case FlushModeEx.Async as unknown as FlushMode:
+			// FlushModeExperimental is experimental and not exposed directly in the runtime APIs
+			case FlushModeExperimental.Async as unknown as FlushMode:
 				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
 				// batch when all micro-tasks are complete.
 				// Compared to TurnBased, this flush mode will capture more ops into the same batch.

@@ -17,7 +17,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { FlushMode, FlushModeEx } from "@fluidframework/runtime-definitions";
+import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Less batches", (getTestObjectProvider) => {
 	const mapId = "mapId";
@@ -72,7 +72,7 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 			batchCount: 5,
 		},
 		{
-			flushMode: FlushModeEx.Async as unknown as FlushMode,
+			flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 			batchCount: 1,
 		},
 	].forEach((test) => {

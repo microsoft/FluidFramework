@@ -101,7 +101,7 @@ export enum FlushMode {
 }
 
 // @public
-export enum FlushModeEx {
+export enum FlushModeExperimental {
     Async = 2
 }
 

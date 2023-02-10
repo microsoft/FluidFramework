@@ -60,11 +60,11 @@ export enum FlushMode {
 }
 
 /**
- * FlushMode extended
+ * FlushMode experimental
  *
  * @experimental - Not ready for use
  */
-export enum FlushModeEx {
+export enum FlushModeExperimental {
 	/**
 	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
 	 * batch when all micro-tasks are complete.

@@ -14,7 +14,7 @@ export {
 	BindState,
 	CreateChildSummarizerNodeFn,
 	FlushMode,
-	FlushModeEx,
+	FlushModeExperimental,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
