@@ -367,6 +367,7 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
+    isSummaryInProgress?(): boolean;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
@@ -426,6 +427,7 @@ export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    setAll(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public

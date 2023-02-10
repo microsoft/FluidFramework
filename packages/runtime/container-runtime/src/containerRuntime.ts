@@ -2302,12 +2302,24 @@ export class ContainerRuntime
 			fullGC,
 		} = options;
 
+		const telemetryContext = new TelemetryContext();
+		// Add the options that are used to generate this summary to the telemetry context.
+		telemetryContext.setAll("fluid_Summarize", "Options", {
+			fullTree,
+			trackState,
+			runGC,
+			fullGC,
+			runSweep,
+		});
+
 		let gcStats: IGCStats | undefined;
 		if (runGC) {
-			gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
+			gcStats = await this.collectGarbage(
+				{ logger: summaryLogger, runSweep, fullGC },
+				telemetryContext,
+			);
 		}
 
-		const telemetryContext = new TelemetryContext();
 		const { stats, summary } = await this.summarizerNode.summarize(
 			fullTree,
 			trackState,
@@ -2478,15 +2490,18 @@ export class ContainerRuntime
 	 * Runs garbage collection and updates the reference / used state of the nodes in the container.
 	 * @returns the statistics of the garbage collection run; undefined if GC did not run.
 	 */
-	public async collectGarbage(options: {
-		/** Logger to use for logging GC events */
-		logger?: ITelemetryLogger;
-		/** True to run GC sweep phase after the mark phase */
-		runSweep?: boolean;
-		/** True to generate full GC data */
-		fullGC?: boolean;
-	}): Promise<IGCStats | undefined> {
-		return this.garbageCollector.collectGarbage(options);
+	public async collectGarbage(
+		options: {
+			/** Logger to use for logging GC events */
+			logger?: ITelemetryLogger;
+			/** True to run GC sweep phase after the mark phase */
+			runSweep?: boolean;
+			/** True to generate full GC data */
+			fullGC?: boolean;
+		},
+		telemetryContext?: ITelemetryContext,
+	): Promise<IGCStats | undefined> {
+		return this.garbageCollector.collectGarbage(options, telemetryContext);
 	}
 
 	/**
