@@ -277,6 +277,9 @@ export interface IPendingContainerState {
 
 const summarizerClientType = "summarizer";
 
+/**
+ * @deprecated - In the next release Container will no longer be exported, IContainer should be used in its place.
+ */
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
 	implements IContainer

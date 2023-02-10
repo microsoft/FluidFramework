@@ -32,6 +32,7 @@ import {
 import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
+	packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -106,6 +107,7 @@ describe("Data Store Context Tests", () => {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
 				logger: new TelemetryNullLogger(),
+				clientDetails: {},
 			} as ContainerRuntime;
 		});
 
@@ -131,9 +133,10 @@ describe("Data Store Context Tests", () => {
 			});
 
 			it("Errors thrown during realize are wrapped as DataProcessingError", async () => {
+				const fullPackageName = ["BOGUS1", "BOGUS2"];
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
-					pkg: ["BOGUS"], // This will cause an error when calling `realizeCore`
+					pkg: fullPackageName, // This will cause an error when calling `realizeCore`
 					runtime: containerRuntime,
 					storage,
 					scope,
@@ -154,10 +157,15 @@ describe("Data Store Context Tests", () => {
 						"Error should be a DataProcessingError",
 					);
 					const props = e.getTelemetryProperties();
+					assert.strictEqual(
+						(props.fullPackageName as ITaggedTelemetryPropertyType)?.value,
+						packagePathToTelemetryProperty(fullPackageName)?.value,
+						"The error should have the full package name in its telemetry properties",
+					);
 					assert.equal(
-						(props.packageName as ITaggedTelemetryPropertyType)?.value,
-						"BOGUS",
-						"The error should have the packageName in its telemetry properties",
+						(props.failedPkgPath as ITaggedTelemetryPropertyType)?.value,
+						"BOGUS1",
+						"The error should have the failed package path in its telemetry properties",
 					);
 					assert.equal(
 						(props.fluidDataStoreId as ITaggedTelemetryPropertyType)?.value,
@@ -256,6 +264,7 @@ describe("Data Store Context Tests", () => {
 				containerRuntime = {
 					IFluidDataStoreRegistry: registryWithSubRegistries,
 					on: (event, listener) => {},
+					clientDetails: {},
 				} as ContainerRuntime;
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
@@ -450,6 +459,7 @@ describe("Data Store Context Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
+				clientDetails: {},
 			} as ContainerRuntime;
 		});
 
@@ -964,6 +974,7 @@ describe("Data Store Context Tests", () => {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
 				logger: new TelemetryNullLogger(),
+				clientDetails: {},
 			} as ContainerRuntime;
 		});
 

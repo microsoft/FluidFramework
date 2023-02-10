@@ -26,6 +26,7 @@ import { ReadAndParseBlob } from "../utils";
 import {
 	EscapedPath,
 	ICreateChildDetails,
+	IFetchSnapshotResult,
 	IInitialSummary,
 	ISummarizerNodeRootContract,
 	parseSummaryForSubtrees,
@@ -88,7 +89,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		assert(
-			this.isTrackingInProgress(),
+			this.isSummaryInProgress(),
 			0x1a1 /* "summarize should not be called when not tracking the summary" */,
 		);
 		assert(
@@ -216,12 +217,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 	/**
 	 * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
 	 * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
-	 * we skip the update. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
-	 * summary based off of that.
+	 * we skip the update. Otherwise, we fetch the latest snapshot and update latest summary based off of that.
 	 *
 	 * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
 	 *
-	 * 1. The latest summary was not udpated.
+	 * 1. The latest summary was not updated.
 	 *
 	 * 2. The latest summary was updated and the summary corresponding to the params was being tracked.
 	 *
@@ -231,7 +231,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	public async refreshLatestSummary(
 		proposalHandle: string | undefined,
 		summaryRefSeq: number,
-		getSnapshot: () => Promise<ISnapshotTree>,
+		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
 		readAndParseBlob: ReadAndParseBlob,
 		correlatedSummaryLogger: ITelemetryLogger,
 	): Promise<RefreshSummaryResult> {
@@ -250,7 +250,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 					proposalHandle,
 					maybeSummaryNode.referenceSequenceNumber,
 				);
-				return { latestSummaryUpdated: true, wasSummaryTracked: true };
+				return { latestSummaryUpdated: true, wasSummaryTracked: true, summaryRefSeq };
 			}
 
 			const props = {
@@ -265,21 +265,36 @@ export class SummarizerNode implements IRootSummarizerNode {
 			});
 		}
 
-		// If we have seen a summary same or later as the current one, ignore it.
+		// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
 		if (this.referenceSequenceNumber >= summaryRefSeq) {
 			return { latestSummaryUpdated: false };
 		}
 
-		const snapshotTree = await getSnapshot();
+		// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
+		// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
+		const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } = await fetchLatestSnapshot();
+
+		// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
+		// snapshot is older than the latest tracked summary, ignore it.
+		if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
+			return { latestSummaryUpdated: false };
+		}
+
 		await this.refreshLatestSummaryFromSnapshot(
-			summaryRefSeq,
+			fetchedSnapshotRefSeq,
 			snapshotTree,
 			undefined,
 			EscapedPath.create(""),
 			correlatedSummaryLogger,
 			readAndParseBlob,
 		);
-		return { latestSummaryUpdated: true, wasSummaryTracked: false, snapshot: snapshotTree };
+
+		return {
+			latestSummaryUpdated: true,
+			wasSummaryTracked: false,
+			snapshotTree,
+			summaryRefSeq: fetchedSnapshotRefSeq,
+		};
 	}
 	/**
 	 * Called when we get an ack from the server for a summary we've just sent. Updates the reference state of this node
@@ -574,9 +589,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * @param child - The child node whose state is to be updated.
 	 */
 	protected maybeUpdateChildState(child: SummarizerNode) {
-		// If we are tracking a summary, this child was created after the tracking started. So, we need to update the
-		// child's tracking state as well.
-		if (this.isTrackingInProgress()) {
+		// If a summary is in progress, this child was created after the summary started. So, we need to update the
+		// child's summary state as well.
+		if (this.isSummaryInProgress()) {
 			child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
 		}
 		// In case we have pending summaries on the parent, let's initialize it on the child.
@@ -599,7 +614,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	/**
 	 * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
 	 */
-	protected isTrackingInProgress(): boolean {
+	public isSummaryInProgress(): boolean {
 		return this.wipReferenceSequenceNumber !== undefined;
 	}
 }
