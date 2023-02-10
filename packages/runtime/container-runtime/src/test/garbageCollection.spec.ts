@@ -47,6 +47,7 @@ import {
     currentGCVersion,
     stableGCVersion,
     gcVersionUpgradeToV2Key,
+    gcTombstoneGenerationOptionName,
 } from "../garbageCollectionConstants";
 
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
@@ -229,8 +230,11 @@ describe("Garbage Collection Tests", () => {
                     gcFeature: 1,
                     sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
                     sweepTimeoutMs: 123,
+                    gcFeatureMatrix: { tombstoneGeneration: 1 },
                 };
-                gc = createGcWithPrivateMembers(inputMetadata);
+                gc = createGcWithPrivateMembers(inputMetadata, {
+                    [gcTombstoneGenerationOptionName]: 2,
+                }); // 2 should not be persisted
                 const outputMetadata = gc.getMetadata();
                 const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: stableGCVersion };
                 assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
@@ -242,6 +246,7 @@ describe("Garbage Collection Tests", () => {
                     gcFeature: 1,
                     sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
                     sweepTimeoutMs: 123,
+                    gcFeatureMatrix: { tombstoneGeneration: 1 },
                 };
                 gc = createGcWithPrivateMembers(inputMetadata);
                 const outputMetadata = gc.getMetadata();
@@ -328,8 +333,12 @@ describe("Garbage Collection Tests", () => {
                     gcFeature: 1,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+                    gcFeatureMatrix: { tombstoneGeneration: 2 },
                 };
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+                gc = createGcWithPrivateMembers(undefined /* metadata */, {
+                    sweepAllowed: true,
+                    [gcTombstoneGenerationOptionName]: 2,
+                });
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
             });
@@ -341,6 +350,7 @@ describe("Garbage Collection Tests", () => {
                     gcFeature: currentGCVersion,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+                    gcFeatureMatrix: undefined,
                 };
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
                 const outputMetadata = gc.getMetadata();
@@ -418,6 +428,7 @@ describe("Garbage Collection Tests", () => {
                     gcFeature: 1,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: expectedSweepTimeoutMs,
+                    gcFeatureMatrix: undefined,
                 };
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
@@ -1195,11 +1206,11 @@ describe("Garbage Collection Tests", () => {
             assert(deletedNodesBlob.type === SummaryType.Handle, "Deleted nodes state should be a handle");
 
             const refreshSummaryResult: RefreshSummaryResult = { latestSummaryUpdated: true, wasSummaryTracked: true, summaryRefSeq: 0 };
-			await garbageCollector.refreshLatestSummary(
-				undefined,
-				refreshSummaryResult,
-				parseNothing,
-			);
+            await garbageCollector.refreshLatestSummary(
+                undefined,
+                refreshSummaryResult,
+                parseNothing,
+            );
 
             // Run GC and summarize again. The whole GC summary should now be a summary handle.
             await garbageCollector.collectGarbage({});
@@ -1739,11 +1750,11 @@ describe("Garbage Collection Tests", () => {
 
             checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
-			await garbageCollector.refreshLatestSummary(
-				undefined,
-				{ wasSummaryTracked: true, latestSummaryUpdated: true, summaryRefSeq: 0 },
-				parseNothing,
-			);
+            await garbageCollector.refreshLatestSummary(
+                undefined,
+                { wasSummaryTracked: true, latestSummaryUpdated: true, summaryRefSeq: 0 },
+                parseNothing,
+            );
 
             await garbageCollector.collectGarbage({});
             const tree2 = garbageCollector.summarize(fullTree, trackState);

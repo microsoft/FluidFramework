@@ -10,6 +10,9 @@ export const stableGCVersion: GCVersion = 1;
 /** The current version of garbage collection. */
 export const currentGCVersion: GCVersion = 2;
 
+/** This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value */
+export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
+
 // Feature gate key to turn GC on / off.
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.
