@@ -55,6 +55,7 @@ function createCompatSuite(
 							},
 							error,
 						);
+						throw error;
 					}
 
 					Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
