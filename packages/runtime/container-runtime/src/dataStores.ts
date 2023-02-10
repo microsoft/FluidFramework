@@ -621,10 +621,11 @@ export class DataStores implements IDisposable {
 		await Promise.all(
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
-					// Summarizer works only with clients with no local changes!
+					// Summarizer works only with clients with no local changes. A data store in attaching
+					// state indicates an op was sent to attach a local data store.
 					assert(
 						context.attachState !== AttachState.Attaching,
-						0x165 /* "Summarizer cannot work if client has local changes" */,
+						"Local data store detected in attaching state during summarize",
 					);
 					return context.attachState === AttachState.Attached;
 				})
@@ -722,8 +723,12 @@ export class DataStores implements IDisposable {
 		await Promise.all(
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
-					// Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
-					// graph so any references they might have won't be connected as well.
+					// Summarizer client and hence GC works only with clients with no local changes. A data store in
+					// attaching state indicates an op was sent to attach a local data store.
+					assert(
+						context.attachState !== AttachState.Attaching,
+						"Local data store detected in attaching state while running GC",
+					);
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
