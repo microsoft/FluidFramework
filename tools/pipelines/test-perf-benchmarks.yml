@@ -517,19 +517,20 @@ stages:
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
               echo "FLUID_TEST_LOGGER_PKG_PATH= ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger"
-              ls -1 `${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`;
-              FLUID_BUILD_ID=${{ variables.artifactBuildId }}
+              #ls -1 `${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`;
+              #FLUID_BUILD_ID=${{ variables.artifactBuildId }}
               echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
 
               # Run execution time tests              
-              FLUID_ENDPOINTNAME="odsp"
-              echo $FLUID_ENDPOINTNAME
+              # FLUID_ENDPOINTNAME="odsp"
+              # echo $FLUID_ENDPOINTNAME
+              echo "FLUID_ENDPOINTNAME = odsp"
               npm run test:benchmark:report:odsp;
               executionTimeTestsExitCodeOdsp=$?;
 
               # Run memory tests
-              FLUID_ENDPOINTNAME="odsp"
-              echo $FLUID_ENDPOINTNAME
+              #FLUID_ENDPOINTNAME="odsp"
+              echo "FLUID_ENDPOINTNAME = odsp"
               npm run test:memory-profiling:report:odsp;
               memoryTestsExitCodeOdsp=$?;
 
@@ -550,6 +551,7 @@ stages:
             login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
+            FLUID_ENDPOINTNAME: odsp
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - execution time odsp
@@ -559,9 +561,9 @@ stages:
             workingDirectory: $(toolAbsolutePath)
             script: |
               ls -la ${{ variables.executionTimeTestOutputFolder }};
-              FLUID_ENDPOINTNAME="odsp"
-              echo $FLUID_ENDPOINTNAME
-              echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
+              #FLUID_ENDPOINTNAME="odsp"
+              #echo $FLUID_ENDPOINTNAME
+              echo "Writing the following performance tests results to Aria/Kusto - ODSP"
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: "odsp"
@@ -574,10 +576,10 @@ stages:
             workingDirectory: $(toolAbsolutePath)
             script: |
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              FLUID_ENDPOINTNAME="odsp"
-              echo $FLUID_ENDPOINTNAME
-              echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
-              FLUID_ENDPOINTNAME="odsp"
+              #FLUID_ENDPOINTNAME="odsp"
+              #echo $FLUID_ENDPOINTNAME
+              echo "Writing the following performance tests results to Aria/Kusto - ODSP"
+              #FLUID_ENDPOINTNAME="odsp"
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: "odsp"
