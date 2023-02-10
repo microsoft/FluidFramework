@@ -72,9 +72,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
             buildRuntimeRequestHandler(
                 mountableViewRequestHandler(MountableView, [viewRequestHandler]),
             ),
-            {
-                summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-            }, // runtimeOptions
+            undefined, // runtimeOptions
             undefined, // containerScope
             existing,
         );
