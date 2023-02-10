@@ -135,7 +135,7 @@ export interface IContainerLoadOptions {
 	baseLogger?: ITelemetryBaseLogger;
 }
 
-interface IContainerConfig {
+export interface IContainerConfig {
 	resolvedUrl?: IFluidResolvedUrl;
 	canReconnect?: boolean;
 	/**

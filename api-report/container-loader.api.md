@@ -55,7 +55,6 @@ export enum ConnectionState {
 
 // @public @deprecated (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    // Warning: (ae-forgotten-export) The symbol "IContainerConfig" needs to be exported by the entry point index.d.ts
     constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
@@ -95,7 +94,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    // Warning: (ae-forgotten-export) The symbol "IPendingContainerState" needs to be exported by the entry point index.d.ts
     static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
@@ -189,6 +187,22 @@ export interface ILoaderServices {
     readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
+}
+
+// @public
+export interface IPendingContainerState {
+    baseSnapshot: ISnapshotTree;
+    // (undocumented)
+    clientId?: string;
+    // (undocumented)
+    pendingRuntimeState: unknown;
+    savedOps: ISequencedDocumentMessage[];
+    // Warning: (ae-forgotten-export) The symbol "ISerializableBlobContents" needs to be exported by the entry point index.d.ts
+    snapshotBlobs: ISerializableBlobContents;
+    // (undocumented)
+    term: number;
+    // (undocumented)
+    url: string;
 }
 
 // @public (undocumented)

@@ -112,6 +112,15 @@
 		"previousVersionStyle": "~previousMinor",
 		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
 		"baselineVersion": "2.0.0-internal.3.0.0",
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerConfig": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IPendingContainerState": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -88,14 +88,28 @@ use_old_InterfaceDeclaration_ICodeDetailsLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IContainerConfig": {"forwardCompat": false}
+* "InterfaceDeclaration_IContainerConfig": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_IContainerConfig():
+    TypeOnly<old.IContainerConfig>;
+declare function use_current_InterfaceDeclaration_IContainerConfig(
+    use: TypeOnly<current.IContainerConfig>);
+use_current_InterfaceDeclaration_IContainerConfig(
+// @ts-expect-error compatibility expected to be broken
+    get_old_InterfaceDeclaration_IContainerConfig());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IContainerConfig": {"backCompat": false}
+* "InterfaceDeclaration_IContainerConfig": {"backCompat": false}
 */
+declare function get_current_InterfaceDeclaration_IContainerConfig():
+    TypeOnly<current.IContainerConfig>;
+declare function use_old_InterfaceDeclaration_IContainerConfig(
+    use: TypeOnly<old.IContainerConfig>);
+use_old_InterfaceDeclaration_IContainerConfig(
+// @ts-expect-error compatibility expected to be broken
+    get_current_InterfaceDeclaration_IContainerConfig());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -244,14 +258,28 @@ use_old_InterfaceDeclaration_ILoaderServices(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingContainerState": {"forwardCompat": false}
+* "InterfaceDeclaration_IPendingContainerState": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_IPendingContainerState():
+    TypeOnly<old.IPendingContainerState>;
+declare function use_current_InterfaceDeclaration_IPendingContainerState(
+    use: TypeOnly<current.IPendingContainerState>);
+use_current_InterfaceDeclaration_IPendingContainerState(
+// @ts-expect-error compatibility expected to be broken
+    get_old_InterfaceDeclaration_IPendingContainerState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingContainerState": {"backCompat": false}
+* "InterfaceDeclaration_IPendingContainerState": {"backCompat": false}
 */
+declare function get_current_InterfaceDeclaration_IPendingContainerState():
+    TypeOnly<current.IPendingContainerState>;
+declare function use_old_InterfaceDeclaration_IPendingContainerState(
+    use: TypeOnly<old.IPendingContainerState>);
+use_old_InterfaceDeclaration_IPendingContainerState(
+// @ts-expect-error compatibility expected to be broken
+    get_current_InterfaceDeclaration_IPendingContainerState());
 
 /*
 * Validate forward compat by using old type in place of current type
