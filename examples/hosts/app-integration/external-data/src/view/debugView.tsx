@@ -92,12 +92,10 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 
 		// HACK: Poll every 3 seconds
 		const timer = setInterval(() => {
-			setFetchingExternalData(true);
 			pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
 				console.error,
 			);
-			setFetchingExternalData(false);
-		}, 3000);
+		}, 8000);
 
 		return (): void => {
 			clearInterval(timer);
@@ -141,10 +139,6 @@ interface ISyncStatusViewProps {
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
 	const { fetchingData, unresolvedChanges } = props;
-	useEffect(() => {
-		console.log("hooks changed", fetchingData);
-	}, [unresolvedChanges, fetchingData]);
-
 	return (
 		<div>
 			<h3>Sync status</h3>
@@ -255,6 +249,7 @@ export interface ExternalDataTask {
 
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
+ * TODO: Audit the state management. Currently, if changes aren't saved before the poll reruns, the diffs aren't saved.
  */
 export const ExternalAppForm: React.FC<IExternalAppFormProps> = (props: IExternalAppFormProps) => {
 	const { model, setFetchingExternalData } = props;
