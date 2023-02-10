@@ -228,7 +228,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		}
 		assert(this.mode === CursorLocationType.Nodes, 0x524 /* must be in nodes mode */);
 		const path = this.getOffsetPath(0, prefix);
-		assert(path !== undefined, "field root cursor should never have undefined path");
+		assert(path !== undefined, 0x55c /* field root cursor should never have undefined path */);
 		return path;
 	}
 
@@ -440,7 +440,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	}
 
 	private initNestedCursor(): void {
-		assert(this.mode === CursorLocationType.Nodes, "can only initNestedCursor when in Nodes");
+		assert(
+			this.mode === CursorLocationType.Nodes,
+			0x55d /* can only initNestedCursor when in Nodes */,
+		);
 		const chunk = (this.siblings as TreeChunk[])[this.indexOfChunk];
 		this.nestedCursor = !(chunk instanceof BasicChunk) ? chunk.cursor() : undefined;
 		this.nestedCursor?.enterNode(this.indexWithinChunk);
@@ -526,11 +529,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	}
 
 	private nestedOffset(): number {
-		assert(this.nestedCursor !== undefined, "nested offset requires nested cursor");
+		assert(this.nestedCursor !== undefined, 0x55e /* nested offset requires nested cursor */);
 		assert(
 			!this.nestedCursor.atChunkRoot() ||
 				this.indexWithinChunk === this.nestedCursor.fieldIndex,
-			"indexes should match if at root",
+			0x55f /* indexes should match if at root */,
 		);
 		return this.index - this.indexWithinChunk;
 	}

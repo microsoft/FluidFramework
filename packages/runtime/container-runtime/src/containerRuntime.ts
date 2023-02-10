@@ -1095,15 +1095,15 @@ export class ContainerRuntime
 		this._connected = this.context.connected;
 
 		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
-			metadata?.gcFeatureMatrix?.tombstoneGeneration,
-			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
+			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName] /* current */,
 		);
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
-			info: JSON.stringify(metadata?.gcFeatureMatrix),
+			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
 				gcOptions_gcTombstoneGeneration:
 					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
@@ -2533,8 +2533,15 @@ export class ContainerRuntime
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
+		const shouldPauseInboundSignal =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
+			) !== true;
 		try {
 			await this.deltaManager.inbound.pause();
+			if (shouldPauseInboundSignal) {
+				await this.deltaManager.inboundSignal.pause();
+			}
 
 			const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
@@ -2730,8 +2737,12 @@ export class ContainerRuntime
 		} finally {
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
+
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();
+			if (shouldPauseInboundSignal) {
+				this.deltaManager.inboundSignal.resume();
+			}
 		}
 	}
 

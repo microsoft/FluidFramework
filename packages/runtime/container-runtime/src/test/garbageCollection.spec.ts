@@ -264,8 +264,8 @@ describe("Garbage Collection Tests", () => {
 					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
 				gc = createGcWithPrivateMembers(inputMetadata, {
-					[gcTombstoneGenerationOptionName]: 2,
-				}); // 2 should not be persisted
+					[gcTombstoneGenerationOptionName]: 2, // 2 should not be persisted
+				});
 				const outputMetadata = gc.getMetadata();
 				const expectedOutputMetadata: IGCMetadata = {
 					...inputMetadata,
@@ -286,9 +286,7 @@ describe("Garbage Collection Tests", () => {
 					sweepTimeoutMs: 123,
 					gcFeatureMatrix: { tombstoneGeneration: 1 },
 				};
-				gc = createGcWithPrivateMembers(inputMetadata, {
-					[gcTombstoneGenerationOptionName]: 2,
-				}); // 2 should not be persisted
+				gc = createGcWithPrivateMembers(inputMetadata);
 				const outputMetadata = gc.getMetadata();
 				const expectedOutputMetadata: IGCMetadata = {
 					...inputMetadata,

@@ -497,7 +497,7 @@ export class DataStores implements IDisposable {
 		if (this.isDataStoreDeleted(dataStoreNodePath)) {
 			assert(
 				!this.contexts.has(id),
-				"Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime.",
+				0x570 /* Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime. */,
 			);
 			// The requested data store is removed by gc. Create a 404 gc response exception.
 			const error = responseToException(
@@ -810,7 +810,7 @@ export class DataStores implements IDisposable {
 			}
 
 			const dataStore = this.contexts.get(dataStoreId);
-			assert(dataStore !== undefined, "Attempting to delete unknown dataStore");
+			assert(dataStore !== undefined, 0x571 /* Attempting to delete unknown dataStore */);
 			dataStore.delete();
 
 			// Delete the contexts of unused data stores.

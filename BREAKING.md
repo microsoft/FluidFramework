@@ -33,6 +33,7 @@ Container and RelativeLoader are no longer exported. All Container usages should
 
 -   [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
 -   [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
+-   [Deprecated IFluidHTMLView and HTMLViewAdapter](#Deprecated-IFluidHTMLView-and-HTMLViewAdapter)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -51,6 +52,10 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 -   `IPendingFlush`
 -   `IPendingState`
 -   `IPendingLocalState`
+
+### Deprecated IFluidHTMLView and HTMLViewAdapter
+
+`IFluidHTMLView` and `HTMLViewAdapter` have been deprecated. It is recommended not to bundle view code with Fluid data, and instead apply the views from outside the container (see https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/external-views for an example of this approach). For those views, a dedicated view framework is recommended (see view sampler demo https://github.com/microsoft/FluidFramework/tree/main/examples/apps/view-framework-sampler)
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

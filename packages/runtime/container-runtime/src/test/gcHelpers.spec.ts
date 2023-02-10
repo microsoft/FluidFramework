@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { shouldAllowGcTombstoneEnforcement } from "../garbageCollectionHelpers";
 
 describe("Garbage Collection Helpers Tests", () => {
-	describe("shouldDisableGcEnforcement", () => {
+	describe("shouldAllowGcTombstoneEnforcement", () => {
 		const testCases: {
 			persisted: number | undefined;
 			current: number | undefined;
