@@ -23,7 +23,7 @@ import {
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { delay } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";

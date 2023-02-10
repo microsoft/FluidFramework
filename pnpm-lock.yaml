@@ -1835,6 +1835,7 @@ importers:
   examples/data-objects/table-document:
     specifiers:
       '@fluid-experimental/sequence-deprecated': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
+      '@fluid-internal/test-version-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/build-cli': ^0.9.0-127618
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -1852,7 +1853,6 @@ importers:
       '@fluidframework/sequence': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-version-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/debug': ^4.1.5
       '@types/mocha': ^9.1.1
@@ -1880,6 +1880,7 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       debug: 4.3.4
     devDependencies:
+      '@fluid-internal/test-version-utils': link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli': 0.9.0-127618
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -1887,7 +1888,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@fluidframework/test-version-utils': link:../../../packages/test/test-version-utils
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/debug': 4.1.7
       '@types/mocha': 9.1.1
@@ -2147,6 +2147,7 @@ importers:
   examples/data-objects/webflow:
     specifiers:
       '@fluid-example/example-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
+      '@fluid-internal/test-version-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -2162,7 +2163,6 @@ importers:
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-version-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/view-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/debug': ^4.1.5
@@ -2215,13 +2215,13 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
+      '@fluid-internal/test-version-utils': link:../../../packages/test/test-version-utils
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@fluidframework/test-version-utils': link:../../../packages/test/test-version-utils
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/debug': 4.1.7
       '@types/mocha': 9.1.1
@@ -8980,6 +8980,7 @@ importers:
     specifiers:
       '@fluid-experimental/sequence-deprecated': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-internal/test-pairwise-generator': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
+      '@fluid-internal/test-version-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/benchmark': ^0.45.0
       '@fluid-tools/build-cli': ^0.9.0-127618
       '@fluidframework/agent-scheduler': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9022,7 +9023,6 @@ importers:
       '@fluidframework/test-loader-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-version-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/undo-redo': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
@@ -9047,6 +9047,7 @@ importers:
     dependencies:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-internal/test-pairwise-generator': link:../test-pairwise-generator
+      '@fluid-internal/test-version-utils': link:../test-version-utils
       '@fluid-tools/benchmark': 0.45.112032
       '@fluidframework/agent-scheduler': link:../../framework/agent-scheduler
       '@fluidframework/aqueduct': link:../../framework/aqueduct
@@ -9086,7 +9087,6 @@ importers:
       '@fluidframework/test-loader-utils': link:../../loader/test-loader-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../test-utils
-      '@fluidframework/test-version-utils': link:../test-version-utils
       '@fluidframework/undo-redo': link:../../framework/undo-redo
       cross-env: 7.0.3
       mocha: 10.2.0
@@ -9116,6 +9116,7 @@ importers:
   packages/test/test-gc-sweep-tests:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
+      '@fluid-internal/test-version-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/build-cli': ^0.9.0-127618
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -9140,7 +9141,6 @@ importers:
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-version-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
@@ -9159,6 +9159,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluid-internal/stochastic-test-utils': link:../stochastic-test-utils
+      '@fluid-internal/test-version-utils': link:../test-version-utils
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
@@ -9179,7 +9180,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/test-utils': link:../test-utils
-      '@fluidframework/test-version-utils': link:../test-version-utils
       mocha: 10.2.0
       random-js: 1.0.8
       uuid: 8.3.2
@@ -9469,7 +9469,6 @@ importers:
       '@fluidframework/sequence': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-version-utils-previous': npm:@fluidframework/test-version-utils@2.0.0-internal.3.0.0
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
@@ -9527,7 +9526,6 @@ importers:
       '@fluidframework/build-tools': 0.9.0-127618_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
-      '@fluidframework/test-version-utils-previous': /@fluidframework/test-version-utils/2.0.0-internal.3.0.0
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
@@ -10313,7 +10311,7 @@ packages:
     resolution: {integrity: sha512-RAmZReFuKCKx0Rs5C0nVJwKomAHUHn+gGP/YvbEsXQWu0sXoncEUZa71UqlfCPVXa/0MkYOIbCXSQdOcuRrHgw==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
-      react: ^16.8.0 || ^17.0.0
+      react: ^16.8.0 || ^17.0.0 || 17.0.2
       subscriptions-transport-ws: ^0.9.0
     peerDependenciesMeta:
       react:
@@ -12126,7 +12124,7 @@ packages:
     resolution: {integrity: sha512-yK14cYaviKs7UW8GFB5rR1+2GtLOMzZ71pPw8Od5ilOTYD6VgUTTRZZfUjAidFCJ1+XsocNnzUQXX73q4tSC3Q==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/merge-styles': 8.5.4
       '@fluentui/set-version': 8.2.3
@@ -12164,8 +12162,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
-      react-dom: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
       scheduler: ^0.19.0 || ^0.20.0
     dependencies:
       '@fluentui/react-utilities': 9.4.0_q5o373oqrklnndq2vhekyuzhxi
@@ -12182,8 +12180,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
       '@types/react-dom': '>=16.8.0 <18.0.0'
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
     dependencies:
       '@fluentui/keyboard-key': 0.2.17
       '@types/react': 17.0.52
@@ -12201,7 +12199,7 @@ packages:
     resolution: {integrity: sha512-RJlytqrdhVC6HqtUKk/SGqOx8IW5S6SxxUbutsto7LZT72wFMBf8VsrxvkfweVrWT2jQp+VkH/c0CHJzzZtztQ==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/keyboard-key': 0.4.3
       '@fluentui/merge-styles': 8.5.4
@@ -12216,7 +12214,7 @@ packages:
     resolution: {integrity: sha512-mM2bW7xIRGGx7thBXKDR64SaZB1tYwICdM9qpM/Jfiu0H+VPQhhhtMPJ+ImmG+DM8MxX9n5Su8ePo2QWtz9mYA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/react-window-provider': 2.2.4_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/set-version': 8.2.3
@@ -12230,8 +12228,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
-      react-dom: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/set-version': 8.2.3
       '@fluentui/style-utilities': 8.8.4_q5o373oqrklnndq2vhekyuzhxi
@@ -12245,7 +12243,7 @@ packages:
   /@fluentui/react-icons-mdl2/1.3.28_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-yt2dQxpbjzTyY2geOnMoSwKv5dps0PRaVbh0g5d2dX9MQHJM3TReRIfwo4bq2dLkeKTP4e86LehQ7/WNP+yVjw==}
     peerDependencies:
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/react-icon-provider': 1.3.26_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/set-version': 8.2.3
@@ -12263,7 +12261,7 @@ packages:
     resolution: {integrity: sha512-qw2lmkxZ2TmgC0pB2dvFyrzVffxBdpCx1BdWRaF+MRGUlTxRtqfybSx3Edsqa6NMewc3J0ThLMFdVFBQ5Yafqw==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@types/react': 17.0.52
       react: 17.0.2
@@ -12273,7 +12271,7 @@ packages:
     resolution: {integrity: sha512-528QMaG3hmCt8mFFWvfK2eXN3nA+p2bJToxq5HrfHqZ4ua9BwQ6iwGNq0w5s0ymqpfdHsXuezu8m0FmFLbZJDA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/react-theme': 9.1.5
       '@types/react': 17.0.52
@@ -12286,8 +12284,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
-      react-dom: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
       scheduler: ^0.19.0 || ^0.20.0
     dependencies:
       '@fluentui/react-context-selector': 9.1.5_7dy3sgqkcy3kjbu4ktqmdo3kpm
@@ -12308,8 +12306,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
-      react-dom: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/react-shared-contexts': 9.1.4_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/react-theme': 9.1.5
@@ -12335,7 +12333,7 @@ packages:
     resolution: {integrity: sha512-h8kz4OjPRWE7Q35jCTsnu173yfEha9xRMXyF9rHia+cHPiFAsOspdf9mhCtfJaflWry1owiKx97P97PKKgycMQ==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/keyboard-keys': 9.0.1
       '@types/react': 17.0.52
@@ -12348,8 +12346,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
       '@types/react-dom': '>=16.8.0 <18.0.0'
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
     dependencies:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
@@ -12363,7 +12361,7 @@ packages:
     resolution: {integrity: sha512-tCiIGQSILSipcn8DwwRgYq5IMtwBKiSQ+/cVRNq54cJZoq5ie/kMGFpldZ+vREDbM8wjmO3eNgNi63A3QRx39g==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/set-version': 8.2.3
       '@types/react': 17.0.52
@@ -12375,8 +12373,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
-      react-dom: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/date-time-utilities': 8.5.3
       '@fluentui/font-icons-mdl2': 8.5.5_q5o373oqrklnndq2vhekyuzhxi
@@ -12420,8 +12418,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
       '@types/react-dom': '>=16.8.0 <18.0.0'
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
     dependencies:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
@@ -12437,7 +12435,7 @@ packages:
     resolution: {integrity: sha512-nJbKBx676hqV7e0RWDSavleIZ0ixrIP2/lOcD651PItLogpe1IexlH6LbMIhNI56BfKmDttE+MYEzELK7ORr/w==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/merge-styles': 8.5.4
       '@fluentui/set-version': 8.2.3
@@ -12456,7 +12454,7 @@ packages:
     resolution: {integrity: sha512-oJ6q8BvVdr0eEG5RgI/VBtKX2JvJV2h0AUkR7FwZoT8fvUUH/iykPZO/5CAVcQDyiXj73hmBibiEGkWNFFuPfw==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/dom-utilities': 2.2.3
       '@fluentui/merge-styles': 8.5.4
@@ -12582,20 +12580,6 @@ packages:
   /@fluid-experimental/sequence-deprecated/2.0.0-internal.2.0.0:
     resolution: {integrity: sha512-l2UdVP3sZRlqm0FD0GRVF5VJGrFI2FgD9hYzCMRXCk1m6jaNmkNB0rtf8LboczoTu3NMad3IEz+bOKbLCHrr/Q==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.3.0.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/merge-tree': 2.0.0-internal.3.0.0
-      '@fluidframework/sequence': 2.0.0-internal.3.0.0
-      '@fluidframework/shared-object-base': 2.0.0-internal.3.0.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
-  /@fluid-experimental/sequence-deprecated/2.0.0-internal.3.0.0:
-    resolution: {integrity: sha512-Ssbf1s4urGs354mx6Kn33rCji7AbLfkrjkD364bDTv3JphuwClNIADemH4hCJwKyk7TJ+90muj1KBDi/5srwWw==}
-    dependencies:
-      '@fluidframework/common-utils': 1.0.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.0.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.0.0
       '@fluidframework/merge-tree': 2.0.0-internal.3.0.0
@@ -12881,26 +12865,6 @@ packages:
       '@fluidframework/synthesize': 2.0.0-internal.3.0.0
       '@fluidframework/view-interfaces': 2.0.0-internal.3.0.0
       uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
-  /@fluidframework/attributor/2.0.0-internal.3.0.0:
-    resolution: {integrity: sha512-wa1pPDN1ItggsvsuL0rns24+x2t5jpAMQkSAawlbk9HRkdNYUzNK89tWNeym0OosB1p1NacnnwOSB3ag4qY63A==}
-    dependencies:
-      '@fluidframework/common-utils': 1.0.0
-      '@fluidframework/container-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/container-runtime': 2.0.0-internal.3.0.0
-      '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/container-utils': 2.0.0-internal.3.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.3.0.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/runtime-utils': 2.0.0-internal.3.0.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.3.0.0
-      lz4js: 0.2.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -14592,37 +14556,6 @@ packages:
       uuid: 8.3.2
     dev: true
 
-  /@fluidframework/test-drivers/2.0.0-internal.3.0.0:
-    resolution: {integrity: sha512-1k+tjib7A+ZD9UHoih4lrQZLIoHG/JlB2NPcB7ws9vicQSqLuGLxORds+ldCPZ+COxnJRFWNQTPveZ3YO0ki3g==}
-    dependencies:
-      '@fluidframework/common-utils': 1.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.3.0.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/driver-utils': 2.0.0-internal.3.0.0
-      '@fluidframework/local-driver': 2.0.0-internal.3.0.0
-      '@fluidframework/odsp-doclib-utils': 2.0.0-internal.3.0.0
-      '@fluidframework/odsp-driver': 2.0.0-internal.3.0.0
-      '@fluidframework/odsp-driver-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/odsp-urlresolver': 2.0.0-internal.3.0.0
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/routerlicious-driver': 2.0.0-internal.3.0.0
-      '@fluidframework/server-local-server': 0.1038.2000
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/test-pairwise-generator': 2.0.0-internal.3.0.0
-      '@fluidframework/test-runtime-utils': 2.0.0-internal.3.0.0
-      '@fluidframework/tinylicious-driver': 2.0.0-internal.3.0.0
-      '@fluidframework/tool-utils': 2.0.0-internal.3.0.0
-      axios: 0.26.1
-      semver: 7.3.8
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-    dev: true
-
   /@fluidframework/test-loader-utils/2.0.0-internal.3.0.0:
     resolution: {integrity: sha512-1OPRj/HrkUPC3l8N3xwf2HnTWV7QyEmhaaZkahQttZFlWSin2qlR4yVhBXlhiNYXfdyfXiTiD91lA7owNM1qtQ==}
     dependencies:
@@ -14634,13 +14567,6 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
-    dev: true
-
-  /@fluidframework/test-pairwise-generator/2.0.0-internal.3.0.0:
-    resolution: {integrity: sha512-Tpnc2nbTzQyj9LzWprQgbqY0yC9sijvHt5YkvMrlnBQADpxYQ4tM0pXg9izyJwSibHK+TKxym/6OrOm1Bl2XiQ==}
-    dependencies:
-      '@fluidframework/common-utils': 1.0.0
-      random-js: 1.0.8
     dev: true
 
   /@fluidframework/test-runtime-utils/2.0.0-internal.3.0.0:
@@ -14733,45 +14659,6 @@ packages:
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
-      - encoding
-      - supports-color
-      - utf-8-validate
-    dev: true
-
-  /@fluidframework/test-version-utils/2.0.0-internal.3.0.0:
-    resolution: {integrity: sha512-TNQPRrLIDWGknVJ+ZWUp63e79nUW5RKuIePT+PQidsBDpUGtBmQ1/I1NmhjQ2cwQx7riqGHu0ecA29u2FcSMMg==}
-    dependencies:
-      '@fluid-experimental/sequence-deprecated': 2.0.0-internal.3.0.0
-      '@fluidframework/aqueduct': 2.0.0-internal.3.0.0
-      '@fluidframework/attributor': 2.0.0-internal.3.0.0
-      '@fluidframework/cell': 2.0.0-internal.3.0.0
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
-      '@fluidframework/container-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/container-loader': 2.0.0-internal.3.0.0
-      '@fluidframework/container-runtime': 2.0.0-internal.3.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.3.0.0
-      '@fluidframework/counter': 2.0.0-internal.3.0.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/driver-utils': 2.0.0-internal.3.0.0
-      '@fluidframework/ink': 2.0.0-internal.3.0.0
-      '@fluidframework/map': 2.0.0-internal.3.0.0
-      '@fluidframework/matrix': 2.0.0-internal.3.0.0
-      '@fluidframework/ordered-collection': 2.0.0-internal.3.0.0
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/register-collection': 2.0.0-internal.3.0.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/sequence': 2.0.0-internal.3.0.0
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.0.0
-      '@fluidframework/test-drivers': 2.0.0-internal.3.0.0
-      '@fluidframework/test-utils': 2.0.0-internal.3.0.0
-      nconf: 0.12.0
-      proper-lockfile: 4.1.2
-      semver: 7.3.8
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
       - encoding
       - supports-color
       - utf-8-validate
@@ -15456,7 +15343,7 @@ packages:
   /@griffel/react/1.5.2_react@17.0.2:
     resolution: {integrity: sha512-y27CVUYIFuJue18AiSnaocfhXvbkjDvH5oafJY+3zdcY7hx17oaGQZ2qdKegRkZJlyKcMU//J/1HJ4SrIDrXRA==}
     peerDependencies:
-      react: '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@griffel/core': 1.9.0
       react: 17.0.2
@@ -16566,7 +16453,7 @@ packages:
     peerDependencies:
       '@types/react': ^16.8.6 || ^17.0.0
       react: ^16.8.0 || ^17.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -16594,8 +16481,8 @@ packages:
     deprecated: Material UI v4 doesn't receive active development since September 2021. See the guide https://mui.com/material-ui/migration/migration-v4/ to upgrade to v5.
     peerDependencies:
       '@types/react': ^16.8.6 || ^17.0.0
-      react: ^16.8.0 || ^17.0.0
-      react-dom: ^16.8.0 || ^17.0.0
+      react: ^16.8.0 || ^17.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -16624,7 +16511,7 @@ packages:
       '@material-ui/core': ^4.12.1
       '@types/react': ^16.8.6 || ^17.0.0
       react: ^16.8.0 || ^17.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -16647,8 +16534,8 @@ packages:
     peerDependencies:
       '@material-ui/core': ^4.12.1
       '@types/react': ^16.8.6 || ^17.0.0
-      react: ^16.8.0 || ^17.0.0
-      react-dom: ^16.8.0 || ^17.0.0
+      react: ^16.8.0 || ^17.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -16670,7 +16557,7 @@ packages:
     peerDependencies:
       '@types/react': ^16.8.6 || ^17.0.0
       react: ^16.8.0 || ^17.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -16702,8 +16589,8 @@ packages:
     deprecated: Material UI v4 doesn't receive active development since September 2021. See the guide https://mui.com/material-ui/migration/migration-v4/ to upgrade to v5.
     peerDependencies:
       '@types/react': ^16.8.6 || ^17.0.0
-      react: ^16.8.0 || ^17.0.0
-      react-dom: ^16.8.0 || ^17.0.0
+      react: ^16.8.0 || ^17.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -16734,7 +16621,7 @@ packages:
     peerDependencies:
       '@types/react': ^16.8.6 || ^17.0.0
       react: ^16.8.0 || ^17.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -16753,8 +16640,8 @@ packages:
     engines: {node: '>=8.0.0'}
     peerDependencies:
       '@types/react': ^16.8.6 || ^17.0.0
-      react: ^16.8.0 || ^17.0.0
-      react-dom: ^16.8.0 || ^17.0.0
+      react: ^16.8.0 || ^17.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -16792,7 +16679,7 @@ packages:
     engines: {node: '>=8.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || 17.0.2
     dependencies:
       '@babel/runtime': 7.20.7
       prop-types: 15.8.1
@@ -18051,7 +17938,7 @@ packages:
     resolution: {integrity: sha512-3Tji0gIy95havhTpSc6CsFl5lNxGn4O5Y1U9fyji+GRkKqDFOrvVLYAHPtLOpYdEI5tF0bDo+akiqfDouY8+eA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       react:
         optional: true
@@ -18085,7 +17972,7 @@ packages:
     resolution: {integrity: sha512-b4JX7JMY7e50y1l6g71D+2XWV3GO0TO2z1ta8J6W4OQt8f44V7sSkRQaJUzXdLjQMrA+Anojuy1ZwPjVeLC6vg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       react:
         optional: true
@@ -18113,7 +18000,7 @@ packages:
     resolution: {integrity: sha512-lYq3uf2mlVevm0bi6ueL3H6TpUMRYW9s/pTNTVJT225l27kLdFR9wEKxAkCBrlKaTgDLJmzzDRsJE3NLZlR/5Q==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       react:
         optional: true
@@ -18148,7 +18035,7 @@ packages:
     peerDependencies:
       '@storybook/mdx2-csf': ^0.0.3
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       '@storybook/mdx2-csf':
         optional: true
@@ -18289,7 +18176,7 @@ packages:
     resolution: {integrity: sha512-K/LYYu9R/Xoah5h9MNh4mSHOic3q5csqjderLqr2YW/KPYiuNubgvzEbAAbzI5xq5JrtAZqnINrZUv2A4CyYbQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       react:
         optional: true
@@ -18316,7 +18203,7 @@ packages:
     resolution: {integrity: sha512-pi5RFB9YTnESRFtYHAVRUrgEI5to0TFc4KndtwcCKt1fMJ8OFjXQeznEfdj95PFeUvW5TNUwjL38vK4LhicB+g==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       react:
         optional: true
@@ -18339,7 +18226,7 @@ packages:
     resolution: {integrity: sha512-8d8taPheO/tryflzXbj2QRuxHOIS8CtzRzcaglCcioqHEMhOIDOx9BdXKdheq54gdk/UN94HdGJUoVxYyXwZ4Q==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       react:
         optional: true
@@ -18364,7 +18251,7 @@ packages:
     resolution: {integrity: sha512-Qgr4wKRSP+gY1VaN7PYT4TM1um7KY341X3GHTglXLFHd8nDsCweawfV2shaX3WxCfZmVro8g4G+Oest30kLLCw==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       react:
         optional: true
@@ -18386,7 +18273,7 @@ packages:
     resolution: {integrity: sha512-KSfeuCSIjncwWGnUu6cZBx8WNqYvm5gHyFvkSPKEu0+MJtgncbUy7pl53lrEEr6QmIq0GRXvS3A0XzV8RCnrSA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       react:
         optional: true
@@ -18412,7 +18299,7 @@ packages:
     resolution: {integrity: sha512-18CqzNnrGMfeZtiKz+R/3rHtSNnfNwz6y6prIQIbWseK16jY8ELTfIFGviwO5V2OqpbHDQi5+xQQ63QAIb89YA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/api': 6.5.13_sfoxds7t5ydpegc3knd667wn6m
       '@storybook/channels': 6.5.13
@@ -18433,7 +18320,7 @@ packages:
     resolution: {integrity: sha512-xVSmB7/IuFd6G7eiJjbI2MuS7SZunoUM6d+YCWpjiehfMeX47MXt1gZtOwFrgJC1ShZlefXFahq/dvxwtmWs+w==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/channels': 6.5.13
       '@storybook/client-logger': 6.5.13
@@ -18460,7 +18347,7 @@ packages:
     resolution: {integrity: sha512-Agqy3IKPv3Nl8QqdS7PjtqLp+c0BD8+/3A2ki/YfKqVz+F+J34EpbZlh3uU053avm1EoNQHSmhZok3ZlWH6O7A==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
     peerDependenciesMeta:
       typescript:
@@ -18529,7 +18416,7 @@ packages:
     resolution: {integrity: sha512-juNH31ZljWbaoBD6Yx2/iQ4G66UBkwq+cFUqLzgVROKMXmYaT0AJYbfyY8CgGqcXkc+sqNA63yWaLWd8/K9vTg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
     peerDependenciesMeta:
       typescript:
@@ -18621,7 +18508,7 @@ packages:
     resolution: {integrity: sha512-uH1mAWbidPiuuTdMUVEiuaNOfrYXm+9QLSP1MMYTKULqEOZI5MSOGkEDqRfVWxbYv/iWBOPTQ+OM9TQ6ecYacg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/addons': 6.5.13_sfoxds7t5ydpegc3knd667wn6m
       '@storybook/channel-postmessage': 6.5.13
@@ -18658,7 +18545,7 @@ packages:
     resolution: {integrity: sha512-6Hhx70JK5pGfKCkqMU4yq/BBH+vRTmzj7tZKfPwba+f8VmTMoOr/2ysTQFRtXryiHB6Z15xBYgfq5x2pIwQzLQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/client-logger': 6.5.13
       '@storybook/csf': 0.0.2--canary.4566f4d.1
@@ -18676,7 +18563,7 @@ packages:
     resolution: {integrity: sha512-YuELbRokTBdqjbx/R4/7O4rou9kvbBIOJjlUkor9hdLLuJ3P0yGianERGNkZFfvcfMBAxU0p52o7QvDldSR3kA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
       webpack: '*'
     peerDependenciesMeta:
@@ -18713,7 +18600,7 @@ packages:
     resolution: {integrity: sha512-YuELbRokTBdqjbx/R4/7O4rou9kvbBIOJjlUkor9hdLLuJ3P0yGianERGNkZFfvcfMBAxU0p52o7QvDldSR3kA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
       webpack: '*'
     peerDependenciesMeta:
@@ -18750,7 +18637,7 @@ packages:
     resolution: {integrity: sha512-+DVZrRsteE9pw0X5MNffkdBgejQnbnL+UOG3qXkE9xxUamQALnuqS/w1BzpHE9WmOHuf7RWMKflyQEW3OLKAJg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
     peerDependenciesMeta:
       typescript:
@@ -18829,7 +18716,7 @@ packages:
       '@storybook/builder-webpack5': '*'
       '@storybook/manager-webpack5': '*'
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
     peerDependenciesMeta:
       '@storybook/builder-webpack5':
@@ -18908,7 +18795,7 @@ packages:
       '@storybook/builder-webpack5': '*'
       '@storybook/manager-webpack5': '*'
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
       webpack: '*'
     peerDependenciesMeta:
@@ -18992,7 +18879,7 @@ packages:
     resolution: {integrity: sha512-pURzS5W3XM0F7bCBWzpl7TRsuy+OXFwLXiWLaexuvo0POZe31Ueo2A1R4rx3MT5Iee8O9mYvG2XTmvK9MlLefQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
     peerDependenciesMeta:
       typescript:
@@ -19050,7 +18937,7 @@ packages:
     resolution: {integrity: sha512-lQEZacSfeRsbqfJE7TVk35Hm1vkr0I2i1pyYqM+4862gRbMh1nJQXbJ5GqZ+Fo/bf0ZfyFZ32jGDIJAFdlpkuQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       typescript: '*'
     peerDependenciesMeta:
       typescript:
@@ -19142,7 +19029,7 @@ packages:
     resolution: {integrity: sha512-GNNYVzw4SmRua3dOc52Ye6Us4iQbq5GKQ56U3iwnzZM3TBdJB+Rft94Fn1/pypHujEHS8hl5Xgp9td6C1lLCow==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/addons': 6.5.13_sfoxds7t5ydpegc3knd667wn6m
       '@storybook/channel-postmessage': 6.5.13
@@ -19194,7 +19081,7 @@ packages:
       '@storybook/manager-webpack4': '*'
       '@storybook/manager-webpack5': '*'
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       require-from-string: ^2.0.2
       typescript: '*'
     peerDependenciesMeta:
@@ -19279,7 +19166,7 @@ packages:
     resolution: {integrity: sha512-sf5aogfirH5ucD0d0hc2mKf2iyWsZsvXhr5kjxUQmgkcoflkGUWhc34sbSQVRQ1i8K5lkLIDH/q2s1Zr2SbzhQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/client-logger': 6.5.13
       core-js: 3.26.1
@@ -19303,7 +19190,7 @@ packages:
     resolution: {integrity: sha512-tHuM8PfeB/0m+JigbaFp+Ld0euFH+fgOObH2W9rjEXy5vnwmaeex/JAdCprv4oL+LcDQEERqNULUUNIvbcTPAg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/addons': 6.5.13_sfoxds7t5ydpegc3knd667wn6m
       '@storybook/client-logger': 6.5.13
@@ -19323,7 +19210,7 @@ packages:
     resolution: {integrity: sha512-GG6lm+8fBX1tNUnX7x3raBOjYhhf14bPWLtYiPlxDTFEMs3sJte7zWKZq6NQ79MoBLL6jjzTeolBfDCBw6fiWQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/addons': 6.5.13_sfoxds7t5ydpegc3knd667wn6m
       '@storybook/client-logger': 6.5.13
@@ -19375,7 +19262,7 @@ packages:
     resolution: {integrity: sha512-oif5NGFAUQhizo50r+ctw2hZNLWV4dPHai+L/gFvbaSeRBeHSNkIcMoZ2FlrO566HdGZTDutYXcR+xus8rI28g==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/client-logger': 6.5.13
       core-js: 3.26.1
@@ -19389,7 +19276,7 @@ packages:
     resolution: {integrity: sha512-MklJuSg4Bc+MWjwhZVmZhJaucaeEBUMMa2V9oRWbIgZOdRHqdW72S2vCbaarDAYfBQdnfaoq1GkSQiw+EnWOzA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@storybook/addons': 6.5.13_sfoxds7t5ydpegc3knd667wn6m
       '@storybook/api': 6.5.13_sfoxds7t5ydpegc3knd667wn6m
@@ -19462,8 +19349,8 @@ packages:
     resolution: {integrity: sha512-OfTXCJUFgjd/digLUuPxa0+/3ZxsQmE7ub9kcbW/wi96Bh3o/p5vrETcBGfP17NWPGqeYYl5LTRpwyGoMC4ysg==}
     engines: {node: '>=12'}
     peerDependencies:
-      react: <18.0.0
-      react-dom: <18.0.0
+      react: <18.0.0 || 17.0.2
+      react-dom: <18.0.0 || 17.0.2
     dependencies:
       '@babel/runtime': 7.20.7
       '@testing-library/dom': 8.19.1
@@ -20633,8 +20520,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
       '@types/react-dom': '>=16.8.0 <18.0.0'
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
     dependencies:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
@@ -20673,8 +20560,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
       '@types/react-dom': '>=16.8.0 <18.0.0'
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
     dependencies:
       '@fluentui/react-window-provider': 1.0.6_74b3ggvk3akyhuq4eydyx3fqim
       '@types/react': 17.0.52
@@ -20713,8 +20600,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
       '@types/react-dom': '>=16.8.0 <18.0.0'
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
     dependencies:
       '@fluentui/dom-utilities': 1.1.2
       '@types/react': 17.0.52
@@ -20995,7 +20882,7 @@ packages:
     peerDependencies:
       enzyme: ^3.0.0
       react: ^17.0.0-0 || 17.0.2
-      react-dom: ^17.0.0-0
+      react-dom: ^17.0.0-0 || 17.0.2
     dependencies:
       '@wojtekmaj/enzyme-adapter-utils': 0.1.4_react@17.0.2
       enzyme: 3.11.0
@@ -21984,7 +21871,7 @@ packages:
       loader-utils: 2.0.4
       make-dir: 3.1.0
       schema-utils: 2.7.1
-      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack: 5.75.0
     dev: true
 
   /babel-loader/8.3.0_tktscwi5cl3qcx6vcfwkvrwn6i:
@@ -22739,7 +22626,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -27175,7 +27062,7 @@ packages:
   /flux/4.0.3_react@17.0.2:
     resolution: {integrity: sha512-yKAbrp7JhZhj6uiT1FTuVMlIAT1J4jqEyBpFApi1kxpGZCvacMVc/t1pMQyotqHhAgvoE3bNvAykhCo2CLjnYw==}
     peerDependencies:
-      react: ^15.0.2 || ^16.0.0 || ^17.0.0
+      react: ^15.0.2 || ^16.0.0 || ^17.0.0 || 17.0.2
     dependencies:
       fbemitter: 3.0.0
       fbjs: 3.0.4
@@ -33956,8 +33843,8 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
       '@types/react-dom': '>=16.8.0 <18.0.0'
-      react: '>=16.8.0 <18.0.0'
-      react-dom: '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
     dependencies:
       '@fluentui/date-time-utilities': 7.9.1
       '@fluentui/react-focus': 7.18.17_74b3ggvk3akyhuq4eydyx3fqim
@@ -35843,8 +35730,8 @@ packages:
   /re-resizable/6.9.9_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-l+MBlKZffv/SicxDySKEEh42hR6m5bAHfNu3Tvxks2c4Ah+ldnWjfnVRwxo/nxF27SsUsxDS0raAzFuJNKABXA==}
     peerDependencies:
-      react: ^16.13.1 || ^17.0.0 || ^18.0.0
-      react-dom: ^16.13.1 || ^17.0.0 || ^18.0.0
+      react: ^16.13.1 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.13.1 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -35854,7 +35741,7 @@ packages:
     resolution: {integrity: sha512-VhyKXZwEu8U/wH2eY3Ie3GJbvGP9wQzts26k1t/A7b8IS1OM31j8ul6HAvLmudpT33XqFPD7/KK18tfx/5I/eA==}
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || 17.0.2
-      react-dom: ^16.0.0 || ^17.0.0
+      react-dom: ^16.0.0 || ^17.0.0 || 17.0.2
     dependencies:
       '@babel/runtime': 7.20.7
       classnames: 2.3.2
@@ -35878,8 +35765,8 @@ packages:
   /react-collapsible/2.10.0_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-kEVsmlFfXBMTCnU5gwIv19MdmPAhbIPzz5Er37TiJSzRKS0IHrqAKQyQeHEmtoGIQMTcVI46FzE4z3NlVTx77A==}
     peerDependencies:
-      react: ~15 || ~16 || ~17 || ~18
-      react-dom: ~15 || ~16 || ~17 || ~18
+      react: ~15 || ~16 || ~17 || ~18 || 17.0.2
+      react-dom: ~15 || ~16 || ~17 || ~18 || 17.0.2
     dependencies:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -35915,7 +35802,7 @@ packages:
   /react-dom/16.14.0_react@16.14.0:
     resolution: {integrity: sha512-1gCeQXDLoIqMgqD3IO2Ah9bnf0w9kzhwN5q4FGnHZ67hBm9yePzB5JJAIQCc8x3pFnNlwFq4RidZggNAAkzWWw==}
     peerDependencies:
-      react: ^16.14.0
+      react: ^16.14.0 || 17.0.2
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
@@ -35937,8 +35824,8 @@ packages:
   /react-draggable/4.4.5_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-OMHzJdyJbYTZo4uQE393fHcqqPYsEtkjfMgvCHr6rejT+Ezn4OZbNyGH50vv+SunC1RMvwOTSWkEODQLzw1M9g==}
     peerDependencies:
-      react: '>= 16.3.0'
-      react-dom: '>= 16.3.0'
+      react: '>= 16.3.0 || 17.0.2'
+      react-dom: '>= 16.3.0 || 17.0.2'
     dependencies:
       clsx: 1.2.1
       prop-types: 15.8.1
@@ -35950,7 +35837,7 @@ packages:
     resolution: {integrity: sha512-t4ZwvV6vwNxzujDQ+37bspnLwA4JlgUPWhLjBJWsNIDceAf6ZKUTCjdm08cN6WeZ5pTMKiCJkmAYnpmR4Bm+dg==}
     peerDependencies:
       react: ^0.14.8 || ^15.0.1 || ^16.0.0 || ^17.0.1 || 17.0.2
-      react-dom: ^0.14.8 || ^15.0.1 || ^16.0.0 || ^17.0.1
+      react-dom: ^0.14.8 || ^15.0.1 || ^16.0.0 || ^17.0.1 || 17.0.2
     dependencies:
       '@base2/pretty-print-object': 1.0.1
       is-plain-object: 5.0.0
@@ -36001,8 +35888,8 @@ packages:
   /react-json-view/1.21.3_gzv7pa6nrbev3fs6gyzn7sadkq:
     resolution: {integrity: sha512-13p8IREj9/x/Ye4WI/JpjhoIwuzEgUAtgJZNBJckfzJt1qyh24BdTm6UQNGnyTq9dapQdrqvquZTo3dz1X6Cjw==}
     peerDependencies:
-      react: ^17.0.0 || ^16.3.0 || ^15.5.4
-      react-dom: ^17.0.0 || ^16.3.0 || ^15.5.4
+      react: ^17.0.0 || ^16.3.0 || ^15.5.4 || 17.0.2
+      react-dom: ^17.0.0 || ^16.3.0 || ^15.5.4 || 17.0.2
     dependencies:
       flux: 4.0.3_react@17.0.2
       react: 17.0.2
@@ -36035,8 +35922,8 @@ packages:
   /react-resizable/1.11.1_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-S70gbLaAYqjuAd49utRHibtHLrHXInh7GuOR+6OO6RO6uleQfuBnWmZjRABfqNEx3C3Z6VPLg0/0uOYFrkfu9Q==}
     peerDependencies:
-      react: 0.14.x || 15.x || 16.x || 17.x
-      react-dom: 0.14.x || 15.x || 16.x || 17.x
+      react: 0.14.x || 15.x || 16.x || 17.x || 17.0.2
+      react-dom: 0.14.x || 15.x || 16.x || 17.x || 17.0.2
     dependencies:
       prop-types: 15.8.1
       react: 17.0.2
@@ -36048,7 +35935,7 @@ packages:
     resolution: {integrity: sha512-C4QPLgy9h42J/KkdrpVxNmkY6p4lb49fsrbDk/hRcZpX7JvZPNb6mGj+c5SzyEtBv1DmQ9oPH4NmhAFvCrg8Jw==}
     peerDependencies:
       react: ^15.3.0 || ^16.0.0 || 17.0.2
-      react-dom: ^15.3.0 || ^16.0.0
+      react-dom: ^15.3.0 || ^16.0.0 || 17.0.2
     dependencies:
       classnames: 2.3.2
       emotion: 9.2.12
@@ -36087,7 +35974,7 @@ packages:
     resolution: {integrity: sha512-YrTFaEHLgJsi8sJVYHBzYn+mkP3prGkmP2DKb/tm0t7CLJY5t1Rxix8070LAKb0wby7bl/lf2EeHkuMihMZMwQ==}
     engines: {node: '>=10'}
     peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@babel/runtime': 7.20.7
       react: 17.0.2
@@ -36101,7 +35988,7 @@ packages:
     resolution: {integrity: sha512-+HzNTCHpeQyl4MJ/bdE0u6XRMe9+XG/+aL4mCxVN4DnPBQ0/5bfHWPDuOZUzYdMj94daZaZdCCc1Dzt9R/xSSg==}
     peerDependencies:
       react: '>=15.0.0 || 17.0.2'
-      react-dom: '>=15.0.0'
+      react-dom: '>=15.0.0 || 17.0.2'
     dependencies:
       dom-helpers: 3.4.0
       loose-envify: 1.4.0
@@ -36115,7 +36002,7 @@ packages:
     resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
     peerDependencies:
       react: '>=16.6.0 || 17.0.2'
-      react-dom: '>=16.6.0'
+      react-dom: '>=16.6.0 || 17.0.2'
     dependencies:
       '@babel/runtime': 7.20.7
       dom-helpers: 5.2.1
@@ -36130,7 +36017,7 @@ packages:
     engines: {node: '>8.0.0'}
     peerDependencies:
       react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc || 17.0.2
-      react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc
+      react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc || 17.0.2
     dependencies:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -36141,7 +36028,7 @@ packages:
     engines: {node: '>8.0.0'}
     peerDependencies:
       react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || 17.0.2
-      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       '@babel/runtime': 7.20.7
       memoize-one: 5.2.1
@@ -39935,7 +39822,7 @@ packages:
   /use-composed-ref/1.3.0_react@17.0.2:
     resolution: {integrity: sha512-GLMG0Jc/jiKov/3Ulid1wbv3r54K9HlMW29IWcDFPEqFkSO2nS0MuefWgMJpeHQ9YJeXDL3ZUF+P3jdXlZX/cQ==}
     peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       react: 17.0.2
     dev: false
@@ -39944,7 +39831,7 @@ packages:
     resolution: {integrity: sha512-49L8yCO3iGT/ZF9QttjwLF/ZD9Iwto5LnH5LmEdk/6cFmXddqi2ulF0edxTwjj+7mqvpVVGQWvbXZdn32wRSHA==}
     peerDependencies:
       '@types/react': '*'
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -39957,7 +39844,7 @@ packages:
     resolution: {integrity: sha512-xA+AVm/Wlg3e2P/JiItTziwS7FK92LWrDB0p+hgXloIMuVCeJJ8v6f0eeHyPZaJrM+usM1FkFfbNCrJGs8A/zw==}
     peerDependencies:
       '@types/react': '*'
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -39970,8 +39857,8 @@ packages:
   /use-resize-observer/7.0.1_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-tJESENDoVXfzkv1Cl9dJ13ySgENcKjvEKSU7QwjckjxjXg/MV2zW1CjEUtLpmXY084womIxJROUR3L1SuqlvOw==}
     peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
+      react: '>=16.8.0 || 17.0.2'
+      react-dom: '>=16.8.0 || 17.0.2'
     dependencies:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2

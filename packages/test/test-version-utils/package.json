@@ -1,6 +1,7 @@
 {
-	"name": "@fluidframework/test-version-utils",
+	"name": "@fluid-internal/test-version-utils",
 	"version": "2.0.0-internal.4.0.0",
+	"private": true,
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -16,7 +17,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
+		"build:compile": "npm run tsc && npm run build:test",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
@@ -32,9 +33,7 @@
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --unhandled-rejections=strict  --recursive dist/test/*.spec.js --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --generate --dir .",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"tsc": "tsc"
 	},
 	"nyc": {
 		"all": true,
@@ -92,7 +91,6 @@
 		"@fluidframework/build-tools": "^0.9.0-127618",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-version-utils-previous": "npm:@fluidframework/test-version-utils@2.0.0-internal.3.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
@@ -112,12 +110,5 @@
 		"uuid": "^8.3.1",
 		"webpack": "^5.72.0",
 		"webpack-cli": "^4.9.2"
-	},
-	"typeValidation": {
-		"version": "2.0.0-internal.4.0.0",
-		"previousVersionStyle": "^previousMajor",
-		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-		"baselineVersion": "2.0.0-internal.3.0.0",
-		"broken": {}
 	}
 }

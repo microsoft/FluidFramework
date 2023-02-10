@@ -18,7 +18,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { RuntimeHeaders, ISummarizer } from "@fluidframework/container-runtime";
 import { defaultGCConfig } from "./gcTestConfigs";
 

@@ -13,7 +13,7 @@ import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-de
 
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 const runtimeFactory: IProvideRuntimeFactory = {

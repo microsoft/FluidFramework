@@ -23,7 +23,7 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
 const map1Id = "map1Key";

@@ -12,7 +12,7 @@ import {
 	describeFullCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 
 describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;

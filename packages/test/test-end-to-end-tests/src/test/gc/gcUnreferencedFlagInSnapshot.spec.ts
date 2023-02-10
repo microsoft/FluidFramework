@@ -20,7 +20,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
 

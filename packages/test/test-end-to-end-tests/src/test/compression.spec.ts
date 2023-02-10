@@ -13,7 +13,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 import { IContainer } from "@fluidframework/container-definitions";
 

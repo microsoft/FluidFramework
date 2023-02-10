@@ -16,7 +16,7 @@ import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager";
 import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";

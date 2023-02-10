@@ -97,7 +97,7 @@
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-version-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/test-version-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^9.1.1",

@@ -24,7 +24,7 @@ import {
 	ITestObjectProvider,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],

@@ -11,7 +11,7 @@ window.performance.measure ??= () => undefined as PerformanceMeasure;
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeLoaderCompat } from "@fluidframework/test-version-utils";
+import { describeLoaderCompat } from "@fluid-internal/test-version-utils";
 import { htmlFormatter } from "..";
 import { FlowDocument } from "../document";
 import { Layout } from "../view/layout";

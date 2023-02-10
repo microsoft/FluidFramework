@@ -15,7 +15,7 @@ import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 

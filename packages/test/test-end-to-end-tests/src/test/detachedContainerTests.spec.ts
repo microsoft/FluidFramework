@@ -40,7 +40,7 @@ import {
 	describeFullCompat,
 	describeNoCompat,
 	itExpects,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
