@@ -2122,7 +2122,7 @@ export class ContainerRuntime
 	public getQuorum(): IQuorumClients {
 		return this.context.quorum;
 	}
-	f;
+
 	public getAudience(): IAudience {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.context.audience!;
