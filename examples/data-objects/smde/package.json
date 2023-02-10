@@ -56,7 +56,6 @@
 		"@fluidframework/sequence": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/view-adapters": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
 		"events": "^3.1.0",
-		"marked": "^2.0.3",
 		"react": "^17.0.1",
 		"simplemde": "^1.11.2"
 	},
@@ -66,7 +65,6 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/events": "^3.0.0",
-		"@types/marked": "^2.0.2",
 		"@types/react": "^17.0.44",
 		"@types/simplemde": "^1.11.7",
 		"concurrently": "^6.2.0",
