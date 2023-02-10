@@ -8,11 +8,11 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, mockConfigProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { IFluidHandle, IFluidHandleContext, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { defaultGCConfig, mockConfigProvider } from "./gcTestConfigs";
-import { getGCStateFromSummary, waitForContainerConnection } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * An IFluidHandle implementation that has a random path / url. This is used to test that adding this handle to

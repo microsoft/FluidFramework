@@ -10,10 +10,14 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+ } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
-import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
  * Validates that the 'unreferenced' property in the summary tree of unreferenced data stores is present

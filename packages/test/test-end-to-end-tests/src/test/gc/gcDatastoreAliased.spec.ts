@@ -8,10 +8,10 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary, waitForContainerConnection } from "./gcTestSummaryUtils";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
