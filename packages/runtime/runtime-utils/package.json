@@ -101,6 +101,11 @@
     "version": "2.0.0-internal.2.4.0",
     "previousVersionStyle": "previousPatch",
     "baselineRange": "2.0.0-internal.2.4.0",
-    "broken": {}
+    "broken": {
+      "TypeAliasDeclaration_RefreshSummaryResult": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }
