@@ -66,12 +66,24 @@ use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_AttributionKey": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_AttributionKey():
+    TypeOnly<old.AttributionKey>;
+declare function use_current_RemovedInterfaceDeclaration_AttributionKey(
+    use: TypeOnly<current.AttributionKey>);
+use_current_RemovedInterfaceDeclaration_AttributionKey(
+    get_old_InterfaceDeclaration_AttributionKey());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_AttributionKey": {"backCompat": false}
 */
+declare function get_current_RemovedInterfaceDeclaration_AttributionKey():
+    TypeOnly<current.AttributionKey>;
+declare function use_old_InterfaceDeclaration_AttributionKey(
+    use: TypeOnly<old.AttributionKey>);
+use_old_InterfaceDeclaration_AttributionKey(
+    get_current_RemovedInterfaceDeclaration_AttributionKey());
 
 /*
 * Validate forward compat by using old type in place of current type
