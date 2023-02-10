@@ -317,9 +317,7 @@ export const shortCodeMap = {
 	"0x17a": "Channel should be loaded when created!!",
 	"0x17b": "Channel to be binded should be in not bounded set",
 	"0x17c": "Unexpected attach (local) channel OP",
-	"0x17d":
-		// eslint-disable-next-line no-template-curly-in-string
-		"Unexpected attach channel OP,\n                            is in pendingAttach set: ${this.pendingAttach.has(id)},\n                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContextBase}",
+	"0x17d": "Unexpected attach channel OP",
 	"0x17e": "Used route does not belong to any known context",
 	"0x17f": "Not expecting detached channels during summarize",
 	"0x180": "getAttachSummary should always return a tree",
