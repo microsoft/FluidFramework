@@ -108,7 +108,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 					this.schema.treeSchema.get(adapter.output) ?? this.policy.defaultTreeSchema,
 				)
 			) {
-				fail(`tree adapter for stored ${adapter.output} should not be never`);
+				fail("tree adapter for stored adapter.output should not be never");
 			}
 		}
 		const adapted = {

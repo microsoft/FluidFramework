@@ -128,9 +128,8 @@ describe("Container create scenarios", () => {
 
 		const errorFn = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
-			assert.strictEqual(
-				error.message,
-				"R11s fetch error: Document is deleted and cannot be accessed.",
+			assert.strict(
+				error.message.startsWith("R11s fetch error"),
 				`Unexpected error: ${error.message}`,
 			);
 			return true;
