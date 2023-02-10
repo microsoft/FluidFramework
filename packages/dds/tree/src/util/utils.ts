@@ -29,27 +29,6 @@ export function fail(message: string): never {
 }
 
 /**
- * Use as a default branch in switch statements to enforce (at compile time) that all possible branches are accounted
- * for, according to the TypeScript type system.
- * As an additional protection, it errors if called.
- *
- * Example:
- * ```typescript
- * const bool: true | false = ...;
- * switch(bool) {
- *   case true: {...}
- *   case false: {...}
- *   default: unreachableCase(bool);
- * }
- * ```
- *
- * @param never - The switch value
- */
-export function unreachableCase(never: never): never {
-	fail("unreachableCase was called");
-}
-
-/**
  * Checks whether or not the given object is a `readonly` array.
  */
 export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
