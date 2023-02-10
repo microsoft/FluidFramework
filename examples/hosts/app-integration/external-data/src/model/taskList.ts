@@ -66,13 +66,13 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 			this.emit("draftPriorityChanged");
 		});
 	}
-	public externalNameChanged = (savedName: string): void => {
+	public externalNameChanged = (incomingName: string): void => {
 		this.changeType = "change";
-		this.externalName = savedName;
+		this.externalName = incomingName;
 	};
-	public externalPriorityChanged = (savedPriority: number): void => {
+	public externalPriorityChanged = (incomingPriority: number): void => {
 		this.changeType = "change";
-		this.externalPriority = savedPriority;
+		this.externalPriority = incomingPriority;
 	};
 	public overwriteWithExternalData = (): void => {
 		this.changeType = undefined;
@@ -258,53 +258,53 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		// TODO: Delete any items that are in the root but missing from the external data
-		const updateTaskPs = updatedExternalData.map(async ([id, { name, priority }]) => {
-			// Write external data into savedData map.
-			const currentTask = this.savedData.get<PersistedTask>(id);
-			let sourceNameDiffersFromSavedName = false;
-			let sourcePriorityDiffersFromSavedPriority = false;
+		const updateTaskPs = incomingExternalData.map(async ([id, { name: incomingName , priority: incomingPriority }]) => {
+			// Write external data into externalDataSnapshot map.
+			const currentTask = this.externalDataSnapshot.get<PersistedTask>(id);
+			let incomingNameDiffersFromSnapshotName = false;
+			let incomingPriorityDiffersFromSnapshotPriority = false;
 			// Create a new task because it doesn't exist already
 			if (currentTask === undefined) {
-				const savedNameString = SharedString.create(this.runtime);
-				const savedPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
-				const savedDataPT: PersistedTask = {
+				const snapshotNameString = SharedString.create(this.runtime);
+				const snapshotPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+				const externalDataSnapshotPT: PersistedTask = {
 					id,
-					name: savedNameString.handle as IFluidHandle<SharedString>,
-					priority: savedPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+					name: snapshotNameString.handle as IFluidHandle<SharedString>,
+					priority: snapshotPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
 				};
-				savedNameString.insertText(0, name);
-				savedPriorityCell.set(priority);
-				this.savedData.set(id, savedDataPT);
+				snapshotNameString.insertText(0, incomingName);
+				snapshotPriorityCell.set(incomingPriority);
+				this.externalDataSnapshot.set(id, externalDataSnapshotPT);
 			} else {
 				// Make changes to exisiting saved tasks
-				const [savedNameString, savedPriorityCell] = await Promise.all([
+				const [snapshotNameString, snapshotPriorityCell] = await Promise.all([
 					currentTask.name.get(),
 					currentTask.priority.get(),
 				]);
-				if (savedNameString.getText() !== name) {
-					sourceNameDiffersFromSavedName = true;
+				if (snapshotNameString.getText() !== incomingName) {
+					incomingNameDiffersFromSnapshotName = true;
 				}
-				if (savedPriorityCell.get() !== priority) {
-					sourcePriorityDiffersFromSavedPriority = true;
+				if (snapshotPriorityCell.get() !== incomingPriority) {
+					incomingPriorityDiffersFromSnapshotPriority = true;
 				}
-				savedNameString.insertText(0, name);
-				savedPriorityCell.set(priority);
+				snapshotNameString.insertText(0, incomingName);
+				snapshotPriorityCell.set(incomingPriority);
 			}
 
-			// Now look for differences between draftData and savedData
+			// Now look for differences between draftData and externalDataSnapshot
 			const task = this.tasks.get(id);
 			if (task === undefined) {
 				// A new task was added from external source, add it to the Fluid data.
-				this.addTask(id, name, priority);
+				this.addTask(id, incomingName, incomingPriority);
 				return;
 			}
 			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (sourceNameDiffersFromSavedName && task.draftName.getText() !== name) {
-				task.sourceNameChanged(name);
+			if (incomingNameDiffersFromSnapshotName && task.draftName.getText() !== incomingName) {
+				task.externalNameChanged(incomingName);
 			}
 			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (sourcePriorityDiffersFromSavedPriority && task.draftPriority !== priority) {
-				task.sourcePriorityChanged(priority);
+			if (incomingPriorityDiffersFromSnapshotPriority && task.draftPriority !== incomingPriority) {
+				task.externalPriorityChanged(incomingPriority);
 			}
 		});
 		await Promise.all(updateTaskPs);
