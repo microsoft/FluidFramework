@@ -819,6 +819,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     // Return if the client has already been removed due to a prior leave message.
                     return;
                 }
+
+                if (this.serviceConfiguration.deli.enableLeaveOpNoClientServerMetadata &&
+                    this.clientSeqManager.count() === 0) {
+                    // add server metadata to indicate the last client left
+                    (message.operation.serverMetadata ??= {}).noClient = true;
+                }
+
             } else if (message.operation.type === MessageType.ClientJoin) {
                 const clientJoinMessage = dataContent as IClientJoin;
 
@@ -974,13 +981,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              * Sequence number was never rev'd for noClients. We will decide now based on heuristics.
              */
             case MessageType.NoClient: {
-                // Only rev if no clients have shown up since last noClient was sent to alfred.
-                if (this.noActiveClients) {
-                    sequenceNumber = this.revSequenceNumber();
-                    message.operation.referenceSequenceNumber = sequenceNumber;
-                    this.minimumSequenceNumber = sequenceNumber;
-                } else {
+                if (this.serviceConfiguration.deli.disableNoClientMessage) {
                     sendType = SendType.Never;
+                } else {
+                    // Only rev if no clients have shown up since last noClient was sent to alfred.
+                    if (this.noActiveClients) {
+                        sequenceNumber = this.revSequenceNumber();
+                        message.operation.referenceSequenceNumber = sequenceNumber;
+                        this.minimumSequenceNumber = sequenceNumber;
+                    } else {
+                        sendType = SendType.Never;
+                    }
                 }
 
                 break;
