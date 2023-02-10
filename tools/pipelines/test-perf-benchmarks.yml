@@ -516,8 +516,8 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
-              FLUID_TEST_LOGGER_PKG_PATH=`${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`
-              echo $FLUID_TEST_LOGGER_PKG_PATH
+              echo "FLUID_TEST_LOGGER_PKG_PATH= ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger"
+              ls -1 `${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`;
               FLUID_BUILD_ID=${{ variables.artifactBuildId }}
               echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
 
