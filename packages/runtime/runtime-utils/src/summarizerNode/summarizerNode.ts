@@ -19,9 +19,14 @@ import {
 	ISnapshotTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	LoggingError,
+	PerformanceEvent,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
 import { ReadAndParseBlob } from "../utils";
 import {
@@ -82,15 +87,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 		private readonly initialSummary?: IInitialSummary,
 		protected wipSummaryLogger?: ITelemetryLogger,
 		/** A unique id of this node to be logged when sending telemetry. */
-		protected telemetryId?: string,
+		protected telemetryNodeId?: string,
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
-		// All logs posted by the summarizer node should include the telemetryId.
+		// All logs posted by the summarizer node should include the telemetryNodeId.
 		this.logger = ChildLogger.create(baseLogger, undefined /* namespace */, {
 			all: {
 				id: {
 					tag: TelemetryDataTag.CodeArtifact,
-					value: this.telemetryId,
+					value: this.telemetryNodeId,
 				},
 			},
 		});
@@ -217,21 +222,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * will help us identify these cases and take appropriate action.
 		 */
 		if (localPathsToUse === undefined) {
-			const error = new LoggingError("NodeNotSummarized", {
+			this.throwUnexpectedError({
+				eventName: "NodeNotSummarized",
 				proposalHandle,
-				referenceSequenceNumber: this.wipReferenceSequenceNumber,
-				id: {
-					tag: TelemetryDataTag.CodeArtifact,
-					value: this.telemetryId,
-				},
 			});
-			this.logger.sendErrorEvent(
-				{
-					eventName: "NodeNotSummarized",
-				},
-				error,
-			);
-			throw error;
 		}
 
 		const summary = new SummaryNode({
@@ -292,7 +286,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * Refresh latest summary should never happen while a summary is in progress. If it does, log an error
 		 * so that we can gather data around it and take appropriate action.
 		 */
-		if (this.isTrackingInProgress()) {
+		if (this.isSummaryInProgress()) {
 			this.logger.sendErrorEvent({
 				eventName: "UnexpectedRefreshDuringSummarize",
 				proposalHandle,
@@ -301,87 +295,104 @@ export class SummarizerNode implements IRootSummarizerNode {
 			});
 		}
 
-		let result: RefreshSummaryResult | undefined;
-		try {
-			this.logger.sendTelemetryEvent({
-				eventName: "refreshLatestSummary_start",
-				proposalHandle,
-				referenceSequenceNumber: this.referenceSequenceNumber,
-				summaryRefSeq,
-			});
-
-			if (proposalHandle !== undefined) {
-				const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
-
-				if (maybeSummaryNode !== undefined) {
-					this.refreshLatestSummaryFromPending(
-						proposalHandle,
-						maybeSummaryNode.referenceSequenceNumber,
-					);
-					result = { latestSummaryUpdated: true, wasSummaryTracked: true, summaryRefSeq };
-					return result;
+		const eventProps: {
+			proposalHandle: string | undefined;
+			summaryRefSeq: number;
+			referenceSequenceNumber: number;
+			latestSummaryUpdated?: boolean;
+			wasSummaryTracked?: boolean;
+		} = {
+			proposalHandle,
+			summaryRefSeq,
+			referenceSequenceNumber: this.referenceSequenceNumber,
+		};
+		return PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: "refreshLatestSummary",
+				...eventProps,
+			},
+			async (event) => {
+				// Refresh latest summary should not happen while a summary is in progress. If it does, it can result
+				// in inconsistent state, so, we should not continue;
+				if (this.isSummaryInProgress()) {
+					throw new LoggingError("UnexpectedRefreshDuringSummarize", {
+						inProgressSummaryRefSeq: this.wipReferenceSequenceNumber,
+					});
 				}
 
-				const props = {
-					summaryRefSeq,
-					pendingSize: this.pendingSummaries.size ?? undefined,
+				if (proposalHandle !== undefined) {
+					const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
+
+					if (maybeSummaryNode !== undefined) {
+						this.refreshLatestSummaryFromPending(
+							proposalHandle,
+							maybeSummaryNode.referenceSequenceNumber,
+						);
+						eventProps.wasSummaryTracked = true;
+						eventProps.latestSummaryUpdated = true;
+						event.end(eventProps);
+						return {
+							latestSummaryUpdated: true,
+							wasSummaryTracked: true,
+							summaryRefSeq,
+						};
+					}
+
+					const props = {
+						summaryRefSeq,
+						pendingSize: this.pendingSummaries.size ?? undefined,
+					};
+					this.logger.sendTelemetryEvent({
+						eventName: "PendingSummaryNotFound",
+						proposalHandle,
+						referenceSequenceNumber: this.referenceSequenceNumber,
+						details: JSON.stringify(props),
+					});
+				}
+
+				// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
+				if (this.referenceSequenceNumber >= summaryRefSeq) {
+					eventProps.latestSummaryUpdated = false;
+					event.end(eventProps);
+					return { latestSummaryUpdated: false };
+				}
+
+				// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
+				// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
+				const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } =
+					await fetchLatestSnapshot();
+
+				// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
+				// snapshot is older than the latest tracked summary, ignore it.
+				if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
+					eventProps.latestSummaryUpdated = false;
+					event.end(eventProps);
+					return { latestSummaryUpdated: false };
+				}
+
+				await this.refreshLatestSummaryFromSnapshot(
+					fetchedSnapshotRefSeq,
+					snapshotTree,
+					undefined,
+					EscapedPath.create(""),
+					correlatedSummaryLogger,
+					readAndParseBlob,
+				);
+
+				eventProps.latestSummaryUpdated = true;
+				eventProps.wasSummaryTracked = false;
+				eventProps.summaryRefSeq = fetchedSnapshotRefSeq;
+				event.end(eventProps);
+				return {
+					latestSummaryUpdated: true,
+					wasSummaryTracked: false,
+					snapshotTree,
+					summaryRefSeq: fetchedSnapshotRefSeq,
 				};
-				this.logger.sendTelemetryEvent({
-					eventName: "PendingSummaryNotFound",
-					proposalHandle,
-					referenceSequenceNumber: this.referenceSequenceNumber,
-					details: JSON.stringify(props),
-				});
-			}
-
-			// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
-			if (this.referenceSequenceNumber >= summaryRefSeq) {
-				result = { latestSummaryUpdated: false };
-				return result;
-			}
-
-			// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
-			// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
-			const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } =
-				await fetchLatestSnapshot();
-
-			// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
-			// snapshot is older than the latest tracked summary, ignore it.
-			if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
-				result = { latestSummaryUpdated: false };
-				return result;
-			}
-
-			await this.refreshLatestSummaryFromSnapshot(
-				fetchedSnapshotRefSeq,
-				snapshotTree,
-				undefined,
-				EscapedPath.create(""),
-				correlatedSummaryLogger,
-				readAndParseBlob,
-			);
-
-			result = {
-				latestSummaryUpdated: true,
-				wasSummaryTracked: false,
-				snapshotTree,
-				summaryRefSeq: fetchedSnapshotRefSeq,
-			};
-			return result;
-		} finally {
-			const loggingProps: {
-				latestSummaryUpdated?: boolean;
-				wasSummaryTracked?: boolean;
-				summaryRefSeq?: number;
-			} = { ...result };
-			this.logger.sendTelemetryEvent({
-				eventName: "refreshLatestSummary_end",
-				proposalHandle,
-				referenceSequenceNumber: this.referenceSequenceNumber,
-				summaryRefSeq,
-				...loggingProps,
-			});
-		}
+			},
+			{ start: true, end: true, cancel: "error" },
+		);
 	}
 	/**
 	 * Called when we get an ack from the server for a summary we've just sent. Updates the reference state of this node
@@ -539,7 +550,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			createDetails.latestSummary,
 			createDetails.initialSummary,
 			this.wipSummaryLogger,
-			createDetails.telemetryId,
+			createDetails.telemetryNodeId,
 		);
 
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
@@ -645,13 +656,13 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		const childTelemetryId = `${this.telemetryId ?? ""}/${id}`;
+		const childtelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
 
 		return {
 			initialSummary,
 			latestSummary,
 			changeSequenceNumber,
-			telemetryId: childTelemetryId,
+			telemetryNodeId: childtelemetryNodeId,
 		};
 	}
 
@@ -685,11 +696,28 @@ export class SummarizerNode implements IRootSummarizerNode {
 	protected addPendingSummary(key: string, summary: SummaryNode) {
 		this.pendingSummaries.set(key, summary);
 	}
+
 	/**
 	 * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
 	 */
 	public isSummaryInProgress(): boolean {
 		return this.wipReferenceSequenceNumber !== undefined;
+	}
+
+	/**
+	 * Creates and throws an error due to unexpected conditions.
+	 */
+	protected throwUnexpectedError(eventProps: ITelemetryErrorEvent): never {
+		const error = new LoggingError(eventProps.eventName, {
+			...eventProps,
+			referenceSequenceNumber: this.wipReferenceSequenceNumber,
+			id: {
+				tag: TelemetryDataTag.CodeArtifact,
+				value: this.telemetryNodeId,
+			},
+		});
+		this.logger.sendErrorEvent(eventProps, error);
+		throw error;
 	}
 }
 
@@ -719,5 +747,5 @@ export const createRootSummarizerNode = (
 			: SummaryNode.createForRoot(referenceSequenceNumber),
 		undefined /* initialSummary */,
 		undefined /* wipSummaryLogger */,
-		"" /* telemetryId */,
+		"" /* telemetryNodeId */,
 	);

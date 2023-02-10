@@ -33,7 +33,6 @@ import {
 	convertToSummaryTree,
 	create404Response,
 	createResponseError,
-	packagePathToTelemetryProperty,
 	responseToException,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
@@ -624,24 +623,10 @@ export class DataStores implements IDisposable {
 				.filter(([_, context]) => {
 					// Summarizer works only with clients with no local changes. A data store in attaching
 					// state indicates an op was sent to attach a local data store.
-					if (context.attachState === AttachState.Attaching) {
-						const error = new LoggingError("Local data store during summarize", {
-							fluidDataStoreId: {
-								value: context.id,
-								tag: TelemetryDataTag.CodeArtifact,
-							},
-							packageName: context.isLoaded
-								? packagePathToTelemetryProperty(context.packagePath)
-								: undefined,
-						});
-						this.mc.logger.sendErrorEvent(
-							{
-								eventName: "LocalDataStoreDuringSummarize",
-							},
-							error,
-						);
-						throw error;
-					}
+					assert(
+						context.attachState !== AttachState.Attaching,
+						"Local data store detected in attaching state during summarize",
+					);
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
@@ -740,24 +725,10 @@ export class DataStores implements IDisposable {
 				.filter(([_, context]) => {
 					// Summarizer client and hence GC works only with clients with no local changes. A data store in
 					// attaching state indicates an op was sent to attach a local data store.
-					if (context.attachState === AttachState.Attaching) {
-						const error = new LoggingError("Local data store during GC", {
-							fluidDataStoreId: {
-								value: context.id,
-								tag: TelemetryDataTag.CodeArtifact,
-							},
-							packageName: context.isLoaded
-								? packagePathToTelemetryProperty(context.packagePath)
-								: undefined,
-						});
-						this.mc.logger.sendErrorEvent(
-							{
-								eventName: "LocalDataStoreDuringGC",
-							},
-							error,
-						);
-						throw error;
-					}
+					assert(
+						context.attachState !== AttachState.Attaching,
+						"Local data store detected in attaching state while running GC",
+					);
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {

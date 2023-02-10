@@ -460,6 +460,33 @@ describe("Runtime", () => {
 					assert(result.latestSummaryUpdated === true, "should update");
 					assert(result.wasSummaryTracked === true, "should be tracked");
 				});
+
+				it("should fail refresh when summary is in progress", async () => {
+					createRoot();
+					const proposalHandle = "test-handle";
+
+					const referenceSeqNum = 10;
+					rootNode.startSummary(referenceSeqNum, logger);
+					await rootNode.summarize(false);
+					await assert.rejects(
+						async () =>
+							rootNode.refreshLatestSummary(
+								proposalHandle,
+								summaryRefSeq,
+								fetchLatestSnapshot,
+								readAndParseBlob,
+								logger,
+							),
+						(error) => {
+							const correctErrorMessage =
+								error.message === "UnexpectedRefreshDuringSummarize";
+							const correctInProgressRefSeq =
+								error.inProgressSummaryRefSeq === referenceSeqNum;
+							return correctErrorMessage && correctInProgressRefSeq;
+						},
+						"Refresh should fail if called when summary is in progress",
+					);
+				});
 			});
 		});
 	});

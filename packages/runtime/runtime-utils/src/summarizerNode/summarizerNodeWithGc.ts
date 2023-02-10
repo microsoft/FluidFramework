@@ -24,7 +24,6 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
@@ -253,21 +252,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			 * identify these cases and take appropriate action.
 			 */
 			if (wipSerializedUsedRoutes === undefined) {
-				const error = new LoggingError("NodeDidNotRunGC", {
+				this.throwUnexpectedError({
+					eventName: "NodeDidNotRunGC",
 					proposalHandle,
-					referenceSequenceNumber: this.wipReferenceSequenceNumber,
-					id: {
-						tag: TelemetryDataTag.CodeArtifact,
-						value: this.telemetryId,
-					},
 				});
-				this.logger.sendErrorEvent(
-					{
-						eventName: "NodeDidNotRunGC",
-					},
-					error,
-				);
-				throw error;
 			}
 		}
 
@@ -475,7 +463,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			this.wipSummaryLogger,
 			getGCDataFn,
 			async () => getChildBaseGCDetailsP,
-			createDetails.telemetryId,
+			createDetails.telemetryNodeId,
 		);
 
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
