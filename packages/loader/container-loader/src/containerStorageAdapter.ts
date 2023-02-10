@@ -27,6 +27,7 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 
 /**
  * Stringified blobs from a summary/snapshot tree.
+ * @internal
  */
 export interface ISerializableBlobContents {
 	[id: string]: string;

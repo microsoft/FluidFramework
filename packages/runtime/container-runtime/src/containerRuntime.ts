@@ -25,7 +25,6 @@ import {
 	AttachState,
 	ILoaderOptions,
 	LoaderHeader,
-	ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -3129,7 +3128,7 @@ export class ContainerRuntime
 		);
 	}
 
-	public notifyAttaching(snapshot: ISnapshotTreeWithBlobContents) {}
+	public notifyAttaching() {} // do nothing (deprecated method)
 
 	public getPendingLocalState(): unknown {
 		if (this._orderSequentiallyCalls !== 0) {

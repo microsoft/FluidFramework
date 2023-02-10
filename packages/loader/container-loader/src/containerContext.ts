@@ -313,9 +313,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
-		// TODO: add to IRuntime
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return (this.runtime as any).notifyOpReplay(message);
+		return this.runtime.notifyOpReplay?.(message);
 	}
 
 	// #region private

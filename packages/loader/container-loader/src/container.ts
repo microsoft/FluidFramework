@@ -135,6 +135,9 @@ export interface IContainerLoadOptions {
 	baseLogger?: ITelemetryBaseLogger;
 }
 
+/**
+ * @internal
+ */
 export interface IContainerConfig {
 	resolvedUrl?: IFluidResolvedUrl;
 	canReconnect?: boolean;
@@ -270,6 +273,7 @@ export async function ReportIfTooLong(
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
+ * @internal
  */
 export interface IPendingContainerState {
 	pendingRuntimeState: unknown;
@@ -306,6 +310,7 @@ export class Container
 
 	/**
 	 * Load an existing container.
+	 * @internal
 	 */
 	public static async load(
 		loader: Loader,
@@ -640,6 +645,9 @@ export class Container
 		return this.loader.services.codeLoader;
 	}
 
+	/**
+	 * @internal
+	 */
 	constructor(
 		private readonly loader: Loader,
 		config: IContainerConfig,

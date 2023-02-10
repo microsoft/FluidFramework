@@ -55,6 +55,7 @@ export enum ConnectionState {
 
 // @public @deprecated (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
+    // @internal
     constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
@@ -94,6 +95,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
+    // @internal
     static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
@@ -125,7 +127,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IContainerConfig {
     baseLogger?: ITelemetryBaseLogger;
     // (undocumented)
@@ -189,7 +191,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public
+// @internal
 export interface IPendingContainerState {
     baseSnapshot: ISnapshotTree;
     // (undocumented)
@@ -197,7 +199,6 @@ export interface IPendingContainerState {
     // (undocumented)
     pendingRuntimeState: unknown;
     savedOps: ISequencedDocumentMessage[];
-    // Warning: (ae-forgotten-export) The symbol "ISerializableBlobContents" needs to be exported by the entry point index.d.ts
     snapshotBlobs: ISerializableBlobContents;
     // (undocumented)
     term: number;
@@ -211,6 +212,12 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
     readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
+}
+
+// @internal
+export interface ISerializableBlobContents {
+    // (undocumented)
+    [id: string]: string;
 }
 
 // @public
