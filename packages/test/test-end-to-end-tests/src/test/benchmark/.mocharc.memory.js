@@ -22,7 +22,4 @@ const newConfig = {
 	"spec": ["dist/test/benchmark/**/*.memory.spec.js", "--perfMode"],
 	"timeout": "60000",
 };
-console.log("NewConfig", JSON.parse(newConfig));
-console.log("Config", JSON.parse(config));
-console.log("Require", JSON.parse(newConfig.require));
 module.exports = newConfig;
