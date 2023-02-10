@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IInboundMessage, IOutboundMessage } from "./Messages";
+import { IDebuggerMessage } from "./Messages";
 
 /**
  * Posts the provided message to the window (globalThis).
@@ -14,25 +14,29 @@ import { IInboundMessage, IOutboundMessage } from "./Messages";
  *
  * @internal
  */
-export function postWindowMessage<TMessage extends IOutboundMessage>(message: TMessage): void {
+export function postWindowMessage<TMessage extends IDebuggerMessage>(message: TMessage): void {
 	globalThis.postMessage(message, "*"); // TODO: verify target is okay
 }
 
 /**
- * Handlers for {@link IInboundMessage}s.
+ * Handlers for incoming {@link IDebuggerMessage}s.
+ *
+ * @internal
  */
 export interface InboundHandlers {
 	/**
-	 * Mapping from {@link IInboundMessage."type"}s to a handler callback for that message type.
+	 * Mapping from {@link IDebuggerMessage."type"}s to a handler callback for that message type.
 	 * @returns Whether or not the message was actually handled.
 	 */
-	[type: string]: (message: IInboundMessage) => boolean;
+	[type: string]: (message: IDebuggerMessage) => boolean;
 }
 
 /**
  * Console logging options for {@link handleWindowMessage}.
  *
  * @privateRemarks TODO: Introduce better diagnostic logging infra for the entire library
+ *
+ * @internal
  */
 export interface LoggingOptions {
 	/**
@@ -49,9 +53,11 @@ export interface LoggingOptions {
  * @param handlers - List of handlers for particular event types.
  * If the incoming event's message type has a corresponding handler callback, that callback will be invoked.
  * Otherwise, this function will no-op.
+ *
+ * @internal
  */
 export function handleWindowMessage(
-	event: MessageEvent<IInboundMessage>,
+	event: MessageEvent<Partial<IDebuggerMessage>>,
 	handlers: InboundHandlers,
 	loggingOptions?: LoggingOptions,
 ): void {
@@ -71,7 +77,7 @@ export function handleWindowMessage(
 		return;
 	}
 
-	const handled = handlers[message.type](message);
+	const handled = handlers[message.type](message as IDebuggerMessage);
 
 	// Only log if the message was actually handled by the recipient.
 	if (handled) {

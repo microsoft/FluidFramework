@@ -40,7 +40,7 @@ export interface ContainerMetadata {
 }
 
 // @public
-export interface ContainerStateChangeMessage extends IOutboundMessage<ContainerStateChangeMessageData> {
+export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
     // (undocumented)
     type: "CONTAINER_STATE_CHANGE";
 }
@@ -89,6 +89,18 @@ export interface FluidClientDebuggerProps {
     containerNickname?: string;
 }
 
+// @public
+export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
+    // (undocumented)
+    type: "GET_CONTAINER_LIST";
+}
+
+// @public
+export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "GET_CONTAINER_STATE";
+}
+
 // @internal
 export function getDebuggerRegistry(): DebuggerRegistry;
 
@@ -97,6 +109,14 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 
 // @internal
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
+
+// @internal
+export function handleWindowMessage(event: MessageEvent<Partial<IDebuggerMessage>>, handlers: InboundHandlers, loggingOptions?: LoggingOptions): void;
+
+// @public
+export interface HasContainerId {
+    containerId: string;
+}
 
 // @public
 export interface IDebuggerMessage<TData = unknown> {
@@ -122,11 +142,18 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "disposed", listener: () => void): any;
 }
 
+// @internal
+export interface InboundHandlers {
+    [type: string]: (message: IDebuggerMessage) => boolean;
+}
+
 // @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
 
 // @public
-export interface IOutboundMessage<TData = unknown> extends IDebuggerMessage<TData> {
+export interface InitiateDebuggerMessagingMessage extends IDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "INITIATE_DEBUGGER_MESSAGING";
 }
 
 // @internal
@@ -135,13 +162,21 @@ export interface LogEntry {
 }
 
 // @internal
+export interface LoggingOptions {
+    context?: string;
+}
+
+// @internal
 export enum MemberChangeKind {
     Added = "Added",
     Removed = "Removed"
 }
 
+// @internal
+export function postWindowMessage<TMessage extends IDebuggerMessage>(message: TMessage): void;
+
 // @public
-export interface RegistryChangeMessage extends IOutboundMessage<RegistryChangeMessageData> {
+export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
     // (undocumented)
     type: "REGISTRY_CHANGE";
 }
@@ -154,6 +189,12 @@ export interface RegistryChangeMessageData {
 // @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
+}
+
+// @public
+export interface TerminateDebuggerMessagingMessage extends IDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "TERMINATE_DEBUGGER_MESSAGING";
 }
 
 ```

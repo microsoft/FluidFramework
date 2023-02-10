@@ -16,10 +16,9 @@ import {
 	debuggerMessageSource,
 	GetContainerStateMessage,
 	handleWindowMessage,
-	IInboundMessage,
+	IDebuggerMessage,
 	InboundHandlers,
 	InitiateDebuggerMessagingMessage,
-	IOutboundMessage,
 	postWindowMessage,
 	TerminateDebuggerMessagingMessage,
 } from "./messaging";
@@ -161,7 +160,9 @@ export class FluidClientDebugger
 	/**
 	 * Event handler for messages coming from the window (globalThis).
 	 */
-	private readonly windowMessageHandler = (event: MessageEvent<IInboundMessage>): void => {
+	private readonly windowMessageHandler = (
+		event: MessageEvent<Partial<IDebuggerMessage>>,
+	): void => {
 		handleWindowMessage(event, this.inboundMessageHandlers, {
 			context: `Debugger(${this.containerId})`,
 		});
@@ -287,7 +288,7 @@ export class FluidClientDebugger
 	/**
 	 * Posts the provided message to the window (globalThis) iff {@link FluidClientDebugger.postMessages}.
 	 */
-	private postMessageIfActive<TMessage extends IOutboundMessage>(message: TMessage): void {
+	private postMessageIfActive<TMessage extends IDebuggerMessage>(message: TMessage): void {
 		if (this.postMessages) {
 			postWindowMessage<TMessage>(message);
 		}

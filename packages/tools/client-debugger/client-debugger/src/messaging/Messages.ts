@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// TODOs:
-// - Pass diffs instead of all data in change events (probably requires defining separate full-dump messages from delta messages)
-// - Determine if separate inbound vs outbound type aliases are actually useful.
-
 /**
  * Message structure expected for window event listeners used by the Fluid Client Debugger.
  *
@@ -31,19 +27,3 @@ export interface IDebuggerMessage<TData = unknown> {
 	 */
 	data: TData;
 }
-
-/**
- * Message structure used in window messages *received* by the Fluid Client Debugger.
- *
- * @public
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IInboundMessage<TData = unknown> extends IDebuggerMessage<TData> {}
-
-/**
- * Message structure used in window messages *sent* by the Fluid Client Debugger.
- *
- * @public
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IOutboundMessage<TData = unknown> extends IDebuggerMessage<TData> {}

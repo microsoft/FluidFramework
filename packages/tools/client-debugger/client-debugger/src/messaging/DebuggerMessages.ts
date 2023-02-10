@@ -4,7 +4,7 @@
  */
 
 import { ContainerStateMetadata } from "../ContainerMetadata";
-import { IInboundMessage, IOutboundMessage } from "./Messages";
+import { IDebuggerMessage } from "./Messages";
 
 /**
  * Base interface used in message data for events targeting a particular debugger instance via
@@ -24,16 +24,20 @@ export interface HasContainerId {
 /**
  * Inbound event requesting the debugger associated with the provided Container ID begin posting
  * change events to the window.
+ *
+ * @public
  */
-export interface InitiateDebuggerMessagingMessage extends IInboundMessage<HasContainerId> {
+export interface InitiateDebuggerMessagingMessage extends IDebuggerMessage<HasContainerId> {
 	type: "INITIATE_DEBUGGER_MESSAGING";
 }
 
 /**
  * Inbound event requesting the debugger associated with the provided Container ID cease posting
  * change events to the window.
+ *
+ * @public
  */
-export interface TerminateDebuggerMessagingMessage extends IInboundMessage<HasContainerId> {
+export interface TerminateDebuggerMessagingMessage extends IDebuggerMessage<HasContainerId> {
 	type: "TERMINATE_DEBUGGER_MESSAGING";
 }
 
@@ -43,7 +47,7 @@ export interface TerminateDebuggerMessagingMessage extends IInboundMessage<HasCo
  *
  * @public
  */
-export interface GetContainerStateMessage extends IInboundMessage<HasContainerId> {
+export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
 	type: "GET_CONTAINER_STATE";
 }
 
@@ -71,7 +75,7 @@ export interface ContainerStateChangeMessageData {
  * @public
  */
 export interface ContainerStateChangeMessage
-	extends IOutboundMessage<ContainerStateChangeMessageData> {
+	extends IDebuggerMessage<ContainerStateChangeMessageData> {
 	type: "CONTAINER_STATE_CHANGE";
 }
 

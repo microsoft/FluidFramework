@@ -12,6 +12,7 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 // - Data recording configuration (what things the user wishes to subscribe to)
 // - Document message posting details:
 //   - Requires activation before it will begin posting. Must be deactivated to stop.
+// - Pass diffs instead of all data in change events (probably requires defining separate full-dump messages from delta messages)
 
 /**
  * Events emitted by {@link IFluidClientDebugger}.
