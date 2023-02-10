@@ -10,6 +10,8 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)
+// - Document message posting details:
+//   - Requires activation before it will begin posting. Must be deactivated to stop.
 
 /**
  * Events emitted by {@link IFluidClientDebugger}.

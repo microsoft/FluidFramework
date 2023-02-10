@@ -10,12 +10,18 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
 import {
+	debuggerMessageSource,
 	handleWindowMessage,
 	IInboundMessage,
 	InboundHandlers,
 	postWindowMessage,
 	RegistryChangeMessage,
 } from "./messaging";
+
+// TODOs:
+// - Document message posting details:
+//   - Always active (no activation required)
+//   - Will post notifications anytime the registry changes, or when explicitly asked.
 
 /**
  * Properties for configuring a {@link IFluidClientDebugger}.
@@ -107,6 +113,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 */
 	private readonly postRegistryChange = (): void => {
 		postWindowMessage<RegistryChangeMessage>({
+			source: debuggerMessageSource,
 			type: "REGISTRY_CHANGE",
 			data: {
 				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({

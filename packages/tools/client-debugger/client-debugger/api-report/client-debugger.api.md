@@ -40,13 +40,14 @@ export interface ContainerMetadata {
 }
 
 // @public
-export interface ContainerStateChangeMessage extends IOutboundMessage {
-    // (undocumented)
-    data: {
-        containerState: ContainerStateMetadata;
-    };
+export interface ContainerStateChangeMessage extends IOutboundMessage<ContainerStateChangeMessageData> {
     // (undocumented)
     type: "CONTAINER_STATE_CHANGE";
+}
+
+// @public
+export interface ContainerStateChangeMessageData {
+    containerState: ContainerStateMetadata;
 }
 
 // @public
@@ -60,6 +61,9 @@ export interface ContainerStateMetadata extends ContainerMetadata {
     // (undocumented)
     connectionState: ConnectionState;
 }
+
+// @public
+export const debuggerMessageSource: string;
 
 // @internal
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
@@ -95,11 +99,10 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
 // @public
-export interface IDebuggerMessage {
-    // (undocumented)
-    data?: unknown;
-    // (undocumented)
-    type?: string;
+export interface IDebuggerMessage<TData = unknown> {
+    data: TData;
+    source: string;
+    type: string;
 }
 
 // @internal
@@ -123,7 +126,7 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
 
 // @public
-export interface IOutboundMessage extends IDebuggerMessage {
+export interface IOutboundMessage<TData = unknown> extends IDebuggerMessage<TData> {
 }
 
 // @internal
@@ -138,13 +141,14 @@ export enum MemberChangeKind {
 }
 
 // @public
-export interface RegistryChangeMessage extends IOutboundMessage {
-    // (undocumented)
-    data: {
-        containers: ContainerMetadata[];
-    };
+export interface RegistryChangeMessage extends IOutboundMessage<RegistryChangeMessageData> {
     // (undocumented)
     type: "REGISTRY_CHANGE";
+}
+
+// @public
+export interface RegistryChangeMessageData {
+    containers: ContainerMetadata[];
 }
 
 // @internal

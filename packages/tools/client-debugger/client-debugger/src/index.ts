@@ -56,9 +56,12 @@ export {
 } from "./Logs";
 export {
 	ContainerStateChangeMessage,
+	ContainerStateChangeMessageData,
+	debuggerMessageSource,
 	IDebuggerMessage,
 	IOutboundMessage,
 	RegistryChangeMessage,
+	RegistryChangeMessageData,
 } from "./messaging";
 export * from "./ContainerMetadata";
 export {
