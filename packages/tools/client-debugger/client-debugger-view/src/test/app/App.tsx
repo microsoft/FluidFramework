@@ -29,6 +29,10 @@ import {
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
 import { CounterWidget } from "../widgets";
+import { initializeFluentUiIcons } from "../../InitializeIcons";
+
+// Ensure FluentUI icons are initialized.
+initializeFluentUiIcons();
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
