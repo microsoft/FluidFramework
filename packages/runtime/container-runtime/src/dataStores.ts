@@ -33,6 +33,7 @@ import {
 	convertToSummaryTree,
 	create404Response,
 	createResponseError,
+	packagePathToTelemetryProperty,
 	responseToException,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
@@ -621,11 +622,26 @@ export class DataStores implements IDisposable {
 		await Promise.all(
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
-					// Summarizer works only with clients with no local changes!
-					assert(
-						context.attachState !== AttachState.Attaching,
-						0x165 /* "Summarizer cannot work if client has local changes" */,
-					);
+					// Summarizer works only with clients with no local changes. A data store in attaching
+					// state indicates an op was sent to attach a local data store.
+					if (context.attachState === AttachState.Attaching) {
+						const error = new LoggingError("Local data store during summarize", {
+							fluidDataStoreId: {
+								value: context.id,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
+							packageName: context.isLoaded
+								? packagePathToTelemetryProperty(context.packagePath)
+								: undefined,
+						});
+						this.mc.logger.sendErrorEvent(
+							{
+								eventName: "LocalDataStoreDuringSummarize",
+							},
+							error,
+						);
+						throw error;
+					}
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
@@ -722,8 +738,26 @@ export class DataStores implements IDisposable {
 		await Promise.all(
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
-					// Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
-					// graph so any references they might have won't be connected as well.
+					// Summarizer client and hence GC works only with clients with no local changes. A data store in
+					// attaching state indicates an op was sent to attach a local data store.
+					if (context.attachState === AttachState.Attaching) {
+						const error = new LoggingError("Local data store during GC", {
+							fluidDataStoreId: {
+								value: context.id,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
+							packageName: context.isLoaded
+								? packagePathToTelemetryProperty(context.packagePath)
+								: undefined,
+						});
+						this.mc.logger.sendErrorEvent(
+							{
+								eventName: "LocalDataStoreDuringGC",
+							},
+							error,
+						);
+						throw error;
+					}
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {

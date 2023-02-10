@@ -179,6 +179,8 @@ export interface ICreateChildDetails {
 	latestSummary: SummaryNode | undefined;
 	/** Sequence number of latest known change to the node */
 	changeSequenceNumber: number;
+	/** A unique id of this child to be logged when sending telemetry. */
+	telemetryId: string;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
