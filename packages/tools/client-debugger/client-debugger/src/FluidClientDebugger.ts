@@ -176,6 +176,7 @@ export class FluidClientDebugger
 			source: debuggerMessageSource,
 			type: "CONTAINER_STATE_CHANGE",
 			data: {
+				containerId: this.containerId,
 				containerState: this.getContainerState(),
 			},
 		});

@@ -46,7 +46,7 @@ export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerS
 }
 
 // @public
-export interface ContainerStateChangeMessageData {
+export interface ContainerStateChangeMessageData extends HasContainerId {
     containerState: ContainerStateMetadata;
 }
 

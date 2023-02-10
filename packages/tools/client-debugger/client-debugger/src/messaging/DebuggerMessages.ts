@@ -60,7 +60,7 @@ export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerI
  *
  * @public
  */
-export interface ContainerStateChangeMessageData {
+export interface ContainerStateChangeMessageData extends HasContainerId {
 	/**
 	 * Updated Container state metadata.
 	 */
