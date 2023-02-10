@@ -122,6 +122,9 @@ export interface IDeltaManagerEvents extends IEvent {
 	 */
 	(event: "allSentOpsAckd", listener: () => void);
 
+	/**
+	 * Emitted from client to server, purpose is tracking latency
+	 */
 	(event: "pong", listener: (latency: number) => void);
 
 	/**

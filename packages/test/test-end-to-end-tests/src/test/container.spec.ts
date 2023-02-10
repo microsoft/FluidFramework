@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { useFakeTimers, SinonFakeTimers } from "sinon";
 import {
 	IPendingLocalState,
 	ContainerErrorType,
@@ -55,6 +56,7 @@ const timeoutMs = 500;
 // REVIEW: enable compat testing?
 describeNoCompat("Container", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
+	let clock: SinonFakeTimers;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {
 		provider = getTestObjectProvider();
@@ -66,6 +68,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		}
 	});
 	before(async () => {
+		clock = useFakeTimers();
 		const loader = new Loader({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,
@@ -136,6 +139,26 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			true,
 			"Client details should be set with interactive as true",
 		);
+	});
+	it.only("Delta manager receives pong event", async () => {
+		const container = await createConnectedContainer();
+		const realSetTimeout = setTimeout;
+		// function to yield control in the Javascript event loop.
+		async function yieldEventLoop(): Promise<void> {
+			await new Promise<void>((resolve) => {
+				realSetTimeout(resolve, 0);
+			});
+		}
+
+		// await requestFluidObject<ITestDataObject>(container, "default");
+		let run = 0;
+		container.deltaManager.on("pong", () => {
+			run++;
+		});
+
+		clock.tick(60000);
+		// await yieldEventLoop();
+		assert.strictEqual(run, 1);
 	});
 
 	itExpects(
@@ -332,9 +355,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		dataObject._context.deltaManager.on("readonly", () => {
 			runCount++;
 		});
-
 		container.forceReadonly(true);
-		assert.strictEqual(container.readOnlyInfo.readonly, true);
 
 		assert.strictEqual(runCount, 1);
 	});

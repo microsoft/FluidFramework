@@ -158,28 +158,30 @@ export class DocumentDeltaConnection
 				0x20b /* "mismatch" */,
 			);
 			if (!this.trackedListeners.has(event)) {
+				if (event === "pong") {
+					// log latency every minute
+					this.trackLatencyTimer = setInterval(() => {
+						const start = Date.now();
+
+						// emit pong event every minute. If latency is longer than 1 min, log separately
+						this.socket.emit("pong", () => {
+							const latency = Date.now() - start;
+							if (latency > 1000 * 60) {
+								this.mc.logger.sendPerformanceEvent({
+									eventName: "LatencyTooLong",
+									driverVersion,
+									duration: latency,
+								});
+							}
+							this.emit("pong", latency);
+						});
+					}, 1000 * 60);
+				}
+
 				this.addTrackedListener(event, (...args: any[]) => {
 					this.emit(event, ...args);
 				});
 			}
-
-			// log latency every minute
-			this.trackLatencyTimer = setInterval(() => {
-				const start = Date.now();
-
-				// emit pong event every minute. If latency is longer than 1 min, log separately
-				this.socket.emit("pong", () => {
-					const latency = Date.now() - start;
-					if (latency > 1000 * 60) {
-						this.mc.logger.sendPerformanceEvent({
-							eventName: "LatencyTooLong",
-							driverVersion,
-							latency,
-						});
-					}
-					return latency;
-				});
-			}, 1000 * 60);
 		});
 	}
 
