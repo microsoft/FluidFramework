@@ -591,7 +591,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					maxClientsSendingLargeOps,
 				)
 			) {
-				dataModel.sharedmap.set(`key${opsSent}`, generateContentOfSize(getOpSizeInBytes()));
+				dataModel.sharedmap.set(
+					config.runId.toString(),
+					generateContentOfSize(getOpSizeInBytes()),
+				);
 			} else {
 				dataModel.counter.increment(1);
 			}
