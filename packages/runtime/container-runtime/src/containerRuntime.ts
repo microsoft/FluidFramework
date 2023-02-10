@@ -2906,7 +2906,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async refreshLatestSummaryAckFromServer(
         summaryLogger: ITelemetryLogger,
-    ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
+    ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined; }> {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const { snapshotTree, versionId, latestSnapshotRefSeq } =
             await this.fetchLatestSnapshotFromStorage(
@@ -2933,7 +2933,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             undefined /* proposalHandle */,
             result,
             readAndParseBlob,
-        );
+        )
 
         return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
     }
@@ -2954,39 +2954,39 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     snapshotVersion?: string | undefined;
                 }) => void;
             }) => {
-                const stats: {
-                    getVersionDuration?: number;
-                    getSnapshotDuration?: number;
-                    snapshotRefSeq?: number;
-                    snapshotVersion?: string;
-                } = {};
-                const trace = Trace.start();
+            const stats: {
+                getVersionDuration?: number;
+                getSnapshotDuration?: number;
+                snapshotRefSeq?: number;
+                snapshotVersion?: string;
+            } = {};
+            const trace = Trace.start();
 
-                const versions = await this.storage.getVersions(
-                    null,
-                    1,
-                    "refreshLatestSummaryAckFromServer",
-                    FetchSource.noCache,
-                );
-                assert(
-                    !!versions && !!versions[0],
-                    0x137 /* "Failed to get version from storage" */,
-                );
-                stats.getVersionDuration = trace.trace().duration;
+            const versions = await this.storage.getVersions(
+                null,
+                1,
+                "refreshLatestSummaryAckFromServer",
+                FetchSource.noCache,
+            );
+            assert(
+                !!versions && !!versions[0],
+                0x137 /* "Failed to get version from storage" */,
+            );
+            stats.getVersionDuration = trace.trace().duration;
 
-                const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-                assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-                stats.getSnapshotDuration = trace.trace().duration;
-                const latestSnapshotRefSeq = await seqFromTree(maybeSnapshot, readAndParseBlob);
-                stats.snapshotRefSeq = latestSnapshotRefSeq;
-                stats.snapshotVersion = versions[0].id;
+            const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+            assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+            stats.getSnapshotDuration = trace.trace().duration;
+            const latestSnapshotRefSeq = await seqFromTree(maybeSnapshot, readAndParseBlob);
+            stats.snapshotRefSeq = latestSnapshotRefSeq;
+            stats.snapshotVersion = versions[0].id;
 
-                perfEvent.end(stats);
-                return {
-                    snapshotTree: maybeSnapshot,
-                    versionId: versions[0].id,
-                    latestSnapshotRefSeq,
-                };
+            perfEvent.end(stats);
+            return {
+                snapshotTree: maybeSnapshot,
+                versionId: versions[0].id,
+                latestSnapshotRefSeq,
+            };
             },
         );
     }

@@ -157,11 +157,11 @@ export interface IGarbageCollector {
     /** Returns the GC details generated from the base snapshot. */
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     /** Called when the latest summary of the system has been refreshed. */
-	refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void>;
+    refreshLatestSummary(
+        proposalHandle: string | undefined,
+        result: RefreshSummaryResult,
+        readAndParseBlob: ReadAndParseBlob,
+    ): Promise<void>;
     /** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
     nodeUpdated(
         nodePath: string,
@@ -1177,11 +1177,11 @@ export class GarbageCollector implements IGarbageCollector {
      * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
      * is downloaded and should be used to update the state.
      */
-	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void> {
+    public async refreshLatestSummary(
+        proposalHandle: string | undefined,
+        result: RefreshSummaryResult,
+        readAndParseBlob: ReadAndParseBlob,
+    ): Promise<void> {
         // If the latest summary was updated and the summary was tracked, this client is the one that generated this
         // summary. So, update wasGCRunInLatestSummary.
         // Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
@@ -1206,8 +1206,8 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         // If the summary was not tracked by this client, the state should be updated from the downloaded snapshot.
-		const snapshotTree = result.snapshotTree;
-		const metadataBlobId = snapshotTree.blobs[metadataBlobName];
+        const snapshotTree = result.snapshotTree;
+        const metadataBlobId = snapshotTree.blobs[metadataBlobName];
         if (metadataBlobId) {
             const metadata = await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId);
             this.latestSummaryGCVersion = getGCVersion(metadata);
