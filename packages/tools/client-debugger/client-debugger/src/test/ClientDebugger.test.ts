@@ -30,7 +30,7 @@ describe("ClientDebugger unit tests", () => {
 	let otherContainer: IContainer | undefined;
 
 	const registry: DebuggerRegistry = getDebuggerRegistry();
-    
+
 	let clientId: string | undefined;
 
 	let debuggerRegistered = false;
@@ -98,19 +98,19 @@ describe("ClientDebugger unit tests", () => {
 		const clientDebugger = initializeDebugger(containerId, container!);
 
 		// verify audience change in container is reflecting in client debugger
-        clientId = addAudienceMember(container!);
-        expect(container?.audience.getMembers().size).to.equal(1);
+		clientId = addAudienceMember(container!);
+		expect(container?.audience.getMembers().size).to.equal(1);
 		expect(clientDebugger?.getAudienceHistory().length).to.equal(1);
-        expect(clientDebugger?.getAudienceHistory()[0].clientId).to.equal(clientId);
-        expect(clientDebugger?.getAudienceHistory()[0].changeKind).to.equal("added");
+		expect(clientDebugger?.getAudienceHistory()[0].clientId).to.equal(clientId);
+		expect(clientDebugger?.getAudienceHistory()[0].changeKind).to.equal("added");
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(audienceAdded).to.be.true;
 
-        removeAudienceMember(container!, clientId);
-        expect(container!.audience.getMembers().size).to.equal(0);
+		removeAudienceMember(container!, clientId);
+		expect(container!.audience.getMembers().size).to.equal(0);
 		expect(clientDebugger?.getAudienceHistory().length).to.equal(2);
-        expect(clientDebugger?.getAudienceHistory()[1].clientId).to.equal(clientId);
-        expect(clientDebugger?.getAudienceHistory()[1].changeKind).to.equal("removed");
+		expect(clientDebugger?.getAudienceHistory()[1].clientId).to.equal(clientId);
+		expect(clientDebugger?.getAudienceHistory()[1].changeKind).to.equal("removed");
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(audienceRemoved).to.be.true;
 	});
