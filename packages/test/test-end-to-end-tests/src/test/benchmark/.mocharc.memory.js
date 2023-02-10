@@ -7,6 +7,8 @@
  * Mocha configuration file for memory profiling tests
  */
 const getFluidTestMochaConfig = require("@fluidframework/test-version-utils/mocharc-common.js");
+const packageDir = `${__dirname}/../../..`;
+
 const config = getFluidTestMochaConfig(packageDir);
 const newConfig = {
 	"extends": "../.mocharc.js",
