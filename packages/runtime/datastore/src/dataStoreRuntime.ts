@@ -600,12 +600,7 @@ export class FluidDataStoreRuntime
 						);
 						this.pendingAttach.delete(id);
 					} else {
-						assert(
-							!this.contexts.has(id),
-							0x17d /* `Unexpected attach channel OP,
-                            is in pendingAttach set: ${this.pendingAttach.has(id)},
-                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContextBase}` */,
-						);
+						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
 
 						const flatBlobs = new Map<string, ArrayBufferLike>();
 						const snapshotTree = buildSnapshotTree(
