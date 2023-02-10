@@ -832,6 +832,30 @@ use_old_FunctionDeclaration_logNetworkFailure(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_MapWithExpiration": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_MapWithExpiration():
+    TypeOnly<old.MapWithExpiration>;
+declare function use_current_ClassDeclaration_MapWithExpiration(
+    use: TypeOnly<current.MapWithExpiration>);
+use_current_ClassDeclaration_MapWithExpiration(
+    get_old_ClassDeclaration_MapWithExpiration());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_MapWithExpiration": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_MapWithExpiration():
+    TypeOnly<current.MapWithExpiration>;
+declare function use_old_ClassDeclaration_MapWithExpiration(
+    use: TypeOnly<old.MapWithExpiration>);
+use_old_ClassDeclaration_MapWithExpiration(
+    get_current_ClassDeclaration_MapWithExpiration());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_MessageType2": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_MessageType2():
