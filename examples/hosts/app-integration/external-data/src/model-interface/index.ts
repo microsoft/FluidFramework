@@ -43,11 +43,11 @@ export interface ITaskEvents extends IEvent {
 	/**
 	 * Emitted when the name from the source (the external server) has changed.
 	 */
-	(event: "sourceNameChanged", listener: () => void);
+	(event: "externalNameChanged", listener: () => void);
 	/**
 	 * Emitted when priority from the source (the external server) has changed.
 	 */
-	(event: "sourcePriorityChanged", listener: () => void);
+	(event: "externalPriorityChanged", listener: () => void);
 	/**
 	 * Emitted when changeType is updated and the conflict UI needs to be displayed.
 	 */
@@ -74,11 +74,11 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	/**
 	 * The task name coming in from the external server.
 	 */
-	readonly sourceName: string | undefined;
+	readonly externalName: string | undefined;
 	/**
 	 * The task priority coming in from the external server.
 	 */
-	readonly sourcePriority: number | undefined;
+	readonly externalPriority: number | undefined;
 	/**
 	 * The type of change to the task coming in from the external server.
 	 */
@@ -86,15 +86,15 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	/**
 	 * Trigger event to render change to UI.
 	 */
-	readonly sourceNameChanged: (name: string) => void;
+	readonly externalNameChanged: (name: string) => void;
 	/**
 	 * Trigger event to render change to UI.
 	 */
-	readonly sourcePriorityChanged: (priority: number) => void;
+	readonly externalPriorityChanged: (priority: number) => void;
 	/**
 	 * Save the proposed changes to SavedData.
 	 */
-	readonly overwriteWithSourceData: () => void;
+	readonly overwriteWithExternalData: () => void;
 }
 
 /**

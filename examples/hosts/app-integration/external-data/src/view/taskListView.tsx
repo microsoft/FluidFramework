@@ -20,8 +20,8 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const { task, deleteTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
-	const [sourceName, setSourceName] = useState<string | undefined>(task.sourceName);
-	const [sourcePriority, setSourcePriority] = useState<number | undefined>(task.sourcePriority);
+	const [externalName, setSourceName] = useState<string | undefined>(task.externalName);
+	const [externalPriority, setSourcePriority] = useState<number | undefined>(task.externalPriority);
 	const [changeType, setChangeType] = useState<string | undefined>(task.changeType);
 	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
@@ -30,26 +30,26 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 				priorityRef.current.value = task.draftPriority.toString();
 			}
 		};
-		const updateSourcePriority = (): void => {
-			setSourcePriority(task.sourcePriority);
+		const updateExternalPriority = (): void => {
+			setSourcePriority(task.externalPriority);
 			setChangeType(task.changeType);
 		};
-		const updateSourceName = (): void => {
-			setSourceName(task.sourceName);
+		const updateExternalName = (): void => {
+			setSourceName(task.externalName);
 			setChangeType(task.changeType);
 		};
 		const updateShowConflictUI = (value: boolean): void => {
 			setShowConflictUI(value);
 		};
 		task.on("draftPriorityChanged", updatePriorityFromUIForm);
-		task.on("sourcePriorityChanged", updateSourcePriority);
-		task.on("sourceNameChanged", updateSourceName);
+		task.on("externalPriorityChanged", updateExternalPriority);
+		task.on("externalNameChanged", updateExternalName);
 		task.on("changesAvailable", updateShowConflictUI);
 		updatePriorityFromUIForm();
 		return (): void => {
 			task.off("draftPriorityChanged", updatePriorityFromUIForm);
-			task.off("sourcePriorityChanged", updateSourcePriority);
-			task.off("sourceNameChanged", updateSourceName);
+			task.off("externalPriorityChanged", updateExternalPriority);
+			task.off("externalNameChanged", updateExternalName);
 			task.off("changesAvailable", updateShowConflictUI);
 		};
 	}, [task, priorityRef]);
@@ -61,10 +61,10 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 
 	const showPriorityDiff =
 		showConflictUI &&
-		task.sourcePriority !== undefined &&
-		task.sourcePriority !== task.draftPriority;
+		task.externalPriority !== undefined &&
+		task.externalPriority !== task.draftPriority;
 	const showNameDiff =
-		showConflictUI && task.sourceName !== undefined && task.sourceName !== task.draftName.getText();
+		showConflictUI && task.externalName !== undefined && task.externalName !== task.draftName.getText();
 	const showAcceptButton = showConflictUI ? "visible" : "hidden";
 
 	let diffColor: string = "white";
@@ -105,13 +105,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 					❌
 				</button>
 			</td>
-			{showNameDiff && <td style={{ backgroundColor: diffColor }}>{sourceName}</td>}
+			{showNameDiff && <td style={{ backgroundColor: diffColor }}>{externalName}</td>}
 			{showPriorityDiff && (
-				<td style={{ backgroundColor: diffColor, width: "30px" }}>{sourcePriority}</td>
+				<td style={{ backgroundColor: diffColor, width: "30px" }}>{externalPriority}</td>
 			)}
 			<td>
 				<button
-					onClick={task.overwriteWithSourceData}
+					onClick={task.overwriteWithExternalData}
 					style={{ visibility: showAcceptButton }}
 				>
 					Accept change
