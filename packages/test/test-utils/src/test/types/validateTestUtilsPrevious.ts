@@ -112,6 +112,54 @@ use_old_FunctionDeclaration_createLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSummarizer": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createSummarizer():
+    TypeOnly<typeof old.createSummarizer>;
+declare function use_current_FunctionDeclaration_createSummarizer(
+    use: TypeOnly<typeof current.createSummarizer>);
+use_current_FunctionDeclaration_createSummarizer(
+    get_old_FunctionDeclaration_createSummarizer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSummarizer": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createSummarizer():
+    TypeOnly<typeof current.createSummarizer>;
+declare function use_old_FunctionDeclaration_createSummarizer(
+    use: TypeOnly<typeof old.createSummarizer>);
+use_old_FunctionDeclaration_createSummarizer(
+    get_current_FunctionDeclaration_createSummarizer());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSummarizerFromFactory": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createSummarizerFromFactory():
+    TypeOnly<typeof old.createSummarizerFromFactory>;
+declare function use_current_FunctionDeclaration_createSummarizerFromFactory(
+    use: TypeOnly<typeof current.createSummarizerFromFactory>);
+use_current_FunctionDeclaration_createSummarizerFromFactory(
+    get_old_FunctionDeclaration_createSummarizerFromFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSummarizerFromFactory": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createSummarizerFromFactory():
+    TypeOnly<typeof current.createSummarizerFromFactory>;
+declare function use_old_FunctionDeclaration_createSummarizerFromFactory(
+    use: TypeOnly<typeof old.createSummarizerFromFactory>);
+use_old_FunctionDeclaration_createSummarizerFromFactory(
+    get_current_FunctionDeclaration_createSummarizerFromFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createTestContainerRuntimeFactory": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createTestContainerRuntimeFactory():
@@ -424,6 +472,30 @@ use_old_ClassDeclaration_LocalCodeLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_mockConfigProvider": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_mockConfigProvider():
+    TypeOnly<typeof old.mockConfigProvider>;
+declare function use_current_VariableDeclaration_mockConfigProvider(
+    use: TypeOnly<typeof current.mockConfigProvider>);
+use_current_VariableDeclaration_mockConfigProvider(
+    get_old_VariableDeclaration_mockConfigProvider());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_mockConfigProvider": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_mockConfigProvider():
+    TypeOnly<typeof current.mockConfigProvider>;
+declare function use_old_VariableDeclaration_mockConfigProvider(
+    use: TypeOnly<typeof old.mockConfigProvider>);
+use_old_VariableDeclaration_mockConfigProvider(
+    get_current_VariableDeclaration_mockConfigProvider());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_retryWithEventualValue": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_retryWithEventualValue():
@@ -444,6 +516,30 @@ declare function use_old_VariableDeclaration_retryWithEventualValue(
     use: TypeOnly<typeof old.retryWithEventualValue>);
 use_old_VariableDeclaration_retryWithEventualValue(
     get_current_VariableDeclaration_retryWithEventualValue());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_summarizeNow": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_summarizeNow():
+    TypeOnly<typeof old.summarizeNow>;
+declare function use_current_FunctionDeclaration_summarizeNow(
+    use: TypeOnly<typeof current.summarizeNow>);
+use_current_FunctionDeclaration_summarizeNow(
+    get_old_FunctionDeclaration_summarizeNow());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_summarizeNow": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_summarizeNow():
+    TypeOnly<typeof current.summarizeNow>;
+declare function use_old_FunctionDeclaration_summarizeNow(
+    use: TypeOnly<typeof old.summarizeNow>);
+use_old_FunctionDeclaration_summarizeNow(
+    get_current_FunctionDeclaration_summarizeNow());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -660,3 +756,99 @@ declare function use_old_InterfaceDeclaration_TimeoutWithValue(
     use: TypeOnly<old.TimeoutWithValue>);
 use_old_InterfaceDeclaration_TimeoutWithValue(
     get_current_InterfaceDeclaration_TimeoutWithValue());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_waitForContainerConnection": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_waitForContainerConnection():
+    TypeOnly<typeof old.waitForContainerConnection>;
+declare function use_current_FunctionDeclaration_waitForContainerConnection(
+    use: TypeOnly<typeof current.waitForContainerConnection>);
+use_current_FunctionDeclaration_waitForContainerConnection(
+    get_old_FunctionDeclaration_waitForContainerConnection());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_waitForContainerConnection": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_waitForContainerConnection():
+    TypeOnly<typeof current.waitForContainerConnection>;
+declare function use_old_FunctionDeclaration_waitForContainerConnection(
+    use: TypeOnly<typeof old.waitForContainerConnection>);
+use_old_FunctionDeclaration_waitForContainerConnection(
+    get_current_FunctionDeclaration_waitForContainerConnection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_wrapDocumentService": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_wrapDocumentService():
+    TypeOnly<typeof old.wrapDocumentService>;
+declare function use_current_FunctionDeclaration_wrapDocumentService(
+    use: TypeOnly<typeof current.wrapDocumentService>);
+use_current_FunctionDeclaration_wrapDocumentService(
+    get_old_FunctionDeclaration_wrapDocumentService());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_wrapDocumentService": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_wrapDocumentService():
+    TypeOnly<typeof current.wrapDocumentService>;
+declare function use_old_FunctionDeclaration_wrapDocumentService(
+    use: TypeOnly<typeof old.wrapDocumentService>);
+use_old_FunctionDeclaration_wrapDocumentService(
+    get_current_FunctionDeclaration_wrapDocumentService());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_wrapDocumentServiceFactory": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_wrapDocumentServiceFactory():
+    TypeOnly<typeof old.wrapDocumentServiceFactory>;
+declare function use_current_FunctionDeclaration_wrapDocumentServiceFactory(
+    use: TypeOnly<typeof current.wrapDocumentServiceFactory>);
+use_current_FunctionDeclaration_wrapDocumentServiceFactory(
+    get_old_FunctionDeclaration_wrapDocumentServiceFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_wrapDocumentServiceFactory": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_wrapDocumentServiceFactory():
+    TypeOnly<typeof current.wrapDocumentServiceFactory>;
+declare function use_old_FunctionDeclaration_wrapDocumentServiceFactory(
+    use: TypeOnly<typeof old.wrapDocumentServiceFactory>);
+use_old_FunctionDeclaration_wrapDocumentServiceFactory(
+    get_current_FunctionDeclaration_wrapDocumentServiceFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_wrapDocumentStorageService": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_wrapDocumentStorageService():
+    TypeOnly<typeof old.wrapDocumentStorageService>;
+declare function use_current_FunctionDeclaration_wrapDocumentStorageService(
+    use: TypeOnly<typeof current.wrapDocumentStorageService>);
+use_current_FunctionDeclaration_wrapDocumentStorageService(
+    get_old_FunctionDeclaration_wrapDocumentStorageService());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_wrapDocumentStorageService": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_wrapDocumentStorageService():
+    TypeOnly<typeof current.wrapDocumentStorageService>;
+declare function use_old_FunctionDeclaration_wrapDocumentStorageService(
+    use: TypeOnly<typeof old.wrapDocumentStorageService>);
+use_old_FunctionDeclaration_wrapDocumentStorageService(
+    get_current_FunctionDeclaration_wrapDocumentStorageService());
