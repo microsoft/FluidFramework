@@ -11,7 +11,7 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -227,7 +227,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		} catch (e) {}
 		assert(success, "Loader pause flags doesn't pause container op processing");
 
-		(container2 as Container).connect();
+		container2.connect();
 
 		// Flush all the ops
 		await provider.ensureSynchronized();
@@ -260,7 +260,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		// this binds newDataStore to dataStore1
 		dataStore1._root.set("key", newDataStore.handle);
 
-		(container1 as Container).connect();
+		container1.connect();
 
 		// Flush all the ops
 		await provider.ensureSynchronized();

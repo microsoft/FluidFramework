@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
 import { ReferenceType } from "../ops";
 import {
 	appendToMergeTreeDeltaRevertibles,

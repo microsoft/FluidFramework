@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluidframework/common-utils";
-import { Container } from "@fluidframework/container-loader";
+
 import { ContainerRuntime, IGCStats } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
@@ -17,9 +17,10 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluidframework/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
 
-const ensureContainerConnectedWriteMode = async (container: Container) => {
+const ensureContainerConnectedWriteMode = async (container: IContainer) => {
 	const resolveIfActive = (res: () => void) => {
 		if (container.deltaManager.active) {
 			res();
@@ -29,7 +30,6 @@ const ensureContainerConnectedWriteMode = async (container: Container) => {
 		await new Promise<void>((resolve) =>
 			container.on("connected", () => resolveIfActive(resolve)),
 		);
-		container.off("connected", resolveIfActive);
 	}
 };
 
@@ -39,7 +39,7 @@ const ensureContainerConnectedWriteMode = async (container: Container) => {
  */
 describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let container: Container;
+	let container: IContainer;
 	let containerRuntime: ContainerRuntime;
 	let mainDataStore: ITestDataObject;
 
@@ -78,7 +78,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		container = (await provider.makeTestContainer(defaultGCConfig)) as Container;
+		container = await provider.makeTestContainer(defaultGCConfig);
 		mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(container, true);

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// Driver API
+import { DriverApi } from "@fluid-internal/test-drivers";
+
 // Loader API
 import { Loader } from "@fluidframework/container-loader";
-
-// Driver API
-import { DriverApi } from "@fluidframework/test-drivers";
 
 // ContainerRuntime API
 import { ContainerRuntime } from "@fluidframework/container-runtime";

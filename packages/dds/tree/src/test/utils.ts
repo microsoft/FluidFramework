@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
@@ -12,7 +13,6 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalServerTestDriver } from "@fluidframework/test-drivers";
 import {
 	ITestObjectProvider,
 	ChannelFactoryRegistry,

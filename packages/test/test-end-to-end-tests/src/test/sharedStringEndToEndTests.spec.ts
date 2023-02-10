@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
@@ -35,11 +35,11 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 	let dataObject1: ITestFluidObject;
 
 	beforeEach(async () => {
-		const container1 = (await provider.makeTestContainer(testContainerConfig)) as Container;
+		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
-		const container2 = (await provider.loadTestContainer(testContainerConfig)) as Container;
+		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 	});
@@ -76,7 +76,7 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		// Create a initialize a new container with the same id.
-		const newContainer = (await provider.loadTestContainer(testContainerConfig)) as Container;
+		const newContainer = await provider.loadTestContainer(testContainerConfig);
 		const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
 		const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
 		assert.equal(
