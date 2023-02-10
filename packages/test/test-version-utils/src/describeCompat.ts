@@ -47,18 +47,11 @@ function createCompatSuite(
 							config.dataRuntime,
 						);
 					} catch (error) {
-						const logger = ChildLogger.create(
-							getTestLogger?.(),
-							"DescribeCompatSetup",
-							{
-								all: {
-									driverType: driver,
-								},
-							},
-						);
+						const logger = ChildLogger.create(getTestLogger?.(), "DescribeCompatSetup");
 						logger.sendErrorEvent(
 							{
 								eventName: "TestObjectProviderLoadFailed",
+								driverType: driver,
 							},
 							error,
 						);
