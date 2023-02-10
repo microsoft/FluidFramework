@@ -38,7 +38,6 @@ parameters:
     - "@fluid-experimental/tree"
 
 variables:
-  - group: prague-key-vault
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
   # basic ANSI color support though, so force that in the pipeline
@@ -57,6 +56,7 @@ variables:
   - name: toolAbsolutePath
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
+  - group: prague-key-vault
 
 stages:
   # Performance unit tests - runtime
@@ -315,7 +315,6 @@ stages:
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
                 npm run test:memory-profiling:report;
-                npm run test:memory-profiling:report:odsp;
 
           # Consolidate output files
           - task: CopyFiles@2
@@ -439,24 +438,17 @@ stages:
         # Doing this with separate ADO steps is not easy.
         # This step reports failure if either of the test runs reports failure.
         - task: Bash@3
-          displayName: Run tests local
+          displayName: Run tests
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
-              echo "FLUID_TEST_LOGGER_PKG_PATH= ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger"
-              ls -1 `${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`;
-              FLUID_BUILD_ID=${{ variables.artifactBuildId }}
-              echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
 
               # Run execution time tests
-              FLUID_ENDPOINTNAME="local"
-              echo $FLUID_ENDPOINTNAME
               npm run test:benchmark:report;
               executionTimeTestsExitCode=$?;
 
               # Run memory tests
-              echo $FLUID_ENDPOINTNAME
               npm run test:memory-profiling:report;
               memoryTestsExitCode=$?;
 
@@ -472,40 +464,31 @@ stages:
                 exit 1;
               fi
           env:
-            login__microsoft__clientId: $(login-microsoft-clientId)
-            login__microsoft__secret: $(login-microsoft-secret)
-            login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
-            FLUID_TEST_VERBOSE: 1
 
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto - execution time
+          displayName: Write measurements to Aria/Kusto - execution time local
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
+              echo "Writing the following performance tests results to Aria/Kusto - local"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
-              FLUID_ENDPOINTNAME="local"
-              echo $FLUID_ENDPOINTNAME
-              echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: "local"
-            FLUID_TEST_VERBOSE: 1
 
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto - memory usage
+          displayName: Write measurements to Aria/Kusto - memory usage local
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
+              echo "Writing the following performance tests results to Aria/Kusto - local"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              FLUID_ENDPOINTNAME="local"
-              echo $FLUID_ENDPOINTNAME
-              echo "Writing the following performance tests results to Aria/Kusto - $FLUID_ENDPOINTNAME"
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: "local"
@@ -517,19 +500,14 @@ stages:
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
               echo "FLUID_TEST_LOGGER_PKG_PATH= ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger"
-              #ls -1 `${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger`;
-              #FLUID_BUILD_ID=${{ variables.artifactBuildId }}
               echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
 
-              # Run execution time tests              
-              # FLUID_ENDPOINTNAME="odsp"
-              # echo $FLUID_ENDPOINTNAME
+              # Run execution time tests
               echo "FLUID_ENDPOINTNAME = odsp"
               npm run test:benchmark:report:odsp;
               executionTimeTestsExitCodeOdsp=$?;
 
               # Run memory tests
-              #FLUID_ENDPOINTNAME="odsp"
               echo "FLUID_ENDPOINTNAME = odsp"
               npm run test:memory-profiling:report:odsp;
               memoryTestsExitCodeOdsp=$?;
@@ -560,10 +538,8 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              ls -la ${{ variables.executionTimeTestOutputFolder }};
-              #FLUID_ENDPOINTNAME="odsp"
-              #echo $FLUID_ENDPOINTNAME
               echo "Writing the following performance tests results to Aria/Kusto - ODSP"
+              ls -la ${{ variables.executionTimeTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: "odsp"
@@ -575,24 +551,21 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              #FLUID_ENDPOINTNAME="odsp"
-              #echo $FLUID_ENDPOINTNAME
               echo "Writing the following performance tests results to Aria/Kusto - ODSP"
-              #FLUID_ENDPOINTNAME="odsp"
+              ls -la ${{ variables.memoryUsageTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: "odsp"
 
         - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - E2E perf tests output - execution time
+          displayName: Publish Artifact - E2E perf tests output - execution time odsp
           condition: succeededOrFailed()
           inputs:
             targetPath: '${{ variables.executionTimeTestOutputFolder }}'
             artifactName: 'perf-test-outputs-e2e_execution-time'
 
         - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - E2E perf tests output - memory usage
+          displayName: Publish Artifact - E2E perf tests output - memory usage odsp
           condition: succeededOrFailed()
           inputs:
             targetPath: '${{ variables.memoryUsageTestOutputFolder }}'
