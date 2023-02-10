@@ -99,7 +99,7 @@ export class SnapshotV1 {
 		const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
 		assert(
 			!hasAttribution || attributionSerializer !== undefined,
-			"attribution serializer must be provided when there are segments with attribution.",
+			0x55a /* attribution serializer must be provided when there are segments with attribution. */,
 		);
 
 		return {

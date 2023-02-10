@@ -288,7 +288,10 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
 	return {
 		attach: (client: Client) => {
-			assert(unsubscribe === undefined, "cannot attach to multiple clients at once");
+			assert(
+				unsubscribe === undefined,
+				0x557 /* cannot attach to multiple clients at once */,
+			);
 			const deltaCallback: MergeTreeDeltaCallback = (
 				opArgs,
 				{ deltaSegments, operation },
@@ -323,7 +326,10 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 					return;
 				}
 				for (const { segment } of deltaSegments) {
-					assert(segment.seq !== undefined, "segment.seq should be set after ack.");
+					assert(
+						segment.seq !== undefined,
+						0x558 /* segment.seq should be set after ack. */,
+					);
 					segment.attribution = new AttributionCollection(
 						{ type: "op", seq: segment.seq },
 						segment.cachedLength,

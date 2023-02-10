@@ -556,9 +556,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
 		const opSizeinBytes =
-			typeof config.testConfig.opSizeinBytes === "undefined"
+			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
-				: config.testConfig.opSizeinBytes;
+				: config.testConfig.content.opSizeinBytes;
 		assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
 
 		const generateStringOfSize = (sizeInBytes: number): string =>
@@ -566,34 +566,25 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const generateRandomStringOfSize = (sizeInBytes: number): string =>
 			crypto.randomBytes(sizeInBytes / 2).toString("hex");
 		const generateContentOfSize =
-			config.testConfig.useRandomContent === true
+			config.testConfig.content?.useRandomContent === true
 				? generateRandomStringOfSize
 				: generateStringOfSize;
 		const getOpSizeInBytes = () =>
-			config.testConfig.useVariableOpSize === true
+			config.testConfig.content?.useVariableOpSize === true
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
-
-		const sendSingleOp =
-			opSizeinBytes === 0
-				? () => {
-						dataModel.counter.increment(1);
-				  }
-				: () => {
-						const opPayload = generateContentOfSize(getOpSizeInBytes());
-						const opKey = Math.random().toString();
-						dataModel.sharedmap.set(opKey, opPayload);
-				  };
-
+		const largeOpRate = config.testConfig.content?.largeOpRate ?? 1;
 		let opsSent = 0;
-		const updateOpsSent =
-			opSizeinBytes === 0
-				? () => {
-						opsSent = dataModel.counter.value;
-				  }
-				: () => {
-						opsSent++;
-				  };
+
+		const sendSingleOp = () => {
+			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === 1) {
+				dataModel.sharedmap.set(`key${opsSent}`, generateContentOfSize(getOpSizeInBytes()));
+			} else {
+				dataModel.counter.increment(1);
+			}
+
+			opsSent++;
+		};
 
 		const enableQuickRampDown = () => {
 			return opsSendType === "staggeredReadWrite" && opSizeinBytes === 0 ? true : false;
@@ -604,7 +595,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? async () => {
 						if (dataModel.assigned()) {
 							sendSingleOp();
-							updateOpsSent();
 							if (opsSent % opsPerCycle === 0) {
 								dataModel.abandonTask();
 								await delay(cycleMs / 2);
@@ -619,7 +609,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  }
 				: async () => {
 						sendSingleOp();
-						updateOpsSent();
 						await delay(
 							opsGapMs + opsGapMs * random.real(0, 0.5, true)(config.randEng),
 						);
