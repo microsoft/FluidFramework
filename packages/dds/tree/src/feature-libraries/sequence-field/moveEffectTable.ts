@@ -397,9 +397,7 @@ export function splitMarkOnInput<T, TMark extends InputSpanningMark<T>>(
 	const markLength = getInputLength(mark);
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
-		fail(
-			`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
-		);
+		fail("Unable to split mark due to lengths");
 	}
 	if (isSkipMark(mark)) {
 		return [length, remainder] as [TMark, TMark];
@@ -408,7 +406,7 @@ export function splitMarkOnInput<T, TMark extends InputSpanningMark<T>>(
 	const type = mark.type;
 	switch (type) {
 		case "Modify":
-			fail(`Unable to split ${type} mark of length 1`);
+			fail("Unable to split Modify mark of length 1");
 		case "ReturnTo": {
 			const newId = genId();
 			splitMove(
@@ -506,9 +504,7 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 	const markLength = getOutputLength(mark, ignorePairing);
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
-		fail(
-			`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
-		);
+		fail("Unable to split mark due to lengths");
 	}
 	if (isSkipMark(mark)) {
 		return [length, remainder] as [TMark, TMark];
