@@ -2829,8 +2829,7 @@ export class ContainerRuntime
 			0x132 /* "sending ops in detached container" */,
 		);
 
-		const deserializedContent: ContainerRuntimeMessage = { type, contents };
-		const serializedContent = JSON.stringify(deserializedContent);
+		const serializedContent = JSON.stringify({ type, contents });
 
 		if (this.deltaManager.readOnlyInfo.readonly) {
 			this.logger.sendTelemetryEvent({
@@ -2841,7 +2840,7 @@ export class ContainerRuntime
 
 		const message: BatchMessage = {
 			contents: serializedContent,
-			deserializedContent,
+			deserializedContent: JSON.parse(serializedContent), // Deep copy
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
