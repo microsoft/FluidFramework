@@ -422,7 +422,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
                     // Check for document inactivity.
                     if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
-                        && this.noActiveClients) {
+                        && this.noActiveClients
+                        && !this.serviceConfiguration.deli.disableNoClientMessage) {
                         this.lastNoClientP = this.sendToRawDeltas(this.createOpMessage(MessageType.NoClient))
                             .catch((error) => {
                                 const errorMsg = "Could not send no client message";
@@ -981,17 +982,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              * Sequence number was never rev'd for noClients. We will decide now based on heuristics.
              */
             case MessageType.NoClient: {
-                if (this.serviceConfiguration.deli.disableNoClientMessage) {
-                    sendType = SendType.Never;
+                // Only rev if no clients have shown up since last noClient was sent to alfred.
+                if (this.noActiveClients) {
+                    sequenceNumber = this.revSequenceNumber();
+                    message.operation.referenceSequenceNumber = sequenceNumber;
+                    this.minimumSequenceNumber = sequenceNumber;
                 } else {
-                    // Only rev if no clients have shown up since last noClient was sent to alfred.
-                    if (this.noActiveClients) {
-                        sequenceNumber = this.revSequenceNumber();
-                        message.operation.referenceSequenceNumber = sequenceNumber;
-                        this.minimumSequenceNumber = sequenceNumber;
-                    } else {
-                        sendType = SendType.Never;
-                    }
+                    sendType = SendType.Never;
                 }
 
                 break;
