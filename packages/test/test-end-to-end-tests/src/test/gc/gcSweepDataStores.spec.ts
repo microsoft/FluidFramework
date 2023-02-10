@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { IGCRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import {
+	IGCRuntimeOptions,
+	ISummarizer,
+	TombstoneResponseHeaderKey,
+} from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
@@ -60,7 +64,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		}
 		settings["Fluid.GarbageCollection.Test.SweepDataStores"] = true;
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
-		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
@@ -156,6 +159,13 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		};
 	};
 
+	const setupContainerCloseErrorValidation = (container: IContainer) => {
+		container.on("closed", (error) => {
+			assert(error !== undefined, `Expecting an error!`);
+			assert(error.message.startsWith("DataStore was deleted:"));
+		});
+	};
+
 	describe("Using swept data stores not allowed", () => {
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
@@ -208,12 +218,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	});
 
 	describe("Loading swept data stores not allowed", () => {
-		const expectedHeadersLogged = {
-			request: "{}",
-			handleGet: JSON.stringify({ viaHandle: true }),
-			request_allowTombstone: JSON.stringify({ allowTombstone: true }),
-		};
-
 		/**
 		 * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
 		 * but the test containers are wired up to route requests to this function.
@@ -227,31 +231,16 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		}
 
 		// TODO: Receive ops scenarios - loaded before and loaded after (are these just context loading errors?)
-		// TODO: load deleted datastore scenarios
-		itExpects.skip(
+		itExpects(
 			"Requesting swept datastores fails in client loaded after sweep timeout and summarizing container",
 			[
-				// Interactive client's request
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.request,
-				},
-				// Interactive client's request w/ allowTombstone
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
-					headers: expectedHeadersLogged.request_allowTombstone,
-				},
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 				},
 				// Summarizer client's request
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
-					headers: expectedHeadersLogged.request,
-					isSummarizerClient: true,
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
@@ -262,7 +251,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				// The datastore should be swept now
 				const { summaryVersion } = await summarize(summarizer);
 				const container = await loadContainer(summaryVersion);
-				await sendOpToUpdateSummaryTimestampToNow(container);
 
 				// This request fails since the datastore is swept
 				const errorResponse = await containerRuntime_resolveHandle(container, {
@@ -278,6 +266,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 					`DataStore was deleted: ${unreferencedId}`,
 					"Expected the Sweep error message",
 				);
+				assert.equal(
+					errorResponse.headers?.[TombstoneResponseHeaderKey],
+					undefined,
+					"DID NOT Expect tombstone header to be set on the response",
+				);
 
 				// This request fails since the datastore is swept
 				const summarizerResponse = await containerRuntime_resolveHandle(
@@ -290,9 +283,126 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 					"Should not be able to retrieve a swept datastore from a summarizer client",
 				);
 				assert.equal(
-					errorResponse.value,
+					summarizerResponse.value,
 					`DataStore was deleted: ${unreferencedId}`,
 					"Expected the Sweep error message",
+				);
+				assert.equal(
+					summarizerResponse.headers?.[TombstoneResponseHeaderKey],
+					undefined,
+					"DID NOT Expect tombstone header to be set on the response",
+				);
+			},
+		);
+
+		itExpects(
+			"Receiving ops for swept datastores fails in client after sweep timeout and summarizing container",
+			[
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+				},
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+				},
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+				},
+			],
+			async () => {
+				const {
+					unreferencedId,
+					summarizingContainer,
+					summarizer,
+					summaryVersion: unreferencedSummaryVersion,
+				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
+				const response = await containerRuntime_resolveHandle(sendingContainer, {
+					url: unreferencedId,
+				});
+				const dataObject = response.value as ITestDataObject;
+
+				// The datastore should be swept now
+				const { summaryVersion } = await summarize(summarizer);
+				const container = await loadContainer(summaryVersion);
+				setupContainerCloseErrorValidation(summarizingContainer);
+				setupContainerCloseErrorValidation(container);
+
+				// Send an op to the swept data store
+				dataObject._root.set("send", "op");
+				await provider.ensureSynchronized();
+
+				// The containers should fail
+				assert(
+					summarizingContainer.closed,
+					"Summarzing container with deleted datastore should close on receiving an op for it",
+				);
+				assert(
+					container.closed,
+					"Container with deleted datastore should close on receiving an op for it",
+				);
+			},
+		);
+
+		itExpects(
+			"Receiving ops for swept datastores fails in client after sweep timeout and summarizing container",
+			[
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+				},
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+				},
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+				},
+			],
+			async () => {
+				const {
+					unreferencedId,
+					summarizingContainer,
+					summarizer,
+					summaryVersion: unreferencedSummaryVersion,
+				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
+				const response = await containerRuntime_resolveHandle(sendingContainer, {
+					url: unreferencedId,
+				});
+				const dataObject = response.value as ITestDataObject;
+
+				// The datastore should be swept now
+				const { summaryVersion } = await summarize(summarizer);
+				const container = await loadContainer(summaryVersion);
+				setupContainerCloseErrorValidation(summarizingContainer);
+				setupContainerCloseErrorValidation(container);
+
+				// Send an op to the swept data store
+				dataObject._runtime.submitSignal("a", "signal");
+				await provider.ensureSynchronized();
+
+				// The containers should fail
+				assert(
+					summarizingContainer.closed,
+					"Summarzing container with deleted datastore should close on receiving an op for it",
+				);
+				assert(
+					container.closed,
+					"Container with deleted datastore should close on receiving an op for it",
 				);
 			},
 		);

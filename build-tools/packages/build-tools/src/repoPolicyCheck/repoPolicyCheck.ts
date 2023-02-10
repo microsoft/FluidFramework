@@ -16,6 +16,7 @@ import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackag
 import { handler as fluidCaseHandler } from "./handlers/fluidCase";
 import { handlers as lockfilesHandlers } from "./handlers/lockfiles";
 import { handlers as npmPackageContentsHandlers } from "./handlers/npmPackages";
+import { handlers as pnpmHandlers } from "./handlers/pnpm";
 
 const exclusions: RegExp[] = require("../../data/exclusions.json").map(
 	(e: string) => new RegExp(e, "i"),
@@ -63,6 +64,7 @@ const handlers: Handler[] = [
 	fluidCaseHandler,
 	...lockfilesHandlers,
 	assertShortCodeHandler,
+	...pnpmHandlers,
 ];
 
 const handlerActionPerf = new Map<"handle" | "resolve" | "final", Map<string, number>>();
