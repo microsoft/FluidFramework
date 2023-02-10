@@ -228,7 +228,7 @@ export class LoadTestDataStoreModel {
 		this.taskId = `op_sender${config.runId % halfClients}`;
 		this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
 
-		config.logger.sendTelemetryEvent({
+		config.logger.sendErrorEvent({
 			eventName: "StressTestCanary",
 			runId: config.runId,
 			config: JSON.stringify(config.testConfig),
