@@ -199,8 +199,9 @@ Then:
 This repository uses [prettier](https://prettier.io/) as its code formatter.
 Right now, this is implemented on a per-package basis, with a [shared base configuration](./common/build/build-common/prettier.config.cjs).
 
--   To run `prettier` on your code, run `npm run format` from the appropriate package or release group, or run `npm run format:changed` from the root of the repo to format only files changed since the main branch. If your change is for the
-    next branch instead, you can run `npm run format:changed:next`.
+-   To run `prettier` on your code, run `npm run format` from the appropriate package or release group, or run
+    `npm run format:changed` from the root of the repo to format only files changed since the main branch.
+    If your change is for the next branch instead, you can run `npm run format:changed:next`.
 -   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
     script argument: `fluid-build -s format` or `npm run build:fast -- -s format`
 
@@ -214,6 +215,13 @@ Please do not change this.
 It is not configured to do any formatting automatically, however.
 This is intentional, to ensure that each developer can work formatting into their workflow as they see fit.
 If you wish to configure your setup to format on save/paste/etc., please feel free to update your [user preferences](https://code.visualstudio.com/docs/getstarted/settings) to do so.
+
+Notable setting options:
+
+-   `format on save`
+-   `format on paste`
+
+<img src="https://user-images.githubusercontent.com/54606601/217620203-0cb07007-0aaa-4e57-bc83-973ed4a3f2d7.png" alt="User editor formatting setting options" style="height:400px;"/>
 
 ### Git Configuration
 
