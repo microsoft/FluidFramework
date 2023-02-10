@@ -282,19 +282,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		readAndParseBlob: ReadAndParseBlob,
 		correlatedSummaryLogger: ITelemetryLogger,
 	): Promise<RefreshSummaryResult> {
-		/**
-		 * Refresh latest summary should never happen while a summary is in progress. If it does, log an error
-		 * so that we can gather data around it and take appropriate action.
-		 */
-		if (this.isSummaryInProgress()) {
-			this.logger.sendErrorEvent({
-				eventName: "UnexpectedRefreshDuringSummarize",
-				proposalHandle,
-				summaryRefSeq,
-				inProgressSummaryRefSeq: this.wipReferenceSequenceNumber,
-			});
-		}
-
 		const eventProps: {
 			proposalHandle: string | undefined;
 			summaryRefSeq: number;
