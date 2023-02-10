@@ -299,6 +299,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
                 serializedContainerState: pendingLocalState,
+                baseLogger: loadOptions.baseLogger,
             },
             protocolHandlerBuilder);
 
@@ -610,7 +611,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
-            loader.services.subLogger,
+            // If a baseLogger was provided, use it; otherwise use the loader's logger.
+            config.baseLogger ?? loader.services.subLogger,
             undefined,
             {
                 all: {
