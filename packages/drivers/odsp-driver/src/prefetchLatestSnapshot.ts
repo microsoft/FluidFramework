@@ -28,11 +28,8 @@ import {
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
-import {
-	snapshotPrefetchCacheKeyFromEntry,
-	ISnapshotContentsWithEpoch,
-	SnapshotPrefetchResultCache,
-} from "./odspCache";
+import { snapshotPrefetchCacheKeyFromEntry, ISnapshotContentsWithEpoch } from "./odspCache";
+import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -51,7 +48,7 @@ import {
  * Note: this can be considered deprecated - it will be replaced with `snapshotFormatFetchType`.
  * @param fetchBinarySnapshotFormat - Control if we want to fetch binary format snapshot.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
- * @param snapshotPrefetchResultCache - Non Persistant cache to store snapshot promise.
+ * @param odspDocumentServiceFactory - factory to access the non persistent cache and store the prefetch promise.
  *
  * @returns - True if the snapshot is cached, false otherwise.
  */
@@ -65,7 +62,7 @@ export async function prefetchLatestSnapshot(
 	enableRedeemFallback: boolean = true,
 	fetchBinarySnapshotFormat?: boolean,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
-	snapshotPrefetchResultCache?: SnapshotPrefetchResultCache,
+	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
 	const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -93,7 +90,7 @@ export async function prefetchLatestSnapshot(
 			storageToken,
 			odspLogger,
 			snapshotOptions,
-			snapshotFormatFetchType,
+			undefined,
 			controller,
 		);
 	};
@@ -112,8 +109,11 @@ export async function prefetchLatestSnapshot(
 		async () => {
 			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
 			const snapshotContentsWithEpochP = new Deferred<ISnapshotContentsWithEpoch>();
-			snapshotPrefetchResultCache?.add(
-				snapshotPrefetchCacheKeyFromEntry(snapshotKey),
+			const nonPersistentCacheKey = snapshotPrefetchCacheKeyFromEntry(snapshotKey);
+			const nonPersistentCache =
+				odspDocumentServiceFactory?.nonPersistentCache?.snapshotPrefetchResultCache;
+			nonPersistentCache?.add(
+				nonPersistentCacheKey,
 				async () => snapshotContentsWithEpochP.promise,
 			);
 			await fetchSnapshotWithRedeem(
@@ -136,7 +136,9 @@ export async function prefetchLatestSnapshot(
 					throw err;
 				});
 			assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
-			await cacheP;
+			// Remove it from the non persistent cache once it is cached in the persistent cache as then it will
+			// be fetched from persistent cache.
+			await cacheP.then(() => nonPersistentCache?.remove(nonPersistentCacheKey));
 			return true;
 		},
 	).catch(async (error) => false);

@@ -248,11 +248,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					const snapshotCacheKey = createCacheSnapshotKey(this.odspResolvedUrl);
 					let prefetchedSnapshotP:
 						| Promise<ISnapshotContentsWithEpoch | undefined>
-						| undefined;
-					// Only use the prefetched snapshot from non persistent cache in the load flow.
-					if (this.firstVersionCall) {
+						| Promise<ISnapshotContents>;
+					let inPrefetchNonPersistentCache = false;
+					// Only use the prefetched snapshot from non persistent cache in the load flow. Don't look into
+					// cache, if the host specifically tells us so.
+					if (!this.hostPolicy.avoidPrefetchSnapshotCache) {
+						const prefetchCacheKey = snapshotPrefetchCacheKeyFromEntry(snapshotCacheKey);
+						inPrefetchNonPersistentCache = this.cache.snapshotPrefetchResultCache?.has(prefetchCacheKey);
 						prefetchedSnapshotP = this.cache.snapshotPrefetchResultCache
-							?.get(snapshotPrefetchCacheKeyFromEntry(snapshotCacheKey))
+							?.get(prefetchCacheKey)
 							?.then(async (response) => {
 								// Validate the epoch from the prefetched snapshot result.
 								await this.epochTracker.validateEpoch(
@@ -261,7 +265,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								);
 								return response;
 							})
-							.catch((err) => {
+							.catch(async (err) => {
 								this.logger.sendTelemetryEvent(
 									{
 										eventName: "PrefetchSnapshotError",
@@ -270,19 +274,20 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 									},
 									err,
 								);
-								return undefined;
-							});
-					}
-					if (fetchSource === FetchSource.noCache) {
-						retrievedSnapshot = await prefetchedSnapshotP;
-						method = "prefetched";
-						if (retrievedSnapshot === undefined) {
-							retrievedSnapshot = await this.fetchSnapshot(
+								throw err;
+							}) ?? this.fetchSnapshot(
 								hostSnapshotOptions,
 								scenarioName,
 							);
-							method = "networkOnly";
-						}
+					} else {
+						prefetchedSnapshotP = this.fetchSnapshot(
+							hostSnapshotOptions,
+							scenarioName,
+						);
+					}
+					if (fetchSource === FetchSource.noCache) {
+						retrievedSnapshot = await prefetchedSnapshotP;
+						method = inPrefetchNonPersistentCache ? "prefetched" : "networkOnly";
 					} else {
 						// Here's the logic to grab the persistent cache snapshot implemented by the host
 						// Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
@@ -334,58 +339,23 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							// I.e. if cache fails for some reason, we will proceed with prefetched/network result.
 							// And vice versa - if (for example) client is offline and prefetched/network request fails first, we
 							// do want to attempt to succeed with cached data!
-							if (prefetchedSnapshotP) {
-								// First wait for result either from cache or from prefetch cache.
-								const promiseRaceWinner = await promiseRaceWithWinner<
-									ISnapshotContents | ISnapshotContentsWithEpoch | undefined
-								>([cachedSnapshotP.catch(() => undefined), prefetchedSnapshotP]);
-								retrievedSnapshot = promiseRaceWinner.value;
-								method = promiseRaceWinner.index === 0 ? "cache" : "prefetched";
-								if (retrievedSnapshot === undefined) {
-									// if prefetch failed -> wait for cache
-									// If cache returned empty or failed -> wait for prefetch (success or failure)
-									// If both fail, then make a network call by ourself.
-									if (promiseRaceWinner.index === 1) {
-										retrievedSnapshot = await cachedSnapshotP;
-										method = "cache";
-									}
-									if (retrievedSnapshot === undefined) {
-										retrievedSnapshot = await prefetchedSnapshotP;
-										method = "prefetched";
-									}
-									if (retrievedSnapshot === undefined) {
-										retrievedSnapshot = await this.fetchSnapshot(
-											hostSnapshotOptions,
-											scenarioName,
-										);
-										method = "network";
-									}
+							// First wait for result either from cache or from prefetch cache.
+							const promiseRaceWinner = await promiseRaceWithWinner<
+								ISnapshotContents | ISnapshotContentsWithEpoch | undefined
+							>([cachedSnapshotP.catch(() => undefined), prefetchedSnapshotP.catch(() => undefined)]);
+							retrievedSnapshot = promiseRaceWinner.value;
+							method = promiseRaceWinner.index === 0 ? "cache" : inPrefetchNonPersistentCache ? "prefetched" : "network";
+							if (retrievedSnapshot === undefined) {
+								// if prefetch failed -> wait for cache
+								// If cache returned empty or failed -> wait for prefetch (success or failure)
+								// If both fail, then make a network call by ourself.
+								if (promiseRaceWinner.index === 1) {
+									retrievedSnapshot = await cachedSnapshotP;
+									method = "cache";
 								}
-							} else {
-								// In case there is no prefetched snapshot, then proceed with a concurrent network fetch call.
-								const networkSnapshotP = this.fetchSnapshot(
-									hostSnapshotOptions,
-									scenarioName,
-								);
-								const promiseRaceWinner = await promiseRaceWithWinner<
-									ISnapshotContents | undefined
-								>([
-									cachedSnapshotP.catch(() => undefined),
-									networkSnapshotP.catch(() => undefined),
-								]);
-								retrievedSnapshot = promiseRaceWinner.value;
-								method = promiseRaceWinner.index === 0 ? "cache" : "network";
 								if (retrievedSnapshot === undefined) {
-									// if network failed -> wait for cache ( then return network failure)
-									// If cache returned empty or failed -> wait for network (success or failure)
-									if (promiseRaceWinner.index === 1) {
-										retrievedSnapshot = await cachedSnapshotP;
-										method = "cache";
-									}
-									if (retrievedSnapshot === undefined) {
-										retrievedSnapshot = await networkSnapshotP;
-										method = "network";
-									}
+									retrievedSnapshot = await prefetchedSnapshotP;
+									method = inPrefetchNonPersistentCache ? "prefetched" : "network";
 								}
 							}
 						} else {
@@ -393,18 +363,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							// while the first caller is awaiting later async code in this block.
 
 							retrievedSnapshot = await cachedSnapshotP;
-							if (!retrievedSnapshot) {
+							if (retrievedSnapshot !== undefined) {
 								method = "cache";
-							} else if (prefetchedSnapshotP !== undefined) {
+							} else {
 								retrievedSnapshot = await prefetchedSnapshotP;
-								method = "prefetched";
-							}
-							if (retrievedSnapshot === undefined) {
-								retrievedSnapshot = await this.fetchSnapshot(
-									hostSnapshotOptions,
-									scenarioName,
-								);
-								method = "network";
+								method = inPrefetchNonPersistentCache ? "prefetched" : "networkOnly";
 							}
 						}
 					}

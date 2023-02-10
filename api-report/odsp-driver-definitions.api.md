@@ -13,6 +13,7 @@ export type CacheContentType = "snapshot" | "ops";
 
 // @public (undocumented)
 export interface HostStoragePolicy {
+    avoidPrefetchSnapshotCache?: boolean;
     cacheCreateNewSummary?: boolean;
     // (undocumented)
     concurrentOpsBatches?: number;

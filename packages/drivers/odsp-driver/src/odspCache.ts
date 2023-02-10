@@ -108,7 +108,11 @@ export interface INonPersistentCache {
 	 */
 	readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
 
-	readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache;
+	/**
+	 * Used to store the snapshot fetch promise if the prefetch has been made using the prefetchLatestSnapshot api.
+	 * This is then used later to look for the promise during the container load.
+	 */
+	readonly snapshotPrefetchResultCache: PromiseCache<string, ISnapshotContentsWithEpoch>;
 }
 
 /**
@@ -122,21 +126,17 @@ export interface IOdspCache extends INonPersistentCache {
 }
 
 export class NonPersistentCache implements INonPersistentCache {
-	constructor(readonly snapshotPrefetchResultCache?: SnapshotPrefetchResultCache) {
-		if (this.snapshotPrefetchResultCache === undefined) {
-			this.snapshotPrefetchResultCache = new PromiseCache<
-				string,
-				ISnapshotContentsWithEpoch
-			>();
-		}
-	}
-
 	public readonly sessionJoinCache = new PromiseCache<
 		string,
 		{ entryTime: number; joinSessionResponse: ISocketStorageDiscovery }
 	>();
 
 	public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
+
+	public readonly snapshotPrefetchResultCache = new PromiseCache<
+		string,
+		ISnapshotContentsWithEpoch
+	>();
 }
 
 export interface ISnapshotContentsWithEpoch extends ISnapshotContents {
@@ -146,5 +146,3 @@ export interface ISnapshotContentsWithEpoch extends ISnapshotContents {
 export function snapshotPrefetchCacheKeyFromEntry(entry: ICacheEntry): string {
 	return `${entry.file.docId}_${entry.type}_${entry.key}`;
 }
-
-export type SnapshotPrefetchResultCache = PromiseCache<string, ISnapshotContentsWithEpoch>;

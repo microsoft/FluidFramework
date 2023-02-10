@@ -141,4 +141,10 @@ export interface HostStoragePolicy {
 	 * where 'createLinkType' was requested.)
 	 */
 	enableSingleRequestForShareLinkWithCreate?: boolean;
+
+	/**
+	 * True if host does not want the storage service to use the prefetch cache to get the snapshot. Undefined will be treated
+	 * as false. This is if the host wants to do some A/B testing.
+	 */
+	avoidPrefetchSnapshotCache?: boolean;
 }

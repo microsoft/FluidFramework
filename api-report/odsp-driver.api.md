@@ -115,7 +115,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 
 // @public
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy, snapshotPrefetchResultCache?: SnapshotPrefetchResultCache | undefined);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
@@ -124,6 +124,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // Warning: (ae-forgotten-export) The symbol "INonPersistentCache" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    readonly nonPersistentCache: INonPersistentCache;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
@@ -176,7 +180,7 @@ export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITeleme
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //
 // @public
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType, snapshotPrefetchResultCache?: SnapshotPrefetchResultCache): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
 
 // @public
 export interface ShareLinkFetcherProps {
@@ -189,11 +193,6 @@ export enum SharingLinkHeader {
     // (undocumented)
     isSharingLinkToRedeem = "isSharingLinkToRedeem"
 }
-
-// Warning: (ae-forgotten-export) The symbol "ISnapshotContentsWithEpoch" needs to be exported by the entry point index.d.ts
-//
-// @public (undocumented)
-export type SnapshotPrefetchResultCache = PromiseCache<string, ISnapshotContentsWithEpoch>;
 
 // @public
 export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void;
