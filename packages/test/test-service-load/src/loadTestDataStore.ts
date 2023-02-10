@@ -233,6 +233,11 @@ export class LoadTestDataStoreModel {
 			runId: config.runId,
 			config: JSON.stringify(config.testConfig),
 		});
+		console.log(
+			`StressTestCanary - runId: ${config.runId} config: ${JSON.stringify(
+				config.testConfig,
+			)}`,
+		);
 
 		const changed = (taskId) => {
 			this.deferUntilConnected(
