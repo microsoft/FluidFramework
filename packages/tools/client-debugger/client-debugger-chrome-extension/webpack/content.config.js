@@ -20,7 +20,7 @@ module.exports = {
 		// The Background script
 		BackgroundScript: path.join(contentExtensionSourcePath, "BackgroundScript.ts"),
 
-		// The Content scripts
+		// The Content script
 		ContentScript: path.join(contentExtensionSourcePath, "ContentScript.ts"),
 	},
 	output: {
