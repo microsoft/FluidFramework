@@ -125,7 +125,7 @@ export async function fetchTokens(
 		} catch (error) {
 			if (isFluidError(error) && isAccessTokenError(parsedResponse)) {
 				error.addTelemetryProperties({
-					error: parsedResponse.error,
+					innerError: parsedResponse.error,
 					errorDescription: parsedResponse.error_description,
 					code: JSON.stringify(parsedResponse.error_codes),
 					timestamp: parsedResponse.timestamp,
