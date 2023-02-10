@@ -26,6 +26,9 @@ import { SharedString } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
 
+/**
+ * Data object storing the data to back a SimpleMDE editor.  Primarily just a SharedString.
+ */
 export class SmdeDataObject extends EventEmitter implements IFluidLoadable, IFluidRouter {
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
 		const collection = new SmdeDataObject(runtime);
@@ -84,6 +87,9 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable, IFlu
 	}
 }
 
+/**
+ * Factory for creating SmdeDataObjects.
+ */
 export class SmdeFactory implements IFluidDataStoreFactory {
 	public static readonly type = "@fluid-example/smde";
 	public readonly type = SmdeFactory.type;

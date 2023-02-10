@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import { mixinRequestHandler } from "@fluidframework/datastore";
-import { SharedMap } from "@fluidframework/map";
 import {
 	MergeTreeDeltaType,
 	TextSegment,
@@ -13,11 +10,7 @@ import {
 	reservedTileLabelsKey,
 	Marker,
 } from "@fluidframework/merge-tree";
-import {
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { getTextAndMarkers, SharedString } from "@fluidframework/sequence";
+import { getTextAndMarkers } from "@fluidframework/sequence";
 
 import React, { useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
@@ -61,6 +54,7 @@ class SmdeView {
 		let localEdit = false;
 
 		this.smdeDataObject.text.on("sequenceDelta", (ev) => {
+			// We assume local modifications to the string were already applied to the editor (because they were typed there by the user), so there's nothing to do.
 			if (ev.isLocal) {
 				return;
 			}
@@ -135,10 +129,16 @@ class SmdeView {
 	}
 }
 
+/**
+ * Props for creating an SmdeReactView.
+ */
 export interface ISmdeReactViewProps {
 	readonly smdeDataObject: SmdeDataObject;
 }
 
+/**
+ * A React view that may be applied to an SmdeDataObject to render it and allow editing.
+ */
 export const SmdeReactView: React.FC<ISmdeReactViewProps> = (props: ISmdeReactViewProps) => {
 	const { smdeDataObject } = props;
 	const htmlView = useRef<SmdeView>(new SmdeView(smdeDataObject));
@@ -150,33 +150,3 @@ export const SmdeReactView: React.FC<ISmdeReactViewProps> = (props: ISmdeReactVi
 	}, [divRef.current]);
 	return <div ref={divRef}></div>;
 };
-
-export class SmdeFactory implements IFluidDataStoreFactory {
-	public static readonly type = "@fluid-example/smde";
-	public readonly type = SmdeFactory.type;
-
-	public get IFluidDataStoreFactory() {
-		return this;
-	}
-
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
-			const router = await routerP;
-			return router.request(request);
-		});
-
-		const runtime = new runtimeClass(
-			context,
-			new Map(
-				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
-					factory.type,
-					factory,
-				]),
-			),
-			existing,
-		);
-		const routerP = SmdeDataObject.load(runtime, existing);
-
-		return runtime;
-	}
-}
