@@ -1194,8 +1194,12 @@ describe("Garbage Collection Tests", () => {
             const deletedNodesBlob = gcSummary.summary.tree[gcDeletedBlobKey];
             assert(deletedNodesBlob.type === SummaryType.Handle, "Deleted nodes state should be a handle");
 
-            const refreshSummaryResult: RefreshSummaryResult = { latestSummaryUpdated: true, wasSummaryTracked: true};
-            await garbageCollector.refreshLatestSummary(refreshSummaryResult, undefined, 0, parseNothing);
+            const refreshSummaryResult: RefreshSummaryResult = { latestSummaryUpdated: true, wasSummaryTracked: true, summaryRefSeq: 0 };
+			await garbageCollector.refreshLatestSummary(
+				undefined,
+				refreshSummaryResult,
+				parseNothing,
+			);
 
             // Run GC and summarize again. The whole GC summary should now be a summary handle.
             await garbageCollector.collectGarbage({});
@@ -1735,12 +1739,11 @@ describe("Garbage Collection Tests", () => {
 
             checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
-            await garbageCollector.refreshLatestSummary(
-                { wasSummaryTracked: true, latestSummaryUpdated: true },
-                undefined,
-                0,
-                parseNothing,
-            );
+			await garbageCollector.refreshLatestSummary(
+				undefined,
+				{ wasSummaryTracked: true, latestSummaryUpdated: true, summaryRefSeq: 0 },
+				parseNothing,
+			);
 
             await garbageCollector.collectGarbage({});
             const tree2 = garbageCollector.summarize(fullTree, trackState);
