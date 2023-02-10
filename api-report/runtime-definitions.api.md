@@ -100,7 +100,7 @@ export enum FlushMode {
     TurnBased = 1
 }
 
-// @public
+// @public (undocumented)
 export enum FlushModeExperimental {
     Async = 2
 }

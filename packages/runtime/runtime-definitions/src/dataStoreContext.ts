@@ -59,11 +59,6 @@ export enum FlushMode {
 	TurnBased,
 }
 
-/**
- * FlushMode experimental
- *
- * @experimental - Not ready for use
- */
 export enum FlushModeExperimental {
 	/**
 	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
