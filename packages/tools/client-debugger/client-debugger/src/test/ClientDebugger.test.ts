@@ -58,6 +58,10 @@ describe("ClientDebugger unit tests", () => {
 	});
 
 	afterEach(() => {
+		debuggerRegistered = false;
+		debuggerClosed = false;
+		audienceAdded = false;
+		audienceRemoved = false;
 		clearDebuggerRegistry();
 	});
 
