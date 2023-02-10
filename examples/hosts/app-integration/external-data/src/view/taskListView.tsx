@@ -25,7 +25,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const [changeType, setChangeType] = useState<string | undefined>(task.changeType);
 	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
-		const updatePriorityFromUIForm = (): void => {
+		const updateFromRemotePriority = (): void => {
 			if (priorityRef.current !== null) {
 				priorityRef.current.value = task.draftPriority.toString();
 			}
@@ -41,13 +41,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 		const updateShowConflictUI = (value: boolean): void => {
 			setShowConflictUI(value);
 		};
-		task.on("draftPriorityChanged", updatePriorityFromUIForm);
+		task.on("draftPriorityChanged", updateFromRemotePriority);
 		task.on("externalPriorityChanged", updateExternalPriority);
 		task.on("externalNameChanged", updateExternalName);
 		task.on("changesAvailable", updateShowConflictUI);
-		updatePriorityFromUIForm();
+		updateFromRemotePriority();
 		return (): void => {
-			task.off("draftPriorityChanged", updatePriorityFromUIForm);
+			task.off("draftPriorityChanged", updateFromRemotePriority);
 			task.off("externalPriorityChanged", updateExternalPriority);
 			task.off("externalNameChanged", updateExternalName);
 			task.off("changesAvailable", updateShowConflictUI);

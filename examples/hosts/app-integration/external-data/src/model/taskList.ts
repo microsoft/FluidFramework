@@ -28,6 +28,9 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		}
 		return cellValue;
 	}
+	public set draftPriority(newPriority: number) {
+		this._draftPriority.set(newPriority);
+	}
 	public get externalName(): string | undefined {
 		return this._externalName;
 	}
