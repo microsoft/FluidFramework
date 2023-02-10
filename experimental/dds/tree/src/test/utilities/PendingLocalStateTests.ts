@@ -22,6 +22,7 @@ import {
 	withContainerOffline,
 } from './TestUtilities';
 import { SimpleTestTree } from './TestNode';
+import { TestObjectProvider } from '@fluidframework/test-utils';
 
 /**
  * Runs a test suite for SharedTree's ability to apply pending local state stashed by the host.
@@ -41,12 +42,20 @@ export function runPendingLocalStateTests(
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_0_2));
 		it('applies and submits ops from 0.0.2 in 0.1.1', async () =>
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_1_1));
-		it('applies and submits ops from 0.1.1 in 0.0.2 (via upgrade)', async () =>
-			applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2));
+		it('applies and submits ops from 0.1.1 in 0.0.2 (via upgrade)', async () => {
+			const testObjectProvider = await applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2);
+
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
+			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
+			expect(events.unexpectedErrors.length).to.equal(1);
+			expect(events.unexpectedErrors[0].eventName).to.equal(
+				'fluid:telemetry:ContainerRuntime:BatchManager:ReferenceSequenceNumberMismatch'
+			);
+		});
 		it('applies and submits ops from 0.1.1 in 0.1.1', async () =>
 			applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_1_1));
 
-		async function applyStashedOp(treeVersion: WriteFormat, opVersion: WriteFormat): Promise<void> {
+		async function applyStashedOp(treeVersion: WriteFormat, opVersion: WriteFormat): Promise<TestObjectProvider> {
 			const {
 				container: stashingContainer,
 				tree: stashingTree,
@@ -139,6 +148,8 @@ export function runPendingLocalStateTests(
 
 			expect(observerTree.edits.length).to.equal(initialEditLogLength + 1);
 			expect(stashingTree2.edits.length).to.equal(initialEditLogLength + 1);
+
+			return testObjectProvider;
 		}
 
 		it('works across summaries', async () => {
