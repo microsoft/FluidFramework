@@ -78,8 +78,8 @@ function getTableValue(data: unknown, _renderChild: RenderChild): React.ReactNod
 		return "null";
 	}
 
-	if (typeof data === ("string" || "number")) {
-		return <>{data}</>;
+	if (typeof data === "string" || typeof data === "number") {
+		return <> {data}</>;
 	}
 
 	return <>{_renderChild(data)}</>;
