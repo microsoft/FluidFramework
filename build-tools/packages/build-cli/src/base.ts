@@ -139,7 +139,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 
 			this._context = new Context(
 				gitRepo,
-				"github.com/microsoft/FluidFramework",
+				"microsoft/FluidFramework",
 				branch,
 				this.logger,
 			);
