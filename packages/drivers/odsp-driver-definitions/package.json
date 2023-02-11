@@ -61,6 +61,8 @@
     "version": "2.0.0-internal.3.0.1",
     "previousVersionStyle": "previousPatch",
     "baselineRange": "2.0.0-internal.3.0.0",
-    "broken": {}
+    "broken": {
+      "TypeAliasDeclaration_OdspError": {"forwardCompat": false}
+    }
   }
 }
