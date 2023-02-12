@@ -99,9 +99,9 @@ const dataSchema = namedTreeSchema({
 });
 
 // number of nodes in test for wide trees
-const nodesCountWide = [5, 100, 500];
+const nodesCountWide = [1, 100, 500];
 // number of nodes in test for deep trees
-const nodesCountDeep = [5, 10, 100];
+const nodesCountDeep = [1, 10, 100];
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
@@ -699,6 +699,9 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
 			}
 			break;
 		case TreeShape.Wide:
+			if (numberOfNodes === 1) {
+				break;
+			}
 			readCursor.firstField();
 			readCursor.firstNode();
 			for (let j = 0; j < numberOfNodes - 1; j++) {
