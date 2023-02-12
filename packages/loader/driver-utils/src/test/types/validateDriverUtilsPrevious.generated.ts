@@ -35,7 +35,6 @@ declare function get_current_ClassDeclaration_AuthorizationError():
 declare function use_old_ClassDeclaration_AuthorizationError(
     use: TypeOnly<old.AuthorizationError>);
 use_old_ClassDeclaration_AuthorizationError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_AuthorizationError());
 
 /*
@@ -324,7 +323,6 @@ declare function get_current_ClassDeclaration_DeltaStreamConnectionForbiddenErro
 declare function use_old_ClassDeclaration_DeltaStreamConnectionForbiddenError(
     use: TypeOnly<old.DeltaStreamConnectionForbiddenError>);
 use_old_ClassDeclaration_DeltaStreamConnectionForbiddenError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DeltaStreamConnectionForbiddenError());
 
 /*
@@ -469,7 +467,6 @@ declare function get_current_ClassDeclaration_FluidInvalidSchemaError():
 declare function use_old_ClassDeclaration_FluidInvalidSchemaError(
     use: TypeOnly<old.FluidInvalidSchemaError>);
 use_old_ClassDeclaration_FluidInvalidSchemaError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FluidInvalidSchemaError());
 
 /*
@@ -494,7 +491,6 @@ declare function get_current_ClassDeclaration_GenericNetworkError():
 declare function use_old_ClassDeclaration_GenericNetworkError(
     use: TypeOnly<old.GenericNetworkError>);
 use_old_ClassDeclaration_GenericNetworkError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_GenericNetworkError());
 
 /*
@@ -807,7 +803,6 @@ declare function get_current_ClassDeclaration_LocationRedirectionError():
 declare function use_old_ClassDeclaration_LocationRedirectionError(
     use: TypeOnly<old.LocationRedirectionError>);
 use_old_ClassDeclaration_LocationRedirectionError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocationRedirectionError());
 
 /*
@@ -1312,7 +1307,6 @@ declare function get_current_ClassDeclaration_ThrottlingError():
 declare function use_old_ClassDeclaration_ThrottlingError(
     use: TypeOnly<old.ThrottlingError>);
 use_old_ClassDeclaration_ThrottlingError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ThrottlingError());
 
 /*
@@ -1337,7 +1331,6 @@ declare function get_current_ClassDeclaration_UsageError():
 declare function use_old_ClassDeclaration_UsageError(
     use: TypeOnly<old.UsageError>);
 use_old_ClassDeclaration_UsageError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_UsageError());
 
 /*
