@@ -4,15 +4,15 @@
  */
 
 module.exports = {
-    extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
-    parserOptions: {
-        project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-    },
-    rules: {
-        "@typescript-eslint/no-use-before-define": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off",
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
+	rules: {
+		"@typescript-eslint/no-use-before-define": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
 
-        // This package is exclusively used in a Node.js context
-        "import/no-nodejs-modules": "off",
-    },
+		// This package is exclusively used in a Node.js context
+		"import/no-nodejs-modules": "off",
+	},
 };

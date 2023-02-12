@@ -11,104 +11,104 @@ import { View } from "./view";
 import "./index.css";
 
 interface ISearchMenuProps {
-    commands: ICommand[];
-    onComplete: (command: ICommand) => void;
+	commands: ICommand[];
+	onComplete: (command: ICommand) => void;
 }
 
 export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
-    private state?: ISearchMenuProps;
-    private readonly inputElement = document.createElement("input");
-    private readonly datalistElement = document.createElement("datalist");
+	private state?: ISearchMenuProps;
+	private readonly inputElement = document.createElement("input");
+	private readonly datalistElement = document.createElement("datalist");
 
-    public show() {
-        this.updateCommands();
-        const root = this.root as HTMLElement;
-        root.style.display = "inline-block";
-        this.inputElement.focus();
-    }
+	public show() {
+		this.updateCommands();
+		const root = this.root as HTMLElement;
+		root.style.display = "inline-block";
+		this.inputElement.focus();
+	}
 
-    public hide() {
-        const root = this.root as HTMLElement;
-        root.blur();
-        root.style.display = "none";
-    }
+	public hide() {
+		const root = this.root as HTMLElement;
+		root.blur();
+		root.style.display = "none";
+	}
 
-    protected onAttach(props: Readonly<ISearchMenuProps>) {
-        const root = document.createElement("div");
-        root.classList.add("searchMenu");
+	protected onAttach(props: Readonly<ISearchMenuProps>) {
+		const root = document.createElement("div");
+		root.classList.add("searchMenu");
 
-        this.inputElement.type = "text";
-        this.inputElement.classList.add("input");
-        this.inputElement.autocomplete = "off";
-        // Assign the datalist a random 'id' and <input> element to the datalist.
-        this.inputElement.setAttribute("list", this.datalistElement.id = randomId());
-        this.onDom(this.inputElement, "keydown", this.onKeyDown);
+		this.inputElement.type = "text";
+		this.inputElement.classList.add("input");
+		this.inputElement.autocomplete = "off";
+		// Assign the datalist a random 'id' and <input> element to the datalist.
+		this.inputElement.setAttribute("list", (this.datalistElement.id = randomId()));
+		this.onDom(this.inputElement, "keydown", this.onKeyDown);
 
-        root.append(this.inputElement, this.datalistElement);
+		root.append(this.inputElement, this.datalistElement);
 
-        this.state = props;
+		this.state = props;
 
-        return root;
-    }
+		return root;
+	}
 
-    protected onUpdate(props: Readonly<ISearchMenuProps>): void {
-        this.state = props;
+	protected onUpdate(props: Readonly<ISearchMenuProps>): void {
+		this.state = props;
 
-        this.updateCommands();
-    }
+		this.updateCommands();
+	}
 
-    protected onDetach(): void {
-        // Do nothing.
-    }
+	protected onDetach(): void {
+		// Do nothing.
+	}
 
-    private updateCommands() {
-        Dom.removeAllChildren(this.datalistElement);
-        this.datalistElement.append(...this.state.commands
-            .filter((command) => command.enabled())
-            .map((command) => {
-                const option = document.createElement("option");
-                option.value = command.name;
+	private updateCommands() {
+		Dom.removeAllChildren(this.datalistElement);
+		this.datalistElement.append(
+			...this.state.commands
+				.filter((command) => command.enabled())
+				.map((command) => {
+					const option = document.createElement("option");
+					option.value = command.name;
 
-                return option;
-            }));
-    }
+					return option;
+				}),
+		);
+	}
 
-    private dismiss(e: KeyboardEvent) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.hide();
-    }
+	private dismiss(e: KeyboardEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		this.hide();
+	}
 
-    private findCommand(text: string) {
-        for (const command of this.state.commands) {
-            if (command.name === text) {
-                debug(`Search Menu: ${command.name}`);
+	private findCommand(text: string) {
+		for (const command of this.state.commands) {
+			if (command.name === text) {
+				debug(`Search Menu: ${command.name}`);
 
-                return command;
-            }
-        }
+				return command;
+			}
+		}
 
-        return undefined;
-    }
+		return undefined;
+	}
 
-    private complete(e: KeyboardEvent, commit: boolean) {
-        const command = commit
-            ? this.findCommand(this.inputElement.value)
-            : undefined;
+	private complete(e: KeyboardEvent, commit: boolean) {
+		const command = commit ? this.findCommand(this.inputElement.value) : undefined;
 
-        this.dismiss(e);
-        this.state.onComplete(command);
-    }
+		this.dismiss(e);
+		this.state.onComplete(command);
+	}
 
-    private readonly onKeyDown = (e: KeyboardEvent) => {
-        switch (e.code) {
-            case KeyCode.enter:
-                this.complete(e, true);
-                break;
-            case KeyCode.escape:
-                this.complete(e, false);
-                break;
-            default:
-        }
-    };
+	private readonly onKeyDown = (e: KeyboardEvent) => {
+		switch (e.code) {
+			case KeyCode.enter:
+				this.complete(e, true);
+				break;
+			case KeyCode.escape:
+				this.complete(e, false);
+				break;
+			default:
+		}
+	};
 }

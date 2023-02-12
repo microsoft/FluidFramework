@@ -12,10 +12,10 @@ import { DynamicDataView } from "./data-object-views";
  * {@link DataObjectsView} input props.
  */
 export interface DataObjectsViewProps extends HasClientDebugger {
-    /**
-     * {@inheritDoc RendererOptions}
-     */
-    renderOptions: SharedObjectRenderOptions;
+	/**
+	 * {@inheritDoc RendererOptions}
+	 */
+	renderOptions: SharedObjectRenderOptions;
 }
 
 /**
@@ -26,18 +26,18 @@ export interface DataObjectsViewProps extends HasClientDebugger {
  * Dispatches data object rendering based on those provided view {@link DataObjectsViewProps.renderOptions}.
  */
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
-    const { clientDebugger, renderOptions } = props;
+	const { clientDebugger, renderOptions } = props;
 
-    const { containerData } = clientDebugger;
+	const { containerData } = clientDebugger;
 
-    return (
-        <div className="data-objects-view">
-            <h3>Container Data</h3>
-            {containerData === undefined ? (
-                <div>No Container data provided at debugger initialization.</div>
-            ) : (
-                <DynamicDataView data={containerData} renderOptions={renderOptions} />
-            )}
-        </div>
-    );
+	return (
+		<div className="data-objects-view">
+			<h3>Container Data</h3>
+			{containerData === undefined ? (
+				<div>No Container data provided at debugger initialization.</div>
+			) : (
+				<DynamicDataView data={containerData} renderOptions={renderOptions} />
+			)}
+		</div>
+	);
 }

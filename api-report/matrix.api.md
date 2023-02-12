@@ -87,7 +87,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     setCell(row: number, col: number, value: MatrixItem<T>): void;
     // (undocumented)
-    setCells(rowStart: number, colStart: number, colCount: number, values: readonly (MatrixItem<T>)[]): void;
+    setCells(rowStart: number, colStart: number, colCount: number, values: readonly MatrixItem<T>[]): void;
     // (undocumented)
     protected submitLocalMessage(message: any, localOpMetadata?: any): void;
     // (undocumented)

@@ -10,7 +10,7 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	Factory,
-    packagePathToTelemetryProperty,
+	packagePathToTelemetryProperty,
 	requestFluidObject,
 	responseToException,
 } from "./dataStoreHelpers";
@@ -21,6 +21,7 @@ export { RuntimeFactoryHelper } from "./runtimeFactoryHelper";
 export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,
+	IFetchSnapshotResult,
 	IRootSummarizerNode,
 	IRootSummarizerNodeWithGC,
 	ISummarizerNodeRootContract,

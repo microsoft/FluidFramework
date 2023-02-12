@@ -95,6 +95,14 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 // @public (undocumented)
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
+// @public
+export interface IFetchSnapshotResult {
+    // (undocumented)
+    snapshotRefSeq: number;
+    // (undocumented)
+    snapshotTree: ISnapshotTree;
+}
+
 // @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
@@ -110,7 +118,7 @@ export interface ISummarizerNodeRootContract {
     // (undocumented)
     completeSummary(proposalHandle: string): void;
     // (undocumented)
-    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, getSnapshot: () => Promise<ISnapshotTree>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
+    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
     // (undocumented)
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 }
@@ -144,10 +152,12 @@ export type RefreshSummaryResult = {
 } | {
     latestSummaryUpdated: true;
     wasSummaryTracked: true;
+    summaryRefSeq: number;
 } | {
     latestSummaryUpdated: true;
     wasSummaryTracked: false;
-    snapshot: ISnapshotTree;
+    snapshotTree: ISnapshotTree;
+    summaryRefSeq: number;
 };
 
 // @public (undocumented)
@@ -219,6 +229,8 @@ export class TelemetryContext implements ITelemetryContext {
     serialize(): string;
     // (undocumented)
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    // (undocumented)
+    setAll(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public (undocumented)
