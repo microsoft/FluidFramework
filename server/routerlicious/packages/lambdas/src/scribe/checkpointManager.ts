@@ -56,13 +56,13 @@ export class CheckpointManager implements ICheckpointManager {
                         lastDelta: lastDelta.length > 0 ? lastDelta[0].sequenceNumber: -1
                     }
                     Lumberjack.info(`Pending ops were not been persisted to op storage. Retrying after delay`, lumberjackProperties);
-                    await delay(1000);
+                    await delay(1500);
                     const lastDelta1 = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber-1, expectedSequenceNumber + 1);
 
                     if (lastDelta1.length === 0 || lastDelta1[0].sequenceNumber < expectedSequenceNumber) {
                         const errMsg = "Pending ops were not been persisted to op storage. Checkpointing failed";
                         Lumberjack.error(errMsg, lumberjackProperties);
-                        throw new Error(errMsg);
+                        return;
                     }
 
                     Lumberjack.info(`Verified on retry that pending ops are persisted`, getLumberBaseProperties(this.documentId, this.tenantId));
