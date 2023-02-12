@@ -61,6 +61,11 @@ export enum DriverErrorType {
 	fetchFailure = "fetchFailure",
 
 	/**
+	 * This error occurs when token provider fails to fetch orderer token
+	 */
+	fetchTokenError = "fetchTokenError",
+
+	/**
 	 * Unexpected response from server. Either JSON is malformed, or some required properties are missing
 	 */
 	incorrectServerResponse = "incorrectServerResponse",
@@ -175,6 +180,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 		| DriverErrorType.unsupportedClientProtocolVersion
 		| DriverErrorType.writeError
 		| DriverErrorType.fetchFailure
+		| DriverErrorType.fetchTokenError
 		| DriverErrorType.incorrectServerResponse
 		| DriverErrorType.fileOverwrittenInStorage
 		| DriverErrorType.fluidInvalidSchema

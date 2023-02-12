@@ -70,7 +70,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     // (undocumented)
     protected isRealStorageId(id: string): boolean;
     // (undocumented)

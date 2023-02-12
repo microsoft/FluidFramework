@@ -14,7 +14,7 @@ import {
 } from "../../feature-libraries";
 import { makeAnonChange, RevisionTag, TaggedChange, TreeSchemaIdentifier, Delta } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
-import { assertMarkListEqual, noRepair } from "../utils";
+import { assertFieldChangesEqual, noRepair } from "../utils";
 
 const nodeType: TreeSchemaIdentifier = brand("Node");
 const tree1 = { type: nodeType, value: "value1" };
@@ -24,16 +24,23 @@ const nodeChange1: NodeChangeset = { valueChange: { value: "value3" } };
 const nodeChange2: NodeChangeset = { valueChange: { value: "value4" } };
 const nodeChange3: NodeChangeset = { valueChange: { value: "value5" } };
 
-const idAllocator: IdAllocator = () => assert.fail("Should not be called");
+const unexpectedDelegate = () => assert.fail("Should not be called");
+const idAllocator: IdAllocator = unexpectedDelegate;
 
-const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
-	assert.deepEqual(child, nodeChange1);
-	return { type: Delta.MarkType.Modify, setValue: "value3" };
+const crossFieldManager = {
+	get: unexpectedDelegate,
+	getOrCreate: unexpectedDelegate,
+	consume: unexpectedDelegate,
 };
 
-const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
+const deltaFromChild1 = (child: NodeChangeset): Delta.NodeChanges => {
+	assert.deepEqual(child, nodeChange1);
+	return { setValue: "value3" };
+};
+
+const deltaFromChild2 = (child: NodeChangeset): Delta.NodeChanges => {
 	assert.deepEqual(child, nodeChange2);
-	return { type: Delta.MarkType.Modify, setValue: "value4" };
+	return { setValue: "value4" };
 };
 
 const encodedChild = "encoded child";
@@ -92,6 +99,7 @@ describe("Value field changesets", () => {
 			[makeAnonChange(change1), makeAnonChange(change2)],
 			simpleChildComposer,
 			idAllocator,
+			crossFieldManager,
 		);
 
 		assert.deepEqual(composed, change2);
@@ -103,6 +111,7 @@ describe("Value field changesets", () => {
 				[makeAnonChange(change1), makeAnonChange(childChange1)],
 				simpleChildComposer,
 				idAllocator,
+				crossFieldManager,
 			),
 			change1WithChildChange,
 		);
@@ -118,6 +127,7 @@ describe("Value field changesets", () => {
 				[makeAnonChange(childChange1), makeAnonChange(change1)],
 				simpleChildComposer,
 				idAllocator,
+				crossFieldManager,
 			),
 			change1,
 		);
@@ -127,6 +137,7 @@ describe("Value field changesets", () => {
 				[makeAnonChange(childChange1), makeAnonChange(childChange2)],
 				childComposer1_2,
 				idAllocator,
+				crossFieldManager,
 			),
 			childChange3,
 		);
@@ -142,6 +153,7 @@ describe("Value field changesets", () => {
 			makeAnonChange(change1WithChildChange),
 			childInverter,
 			idAllocator,
+			crossFieldManager,
 		);
 
 		assert.deepEqual(inverted.changes, nodeChange2);
@@ -157,6 +169,7 @@ describe("Value field changesets", () => {
 				makeAnonChange(change1WithChildChange),
 				childRebaser,
 				idAllocator,
+				crossFieldManager,
 			),
 			change2,
 		);
@@ -178,30 +191,32 @@ describe("Value field changesets", () => {
 				makeAnonChange(baseChange),
 				childRebaser,
 				idAllocator,
+				crossFieldManager,
 			),
 			childChange3,
 		);
 	});
 
 	it("can be converted to a delta when overwriting content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
-				setValue: "value3",
-			},
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
+			],
+			afterShallow: [{ index: 0, setValue: "value3" }],
+		};
 
 		const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1, noRepair);
-		assertMarkListEqual(delta, expected);
+		assertFieldChangesEqual(delta, expected);
 	});
 
 	it("can be converted to a delta when restoring content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
+			],
+		};
 
 		const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
 			assert.equal(revision, detachedBy);
@@ -210,7 +225,7 @@ describe("Value field changesets", () => {
 			return [singleTextCursor(tree1)];
 		};
 		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1, repair);
-		assertMarkListEqual(actual, expected);
+		assertFieldChangesEqual(actual, expected);
 	});
 
 	it("can be encoded in JSON", () => {
@@ -264,6 +279,7 @@ describe("Optional field changesets", () => {
 			[makeAnonChange(change1), makeAnonChange(change2)],
 			childComposer,
 			idAllocator,
+			crossFieldManager,
 		);
 		assert.deepEqual(composed, change3);
 	});
@@ -279,6 +295,7 @@ describe("Optional field changesets", () => {
 				[makeAnonChange(change1), makeAnonChange(change4)],
 				childComposer1_2,
 				idAllocator,
+				crossFieldManager,
 			),
 			expected,
 		);
@@ -296,7 +313,12 @@ describe("Optional field changesets", () => {
 		};
 
 		assert.deepEqual(
-			fieldHandler.rebaser.invert(makeAnonChange(change1), childInverter, idAllocator),
+			fieldHandler.rebaser.invert(
+				makeAnonChange(change1),
+				childInverter,
+				idAllocator,
+				crossFieldManager,
+			),
 			expected,
 		);
 	});
@@ -310,6 +332,7 @@ describe("Optional field changesets", () => {
 				makeAnonChange(change1),
 				childRebaser,
 				idAllocator,
+				crossFieldManager,
 			),
 			change2,
 		);
@@ -333,37 +356,50 @@ describe("Optional field changesets", () => {
 				makeAnonChange(baseChange),
 				childRebaser,
 				idAllocator,
+				crossFieldManager,
 			),
 			expected,
 		);
 	});
 
 	it("can be converted to a delta when field was empty", () => {
-		const expected: Delta.MarkList = [
-			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
-				setValue: "value3",
-			},
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{
+					type: Delta.MarkType.Insert,
+					content: [singleTextCursor(tree1)],
+				},
+			],
+			afterShallow: [{ index: 0, setValue: "value3" }],
+		};
 
-		assertMarkListEqual(fieldHandler.intoDelta(change1, deltaFromChild1, noRepair), expected);
+		assertFieldChangesEqual(
+			fieldHandler.intoDelta(change1, deltaFromChild1, noRepair),
+			expected,
+		);
 	});
 
 	it("can be converted to a delta when replacing content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
+			],
+		};
 
-		assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1, noRepair), expected);
+		assertFieldChangesEqual(
+			fieldHandler.intoDelta(change2, deltaFromChild1, noRepair),
+			expected,
+		);
 	});
 
 	it("can be converted to a delta when restoring content", () => {
-		const expected: Delta.MarkList = [
-			{ type: Delta.MarkType.Delete, count: 1 },
-			{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
-		];
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
+			],
+		};
 
 		const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
 			assert.equal(revision, detachedBy);
@@ -372,13 +408,18 @@ describe("Optional field changesets", () => {
 			return [singleTextCursor(tree1)];
 		};
 		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1, repair);
-		assertMarkListEqual(actual, expected);
+		assertFieldChangesEqual(actual, expected);
 	});
 
 	it("can be converted to a delta with only child changes", () => {
-		const expected: Delta.MarkList = [{ type: Delta.MarkType.Modify, setValue: "value4" }];
+		const expected: Delta.FieldChanges = {
+			beforeShallow: [{ index: 0, setValue: "value4" }],
+		};
 
-		assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2, noRepair), expected);
+		assertFieldChangesEqual(
+			fieldHandler.intoDelta(change4, deltaFromChild2, noRepair),
+			expected,
+		);
 	});
 
 	it("can be encoded in JSON", () => {

@@ -193,6 +193,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	public async getSnapshotTree(
 		version?: api.IVersion,
 		scenarioName?: string,
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		if (!this.snapshotUrl) {
 			return null;
@@ -201,6 +202,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	public async getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null
 		blobid: string | null,
 		count: number,
 		scenarioName?: string,
@@ -567,14 +569,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		assert(
 			this.odspSummaryUploadManager !== undefined,
-			"summary upload manager should have been initialized",
+			0x56e /* summary upload manager should have been initialized */,
 		);
 		const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
 		return id;
 	}
 
 	private async getDelayLoadedSummaryManager() {
-		assert(this.odspSummaryModuleLoaded === false, "Should be loaded only once");
+		assert(this.odspSummaryModuleLoaded === false, 0x56f /* Should be loaded only once */);
 		const module = await import(
 			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager"
 		)

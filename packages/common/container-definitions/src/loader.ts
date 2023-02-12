@@ -351,6 +351,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	/**
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
+	 * @experimental
+	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	closeAndGetPendingLocalState(): string;
 
@@ -542,6 +544,12 @@ export enum LoaderHeader {
 	 * otherwise, version sha to load snapshot
 	 */
 	version = "version",
+
+	// TODO #AB3350: This is a breaking change; it will be enabled in the "next" branch
+	// baseLogger = "fluid-base-logger",
+
+	// TODO #AB???: This is a breaking change; it will be enabled in the "next" branch
+	// scopeOverride = "fluid-scope-override",
 }
 
 export interface IContainerLoadMode {

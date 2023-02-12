@@ -406,7 +406,15 @@ export async function getAndUpdatePackageDetails(
 		};
 	}
 
-	const baseline = getPreviousVersionBaseline(version, previousVersionStyle);
+	let baseline: string;
+	try {
+		baseline = getPreviousVersionBaseline(version, previousVersionStyle);
+	} catch {
+		return {
+			skipReason: `Skipping package: couldn't calculate a previous version from version '${version}'`,
+		};
+	}
+
 	if (
 		pinRange &&
 		(previousVersionStyle?.startsWith("~") || previousVersionStyle?.startsWith("^"))

@@ -50,9 +50,14 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import {
+	addBlobToSummary,
+	convertSummaryTreeToITree,
+	packagePathToTelemetryProperty,
+} from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
+	generateStack,
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
@@ -206,6 +211,9 @@ export abstract class FluidDataStoreContext
 	/** If true, throw an error when a tombstone data store is used. */
 	private readonly throwOnTombstoneUsage: boolean;
 
+	/** If true, this means that this data store context and its children have been removed from the runtime */
+	private deleted: boolean = false;
+
 	public get attachState(): AttachState {
 		return this._attachState;
 	}
@@ -248,7 +256,7 @@ export abstract class FluidDataStoreContext
 	protected _attachState: AttachState;
 	private _isInMemoryRoot: boolean = false;
 	protected readonly summarizerNode: ISummarizerNodeWithGC;
-	private readonly mc: MonitoringContext;
+	protected readonly mc: MonitoringContext;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 
@@ -323,6 +331,7 @@ export abstract class FluidDataStoreContext
 		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
 		this.throwOnTombstoneUsage =
 			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+			this._containerRuntime.gcTombstoneEnforcementAllowed &&
 			this.clientDetails.type !== summarizerClientType;
 	}
 
@@ -343,6 +352,15 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
+	/**
+	 * When delete is called, that means that the data store is permanently removed from the runtime, and will not show up in future summaries
+	 * This function is called to prevent ops from being generated from this data store once it has been deleted. Furthermore, this data store
+	 * should not receive any ops/signals.
+	 */
+	public delete() {
+		this.deleted = true;
+	}
+
 	public setTombstone(tombstone: boolean) {
 		if (this.tombstoned === tombstone) {
 			return;
@@ -351,9 +369,14 @@ export abstract class FluidDataStoreContext
 		this._tombstoned = tombstone;
 	}
 
-	private rejectDeferredRealize(reason: string, packageName?: string): never {
+	private rejectDeferredRealize(
+		reason: string,
+		failedPkgPath?: string,
+		fullPackageName?: readonly string[],
+	): never {
 		throw new LoggingError(reason, {
-			packageName: { value: packageName, tag: TelemetryDataTag.CodeArtifact },
+			failedPkgPath: { value: failedPkgPath, tag: TelemetryDataTag.CodeArtifact },
+			fullPackageName: packagePathToTelemetryProperty(fullPackageName),
 		});
 	}
 
@@ -371,6 +394,7 @@ export abstract class FluidDataStoreContext
 						value: this.id,
 						tag: TelemetryDataTag.CodeArtifact,
 					},
+					packageName: packagePathToTelemetryProperty(this.pkg),
 				});
 				this.channelDeferred?.reject(errorWrapped);
 				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
@@ -391,18 +415,22 @@ export abstract class FluidDataStoreContext
 		let lastPkg: string | undefined;
 		for (const pkg of packages) {
 			if (!registry) {
-				this.rejectDeferredRealize("No registry for package", lastPkg);
+				this.rejectDeferredRealize("No registry for package", lastPkg, packages);
 			}
 			lastPkg = pkg;
 			entry = await registry.get(pkg);
 			if (!entry) {
-				this.rejectDeferredRealize("Registry does not contain entry for the package", pkg);
+				this.rejectDeferredRealize(
+					"Registry does not contain entry for the package",
+					pkg,
+					packages,
+				);
 			}
 			registry = entry.IFluidDataStoreRegistry;
 		}
 		const factory = entry?.IFluidDataStoreFactory;
 		if (factory === undefined) {
-			this.rejectDeferredRealize("Can't find factory for package", lastPkg);
+			this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
 		}
 
 		return { factory, registry };
@@ -658,6 +686,10 @@ export abstract class FluidDataStoreContext
 			content,
 			type,
 		};
+
+		// Summarizer clients should not submit messages.
+		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
+
 		this._containerRuntime.submitDataStoreOp(this.id, fluidDataStoreContent, localOpMetadata);
 	}
 
@@ -812,6 +844,20 @@ export abstract class FluidDataStoreContext
 		checkTombstone = true,
 		safeTelemetryProps: ITelemetryProperties = {},
 	) {
+		if (this.deleted) {
+			const messageString = `Context is deleted! Call site [${callSite}]`;
+			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "GC_Deleted_DataStore_Changed",
+					callSite,
+				},
+				error,
+			);
+
+			throw error;
+		}
+
 		if (this._disposed) {
 			throw new Error(`Context is closed! Call site [${callSite}]`);
 		}
@@ -825,7 +871,8 @@ export abstract class FluidDataStoreContext
 				{
 					eventName: "GC_Tombstone_DataStore_Changed",
 					category: this.throwOnTombstoneUsage ? "error" : "generic",
-					isSummarizerClient: this.clientDetails.type === summarizerClientType,
+					gcTombstoneEnforcementAllowed:
+						this._containerRuntime.gcTombstoneEnforcementAllowed,
 					callSite,
 				},
 				this.pkg,
@@ -834,6 +881,30 @@ export abstract class FluidDataStoreContext
 			if (this.throwOnTombstoneUsage) {
 				throw error;
 			}
+		}
+	}
+
+	/**
+	 * Summarizer client should not have local changes. These changes can become part of the summary and can break
+	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
+	 * other clients that are up-to-date till seq# 100 may not have them yet.
+	 */
+	protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
+		if (this.clientDetails.type === summarizerClientType) {
+			// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+			// this is happening and which data stores do this. The eventual goal is to disallow local changes
+			// in the summarizer and the data will help us plan this.
+			this.mc.logger.sendTelemetryEvent({
+				eventName,
+				type,
+				fluidDataStoreId: {
+					value: this.id,
+					tag: TelemetryDataTag.CodeArtifact,
+				},
+				packageName: packagePathToTelemetryProperty(this.pkg),
+				isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
+				stack: generateStack(),
+			});
 		}
 	}
 
@@ -959,6 +1030,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			props.makeLocallyVisibleFn,
 		);
 
+		// Summarizer client should not create local data stores.
+		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
+
 		this.snapshotTree = props.snapshotTree;
 		if (props.isRootDataStore === true) {
 			this.setInMemoryRoot();
@@ -1053,6 +1127,28 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		// Local data store does not have initial summary.
 		return {};
+	}
+
+	/**
+	 * A context should only be marked as deleted when its a remote context.
+	 * Session Expiry at the runtime level should have closed the container creating the local data store context
+	 * before delete is even possible. Session Expiry is at 30 days, and sweep is done 36+ days later from the time
+	 * it was unreferenced. Thus the sweeping container should have loaded from a snapshot and thus creating a remote
+	 * context.
+	 */
+	public delete() {
+		// TODO: GC:Validation - potentially prevent this from happening or asserting. Maybe throw here.
+		sendGCUnexpectedUsageEvent(
+			this.mc,
+			{
+				eventName: "GC_Deleted_DataStore_Unexpected_Delete",
+				message: "Unexpected deletion of a local data store context",
+				category: "error",
+				gcTombstoneEnforcementAllowed: undefined,
+			},
+			this.pkg,
+		);
+		super.delete();
 	}
 }
 

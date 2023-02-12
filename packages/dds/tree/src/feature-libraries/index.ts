@@ -39,6 +39,7 @@ export {
 	MarkedArrayLike,
 	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
+	parentField,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
@@ -49,6 +50,7 @@ export {
 	CursorAdapter,
 	prefixPath,
 	prefixFieldPath,
+	CursorWithNode,
 } from "./treeCursorUtils";
 export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 
@@ -63,6 +65,7 @@ export {
 	isNeverField,
 	ModularChangeFamily,
 	ModularEditBuilder,
+	EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldChangeEncoder,
@@ -80,6 +83,8 @@ export {
 	NodeChangeRebaser,
 	NodeChangeEncoder,
 	NodeChangeDecoder,
+	CrossFieldManager,
+	CrossFieldTarget,
 	FieldKind,
 	Multiplicity,
 	FullSchemaPolicy,
@@ -93,7 +98,7 @@ export {
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
-export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
+export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	EditManagerIndex,

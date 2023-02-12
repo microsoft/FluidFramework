@@ -18,6 +18,7 @@ import { fail } from "../util";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
+ * @alpha
  */
 export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 	/**
@@ -40,6 +41,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 
 /**
  * @returns an {@link ITreeCursorSynchronous} for a single root.
+ * @alpha
  */
 export function singleStackTreeCursor<TNode>(
 	root: TNode,
@@ -50,6 +52,7 @@ export function singleStackTreeCursor<TNode>(
 
 /**
  * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
+ * @alpha
  */
 export interface CursorAdapter<TNode> {
 	/**
@@ -395,28 +398,38 @@ export function prefixFieldPath(
 	};
 }
 
+/**
+ * Compose two prefixes together.
+ * `prefixFieldPath(root, prefixFieldPath(inner, path))` should be the same as `prefixFieldPath(prefixPathPrefix(root, inner), path))`
+ *
+ * TODO: tests for this.
+ */
+export function prefixPathPrefix(root: PathRootPrefix, inner: PathRootPrefix): PathRootPrefix {
+	if (inner.parent !== undefined) {
+		const composedPrefix: PathRootPrefix = {
+			parent: new PrefixedPath(root, inner.parent),
+			rootFieldOverride: inner.rootFieldOverride,
+			indexOffset: inner.indexOffset,
+		};
+		return composedPrefix;
+	} else {
+		const composedPrefix: PathRootPrefix = {
+			parent: root.parent,
+			rootFieldOverride: root.rootFieldOverride ?? inner.rootFieldOverride,
+			indexOffset: (inner.indexOffset ?? 0) + (root.indexOffset ?? 0),
+		};
+		return composedPrefix;
+	}
+}
+
 function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath | undefined {
 	if (path === undefined) {
 		return prefix.parent;
 	} else {
 		// As an optimization, avoid double wrapping paths with multiple prefixes
 		if (path instanceof PrefixedPath) {
-			const inner = path.prefix;
-			if (inner.parent !== undefined) {
-				const composedPrefix: PathRootPrefix = {
-					parent: new PrefixedPath(prefix, inner.parent),
-					rootFieldOverride: inner.rootFieldOverride,
-					indexOffset: inner.indexOffset,
-				};
-				return new PrefixedPath(composedPrefix, path.path);
-			} else {
-				const composedPrefix: PathRootPrefix = {
-					parent: prefix.parent,
-					rootFieldOverride: prefix.rootFieldOverride ?? inner.rootFieldOverride,
-					indexOffset: (inner.indexOffset ?? 0) + (prefix.indexOffset ?? 0),
-				};
-				return new PrefixedPath(composedPrefix, path.path);
-			}
+			const composedPrefix: PathRootPrefix = prefixPathPrefix(prefix, path.prefix);
+			return new PrefixedPath(composedPrefix, path.path);
 		} else {
 			return new PrefixedPath(prefix, path);
 		}

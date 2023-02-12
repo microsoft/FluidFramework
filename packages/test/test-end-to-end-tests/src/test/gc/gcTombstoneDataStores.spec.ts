@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
-	IGCRuntimeOptions,
 	ISummarizer,
 	RuntimeHeaders,
 	TombstoneResponseHeaderKey,
@@ -51,7 +50,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	);
 	const settings = {};
 
-	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -59,9 +57,20 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					state: "disabled",
 				},
 			},
-			gcOptions,
+			gcOptions: { inactiveTimeoutMs: 0 },
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
+	};
+	const testContainerConfigWithFutureMinGcOption: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: testContainerConfig.runtimeOptions?.summaryOptions,
+			gcOptions: {
+				...testContainerConfig.runtimeOptions?.gcOptions,
+				// Different from undefined (the persisted value) so will disable GC enforcement
+				gcTombstoneGeneration: 2,
+			},
+		},
+		loaderProps: testContainerConfig.loaderProps,
 	};
 
 	let provider: ITestObjectProvider;
@@ -74,16 +83,22 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
-	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
+	async function loadContainer(
+		summaryVersion: string,
+		disableTombstoneFailureViaOption: boolean = false,
+	) {
+		const config = disableTombstoneFailureViaOption
+			? testContainerConfigWithFutureMinGcOption
+			: testContainerConfig;
+		return provider.loadTestContainer(config, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
 
 	let documentAbsoluteUrl: string | undefined;
 
-	const makeContainer = async () => {
-		const container = await provider.makeTestContainer(testContainerConfig);
+	const makeContainer = async (config: ITestContainerConfig = testContainerConfig) => {
+		const container = await provider.makeTestContainer(config);
 		documentAbsoluteUrl = await container.getAbsoluteUrl("");
 		return container;
 	};
@@ -93,7 +108,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			provider,
 			documentAbsoluteUrl,
 			summaryVersion,
-			gcOptions,
+			testContainerConfig.runtimeOptions?.gcOptions,
 			mockConfigProvider(settings),
 		);
 	};
@@ -535,7 +550,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
 					category: "generic",
 					headers: expectedHeadersLogged.request,
-					isSummarizerClient: true,
+					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
@@ -546,7 +561,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
 				const container = await loadContainer(summaryVersion);
-				await sendOpToUpdateSummaryTimestampToNow(container);
 
 				// This request fails since the datastore is tombstoned
 				const tombstoneErrorResponse = await containerRuntime_resolveHandle(container, {
@@ -599,6 +613,104 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					true,
 					"DID NOT Expect tombstone header to be set on the response",
 				);
+			},
+		);
+
+		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+		itExpects(
+			"Requesting tombstoned datastores succeeds for legacy document given gcTombtoneGeneration option is defined",
+			[
+				// Interactive client's request that succeeds
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					category: "generic",
+					gcTombstoneEnforcementAllowed: false,
+				},
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+				},
+			],
+			async function () {
+				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
+				const { unreferencedId, summarizingContainer, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+				// The datastore should be tombstoned now
+				const { summaryVersion } = await summarize(summarizer);
+				const container = await loadContainer(
+					summaryVersion,
+					true /* disableTombstoneFailureViaOption */,
+				);
+
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombtoneGeneration passed in
+				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
+					url: unreferencedId,
+				});
+				assert.equal(
+					tombstoneSuccessResponse.status,
+					200,
+					"Should be able to retrieve a tombstoned datastore given gcTombtoneGeneration",
+				);
+				assert.notEqual(
+					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
+					true,
+					"DID NOT Expect tombstone header to be set on the response",
+				);
+			},
+		);
+
+		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+		itExpects(
+			"Requesting tombstoned datastores succeeds with when gcTombtoneGeneration differs from persisted value",
+			[
+				// Interactive client's request that succeeds
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					category: "generic",
+					gcTombstoneEnforcementAllowed: false,
+				},
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+				},
+			],
+			async function () {
+				// This will become the persisted value in the container(s) created below (except the one with disableTombstoneFailureViaOption)
+				// NOTE: IT IS RESET AT THE END OF THE TEST
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				testContainerConfig.runtimeOptions!.gcOptions!.gcTombstoneGeneration = 1;
+
+				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
+				const { unreferencedId, summarizingContainer, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+				// The datastore should be tombstoned now
+				const { summaryVersion } = await summarize(summarizer);
+				const container = await loadContainer(
+					summaryVersion,
+					true /* disableTombstoneFailureViaOption */,
+				);
+
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
+				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
+					url: unreferencedId,
+				});
+				assert.equal(
+					tombstoneSuccessResponse.status,
+					200,
+					"Should be able to retrieve a tombstoned datastore given gcTombstoneGeneration",
+				);
+				assert.notEqual(
+					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
+					true,
+					"DID NOT Expect tombstone header to be set on the response",
+				);
+
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				testContainerConfig.runtimeOptions!.gcOptions!.gcTombstoneGeneration = undefined;
 			},
 		);
 
@@ -968,7 +1080,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
-				gcOptions,
+				testContainerConfig.runtimeOptions?.gcOptions,
 				mockConfigProvider(settings),
 			);
 
@@ -1025,7 +1137,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
-				gcOptions,
+				testContainerConfig.runtimeOptions?.gcOptions,
 				mockConfigProvider(settings),
 			);
 
@@ -1096,7 +1208,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
-					gcOptions,
+					testContainerConfig.runtimeOptions?.gcOptions,
 					mockConfigProvider(settings),
 					mockLogger,
 				);
@@ -1204,7 +1316,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
-				gcOptions,
+				testContainerConfig.runtimeOptions?.gcOptions,
 				mockConfigProvider(settings),
 			);
 
@@ -1275,7 +1387,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
-					gcOptions,
+					testContainerConfig.runtimeOptions?.gcOptions,
 					mockConfigProvider(settings),
 				);
 

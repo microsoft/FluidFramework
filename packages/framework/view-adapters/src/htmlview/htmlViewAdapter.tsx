@@ -11,8 +11,14 @@ import ReactDOM from "react-dom";
 /**
  * Abstracts rendering of views via the IFluidHTMLView interface.  Supports React elements, as well as
  * objects that implement IFluidHTMLView.
+ *
+ * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
  */
 export class HTMLViewAdapter implements IFluidHTMLView {
+	/**
+	 * Provide the view for querying purposes.
+	 * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
+	 */
 	public get IFluidHTMLView(): HTMLViewAdapter {
 		return this;
 	}
@@ -20,6 +26,8 @@ export class HTMLViewAdapter implements IFluidHTMLView {
 	/**
 	 * Test whether the given view can be successfully adapted by an HTMLViewAdapter.
 	 * @param view - the view to test if it is adaptable.
+	 *
+	 * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
 	 */
 	public static canAdapt(view: FluidObject): boolean {
 		const maybeView: FluidObject<IFluidHTMLView> = view;
@@ -35,6 +43,8 @@ export class HTMLViewAdapter implements IFluidHTMLView {
 
 	/**
 	 * @param view - The view to adapt into an IFluidHTMLView
+	 *
+	 * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
 	 */
 	constructor(view: FluidObject) {
 		this.view = view;
@@ -42,6 +52,8 @@ export class HTMLViewAdapter implements IFluidHTMLView {
 
 	/**
 	 * {@inheritDoc @fluidframework/view-interfaces#IFluidHTMLView.render}
+	 *
+	 * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
 	 */
 	public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
 		// Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.
@@ -68,6 +80,8 @@ export class HTMLViewAdapter implements IFluidHTMLView {
 
 	/**
 	 * {@inheritDoc @fluidframework/view-interfaces#IFluidHTMLView.remove}
+	 *
+	 * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
 	 */
 	public remove(): void {
 		if (this.containerNode === undefined) {

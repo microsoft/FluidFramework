@@ -4,10 +4,17 @@
  */
 
 export {
+	AttributionInfo,
+	AttributionKey,
+	DetachedAttributionKey,
+	OpAttributionKey,
+} from "./attribution";
+export {
 	AliasResult,
 	BindState,
 	CreateChildSummarizerNodeFn,
 	FlushMode,
+	FlushModeExperimental,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
