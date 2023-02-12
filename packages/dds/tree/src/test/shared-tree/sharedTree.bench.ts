@@ -417,7 +417,7 @@ async function setNodesNarrow(
 	for (let i = 0; i < numberOfNodes; i++) {
 		tree.runTransaction((forest, editor) => {
 			const field = editor.sequenceField(currPath, localFieldKey);
-			field.insert(0, singleTextCursor(generateTreeData(dataType, random)));
+			field.insert(0, singleTextCursor(generateTreeData(dataType)));
 			return TransactionResult.Apply;
 		});
 		currPath = {
@@ -442,7 +442,7 @@ async function setNodesWide(
 		parentIndex: 0,
 	};
 	for (let j = 0; j < numberOfNodes; j++) {
-		const personData = generateTreeData(dataType, random);
+		const personData = generateTreeData(dataType);
 		tree.runTransaction((forest, editor) => {
 			const writeCursor = singleTextCursor(personData);
 			const field = editor.sequenceField(path, localFieldKey);
@@ -473,7 +473,7 @@ async function generateEditableTree(
 			tree[createField](localFieldKey, [
 				singleTextCursor({
 					type: dataSchema.name,
-					value: generateTreeData(dataType, random),
+					value: generateTreeData(dataType),
 				}),
 			]);
 			assert(isUnwrappedNode(trees[0].root));
@@ -481,7 +481,7 @@ async function generateEditableTree(
 			assert(field_0 !== undefined);
 			currentNode = field_0.getNode(0);
 			for (let i = 0; i < numberOfNodes; i++) {
-				const treeData = generateTreeData(dataType, random);
+				const treeData = generateTreeData(dataType);
 				currentNode[createField](localFieldKey, singleTextCursor(treeData));
 				currentNode = currentNode[getField](localFieldKey).getNode(0);
 			}
@@ -491,7 +491,7 @@ async function generateEditableTree(
 			for (let i = 0; i < numberOfNodes - 1; i++) {
 				trees[0].root[getField](localFieldKey).insertNodes(
 					i,
-					singleTextCursor(generateTreeData(dataType, random)),
+					singleTextCursor(generateTreeData(dataType)),
 				);
 			}
 			break;
@@ -502,8 +502,8 @@ async function generateEditableTree(
 }
 const booleans = [true, false];
 
-function generateTreeData(dataType: TestPrimitives, random: IRandom): JsonableTree {
-	const insertValue = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+function generateTreeData(dataType: TestPrimitives): JsonableTree {
+	const insertValue = 0;
 	let map;
 	switch (dataType) {
 		case TestPrimitives.Number:
@@ -512,15 +512,15 @@ function generateTreeData(dataType: TestPrimitives, random: IRandom): JsonableTr
 			return { value: insertValue, type: dataSchema.name };
 		case TestPrimitives.String:
 			return {
-				value: random.real(0, Number.MAX_SAFE_INTEGER).toString(),
+				value: "testString",
 				type: dataSchema.name,
 			};
 		case TestPrimitives.Boolean:
-			return { value: random.pick(booleans), type: dataSchema.name };
+			return { value: true, type: dataSchema.name };
 		case TestPrimitives.Map:
 			map = {
 				mapField2: {
-					mapField3: [{ type: dataSchema.name, value: insertValue.toString() }],
+					mapField3: [{ type: dataSchema.name, value: "testString" }],
 				},
 			};
 			return {
@@ -557,7 +557,7 @@ function getTestTreeAsJSObject(
 function getJSTestTreeWide(numberOfNodes: number, dataType: TestPrimitives, random: IRandom): Jsonable {
 	const nodes = [];
 	for (let i = 0; i < numberOfNodes - 1; i++) {
-		const node = generateTreeData(dataType, random);
+		const node = generateTreeData(dataType);
 		nodes.push(node);
 	}
 	const tree = {
@@ -565,13 +565,13 @@ function getJSTestTreeWide(numberOfNodes: number, dataType: TestPrimitives, rand
 		fields: {
 			foo: nodes,
 		},
-		value: generateTreeData(dataType, random).value,
+		value: generateTreeData(dataType).value,
 	};
 	return tree;
 }
 
 function getJSTestTreeDeep(numberOfNodes: number, dataType: TestPrimitives, random: IRandom): Jsonable {
-	const node = generateTreeData(dataType, random);
+	const node = generateTreeData(dataType);
 	if (numberOfNodes === 1) {
 		return {
 			type: dataSchema.name,
@@ -602,7 +602,7 @@ function manipulateTreeAsJSObject(tree: Jsonable, dataType: TestPrimitives, rand
 		if (typeof tree[key] === "object" && tree[key] !== null)
 			manipulateTreeAsJSObject(tree[key], dataType, random);
 		if (key === "value") {
-			tree[key] = generateTreeData(dataType, random).value;
+			tree[key] = generateTreeData(dataType).value;
 		}
 	}
 }
@@ -725,13 +725,13 @@ function manipulateEditableTree(
 				currField = currNode[getField](localFieldKey);
 				currNode = currField.getNode(0);
 			}
-			currField.replaceNodes(0, singleTextCursor(generateTreeData(dataType, random)), 1);
+			currField.replaceNodes(0, singleTextCursor(generateTreeData(dataType)), 1);
 			break;
 		case TreeShape.Wide:
 			for (let j = 0; j < numberOfNodes - 1; j++) {
 				tree.root[getField](localFieldKey).replaceNodes(
 					j,
-					singleTextCursor(generateTreeData(dataType, random)),
+					singleTextCursor(generateTreeData(dataType)),
 					1,
 				);
 			}
