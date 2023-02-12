@@ -507,11 +507,6 @@ export class ScribeLambda implements IPartitionLambda {
                 }
             },
             (error) => {
-                this.context.error(error, {
-                    restart: false,
-                    tenantId: this.tenantId,
-                    documentId: this.documentId,
-                });
                 const message = "Checkpoint error";
                 Lumberjack.error(message, getLumberBaseProperties(this.documentId, this.tenantId), error);
             });

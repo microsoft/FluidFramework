@@ -62,7 +62,7 @@ export class CheckpointManager implements ICheckpointManager {
                     if (lastDelta1.length === 0 || lastDelta1[0].sequenceNumber < expectedSequenceNumber) {
                         const errMsg = "Pending ops were not been persisted to op storage. Checkpointing failed";
                         Lumberjack.error(errMsg, lumberjackProperties);
-                        return;
+                        throw new Error(errMsg);
                     }
 
                     Lumberjack.info(`Verified on retry that pending ops are persisted`, getLumberBaseProperties(this.documentId, this.tenantId));
