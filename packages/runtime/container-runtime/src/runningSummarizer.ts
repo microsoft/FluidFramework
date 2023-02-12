@@ -11,7 +11,7 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     ISummaryConfiguration,
 } from "./containerRuntime";
@@ -445,10 +445,12 @@ export class RunningSummarizer implements IDisposable {
             let overrideDelaySeconds: number | undefined;
             let summaryAttempts = 0;
             let summaryAttemptsPerPhase = 0;
+            const totalAttempts = loggerToMonitoringContext(this.logger).config.getNumber("Fluid.Summarizer.Attempts") ?? 1;
+            assert(totalAttempts >= 1 && totalAttempts <= attempts.length, "Total number of attempts is invalid ");
 
             let lastResult: { message: string; error: any; } | undefined;
 
-            for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length;) {
+            for (let summaryAttemptPhase = 0; summaryAttemptPhase < totalAttempts;) {
                 if (this.cancellationToken.cancelled) {
                     return;
                 }
