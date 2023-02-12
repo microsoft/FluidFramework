@@ -17,16 +17,11 @@ const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
-		console.log("process.env.FLUID_TEST_LOGGER_PKG_PATH");
-		console.log(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-		if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-			await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-			const logger = getTestLogger?.();
-			assert(logger !== undefined, "Expected getTestLogger to return something");
-			return new FileLogger(logger);
-		} else {
-			return new FileLogger();
-		}
+		assert(process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined, "Fluid Logger not defined");
+		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+		const logger = getTestLogger?.();
+		assert(logger !== undefined, "Expected getTestLogger to return something");
+		return new FileLogger(logger);
 	});
 
 	public static async createLogger(dimensions: {
@@ -35,11 +30,8 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		profile: string | undefined;
 		runId: number | undefined;
 	}) {
-		if (process.env.FLUID_BUILD_ID !== undefined) {
-			dimensions.runId = parseInt(process.env.FLUID_BUILD_ID, 10);
-		}
-		console.log("process.env.FLUID_BUILD_ID");
-		console.log(process.env.FLUID_BUILD_ID);
+		assert(process.env.FLUID_BUILD_ID !== undefined, "Fluid Build Id not defined");
+		dimensions.runId = parseInt(process.env.FLUID_BUILD_ID, 10);
 
 		return ChildLogger.create(await this.loggerP, undefined, {
 			all: dimensions,
