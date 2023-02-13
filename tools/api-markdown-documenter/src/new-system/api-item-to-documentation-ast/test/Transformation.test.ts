@@ -241,87 +241,64 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expected = new HierarchicalSectionNode([
 			// Summary section
-			wrapInSection([ParagraphNode.createFromPlainText("Test interface")]),
+			ParagraphNode.createFromPlainText("Test interface"),
+
 			// Signature section
-			wrapInSection(
-				[
-					FencedCodeBlockNode.createFromPlainText(
-						"export interface TestInterface",
-						"typescript",
-					),
-				],
-				{
-					title: "Signature",
-					id: `testinterface-signature`,
-				},
-			),
+			HeadingNode.createFromPlainText("Signature", /*id: */ "testinterface-signature"),
+			FencedCodeBlockNode.createFromPlainText("export interface TestInterface", "typescript"),
+
 			// Remarks section
-			wrapInSection(
-				[ParagraphNode.createFromPlainText("Here are some remarks about the interface")],
-				{
-					title: "Remarks",
-					id: `testinterface-remarks`,
-				},
-			),
+			HeadingNode.createFromPlainText("Remarks", /*id: */ "testinterface-remarks"),
+			ParagraphNode.createFromPlainText("Here are some remarks about the interface"),
 
 			// Properties section
-			wrapInSection(
+			HeadingNode.createFromPlainText("Properties"),
+			new TableNode(
 				[
-					new TableNode(
-						[
-							new TableRowNode([
-								new TableCellNode([
-									LinkNode.createFromPlainText(
-										"testOptionalInterfaceProperty",
-										"./test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
-									),
-								]),
-								new TableCellNode([CodeSpanNode.createFromPlainText("optional")]),
-								TableCellNode.createFromPlainText("0"),
-								new TableCellNode([SpanNode.createFromPlainText("number")]),
-								TableCellNode.createFromPlainText("Test optional property"),
-							]),
-						],
-						new TableRowNode([
-							TableCellNode.createFromPlainText("Property"),
-							TableCellNode.createFromPlainText("Modifiers"),
-							TableCellNode.createFromPlainText("Default Value"),
-							TableCellNode.createFromPlainText("Type"),
-							TableCellNode.createFromPlainText("Description"),
+					new TableRowNode([
+						new TableCellNode([
+							LinkNode.createFromPlainText(
+								"testOptionalInterfaceProperty",
+								"./test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
+							),
 						]),
-					),
+						new TableCellNode([CodeSpanNode.createFromPlainText("optional")]),
+						TableCellNode.createFromPlainText("0"),
+						new TableCellNode([SpanNode.createFromPlainText("number")]),
+						TableCellNode.createFromPlainText("Test optional property"),
+					]),
 				],
-				{ title: "Properties" },
+				new TableRowNode([
+					TableCellNode.createFromPlainText("Property"),
+					TableCellNode.createFromPlainText("Modifiers"),
+					TableCellNode.createFromPlainText("Default Value"),
+					TableCellNode.createFromPlainText("Type"),
+					TableCellNode.createFromPlainText("Description"),
+				]),
 			),
 
 			// Property details section
+			HeadingNode.createFromPlainText("Property Details"),
 			wrapInSection(
 				[
+					wrapInSection([ParagraphNode.createFromPlainText("Test optional property")]),
 					wrapInSection(
 						[
-							wrapInSection([
-								ParagraphNode.createFromPlainText("Test optional property"),
-							]),
-							wrapInSection(
-								[
-									FencedCodeBlockNode.createFromPlainText(
-										"testOptionalInterfaceProperty?: number;",
-										"typescript",
-									),
-								],
-								{
-									title: "Signature",
-									id: "testoptionalinterfaceproperty-signature",
-								},
+							FencedCodeBlockNode.createFromPlainText(
+								"testOptionalInterfaceProperty?: number;",
+								"typescript",
 							),
 						],
 						{
-							title: "testOptionalInterfaceProperty",
-							id: "testoptionalinterfaceproperty-propertysignature",
+							title: "Signature",
+							id: "testoptionalinterfaceproperty-signature",
 						},
 					),
 				],
-				{ title: "Property Details" },
+				{
+					title: "testOptionalInterfaceProperty",
+					id: "testoptionalinterfaceproperty-propertysignature",
+				},
 			),
 		]);
 
