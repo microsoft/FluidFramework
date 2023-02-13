@@ -18,7 +18,10 @@ import {
 	apiPackageToDocument,
 } from "./api-item-to-documentation-ast";
 import { DocumentNode } from "./documentation-domain";
-import { CustomNodeRenderers, markdownFromDocumentNode } from "./documentation-domain-to-md-sink";
+import {
+	DocumentationNodeRenderers,
+	markdownFromDocumentNode,
+} from "./documentation-domain-to-md-sink";
 
 /**
  * This module contains the primary rendering entrypoints to the system.
@@ -108,7 +111,7 @@ export function createDocuments(partialConfig: MarkdownDocumenterConfiguration):
 export async function renderFiles(
 	partialConfig: MarkdownDocumenterConfiguration,
 	outputDirectoryPath: string,
-	customRenderers?: CustomNodeRenderers,
+	customRenderers?: DocumentationNodeRenderers,
 ): Promise<void> {
 	const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 

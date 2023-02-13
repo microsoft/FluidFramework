@@ -25,6 +25,7 @@ import { CodeSpanToMarkdown } from "./CodeSpanToMd";
 import { FencedCodeBlockToMarkdown } from "./FencedCodeToMd";
 import { HeadingToMarkdown } from "./HeadingToMd";
 import { HierarchicalSectionToMarkdown } from "./HierarchicalSectionToMd";
+import { LineBreakToMarkdown } from "./LineBreakToMd";
 import { LinkToMarkdown } from "./LinkToMd";
 import { OrderedListToMarkdown } from "./OrderedListToMd";
 import { ParagraphToMarkdown } from "./ParagraphToMd";
@@ -37,105 +38,59 @@ import { UnorderedListToMarkdown } from "./UnorderedListToMd";
 import { addNewlineOrBlank, countTrailingNewlines, standardEOL } from "./Utilities";
 
 /**
+ * {@link DocumentationNode} renderer type-signature.
+ */
+export type DocumentationNodeRenderSignature<
+	TDocumentationNode extends DocumentationNode = DocumentationNode,
+> = (node: TDocumentationNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+
+/**
  * All known node types this renderer supports by default
  */
-export interface NodeRenderers {
-	[DocumentationNodeType.Alert]: (
-		node: AlertNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.BlockQuote]: (
-		node: BlockQuoteNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.CodeSpan]: (
-		node: CodeSpanNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.FencedCode]: (
-		node: FencedCodeBlockNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.Heading]: (
-		node: HeadingNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.LineBreak]: (
-		node: LineBreakNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.Link]: (
-		node: LinkNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.HierarchicalSection]: (
-		node: HierarchicalSectionNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.OrderedList]: (
-		node: OrderedListNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.Paragraph]: (
-		node: ParagraphNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.PlainText]: (
-		node: PlainTextNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.Span]: (
-		node: SpanNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.Table]: (
-		node: TableNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.TableCell]: (
-		node: TableCellNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.TableRow]: (
-		node: TableRowNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
-	[DocumentationNodeType.UnorderedList]: (
-		node: UnorderedListNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	) => string;
+export interface DocumentationNodeRenderers {
+	/**
+	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a renderer implementation for that kind of node.
+	 */
+	[documentationNodeKind: string]: DocumentationNodeRenderSignature;
 }
 
 /**
  * Simple class which provides default rendering implementations for nodes
  */
-export class DefaultNodeRenderers {
-	public [DocumentationNodeType.Alert] = AlertToMarkdown;
-	public [DocumentationNodeType.BlockQuote] = BlockQuoteToMarkdown;
-	public [DocumentationNodeType.CodeSpan] = CodeSpanToMarkdown;
-	public [DocumentationNodeType.FencedCode] = FencedCodeBlockToMarkdown;
-	public [DocumentationNodeType.Heading] = HeadingToMarkdown;
-	public [DocumentationNodeType.LineBreak] = (
-		node: LineBreakNode,
-		subtreeRenderer: DocumentationNodeRenderer,
-	): string => (subtreeRenderer.isInsideTable ? `<br/>` : standardEOL);
-	public [DocumentationNodeType.Link] = LinkToMarkdown;
-	public [DocumentationNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
-	public [DocumentationNodeType.OrderedList] = OrderedListToMarkdown;
-	public [DocumentationNodeType.Paragraph] = ParagraphToMarkdown;
-	public [DocumentationNodeType.PlainText] = PlainTextToMarkdown;
-	public [DocumentationNodeType.Span] = SpanToMarkdown;
-	public [DocumentationNodeType.Table] = TableToMarkdown;
-	public [DocumentationNodeType.TableCell] = TableCellToMarkdown;
-	public [DocumentationNodeType.TableRow] = TableRowToMarkdown;
-	public [DocumentationNodeType.UnorderedList] = UnorderedListToMarkdown;
-}
-
-/**
- * Partial type which can be used to provide custom implementations for any or all rendering functions
- */
-export type CustomNodeRenderers = Partial<NodeRenderers>;
-export const DefaultRenderers = new DefaultNodeRenderers();
+export const defaultNodeRenderers: DocumentationNodeRenderers = {
+	[DocumentationNodeType.Alert]: (node, subtreeRenderer): string =>
+		AlertToMarkdown(node as AlertNode, subtreeRenderer),
+	[DocumentationNodeType.BlockQuote]: (node, subtreeRenderer): string =>
+		BlockQuoteToMarkdown(node as BlockQuoteNode, subtreeRenderer),
+	[DocumentationNodeType.CodeSpan]: (node, subtreeRenderer): string =>
+		CodeSpanToMarkdown(node as CodeSpanNode, subtreeRenderer),
+	[DocumentationNodeType.FencedCode]: (node, subtreeRenderer): string =>
+		FencedCodeBlockToMarkdown(node as FencedCodeBlockNode, subtreeRenderer),
+	[DocumentationNodeType.Heading]: (node, subtreeRenderer): string =>
+		HeadingToMarkdown(node as HeadingNode, subtreeRenderer),
+	[DocumentationNodeType.LineBreak]: (node, subtreeRenderer): string =>
+		LineBreakToMarkdown(node as LineBreakNode, subtreeRenderer),
+	[DocumentationNodeType.Link]: (node, subtreeRenderer): string =>
+		LinkToMarkdown(node as LinkNode, subtreeRenderer),
+	[DocumentationNodeType.HierarchicalSection]: (node, subtreeRenderer): string =>
+		HierarchicalSectionToMarkdown(node as HierarchicalSectionNode, subtreeRenderer),
+	[DocumentationNodeType.OrderedList]: (node, subtreeRenderer): string =>
+		OrderedListToMarkdown(node as OrderedListNode, subtreeRenderer),
+	[DocumentationNodeType.Paragraph]: (node, subtreeRenderer): string =>
+		ParagraphToMarkdown(node as ParagraphNode, subtreeRenderer),
+	[DocumentationNodeType.PlainText]: (node, subtreeRenderer): string =>
+		PlainTextToMarkdown(node as PlainTextNode, subtreeRenderer),
+	[DocumentationNodeType.Span]: (node, subtreeRenderer): string =>
+		SpanToMarkdown(node as SpanNode, subtreeRenderer),
+	[DocumentationNodeType.Table]: (node, subtreeRenderer): string =>
+		TableToMarkdown(node as TableNode, subtreeRenderer),
+	[DocumentationNodeType.TableCell]: (node, subtreeRenderer): string =>
+		TableCellToMarkdown(node as TableCellNode, subtreeRenderer),
+	[DocumentationNodeType.TableRow]: (node, subtreeRenderer): string =>
+		TableRowToMarkdown(node as TableRowNode, subtreeRenderer),
+	[DocumentationNodeType.UnorderedList]: (node, subtreeRenderer): string =>
+		UnorderedListToMarkdown(node as UnorderedListNode, subtreeRenderer),
+};
 
 /**
  * Class for recursively rendering node trees and maintaining state (style, hierarchy depth, count of trailing newlines) while rendering nodes.
@@ -143,7 +98,7 @@ export const DefaultRenderers = new DefaultNodeRenderers();
  */
 export class DocumentationNodeRenderer {
 	private trailingNewlinesCount = 1; // Start the document at 1 so elements don't unnecessarily prepend newlines
-	private readonly renderers: NodeRenderers = DefaultRenderers;
+	private readonly renderers: DocumentationNodeRenderers;
 	private renderingContext = {
 		bold: false,
 		strikethrough: false,
@@ -160,13 +115,11 @@ export class DocumentationNodeRenderer {
 	 * @remarks The custom renderers object can also include custom node types that this renderer isn't explicitly aware of. Provide a key/value pair where the key is the node type as a string, and the value is a
 	 * callback function. If the renderer encounters a custom node type, it will invoke the provided custom function.
 	 */
-	public constructor(customRenderers?: CustomNodeRenderers) {
-		if (customRenderers) {
-			this.renderers = {
-				...DefaultRenderers,
-				...customRenderers,
-			};
-		}
+	public constructor(customRenderers?: DocumentationNodeRenderers) {
+		this.renderers = {
+			...defaultNodeRenderers,
+			...customRenderers,
+		};
 	}
 
 	/**
@@ -179,7 +132,8 @@ export class DocumentationNodeRenderer {
 		const prevRenderingContext = this.renderingContext;
 		const newRenderingContext = { ...prevRenderingContext };
 		this.renderingContext = newRenderingContext;
-		let renderedNode = `TODO: UNKNOWN NODE (${node.type}) ENCOUNTERED`;
+
+		let renderedNode: string | undefined;
 		switch (node.type) {
 			case DocumentationNodeType.Alert:
 				renderedNode = this.renderers[DocumentationNodeType.Alert](
@@ -280,6 +234,10 @@ export class DocumentationNodeRenderer {
 				if (rendererForNode !== undefined && typeof rendererForNode === "function") {
 					// We don't recognize this node type, but a renderer was given to us (probably from custom renderers). We'll invoke it and hope for the best
 					renderedNode = rendererForNode(node, this) as string;
+				} else {
+					throw new Error(
+						`Encountered an unrecognized DocumentationNode type: ${node.type}. Please provide a renderer for this type.`,
+					);
 				}
 				break;
 		}
@@ -419,7 +377,7 @@ export class DocumentationNodeRenderer {
  */
 export function markdownFromDocumentNode(
 	node: DocumentNode,
-	customRenderers?: CustomNodeRenderers,
+	customRenderers?: DocumentationNodeRenderers,
 ): string {
 	// TODO: configurability of individual node renderers
 	const renderer = new DocumentationNodeRenderer(customRenderers);
