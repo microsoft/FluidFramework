@@ -67,13 +67,13 @@ export const createDocumentId: () => string;
 // @public
 export function createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, documentServiceFactory: IDocumentServiceFactory, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger, options?: ILoaderOptions): IHostLoader;
 
-// @public (undocumented)
+// @public
 export function createSummarizer(provider: ITestObjectProvider, container: IContainer, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase, logger?: ITelemetryBaseLogger): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
 
-// @public (undocumented)
+// @public
 export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
