@@ -81,6 +81,7 @@ steps:
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
+      failOnStderr: true
       script: |
         if [ -f "lerna.json" ]; then
           # Run on all the release group packages, if in a release group
