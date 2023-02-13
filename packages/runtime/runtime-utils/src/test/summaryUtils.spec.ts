@@ -327,7 +327,7 @@ describe("Summary Utils", () => {
 			telemetryContext.set("pre2_", "prop1", "10");
 			telemetryContext.set("pre2_", "prop2", true);
 			telemetryContext.set("pre1_", "prop2", undefined);
-			telemetryContext.setAll("pre3_", "obj1", { prop1: "1", prop2: 2, prop3: true });
+			telemetryContext.setMultiple("pre3_", "obj1", { prop1: "1", prop2: 2, prop3: true });
 
 			const serialized = telemetryContext.serialize();
 
