@@ -107,6 +107,7 @@ import {
 	ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
+import { add } from "@fluid-internal/wasm-hello-world";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -1070,6 +1071,8 @@ export class ContainerRuntime
 		},
 	) {
 		super();
+
+		console.log("WASM_ADD", add(1, 2));
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,

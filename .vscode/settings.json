@@ -38,5 +38,8 @@
 
     // Enable prettier as default formatter, and disable rules that disagree with it
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.insertSpaces": false
+    "editor.insertSpaces": false,
+    "rust-analyzer.linkedProjects": [
+		"${workspaceFolder}/packages/wasm/wasm-hello-world/wasm/Cargo.toml"
+	]
 }
