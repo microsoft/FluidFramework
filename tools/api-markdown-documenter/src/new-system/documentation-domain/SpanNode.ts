@@ -5,7 +5,7 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
-import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
+import { createNodesFromPlainText } from "./Utilities";
 
 /**
  * Text formatting options used by {@link SpanNode}.
@@ -28,10 +28,6 @@ export interface TextFormatting {
 
 	// TODO: underline?
 	// TODO: what else?
-}
-
-function compareTextFormatting(a: TextFormatting, b: TextFormatting): boolean {
-	return a.bold === b.bold && a.italic === b.italic && a.strikethrough === b.strikethrough;
 }
 
 export class SpanNode<
@@ -58,32 +54,6 @@ export class SpanNode<
 	 */
 	public static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode {
 		return new SpanNode(createNodesFromPlainText(text), formatting);
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherSpan = other as SpanNode;
-
-		if (this.textFormatting === undefined) {
-			if (otherSpan.textFormatting !== undefined) {
-				return false;
-			}
-		} else {
-			if (otherSpan.textFormatting === undefined) {
-				return false;
-			}
-			if (!compareTextFormatting(this.textFormatting, otherSpan.textFormatting)) {
-				return false;
-			}
-		}
-
-		return compareNodeArrays(this.children, otherSpan.children);
 	}
 }
 

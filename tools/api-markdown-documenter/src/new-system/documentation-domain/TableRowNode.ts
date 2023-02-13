@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
+import { ParentNodeBase } from "./DocumentionNode";
 import { TableCellNode } from "./TableCellNode";
-import { compareNodeArrays } from "./Utilities";
 
 export class TableRowNode extends ParentNodeBase<TableCellNode> {
 	/**
@@ -15,18 +14,5 @@ export class TableRowNode extends ParentNodeBase<TableCellNode> {
 
 	public constructor(cells: TableCellNode[]) {
 		super(cells);
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherRow = other as TableRowNode;
-
-		return compareNodeArrays(this.children, otherRow.children);
 	}
 }

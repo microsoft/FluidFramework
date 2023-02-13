@@ -6,7 +6,7 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { LineBreakNode } from "./LineBreakNode";
 import { SpanNode } from "./SpanNode";
-import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
+import { createNodesFromPlainText } from "./Utilities";
 
 export type ParagraphChildren =
 	| LineBreakNode
@@ -34,19 +34,6 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
 	 */
 	public static createFromPlainText(text: string): ParagraphNode {
 		return new ParagraphNode(createNodesFromPlainText(text));
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherParagraph = other as ParagraphNode;
-
-		return compareNodeArrays(this.children, otherParagraph.children);
 	}
 
 	/**

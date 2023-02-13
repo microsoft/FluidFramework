@@ -7,7 +7,6 @@ import type { Parent as UnistParent } from "unist";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
 import { ParagraphNode } from "./ParagraphNode";
-import { compareNodeArrays } from "./Utilities";
 
 /**
  * Represents the root of a document.
@@ -21,12 +20,36 @@ export class DocumentNode implements UnistParent<DocumentationNode> {
 	 */
 	public readonly type = DocumentationNodeType.Document;
 
+	/**
+	 * {@inheritDoc DocumentationNode.children}
+	 */
 	public readonly children: DocumentationNode[];
+
+	/**
+	 * Path to which the resulting document should be saved.
+	 */
 	public readonly filePath: string;
+
+	/**
+	 * Optional document title.
+	 */
 	public readonly title?: string;
+
+	/**
+	 * Optional document front-matter, to be appended above all other content.
+	 */
 	public readonly frontMatter?: string;
+
+	/**
+	 * Optional document header section.
+	 */
 	public readonly header?: ParagraphNode;
+
+	/**
+	 * Optional document footer section.
+	 */
 	public readonly footer?: ParagraphNode;
+
 	public constructor(
 		children: DocumentationNode[],
 		filePath: string,
@@ -41,38 +64,5 @@ export class DocumentNode implements UnistParent<DocumentationNode> {
 		this.frontMatter = frontMatter;
 		this.header = header;
 		this.footer = footer;
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherHeading = other as DocumentNode;
-
-		if (this.filePath !== otherHeading.filePath) {
-			return false;
-		}
-
-		if (this.title !== otherHeading.title) {
-			return false;
-		}
-
-		if (this.frontMatter !== otherHeading.frontMatter) {
-			return false;
-		}
-
-		if (this.header !== otherHeading.header) {
-			return false;
-		}
-
-		if (this.footer !== otherHeading.footer) {
-			return false;
-		}
-
-		return compareNodeArrays(this.children, otherHeading.children);
 	}
 }

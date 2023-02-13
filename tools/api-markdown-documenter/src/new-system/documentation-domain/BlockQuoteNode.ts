@@ -4,7 +4,7 @@
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
-import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
+import { createNodesFromPlainText } from "./Utilities";
 
 /**
  * TODO
@@ -32,18 +32,5 @@ export class BlockQuoteNode extends ParentNodeBase {
 	 */
 	public static createFromPlainText(text: string): BlockQuoteNode {
 		return new BlockQuoteNode(createNodesFromPlainText(text));
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherBlockQuote = other as BlockQuoteNode;
-
-		return compareNodeArrays(this.children, otherBlockQuote.children);
 	}
 }

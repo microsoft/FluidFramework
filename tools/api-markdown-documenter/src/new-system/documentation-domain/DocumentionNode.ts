@@ -18,11 +18,6 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
 	 * See {@link unist#Node."type"}.
 	 */
 	readonly type: string;
-
-	/**
-	 * Deep equality comparison.
-	 */
-	equals(other: DocumentationNode): boolean;
 }
 
 /**
@@ -41,6 +36,11 @@ export interface ParentNode<TDocumentationNode extends DocumentationNode = Docum
 	 */
 	readonly type: string;
 
+	/**
+	 * Child nodes.
+	 *
+	 * See {@link unist#Parent.children}.
+	 */
 	readonly children: TDocumentationNode[];
 }
 
@@ -74,9 +74,4 @@ export abstract class ParentNodeBase<
 	protected constructor(children: TDocumentationNode[]) {
 		this.children = children;
 	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public abstract equals(other: DocumentationNode): boolean;
 }

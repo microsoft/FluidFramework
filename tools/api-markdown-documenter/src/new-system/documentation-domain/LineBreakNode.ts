@@ -5,6 +5,9 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
 
+/**
+ * Represents a line break in a document.
+ */
 export class LineBreakNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
@@ -15,11 +18,4 @@ export class LineBreakNode implements DocumentationNode {
 	public static readonly Singleton = new LineBreakNode();
 
 	public constructor() {}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		return other.type === DocumentationNodeType.LineBreak;
-	}
 }

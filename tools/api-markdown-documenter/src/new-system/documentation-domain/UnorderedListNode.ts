@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
-import { compareNodeArrays } from "./Utilities";
+import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 
 // TODOs:
 // - Do we support a special input for doing nested sub-lists?
@@ -17,18 +16,5 @@ export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
 
 	public constructor(children: SingleLineElementNode[]) {
 		super(children);
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherList = other as UnorderedListNode;
-
-		return compareNodeArrays(this.children, otherList.children);
 	}
 }

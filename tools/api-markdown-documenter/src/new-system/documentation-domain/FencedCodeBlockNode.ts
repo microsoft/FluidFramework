@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
+import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { LineBreakNode } from "./LineBreakNode";
-import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
+import { createNodesFromPlainText } from "./Utilities";
 
 /**
  * Types allowed as children under {@link FencedCodeBlockNode}.
@@ -43,22 +43,5 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
 	 */
 	public static createFromPlainText(text: string, language?: string): FencedCodeBlockNode {
 		return new FencedCodeBlockNode(createNodesFromPlainText(text), language);
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherHeading = other as FencedCodeBlockNode;
-
-		if (this.language !== otherHeading.language) {
-			return false;
-		}
-
-		return compareNodeArrays(this.children, otherHeading.children);
 	}
 }

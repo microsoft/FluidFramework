@@ -4,9 +4,8 @@
  */
 import { Heading } from "../../Heading";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
+import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
-import { compareNodeArrays } from "./Utilities";
 
 /**
  *
@@ -56,26 +55,5 @@ export class HeadingNode
 	 */
 	public static createFromPlainTextHeading(heading: Heading): HeadingNode {
 		return HeadingNode.createFromPlainText(heading.title, heading.id, heading.level);
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherHeading = other as HeadingNode;
-
-		if (this.id !== otherHeading.id) {
-			return false;
-		}
-
-		if (this.level !== otherHeading.level) {
-			return false;
-		}
-
-		return compareNodeArrays(this.children, otherHeading.children);
 	}
 }

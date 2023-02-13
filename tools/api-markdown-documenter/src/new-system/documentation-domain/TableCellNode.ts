@@ -4,7 +4,7 @@
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
-import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
+import { createNodesFromPlainText } from "./Utilities";
 
 export class TableCellNode extends ParentNodeBase {
 	/**
@@ -26,18 +26,5 @@ export class TableCellNode extends ParentNodeBase {
 		return text.length === 0
 			? TableCellNode.Empty
 			: new TableCellNode(createNodesFromPlainText(text));
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherCell = other as TableCellNode;
-
-		return compareNodeArrays(this.children, otherCell.children);
 	}
 }

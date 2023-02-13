@@ -1,6 +1,6 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
-import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
+import { createNodesFromPlainText } from "./Utilities";
 
 // TODOs:
 // - Document each alert kind
@@ -46,26 +46,5 @@ export class AlertNode extends ParentNodeBase {
 		title?: string,
 	): AlertNode {
 		return new AlertNode(createNodesFromPlainText(text), alertKind, title);
-	}
-
-	/**
-	 * {@inheritDoc DocumentationNode.equals}
-	 */
-	public equals(other: DocumentationNode): boolean {
-		if (this.type !== other.type) {
-			return false;
-		}
-
-		const otherAlert = other as AlertNode;
-
-		if (this.alertKind !== otherAlert.alertKind) {
-			return false;
-		}
-
-		if (this.title !== otherAlert.title) {
-			return false;
-		}
-
-		return compareNodeArrays(this.children, otherAlert.children);
 	}
 }
