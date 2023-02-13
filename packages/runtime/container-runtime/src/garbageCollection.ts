@@ -156,11 +156,14 @@ export interface IGarbageCollector {
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
-	collectGarbage(options: {
-		logger?: ITelemetryLogger;
-		runSweep?: boolean;
-		fullGC?: boolean;
-	}): Promise<IGCStats | undefined>;
+	collectGarbage(
+		options: {
+			logger?: ITelemetryLogger;
+			runSweep?: boolean;
+			fullGC?: boolean;
+		},
+		telemetryContext?: ITelemetryContext,
+	): Promise<IGCStats | undefined>;
 	/** Summarizes the GC data and returns it as a summary tree. */
 	summarize(
 		fullTree: boolean,
@@ -1001,14 +1004,17 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Runs garbage collection and updates the reference / used state of the nodes in the container.
 	 * @returns stats of the GC run or undefined if GC did not run.
 	 */
-	public async collectGarbage(options: {
-		/** Logger to use for logging GC events */
-		logger?: ITelemetryLogger;
-		/** True to run GC sweep phase after the mark phase */
-		runSweep?: boolean;
-		/** True to generate full GC data */
-		fullGC?: boolean;
-	}): Promise<IGCStats | undefined> {
+	public async collectGarbage(
+		options: {
+			/** Logger to use for logging GC events */
+			logger?: ITelemetryLogger;
+			/** True to run GC sweep phase after the mark phase */
+			runSweep?: boolean;
+			/** True to generate full GC data */
+			fullGC?: boolean;
+		},
+		telemetryContext?: ITelemetryContext,
+	): Promise<IGCStats | undefined> {
 		const fullGC =
 			options.fullGC ?? (this.gcOptions.runFullGC === true || this.summaryStateNeedsReset);
 		const logger = options.logger
@@ -1034,6 +1040,9 @@ export class GarbageCollector implements IGarbageCollector {
 			});
 			return undefined;
 		}
+
+		// Add the options that are used to run GC to the telemetry context.
+		telemetryContext?.setAll("fluid_GC", "Options", { fullGC, runSweep: options.runSweep });
 
 		return PerformanceEvent.timedExecAsync(
 			logger,

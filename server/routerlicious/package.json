@@ -30,7 +30,7 @@
     "docker-build": "docker-compose build",
     "docker-clean": "docker-compose down --rmi local -v",
     "format": "lerna run format --parallel --stream",
-    "preinstall": "node ./scripts/only-pnpm.cjs",
+    "preinstall": "node scripts/only-pnpm.cjs",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
     "lint:strict": "lerna run lint --stream -- -- -- --report-unused-disable-directives",

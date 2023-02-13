@@ -68,6 +68,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
+	FlushModeExperimental,
 	gcTreeKey,
 	InboundAttachMessage,
 	IFluidDataStoreContextDetached,
@@ -908,7 +909,7 @@ export class ContainerRuntime
 
 	private _orderSequentiallyCalls: number = 0;
 	private readonly _flushMode: FlushMode;
-	private flushMicroTaskExists = false;
+	private flushTaskExists = false;
 
 	private _connected: boolean;
 
@@ -2115,7 +2116,7 @@ export class ContainerRuntime
 	 * Are we in the middle of batching ops together?
 	 */
 	private currentlyBatching() {
-		return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
+		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
 	}
 
 	public getQuorum(): IQuorumClients {
@@ -2302,12 +2303,24 @@ export class ContainerRuntime
 			fullGC,
 		} = options;
 
+		const telemetryContext = new TelemetryContext();
+		// Add the options that are used to generate this summary to the telemetry context.
+		telemetryContext.setAll("fluid_Summarize", "Options", {
+			fullTree,
+			trackState,
+			runGC,
+			fullGC,
+			runSweep,
+		});
+
 		let gcStats: IGCStats | undefined;
 		if (runGC) {
-			gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
+			gcStats = await this.collectGarbage(
+				{ logger: summaryLogger, runSweep, fullGC },
+				telemetryContext,
+			);
 		}
 
-		const telemetryContext = new TelemetryContext();
 		const { stats, summary } = await this.summarizerNode.summarize(
 			fullTree,
 			trackState,
@@ -2478,15 +2491,18 @@ export class ContainerRuntime
 	 * Runs garbage collection and updates the reference / used state of the nodes in the container.
 	 * @returns the statistics of the garbage collection run; undefined if GC did not run.
 	 */
-	public async collectGarbage(options: {
-		/** Logger to use for logging GC events */
-		logger?: ITelemetryLogger;
-		/** True to run GC sweep phase after the mark phase */
-		runSweep?: boolean;
-		/** True to generate full GC data */
-		fullGC?: boolean;
-	}): Promise<IGCStats | undefined> {
-		return this.garbageCollector.collectGarbage(options);
+	public async collectGarbage(
+		options: {
+			/** Logger to use for logging GC events */
+			logger?: ITelemetryLogger;
+			/** True to run GC sweep phase after the mark phase */
+			runSweep?: boolean;
+			/** True to generate full GC data */
+			fullGC?: boolean;
+		},
+		telemetryContext?: ITelemetryContext,
+	): Promise<IGCStats | undefined> {
+		return this.garbageCollector.collectGarbage(options, telemetryContext);
 	}
 
 	/**
@@ -2533,8 +2549,15 @@ export class ContainerRuntime
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
+		const shouldPauseInboundSignal =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
+			) !== true;
 		try {
 			await this.deltaManager.inbound.pause();
+			if (shouldPauseInboundSignal) {
+				await this.deltaManager.inboundSignal.pause();
+			}
 
 			const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
@@ -2730,8 +2753,12 @@ export class ContainerRuntime
 		} finally {
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
+
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();
+			if (shouldPauseInboundSignal) {
+				this.deltaManager.inboundSignal.resume();
+			}
 		}
 	}
 
@@ -2802,8 +2829,7 @@ export class ContainerRuntime
 			0x132 /* "sending ops in detached container" */,
 		);
 
-		const deserializedContent: ContainerRuntimeMessage = { type, contents };
-		const serializedContent = JSON.stringify(deserializedContent);
+		const serializedContent = JSON.stringify({ type, contents });
 
 		if (this.deltaManager.readOnlyInfo.readonly) {
 			this.logger.sendTelemetryEvent({
@@ -2814,7 +2840,7 @@ export class ContainerRuntime
 
 		const message: BatchMessage = {
 			contents: serializedContent,
-			deserializedContent,
+			deserializedContent: JSON.parse(serializedContent), // Deep copy in case caller changes reference object
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -2853,17 +2879,8 @@ export class ContainerRuntime
 
 			if (!this.currentlyBatching()) {
 				this.flush();
-			} else if (!this.flushMicroTaskExists) {
-				this.flushMicroTaskExists = true;
-				// Queue a microtask to detect the end of the turn and force a flush.
-				Promise.resolve()
-					.then(() => {
-						this.flushMicroTaskExists = false;
-						this.flush();
-					})
-					.catch((error) => {
-						this.closeFn(error as GenericError);
-					});
+			} else {
+				this.scheduleFlush();
 			}
 		} catch (error) {
 			this.closeFn(error as GenericError);
@@ -2872,6 +2889,46 @@ export class ContainerRuntime
 
 		if (this.isContainerMessageDirtyable(type, contents)) {
 			this.updateDocumentDirtyState(true);
+		}
+	}
+
+	private scheduleFlush() {
+		if (this.flushTaskExists) {
+			return;
+		}
+
+		this.flushTaskExists = true;
+		const flush = () => {
+			this.flushTaskExists = false;
+			try {
+				this.flush();
+			} catch (error) {
+				this.closeFn(error as GenericError);
+			}
+		};
+
+		switch (this.flushMode) {
+			case FlushMode.TurnBased:
+				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
+				// batch at the end of the turn
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				Promise.resolve().then(flush);
+				break;
+
+			// FlushModeExperimental is experimental and not exposed directly in the runtime APIs
+			case FlushModeExperimental.Async as unknown as FlushMode:
+				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
+				// batch when all micro-tasks are complete.
+				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
+				setTimeout(flush, 0);
+				break;
+
+			default:
+				assert(
+					this._orderSequentiallyCalls > 0,
+					"Unreachable unless running under orderSequentially",
+				);
+				break;
 		}
 	}
 

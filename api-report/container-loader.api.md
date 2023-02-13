@@ -53,7 +53,7 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
@@ -133,6 +133,7 @@ export interface IContainerConfig {
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
+    scopeOverride?: FluidObject;
     serializedContainerState?: IPendingContainerState;
 }
 
@@ -144,6 +145,7 @@ export interface IContainerLoadOptions {
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
+    scopeOverride?: FluidObject;
     version: string | undefined;
 }
 
@@ -231,7 +233,7 @@ export class Loader implements IHostLoader {
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class RelativeLoader implements ILoader {
     constructor(container: Container, loader: ILoader | undefined);
     // (undocumented)

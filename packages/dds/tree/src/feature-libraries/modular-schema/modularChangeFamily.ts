@@ -638,7 +638,7 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 		for (const id of ids.keys()) {
 			assert(
 				tryGetFromNestedMap(manager.table.srcDependents, revision, id) === undefined,
-				"TODO: Support multiple dependents per key",
+				0x564 /* TODO: Support multiple dependents per key */,
 			);
 			setInNestedMap(manager.table.srcDependents, revision, id, fieldData);
 		}
@@ -648,7 +648,7 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 		for (const id of ids.keys()) {
 			assert(
 				tryGetFromNestedMap(manager.table.dstDependents, revision, id) === undefined,
-				"TODO: Support multiple dependents per key",
+				0x565 /* TODO: Support multiple dependents per key */,
 			);
 			setInNestedMap(manager.table.dstDependents, revision, id, fieldData);
 		}
