@@ -30,7 +30,9 @@ import {
 	SpanNode,
 } from "../documentation-domain";
 
-// TODO: remove calls to "trim" - this logic should not be opinionated in that way
+// TODOs:
+// - remove calls to "trim" - this logic should not be opinionated in that way
+// - rename functions to "renameDocFoo", to make clear we're transforming from the "Doc" domain.
 
 /**
  * Transformation library from {@link @microsoft/tsdoc#DocNode}_s to {@link DocumentationNode}s.
