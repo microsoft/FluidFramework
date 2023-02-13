@@ -1943,8 +1943,6 @@ importers:
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       '@tiny-calc/micro': 0.0.0-alpha.5
       react: 17.0.2
-      source-map-loader: 2.0.2_webpack@5.75.0
-      url-loader: 2.3.0_webpack@5.75.0
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
@@ -1958,9 +1956,11 @@ importers:
       eslint: 8.6.0
       prettier: 2.6.2
       rimraf: 2.7.1
+      source-map-loader: 2.0.2_webpack@5.75.0
       style-loader: 1.3.0_webpack@5.75.0
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
       typescript: 4.5.5
+      url-loader: 2.3.0_webpack@5.75.0
       webpack: 5.75.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
       webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
@@ -32435,6 +32435,7 @@ packages:
     resolution: {integrity: sha512-USPkMeET31rOMiarsBNIHZKLGgvKc/LrjofAnBlOttf5ajRvqiRA8QsenbcooctK6d6Ts6aqZXBA+XbkKthiQg==}
     engines: {node: '>=4.0.0'}
     hasBin: true
+    dev: true
 
   /mimic-fn/1.2.0:
     resolution: {integrity: sha512-jf84uxzwiuiIVKiOLpfYk7N46TSy8ubTonmneY9vrpHNAnp0QBt2BxWV9dO3/j+BoVAb+a5G6YDPW3M5HOdMWQ==}
@@ -39783,6 +39784,7 @@ packages:
       mime: 2.6.0
       schema-utils: 2.7.1
       webpack: 5.75.0_webpack-cli@4.10.0
+    dev: true
 
   /url-loader/4.1.1_lit45vopotvaqup7lrvlnvtxwy:
     resolution: {integrity: sha512-3BTV812+AVHHOJQO8O5MkWgZ5aosP7GnROJwvzLS9hWDj00lZ6Z0wNak423Lp9PBZN05N+Jk/N5Si8jRAlGyWA==}
