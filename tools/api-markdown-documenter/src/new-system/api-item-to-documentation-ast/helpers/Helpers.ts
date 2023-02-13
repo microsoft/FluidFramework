@@ -33,6 +33,7 @@ import {
 	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
+	injectSeparator,
 } from "../../../utilities";
 import {
 	AlertKind,
@@ -224,25 +225,23 @@ function createHeritageTypeListSpan(
 	config: Required<MarkdownDocumenterConfiguration>,
 ): SpanNode | undefined {
 	if (heritageTypes.length > 0) {
-		const children: DocumentationNode[] = [];
+		const renderedLabel = SpanNode.createFromPlainText(`${label}: `, { bold: true });
 
-		children.push(SpanNode.createFromPlainText(`${label}: `, { bold: true }));
-
-		// TODO: add node array join helper?
-		let needsComma: boolean = false;
+		// Build up array of excerpt entries
+		const renderedHeritageTypes: SpanNode[] = [];
 		for (const heritageType of heritageTypes) {
-			if (needsComma) {
-				children.push(new PlainTextNode(", "));
-			}
-
 			const renderedExcerpt = createExcerptSpanWithHyperlinks(heritageType.excerpt, config);
 			if (renderedExcerpt !== undefined) {
-				children.push(renderedExcerpt);
-				needsComma = true;
+				renderedHeritageTypes.push(renderedExcerpt);
 			}
 		}
 
-		return new SpanNode(children);
+		const renderedList = injectSeparator<DocumentationNode>(
+			renderedHeritageTypes,
+			new PlainTextNode(", "),
+		);
+
+		return new SpanNode([renderedLabel, ...renderedList]);
 	}
 	return undefined;
 }
@@ -306,9 +305,8 @@ export function createTypeParametersSpan(
  * @param excerpt - The TSDoc excerpt to render.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  *
- * @returns A list of doc nodes containing the rendered contents, if the excerpt was non-empty.
- * Will return `undefined` otherwise.
- * This list of nodes is suitable to be placed in a `paragraph` or `section`, etc.
+ * @returns A span containing the rendered contents, if non-empty.
+ * Otherwise, will return `undefined`.
  */
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
