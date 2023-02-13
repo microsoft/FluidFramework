@@ -24,6 +24,7 @@ export * from "./SpanNode";
 export * from "./TableCellNode";
 export * from "./TableRowNode";
 export * from "./TableNode";
+export { TextFormatting } from "./TextFormatting";
 export * from "./UnorderedListNode";
 
 /* eslint-enable no-restricted-syntax */

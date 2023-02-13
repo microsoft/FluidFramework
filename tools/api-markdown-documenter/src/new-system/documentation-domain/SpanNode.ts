@@ -5,30 +5,8 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
+import { TextFormatting } from "./TextFormatting";
 import { createNodesFromPlainText } from "./Utilities";
-
-/**
- * Text formatting options used by {@link SpanNode}.
- */
-export interface TextFormatting {
-	/**
-	 * @defaultValue Inherit
-	 */
-	italic?: boolean;
-
-	/**
-	 * @defaultValue Inherit
-	 */
-	bold?: boolean;
-
-	/**
-	 * @defaultValue Inherit
-	 */
-	strikethrough?: boolean;
-
-	// TODO: underline?
-	// TODO: what else?
-}
 
 export class SpanNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
