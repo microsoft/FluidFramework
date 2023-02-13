@@ -22,6 +22,7 @@
 		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
 		"build:tsc": "tsc --pretty",
+		"build-and-test": "npm run build && npm run test",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
 		"clean": "rimraf _api-extractor-temp .nyc_output dist *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
@@ -35,7 +36,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict",
+		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --reporter-option maxDiffSize=100000",
 		"test:hackathon": "mocha dist/new-system/**/*.test.js --unhandled-rejections=strict",
 		"tsc": "tsc"
 	},
