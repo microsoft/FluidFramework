@@ -91,7 +91,7 @@ export function generateRuntimeOptions(
 		enableOfflineLoad: [undefined],
 		flushMode: [undefined],
 		compressionOptions: [
-			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
+			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: "lz4" },
 		],
 		maxBatchSizeInBytes: [716800],
 		enableOpReentryCheck: [true],
