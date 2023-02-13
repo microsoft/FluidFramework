@@ -167,7 +167,7 @@ export class DocumentDeltaConnection
 						this.socket.emit("pong", () => {
 							const latency = Date.now() - start;
 							if (latency > 1000 * 60) {
-								this.mc.logger.sendPerformanceEvent({
+								this.mc.logger.sendErrorEvent({
 									eventName: "LatencyTooLong",
 									driverVersion,
 									duration: latency,
@@ -389,12 +389,15 @@ export class DocumentDeltaConnection
 	}
 
 	protected disconnect(err: IAnyDriverError) {
-		clearInterval(this.trackLatencyTimer);
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
 		if (this._disposed) {
 			return;
+		}
+
+		if (this.trackLatencyTimer !== undefined) {
+			clearInterval(this.trackLatencyTimer);
 		}
 
 		// We set the disposed flag as a part of the contract for overriding the disconnect method. This is used by
