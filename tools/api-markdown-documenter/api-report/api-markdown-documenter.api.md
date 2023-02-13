@@ -304,6 +304,9 @@ export interface IDocListParameters extends IDocNodeContainerParameters {
 }
 
 // @public
+export function injectSeparator<T>(array: T[], separator: T): T[];
+
+// @public
 export function isDeprecated(apiItem: ApiItem): boolean;
 
 // @public
