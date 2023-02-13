@@ -263,6 +263,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
+    /**
+     * If the summarizer makes local changes, a telemetry event is logged. This has the potential to be very noisy.
+     * So, adding a threshold of how many telemetry events can be logged per data store context. This can be
+     * controlled via feature flags.
+     */
+    private localChangesTelemetryThreshold: number;
+
     // The used routes of this node as per the last GC run. This is used to update the used routes of the channel
     // if it realizes after GC is run.
     private lastUsedRoutes: string[] | undefined;
@@ -320,6 +327,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.throwOnTombstoneUsage =
             this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
             this.clientDetails.type !== summarizerClientType;
+
+        // By default, a data store can log maximum 100 local changes telemetry in summarizer.
+        this.localChangesTelemetryThreshold =
+            this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryThreshold") ?? 100;
     }
 
     public dispose(): void {
@@ -821,6 +832,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
         if (this.clientDetails.type === summarizerClientType) {
+            // If the count of telemetry logged has crossed the threshold, don't log any more.
+            if (this.localChangesTelemetryThreshold > 0) {
+                return;
+            }
+
             // Log a telemetry if there are local changes in the summarizer. This will give us data on how often
             // this is happening and which data stores do this. The eventual goal is to disallow local changes
             // in the summarizer and the data will help us plan this.
@@ -835,6 +851,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
                 stack: generateStack(),
             });
+            this.localChangesTelemetryThreshold--;
         }
     }
 

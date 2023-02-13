@@ -27,8 +27,12 @@ import {
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
+    generateStack,
     LoggingError,
+    loggerToMonitoringContext,
+    MonitoringContext,
     raiseConnectedEvent,
+    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
@@ -64,6 +68,7 @@ import {
     createResponseError,
     exceptionToResponse,
     requestFluidObject,
+    packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -184,11 +189,21 @@ export class FluidDataStoreRuntime extends
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly quorum: IQuorumClients;
     private readonly audience: IAudience;
-    public readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
+    public get logger(): ITelemetryLogger {
+        return this.mc.logger;
+    }
 
     // A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
     // channel contexts.
     private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
+
+    /**
+     * If the summarizer makes local changes, a telemetry event is logged. This has the potential to be very noisy.
+     * So, adding a threshold of how many telemetry events can be logged per data store context. This can be
+     * controlled via feature flags.
+     */
+    private localChangesTelemetryThreshold: number;
 
     /**
      * Invokes the given callback and expects that no ops are submitted
@@ -227,10 +242,10 @@ export class FluidDataStoreRuntime extends
         assert(!dataStoreContext.id.includes("/"),
             0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */);
 
-        this.logger = ChildLogger.create(
-            dataStoreContext.logger,
-            "FluidDataStoreRuntime",
-            { all: { dataStoreId: uuid() } },
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
+                all: { dataStoreId: uuid() },
+            }),
         );
 
         this.id = dataStoreContext.id;
@@ -336,6 +351,10 @@ export class FluidDataStoreRuntime extends
         if (existing) {
             this.deferredAttached.resolve();
         }
+
+        // By default, a data store can log maximum 100 local changes telemetry in summarizer.
+        this.localChangesTelemetryThreshold =
+            this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryThreshold") ?? 100;
     }
 
     public dispose(): void {
@@ -370,7 +389,7 @@ export class FluidDataStoreRuntime extends
 
                     return { mimeType: "fluid/object", status: 200, value: channel };
                 } catch (error) {
-                    this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+                    this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
 
                     return createResponseError(500, `Failed to get Channel: ${error}`, request);
                 }
@@ -431,6 +450,9 @@ export class FluidDataStoreRuntime extends
             deferred.resolve(context);
             this.contextsDeferred.set(id, deferred);
         }
+
+        // Channels (DDS) should not be created in summarizer client.
+        this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 
         assert(!!context.channel, 0x17a /* "Channel should be loaded when created!!" */);
         return context.channel;
@@ -1017,6 +1039,45 @@ export class FluidDataStoreRuntime extends
     private verifyNotClosed() {
         if (this._disposed) {
             throw new LoggingError("Runtime is closed");
+        }
+    }
+
+    /**
+     * Summarizer client should not have local changes. These changes can become part of the summary and can break
+     * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
+     * other clients that are up-to-date till seq# 100 may not have them yet.
+     */
+    private identifyLocalChangeInSummarizer(
+        eventName: string,
+        channelId: string,
+        channelType: string,
+    ) {
+        if (this.clientDetails.type === "summarizer") {
+            // If the count of telemetry logged has crossed the threshold, don't log any more.
+            if (this.localChangesTelemetryThreshold > 0) {
+                return;
+            }
+
+            // Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+            // this is happening and which data stores do this. The eventual goal is to disallow local changes
+            // in the summarizer and the data will help us plan this.
+            this.mc.logger.sendTelemetryEvent({
+                eventName,
+                channelType,
+                channelId: {
+                    value: channelId,
+                    tag: TelemetryDataTag.CodeArtifact,
+                },
+                fluidDataStoreId: {
+                    value: this.id,
+                    tag: TelemetryDataTag.CodeArtifact,
+                },
+                fluidDataStorePackagePath: packagePathToTelemetryProperty(
+                    this.dataStoreContext.packagePath,
+                ),
+                stack: generateStack(),
+            });
+            this.localChangesTelemetryThreshold--;
         }
     }
 }
