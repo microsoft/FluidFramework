@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { Static, TUnsafe, Type } from "@sinclair/typebox";
+// typebox documents using this internal module, so it should be ok to access.
+// eslint-disable-next-line import/no-internal-modules
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKindIdentifier,
@@ -15,9 +19,57 @@ import {
 	TreeSchemaIdentifier,
 	ValueSchema,
 } from "../core";
-import { brand } from "../util";
+import { brand, fail } from "../util";
 
 const version = "1.0.0" as const;
+
+/**
+ * Create a TypeBox string schema for a branded string type.
+ * This only validates that the value is a string,
+ * and not that it came from the correct branded type (that information is lost when serialized).
+ */
+function brandedString<T extends string>(): TUnsafe<T> {
+	// This could use:
+	// return TypeSystem.CreateType<T>(name, (options, value) => typeof value === "string")();
+	// Since there isn't any useful custom validation to do and
+	// TUnsafe is documented as unsupported in `typebox/compiler`,
+	// opt for the compile time behavior like the above, but the runtime behavior of the built in string type.
+	return Type.String() as unknown as TUnsafe<T>;
+}
+
+const FieldKindIdentifier = brandedString<FieldKindIdentifier>();
+const TreeSchemaIdentifier = brandedString<TreeSchemaIdentifier>();
+const LocalFieldKey = brandedString<LocalFieldKey>();
+const GlobalFieldKey = brandedString<GlobalFieldKey>();
+
+const FieldSchemaFormat = Type.Object({
+	kind: FieldKindIdentifier,
+	types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
+});
+
+const NamedLocalFieldSchemaFormat = Type.Intersect([
+	FieldSchemaFormat,
+	Type.Object({
+		name: LocalFieldKey,
+	}),
+]);
+
+const NamedGlobalFieldSchemaFormat = Type.Intersect([
+	FieldSchemaFormat,
+	Type.Object({
+		name: GlobalFieldKey,
+	}),
+]);
+
+const TreeSchemaFormat = Type.Object({
+	name: TreeSchemaIdentifier,
+	localFields: Type.Array(NamedLocalFieldSchemaFormat),
+	globalFields: Type.Array(GlobalFieldKey),
+	extraLocalFields: FieldSchemaFormat,
+	extraGlobalFields: Type.Boolean(),
+	// TODO: don't use external type here.
+	value: Type.Enum(ValueSchema),
+});
 
 /**
  * Format for encoding as json.
@@ -28,31 +80,29 @@ const version = "1.0.0" as const;
  * this choice is somewhat arbitrary, but avoids user data being used as object keys,
  * which can sometimes be an issue (for example handling that for "__proto__" can require care).
  */
-interface Format {
-	version: typeof version;
-	treeSchema: TreeSchemaFormat[];
-	globalFieldSchema: NamedFieldSchemaFormat[];
-}
+const Format = Type.Object({
+	version: Type.Literal(version),
+	treeSchema: Type.Array(TreeSchemaFormat),
+	globalFieldSchema: Type.Array(NamedGlobalFieldSchemaFormat),
+});
 
-interface TreeSchemaFormat {
-	name: TreeSchemaIdentifier;
-	localFields: NamedFieldSchemaFormat[];
-	globalFields: GlobalFieldKey[];
-	extraLocalFields: FieldSchemaFormat;
-	extraGlobalFields: boolean;
-	value: ValueSchema;
-}
+type Format = Static<typeof Format>;
+type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
+type TreeSchemaFormat = Static<typeof TreeSchemaFormat>;
+type NamedLocalFieldSchemaFormat = Static<typeof NamedLocalFieldSchemaFormat>;
+type NamedGlobalFieldSchemaFormat = Static<typeof NamedGlobalFieldSchemaFormat>;
 
-type NamedFieldSchemaFormat = FieldSchemaFormat & Named<string>;
+const CompiledFormat = TypeCompiler.Compile(Format);
 
-interface FieldSchemaFormat {
-	kind: FieldKindIdentifier;
-	types?: TreeSchemaIdentifier[];
-}
+const Versioned = TypeCompiler.Compile(
+	Type.Object({
+		version: Type.String(),
+	}),
+);
 
 function encodeRepo(repo: SchemaData): Format {
 	const treeSchema: TreeSchemaFormat[] = [];
-	const globalFieldSchema: NamedFieldSchemaFormat[] = [];
+	const globalFieldSchema: NamedGlobalFieldSchemaFormat[] = [];
 	for (const [name, schema] of repo.treeSchema) {
 		treeSchema.push(encodeTree(name, schema));
 	}
@@ -102,7 +152,7 @@ function encodeField(schema: FieldSchema): FieldSchemaFormat {
 	return out;
 }
 
-function encodeNamedField(name: string, schema: FieldSchema): NamedFieldSchemaFormat {
+function encodeNamedField<T>(name: T, schema: FieldSchema): FieldSchemaFormat & Named<T> {
 	return {
 		...encodeField(schema),
 		name,
@@ -113,7 +163,7 @@ function decode(f: Format): SchemaData {
 	const globalFieldSchema: Map<GlobalFieldKey, FieldSchema> = new Map();
 	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	for (const field of f.globalFieldSchema) {
-		globalFieldSchema.set(brand(field.name), decodeField(field));
+		globalFieldSchema.set(field.name, decodeField(field));
 	}
 	for (const tree of f.treeSchema) {
 		treeSchema.set(brand(tree.name), decodeTree(tree));
@@ -157,6 +207,8 @@ function decodeTree(schema: TreeSchemaFormat): TreeSchema {
  */
 export function getSchemaString(data: SchemaData): string {
 	const encoded = encodeRepo(data);
+	assert(Versioned.Check(encoded), "Encoded schema should be versioned");
+	assert(CompiledFormat.Check(encoded), "Encoded schema should validate");
 	// Currently no Fluid handles are used, so just use JSON.stringify.
 	return JSON.stringify(encoded);
 }
@@ -166,7 +218,16 @@ export function getSchemaString(data: SchemaData): string {
  */
 export function parseSchemaString(data: string): SchemaData {
 	// Currently no Fluid handles are used, so just use JSON.parse.
-	const parsed = JSON.parse(data) as Format;
-	assert(parsed.version === version, 0x3d7 /* Got unsupported schema format version */);
+	const parsed = JSON.parse(data);
+	if (!Versioned.Check(parsed)) {
+		fail("invalid serialized schema: did not have a version");
+	}
+	// When more versions exist, we can switch on the version here.
+	if (!CompiledFormat.Check(parsed)) {
+		if (parsed.version !== version) {
+			fail("Unexpected version for serialized schema");
+		}
+		fail("Serialized schema failed validation");
+	}
 	return decode(parsed);
 }

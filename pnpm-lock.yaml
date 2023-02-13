@@ -5943,6 +5943,7 @@ importers:
       '@fluidframework/test-utils': '>=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
+      '@sinclair/typebox': ^0.25.21
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
@@ -5976,6 +5977,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
+      '@sinclair/typebox': 0.25.21
       '@ungap/structured-clone': 0.3.4
       sorted-btree: 1.8.1
       uuid: 8.3.2
@@ -17986,6 +17988,10 @@ packages:
 
   /@sideway/pinpoint/2.0.0:
     resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
+
+  /@sinclair/typebox/0.25.21:
+    resolution: {integrity: sha512-gFukHN4t8K4+wVC+ECqeqwzBDeFeTzBXroBTqE6vcWrQGbEUpHO7LYdG0f4xnvYq4VOEwITSlHlp0JBAIFMS/g==}
+    dev: false
 
   /@sindresorhus/is/0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}
