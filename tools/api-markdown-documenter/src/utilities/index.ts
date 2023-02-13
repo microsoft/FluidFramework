@@ -4,5 +4,9 @@
  */
 
 // TODO: fix before merging
-// eslint-disable-next-line no-restricted-syntax
+/* eslint-disable no-restricted-syntax */
+
 export * from "./ApiItemUtilities";
+export * from "./ArrayUtilities";
+
+/* eslint-enable no-restricted-syntax */
