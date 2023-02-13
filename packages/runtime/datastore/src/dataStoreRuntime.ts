@@ -425,7 +425,10 @@ export class FluidDataStoreRuntime
 
 					return { mimeType: "fluid/object", status: 200, value: channel };
 				} catch (error) {
-					this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+					this.mc.logger.sendErrorEvent(
+						{ eventName: "GetChannelFailedInRequest" },
+						error,
+					);
 
 					return createResponseError(500, `Failed to get Channel: ${error}`, request);
 				}
@@ -1140,7 +1143,7 @@ export class FluidDataStoreRuntime
 	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
-	protected identifyLocalChangeInSummarizer(
+	private identifyLocalChangeInSummarizer(
 		eventName: string,
 		channelId: string,
 		channelType: string,

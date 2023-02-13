@@ -84,7 +84,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
-    protected identifyLocalChangeInSummarizer(eventName: string, channelId: string, channelType: string): void;
     // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)
