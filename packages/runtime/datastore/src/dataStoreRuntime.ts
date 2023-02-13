@@ -425,7 +425,7 @@ export class FluidDataStoreRuntime
 
 					return { mimeType: "fluid/object", status: 200, value: channel };
 				} catch (error) {
-					this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+					this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
 
 					return createResponseError(500, `Failed to get Channel: ${error}`, request);
 				}

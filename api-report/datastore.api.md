@@ -84,6 +84,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
+    protected identifyLocalChangeInSummarizer(eventName: string, channelId: string, channelType: string): void;
     // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)
@@ -93,7 +94,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // @deprecated (undocumented)
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    get logger(): ITelemetryLogger;
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;
