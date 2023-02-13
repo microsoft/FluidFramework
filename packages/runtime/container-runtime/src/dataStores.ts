@@ -629,7 +629,7 @@ export class DataStores implements IDisposable {
 					// state indicates an op was sent to attach a local data store.
 					assert(
 						context.attachState !== AttachState.Attaching,
-						0x573 /* Local data store detected in attaching state during summarize */,
+						"Local data store detected in attaching state during summarize",
 					);
 					return context.attachState === AttachState.Attached;
 				})
@@ -731,7 +731,7 @@ export class DataStores implements IDisposable {
 					// attaching state indicates an op was sent to attach a local data store.
 					assert(
 						context.attachState !== AttachState.Attaching,
-						0x574 /* Local data store detected in attaching state while running GC */,
+						"Local data store detected in attaching state while running GC",
 					);
 					return context.attachState === AttachState.Attached;
 				})

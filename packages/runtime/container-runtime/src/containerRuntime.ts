@@ -2926,7 +2926,7 @@ export class ContainerRuntime
 			default:
 				assert(
 					this._orderSequentiallyCalls > 0,
-					0x572 /* Unreachable unless running under orderSequentially */,
+					"Unreachable unless running under orderSequentially",
 				);
 				break;
 		}
