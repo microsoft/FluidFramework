@@ -17,6 +17,7 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -139,6 +140,10 @@ export interface IContainerLoadOptions {
      * use the loader's logger, `Loader.services.subLogger`.
      */
     baseLogger?: ITelemetryBaseLogger;
+    /**
+     * A scope object to replace the one provided on the Loader.
+     */
+    scopeOverride?: FluidObject;
 }
 
 export interface IContainerConfig {
@@ -157,6 +162,10 @@ export interface IContainerConfig {
      * use the loader's logger, `Loader.services.subLogger`.
      */
     baseLogger?: ITelemetryBaseLogger;
+    /**
+     * A scope object to replace the one provided on the Loader.
+     */
+    scopeOverride?: FluidObject;
 }
 
 /**
@@ -299,6 +308,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
                 serializedContainerState: pendingLocalState,
+                baseLogger: loadOptions.baseLogger,
+                scopeOverride: loadOptions.scopeOverride,
             },
             protocolHandlerBuilder);
 
@@ -438,6 +449,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
+    private readonly _scopeOverride: FluidObject | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
 
@@ -579,7 +591,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private get serviceFactory() { return this.loader.services.documentServiceFactory; }
     private get urlResolver() { return this.loader.services.urlResolver; }
     public readonly options: ILoaderOptions;
-    private get scope() { return this.loader.services.scope; }
+    private get scope() { return this._scopeOverride ?? this.loader.services.scope; }
     private get codeLoader() { return this.loader.services.codeLoader; }
 
     constructor(
@@ -597,6 +609,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this.clientDetailsOverride = config.clientDetailsOverride;
+        this._scopeOverride = config.scopeOverride;
         this._resolvedUrl = config.resolvedUrl;
         if (config.canReconnect !== undefined) {
             this._canReconnect = config.canReconnect;
@@ -610,7 +623,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
-            loader.services.subLogger,
+            // If a baseLogger was provided, use it; otherwise use the loader's logger.
+            config.baseLogger ?? loader.services.subLogger,
             undefined,
             {
                 all: {
