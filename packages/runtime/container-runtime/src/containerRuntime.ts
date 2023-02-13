@@ -2177,12 +2177,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             fullGC,
         } = options;
 
+        const telemetryContext = new TelemetryContext();
+        // Add the options that are used to generate this summary to the telemetry context.
+        telemetryContext.setAll("fluid_Summarize", "Options", {
+            fullTree,
+            trackState,
+            runGC,
+            fullGC,
+            runSweep,
+        });
+
         let gcStats: IGCStats | undefined;
         if (runGC) {
-            gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
+            gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC }, telemetryContext);
         }
 
-        const telemetryContext = new TelemetryContext();
         const { stats, summary } = await this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
 
         this.logger.sendTelemetryEvent({ eventName: "SummarizeTelemetry", details: telemetryContext.serialize() });
@@ -2336,8 +2345,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             /** True to generate full GC data */
             fullGC?: boolean;
         },
+        telemetryContext?: ITelemetryContext,
     ): Promise<IGCStats | undefined> {
-        return this.garbageCollector.collectGarbage(options);
+        return this.garbageCollector.collectGarbage(options, telemetryContext);
     }
 
     /**

@@ -105,6 +105,9 @@
       "TypeAliasDeclaration_RefreshSummaryResult": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "ClassDeclaration_TelemetryContext": {
+        "forwardCompat": false
       }
     }
   }

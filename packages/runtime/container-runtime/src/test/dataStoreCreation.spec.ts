@@ -98,6 +98,7 @@ describe("Data Store Creation Tests", () => {
                 IFluidDataStoreRegistry: globalRegistry,
                 on: (event, listener) => { },
                 logger: new TelemetryNullLogger(),
+                clientDetails: {},
             } as ContainerRuntime;
             const summarizerNode = createRootSummarizerNodeWithGC(
                 new TelemetryNullLogger(),

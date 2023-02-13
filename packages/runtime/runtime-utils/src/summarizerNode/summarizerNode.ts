@@ -83,7 +83,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         trackState: boolean = true,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummarizeResult> {
-        assert(this.isTrackingInProgress(), 0x1a1 /* "summarize should not be called when not tracking the summary" */);
+        assert(this.isSummaryInProgress(), 0x1a1 /* "summarize should not be called when not tracking the summary" */);
         assert(this.wipSummaryLogger !== undefined,
             0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
 
@@ -564,9 +564,9 @@ export class SummarizerNode implements IRootSummarizerNode {
      * @param child - The child node whose state is to be updated.
      */
     protected maybeUpdateChildState(child: SummarizerNode) {
-        // If we are tracking a summary, this child was created after the tracking started. So, we need to update the
-        // child's tracking state as well.
-        if (this.isTrackingInProgress()) {
+        // If a summary is in progress, this child was created after the summary started. So, we need to update the
+        // child's summary state as well.
+        if (this.isSummaryInProgress()) {
             child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
         }
         // In case we have pending summaries on the parent, let's initialize it on the child.
@@ -589,7 +589,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     /**
      * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
      */
-    protected isTrackingInProgress(): boolean {
+    public isSummaryInProgress(): boolean {
         return this.wipReferenceSequenceNumber !== undefined;
     }
 }
