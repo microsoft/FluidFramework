@@ -1,8 +1,10 @@
-// TODOs:
-// - Consider extensibility of this list? How can consumers introduce custom types here?
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 /**
- * Kind of document domain node. Used to dispatch on different document domain node implementations.
+ * Kinds of {@link DocumentationNode} known inherently by the system.
  *
  * @remarks Any given {@link DocumentationNode} implementation will specify a unique value as
  * its {@link DocumentationNode."type"}.
