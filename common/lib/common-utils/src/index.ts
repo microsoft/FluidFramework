@@ -24,6 +24,7 @@ export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
  * In a future breaking change of common-utils, we could use a named export for their intersection if we
  * desired.
  */
+// eslint-disable-next-line no-restricted-syntax
 export * from "./indexNode";
 export { Lazy } from "./lazy";
 export { BaseTelemetryNullLogger, TelemetryNullLogger } from "./logger";
