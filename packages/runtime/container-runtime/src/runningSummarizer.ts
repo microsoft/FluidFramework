@@ -38,6 +38,7 @@ import {
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
+const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
  * Until disposed, the instance of RunningSummarizer can assume that it is
@@ -470,11 +471,11 @@ export class RunningSummarizer implements IDisposable {
 			let overrideDelaySeconds: number | undefined;
 			let summaryAttempts = 0;
 			let summaryAttemptsPerPhase = 0;
-			// Reducing the default number of attempts to 2.
+			// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
 			const totalAttempts =
 				loggerToMonitoringContext(this.logger).config.getNumber(
 					"Fluid.Summarizer.Attempts",
-				) ?? 2;
+				) ?? defaultNumberSummarizationAttempts;
 			assert(
 				totalAttempts >= 1 && totalAttempts <= attempts.length,
 				"Total number of attempts is invalid ",
