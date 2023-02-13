@@ -9,14 +9,14 @@
  * of the browser implementation, so any changes made in one should be made in both.
  */
 export declare class Buffer extends Uint8Array {
-    toString(encoding?: string): string;
-    /**
-     * @param value - (string | ArrayBuffer).
-     * @param encodingOrOffset - (string | number).
-     * @param length - (number).
-     */
-    static from(value, encodingOrOffset?, length?): IsoBuffer;
-    static isBuffer(obj: any): obj is Buffer;
+	toString(encoding?: string): string;
+	/**
+	 * @param value - (string | ArrayBuffer).
+	 * @param encodingOrOffset - (string | number).
+	 * @param length - (number).
+	 */
+	static from(value, encodingOrOffset?, length?): IsoBuffer;
+	static isBuffer(obj: any): obj is Buffer;
 }
 export const IsoBuffer = Buffer;
 export type IsoBuffer = Buffer;
@@ -30,8 +30,8 @@ export type IsoBuffer = Buffer;
  * @returns The converted string.
  */
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
-    // Make this check because Buffer.from(arr) will always do a buffer copy
-    return Buffer.isBuffer(arr) ? arr.toString(encoding) : Buffer.from(arr).toString(encoding);
+	// Make this check because Buffer.from(arr) will always do a buffer copy
+	return Buffer.isBuffer(arr) ? arr.toString(encoding) : Buffer.from(arr).toString(encoding);
 }
 
 /**
@@ -39,13 +39,13 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
  * @param encoding - The input string's encoding.
  */
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike {
-    const iso = IsoBuffer.from(input, encoding);
-    // In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
-    // pool multiple small Buffer instances into a single ArrayBuffer, in which
-    // case we need to slice the appropriate span of bytes.
-    return iso.byteLength === iso.buffer.byteLength
-        ? iso.buffer
-        : iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
+	const iso = IsoBuffer.from(input, encoding);
+	// In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
+	// pool multiple small Buffer instances into a single ArrayBuffer, in which
+	// case we need to slice the appropriate span of bytes.
+	return iso.byteLength === iso.buffer.byteLength
+		? iso.buffer
+		: iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
 }
 
 /**
@@ -56,4 +56,4 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  * @returns The blob in string format
  */
 export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
-    IsoBuffer.from(blob).toString(encoding);
+	IsoBuffer.from(blob).toString(encoding);

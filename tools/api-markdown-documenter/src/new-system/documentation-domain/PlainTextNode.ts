@@ -6,33 +6,33 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, LiteralNode, SingleLineElementNode } from "./DocumentionNode";
 
 export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode {
-    /**
-     * {@inheritDoc DocumentationNode."type"}
-     */
-    public readonly type = DocumentationNodeType.PlainText;
+	/**
+	 * {@inheritDoc DocumentationNode."type"}
+	 */
+	public readonly type = DocumentationNodeType.PlainText;
 
-    /**
-     * The text to display.
-     *
-     * @remarks Must not contain newline characters.
-     */
-    public readonly value: string;
+	/**
+	 * The text to display.
+	 *
+	 * @remarks Must not contain newline characters.
+	 */
+	public readonly value: string;
 
-    public constructor(value: string) {
-        if (value.includes("\n")) {
-            throw new Error("Invalid value: Plain text nodes may not contain newline characters");
-        }
-        this.value = value;
-    }
+	public constructor(value: string) {
+		if (value.includes("\n")) {
+			throw new Error("Invalid value: Plain text nodes may not contain newline characters");
+		}
+		this.value = value;
+	}
 
-    /**
-     * {@inheritDoc DocumentationNode.equals}
-     */
-    public equals(other: DocumentationNode): boolean {
-        if (this.type !== other.type) {
-            return false;
-        }
+	/**
+	 * {@inheritDoc DocumentationNode.equals}
+	 */
+	public equals(other: DocumentationNode): boolean {
+		if (this.type !== other.type) {
+			return false;
+		}
 
-        return this.value === (other as PlainTextNode).value;
-    }
+		return this.value === (other as PlainTextNode).value;
+	}
 }

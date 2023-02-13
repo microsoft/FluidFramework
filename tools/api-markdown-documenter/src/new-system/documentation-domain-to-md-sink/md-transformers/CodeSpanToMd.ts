@@ -13,22 +13,22 @@ import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
  * @returns The markdown representation of the CodeSpanNode as a string
  */
 export function CodeSpanToMarkdown(
-    codeSpanNode: CodeSpanNode,
-    renderer: DocumentationNodeRenderer,
+	codeSpanNode: CodeSpanNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    renderer.setInsideCodeBlock();
-    const childContents = renderer.renderNodes(codeSpanNode.children);
+	renderer.setInsideCodeBlock();
+	const childContents = renderer.renderNodes(codeSpanNode.children);
 
-    let output: string[] = [];
-    output = renderer.isInsideTable
-        ? [
-              "<code>",
-              // TODO: Linebreaks get converted to <brs> automatically. Do we need this?
-              // Also: Do we need to wrap each linebroken line in its own <code> block? this came from the original markdown emitters, but it's not clear
-              // if it's needed
-              childContents.split(/\r?\n/g).join("</code><br/><code>"),
-              "</code>",
-          ]
-        : ["`", childContents, "`"];
-    return output.join("");
+	let output: string[] = [];
+	output = renderer.isInsideTable
+		? [
+				"<code>",
+				// TODO: Linebreaks get converted to <brs> automatically. Do we need this?
+				// Also: Do we need to wrap each linebroken line in its own <code> block? this came from the original markdown emitters, but it's not clear
+				// if it's needed
+				childContents.split(/\r?\n/g).join("</code><br/><code>"),
+				"</code>",
+		  ]
+		: ["`", childContents, "`"];
+	return output.join("");
 }

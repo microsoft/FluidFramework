@@ -54,6 +54,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         private readonly externalStorageManager: IExternalStorageManager,
         repoPerDocEnabled: boolean,
         private readonly enableRepositoryManagerMetrics: boolean = false,
+        private readonly enforceSynchronous: boolean = true,
     ) {
         this.internalHandler = repoPerDocEnabled
             ? this.repoPerDocInternalHandler.bind(this)
@@ -187,28 +188,37 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
         // We define the function below to be able to call it either on its own or within the mutex.
         const action = async () => {
-            // We only lock on the mutex for "create repo" operations, since we want repo creation to happen
-            // atomically. That means that "open repo" operations can happen in parallel, without the need
-            // for acquiring the lock/mutex. However, imagine the following scenario: one "create repo" operation
-            // acquired the lock for repo A, and then a concurrent "open repo" request comes for repo A. The
-            // "open repo" request will not try to acquire the mutex. However, it still needs to wait just in
-            // case there is an ongoing "create repo" operation, in order for the "open repo" to succeed.
-            // The conditional below makes sure we only proceed with the "open repo" operation if there
-            // is no ongoing "create repo".
-            if (repoOperationType === "open" && this.mutexes.get(repoName)?.isLocked()) {
-                await this.mutexes.get(repoName).waitForUnlock();
-            }
-            if (!this.repositoryCache.has(repoPath)) {
-                const repoExists = await helpers.exists(fileSystemManager, directoryPath);
-                if (!repoExists || !repoExists.isDirectory()) {
-                    await onRepoNotExists(
-                        fileSystemManager,
-                        repoPath,
-                        directoryPath,
-                        lumberjackBaseProperties);
-                } else {
-                    const repo = await this.openGitRepo(directoryPath);
-                    this.repositoryCache.set(repoPath, repo);
+            if (params.optimizeForInitialSummary && repoOperationType === "create") {
+                // Skip checking if repo exists when optimizing for an initial summary.
+                await onRepoNotExists(
+                    fileSystemManager,
+                    repoPath,
+                    directoryPath,
+                    lumberjackBaseProperties);
+            } else {
+                // We only lock on the mutex for "create repo" operations, since we want repo creation to happen
+                // atomically. That means that "open repo" operations can happen in parallel, without the need
+                // for acquiring the lock/mutex. However, imagine the following scenario: one "create repo" operation
+                // acquired the lock for repo A, and then a concurrent "open repo" request comes for repo A. The
+                // "open repo" request will not try to acquire the mutex. However, it still needs to wait just in
+                // case there is an ongoing "create repo" operation, in order for the "open repo" to succeed.
+                // The conditional below makes sure we only proceed with the "open repo" operation if there
+                // is no ongoing "create repo".
+                if (this.enforceSynchronous && repoOperationType === "open" && this.mutexes.get(repoName)?.isLocked()) {
+                    await this.mutexes.get(repoName).waitForUnlock();
+                }
+                if (!this.repositoryCache.has(repoPath)) {
+                    const repoExists = await helpers.exists(fileSystemManager, directoryPath);
+                    if (!repoExists || !repoExists.isDirectory()) {
+                        await onRepoNotExists(
+                            fileSystemManager,
+                            repoPath,
+                            directoryPath,
+                            lumberjackBaseProperties);
+                    } else {
+                        const repo = await this.openGitRepo(directoryPath);
+                        this.repositoryCache.set(repoPath, repo);
+                    }
                 }
             }
 
@@ -232,7 +242,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         // to the filesystem, context switching can cause those "create repo" operations to actually happen
         // asynchronously. Therefore, we use a mutex per repository to control concurrent "create repo" requests
         // and make sure only one of them happens atomically.
-        if (repoOperationType === "create") {
+        if (this.enforceSynchronous && repoOperationType === "create") {
             if (!this.mutexes.has(repoName)) {
                 this.mutexes.set(repoName, withTimeout(new Mutex(), 100000));
             }

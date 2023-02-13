@@ -83,8 +83,6 @@ interface ChildSectionProperties {
     items: readonly ApiItem[];
 }
 
-// Warning: (ae-internal-missing-underscore) The name "CustomDocNodes" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal
 export class CustomDocNodes {
     // (undocumented)

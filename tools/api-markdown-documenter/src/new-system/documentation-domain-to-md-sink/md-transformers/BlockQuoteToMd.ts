@@ -10,12 +10,12 @@ import { standardEOL } from "./Utilities";
  * @returns The markdown representation of the BlockQuoteNode as a string
  */
 export function BlockQuoteToMarkdown(
-    blockQuoteNode: BlockQuoteNode,
-    renderer: DocumentationNodeRenderer,
+	blockQuoteNode: BlockQuoteNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    return renderer
-        .renderNodes(blockQuoteNode.children)
-        .split(standardEOL) // Temporarily remove line breaks
-        .map((line) => `> ${line}`) // Prepend a block quote > in front of the line
-        .join(standardEOL); // And return the line breaks
+	return renderer
+		.renderNodes(blockQuoteNode.children)
+		.split(standardEOL) // Temporarily remove line breaks
+		.map((line) => `> ${line}`) // Prepend a block quote > in front of the line
+		.join(standardEOL); // And return the line breaks
 }

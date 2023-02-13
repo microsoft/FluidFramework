@@ -83,6 +83,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
         containerPackageName?: string;
     };
     // (undocumented)
+    dataStorePath?: string;
+    // (undocumented)
     endpoints: {
         snapshotStorageUrl: string;
         attachmentPOSTStorageUrl: string;
@@ -168,19 +170,15 @@ export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) =>
 // @public (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @public (undocumented)
+// @public
 export enum OdspErrorType {
-    // (undocumented)
     cannotCatchUp = "cannotCatchUp",
-    // (undocumented)
     fetchTimeout = "fetchTimeout",
     // (undocumented)
     fetchTokenError = "fetchTokenError",
-    // (undocumented)
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
     outOfStorageError = "outOfStorageError",
-    // (undocumented)
     serviceReadOnly = "serviceReadOnly",
     snapshotTooBig = "snapshotTooBig"
 }

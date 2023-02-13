@@ -10,17 +10,17 @@ import { standardEOL } from "./Utilities";
  * @returns The markdown representation of the TableRowNode as a string
  */
 export function TableRowToMarkdown(
-    tableRowNode: TableRowNode,
-    renderer: DocumentationNodeRenderer,
+	tableRowNode: TableRowNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    renderer.setInsideTable();
+	renderer.setInsideTable();
 
-    const output = ["| "];
-    for (const cell of tableRowNode.children) {
-        output.push(" ");
-        output.push(renderer.renderNodes(cell.children));
-        output.push(" |");
-    }
+	const output = ["| "];
+	for (const cell of tableRowNode.children) {
+		output.push(" ");
+		output.push(renderer.renderNodes(cell.children));
+		output.push(" |");
+	}
 
-    return `${output.join("")}${standardEOL}`;
+	return `${output.join("")}${standardEOL}`;
 }

@@ -1,5 +1,0 @@
-{
-    "tags": ["mock-service-interface"],
-    "exports": ["index"],
-    "imports": []
-  }

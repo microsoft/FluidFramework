@@ -11,40 +11,40 @@ import { getEscapedText, getTableEscapedText } from "./Utilities";
  * @returns The markdown representation of the PlainTextNode as a string
  */
 export function PlainTextToMarkdown(
-    textNode: PlainTextNode,
-    renderer: DocumentationNodeRenderer,
+	textNode: PlainTextNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    // TODO: Include leading whitespace but trim trailing
-    const output: string[] = [""];
+	// TODO: Include leading whitespace but trim trailing
+	const output: string[] = [""];
 
-    const tagsChecked = [
-        { predicate: renderer.applyingBold, enter: "<b>", exit: "</b>" },
-        { predicate: renderer.applyingItalic, enter: "<i>", exit: "</i>" },
-        { predicate: renderer.applyingStrikethrough, enter: "<strike>", exit: "</strike>" },
-    ];
+	const tagsChecked = [
+		{ predicate: renderer.applyingBold, enter: "<b>", exit: "</b>" },
+		{ predicate: renderer.applyingItalic, enter: "<i>", exit: "</i>" },
+		{ predicate: renderer.applyingStrikethrough, enter: "<strike>", exit: "</strike>" },
+	];
 
-    // Add bold, underline, strikethrough entry tags
-    for (const tag of tagsChecked) {
-        if (tag.predicate) {
-            output.push(tag.enter);
-        }
-    }
+	// Add bold, underline, strikethrough entry tags
+	for (const tag of tagsChecked) {
+		if (tag.predicate) {
+			output.push(tag.enter);
+		}
+	}
 
-    // Add actual content
-    if (renderer.isInsideTable) {
-        output.push(getTableEscapedText(textNode.value));
-    } else if (renderer.isInsideCodeBlock) {
-        output.push(textNode.value);
-    } else {
-        output.push(getEscapedText(textNode.value));
-    }
+	// Add actual content
+	if (renderer.isInsideTable) {
+		output.push(getTableEscapedText(textNode.value));
+	} else if (renderer.isInsideCodeBlock) {
+		output.push(textNode.value);
+	} else {
+		output.push(getEscapedText(textNode.value));
+	}
 
-    // Add bold, underline, strikethrough exit tags
-    for (const tag of tagsChecked) {
-        if (tag.predicate) {
-            output.push(tag.exit);
-        }
-    }
+	// Add bold, underline, strikethrough exit tags
+	for (const tag of tagsChecked) {
+		if (tag.predicate) {
+			output.push(tag.exit);
+		}
+	}
 
-    return output.join("");
+	return output.join("");
 }

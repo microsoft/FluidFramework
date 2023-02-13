@@ -14,16 +14,16 @@ import { standardEOL } from "./Utilities";
  * @returns The markdown representation of the AlertNode as a string
  */
 export function AlertToMarkdown(alertNode: AlertNode, renderer: DocumentationNodeRenderer): string {
-    let headerText = `<bold> [${alertNode.alertKind}]`;
-    if (alertNode.title !== undefined) {
-        headerText += `: ${alertNode.title}`;
-    }
-    headerText += ` </bold>${standardEOL}`;
+	let headerText = `<bold> [${alertNode.alertKind}]`;
+	if (alertNode.title !== undefined) {
+		headerText += `: ${alertNode.title}`;
+	}
+	headerText += ` </bold>${standardEOL}`;
 
-    let output: string[] = [headerText, standardEOL];
-    output.push(renderer.renderNodes(alertNode.children));
-    output = output.map((line) => `> ${line}`);
-    output.unshift(standardEOL);
-    output.push(standardEOL);
-    return output.join("");
+	let output: string[] = [headerText, standardEOL];
+	output.push(renderer.renderNodes(alertNode.children));
+	output = output.map((line) => `> ${line}`);
+	output.unshift(standardEOL);
+	output.push(standardEOL);
+	return output.join("");
 }

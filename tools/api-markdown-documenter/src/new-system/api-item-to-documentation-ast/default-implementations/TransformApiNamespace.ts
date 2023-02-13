@@ -12,9 +12,9 @@ import { transformApiModuleLike } from "./TransformApiModuleLike";
  * Default policy for rendering doc sections for `Namespace` items.
  */
 export function transformApiNamespace(
-    apiNamespace: ApiNamespace,
-    config: Required<MarkdownDocumenterConfiguration>,
-    generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode,
+	apiNamespace: ApiNamespace,
+	config: Required<MarkdownDocumenterConfiguration>,
+	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode,
 ): HierarchicalSectionNode {
-    return transformApiModuleLike(apiNamespace, apiNamespace.members, config, generateChildContent);
+	return transformApiModuleLike(apiNamespace, apiNamespace.members, config, generateChildContent);
 }

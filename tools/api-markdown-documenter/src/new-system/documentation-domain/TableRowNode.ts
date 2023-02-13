@@ -8,25 +8,25 @@ import { TableCellNode } from "./TableCellNode";
 import { compareNodeArrays } from "./Utilities";
 
 export class TableRowNode extends ParentNodeBase<TableCellNode> {
-    /**
-     * {@inheritDoc DocumentationNode."type"}
-     */
-    public readonly type = DocumentationNodeType.TableRow;
+	/**
+	 * {@inheritDoc DocumentationNode."type"}
+	 */
+	public readonly type = DocumentationNodeType.TableRow;
 
-    public constructor(cells: TableCellNode[]) {
-        super(cells);
-    }
+	public constructor(cells: TableCellNode[]) {
+		super(cells);
+	}
 
-    /**
-     * {@inheritDoc DocumentationNode.equals}
-     */
-    public equals(other: DocumentationNode): boolean {
-        if (this.type !== other.type) {
-            return false;
-        }
+	/**
+	 * {@inheritDoc DocumentationNode.equals}
+	 */
+	public equals(other: DocumentationNode): boolean {
+		if (this.type !== other.type) {
+			return false;
+		}
 
-        const otherRow = other as TableRowNode;
+		const otherRow = other as TableRowNode;
 
-        return compareNodeArrays(this.children, otherRow.children);
-    }
+		return compareNodeArrays(this.children, otherRow.children);
+	}
 }

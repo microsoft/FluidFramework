@@ -6,20 +6,20 @@
 // TODO: fix before merging
 /* eslint-disable no-restricted-syntax */
 export {
-    DocAlert,
-    DocAlertType,
-    DocEmphasisSpan,
-    DocHeading,
-    DocList,
-    DocNoteBox,
-    DocTable,
-    DocTableCell,
-    DocTableRow,
-    IDocAlertParameters,
-    IDocHeadingParameters,
-    IDocListParameters,
-    CustomDocNodes,
-    ListKind,
+	DocAlert,
+	DocAlertType,
+	DocEmphasisSpan,
+	DocHeading,
+	DocList,
+	DocNoteBox,
+	DocTable,
+	DocTableCell,
+	DocTableRow,
+	IDocAlertParameters,
+	IDocHeadingParameters,
+	IDocListParameters,
+	CustomDocNodes,
+	ListKind,
 } from "./doc-nodes";
 export * from "./rendering";
 export * from "./utilities";

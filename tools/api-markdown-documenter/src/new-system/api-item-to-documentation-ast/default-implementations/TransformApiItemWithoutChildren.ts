@@ -11,10 +11,10 @@ import { HierarchicalSectionNode } from "../../documentation-domain";
  * Default transformation helper for rendering item kinds that do not have children.
  */
 export function transformApiItemWithoutChildren(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode {
-    // Items without children don't have much information to provide other than the default
-    // rendered details.
-    return config.createSectionWithChildContent(apiItem, undefined, config);
+	// Items without children don't have much information to provide other than the default
+	// rendered details.
+	return config.createSectionWithChildContent(apiItem, undefined, config);
 }

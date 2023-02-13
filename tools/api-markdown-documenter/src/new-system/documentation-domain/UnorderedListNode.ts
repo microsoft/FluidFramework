@@ -10,25 +10,25 @@ import { compareNodeArrays } from "./Utilities";
 // - Do we support a special input for doing nested sub-lists?
 
 export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
-    /**
-     * {@inheritDoc DocumentationNode."type"}
-     */
-    public readonly type = DocumentationNodeType.UnorderedList;
+	/**
+	 * {@inheritDoc DocumentationNode."type"}
+	 */
+	public readonly type = DocumentationNodeType.UnorderedList;
 
-    public constructor(children: SingleLineElementNode[]) {
-        super(children);
-    }
+	public constructor(children: SingleLineElementNode[]) {
+		super(children);
+	}
 
-    /**
-     * {@inheritDoc DocumentationNode.equals}
-     */
-    public equals(other: DocumentationNode): boolean {
-        if (this.type !== other.type) {
-            return false;
-        }
+	/**
+	 * {@inheritDoc DocumentationNode.equals}
+	 */
+	public equals(other: DocumentationNode): boolean {
+		if (this.type !== other.type) {
+			return false;
+		}
 
-        const otherList = other as UnorderedListNode;
+		const otherList = other as UnorderedListNode;
 
-        return compareNodeArrays(this.children, otherList.children);
-    }
+		return compareNodeArrays(this.children, otherList.children);
+	}
 }

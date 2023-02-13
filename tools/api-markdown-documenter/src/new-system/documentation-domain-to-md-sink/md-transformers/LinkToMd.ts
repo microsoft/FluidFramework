@@ -9,6 +9,6 @@ import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
  * @returns The markdown representation of the LinkNode as a string
  */
 export function LinkToMarkdown(linkNode: LinkNode, renderer: DocumentationNodeRenderer): string {
-    const linkText = renderer.renderNodes(linkNode.children).replace(/\s+/g, " ");
-    return `[${linkText}](${linkNode.target})`;
+	const linkText = renderer.renderNodes(linkNode.children).replace(/\s+/g, " ");
+	return `[${linkText}](${linkNode.target})`;
 }

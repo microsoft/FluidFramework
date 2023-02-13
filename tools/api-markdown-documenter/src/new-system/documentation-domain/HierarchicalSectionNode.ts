@@ -17,83 +17,83 @@ import { compareNodeArrays } from "./Utilities";
  * @example TODO
  */
 export class HierarchicalSectionNode extends ParentNodeBase {
-    /**
-     * {@inheritDoc DocumentationNode."type"}
-     */
-    public readonly type = DocumentationNodeType.HierarchicalSection;
+	/**
+	 * {@inheritDoc DocumentationNode."type"}
+	 */
+	public readonly type = DocumentationNodeType.HierarchicalSection;
 
-    /**
-     * Optional heading to display for the section.
-     *
-     * @remarks If not specified, no heading will be displayed in the section contents.
-     * Note that this section will still influence heading hierarchy of child contents regardless.
-     */
-    public readonly heading?: HeadingNode;
+	/**
+	 * Optional heading to display for the section.
+	 *
+	 * @remarks If not specified, no heading will be displayed in the section contents.
+	 * Note that this section will still influence heading hierarchy of child contents regardless.
+	 */
+	public readonly heading?: HeadingNode;
 
-    /**
-     * Empty section singleton.
-     */
-    public static readonly Empty = new HierarchicalSectionNode([]);
+	/**
+	 * Empty section singleton.
+	 */
+	public static readonly Empty = new HierarchicalSectionNode([]);
 
-    public constructor(children: DocumentationNode[], heading?: HeadingNode) {
-        super(children);
+	public constructor(children: DocumentationNode[], heading?: HeadingNode) {
+		super(children);
 
-        if (heading?.level !== undefined) {
-            throw new Error("Hierarchical section headings must not specify a heading level.");
-        }
+		if (heading?.level !== undefined) {
+			throw new Error("Hierarchical section headings must not specify a heading level.");
+		}
 
-        this.heading = heading;
-    }
+		this.heading = heading;
+	}
 
-    /**
-     * {@inheritDoc DocumentationNode.equals}
-     */
-    public equals(other: DocumentationNode): boolean {
-        if (this.type !== other.type) {
-            return false;
-        }
+	/**
+	 * {@inheritDoc DocumentationNode.equals}
+	 */
+	public equals(other: DocumentationNode): boolean {
+		if (this.type !== other.type) {
+			return false;
+		}
 
-        const otherSection = other as HierarchicalSectionNode;
+		const otherSection = other as HierarchicalSectionNode;
 
-        if (this.heading === undefined) {
-            if (otherSection.heading !== undefined) {
-                return false;
-            }
-        } else {
-            if (otherSection.heading === undefined) {
-                return false;
-            }
-            if (!this.heading.equals(otherSection.heading)) {
-                return false;
-            }
-        }
+		if (this.heading === undefined) {
+			if (otherSection.heading !== undefined) {
+				return false;
+			}
+		} else {
+			if (otherSection.heading === undefined) {
+				return false;
+			}
+			if (!this.heading.equals(otherSection.heading)) {
+				return false;
+			}
+		}
 
-        return compareNodeArrays(this.children, otherSection.children);
-    }
+		return compareNodeArrays(this.children, otherSection.children);
+	}
 
-    /**
-     * Merges a list of {@link HierarchicalSectionNode}s into a single section.
-     *
-     * @remarks This is an option if you wish to group a series of sections without putting them under some parent section
-     * (which would affect the hierarchy).
-     * @param sections - The sections to merge.
-     */
-    public static combine(...sections: HierarchicalSectionNode[]): HierarchicalSectionNode {
-        if (sections.length === 0) {
-            return HierarchicalSectionNode.Empty;
-        }
+	/**
+	 * Merges a list of {@link HierarchicalSectionNode}s into a single section.
+	 *
+	 * @remarks This is an option if you wish to group a series of sections without putting them under some parent section
+	 * (which would affect the hierarchy).
+	 * @param sections - The sections to merge.
+	 */
+	public static combine(...sections: HierarchicalSectionNode[]): HierarchicalSectionNode {
+		if (sections.length === 0) {
+			return HierarchicalSectionNode.Empty;
+		}
 
-        if (sections.length === 1) {
-            return sections[0];
-        }
+		if (sections.length === 1) {
+			return sections[0];
+		}
 
-        const childNodes: DocumentationNode[] = [];
-        for (const section of sections) {
-            if (section.heading !== undefined) {
-                childNodes.push(section.heading);
-            }
-            childNodes.push(...section.children);
-        }
-        return new HierarchicalSectionNode(childNodes, undefined);
-    }
+		const childNodes: DocumentationNode[] = [];
+		for (const section of sections) {
+			if (section.heading !== undefined) {
+				childNodes.push(section.heading);
+			}
+			childNodes.push(...section.children);
+		}
+		return new HierarchicalSectionNode(childNodes, undefined);
+	}
 }

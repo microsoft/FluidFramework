@@ -16,63 +16,63 @@ import { compareNodeArrays } from "./Utilities";
  * and cannot be parented under other Documentation nodes.
  */
 export class DocumentNode implements UnistParent<DocumentationNode> {
-    /**
-     * {@inheritDoc DocumentationNode."type"}
-     */
-    public readonly type = DocumentationNodeType.Document;
+	/**
+	 * {@inheritDoc DocumentationNode."type"}
+	 */
+	public readonly type = DocumentationNodeType.Document;
 
-    public readonly children: DocumentationNode[];
-    public readonly filePath: string;
-    public readonly title?: string;
-    public readonly frontMatter?: string;
-    public readonly header?: ParagraphNode;
-    public readonly footer?: ParagraphNode;
-    public constructor(
-        children: DocumentationNode[],
-        filePath: string,
-        title?: string,
-        frontMatter?: string,
-        header?: ParagraphNode,
-        footer?: ParagraphNode,
-    ) {
-        this.children = children;
-        this.filePath = filePath;
-        this.title = title;
-        this.frontMatter = frontMatter;
-        this.header = header;
-        this.footer = footer;
-    }
+	public readonly children: DocumentationNode[];
+	public readonly filePath: string;
+	public readonly title?: string;
+	public readonly frontMatter?: string;
+	public readonly header?: ParagraphNode;
+	public readonly footer?: ParagraphNode;
+	public constructor(
+		children: DocumentationNode[],
+		filePath: string,
+		title?: string,
+		frontMatter?: string,
+		header?: ParagraphNode,
+		footer?: ParagraphNode,
+	) {
+		this.children = children;
+		this.filePath = filePath;
+		this.title = title;
+		this.frontMatter = frontMatter;
+		this.header = header;
+		this.footer = footer;
+	}
 
-    /**
-     * {@inheritDoc DocumentationNode.equals}
-     */
-    public equals(other: DocumentationNode): boolean {
-        if (this.type !== other.type) {
-            return false;
-        }
+	/**
+	 * {@inheritDoc DocumentationNode.equals}
+	 */
+	public equals(other: DocumentationNode): boolean {
+		if (this.type !== other.type) {
+			return false;
+		}
 
-        const otherHeading = other as DocumentNode;
+		const otherHeading = other as DocumentNode;
 
-        if (this.filePath !== otherHeading.filePath) {
-            return false;
-        }
+		if (this.filePath !== otherHeading.filePath) {
+			return false;
+		}
 
-        if (this.title !== otherHeading.title) {
-            return false;
-        }
+		if (this.title !== otherHeading.title) {
+			return false;
+		}
 
-        if (this.frontMatter !== otherHeading.frontMatter) {
-            return false;
-        }
+		if (this.frontMatter !== otherHeading.frontMatter) {
+			return false;
+		}
 
-        if (this.header !== otherHeading.header) {
-            return false;
-        }
+		if (this.header !== otherHeading.header) {
+			return false;
+		}
 
-        if (this.footer !== otherHeading.footer) {
-            return false;
-        }
+		if (this.footer !== otherHeading.footer) {
+			return false;
+		}
 
-        return compareNodeArrays(this.children, otherHeading.children);
-    }
+		return compareNodeArrays(this.children, otherHeading.children);
+	}
 }

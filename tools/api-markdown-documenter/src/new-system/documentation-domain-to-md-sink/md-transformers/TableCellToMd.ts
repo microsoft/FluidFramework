@@ -9,9 +9,9 @@ import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
  * @returns The markdown representation of the TableCellNode as a string
  */
 export function TableCellToMarkdown(
-    tableCellNode: TableCellNode,
-    renderer: DocumentationNodeRenderer,
+	tableCellNode: TableCellNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    renderer.setInsideTable();
-    return renderer.renderNodes(tableCellNode.children);
+	renderer.setInsideTable();
+	return renderer.renderNodes(tableCellNode.children);
 }

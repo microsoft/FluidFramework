@@ -13,13 +13,13 @@ export type UrlTarget = string;
  * Represents a link to some documentation element.
  */
 export interface Link {
-    /**
-     * Link text to be rendered.
-     */
-    readonly text: string;
+	/**
+	 * Link text to be rendered.
+	 */
+	readonly text: string;
 
-    /**
-     * Link target URL.
-     */
-    readonly target: UrlTarget;
+	/**
+	 * Link target URL.
+	 */
+	readonly target: UrlTarget;
 }

@@ -6,20 +6,20 @@ import { PlainTextNode } from "./PlainTextNode";
  * Compare two arrays and return true if their elements are equivalent and in the same order.
  */
 export function compareNodeArrays<TNode extends DocumentationNode>(
-    arrayA: readonly TNode[],
-    arrayB: readonly TNode[],
+	arrayA: readonly TNode[],
+	arrayB: readonly TNode[],
 ): boolean {
-    if (arrayA.length !== arrayB.length) {
-        return false;
-    }
+	if (arrayA.length !== arrayB.length) {
+		return false;
+	}
 
-    for (const [i, element] of arrayA.entries()) {
-        if (!element.equals(arrayB[i])) {
-            return false;
-        }
-    }
+	for (const [i, element] of arrayA.entries()) {
+		if (!element.equals(arrayB[i])) {
+			return false;
+		}
+	}
 
-    return true;
+	return true;
 }
 
 /**
@@ -27,19 +27,19 @@ export function compareNodeArrays<TNode extends DocumentationNode>(
  * appropriate to preserve the invariant that `PlainTextNode`s do not include line breaks.
  */
 export function createNodesFromPlainText(text: string): (PlainTextNode | LineBreakNode)[] {
-    const lines = text.split(/\r?\n/g);
+	const lines = text.split(/\r?\n/g);
 
-    const transformedLines: (PlainTextNode | LineBreakNode)[] = [];
-    for (const [index, line] of lines.entries()) {
-        if (line.length === 0) {
-            transformedLines.push(LineBreakNode.Singleton);
-        } else {
-            transformedLines.push(new PlainTextNode(line));
-        }
-        if (index !== lines.length - 1) {
-            // Push line break between each entry (not after last entry)
-            transformedLines.push(LineBreakNode.Singleton);
-        }
-    }
-    return transformedLines;
+	const transformedLines: (PlainTextNode | LineBreakNode)[] = [];
+	for (const [index, line] of lines.entries()) {
+		if (line.length === 0) {
+			transformedLines.push(LineBreakNode.Singleton);
+		} else {
+			transformedLines.push(new PlainTextNode(line));
+		}
+		if (index !== lines.length - 1) {
+			// Push line break between each entry (not after last entry)
+			transformedLines.push(LineBreakNode.Singleton);
+		}
+	}
+	return transformedLines;
 }

@@ -15,26 +15,26 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
  * @returns The rendered Markdown document.
  */
 export function apiPackageToDocument(
-    apiPackage: ApiPackage,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiPackage: ApiPackage,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocumentNode {
-    const logger = config.logger;
+	const logger = config.logger;
 
-    logger.verbose(`Rendering ${apiPackage.name} package document...`);
+	logger.verbose(`Rendering ${apiPackage.name} package document...`);
 
-    const sections: HierarchicalSectionNode[] = [];
+	const sections: HierarchicalSectionNode[] = [];
 
-    // Render breadcrumb
-    sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
+	// Render breadcrumb
+	sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
 
-    // Render body contents
-    sections.push(
-        config.transformApiPackage(apiPackage, config, (childItem) =>
-            apiItemToSection(childItem, config),
-        ),
-    );
+	// Render body contents
+	sections.push(
+		config.transformApiPackage(apiPackage, config, (childItem) =>
+			apiItemToSection(childItem, config),
+		),
+	);
 
-    logger.verbose(`Package document rendered successfully.`);
+	logger.verbose(`Package document rendered successfully.`);
 
-    return createDocument(apiPackage, sections, config);
+	return createDocument(apiPackage, sections, config);
 }

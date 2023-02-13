@@ -26,14 +26,14 @@ export const markdownEOL = `${standardEOL}${standardEOL}`;
  * @returns Escaped text
  */
 export function getEscapedText(text: string): string {
-    const textWithBackslashes = text
-        .replace(/\\/g, "\\\\") // first replace the escape character
-        .replace(/[#*[\]_`|~]/g, (x) => `\\${x}`) // then escape any special characters
-        .replace(/---/g, "\\-\\-\\-") // hyphens only if it's 3 or more
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    return textWithBackslashes;
+	const textWithBackslashes = text
+		.replace(/\\/g, "\\\\") // first replace the escape character
+		.replace(/[#*[\]_`|~]/g, (x) => `\\${x}`) // then escape any special characters
+		.replace(/---/g, "\\-\\-\\-") // hyphens only if it's 3 or more
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
+	return textWithBackslashes;
 }
 
 /**
@@ -43,12 +43,12 @@ export function getEscapedText(text: string): string {
  * @returns Escaped text
  */
 export function getTableEscapedText(text: string): string {
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\|/g, "&#124;");
+	return text
+		.replace(/&/g, "&amp;")
+		.replace(/"/g, "&quot;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/\|/g, "&#124;");
 }
 
 /**
@@ -62,7 +62,7 @@ export function getTableEscapedText(text: string): string {
  * @returns A newline or an empty string
  */
 export function addNewlineOrBlank(shouldAddNewline: boolean): string {
-    return shouldAddNewline ? standardEOL : "";
+	return shouldAddNewline ? standardEOL : "";
 }
 
 /**
@@ -73,14 +73,14 @@ export function addNewlineOrBlank(shouldAddNewline: boolean): string {
  * @returns Number of newlines at the end of the string
  */
 export function countTrailingNewlines(text: string): number {
-    const matches = text.match(/(\r?\n)*$/); // TODO: Do we need to account for whitespace chars?
-    const trailingNewlines = matches ? matches[0] : undefined;
-    if (trailingNewlines === undefined) {
-        return 0;
-    }
-    let count = 0;
-    for (const trailingNewline of trailingNewlines) {
-        if (trailingNewline === "\n") count++;
-    }
-    return count;
+	const matches = text.match(/(\r?\n)*$/); // TODO: Do we need to account for whitespace chars?
+	const trailingNewlines = matches ? matches[0] : undefined;
+	if (trailingNewlines === undefined) {
+		return 0;
+	}
+	let count = 0;
+	for (const trailingNewline of trailingNewlines) {
+		if (trailingNewline === "\n") count++;
+	}
+	return count;
 }

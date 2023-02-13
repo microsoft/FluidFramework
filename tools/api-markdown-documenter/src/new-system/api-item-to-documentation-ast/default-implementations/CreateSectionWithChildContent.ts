@@ -8,15 +8,15 @@ import { MarkdownDocumenterConfiguration } from "../../../Configuration";
 import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../../../utilities";
 import { HierarchicalSectionNode } from "../../documentation-domain";
 import {
-    betaAlert,
-    createDeprecationNoticeSection,
-    createExamplesSection,
-    createRemarksSection,
-    createSeeAlsoSection,
-    createSignatureSection,
-    createSummaryParagraph,
-    createThrowsSection,
-    wrapInSection,
+	betaAlert,
+	createDeprecationNoticeSection,
+	createExamplesSection,
+	createRemarksSection,
+	createSeeAlsoSection,
+	createSignatureSection,
+	createSummaryParagraph,
+	createThrowsSection,
+	wrapInSection,
 } from "../helpers";
 
 /**
@@ -39,67 +39,67 @@ import {
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function createSectionWithChildContent(
-    apiItem: ApiItem,
-    childContent: HierarchicalSectionNode[] | undefined,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	childContent: HierarchicalSectionNode[] | undefined,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode {
-    const sections: HierarchicalSectionNode[] = [];
+	const sections: HierarchicalSectionNode[] = [];
 
-    // Render beta warning if applicable
-    if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-        sections.push(wrapInSection([betaAlert]));
-    }
+	// Render beta warning if applicable
+	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
+		sections.push(wrapInSection([betaAlert]));
+	}
 
-    // Render deprecation notice (if any)
-    const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
-    if (deprecationNotice !== undefined) {
-        sections.push(wrapInSection([deprecationNotice]));
-    }
+	// Render deprecation notice (if any)
+	const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
+	if (deprecationNotice !== undefined) {
+		sections.push(wrapInSection([deprecationNotice]));
+	}
 
-    // Render summary comment (if any)
-    const summary = createSummaryParagraph(apiItem, config);
-    if (summary !== undefined) {
-        sections.push(wrapInSection([summary]));
-    }
+	// Render summary comment (if any)
+	const summary = createSummaryParagraph(apiItem, config);
+	if (summary !== undefined) {
+		sections.push(wrapInSection([summary]));
+	}
 
-    // Render signature (if any)
-    const signature = createSignatureSection(apiItem, config);
-    if (signature !== undefined) {
-        sections.push(signature);
-    }
+	// Render signature (if any)
+	const signature = createSignatureSection(apiItem, config);
+	if (signature !== undefined) {
+		sections.push(signature);
+	}
 
-    // Render @remarks content (if any)
-    const renderedRemarks = createRemarksSection(apiItem, config);
-    if (renderedRemarks !== undefined) {
-        sections.push(renderedRemarks);
-    }
+	// Render @remarks content (if any)
+	const renderedRemarks = createRemarksSection(apiItem, config);
+	if (renderedRemarks !== undefined) {
+		sections.push(renderedRemarks);
+	}
 
-    // Render examples (if any)
-    const renderedExamples = createExamplesSection(apiItem, config);
-    if (renderedExamples !== undefined) {
-        sections.push(renderedExamples);
-    }
+	// Render examples (if any)
+	const renderedExamples = createExamplesSection(apiItem, config);
+	if (renderedExamples !== undefined) {
+		sections.push(renderedExamples);
+	}
 
-    if (childContent !== undefined) {
-        // Flatten contents into this section
-        sections.push(...childContent);
-    }
+	if (childContent !== undefined) {
+		// Flatten contents into this section
+		sections.push(...childContent);
+	}
 
-    // Render @throws content (if any)
-    const renderedThrows = createThrowsSection(apiItem, config);
-    if (renderedThrows !== undefined) {
-        sections.push(renderedThrows);
-    }
+	// Render @throws content (if any)
+	const renderedThrows = createThrowsSection(apiItem, config);
+	if (renderedThrows !== undefined) {
+		sections.push(renderedThrows);
+	}
 
-    // Render @see content (if any)
-    const renderedSeeAlso = createSeeAlsoSection(apiItem, config);
-    if (renderedSeeAlso !== undefined) {
-        sections.push(renderedSeeAlso);
-    }
+	// Render @see content (if any)
+	const renderedSeeAlso = createSeeAlsoSection(apiItem, config);
+	if (renderedSeeAlso !== undefined) {
+		sections.push(renderedSeeAlso);
+	}
 
-    // Add heading to top of section only if this is being rendered to a parent item.
-    // Document items have their headings handled specially.
-    return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
-        ? HierarchicalSectionNode.combine(...sections)
-        : wrapInSection(sections, getHeadingForApiItem(apiItem, config));
+	// Add heading to top of section only if this is being rendered to a parent item.
+	// Document items have their headings handled specially.
+	return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+		? HierarchicalSectionNode.combine(...sections)
+		: wrapInSection(sections, getHeadingForApiItem(apiItem, config));
 }

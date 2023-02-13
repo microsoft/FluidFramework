@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 import {
-    ApiCallSignature,
-    ApiClass,
-    ApiConstructSignature,
-    ApiConstructor,
-    ApiEnum,
-    ApiEnumMember,
-    ApiFunction,
-    ApiIndexSignature,
-    ApiInterface,
-    ApiItem,
-    ApiItemKind,
-    ApiMethod,
-    ApiMethodSignature,
-    ApiNamespace,
-    ApiPropertyItem,
-    ApiTypeAlias,
-    ApiVariable,
+	ApiCallSignature,
+	ApiClass,
+	ApiConstructSignature,
+	ApiConstructor,
+	ApiEnum,
+	ApiEnumMember,
+	ApiFunction,
+	ApiIndexSignature,
+	ApiInterface,
+	ApiItem,
+	ApiItemKind,
+	ApiMethod,
+	ApiMethodSignature,
+	ApiNamespace,
+	ApiPropertyItem,
+	ApiTypeAlias,
+	ApiVariable,
 } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
@@ -47,44 +47,44 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
  * @returns The rendered Markdown document.
  */
 export function apiItemToDocument(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocumentNode {
-    if (apiItem.kind === ApiItemKind.None) {
-        throw new Error(`Encountered API item with a kind of "None".`);
-    }
+	if (apiItem.kind === ApiItemKind.None) {
+		throw new Error(`Encountered API item with a kind of "None".`);
+	}
 
-    if (
-        apiItem.kind === ApiItemKind.Model ||
-        apiItem.kind === ApiItemKind.Package ||
-        apiItem.kind === ApiItemKind.EntryPoint
-    ) {
-        throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
-    }
+	if (
+		apiItem.kind === ApiItemKind.Model ||
+		apiItem.kind === ApiItemKind.Package ||
+		apiItem.kind === ApiItemKind.EntryPoint
+	) {
+		throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+	}
 
-    if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
-        throw new Error(
-            `"renderApiDocument" called for an API item kind that is not intended to be rendered to its own document. Provided item kind: "${apiItem.kind}".`,
-        );
-    }
+	if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
+		throw new Error(
+			`"renderApiDocument" called for an API item kind that is not intended to be rendered to its own document. Provided item kind: "${apiItem.kind}".`,
+		);
+	}
 
-    const logger = config.logger;
+	const logger = config.logger;
 
-    logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
+	logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
 
-    const sections: HierarchicalSectionNode[] = [];
+	const sections: HierarchicalSectionNode[] = [];
 
-    // Render breadcrumb
-    if (config.includeBreadcrumb) {
-        sections.push(wrapInSection([createBreadcrumbParagraph(apiItem, config)]));
-    }
+	// Render breadcrumb
+	if (config.includeBreadcrumb) {
+		sections.push(wrapInSection([createBreadcrumbParagraph(apiItem, config)]));
+	}
 
-    // Render body content for the item
-    sections.push(apiItemToSection(apiItem, config));
+	// Render body content for the item
+	sections.push(apiItemToSection(apiItem, config));
 
-    logger.verbose(`Document for ${apiItem.displayName} rendered successfully.`);
+	logger.verbose(`Document for ${apiItem.displayName} rendered successfully.`);
 
-    return createDocument(apiItem, sections, config);
+	return createDocument(apiItem, sections, config);
 }
 
 /**
@@ -97,100 +97,100 @@ export function apiItemToDocument(
  * - `EntryPoint`
  */
 export function apiItemToSection(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode {
-    if (apiItem.kind === ApiItemKind.None) {
-        throw new Error(`Encountered API item with a kind of "None".`);
-    }
+	if (apiItem.kind === ApiItemKind.None) {
+		throw new Error(`Encountered API item with a kind of "None".`);
+	}
 
-    if (
-        apiItem.kind === ApiItemKind.Model ||
-        apiItem.kind === ApiItemKind.Package ||
-        apiItem.kind === ApiItemKind.EntryPoint
-    ) {
-        throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
-    }
+	if (
+		apiItem.kind === ApiItemKind.Model ||
+		apiItem.kind === ApiItemKind.Package ||
+		apiItem.kind === ApiItemKind.EntryPoint
+	) {
+		throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+	}
 
-    const logger = config.logger;
+	const logger = config.logger;
 
-    logger.verbose(`Rendering section for ${apiItem.displayName}...`);
+	logger.verbose(`Rendering section for ${apiItem.displayName}...`);
 
-    let section: HierarchicalSectionNode;
-    switch (apiItem.kind) {
-        case ApiItemKind.CallSignature:
-            section = config.transformApiCallSignature(apiItem as ApiCallSignature, config);
-            break;
+	let section: HierarchicalSectionNode;
+	switch (apiItem.kind) {
+		case ApiItemKind.CallSignature:
+			section = config.transformApiCallSignature(apiItem as ApiCallSignature, config);
+			break;
 
-        case ApiItemKind.Class:
-            section = config.transformApiClass(apiItem as ApiClass, config, (childItem) =>
-                apiItemToSection(childItem, config),
-            );
-            break;
+		case ApiItemKind.Class:
+			section = config.transformApiClass(apiItem as ApiClass, config, (childItem) =>
+				apiItemToSection(childItem, config),
+			);
+			break;
 
-        case ApiItemKind.ConstructSignature:
-            section = config.transformApiConstructor(apiItem as ApiConstructSignature, config);
-            break;
+		case ApiItemKind.ConstructSignature:
+			section = config.transformApiConstructor(apiItem as ApiConstructSignature, config);
+			break;
 
-        case ApiItemKind.Constructor:
-            section = config.transformApiConstructor(apiItem as ApiConstructor, config);
-            break;
+		case ApiItemKind.Constructor:
+			section = config.transformApiConstructor(apiItem as ApiConstructor, config);
+			break;
 
-        case ApiItemKind.Enum:
-            section = config.transformApiEnum(apiItem as ApiEnum, config, (childItem) =>
-                apiItemToSection(childItem, config),
-            );
-            break;
+		case ApiItemKind.Enum:
+			section = config.transformApiEnum(apiItem as ApiEnum, config, (childItem) =>
+				apiItemToSection(childItem, config),
+			);
+			break;
 
-        case ApiItemKind.EnumMember:
-            section = config.transformApiEnumMember(apiItem as ApiEnumMember, config);
-            break;
+		case ApiItemKind.EnumMember:
+			section = config.transformApiEnumMember(apiItem as ApiEnumMember, config);
+			break;
 
-        case ApiItemKind.Function:
-            section = config.transformApiFunction(apiItem as ApiFunction, config);
-            break;
+		case ApiItemKind.Function:
+			section = config.transformApiFunction(apiItem as ApiFunction, config);
+			break;
 
-        case ApiItemKind.IndexSignature:
-            section = config.transformApiIndexSignature(apiItem as ApiIndexSignature, config);
-            break;
+		case ApiItemKind.IndexSignature:
+			section = config.transformApiIndexSignature(apiItem as ApiIndexSignature, config);
+			break;
 
-        case ApiItemKind.Interface:
-            section = config.transformApiInterface(apiItem as ApiInterface, config, (childItem) =>
-                apiItemToSection(childItem, config),
-            );
-            break;
+		case ApiItemKind.Interface:
+			section = config.transformApiInterface(apiItem as ApiInterface, config, (childItem) =>
+				apiItemToSection(childItem, config),
+			);
+			break;
 
-        case ApiItemKind.Method:
-            section = config.transformApiMethod(apiItem as ApiMethod, config);
-            break;
+		case ApiItemKind.Method:
+			section = config.transformApiMethod(apiItem as ApiMethod, config);
+			break;
 
-        case ApiItemKind.MethodSignature:
-            section = config.transformApiMethod(apiItem as ApiMethodSignature, config);
-            break;
+		case ApiItemKind.MethodSignature:
+			section = config.transformApiMethod(apiItem as ApiMethodSignature, config);
+			break;
 
-        case ApiItemKind.Namespace:
-            section = config.transformApiNamespace(apiItem as ApiNamespace, config, (childItem) =>
-                apiItemToSection(childItem, config),
-            );
-            break;
+		case ApiItemKind.Namespace:
+			section = config.transformApiNamespace(apiItem as ApiNamespace, config, (childItem) =>
+				apiItemToSection(childItem, config),
+			);
+			break;
 
-        case ApiItemKind.Property:
-        case ApiItemKind.PropertySignature:
-            section = config.transformApiProperty(apiItem as ApiPropertyItem, config);
-            break;
+		case ApiItemKind.Property:
+		case ApiItemKind.PropertySignature:
+			section = config.transformApiProperty(apiItem as ApiPropertyItem, config);
+			break;
 
-        case ApiItemKind.TypeAlias:
-            section = config.transformApiTypeAlias(apiItem as ApiTypeAlias, config);
-            break;
+		case ApiItemKind.TypeAlias:
+			section = config.transformApiTypeAlias(apiItem as ApiTypeAlias, config);
+			break;
 
-        case ApiItemKind.Variable:
-            section = config.transformApiVariable(apiItem as ApiVariable, config);
-            break;
+		case ApiItemKind.Variable:
+			section = config.transformApiVariable(apiItem as ApiVariable, config);
+			break;
 
-        default:
-            throw new Error(`Unrecognized API item kind: "${apiItem.kind}".`);
-    }
+		default:
+			throw new Error(`Unrecognized API item kind: "${apiItem.kind}".`);
+	}
 
-    logger.verbose(`${apiItem.displayName} section rendered successfully!`);
-    return section;
+	logger.verbose(`${apiItem.displayName} section rendered successfully!`);
+	return section;
 }

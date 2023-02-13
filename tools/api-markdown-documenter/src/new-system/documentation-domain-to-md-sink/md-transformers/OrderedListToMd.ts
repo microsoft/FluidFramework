@@ -10,22 +10,22 @@ import { addNewlineOrBlank, standardEOL } from "./Utilities";
  * @returns The markdown representation of the OrderedListNode as a string
  */
 export function OrderedListToMarkdown(
-    listNode: OrderedListNode,
-    renderer: DocumentationNodeRenderer,
+	listNode: OrderedListNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    const output: string[] = [addNewlineOrBlank(renderer.countTrailingNewlines < 1)];
+	const output: string[] = [addNewlineOrBlank(renderer.countTrailingNewlines < 1)];
 
-    output.push(
-        ...listNode.children.map(
-            (child, index) =>
-                `${index + 1}. ${renderer.renderNode(child)}${addNewlineOrBlank(
-                    renderer.countTrailingNewlines < 1,
-                )}`,
-        ),
-    );
+	output.push(
+		...listNode.children.map(
+			(child, index) =>
+				`${index + 1}. ${renderer.renderNode(child)}${addNewlineOrBlank(
+					renderer.countTrailingNewlines < 1,
+				)}`,
+		),
+	);
 
-    output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
-    output.push(standardEOL);
+	output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
+	output.push(standardEOL);
 
-    return output.join("");
+	return output.join("");
 }

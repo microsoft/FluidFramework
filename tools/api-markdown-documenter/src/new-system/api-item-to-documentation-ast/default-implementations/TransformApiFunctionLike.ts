@@ -12,22 +12,22 @@ import { createParametersSection, createReturnsSection } from "../helpers";
  * (constructors, functions, methods).
  */
 export function transformApiFunctionLike(
-    apiFunctionLike: ApiFunctionLike,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiFunctionLike: ApiFunctionLike,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode {
-    const childSections: HierarchicalSectionNode[] = [];
+	const childSections: HierarchicalSectionNode[] = [];
 
-    // Render parameter table (if any parameters)
-    const renderedParameterTable = createParametersSection(apiFunctionLike, config);
-    if (renderedParameterTable !== undefined) {
-        childSections.push(renderedParameterTable);
-    }
+	// Render parameter table (if any parameters)
+	const renderedParameterTable = createParametersSection(apiFunctionLike, config);
+	if (renderedParameterTable !== undefined) {
+		childSections.push(renderedParameterTable);
+	}
 
-    // Render `@returns` block (if any)
-    const renderedReturnsSection = createReturnsSection(apiFunctionLike, config);
-    if (renderedReturnsSection !== undefined) {
-        childSections.push(renderedReturnsSection);
-    }
+	// Render `@returns` block (if any)
+	const renderedReturnsSection = createReturnsSection(apiFunctionLike, config);
+	if (renderedReturnsSection !== undefined) {
+		childSections.push(renderedReturnsSection);
+	}
 
-    return config.createSectionWithChildContent(apiFunctionLike, childSections, config);
+	return config.createSectionWithChildContent(apiFunctionLike, childSections, config);
 }

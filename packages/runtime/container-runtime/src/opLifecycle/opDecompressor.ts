@@ -18,107 +18,107 @@ import { IMessageProcessingResult } from "./definitions";
  * 4. An individually compressed op will have undefined batch metadata and compression set to true
  */
 export class OpDecompressor {
-    private activeBatch = false;
-    private rootMessageContents: any | undefined;
-    private processedCount = 0;
+	private activeBatch = false;
+	private rootMessageContents: any | undefined;
+	private processedCount = 0;
 
-    public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-        // We're checking for compression = true or top level compression property so
-        // that we can enable compression without waiting on all ordering services
-        // to pick up protocol change. Eventually only the top level property should
-        // be used.
-        if (message.metadata?.batch === true
-            && (message.metadata?.compressed || message.compression !== undefined)) {
-            // Beginning of a compressed batch
-            assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
-            if (message.compression) {
-                // lz4 is the only supported compression algorithm for now
-                assert(message.compression === CompressionAlgorithms.lz4,
-                    0x4b9 /* lz4 is currently the only supported compression algorithm */);
-            }
+	public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
+		assert(
+			message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
+			0x511 /* Only lz4 compression is supported */,
+		);
 
-            this.activeBatch = true;
+		if (message.metadata?.batch === true && message.compression === CompressionAlgorithms.lz4) {
+			// Beginning of a compressed batch
+			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
+			if (message.compression) {
+				// lz4 is the only supported compression algorithm for now
+				assert(
+					message.compression === CompressionAlgorithms.lz4,
+					0x4b9 /* lz4 is currently the only supported compression algorithm */,
+				);
+			}
 
-            const contents = IsoBuffer.from(message.contents.packedContents, "base64");
-            const decompressedMessage = decompress(contents);
-            const intoString = Uint8ArrayToString(decompressedMessage);
-            const asObj = JSON.parse(intoString);
-            this.rootMessageContents = asObj;
+			this.activeBatch = true;
 
-            return {
-                message: newMessage(message, this.rootMessageContents[this.processedCount++]),
-                state: "Accepted",
-            };
-        }
+			const contents = IsoBuffer.from(message.contents.packedContents, "base64");
+			const decompressedMessage = decompress(contents);
+			const intoString = Uint8ArrayToString(decompressedMessage);
+			const asObj = JSON.parse(intoString);
+			this.rootMessageContents = asObj;
 
-        if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
-            assert(message.contents === undefined, "Expecting empty message");
+			return {
+				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
+				state: "Accepted",
+			};
+		}
 
-            // Continuation of compressed batch
-            return {
-                message: newMessage(message, this.rootMessageContents[this.processedCount++]),
-                state: "Accepted",
-            };
-        }
+		if (
+			this.rootMessageContents !== undefined &&
+			message.metadata?.batch === undefined &&
+			this.activeBatch
+		) {
+			assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
-        if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
-            // End of compressed batch
-            const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount++]);
+			// Continuation of compressed batch
+			return {
+				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
+				state: "Accepted",
+			};
+		}
 
-            this.activeBatch = false;
-            this.rootMessageContents = undefined;
-            this.processedCount = 0;
+		if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
+			// End of compressed batch
+			const returnMessage = newMessage(
+				message,
+				this.rootMessageContents[this.processedCount++],
+			);
 
-            return {
-                message: returnMessage,
-                state: "Processed",
-            };
-        }
+			this.activeBatch = false;
+			this.rootMessageContents = undefined;
+			this.processedCount = 0;
 
-        if (message.metadata?.batch === undefined &&
-            (message.metadata?.compressed || message.compression === CompressionAlgorithms.lz4)) {
-            // Single compressed message
-            assert(this.activeBatch === false, 0x4ba /* shouldn't receive compressed message in middle of a batch */);
+			return {
+				message: returnMessage,
+				state: "Processed",
+			};
+		}
 
-            const contents = IsoBuffer.from(message.contents.packedContents, "base64");
-            const decompressedMessage = decompress(contents);
-            const intoString = new TextDecoder().decode(decompressedMessage);
-            const asObj = JSON.parse(intoString);
+		if (
+			message.metadata?.batch === undefined &&
+			message.compression === CompressionAlgorithms.lz4
+		) {
+			// Single compressed message
+			assert(
+				this.activeBatch === false,
+				0x4ba /* shouldn't receive compressed message in middle of a batch */,
+			);
 
-            return {
-                message: newMessage(message, asObj[0]),
-                state: "Processed",
-            };
-        }
+			const contents = IsoBuffer.from(message.contents.packedContents, "base64");
+			const decompressedMessage = decompress(contents);
+			const intoString = new TextDecoder().decode(decompressedMessage);
+			const asObj = JSON.parse(intoString);
 
-        return {
-            message,
-            state: "Skipped",
-        };
-    }
+			return {
+				message: newMessage(message, asObj[0]),
+				state: "Processed",
+			};
+		}
+
+		return {
+			message,
+			state: "Skipped",
+		};
+	}
 }
 
 // We should not be mutating the input message nor its metadata
-const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage =>
-    stripCompressionMarkers({
-        ...originalMessage,
-        contents,
-        metadata: { ...originalMessage.metadata },
-    });
-
-// After compression, it is irrelevant to the other layers whether or not the
-// original message was compressed, so in the interest of both correctness and safety
-// we should remove all compression markers after we decompress.
-const stripCompressionMarkers = (message: ISequencedDocumentMessage): ISequencedDocumentMessage => {
-    message.compression = undefined;
-
-    if (message.metadata?.compressed === true) {
-        message.metadata.compressed = undefined;
-
-        if (Object.keys(message.metadata).length === 0) {
-            message.metadata = undefined;
-        }
-    }
-
-    return message;
-};
+const newMessage = (
+	originalMessage: ISequencedDocumentMessage,
+	contents: any,
+): ISequencedDocumentMessage => ({
+	...originalMessage,
+	contents,
+	compression: undefined,
+	metadata: { ...originalMessage.metadata },
+});

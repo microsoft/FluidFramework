@@ -17,15 +17,15 @@ import { DocNodeTransformOptions } from "../DocNodeTransforms";
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function getDocNodeTransformationOptions(
-    contextApiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	contextApiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocNodeTransformOptions {
-    return {
-        contextApiItem,
-        resolveApiReference: (codeDestination): string | undefined =>
-            resolveSymbolicLink(contextApiItem, codeDestination, config),
-        logger: config.logger,
-    };
+	return {
+		contextApiItem,
+		resolveApiReference: (codeDestination): string | undefined =>
+			resolveSymbolicLink(contextApiItem, codeDestination, config),
+		logger: config.logger,
+	};
 }
 
 /**
@@ -36,24 +36,24 @@ export function getDocNodeTransformationOptions(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 function resolveSymbolicLink(
-    contextApiItem: ApiItem,
-    codeDestination: DocDeclarationReference,
-    config: Required<MarkdownDocumenterConfiguration>,
+	contextApiItem: ApiItem,
+	codeDestination: DocDeclarationReference,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): UrlTarget | undefined {
-    const { apiModel, logger } = config;
+	const { apiModel, logger } = config;
 
-    const resolvedReference: IResolveDeclarationReferenceResult =
-        apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
+	const resolvedReference: IResolveDeclarationReferenceResult =
+		apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
 
-    if (resolvedReference.resolvedApiItem === undefined) {
-        logger.warning(
-            `Unable to resolve reference "${codeDestination.emitAsTsdoc()}": ${
-                resolvedReference.errorMessage
-            }`,
-        );
+	if (resolvedReference.resolvedApiItem === undefined) {
+		logger.warning(
+			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}": ${
+				resolvedReference.errorMessage
+			}`,
+		);
 
-        return undefined;
-    }
+		return undefined;
+	}
 
-    return getLinkUrlForApiItem(resolvedReference.resolvedApiItem, config);
+	return getLinkUrlForApiItem(resolvedReference.resolvedApiItem, config);
 }

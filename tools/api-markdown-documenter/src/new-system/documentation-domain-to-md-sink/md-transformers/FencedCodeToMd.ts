@@ -10,21 +10,21 @@ import { addNewlineOrBlank, standardEOL } from "./Utilities";
  * @returns The markdown representation of the FencedCodeBlockNode as a string
  */
 export function FencedCodeBlockToMarkdown(
-    blockNode: FencedCodeBlockNode,
-    renderer: DocumentationNodeRenderer,
+	blockNode: FencedCodeBlockNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    const output = [
-        addNewlineOrBlank(renderer.countTrailingNewlines < 1),
-        `\`\`\`${blockNode.language}`,
-        standardEOL,
-    ];
-    renderer.setInsideCodeBlock();
-    const children = renderer.renderNodes(blockNode.children);
-    output.push(children);
-    output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
-    output.push("```");
-    output.push(standardEOL);
-    output.push(standardEOL);
+	const output = [
+		addNewlineOrBlank(renderer.countTrailingNewlines < 1),
+		`\`\`\`${blockNode.language}`,
+		standardEOL,
+	];
+	renderer.setInsideCodeBlock();
+	const children = renderer.renderNodes(blockNode.children);
+	output.push(children);
+	output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
+	output.push("```");
+	output.push(standardEOL);
+	output.push(standardEOL);
 
-    return output.join("");
+	return output.join("");
 }

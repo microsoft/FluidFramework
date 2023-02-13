@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
@@ -16,11 +17,25 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
+// @alpha
+export interface ICellAttributionOptions {
+    // (undocumented)
+    track?: boolean;
+}
+
+// @alpha
+export interface ICellOptions {
+    // (undocumented)
+    attribution?: ICellAttributionOptions;
+}
+
 // @public
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
+    // @alpha (undocumented)
+    getAttribution(): AttributionKey | undefined;
     set(value: Serializable<T>): void;
 }
 
@@ -32,6 +47,7 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 
 // @public
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
+    // @alpha
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
@@ -39,6 +55,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
+    // @alpha (undocumented)
+    getAttribution(): AttributionKey | undefined;
     static getFactory(): IChannelFactory;
     protected initializeLocalCore(): void;
     // (undocumented)

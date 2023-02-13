@@ -1,23 +1,23 @@
 import {
-    AlertNode,
-    BlockQuoteNode,
-    CodeSpanNode,
-    DocumentNode,
-    DocumentationNode,
-    DocumentationNodeType,
-    FencedCodeBlockNode,
-    HeadingNode,
-    HierarchicalSectionNode,
-    LineBreakNode,
-    LinkNode,
-    OrderedListNode,
-    ParagraphNode,
-    PlainTextNode,
-    SpanNode,
-    TableCellNode,
-    TableNode,
-    TableRowNode,
-    UnorderedListNode,
+	AlertNode,
+	BlockQuoteNode,
+	CodeSpanNode,
+	DocumentNode,
+	DocumentationNode,
+	DocumentationNodeType,
+	FencedCodeBlockNode,
+	HeadingNode,
+	HierarchicalSectionNode,
+	LineBreakNode,
+	LinkNode,
+	OrderedListNode,
+	ParagraphNode,
+	PlainTextNode,
+	SpanNode,
+	TableCellNode,
+	TableNode,
+	TableRowNode,
+	UnorderedListNode,
 } from "../../documentation-domain";
 import { AlertToMarkdown } from "./AlertToMd";
 import { BlockQuoteToMarkdown } from "./BlockQuoteToMd";
@@ -40,95 +40,95 @@ import { addNewlineOrBlank, countTrailingNewlines, standardEOL } from "./Utiliti
  * All known node types this renderer supports by default
  */
 export interface NodeRenderers {
-    [DocumentationNodeType.Alert]: (
-        node: AlertNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.BlockQuote]: (
-        node: BlockQuoteNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.CodeSpan]: (
-        node: CodeSpanNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.FencedCode]: (
-        node: FencedCodeBlockNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.Heading]: (
-        node: HeadingNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.LineBreak]: (
-        node: LineBreakNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.Link]: (
-        node: LinkNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.HierarchicalSection]: (
-        node: HierarchicalSectionNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.OrderedList]: (
-        node: OrderedListNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.Paragraph]: (
-        node: ParagraphNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.PlainText]: (
-        node: PlainTextNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.Span]: (
-        node: SpanNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.Table]: (
-        node: TableNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.TableCell]: (
-        node: TableCellNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.TableRow]: (
-        node: TableRowNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentationNodeType.UnorderedList]: (
-        node: UnorderedListNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
+	[DocumentationNodeType.Alert]: (
+		node: AlertNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.BlockQuote]: (
+		node: BlockQuoteNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.CodeSpan]: (
+		node: CodeSpanNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.FencedCode]: (
+		node: FencedCodeBlockNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.Heading]: (
+		node: HeadingNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.LineBreak]: (
+		node: LineBreakNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.Link]: (
+		node: LinkNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.HierarchicalSection]: (
+		node: HierarchicalSectionNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.OrderedList]: (
+		node: OrderedListNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.Paragraph]: (
+		node: ParagraphNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.PlainText]: (
+		node: PlainTextNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.Span]: (
+		node: SpanNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.Table]: (
+		node: TableNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.TableCell]: (
+		node: TableCellNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.TableRow]: (
+		node: TableRowNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
+	[DocumentationNodeType.UnorderedList]: (
+		node: UnorderedListNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	) => string;
 }
 
 /**
  * Simple class which provides default rendering implementations for nodes
  */
 export class DefaultNodeRenderers {
-    public [DocumentationNodeType.Alert] = AlertToMarkdown;
-    public [DocumentationNodeType.BlockQuote] = BlockQuoteToMarkdown;
-    public [DocumentationNodeType.CodeSpan] = CodeSpanToMarkdown;
-    public [DocumentationNodeType.FencedCode] = FencedCodeBlockToMarkdown;
-    public [DocumentationNodeType.Heading] = HeadingToMarkdown;
-    public [DocumentationNodeType.LineBreak] = (
-        node: LineBreakNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ): string => (subtreeRenderer.isInsideTable ? `<br/>` : standardEOL);
-    public [DocumentationNodeType.Link] = LinkToMarkdown;
-    public [DocumentationNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
-    public [DocumentationNodeType.OrderedList] = OrderedListToMarkdown;
-    public [DocumentationNodeType.Paragraph] = ParagraphToMarkdown;
-    public [DocumentationNodeType.PlainText] = PlainTextToMarkdown;
-    public [DocumentationNodeType.Span] = SpanToMarkdown;
-    public [DocumentationNodeType.Table] = TableToMarkdown;
-    public [DocumentationNodeType.TableCell] = TableCellToMarkdown;
-    public [DocumentationNodeType.TableRow] = TableRowToMarkdown;
-    public [DocumentationNodeType.UnorderedList] = UnorderedListToMarkdown;
+	public [DocumentationNodeType.Alert] = AlertToMarkdown;
+	public [DocumentationNodeType.BlockQuote] = BlockQuoteToMarkdown;
+	public [DocumentationNodeType.CodeSpan] = CodeSpanToMarkdown;
+	public [DocumentationNodeType.FencedCode] = FencedCodeBlockToMarkdown;
+	public [DocumentationNodeType.Heading] = HeadingToMarkdown;
+	public [DocumentationNodeType.LineBreak] = (
+		node: LineBreakNode,
+		subtreeRenderer: DocumentationNodeRenderer,
+	): string => (subtreeRenderer.isInsideTable ? `<br/>` : standardEOL);
+	public [DocumentationNodeType.Link] = LinkToMarkdown;
+	public [DocumentationNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
+	public [DocumentationNodeType.OrderedList] = OrderedListToMarkdown;
+	public [DocumentationNodeType.Paragraph] = ParagraphToMarkdown;
+	public [DocumentationNodeType.PlainText] = PlainTextToMarkdown;
+	public [DocumentationNodeType.Span] = SpanToMarkdown;
+	public [DocumentationNodeType.Table] = TableToMarkdown;
+	public [DocumentationNodeType.TableCell] = TableCellToMarkdown;
+	public [DocumentationNodeType.TableRow] = TableRowToMarkdown;
+	public [DocumentationNodeType.UnorderedList] = UnorderedListToMarkdown;
 }
 
 /**
@@ -142,273 +142,273 @@ export const DefaultRenderers = new DefaultNodeRenderers();
  * Generally doesn't need to be instantiated directly. Use markdownFromDocumentNode to generate markdown from a document node instead of creating this directly.
  */
 export class DocumentationNodeRenderer {
-    private trailingNewlinesCount = 1; // Start the document at 1 so elements don't unnecessarily prepend newlines
-    private readonly renderers: NodeRenderers = DefaultRenderers;
-    private renderingContext = {
-        bold: false,
-        strikethrough: false,
-        italic: false,
-        insideTable: false,
-        insideCodeBlock: false,
-        depth: 0,
-    };
+	private trailingNewlinesCount = 1; // Start the document at 1 so elements don't unnecessarily prepend newlines
+	private readonly renderers: NodeRenderers = DefaultRenderers;
+	private renderingContext = {
+		bold: false,
+		strikethrough: false,
+		italic: false,
+		insideTable: false,
+		insideCodeBlock: false,
+		depth: 0,
+	};
 
-    /**
-     * Creates a new helper object for rendering node subtrees
-     *
-     * @param customRenderers - Custom renderers to override default implementations.
-     * @remarks The custom renderers object can also include custom node types that this renderer isn't explicitly aware of. Provide a key/value pair where the key is the node type as a string, and the value is a
-     * callback function. If the renderer encounters a custom node type, it will invoke the provided custom function.
-     */
-    public constructor(customRenderers?: CustomNodeRenderers) {
-        if (customRenderers) {
-            this.renderers = {
-                ...DefaultRenderers,
-                ...customRenderers,
-            };
-        }
-    }
+	/**
+	 * Creates a new helper object for rendering node subtrees
+	 *
+	 * @param customRenderers - Custom renderers to override default implementations.
+	 * @remarks The custom renderers object can also include custom node types that this renderer isn't explicitly aware of. Provide a key/value pair where the key is the node type as a string, and the value is a
+	 * callback function. If the renderer encounters a custom node type, it will invoke the provided custom function.
+	 */
+	public constructor(customRenderers?: CustomNodeRenderers) {
+		if (customRenderers) {
+			this.renderers = {
+				...DefaultRenderers,
+				...customRenderers,
+			};
+		}
+	}
 
-    /**
-     * Renders a given a node into markdown.
-     *
-     * @param node - Node to render
-     * @returns A markdown version of the given node
-     */
-    public renderNode(node: DocumentationNode): string {
-        const prevRenderingContext = this.renderingContext;
-        const newRenderingContext = { ...prevRenderingContext };
-        this.renderingContext = newRenderingContext;
-        let renderedNode = `TODO: UNKNOWN NODE (${node.type}) ENCOUNTERED`;
-        switch (node.type) {
-            case DocumentationNodeType.Alert:
-                renderedNode = this.renderers[DocumentationNodeType.Alert](
-                    node as unknown as AlertNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.BlockQuote:
-                renderedNode = this.renderers[DocumentationNodeType.BlockQuote](
-                    node as unknown as BlockQuoteNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.CodeSpan:
-                renderedNode = this.renderers[DocumentationNodeType.CodeSpan](
-                    node as unknown as CodeSpanNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.FencedCode:
-                renderedNode = this.renderers[DocumentationNodeType.FencedCode](
-                    node as unknown as FencedCodeBlockNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.Heading:
-                renderedNode = this.renderers[DocumentationNodeType.Heading](
-                    node as unknown as HeadingNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.HierarchicalSection:
-                renderedNode = this.renderers[DocumentationNodeType.HierarchicalSection](
-                    node as unknown as HierarchicalSectionNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.LineBreak:
-                renderedNode = this.renderers[DocumentationNodeType.LineBreak](
-                    node as unknown as LineBreakNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.Link:
-                renderedNode = this.renderers[DocumentationNodeType.Link](node as LinkNode, this);
-                break;
-            case DocumentationNodeType.OrderedList:
-                renderedNode = this.renderers[DocumentationNodeType.OrderedList](
-                    node as unknown as OrderedListNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.Paragraph:
-                renderedNode = this.renderers[DocumentationNodeType.Paragraph](
-                    node as unknown as ParagraphNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.PlainText:
-                renderedNode = this.renderers[DocumentationNodeType.PlainText](
-                    node as unknown as PlainTextNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.Span:
-                renderedNode = this.renderers[DocumentationNodeType.Span](
-                    node as unknown as SpanNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.Table:
-                renderedNode = this.renderers[DocumentationNodeType.Table](
-                    node as unknown as TableNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.TableRow:
-                renderedNode = this.renderers[DocumentationNodeType.TableRow](
-                    node as unknown as TableRowNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.TableCell:
-                renderedNode = this.renderers[DocumentationNodeType.TableCell](
-                    node as unknown as TableCellNode,
-                    this,
-                );
-                break;
-            case DocumentationNodeType.UnorderedList:
-                renderedNode = this.renderers[DocumentationNodeType.UnorderedList](
-                    node as unknown as UnorderedListNode,
-                    this,
-                );
-                break;
-            default:
-                // eslint-disable-next-line no-case-declarations
-                const rendererForNode = this.renderers[node.type] as unknown;
-                if (rendererForNode !== undefined && typeof rendererForNode === "function") {
-                    // We don't recognize this node type, but a renderer was given to us (probably from custom renderers). We'll invoke it and hope for the best
-                    renderedNode = rendererForNode(node, this) as string;
-                }
-                break;
-        }
-        this.renderingContext = prevRenderingContext;
-        this.trailingNewlinesCount =
-            renderedNode.length > 0
-                ? countTrailingNewlines(renderedNode)
-                : this.trailingNewlinesCount;
-        return renderedNode;
-    }
+	/**
+	 * Renders a given a node into markdown.
+	 *
+	 * @param node - Node to render
+	 * @returns A markdown version of the given node
+	 */
+	public renderNode(node: DocumentationNode): string {
+		const prevRenderingContext = this.renderingContext;
+		const newRenderingContext = { ...prevRenderingContext };
+		this.renderingContext = newRenderingContext;
+		let renderedNode = `TODO: UNKNOWN NODE (${node.type}) ENCOUNTERED`;
+		switch (node.type) {
+			case DocumentationNodeType.Alert:
+				renderedNode = this.renderers[DocumentationNodeType.Alert](
+					node as unknown as AlertNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.BlockQuote:
+				renderedNode = this.renderers[DocumentationNodeType.BlockQuote](
+					node as unknown as BlockQuoteNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.CodeSpan:
+				renderedNode = this.renderers[DocumentationNodeType.CodeSpan](
+					node as unknown as CodeSpanNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.FencedCode:
+				renderedNode = this.renderers[DocumentationNodeType.FencedCode](
+					node as unknown as FencedCodeBlockNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.Heading:
+				renderedNode = this.renderers[DocumentationNodeType.Heading](
+					node as unknown as HeadingNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.HierarchicalSection:
+				renderedNode = this.renderers[DocumentationNodeType.HierarchicalSection](
+					node as unknown as HierarchicalSectionNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.LineBreak:
+				renderedNode = this.renderers[DocumentationNodeType.LineBreak](
+					node as unknown as LineBreakNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.Link:
+				renderedNode = this.renderers[DocumentationNodeType.Link](node as LinkNode, this);
+				break;
+			case DocumentationNodeType.OrderedList:
+				renderedNode = this.renderers[DocumentationNodeType.OrderedList](
+					node as unknown as OrderedListNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.Paragraph:
+				renderedNode = this.renderers[DocumentationNodeType.Paragraph](
+					node as unknown as ParagraphNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.PlainText:
+				renderedNode = this.renderers[DocumentationNodeType.PlainText](
+					node as unknown as PlainTextNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.Span:
+				renderedNode = this.renderers[DocumentationNodeType.Span](
+					node as unknown as SpanNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.Table:
+				renderedNode = this.renderers[DocumentationNodeType.Table](
+					node as unknown as TableNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.TableRow:
+				renderedNode = this.renderers[DocumentationNodeType.TableRow](
+					node as unknown as TableRowNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.TableCell:
+				renderedNode = this.renderers[DocumentationNodeType.TableCell](
+					node as unknown as TableCellNode,
+					this,
+				);
+				break;
+			case DocumentationNodeType.UnorderedList:
+				renderedNode = this.renderers[DocumentationNodeType.UnorderedList](
+					node as unknown as UnorderedListNode,
+					this,
+				);
+				break;
+			default:
+				// eslint-disable-next-line no-case-declarations
+				const rendererForNode = this.renderers[node.type] as unknown;
+				if (rendererForNode !== undefined && typeof rendererForNode === "function") {
+					// We don't recognize this node type, but a renderer was given to us (probably from custom renderers). We'll invoke it and hope for the best
+					renderedNode = rendererForNode(node, this) as string;
+				}
+				break;
+		}
+		this.renderingContext = prevRenderingContext;
+		this.trailingNewlinesCount =
+			renderedNode.length > 0
+				? countTrailingNewlines(renderedNode)
+				: this.trailingNewlinesCount;
+		return renderedNode;
+	}
 
-    /**
-     * Helper function - iterates through all given nodes and invokes renderNode() on each of them
-     *
-     * @param nodes - Nodes to render
-     * @returns A single string, which is the combined output of every node's renderNode() call
-     */
-    public renderNodes(nodes: DocumentationNode[]): string {
-        return nodes.map((node) => this.renderNode(node)).join("");
-    }
+	/**
+	 * Helper function - iterates through all given nodes and invokes renderNode() on each of them
+	 *
+	 * @param nodes - Nodes to render
+	 * @returns A single string, which is the combined output of every node's renderNode() call
+	 */
+	public renderNodes(nodes: DocumentationNode[]): string {
+		return nodes.map((node) => this.renderNode(node)).join("");
+	}
 
-    /**
-     * Sets the bold style flag for all content beneath the current node.
-     */
-    public setBold(): void {
-        this.renderingContext.bold = true;
-    }
+	/**
+	 * Sets the bold style flag for all content beneath the current node.
+	 */
+	public setBold(): void {
+		this.renderingContext.bold = true;
+	}
 
-    /**
-     * Sets the italic style flag for all content beneath the current node.
-     */
-    public setItalic(): void {
-        this.renderingContext.italic = true;
-    }
+	/**
+	 * Sets the italic style flag for all content beneath the current node.
+	 */
+	public setItalic(): void {
+		this.renderingContext.italic = true;
+	}
 
-    /**
-     * Sets the strikethrough style flag for all content beneath the current node.
-     */
-    public setStrikethrough(): void {
-        this.renderingContext.strikethrough = true;
-    }
+	/**
+	 * Sets the strikethrough style flag for all content beneath the current node.
+	 */
+	public setStrikethrough(): void {
+		this.renderingContext.strikethrough = true;
+	}
 
-    /**
-     * Flags the content beneath the current node as being nested inside of a table.
-     */
-    public setInsideTable(): void {
-        this.renderingContext.insideTable = true;
-    }
+	/**
+	 * Flags the content beneath the current node as being nested inside of a table.
+	 */
+	public setInsideTable(): void {
+		this.renderingContext.insideTable = true;
+	}
 
-    /**
-     * Flags the content beneath the current node as being nested inside of a code block.
-     */
-    public setInsideCodeBlock(): void {
-        this.renderingContext.insideCodeBlock = true;
-    }
+	/**
+	 * Flags the content beneath the current node as being nested inside of a code block.
+	 */
+	public setInsideCodeBlock(): void {
+		this.renderingContext.insideCodeBlock = true;
+	}
 
-    /**
-     * Increases the hierarchical depth for all children of the current node (used for headings)
-     */
-    public increaseHierarchicalDepth(): void {
-        this.renderingContext.depth++;
-    }
+	/**
+	 * Increases the hierarchical depth for all children of the current node (used for headings)
+	 */
+	public increaseHierarchicalDepth(): void {
+		this.renderingContext.depth++;
+	}
 
-    /**
-     * True if the subtree should apply bold styles to rendered content
-     */
-    public get applyingBold(): boolean {
-        return this.renderingContext.bold;
-    }
+	/**
+	 * True if the subtree should apply bold styles to rendered content
+	 */
+	public get applyingBold(): boolean {
+		return this.renderingContext.bold;
+	}
 
-    /**
-     * True if the subtree should apply italic styles to rendered content
-     */
-    public get applyingItalic(): boolean {
-        return this.renderingContext.italic;
-    }
+	/**
+	 * True if the subtree should apply italic styles to rendered content
+	 */
+	public get applyingItalic(): boolean {
+		return this.renderingContext.italic;
+	}
 
-    /**
-     * True if the subtree should apply strikethrough styles to rendered content
-     */
-    public get applyingStrikethrough(): boolean {
-        return this.renderingContext.strikethrough;
-    }
+	/**
+	 * True if the subtree should apply strikethrough styles to rendered content
+	 */
+	public get applyingStrikethrough(): boolean {
+		return this.renderingContext.strikethrough;
+	}
 
-    /**
-     * True if the current node is being rendered inside of a table
-     */
-    public get isInsideTable(): boolean {
-        return this.renderingContext.insideTable;
-    }
+	/**
+	 * True if the current node is being rendered inside of a table
+	 */
+	public get isInsideTable(): boolean {
+		return this.renderingContext.insideTable;
+	}
 
-    /**
-     * True if the current node is being rendered inside of a code block
-     */
-    public get isInsideCodeBlock(): boolean {
-        return this.renderingContext.insideCodeBlock;
-    }
+	/**
+	 * True if the current node is being rendered inside of a code block
+	 */
+	public get isInsideCodeBlock(): boolean {
+		return this.renderingContext.insideCodeBlock;
+	}
 
-    /**
-     * Returns how deep into nested HierarchicalSectionNodes the renderer currently is
-     */
-    public get hierarchyDepth(): number {
-        return this.renderingContext.depth;
-    }
+	/**
+	 * Returns how deep into nested HierarchicalSectionNodes the renderer currently is
+	 */
+	public get hierarchyDepth(): number {
+		return this.renderingContext.depth;
+	}
 
-    /**
-     * Returns the number of trailing newlines in the last element this renderer rendered.
-     */
-    public get countTrailingNewlines(): number {
-        return this.trailingNewlinesCount;
-    }
+	/**
+	 * Returns the number of trailing newlines in the last element this renderer rendered.
+	 */
+	public get countTrailingNewlines(): number {
+		return this.trailingNewlinesCount;
+	}
 
-    /**
-     * Determines whether additional newlines are required to ensure new content is preceeded by the
-     * specified number of newlines.
-     *
-     * @param requiredBlankLineCount - The number of required preceeding blank lines.
-     *
-     * @returns If newlines are required, this will return a string containing those required
-     * newline characters.
-     * Otherwise, will return an empty string.
-     */
-    public ensurePreceedingBlankLines(requiredBlankLineCount: number): string {
-        const preceedingBlankLines = this.countTrailingNewlines - 1;
-        if (preceedingBlankLines > requiredBlankLineCount) {
-            return "";
-        }
-        return standardEOL.repeat(requiredBlankLineCount - preceedingBlankLines + 1);
-    }
+	/**
+	 * Determines whether additional newlines are required to ensure new content is preceeded by the
+	 * specified number of newlines.
+	 *
+	 * @param requiredBlankLineCount - The number of required preceeding blank lines.
+	 *
+	 * @returns If newlines are required, this will return a string containing those required
+	 * newline characters.
+	 * Otherwise, will return an empty string.
+	 */
+	public ensurePreceedingBlankLines(requiredBlankLineCount: number): string {
+		const preceedingBlankLines = this.countTrailingNewlines - 1;
+		if (preceedingBlankLines > requiredBlankLineCount) {
+			return "";
+		}
+		return standardEOL.repeat(requiredBlankLineCount - preceedingBlankLines + 1);
+	}
 }
 
 /**
@@ -418,38 +418,38 @@ export class DocumentationNodeRenderer {
  * @param customRenderers - Optional custom node renderers
  */
 export function markdownFromDocumentNode(
-    node: DocumentNode,
-    customRenderers?: CustomNodeRenderers,
+	node: DocumentNode,
+	customRenderers?: CustomNodeRenderers,
 ): string {
-    // TODO: configurability of individual node renderers
-    const renderer = new DocumentationNodeRenderer(customRenderers);
-    const output: string[] = [];
+	// TODO: configurability of individual node renderers
+	const renderer = new DocumentationNodeRenderer(customRenderers);
+	const output: string[] = [];
 
-    if (node.frontMatter !== undefined) {
-        output.push(`${node.frontMatter}${standardEOL}`);
-    }
-    if (node.title !== undefined) {
-        output.push(`# ${node.title}${standardEOL}${standardEOL}`);
-        renderer.increaseHierarchicalDepth();
-    }
-    if (node.header) {
-        output.push(
-            `${renderer.renderNode(node.header)}${addNewlineOrBlank(
-                renderer.countTrailingNewlines < 2,
-            )}${standardEOL}`,
-        );
-    }
+	if (node.frontMatter !== undefined) {
+		output.push(`${node.frontMatter}${standardEOL}`);
+	}
+	if (node.title !== undefined) {
+		output.push(`# ${node.title}${standardEOL}${standardEOL}`);
+		renderer.increaseHierarchicalDepth();
+	}
+	if (node.header) {
+		output.push(
+			`${renderer.renderNode(node.header)}${addNewlineOrBlank(
+				renderer.countTrailingNewlines < 2,
+			)}${standardEOL}`,
+		);
+	}
 
-    output.push(...node.children.map((child) => renderer.renderNode(child)));
-    output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 2));
+	output.push(...node.children.map((child) => renderer.renderNode(child)));
+	output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 2));
 
-    if (node.footer) {
-        output.push(
-            `${standardEOL}${renderer.renderNode(node.footer)}${addNewlineOrBlank(
-                renderer.countTrailingNewlines < 2,
-            )}${standardEOL}`,
-        );
-    }
+	if (node.footer) {
+		output.push(
+			`${standardEOL}${renderer.renderNode(node.footer)}${addNewlineOrBlank(
+				renderer.countTrailingNewlines < 2,
+			)}${standardEOL}`,
+		);
+	}
 
-    return output.join("");
+	return output.join("");
 }

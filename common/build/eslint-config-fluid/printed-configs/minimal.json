@@ -23,7 +23,6 @@
         "eslint-comments",
         "import",
         "unicorn",
-        "react",
         "unused-imports",
         "tsdoc",
         "promise",
@@ -1184,6 +1183,9 @@
                     "pascalCase": true
                 }
             }
+        ],
+        "unicorn/no-for-loop": [
+            "off"
         ],
         "unicorn/no-nested-ternary": [
             "off"

@@ -5,7 +5,6 @@
 ```ts
 
 import { ConfigTypes } from '@fluidframework/telemetry-utils';
-import { Container } from '@fluidframework/container-loader';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
@@ -91,7 +90,7 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
         instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
         preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & IContainerRuntime>;
         readonly IRuntimeFactory: any;
-        instantiateRuntime(context: IContainerContext, existing?: boolean | undefined): Promise<IRuntime>;
+        instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
         hasInitialized(_runtime: IContainerRuntime): Promise<void>;
     };
 };
@@ -107,8 +106,8 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public (undocumented)
-export function ensureContainerConnected(container: Container): Promise<void>;
+// @public @deprecated
+export function ensureContainerConnected(container: IContainer): Promise<void>;
 
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
@@ -153,6 +152,7 @@ export interface IProvideTestFluidObject {
 
 // @public (undocumented)
 export interface ITestContainerConfig {
+    enableAttribution?: boolean;
     fluidDataObjectType?: DataObjectFactoryType;
     loaderProps?: Partial<ILoaderProps>;
     registry?: ChannelFactoryRegistry;
@@ -235,10 +235,11 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 // @public
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
-// @public (undocumented)
+// @public
 export function summarizeNow(summarizer: ISummarizer, reason?: string): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
+    summaryRefSeq: number;
 }>;
 
 // @public (undocumented)
@@ -255,7 +256,7 @@ export const TestContainerRuntimeFactory: {
         instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
         preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & IContainerRuntime>;
         readonly IRuntimeFactory: any;
-        instantiateRuntime(context: IContainerContext, existing?: boolean | undefined): Promise<IRuntime>;
+        instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
         hasInitialized(_runtime: IContainerRuntime): Promise<void>;
     };
 };
@@ -346,7 +347,6 @@ export function timeoutPromise<T = void>(executor: (resolve: (value: T | Promise
 
 // @public (undocumented)
 export interface TimeoutWithError {
-    // (undocumented)
     durationMs?: number;
     // (undocumented)
     errorMsg?: string;
@@ -356,7 +356,6 @@ export interface TimeoutWithError {
 
 // @public (undocumented)
 export interface TimeoutWithValue<T = void> {
-    // (undocumented)
     durationMs?: number;
     // (undocumented)
     reject: false;
@@ -364,8 +363,8 @@ export interface TimeoutWithValue<T = void> {
     value: T;
 }
 
-// @public (undocumented)
-export function waitForContainerConnection(container: IContainer): Promise<void>;
+// @public
+export function waitForContainerConnection(container: IContainer, failOnContainerClose?: boolean, timeoutOptions?: TimeoutWithError): Promise<void>;
 
 // @public
 export function wrapDocumentService(innerDocService: IDocumentService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentService;

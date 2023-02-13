@@ -59,4 +59,8 @@ export {
 	getQuorumValuesFromProtocolSummary,
 } from "./summaryForCreateNew";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
-export { convertSnapshotAndBlobsToSummaryTree, ISummaryTreeAssemblerProps, SummaryTreeAssembler } from "./treeUtils";
+export {
+	convertSnapshotAndBlobsToSummaryTree,
+	ISummaryTreeAssemblerProps,
+	SummaryTreeAssembler,
+} from "./treeUtils";

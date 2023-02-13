@@ -11,14 +11,14 @@ import { markdownEOL } from "./Utilities";
  * @returns The markdown representation of the ParagraphNode as a string
  */
 export function ParagraphToMarkdown(
-    paragraph: ParagraphNode,
-    renderer: DocumentationNodeRenderer,
+	paragraph: ParagraphNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    const childContents: string = renderer.renderNodes(paragraph.children).trim();
+	const childContents: string = renderer.renderNodes(paragraph.children).trim();
 
-    if (renderer.isInsideTable) {
-        return childContents === "" ? "" : `<p>${childContents}</p>`;
-    }
+	if (renderer.isInsideTable) {
+		return childContents === "" ? "" : `<p>${childContents}</p>`;
+	}
 
-    return `${childContents}${markdownEOL}`;
+	return `${childContents}${markdownEOL}`;
 }

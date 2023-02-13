@@ -8,14 +8,14 @@ import { ApiItem } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 
 import {
-    MarkdownDocumenterConfiguration,
-    markdownDocumenterConfigurationWithDefaults,
+	MarkdownDocumenterConfiguration,
+	markdownDocumenterConfigurationWithDefaults,
 } from "../Configuration";
 import { doesItemRequireOwnDocument } from "../utilities";
 import {
-    apiItemToDocument,
-    apiModelToDocument,
-    apiPackageToDocument,
+	apiItemToDocument,
+	apiModelToDocument,
+	apiPackageToDocument,
 } from "./api-item-to-documentation-ast";
 import { DocumentNode } from "./documentation-domain";
 import { CustomNodeRenderers, markdownFromDocumentNode } from "./documentation-domain-to-md-sink";
@@ -43,47 +43,47 @@ import { CustomNodeRenderers, markdownFromDocumentNode } from "./documentation-d
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
  */
 export function createDocuments(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[] {
-    const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
-    const apiModel = config.apiModel;
+	const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
+	const apiModel = config.apiModel;
 
-    console.log(`Rendering markdown documentation for API Model ${apiModel.displayName}...`);
+	console.log(`Rendering markdown documentation for API Model ${apiModel.displayName}...`);
 
-    const documents: DocumentNode[] = [];
+	const documents: DocumentNode[] = [];
 
-    // Always render Model document
-    documents.push(apiModelToDocument(apiModel, config));
+	// Always render Model document
+	documents.push(apiModelToDocument(apiModel, config));
 
-    const filteredPackages = apiModel.packages.filter(
-        (apiPackage) => !config.packageFilterPolicy(apiPackage),
-    );
-    if (filteredPackages.length > 0) {
-        // For each package, walk the child graph to find API items which should be rendered to their own document
-        // per provided policy.
+	const filteredPackages = apiModel.packages.filter(
+		(apiPackage) => !config.packageFilterPolicy(apiPackage),
+	);
+	if (filteredPackages.length > 0) {
+		// For each package, walk the child graph to find API items which should be rendered to their own document
+		// per provided policy.
 
-        for (const packageItem of filteredPackages) {
-            // Always render documents for packages under the model
-            documents.push(apiPackageToDocument(packageItem, config));
+		for (const packageItem of filteredPackages) {
+			// Always render documents for packages under the model
+			documents.push(apiPackageToDocument(packageItem, config));
 
-            const packageEntryPoints = packageItem.entryPoints;
-            if (packageEntryPoints.length !== 1) {
-                throw new Error(
-                    `Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
-                        "API-Extractor only supports single-entry packages, so this should not be possible.",
-                );
-            }
+			const packageEntryPoints = packageItem.entryPoints;
+			if (packageEntryPoints.length !== 1) {
+				throw new Error(
+					`Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
+						"API-Extractor only supports single-entry packages, so this should not be possible.",
+				);
+			}
 
-            const packageEntryPointItem = packageEntryPoints[0];
+			const packageEntryPointItem = packageEntryPoints[0];
 
-            const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
-            for (const apiItem of packageDocumentItems) {
-                documents.push(apiItemToDocument(apiItem, config));
-            }
-        }
-    }
+			const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
+			for (const apiItem of packageDocumentItems) {
+				documents.push(apiItemToDocument(apiItem, config));
+			}
+		}
+	}
 
-    console.log("Documents rendered.");
+	console.log("Documents rendered.");
 
-    return documents;
+	return documents;
 }
 
 /**
@@ -106,28 +106,28 @@ export function createDocuments(partialConfig: MarkdownDocumenterConfiguration):
  * @param customRenderers - TODO
  */
 export async function renderFiles(
-    partialConfig: MarkdownDocumenterConfiguration,
-    outputDirectoryPath: string,
-    customRenderers?: CustomNodeRenderers,
+	partialConfig: MarkdownDocumenterConfiguration,
+	outputDirectoryPath: string,
+	customRenderers?: CustomNodeRenderers,
 ): Promise<void> {
-    const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
+	const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
-    await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
+	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
-    const documents = createDocuments(config);
+	const documents = createDocuments(config);
 
-    await Promise.all(
-        documents.map(async (document) => {
-            const emittedDocumentContents = markdownFromDocumentNode(document, customRenderers);
+	await Promise.all(
+		documents.map(async (document) => {
+			const emittedDocumentContents = markdownFromDocumentNode(document, customRenderers);
 
-            const filePath = Path.join(outputDirectoryPath, document.filePath);
-            await FileSystem.writeFileAsync(filePath, emittedDocumentContents, {
-                convertLineEndings: config.newlineKind,
-                ensureFolderExists: true,
-            });
-        }),
-    );
-    console.log("Documents written to disk.");
+			const filePath = Path.join(outputDirectoryPath, document.filePath);
+			await FileSystem.writeFileAsync(filePath, emittedDocumentContents, {
+				convertLineEndings: config.newlineKind,
+				ensureFolderExists: true,
+			});
+		}),
+	);
+	console.log("Documents written to disk.");
 }
 
 /**
@@ -138,15 +138,15 @@ export async function renderFiles(
  * and which should be rendered to their parent's document.
  */
 export function getDocumentItems(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): ApiItem[] {
-    const result: ApiItem[] = [];
-    for (const childItem of apiItem.members) {
-        if (doesItemRequireOwnDocument(childItem, config.documentBoundaries)) {
-            result.push(childItem);
-        }
-        result.push(...getDocumentItems(childItem, config));
-    }
-    return result;
+	const result: ApiItem[] = [];
+	for (const childItem of apiItem.members) {
+		if (doesItemRequireOwnDocument(childItem, config.documentBoundaries)) {
+			result.push(childItem);
+		}
+		result.push(...getDocumentItems(childItem, config));
+	}
+	return result;
 }

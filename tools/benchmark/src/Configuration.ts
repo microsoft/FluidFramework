@@ -31,7 +31,7 @@ export enum BenchmarkType {
 	/**
 	 * Tests that measure the actual performance of features.
 	 * These tests are the ones that should be optimized for to improve actual user experience, and thus
-     * should be used to compare across versions to look for regressions and improvements.
+	 * should be used to compare across versions to look for regressions and improvements.
 	 */
 	Measurement,
 
@@ -39,12 +39,12 @@ export enum BenchmarkType {
 	 * Tests that provide extra details which typically aren't useful unless looking into some specific area.
 	 *
 	 * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are
-     * measuring what they claim accurately.
+	 * measuring what they claim accurately.
 	 *
 	 * Diagnostic tests can also be used when a particular feature/area has enough Measurement tests to detect changes,
 	 * but some extra tests would be helpful for understanding the changes when they occur. Extra tests,
 	 * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running
-     * generally, can be marked as Diagnostic to enable skipping them unless they are specifically needed.
+	 * generally, can be marked as Diagnostic to enable skipping them unless they are specifically needed.
 	 */
 	Diagnostic,
 
@@ -80,13 +80,13 @@ for (const type of Object.values(BenchmarkType)) {
 /**
  * Names of all TestTypes.
  */
- export const testTypes: string[] = [];
+export const testTypes: string[] = [];
 
- for (const type of Object.values(TestType)) {
-     if (typeof type === "string") {
-         testTypes.push(type);
-     }
- }
+for (const type of Object.values(TestType)) {
+	if (typeof type === "string") {
+		testTypes.push(type);
+	}
+}
 
 /**
  * Arguments to `benchmark`
@@ -122,8 +122,8 @@ export interface BenchmarkAsyncArguments extends BenchmarkOptions {
 
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
-     * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
-     * in the body will always take at least 4ms per operation due to timeout throttling:
+	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
+	 * in the body will always take at least 4ms per operation due to timeout throttling:
 	 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
 	 */
 	benchmarkFnAsync: () => Promise<unknown>;
@@ -156,10 +156,10 @@ export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
 	 */
 	type?: BenchmarkType;
 
-    /**
+	/**
 	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
-     * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
-     * only execute specific tests.
+	 * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
+	 * only execute specific tests.
 	 */
 	category?: string;
 }
@@ -200,11 +200,16 @@ export interface HookArguments {
  */
 export function validateBenchmarkArguments(
 	args: BenchmarkArguments,
-): { isAsync: true; benchmarkFn: () => Promise<unknown>; } | { isAsync: false; benchmarkFn: () => void; } {
+):
+	| { isAsync: true; benchmarkFn: () => Promise<unknown> }
+	| { isAsync: false; benchmarkFn: () => void } {
 	const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
 	const isSync = intersection.benchmarkFn !== undefined;
 	const isAsync = intersection.benchmarkFnAsync !== undefined;
-	assert(isSync !== isAsync, "Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.");
+	assert(
+		isSync !== isAsync,
+		"Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.",
+	);
 	if (isSync) {
 		return { isAsync: false, benchmarkFn: intersection.benchmarkFn };
 	}
@@ -255,5 +260,5 @@ export const userCategoriesSplitter = ":ff-cat:";
  * Reporter output location
  */
 export interface ReporterOptions {
-    reportDir?: string;
+	reportDir?: string;
 }

@@ -10,7 +10,7 @@ prague-secrets or WAC Bohemia security group.
 
 1. Install the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli), run `az login` and authenticate
    with your Microsoft corporate account.
-2. In this folder, run `npm install`, then `npm start`.
+2. In this folder, run `pnpm install`, then `npm start`.
 
 You should restart the console/shell after running the script (or for bash/zsh run `source ~/.bashrc` or `source ~/.zshrc`)
 for the exported environment variables to become available.
@@ -22,4 +22,3 @@ outdated and had issues (e.g. not retrieving all the existing secrets from the v
 streamline it and make it behave consistently for everyone who runs it; we might remove the (deactivated) REST
 fallback approach, or fix it (start by updating the relevant NPM packages) and remove the AzureCLI flow. [Relevant
 discussion](https://teams.microsoft.com/l/message/19:50292e8934024fc19d6ca2080dd7681e@thread.skype/1657054734667?tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&groupId=9ce27575-2f82-4689-abdb-bcff07e8063b&parentMessageId=1657054734667&teamName=Fluid%20Framework&channelName=Dev&createdTime=1657054734667).
-

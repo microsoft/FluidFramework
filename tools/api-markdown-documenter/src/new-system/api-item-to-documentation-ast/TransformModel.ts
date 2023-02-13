@@ -17,21 +17,21 @@ import { createDocument } from "./Utilities";
  * @returns The rendered Markdown document.
  */
 export function apiModelToDocument(
-    apiModel: ApiModel,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiModel: ApiModel,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocumentNode {
-    const logger = config.logger;
+	const logger = config.logger;
 
-    logger.verbose(`Rendering API Model document...`);
+	logger.verbose(`Rendering API Model document...`);
 
-    const sections: HierarchicalSectionNode[] = [];
+	const sections: HierarchicalSectionNode[] = [];
 
-    // Do not render breadcrumb for Model document
+	// Do not render breadcrumb for Model document
 
-    // Render body contents
-    sections.push(config.transformApiModel(apiModel, config));
+	// Render body contents
+	sections.push(config.transformApiModel(apiModel, config));
 
-    logger.verbose(`API Model document rendered successfully.`);
+	logger.verbose(`API Model document rendered successfully.`);
 
-    return createDocument(apiModel, sections, config);
+	return createDocument(apiModel, sections, config);
 }

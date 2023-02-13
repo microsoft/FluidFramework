@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 export {
-    MonitoringContext,
-    IConfigProviderBase,
-    sessionStorageConfigProvider,
-    mixinMonitoringContext,
-    IConfigProvider,
-    ConfigTypes,
-    loggerToMonitoringContext,
+	MonitoringContext,
+	IConfigProviderBase,
+	sessionStorageConfigProvider,
+	mixinMonitoringContext,
+	IConfigProvider,
+	ConfigTypes,
+	loggerToMonitoringContext,
 } from "./config";
 export { DebugLogger } from "./debugLogger";
 export {
@@ -28,8 +28,18 @@ export {
 	wrapErrorAndLog,
 } from "./errorLogging";
 export { EventEmitterWithErrorHandling } from "./eventEmitterWithErrorHandling";
-export { connectedEventName, disconnectedEventName, raiseConnectedEvent, safeRaiseEvent } from "./events";
-export { hasErrorInstanceId, IFluidErrorBase, isFluidError, isValidLegacyError } from "./fluidErrorBase";
+export {
+	connectedEventName,
+	disconnectedEventName,
+	raiseConnectedEvent,
+	safeRaiseEvent,
+} from "./events";
+export {
+	hasErrorInstanceId,
+	IFluidErrorBase,
+	isFluidError,
+	isValidLegacyError,
+} from "./fluidErrorBase";
 export {
 	BaseTelemetryNullLogger,
 	ChildLogger,
@@ -49,3 +59,13 @@ export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper";
 export { logIfFalse } from "./utils";
+export {
+	TelemetryEventPropertyTypeExt,
+	ITelemetryEventExt,
+	ITelemetryGenericEventExt,
+	ITelemetryErrorEventExt,
+	ITelemetryPerformanceEventExt,
+	ITelemetryLoggerExt,
+	ITaggedTelemetryPropertyTypeExt,
+	ITelemetryPropertiesExt,
+} from "./telemetryTypes";

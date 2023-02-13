@@ -232,14 +232,98 @@ use_old_EnumDeclaration_FlushMode(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_gcBlobKey": {"forwardCompat": false}
+* "VariableDeclaration_gcBlobPrefix": {"forwardCompat": false}
 */
+declare function get_old_VariableDeclaration_gcBlobPrefix():
+    TypeOnly<typeof old.gcBlobPrefix>;
+declare function use_current_VariableDeclaration_gcBlobPrefix(
+    use: TypeOnly<typeof current.gcBlobPrefix>);
+use_current_VariableDeclaration_gcBlobPrefix(
+    get_old_VariableDeclaration_gcBlobPrefix());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_gcBlobKey": {"backCompat": false}
+* "VariableDeclaration_gcBlobPrefix": {"backCompat": false}
 */
+declare function get_current_VariableDeclaration_gcBlobPrefix():
+    TypeOnly<typeof current.gcBlobPrefix>;
+declare function use_old_VariableDeclaration_gcBlobPrefix(
+    use: TypeOnly<typeof old.gcBlobPrefix>);
+use_old_VariableDeclaration_gcBlobPrefix(
+    get_current_VariableDeclaration_gcBlobPrefix());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcDeletedBlobKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcDeletedBlobKey():
+    TypeOnly<typeof old.gcDeletedBlobKey>;
+declare function use_current_VariableDeclaration_gcDeletedBlobKey(
+    use: TypeOnly<typeof current.gcDeletedBlobKey>);
+use_current_VariableDeclaration_gcDeletedBlobKey(
+    get_old_VariableDeclaration_gcDeletedBlobKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcDeletedBlobKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcDeletedBlobKey():
+    TypeOnly<typeof current.gcDeletedBlobKey>;
+declare function use_old_VariableDeclaration_gcDeletedBlobKey(
+    use: TypeOnly<typeof old.gcDeletedBlobKey>);
+use_old_VariableDeclaration_gcDeletedBlobKey(
+    get_current_VariableDeclaration_gcDeletedBlobKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTombstoneBlobKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcTombstoneBlobKey():
+    TypeOnly<typeof old.gcTombstoneBlobKey>;
+declare function use_current_VariableDeclaration_gcTombstoneBlobKey(
+    use: TypeOnly<typeof current.gcTombstoneBlobKey>);
+use_current_VariableDeclaration_gcTombstoneBlobKey(
+    get_old_VariableDeclaration_gcTombstoneBlobKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTombstoneBlobKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcTombstoneBlobKey():
+    TypeOnly<typeof current.gcTombstoneBlobKey>;
+declare function use_old_VariableDeclaration_gcTombstoneBlobKey(
+    use: TypeOnly<typeof old.gcTombstoneBlobKey>);
+use_old_VariableDeclaration_gcTombstoneBlobKey(
+    get_current_VariableDeclaration_gcTombstoneBlobKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTreeKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcTreeKey():
+    TypeOnly<typeof old.gcTreeKey>;
+declare function use_current_VariableDeclaration_gcTreeKey(
+    use: TypeOnly<typeof current.gcTreeKey>);
+use_current_VariableDeclaration_gcTreeKey(
+    get_old_VariableDeclaration_gcTreeKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTreeKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcTreeKey():
+    TypeOnly<typeof current.gcTreeKey>;
+declare function use_old_VariableDeclaration_gcTreeKey(
+    use: TypeOnly<typeof old.gcTreeKey>);
+use_old_VariableDeclaration_gcTreeKey(
+    get_current_VariableDeclaration_gcTreeKey());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -628,6 +712,30 @@ use_old_InterfaceDeclaration_IGarbageCollectionNodeData(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGarbageCollectionSnapshotData": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IGarbageCollectionSnapshotData():
+    TypeOnly<old.IGarbageCollectionSnapshotData>;
+declare function use_current_InterfaceDeclaration_IGarbageCollectionSnapshotData(
+    use: TypeOnly<current.IGarbageCollectionSnapshotData>);
+use_current_InterfaceDeclaration_IGarbageCollectionSnapshotData(
+    get_old_InterfaceDeclaration_IGarbageCollectionSnapshotData());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGarbageCollectionSnapshotData": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IGarbageCollectionSnapshotData():
+    TypeOnly<current.IGarbageCollectionSnapshotData>;
+declare function use_old_InterfaceDeclaration_IGarbageCollectionSnapshotData(
+    use: TypeOnly<old.IGarbageCollectionSnapshotData>);
+use_old_InterfaceDeclaration_IGarbageCollectionSnapshotData(
+    get_current_InterfaceDeclaration_IGarbageCollectionSnapshotData());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGarbageCollectionState": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGarbageCollectionState():
@@ -648,6 +756,30 @@ declare function use_old_InterfaceDeclaration_IGarbageCollectionState(
     use: TypeOnly<old.IGarbageCollectionState>);
 use_old_InterfaceDeclaration_IGarbageCollectionState(
     get_current_InterfaceDeclaration_IGarbageCollectionState());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy():
+    TypeOnly<old.IGarbageCollectionSummaryDetailsLegacy>;
+declare function use_current_InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy(
+    use: TypeOnly<current.IGarbageCollectionSummaryDetailsLegacy>);
+use_current_InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy(
+    get_old_InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy():
+    TypeOnly<current.IGarbageCollectionSummaryDetailsLegacy>;
+declare function use_old_InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy(
+    use: TypeOnly<old.IGarbageCollectionSummaryDetailsLegacy>);
+use_old_InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy(
+    get_current_InterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -971,6 +1103,7 @@ declare function get_old_InterfaceDeclaration_ITelemetryContext():
 declare function use_current_InterfaceDeclaration_ITelemetryContext(
     use: TypeOnly<current.ITelemetryContext>);
 use_current_InterfaceDeclaration_ITelemetryContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITelemetryContext());
 
 /*

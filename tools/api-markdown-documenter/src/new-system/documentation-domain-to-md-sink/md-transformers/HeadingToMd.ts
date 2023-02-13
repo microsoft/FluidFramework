@@ -17,34 +17,34 @@ export const maxHeadingLevel = 6;
  * @returns The markdown representation of the Heading node as a string
  */
 export function HeadingToMarkdown(
-    headingNode: HeadingNode,
-    renderer: DocumentationNodeRenderer,
+	headingNode: HeadingNode,
+	renderer: DocumentationNodeRenderer,
 ): string {
-    const output: string[] = [addNewlineOrBlank(renderer.countTrailingNewlines < 2)];
-    const headingLevel = headingNode.level ?? renderer.hierarchyDepth;
-    const headerLine: string[] = [];
+	const output: string[] = [addNewlineOrBlank(renderer.countTrailingNewlines < 2)];
+	const headingLevel = headingNode.level ?? renderer.hierarchyDepth;
+	const headerLine: string[] = [];
 
-    const renderAsMarkdownHeading = headingLevel <= maxHeadingLevel;
+	const renderAsMarkdownHeading = headingLevel <= maxHeadingLevel;
 
-    if (renderAsMarkdownHeading) {
-        const prefix = "#".repeat(headingLevel);
-        headerLine.push(prefix);
-    } else {
-        // TODO: ID above bold text? Confirm support.
-        // If the heading level is beyond the max, we will simply render the title as bolded text
-        renderer.setBold();
-    }
+	if (renderAsMarkdownHeading) {
+		const prefix = "#".repeat(headingLevel);
+		headerLine.push(prefix);
+	} else {
+		// TODO: ID above bold text? Confirm support.
+		// If the heading level is beyond the max, we will simply render the title as bolded text
+		renderer.setBold();
+	}
 
-    headerLine.push(renderer.renderNodes(headingNode.children));
+	headerLine.push(renderer.renderNodes(headingNode.children));
 
-    if (renderAsMarkdownHeading && headingNode.id !== undefined) {
-        headerLine.push(`{#${headingNode.id}}`);
-    }
+	if (renderAsMarkdownHeading && headingNode.id !== undefined) {
+		headerLine.push(`{#${headingNode.id}}`);
+	}
 
-    output.push(headerLine.join(" "));
-    output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
-    // Markdown best practices: Include one extra newline after a header
-    output.push(standardEOL);
+	output.push(headerLine.join(" "));
+	output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
+	// Markdown best practices: Include one extra newline after a header
+	output.push(standardEOL);
 
-    return output.join("");
+	return output.join("");
 }

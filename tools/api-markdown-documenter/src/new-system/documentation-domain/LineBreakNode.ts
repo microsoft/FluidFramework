@@ -6,20 +6,20 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
 
 export class LineBreakNode implements DocumentationNode {
-    /**
-     * {@inheritDoc DocumentationNode."type"}
-     */
-    public readonly type = DocumentationNodeType.LineBreak;
+	/**
+	 * {@inheritDoc DocumentationNode."type"}
+	 */
+	public readonly type = DocumentationNodeType.LineBreak;
 
-    // TODO: do we want this? What should it be called?
-    public static readonly Singleton = new LineBreakNode();
+	// TODO: do we want this? What should it be called?
+	public static readonly Singleton = new LineBreakNode();
 
-    public constructor() {}
+	public constructor() {}
 
-    /**
-     * {@inheritDoc DocumentationNode.equals}
-     */
-    public equals(other: DocumentationNode): boolean {
-        return other.type === DocumentationNodeType.LineBreak;
-    }
+	/**
+	 * {@inheritDoc DocumentationNode.equals}
+	 */
+	public equals(other: DocumentationNode): boolean {
+		return other.type === DocumentationNodeType.LineBreak;
+	}
 }
