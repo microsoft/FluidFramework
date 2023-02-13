@@ -24,12 +24,14 @@ An example application demonstrating how to use the azure-client package.
 
 See the [package README](./packages/external-controller/README.md) for more information.
 
-## Help
+# Developer notes
+
+
+
+# Help
 
 Not finding what you're looking for in this README?
 Check out our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
 
 Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 Thank you!
-
-<!-- AUTO-GENERATED-CONTENT:END -->
