@@ -4,15 +4,15 @@
 	"version": "0.1.0",
 	"license": "MIT",
 	"files": [
-	  "/nodejs/wasm_bg.wasm",
-	  "/nodejs/wasm.js",
-	  "/nodejs/wasm.d.ts",
-	  "/bundler/wasm_bg.wasm",
-	  "/bundler/wasm.js",
-	  "/bundler/wasm_bg.js"
+	  "/nodejs/fluid_wasm_bg.wasm",
+	  "/nodejs/fluid_wasm.js",
+	  "/nodejs/fluid_wasm.d.ts",
+	  "/bundler/fluid_wasm_bg.wasm",
+	  "/bundler/fluid_wasm.js",
+	  "/bundler/fluid_wasm_bg.js"
 	],
-	"main": "./nodejs/wasm.js",
-	"types": "./nodejs/wasm.d.ts",
+	"main": "./nodejs/fluid_wasm.js",
+	"types": "./nodejs/fluid_wasm.d.ts",
 	"sideEffects": false,
-	"module": "./bundler/wasm.js"
-  }
+	"module": "./bundler/fluid_wasm.js"
+}

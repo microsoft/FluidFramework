@@ -16,7 +16,7 @@
 	"module": "./pkg_combo/bundler/wasm.js",
 	"scripts": {
 		"build": "npm run build:compile",
-		"build:compile": "concurrently npm:build:wasm npm:build:test",
+		"build:compile": "npm run build:wasm && npm run build:test",
 		"build:wasm": "wasm-pack build --target bundler --out-dir ../pkg_combo/bundler ./wasm && wasm-pack build --target nodejs --out-dir ../pkg_combo/nodejs ./wasm",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:full": "npm run build",
