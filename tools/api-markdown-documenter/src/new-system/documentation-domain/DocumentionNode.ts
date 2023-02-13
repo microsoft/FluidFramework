@@ -5,8 +5,6 @@ import type {
 	Parent as UnistParent,
 } from "unist";
 
-import { DocumentationNodeType } from "./DocumentationNodeType";
-
 // TODOs:
 // - Make SingleLineTextNode actually typesafe
 
@@ -14,8 +12,12 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
  * Base type for documentation nodes.
  */
 export interface DocumentationNode<TData extends object = UnistData> extends UnistNode<TData> {
-	// TODO: rename
-	readonly type: DocumentationNodeType;
+	/**
+	 * The type of Documentation domain node.
+	 *
+	 * See {@link unist#Node."type"}.
+	 */
+	readonly type: string;
 
 	/**
 	 * Deep equality comparison.
@@ -37,7 +39,7 @@ export interface ParentNode<TDocumentationNode extends DocumentationNode = Docum
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	readonly type: DocumentationNodeType;
+	readonly type: string;
 
 	readonly children: TDocumentationNode[];
 }
@@ -49,7 +51,7 @@ export interface LiteralNode<T = unknown> extends UnistLiteral<T>, Documentation
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	readonly type: DocumentationNodeType;
+	readonly type: string;
 }
 
 /**
@@ -62,7 +64,7 @@ export abstract class ParentNodeBase<
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public abstract type: DocumentationNodeType;
+	public abstract type: string;
 
 	/**
 	 * {@inheritDoc ParentNode.children}
