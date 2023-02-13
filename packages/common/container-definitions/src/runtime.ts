@@ -115,6 +115,7 @@ export interface IBatchMessage {
 	contents?: string;
 	metadata: Record<string, unknown> | undefined;
 	compression?: string;
+	referenceSequenceNumber?: number;
 }
 
 /**

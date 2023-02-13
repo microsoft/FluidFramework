@@ -1992,6 +1992,7 @@ export class Container
 		batch?: boolean,
 		metadata?: any,
 		compression?: string,
+		referenceSequenceNumber?: number,
 	): number {
 		if (this.connectionState !== ConnectionState.Connected) {
 			this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
@@ -2000,7 +2001,7 @@ export class Container
 
 		this.messageCountAfterDisconnection += 1;
 		this.collabWindowTracker?.stopSequenceNumberUpdate();
-		return this._deltaManager.submit(type, contents, batch, metadata, compression);
+		return this._deltaManager.submit(type, contents, batch, metadata, compression, referenceSequenceNumber);
 	}
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {

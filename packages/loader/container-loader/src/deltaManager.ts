@@ -120,6 +120,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// * lastProcessedSequenceNumber - last processed sequence number
 	private lastQueuedSequenceNumber: number = 0;
 	private lastObservedSeqNumber: number = 0;
+	// To be removed as part of ADO:3455
 	private lastProcessedSequenceNumber: number = 0;
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
 	private baseTerm: number = 0;
@@ -230,11 +231,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		batch = false,
 		metadata?: any,
 		compression?: string,
+		referenceSequenceNumber?: number,
 	) {
+		// Back-compat ADO:3455
+		const backCompatRefSeqNum = referenceSequenceNumber ?? this.lastProcessedSequenceNumber;
 		const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
 			contents,
 			metadata,
-			referenceSequenceNumber: this.lastProcessedSequenceNumber,
+			referenceSequenceNumber: backCompatRefSeqNum,
 			type,
 			compression,
 		};
