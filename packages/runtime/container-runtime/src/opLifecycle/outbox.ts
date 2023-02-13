@@ -186,6 +186,7 @@ export class Outbox {
 					contents: message.contents,
 					metadata: message.metadata,
 					compression: message.compression,
+					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
 			);
 		}

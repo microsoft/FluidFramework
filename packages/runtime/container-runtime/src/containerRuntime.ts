@@ -925,6 +925,7 @@ export class ContainerRuntime
 	private delayConnectClientId?: string;
 
 	private ensureNoDataModelChangesCalls = 0;
+	private lastProcessedSequenceNumber: number = 0;
 
 	/**
 	 * Tracks the number of detected reentrant ops to report,
@@ -1902,6 +1903,7 @@ export class ContainerRuntime
 				this.emit("op", message, runtimeMessage);
 			}
 
+			this.lastProcessedSequenceNumber = message.sequenceNumber;
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
 			if (local) {
@@ -2843,7 +2845,7 @@ export class ContainerRuntime
 			deserializedContent: JSON.parse(serializedContent), // Deep copy in case caller changes reference object
 			metadata,
 			localOpMetadata,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			referenceSequenceNumber: this.lastProcessedSequenceNumber,
 		};
 
 		try {

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { IDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 describeNoCompat("Less batches", (getTestObjectProvider) => {
 	const mapId = "mapId";
@@ -118,5 +119,60 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 				assert.strictEqual(value, `${i}`, `Wrong value for key${i}`);
 			}
 		});
+	});
+
+	it("Reference sequence number mismatch when doing op reentry", async () => {
+		await setupContainers(testContainerConfig);
+
+		// Force the container into write-mode
+		dataObject1map.set("key0", "0");
+		await provider.ensureSynchronized();
+
+		assert(localContainer.clientId !== undefined);
+		// An op crafted to set a map value of "mockKey".
+		const op1: ISequencedDocumentMessage = {
+			clientId: localContainer.clientId,
+			clientSequenceNumber: 1,
+			contents: {
+				type: "component",
+				contents: {
+					address: "default",
+					contents: {
+						content: {
+							address: mapId,
+							contents: {
+								key: "mockKey",
+								type: "set",
+								value: {
+									type: "Plain",
+									value: "value3",
+								},
+							},
+						},
+						type: "op",
+					},
+				},
+			},
+			metadata: { batch: true },
+			minimumSequenceNumber: 0,
+			referenceSequenceNumber: 2,
+			sequenceNumber: 3,
+			term: 1,
+			timestamp: 1675197275171,
+			type: "op",
+			expHash1: "4d1a6431",
+		};
+
+		// Queue a microtask to process the above op.
+		Promise.resolve()
+			.then(() => {
+				(dataObject1.context.containerRuntime as ContainerRuntime).process(op1, false);
+				dataObject1map.set("key2", "value2");
+			})
+			.catch(() => {});
+
+		dataObject1map.set("key1", "value1");
+		// Wait for the ops to get processed by both the containers.
+		await provider.ensureSynchronized();
 	});
 });

@@ -1964,6 +1964,7 @@ export class Container
 				true, // batch
 				message.metadata,
 				message.compression,
+				message.referenceSequenceNumber,
 			);
 		}
 		this._deltaManager.flush();
@@ -2001,7 +2002,14 @@ export class Container
 
 		this.messageCountAfterDisconnection += 1;
 		this.collabWindowTracker?.stopSequenceNumberUpdate();
-		return this._deltaManager.submit(type, contents, batch, metadata, compression, referenceSequenceNumber);
+		return this._deltaManager.submit(
+			type,
+			contents,
+			batch,
+			metadata,
+			compression,
+			referenceSequenceNumber,
+		);
 	}
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
