@@ -263,7 +263,7 @@ Another example call signature
 
 Here are some remarks about the event call signature
 
-### See also {#testinterface-see-also}
+### See Also {#testinterface-see-also}
 
 [TestInterface.testInterfaceMethod](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature)
 
@@ -325,7 +325,7 @@ A number
 
 <b>Return type: </b>number
 
-### See also {#testinterfaceextendingotherinterfaces-see-also}
+### See Also {#testinterfaceextendingotherinterfaces-see-also}
 
 - [TestInterface](docs/simple-suite-test#testinterface-interface)
 
@@ -375,7 +375,6 @@ export interface TestInterfaceWithTypeParameter<T>
 ```
 
 <b>Type parameters: </b>
-
 - <b>T</b>: A type parameter
 
 ### Remarks {#testinterfacewithtypeparameter-remarks}
@@ -542,9 +541,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 <b>Extends: </b>[TestAbstractClass](docs/simple-suite-test#testabstractclass-class)
 
 <b>Type parameters: </b>
-
 - <b>TTypeParameterA</b>: A type parameter
-
 - <b>TTypeParameterB</b>: Another type parameter
 
 ### Remarks {#testclass-remarks}
@@ -772,7 +769,7 @@ protected virtualMethod(): number;
 
 <b>Return type: </b>number
 
-### See also {#testclass-see-also}
+### See Also {#testclass-see-also}
 
 [TestAbstractClass](docs/simple-suite-test#testabstractclass-class)
 

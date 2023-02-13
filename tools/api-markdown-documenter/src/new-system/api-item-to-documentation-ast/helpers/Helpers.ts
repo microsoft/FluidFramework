@@ -42,6 +42,7 @@ import {
 	FencedCodeBlockNode,
 	HeadingNode,
 	HierarchicalSectionNode,
+	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
@@ -82,7 +83,7 @@ export function createSignatureSection(
 				FencedCodeBlockNode.createFromPlainText(signatureExcerpt.trim(), "typescript"),
 			);
 
-			const renderedHeritageTypes = createHeritageTypesSpan(apiItem, config);
+			const renderedHeritageTypes = createHeritageTypesParagraph(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {
 				contents.push(renderedHeritageTypes);
 			}
@@ -123,7 +124,7 @@ export function createSeeAlsoSection(
 	);
 
 	return wrapInSection(contents, {
-		title: "See also",
+		title: "See Also",
 		id: `${getQualifiedApiItemName(apiItem)}-see-also`,
 	});
 }
@@ -136,15 +137,15 @@ export function createSeeAlsoSection(
  * @param apiItem - The API item whose heritage types will be rendered.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  *
- * @returns The doc section if there were any heritage types to render, otherwise `undefined`.
+ * @returns The paragraph containing heritage type information, if any is present. Otherwise `undefined`.
  */
-export function createHeritageTypesSpan(
+export function createHeritageTypesParagraph(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): SpanNode | undefined {
+): ParagraphNode | undefined {
 	const { logger } = config;
 
-	const contents: DocumentationNode[] = [];
+	const contents: ParagraphNode[] = [];
 
 	if (apiItem instanceof ApiClass) {
 		// Render `extends` type if there is one.
@@ -207,7 +208,16 @@ export function createHeritageTypesSpan(
 		}
 	}
 
-	return contents.length === 0 ? undefined : new SpanNode(contents);
+	if (contents.length === 0) {
+		return undefined;
+	}
+
+	// If only 1 child paragraph, prevent creating unecessary hierarchy here by not wrapping it.
+	if (contents.length === 1) {
+		return contents[0];
+	}
+
+	return new ParagraphNode(contents);
 }
 
 /**
@@ -277,20 +287,22 @@ export function createTypeParametersSpan(
 		innerNodes.push(SpanNode.createFromPlainText(typeParameter.name, { bold: true }));
 
 		if (typeParameter.tsdocTypeParamBlock !== undefined) {
-			innerNodes.push(new PlainTextNode(": "));
-			innerNodes.push(
-				transformSection(
-					typeParameter.tsdocTypeParamBlock.content,
-					docNodeTransformOptions,
-				),
+			innerNodes.push();
+
+			// TODO: We can probably make this cleaner
+			const paragraph = transformSection(
+				typeParameter.tsdocTypeParamBlock.content,
+				docNodeTransformOptions,
 			);
+			innerNodes.push(new PlainTextNode(": "), ...paragraph.children);
 		}
 
 		listItemNodes.push(new SpanNode(innerNodes));
 	}
 
 	return new SpanNode([
-		new ParagraphNode([createSingleLineSpanFromPlainText("Type parameters: ", { bold: true })]),
+		createSingleLineSpanFromPlainText("Type parameters: ", { bold: true }),
+		LineBreakNode.Singleton,
 		new UnorderedListNode(listItemNodes),
 	]);
 }

@@ -11,9 +11,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 <b>Extends: </b>[TestAbstractClass](docs/simple-suite-test/testabstractclass-class)
 
 <b>Type parameters: </b>
-
 - <b>TTypeParameterA</b>: A type parameter
-
 - <b>TTypeParameterB</b>: Another type parameter
 
 ## Remarks {#testclass-remarks}
@@ -66,7 +64,7 @@ Here are some remarks about the class
 |  [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) | <code>sealed</code> | TTypeParameterA | Test class method |
 |  [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test/testabstractclass-virtualmethod-method). |
 
-## See also {#testclass-see-also}
+## See Also {#testclass-see-also}
 
 [TestAbstractClass](docs/simple-suite-test/testabstractclass-class)
 

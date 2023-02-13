@@ -11,7 +11,6 @@ export interface TestInterfaceWithTypeParameter<T>
 ```
 
 <b>Type parameters: </b>
-
 - <b>T</b>: A type parameter
 
 ## Remarks {#testinterfacewithtypeparameter-remarks}

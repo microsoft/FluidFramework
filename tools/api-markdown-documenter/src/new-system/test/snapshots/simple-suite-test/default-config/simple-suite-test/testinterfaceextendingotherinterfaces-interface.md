@@ -52,7 +52,7 @@ A number
 
 <b>Return type: </b>number
 
-## See also {#testinterfaceextendingotherinterfaces-see-also}
+## See Also {#testinterfaceextendingotherinterfaces-see-also}
 
 - [TestInterface](./simple-suite-test/testinterface-interface)
 

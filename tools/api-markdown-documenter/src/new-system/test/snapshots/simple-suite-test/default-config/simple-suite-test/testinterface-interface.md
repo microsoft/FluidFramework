@@ -155,7 +155,7 @@ Another example call signature
 
 Here are some remarks about the event call signature
 
-## See also {#testinterface-see-also}
+## See Also {#testinterface-see-also}
 
 [TestInterface.testInterfaceMethod](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature)
 
