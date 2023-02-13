@@ -265,9 +265,7 @@ export abstract class FluidDataStoreContext
 	 * So, adding a threshold of how many telemetry events can be logged per data store context. This can be
 	 * controlled via feature flags.
 	 */
-	private readonly localChangesTelemetryThreshold?: number;
-	// The count of the local changes in summarizer telemetry that has been logged by this data store context.
-	private localChangesTelemetryCount = 0;
+	private localChangesTelemetryThreshold: number;
 
 	// The used routes of this node as per the last GC run. This is used to update the used routes of the channel
 	// if it realizes after GC is run.
@@ -343,9 +341,9 @@ export abstract class FluidDataStoreContext
 			this._containerRuntime.gcTombstoneEnforcementAllowed &&
 			this.clientDetails.type !== summarizerClientType;
 
-		this.localChangesTelemetryThreshold = this.mc.config.getNumber(
-			"Fluid.Telemetry.LocalChangesTelemetryThreshold",
-		);
+		// By default, a data store can log maximum 100 local changes telemetry in summarizer.
+		this.localChangesTelemetryThreshold =
+			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryThreshold") ?? 100;
 	}
 
 	public dispose(): void {
@@ -905,13 +903,9 @@ export abstract class FluidDataStoreContext
 	protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
 		if (this.clientDetails.type === summarizerClientType) {
 			// If the count of telemetry logged has crossed the threshold, don't log any more.
-			if (
-				this.localChangesTelemetryThreshold !== undefined &&
-				this.localChangesTelemetryCount >= this.localChangesTelemetryThreshold
-			) {
+			if (this.localChangesTelemetryThreshold > 0) {
 				return;
 			}
-			this.localChangesTelemetryCount++;
 
 			// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
 			// this is happening and which data stores do this. The eventual goal is to disallow local changes
@@ -927,6 +921,7 @@ export abstract class FluidDataStoreContext
 				isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 				stack: generateStack(),
 			});
+			this.localChangesTelemetryThreshold--;
 		}
 	}
 
