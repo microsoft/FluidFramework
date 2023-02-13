@@ -52,7 +52,7 @@ const chunkingBatchesConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		compressionOptions: {
 			minimumBatchSizeInBytes: 1024 * 1024,
-			compressionAlgorithm: CompressionAlgorithms.lz4,
+			compressionAlgorithm: "lz4",
 		},
 		chunkSizeInBytes: 600 * 1024,
 		//		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
