@@ -7,6 +7,9 @@ import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./Docu
 import { PlainTextNode } from "./PlainTextNode";
 import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
 
+/**
+ * Text formatting options used by {@link SpanNode}.
+ */
 export interface TextFormatting {
 	/**
 	 * @defaultValue Inherit
@@ -32,8 +35,8 @@ function compareTextFormatting(a: TextFormatting, b: TextFormatting): boolean {
 }
 
 export class SpanNode<
-	TDocumentNode extends DocumentationNode = DocumentationNode,
-> extends ParentNodeBase<TDocumentNode> {
+	TDocumentationNode extends DocumentationNode = DocumentationNode,
+> extends ParentNodeBase<TDocumentationNode> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -44,7 +47,7 @@ export class SpanNode<
 	 */
 	public readonly textFormatting?: TextFormatting;
 
-	public constructor(children: TDocumentNode[], formatting?: TextFormatting) {
+	public constructor(children: TDocumentationNode[], formatting?: TextFormatting) {
 		super(children);
 		this.textFormatting = formatting;
 	}
