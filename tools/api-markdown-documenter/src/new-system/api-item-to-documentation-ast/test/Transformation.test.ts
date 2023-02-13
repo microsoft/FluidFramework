@@ -244,11 +244,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 			ParagraphNode.createFromPlainText("Test interface"),
 
 			// Signature section
-			HeadingNode.createFromPlainText("Signature", /*id: */ "testinterface-signature"),
+			HeadingNode.createFromPlainText("Signature", /* id: */ "testinterface-signature"),
 			FencedCodeBlockNode.createFromPlainText("export interface TestInterface", "typescript"),
 
 			// Remarks section
-			HeadingNode.createFromPlainText("Remarks", /*id: */ "testinterface-remarks"),
+			HeadingNode.createFromPlainText("Remarks", /* id: */ "testinterface-remarks"),
 			ParagraphNode.createFromPlainText("Here are some remarks about the interface"),
 
 			// Properties section
