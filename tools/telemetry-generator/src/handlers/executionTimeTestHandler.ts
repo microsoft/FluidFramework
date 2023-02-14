@@ -9,6 +9,7 @@ module.exports = function handler(fileData, logger) {
 	} else {
 		console.log("ENDPOINTNAME not defined using local as default.");
 	}
+
 	fileData.benchmarks.forEach((testData) => {
 		logger.send({
 			category: "performance",
