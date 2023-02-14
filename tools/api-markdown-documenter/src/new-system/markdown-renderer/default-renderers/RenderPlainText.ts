@@ -36,7 +36,7 @@ function renderPlainTextWithMarkdownSyntax(
 	// Adapted from <https://github.com/microsoft/rushstack/blob/main/apps/api-documenter/src/markdown/MarkdownEmitter.ts>
 
 	// split out the [ leading whitespace, body, trailing whitespace ]
-	const [leadingWhitespace, body, trailingWhitespace]: string[] =
+	const [, leadingWhitespace, body, trailingWhitespace]: string[] =
 		text.match(/^(\s*)(.*?)(\s*)$/) ?? [];
 
 	writer.write(leadingWhitespace); // write leading whitespace
