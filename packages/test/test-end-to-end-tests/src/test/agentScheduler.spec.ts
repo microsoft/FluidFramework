@@ -80,14 +80,14 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 			await scheduler
 				.pick("task1", async () => {})
 				.catch((err) => {
-					assert.deepStrictEqual(err.message, "task1 is already attempted");
+					assert.deepStrictEqual(err.message, "Task is already attempted");
 				});
 		});
 
 		it("Unpicked task release should fail", async () => {
 			await scheduler.pick("task1", async () => {});
 			await scheduler.release("task2").catch((err) => {
-				assert.deepStrictEqual(err.message, "task2 was never registered");
+				assert.deepStrictEqual(err.message, "Task was never registered");
 			});
 		});
 
@@ -186,13 +186,13 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
 			await provider.ensureSynchronized();
 			await scheduler1.release("task4").catch((err) => {
-				assert.deepStrictEqual(err.message, "task4 was never picked");
+				assert.deepStrictEqual(err.message, "Task was never picked");
 			});
 			await scheduler2.release("task1").catch((err) => {
-				assert.deepStrictEqual(err.message, "task1 was never picked");
+				assert.deepStrictEqual(err.message, "Task was never picked");
 			});
 			await scheduler2.release("task2").catch((err) => {
-				assert.deepStrictEqual(err.message, "task2 was never picked");
+				assert.deepStrictEqual(err.message, "Task was never picked");
 			});
 		});
 

@@ -41,10 +41,7 @@ export interface AttributionInfo {
 }
 
 // @alpha
-export interface AttributionKey {
-    seq: number;
-    type: "op";
-}
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey;
 
 // @public @deprecated (undocumented)
 export enum BindState {
@@ -87,6 +84,13 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
+// @alpha
+export interface DetachedAttributionKey {
+    id: 0;
+    // (undocumented)
+    type: "detached";
+}
+
 // @public
 export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
 
@@ -94,6 +98,11 @@ export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStor
 export enum FlushMode {
     Immediate = 0,
     TurnBased = 1
+}
+
+// @public (undocumented)
+export enum FlushModeExperimental {
+    Async = 2
 }
 
 // @public
@@ -363,6 +372,7 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
+    isSummaryInProgress?(): boolean;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
@@ -422,6 +432,7 @@ export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    setAll(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public
@@ -429,6 +440,12 @@ export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreReg
 
 // @public
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+// @alpha
+export interface OpAttributionKey {
+    seq: number;
+    type: "op";
+}
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;

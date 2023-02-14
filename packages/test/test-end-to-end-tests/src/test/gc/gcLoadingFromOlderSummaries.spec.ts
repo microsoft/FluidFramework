@@ -15,7 +15,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-	createSummarizerWithContainer,
+	createSummarizer,
 	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
@@ -38,14 +38,6 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;
 	let dataStoreA: ITestDataObject;
-
-	/**
-	 * Creates a summarizer with the given summary version and returns the IContainer along with the ISummarizer.
-	 */
-	async function createSummarizerAndContainer(summaryVersion?: string) {
-		const url = await mainContainer.getAbsoluteUrl("");
-		return createSummarizerWithContainer(provider, url, summaryVersion);
-	}
 
 	/**
 	 * Returns the reference state for all the nodes in the given summary tree.
@@ -130,7 +122,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	});
 
 	it("updates referenced nodes correctly when loading from an older summary", async () => {
-		const { summarizer: summarizer1 } = await createSummarizerAndContainer();
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create a data store and mark it unreferenced to begin with.
 		const dataStoreBHandle = (await containerRuntime.createDataStore(TestDataObjectType))
@@ -152,8 +144,11 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 
 		// Create a second summarizer with summary1. Note that this is done before posting another summary because ODSP
 		// may delete this summary when a new one is posted.
-		const { container: container2, summarizer: summarizer2 } =
-			await createSummarizerAndContainer(summaryResult1.summaryVersion);
+		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryResult1.summaryVersion,
+		);
 
 		// Reference dataStoreB now.
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
@@ -204,7 +199,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	});
 
 	it("updates unreferenced nodes correctly when loading from an older summary", async () => {
-		const { summarizer: summarizer1 } = await createSummarizerAndContainer();
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create a data store and mark it referenced to begin with.
 		const dataStoreBHandle = (await containerRuntime.createDataStore(TestDataObjectType))
@@ -225,8 +220,11 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 
 		// Create a second summarizer with summary1. Note that this is done before posting another summary because ODSP
 		// may delete this summary when a new one is posted.
-		const { container: container2, summarizer: summarizer2 } =
-			await createSummarizerAndContainer(summaryResult1.summaryVersion);
+		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryResult1.summaryVersion,
+		);
 
 		// Unreference dataStoreB now.
 		dataStoreA._root.delete("dataStoreB");
@@ -282,7 +280,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	 * in older summary is correctly propagated to DDS as well.
 	 */
 	it("updates unreferenced nodes correctly when DDS is unchanged after loading from older summary", async () => {
-		const { summarizer: summarizer1 } = await createSummarizerAndContainer();
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create a second DDS in dataStoreA. This will be changed after loading from old summary so that the data store
 		// changes but the root DDS containing references is unchanged.
@@ -308,8 +306,11 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 
 		// Create a second summarizer with summary1. Note that this is done before posting another summary because ODSP
 		// may delete this summary when a new one is posted.
-		const { container: container2, summarizer: summarizer2 } =
-			await createSummarizerAndContainer(summaryResult1.summaryVersion);
+		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryResult1.summaryVersion,
+		);
 
 		// Reference dataStoreB now.
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
@@ -364,7 +365,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	});
 
 	it("updates unreferenced timestamps correctly when loading from an older summary", async () => {
-		const { summarizer: summarizer1 } = await createSummarizerAndContainer();
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create a data store and mark it unreferenced to begin with.
 		const dataStoreBHandle = (await containerRuntime.createDataStore(TestDataObjectType))
@@ -384,8 +385,11 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 
 		// Create a second summarizer with summary1. Note that this is done before posting another summary because ODSP
 		// may delete this summary when a new one is posted.
-		const { container: container2, summarizer: summarizer2 } =
-			await createSummarizerAndContainer(summaryResult1.summaryVersion);
+		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryResult1.summaryVersion,
+		);
 
 		// Reference and unreference dataStoreB.
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
@@ -433,7 +437,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	});
 
 	it("does not log gcUnknownOutboundReferences errors when loading from an older summary", async () => {
-		const { summarizer: summarizer1 } = await createSummarizerAndContainer();
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create a data store and mark it unreferenced to begin with.
 		const dataStoreBHandle = (await containerRuntime.createDataStore(TestDataObjectType))
@@ -455,8 +459,11 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 
 		// Create a second summarizer with summary1. Note that this is done before posting another summary because ODSP
 		// may delete this summary when a new one is posted.
-		const { container: container2, summarizer: summarizer2 } =
-			await createSummarizerAndContainer(summaryResult1.summaryVersion);
+		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryResult1.summaryVersion,
+		);
 
 		// Reference dataStoreB. This should result in an explicit reference from dataStoreA -> dataStoreB.
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);

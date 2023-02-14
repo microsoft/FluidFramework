@@ -80,8 +80,7 @@ describe("PropertyDDS summarizer", () => {
 	};
 
 	const getSummarizer = async (container) => {
-		const summarizer = await createSummarizer(objProvider, container);
-		return summarizer;
+		return createSummarizer(objProvider, container);
 	};
 
 	const createUserNode = (name: string) => {
@@ -182,7 +181,7 @@ describe("PropertyDDS summarizer", () => {
 		});
 
 		// Summarize
-		await summarizeNow(summarizer);
+		await summarizeNow(summarizer.summarizer);
 
 		await objProvider.ensureSynchronized();
 
