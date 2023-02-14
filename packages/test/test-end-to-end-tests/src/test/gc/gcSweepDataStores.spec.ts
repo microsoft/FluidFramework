@@ -27,6 +27,7 @@ import {
 import { delay } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * These tests validate that SweepReady data stores are correctly swept. Swept datastores should be
@@ -406,5 +407,33 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				);
 			},
 		);
+	});
+
+	describe("Deleted data stores in summary", () => {
+		it("updates deleted blobs in the GC data in summary", async () => {
+			const { unreferencedId, summarizingContainer, summarizer } =
+				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+			const deletedDataStoreNodePath = `/${unreferencedId}`;
+			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+			// The datastore should be swept now
+			const summary2 = await summarize(summarizer);
+
+			// Validate that the GC state does not contain an entry for the deleted data store.
+			const gcState = getGCStateFromSummary(summary2.summaryTree);
+			assert(gcState !== undefined, "GC tree is not available in the summary");
+			for (const [nodePath] of Object.entries(gcState.gcNodes)) {
+				if (nodePath.startsWith(deletedDataStoreNodePath)) {
+					assert(false, `${unreferencedId} nodes should have been deleted from GC state`);
+				}
+			}
+
+			// Validate that the deleted nodes in the GC data has the deleted data store node.
+			const deletedNodesState = getGCDeletedStateFromSummary(summary2.summaryTree);
+			assert(
+				deletedNodesState?.includes(deletedDataStoreNodePath),
+				`${deletedDataStoreNodePath} is missing from deleted nodes`,
+			);
+		});
 	});
 });
