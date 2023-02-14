@@ -1111,12 +1111,13 @@ export class ContainerRuntime
 			}),
 		});
 
+		const chunkingDisabled = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableCompressionChunking",
+		);
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.context.submitBatchFn,
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompressionChunking") === true
-				? Number.POSITIVE_INFINITY
-				: runtimeOptions.chunkSizeInBytes,
+			chunkingDisabled === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
@@ -1128,10 +1129,13 @@ export class ContainerRuntime
 			this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
+		const opReentryDisabled = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableOpReentryCheck",
+		);
 		this.enableOpReentryCheck =
 			runtimeOptions.enableOpReentryCheck === true &&
 			// Allow for a break-glass config to override the options
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
+			opReentryDisabled !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.heuristicsDisabled = this.isHeuristicsDisabled();
@@ -1273,8 +1277,11 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 		);
 
+		const compressionDisabled = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableCompression",
+		);
 		const compressionOptions =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompression") === true
+			compressionDisabled === true
 				? {
 						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 						compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1426,30 +1433,22 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
+			options: JSON.stringify(runtimeOptions),
+			featureGates: JSON.stringify({
+				compressionDisabled,
+				opReentryDisabled,
+				chunkingDisabled,
+				attachReorderDisabled: this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.disableAttachOpReorder",
+				),
+				partialFlushDisabled: this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.DisablePartialFlush",
+				),
+			}),
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
-
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "Config",
-			options: JSON.stringify(runtimeOptions),
-			compressionDisabled: this.mc.config.getBoolean(
-				"Fluid.ContainerRuntime.DisableCompression",
-			),
-			opReentryDisabled: this.mc.config.getBoolean(
-				"Fluid.ContainerRuntime.DisableOpReentryCheck",
-			),
-			chunkingDisabled: this.mc.config.getBoolean(
-				"Fluid.ContainerRuntime.DisableCompressionChunking",
-			),
-			attachReorderDisabled: this.mc.config.getBoolean(
-				"Fluid.ContainerRuntime.disableAttachOpReorder",
-			),
-			partialFlushDisabled: this.mc.config.getBoolean(
-				"Fluid.ContainerRuntime.DisablePartialFlush",
-			),
-		});
 	}
 
 	/**

@@ -88,6 +88,8 @@ export interface IBatchMessage {
     contents?: string;
     // (undocumented)
     metadata: Record<string, unknown> | undefined;
+    // (undocumented)
+    referenceSequenceNumber?: number;
 }
 
 // @public
