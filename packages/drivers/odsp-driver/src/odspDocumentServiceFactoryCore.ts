@@ -51,8 +51,12 @@ import {
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	public readonly protocolName = "fluid-odsp:";
 
-	public readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
+	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
+
+	public get snapshotPrefetchResultCache() {
+		return this.nonPersistentCache.snapshotPrefetchResultCache;
+	}
 
 	public async createContainer(
 		createNewSummary: ISummaryTree | undefined,

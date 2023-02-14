@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-floating-promises */
 import { strict as assert } from "assert";
-import { IOdspResolvedUrl, ICacheEntry } from "@fluidframework/odsp-driver-definitions";
+import { PromiseCache } from "@fluidframework/common-utils";
+import {
+	IOdspResolvedUrl,
+	ICacheEntry,
+	getKeyForCacheEntry,
+} from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FetchSource } from "@fluidframework/driver-definitions";
 import {
@@ -13,25 +19,19 @@ import {
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "../contracts";
-import {
-	INonPersistentCache,
-	LocalPersistentCache,
-	snapshotPrefetchCacheKeyFromEntry,
-} from "../odspCache";
+import { ISnapshotContentsWithEpoch, LocalPersistentCache } from "../odspCache";
 import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import {
-	OdspDocumentStorageService,
-} from "../odspDocumentStorageManager";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
 
-describe("xxxTests for prefetching snapshot", () => {
+describe("Tests for prefetching snapshot", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
 	const driveId = "driveId";
 	const itemId = "itemId";
@@ -64,7 +64,7 @@ describe("xxxTests for prefetching snapshot", () => {
 		};
 	}
 	const resolver = new OdspDriverUrlResolver();
-	let nonPersistentCache: INonPersistentCache;
+	let snapshotPrefetchResultCache: PromiseCache<string, ISnapshotContentsWithEpoch>;
 	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
 	const odspSnapshot: IOdspSnapshot = {
@@ -115,28 +115,23 @@ describe("xxxTests for prefetching snapshot", () => {
 				localCache,
 				GetHostStoragePolicyInternal(),
 			);
-			snapshotPrefetchCacheKey = snapshotPrefetchCacheKeyFromEntry(
-				createCacheSnapshotKey(resolved),
-			);
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,
 			);
 			service = (await documentservice.connectToStorage()) as OdspDocumentStorageService;
-			nonPersistentCache = odspDocumentServiceFactory.nonPersistentCache;
+			snapshotPrefetchResultCache = odspDocumentServiceFactory.snapshotPrefetchResultCache;
 		});
 
 		afterEach(async () => {
-			localCache.removeEntries({ docId: hashedDocumentId, resolvedUrl: resolved }).catch(() => {});
-			nonPersistentCache.snapshotPrefetchResultCache?.remove(snapshotPrefetchCacheKey);
+			localCache
+				.removeEntries({ docId: hashedDocumentId, resolvedUrl: resolved })
+				.catch(() => {});
+			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
 		});
 
-		it("prefetching snapshot should result in snapshot source as prefetched if cache throws", async () => {
-			// overwriting get() to make cache fetch throw
-			localCache.get = async () => {
-				throw new Error("testing");
-			};
-
+		it("prefetching snapshot should result in snapshot source as cache as prefetch adds to cache", async () => {
 			await mockFetchSingle(
 				async () =>
 					prefetchLatestSnapshot(
@@ -168,7 +163,9 @@ describe("xxxTests for prefetching snapshot", () => {
 				"1 Obtain snapshot event should be there",
 			);
 			assert(
-				mockLogger.matchEvents([{ eventName: "OdspDriver:ObtainSnapshot_end", method: "cache" }]),
+				mockLogger.matchEvents([
+					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "cache" },
+				]),
 				"Source should be cache",
 			);
 		});
@@ -212,7 +209,9 @@ describe("xxxTests for prefetching snapshot", () => {
 				"1 Obtain snapshot event should be there",
 			);
 			assert(
-				mockLogger.matchEvents([{ eventName: "OdspDriver:ObtainSnapshot_end", method: "network" }]),
+				mockLogger.matchEvents([
+					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "network" },
+				]),
 				"Source should be network",
 			);
 		});
@@ -317,7 +316,7 @@ describe("xxxTests for prefetching snapshot", () => {
 			};
 			// Set epoch first
 			await mockFetchSingle(
-				async () => await service.readBlob("id"),
+				async () => service.readBlob("id"),
 				async () =>
 					createResponse(
 						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
@@ -326,7 +325,7 @@ describe("xxxTests for prefetching snapshot", () => {
 					),
 			);
 
-			await mockFetchSingle(
+			mockFetchSingle(
 				async () =>
 					prefetchLatestSnapshot(
 						resolved,
@@ -348,44 +347,26 @@ describe("xxxTests for prefetching snapshot", () => {
 					),
 			);
 
-			// assert(
-			// 	nonPersistentCache.snapshotPrefetchResultCache?.has(snapshotPrefetchCacheKey),
-			// 	"non persistent cache should have the snapshot",
-			// );
-			const version = await mockFetchSingle(
-				async () => service.getVersions(null, 1),
-				async () =>
-					createResponse(
-						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
-						odspSnapshot,
-						200,
-					),
-			);
+			let errorOccurred = false;
+			const version = await service.getVersions(null, 1).catch((err) => {
+				errorOccurred = true;
+				return undefined;
+			});
 
-			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+			assert.deepStrictEqual(version, undefined, "incorrect version");
+			assert.deepStrictEqual(errorOccurred, true, "error didn't occur");
 			assert(
 				mockLogger.events.filter((event) =>
 					event.eventName.includes("PrefetchSnapshotError"),
 				).length === 1,
 				"Snapshot prefetch has different epoch",
-			);
-			assert(
-				mockLogger.matchEvents([
-					{
-						eventName: "OdspDriver:PrefetchSnapshotError",
-						errorType: "fileOverwrittenInStorage",
-						error: "Epoch mismatch",
-					},
-					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "network" },
-				]),
-				"unexpected events",
 			);
 		});
 
 		it("prefetching snapshot should result in epoch error if different from what is already present, fetch is not from cache", async () => {
 			// Set epoch first
 			await mockFetchSingle(
-				async () => await service.readBlob("id"),
+				async () => service.readBlob("id"),
 				async () =>
 					createResponse(
 						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
@@ -393,7 +374,7 @@ describe("xxxTests for prefetching snapshot", () => {
 						200,
 					),
 			);
-			await mockFetchSingle(
+			mockFetchSingle(
 				async () =>
 					prefetchLatestSnapshot(
 						resolved,
@@ -415,37 +396,21 @@ describe("xxxTests for prefetching snapshot", () => {
 					),
 			);
 
-			// assert(
-			// 	nonPersistentCache.snapshotPrefetchResultCache?.has(snapshotPrefetchCacheKey),
-			// 	"non persistent cache should have the snapshot",
-			// );
-			const version = await mockFetchSingle(
-				async () => service.getVersions(null, 1, "test", FetchSource.noCache),
-				async () =>
-					createResponse(
-						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
-						odspSnapshot,
-						200,
-					),
-			);
+			let errorOccurred = false;
+			const version = await service
+				.getVersions(null, 1, undefined, FetchSource.noCache)
+				.catch((err) => {
+					errorOccurred = true;
+					return undefined;
+				});
 
-			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+			assert.deepStrictEqual(version, undefined, "incorrect version");
+			assert.deepStrictEqual(errorOccurred, true, "error didn't occur");
 			assert(
 				mockLogger.events.filter((event) =>
 					event.eventName.includes("PrefetchSnapshotError"),
 				).length === 1,
 				"Snapshot prefetch has different epoch",
-			);
-			assert(
-				mockLogger.matchEvents([
-					{
-						eventName: "OdspDriver:PrefetchSnapshotError",
-						errorType: "fileOverwrittenInStorage",
-						error: "Epoch mismatch",
-					},
-					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "networkOnly" },
-				]),
-				"unexpected events",
 			);
 		});
 	});
@@ -464,26 +429,26 @@ describe("xxxTests for prefetching snapshot", () => {
 				localCache,
 				hostPolicy,
 			);
-			snapshotPrefetchCacheKey = snapshotPrefetchCacheKeyFromEntry(
-				createCacheSnapshotKey(resolved),
-			);
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,
 			);
 			service = (await documentservice.connectToStorage()) as OdspDocumentStorageService;
-			nonPersistentCache = odspDocumentServiceFactory.nonPersistentCache;
+			snapshotPrefetchResultCache = odspDocumentServiceFactory.snapshotPrefetchResultCache;
 		});
 
 		afterEach(async () => {
-			localCache.removeEntries({ docId: hashedDocumentId, resolvedUrl: resolved }).catch(() => {});
-			nonPersistentCache.snapshotPrefetchResultCache?.remove(snapshotPrefetchCacheKey);
+			localCache
+				.removeEntries({ docId: hashedDocumentId, resolvedUrl: resolved })
+				.catch(() => {});
+			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
 		});
 
 		it("prefetching snapshot should result in epoch error if different from what is already present, no concurrent fetch", async () => {
 			// Set epoch first
 			await mockFetchSingle(
-				async () => await service.readBlob("id"),
+				async () => service.readBlob("id"),
 				async () =>
 					createResponse(
 						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
@@ -491,7 +456,7 @@ describe("xxxTests for prefetching snapshot", () => {
 						200,
 					),
 			);
-			await mockFetchSingle(
+			mockFetchSingle(
 				async () =>
 					prefetchLatestSnapshot(
 						resolved,
@@ -513,46 +478,25 @@ describe("xxxTests for prefetching snapshot", () => {
 					),
 			);
 
-			assert(
-				nonPersistentCache.snapshotPrefetchResultCache?.has(snapshotPrefetchCacheKey),
-				"non persistent cache should have the snapshot",
-			);
-			const version = await mockFetchSingle(
-				async () => service.getVersions(null, 1),
-				async () =>
-					createResponse(
-						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
-						odspSnapshot,
-						200,
-					),
-			);
+			let errorOccurred = false;
+			const version = await service.getVersions(null, 1, undefined).catch((err) => {
+				errorOccurred = true;
+				return undefined;
+			});
 
-			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+			assert.deepStrictEqual(version, undefined, "incorrect version");
+			assert.deepStrictEqual(errorOccurred, true, "error didn't occur");
+
 			assert(
 				mockLogger.events.filter((event) =>
 					event.eventName.includes("PrefetchSnapshotError"),
 				).length === 1,
 				"Snapshot prefetch has different epoch",
 			);
-			assert(
-				mockLogger.matchEvents([
-					{
-						eventName: "OdspDriver:PrefetchSnapshotError",
-						errorType: "fileOverwrittenInStorage",
-						error: "Epoch mismatch",
-					},
-					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "network" },
-				]),
-				"unexpected events",
-			);
 		});
 
 		it("prefetching snapshot should be successful from prefetching, no concurrent fetch", async () => {
-			// overwriting get() to make cache fetch throw
-			localCache.get = async () => {
-				throw new Error("testing");
-			};
-			mockFetchSingle(
+			await mockFetchSingle(
 				async () =>
 					prefetchLatestSnapshot(
 						resolved,
@@ -574,15 +518,14 @@ describe("xxxTests for prefetching snapshot", () => {
 					),
 			);
 
-			assert(
-				nonPersistentCache.snapshotPrefetchResultCache?.has(snapshotPrefetchCacheKey),
-				"non persistent cache should have the snapshot",
-			);
 			const version = await service.getVersions(null, 1);
 
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+			// Should be from cache as prefetch will store in cache
 			assert(
-				mockLogger.matchEvents([{ eventName: "OdspDriver:ObtainSnapshot_end", method: "prefetched" }]),
+				mockLogger.matchEvents([
+					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "cache" },
+				]),
 				"unexpected events",
 			);
 		});

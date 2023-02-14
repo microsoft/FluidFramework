@@ -124,14 +124,14 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // Warning: (ae-forgotten-export) The symbol "INonPersistentCache" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    readonly nonPersistentCache: INonPersistentCache;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
     readonly protocolName = "fluid-odsp:";
+    // Warning: (ae-forgotten-export) The symbol "ISnapshotContentsWithEpoch" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    get snapshotPrefetchResultCache(): PromiseCache<string, ISnapshotContentsWithEpoch>;
 }
 
 // @public @deprecated (undocumented)

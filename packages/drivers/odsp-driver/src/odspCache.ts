@@ -9,6 +9,7 @@ import {
 	IEntry,
 	IPersistedCache,
 	ICacheEntry,
+	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 import { ISnapshotContents } from "./odspPublicUtils";
@@ -34,13 +35,13 @@ export class LocalPersistentCache implements IPersistedCache {
 	public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) {}
 
 	async get(entry: ICacheEntry): Promise<any> {
-		const key = this.keyFromEntry(entry);
+		const key = getKeyForCacheEntry(entry);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.cache.get(key);
 	}
 
 	async put(entry: ICacheEntry, value: any) {
-		const key = this.keyFromEntry(entry);
+		const key = getKeyForCacheEntry(entry);
 		this.cache.set(key, value);
 		this.updateExpirationEntry(entry.file.docId);
 	}
@@ -79,10 +80,6 @@ export class LocalPersistentCache implements IPersistedCache {
 				this.removeDocIdEntriesFromCache(docId);
 			}, this.snapshotExpiryPolicy),
 		);
-	}
-
-	private keyFromEntry(entry: ICacheEntry): string {
-		return `${entry.file.docId}_${entry.type}_${entry.key}`;
 	}
 }
 export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
@@ -141,8 +138,4 @@ export class NonPersistentCache implements INonPersistentCache {
 
 export interface ISnapshotContentsWithEpoch extends ISnapshotContents {
 	fluidEpoch: string;
-}
-
-export function snapshotPrefetchCacheKeyFromEntry(entry: ICacheEntry): string {
-	return `${entry.file.docId}_${entry.type}_${entry.key}`;
 }

@@ -14,6 +14,7 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 	IOdspUrlParts,
+	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -28,7 +29,7 @@ import {
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
-import { snapshotPrefetchCacheKeyFromEntry, ISnapshotContentsWithEpoch } from "./odspCache";
+import { ISnapshotContentsWithEpoch } from "./odspCache";
 import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
 
 /**
@@ -109,10 +110,10 @@ export async function prefetchLatestSnapshot(
 		async () => {
 			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
 			const snapshotContentsWithEpochP = new Deferred<ISnapshotContentsWithEpoch>();
-			const nonPersistentCacheKey = snapshotPrefetchCacheKeyFromEntry(snapshotKey);
-			const nonPersistentCache =
-				odspDocumentServiceFactory?.nonPersistentCache?.snapshotPrefetchResultCache;
-			nonPersistentCache?.add(
+			const nonPersistentCacheKey = getKeyForCacheEntry(snapshotKey);
+			const snapshotNonPersistentCache =
+				odspDocumentServiceFactory?.snapshotPrefetchResultCache;
+			snapshotNonPersistentCache?.add(
 				nonPersistentCacheKey,
 				async () => snapshotContentsWithEpochP.promise,
 			);
@@ -133,13 +134,18 @@ export async function prefetchLatestSnapshot(
 				})
 				.catch((err) => {
 					snapshotContentsWithEpochP.reject(err);
+					// Remove from cache if prefetch was not successful.
+					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					throw err;
 				});
 			assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
-			// Remove it from the non persistent cache once it is cached in the persistent cache as then it will
-			// be fetched from persistent cache.
-			await cacheP.then(() => nonPersistentCache?.remove(nonPersistentCacheKey));
+			// Remove it from the non persistent cache once it is cached in the persistent cache or an error
+			// occured while caching.
+			await cacheP.finally(() => snapshotNonPersistentCache?.remove(nonPersistentCacheKey));
 			return true;
 		},
-	).catch(async (error) => false);
+	).catch(async (error) => {
+		odspLogger.sendErrorEvent({ eventName: "PrefetchLatestSnapshotError" }, error);
+		return false;
+	});
 }
