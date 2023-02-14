@@ -7,6 +7,11 @@ import type { DocumentWriter } from "../DocumentWriter";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
+ * This logic was adapted from:
+ * {@link https://github.com/microsoft/rushstack/blob/main/apps/api-documenter/src/markdown/MarkdownEmitter.ts}
+ */
+
+/**
  * Converts a PlainTextNode into markdown
  *
  * @param node - PlainTextNode to convert into markdown
@@ -19,29 +24,31 @@ export function renderPlainText(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideHtml) {
-		renderPlainTextWithHtmlSyntax(node, writer, context);
-	} else {
-		renderPlainTextWithMarkdownSyntax(node, writer, context);
-	}
-}
-
-function renderPlainTextWithMarkdownSyntax(
-	node: PlainTextNode,
-	writer: DocumentWriter,
-	context: MarkdownRenderContext,
-): void {
 	const text = node.value;
-
-	// Adapted from <https://github.com/microsoft/rushstack/blob/main/apps/api-documenter/src/markdown/MarkdownEmitter.ts>
 
 	// split out the [ leading whitespace, body, trailing whitespace ]
 	const [, leadingWhitespace, body, trailingWhitespace]: string[] =
 		text.match(/^(\s*)(.*?)(\s*)$/) ?? [];
 
+	// We will render leading and trailing whitespace *outside* of any formatting.
+
 	writer.write(leadingWhitespace); // write leading whitespace
 
-	if (body !== "") {
+	if (context.insideHtml) {
+		renderPlainTextWithHtmlSyntax(body, writer, context);
+	} else {
+		renderPlainTextWithMarkdownSyntax(body, writer, context);
+	}
+
+	writer.write(trailingWhitespace); // write trailing whitespace
+}
+
+function renderPlainTextWithMarkdownSyntax(
+	content: string,
+	writer: DocumentWriter,
+	context: MarkdownRenderContext,
+): void {
+	if (content !== "") {
 		switch (writer.peekLastCharacter()) {
 			case "":
 			case "\n":
@@ -68,7 +75,7 @@ function renderPlainTextWithMarkdownSyntax(
 			writer.write("~~");
 		}
 
-		writer.write(getMarkdownEscapedText(body));
+		writer.write(getMarkdownEscapedText(content));
 
 		if (context.strikethrough === true) {
 			writer.write("~~");
@@ -80,17 +87,13 @@ function renderPlainTextWithMarkdownSyntax(
 			writer.write("**");
 		}
 	}
-
-	writer.write(trailingWhitespace); // write trailing whitespace
 }
 
 function renderPlainTextWithHtmlSyntax(
-	node: PlainTextNode,
+	content: string,
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	const escapedText = getHtmlEscapedText(node.value);
-
 	if (context.bold === true) {
 		writer.write("<b>");
 	}
@@ -101,7 +104,7 @@ function renderPlainTextWithHtmlSyntax(
 		writer.write("<s>");
 	}
 
-	writer.write(escapedText);
+	writer.write(getHtmlEscapedText(content));
 
 	if (context.strikethrough === true) {
 		writer.write("</s>");
