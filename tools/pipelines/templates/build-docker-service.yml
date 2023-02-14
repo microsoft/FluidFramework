@@ -241,16 +241,16 @@ stages:
             npm i -g pnpm
             pnpm config set store-dir $(pnpmStorePath)
 
-    - task: Bash@3
-      displayName: Install dependencies
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          ${{ parameters.packageManagerInstallCommand }}
-
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
+      - task: Bash@3
+        displayName: Install dependencies
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            ${{ parameters.packageManagerInstallCommand }}
+
       - template: include-set-package-version.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
