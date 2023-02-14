@@ -5,7 +5,20 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { LiteralNode, SingleLineElementNode } from "./DocumentionNode";
 
+/**
+ * Plain text.
+ *
+ * @remarks
+ *
+ * Must not contain any line breaks.
+ * To include line breaks in your text, see {@link LineBreakNode}.
+ */
 export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode {
+	/**
+	 * Static singleton representing an empty Plain Text node.
+	 */
+	public static readonly Empty: PlainTextNode = new PlainTextNode("");
+
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
