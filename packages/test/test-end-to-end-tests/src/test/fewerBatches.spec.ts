@@ -16,11 +16,12 @@ import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
-describeNoCompat("Less batches", (getTestObjectProvider) => {
+describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -44,14 +45,28 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 	let dataObject1map: SharedMap;
 	let dataObject2map: SharedMap;
 
-	const setupContainers = async (containerConfig: ITestContainerConfig) => {
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+		return {
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		};
+	};
+
+	const setupContainers = async (
+		containerConfig: ITestContainerConfig,
+		featureGates: Record<string, ConfigTypes> = {},
+	) => {
+		const configWithFeatureGates = {
+			...containerConfig,
+			loaderProps: { configProvider: configProvider(featureGates) },
+		};
+
 		// Create a Container for the first client.
-		localContainer = await provider.makeTestContainer(containerConfig);
+		localContainer = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject1 = await requestFluidObject<ITestFluidObject>(localContainer, "default");
 		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
-		remoteContainer = await provider.loadTestContainer(containerConfig);
+		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
 		dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
 		dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 		await waitForContainerConnection(localContainer, true);
@@ -121,16 +136,57 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 		});
 	});
 
-	it("Reference sequence number mismatch when doing op reentry", async () => {
-		await setupContainers(testContainerConfig);
+	const expectedErrors = [
+		{
+			eventName: "fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
+			error: "Submission of an out of order message",
+		},
+		// A container will not close when an out of order message was detected.
+		// The error below is due to the artificial repro of interleaving op processing and flushing
+		{
+			eventName: "fluid:telemetry:Container:ContainerClose",
+			error: "Found a non-Sequential sequenceNumber",
+		},
+	];
+
+	itExpects(
+		"Reference sequence number mismatch when doing op reentry - early flush enabled - submits two batches",
+		expectedErrors,
+		async () => {
+			// By default, we would flush a batch when we detect a reference sequence number mismatch
+			await processOutOfOrderOp({});
+			assert.strictEqual(capturedBatches.length, 2);
+		},
+	);
+
+	itExpects(
+		"Reference sequence number mismatch when doing op reentry - early flush disabled - submits one batch",
+		expectedErrors,
+		async () => {
+			await processOutOfOrderOp({ "Fluid.ContainerRuntime.DisablePartialFlush": true });
+			assert.strictEqual(capturedBatches.length, 1);
+		},
+	);
+
+	/**
+	 * With `FlushMode.TurnBased`, the container will schedule a flush at the end of the JS turn.
+	 * There is a possibility that the DeltaManager's inbound queue to schedule processing in-between the op getting
+	 * create and the flush being scheduled. This function attempts to recreate that scenario artificially.
+	 *
+	 * @param containerConfig - the test container configuration
+	 */
+	const processOutOfOrderOp = async (featureGates: Record<string, ConfigTypes> = {}) => {
+		await setupContainers(testContainerConfig, featureGates);
 
 		// Force the container into write-mode
 		dataObject1map.set("key0", "0");
 		await provider.ensureSynchronized();
 
+		// Ignore the batch we just sent
+		capturedBatches.splice(0);
+
 		assert(localContainer.clientId !== undefined);
-		// An op crafted to set a map value of "mockKey".
-		const op1: ISequencedDocumentMessage = {
+		const op: ISequencedDocumentMessage = {
 			clientId: localContainer.clientId,
 			clientSequenceNumber: 1,
 			contents: {
@@ -166,7 +222,8 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 		// Queue a microtask to process the above op.
 		Promise.resolve()
 			.then(() => {
-				(dataObject1.context.containerRuntime as ContainerRuntime).process(op1, false);
+				(localContainer.deltaManager as any).lastProcessedSequenceNumber += 1;
+				(dataObject1.context.containerRuntime as ContainerRuntime).process(op, false);
 				dataObject1map.set("key2", "value2");
 			})
 			.catch(() => {});
@@ -174,5 +231,5 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 		dataObject1map.set("key1", "value1");
 		// Wait for the ops to get processed by both the containers.
 		await provider.ensureSynchronized();
-	});
+	};
 });

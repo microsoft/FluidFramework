@@ -68,10 +68,6 @@ export class Outbox {
 	 * @param message - the incoming message
 	 */
 	private maybeFlushPartialBatch(batchManager: BatchManager, message: BatchMessage) {
-		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisablePartialFlush") === true) {
-			return;
-		}
-
 		const batchReference = batchManager.referenceSequenceNumber;
 		if (batchReference !== undefined && batchReference !== message.referenceSequenceNumber) {
 			this.mc.logger.sendErrorEvent(
@@ -85,7 +81,10 @@ export class Outbox {
 				},
 				new UsageError("Submission of an out of order message"),
 			);
-			this.flushInternal(batchManager.popBatch());
+
+			if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisablePartialFlush") !== true) {
+				this.flushInternal(batchManager.popBatch());
+			}
 		}
 	}
 
