@@ -10,7 +10,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
-	CompressionAlgorithms,
 } from "@fluidframework/container-runtime";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
