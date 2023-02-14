@@ -8,7 +8,11 @@ import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-ut
 import { UsageError } from "@fluidframework/container-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ChildLogger, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	loggerToMonitoringContext,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ISummaryConfiguration } from "./containerRuntime";
 import { opSize } from "./opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
@@ -114,7 +118,8 @@ export class RunningSummarizer implements IDisposable {
 	private readonly pendingAckTimer: PromiseTimer;
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
-	private readonly logger: ITelemetryLogger;
+	private readonly mc: MonitoringContext;
+
 	private enqueuedSummary:
 		| {
 				reason: SummarizeReason;
@@ -146,9 +151,11 @@ export class RunningSummarizer implements IDisposable {
 			summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
 		};
 
-		this.logger = ChildLogger.create(baseLogger, "Running", {
-			all: telemetryProps,
-		});
+		this.mc = loggerToMonitoringContext(
+			ChildLogger.create(baseLogger, "Running", {
+				all: telemetryProps,
+			}),
+		);
 
 		if (configuration.state !== "disableHeuristics") {
 			assert(
@@ -159,7 +166,7 @@ export class RunningSummarizer implements IDisposable {
 				heuristicData,
 				this.configuration,
 				(reason) => this.trySummarize(reason),
-				this.logger,
+				this.mc.logger,
 			);
 		}
 
@@ -179,7 +186,7 @@ export class RunningSummarizer implements IDisposable {
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
-			this.logger.sendErrorEvent({
+			this.mc.logger.sendErrorEvent({
 				eventName: "SummaryAckWaitTimeout",
 				maxAckWaitTime,
 				referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
@@ -190,7 +197,7 @@ export class RunningSummarizer implements IDisposable {
 		// Set up pending ack timeout by op timestamp differences for previous summaries.
 		summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
 			if (this.pendingAckTimer.hasTimer) {
-				this.logger.sendTelemetryEvent({
+				this.mc.logger.sendTelemetryEvent({
 					eventName: "MissingSummaryAckFoundByOps",
 					referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
 					summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
@@ -208,7 +215,7 @@ export class RunningSummarizer implements IDisposable {
 				this.totalSuccessfulAttempts++;
 			},
 			this.summaryWatcher,
-			this.logger,
+			this.mc.logger,
 		);
 
 		// Listen for ops
@@ -239,7 +246,7 @@ export class RunningSummarizer implements IDisposable {
 	 */
 	public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
 		this.heuristicData.lastAttempt.refSequenceNumber === summaryOpRefSeq
-			? this.logger
+			? this.mc.logger
 			: undefined;
 
 	/** We only want a single heuristic runner micro-task (will provide better optimized grouping of ops) */
@@ -473,13 +480,12 @@ export class RunningSummarizer implements IDisposable {
 			let summaryAttemptsPerPhase = 0;
 			// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
 			const totalAttempts =
-				loggerToMonitoringContext(this.logger).config.getNumber(
-					"Fluid.Summarizer.Attempts",
-				) ?? defaultNumberSummarizationAttempts;
-			assert(
-				totalAttempts >= 1 && totalAttempts <= attempts.length,
-				"Total number of attempts is invalid ",
-			);
+				this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
+				defaultNumberSummarizationAttempts;
+
+			if (totalAttempts < 1 || totalAttempts > attempts.length) {
+				throw new UsageError("Invalid number of attempts.");
+			}
 
 			let lastResult: { message: string; error: any } | undefined;
 
@@ -508,7 +514,7 @@ export class RunningSummarizer implements IDisposable {
 				};
 
 				if (delaySeconds > 0) {
-					this.logger.sendPerformanceEvent({
+					this.mc.logger.sendPerformanceEvent({
 						eventName: "SummarizeAttemptDelay",
 						duration: delaySeconds,
 						summaryNackDelay: overrideDelaySeconds !== undefined,
@@ -543,7 +549,7 @@ export class RunningSummarizer implements IDisposable {
 			}
 
 			// If all attempts failed, log error (with last attempt info) and close the summarizer container
-			this.logger.sendErrorEvent(
+			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "FailToSummarize",
 					reason,
@@ -554,7 +560,7 @@ export class RunningSummarizer implements IDisposable {
 
 			this.stopSummarizerCallback("failToSummarize");
 		}).catch((error) => {
-			this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+			this.mc.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
 		});
 	}
 
