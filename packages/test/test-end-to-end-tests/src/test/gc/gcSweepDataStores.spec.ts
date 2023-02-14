@@ -342,7 +342,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				// The containers should fail
 				assert(
 					summarizingContainer.closed,
-					"Summarzing container with deleted datastore should close on receiving an op for it",
+					"Summarizing container with deleted datastore should close on receiving an op for it",
 				);
 				assert(
 					container.closed,
@@ -352,7 +352,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		);
 
 		itExpects(
-			"Receiving ops for swept datastores fails in client after sweep timeout and summarizing container",
+			"Receiving signals for swept datastores fails in client after sweep timeout and summarizing container",
 			[
 				{
 					eventName:
@@ -398,11 +398,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				// The containers should fail
 				assert(
 					summarizingContainer.closed,
-					"Summarzing container with deleted datastore should close on receiving an op for it",
+					"Summarizing container with deleted datastore should close on receiving a signal for it",
 				);
 				assert(
 					container.closed,
-					"Container with deleted datastore should close on receiving an op for it",
+					"Container with deleted datastore should close on receiving a signal for it",
 				);
 			},
 		);

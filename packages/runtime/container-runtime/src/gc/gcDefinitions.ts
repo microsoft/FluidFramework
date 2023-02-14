@@ -50,6 +50,8 @@ export const gcVersionUpgradeToV2Key = "Fluid.GarbageCollection.GCVersionUpgrade
 // Feature gate to enable GC sweep for datastores.
 // TODO: Remove Test from the flag when we are confident to turn on sweep
 export const sweepDatastoresKey = "Fluid.GarbageCollection.Test.SweepDataStores";
+// Feature gate to enable GC sweep for attachment blobs.
+export const sweepAttachmentBlobsKey = "Fluid.GarbageCollection.Test.SweepAttachmentBlobs";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;

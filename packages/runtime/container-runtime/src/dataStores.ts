@@ -796,29 +796,31 @@ export class DataStores implements IDisposable {
 
 	/**
 	 * This is called to delete unused nodes and returns that list so that other
-	 * systems can remove those nodes from their states (i.e. garbage collection when sweep is run)
-	 * @param unusedRoutes - The routes of data stores and DDSes that should be deleted
-	 * @returns - routes of deleted nodes such that garbage collection can delete those nodes from its reference graph
-	 * and other state
+	 * systems can remove those nodes from their states (i.e. garbage collection when sweep is run).
+	 * @param unusedRoutes - The routes of data stores and DDSes that should be deleted.
+	 * @returns - routes of deleted nodes such that garbage collection can delete those nodes from its state.
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
 		if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
 			return [];
 		}
-		const deletedRoutes = new Set<string>();
-
 		for (const route of unusedRoutes) {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
 
 			// TODO: GC:Validation - Skip any routes already deleted
-
-			// Push all deleted DataStore (/datastoreId) and sub DataStore (/datastoreId/...) routes to deleted routes
-			deletedRoutes.add(route);
-
-			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only need to delete the data store.
+			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
+			// need to delete the data store.
 			if (pathParts.length > 2) {
 				continue;
+			}
+
+			if (!this.contexts.has(dataStoreId)) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "DeletedDataStoreNotFound",
+					dataStoreId,
+				});
 			}
 
 			const dataStore = this.contexts.get(dataStoreId);
@@ -830,8 +832,7 @@ export class DataStores implements IDisposable {
 			// Delete the summarizer node of the unused data stores.
 			this.deleteChildSummarizerNodeFn(dataStoreId);
 		}
-
-		return Array.from(deletedRoutes);
+		return Array.from(unusedRoutes);
 	}
 
 	/**

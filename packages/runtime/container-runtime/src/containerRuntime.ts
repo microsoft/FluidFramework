@@ -2370,12 +2370,13 @@ export class ContainerRuntime
 	 * @returns - routes of objects deleted from the runtime
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
-		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
+		const { dataStoreRoutes, blobManagerRoutes } =
+			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
 		const deletedRoutes: string[] = [];
 
 		const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
-		deletedRoutes.push(...deletedDataStoreRoutes);
-
+		const deletedBlobManagerRoutes = this.blobManager.deleteUnusedRoutes(blobManagerRoutes);
+		deletedRoutes.push(...deletedDataStoreRoutes, ...deletedBlobManagerRoutes);
 		return deletedRoutes;
 	}
 
