@@ -80,7 +80,9 @@ steps:
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
-      # Azure Pipelines doesn't fail the job when a formatting error is found unless this is set to true.
+      # This script runs multiple commands and all must succeed in order for this task to succeed. Rather than
+      # aggregate the results of the different commands, setting failOnStderr to true has the same effect: the task will
+      # fail if any of the commands emit anything to stdErr.
       failOnStderr: true
       script: |
         if [ -f "lerna.json" ]; then
