@@ -10,8 +10,9 @@ import {
 	HierarchicalSectionNode,
 	ParagraphNode,
 	PlainTextNode,
+	SpanNode,
 } from "../../documentation-domain";
-import { markdownFromDocumentNode, standardEOL } from "../md-transformers";
+import { renderDocument } from "../Render";
 
 describe("Document markdown tests", () => {
 	it("Renders a simple document", () => {
@@ -19,34 +20,34 @@ describe("Document markdown tests", () => {
 			[
 				new ParagraphNode([
 					new PlainTextNode("This is a sample document. "),
-					new PlainTextNode("It has very basic content"),
+					new PlainTextNode("It has very basic content.\t"),
 				]),
 				new HierarchicalSectionNode(
 					[
 						new ParagraphNode([
 							new PlainTextNode("This is test inside of a paragraph. "),
 							new PlainTextNode("It is also inside of a hierarchical section node. "),
-							new PlainTextNode("That's real neat-o."),
+							SpanNode.createFromPlainText("That's real neat-o.", { italic: true }),
 						]),
 					],
 					HeadingNode.createFromPlainText("Section Heading"),
 				),
 			],
-			"./test.md",
-			"Sample Document",
+			/* path: */ "./test.md",
+			/* title: */ "Sample Document",
 		);
 
 		const expected = [
 			"# Sample Document",
 			"",
-			"This is a sample document. It has very basic content  ",
+			"This is a sample document. It has very basic content.\t",
 			"",
 			"## Section Heading",
 			"",
-			"This is test inside of a paragraph. It is also inside of a hierarchical section node. That's real neat-o.  ",
+			"This is test inside of a paragraph. It is also inside of a hierarchical section node. _That's real neat-o._",
 			"",
 			"",
-		].join(standardEOL);
-		expect(markdownFromDocumentNode(document)).to.equal(expected);
+		].join("\n");
+		expect(renderDocument(document)).to.equal(expected);
 	});
 });
