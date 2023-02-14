@@ -28,5 +28,5 @@ export function testRender(
 
 	renderNode(node, writer, context);
 
-	return writer.getText();
+	return writer.getText().trimStart();
 }
