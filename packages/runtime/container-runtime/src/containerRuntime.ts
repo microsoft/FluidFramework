@@ -93,9 +93,6 @@ import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	addTreeToSummary,
-	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
-	IRootSummarizerNodeWithGC,
 	RequestParser,
 	create404Response,
 	exceptionToResponse,
@@ -111,6 +108,11 @@ import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
+import {
+	createRootSummarizerNodeWithGC,
+	IFetchSnapshotResult,
+	IRootSummarizerNodeWithGC,
+} from "./summarizerNode";
 import { SummaryManager } from "./summaryManager";
 import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";

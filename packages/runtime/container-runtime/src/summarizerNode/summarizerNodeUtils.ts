@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "../utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 
 /**
  * Return type of refreshSummaryAck function. There can be three different scenarios based on the passed params:
@@ -17,9 +17,6 @@ import { ReadAndParseBlob } from "../utils";
  *
  * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
  * latest snapshot is fetched and the latest summary state is updated based on it.
- *
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
  */
 export type RefreshSummaryResult =
 	| {
@@ -39,19 +36,12 @@ export type RefreshSummaryResult =
 
 /**
  * Result of snapshot fetch during refreshing latest summary state.
- *
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
  */
 export interface IFetchSnapshotResult {
 	snapshotTree: ISnapshotTree;
 	snapshotRefSeq: number;
 }
 
-/**
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
- */
 export interface ISummarizerNodeRootContract {
 	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 	completeSummary(proposalHandle: string): void;
@@ -86,7 +76,9 @@ export class EscapedPath {
 	}
 }
 
-/** Information about a summary relevant to a specific node in the tree */
+/**
+ * Information about a summary relevant to a specific node in the tree
+ */
 export class SummaryNode {
 	/** Creates an instance that is valid for the root with specific basePath and localPath */
 	public static createForRoot(referenceSequenceNumber: number): SummaryNode {

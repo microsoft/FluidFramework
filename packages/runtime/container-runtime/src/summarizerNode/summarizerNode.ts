@@ -22,13 +22,17 @@ import {
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
+	calculateStats,
+	convertToSummaryTree,
+	mergeStats,
+	ReadAndParseBlob,
+} from "@fluidframework/runtime-utils";
+import {
 	ChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
-import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
-import { ReadAndParseBlob } from "../utils";
 import {
 	EscapedPath,
 	ICreateChildDetails,
@@ -41,10 +45,6 @@ import {
 	SummaryNode,
 } from "./summarizerNodeUtils";
 
-/**
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
- */
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
 /**
@@ -720,9 +720,6 @@ export class SummarizerNode implements IRootSummarizerNode {
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
- *
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
  */
 export const createRootSummarizerNode = (
 	logger: ITelemetryLogger,
