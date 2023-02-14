@@ -5,14 +5,28 @@
 import { expect } from "chai";
 
 import { LinkNode, PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
+import { testRender } from "./Utilities";
 
 describe("Link markdown tests", () => {
-	it("Can render a simple LinkNode", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new LinkNode([new PlainTextNode("Some Website")], "https://www.contoso.com"),
+	it("Can render a simple LinkNode (Markdown)", () => {
+		const linkText = "Some Website";
+		const linkTarget = "https://www.contoso.com";
+		const result = testRender(new LinkNode([new PlainTextNode(linkText)], linkTarget));
+
+		const expected = `[${linkText}](${linkTarget})`;
+		expect(result).to.equal(expected);
+	});
+
+	it("Can render a simple LinkNode (HTML)", () => {
+		const linkText = "Some Website";
+		const linkTarget = "https://www.contoso.com";
+		const result = testRender(
+			new LinkNode([new PlainTextNode(linkText)], linkTarget),
+			undefined,
+			{ insideHtml: true },
 		);
-		expect(renderedForm).to.equal("[Some Website](https://www.contoso.com)");
+
+		const expected = `<a href='${linkTarget}'>${linkText}</a>`;
+		expect(result).to.equal(expected);
 	});
 });

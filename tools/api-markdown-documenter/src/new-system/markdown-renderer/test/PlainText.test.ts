@@ -5,20 +5,30 @@
 import { expect } from "chai";
 
 import { PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
+import { MarkdownRenderContext } from "../RenderContext";
+import { testRender } from "./Utilities";
 
 describe("PlainText markdown tests", () => {
-	it("Renders nothing when given an empty plain text node", () => {
-		const emptyNode = new PlainTextNode("");
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(emptyNode);
-		expect(renderedForm).to.equal("");
+	describe("Markdown", () => {
+		it("Empty text", () => {
+			expect(testRender(PlainTextNode.Empty)).to.equal("");
+		});
+		it("Simple text", () => {
+			const text = `This is some text!`;
+			expect(testRender(new PlainTextNode(text))).to.equal(text);
+		});
 	});
-	it("Renders text when given text", () => {
-		const expectedString = `this is some text`;
-		const contentNode = new PlainTextNode(expectedString);
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(contentNode);
-		expect(renderedForm).to.equal(expectedString);
+
+	describe("HTML", () => {
+		const customContext: Partial<MarkdownRenderContext> = {
+			insideHtml: true,
+		};
+		it("Empty text", () => {
+			expect(testRender(PlainTextNode.Empty, undefined, customContext)).to.equal("");
+		});
+		it("Simple text", () => {
+			const text = `This is some text!`;
+			expect(testRender(new PlainTextNode(text), undefined, customContext)).to.equal(text);
+		});
 	});
 });
