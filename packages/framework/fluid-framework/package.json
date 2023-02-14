@@ -68,7 +68,7 @@
     "baselineRange": "2.0.0-internal.3.0.0",
     "broken": {
       "EnumDeclaration_DriverErrorType": {
-        "forwardCompat": false
+        "backCompat": false
       }
     }
   }

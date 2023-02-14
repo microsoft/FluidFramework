@@ -767,7 +767,6 @@ declare function get_old_ClassDeclaration_OdspRedirectError():
 declare function use_current_ClassDeclaration_OdspRedirectError(
     use: TypeOnly<current.OdspRedirectError>);
 use_current_ClassDeclaration_OdspRedirectError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_OdspRedirectError());
 
 /*
