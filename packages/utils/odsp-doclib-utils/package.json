@@ -94,6 +94,9 @@
     "previousVersionStyle": "previousPatch",
     "baselineRange": "2.0.0-internal.3.0.0",
     "broken": {
+      "ClassDeclaration_OdspRedirectError": {
+        "forwardCompat": false
+      }
     }
   }
 }
