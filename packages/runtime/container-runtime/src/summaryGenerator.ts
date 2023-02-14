@@ -205,11 +205,15 @@ export class SummaryGenerator {
             timeSinceLastSummary,
         };
 
-        const summarizeEvent = PerformanceEvent.start(logger, {
-            eventName: "Summarize",
-            refreshLatestAck,
-            ...summarizeTelemetryProps,
-        });
+        const summarizeEvent = PerformanceEvent.start(
+            logger,
+            {
+                eventName: "Summarize",
+                refreshLatestAck,
+                ...summarizeTelemetryProps,
+            },
+            { start: true, end: true, cancel: "generic" },
+        );
 
         // Helper functions to report failures and return.
         const getFailMessage =

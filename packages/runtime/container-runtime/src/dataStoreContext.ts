@@ -61,9 +61,11 @@ import {
 import {
     addBlobToSummary,
     convertSummaryTreeToITree,
+    packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
+    generateStack,
     loggerToMonitoringContext,
     LoggingError,
     MonitoringContext,
@@ -261,6 +263,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
+    /**
+     * If the summarizer makes local changes, a telemetry event is logged. This has the potential to be very noisy.
+     * So, adding a count of how many telemetry events are logged per data store context. This can be
+     * controlled via feature flags.
+     */
+    private localChangesTelemetryCount: number;
+
     // The used routes of this node as per the last GC run. This is used to update the used routes of the channel
     // if it realizes after GC is run.
     private lastUsedRoutes: string[] | undefined;
@@ -318,6 +327,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.throwOnTombstoneUsage =
             this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
             this.clientDetails.type !== summarizerClientType;
+
+        // By default, a data store can log maximum 10 local changes telemetry in summarizer.
+        this.localChangesTelemetryCount =
+            this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
     }
 
     public dispose(): void {
@@ -343,8 +356,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this._tombstoned = tombstone;
     }
 
-    private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.CodeArtifact } });
+    private rejectDeferredRealize(
+        reason: string,
+        failedPkgPath?: string,
+        fullPackageName?: readonly string[],
+    ): never {
+        throw new LoggingError(reason, {
+            failedPkgPath: { value: failedPkgPath, tag: TelemetryDataTag.CodeArtifact },
+            fullPackageName: packagePathToTelemetryProperty(fullPackageName),
+        });
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -358,6 +378,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                         value: this.id,
                         tag: TelemetryDataTag.CodeArtifact,
                     },
+                    packageName: packagePathToTelemetryProperty(this.pkg),
                 });
                 this.channelDeferred?.reject(errorWrapped);
                 this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
@@ -377,18 +398,22 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         let lastPkg: string | undefined;
         for (const pkg of packages) {
             if (!registry) {
-                this.rejectDeferredRealize("No registry for package", lastPkg);
+                this.rejectDeferredRealize("No registry for package", lastPkg, packages);
             }
             lastPkg = pkg;
             entry = await registry.get(pkg);
             if (!entry) {
-                this.rejectDeferredRealize("Registry does not contain entry for the package", pkg);
+                this.rejectDeferredRealize(
+                    "Registry does not contain entry for the package",
+                    pkg,
+                    packages,
+                );
             }
             registry = entry.IFluidDataStoreRegistry;
         }
         const factory = entry?.IFluidDataStoreFactory;
         if (factory === undefined) {
-            this.rejectDeferredRealize("Can't find factory for package", lastPkg);
+            this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
         }
 
         return { factory, registry };
@@ -627,6 +652,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             content,
             type,
         };
+
+        // Summarizer clients should not submit messages.
+        this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
+
         this._containerRuntime.submitDataStoreOp(
             this.id,
             fluidDataStoreContent,
@@ -800,6 +829,33 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
+    /**
+     * Summarizer client should not have local changes. These changes can become part of the summary and can break
+     * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
+     * other clients that are up-to-date till seq# 100 may not have them yet.
+     */
+    protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
+        if (this.clientDetails.type !== summarizerClientType || this.localChangesTelemetryCount <= 0) {
+            return;
+        }
+
+        // Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+        // this is happening and which data stores do this. The eventual goal is to disallow local changes
+        // in the summarizer and the data will help us plan this.
+        this.mc.logger.sendTelemetryEvent({
+            eventName,
+            type,
+            fluidDataStoreId: {
+                value: this.id,
+                tag: TelemetryDataTag.CodeArtifact,
+            },
+            packageName: packagePathToTelemetryProperty(this.pkg),
+            isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
+            stack: generateStack(),
+        });
+        this.localChangesTelemetryCount--;
+    }
+
     public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
         return (
             summarizeInternal: SummarizeInternalFn,
@@ -921,6 +977,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             true /* isLocalDataStore */,
             props.makeLocallyVisibleFn,
         );
+
+        // Summarizer client should not create local data stores.
+        this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
 
         this.snapshotTree = props.snapshotTree;
         if (props.isRootDataStore === true) {

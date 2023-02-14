@@ -157,9 +157,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         trackState: boolean = true,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummarizeResult> {
-        // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
+        // If GC is not disabled and a summary is in progress, GC should have run and updated the used routes for this
         // summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
-        if (!this.gcDisabled && this.isTrackingInProgress()) {
+        if (!this.gcDisabled && this.isSummaryInProgress()) {
             assert(this.wipSerializedUsedRoutes !== undefined,
                 0x1b1 /* "wip used routes should be set if tracking a summary" */);
         }
@@ -451,9 +451,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // are in the same order.
         this.usedRoutes = usedRoutes.sort();
 
-        // If GC is not disabled and we are tracking a summary, update the work-in-progress used routes so that it can
+        // If GC is not disabled and a summary is in progress, update the work-in-progress used routes so that it can
         // be tracked for this summary.
-        if (!this.gcDisabled && this.isTrackingInProgress()) {
+        if (!this.gcDisabled && this.isSummaryInProgress()) {
             this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
         }
     }

@@ -147,6 +147,7 @@ export interface IGarbageCollector {
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger; runSweep?: boolean; fullGC?: boolean; },
+        telemetryContext?: ITelemetryContext,
     ): Promise<IGCStats | undefined>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(
@@ -960,6 +961,7 @@ export class GarbageCollector implements IGarbageCollector {
             /** True to generate full GC data */
             fullGC?: boolean;
         },
+        telemetryContext?: ITelemetryContext,
     ): Promise<IGCStats | undefined> {
         const fullGC = options.fullGC ?? (this.gcOptions.runFullGC === true || this.summaryStateNeedsReset);
         const logger = options.logger
@@ -983,6 +985,9 @@ export class GarbageCollector implements IGarbageCollector {
             });
             return undefined;
         }
+
+        // Add the options that are used to run GC to the telemetry context.
+        telemetryContext?.setAll("fluid_GC", "Options", { fullGC, runSweep: options.runSweep });
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
             await this.runPreGCSteps();
