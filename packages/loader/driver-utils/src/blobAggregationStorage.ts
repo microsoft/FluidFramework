@@ -345,7 +345,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 				case SummaryType.Tree:
 					// If client created empty tree, keep it as is
 					// Also do not package search blobs - they are part of storage contract
-					if (obj.tree !== {} && key !== "__search") {
+					if (Object.keys(obj).length !== 0 && key !== "__search") {
 						const tree = await this.compressSmallBlobs(
 							obj,
 							newPath,
@@ -353,7 +353,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 							aggregator,
 						);
 						newSummary.tree[key] = tree;
-						if (tree.tree === {}) {
+						if (Object.keys(obj).length === 0) {
 							// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 							delete newSummary.tree[key];
 						}
