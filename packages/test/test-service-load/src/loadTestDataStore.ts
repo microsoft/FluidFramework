@@ -600,7 +600,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			) {
 				const opSize = getOpSizeInBytes();
 				dataModel.sharedmap.set(config.runId.toString(), generateContentOfSize(opSize));
-				config.logger.sendTelemetryEvent({
+				config.logger.sendErrorEvent({
 					eventName: "LargeTestPayload",
 					runId: config.runId,
 					opSize,
