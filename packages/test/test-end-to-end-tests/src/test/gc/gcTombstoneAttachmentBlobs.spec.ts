@@ -14,7 +14,6 @@ import {
 	waitForContainerConnection,
 	mockConfigProvider,
 	ITestContainerConfig,
-	createSummarizerWithContainer,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
@@ -59,7 +58,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			dataStore._root.set("transition to write", "true");
 			await waitForContainerConnection(container, true);
 
-			const summarizer = await createSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
 				container,
 				undefined /* summaryVersion */,
@@ -118,8 +117,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Summarize so that the tombstoned blobs are now part of the summary.
 				const summary2 = await summarizeNow(summarizer);
 				const container2 = await loadContainer(summary2.summaryVersion);
-				const absoluteUrl = await container2.getAbsoluteUrl("");
-				assert(absoluteUrl !== undefined, "Should be able to retrieve the absolute url");
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle since it loaded after the blob was tombstoned.
@@ -133,9 +130,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				assert(container2.closed !== true, "Container should not have closed");
 
 				// But the summarizing container should succeed (logging and error)
-				const { container: summarizingContainer } = await createSummarizerWithContainer(
+				const { container: summarizingContainer } = await createSummarizer(
 					provider,
-					absoluteUrl,
+					container2,
 					summary2.summaryVersion,
 					gcOptions,
 					mockConfigProvider(settings),
@@ -470,7 +467,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerConnection(mainContainer, true);
 
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
@@ -561,7 +558,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.delete("local1");
 				mainDataStore._root.delete("local2");
 
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
@@ -655,7 +652,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerConnection(mainContainer, true);
 
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
@@ -763,7 +760,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		 * GC data to validate references against and ensure that gcUnknownOutboundReferences error is not logged.
 		 */
 		async function createSummarizerWithInitialSummary(container: IContainer) {
-			const summarizer = await createSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
 				container,
 				undefined /* summaryVersion */,
