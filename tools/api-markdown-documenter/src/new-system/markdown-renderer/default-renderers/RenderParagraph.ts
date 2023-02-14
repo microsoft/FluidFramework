@@ -40,6 +40,7 @@ function renderParagraphWithHtmlSyntax(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
+	writer.ensureNewLine(); // Ensure line break before paragraph
 	writer.writeLine("<p>");
 	writer.increaseIndent();
 	renderNodes(node.children, writer, {
