@@ -51,16 +51,19 @@ function renderTableWithMarkdownSyntax(
 			new TableRowNode(
 				// eslint-disable-next-line unicorn/new-for-builtins
 				Array<TableCellNode>(headerCellCount).fill(
-					TableCellNode.createFromPlainText("---"),
+					TableCellNode.createFromPlainText(" --- "),
 				),
 			),
 			writer,
-			childContext,
+			{
+				...childContext,
+				insideCodeBlock: true, // Ensure that text does not get escaped.
+			},
 		);
 		writer.ensureNewLine();
 	}
 
-	renderNodes(node.children, writer, context);
+	renderNodes(node.children, writer, childContext);
 	writer.ensureSkippedLine(); // Ensure blank line after table
 }
 
