@@ -236,12 +236,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				{ eventName: "ObtainSnapshot", fetchSource },
 				async (event: PerformanceEvent) => {
 					const props: GetVersionsTelemetryProps = {};
-					let retrievedSnapshot:
-						| ISnapshotContents
-						| ISnapshotContentsWithEpoch
-						| undefined;
+					let retrievedSnapshot: ISnapshotContents | undefined;
 
-					let method: string | undefined;
+					let method: string;
 					if (fetchSource === FetchSource.noCache) {
 						retrievedSnapshot = await this.fetchSnapshot(
 							hostSnapshotOptions,
@@ -300,18 +297,16 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								scenarioName,
 							);
 							// Ensure that failures on both paths are ignored initially.
-							// I.e. if cache fails for some reason, we will proceed with prefetched/network result.
-							// And vice versa - if (for example) client is offline and prefetched/network request fails first, we
+							// I.e. if cache fails for some reason, we will proceed with network result.
+							// And vice versa - if (for example) client is offline and network request fails first, we
 							// do want to attempt to succeed with cached data!
-							// First wait for result either from cache or from prefetch cache.
-							const promiseRaceWinner = await promiseRaceWithWinner<
-								ISnapshotContents | ISnapshotContentsWithEpoch | undefined
-							>([
+							const promiseRaceWinner = await promiseRaceWithWinner([
 								cachedSnapshotP.catch(() => undefined),
 								networkSnapshotP.catch(() => undefined),
 							]);
 							retrievedSnapshot = promiseRaceWinner.value;
 							method = promiseRaceWinner.index === 0 ? "cache" : "network";
+
 							if (retrievedSnapshot === undefined) {
 								// if prefetch failed -> wait for cache
 								// If cache returned empty or failed -> wait for prefetch (success or failure)
@@ -330,9 +325,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							// while the first caller is awaiting later async code in this block.
 
 							retrievedSnapshot = await cachedSnapshotP;
-							if (retrievedSnapshot !== undefined) {
-								method = "cache";
-							} else {
+							method = retrievedSnapshot !== undefined ? "cache" : "network";
+							if (retrievedSnapshot === undefined) {
 								retrievedSnapshot = await this.fetchSnapshot(
 									hostSnapshotOptions,
 									scenarioName,
