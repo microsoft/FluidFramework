@@ -6,6 +6,10 @@ import { PlainTextNode } from "./PlainTextNode";
  * appropriate to preserve the invariant that `PlainTextNode`s do not include line breaks.
  */
 export function createNodesFromPlainText(text: string): (PlainTextNode | LineBreakNode)[] {
+	if (text.length === 0) {
+		return [PlainTextNode.Empty];
+	}
+
 	const lines = text.split(/\r?\n/g);
 
 	const transformedLines: (PlainTextNode | LineBreakNode)[] = [];
@@ -15,8 +19,9 @@ export function createNodesFromPlainText(text: string): (PlainTextNode | LineBre
 		} else {
 			transformedLines.push(new PlainTextNode(line));
 		}
+
+		// Push line break between each entry (not after last entry)
 		if (index !== lines.length - 1) {
-			// Push line break between each entry (not after last entry)
 			transformedLines.push(LineBreakNode.Singleton);
 		}
 	}
