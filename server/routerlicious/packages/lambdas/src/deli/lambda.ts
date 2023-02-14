@@ -1511,7 +1511,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             lastSentMSN: this.lastSentMSN,
             nackMessages: Array.from(this.nackMessages),
             successfullyStartedLambdas: this.successfullyStartedLambdas,
-            checkpointTimestampEpoch: Date.now(),
+            checkpointTimestamp: Date.now(),
         };
     }
 
