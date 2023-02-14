@@ -34,7 +34,7 @@ function getFluidTestMochaConfigWithCompat(packageDir, additionalRequiredModules
 
 	return getFluidTestMochaConfig(
 		packageDir,
-		["@fluidframework/test-version-utils", ...additionalRequiredModules],
+		["@fluid-internal/test-version-utils", ...additionalRequiredModules],
 		testReportPrefix,
 	);
 }

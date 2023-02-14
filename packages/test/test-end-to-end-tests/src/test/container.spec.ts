@@ -42,7 +42,7 @@ import {
 	TestDataObjectType,
 	describeNoCompat,
 	itExpects,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 

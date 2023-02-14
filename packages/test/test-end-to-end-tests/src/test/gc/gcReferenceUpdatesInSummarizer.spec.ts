@@ -26,7 +26,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
