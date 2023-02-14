@@ -100,6 +100,11 @@ export enum FlushMode {
     TurnBased = 1
 }
 
+// @public (undocumented)
+export enum FlushModeExperimental {
+    Async = 2
+}
+
 // @public
 export const gcBlobPrefix = "__gc";
 

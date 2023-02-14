@@ -68,6 +68,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
+	FlushModeExperimental,
 	gcTreeKey,
 	InboundAttachMessage,
 	IFluidDataStoreContextDetached,
@@ -908,7 +909,7 @@ export class ContainerRuntime
 
 	private _orderSequentiallyCalls: number = 0;
 	private readonly _flushMode: FlushMode;
-	private flushMicroTaskExists = false;
+	private flushTaskExists = false;
 
 	private _connected: boolean;
 
@@ -2115,7 +2116,7 @@ export class ContainerRuntime
 	 * Are we in the middle of batching ops together?
 	 */
 	private currentlyBatching() {
-		return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
+		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
 	}
 
 	public getQuorum(): IQuorumClients {
@@ -2828,8 +2829,7 @@ export class ContainerRuntime
 			0x132 /* "sending ops in detached container" */,
 		);
 
-		const deserializedContent: ContainerRuntimeMessage = { type, contents };
-		const serializedContent = JSON.stringify(deserializedContent);
+		const serializedContent = JSON.stringify({ type, contents });
 
 		if (this.deltaManager.readOnlyInfo.readonly) {
 			this.logger.sendTelemetryEvent({
@@ -2840,7 +2840,7 @@ export class ContainerRuntime
 
 		const message: BatchMessage = {
 			contents: serializedContent,
-			deserializedContent,
+			deserializedContent: JSON.parse(serializedContent), // Deep copy in case caller changes reference object
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -2879,17 +2879,8 @@ export class ContainerRuntime
 
 			if (!this.currentlyBatching()) {
 				this.flush();
-			} else if (!this.flushMicroTaskExists) {
-				this.flushMicroTaskExists = true;
-				// Queue a microtask to detect the end of the turn and force a flush.
-				Promise.resolve()
-					.then(() => {
-						this.flushMicroTaskExists = false;
-						this.flush();
-					})
-					.catch((error) => {
-						this.closeFn(error as GenericError);
-					});
+			} else {
+				this.scheduleFlush();
 			}
 		} catch (error) {
 			this.closeFn(error as GenericError);
@@ -2898,6 +2889,46 @@ export class ContainerRuntime
 
 		if (this.isContainerMessageDirtyable(type, contents)) {
 			this.updateDocumentDirtyState(true);
+		}
+	}
+
+	private scheduleFlush() {
+		if (this.flushTaskExists) {
+			return;
+		}
+
+		this.flushTaskExists = true;
+		const flush = () => {
+			this.flushTaskExists = false;
+			try {
+				this.flush();
+			} catch (error) {
+				this.closeFn(error as GenericError);
+			}
+		};
+
+		switch (this.flushMode) {
+			case FlushMode.TurnBased:
+				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
+				// batch at the end of the turn
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				Promise.resolve().then(flush);
+				break;
+
+			// FlushModeExperimental is experimental and not exposed directly in the runtime APIs
+			case FlushModeExperimental.Async as unknown as FlushMode:
+				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
+				// batch when all micro-tasks are complete.
+				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
+				setTimeout(flush, 0);
+				break;
+
+			default:
+				assert(
+					this._orderSequentiallyCalls > 0,
+					"Unreachable unless running under orderSequentially",
+				);
+				break;
 		}
 	}
 

@@ -59,5 +59,4 @@ export {
 	makeArray,
 	Mutable,
 	RecursiveReadonly,
-	unreachableCase,
 } from "./utils";

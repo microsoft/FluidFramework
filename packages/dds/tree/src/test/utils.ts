@@ -199,7 +199,7 @@ export class TestTreeProvider {
 			const firstTree = await dataObject.getSharedObject<ISharedTree>(
 				TestTreeProvider.treeId,
 			);
-			const summarizer = await createSummarizer(objProvider, container);
+			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
 				firstTree,

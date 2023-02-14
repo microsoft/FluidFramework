@@ -2,20 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	IOverflowSetItemProps,
-	IconButton,
-	Link,
-	OverflowSet,
-	Stack,
-	initializeIcons,
-} from "@fluentui/react";
+import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
 import React from "react";
 
 import { HasClientDebugger } from "../CommonProps";
+import { initializeFluentUiIcons } from "../InitializeIcons";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
-import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 
@@ -25,8 +18,8 @@ import { DataObjectsView } from "./DataObjectsView";
 // - Move Container action bar (connection / disposal buttons) to summary header, rather than in
 //   the Container data view.
 
-// Initialize Fluent icons used this library's components.
-initializeIcons();
+// Ensure FluentUI icons are initialized.
+initializeFluentUiIcons();
 
 /**
  * `className` used by {@link ClientDebugView}.
@@ -80,19 +73,16 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 
 	// UI state
 	const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
-		RootView.Container,
+		RootView.ContainerData,
 	);
 
 	let view: React.ReactElement;
 	if (isContainerClosed) {
-		view = <div>The Container has been disposed.</div>;
+		view = <div>The Container has been closed.</div>;
 	} else {
 		let innerView: React.ReactElement;
 		switch (rootViewSelection) {
-			case RootView.Container:
-				innerView = <ContainerDataView clientDebugger={clientDebugger} />;
-				break;
-			case RootView.Data:
+			case RootView.ContainerData:
 				innerView = (
 					<DataObjectsView
 						clientDebugger={clientDebugger}
@@ -146,19 +136,19 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
  */
 enum RootView {
 	/**
-	 * Corresponds with {@link ContainerDataView}.
-	 */
-	Container = "Container",
-
-	/**
 	 * Corresponds with {@link DataObjectsView}.
 	 */
-	Data = "Data",
+	ContainerData = "Data",
 
 	/**
 	 * Corresponds with {@link AudienceView}.
 	 */
 	Audience = "Audience",
+
+	// TODOs:
+	// - Network stats
+	// - Telemetry
+	// - Ops/message latency stats
 }
 
 /**
