@@ -6,11 +6,9 @@ maintainable CLI using [oclif](https://oclif.io).
 
 <!-- prettier-ignore-start -->
 <!-- toc -->
-
--   [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
--   [Usage](#usage)
--   [Command Topics](#command-topics)
-
+* [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
+* [Usage](#usage)
+* [Command Topics](#command-topics)
 <!-- tocstop -->
 <!-- prettier-ignore-stop -->
 
@@ -23,7 +21,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.9.0
+@fluid-tools/build-cli/0.10.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND

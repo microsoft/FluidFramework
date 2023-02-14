@@ -50,6 +50,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 				"An exact string to use as the version. The string must be a valid semver string.",
 			exclusive: ["bumpType", "scheme"],
 		}),
+		exactDepType: Flags.enum({
+			description:
+				"When using the exact flag, controls the type of dependency that is used between packages within the release group.",
+			dependsOn: ["exact"],
+			options: ["^", "~", ""],
+			default: "^",
+		}),
 		scheme: versionSchemeFlag({
 			description: "Override the version scheme used by the release group or package.",
 			required: false,
@@ -99,11 +106,18 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
+		const exactDepType = flags.exactDepType ?? "^";
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
 
 		if (bumpType === undefined && exactVersion === null) {
 			this.error(`Either --bumpType or --exact must be provided.`);
+		}
+
+		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
+			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
+			// that the exactDepType will be one of the enum values.
+			this.error(`Invalid exactDepType: ${exactDepType}`);
 		}
 
 		if (isReleaseGroup(args.package_or_release_group)) {
@@ -165,6 +179,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
+		this.log(`Exact dependency type: ${exactDepType}`);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
@@ -185,7 +200,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 			}
 		}
 
-		const logs = await bumpReleaseGroup(context, bumpArg, packageOrReleaseGroup, scheme);
+		const logs = await bumpReleaseGroup(
+			context,
+			bumpArg,
+			packageOrReleaseGroup,
+			scheme,
+			exactDepType,
+		);
 		this.verbose(logs);
 
 		if (shouldInstall) {
