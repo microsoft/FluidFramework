@@ -271,14 +271,17 @@ describe("Runtime", () => {
 			});
 
 			describe("Complete Summary", () => {
-				it("Should fail completeSummary if summarize not called", () => {
+				it("Should fail completeSummary if summarize not called on root node", () => {
 					createRoot();
 					rootNode.startSummary(11, logger);
-					expectThrow(
+					assert.throws(
 						() => rootNode.completeSummary("test-handle"),
-						"complete summary",
-						"tracked local paths not set",
-						"0x1a5",
+						(error) => {
+							const correctErrorMessage = error.message === "NodeNotSummarized";
+							const correctErrorId = error.id.value === "";
+							return correctErrorMessage && correctErrorId;
+						},
+						"Complete summary should have failed at the root node",
 					);
 				});
 
@@ -289,11 +292,34 @@ describe("Runtime", () => {
 					rootNode.startSummary(11, logger);
 					await rootNode.summarize(false);
 					await leafNode?.summarize(false);
-					expectThrow(
+					const midNodeId = `/${ids[1]}`;
+					assert.throws(
 						() => rootNode.completeSummary("test-handle"),
-						"complete summary",
-						"tracked local paths not set",
-						"0x1a5",
+						(error) => {
+							const correctErrorMessage = error.message === "NodeNotSummarized";
+							const correctErrorId = error.id.value === midNodeId;
+							return correctErrorMessage && correctErrorId;
+						},
+						"Complete summary should have failed at the mid node",
+					);
+				});
+
+				it("Should fail completeSummary if summarize not called on leaf node", async () => {
+					createRoot();
+					createMid({ type: CreateSummarizerNodeSource.Local });
+					createLeaf({ type: CreateSummarizerNodeSource.Local });
+					rootNode.startSummary(11, logger);
+					await rootNode.summarize(false);
+					await midNode?.summarize(false);
+					const leafNodeId = `/${ids[1]}/${ids[2]}`;
+					assert.throws(
+						() => rootNode.completeSummary("test-handle"),
+						(error) => {
+							const correctErrorMessage = error.message === "NodeNotSummarized";
+							const correctErrorId = error.id.value === leafNodeId;
+							return correctErrorMessage && correctErrorId;
+						},
+						"Complete summary should have failed at the leaf node",
 					);
 				});
 			});
@@ -433,6 +459,33 @@ describe("Runtime", () => {
 					);
 					assert(result.latestSummaryUpdated === true, "should update");
 					assert(result.wasSummaryTracked === true, "should be tracked");
+				});
+
+				it("should fail refresh when summary is in progress", async () => {
+					createRoot();
+					const proposalHandle = "test-handle";
+
+					const referenceSeqNum = 10;
+					rootNode.startSummary(referenceSeqNum, logger);
+					await rootNode.summarize(false);
+					await assert.rejects(
+						async () =>
+							rootNode.refreshLatestSummary(
+								proposalHandle,
+								summaryRefSeq,
+								fetchLatestSnapshot,
+								readAndParseBlob,
+								logger,
+							),
+						(error) => {
+							const correctErrorMessage =
+								error.message === "UnexpectedRefreshDuringSummarize";
+							const correctInProgressRefSeq =
+								error.inProgressSummaryRefSeq === referenceSeqNum;
+							return correctErrorMessage && correctInProgressRefSeq;
+						},
+						"Refresh should fail if called when summary is in progress",
+					);
 				});
 			});
 		});

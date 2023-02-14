@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "../utils";
@@ -179,6 +179,8 @@ export interface ICreateChildDetails {
 	latestSummary: SummaryNode | undefined;
 	/** Sequence number of latest known change to the node */
 	changeSequenceNumber: number;
+	/** A unique id of this child to be logged when sending telemetry. */
+	telemetryNodeId: string;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
@@ -227,3 +229,5 @@ export function parseSummaryTreeForSubtrees(summary: ISummaryTree): ISubtreeInfo
 		childrenPathPart: undefined,
 	};
 }
+
+export function logUnexpectedError(event: ITelemetryBaseEvent) {}
