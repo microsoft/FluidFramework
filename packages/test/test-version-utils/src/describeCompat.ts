@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
@@ -30,20 +31,32 @@ function createCompatSuite(
 				let provider: TestObjectProvider;
 				let resetAfterEach: boolean;
 				before(async function () {
-					provider = await getVersionedTestObjectProvider(
-						baseVersion,
-						config.loader,
-						{
-							type: driver,
-							version: config.driver,
-							config: {
-								r11s: { r11sEndpointName },
-								odsp: { tenantIndex },
+					try {
+						provider = await getVersionedTestObjectProvider(
+							baseVersion,
+							config.loader,
+							{
+								type: driver,
+								version: config.driver,
+								config: {
+									r11s: { r11sEndpointName },
+									odsp: { tenantIndex },
+								},
 							},
-						},
-						config.containerRuntime,
-						config.dataRuntime,
-					);
+							config.containerRuntime,
+							config.dataRuntime,
+						);
+					} catch (error) {
+						const logger = ChildLogger.create(getTestLogger?.(), "DescribeCompatSetup");
+						logger.sendErrorEvent(
+							{
+								eventName: "TestObjectProviderLoadFailed",
+								driverType: driver,
+							},
+							error,
+						);
+						throw error;
+					}
 
 					Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
 				});

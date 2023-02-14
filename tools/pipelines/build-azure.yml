@@ -92,6 +92,8 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     buildDirectory: azure
     tagName: azure
     poolBuild: Large
