@@ -4,29 +4,71 @@
  */
 import { expect } from "chai";
 
-import { PlainTextNode, SpanNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
+import { LineBreakNode, PlainTextNode, SpanNode, TextFormatting } from "../../documentation-domain";
+import { testRender } from "./Utilities";
 
 describe("Span markdown tests", () => {
-	it("Renders nothing in an empty span", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(new SpanNode([]));
-		expect(renderedForm).to.equal(``);
-	});
-	it("Renders plain text nodes", () => {
-		const node1 = new PlainTextNode("This is some text. ");
-		const node2 = new PlainTextNode("This is more text!");
-		const span = new SpanNode([node1, node2]);
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(span);
-		expect(renderedForm).to.equal(`This is some text. This is more text!`);
+	describe("Markdown", () => {
+		it("Empty span", () => {
+			expect(testRender(SpanNode.Empty)).to.equal("");
+		});
+
+		it("Simple span", () => {
+			const text1 = "This is some text. ";
+			const text2 = "This is more text!";
+			const node1 = new PlainTextNode(text1);
+			const node2 = new PlainTextNode(text2);
+			const span = new SpanNode([node1, node2]);
+			expect(testRender(span)).to.equal(`${text1}${text2}`);
+		});
+
+		it("Formatted span", () => {
+			const formatting: TextFormatting = {
+				bold: true,
+				italic: true,
+			};
+			const text1 = "This is some text. ";
+			const text2 = "This is more text!";
+			const node1 = new PlainTextNode(text1);
+			const node2 = LineBreakNode.Singleton;
+			const node3 = new PlainTextNode(text2);
+			const span = new SpanNode([node1, node2, node3], formatting);
+			expect(testRender(span)).to.equal(`**_This is some text._** \n**_${text2}_**`);
+		});
 	});
 
-	it("Renders plain text nodes", () => {
-		const node1 = new PlainTextNode("This is some text");
-		const span = new SpanNode([node1], { bold: true });
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(span);
-		expect(renderedForm).to.equal(`<b>This is some text</b>`);
+	describe("HTML", () => {
+		it("Empty span", () => {
+			expect(testRender(SpanNode.Empty, undefined, { insideHtml: true })).to.equal(
+				"<span></span>",
+			);
+		});
+
+		it("Simple span", () => {
+			const text1 = "This is some text. ";
+			const text2 = "This is more text!";
+			const node1 = new PlainTextNode(text1);
+			const node2 = new PlainTextNode(text2);
+			const span = new SpanNode([node1, node2]);
+			expect(testRender(span, undefined, { insideHtml: true })).to.equal(
+				`<span>${text1}${text2}</span>`,
+			);
+		});
+
+		it("Formatted span", () => {
+			const formatting: TextFormatting = {
+				bold: true,
+				italic: true,
+			};
+			const text1 = "This is some text. ";
+			const text2 = "This is more text!";
+			const node1 = new PlainTextNode(text1);
+			const node2 = LineBreakNode.Singleton;
+			const node3 = new PlainTextNode(text2);
+			const span = new SpanNode([node1, node2, node3], formatting);
+			expect(testRender(span, undefined, { insideHtml: true })).to.equal(
+				`<span><b><i>This is some text.</i></b> \n<br/>\n<b><i>${text2}</i></b></span>`,
+			);
+		});
 	});
 });
