@@ -44,7 +44,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.0.0",
+		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "^1.4.0-121020",
 		"@fluidframework/container-loader": "^1.4.0-121020",
 		"@fluidframework/core-interfaces": "^1.4.0-121020",
