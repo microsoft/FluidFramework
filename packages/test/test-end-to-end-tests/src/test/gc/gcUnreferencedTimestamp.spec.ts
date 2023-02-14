@@ -68,7 +68,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
 	describe("unreferenced timestamp in summary", () => {
 		it("adds / removes unreferenced timestamp for data stores correctly", async () => {
-			const summarizer = await createSummarizer(provider, mainContainer);
+			const { summarizer } = await createSummarizer(provider, mainContainer);
 
 			// Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
 			const dataStoreB = await requestFluidObject<ITestDataObject>(
@@ -123,7 +123,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 		});
 
 		it("adds / removes unreferenced timestamp for attachment blobs correctly", async () => {
-			const summarizer = await createSummarizer(provider, mainContainer);
+			const { summarizer } = await createSummarizer(provider, mainContainer);
 
 			// Upload an attachment blob and mark it as referenced by storing its handle in a referenced DDS.
 			const blob1Contents = "Blob contents 1";
@@ -175,7 +175,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 		});
 
 		it("uses unreferenced timestamp from previous summary correctly", async () => {
-			const summarizer1 = await createSummarizer(provider, mainContainer);
+			const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 			// Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
 			const dataStoreB = await requestFluidObject<ITestDataObject>(
@@ -219,7 +219,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			// Load a new summarizer from the last summary. Validate that the GC state has not changed and we get a
 			// handle for it.
 			summarizer1.close();
-			const summarizer2 = await createSummarizer(
+			const { summarizer: summarizer2 } = await createSummarizer(
 				provider,
 				mainContainer,
 				summaryResult2.summaryVersion,
@@ -257,7 +257,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * Validates that the unreferenced time for B is t2 which is > t1.
 			 */
 			it(`Scenario 1 - Reference added and then removed`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store B and mark it as referenced by storing its handle in A.
 				const dataStoreB = await requestFluidObject<ITestDataObject>(
@@ -303,7 +303,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * Validates that the unreferenced time for B and C is t2 which is > t1.
 			 */
 			it(`Scenario 2 - Reference transitively added and removed`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data stores B and C and mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC
@@ -364,7 +364,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * Validates that the unreferenced time for B, C and D is t2 which is > t1.
 			 */
 			it(`Scenario 3 - Reference added through chain of references and removed`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data stores B, C and D and mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC -> dataStoreD
@@ -436,7 +436,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * Validates that the unreferenced time for C is t2 which is > t1.
 			 */
 			it(`Scenario 4 - Reference added and removed via new nodes`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
 				const dataStoreC = await requestFluidObject<ITestDataObject>(
@@ -495,7 +495,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * that we can detect new root data stores and outbound references from them.
 			 */
 			it(`Scenario 5 - Reference added via new root nodes and removed`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
 				const dataStoreC = await requestFluidObject<ITestDataObject>(
@@ -551,7 +551,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * observed by summarizer. So, the summarizer does not see this reference directly but only when B is realized.
 			 */
 			it(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
 				const dataStoreC = await requestFluidObject<ITestDataObject>(
@@ -612,7 +612,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * references the node which was unreferenced in previous summary.
 			 */
 			it(`Scenario 7 - Reference added transitively via new nodes and removed`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store D and mark it referenced by storing its handle in data store A.
 				const dataStoreD = await requestFluidObject<ITestDataObject>(
@@ -672,7 +672,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * 3. Summary 2 at t2. V = [A*, B]. E = []. B is still referenced.
 			 */
 			it(`Scenario 8 - Reference to DDS not added`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// 1. Get summary 1 and validate that A is referenced. E = [].
 				await provider.ensureSynchronized();
@@ -709,7 +709,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * Validates that the unreferenced time for C is t2 which is > t1.
 			 */
 			it(`Scenario 1 - Reference added to unreferenced node`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data stores B and C and mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC.
@@ -764,7 +764,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * Validates that the unreferenced time for C and D is t2 which is > t1.
 			 */
 			it(`Scenario 2 - Reference added to a list of unreferenced nodes`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data stores B, C and D mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC -> dataStoreD.
@@ -833,7 +833,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			 * Validates that the unreferenced time for C and D is t2 which is > t1.
 			 */
 			it(`Scenario 3 - Reference added to a list of unreferenced nodes and a reference is removed`, async () => {
-				const summarizer = await createSummarizer(provider, mainContainer);
+				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data stores B, C and D mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC -> dataStoreD.

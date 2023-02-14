@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-	createSummarizerWithContainer,
+	createSummarizer,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	mockConfigProvider,
@@ -22,7 +22,7 @@ import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	getGCStateFromSummary,
 	getGCDeletedStateFromSummary,
@@ -51,12 +51,11 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 	};
 
 	let provider: ITestObjectProvider;
-	let documentAbsoluteUrl: string | undefined;
 
-	const loadSummarizerAndContainer = async (summaryVersion?: string) => {
-		return createSummarizerWithContainer(
+	const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
+		return createSummarizer(
 			provider,
-			documentAbsoluteUrl,
+			container,
 			summaryVersion,
 			gcOptions,
 			mockConfigProvider(settings),
@@ -85,11 +84,10 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 
 	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to tombstone", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
-		documentAbsoluteUrl = await mainContainer.getAbsoluteUrl("");
 		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
 		await waitForContainerConnection(mainContainer);
 
-		const { container, summarizer } = await loadSummarizerAndContainer();
+		const { container, summarizer } = await loadSummarizer(mainContainer);
 
 		// create datastore and blob
 		const dataStore = await mainDataStore._context.containerRuntime.createDataStore(
@@ -197,7 +195,8 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 		});
 		container.close();
 
-		const { summarizer: remoteSummarizer } = await loadSummarizerAndContainer(
+		const { summarizer: remoteSummarizer } = await loadSummarizer(
+			mainContainer,
 			summary3.summaryVersion,
 		);
 		const summaryTree4 = (await summarizeNow(remoteSummarizer)).summaryTree;

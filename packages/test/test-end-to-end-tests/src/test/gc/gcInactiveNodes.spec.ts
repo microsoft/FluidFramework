@@ -289,9 +289,14 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				};
 
 				// Create a summarizer client that will be used to summarize the container.
-				const summarizer1 = await createSummarizer(provider, mainContainer, undefined, {
-					inactiveTimeoutMs,
-				});
+				const { summarizer: summarizer1 } = await createSummarizer(
+					provider,
+					mainContainer,
+					undefined,
+					{
+						inactiveTimeoutMs,
+					},
+				);
 
 				// Create a data store, mark it as referenced and then unreferenced; summarize;
 				const dataStore = await requestFluidObject<ITestDataObject>(
@@ -353,9 +358,14 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					return summaryResult.summaryVersion;
 				};
 
-				const summarizer1 = await createSummarizer(provider, mainContainer, undefined, {
-					inactiveTimeoutMs,
-				});
+				const { summarizer: summarizer1 } = await createSummarizer(
+					provider,
+					mainContainer,
+					undefined,
+					{
+						inactiveTimeoutMs,
+					},
+				);
 
 				const dataStore = await requestFluidObject<ITestDataObject>(
 					await containerRuntime.createDataStore(TestDataObjectType),
@@ -369,7 +379,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 				// Load a new summarizer from the above summary such that the second data store is not loaded.
 				summarizer1.close();
-				const summarizer2 = await createSummarizer(
+				const { summarizer: summarizer2 } = await createSummarizer(
 					provider,
 					mainContainer,
 					summaryVersion1,

@@ -180,3 +180,27 @@ declare function use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
     use: TypeOnly<old.RouterliciousDocumentServiceFactory>);
 use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
     get_current_ClassDeclaration_RouterliciousDocumentServiceFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_RouterliciousErrorType": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_RouterliciousErrorType():
+    TypeOnly<old.RouterliciousErrorType>;
+declare function use_current_EnumDeclaration_RouterliciousErrorType(
+    use: TypeOnly<current.RouterliciousErrorType>);
+use_current_EnumDeclaration_RouterliciousErrorType(
+    get_old_EnumDeclaration_RouterliciousErrorType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_RouterliciousErrorType": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_RouterliciousErrorType():
+    TypeOnly<current.RouterliciousErrorType>;
+declare function use_old_EnumDeclaration_RouterliciousErrorType(
+    use: TypeOnly<old.RouterliciousErrorType>);
+use_old_EnumDeclaration_RouterliciousErrorType(
+    get_current_EnumDeclaration_RouterliciousErrorType());
