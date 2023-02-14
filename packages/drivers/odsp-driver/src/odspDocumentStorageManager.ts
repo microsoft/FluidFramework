@@ -30,7 +30,7 @@ import {
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache, ISnapshotContentsWithEpoch } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
@@ -280,10 +280,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								});
 
 						// Based on the concurrentSnapshotFetch policy:
-						// Either retrieve both the network and cache snapshots concurrently and pick the first to return, or grab the cache value
-						// and then the network value if the cache value returns undefined. However in both the cases if we have a prefetched
-						// snapshot promise, then before making the network call, we await the result of that prefetch call as that is also a network
-						// call and we don't want to unnecessarily load the service by making another network call.
+						// Either retrieve both the network and cache snapshots concurrently and pick the first to return,
+						// or grab the cache value and then the network value if the cache value returns undefined.
 						// For summarizer which could call this during refreshing of summary parent, always use the cache
 						// first. Also for other clients, if it is not critical path which is determined by firstVersionCall,
 						// then also check the cache first.
@@ -446,6 +444,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					);
 					return undefined;
 				});
+			// If the prefetch call, is successful, then return the contents otherwise as backup for now, just
+			// proceed with the old snapshot fetch flow.
 			if (result !== undefined) {
 				return result;
 			}
