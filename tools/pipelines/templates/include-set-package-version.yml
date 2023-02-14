@@ -80,6 +80,7 @@ steps:
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
+      # Azure Pipelines doesn't fail the job when a formatting error is found unless this is set to true.
       failOnStderr: true
       script: |
         if [ -f "lerna.json" ]; then
