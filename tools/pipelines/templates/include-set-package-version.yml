@@ -141,7 +141,7 @@ steps:
           if [ "$VERSION_RELEASE" = "release" ]; then
             flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType="" -xv
           else
-            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType=^ -xv
+            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType="^" -xv
           fi
         else
           npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
