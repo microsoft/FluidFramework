@@ -5,8 +5,13 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainerContext } from "@fluidframework/container-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
+import {
+	ChildLogger,
+	loggerToMonitoringContext,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager } from "./batchManager";
@@ -18,7 +23,6 @@ export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
-	readonly enableOpReentryCheck?: boolean;
 }
 
 export interface IOutboxParameters {
@@ -32,11 +36,13 @@ export interface IOutboxParameters {
 }
 
 export class Outbox {
+	private readonly mc: MonitoringContext;
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
-	private readonly defaultAttachFlowSoftLimitInBytes = 64 * 1024;
+	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
 
 	constructor(private readonly params: IOutboxParameters) {
+		this.mc = loggerToMonitoringContext(ChildLogger.create(params.logger, "Outbox"));
 		const isCompressionEnabled =
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;
@@ -44,28 +50,48 @@ export class Outbox {
 		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
 		const softLimit = isCompressionEnabled ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
 
-		this.attachFlowBatch = new BatchManager(
-			{
-				hardLimit,
-				softLimit,
-				enableOpReentryCheck: params.config.enableOpReentryCheck,
-			},
-			params.logger,
-		);
-		this.mainBatch = new BatchManager(
-			{
-				hardLimit,
-				enableOpReentryCheck: params.config.enableOpReentryCheck,
-			},
-			params.logger,
-		);
+		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit });
+		this.mainBatch = new BatchManager({ hardLimit });
 	}
 
 	public get isEmpty(): boolean {
 		return this.attachFlowBatch.length === 0 && this.mainBatch.length === 0;
 	}
 
+	/**
+	 * If we detect that the reference sequence number of the incoming message does not match
+	 * what was already in the batch manager, this means that the batch has been interrupted so
+	 * we will flush the accumulated messages to account for that and create a new batch with the new
+	 * message as the first message.
+	 *
+	 * @param batchManager - the batch manager where the message is supposed to be pushed to
+	 * @param message - the incoming message
+	 */
+	private maybeFlushPartialBatch(batchManager: BatchManager, message: BatchMessage) {
+		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisablePartialFlush") === true) {
+			return;
+		}
+
+		const batchReference = batchManager.referenceSequenceNumber;
+		if (batchReference !== undefined && batchReference !== message.referenceSequenceNumber) {
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "ReferenceSequenceNumberMismatch",
+					referenceSequenceNumber: batchReference,
+					messageReferenceSequenceNumber: message.referenceSequenceNumber,
+					type: message.deserializedContent.type,
+					count: batchManager.length,
+					batchSize: batchManager.contentSizeInBytes,
+				},
+				new UsageError("Submission of an out of order message"),
+			);
+			this.flushInternal(batchManager.popBatch());
+		}
+	}
+
 	public submit(message: BatchMessage) {
+		this.maybeFlushPartialBatch(this.mainBatch, message);
+
 		if (!this.mainBatch.push(message)) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
 				opSize: message.contents?.length ?? 0,
@@ -77,6 +103,8 @@ export class Outbox {
 	}
 
 	public submitAttach(message: BatchMessage) {
+		this.maybeFlushPartialBatch(this.mainBatch, message);
+
 		if (!this.attachFlowBatch.push(message)) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
 			// when queue is not empty.

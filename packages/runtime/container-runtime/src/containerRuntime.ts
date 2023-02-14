@@ -1290,7 +1290,6 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				enableOpReentryCheck: this.enableOpReentryCheck,
 			},
 			logger: this.mc.logger,
 		});
@@ -1431,6 +1430,26 @@ export class ContainerRuntime
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
+
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "Config",
+			options: JSON.stringify(runtimeOptions),
+			compressionDisabled: this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.DisableCompression",
+			),
+			opReentryDisabled: this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.DisableOpReentryCheck",
+			),
+			chunkingDisabled: this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.DisableCompressionChunking",
+			),
+			attachReorderDisabled: this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.disableAttachOpReorder",
+			),
+			partialFlushDisabled: this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.DisablePartialFlush",
+			),
+		});
 	}
 
 	/**
