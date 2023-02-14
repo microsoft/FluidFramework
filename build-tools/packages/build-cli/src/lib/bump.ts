@@ -150,7 +150,7 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
-  exactDependencyType: "~" | "^" | "" = "^",
+	exactDependencyType: "~" | "^" | "" = "^",
 ) {
 	const translatedVersion = isVersionBumpType(bumpType)
 		? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
@@ -163,8 +163,11 @@ export async function bumpReleaseGroup(
 	if (releaseGroupOrPackage instanceof MonoRepo) {
 		workingDir = releaseGroupOrPackage.repoPath;
 		name = releaseGroupOrPackage.kind;
-		cmd =
-    `npx --no-install lerna version ${translatedVersion.version} --no-push --no-git-tag-version -y${exactDependencyType === "" ? " --exact" : ""} && npm run build:genver`;
+		cmd = `npx --no-install lerna version ${
+			translatedVersion.version
+		} --no-push --no-git-tag-version -y${
+			exactDependencyType === "" ? " --exact" : ""
+		} && npm run build:genver`;
 	} else {
 		workingDir = releaseGroupOrPackage.directory;
 		name = releaseGroupOrPackage.name;
@@ -180,7 +183,10 @@ export async function bumpReleaseGroup(
 	// the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
 	// for the internal version scheme, the range needs to be a >= < range.
 	if (scheme === "internal" || scheme === "internalPrerelease") {
-		const range = exactDependencyType === "" ? translatedVersion.version : getVersionRange(translatedVersion, exactDependencyType);
+		const range =
+			exactDependencyType === ""
+				? translatedVersion.version
+				: getVersionRange(translatedVersion, exactDependencyType);
 		if (releaseGroupOrPackage instanceof MonoRepo) {
 			const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
 			const packageNewVersionMap = new Map<string, PackageWithRangeSpec>();
