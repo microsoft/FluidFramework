@@ -6,9 +6,8 @@
 // TODO: fix before merging
 /* eslint-disable no-restricted-syntax */
 
-export * from "./api-item-transforms";
-export * from "./documentation-domain";
-export * from "./markdown-renderer";
-export * from "./MarkdownDocumenter";
+export * from "./default-renderers";
+export * from "./Render";
+export * from "./RenderContext";
 
 /* eslint-enable no-restricted-syntax */

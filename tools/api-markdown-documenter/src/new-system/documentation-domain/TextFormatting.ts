@@ -10,17 +10,17 @@ export interface TextFormatting {
 	/**
 	 * @defaultValue Inherit
 	 */
-	italic?: boolean;
+	readonly italic?: boolean;
 
 	/**
 	 * @defaultValue Inherit
 	 */
-	bold?: boolean;
+	readonly bold?: boolean;
 
 	/**
 	 * @defaultValue Inherit
 	 */
-	strikethrough?: boolean;
+	readonly strikethrough?: boolean;
 
 	// TODO: underline?
 	// TODO: what else?

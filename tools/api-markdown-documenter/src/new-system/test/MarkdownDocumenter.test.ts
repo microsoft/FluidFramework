@@ -15,7 +15,7 @@ import {
 	markdownDocumenterConfigurationWithDefaults,
 } from "../../Configuration";
 import { createDocuments, renderFiles } from "../MarkdownDocumenter";
-import { apiModelToDocument, apiPackageToDocument } from "../api-item-to-documentation-ast";
+import { apiModelToDocument, apiPackageToDocument } from "../api-item-transforms";
 import { DocumentNode } from "../documentation-domain";
 
 /**

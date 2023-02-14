@@ -12,16 +12,9 @@ import {
 	markdownDocumenterConfigurationWithDefaults,
 } from "../Configuration";
 import { doesItemRequireOwnDocument } from "../utilities";
-import {
-	apiItemToDocument,
-	apiModelToDocument,
-	apiPackageToDocument,
-} from "./api-item-to-documentation-ast";
+import { apiItemToDocument, apiModelToDocument, apiPackageToDocument } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
-import {
-	DocumentationNodeRenderers,
-	markdownFromDocumentNode,
-} from "./documentation-domain-to-md-sink";
+import { DocumentationNodeRenderers, renderDocument } from "./markdown-renderer";
 
 /**
  * This module contains the primary rendering entrypoints to the system.
@@ -121,10 +114,10 @@ export async function renderFiles(
 
 	await Promise.all(
 		documents.map(async (document) => {
-			const emittedDocumentContents = markdownFromDocumentNode(document, customRenderers);
+			const renderedDocument = renderDocument(document, customRenderers);
 
 			const filePath = Path.join(outputDirectoryPath, document.filePath);
-			await FileSystem.writeFileAsync(filePath, emittedDocumentContents, {
+			await FileSystem.writeFileAsync(filePath, renderedDocument, {
 				convertLineEndings: config.newlineKind,
 				ensureFolderExists: true,
 			});
