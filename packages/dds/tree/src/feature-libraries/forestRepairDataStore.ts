@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	castCursorToSynchronous,
 	Delta,
@@ -20,7 +20,6 @@ import {
 	UpPath,
 	Value,
 } from "../core";
-import { unreachableCase } from "../util";
 import { chunkTree, TreeChunk } from "./chunked-forest";
 
 interface RepairData {
