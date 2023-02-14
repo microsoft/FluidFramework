@@ -296,6 +296,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								hostSnapshotOptions,
 								scenarioName,
 							);
+
 							// Ensure that failures on both paths are ignored initially.
 							// I.e. if cache fails for some reason, we will proceed with network result.
 							// And vice versa - if (for example) client is offline and network request fails first, we
@@ -308,9 +309,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							method = promiseRaceWinner.index === 0 ? "cache" : "network";
 
 							if (retrievedSnapshot === undefined) {
-								// if prefetch failed -> wait for cache
-								// If cache returned empty or failed -> wait for prefetch (success or failure)
-								// If both fail, then make a network call by ourself.
+								// if network failed -> wait for cache ( then return network failure)
+								// If cache returned empty or failed -> wait for network (success of failure)
 								if (promiseRaceWinner.index === 1) {
 									retrievedSnapshot = await cachedSnapshotP;
 									method = "cache";
@@ -325,13 +325,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							// while the first caller is awaiting later async code in this block.
 
 							retrievedSnapshot = await cachedSnapshotP;
+
 							method = retrievedSnapshot !== undefined ? "cache" : "network";
+
 							if (retrievedSnapshot === undefined) {
 								retrievedSnapshot = await this.fetchSnapshot(
 									hostSnapshotOptions,
 									scenarioName,
 								);
-								method = "network";
 							}
 						}
 					}
