@@ -135,11 +135,11 @@ steps:
 
         if [ -f "lerna.json" ]; then
           if [ "$VERSION_RELEASE" = "release" ]; then
-            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType=\"\" -xv
-            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType="" -xv
-          else
             echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType=\"^\" -xv
             flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType="^" -xv
+          else
+            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType=\"\" -xv
+            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDependencyType="" -xv
           fi
         else
           npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
