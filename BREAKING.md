@@ -15,6 +15,18 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.4.0.0
+
+## 2.0.0-internal.4.0.0 Upcoming changes
+
+## 2.0.0-internal.4.0.0 Breaking changes
+
+-   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+
+### Container and RelativeLoader no longer exported
+
+Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
@@ -69,6 +81,7 @@ The Container and RelativeLoader classes in `@fluidframework/container-loader` h
 -   [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
 -   [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
 -   [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
+-   [test-drivers and test-pairwise-generator packages no longer published](#test-drivers-and-test-pairwise-generator-packages-no-longer-published)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 
@@ -148,9 +161,21 @@ const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
 
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
 
+### Remove internal connection details from `IConnectionDetails`
+
+Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDetails`, no longer exposing these to runtime. Reasons for removing each of them:
+
+-   `existing` : this will always be true, which no longer provides useful information
+-   `mode` : this is implementation detail of connection
+-   `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
+
 ### Remove deprecated experimental get-container package
 
 The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
+
+### test-drivers and test-pairwise-generator packages no longer published
+
+These packages were previously published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These have been moved to the `@fluid-internal` scope and are no longer published.
 
 # 2.0.0-internal.2.4.0
 
