@@ -121,6 +121,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			title = "Generate summary tree 15Mb document";
+			maxBenchmarkDurationSeconds = 120000;
 			async run() {
 				loader = provider.makeTestLoader(testConfig);
 				mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
