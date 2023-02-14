@@ -7,10 +7,7 @@
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import {
-	ContainerRuntime,
-	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
+import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
