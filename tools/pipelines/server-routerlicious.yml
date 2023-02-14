@@ -88,7 +88,7 @@ extends:
     buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
     packageManager: pnpm
     tagName: server
     pool: Large
