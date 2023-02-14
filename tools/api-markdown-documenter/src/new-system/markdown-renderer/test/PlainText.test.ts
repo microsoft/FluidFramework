@@ -13,22 +13,109 @@ describe("PlainText markdown tests", () => {
 		it("Empty text", () => {
 			expect(testRender(PlainTextNode.Empty)).to.equal("");
 		});
+
 		it("Simple text", () => {
 			const text = `This is some text!`;
 			expect(testRender(new PlainTextNode(text))).to.equal(text);
 		});
+
+		it("Italic text", () => {
+			const text = `This is some text!`;
+			const context: Partial<MarkdownRenderContext> = {
+				italic: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(`_${text}_`);
+		});
+
+		it("Bold text", () => {
+			const text = `This is some text!`;
+			const context: Partial<MarkdownRenderContext> = {
+				bold: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(`**${text}**`);
+		});
+
+		it("Strikethrough text", () => {
+			const text = `This is some text!`;
+			const context: Partial<MarkdownRenderContext> = {
+				strikethrough: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(`~~${text}~~`);
+		});
+
+		it("Text with complex formatting", () => {
+			const text = `This is some text!`;
+			const context: Partial<MarkdownRenderContext> = {
+				italic: true,
+				bold: true,
+				strikethrough: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
+				`**_~~${text}~~_**`,
+			);
+		});
 	});
 
 	describe("HTML", () => {
-		const customContext: Partial<MarkdownRenderContext> = {
-			insideHtml: true,
-		};
 		it("Empty text", () => {
-			expect(testRender(PlainTextNode.Empty, undefined, customContext)).to.equal("");
+			const context: Partial<MarkdownRenderContext> = {
+				insideHtml: true,
+			};
+			expect(testRender(PlainTextNode.Empty, undefined, context)).to.equal("");
 		});
+
 		it("Simple text", () => {
 			const text = `This is some text!`;
-			expect(testRender(new PlainTextNode(text), undefined, customContext)).to.equal(text);
+			const context: Partial<MarkdownRenderContext> = {
+				insideHtml: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(text);
+		});
+
+		it("Italic text", () => {
+			const text = `This is some text!`;
+			const context: Partial<MarkdownRenderContext> = {
+				insideHtml: true,
+				italic: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
+				`<i>${text}</i>`,
+			);
+		});
+
+		it("Bold text", () => {
+			const text = `This is some text!`;
+			const context: Partial<MarkdownRenderContext> = {
+				insideHtml: true,
+				bold: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
+				`<b>${text}</b>`,
+			);
+		});
+
+		it("Strikethrough text", () => {
+			const text = `This is some text!`;
+			const context: Partial<MarkdownRenderContext> = {
+				insideHtml: true,
+				strikethrough: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
+				`<s>${text}</s>`,
+			);
+		});
+
+		it("Text with complex formatting", () => {
+			const text = `This is some text!`;
+			const context: Partial<MarkdownRenderContext> = {
+				insideHtml: true,
+				italic: true,
+				bold: true,
+				strikethrough: true,
+			};
+			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
+				`<b><i><s>${text}</s></i></b>`,
+			);
 		});
 	});
 });
