@@ -9,6 +9,8 @@ import {
 	ISummarizer,
 	TombstoneResponseHeaderKey,
 } from "@fluidframework/container-runtime";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
@@ -410,7 +412,43 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	});
 
 	describe("Deleted data stores in summary", () => {
-		it("updates deleted blobs in the GC data in summary", async () => {
+		/**
+		 * Validates that the given data store state is correct in the summary:
+		 * - It should be deleted from the data store summary tree.
+		 * - It should not be present in the GC state in GC summary tree.
+		 * - It should be present in the deleted nodes in GC summary tree.
+		 */
+		function validateDataStoreStateInSummary(
+			summaryTree: ISummaryTree,
+			dataStoreNodePath: string,
+		) {
+			// Validate that the data store is deleted from the data store summary tree.
+			const deletedDataStoreId = dataStoreNodePath.split("/")[1];
+			const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
+			for (const [id] of Object.entries(channelsTree)) {
+				if (id === deletedDataStoreId) {
+					assert(false, `Data store ${id} should have been deleted from the summary`);
+				}
+			}
+
+			// Validate that the GC state does not contain an entry for the deleted data store.
+			const gcState = getGCStateFromSummary(summaryTree);
+			assert(gcState !== undefined, "GC tree is not available in the summary");
+			for (const [nodePath] of Object.entries(gcState.gcNodes)) {
+				if (nodePath === dataStoreNodePath) {
+					assert(false, `Data store ${nodePath} should not present be in GC state`);
+				}
+			}
+
+			// Validate that the deleted nodes in the GC data has the deleted data store.
+			const deletedNodesState = getGCDeletedStateFromSummary(summaryTree);
+			assert(
+				deletedNodesState?.includes(dataStoreNodePath),
+				`Data store ${dataStoreNodePath} should be in deleted nodes`,
+			);
+		}
+
+		it("updates deleted data store state in the summary", async () => {
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 			const deletedDataStoreNodePath = `/${unreferencedId}`;
@@ -419,21 +457,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			// The datastore should be swept now
 			const summary2 = await summarize(summarizer);
 
-			// Validate that the GC state does not contain an entry for the deleted data store.
-			const gcState = getGCStateFromSummary(summary2.summaryTree);
-			assert(gcState !== undefined, "GC tree is not available in the summary");
-			for (const [nodePath] of Object.entries(gcState.gcNodes)) {
-				if (nodePath.startsWith(deletedDataStoreNodePath)) {
-					assert(false, `${unreferencedId} nodes should have been deleted from GC state`);
-				}
-			}
-
-			// Validate that the deleted nodes in the GC data has the deleted data store node.
-			const deletedNodesState = getGCDeletedStateFromSummary(summary2.summaryTree);
-			assert(
-				deletedNodesState?.includes(deletedDataStoreNodePath),
-				`${deletedDataStoreNodePath} is missing from deleted nodes`,
-			);
+			// Validate that the deleted data store's state is correct in the summary.
+			validateDataStoreStateInSummary(summary2.summaryTree, deletedDataStoreNodePath);
 		});
 	});
 });

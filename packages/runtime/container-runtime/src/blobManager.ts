@@ -730,7 +730,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			const pathParts = route.split("/");
 			assert(
 				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-				0x2d5 /* "Invalid blob node id in unused routes." */,
+				"Invalid blob node id in deleted routes.",
 			);
 			const blobId = pathParts[2];
 			if (!this.redirectTable.has(blobId)) {
