@@ -1,0 +1,15 @@
+{
+    "folders": [
+      {
+        "name": "FluidFramework",
+        "path": "../../.."
+      },
+      {
+        "name": "wasm-hello-world",
+        "path": ".."
+      }
+    ],
+    "settings": {
+      "terminal.integrated.cwd": "../.."
+    }
+}
