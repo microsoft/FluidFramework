@@ -109,7 +109,7 @@ export function getRootRenderContext(renderers: DocumentationNodeRenderers): Mar
 		insideTable: false,
 		insideCodeBlock: false,
 		insideHtml: false,
-		headingLevel: 0,
+		headingLevel: 1,
 		renderers,
 	};
 }
@@ -128,16 +128,42 @@ export function renderDocument(
 		...customRenderers,
 	};
 
-	const rootContext = getRootRenderContext(renderers);
-
 	const writer = new DocumentWriter(new StringBuilder());
-
-	renderNodes(document.children, writer, rootContext);
-	const renderedBody = writer.getText();
-
-	// TODO: front-matter, header, footer, etc.
+	renderDocumentNode(document, writer, getRootRenderContext(renderers));
+	const renderedBody = writer.getText().trimStart(); // Trim any leading lines / spaces
 
 	return renderedBody;
+}
+
+/**
+ * Renders the provided {@link DocumentNode} representing the root of some document, per the
+ * configured policy ({@link MarkdownRenderContext.renderers}).
+ */
+function renderDocumentNode(
+	node: DocumentNode,
+	writer: DocumentWriter,
+	context: MarkdownRenderContext,
+): void {
+	if (node.title !== undefined) {
+		if (context.insideHtml) {
+			writer.ensureNewLine();
+			writer.writeLine(`<title>${node.title}</title>`);
+		} else {
+			// In Markdown, there isn't a concept of a "title".
+			// Instead, we will use a top-level heading (and offset our context level to ensure
+			// sub-headings are at the appropriate level).
+			// We accomplish this by wrapping the document's contents in a `HierarchicalSectionNode`.
+			const rootSection: HierarchicalSectionNode = new HierarchicalSectionNode(
+				node.children,
+				HeadingNode.createFromPlainText(node.title),
+			);
+			renderNode(rootSection, writer, context);
+		}
+	} else {
+		renderNodes(node.children, writer, context);
+	}
+
+	// TODO: front-matter, header, footer, etc.
 }
 
 /**
