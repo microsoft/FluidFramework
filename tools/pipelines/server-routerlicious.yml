@@ -88,6 +88,7 @@ extends:
     buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
+    packageManagerInstallCommand: pnpm i --frozen-lockfile
     tagName: server
     pool: Large
     pack: true
