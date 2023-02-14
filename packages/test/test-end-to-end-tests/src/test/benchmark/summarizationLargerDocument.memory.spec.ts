@@ -116,31 +116,30 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 				loaderProps: { logger },
 			};
 		}
+
+		loader = provider.makeTestLoader(testConfig);
+		mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+		const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+
+		dataObject1 = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
+		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
+		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+		const messageCount = 2; // Will result in a 10 MB payload
+		setMapKeys(dataObject1map, messageCount, largeString);
+		fileName = uuid();
+		await mainContainer.attach(provider.driver.createCreateNewRequest(fileName));
+		assert(mainContainer.resolvedUrl);
+		containerUrl = mainContainer.resolvedUrl;
+		await waitForContainerConnection(mainContainer, true);
+		await provider.ensureSynchronized();
 	});
 
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
-			title = "Generate summary tree 15Mb document";
+			title = "Generate summary tree 10Mb document";
 			maxBenchmarkDurationSeconds = 120000;
 			async run() {
-				loader = provider.makeTestLoader(testConfig);
-				mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-				const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-
-				dataObject1 = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
-				dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
-
-				const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-				const messageCount = 3; // Will result in a 15 MB payload
-				setMapKeys(dataObject1map, messageCount, largeString);
-				fileName = uuid();
-				await mainContainer.attach(provider.driver.createCreateNewRequest(fileName));
-				assert(mainContainer.resolvedUrl);
-				containerUrl = mainContainer.resolvedUrl;
-				await waitForContainerConnection(mainContainer, true);
-				await provider.ensureSynchronized();
-
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
 				await loader.resolve(testRequest);
@@ -150,6 +149,9 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 					defaultDataStoreId,
 				);
 				dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
+				dataObject2map.set("setup", "done");
+				const key1 = dataObject1map.get("key1");
+				assert(key1 !== undefined);
 				await provider.ensureSynchronized();
 
 				const containerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
