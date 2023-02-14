@@ -40,11 +40,11 @@ function renderSpanWithHtmlSyntax(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	writer.writeLine("<span>");
+	writer.write("<span>");
 	renderNodes(node.children, writer, {
 		...context,
 		...node.textFormatting, // Override any existing formatting as needed
 		insideHtml: true,
 	});
-	writer.writeLine("</span>");
+	writer.write("</span>");
 }
