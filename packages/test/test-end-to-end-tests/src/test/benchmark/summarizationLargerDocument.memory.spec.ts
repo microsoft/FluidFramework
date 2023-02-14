@@ -50,9 +50,10 @@ const testContainerConfig: ITestContainerConfig = {
 const chunkingBatchesConfig: ITestContainerConfig = {
 	...testContainerConfig,
 	runtimeOptions: {
-		compressionOptions: [
-			{ minimumBatchSizeInBytes: 1024 * 1024, compressionAlgorithm: "lz4" as any },
-		],
+		compressionOptions: {
+			minimumBatchSizeInBytes: 1024 * 1024,
+			compressionAlgorithm: "lz4" as any,
+		},
 		chunkSizeInBytes: 600 * 1024,
 		//		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 	},
@@ -101,7 +102,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 			runtimeOptions: {
 				compressionOptions: {
 					minimumBatchSizeInBytes: 1,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
+					compressionAlgorithm: "lz4" as any,
 				},
 			},
 		};
