@@ -231,7 +231,8 @@
         "groupId": "scriptorium",
         "checkpointBatchSize": 1,
         "checkpointTimeIntervalMsec": 1000,
-        "enableRunWithRetryMetricTelemetry": true
+        "enableRunWithRetryMetricTelemetry": true,
+        "enableHandlerTelemetry": true
     },
     "copier": {
         "topic": "rawdeltas",
