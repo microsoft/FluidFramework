@@ -40,6 +40,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.insertSpaces": false,
     "rust-analyzer.linkedProjects": [
-		"${workspaceFolder}/packages/wasm/wasm-hello-world/wasm/Cargo.toml"
+		"${workspaceFolder}/wasm/wasm-hello-world/Cargo.toml"
 	]
 }

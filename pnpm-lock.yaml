@@ -7965,7 +7965,7 @@ importers:
 
   packages/runtime/container-runtime:
     specifiers:
-      '@fluid-internal/wasm-hello-world': 0.1.0
+      '@fluid-experimental/wasm-hello-world': link:/workspaces/FluidFramework/wasm/wasm-hello-world/pkg_combo
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
@@ -8010,7 +8010,7 @@ importers:
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
-      '@fluid-internal/wasm-hello-world': link:../../wasm/wasm-hello-world
+      '@fluid-experimental/wasm-hello-world': link:../../../wasm/wasm-hello-world/pkg_combo
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.0.0
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -10297,64 +10297,6 @@ importers:
       prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
-
-  packages/wasm/wasm-hello-world:
-    specifiers:
-      '@fluid-tools/build-cli': ^0.9.0
-      '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0'
-      '@microsoft/api-extractor': ^7.22.2
-      '@rushstack/eslint-config': ^2.5.1
-      '@types/diff': ^3.5.1
-      '@types/mocha': ^9.1.1
-      '@types/node': ^14.18.36
-      '@types/ungap__structured-clone': ^0.3.0
-      concurrently: ^6.2.0
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.2
-      diff: ^3.5.0
-      eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
-      fluid-wasm: file:pkg_combo
-      good-fences: ^1.1.1
-      mocha: ^10.0.0
-      nyc: ^15.0.0
-      prettier: ~2.6.2
-      rimraf: ^2.6.2
-      source-map-support: ^0.5.16
-      typescript: ~4.5.5
-    dependencies:
-      fluid-wasm: file:packages/wasm/wasm-hello-world/pkg_combo
-    devDependencies:
-      '@fluid-tools/build-cli': 0.9.0
-      '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.9.0
-      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.22.2
-      '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/diff': 3.5.5
-      '@types/mocha': 9.1.1
-      '@types/node': 14.18.36
-      '@types/ungap__structured-clone': 0.3.0
-      concurrently: 6.3.0
-      copyfiles: 2.4.1
-      cross-env: 7.0.3
-      diff: 3.5.0
-      eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
-      good-fences: 1.1.2
-      mocha: 10.2.0
-      nyc: 15.1.0
-      prettier: 2.6.2
-      rimraf: 2.7.1
-      source-map-support: 0.5.21
-      typescript: 4.5.5
-
-  packages/wasm/wasm-hello-world/pkg_combo:
-    specifiers: {}
 
 packages:
 
@@ -41583,9 +41525,3 @@ packages:
   /zwitch/1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: true
-
-  file:packages/wasm/wasm-hello-world/pkg_combo:
-    resolution: {directory: packages/wasm/wasm-hello-world/pkg_combo, type: directory}
-    name: fluid-wasm
-    version: 0.1.0
-    dev: false

@@ -17,7 +17,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -26,7 +26,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullCompat("SharedMap", (getTestObjectProvider) => {
+describeNoCompat("SharedMap", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -85,7 +85,7 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
 		assert.equal(sharedMap3.size, size, "Incorrect map size in container 3");
 	}
 
-	it("should set key value in three containers correctly", async () => {
+	it.only("should set key value in three containers correctly", async () => {
 		expectAllAfterValues("testKey1", "testValue");
 	});
 

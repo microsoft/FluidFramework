@@ -1,0 +1,11 @@
+lockfileVersion: 5.4
+
+importers:
+
+  Compressed-Tree-main/pkg_combo:
+    specifiers:
+      '@fluidframework/container-runtime': link:/workspaces/FluidFramework/packages/runtime/container-runtime
+      root: link:/workspaces/FluidFramework
+    dependencies:
+      '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
+      root: link:../../..

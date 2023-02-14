@@ -1,0 +1,13 @@
+// I couldn't figure out hot to set the configFile for ts-loader, so it uses the default tsconfig file (this one) for webpack.
+// See tsconfig-node.json for use with node.
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ES2022",
+        "moduleResolution": "node",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    },
+}

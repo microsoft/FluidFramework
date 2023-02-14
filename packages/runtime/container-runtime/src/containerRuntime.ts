@@ -107,7 +107,7 @@ import {
 	ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
-import { add } from "@fluid-internal/wasm-hello-world";
+import { add } from "@fluid-experimental/wasm-hello-world";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
