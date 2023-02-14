@@ -29,10 +29,11 @@ import { timeoutAwait } from "./timeoutUtils";
 const summarizerClientType = "summarizer";
 
 async function createSummarizerCore(
-	absoluteUrl: string | undefined,
+	container: IContainer,
 	loader: IHostLoader,
 	summaryVersion?: string,
 ) {
+	const absoluteUrl = await container.getAbsoluteUrl("");
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
 	}
@@ -74,6 +75,11 @@ const defaultSummaryOptions: ISummaryRuntimeOptions = {
 	},
 };
 
+/**
+ * Creates a summarizer client from the given container and data store factory, and returns the summarizer client's
+ * IContainer and ISummarizer.
+ * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
+ */
 export async function createSummarizerFromFactory(
 	provider: ITestObjectProvider,
 	container: IContainer,
@@ -81,7 +87,7 @@ export async function createSummarizerFromFactory(
 	summaryVersion?: string,
 	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
-): Promise<ISummarizer> {
+): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = new containerRuntimeFactoryType(
@@ -95,34 +101,16 @@ export async function createSummarizerFromFactory(
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
 		configProvider: mockConfigProvider(),
 	});
-	const absoluteUrl = await container.getAbsoluteUrl("");
-	return (await createSummarizerCore(absoluteUrl, loader, summaryVersion)).summarizer;
+	return createSummarizerCore(container, loader, summaryVersion);
 }
 
+/**
+ * Creates a summarizer client from the given container and returns the summarizer client's IContainer and ISummarizer.
+ * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
+ */
 export async function createSummarizer(
 	provider: ITestObjectProvider,
 	container: IContainer,
-	summaryVersion?: string,
-	gcOptions?: IGCRuntimeOptions,
-	configProvider: IConfigProviderBase = mockConfigProvider(),
-	logger?: ITelemetryBaseLogger,
-): Promise<ISummarizer> {
-	const absoluteUrl = await container.getAbsoluteUrl("");
-	return (
-		await createSummarizerWithContainer(
-			provider,
-			absoluteUrl,
-			summaryVersion,
-			gcOptions,
-			configProvider,
-			logger,
-		)
-	).summarizer;
-}
-
-export async function createSummarizerWithContainer(
-	provider: ITestObjectProvider,
-	absoluteUrl: string | undefined,
 	summaryVersion?: string,
 	gcOptions?: IGCRuntimeOptions,
 	configProvider: IConfigProviderBase = mockConfigProvider(),
@@ -136,8 +124,9 @@ export async function createSummarizerWithContainer(
 		loaderProps: { configProvider, logger },
 	};
 	const loader = provider.makeTestLoader(testContainerConfig);
-	return createSummarizerCore(absoluteUrl, loader, summaryVersion);
+	return createSummarizerCore(container, loader, summaryVersion);
 }
+
 /**
  * Summarizes on demand and returns the summary tree, the version number and the reference sequence number of the
  * submitted summary.
