@@ -22,8 +22,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
 -   [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
 -   [Deprecated IFluidHTMLView and HTMLViewAdapter](#Deprecated-IFluidHTMLView-and-HTMLViewAdapter)
--   [test-drivers and test-pairwise-generator packages will no longer be published](test-drivers-and-test-pairwise-generator-packages-will-no-longer-be-published)
--   [Container and RelativeLoader Deprecated](#Container-and-RelativeLoader-Deprecated)
+-   [test-drivers and test-pairwise-generator packages will no longer be published](#test-drivers-and-test-pairwise-generator-packages-will-no-longer-be-published)
+-   [Container and RelativeLoader deprecated](#container-and-relativeloader-deprecated)
+-   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -51,12 +52,17 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 
 These packages are currently published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These will be moved to the `@fluid-internal` scope and will no longer be published.
 
-### Container and RelativeLoader Deprecated
+### Container and RelativeLoader deprecated
 
 The Container and RelativeLoader classes in `@fluidframework/container-loader` have been deprecated and will be removed in the next major release.
 
 -   Container usage should be replaced with usage of the interface IContainer from `@fluidframework/container-definitions`.
 -   RelativeLoader is an internal class and should not be used directly.
+
+### BlobAggregationStorage and SnapshotExtractor deprecated
+
+The Container and RelativeLoader classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
+the next major release. These classes were experimental and never widely used. There are no replacements.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
