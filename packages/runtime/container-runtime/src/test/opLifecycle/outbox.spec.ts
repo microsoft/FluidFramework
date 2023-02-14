@@ -127,14 +127,18 @@ describe("Outbox", () => {
 		};
 	};
 
-	const batchedMessage = (message: BatchMessage, batchMarker: boolean | undefined = undefined) =>
-		batchMarker === undefined
-			? { contents: message.contents, metadata: message.metadata, compression: undefined }
-			: {
-					contents: message.contents,
-					metadata: { ...message.metadata, batch: batchMarker },
-					compression: undefined,
-			  };
+	const batchedMessage = (
+		message: BatchMessage,
+		batchMarker: boolean | undefined = undefined,
+	) => ({
+		contents: message.contents,
+		metadata:
+			batchMarker === undefined
+				? message.metadata
+				: { ...message.metadata, batch: batchMarker },
+		compression: undefined,
+		referenceSequenceNumber: Number.POSITIVE_INFINITY,
+	});
 
 	const addBatchMetadata = (messages: BatchMessage[]): BatchMessage[] => {
 		if (messages.length > 1) {
