@@ -34,6 +34,7 @@ function renderFencedCodeBlockWithMarkdownSyntax(
 		...context,
 		insideCodeBlock: true,
 	});
+	writer.ensureNewLine(); // Ensure newline after body content
 	writer.writeLine("```");
 	writer.ensureSkippedLine(); // Code blocks require a trailing blank line
 }
