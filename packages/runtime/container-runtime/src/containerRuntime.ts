@@ -1823,7 +1823,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
                     clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
                 });
-            } else if (envelope.clientSignalSequenceNumber === this._perfSignalData.trackingSignalSequenceNumber) {
+            } else if (this.consecutiveReconnects === 0 &&
+                envelope.clientSignalSequenceNumber === this._perfSignalData.trackingSignalSequenceNumber) {
+                // only logging for the first connection and the trackingSignalSequenceNUmber.
                 this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
                 this._perfSignalData.trackingSignalSequenceNumber = undefined;
             }
