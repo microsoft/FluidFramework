@@ -5,7 +5,15 @@
 
 import { fail, strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { defaultSchemaPolicy, FieldKinds, Multiplicity } from "../../../feature-libraries";
+import {
+	defaultSchemaPolicy,
+	FieldKinds,
+	Multiplicity,
+	isPrimitiveValue,
+	getPrimaryField,
+	getFieldKind,
+	getFieldSchema,
+} from "../../../feature-libraries";
 import {
 	fieldSchema,
 	LocalFieldKey,
@@ -18,12 +26,8 @@ import {
 } from "../../../core";
 import { brand } from "../../../util";
 import {
-	isPrimitiveValue,
 	isPrimitive,
-	getPrimaryField,
 	getOwnArrayKeys,
-	getFieldKind,
-	getFieldSchema,
 	keyIsValidIndex,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
