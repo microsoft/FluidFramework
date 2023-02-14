@@ -4,15 +4,18 @@
  */
 
 import { FieldChangeRebaser } from "../modular-schema";
-import { compose } from "./compose";
+import { amendCompose, compose } from "./compose";
 import { Changeset } from "./format";
-import { invert } from "./invert";
-import { rebase } from "./rebase";
+import { amendInvert, invert } from "./invert";
+import { amendRebase, rebase } from "./rebase";
 
 export type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 
 export const sequenceFieldChangeRebaser = {
-    compose,
-    invert,
-    rebase,
+	compose,
+	amendCompose,
+	invert,
+	amendInvert,
+	rebase,
+	amendRebase,
 };

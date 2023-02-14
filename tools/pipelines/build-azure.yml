@@ -92,6 +92,8 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     buildDirectory: azure
     tagName: azure
     poolBuild: Large
@@ -108,14 +110,17 @@ extends:
       displayName: npm ci
       inputs:
         command: 'custom'
+        workingDir: azure
         customCommand: 'ci --ignore-scripts'
         customRegistry: 'useNpmrc'
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
       inputs:
         targetType: 'inline'
+        # Must run in the root but creates files relative to the release group root
+        workingDirectory: $(Build.SourcesDirectory)
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
-          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure
+          node azure/node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure
           cp azure/repo-package.json azure/packages/package.json
           cp azure/repo-package-lock.json azure/packages/package-lock.json

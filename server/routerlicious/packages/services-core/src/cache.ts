@@ -16,4 +16,20 @@ export interface ICache {
      * Sets a cache value
      */
     set(key: string, value: string, expireAfterSeconds?: number): Promise<void>;
+
+    /**
+     * Deletes a cache value
+     */
+     delete?(key: string): Promise<boolean>;
+
+     /**
+     * Increments key value by 1. If the key does not exist, its value will be first set to 0 and then incremented.
+     */
+    incr?(key: string): Promise<number>;
+
+    /**
+     * Decrements key value by 1. If the key does not exist, its value will be first set to 0 and then decremented.
+     */
+    decr?(key: string): Promise<number>;
+
 }

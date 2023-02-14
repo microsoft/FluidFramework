@@ -28,12 +28,18 @@ steps:
   inputs:
     version: 14.x
 
-- task: Npm@1
-  displayName: npm ci
+- task: Bash@3
+  displayName: Install root dependencies
   inputs:
-    command: 'custom'
-    customCommand: 'ci --ignore-scripts'
-    customRegistry: 'useNpmrc'
+    targetType: 'inline'
+    workingDirectory: .
+    script: |
+      # Install pnpm globally
+      npm i -g pnpm
+
+      # We only want to install the root package deps, so we set recursive-install to false
+      pnpm config set recursive-install false
+      pnpm install --frozen-lockfile
 
 - task: Npm@1
   displayName: Policy Check

@@ -64,6 +64,30 @@ use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AttributionPolicy": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AttributionPolicy():
+    TypeOnly<old.AttributionPolicy>;
+declare function use_current_InterfaceDeclaration_AttributionPolicy(
+    use: TypeOnly<current.AttributionPolicy>);
+use_current_InterfaceDeclaration_AttributionPolicy(
+    get_old_InterfaceDeclaration_AttributionPolicy());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AttributionPolicy": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AttributionPolicy():
+    TypeOnly<current.AttributionPolicy>;
+declare function use_old_InterfaceDeclaration_AttributionPolicy(
+    use: TypeOnly<old.AttributionPolicy>);
+use_old_InterfaceDeclaration_AttributionPolicy(
+    get_current_InterfaceDeclaration_AttributionPolicy());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_BaseSegment": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_BaseSegment():
@@ -424,6 +448,30 @@ use_old_FunctionDeclaration_createGroupOp(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createInsertOnlyAttributionPolicy": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy():
+    TypeOnly<typeof old.createInsertOnlyAttributionPolicy>;
+declare function use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
+    use: TypeOnly<typeof current.createInsertOnlyAttributionPolicy>);
+use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
+    get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createInsertOnlyAttributionPolicy": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy():
+    TypeOnly<typeof current.createInsertOnlyAttributionPolicy>;
+declare function use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
+    use: TypeOnly<typeof old.createInsertOnlyAttributionPolicy>);
+use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
+    get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createInsertOp": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createInsertOp():
@@ -660,6 +708,54 @@ declare function use_old_FunctionDeclaration_extendIfUndefined(
     use: TypeOnly<typeof old.extendIfUndefined>);
 use_old_FunctionDeclaration_extendIfUndefined(
     get_current_FunctionDeclaration_extendIfUndefined());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAttributionCollection": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAttributionCollection():
+    TypeOnly<old.IAttributionCollection<any>>;
+declare function use_current_InterfaceDeclaration_IAttributionCollection(
+    use: TypeOnly<current.IAttributionCollection<any>>);
+use_current_InterfaceDeclaration_IAttributionCollection(
+    get_old_InterfaceDeclaration_IAttributionCollection());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAttributionCollection": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAttributionCollection():
+    TypeOnly<current.IAttributionCollection<any>>;
+declare function use_old_InterfaceDeclaration_IAttributionCollection(
+    use: TypeOnly<old.IAttributionCollection<any>>);
+use_old_InterfaceDeclaration_IAttributionCollection(
+    get_current_InterfaceDeclaration_IAttributionCollection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAttributionCollectionSerializer": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAttributionCollectionSerializer():
+    TypeOnly<old.IAttributionCollectionSerializer>;
+declare function use_current_InterfaceDeclaration_IAttributionCollectionSerializer(
+    use: TypeOnly<current.IAttributionCollectionSerializer>);
+use_current_InterfaceDeclaration_IAttributionCollectionSerializer(
+    get_old_InterfaceDeclaration_IAttributionCollectionSerializer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAttributionCollectionSerializer": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAttributionCollectionSerializer():
+    TypeOnly<current.IAttributionCollectionSerializer>;
+declare function use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
+    use: TypeOnly<old.IAttributionCollectionSerializer>);
+use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
+    get_current_InterfaceDeclaration_IAttributionCollectionSerializer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1000,6 +1096,30 @@ use_old_InterfaceDeclaration_IMergeTreeAnnotateMsg(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMergeTreeAttributionOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMergeTreeAttributionOptions():
+    TypeOnly<old.IMergeTreeAttributionOptions>;
+declare function use_current_InterfaceDeclaration_IMergeTreeAttributionOptions(
+    use: TypeOnly<current.IMergeTreeAttributionOptions>);
+use_current_InterfaceDeclaration_IMergeTreeAttributionOptions(
+    get_old_InterfaceDeclaration_IMergeTreeAttributionOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMergeTreeAttributionOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMergeTreeAttributionOptions():
+    TypeOnly<current.IMergeTreeAttributionOptions>;
+declare function use_old_InterfaceDeclaration_IMergeTreeAttributionOptions(
+    use: TypeOnly<old.IMergeTreeAttributionOptions>);
+use_old_InterfaceDeclaration_IMergeTreeAttributionOptions(
+    get_current_InterfaceDeclaration_IMergeTreeAttributionOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IMergeTreeClientSequenceArgs": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IMergeTreeClientSequenceArgs():
@@ -1212,6 +1332,30 @@ declare function use_old_TypeAliasDeclaration_IMergeTreeOp(
     use: TypeOnly<old.IMergeTreeOp>);
 use_old_TypeAliasDeclaration_IMergeTreeOp(
     get_current_TypeAliasDeclaration_IMergeTreeOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMergeTreeOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMergeTreeOptions():
+    TypeOnly<old.IMergeTreeOptions>;
+declare function use_current_InterfaceDeclaration_IMergeTreeOptions(
+    use: TypeOnly<current.IMergeTreeOptions>);
+use_current_InterfaceDeclaration_IMergeTreeOptions(
+    get_old_InterfaceDeclaration_IMergeTreeOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMergeTreeOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMergeTreeOptions():
+    TypeOnly<current.IMergeTreeOptions>;
+declare function use_old_InterfaceDeclaration_IMergeTreeOptions(
+    use: TypeOnly<old.IMergeTreeOptions>);
+use_old_InterfaceDeclaration_IMergeTreeOptions(
+    get_current_InterfaceDeclaration_IMergeTreeOptions());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2128,30 +2272,6 @@ use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_MergeTreeStats": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_MergeTreeStats():
-    TypeOnly<old.MergeTreeStats>;
-declare function use_current_InterfaceDeclaration_MergeTreeStats(
-    use: TypeOnly<current.MergeTreeStats>);
-use_current_InterfaceDeclaration_MergeTreeStats(
-    get_old_InterfaceDeclaration_MergeTreeStats());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_MergeTreeStats": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_MergeTreeStats():
-    TypeOnly<current.MergeTreeStats>;
-declare function use_old_InterfaceDeclaration_MergeTreeStats(
-    use: TypeOnly<old.MergeTreeStats>);
-use_old_InterfaceDeclaration_MergeTreeStats(
-    get_current_InterfaceDeclaration_MergeTreeStats());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_MinListener": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_MinListener():
@@ -3012,6 +3132,30 @@ declare function use_old_ClassDeclaration_SegmentGroupCollection(
     use: TypeOnly<old.SegmentGroupCollection>);
 use_old_ClassDeclaration_SegmentGroupCollection(
     get_current_ClassDeclaration_SegmentGroupCollection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SerializedAttributionCollection": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_SerializedAttributionCollection():
+    TypeOnly<old.SerializedAttributionCollection>;
+declare function use_current_InterfaceDeclaration_SerializedAttributionCollection(
+    use: TypeOnly<current.SerializedAttributionCollection>);
+use_current_InterfaceDeclaration_SerializedAttributionCollection(
+    get_old_InterfaceDeclaration_SerializedAttributionCollection());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SerializedAttributionCollection": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_SerializedAttributionCollection():
+    TypeOnly<current.SerializedAttributionCollection>;
+declare function use_old_InterfaceDeclaration_SerializedAttributionCollection(
+    use: TypeOnly<old.SerializedAttributionCollection>);
+use_old_InterfaceDeclaration_SerializedAttributionCollection(
+    get_current_InterfaceDeclaration_SerializedAttributionCollection());
 
 /*
 * Validate forward compat by using old type in place of current type

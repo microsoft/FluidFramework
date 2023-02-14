@@ -8,12 +8,10 @@ import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
 /** Error indicating an API is being used improperly resulting in an invalid operation. */
 export class UsageError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
-    readonly errorType = DriverErrorType.usageError;
-    readonly canRetry = false;
+	readonly errorType = DriverErrorType.usageError;
+	readonly canRetry = false;
 
-    constructor(
-        message: string,
-    ) {
-        super(message, { usageError: true });
-    }
+	constructor(message: string) {
+		super(message, { usageError: true });
+	}
 }

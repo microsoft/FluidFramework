@@ -16,6 +16,11 @@ parameters:
   type: string
   default: repo
 
+# If true, then this pipeline will check and format package.json files according to prettier settings.
+- name: usesPrettier
+  type: boolean
+  default: true
+
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -40,8 +45,8 @@ steps:
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
         npm i -g pnpm
+        pnpm config set store-dir $(pnpmStorePath)
         pnpm i
-        npm run build:compile
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -63,8 +68,26 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       # Output the help and full command list for debugging purposes
+      which flub
       flub --help
       flub commands
+
+- ${{ if eq(parameters.usesPrettier, true) }}:
+  # package.json files are reformatted by upcoming update version steps, then will be reformatted by prettier. We check
+  # them here because otherwise legitimate formatting problems would be hidden by the forced reformatting in CI.
+  - task: Bash@3
+    displayName: Check package.json formatting
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        if [ -f "lerna.json" ]; then
+          # Run on all the release group packages, if in a release group
+          npx --no-install lerna exec prettier -- --check package.json
+        fi
+
+        # Check the package.json at the root of the release group/package
+        npx --no-install prettier --check package.json
 
 - task: Bash@3
   name: SetVersion
@@ -108,10 +131,15 @@ steps:
         echo SETVERSION_VERSION=$SETVERSION_VERSION
         echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
         echo RELEASE_GROUP=$RELEASE_GROUP
-        echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv"
 
         if [ -f "lerna.json" ]; then
-          flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv
+          if [ "$VERSION_RELEASE" = "release" ]; then
+            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"^\" -xv"
+            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="^" -xv
+          else
+            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"\" -xv"
+            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="" -xv
+          fi
         else
           npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
         fi
@@ -137,3 +165,19 @@ steps:
         else
           npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
         fi
+
+- ${{ if eq(parameters.usesPrettier, true) }}:
+  # package.json files are reformatted by the prior set version steps, so reformat them (and only them) with prettier
+  - task: Bash@3
+    displayName: Reformat package.json files
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        if [ -f "lerna.json" ]; then
+          # Run on all the release group packages, if in a release group
+          npx --no-install lerna exec prettier -- --write package.json
+        fi
+
+        # Format the package.json at the root of the release group/package
+        npx --no-install prettier --write package.json

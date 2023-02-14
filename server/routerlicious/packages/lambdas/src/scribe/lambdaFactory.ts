@@ -10,6 +10,7 @@ import {
     ICollection,
     IContext,
     IControlMessage,
+    IDeltaService,
     IDocument,
     ILambdaStartControlMessageContents,
     IPartitionLambda,
@@ -33,6 +34,7 @@ import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
 import { initializeProtocol, sendToDeli } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
+import { PendingMessageReader } from "./pendingMessageReader";
 
 const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,
@@ -55,9 +57,11 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         private readonly documentCollection: ICollection<IDocument>,
         private readonly messageCollection: ICollection<ISequencedOperationMessage>,
         private readonly producer: IProducer,
+        private readonly deltaManager: IDeltaService,
         private readonly tenantManager: ITenantManager,
         private readonly serviceConfiguration: IServiceConfiguration,
         private readonly enableWholeSummaryUpload: boolean,
+        private readonly getDeltasViaAlfred: boolean,
     ) {
         super();
     }
@@ -68,7 +72,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         let lastCheckpoint: IScribe;
         let summaryReader: SummaryReader;
         let latestSummary: ILatestSummaryState;
-        let opMessages: ISequencedDocumentMessage[];
+        let opMessages: ISequencedDocumentMessage[] = [];
 
         const { tenantId, documentId } = config;
         const messageMetaData = {
@@ -113,11 +117,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                     return new NoOpLambda(context);
                 }
             }
-
-            // Fetch pending ops from scribeDeltas collection
-            const dbMessages =
-                await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
-            opMessages = dbMessages.map((message) => message.operation);
         } catch (error) {
             const errorMessage = "Scribe lambda creation failed.";
             context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
@@ -135,7 +134,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             context.log?.info(message, { messageMetaData });
             Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
             lastCheckpoint = DefaultScribe;
-            opMessages = [];
         } else if (document.scribe === "") {
             const message = "Existing document. Fetching checkpoint from summary";
             context.log?.info(message, { messageMetaData });
@@ -144,7 +142,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 context.log?.error(`Summary can't be fetched`, { messageMetaData });
                 Lumberjack.error(`Summary can't be fetched`, getLumberBaseProperties(documentId, tenantId));
                 lastCheckpoint = DefaultScribe;
-                opMessages = [];
             } else {
                 lastCheckpoint = JSON.parse(latestSummary.scribe);
                 opMessages = latestSummary.messages;
@@ -159,9 +156,24 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             }
         } else {
             lastCheckpoint = JSON.parse(document.scribe);
-            const message = `Restoring checkpoint from db. Seq no: ${lastCheckpoint.sequenceNumber}`;
-            context.log?.info(message, { messageMetaData });
-            Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
+            const lumberjackProperties = {
+                ...getLumberBaseProperties(documentId, tenantId),
+                lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
+                logOffset: lastCheckpoint.logOffset,
+                LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber
+            }
+
+            Lumberjack.info("Restoring checkpoint from db", lumberjackProperties);
+
+            if (!this.getDeltasViaAlfred)
+            {
+                // Fetch pending ops from scribeDeltas collection
+                const dbMessages =
+                    await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
+                opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
+            } else if (lastCheckpoint.logOffset !== -1) {
+                opMessages = await this.deltaManager.getDeltas("", tenantId, documentId, lastCheckpoint.protocolState.sequenceNumber);
+            }
         }
 
         // Filter and keep ops after protocol state
@@ -196,23 +208,38 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             tenantId,
             documentId,
             gitManager,
+            this.deltaManager,
             this.messageCollection,
             this.enableWholeSummaryUpload,
-            lastSummaryMessages);
+            lastSummaryMessages,
+            this.getDeltasViaAlfred);
         const checkpointManager = new CheckpointManager(
             context,
             tenantId,
             documentId,
             this.documentCollection,
-            this.messageCollection);
+            this.messageCollection,
+            this.deltaManager,
+            this.getDeltasViaAlfred);
 
+        const pendingMessageReader = new PendingMessageReader(tenantId, documentId, this.deltaManager);
+
+        const scribeLambdaProperties = {
+            ...getLumberBaseProperties(documentId, tenantId),
+            lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
+            logOffset: lastCheckpoint.logOffset,
+            protocolHead: latestSummary.protocolHead,
+            numOpsSinceLastSummary: opsSinceLastSummary.length,
+            LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber
+        }
+        Lumberjack.info(`Creating scribe lambda`, scribeLambdaProperties);
         const scribeLambda = new ScribeLambda(
             context,
             document.tenantId,
             document.documentId,
             summaryWriter,
             summaryReader,
-            undefined,
+            pendingMessageReader,
             checkpointManager,
             lastCheckpoint,
             this.serviceConfiguration,

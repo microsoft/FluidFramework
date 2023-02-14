@@ -22,7 +22,6 @@
     "plugins": [
         "eslint-comments",
         "import",
-        "react",
         "unused-imports",
         "promise",
         "jsdoc",
@@ -30,8 +29,7 @@
         "@rushstack/security",
         "@rushstack",
         "unicorn",
-        "tsdoc",
-        "editorconfig"
+        "tsdoc"
     ],
     "reportUnusedDisableDirectives": true,
     "rules": {
@@ -89,9 +87,6 @@
         "@typescript-eslint/dot-notation": [
             "error"
         ],
-        "@typescript-eslint/eol-last": [
-            "off"
-        ],
         "@typescript-eslint/explicit-function-return-type": [
             "error",
             {
@@ -119,9 +114,6 @@
         ],
         "@typescript-eslint/keyword-spacing": [
             "error"
-        ],
-        "@typescript-eslint/linebreak-style": [
-            "off"
         ],
         "@typescript-eslint/member-delimiter-style": [
             "error",
@@ -237,9 +229,6 @@
         ],
         "@typescript-eslint/no-throw-literal": [
             "error"
-        ],
-        "@typescript-eslint/no-trailing-spaces": [
-            "off"
         ],
         "@typescript-eslint/no-unnecessary-qualifier": [
             "error"
@@ -367,9 +356,6 @@
                 "ignoreStatic": true
             }
         ],
-        "@typescript-eslint/unicode-bom": [
-            "off"
-        ],
         "@typescript-eslint/unified-signatures": [
             "off"
         ],
@@ -443,21 +429,6 @@
         ],
         "dot-notation": [
             "off"
-        ],
-        "editorconfig/charset": [
-            "error"
-        ],
-        "editorconfig/eol-last": [
-            "error"
-        ],
-        "editorconfig/indent": [
-            "off"
-        ],
-        "editorconfig/linebreak-style": [
-            "error"
-        ],
-        "editorconfig/no-trailing-spaces": [
-            "error"
         ],
         "eol-last": [
             "off"
@@ -1298,7 +1269,7 @@
             "error"
         ],
         "unicorn/no-for-loop": [
-            "error"
+            "off"
         ],
         "unicorn/no-hex-escape": [
             "error"

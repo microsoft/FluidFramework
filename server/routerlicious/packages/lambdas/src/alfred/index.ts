@@ -39,6 +39,7 @@ import {
     createRoomLeaveMessage,
     generateClientId,
     getRandomInt,
+    ConnectionCountLogger,
 } from "../utils";
 
 const summarizerClientType = "summarizer";
@@ -165,13 +166,14 @@ function checkThrottleAndUsage(
     tenantId: string,
     logger?: core.ILogger,
     usageStorageId?: string,
-    usageData?: core.IUsageData): core.ThrottlingError | undefined {
+    usageData?: core.IUsageData,
+    incrementWeight: number = 1): core.ThrottlingError | undefined {
     if (!throttler) {
         return;
     }
 
     try {
-        throttler.incrementCount(throttleId, 1, usageStorageId, usageData);
+        throttler.incrementCount(throttleId, incrementWeight, usageStorageId, usageData);
     } catch (error) {
         if (error instanceof core.ThrottlingError) {
             return error;
@@ -206,7 +208,9 @@ export function configureWebSocketServices(
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
     isSignalUsageCountingEnabled: boolean = false,
-    connectThrottler?: core.IThrottler,
+    cache?: core.ICache,
+    connectThrottlerPerTenant?: core.IThrottler,
+    connectThrottlerPerCluster?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
     submitSignalThrottler?: core.IThrottler,
     throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
@@ -224,6 +228,8 @@ export function configureWebSocketServices(
 
         // Timer to check token expiry for this socket connection
         let expirationTimer: NodeJS.Timer | undefined;
+
+        const connectionCountLogger = new ConnectionCountLogger(process.env.NODE_NAME, cache);
 
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
@@ -246,13 +252,21 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-            const throttleError = checkThrottleAndUsage(
-                connectThrottler,
+            const throttleErrorPerCluster = checkThrottleAndUsage(
+                connectThrottlerPerCluster,
+                getSocketConnectThrottleId("connectDoc"),
+                message.tenantId,
+                logger);
+            if (throttleErrorPerCluster) {
+                return Promise.reject(throttleErrorPerCluster);
+            }
+            const throttleErrorPerTenant = checkThrottleAndUsage(
+                connectThrottlerPerTenant,
                 getSocketConnectThrottleId(message.tenantId),
                 message.tenantId,
                 logger);
-            if (throttleError) {
-                return Promise.reject(throttleError);
+            if (throttleErrorPerTenant) {
+                return Promise.reject(throttleErrorPerTenant);
             }
             if (!message.token) {
                 throw new NetworkError(403, "Must provide an authorization token");
@@ -317,6 +331,13 @@ export function configureWebSocketServices(
 
             // Join the room to receive signals.
             roomMap.set(clientId, room);
+
+            // increment connection count after the client is added to the room.
+            // excluding summarizer for total client count.
+            if (!isSummarizer) {
+                connectionCountLogger.incrementConnectionCount();
+            }
+
             // Iterate over the version ranges provided by the client and select the best one that works
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
@@ -491,6 +512,9 @@ export function configureWebSocketServices(
                 },
                 (error) => {
                     socket.emit("connect_document_error", error);
+                    if (isNetworkError(error)) {
+                        connectMetric.setProperty(CommonProperties.errorCode, error.code);
+                    }
                     connectMetric.error(`Connect document failed`, error);
                 });
         });
@@ -514,11 +538,21 @@ export function configureWebSocketServices(
 
                     socket.emit("nack", "", [nackMessage]);
                 } else {
+                    let messageCount = 0;
+                    for (const messageBatch of messageBatches) {
+                        // Count all messages in each batch for accurate throttling calculation.
+                        // Note: This is happening before message size checking. We won't process
+                        // messages that are too large, so it is inaccurate to increment throttle
+                        // counts for unprocessed messages.
+                        messageCount += (Array.isArray(messageBatch) ? messageBatch.length : 1);
+                    }
                     const throttleError = checkThrottleAndUsage(
                         submitOpThrottler,
                         getSubmitOpThrottleId(clientId, connection.tenantId),
                         connection.tenantId,
-                        logger);
+                        logger,
+                        undefined, undefined,
+                        messageCount /* incrementWeight */);
                     if (throttleError) {
                         const nackMessage = createNackMessage(
                             throttleError.code,
@@ -551,7 +585,7 @@ export function configureWebSocketServices(
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                         try {
                             const sanitized = messages
-                                .filter((message) => {
+                                .map((message) => {
                                     if (verifyMaxMessageSize === true) {
                                         // Local tests show `JSON.stringify` to be fast
                                         // - <1ms for JSONs <100kb
@@ -568,9 +602,6 @@ export function configureWebSocketServices(
                                         }
                                     }
 
-                                    return true;
-                                })
-                                .map((message) => {
                                     const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
                                     const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage,
                                         numberOfMessagesPerTrace, connection.clientId,
@@ -599,6 +630,11 @@ export function configureWebSocketServices(
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
                 } else {
+                    let messageCount = 0;
+                    for (const contentBatch of contentBatches) {
+                        // Count all messages in each batch for accurate throttling calculation.
+                        messageCount += (Array.isArray(contentBatch) ? contentBatch.length : 1);
+                    }
                     const signalUsageData: core.IUsageData = {
                         value: 0,
                         tenantId: room.tenantId,
@@ -611,7 +647,8 @@ export function configureWebSocketServices(
                         room.tenantId,
                         logger,
                         isSignalUsageCountingEnabled ? core.signalUsageStorageId : undefined,
-                        isSignalUsageCountingEnabled ? signalUsageData : undefined);
+                        isSignalUsageCountingEnabled ? signalUsageData : undefined,
+                        messageCount /* incrementWeight */);
                     if (throttleError) {
                         const nackMessage = createNackMessage(
                             throttleError.code,
@@ -621,8 +658,8 @@ export function configureWebSocketServices(
                         socket.emit("nack", "", [nackMessage]);
                         return;
                     }
-                    contentBatches.forEach((contentBatche) => {
-                        const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
+                    contentBatches.forEach((contentBatch) => {
+                        const contents = Array.isArray(contentBatch) ? contentBatch : [contentBatch];
 
                         for (const content of contents) {
                             const signalMessage: ISignalMessage = {
@@ -666,6 +703,10 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the room map
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
+                // excluding summarizer for total client count.
+                if (connectionTimeMap.has(clientId)) {
+                    connectionCountLogger.decrementConnectionCount();
+                }
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId} from room`,

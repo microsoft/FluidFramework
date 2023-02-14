@@ -2,127 +2,91 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { expect } from "chai";
 
-import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
-import {
-    TinyliciousClient,
-    TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
+import { IContainer } from "@fluidframework/container-definitions";
 
 import { IFluidClientDebugger } from "../IFluidClientDebugger";
 import {
-    FluidClientDebuggerProps,
-    clearDebuggerRegistry,
-    closeFluidClientDebugger,
-    getDebuggerRegistry,
-    getFluidClientDebugger,
-    initializeFluidClientDebugger,
+	clearDebuggerRegistry,
+	closeFluidClientDebugger,
+	getFluidClientDebuggers,
+	getFluidClientDebugger,
+	initializeFluidClientDebugger,
 } from "../Registry";
+import { createMockContainer } from "./Utilities";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/**
- * Type returned from when creating / loading the Container.
- */
-interface ContainerLoadResult {
-    container: IFluidContainer;
-    services: TinyliciousContainerServices;
-}
-
-/**
- * Schema used by the app.
- */
-const containerSchema: ContainerSchema = {
-    initialObjects: {
-        counter: SharedCounter,
-    },
-};
-
 describe("ClientDebugger unit tests", () => {
-    let _debuggerProps: FluidClientDebuggerProps | undefined;
+	const containerId = "test-container-id";
+	let container: IContainer | undefined;
 
-    beforeEach(async () => {
-        const client = new TinyliciousClient();
+	const otherContainerId = "test-container-id-other";
+	let otherContainer: IContainer | undefined;
 
-        // Create the container
-        console.log("Creating new container...");
-        let createContainerResult: ContainerLoadResult;
-        try {
-            createContainerResult = await client.createContainer(containerSchema);
-        } catch (error) {
-            console.error(`Encountered error creating Fluid container: "${error}".`);
-            throw error;
-        }
-        console.log("Container created!");
+	beforeEach(async () => {
+		container = createMockContainer();
+		otherContainer = createMockContainer();
+	});
 
-        const { container: tinyliciousContainer } = createContainerResult;
+	afterEach(() => {
+		clearDebuggerRegistry();
+	});
 
-        // Attach container
-        let containerId: string;
-        console.log("Awaiting container attach...");
-        try {
-            containerId = await tinyliciousContainer.attach();
-        } catch (error) {
-            console.error(`Encountered error attaching Fluid container: "${error}".`);
-            throw error;
-        }
-        console.log("Fluid container attached!");
+	function initializeDebugger(
+		_containerId: string,
+		_container: IContainer,
+	): IFluidClientDebugger {
+		initializeFluidClientDebugger({ container: _container, containerId: _containerId });
+		return getFluidClientDebugger(_containerId)!;
+	}
 
-        _debuggerProps = {
-            containerId,
-            container: (tinyliciousContainer as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
-            containerData: tinyliciousContainer.initialObjects,
-        };
-    });
+	it("Initializing debugger populates global (window) registry", () => {
+		let debuggers = getFluidClientDebuggers();
+		expect(debuggers.length).to.equal(0); // There should be no registered debuggers yet.
 
-    afterEach(() => {
-        clearDebuggerRegistry();
-    });
+		initializeDebugger(containerId, container!);
+		initializeDebugger(otherContainerId, otherContainer!);
 
-    function getDebuggerProps(): FluidClientDebuggerProps {
-        if (_debuggerProps === undefined) {
-            expect.fail("Container initialization failed.");
-        }
-        return _debuggerProps;
-    }
+		debuggers = getFluidClientDebuggers();
+		expect(debuggers.length).to.equal(2);
+	});
 
-    function initializeDebugger(props: FluidClientDebuggerProps): IFluidClientDebugger {
-        initializeFluidClientDebugger(props);
-        return getFluidClientDebugger(props.containerId)!;
-    }
+	it("Validate multi-debugger contents are as expected", () => {
+		const clientDebugger = getFluidClientDebugger(containerId);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebugger?.disposed).to.be.false;
 
-    it("Initializing debugger populates global (window) registry", () => {
-        let debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(0); // There should be no registered debuggers yet.
+		const clientDebuggerOther = getFluidClientDebugger(otherContainerId);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebuggerOther?.disposed).to.be.false;
+	});
 
-        initializeDebugger(getDebuggerProps());
+	it("Closing debugger removes it from global (window) registry and disposes it.", () => {
+		const clientDebugger = initializeDebugger(containerId, container!);
+		const otherClientDebugger = initializeDebugger(otherContainerId, otherContainer!);
 
-        debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(1);
-    });
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebugger.disposed).to.be.false;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(otherClientDebugger.disposed).to.be.false;
 
-    it("Closing debugger removes it from global (window) registry and disposes it.", () => {
-        const debuggerProps = getDebuggerProps();
-        const { containerId } = debuggerProps;
+		let debuggers = getFluidClientDebuggers();
+		expect(debuggers.length).to.equal(2);
 
-        const clientDebugger = initializeDebugger(debuggerProps);
+		closeFluidClientDebugger(containerId);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebugger.disposed).to.be.true;
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        expect(clientDebugger.disposed).to.be.false;
+		closeFluidClientDebugger(otherContainerId);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(otherClientDebugger.disposed).to.be.true;
 
-        let debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(1);
-
-        closeFluidClientDebugger(containerId);
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        expect(clientDebugger.disposed).to.be.true;
-
-        debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(0);
-    });
+		debuggers = getFluidClientDebuggers();
+		expect(debuggers.length).to.equal(0);
+	});
 });
 
 /* eslint-enable @typescript-eslint/no-non-null-assertion */

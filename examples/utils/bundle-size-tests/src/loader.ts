@@ -6,9 +6,9 @@
 import { Loader } from "@fluidframework/container-loader";
 
 export function apisToBundle() {
-    new Loader({
-        codeLoader: {} as any,
-        documentServiceFactory: {} as any,
-        urlResolver: {} as any,
-    });
+	new Loader({
+		codeLoader: {} as any,
+		documentServiceFactory: {} as any,
+		urlResolver: {} as any,
+	});
 }
