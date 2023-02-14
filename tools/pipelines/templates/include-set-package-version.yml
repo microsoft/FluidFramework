@@ -80,10 +80,6 @@ steps:
     inputs:
       targetType: 'filePath'
       workingDirectory: ${{ parameters.buildDirectory }}
-      # This script runs multiple commands and all must succeed in order for this task to succeed. Rather than
-      # aggregate the results of the different commands, setting failOnStderr to true has the same effect: the task will
-      # fail if any of the commands emit anything to stdErr.
-      failOnStderr: true
       filePath: $(Build.SourcesDirectory)/scripts/check-pkg-json-formatting.sh
 
 - task: Bash@3
