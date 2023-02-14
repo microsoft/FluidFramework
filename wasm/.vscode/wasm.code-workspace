@@ -2,11 +2,11 @@
     "folders": [
       {
         "name": "FluidFramework",
-        "path": "../../.."
+        "path": "../.."
       },
       {
-        "name": "wasm-hello-world",
-        "path": ".."
+        "name": "wasm",
+        "path": "../"
       }
     ],
 }

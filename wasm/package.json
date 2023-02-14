@@ -1,7 +1,7 @@
 {
 	"scripts": {
 		"build": "pnpm run build:wasm && pnpm i && pnpm run cleanup && tsc --project \"tsconfig.json\" && pnpm run cleanup",
-		"build:wasm": "wasm-pack build --target bundler --out-dir ../target-web/bundler ./rust_src && wasm-pack build --target nodejs --out-dir ../target-web/nodejs ./rust_src",
+		"build:wasm": "wasm-pack build --target bundler --out-dir ../target-web/bundler ./hello-world && wasm-pack build --target nodejs --out-dir ../target-web/nodejs ./hello-world",
 		"cleanup": "rimraf ./target-web/*/package.json && rimraf ./target-web/*/.gitignore"
 	},
 	"devDependencies": {

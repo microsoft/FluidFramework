@@ -1,5 +1,5 @@
 [workspace]
-members = ["./rust_src"]
+members = ["./hello-world"]
 
 # https://www.reddit.com/r/rust/comments/kjcrxu/is_rust_code_compiled_into_webassembly_just_that/
 [profile.release]
