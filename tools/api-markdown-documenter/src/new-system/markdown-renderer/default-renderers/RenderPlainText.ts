@@ -48,7 +48,13 @@ function renderPlainTextWithMarkdownSyntax(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (content !== "") {
+	if (content.length === 0) {
+		return;
+	}
+
+	const anyFormatting =
+		context.bold === true || context.italic === true || context.strikethrough === true;
+	if (anyFormatting) {
 		switch (writer.peekLastCharacter()) {
 			case "":
 			case "\n":
@@ -64,28 +70,30 @@ function renderPlainTextWithMarkdownSyntax(
 				writer.write("<!-- -->");
 				break;
 		}
+	}
 
-		if (context.bold === true) {
-			writer.write("**");
-		}
-		if (context.italic === true) {
-			writer.write("_");
-		}
-		if (context.strikethrough === true) {
-			writer.write("~~");
-		}
+	if (context.bold === true) {
+		writer.write("**");
+	}
+	if (context.italic === true) {
+		writer.write("_");
+	}
+	if (context.strikethrough === true) {
+		writer.write("~~");
+	}
 
-		writer.write(getMarkdownEscapedText(content));
+	// Don't escape text within a code block in Markdown
+	const text = context.insideCodeBlock ? content : getMarkdownEscapedText(content);
+	writer.write(text);
 
-		if (context.strikethrough === true) {
-			writer.write("~~");
-		}
-		if (context.italic === true) {
-			writer.write("_");
-		}
-		if (context.bold === true) {
-			writer.write("**");
-		}
+	if (context.strikethrough === true) {
+		writer.write("~~");
+	}
+	if (context.italic === true) {
+		writer.write("_");
+	}
+	if (context.bold === true) {
+		writer.write("**");
 	}
 }
 
