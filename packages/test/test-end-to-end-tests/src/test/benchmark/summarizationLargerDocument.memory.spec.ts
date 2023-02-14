@@ -6,7 +6,8 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+import { v4 as uuid } from "uuid";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -17,6 +18,8 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	// LocalCodeLoader,
+	// TestFluidObjectFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
@@ -24,6 +27,9 @@ import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { SharedMap } from "@fluidframework/map";
+import { IRequest } from "@fluidframework/core-interfaces";
+// import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createLogger } from "./FileLogger";
 
 const defaultDataStoreId = "default";
@@ -63,13 +69,15 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
-	let remoteContainer: IContainer;
+	let fileName: string;
+	let containerUrl: IResolvedUrl;
 	let logger: ITelemetryLogger | undefined;
 	let testConfig: ITestContainerConfig;
 	let dataObject1: ITestFluidObject;
 	let dataObject1map: SharedMap;
 	let dataObject2: ITestFluidObject;
 	let dataObject2map: SharedMap;
+	let loader: IHostLoader;
 
 	const generateRandomStringOfSize = (sizeInBytes: number): string =>
 		crypto.randomBytes(sizeInBytes / 2).toString("hex");
@@ -108,27 +116,34 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 				loaderProps: { logger },
 			};
 		}
-
-		const loader = provider.makeTestLoader(testConfig);
-		mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-
-		dataObject1 = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
-		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
-
-		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-		const messageCount = 3; // Will result in a 15 MB payload
-		setMapKeys(dataObject1map, messageCount, largeString);
-		await mainContainer.attach(provider.driver.createCreateNewRequest());
-		await waitForContainerConnection(mainContainer, true);
-		await provider.ensureSynchronized();
 	});
 
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			title = "Generate summary tree 15Mb document";
 			async run() {
+				loader = provider.makeTestLoader(testConfig);
+				mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+				const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+
+				dataObject1 = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
+				dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
+
+				const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+				const messageCount = 3; // Will result in a 15 MB payload
+				setMapKeys(dataObject1map, messageCount, largeString);
+				fileName = uuid();
+				await mainContainer.attach(provider.driver.createCreateNewRequest(fileName));
+				assert(mainContainer.resolvedUrl);
+				containerUrl = mainContainer.resolvedUrl;
+				await waitForContainerConnection(mainContainer, true);
+				await provider.ensureSynchronized();
+
+				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
+				const testRequest: IRequest = { url: requestUrl };
+				await loader.resolve(testRequest);
+
 				dataObject2 = await requestFluidObject<ITestFluidObject>(
 					mainContainer,
 					defaultDataStoreId,
