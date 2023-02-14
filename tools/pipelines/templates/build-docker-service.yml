@@ -66,6 +66,10 @@ parameters:
   type: string
   default: repo
 
+- name: packageManager
+  type: string
+  default: npm
+
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
@@ -220,6 +224,22 @@ stages:
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
           requireNotice: ${{ eq(variables.releaseImage, true) }}
+
+    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+      - task: Cache@2
+        displayName: Cache pnpm store
+        inputs:
+          key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+          path: ${{ variables.pnpmStorePath }}
+
+      - task: Bash@3
+        displayName: Install and configure pnpm
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            npm i -g pnpm
+            pnpm config set store-dir $(pnpmStorePath)
 
     - task: Bash@3
       displayName: Install dependencies
