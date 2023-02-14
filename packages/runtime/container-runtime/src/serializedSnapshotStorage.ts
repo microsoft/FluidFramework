@@ -4,7 +4,11 @@
  */
 
 import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	FetchSource,
+	IDocumentStorageService,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -117,8 +121,13 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
 	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
 	 */
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-		return this.storage.getVersions(versionId, count);
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+		scenarioName?: string,
+		fetchSource?: FetchSource,
+	): Promise<IVersion[]> {
+		return this.storage.getVersions(versionId, count, scenarioName, fetchSource);
 	}
 
 	/**

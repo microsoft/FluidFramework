@@ -52,14 +52,14 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		const dds = SharedMap.create(mainDataStore._runtime);
 		mainDataStore._root.set("dds", dds.handle);
 
-		const summarizer1 = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 		let summaryResult = await waitForSummary(summarizer1);
 
 		// Change ds1 but not the root dds
 		dds.set("change", "change1");
 
 		summarizer1.close();
-		const summarizer2 = await createSummarizer(
+		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
 			summaryResult.summaryVersion,
@@ -75,7 +75,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		const dds = SharedMap.create(mainDataStore._runtime);
 		mainDataStore._root.set("dds", dds.handle);
 
-		const summarizer1 = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 		let summaryResult = await waitForSummary(summarizer1);
 
 		// Change ds1 but not the root dds so that the root dds routes are pulled by default
@@ -88,7 +88,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		await dataStore.trySetAlias("ARootDataStore");
 
 		summarizer1.close();
-		const summarizer2 = await createSummarizer(
+		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
 			summaryResult.summaryVersion,

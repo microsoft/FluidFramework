@@ -198,6 +198,19 @@ stages:
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
+        - task: Bash@3
+          displayName: Send Execution Time Performance Benchmark Measurments to Azure App Insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
+
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Perf tests output - execution time
           inputs:
@@ -343,6 +356,19 @@ stages:
               echo "Write the following benchmark output to Aria/Kusto";
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+
+        - task: Bash@3
+          displayName: Send Memory Usage Performance Benchmark Measurments to Azure App Insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Perf tests output - memory usage
@@ -556,6 +582,32 @@ stages:
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: "odsp"
+
+        - task: Bash@3
+          displayName: Send Execution Time Perf Benchmark Measurments to Azure App Insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing execution time performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.executionTimeTestOutputFolder }};
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
+
+        - task: Bash@3
+          displayName: Send Memory Usage Perf Benchmark Measurments to Azure App Insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing memory usage performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - execution time odsp

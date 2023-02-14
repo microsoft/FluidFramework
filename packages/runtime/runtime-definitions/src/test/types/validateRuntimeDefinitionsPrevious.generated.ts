@@ -40,6 +40,54 @@ use_old_TypeAliasDeclaration_AliasResult(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AttributionInfo": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AttributionInfo():
+    TypeOnly<old.AttributionInfo>;
+declare function use_current_InterfaceDeclaration_AttributionInfo(
+    use: TypeOnly<current.AttributionInfo>);
+use_current_InterfaceDeclaration_AttributionInfo(
+    get_old_InterfaceDeclaration_AttributionInfo());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AttributionInfo": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AttributionInfo():
+    TypeOnly<current.AttributionInfo>;
+declare function use_old_InterfaceDeclaration_AttributionInfo(
+    use: TypeOnly<old.AttributionInfo>);
+use_old_InterfaceDeclaration_AttributionInfo(
+    get_current_InterfaceDeclaration_AttributionInfo());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_AttributionKey": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_AttributionKey():
+    TypeOnly<old.AttributionKey>;
+declare function use_current_TypeAliasDeclaration_AttributionKey(
+    use: TypeOnly<current.AttributionKey>);
+use_current_TypeAliasDeclaration_AttributionKey(
+    get_old_TypeAliasDeclaration_AttributionKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_AttributionKey": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_AttributionKey():
+    TypeOnly<current.AttributionKey>;
+declare function use_old_TypeAliasDeclaration_AttributionKey(
+    use: TypeOnly<old.AttributionKey>);
+use_old_TypeAliasDeclaration_AttributionKey(
+    get_current_TypeAliasDeclaration_AttributionKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_BindState": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_BindState():
@@ -180,6 +228,30 @@ declare function use_old_EnumDeclaration_CreateSummarizerNodeSource(
     use: TypeOnly<old.CreateSummarizerNodeSource>);
 use_old_EnumDeclaration_CreateSummarizerNodeSource(
     get_current_EnumDeclaration_CreateSummarizerNodeSource());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DetachedAttributionKey": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_DetachedAttributionKey():
+    TypeOnly<old.DetachedAttributionKey>;
+declare function use_current_InterfaceDeclaration_DetachedAttributionKey(
+    use: TypeOnly<current.DetachedAttributionKey>);
+use_current_InterfaceDeclaration_DetachedAttributionKey(
+    get_old_InterfaceDeclaration_DetachedAttributionKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DetachedAttributionKey": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_DetachedAttributionKey():
+    TypeOnly<current.DetachedAttributionKey>;
+declare function use_old_InterfaceDeclaration_DetachedAttributionKey(
+    use: TypeOnly<old.DetachedAttributionKey>);
+use_old_InterfaceDeclaration_DetachedAttributionKey(
+    get_current_InterfaceDeclaration_DetachedAttributionKey());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1103,6 +1175,7 @@ declare function get_old_InterfaceDeclaration_ITelemetryContext():
 declare function use_current_InterfaceDeclaration_ITelemetryContext(
     use: TypeOnly<current.ITelemetryContext>);
 use_current_InterfaceDeclaration_ITelemetryContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITelemetryContext());
 
 /*
@@ -1164,6 +1237,30 @@ declare function use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
     use: TypeOnly<old.NamedFluidDataStoreRegistryEntry>);
 use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
     get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_OpAttributionKey": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_OpAttributionKey():
+    TypeOnly<old.OpAttributionKey>;
+declare function use_current_InterfaceDeclaration_OpAttributionKey(
+    use: TypeOnly<current.OpAttributionKey>);
+use_current_InterfaceDeclaration_OpAttributionKey(
+    get_old_InterfaceDeclaration_OpAttributionKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_OpAttributionKey": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_OpAttributionKey():
+    TypeOnly<current.OpAttributionKey>;
+declare function use_old_InterfaceDeclaration_OpAttributionKey(
+    use: TypeOnly<old.OpAttributionKey>);
+use_old_InterfaceDeclaration_OpAttributionKey(
+    get_current_InterfaceDeclaration_OpAttributionKey());
 
 /*
 * Validate forward compat by using old type in place of current type

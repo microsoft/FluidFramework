@@ -3,14 +3,15 @@
 The version-tools package provides APIs and a CLI to parse and transform version numbers and ranges that are used by the
 Fluid Framework.
 
+<!-- prettier-ignore-start -->
 <!-- toc -->
-
--   [@fluid-tools/version-tools](#fluid-toolsversion-tools)
--   [Version schemes](#version-schemes)
--   [General API](#general-api)
--   [CLI Usage](#cli-usage)
--   [Commands](#commands)
+* [@fluid-tools/version-tools](#fluid-toolsversion-tools)
+* [Version schemes](#version-schemes)
+* [General API](#general-api)
+* [CLI Usage](#cli-usage)
+* [Commands](#commands)
 <!-- tocstop -->
+<!-- prettier-ignore-stop -->
 
 # Version schemes
 
@@ -70,30 +71,30 @@ version-tools provides a command-line interface (`fluv`) when installed directly
 also available in the Fluid build and release tool (`flub`). This is accomplished using
 [oclif's plugin system](https://oclif.io/docs/plugins).
 
+<!-- prettier-ignore-start -->
 <!-- usage -->
-
 ```sh-session
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/0.9.0
+@fluid-tools/version-tools/0.10.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
 ...
 ```
-
 <!-- usagestop -->
+<!-- prettier-ignore-stop -->
 
 # Commands
 
+<!-- prettier-ignore-start -->
 <!-- commands -->
-
--   [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
--   [`fluv help [COMMAND]`](#fluv-help-command)
--   [`fluv version VERSION`](#fluv-version-version)
--   [`fluv version latest`](#fluv-version-latest)
+* [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
+* [`fluv help [COMMAND]`](#fluv-help-command)
+* [`fluv version VERSION`](#fluv-version-version)
+* [`fluv version latest`](#fluv-version-latest)
 
 ## `fluv autocomplete [SHELL]`
 
@@ -219,8 +220,8 @@ EXAMPLES
 
     $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
 ```
-
 <!-- commandsstop -->
+<!-- prettier-ignore-stop -->
 
 ## Developer notes
 

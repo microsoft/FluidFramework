@@ -29,7 +29,8 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     checkpointSequenceNumber: number | undefined;
     get claims(): ITokenClaims;
     get clientId(): string;
-    protected closeSocket(error: IAnyDriverError): void;
+    // (undocumented)
+    protected closeSocketCore(error: IAnyDriverError): void;
     protected createErrorObject(handler: string, error?: any, canRetry?: boolean): IAnyDriverError;
     // (undocumented)
     get details(): IConnected;

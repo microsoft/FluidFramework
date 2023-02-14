@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
+		"build": "npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
 		"build:ci": "npm run build:genver && lerna run build:compile --stream",
 		"build:compile": "lerna run build:compile --stream",
 		"build:docs": "lerna run build:docs --stream --parallel",
@@ -85,7 +85,6 @@
 		"@fluidframework/test-tools": "^0.2.3074",
 		"@microsoft/api-documenter": "^7.17.9",
 		"@microsoft/api-extractor": "^7.22.2",
-		"@trivago/prettier-plugin-sort-imports": "^3.3.0",
 		"c8": "^7.7.1",
 		"commitizen": "^4.2.5",
 		"concurrently": "^6.2.0",
