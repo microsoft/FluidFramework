@@ -26,7 +26,7 @@ import {
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
-	SingleLineSpanNode,
+	SingleLineElementNode,
 	SpanNode,
 } from "../documentation-domain";
 
@@ -148,7 +148,7 @@ export function transformFencedCode(
 export function transformLinkTag(
 	node: DocLinkTag,
 	options: DocNodeTransformOptions,
-): LinkNode | SingleLineSpanNode {
+): LinkNode | SpanNode<SingleLineElementNode> {
 	if (node.codeDestination !== undefined) {
 		// If link text was not provided, use the name of the referenced element.
 		const linkText = node.linkText?.trim() ?? node.codeDestination.emitAsTsdoc().trim();

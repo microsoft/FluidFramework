@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { renderDocument } from "./Render";
+// TODO: rename render functions
+
+export { renderDocument, renderNode, renderNodes } from "./Render";
 export {
 	DocumentationNodeRenderers,
 	MarkdownRenderContext,

@@ -46,10 +46,8 @@ import {
 	ParagraphNode,
 	PlainTextNode,
 	SingleLineElementNode,
-	SingleLineSpanNode,
 	SpanNode,
 	UnorderedListNode,
-	createSingleLineSpanFromPlainText,
 } from "../../documentation-domain";
 import { transformSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";
@@ -279,7 +277,7 @@ export function createTypeParametersSpan(
 
 	const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
 
-	const listItemNodes: SingleLineSpanNode[] = [];
+	const listItemNodes: SingleLineElementNode[] = [];
 	for (const typeParameter of typeParameters) {
 		const innerNodes: SingleLineElementNode[] = [];
 
@@ -300,7 +298,7 @@ export function createTypeParametersSpan(
 	}
 
 	return new SpanNode([
-		createSingleLineSpanFromPlainText("Type parameters: ", { bold: true }),
+		SpanNode.createFromPlainText("Type parameters: ", { bold: true }),
 		LineBreakNode.Singleton,
 		new UnorderedListNode(listItemNodes),
 	]);
@@ -682,7 +680,7 @@ export function createReturnsSection(
 			if (typeExcerptSpan !== undefined) {
 				children.push(
 					new ParagraphNode([
-						createSingleLineSpanFromPlainText("Return type: ", { bold: true }),
+						SpanNode.createFromPlainText("Return type: ", { bold: true }),
 						typeExcerptSpan,
 					]),
 				);

@@ -4,7 +4,6 @@
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
-import { PlainTextNode } from "./PlainTextNode";
 import { TextFormatting } from "./TextFormatting";
 import { createNodesFromPlainText } from "./Utilities";
 
@@ -46,15 +45,3 @@ export class SpanNode<
 export type SingleLineSpanNode<
 	TDocumentationNode extends SingleLineElementNode = SingleLineElementNode,
 > = SpanNode<TDocumentationNode>;
-
-/**
- * Generates an {@link SingleLineSpanNode} from the provided string.
- * @param text - The node contents. Note: must not contain newline characters.
- * @param formatting - See {@link SpanNode.formatting}
- */
-export function createSingleLineSpanFromPlainText(
-	text: string,
-	formatting?: TextFormatting,
-): SingleLineSpanNode {
-	return new SpanNode<PlainTextNode>([new PlainTextNode(text)], formatting);
-}
