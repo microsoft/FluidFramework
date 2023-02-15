@@ -228,12 +228,6 @@ export class LoadTestDataStoreModel {
 		this.taskId = `op_sender${config.runId % halfClients}`;
 		this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
 
-		config.logger.sendTelemetryEvent({
-			eventName: "StressTestCanary",
-			runId: config.runId,
-			config: JSON.stringify(config.testConfig),
-		});
-
 		const changed = (taskId) => {
 			this.deferUntilConnected(
 				() => {
@@ -600,7 +594,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			) {
 				const opSize = getOpSizeInBytes();
 				dataModel.sharedmap.set(config.runId.toString(), generateContentOfSize(opSize));
-				config.logger.sendErrorEvent({
+				config.logger.sendTelemetryEvent({
 					eventName: "LargeTestPayload",
 					runId: config.runId,
 					opSize,

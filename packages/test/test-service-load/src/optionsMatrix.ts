@@ -4,6 +4,7 @@
  */
 
 import {
+	CompressionAlgorithms,
 	IContainerRuntimeOptions,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
@@ -89,7 +90,9 @@ export function generateRuntimeOptions(
 		loadSequenceNumberVerification: [undefined],
 		enableOfflineLoad: [undefined],
 		flushMode: [undefined],
-		compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: "lz4" as any }],
+		compressionOptions: [
+			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
+		],
 		maxBatchSizeInBytes: [716800],
 		enableOpReentryCheck: [true],
 		// Compressed payloads over 1MB will be split into chunked ops of this size
