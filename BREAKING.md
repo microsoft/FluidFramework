@@ -26,6 +26,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [Container and RelativeLoader deprecated](#container-and-relativeloader-deprecated)
 -   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
 -   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
+-   [ContainerRuntime IFluidTokenProvider member deprecated](#ContainerRuntime-IFluidTokenProvider-member-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -82,6 +83,10 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `IRootSummarizerNodeWithGC`
 -   `ISummarizerNodeRootContract`
 -   `RefreshSummaryResult`
+
+### ContainerRuntime IFluidTokenProvider member deprecated
+
+`ContainerRuntime.IFluidTokenProvider` has been deprecated and will be removed in an upcoming release. Token providers should be accessed using normal provider patterns.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

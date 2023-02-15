@@ -1468,6 +1468,9 @@ export class ContainerRuntime
 		this.removeAllListeners();
 	}
 
+	/**
+	 * @deprecated ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
+	 */
 	public get IFluidTokenProvider() {
 		if (this.options?.intelligence) {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
