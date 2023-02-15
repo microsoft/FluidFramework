@@ -5,7 +5,7 @@
 import type { Parent as UnistParent } from "unist";
 
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode } from "./DocumentionNode";
+import { HierarchicalSectionNode } from "./HierarchicalSectionNode";
 import { ParagraphNode } from "./ParagraphNode";
 
 /**
@@ -15,7 +15,7 @@ export interface DocumentNodeProps {
 	/**
 	 * {@inheritDoc DocumentationNode.children}
 	 */
-	readonly children: DocumentationNode[];
+	readonly children: HierarchicalSectionNode[];
 
 	/**
 	 * Path to which the resulting document should be saved.
@@ -44,7 +44,7 @@ export interface DocumentNodeProps {
  * @remarks Note that this node is special. It forms the root of a Documentation tree,
  * and cannot be parented under other Documentation nodes.
  */
-export class DocumentNode implements UnistParent<DocumentationNode>, DocumentNodeProps {
+export class DocumentNode implements UnistParent<HierarchicalSectionNode>, DocumentNodeProps {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -53,7 +53,7 @@ export class DocumentNode implements UnistParent<DocumentationNode>, DocumentNod
 	/**
 	 * {@inheritDoc DocumentNodeProps.children}
 	 */
-	public readonly children: DocumentationNode[];
+	public readonly children: HierarchicalSectionNode[];
 
 	/**
 	 * {@inheritDoc DocumentNodeProps.filePath}
