@@ -182,6 +182,7 @@ export class DocumentStorage implements IDocumentStorage {
             lastSentMSN: 0,
             nackMessages: undefined,
             successfullyStartedLambdas: [],
+            checkpointTimestamp: Date.now(),
         };
 
         const scribe: IScribe = {

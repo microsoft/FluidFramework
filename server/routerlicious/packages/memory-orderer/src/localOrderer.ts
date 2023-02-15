@@ -68,6 +68,7 @@ const DefaultDeli: IDeliState = {
     lastSentMSN: 0,
     nackMessages: undefined,
     successfullyStartedLambdas: [],
+    checkpointTimestamp: undefined,
 };
 
 class LocalSocketPublisher implements IPublisher {
