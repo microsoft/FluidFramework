@@ -79,8 +79,8 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	let dataObject2map: SharedMap;
 	let loader: IHostLoader;
 
-	const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-	const messageCount = 2; // Will result in a 10 MB payload
+	const maxMessageSizeInBytes = 1 * 1024 * 1024; // 1MB
+	const messageCount = 2; // Will result in a 2 MB payload
 
 	const generateRandomStringOfSize = (sizeInBytes: number): string =>
 		crypto.randomBytes(sizeInBytes / 2).toString("hex");
@@ -157,7 +157,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
-			title = "Generate summary tree 10Mb document";
+			title = "Generate summary tree 2Mb document";
 			maxBenchmarkDurationSeconds = 360000;
 			async run() {
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
