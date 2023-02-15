@@ -19,6 +19,13 @@ export function renderBlockQuote(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
+	// If the block quote is empty, there is no need to render anything.
+	if (!node.hasChildren) {
+		return;
+	}
+
+	// BlockQuote rendering is potentially multi-line, and so if we are inside a table,
+	// we need to use HTML syntax.
 	if (context.insideTable || context.insideHtml) {
 		renderBlockQuoteWithHtmlSyntax(node, writer, context);
 	} else {
