@@ -5,7 +5,7 @@
 		"declarationMap": false,
 		"rootDir": "./",
 		"outDir": "../../dist/test",
-		"types": ["node", "mocha"],
+		"types": [],
 		"skipLibCheck": true,
 		"noUnusedLocals": false,
 	},
