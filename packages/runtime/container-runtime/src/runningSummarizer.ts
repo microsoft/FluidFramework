@@ -76,9 +76,15 @@ export class RunningSummarizer implements IDisposable {
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, lets refresh latest Summary ack if already available.
-		summarizer._lastAckRefNumber = await summarizer.handleSummaryAck();
+		const lastAckRefNumber = await summarizer.handleSummaryAck();
 
 		await summarizer.waitStart();
+
+		// Handle summary acks asynchronously
+		// Note: no exceptions are thrown from handleSummaryAcks handler as it handles all exceptions
+		summarizer.handleSummaryAcks(lastAckRefNumber).catch((error) => {
+			logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
+		});
 
 		// Update heuristic counts
 		// By the time we get here, there are potentially ops missing from the heuristic summary counts
@@ -112,10 +118,6 @@ export class RunningSummarizer implements IDisposable {
 	public get disposed() {
 		return this._disposed;
 	}
-	public get lastAckRefNumber() {
-		return this._lastAckRefNumber;
-	}
-	private _lastAckRefNumber = 0;
 	private stopping = false;
 	private _disposed = false;
 	private summarizingLock: Promise<void> | undefined;
@@ -229,7 +231,32 @@ export class RunningSummarizer implements IDisposable {
 		});
 	}
 
-	public async handleSummaryAck(): Promise<number> {
+	/**
+	 * Responsible for receiving and processing all the summaryAcks.
+	 * @param lastAckRefNumber - Before initializing the summarization, if there is a last Ack to be processed, use it.
+	 */
+	private async handleSummaryAcks(lastAckRefNumber: number) {
+		let refSequenceNumber =
+			lastAckRefNumber > 0
+				? lastAckRefNumber
+				: this.runtime.deltaManager.initialSequenceNumber;
+		while (!this.disposed) {
+			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
+
+			summaryLogger.sendTelemetryEvent({
+				eventName: "handleSummaryAcks",
+				referenceSequenceNumber: refSequenceNumber,
+				lastAckRefNumber,
+			});
+
+			// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
+			// we record undefined, not previous handles.
+			await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+			refSequenceNumber = await this.handleSummaryAck();
+		}
+	}
+
+	private async handleSummaryAck(): Promise<number> {
 		const lastAck: IAckedSummary | undefined = this.summaryCollection.latestAck;
 		let refSequenceNumber = -1;
 		if (lastAck !== undefined) {
@@ -478,9 +505,9 @@ export class RunningSummarizer implements IDisposable {
 		before();
 
 		return action().finally(() => {
-			after();
 			summarizingLock.resolve();
 			this.summarizingLock = undefined;
+			after();
 		});
 	}
 
@@ -544,7 +571,7 @@ export class RunningSummarizer implements IDisposable {
 			async () => {
 				const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
 					{ refreshLatestAck: false, fullTree: false },
-					{ refreshLatestAck: true, fullTree: false, delaySeconds: 5 },
+					{ refreshLatestAck: true, fullTree: false },
 					{ refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },
 					{ refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
 				];

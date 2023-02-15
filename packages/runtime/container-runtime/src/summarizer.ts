@@ -293,12 +293,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		this.runningSummarizer = runningSummarizer;
 		this.starting = false;
 
-		// Handle summary acks
-		// Note: no exceptions are thrown from handleSummaryAcks handler as it handles all exceptions
-		this.handleSummaryAcks(this.runningSummarizer.lastAckRefNumber).catch((error) => {
-			this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
-		});
-
 		return runningSummarizer;
 	}
 
@@ -389,30 +383,4 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		}
 		return this.runningSummarizer.enqueueSummarize(...args);
 	};
-
-	/**
-	 * Responsible for receiving and processing all the summaryAcks.
-	 * @param lastAckRefNumber - Before initializing the summarization, if there is a last Ack to be processed, use it.
-	 */
-	private async handleSummaryAcks(lastAckRefNumber: number) {
-		let refSequenceNumber =
-			lastAckRefNumber > 0
-				? lastAckRefNumber
-				: this.runtime.deltaManager.initialSequenceNumber;
-		while (this.runningSummarizer) {
-			const summaryLogger =
-				this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
-
-			summaryLogger.sendTelemetryEvent({
-				eventName: "handleSummaryAcks",
-				referenceSequenceNumber: refSequenceNumber,
-				lastAckRefNumber,
-			});
-
-			// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
-			// we record undefined, not previous handles.
-			await this.summaryCollection.waitSummaryAck(refSequenceNumber);
-			refSequenceNumber = await this.runningSummarizer.handleSummaryAck();
-		}
-	}
 }
