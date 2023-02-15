@@ -19,7 +19,7 @@ export function renderLink(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideTable || context.insideHtml) {
+	if (context.insideHtml) {
 		renderLinkWithHtmlSyntax(node, writer, context);
 	} else {
 		renderLinkWithMarkdownSyntax(node, writer, context);
