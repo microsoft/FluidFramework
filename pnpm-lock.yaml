@@ -10036,7 +10036,6 @@ importers:
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/tool-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/view-adapters': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/view-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/web-code-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@rushstack/eslint-config': ^2.5.1
@@ -10083,7 +10082,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tool-utils': link:../../utils/tool-utils
-      '@fluidframework/view-adapters': link:../../framework/view-adapters
       '@fluidframework/view-interfaces': link:../../framework/view-interfaces
       '@fluidframework/web-code-loader': link:../../loader/web-code-loader
       axios: 0.26.1
@@ -22553,7 +22551,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -22561,7 +22559,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true

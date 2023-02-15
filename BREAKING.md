@@ -22,10 +22,15 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ## 2.0.0-internal.4.0.0 Breaking changes
 
 -   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+-   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
 
 ### Container and RelativeLoader no longer exported
 
 Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
+### IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed
+
+`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in a prior release, and are now removed.
 
 # 2.0.0-internal.3.0.0
 
