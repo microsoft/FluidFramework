@@ -60,7 +60,10 @@ function renderUnorderedListWithHtmlSyntax(
 	for (const child of node.children) {
 		writer.writeLine("<li>");
 		writer.increaseIndent();
-		renderNode(child, writer, context);
+		renderNode(child, writer, {
+			...context,
+			insideHtml: true,
+		});
 		writer.decreaseIndent();
 		writer.ensureNewLine(); // Ensure newline after previous list item
 		writer.writeLine("</li>");
