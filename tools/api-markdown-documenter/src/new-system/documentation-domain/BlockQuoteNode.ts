@@ -20,11 +20,13 @@ import { createNodesFromPlainText } from "./Utilities";
  *
  * @example HTML
  *
+ * ```html
  * <blockquote>
  * 	Foo
  *	<br/>
  * 	Bar
  * </blockquote>
+ * ```
  */
 export class BlockQuoteNode extends ParentNodeBase {
 	/**
