@@ -4,6 +4,7 @@
  */
 
 import { brand, Brand, Invariant } from "../../util";
+import { ReadonlyRepairDataStore } from "../repair";
 import { AnchorSet } from "../tree";
 
 /**
@@ -148,12 +149,18 @@ export interface ChangeRebaser<TChangeset> {
 	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 
 	/**
+	 * @param repairStore - The store to query for repair data.
+	 * If undefined, dummy data will be created instead.
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
 	 * See {@link ChangeRebaser} for details.
 	 */
-	invert(changes: TaggedChange<TChangeset>): TChangeset;
+	invert(
+		changes: TaggedChange<TChangeset>,
+		// TODO: make the repair store mandatory when all usages of this method have repair data support.
+		repairStore?: ReadonlyRepairDataStore,
+	): TChangeset;
 
 	/**
 	 * Rebase `change` over `over`.

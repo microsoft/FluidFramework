@@ -66,7 +66,7 @@ export interface ChangeFamily<TEditor, TChange> {
     // (undocumented)
     readonly encoder: ChangeEncoder<TChange>;
     // (undocumented)
-    intoDelta(change: TChange, repairStore?: ReadonlyRepairDataStore): Delta.Root;
+    intoDelta(change: TChange): Delta.Root;
     // (undocumented)
     readonly rebaser: ChangeRebaser<TChange>;
 }
@@ -75,7 +75,7 @@ export interface ChangeFamily<TEditor, TChange> {
 export interface ChangeRebaser<TChangeset> {
     compose(changes: TaggedChange<TChangeset>[]): TChangeset;
     // (undocumented)
-    invert(changes: TaggedChange<TChangeset>): TChangeset;
+    invert(changes: TaggedChange<TChangeset>, repairStore?: ReadonlyRepairDataStore): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
