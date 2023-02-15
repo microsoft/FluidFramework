@@ -99,6 +99,15 @@ interface PersistedTask {
 }
 
 /**
+ * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.
+ */
+interface ExternalSnapshotTask {
+	id: string;
+	name: string;
+	priority: number;
+}
+
+/**
  * The TaskList is our data object that implements the ITaskList interface.
  */
 export class TaskList extends DataObject implements ITaskList {
@@ -263,35 +272,18 @@ export class TaskList extends DataObject implements ITaskList {
 		// TODO: Delete any items that are in the root but missing from the external data
 		const updateTaskPs = incomingExternalData.map(async ([id, { name: incomingName , priority: incomingPriority }]) => {
 			// Write external data into externalDataSnapshot map.
-			const currentTask = this.externalDataSnapshot.get<PersistedTask>(id);
-			let incomingNameDiffersFromSnapshotName = false;
-			let incomingPriorityDiffersFromSnapshotPriority = false;
+			const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
 			// Create a new task because it doesn't exist already
 			if (currentTask === undefined) {
-				const snapshotNameString = SharedString.create(this.runtime);
-				const snapshotPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
-				const externalDataSnapshotPT: PersistedTask = {
+				const externalDataSnapshotPT: ExternalSnapshotTask = {
 					id,
-					name: snapshotNameString.handle as IFluidHandle<SharedString>,
-					priority: snapshotPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+					name: incomingName,
+					priority: incomingPriority,
 				};
-				snapshotNameString.insertText(0, incomingName);
-				snapshotPriorityCell.set(incomingPriority);
 				this.externalDataSnapshot.set(id, externalDataSnapshotPT);
 			} else {
-				// Make changes to exisiting saved tasks
-				const [snapshotNameString, snapshotPriorityCell] = await Promise.all([
-					currentTask.name.get(),
-					currentTask.priority.get(),
-				]);
-				if (snapshotNameString.getText() !== incomingName) {
-					incomingNameDiffersFromSnapshotName = true;
-				}
-				if (snapshotPriorityCell.get() !== incomingPriority) {
-					incomingPriorityDiffersFromSnapshotPriority = true;
-				}
-				snapshotNameString.insertText(0, incomingName);
-				snapshotPriorityCell.set(incomingPriority);
+				currentTask.name = incomingName;
+				currentTask.priority = incomingPriority;
 			}
 
 			// Now look for differences between draftData and externalDataSnapshot
@@ -301,12 +293,14 @@ export class TaskList extends DataObject implements ITaskList {
 				this.addTask(id, incomingName, incomingPriority);
 				return;
 			}
-			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (incomingNameDiffersFromSnapshotName && task.draftName.getText() !== incomingName) {
+			// Incoming external data differs from existing external snapshot AND
+			// local change has happened, so there is some conflict to resolve
+			if (task.draftName.getText() !== incomingName) {
 				task.externalNameChanged(incomingName);
 			}
-			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (incomingPriorityDiffersFromSnapshotPriority && task.draftPriority !== incomingPriority) {
+			// Incoming external data differs from existing external snapshot AND
+			// local change has happened, so there is some conflict to resolve
+			if (task.draftPriority !== incomingPriority) {
 				task.externalPriorityChanged(incomingPriority);
 			}
 		});
