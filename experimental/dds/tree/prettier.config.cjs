@@ -12,4 +12,12 @@ module.exports = {
 	tabWidth: 4,
 	trailingComma: 'es5',
 	useTabs: true,
+	overrides: [
+		{
+			files: 'tsconfig*.json',
+			options: {
+				singleQuote: false,
+			},
+		},
+	],
 };
