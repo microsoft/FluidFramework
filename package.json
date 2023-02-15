@@ -47,7 +47,7 @@
 		"layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
 		"lerna": "lerna",
 		"lint": "npm run prettier:root && lerna run lint --no-sort --stream",
-		"lint:fix": "concurrently npm:lint:deps:fix npm:lint:versions:fix && npm run prettier:root:fix && lerna run lint:fix --no-sort --stream",
+		"lint:fix": "npm run prettier:root:fix && lerna run lint:fix --no-sort --stream",
 		"policy-check": "concurrently npm:policy-check:deps npm:policy-check:versions && flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json",
 		"policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
 		"policy-check:deps": "syncpack lint-semver-ranges",
