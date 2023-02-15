@@ -63,9 +63,11 @@ class BlobAggregator {
 	}
 }
 
-/*
+/**
  * Base class that deals with unpacking snapshots (in place) containing aggregated blobs
  * It relies on abstract methods for reads and storing unpacked blobs.
+ *
+ * @deprecated This class was introduced experimentally and is no longer used.
  */
 export abstract class SnapshotExtractor {
 	protected readonly aggregatedBlobName = "__big";
@@ -149,10 +151,12 @@ class SnapshotExtractorInPlace extends SnapshotExtractor {
 	}
 }
 
-/*
+/**
  * Snapshot packer and extractor.
  * When summary is written it will find and aggregate small blobs into bigger blobs
  * When snapshot is read, it will unpack aggregated blobs and provide them transparently to caller.
+ *
+ * @deprecated This class was introduced experimentally and is no longer used.
  */
 export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
 	// Tells data store if it can use incremental summary (i.e. reuse DDSes from previous summary
@@ -345,7 +349,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 				case SummaryType.Tree:
 					// If client created empty tree, keep it as is
 					// Also do not package search blobs - they are part of storage contract
-					if (obj.tree !== {} && key !== "__search") {
+					if (Object.keys(obj).length !== 0 && key !== "__search") {
 						const tree = await this.compressSmallBlobs(
 							obj,
 							newPath,
@@ -353,7 +357,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 							aggregator,
 						);
 						newSummary.tree[key] = tree;
-						if (tree.tree === {}) {
+						if (Object.keys(obj).length === 0) {
 							// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 							delete newSummary.tree[key];
 						}

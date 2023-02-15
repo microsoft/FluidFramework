@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { isFluidError } from "@fluidframework/telemetry-utils";
 import { getAadTenant, getAadUrl, getSiteUrl } from "./odspDocLibUtils";
 import { throwOdspNetworkError } from "./odspErrorUtils";
 import { unauthPostAsync } from "./odspRequest";
@@ -104,23 +105,57 @@ export async function fetchTokens(
 		client_secret: clientConfig.clientSecret,
 		...credentials,
 	};
-	const result = await unauthPostAsync(
+	const response = await unauthPostAsync(
 		getFetchTokenUrl(server),
 		new URLSearchParams(body), // This formats the body like a query string which is the expected format
 	);
-	const tokens = await result.json();
-	const accessToken = tokens.access_token;
-	const refreshToken = tokens.refresh_token;
+
+	const parsedResponse = await response.json();
+	const accessToken = parsedResponse.access_token;
+	const refreshToken = parsedResponse.refresh_token;
 
 	if (accessToken === undefined || refreshToken === undefined) {
-		throwOdspNetworkError(
-			// pre-0.58 error message: unableToGetAccessToken
-			"Unable to get access token",
-			tokens.error === "invalid_grant" ? 401 : result.status,
-			result,
-		);
+		try {
+			throwOdspNetworkError(
+				// pre-0.58 error message: unableToGetAccessToken
+				"Unable to get access token.",
+				parsedResponse.error === "invalid_grant" ? 401 : response.status,
+				response,
+			);
+		} catch (error) {
+			if (isFluidError(error) && isAccessTokenError(parsedResponse)) {
+				error.addTelemetryProperties({
+					innerError: parsedResponse.error,
+					errorDescription: parsedResponse.error_description,
+					code: JSON.stringify(parsedResponse.error_codes),
+					timestamp: parsedResponse.timestamp,
+					traceId: parsedResponse.trace_id,
+					correlationId: parsedResponse.correlation_id,
+				});
+			}
+			throw error;
+		}
 	}
 	return { accessToken, refreshToken };
+}
+
+/**
+ * See https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-response-1
+ * for documentation on these values.
+ *
+ * Error codes can also be looked up using https://login.microsoftonline.com/error
+ */
+interface AadOauth2TokenError {
+	error: string;
+	error_codes: string[];
+	error_description: string;
+	timestamp: string;
+	trace_id: string;
+	correlation_id: string;
+}
+
+function isAccessTokenError(parsedResponse: any): parsedResponse is AadOauth2TokenError {
+	return typeof parsedResponse?.error === "string" && Array.isArray(parsedResponse?.error_codes);
 }
 
 /**

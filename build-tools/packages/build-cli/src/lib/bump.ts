@@ -141,6 +141,7 @@ export async function bumpPackageDependencies(
  * @param bumpType - The bump type. Can be a SemVer object to set an exact version.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
+ * @param exactDependencyType - The type of dependency to use on packages within the release group.
  *
  * @internal
  */
@@ -149,6 +150,7 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
+	exactDependencyType: "~" | "^" | "" = "^",
 ) {
 	const translatedVersion = isVersionBumpType(bumpType)
 		? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
@@ -161,7 +163,11 @@ export async function bumpReleaseGroup(
 	if (releaseGroupOrPackage instanceof MonoRepo) {
 		workingDir = releaseGroupOrPackage.repoPath;
 		name = releaseGroupOrPackage.kind;
-		cmd = `npx lerna version ${translatedVersion.version} --no-push --no-git-tag-version -y && npm run build:genver`;
+		cmd = `npx --no-install lerna version ${
+			translatedVersion.version
+		} --no-push --no-git-tag-version -y${
+			exactDependencyType === "" ? " --exact" : ""
+		} && npm run build:genver`;
 	} else {
 		workingDir = releaseGroupOrPackage.directory;
 		name = releaseGroupOrPackage.name;
@@ -177,7 +183,10 @@ export async function bumpReleaseGroup(
 	// the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
 	// for the internal version scheme, the range needs to be a >= < range.
 	if (scheme === "internal" || scheme === "internalPrerelease") {
-		const range = getVersionRange(translatedVersion, "^");
+		const range =
+			exactDependencyType === ""
+				? translatedVersion.version
+				: getVersionRange(translatedVersion, exactDependencyType);
 		if (releaseGroupOrPackage instanceof MonoRepo) {
 			const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
 			const packageNewVersionMap = new Map<string, PackageWithRangeSpec>();

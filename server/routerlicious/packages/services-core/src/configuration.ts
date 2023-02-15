@@ -48,6 +48,12 @@ export interface IDeliServerConfiguration {
 
     // Enable to make deli not add additionalContent to summarize messages that are for the single commit flow
     skipSummarizeAugmentationForSingleCommmit: boolean;
+
+    // disable sequencing NoClient messages
+    disableNoClientMessage: boolean;
+
+    // enables marking leave ops with a flag when they were the last client
+    enableLeaveOpNoClientServerMetadata: boolean;
 }
 
 export interface ICheckpointHeuristicsServerConfiguration {
@@ -206,6 +212,8 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
             },
         },
         skipSummarizeAugmentationForSingleCommmit: false,
+        disableNoClientMessage: false,
+        enableLeaveOpNoClientServerMetadata: false,
     },
     broadcaster: {
         includeEventInMessageBatchName: false,
