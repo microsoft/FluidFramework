@@ -4,12 +4,13 @@ import { renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an ParagraphNode to generate a paragraph of text.
+ * Renders a {@link ParagraphNode} as Markdown.
  *
- * @param node - ParagraphNode to convert into markdown
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link MarkdownRenderContext}.
- * @remarks If being rendered inside of a table, will output using HTML paragraph tags
- * @returns The markdown representation of the ParagraphNode as a string
+ *
+ * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderParagraph(
 	node: ParagraphNode,

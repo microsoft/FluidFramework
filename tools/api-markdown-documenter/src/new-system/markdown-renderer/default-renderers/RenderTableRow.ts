@@ -4,11 +4,13 @@ import { renderNode, renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an TableRowNode to generate a row of markdown elements.
+ * Renders a {@link TableRowNode} as Markdown.
  *
- * @param node - TableRowNode to convert into markdown
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link MarkdownRenderContext}.
- * @returns The markdown representation of the TableRowNode as a string
+ *
+ * @remarks Will render as HTML when in an HTML context.
  */
 export function renderTableRow(
 	node: TableRowNode,

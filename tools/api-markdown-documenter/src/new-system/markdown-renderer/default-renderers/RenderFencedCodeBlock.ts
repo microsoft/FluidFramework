@@ -4,11 +4,13 @@ import { renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an {@link FencedCodeBlockNode} to generate a Markdown fenced code block.
+ * Renders a {@link FencedCodeBlockNode} as Markdown.
  *
- * @param node - FencedCodeBlockNode to convert into markdown
- * @param renderer - Renderer to recursively render child subtrees
- * @returns The markdown representation of the FencedCodeBlockNode as a string
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
+ * @param context - See {@link MarkdownRenderContext}.
+ *
+ * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderFencedCodeBlock(
 	node: FencedCodeBlockNode,

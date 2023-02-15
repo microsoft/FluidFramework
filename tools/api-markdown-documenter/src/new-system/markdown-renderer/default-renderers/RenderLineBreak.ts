@@ -7,10 +7,13 @@ import type { DocumentWriter } from "../DocumentWriter";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Renders a {@link LineBreakNode}.
+ * Renders a {@link LineBreakNode} as Markdown.
  *
- * @param node - LineBreakNode to convert into markdown
- * @param context - Rendering context.
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
+ * @param context - See {@link MarkdownRenderContext}.
+ *
+ * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderLineBreak(
 	node: LineBreakNode,

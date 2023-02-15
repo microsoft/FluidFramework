@@ -8,10 +8,9 @@ import { renderNode, renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an {@link SectionNode} to generate a markdown representation of the section,
- * possibly including a header element.
+ * Renders a {@link SectionNode} as Markdown.
  *
- * @param node - `SectionNode` render into Markdown.
+ * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link MarkdownRenderContext}.
  *
@@ -19,6 +18,8 @@ import type { MarkdownRenderContext } from "../RenderContext";
  *
  * Automatically increases the context's {@link MarkdownRenderContext.headingLevel}, when rendering child contents,
  * such that heading levels increase appropriately through nested sections.
+ *
+ * Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderSection(
 	node: SectionNode,

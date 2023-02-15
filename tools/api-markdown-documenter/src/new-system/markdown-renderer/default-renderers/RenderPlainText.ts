@@ -12,12 +12,13 @@ import type { MarkdownRenderContext } from "../RenderContext";
  */
 
 /**
- * Converts a PlainTextNode into markdown
+ * Renders a {@link PlainTextNode} as Markdown.
  *
- * @param node - PlainTextNode to convert into markdown
- * @param context - Renderer to provide rendering details about the node
- * @remarks Will strip trailing whitespace and insert HTML bold, italic, and strike tags as informed by the renderer
- * @returns The markdown representation of the PlainTextNode as a string
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
+ * @param context - See {@link MarkdownRenderContext}.
+ *
+ * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderPlainText(
 	node: PlainTextNode,

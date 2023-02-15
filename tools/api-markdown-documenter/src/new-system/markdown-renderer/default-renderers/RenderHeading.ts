@@ -11,11 +11,17 @@ import type { MarkdownRenderContext } from "../RenderContext";
 const maxHeadingLevel = 6;
 
 /**
- * Converts a HeadingNode to markdown. Will use the renderer's hierarchyDepth to set an appropriate depth for the header if no override is supplied on the node.
+ * Renders a {@link HeadingNode} as Markdown.
  *
- * @param headingNode - Node to convert to a header
- * @param context - Renderer to recursively render node subtree
- * @returns The markdown representation of the Heading node as a string
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
+ * @param context - See {@link MarkdownRenderContext}.
+ *
+ * @remarks
+ *
+ * Observes {@link MarkdownRenderContext.headingLevel} to determine the heading level to use.
+ *
+ * Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderHeading(
 	headingNode: HeadingNode,

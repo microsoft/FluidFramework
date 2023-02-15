@@ -8,11 +8,13 @@ import { renderNode, renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an {@link AlertNode} to generate a Markdown representation of the node.
+ * Renders an {@link AlertNode} as Markdown.
  *
- * @param node - AlertNode to convert into markdown
- * @param renderer - Renderer to recursively render child subtrees
- * @returns The markdown representation of the AlertNode as a string
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
+ * @param context - See {@link MarkdownRenderContext}.
+ *
+ * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderAlert(
 	node: AlertNode,

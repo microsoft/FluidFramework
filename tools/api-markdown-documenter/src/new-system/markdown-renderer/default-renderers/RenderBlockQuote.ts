@@ -8,11 +8,13 @@ import { renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an {@link BlockQuoteNode} to generate block quote in Markdown.
+ * Renders a {@link BlockQuoteNode} as Markdown.
  *
- * @param node - BlockQuoteNode to convert into markdown
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link MarkdownRenderContext}.
- * @returns The markdown representation of the BlockQuoteNode as a string
+ *
+ * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderBlockQuote(
 	node: BlockQuoteNode,

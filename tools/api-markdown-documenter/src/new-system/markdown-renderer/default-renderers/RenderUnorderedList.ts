@@ -8,19 +8,13 @@ import { renderNode } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an UnorderedListNode to generate an ordered list in markdown
+ * Renders an {@link UnorderedList} as Markdown.
  *
- * @param listNode - UnorderedListNode to convert into markdown
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link MarkdownRenderContext}.
- * @returns The markdown representation of the UnorderedListNode as a string
- */
-
-/**
- * Recursively enumerates an OrderedListNode to generate an ordered list in markdown
  *
- * @param node - OrderedListNode to convert into markdown
- * @param context - See {@link MarkdownRenderContext}.
- * @returns The markdown representation of the OrderedListNode as a string
+ * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderUnorderedList(
 	node: UnorderedListNode,

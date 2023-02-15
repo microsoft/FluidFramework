@@ -3,15 +3,14 @@ import type { DocumentWriter } from "../DocumentWriter";
 import { renderNode, renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
-// TODOs:
-// - Support alignment properties in Table, TableRow and TableCell (inherit pattern for resolution)
-
 /**
- * Recursively enumerates an TableNode to generate table using markdown syntax.
+ * Renders a {@link TableNode} as Markdown.
  *
- * @param node - TableNode to convert into markdown
+ * @param node - The node to render.
+ * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link MarkdownRenderContext}.
- * @returns The markdown representation of the TableNode as a string
+ *
+ * @remarks Will render as HTML when in an HTML context, or within another table context.
  */
 export function renderTable(
 	node: TableNode,

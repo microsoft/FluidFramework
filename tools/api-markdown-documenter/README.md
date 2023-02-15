@@ -111,18 +111,6 @@ The vast majority of these options have default values that have been crafted to
 
 -   Remove support for empty cell substitution
 
-### Hackathon TODOs
-
--   Implement ApiItem/DocNode -> Document Domain (Josh)
-    -   "Unit" tests!
--   Implement Document Domain sink (Justin)
-    -   Default implementation library (like our current emitter)
-    -   Policy configuration object
-    -   Unit tests!
--   Update end-to-end tests
--   Remove old gunk
--   Ensure everything is documented (with examples where appropriate)
-
 ### Known Bugs
 
 -   Example titles are not respected. See TSDoc [@example spec](https://tsdoc.org/pages/tags/example/) - text on the same line as the tag should be treated as the example title.
@@ -140,6 +128,7 @@ The vast majority of these options have default values that have been crafted to
     -   This will require plumbing down a context document item, so we can easily determine if the document to which the link is being generated is the same as the document being linked to.
 -   Config options for parsing TSDoc block comment contents as Markdown (and don't escape the contents)?
 -   Render type parameter summary as a table.
+-   Add support for Table Cell alignment
 
 ## Longer-term work
 
