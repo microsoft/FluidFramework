@@ -40,6 +40,7 @@ import {
 	mergeStats,
 	packagePathToTelemetryProperty,
 	ReadAndParseBlob,
+	RefreshSummaryResult,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import {
@@ -71,7 +72,6 @@ import {
 } from "./garbageCollectionConstants";
 import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
-import { RefreshSummaryResult } from "./summarizerNode";
 import {
 	getGCVersion,
 	GCVersion,
