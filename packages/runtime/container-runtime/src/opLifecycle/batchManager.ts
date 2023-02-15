@@ -29,7 +29,7 @@ export class BatchManager {
 	public get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: this.pendingBatch[0].referenceSequenceNumber;
+			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
 	constructor(public readonly options: IBatchManagerOptions) {}

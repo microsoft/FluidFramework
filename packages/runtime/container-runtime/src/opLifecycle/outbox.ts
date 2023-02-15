@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
@@ -222,6 +223,7 @@ export class Outbox {
 
 			this.params.containerContext.deltaManager.flush();
 		} else {
+			assert(batch.referenceSequenceNumber !== undefined, "Batch must not be empty");
 			this.params.containerContext.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
@@ -229,10 +231,7 @@ export class Outbox {
 					compression: message.compression,
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
-				// Partial flushing will ensure that all messages in the same batch have the same
-				// reference sequence number. If disabled, messages may have different sequence numbers
-				// within the same batch, so the loader must rely on individual message reference sequence numbers.
-				this.params.config.disablePartialFlush ? undefined : batch.referenceSequenceNumber,
+				batch.referenceSequenceNumber,
 			);
 		}
 	}

@@ -167,4 +167,13 @@ describe("BatchManager", () => {
 		assert.equal(batchManager.push(smallMessage()), true);
 		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
 	});
+
+	it("Batch reference sequence number maps to the last message", () => {
+		const batchManager = new BatchManager({ hardLimit });
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
+
+		assert.equal(batchManager.referenceSequenceNumber, 2);
+	});
 });

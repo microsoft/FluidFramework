@@ -591,6 +591,7 @@ describe("Outbox", () => {
 
 		assert.equal(state.opsSubmitted, messages.length);
 		assert.equal(state.individualOpsSubmitted.length, 0);
+		assert.equal(state.batchesSubmitted.length, 2);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
 			[[batchedMessage(messages[0])], [batchedMessage(messages[1])]],
@@ -644,14 +645,12 @@ describe("Outbox", () => {
 
 		assert.equal(state.opsSubmitted, messages.length);
 		assert.equal(state.individualOpsSubmitted.length, 0);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[[batchedMessage(messages[0]), batchedMessage(messages[1])]],
-		);
-		assert.equal(
-			state.batchesSubmitted.every((x) => x.referenceSequenceNumber === undefined),
-			true,
-		);
+		assert.equal(state.batchesSubmitted.length, 1);
+		assert.deepEqual(state.batchesSubmitted[0].messages, [
+			batchedMessage(messages[0]),
+			batchedMessage(messages[1]),
+		]);
+		assert.equal(state.batchesSubmitted[0].referenceSequenceNumber, 1);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 		const rawMessagesInFlushOrder = [messages[0], messages[1]];
 		assert.deepEqual(
@@ -673,37 +672,18 @@ describe("Outbox", () => {
 	});
 
 	it("Log at most 3 reference sequence number mismatch events", () => {
-		const outbox = getOutbox(
-			getMockContext() as IContainerContext,
-			undefined, // maxBatchSize
-			undefined, // compressionOptions
-			undefined, // enableChunking
-			true, // disablePartialFlush
-		);
-		const messages = [
-			{
+		const outbox = getOutbox(getMockContext() as IContainerContext);
+
+		for (let i = 0; i < 10; i++) {
+			outbox.submit({
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+			});
+			outbox.submit({
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 				referenceSequenceNumber: 1,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
-				referenceSequenceNumber: 1,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
-				referenceSequenceNumber: 1,
-			},
-		];
-
-		for (const message of messages) {
-			outbox.submit(message);
+			});
 		}
-
-		outbox.flush();
 
 		mockLogger.assertMatch(
 			new Array(3).fill({

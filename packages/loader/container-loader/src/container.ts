@@ -1964,7 +1964,7 @@ export class Container
 				true, // batch
 				message.metadata,
 				message.compression,
-				referenceSequenceNumber ?? message.referenceSequenceNumber,
+				referenceSequenceNumber,
 			);
 		}
 		this._deltaManager.flush();
