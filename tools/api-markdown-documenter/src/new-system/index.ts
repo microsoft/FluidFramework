@@ -3,12 +3,22 @@
  * Licensed under the MIT License.
  */
 
-// TODO: fix before merging
-/* eslint-disable no-restricted-syntax */
+export {
+	ApiItemTransformationConfiguration,
+	CreateChildContentSections,
+	defaultApiItemTransformations,
+	TransformApiItemWithChildren,
+	TransformApiItemWithoutChildren,
+} from "./api-item-transforms";
 
-export * from "./api-item-transforms";
+// We want to make sure the entirety of this domain is accessible.
+// eslint-disable-next-line no-restricted-syntax
 export * from "./documentation-domain";
-export * from "./markdown-renderer";
-export * from "./MarkdownDocumenter";
 
-/* eslint-enable no-restricted-syntax */
+export {
+	renderDocument as renderDocumentAsMarkdown,
+	renderNode as renderNodeAsMarkdown,
+	renderNodes as renderNodesAsMarkdown,
+} from "./markdown-renderer";
+
+export { createDocuments, renderFiles } from "./MarkdownDocumenter";
