@@ -314,7 +314,7 @@ export interface IDocumentService {
 	policies?: IDocumentServicePolicies;
 
 	/**
-	 * Access to storage associated with the document...
+	 * Access to storage associated with the document
 	 */
 	connectToStorage(): Promise<IDocumentStorageService>;
 
@@ -334,7 +334,7 @@ export interface IDocumentService {
 	 * Please note that it does not remove the need for caller to close all active delta connections,
 	 * as storage may not be tracking such objects.
 	 * @param error - tells if container (and storage) are closed due to critical error.
-	 * Error might be due to disconnect between client & server knowlege about file, like file being overwritten
+	 * Error might be due to disconnect between client & server knowledge about file, like file being overwritten
 	 * in storage, but client having stale local cache.
 	 * If driver implements any kind of local caching, such caches needs to be cleared on on critical errors.
 	 */

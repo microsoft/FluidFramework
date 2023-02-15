@@ -299,12 +299,12 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 	// - data store either reuses previous summary, or generates full summary, i.e. there is no partial (some DDS)
 	// summary produced by data stores.
 	// These simplifications allow us not to touch handles, as they are self-contained (either do not use aggregated
-	// blob Or contain aggregated blob that stays relevant for that sub-tree)
+	// blob or contain aggregated blob that stays relevant for that sub-tree)
 	// Note:
-	// From perf perspective, it makes sense to place aggregated blobs one level up in the tree not to create extra
+	// From perf perspective, it makes sense to place aggregated blobs one level up in the tree to not create extra
 	// tree nodes (i.e. have shallow tree with less edges). But that creates problems with reusability of trees at
 	// incremental summary time - we would need to understand handles and parse them. In current design we can skip
-	// that step because if data store is reused, the hole sub-tree is reused included aggregated blob embedded into it
+	// that step because if data store is reused, the whole sub-tree is reused including aggregated blob embedded into it
 	// and that means we can do nothing and be correct!
 	private async compressSmallBlobs(
 		summary: ISummaryTree,
