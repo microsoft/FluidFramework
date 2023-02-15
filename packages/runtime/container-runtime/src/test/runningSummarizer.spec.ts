@@ -683,9 +683,23 @@ describe("Runtime", () => {
 								summarizeCount: 1,
 								reason: "summaryNack",
 							},
-							{ eventName: "Running:SummarizeAttemptDelay", ...retryProps2 },
-							{ eventName: "Running:Summarize_generate", ...retryProps2 },
-							{ eventName: "Running:Summarize_Op", ...retryProps2 },
+							{
+								eventName: "Running:SummarizeAttemptDelay",
+								...{
+									summarizeCount: 1,
+									summaryAttemptsPerPhase: 1,
+									summaryAttempts: 1,
+									summaryAttemptPhase: 1,
+								},
+							},
+							{
+								eventName: "Running:Summarize_generate",
+								...retryProps2,
+							},
+							{
+								eventName: "Running:Summarize_Op",
+								...retryProps2,
+							},
 						]),
 						"unexpected log sequence",
 					);
@@ -740,16 +754,10 @@ describe("Runtime", () => {
 						summaryAttempts: 1,
 						summaryAttemptPhase: 1,
 					};
-					const retryProps2 = {
-						summarizeCount: 1,
-						summaryAttemptsPerPhase: 2,
-						summaryAttempts: 2,
-						summaryAttemptPhase: 1,
-					};
 					assert(
 						mockLogger.matchEvents([
 							{ eventName: "Running:Summarize_cancel", ...retryProps1 },
-							{ eventName: "Running:SummarizeAttemptDelay", ...retryProps2 },
+							{ eventName: "Running:SummarizeAttemptDelay", ...retryProps1 },
 						]),
 						"unexpected log sequence",
 					);
@@ -757,6 +765,12 @@ describe("Runtime", () => {
 					shouldDeferGenerateSummary = false;
 					await tickAndFlushPromises(1);
 					assertRunCounts(2, 0, 0, "normal run");
+					const retryProps2 = {
+						summarizeCount: 1,
+						summaryAttemptsPerPhase: 2,
+						summaryAttempts: 2,
+						summaryAttemptPhase: 1,
+					};
 
 					assert(
 						mockLogger.matchEvents([
