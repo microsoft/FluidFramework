@@ -64,6 +64,13 @@
 		"broken": {
 			"InterfaceDeclaration_ITelemetryContext": {
 				"forwardCompat": false
+			},
+			"RemovedEnumDeclaration_BindState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreChannel": {
+				"forwardCompat": false
 			}
 		}
 	}

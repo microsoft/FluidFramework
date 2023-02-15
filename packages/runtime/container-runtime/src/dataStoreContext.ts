@@ -29,7 +29,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-	BindState,
 	channelsTreeName,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
@@ -49,6 +48,7 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -246,8 +246,6 @@ export abstract class FluidDataStoreContext
 	protected registry: IFluidDataStoreRegistry | undefined;
 
 	protected detachedRuntimeCreation = false;
-	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
-	public readonly bindToContext: () => void;
 	protected channel: IFluidDataStoreChannel | undefined;
 	private loaded = false;
 	protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -280,7 +278,6 @@ export abstract class FluidDataStoreContext
 	constructor(
 		props: IFluidDataStoreContextProps,
 		private readonly existing: boolean,
-		private bindState: BindState, // Used to assert for state tracking purposes
 		public readonly isLocalDataStore: boolean,
 		private readonly makeLocallyVisibleFn: () => void,
 	) {
@@ -300,20 +297,6 @@ export abstract class FluidDataStoreContext
 			this.containerRuntime.attachState !== AttachState.Detached && this.existing
 				? this.containerRuntime.attachState
 				: AttachState.Detached;
-
-		this.bindToContext = () => {
-			assert(
-				this.bindState === BindState.NotBound,
-				0x13b /* "datastore context is already in bound state" */,
-			);
-			this.bindState = BindState.Binding;
-			assert(
-				this.channel !== undefined,
-				0x13c /* "undefined channel on datastore context" */,
-			);
-			this.makeLocallyVisible();
-			this.bindState = BindState.Bound;
-		};
 
 		const thisSummarizeInternal = async (
 			fullTree: boolean,
@@ -741,6 +724,15 @@ export abstract class FluidDataStoreContext
 	 */
 	public makeLocallyVisible() {
 		assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
+		assert(
+			this.channel.visibilityState === VisibilityState.LocallyVisible,
+			"Channel must be locally visible",
+		);
+		this.makeLocallyVisibleFn();
+	}
+
+	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
+	public bindToContext() {
 		this.makeLocallyVisibleFn();
 	}
 
@@ -952,7 +944,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
-		super(props, true /* existing */, BindState.Bound, false /* isLocalDataStore */, () => {
+		super(props, true /* existing */, false /* isLocalDataStore */, () => {
 			throw new Error("Already attached");
 		});
 
@@ -1042,7 +1034,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		super(
 			props,
 			props.snapshotTree !== undefined ? true : false /* existing */,
-			props.snapshotTree ? BindState.Bound : BindState.NotBound,
 			true /* isLocalDataStore */,
 			props.makeLocallyVisibleFn,
 		);

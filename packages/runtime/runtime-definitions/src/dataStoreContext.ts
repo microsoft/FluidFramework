@@ -224,15 +224,6 @@ export interface IContainerRuntimeBase
 }
 
 /**
- * @deprecated Used only in deprecated API bindToContext
- */
-export enum BindState {
-	NotBound = "NotBound",
-	Binding = "Binding",
-	Bound = "Bound",
-}
-
-/**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
@@ -246,7 +237,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 	 */
 	readonly attachState: AttachState;
 
-	readonly visibilityState?: VisibilityState;
+	readonly visibilityState: VisibilityState;
 
 	/**
 	 * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.

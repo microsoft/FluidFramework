@@ -43,6 +43,7 @@ import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -466,6 +467,10 @@ export class MockFluidDataStoreRuntime
 
 	public get attachState(): AttachState {
 		return this.local ? AttachState.Detached : AttachState.Attached;
+	}
+
+	public get visibilityState(): VisibilityState {
+		return this.local ? VisibilityState.NotVisible : VisibilityState.GloballyVisible;
 	}
 
 	public bindChannel(channel: IChannel): void {
