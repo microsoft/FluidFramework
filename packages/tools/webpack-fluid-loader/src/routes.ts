@@ -49,8 +49,9 @@ export function devServerConfig(baseDir: string, env: RouteOptions) {
 			onAfterSetupMiddleware: (devServer) => after(devServer.app, devServer, baseDir, env),
 		},
 		experiments: {
-			futureDefaults: true,
-		},
+			asyncWebAssembly: true,
+			topLevelAwait: true
+		}
 	};
 }
 

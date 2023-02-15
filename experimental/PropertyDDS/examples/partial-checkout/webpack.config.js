@@ -42,7 +42,8 @@ module.exports = (env) => {
 			extensions: [".ts", ".tsx", ".js"],
 		},
 		experiments: {
-			futureDefaults: true
+			asyncWebAssembly: true,
+			topLevelAwait: true
 		}
 	};
 };

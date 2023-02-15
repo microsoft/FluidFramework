@@ -50,6 +50,7 @@ module.exports = {
 		}),
 	],
 	experiments: {
-		futureDefaults: true
+		asyncWebAssembly: true,
+		topLevelAwait: true
 	}
 };
