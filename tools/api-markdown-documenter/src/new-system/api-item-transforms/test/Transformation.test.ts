@@ -18,11 +18,11 @@ import {
 	MarkdownDocumenterConfiguration,
 	markdownDocumenterConfigurationWithDefaults,
 } from "../../../Configuration";
+import { getHeadingForApiItem } from "../../../utilities";
 import {
 	CodeSpanNode,
+	DocumentationNode,
 	FencedCodeBlockNode,
-	HeadingNode,
-	HierarchicalSectionNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
@@ -33,7 +33,7 @@ import {
 	createSingleLineSpanFromPlainText,
 } from "../../documentation-domain";
 import { apiItemToSections } from "../TransformApiItem";
-import { createHeadingForApiItem, wrapInSection } from "../helpers";
+import { wrapInSection } from "../helpers";
 
 /**
  * Sample "default" configuration.
@@ -100,24 +100,26 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const result = config.transformApiVariable(apiVariable, config);
 
-		const expected = new HierarchicalSectionNode(
-			[
-				wrapInSection([ParagraphNode.createFromPlainText("Test Constant")]),
-				wrapInSection(
-					[
-						FencedCodeBlockNode.createFromPlainText(
-							'TestConst = "Hello world!"',
-							"typescript",
-						),
-					],
-					{
-						title: "Signature",
-						id: `testconst-signature`,
-					},
-				),
-			],
-			createHeadingForApiItem(apiVariable, config),
-		);
+		const expected = [
+			wrapInSection(
+				[
+					wrapInSection([ParagraphNode.createFromPlainText("Test Constant")]),
+					wrapInSection(
+						[
+							FencedCodeBlockNode.createFromPlainText(
+								'TestConst = "Hello world!"',
+								"typescript",
+							),
+						],
+						{
+							title: "Signature",
+							id: `testconst-signature`,
+						},
+					),
+				],
+				getHeadingForApiItem(apiVariable, config),
+			),
+		];
 
 		expect(result).deep.equals(expected);
 	});
@@ -135,91 +137,93 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const result = config.transformApiFunction(apiFunction, config);
 
-		const expected = new HierarchicalSectionNode(
-			[
-				// Summary section
-				wrapInSection([ParagraphNode.createFromPlainText("Test function")]),
+		const expected = [
+			wrapInSection(
+				[
+					// Summary section
+					wrapInSection([ParagraphNode.createFromPlainText("Test function")]),
 
-				// Signature section
-				wrapInSection(
-					[
-						new FencedCodeBlockNode(
-							[
-								new PlainTextNode(
-									"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
-								),
-							],
-							"typescript",
-						),
-					],
-					{
-						title: "Signature",
-						id: `testfunction-signature`,
-					},
-				),
+					// Signature section
+					wrapInSection(
+						[
+							new FencedCodeBlockNode(
+								[
+									new PlainTextNode(
+										"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
+									),
+								],
+								"typescript",
+							),
+						],
+						{
+							title: "Signature",
+							id: `testfunction-signature`,
+						},
+					),
 
-				// Parameters table section
-				wrapInSection(
-					[
-						new TableNode(
-							[
-								new TableRowNode([
-									TableCellNode.createFromPlainText("testParameter"),
-									TableCellNode.Empty,
-									new TableCellNode([
-										SpanNode.createFromPlainText("TTypeParameter"),
+					// Parameters table section
+					wrapInSection(
+						[
+							new TableNode(
+								[
+									new TableRowNode([
+										TableCellNode.createFromPlainText("testParameter"),
+										TableCellNode.Empty,
+										new TableCellNode([
+											SpanNode.createFromPlainText("TTypeParameter"),
+										]),
+										TableCellNode.createFromPlainText("A test parameter"),
 									]),
-									TableCellNode.createFromPlainText("A test parameter"),
-								]),
-								new TableRowNode([
-									TableCellNode.createFromPlainText("testOptionalParameter"),
-									TableCellNode.createFromPlainText("optional"),
-									new TableCellNode([
-										SpanNode.createFromPlainText("TTypeParameter"),
+									new TableRowNode([
+										TableCellNode.createFromPlainText("testOptionalParameter"),
+										TableCellNode.createFromPlainText("optional"),
+										new TableCellNode([
+											SpanNode.createFromPlainText("TTypeParameter"),
+										]),
+										TableCellNode.createFromPlainText("An optional parameter"),
 									]),
-									TableCellNode.createFromPlainText("An optional parameter"),
+								],
+								new TableRowNode([
+									TableCellNode.createFromPlainText("Parameter"),
+									TableCellNode.createFromPlainText("Modifiers"),
+									TableCellNode.createFromPlainText("Type"),
+									TableCellNode.createFromPlainText("Description"),
 								]),
-							],
-							new TableRowNode([
-								TableCellNode.createFromPlainText("Parameter"),
-								TableCellNode.createFromPlainText("Modifiers"),
-								TableCellNode.createFromPlainText("Type"),
-								TableCellNode.createFromPlainText("Description"),
+							),
+						],
+						{
+							title: "Parameters",
+							id: "testfunction-parameters",
+						},
+					),
+
+					// Returns section
+					wrapInSection(
+						[
+							ParagraphNode.createFromPlainText("The provided parameter"),
+							new ParagraphNode([
+								createSingleLineSpanFromPlainText("Return type: ", { bold: true }),
+								createSingleLineSpanFromPlainText("TTypeParameter"),
 							]),
-						),
-					],
-					{
-						title: "Parameters",
-						id: "testfunction-parameters",
-					},
-				),
+						],
+						{
+							title: "Returns",
+							id: "testfunction-returns",
+						},
+					),
 
-				// Returns section
-				wrapInSection(
-					[
-						ParagraphNode.createFromPlainText("The provided parameter"),
-						new ParagraphNode([
-							createSingleLineSpanFromPlainText("Return type: ", { bold: true }),
-							createSingleLineSpanFromPlainText("TTypeParameter"),
-						]),
-					],
-					{
-						title: "Returns",
-						id: "testfunction-returns",
-					},
-				),
-
-				// Throws section
-				wrapInSection(
-					[ParagraphNode.createFromPlainText("An Error when something bad happens.")],
-					{
-						title: "Throws",
-						id: `testfunction-throws`,
-					},
-				),
-			],
-			HeadingNode.createFromPlainText("testFunction", "testfunction-function"),
-		);
+					// Throws section
+					wrapInSection(
+						[ParagraphNode.createFromPlainText("An Error when something bad happens.")],
+						{
+							title: "Throws",
+							id: `testfunction-throws`,
+						},
+					),
+				],
+				{ title: "testFunction", id: "testfunction-function" },
+			),
+		];
 
 		expect(result).deep.equals(expected);
 	});
@@ -239,68 +243,87 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItemToSections(childItem, config),
 		);
 
-		const expected = new HierarchicalSectionNode([
+		const expected: DocumentationNode[] = [
 			// Summary section
-			ParagraphNode.createFromPlainText("Test interface"),
+			wrapInSection([ParagraphNode.createFromPlainText("Test interface")]),
 
 			// Signature section
-			HeadingNode.createFromPlainText("Signature", /* id: */ "testinterface-signature"),
-			FencedCodeBlockNode.createFromPlainText("export interface TestInterface", "typescript"),
+			wrapInSection(
+				[
+					FencedCodeBlockNode.createFromPlainText(
+						"export interface TestInterface",
+						"typescript",
+					),
+				],
+				{ title: "Signature", id: "testinterface-signature" },
+			),
 
 			// Remarks section
-			HeadingNode.createFromPlainText("Remarks", /* id: */ "testinterface-remarks"),
-			ParagraphNode.createFromPlainText("Here are some remarks about the interface"),
+			wrapInSection(
+				[ParagraphNode.createFromPlainText("Here are some remarks about the interface")],
+				{ title: "Remarks", id: "testinterface-remarks" },
+			),
 
 			// Properties section
-			HeadingNode.createFromPlainText("Properties"),
-			new TableNode(
+			wrapInSection(
 				[
-					new TableRowNode([
-						new TableCellNode([
-							LinkNode.createFromPlainText(
-								"testOptionalInterfaceProperty",
-								"./test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
-							),
+					new TableNode(
+						[
+							new TableRowNode([
+								new TableCellNode([
+									LinkNode.createFromPlainText(
+										"testOptionalInterfaceProperty",
+										"./test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
+									),
+								]),
+								new TableCellNode([CodeSpanNode.createFromPlainText("optional")]),
+								TableCellNode.createFromPlainText("0"),
+								new TableCellNode([SpanNode.createFromPlainText("number")]),
+								TableCellNode.createFromPlainText("Test optional property"),
+							]),
+						],
+						new TableRowNode([
+							TableCellNode.createFromPlainText("Property"),
+							TableCellNode.createFromPlainText("Modifiers"),
+							TableCellNode.createFromPlainText("Default Value"),
+							TableCellNode.createFromPlainText("Type"),
+							TableCellNode.createFromPlainText("Description"),
 						]),
-						new TableCellNode([CodeSpanNode.createFromPlainText("optional")]),
-						TableCellNode.createFromPlainText("0"),
-						new TableCellNode([SpanNode.createFromPlainText("number")]),
-						TableCellNode.createFromPlainText("Test optional property"),
-					]),
+					),
 				],
-				new TableRowNode([
-					TableCellNode.createFromPlainText("Property"),
-					TableCellNode.createFromPlainText("Modifiers"),
-					TableCellNode.createFromPlainText("Default Value"),
-					TableCellNode.createFromPlainText("Type"),
-					TableCellNode.createFromPlainText("Description"),
-				]),
+				{ title: "Properties" },
 			),
 
 			// Property details section
-			HeadingNode.createFromPlainText("Property Details"),
 			wrapInSection(
 				[
-					wrapInSection([ParagraphNode.createFromPlainText("Test optional property")]),
 					wrapInSection(
 						[
-							FencedCodeBlockNode.createFromPlainText(
-								"testOptionalInterfaceProperty?: number;",
-								"typescript",
+							wrapInSection([
+								ParagraphNode.createFromPlainText("Test optional property"),
+							]),
+							wrapInSection(
+								[
+									FencedCodeBlockNode.createFromPlainText(
+										"testOptionalInterfaceProperty?: number;",
+										"typescript",
+									),
+								],
+								{
+									title: "Signature",
+									id: "testoptionalinterfaceproperty-signature",
+								},
 							),
 						],
 						{
-							title: "Signature",
-							id: "testoptionalinterfaceproperty-signature",
+							title: "testOptionalInterfaceProperty",
+							id: "testoptionalinterfaceproperty-propertysignature",
 						},
 					),
 				],
-				{
-					title: "testOptionalInterfaceProperty",
-					id: "testoptionalinterfaceproperty-propertysignature",
-				},
+				{ title: "Property Details" },
 			),
-		]);
+		];
 
 		expect(result).deep.equals(expected);
 	});

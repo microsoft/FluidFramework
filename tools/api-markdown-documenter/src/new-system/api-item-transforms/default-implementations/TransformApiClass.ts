@@ -229,5 +229,5 @@ export function transformApiClass(
 		}
 	}
 
-	return config.createSectionWithChildContent(apiClass, sections, config);
+	return config.createChildContentSections(apiClass, sections, config);
 }

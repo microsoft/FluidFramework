@@ -190,5 +190,5 @@ export function transformApiModuleLike(
 		}
 	}
 
-	return config.createSectionWithChildContent(apiItem, children, config);
+	return config.createChildContentSections(apiItem, children, config);
 }

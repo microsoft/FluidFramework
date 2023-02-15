@@ -27,7 +27,6 @@ import {
 	getAncestralHierarchy,
 	getDeprecatedBlock,
 	getExampleBlocks,
-	getHeadingForApiItem,
 	getLinkForApiItem,
 	getQualifiedApiItemName,
 	getReturnsBlock,
@@ -404,20 +403,6 @@ export function createBreadcrumbParagraph(
 	contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
 
 	return new ParagraphNode(contents);
-}
-
-/**
- * Renders a heading for the API item, using the provided configuration policy for generating the link text and ID.
- *
- * @param apiItem - The API item for which the heading is being generated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
- */
-export function createHeadingForApiItem(
-	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
-): HeadingNode {
-	const heading = getHeadingForApiItem(apiItem, config);
-	return HeadingNode.createFromPlainTextHeading(heading);
 }
 
 /**

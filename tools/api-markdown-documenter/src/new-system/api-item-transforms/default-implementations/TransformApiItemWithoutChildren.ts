@@ -16,5 +16,5 @@ export function transformApiItemWithoutChildren(
 ): HierarchicalSectionNode[] {
 	// Items without children don't have much information to provide other than the default
 	// rendered details.
-	return config.createSectionWithChildContent(apiItem, undefined, config);
+	return config.createChildContentSections(apiItem, undefined, config);
 }

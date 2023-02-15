@@ -29,5 +29,5 @@ export function transformApiFunctionLike(
 		childSections.push(renderedReturnsSection);
 	}
 
-	return config.createSectionWithChildContent(apiFunctionLike, childSections, config);
+	return config.createChildContentSections(apiFunctionLike, childSections, config);
 }

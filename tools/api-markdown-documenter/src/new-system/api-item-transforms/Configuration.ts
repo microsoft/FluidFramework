@@ -149,14 +149,16 @@ export interface ApiItemTransformationConfiguration {
 	transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
 
 	/**
-	 * Policy for rendering the child content section within a section describing an API item that potentially
+	 * Policy for generating child content sections within a section describing an API item that potentially
 	 * has children (see {@link TransformApiItemWithChildren}).
 	 *
-	 * @remarks This policy is used by the default policies of many of the other rendering policy options.
-	 * This can be used to adjust the layout of the child rendering section of the rendering policies without
-	 * having to provide new overrides for all of those content types.
+	 * @remarks
+	 *
+	 * This policy is used by the default policies of many of the other transformation policy options.
+	 * This can be used to adjust the layout of the child sections for API item kinds that have
+	 * without having to provide new transformation overrides for all of those content types.
 	 */
-	createSectionWithChildContent?: CreateChildContentSections;
+	createChildContentSections?: CreateChildContentSections;
 }
 
 /**
@@ -242,6 +244,5 @@ export const defaultApiItemTransformations: Required<ApiItemTransformationConfig
 	/**
 	 * Default policy for rendering child content sections.
 	 */
-	createSectionWithChildContent:
-		DefaultTransformationImplementations.createSectionWithChildContent,
+	createChildContentSections: DefaultTransformationImplementations.createSectionWithChildContent,
 };
