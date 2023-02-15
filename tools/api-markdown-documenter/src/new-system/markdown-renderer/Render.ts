@@ -89,23 +89,6 @@ export const defaultNodeRenderers: DocumentationNodeRenderers = {
 };
 
 /**
- * Represents a rendered {@link DocumentNode}.
- */
-export interface RenderedDocument {
-	/**
-	 * Output path for the document to be written to.
-	 *
-	 * @remarks This path is relative to the base URI provided to the system.
-	 */
-	filePath: string;
-
-	/**
-	 * The documentation contents to be written to disk.
-	 */
-	contents: string;
-}
-
-/**
  * Generates the root {@link MarkdownRenderContext} for rendering a document with the provided `renderers`.
  */
 export function getRootRenderContext(renderers: DocumentationNodeRenderers): MarkdownRenderContext {
@@ -119,9 +102,7 @@ export function getRootRenderContext(renderers: DocumentationNodeRenderers): Mar
 }
 
 /**
- * Renders a {@link DocumentNode}.
- *
- * TODO: take in options (e.g. EOL config)
+ * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.
  */
 export function renderDocument(
 	document: DocumentNode,

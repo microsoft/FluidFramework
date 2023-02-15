@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// TODO: fix before merging
-/* eslint-disable no-restricted-syntax */
-
-export * from "./default-renderers";
-export * from "./Render";
-export * from "./RenderContext";
-
-/* eslint-enable no-restricted-syntax */
+export { renderDocument } from "./Render";
+export {
+	DocumentationNodeRenderers,
+	MarkdownRenderContext,
+	RenderDocumentationNode,
+} from "./RenderContext";
