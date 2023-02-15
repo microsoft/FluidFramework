@@ -29,7 +29,7 @@ class TestLogger implements ITelemetryBufferedLogger {
 	}
 	constructor(
 		private readonly parentLogger: ITelemetryBufferedLogger,
-		private readonly testName: string,
+		private readonly testName: string | undefined,
 	) {}
 }
 const nullLogger: ITelemetryBufferedLogger = {
@@ -47,11 +47,20 @@ export const mochaHooks = {
 	beforeAll() {
 		originalLogger = _global.getTestLogger?.() ?? nullLogger;
 		_global.getTestLogger = () => {
-			// If it hasn't been created yet, create a test logger that will log the test name on demand
-			if (!currentTestLogger && currentTestName !== undefined) {
-				currentTestLogger = new TestLogger(originalLogger, currentTestName);
+			// If a current test logger exists, use that. Otherwise, create a new one. This should become the
+			// current test logger if this function is running in a context which understands the current test.
+			// Otherwise, just return the created TestLogger. (This happens e.g. if someone calls `getTestLogger`
+			// in a `before` or `after` hook, due to the order in which mocha hooks run)
+			if (currentTestLogger !== undefined) {
+				return currentTestLogger;
 			}
-			return currentTestLogger ?? originalLogger;
+
+			const testLogger = new TestLogger(originalLogger, currentTestName);
+			if (currentTestName !== undefined) {
+				currentTestLogger = testLogger;
+			}
+
+			return testLogger;
 		};
 	},
 	beforeEach(this: Mocha.Context) {
