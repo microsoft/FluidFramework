@@ -5,44 +5,49 @@
 import { expect } from "chai";
 
 import { AlertKind, AlertNode, PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
+import { testRender } from "./Utilities";
 
 describe("Alert markdown tests", () => {
-	it("Can render a simple alert", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new AlertNode(
-				[
-					new PlainTextNode("This is a test of the AlertNode rendering system. "),
-					new PlainTextNode(
-						"If this were a real alert, more information would follow this message.",
-					),
-				],
-				AlertKind.Warning,
-				"This is a test",
-			),
+	it("Can render an alert with a title", () => {
+		const alertNode = new AlertNode(
+			[
+				new PlainTextNode("This is a test of the AlertNode rendering system. "),
+				new PlainTextNode(
+					"If this were a real alert, more information would follow this message.",
+				),
+			],
+			AlertKind.Warning,
+			/* title: */ "This is a test",
 		);
-		const expectedOutput = [
+		const result = testRender(alertNode);
+
+		const expected = [
 			"",
-			"> <bold> [Warning]: This is a test </bold>",
+			"> **\\[Warning\\]: This is a test**",
 			"> ",
 			"> This is a test of the AlertNode rendering system. If this were a real alert, more information would follow this message.",
 			"",
-		].join(standardEOL);
-		expect(renderedForm).to.equal(expectedOutput);
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
 	});
 	it("Can render an alert without a title", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new AlertNode([new PlainTextNode("PRO TIP: Unit tests are awesome!")], AlertKind.Tip),
+		const alertNode = new AlertNode(
+			[new PlainTextNode("PRO TIP: Unit tests are awesome!")],
+			AlertKind.Tip,
 		);
-		const expectedOutput = [
+		const result = testRender(alertNode);
+
+		const expected = [
 			"",
-			"> <bold> [Tip] </bold>",
+			"> **\\[Tip\\]**",
 			"> ",
 			"> PRO TIP: Unit tests are awesome!",
 			"",
-		].join(standardEOL);
-		expect(renderedForm).to.equal(expectedOutput);
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
 	});
 });
