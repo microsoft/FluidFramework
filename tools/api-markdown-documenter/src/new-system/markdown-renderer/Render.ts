@@ -144,24 +144,7 @@ function renderDocumentNode(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (node.title !== undefined) {
-		if (context.insideHtml) {
-			writer.ensureNewLine();
-			writer.writeLine(`<title>${node.title}</title>`);
-		} else {
-			// In Markdown, there isn't a concept of a "title".
-			// Instead, we will use a top-level heading (and offset our context level to ensure
-			// sub-headings are at the appropriate level).
-			// We accomplish this by wrapping the document's contents in a `HierarchicalSectionNode`.
-			const rootSection: HierarchicalSectionNode = new HierarchicalSectionNode(
-				node.children,
-				HeadingNode.createFromPlainText(node.title),
-			);
-			renderNode(rootSection, writer, context);
-		}
-	} else {
-		renderNodes(node.children, writer, context);
-	}
+	renderNodes(node.children, writer, context);
 
 	// TODO: front-matter, header, footer, etc.
 }
