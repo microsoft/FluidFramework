@@ -14,11 +14,12 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
-import { Container } from "@fluidframework/container-loader";
+import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
+
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -304,7 +305,7 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	let container: Container;
+	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let sharedCell: SharedCell;
 	let containerRuntime: ContainerRuntime;
@@ -324,7 +325,7 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
 				}),
 			},
 		};
-		container = (await provider.makeTestContainer(configWithFeatureGates)) as Container;
+		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 		sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;

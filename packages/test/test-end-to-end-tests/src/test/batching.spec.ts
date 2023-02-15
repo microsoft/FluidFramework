@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -23,7 +23,8 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -97,7 +98,7 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	let container1: Container;
+	let container1: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let dataObject1map1: SharedMap;
@@ -109,7 +110,7 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		const configCopy = { ...testContainerConfig, runtimeOptions };
 
 		// Create a Container for the first client.
-		container1 = (await provider.makeTestContainer(configCopy)) as Container;
+		container1 = await provider.makeTestContainer(configCopy);
 		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);

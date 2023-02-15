@@ -93,6 +93,7 @@ import {
 	addSummarizeResultToSummary,
 	addTreeToSummary,
 	createRootSummarizerNodeWithGC,
+	IFetchSnapshotResult,
 	IRootSummarizerNodeWithGC,
 	RequestParser,
 	create404Response,
@@ -102,6 +103,7 @@ import {
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
+	ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
@@ -168,6 +170,8 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
+import { shouldAllowGcTombstoneEnforcement } from "./garbageCollectionHelpers";
+import { gcTombstoneGenerationOptionName } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -1033,6 +1037,11 @@ export class ContainerRuntime
 	private nextSummaryNumber: number;
 
 	/**
+	 * If false, loading or using a Tombstoned object should merely log, not fail
+	 */
+	public readonly gcTombstoneEnforcementAllowed: boolean;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1085,7 +1094,21 @@ export class ContainerRuntime
 
 		this._connected = this.context.connected;
 
+		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
+			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
+			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName] /* current */,
+		);
+
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
+
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "GCFeatureMatrix",
+			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
+			inputs: JSON.stringify({
+				gcOptions_gcTombstoneGeneration:
+					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+			}),
+		});
 
 		const opSplitter = new OpSplitter(
 			chunks,
@@ -1204,6 +1227,7 @@ export class ContainerRuntime
 			async () => this.garbageCollector.getBaseGCDetails(),
 			(path: string, timestampMs: number, packagePath?: readonly string[]) =>
 				this.garbageCollector.nodeUpdated(path, "Changed", timestampMs, packagePath),
+			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 		);
 
@@ -2278,12 +2302,24 @@ export class ContainerRuntime
 			fullGC,
 		} = options;
 
+		const telemetryContext = new TelemetryContext();
+		// Add the options that are used to generate this summary to the telemetry context.
+		telemetryContext.setAll("fluid_Summarize", "Options", {
+			fullTree,
+			trackState,
+			runGC,
+			fullGC,
+			runSweep,
+		});
+
 		let gcStats: IGCStats | undefined;
 		if (runGC) {
-			gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
+			gcStats = await this.collectGarbage(
+				{ logger: summaryLogger, runSweep, fullGC },
+				telemetryContext,
+			);
 		}
 
-		const telemetryContext = new TelemetryContext();
 		const { stats, summary } = await this.summarizerNode.summarize(
 			fullTree,
 			trackState,
@@ -2454,15 +2490,18 @@ export class ContainerRuntime
 	 * Runs garbage collection and updates the reference / used state of the nodes in the container.
 	 * @returns the statistics of the garbage collection run; undefined if GC did not run.
 	 */
-	public async collectGarbage(options: {
-		/** Logger to use for logging GC events */
-		logger?: ITelemetryLogger;
-		/** True to run GC sweep phase after the mark phase */
-		runSweep?: boolean;
-		/** True to generate full GC data */
-		fullGC?: boolean;
-	}): Promise<IGCStats | undefined> {
-		return this.garbageCollector.collectGarbage(options);
+	public async collectGarbage(
+		options: {
+			/** Logger to use for logging GC events */
+			logger?: ITelemetryLogger;
+			/** True to run GC sweep phase after the mark phase */
+			runSweep?: boolean;
+			/** True to generate full GC data */
+			fullGC?: boolean;
+		},
+		telemetryContext?: ITelemetryContext,
+	): Promise<IGCStats | undefined> {
+		return this.garbageCollector.collectGarbage(options, telemetryContext);
 	}
 
 	/**
@@ -2509,8 +2548,15 @@ export class ContainerRuntime
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
+		const shouldPauseInboundSignal =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
+			) !== true;
 		try {
 			await this.deltaManager.inbound.pause();
+			if (shouldPauseInboundSignal) {
+				await this.deltaManager.inboundSignal.pause();
+			}
 
 			const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
@@ -2706,8 +2752,12 @@ export class ContainerRuntime
 		} finally {
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
+
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();
+			if (shouldPauseInboundSignal) {
+				this.deltaManager.inboundSignal.resume();
+			}
 		}
 	}
 
@@ -2778,8 +2828,7 @@ export class ContainerRuntime
 			0x132 /* "sending ops in detached container" */,
 		);
 
-		const deserializedContent: ContainerRuntimeMessage = { type, contents };
-		const serializedContent = JSON.stringify(deserializedContent);
+		const serializedContent = JSON.stringify({ type, contents });
 
 		if (this.deltaManager.readOnlyInfo.readonly) {
 			this.logger.sendTelemetryEvent({
@@ -2790,7 +2839,7 @@ export class ContainerRuntime
 
 		const message: BatchMessage = {
 			contents: serializedContent,
-			deserializedContent,
+			deserializedContent: JSON.parse(serializedContent), // Deep copy in case caller changes reference object
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -3010,18 +3059,17 @@ export class ContainerRuntime
 		// The call to fetch the snapshot is very expensive and not always needed.
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
-		const snapshotTreeFetcher = async () => {
-			const fetchResult = await this.fetchLatestSnapshotFromStorage(summaryLogger, {
-				eventName: "RefreshLatestSummaryGetSnapshot",
-				ackHandle,
-				summaryRefSeq,
-				fetchLatest: true,
-			});
-
-			const latestSnapshotRefSeq = await seqFromTree(
-				fetchResult.snapshotTree,
+		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
+			const fetchResult = await this.fetchLatestSnapshotFromStorage(
+				summaryLogger,
+				{
+					eventName: "RefreshLatestSummaryAckFetch",
+					ackHandle,
+					targetSequenceNumber: summaryRefSeq,
+				},
 				readAndParseBlob,
 			);
+
 			/**
 			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
 			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
@@ -3032,7 +3080,7 @@ export class ContainerRuntime
 			 * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
 			 * state.
 			 */
-			if (latestSnapshotRefSeq < summaryRefSeq) {
+			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
 				const error = DataProcessingError.create(
 					"Fetched snapshot is older than the received ack",
 					"RefreshLatestSummaryAck",
@@ -3040,42 +3088,36 @@ export class ContainerRuntime
 					{
 						ackHandle,
 						summaryRefSeq,
-						latestSnapshotRefSeq,
+						latestSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
 					},
 				);
 				this.closeFn(error);
 				throw error;
 			}
 
-			summaryLogger.sendTelemetryEvent({
-				eventName: "LatestSummaryRetrieved",
-				ackHandle,
-				lastSequenceNumber: latestSnapshotRefSeq,
-				targetSequenceNumber: summaryRefSeq,
-			});
-
 			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
 			// wait for the delta manager to catch up before refreshing the latest Summary.
-			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryLogger);
+			await this.waitForDeltaManagerToCatchup(
+				fetchResult.latestSnapshotRefSeq,
+				summaryLogger,
+			);
 
-			return fetchResult.snapshotTree;
+			return {
+				snapshotTree: fetchResult.snapshotTree,
+				snapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+			};
 		};
 
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
-			snapshotTreeFetcher,
+			fetchLatestSnapshot,
 			readAndParseBlob,
 			summaryLogger,
 		);
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(
-			result,
-			proposalHandle,
-			summaryRefSeq,
-			readAndParseBlob,
-		);
+		await this.garbageCollector.refreshLatestSummary(proposalHandle, result, readAndParseBlob);
 	}
 
 	/**
@@ -3087,30 +3129,31 @@ export class ContainerRuntime
 	private async refreshLatestSummaryAckFromServer(
 		summaryLogger: ITelemetryLogger,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
-		const { snapshotTree, versionId } = await this.fetchLatestSnapshotFromStorage(
-			summaryLogger,
-			{
-				eventName: "RefreshLatestSummaryGetSnapshot",
-				fetchLatest: true,
-			},
-		);
-
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const latestSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
-
+		const { snapshotTree, versionId, latestSnapshotRefSeq } =
+			await this.fetchLatestSnapshotFromStorage(
+				summaryLogger,
+				{
+					eventName: "RefreshLatestSummaryFromServerFetch",
+				},
+				readAndParseBlob,
+			);
+		const fetchLatestSnapshot: IFetchSnapshotResult = {
+			snapshotTree,
+			snapshotRefSeq: latestSnapshotRefSeq,
+		};
 		const result = await this.summarizerNode.refreshLatestSummary(
-			undefined,
+			undefined /* proposalHandle */,
 			latestSnapshotRefSeq,
-			async () => snapshotTree,
+			async () => fetchLatestSnapshot,
 			readAndParseBlob,
 			summaryLogger,
 		);
 
 		// Notify the garbage collector so it can update its latest summary state.
 		await this.garbageCollector.refreshLatestSummary(
+			undefined /* proposalHandle */,
 			result,
-			undefined,
-			latestSnapshotRefSeq,
 			readAndParseBlob,
 		);
 
@@ -3120,7 +3163,8 @@ export class ContainerRuntime
 	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLogger,
 		event: ITelemetryGenericEvent,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string }> {
+		readAndParseBlob: ReadAndParseBlob,
+	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
@@ -3128,9 +3172,16 @@ export class ContainerRuntime
 				end: (arg0: {
 					getVersionDuration?: number | undefined;
 					getSnapshotDuration?: number | undefined;
+					snapshotRefSeq?: number | undefined;
+					snapshotVersion?: string | undefined;
 				}) => void;
 			}) => {
-				const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+				const stats: {
+					getVersionDuration?: number;
+					getSnapshotDuration?: number;
+					snapshotRefSeq?: number;
+					snapshotVersion?: string;
+				} = {};
 				const trace = Trace.start();
 
 				const versions = await this.storage.getVersions(
@@ -3148,9 +3199,16 @@ export class ContainerRuntime
 				const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
 				assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
 				stats.getSnapshotDuration = trace.trace().duration;
+				const latestSnapshotRefSeq = await seqFromTree(maybeSnapshot, readAndParseBlob);
+				stats.snapshotRefSeq = latestSnapshotRefSeq;
+				stats.snapshotVersion = versions[0].id;
 
 				perfEvent.end(stats);
-				return { snapshotTree: maybeSnapshot, versionId: versions[0].id };
+				return {
+					snapshotTree: maybeSnapshot,
+					versionId: versions[0].id,
+					latestSnapshotRefSeq,
+				};
 			},
 		);
 	}

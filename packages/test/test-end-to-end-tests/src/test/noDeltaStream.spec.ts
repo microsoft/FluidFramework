@@ -5,9 +5,10 @@
 
 import { strict as assert } from "assert";
 
+import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+
 import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import {
 	IDocumentService,
@@ -16,7 +17,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
 import {
 	createLoader,
 	ITestContainerConfig,
@@ -24,7 +24,7 @@ import {
 	ITestObjectProvider,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
@@ -243,10 +243,10 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					provider.urlResolver,
 				);
 
-				const storageOnlyContainer = (await storageOnlyLoader.resolve({
+				const storageOnlyContainer = await storageOnlyLoader.resolve({
 					url: containerUrl,
 					headers: { [LoaderHeader.loadMode]: testConfig.loadOptions },
-				})) as Container;
+				});
 
 				storageOnlyContainer.connect();
 				const deltaManager = storageOnlyContainer.deltaManager;

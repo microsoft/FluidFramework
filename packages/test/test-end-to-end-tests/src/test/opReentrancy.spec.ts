@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -15,7 +15,8 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
@@ -25,8 +26,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		registry,
 	};
 	let provider: ITestObjectProvider;
-	let container1: Container;
-	let container2: Container;
+	let container1: IContainer;
+	let container2: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let sharedMap1: SharedMap;
@@ -48,8 +49,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
 		};
-		container1 = (await provider.makeTestContainer(configWithFeatureGates)) as Container;
-		container2 = (await provider.loadTestContainer(configWithFeatureGates)) as Container;
+		container1 = await provider.makeTestContainer(configWithFeatureGates);
+		container2 = await provider.loadTestContainer(configWithFeatureGates);
 
 		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");

@@ -23,7 +23,7 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 

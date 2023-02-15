@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
-import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
+import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
@@ -40,7 +40,7 @@ import {
 	describeFullCompat,
 	describeNoCompat,
 	itExpects,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -129,11 +129,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				"Loaded package should be same as provided",
 			);
 		}
-		assert.strictEqual(
-			(container as Container).clientDetails.capabilities.interactive,
-			true,
-			"Client details should be set with interactive as true",
-		);
 	});
 
 	it("Attach detached container", async () => {

@@ -16,8 +16,8 @@ import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
 describeNoCompat("Less batches", (getTestObjectProvider) => {
 	const mapId = "mapId";

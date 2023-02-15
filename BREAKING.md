@@ -15,12 +15,27 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.4.0.0
+
+## 2.0.0-internal.4.0.0 Upcoming changes
+
+## 2.0.0-internal.4.0.0 Breaking changes
+
+-   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+
+### Container and RelativeLoader no longer exported
+
+Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 
 -   [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
 -   [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
+-   [Deprecated IFluidHTMLView and HTMLViewAdapter](#Deprecated-IFluidHTMLView-and-HTMLViewAdapter)
+-   [test-drivers and test-pairwise-generator packages will no longer be published](test-drivers-and-test-pairwise-generator-packages-will-no-longer-be-published)
+-   [Container and RelativeLoader Deprecated](#Container-and-RelativeLoader-Deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -40,6 +55,21 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 -   `IPendingState`
 -   `IPendingLocalState`
 
+### Deprecated IFluidHTMLView and HTMLViewAdapter
+
+`IFluidHTMLView` and `HTMLViewAdapter` have been deprecated. It is recommended not to bundle view code with Fluid data, and instead apply the views from outside the container (see https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/external-views for an example of this approach). For those views, a dedicated view framework is recommended (see view sampler demo https://github.com/microsoft/FluidFramework/tree/main/examples/apps/view-framework-sampler)
+
+### test-drivers and test-pairwise-generator packages will no longer be published
+
+These packages are currently published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These will be moved to the `@fluid-internal` scope and will no longer be published.
+
+### Container and RelativeLoader Deprecated
+
+The Container and RelativeLoader classes in `@fluidframework/container-loader` have been deprecated and will be removed in the next major release.
+
+-   Container usage should be replaced with usage of the interface IContainer from `@fluidframework/container-definitions`.
+-   RelativeLoader is an internal class and should not be used directly.
+
 ## 2.0.0-internal.3.0.0 Breaking changes
 
 -   [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
@@ -51,6 +81,7 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 -   [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
 -   [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
 -   [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
+-   [Some test packages no longer published](#some-test-packages-no-longer-published)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 
@@ -141,6 +172,16 @@ Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDet
 ### Remove deprecated experimental get-container package
 
 The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
+
+### Some test packages no longer published
+
+These packages were previously published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-drivers`
+-   `@fluidframework/test-pairwise-generator`
+-   `@fluidframework/test-version-utils`
+
+These have been moved to the `@fluid-internal` scope and are no longer published.
 
 # 2.0.0-internal.2.4.0
 

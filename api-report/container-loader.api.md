@@ -4,21 +4,13 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAudience } from '@fluidframework/container-definitions';
 import { IAudienceOwner } from '@fluidframework/container-definitions';
-import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
-import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerLoadMode } from '@fluidframework/container-definitions';
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
@@ -26,24 +18,17 @@ import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
-import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
 import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
 import { IProtocolState } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
-import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { IVersion } from '@fluidframework/protocol-definitions';
-import { ReadOnlyInfo } from '@fluidframework/container-definitions';
-import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
 export enum ConnectionState {
@@ -51,73 +36,6 @@ export enum ConnectionState {
     Connected = 2,
     Disconnected = 0,
     EstablishingConnection = 3
-}
-
-// @public (undocumented)
-export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
-    // (undocumented)
-    attach(request: IRequest): Promise<void>;
-    // (undocumented)
-    get attachState(): AttachState;
-    get audience(): IAudience;
-    // (undocumented)
-    get clientDetails(): IClientDetails;
-    get clientId(): string | undefined;
-    // (undocumented)
-    close(error?: ICriticalContainerError): void;
-    // (undocumented)
-    closeAndGetPendingLocalState(): string;
-    // (undocumented)
-    get closed(): boolean;
-    // (undocumented)
-    get closeSignal(): AbortSignal;
-    // (undocumented)
-    connect(): void;
-    // (undocumented)
-    get connected(): boolean;
-    // (undocumented)
-    get connectionState(): ConnectionState;
-    static createDetached(loader: Loader, codeDetails: IFluidCodeDetails, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
-    // (undocumented)
-    get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
-    disconnect(): void;
-    // (undocumented)
-    dispose?(error?: ICriticalContainerError): void;
-    forceReadonly(readonly: boolean): void;
-    // (undocumented)
-    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getLoadedCodeDetails(): IFluidCodeDetails | undefined;
-    getQuorum(): IQuorumClients;
-    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
-    // (undocumented)
-    get IFluidRouter(): IFluidRouter;
-    get isDirty(): boolean;
-    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
-    // (undocumented)
-    get loadedFromVersion(): IVersion | undefined;
-    // (undocumented)
-    readonly options: ILoaderOptions;
-    // (undocumented)
-    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
-    // (undocumented)
-    get readOnlyInfo(): ReadOnlyInfo;
-    static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
-    // (undocumented)
-    request(path: IRequest): Promise<IResponse>;
-    // (undocumented)
-    get resolvedUrl(): IResolvedUrl | undefined;
-    get scopes(): string[] | undefined;
-    // (undocumented)
-    serialize(): string;
-    get serviceConfiguration(): IClientConfiguration | undefined;
-    // (undocumented)
-    get storage(): IDocumentStorageService;
-    // (undocumented)
-    subLogger: TelemetryLogger;
-    // (undocumented)
-    static version: string;
 }
 
 // @public @deprecated (undocumented)
@@ -133,6 +51,7 @@ export interface IContainerConfig {
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
+    scopeOverride?: FluidObject;
     serializedContainerState?: IPendingContainerState;
 }
 
@@ -144,6 +63,7 @@ export interface IContainerLoadOptions {
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
+    scopeOverride?: FluidObject;
     version: string | undefined;
 }
 
@@ -230,17 +150,6 @@ export class Loader implements IHostLoader {
 
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
-
-// @public (undocumented)
-export class RelativeLoader implements ILoader {
-    constructor(container: Container, loader: ILoader | undefined);
-    // (undocumented)
-    get IFluidRouter(): IFluidRouter;
-    // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
-    // (undocumented)
-    resolve(request: IRequest): Promise<IContainer>;
-}
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;

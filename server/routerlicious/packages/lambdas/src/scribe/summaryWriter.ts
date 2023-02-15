@@ -29,6 +29,7 @@ import {
 } from "@fluidframework/server-services-client";
 import {
     ICollection,
+    IDeltaService,
     IScribe,
     ISequencedOperationMessage,
     requestWithRetry,
@@ -53,9 +54,11 @@ export class SummaryWriter implements ISummaryWriter {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly summaryStorage: IGitManager,
+        private readonly deltaService: IDeltaService,
         private readonly opStorage: ICollection<ISequencedOperationMessage>,
         private readonly enableWholeSummaryUpload: boolean,
         private readonly lastSummaryMessages: ISequencedDocumentMessage[],
+        private readonly getDeltasViaAlfred: boolean,
         private readonly maxRetriesOnError: number = 6,
     ) {
         this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
@@ -548,7 +551,7 @@ export class SummaryWriter implements ISummaryWriter {
         ];
 
         if (fullLogTail.length > 0) {
-            Lumberjack.info(`LogTail of length ${fullLogTail.length} generated from seq no ${fullLogTail[0].sequenceNumber} to ${fullLogTail[fullLogTail.length - 1].sequenceNumber}`, this.lumberProperties);
+            Lumberjack.info(`FullLogTail of length ${fullLogTail.length} generated from seq no ${fullLogTail[0].sequenceNumber} to ${fullLogTail[fullLogTail.length - 1].sequenceNumber}`, this.lumberProperties);
         }
 
         return logTailEntries;
@@ -582,6 +585,19 @@ export class SummaryWriter implements ISummaryWriter {
         pending: ISequencedOperationMessage[]): Promise<ISequencedDocumentMessage[]> {
         if (lt - gt <= 1) {
             return [];
+        } else if (pending.length > 0) {
+            // Check for logtail ops in the unprocessed ops currently present in memory
+            const pendingOps = pending.filter((op) => op.operation.sequenceNumber > gt && op.operation.sequenceNumber < lt).map((op) => op.operation);
+            if (pendingOps.length > 0 && pendingOps[0].sequenceNumber === gt + 1 && pendingOps[pendingOps.length - 1].sequenceNumber === lt - 1) {
+                Lumberjack.info(`LogTail of length ${pendingOps.length} between ${gt+1} and ${lt-1} fetched from pending ops`, this.lumberProperties);
+                return pendingOps;
+            }
+        }
+        
+        let logTail: ISequencedDocumentMessage[] = [];
+
+        if (this.getDeltasViaAlfred) {
+            logTail = await this.deltaService.getDeltas("", this.tenantId, this.documentId, gt, lt);
         } else {
             const query = {
                 "documentId": this.documentId,
@@ -591,19 +607,25 @@ export class SummaryWriter implements ISummaryWriter {
                     $lt: lt,
                 },
             };
-            const logTail = await this.opStorage.find(query, { "operation.sequenceNumber": 1 });
 
-            // If the db is not updated with all logs yet, get them from checkpoint messages.
-            if (logTail.length !== (lt - gt - 1)) {
-                const nextSeq = logTail.length === 0 ? gt : logTail[logTail.length - 1].operation.sequenceNumber + 1;
-                for (const message of pending) {
-                    if (message.operation.sequenceNumber >= nextSeq && message.operation.sequenceNumber < lt) {
-                        logTail.push(message);
-                    }
+            // Fetching ops from the local db
+            const logTailOpMessage = await this.opStorage.find(query, { "operation.sequenceNumber": 1 });
+            logTail = logTailOpMessage.map((log) => log.operation);
+        }
+        
+        Lumberjack.info(`LogTail of length ${logTail.length} fetched from seq no ${gt} to ${lt}`, this.lumberProperties);
+
+        // If the db is not updated with all logs yet, get them from checkpoint messages.
+        if (logTail.length !== (lt - gt - 1)) {
+            const nextSeq = logTail.length === 0 ? gt : logTail[logTail.length - 1].sequenceNumber + 1;
+            for (const message of pending) {
+                if (message.operation.sequenceNumber >= nextSeq && message.operation.sequenceNumber < lt) {
+                    logTail.push(message.operation);
                 }
             }
-            return logTail.map((log) => log.operation);
+            Lumberjack.info(`Populated logtail gaps. nextSeq: ${nextSeq} LogtailLength: ${logTail.length}`, this.lumberProperties);
         }
+        return logTail;
     }
 
     // When 'includesProtocolTree' is set, client uploads two top level nodes: '.app' and '.protocol'.

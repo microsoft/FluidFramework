@@ -21,8 +21,10 @@ export class AlfredResources implements core.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public restThrottler: core.IThrottler,
-        public socketConnectThrottler: core.IThrottler,
+        public restTenantThrottler: core.IThrottler,
+        public restClusterThrottlers: Map<string, core.IThrottler>,
+        public socketConnectTenantThrottler: core.IThrottler,
+        public socketConnectClusterThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
         public socketSubmitSignalThrottler: core.IThrottler,
         public singleUseTokenCache: core.ICache,
@@ -35,7 +37,7 @@ export class AlfredResources implements core.IResources {
         public metricClientConfig: any,
         public documentsCollection: core.ICollection<core.IDocument>,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
-    ) 
+    )
     ....
 
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
@@ -49,8 +51,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             webSocketLibrary,
             orderManager,
             tenantManager,
-            restThrottler,
-            socketConnectThrottler,
+            restTenantThrottler,
+            restClusterThrottler,
+            socketConnectTenantThrottler,
+            socketConnectClusterThrottler
             socketSubmitOpThrottler,
             socketSubmitSignalThrottler,
             redisJwtCache,

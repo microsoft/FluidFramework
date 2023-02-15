@@ -189,9 +189,7 @@ export function splitMarkOnInput<TMark extends T.SizedMark>(
 	const markLength = getInputLength(mark);
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
-		fail(
-			`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
-		);
+		fail("Unable to split mark due to lengths");
 	}
 	if (isSkipMark(mark)) {
 		return [length, remainder] as [TMark, TMark];
@@ -206,7 +204,7 @@ export function splitMarkOnInput<TMark extends T.SizedMark>(
 		case "MMoveOut":
 		case "MReturn":
 		case "MRevive":
-			fail(`Unable to split ${type} mark of length 1`);
+			fail("Unable to split mark of length 1");
 		case "Delete":
 		case "MoveOut":
 		case "Return":
@@ -236,9 +234,7 @@ export function splitMarkOnOutput<TMark extends T.Mark>(
 	const markLength = getOutputLength(mark);
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
-		fail(
-			`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
-		);
+		fail("Unable to split mark due to lengths");
 	}
 	if (isSkipMark(mark)) {
 		return [length, remainder] as [TMark, TMark];
@@ -251,14 +247,14 @@ export function splitMarkOnOutput<TMark extends T.Mark>(
 		case "MRevive":
 		case "MInsert":
 		case "MMoveIn":
-			fail(`Unable to split ${type} mark of length 1`);
+			fail("Unable to split mark of length 1");
 		case "MDelete":
 		case "MMoveOut":
 		case "Delete":
 		case "MoveOut":
 		case "Bounce":
 		case "Intake":
-			fail(`Unable to split ${type} mark of length 0`);
+			fail("Unable to split mark of length 0");
 		case "Insert":
 			return [
 				{ ...markObj, content: markObj.content.slice(0, length) },

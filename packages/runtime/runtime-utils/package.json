@@ -75,9 +75,9 @@
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.9.0-127618",
+		"@fluid-tools/build-cli": "^0.9.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.9.0-127618",
+		"@fluidframework/build-tools": "^0.9.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.3.0.0",
@@ -102,6 +102,14 @@
 		"previousVersionStyle": "^previousMajor",
 		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
 		"baselineVersion": "2.0.0-internal.3.0.0",
-		"broken": {}
+		"broken": {
+			"TypeAliasDeclaration_RefreshSummaryResult": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_TelemetryContext": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
