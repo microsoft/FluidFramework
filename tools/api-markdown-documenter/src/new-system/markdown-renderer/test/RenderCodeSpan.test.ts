@@ -8,25 +8,39 @@ import { CodeSpanNode, PlainTextNode } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
 describe("CodeSpan rendering tests", () => {
-	it("Can render an empty CodeSpan", () => {
-		expect(testRender(CodeSpanNode.Empty)).to.equal("");
+	describe("Markdown", () => {
+		it("Empty CodeSpan", () => {
+			expect(testRender(CodeSpanNode.Empty)).to.equal("``");
+		});
+
+		it("Simple CodeSpan", () => {
+			const codeSpanNode = new CodeSpanNode([
+				new PlainTextNode("console.log('hello world');"),
+			]);
+			const result = testRender(codeSpanNode);
+
+			const expected = "`console.log('hello world');`";
+
+			expect(result).to.equal(expected);
+		});
 	});
 
-	it("Can render a simple CodeSpan (Markdown)", () => {
-		const codeSpanNode = new CodeSpanNode([new PlainTextNode("console.log('hello world');")]);
-		const result = testRender(codeSpanNode);
+	describe("HTML", () => {
+		it("Empty CodeSpan", () => {
+			expect(testRender(CodeSpanNode.Empty, undefined, { insideHtml: true })).to.equal(
+				"<code></code>",
+			);
+		});
 
-		const expected = "`console.log('hello world');`";
+		it("Simple CodeSpan", () => {
+			const codeSpanNode = new CodeSpanNode([
+				new PlainTextNode("console.log('hello world');"),
+			]);
+			const result = testRender(codeSpanNode, undefined, { insideHtml: true });
 
-		expect(result).to.equal(expected);
-	});
+			const expected = "<code>console.log('hello world');</code>";
 
-	it("Can render a simple CodeSpan (HTML)", () => {
-		const codeSpanNode = new CodeSpanNode([new PlainTextNode("console.log('hello world');")]);
-		const result = testRender(codeSpanNode, undefined, { insideHtml: true });
-
-		const expected = "<code>console.log('hello world');</code>";
-
-		expect(result).to.equal(expected);
+			expect(result).to.equal(expected);
+		});
 	});
 });

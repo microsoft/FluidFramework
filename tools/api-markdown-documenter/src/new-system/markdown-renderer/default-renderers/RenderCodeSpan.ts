@@ -19,11 +19,6 @@ export function renderCodeSpan(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	// If the code span is empty, there is no need to render anything.
-	if (!node.hasChildren) {
-		return;
-	}
-
 	if (context.insideHtml) {
 		renderCodeSpanWithHtmlSyntax(node, writer, context);
 	} else {

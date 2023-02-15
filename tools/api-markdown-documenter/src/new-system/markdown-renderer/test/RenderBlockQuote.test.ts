@@ -9,11 +9,11 @@ import { testRender } from "./Utilities";
 
 describe("BlockQuote rendering tests", () => {
 	describe("Markdown", () => {
-		it("Can render an empty BlockQuote", () => {
+		it("Empty BlockQuote", () => {
 			expect(testRender(BlockQuoteNode.Empty)).to.equal("\n");
 		});
 
-		it("Can render a simple BlockQuote", () => {
+		it("Simple BlockQuote", () => {
 			const blockQuoteNode = new BlockQuoteNode([
 				new PlainTextNode("Here's a block quote. "),
 				new PlainTextNode("It sure is something!"),
@@ -37,13 +37,13 @@ describe("BlockQuote rendering tests", () => {
 	});
 
 	describe("HTML", () => {
-		it("Can render an empty BlockQuote", () => {
+		it("Empty BlockQuote", () => {
 			expect(testRender(BlockQuoteNode.Empty, undefined, { insideHtml: true })).to.equal(
 				"<blockquote>\n</blockquote>\n",
 			);
 		});
 
-		it("Can render a simple BlockQuote", () => {
+		it("Simple BlockQuote", () => {
 			const blockQuoteNode = new BlockQuoteNode([
 				new PlainTextNode("Here's a block quote. "),
 				new PlainTextNode("It sure is something!"),
