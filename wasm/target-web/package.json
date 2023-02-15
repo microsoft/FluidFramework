@@ -16,8 +16,8 @@
     "*-nodejs/*!(*.wasm.d.ts)",
     "*-bundler/*!(*_bg.js|*.wasm.d.ts)"
   ],
-  "main": "./nodejs/fluid_experimental_wasm_hello_world.js",
-  "types": "./nodejs/fluid_experimental_wasm_hello_world.d.ts",
+  "main": "./fluid-experimental-wasm-add-node-js/fluid_experimental_wasm_add.js",
+  "types": "./fluid-experimental-wasm-add-nodejs/fluid_experimental_wasm_add.d.ts",
   "sideEffects": false,
-  "module": "./bundler/fluid_experimental_wasm_hello_world.js"
+  "module": "./fluid-experimental-wasm-add-bundler/fluid_experimental_wasm_add.js"
 }
