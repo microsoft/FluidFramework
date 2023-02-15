@@ -218,10 +218,10 @@ export class FluidDataStoreRuntime
 
 	/**
 	 * If the summarizer makes local changes, a telemetry event is logged. This has the potential to be very noisy.
-	 * So, adding a threshold of how many telemetry events can be logged per data store context. This can be
+	 * So, adding a count of how many telemetry events are logged per data store context. This can be
 	 * controlled via feature flags.
 	 */
-	private localChangesTelemetryThreshold: number;
+	private localChangesTelemetryCount: number;
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
@@ -386,9 +386,9 @@ export class FluidDataStoreRuntime
 			this.deferredAttached.resolve();
 		}
 
-		// By default, a data store can log maximum 100 local changes telemetry in summarizer.
-		this.localChangesTelemetryThreshold =
-			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryThreshold") ?? 100;
+		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
+		this.localChangesTelemetryCount =
+			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 	}
 
 	public dispose(): void {
@@ -1146,33 +1146,30 @@ export class FluidDataStoreRuntime
 		channelId: string,
 		channelType: string,
 	) {
-		if (this.clientDetails.type === "summarizer") {
-			// If the count of telemetry logged has crossed the threshold, don't log any more.
-			if (this.localChangesTelemetryThreshold > 0) {
-				return;
-			}
-
-			// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
-			// this is happening and which data stores do this. The eventual goal is to disallow local changes
-			// in the summarizer and the data will help us plan this.
-			this.mc.logger.sendTelemetryEvent({
-				eventName,
-				channelType,
-				channelId: {
-					value: channelId,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
-				fluidDataStoreId: {
-					value: this.id,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
-				fluidDataStorePackagePath: packagePathToTelemetryProperty(
-					this.dataStoreContext.packagePath,
-				),
-				stack: generateStack(),
-			});
-			this.localChangesTelemetryThreshold--;
+		if (this.clientDetails.type !== "summarizer" || this.localChangesTelemetryCount <= 0) {
+			return;
 		}
+
+		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+		// this is happening and which data stores do this. The eventual goal is to disallow local changes
+		// in the summarizer and the data will help us plan this.
+		this.mc.logger.sendTelemetryEvent({
+			eventName,
+			channelType,
+			channelId: {
+				value: channelId,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			fluidDataStoreId: {
+				value: this.id,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			fluidDataStorePackagePath: packagePathToTelemetryProperty(
+				this.dataStoreContext.packagePath,
+			),
+			stack: generateStack(),
+		});
+		this.localChangesTelemetryCount--;
 	}
 }
 

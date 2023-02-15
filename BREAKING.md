@@ -21,7 +21,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
 -   [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
--   [Deprecated IFluidHTMLView and HTMLViewAdapter](#Deprecated-IFluidHTMLView-and-HTMLViewAdapter)
+-   [Deprecated IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter](#Deprecated-IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter)
 -   [Some test packages will no longer be published](#some-test-packages-will-no-longer-be-published)
 -   [Container and RelativeLoader deprecated](#container-and-relativeloader-deprecated)
 -   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
@@ -44,9 +44,9 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 -   `IPendingState`
 -   `IPendingLocalState`
 
-### Deprecated IFluidHTMLView and HTMLViewAdapter
+### Deprecated IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter
 
-`IFluidHTMLView` and `HTMLViewAdapter` have been deprecated. It is recommended not to bundle view code with Fluid data, and instead apply the views from outside the container (see https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/external-views for an example of this approach). For those views, a dedicated view framework is recommended (see view sampler demo https://github.com/microsoft/FluidFramework/tree/main/examples/apps/view-framework-sampler)
+`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` have been deprecated. It is recommended not to bundle view code with Fluid data, and instead apply the views from outside the container (see https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/external-views for an example of this approach). For those views, a dedicated view framework is recommended (see view sampler demo https://github.com/microsoft/FluidFramework/tree/main/examples/apps/view-framework-sampler)
 
 ### Some test packages will no longer be published
 

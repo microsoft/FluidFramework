@@ -2307,7 +2307,7 @@ export class ContainerRuntime
 
 		const telemetryContext = new TelemetryContext();
 		// Add the options that are used to generate this summary to the telemetry context.
-		telemetryContext.setAll("fluid_Summarize", "Options", {
+		telemetryContext.setMultiple("fluid_Summarize", "Options", {
 			fullTree,
 			trackState,
 			runGC,

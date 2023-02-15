@@ -7,6 +7,9 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 
+/**
+ * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
+ */
 export interface IReactViewAdapterProps {
 	/**
 	 * The view to adapt into a React component.
@@ -19,11 +22,15 @@ export interface IReactViewAdapterProps {
  * views that implement IFluidHTMLView.
  *
  * If the object is none of these, we render nothing.
+ *
+ * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
  */
 export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
 	/**
 	 * Test whether the given Fluid object can be successfully adapted by a ReactViewAdapter.
 	 * @param view - the fluid object to test if it is adaptable.
+	 *
+	 * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
 	 */
 	public static canAdapt(view: FluidObject): boolean {
 		const maybeView: FluidObject<IFluidHTMLView> = view;
@@ -35,6 +42,9 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
 	 */
 	private readonly element: JSX.Element;
 
+	/**
+	 * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
+	 */
 	constructor(props: IReactViewAdapterProps) {
 		super(props);
 
@@ -52,6 +62,10 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
 		this.element = <></>;
 	}
 
+	/**
+	 * React render method
+	 * @deprecated See {@link @fluidframework/view-interfaces#IFluidHTMLView}
+	 */
 	public render(): JSX.Element {
 		return this.element;
 	}
