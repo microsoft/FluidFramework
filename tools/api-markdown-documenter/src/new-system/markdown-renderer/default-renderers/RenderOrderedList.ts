@@ -37,8 +37,8 @@ function renderOrderedListWithMarkdownSyntax(
 		renderNode(child, writer, context);
 		writer.ensureNewLine(); // Ensure newline after previous list item
 	}
-	writer.ensureSkippedLine(); // Ensure blank line after list
 	writer.decreaseIndent();
+	writer.ensureSkippedLine(); // Ensure blank line after list
 }
 
 function renderOrderedListWithHtmlSyntax(
@@ -53,8 +53,8 @@ function renderOrderedListWithHtmlSyntax(
 		writer.writeLine("<li>");
 		writer.increaseIndent();
 		renderNode(child, writer, context);
-		writer.ensureNewLine(); // Ensure newline after previous list item
 		writer.decreaseIndent();
+		writer.ensureNewLine(); // Ensure newline after previous list item
 		writer.writeLine("</li>");
 	}
 
