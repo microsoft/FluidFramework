@@ -79,12 +79,23 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	let dataObject2map: SharedMap;
 	let loader: IHostLoader;
 
+	const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+	const messageCount = 2; // Will result in a 10 MB payload
+
 	const generateRandomStringOfSize = (sizeInBytes: number): string =>
 		crypto.randomBytes(sizeInBytes / 2).toString("hex");
 
 	const setMapKeys = (map: SharedMap, count: number, item: string): void => {
 		for (let i = 0; i < count; i++) {
 			map.set(`key${i}`, item);
+		}
+	};
+
+	const validateMapKeys = (map: SharedMap, count: number, expectedSize: number): void => {
+		for (let i = 0; i < count; i++) {
+			const key = map.get(`key${i}`);
+			assert(key !== undefined);
+			assert(key.length === expectedSize);
 		}
 	};
 
@@ -120,12 +131,9 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 		loader = provider.makeTestLoader(testConfig);
 		mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-		const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-
 		dataObject1 = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
 		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
 		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-		const messageCount = 2; // Will result in a 10 MB payload
 		setMapKeys(dataObject1map, messageCount, largeString);
 		fileName = uuid();
 		await mainContainer.attach(provider.driver.createCreateNewRequest(fileName));
@@ -133,6 +141,18 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 		containerUrl = mainContainer.resolvedUrl;
 		await waitForContainerConnection(mainContainer, true);
 		await provider.ensureSynchronized();
+
+		const containerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
+		const { stats, summary } = await containerRuntime.summarize({
+			runGC: true,
+			fullTree: false,
+			trackState: false,
+			summaryLogger: logger ?? new TelemetryNullLogger(),
+		});
+
+		// Validate stats
+		assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
+		assert(!summary.unreferenced, "Root summary should be referenced.");
 	});
 
 	benchmarkMemory(
@@ -150,8 +170,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 				);
 				dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 				dataObject2map.set("setup", "done");
-				const key1 = dataObject1map.get("key1");
-				assert(key1 !== undefined);
+				validateMapKeys(dataObject2map, messageCount, maxMessageSizeInBytes);
 				await provider.ensureSynchronized();
 
 				const containerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
