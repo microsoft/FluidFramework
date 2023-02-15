@@ -2,27 +2,18 @@ import { ApiItem } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { getFilePathForApiItem } from "../../utilities";
-import {
-	DocumentNode,
-	DocumentationNode,
-	HeadingNode,
-	HierarchicalSectionNode,
-} from "../documentation-domain";
+import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
+import { wrapInSection } from "./helpers";
 
 /**
  * Helper function for creating a {@link DocumentNode} for an API item and its generated documentation contents.
  */
 export function createDocument(
 	apiItem: ApiItem,
-	contents: DocumentationNode[],
+	sections: HierarchicalSectionNode[],
 	config: Required<MarkdownDocumenterConfiguration>,
 ): DocumentNode {
-	const rootSection = new HierarchicalSectionNode(
-		contents,
-		config.includeTopLevelDocumentHeading
-			? HeadingNode.createFromPlainText(config.headingTitlePolicy(apiItem))
-			: undefined,
-	);
+	const rootSection = wrapInSection(sections, { title: config.headingTitlePolicy(apiItem) });
 
 	// TODO: front-matter, header, footer
 

@@ -24,9 +24,9 @@ import {
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { doesItemRequireOwnDocument } from "../../utilities";
-import { DocumentNode, DocumentationNode, HierarchicalSectionNode } from "../documentation-domain";
+import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
 import { createDocument } from "./Utilities";
-import { createBreadcrumbParagraph } from "./helpers";
+import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
 
 /**
  * Creates a {@link DocumentNode} for the specified `apiItem`.
@@ -74,19 +74,19 @@ export function apiItemToDocument(
 
 	logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
 
-	const contents: DocumentationNode[] = [];
+	const sections: HierarchicalSectionNode[] = [];
 
 	// Render breadcrumb
 	if (config.includeBreadcrumb) {
-		contents.push(createBreadcrumbParagraph(apiItem, config));
+		sections.push(wrapInSection([createBreadcrumbParagraph(apiItem, config)]));
 	}
 
 	// Render body content for the item
-	contents.push(apiItemToSection(apiItem, config));
+	sections.push(apiItemToSection(apiItem, config));
 
 	logger.verbose(`Document for ${apiItem.displayName} rendered successfully.`);
 
-	return createDocument(apiItem, contents, config);
+	return createDocument(apiItem, sections, config);
 }
 
 /**

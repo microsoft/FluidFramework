@@ -5,7 +5,7 @@
 import { ApiModel } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
-import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
+import { DocumentNode } from "../documentation-domain";
 import { createDocument } from "./Utilities";
 
 /**
@@ -24,14 +24,12 @@ export function apiModelToDocument(
 
 	logger.verbose(`Rendering API Model document...`);
 
-	const sections: HierarchicalSectionNode[] = [];
-
-	// Do not render breadcrumb for Model document
+	// Note: We don't render the breadcrumb for Model document, as it is always the root of the file hierarchical
 
 	// Render body contents
-	sections.push(config.transformApiModel(apiModel, config));
+	const section = config.transformApiModel(apiModel, config);
 
 	logger.verbose(`API Model document rendered successfully.`);
 
-	return createDocument(apiModel, sections, config);
+	return createDocument(apiModel, [section], config);
 }
