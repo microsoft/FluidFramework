@@ -631,6 +631,10 @@ export class GarbageCollector implements IGarbageCollector {
 				"Fluid.GarbageCollection.TestOverride.SessionExpiryMs",
 			);
 			const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
+			assert(
+				timeoutMs <= this.sessionExpiryTimeoutMs,
+				"Cannot extend sessionExpiry via TestOverride setting",
+			);
 
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
 				this.runtime.closeFn(
@@ -1060,6 +1064,7 @@ export class GarbageCollector implements IGarbageCollector {
 					logger,
 					currentReferenceTimestampMs,
 				);
+				console.log(`................. GC: ${JSON.stringify(gcStats)}`);
 				event.end({ ...gcStats, timestamp: currentReferenceTimestampMs });
 				this.completedRuns++;
 				return gcStats;

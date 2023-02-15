@@ -8,10 +8,21 @@ import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
 import xml from "xml";
-import { TestDriverTypes, DriverEndpoint, ITestDriver } from "@fluidframework/test-driver-definitions";
+import {
+	TestDriverTypes,
+	DriverEndpoint,
+	ITestDriver,
+} from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
-import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
+import {
+	createLogger,
+	createTestDriver,
+	getProfile,
+	initialize,
+	safeExit,
+	writeToFile,
+} from "./utils";
 
 interface ITestUserConfig {
 	/* Credentials' key/value description:
@@ -105,14 +116,14 @@ async function main() {
 }
 
 function msSinceTime(time: Date) {
-    return (new Date()).valueOf() - time.valueOf()
+	return new Date().valueOf() - time.valueOf();
 }
 
 interface RunnerResult {
-    // eslint-disable-next-line @rushstack/no-new-null
-    returnCode: number | null;
-    durationMs: number;
-    index: number;
+	// eslint-disable-next-line @rushstack/no-new-null
+	returnCode: number | null;
+	durationMs: number;
+	index: number;
 }
 
 /**
@@ -143,49 +154,55 @@ async function orchestratorProcess(
 		runId: undefined,
 	});
 
-    const testDriver: ITestDriver = await createTestDriver(
-        driver,
-        endpoint,
-        seed,
-        undefined,
-        args.browserAuth);
+	const testDriver: ITestDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		undefined,
+		args.browserAuth,
+	);
 
-    const url = await (args.testId !== undefined && args.createTestId === false
-        // If testId is provided and createTestId is false, then load the file;
-        ? testDriver.createContainerUrl(args.testId)
-        // If no testId is provided, (or) if testId is provided but createTestId is not false, then
-        // create a file;
-        // In case testId is provided, name of the file to be created is taken as the testId provided
-        : initialize(testDriver, endpoint, seed, profile, args.verbose === true, args.testId));
+	const url = await (args.testId !== undefined && args.createTestId === false
+		? // If testId is provided and createTestId is false, then load the file;
+		  testDriver.createContainerUrl(args.testId)
+		: // If no testId is provided, (or) if testId is provided but createTestId is not false, then
+		  // create a file;
+		  // In case testId is provided, name of the file to be created is taken as the testId provided
+		  initialize(testDriver, seed, endpoint, profile, args.verbose === true, args.testId));
 
-    const estRunningTimeMin = Math.floor(profile.totalSendCount / profile.opRatePerMin);
-    console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
-    console.log(`Selected test profile: ${profile.name}`);
-    console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
+	const estRunningTimeMin = Math.floor(profile.totalSendCount / profile.opRatePerMin);
+	console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
+	console.log(`Selected test profile: ${args.profileName}`);
+	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
-    const startTime = new Date();
-    console.log(`start time: ${startTime.toTimeString()}`);
+	const startTime = new Date();
+	console.log(`start time: ${startTime.toTimeString()}`);
 
-    const runnerArgs: string[][] = [];
-    for (let i = 0; i < profile.numClients; i++) {
-        const childArgs: string[] = [
-            "./dist/runner.js",
-            "--driver", driver,
-            "--profile", profile.name,
-            "--runId", i.toString(),
-            "--url", url,
-            "--seed", seedArg,
-        ];
-        if (args.debug === true) {
-            const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
-            childArgs.unshift(`--inspect-brk=${debugPort}`);
-        }
-        if (args.verbose === true) {
-            childArgs.push("--verbose");
-        }
-        if (args.enableMetrics === true) {
-            childArgs.push("--enableOpsMetrics");
-        }
+	const runnerArgs: string[][] = [];
+	for (let i = 0; i < profile.numClients; i++) {
+		const childArgs: string[] = [
+			"./dist/runner.js",
+			"--driver",
+			driver,
+			"--profile",
+			args.profileName,
+			"--runId",
+			i.toString(),
+			"--url",
+			url,
+			"--seed",
+			seedArg,
+		];
+		if (args.debug === true) {
+			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
+			childArgs.unshift(`--inspect-brk=${debugPort}`);
+		}
+		if (args.verbose === true) {
+			childArgs.push("--verbose");
+		}
+		if (args.enableMetrics === true) {
+			childArgs.push("--enableOpsMetrics");
+		}
 
 		if (endpoint) {
 			childArgs.push(`--driverEndpoint`, endpoint);
@@ -216,92 +233,91 @@ async function orchestratorProcess(
 		}, 20000);
 	}
 
-    let runnerResults: RunnerResult[] | undefined;
-    try {
-        const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : undefined;
-        runnerResults = await Promise.all(runnerArgs.map(async (childArgs, index) => {
-            const username = usernames !== undefined ? usernames[index % usernames.length] : undefined;
-            const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
-            const envVar = { ...process.env };
-            if (username !== undefined && password !== undefined) {
-                if (endpoint === "odsp") {
-                    envVar.login__odsp__test__accounts = createLoginEnv(username, password);
-                } else if (endpoint === "odsp-df") {
-                    envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
-                }
-            }
-            const runnerStartTime = new Date();
-            const runnerProcess = child_process.spawn(
-                "node",
-                childArgs,
-                {
-                    stdio: "inherit",
-                    env: envVar,
-                },
-            );
+	let runnerResults: RunnerResult[] | undefined;
+	try {
+		const usernames =
+			args.testUsers !== undefined ? Object.keys(args.testUsers.credentials) : undefined;
+		runnerResults = await Promise.all(
+			runnerArgs.map(async (childArgs, index) => {
+				const username =
+					usernames !== undefined ? usernames[index % usernames.length] : undefined;
+				const password =
+					username !== undefined ? args.testUsers?.credentials[username] : undefined;
+				const envVar = { ...process.env };
+				if (username !== undefined && password !== undefined) {
+					if (endpoint === "odsp") {
+						envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+					} else if (endpoint === "odsp-df") {
+						envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
+					}
+				}
+				const runnerStartTime = new Date();
+				const runnerProcess = child_process.spawn("node", childArgs, {
+					stdio: "inherit",
+					env: envVar,
+				});
 
 				if (args.enableMetrics === true) {
 					setupTelemetry(runnerProcess, logger, index, username);
 				}
 
-            return new Promise<RunnerResult>((resolve) => runnerProcess.once(
-                "close",
-                (returnCode, _signals) => { resolve({ returnCode, index, durationMs: msSinceTime(runnerStartTime) }); },
-            ));
-        }));
-    } finally {
-        const durationMs = msSinceTime(startTime);
-        console.log(`Duration: ${new Date(durationMs).toISOString().split(/T|Z/)[1]}`);
+				return new Promise<RunnerResult>((resolve) =>
+					runnerProcess.once("close", (returnCode, _signals) => {
+						resolve({ returnCode, index, durationMs: msSinceTime(runnerStartTime) });
+					}),
+				);
+			}),
+		);
+	} finally {
+		const durationMs = msSinceTime(startTime);
+		console.log(`Duration: ${new Date(durationMs).toISOString().split(/T|Z/)[1]}`);
 
-        if (runnerResults === undefined) {
-            console.error("NO TEST RESULTS FOUND TO OUTPUT");
-        }
-        else {
-            writeTestResultXmlFile(runnerResults, durationMs / 1000 /* durationSec */);
-        }
+		if (runnerResults === undefined) {
+			console.error("NO TEST RESULTS FOUND TO OUTPUT");
+		} else {
+			writeTestResultXmlFile(runnerResults, durationMs / 1000 /* durationSec */);
+		}
 
-        if (logger !== undefined) {
-            await logger.flush();
-        }
-        await safeExit(0, url);
-    }
+		await safeExit(0, url);
+	}
 }
 
 /** Format the runner results into the JUnit XML format expected by ADO and write to a file */
 function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
-    const resultsForXml = results.map((({ returnCode, index, durationMs }) => {
-        const _attr = {
-            classname: "StressRunner",
-            name: `Runner_${index}`,
-            time: durationMs / 1000,
-        };
-        if (returnCode === 0) {
-            // Success
-            return { testcase: [{ _attr }] };
-        }
-        return { testcase: [{ _attr },
-            // Failure
-            { failure: "Test Runner failed! Check pipeline logs to find the error" },
-        ] };
-    }));
-    const suiteAttributes = {
-        name: "GC Stress Test",
-        tests: results.length,
-        failures: 0,
-        errors: results.filter(({ returnCode }) => returnCode !== 0).length,
-        time: durationSec,
-        // timestamp: e.g. Wed, 16 Nov 2022 18:15:06 GMT
-    };
-    const outputObj: xml.XmlObject = {
-        testsuite: [{ _attr: suiteAttributes },
-            ...resultsForXml,
-        ],
-    };
-    const outputXml = xml(outputObj, true);
-    console.log(outputXml);
+	const resultsForXml = results.map(({ returnCode, index, durationMs }) => {
+		const _attr = {
+			classname: "StressRunner",
+			name: `Runner_${index}`,
+			time: durationMs / 1000,
+		};
+		if (returnCode === 0) {
+			// Success
+			return { testcase: [{ _attr }] };
+		}
+		return {
+			testcase: [
+				{ _attr },
+				// Failure
+				{ failure: "Test Runner failed! Check pipeline logs to find the error" },
+			],
+		};
+	});
+	const suiteAttributes = {
+		name: "GC Stress Test",
+		tests: results.length,
+		failures: 0,
+		errors: results.filter(({ returnCode }) => returnCode !== 0).length,
+		time: durationSec,
+		// timestamp: e.g. Wed, 16 Nov 2022 18:15:06 GMT
+	};
+	const outputObj: xml.XmlObject = {
+		testsuite: [{ _attr: suiteAttributes }, ...resultsForXml],
+	};
+	const outputXml = xml(outputObj, true);
+	console.log(outputXml);
 
-    const timestamp = (new Date()).toISOString();
-    writeToFile(outputXml, "output", `${timestamp}-junit-report.xml`);
+	const timestamp = new Date().toISOString();
+	writeToFile(outputXml, "output", `${timestamp}-junit-report.xml`);
 }
 
 /**

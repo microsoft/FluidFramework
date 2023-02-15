@@ -9283,6 +9283,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.36
       '@types/random-js': ^1.0.31
+      '@types/xml': ^1.0.0
       commander: ^5.1.0
       concurrently: ^6.2.0
       cross-env: ^7.0.2
@@ -9296,6 +9297,8 @@ importers:
       start-server-and-test: ^1.11.7
       tinylicious: 0.5.0
       typescript: ~4.5.5
+      uuid: ^8.3.1
+      xml: ^1.0.0
     dependencies:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
@@ -9323,6 +9326,8 @@ importers:
       random-js: 1.0.8
       start-server-and-test: 1.14.0
       tinylicious: 0.5.0
+      uuid: 8.3.2
+      xml: 1.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.9.0
       '@fluidframework/build-common': 1.1.0
@@ -9333,6 +9338,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.36
       '@types/random-js': 1.0.31
+      '@types/xml': 1.0.8
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -10762,7 +10768,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-validator-identifier': 7.19.1
-      chalk: 2.4.2
+      chalk: 2.4.1
       js-tokens: 4.0.0
 
   /@babel/parser/7.12.16:
@@ -20089,6 +20095,12 @@ packages:
     dependencies:
       '@types/node': 14.18.36
 
+  /@types/xml/1.0.8:
+    resolution: {integrity: sha512-IptEZBtDwSPayCP8FmbordhAdjdxsif4zH29xTbBRacZeCHFHZp8OxyG1/CrS8AS0MziJUPTGWCTKbYtvHGYPg==}
+    dependencies:
+      '@types/node': 14.18.36
+    dev: true
+
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
     dev: true
@@ -22470,7 +22482,7 @@ packages:
     dependencies:
       ansi-align: 2.0.0
       camelcase: 4.1.0
-      chalk: 2.4.2
+      chalk: 2.4.1
       cli-boxes: 1.0.0
       string-width: 2.1.1
       term-size: 1.2.0
@@ -22672,7 +22684,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -22680,7 +22692,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -23096,7 +23108,6 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
-    dev: false
 
   /chalk/2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -23594,7 +23605,7 @@ packages:
     engines: {node: '>= 4.0'}
     dependencies:
       '@types/q': 1.5.5
-      chalk: 2.4.2
+      chalk: 2.4.1
       q: 1.5.1
     dev: true
 
@@ -24600,7 +24611,7 @@ packages:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2_@octokit+core@4.0.5
       async-retry: 1.2.3
-      chalk: 2.4.2
+      chalk: 2.4.1
       commander: 2.20.3
       debug: 4.3.4
       fast-json-patch: 3.1.1
@@ -27176,7 +27187,7 @@ packages:
         optional: true
     dependencies:
       '@babel/code-frame': 7.18.6
-      chalk: 2.4.2
+      chalk: 2.4.1
       eslint: 8.6.0
       micromatch: 3.1.10
       minimatch: 3.1.2
@@ -29053,7 +29064,7 @@ packages:
     resolution: {integrity: sha512-h+xtnyk4EwKvFWHrUYsWErEVR+igKtLdchu+o0Z1RL7VU/jVMFbYir2bp6bAj8efFNxWqHX0dIss6fJQ+/+qeQ==}
     dependencies:
       ansi-escapes: 3.2.0
-      chalk: 2.4.2
+      chalk: 2.4.1
       cli-cursor: 2.1.0
       cli-width: 2.2.1
       external-editor: 2.2.0
@@ -31487,7 +31498,7 @@ packages:
     resolution: {integrity: sha512-04PDPqSlsqIOaaaGZ+41vq5FejI9auqTInicFRndCBgE3bXG8D6W1I+mWhk+1nqbHmyhla/6BUrd5OSiHwKRXw==}
     engines: {node: '>=4'}
     dependencies:
-      chalk: 2.4.2
+      chalk: 2.4.1
       cli-cursor: 2.1.0
       date-fns: 1.30.1
       figures: 2.0.0
@@ -32737,7 +32748,7 @@ packages:
     resolution: {integrity: sha512-/lFmlpY1cPfLXmV/Qb7kprbQS5VYExEaJGRR86rCLYUdLQM5uivIwvulUEt5VV9mbK/GttN2XPb8al7/5VgtOw==}
     hasBin: true
     dependencies:
-      chalk: 2.4.2
+      chalk: 2.4.1
       dateformat: 3.0.3
       fs-extra: 4.0.3
       fsu: 1.1.1
@@ -35566,7 +35577,7 @@ packages:
     resolution: {integrity: sha512-pB2X5AduTl78J+xRSxQiEmga1jQV0j43jOPs/MTgTLApGFEOn6NgdE2dEjp7nvDtjkIOZbvFIojAiYUx6ep3zg==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      chalk: 2.4.2
+      chalk: 2.4.1
       debug: 4.3.4
       execa: 0.10.0
       fs-extra: 6.0.1
@@ -35597,7 +35608,6 @@ packages:
   /qs/6.7.0:
     resolution: {integrity: sha512-VCdBRNFTX1fyE7Nb6FYoURo/SPe62QCaAyzJvUjwRaIsc+NePBEniHlvxFmmX56+HZphIGtV0XeCirBtpDrTyQ==}
     engines: {node: '>=0.6'}
-    dev: false
 
   /query-string/4.3.4:
     resolution: {integrity: sha512-O2XLNDBIg1DnTOa+2XrIwSiXEV8h2KImXUnjhhn2+UsvZ+Es2uyd5CCRTNQlDGbzUQOW3aYCBx9rVA6dzsiY7Q==}
@@ -38314,7 +38324,7 @@ packages:
       formidable: 1.2.6
       methods: 1.1.2
       mime: 1.6.0
-      qs: 6.11.0
+      qs: 6.7.0
       readable-stream: 2.3.7
     transitivePeerDependencies:
       - supports-color
@@ -39705,7 +39715,7 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       boxen: 1.3.0
-      chalk: 2.4.2
+      chalk: 2.4.1
       configstore: 3.1.5
       import-lazy: 2.1.0
       is-ci: 1.2.1
@@ -41192,7 +41202,6 @@ packages:
 
   /xml/1.0.1:
     resolution: {integrity: sha512-huCv9IH9Tcf95zuYCsQraZtWnJvBtLVE0QHMOs8bWyZAFZNDcYjsPq1nEx8jKA9y+Beo9v+7OBPRisQTjinQMw==}
-    dev: true
 
   /xml2js/0.4.19:
     resolution: {integrity: sha512-esZnJZJOiJR9wWKMyuvSE1y6Dq5LCuJanqhxslH2bxM6duahNZ+HMpCLhBQGZkbX6xRf8x1Y2eJlgt2q3qo49Q==}

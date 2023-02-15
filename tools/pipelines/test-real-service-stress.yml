@@ -49,7 +49,7 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
-        testPackage: "@fluid-internal/test-service-load"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 150
         testCommand: start:odsp:gc:ci

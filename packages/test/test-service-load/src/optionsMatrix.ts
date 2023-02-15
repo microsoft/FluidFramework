@@ -4,9 +4,10 @@
  */
 
 import {
-    IContainerRuntimeOptions,
-    IGCRuntimeOptions,
-    ISummaryRuntimeOptions,
+	CompressionAlgorithms,
+	IContainerRuntimeOptions,
+	IGCRuntimeOptions,
+	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import {
 	booleanCases,
@@ -57,17 +58,16 @@ export const generateLoaderOptions = (
 };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
-    disableGC: [false],
-    gcAllowed: [true],
-    runFullGC: [false],
-    sweepAllowed: [false],
-    sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
+	disableGC: [false],
+	gcAllowed: [true],
+	runFullGC: [false],
+	sweepAllowed: [false],
+	sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
-    disableSummaries: [false],
-    initialSummarizerDelayMs: [undefined],
-    summaryConfigOverrides: [undefined],
+	initialSummarizerDelayMs: [undefined],
+	summaryConfigOverrides: [undefined],
 };
 
 export function generateRuntimeOptions(
@@ -86,7 +86,7 @@ export function generateRuntimeOptions(
 
 	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
 		gcOptions: [...gcOptions],
-        summaryOptions: [...summaryOptions],
+		summaryOptions: [...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
 		enableOfflineLoad: [undefined],
 		flushMode: [undefined],
