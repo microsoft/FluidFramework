@@ -4,6 +4,7 @@
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
+import { PlainTextNode } from "./PlainTextNode";
 
 // TODOs:
 // - Do we support a special input for doing nested sub-lists?
@@ -21,5 +22,9 @@ export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
 
 	public constructor(children: SingleLineElementNode[]) {
 		super(children);
+	}
+
+	public static createFromPlainTextEntries(entries: string[]): OrderedListNode {
+		return new OrderedListNode(entries.map((entry) => new PlainTextNode(entry)));
 	}
 }
