@@ -25,18 +25,9 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
 
 /**
  * Snapshot directory to which generated test data will be copied.
- * Relative to dist/new-system/test.
+ * Relative to dist/test.
  */
-const snapshotsDirPath = Path.resolve(
-	__dirname,
-	"..",
-	"..",
-	"..",
-	"src",
-	"new-system",
-	"test",
-	"snapshots",
-);
+const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
 
 /**
  * Simple integration test that validates complete output from simple test package.
