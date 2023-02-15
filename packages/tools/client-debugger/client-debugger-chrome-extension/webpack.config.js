@@ -49,4 +49,7 @@ module.exports = {
 			patterns: [{ from: ".", to: ".", context: "public" }],
 		}),
 	],
+	experiments: {
+		futureDefaults: true
+	}
 };

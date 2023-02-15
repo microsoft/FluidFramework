@@ -41,6 +41,8 @@ parsedJson.files = [
 
 child_process.execSync(`wasm-pack build --target bundler --out-dir ${path.join(webPackagesPath, name, "bundler")} ${element}`);
 rimraf.sync(path.join(webPackagesPath, name, "bundler", "package.json"));
+rimraf.sync(path.join(webPackagesPath, name, "bundler", ".gitignore"));
 child_process.execSync(`wasm-pack build --target nodejs --out-dir ${path.join(webPackagesPath, name, "nodejs")} ${element}`);
 rimraf.sync(path.join(webPackagesPath, name, "nodejs", "package.json"));
+rimraf.sync(path.join(webPackagesPath, name, "nodejs", ".gitignore"));
 fs.writeFileSync(outputJsonPath, JSON.stringify(parsedJson, undefined, 4));

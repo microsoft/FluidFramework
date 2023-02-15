@@ -2,7 +2,8 @@
 	"scripts": {
 		"build": "pnpm run build:wasm && pnpm i && tsc --project \"tsconfig.json\"",
 		"build:wasm": "node ./wasm-pack-workspace.js",
-		"build:individual": "node ./wasm-pack-crate.js"
+		"build:individual": "node ./wasm-pack-crate.js",
+		"clean": "rimraf web-packages/*/bundler && rimraf web-packages/*/nodejs"
 	},
 	"devDependencies": {
 		"rimraf": "^3.0.2",

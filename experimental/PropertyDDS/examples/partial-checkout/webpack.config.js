@@ -41,5 +41,8 @@ module.exports = (env) => {
 		resolve: {
 			extensions: [".ts", ".tsx", ".js"],
 		},
+		experiments: {
+			futureDefaults: true
+		}
 	};
 };
