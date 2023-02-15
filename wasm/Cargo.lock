@@ -15,7 +15,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "fluid-experimental-wasm-hello-world"
+name = "fluid-experimental-wasm-add"
+version = "0.1.0"
+dependencies = [
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "fluid-experimental-wasm-subtract"
 version = "0.1.0"
 dependencies = [
  "wasm-bindgen",

@@ -1,0 +1,21 @@
+[package]
+name = "fluid-experimental-wasm-add"
+readme = "../README.md"
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/microsoft/FluidFramework"
+license = "MIT"
+categories = ["web-programming", "no-std", "wasm"]
+authors = ["Justus Camp <justuscamp@microsoft.com>", "Taylor Williams <taylorsw@microsoft.com>", "Craig Macomber <Craig.Macomber@microsoft.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+
+# https://www.reddit.com/r/rust/comments/kjcrxu/is_rust_code_compiled_into_webassembly_just_that/
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O4", "--enable-mutable-globals"]

@@ -1,13 +1,7 @@
 [package]
-name = "fluid-experimental-wasm-hello-world"
-description = "Experimental wasm in fluid"
-readme = "../README.md"
+name = "fluid-experimental-wasm-subtract"
 version = "0.1.0"
 edition = "2021"
-repository = "https://github.com/microsoft/FluidFramework"
-license = "MIT"
-categories = ["web-programming", "no-std", "wasm"]
-authors = ["Justus Camp <justuscamp@microsoft.com>", "Taylor Williams <taylorsw@microsoft.com>", "Craig Macomber <Craig.Macomber@microsoft.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

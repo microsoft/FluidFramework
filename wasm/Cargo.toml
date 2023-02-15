@@ -1,5 +1,5 @@
 [workspace]
-members = ["./hello-world"]
+members = ["./fluid-experimental-wasm-add", "./fluid-experimental-wasm-subtract"]
 
 # https://www.reddit.com/r/rust/comments/kjcrxu/is_rust_code_compiled_into_webassembly_just_that/
 [profile.release]

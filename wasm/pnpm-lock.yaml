@@ -5,9 +5,11 @@ importers:
   .:
     specifiers:
       rimraf: ^3.0.2
+      toml: ^3.0.0
       typescript: ^4.8.3
     devDependencies:
       rimraf: 3.0.2
+      toml: 3.0.0
       typescript: 4.9.5
 
 packages:
@@ -75,6 +77,10 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.3
+    dev: true
+
+  /toml/3.0.0:
+    resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
     dev: true
 
   /typescript/4.9.5:

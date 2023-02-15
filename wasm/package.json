@@ -1,11 +1,12 @@
 {
 	"scripts": {
 		"build": "pnpm run build:wasm && pnpm i && pnpm run cleanup && tsc --project \"tsconfig.json\" && pnpm run cleanup",
-		"build:wasm": "wasm-pack build --target bundler --out-dir ../target-web/bundler ./hello-world && wasm-pack build --target nodejs --out-dir ../target-web/nodejs ./hello-world",
+		"build:wasm": "node ./wasm-pack-workspace.js",
 		"cleanup": "rimraf ./target-web/*/package.json && rimraf ./target-web/*/.gitignore"
 	},
 	"devDependencies": {
 		"rimraf": "^3.0.2",
+		"toml": "^3.0.0",
 		"typescript": "^4.8.3"
 	}
 }

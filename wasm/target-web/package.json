@@ -13,12 +13,8 @@
     "url": "https://github.com/microsoft/FluidFramework"
   },
   "files": [
-    "/nodejs/fluid_experimental_wasm_hello_world_bg.wasm",
-    "/nodejs/fluid_experimental_wasm_hello_world.js",
-    "/nodejs/fluid_experimental_wasm_hello_world.d.ts",
-    "/bundler/fluid_experimental_wasm_hello_world_bg.wasm",
-    "/bundler/fluid_experimental_wasm_hello_world.js",
-    "/bundler/fluid_experimental_wasm_hello_world_bg.js"
+    "*-nodejs/*!(*.wasm.d.ts)",
+    "*-bundler/*!(*_bg.js|*.wasm.d.ts)"
   ],
   "main": "./nodejs/fluid_experimental_wasm_hello_world.js",
   "types": "./nodejs/fluid_experimental_wasm_hello_world.d.ts",
