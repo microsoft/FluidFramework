@@ -479,11 +479,17 @@ export class RunningSummarizer implements IDisposable {
 			let summaryAttempts = 0;
 			let summaryAttemptsPerPhase = 0;
 			// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
-			const totalAttempts =
+			let totalAttempts =
 				this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
 				defaultNumberSummarizationAttempts;
 
-			if (totalAttempts < 1 || totalAttempts > attempts.length) {
+			if (totalAttempts > attempts.length) {
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "InvalidSummarizerAttempts",
+					attempts: totalAttempts,
+				});
+				totalAttempts = defaultNumberSummarizationAttempts;
+			} else if (totalAttempts < 1) {
 				throw new UsageError("Invalid number of attempts.");
 			}
 
@@ -503,7 +509,6 @@ export class RunningSummarizer implements IDisposable {
 
 				const { delaySeconds: regularDelaySeconds = 0, ...options } =
 					attempts[summaryAttemptPhase];
-				const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
 				const summarizeProps: ISummarizeTelemetryProperties = {
 					reason,
@@ -512,16 +517,6 @@ export class RunningSummarizer implements IDisposable {
 					summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
 					...options,
 				};
-
-				if (delaySeconds > 0) {
-					this.mc.logger.sendPerformanceEvent({
-						eventName: "SummarizeAttemptDelay",
-						duration: delaySeconds,
-						summaryNackDelay: overrideDelaySeconds !== undefined,
-						...summarizeProps,
-					});
-					await delay(delaySeconds * 1000);
-				}
 
 				// Make sure the refresh Summary Ack is not being executed.
 				await this.refreshSummaryAckLock;
@@ -546,6 +541,18 @@ export class RunningSummarizer implements IDisposable {
 					summaryAttemptsPerPhase = 0;
 				}
 				lastResult = result;
+
+				const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
+
+				if (delaySeconds > 0) {
+					this.mc.logger.sendPerformanceEvent({
+						eventName: "SummarizeAttemptDelay",
+						duration: delaySeconds,
+						summaryNackDelay: overrideDelaySeconds !== undefined,
+						...summarizeProps,
+					});
+					await delay(delaySeconds * 1000);
+				}
 			}
 
 			// If all attempts failed, log error (with last attempt info) and close the summarizer container
