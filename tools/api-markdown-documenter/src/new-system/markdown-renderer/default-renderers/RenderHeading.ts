@@ -75,7 +75,10 @@ function renderHeadingWithHtmlSyntax(
 		}
 		writer.writeLine(">");
 		writer.increaseIndent();
-		renderNodes(headingNode.children, writer, { ...context, insideHtml: true });
+		renderNodes(headingNode.children, writer, {
+			...context,
+			insideHtml: true,
+		});
 		writer.ensureNewLine();
 		writer.decreaseIndent();
 		writer.writeLine(`</h${headingLevel}>`);
@@ -83,7 +86,10 @@ function renderHeadingWithHtmlSyntax(
 		if (headingNode.id !== undefined) {
 			renderAnchor(headingNode.id, writer);
 		}
-		renderNodes(headingNode.children, writer, { ...context, bold: true });
+		renderNodes(headingNode.children, writer, {
+			...context,
+			bold: true,
+		});
 		writer.ensureNewLine();
 	}
 }

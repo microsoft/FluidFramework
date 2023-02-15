@@ -42,6 +42,9 @@ function renderLinkWithHtmlSyntax(
 	context: MarkdownRenderContext,
 ): void {
 	writer.write(`<a href='${node.target}'>`);
-	renderNodes(node.children, writer, { ...context, insideHtml: true });
+	renderNodes(node.children, writer, {
+		...context,
+		insideHtml: true,
+	});
 	writer.write("</a>");
 }
