@@ -57,7 +57,10 @@ function renderHierarchicalSectionWithHtmlSyntax(
 
 	// Render section heading, if one was provided.
 	if (node.heading !== undefined) {
-		renderNode(node.heading, writer, { ...context, insideHtml: true });
+		renderNode(node.heading, writer, {
+			...context,
+			insideHtml: true,
+		});
 		writer.ensureNewLine(); // Ensure line break after heading element
 	}
 

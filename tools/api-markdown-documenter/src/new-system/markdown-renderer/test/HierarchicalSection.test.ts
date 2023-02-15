@@ -4,101 +4,71 @@
  */
 import { expect } from "chai";
 
-import { HeadingNode, HierarchicalSectionNode, PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
+import {
+	HeadingNode,
+	HierarchicalSectionNode,
+	HorizontalRuleNode,
+	ParagraphNode,
+} from "../../documentation-domain";
+import { testRender } from "./Utilities";
 
 describe("HierarchicalSectionNode markdown tests", () => {
-	it("Creates a hierarchical section with sensible default depth when none is provided", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new HierarchicalSectionNode([], HeadingNode.createFromPlainText("Heading")),
+	it("Simple section (Markdown)", () => {
+		const input = new HierarchicalSectionNode(
+			[
+				ParagraphNode.createFromPlainText("Foo"),
+				HorizontalRuleNode.Singleton,
+				ParagraphNode.createFromPlainText("Bar"),
+			],
+			/* heading: */ HeadingNode.createFromPlainText("Hello World", /* id: */ "heading-id"),
 		);
-		expect(renderedForm).to.equal(`${standardEOL}## Heading${standardEOL}${standardEOL}`);
+
+		const result = testRender(input);
+
+		const expected = [
+			"",
+			"# Hello World {#heading-id}",
+			"",
+			"Foo",
+			"",
+			"---",
+			"",
+			"Bar",
+			"",
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
 	});
 
-	it("Can render child content beneath a heading", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new HierarchicalSectionNode(
-				[
-					new PlainTextNode("This is some content text. "),
-					new PlainTextNode("This is more content text."),
-				],
-				HeadingNode.createFromPlainText("Heading"),
-			),
+	it("Simple section (HTML)", () => {
+		const input = new HierarchicalSectionNode(
+			[
+				ParagraphNode.createFromPlainText("Foo"),
+				HorizontalRuleNode.Singleton,
+				ParagraphNode.createFromPlainText("Bar"),
+			],
+			/* heading: */ HeadingNode.createFromPlainText("Hello World", /* id: */ "heading-id"),
 		);
-		expect(renderedForm).to.equal(
-			`${standardEOL}# Heading${standardEOL}This is some content text. This is more content text.${standardEOL}`,
-		);
-	});
 
-	it("Increases the heading level of nested sections, to a limited point", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new HierarchicalSectionNode(
-				[
-					new PlainTextNode("Section 1"),
-					new HierarchicalSectionNode(
-						[
-							new PlainTextNode("Section 2"),
-							new HierarchicalSectionNode(
-								[
-									new PlainTextNode("Section 3"),
-									new HierarchicalSectionNode(
-										[
-											new PlainTextNode("Section 4"),
-											new HierarchicalSectionNode(
-												[
-													new PlainTextNode("Section 5"),
-													new HierarchicalSectionNode(
-														[new PlainTextNode("Section 6")],
-														HeadingNode.createFromPlainText(
-															"Heading 6",
-														),
-													),
-												],
-												HeadingNode.createFromPlainText("Heading 5"),
-											),
-										],
-										HeadingNode.createFromPlainText("Heading 4"),
-									),
-								],
-								HeadingNode.createFromPlainText("Heading 3"),
-							),
-						],
-						HeadingNode.createFromPlainText("Heading 2"),
-					),
-				],
-				HeadingNode.createFromPlainText("Heading 1"),
-			),
-		);
-		const expectedOutput = [
-			"", // Subheadings prefer 1 blank space above and below
-			"# Heading 1",
+		const result = testRender(input, undefined, { insideHtml: true });
+
+		const expected = [
+			"<section>",
+			'  <h1 id="heading-id">',
+			"    Hello World",
+			"  </h1>",
+			"  <p>",
+			"    Foo",
+			"  </p>",
+			"  <hr>",
+			"  <p>",
+			"    Bar",
+			"  </p>",
+			"</section>",
 			"",
-			"Section 1",
-			"",
-			"## Heading 2",
-			"",
-			"Section 2",
-			"",
-			"## Heading 3",
-			"",
-			"Section 3",
-			"",
-			"### Heading 4",
-			"",
-			"Section 4",
-			"",
-			"### Heading 5",
-			"",
-			"Section 5",
-			"",
-			"### Heading 6",
-			"",
-			"Section 6",
-			"",
-		].join(standardEOL);
-		expect(renderedForm).to.equal(expectedOutput);
+		].join("\n");
+
+		expect(result).to.equal(expected);
 	});
 });
