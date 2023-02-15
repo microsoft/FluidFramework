@@ -37,7 +37,6 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --reporter-option maxDiffSize=100000",
-		"test:hackathon": "mocha dist/new-system/**/*.test.js --unhandled-rejections=strict",
 		"tsc": "tsc"
 	},
 	"nyc": {
