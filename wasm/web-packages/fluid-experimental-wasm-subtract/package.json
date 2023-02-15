@@ -8,11 +8,15 @@
         "url": "https://github.com/microsoft/FluidFramework"
     },
     "files": [
-        "*-nodejs/*!(*.wasm.d.ts)",
-        "*-bundler/*!(*_bg.js|*.wasm.d.ts)"
+        "/nodejs/fluid_experimental_wasm_subtract_bg.wasm",
+        "/nodejs/fluid_experimental_wasm_subtract.js",
+        "/nodejs/fluid_experimental_wasm_subtract.d.ts",
+        "/bundler/fluid_experimental_wasm_subtract_bg.wasm",
+        "/bundler/fluid_experimental_wasm_subtract.js",
+        "/bundler/fluid_experimental_wasm_subtract_bg.js"
     ],
-    "main": "./nodejs/fluid-experimental-wasm-subtract.js",
-    "types": "./nodejs/fluid-experimental-wasm-subtract.d.ts",
-    "module": "./bundler/fluid-experimental-wasm-subtract.js",
+    "main": "./nodejs/fluid_experimental_wasm_subtract.js",
+    "types": "./nodejs/fluid_experimental_wasm_subtract.d.ts",
+    "module": "./bundler/fluid_experimental_wasm_subtract.js",
     "sideEffects": false
 }

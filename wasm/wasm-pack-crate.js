@@ -18,23 +18,25 @@ const parsedSubToml = toml.parse(subTomlData);
 const existingPackageJsonTemplateData = fs.readFileSync('package-combo-template.json', 'utf-8');
 const parsedJson = JSON.parse(existingPackageJsonTemplateData);
 const outputJsonPath = path.join(webPackagesPath, element, "package.json");
+const nameWithUnderscores = name.replace(/-/g, "_");
 parsedJson.name = `@fluid-experimental/${parsedSubToml.package.name}`;
-parsedJson.module = "./" + path.join("bundler", `${parsedSubToml.package.name}.js`);
-parsedJson.types = "./" + path.join("nodejs", `${parsedSubToml.package.name}.d.ts`);
-parsedJson.main = "./" + path.join("nodejs", `${parsedSubToml.package.name}.js`);
+parsedJson.module = "./" + path.join("bundler", `${nameWithUnderscores}.js`);
+parsedJson.types = "./" + path.join("nodejs", `${nameWithUnderscores}.d.ts`);
+parsedJson.main = "./" + path.join("nodejs", `${nameWithUnderscores}.js`);
 parsedJson.version = parsedSubToml.package.version;
 if (parsedSubToml.package.description !== undefined) {
     parsedJson.description = parsedSubToml.package.description;
 } else {
     delete parsedJson.description;
 }
+
 parsedJson.files = [ 
-    `/nodejs/${name}_bg.wasm`,
-    `/nodejs/${name}.js`,
-    `/nodejs/${name}.d.ts`,
-    `/bundler/${name}_bg.wasm`,
-    `/bundler/${name}.js`,
-    `/bundler/${name}_bg.js`
+    `/nodejs/${nameWithUnderscores}_bg.wasm`,
+    `/nodejs/${nameWithUnderscores}.js`,
+    `/nodejs/${nameWithUnderscores}.d.ts`,
+    `/bundler/${nameWithUnderscores}_bg.wasm`,
+    `/bundler/${nameWithUnderscores}.js`,
+    `/bundler/${nameWithUnderscores}_bg.js`
 ];
 
 child_process.execSync(`wasm-pack build --target bundler --out-dir ${path.join(webPackagesPath, name, "bundler")} ${element}`);
