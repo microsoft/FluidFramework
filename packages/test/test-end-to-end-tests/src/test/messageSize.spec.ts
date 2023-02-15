@@ -308,7 +308,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		};
 		const chunkingBatchesTimeoutMs = 200000;
 
-		describe.only("Chunking compressed batches", () =>
+		describe("Chunking compressed batches", () =>
 			[
 				{ messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
 				{ messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
