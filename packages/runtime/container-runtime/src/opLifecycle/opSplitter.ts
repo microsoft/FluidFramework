@@ -227,18 +227,16 @@ export const splitOp = (op: BatchMessage, chunkSizeInBytes: number): IChunkedOp[
 	}
 
 	// The last chunk has empty contents, to minimize the risk of the
-	// resulting payload exceeding 1MB due to the overhead from the empty ops 
+	// resulting payload exceeding 1MB due to the overhead from the empty ops
 	// which will be bundled with this op.
-	chunks.push(
-		{
-			chunkId: chunkCount,
-			contents: "",
-			originalType: op.deserializedContent.type,
-			totalChunks: chunkCount,
-			originalMetadata: op.metadata,
-			originalCompression: op.compression,
-		}
-	);
+	chunks.push({
+		chunkId: chunkCount,
+		contents: "",
+		originalType: op.deserializedContent.type,
+		totalChunks: chunkCount,
+		originalMetadata: op.metadata,
+		originalCompression: op.compression,
+	});
 
 	return chunks;
 };
