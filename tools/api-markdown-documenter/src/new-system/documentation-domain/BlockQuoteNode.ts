@@ -4,7 +4,6 @@
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
-import { PlainTextNode } from "./PlainTextNode";
 import { createNodesFromPlainText } from "./Utilities";
 
 /**
@@ -37,7 +36,7 @@ export class BlockQuoteNode extends ParentNodeBase {
 	/**
 	 * Static singleton representing an empty Block Quote node.
 	 */
-	public static readonly Empty: BlockQuoteNode = new BlockQuoteNode([PlainTextNode.Empty]);
+	public static readonly Empty: BlockQuoteNode = new BlockQuoteNode([]);
 
 	public constructor(children: DocumentationNode[]) {
 		super(children);
