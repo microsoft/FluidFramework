@@ -27,7 +27,9 @@ export function renderHorizontalRule(
 }
 
 function renderHorizontalRuleWithMarkdownSyntax(writer: DocumentWriter): void {
-	writer.writeLine();
+	writer.ensureSkippedLine(); // Markdown horizontal rules require leading blank line
+	writer.writeLine("---");
+	writer.ensureSkippedLine(); // Markdown horizontal rules require trailing blank line
 }
 
 function renderHorizontalRuleWithHtmlSyntax(writer: DocumentWriter): void {
