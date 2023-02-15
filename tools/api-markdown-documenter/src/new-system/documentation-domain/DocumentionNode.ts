@@ -42,6 +42,11 @@ export interface ParentNode<TDocumentationNode extends DocumentationNode = Docum
 	 * See {@link unist#Parent.children}.
 	 */
 	readonly children: TDocumentationNode[];
+
+	/**
+	 * Whether or not the node has any {@link ParentNode.children}.
+	 */
+	get hasChildren(): boolean;
 }
 
 /**
@@ -73,5 +78,12 @@ export abstract class ParentNodeBase<
 
 	protected constructor(children: TDocumentationNode[]) {
 		this.children = children;
+	}
+
+	/**
+	 * {@inheritDoc ParentNode.hasChildren}
+	 */
+	public get hasChildren(): boolean {
+		return this.children.length > 0;
 	}
 }
