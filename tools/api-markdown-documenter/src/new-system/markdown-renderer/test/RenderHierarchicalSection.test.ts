@@ -13,173 +13,183 @@ import {
 import { testRender } from "./Utilities";
 
 describe("HierarchicalSection rendering tests", () => {
-	it("Simple section (Markdown)", () => {
-		const input = new HierarchicalSectionNode(
-			[
-				ParagraphNode.createFromPlainText("Foo"),
-				HorizontalRuleNode.Singleton,
-				ParagraphNode.createFromPlainText("Bar"),
-			],
-			/* heading: */ HeadingNode.createFromPlainText("Hello World", /* id: */ "heading-id"),
-		);
-
-		const result = testRender(input);
-
-		const expected = [
-			"",
-			"# Hello World {#heading-id}",
-			"",
-			"Foo",
-			"",
-			"---",
-			"",
-			"Bar",
-			"",
-			"",
-		].join("\n");
-
-		expect(result).to.equal(expected);
-	});
-
-	it("Nested section (Markdown)", () => {
-		const input = new HierarchicalSectionNode(
-			[
-				new HierarchicalSectionNode(
-					[ParagraphNode.createFromPlainText("Foo")],
-					/* heading: */ HeadingNode.createFromPlainText(
-						"Sub-Heading 1",
-						/* id: */ "sub-heading-1",
-					),
+	describe("Markdown", () => {
+		it("Simple section", () => {
+			const input = new HierarchicalSectionNode(
+				[
+					ParagraphNode.createFromPlainText("Foo"),
+					HorizontalRuleNode.Singleton,
+					ParagraphNode.createFromPlainText("Bar"),
+				],
+				/* heading: */ HeadingNode.createFromPlainText(
+					"Hello World",
+					/* id: */ "heading-id",
 				),
+			);
 
-				new HierarchicalSectionNode(
-					[
-						new HierarchicalSectionNode(
-							[ParagraphNode.createFromPlainText("Bar")],
-							/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2b"),
+			const result = testRender(input);
+
+			const expected = [
+				"",
+				"# Hello World {#heading-id}",
+				"",
+				"Foo",
+				"",
+				"---",
+				"",
+				"Bar",
+				"",
+				"",
+			].join("\n");
+
+			expect(result).to.equal(expected);
+		});
+
+		it("Nested section", () => {
+			const input = new HierarchicalSectionNode(
+				[
+					new HierarchicalSectionNode(
+						[ParagraphNode.createFromPlainText("Foo")],
+						/* heading: */ HeadingNode.createFromPlainText(
+							"Sub-Heading 1",
+							/* id: */ "sub-heading-1",
 						),
-					],
-					/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2"),
-				),
-			],
-			/* heading: */ HeadingNode.createFromPlainText(
-				"Root Heading",
-				/* id: */ "root-heading",
-			),
-		);
-
-		const result = testRender(input);
-
-		const expected = [
-			"",
-			"# Root Heading {#root-heading}",
-			"",
-			"## Sub-Heading 1 {#sub-heading-1}",
-			"",
-			"Foo",
-			"",
-			"## Sub-Heading 2",
-			"",
-			"### Sub-Heading 2b",
-			"",
-			"Bar",
-			"",
-			"",
-		].join("\n");
-
-		expect(result).to.equal(expected);
-	});
-
-	it("Simple section (HTML)", () => {
-		const input = new HierarchicalSectionNode(
-			[
-				ParagraphNode.createFromPlainText("Foo"),
-				HorizontalRuleNode.Singleton,
-				ParagraphNode.createFromPlainText("Bar"),
-			],
-			/* heading: */ HeadingNode.createFromPlainText("Hello World", /* id: */ "heading-id"),
-		);
-
-		const result = testRender(input, undefined, { insideHtml: true });
-
-		const expected = [
-			"<section>",
-			'  <h1 id="heading-id">',
-			"    Hello World",
-			"  </h1>",
-			"  <p>",
-			"    Foo",
-			"  </p>",
-			"  <hr>",
-			"  <p>",
-			"    Bar",
-			"  </p>",
-			"</section>",
-			"",
-		].join("\n");
-
-		expect(result).to.equal(expected);
-	});
-
-	it("Nested section (HTML)", () => {
-		const input = new HierarchicalSectionNode(
-			[
-				new HierarchicalSectionNode(
-					[ParagraphNode.createFromPlainText("Foo")],
-					/* heading: */ HeadingNode.createFromPlainText(
-						"Sub-Heading 1",
-						/* id: */ "sub-heading-1",
 					),
-				),
 
-				new HierarchicalSectionNode(
-					[
-						new HierarchicalSectionNode(
-							[ParagraphNode.createFromPlainText("Bar")],
-							/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2b"),
+					new HierarchicalSectionNode(
+						[
+							new HierarchicalSectionNode(
+								[ParagraphNode.createFromPlainText("Bar")],
+								/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2b"),
+							),
+						],
+						/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2"),
+					),
+				],
+				/* heading: */ HeadingNode.createFromPlainText(
+					"Root Heading",
+					/* id: */ "root-heading",
+				),
+			);
+
+			const result = testRender(input);
+
+			const expected = [
+				"",
+				"# Root Heading {#root-heading}",
+				"",
+				"## Sub-Heading 1 {#sub-heading-1}",
+				"",
+				"Foo",
+				"",
+				"## Sub-Heading 2",
+				"",
+				"### Sub-Heading 2b",
+				"",
+				"Bar",
+				"",
+				"",
+			].join("\n");
+
+			expect(result).to.equal(expected);
+		});
+	});
+
+	describe("HTML", () => {
+		it("Simple section", () => {
+			const input = new HierarchicalSectionNode(
+				[
+					ParagraphNode.createFromPlainText("Foo"),
+					HorizontalRuleNode.Singleton,
+					ParagraphNode.createFromPlainText("Bar"),
+				],
+				/* heading: */ HeadingNode.createFromPlainText(
+					"Hello World",
+					/* id: */ "heading-id",
+				),
+			);
+
+			const result = testRender(input, undefined, { insideHtml: true });
+
+			const expected = [
+				"<section>",
+				'  <h1 id="heading-id">',
+				"    Hello World",
+				"  </h1>",
+				"  <p>",
+				"    Foo",
+				"  </p>",
+				"  <hr>",
+				"  <p>",
+				"    Bar",
+				"  </p>",
+				"</section>",
+				"",
+			].join("\n");
+
+			expect(result).to.equal(expected);
+		});
+
+		it("Nested section", () => {
+			const input = new HierarchicalSectionNode(
+				[
+					new HierarchicalSectionNode(
+						[ParagraphNode.createFromPlainText("Foo")],
+						/* heading: */ HeadingNode.createFromPlainText(
+							"Sub-Heading 1",
+							/* id: */ "sub-heading-1",
 						),
-					],
-					/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2"),
+					),
+
+					new HierarchicalSectionNode(
+						[
+							new HierarchicalSectionNode(
+								[ParagraphNode.createFromPlainText("Bar")],
+								/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2b"),
+							),
+						],
+						/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2"),
+					),
+				],
+				/* heading: */ HeadingNode.createFromPlainText(
+					"Root Heading",
+					/* id: */ "root-heading",
 				),
-			],
-			/* heading: */ HeadingNode.createFromPlainText(
-				"Root Heading",
-				/* id: */ "root-heading",
-			),
-		);
+			);
 
-		const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, undefined, { insideHtml: true });
 
-		const expected = [
-			"<section>",
-			'  <h1 id="root-heading">',
-			"    Root Heading",
-			"  </h1>",
-			"  <section>",
-			'    <h2 id="sub-heading-1">',
-			"      Sub-Heading 1",
-			"    </h2>",
-			"    <p>",
-			"      Foo",
-			"    </p>",
-			"  </section>",
-			"  <section>",
-			"    <h2>",
-			"      Sub-Heading 2",
-			"    </h2>",
-			"    <section>",
-			"      <h3>",
-			"        Sub-Heading 2b",
-			"      </h3>",
-			"      <p>",
-			"        Bar",
-			"      </p>",
-			"    </section>",
-			"  </section>",
-			"</section>",
-			"",
-		].join("\n");
+			const expected = [
+				"<section>",
+				'  <h1 id="root-heading">',
+				"    Root Heading",
+				"  </h1>",
+				"  <section>",
+				'    <h2 id="sub-heading-1">',
+				"      Sub-Heading 1",
+				"    </h2>",
+				"    <p>",
+				"      Foo",
+				"    </p>",
+				"  </section>",
+				"  <section>",
+				"    <h2>",
+				"      Sub-Heading 2",
+				"    </h2>",
+				"    <section>",
+				"      <h3>",
+				"        Sub-Heading 2b",
+				"      </h3>",
+				"      <p>",
+				"        Bar",
+				"      </p>",
+				"    </section>",
+				"  </section>",
+				"</section>",
+				"",
+			].join("\n");
 
-		expect(result).to.equal(expected);
+			expect(result).to.equal(expected);
+		});
 	});
 });
