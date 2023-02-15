@@ -80,6 +80,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 { batchOffset: this.pendingOffset?.offset });
         }
 
+        let status = "Processing";
+
         // Swap current and pending
         const temp = this.current;
         this.current = this.pending;
@@ -97,17 +99,38 @@ export class ScriptoriumLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.current.clear();
-                metric?.setProperty("processingComplete", true);
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.context.checkpoint(batchOffset!);
-                metric?.setProperty("checkpointComplete", true);
+                status = "ProcessingComplete";
+
+                // checkpoint batch offset
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.context.checkpoint(batchOffset!);
+                    status = "CheckpointComplete";
+                } catch (error) {
+                    const errorMessage = `Scriptorium failed to checkpoint batch with offset ${batchOffset?.offset}`;
+                    this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
+                }
+
+                metric?.setProperty("status", status);
                 metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
+
+                // continue with next batch
                 this.sendPending();
             },
             (error) => {
-                metric?.error(`Scriptorium failed to process/checkpoint batch with offset ${batchOffset?.offset}, going to restart`, error);
+                const errorMessage = `Scriptorium failed to process batch with offset ${batchOffset?.offset}, going to restart`;
+                this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
+
+                // Restart scriptorium
                 this.context.error(error, { restart: true });
             });
+    }
+
+    private logErrorTelemetry(errorMessage: string, error: any, status: string, batchOffset: number | undefined, metric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined) {
+        Lumberjack.error(errorMessage, {batchOffset, status}, error);
+        // log the metric only if enabled by this.telemetryEnabled flag
+        metric?.setProperty("status", status);
+        metric?.error(errorMessage, error);
     }
 
     private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
