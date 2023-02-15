@@ -53,17 +53,21 @@ function renderAlertWithHtmlSyntax(
 ): void {
 	const headerText = getAlertHeaderText(node);
 
+	writer.ensureNewLine();
 	writer.writeLine("<blockquote>");
 	writer.increaseIndent();
 	renderNode(new PlainTextNode(headerText), writer, {
 		...context,
 		bold: true,
 	});
-	writer.writeLine("<br/><br/>"); // Ensure blank line between header and child content
+	writer.ensureNewLine();
+	writer.writeLine("<br>"); // Ensure blank line between header and child content
+	writer.writeLine("<br>");
 	renderNodes(node.children, writer, {
 		...context,
 		insideHtml: true,
 	});
+	writer.ensureNewLine();
 	writer.decreaseIndent();
 	writer.writeLine("</blockquote>");
 }
