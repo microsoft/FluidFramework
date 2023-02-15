@@ -13,7 +13,8 @@ import { createNodesFromPlainText } from "./Utilities";
 export type FencedCodeBlockChildren = LineBreakNode | SingleLineElementNode;
 
 /**
- * @example
+ * @example Markdown
+ *
  * ```md
  * \`\`\`typescrpt
  * const foo = "bar";
@@ -27,7 +28,7 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
 	public readonly type = DocumentationNodeType.FencedCode;
 
 	/**
-	 * (optional) code language to associated with the code block.
+	 * (optional) Code language to associated with the code block.
 	 */
 	public readonly language?: string;
 

@@ -15,14 +15,14 @@ export type ParagraphChildren =
 
 export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
 	/**
+	 * Static singleton representing an empty Paragraph node.
+	 */
+	public static readonly Empty = new ParagraphNode([]);
+
+	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.Paragraph;
-
-	/**
-	 * Empty paragraph singleton.
-	 */
-	public static readonly Empty = new ParagraphNode([]);
 
 	public constructor(children: ParagraphChildren[]) {
 		super(children);

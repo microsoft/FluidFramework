@@ -29,14 +29,14 @@ import { createNodesFromPlainText } from "./Utilities";
  */
 export class BlockQuoteNode extends ParentNodeBase {
 	/**
-	 * {@inheritDoc DocumentationNode."type"}
-	 */
-	public readonly type = DocumentationNodeType.BlockQuote;
-
-	/**
 	 * Static singleton representing an empty Block Quote node.
 	 */
 	public static readonly Empty: BlockQuoteNode = new BlockQuoteNode([]);
+
+	/**
+	 * {@inheritDoc DocumentationNode."type"}
+	 */
+	public readonly type = DocumentationNodeType.BlockQuote;
 
 	public constructor(children: DocumentationNode[]) {
 		super(children);

@@ -8,6 +8,11 @@ import { TableCellNode } from "./TableCellNode";
 
 export class TableRowNode extends ParentNodeBase<TableCellNode> {
 	/**
+	 * Static singleton representing an empty Table Row node.
+	 */
+	public static readonly Empty = new TableRowNode([]);
+
+	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.TableRow;

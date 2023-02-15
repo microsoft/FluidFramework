@@ -26,14 +26,14 @@ export class CodeSpanNode
 	implements SingleLineElementNode
 {
 	/**
-	 * {@inheritDoc DocumentationNode."type"}
-	 */
-	public readonly type = DocumentationNodeType.CodeSpan;
-
-	/**
 	 * Static singleton representing an empty Code Span node.
 	 */
 	public static readonly Empty: CodeSpanNode = new CodeSpanNode([]);
+
+	/**
+	 * {@inheritDoc DocumentationNode."type"}
+	 */
+	public readonly type = DocumentationNodeType.CodeSpan;
 
 	public constructor(children: SingleLineElementNode[]) {
 		super(children);

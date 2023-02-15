@@ -12,9 +12,9 @@ export class SpanNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
 > extends ParentNodeBase<TDocumentationNode> {
 	/**
-	 * Static singleton representing an empty Plain Text node.
+	 * Static singleton representing an empty Span Text node.
 	 */
-	public static readonly Empty: SpanNode = new SpanNode([PlainTextNode.Empty]);
+	public static readonly Empty: SpanNode = new SpanNode([]);
 
 	/**
 	 * {@inheritDoc DocumentationNode."type"}

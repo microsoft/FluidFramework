@@ -10,6 +10,11 @@ import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 
 export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
 	/**
+	 * Static singleton representing an empty Ordered List node.
+	 */
+	public static readonly Empty = new OrderedListNode([]);
+
+	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.OrderedList;
