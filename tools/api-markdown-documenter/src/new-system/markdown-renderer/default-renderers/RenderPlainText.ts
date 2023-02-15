@@ -25,33 +25,22 @@ export function renderPlainText(
 	context: MarkdownRenderContext,
 ): void {
 	const text = node.value;
-
-	// split out the [ leading whitespace, body, trailing whitespace ]
-	const [, leadingWhitespace, body, trailingWhitespace]: string[] =
-		text.match(/^(\s*)(.*?)(\s*)$/) ?? [];
-
-	// We will render leading and trailing whitespace *outside* of any formatting.
-
-	writer.write(leadingWhitespace); // write leading whitespace
-
-	if (context.insideHtml) {
-		renderPlainTextWithHtmlSyntax(body, writer, context);
-	} else {
-		renderPlainTextWithMarkdownSyntax(body, writer, context);
-	}
-
-	writer.write(trailingWhitespace); // write trailing whitespace
-}
-
-function renderPlainTextWithMarkdownSyntax(
-	content: string,
-	writer: DocumentWriter,
-	context: MarkdownRenderContext,
-): void {
-	if (content.length === 0) {
+	if (text.length === 0) {
 		return;
 	}
 
+	if (context.insideHtml) {
+		renderPlainTextWithHtmlSyntax(node, writer, context);
+	} else {
+		renderPlainTextWithMarkdownSyntax(node, writer, context);
+	}
+}
+
+function renderPlainTextWithMarkdownSyntax(
+	node: PlainTextNode,
+	writer: DocumentWriter,
+	context: MarkdownRenderContext,
+): void {
 	const anyFormatting =
 		context.bold === true || context.italic === true || context.strikethrough === true;
 	if (anyFormatting) {
@@ -72,6 +61,13 @@ function renderPlainTextWithMarkdownSyntax(
 		}
 	}
 
+	// We will render leading and trailing whitespace *outside* of any formatting.
+	const { leadingWhitespace, body, trailingWhitespace } = splitLeadingAndTrailingWhitespace(
+		node.value,
+	);
+
+	writer.write(leadingWhitespace); // write leading whitespace
+
 	if (context.bold === true) {
 		writer.write("**");
 	}
@@ -83,7 +79,7 @@ function renderPlainTextWithMarkdownSyntax(
 	}
 
 	// Don't escape text within a code block in Markdown
-	const text = context.insideCodeBlock ? content : getMarkdownEscapedText(content);
+	const text = context.insideCodeBlock ? body : getMarkdownEscapedText(body);
 	writer.write(text);
 
 	if (context.strikethrough === true) {
@@ -95,13 +91,22 @@ function renderPlainTextWithMarkdownSyntax(
 	if (context.bold === true) {
 		writer.write("**");
 	}
+
+	writer.write(trailingWhitespace); // write trailing whitespace
 }
 
 function renderPlainTextWithHtmlSyntax(
-	content: string,
+	node: PlainTextNode,
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
+	// We will render leading and trailing whitespace *outside* of any formatting tags.
+	const { leadingWhitespace, body, trailingWhitespace } = splitLeadingAndTrailingWhitespace(
+		node.value,
+	);
+
+	writer.write(leadingWhitespace); // write leading whitespace
+
 	if (context.bold === true) {
 		writer.write("<b>");
 	}
@@ -112,7 +117,7 @@ function renderPlainTextWithHtmlSyntax(
 		writer.write("<s>");
 	}
 
-	writer.write(getHtmlEscapedText(content));
+	writer.write(getHtmlEscapedText(body));
 
 	if (context.strikethrough === true) {
 		writer.write("</s>");
@@ -123,6 +128,26 @@ function renderPlainTextWithHtmlSyntax(
 	if (context.bold === true) {
 		writer.write("</b>");
 	}
+
+	writer.write(trailingWhitespace); // write trailing whitespace
+}
+
+interface SplitTextResult {
+	leadingWhitespace: string;
+	body: string;
+	trailingWhitespace: string;
+}
+
+function splitLeadingAndTrailingWhitespace(text: string): SplitTextResult {
+	// split out the [ leading whitespace, body, trailing whitespace ]
+	const [, leadingWhitespace, body, trailingWhitespace]: string[] =
+		text.match(/^(\s*)(.*?)(\s*)$/) ?? [];
+
+	return {
+		leadingWhitespace,
+		body,
+		trailingWhitespace,
+	};
 }
 
 /**
