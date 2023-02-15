@@ -4,56 +4,188 @@
  */
 import { expect } from "chai";
 
-import { PlainTextNode, TableCellNode, TableNode, TableRowNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
+import { TableCellNode, TableNode, TableRowNode } from "../../documentation-domain";
+import { testRender } from "./Utilities";
 
-describe("Table markdown tests", () => {
-	it("Can render a table row, and includes a default heading row when none is supplied", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new TableNode([
-				new TableRowNode([
-					new TableCellNode([new PlainTextNode("Cell 1")]),
-					new TableCellNode([new PlainTextNode("Cell 2")]),
-					new TableCellNode([new PlainTextNode("Cell 3")]),
-				]),
-			]),
-		);
-		const expected = [
-			"",
-			"|  |  |  |",
-			"|  --- | --- | --- |",
-			"|  Cell 1 | Cell 2 | Cell 3 |",
-			"",
-		].join(standardEOL);
-		expect(renderedForm).to.equal(expected);
+describe("Table rendering tests", () => {
+	it("Empty table (Markdown)", () => {
+		expect(testRender(TableNode.Empty)).to.equal("\n");
 	});
 
-	it("Can render a table header row", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new TableNode(
-				[
-					new TableRowNode([
-						new TableCellNode([new PlainTextNode("Cell 1")]),
-						new TableCellNode([new PlainTextNode("Cell 2")]),
-						new TableCellNode([new PlainTextNode("Cell 3")]),
-					]),
-				],
-				new TableRowNode([
-					new TableCellNode([new PlainTextNode("Heading 1")]),
-					new TableCellNode([new PlainTextNode("Heading 2")]),
-					new TableCellNode([new PlainTextNode("Heading 3")]),
-				]),
-			),
-		);
+	it("Simple table without header (Markdown)", () => {
+		const input = new TableNode([
+			new TableRowNode([
+				TableCellNode.createFromPlainText("Cell 1A"),
+				TableCellNode.createFromPlainText("Cell 1B"),
+				TableCellNode.createFromPlainText("Cell 1C"),
+			]),
+			new TableRowNode([
+				TableCellNode.createFromPlainText("Cell 2A"),
+				TableCellNode.createFromPlainText("Cell 2B"),
+			]),
+		]);
+
+		const result = testRender(input);
+
 		const expected = [
 			"",
-			"| Heading 1 | Heading 2 | Heading 3 |",
-			"|  --- | --- | --- |",
-			"|  Cell 1 | Cell 2 | Cell 3 |",
+			"| Cell 1A | Cell 1B | Cell 1C |",
+			"| Cell 2A | Cell 2B |",
 			"",
-		].join(standardEOL);
-		expect(renderedForm).to.equal(expected);
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
+	});
+
+	it("Simple table with header (Markdown)", () => {
+		const input = new TableNode(
+			[
+				new TableRowNode([
+					TableCellNode.createFromPlainText("Cell 1A"),
+					TableCellNode.createFromPlainText("Cell 1B"),
+				]),
+				new TableRowNode([
+					TableCellNode.createFromPlainText("Cell 2A"),
+					TableCellNode.createFromPlainText("Cell 2B"),
+					TableCellNode.createFromPlainText("Cell 2C"),
+				]),
+			],
+			/* headingRow: */ new TableRowNode([
+				TableCellNode.createFromPlainText("Header A"),
+				TableCellNode.createFromPlainText("Header B"),
+				TableCellNode.createFromPlainText("Header C"),
+			]),
+		);
+
+		const result = testRender(input);
+
+		const expected = [
+			"",
+			"| Header A | Header B | Header C |",
+			"| --- | --- | --- |",
+			"| Cell 1A | Cell 1B |",
+			"| Cell 2A | Cell 2B | Cell 2C |",
+			"",
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
+	});
+
+	it("Empty table (HTML)", () => {
+		expect(testRender(TableNode.Empty, undefined, { insideHtml: true })).to.equal(
+			"<table>\n</table>\n",
+		);
+	});
+
+	it("Simple table without header (HTML)", () => {
+		const input = new TableNode([
+			new TableRowNode([
+				TableCellNode.createFromPlainText("Cell 1A"),
+				TableCellNode.createFromPlainText("Cell 1B"),
+				TableCellNode.createFromPlainText("Cell 1C"),
+			]),
+			new TableRowNode([
+				TableCellNode.createFromPlainText("Cell 2A"),
+				TableCellNode.createFromPlainText("Cell 2B"),
+			]),
+		]);
+
+		const result = testRender(input, undefined, { insideHtml: true });
+
+		const expected = [
+			"<table>",
+			"  <tbody>",
+			"    <tr>",
+			"      <td>",
+			"        Cell 1A",
+			"      </td>",
+			"      <td>",
+			"        Cell 1B",
+			"      </td>",
+			"      <td>",
+			"        Cell 1C",
+			"      </td>",
+			"    </tr>",
+			"    <tr>",
+			"      <td>",
+			"        Cell 2A",
+			"      </td>",
+			"      <td>",
+			"        Cell 2B",
+			"      </td>",
+			"    </tr>",
+			"  </tbody>",
+			"</table>",
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
+	});
+
+	it("Simple table with header (Markdown)", () => {
+		const input = new TableNode(
+			[
+				new TableRowNode([
+					TableCellNode.createFromPlainText("Cell 1A"),
+					TableCellNode.createFromPlainText("Cell 1B"),
+				]),
+				new TableRowNode([
+					TableCellNode.createFromPlainText("Cell 2A"),
+					TableCellNode.createFromPlainText("Cell 2B"),
+					TableCellNode.createFromPlainText("Cell 2C"),
+				]),
+			],
+			/* headingRow: */ new TableRowNode([
+				TableCellNode.createFromPlainText("Header A"),
+				TableCellNode.createFromPlainText("Header B"),
+				TableCellNode.createFromPlainText("Header C"),
+			]),
+		);
+
+		const result = testRender(input, undefined, { insideHtml: true });
+
+		const expected = [
+			"<table>",
+			"  <thead>",
+			"    <tr>",
+			"      <td>",
+			"        Header A",
+			"      </td>",
+			"      <td>",
+			"        Header B",
+			"      </td>",
+			"      <td>",
+			"        Header C",
+			"      </td>",
+			"    </tr>",
+			"  </thead>",
+			"  <tbody>",
+			"    <tr>",
+			"      <td>",
+			"        Cell 1A",
+			"      </td>",
+			"      <td>",
+			"        Cell 1B",
+			"      </td>",
+			"    </tr>",
+			"    <tr>",
+			"      <td>",
+			"        Cell 2A",
+			"      </td>",
+			"      <td>",
+			"        Cell 2B",
+			"      </td>",
+			"      <td>",
+			"        Cell 2C",
+			"      </td>",
+			"    </tr>",
+			"  </tbody>",
+			"</table>",
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
 	});
 });
