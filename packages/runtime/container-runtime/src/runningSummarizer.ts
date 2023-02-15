@@ -264,6 +264,7 @@ export class RunningSummarizer implements IDisposable {
 				// executing the refreshLatestSummaryAck.
 				// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
 				await this.lockedSummaryAction(
+					() => {},
 					async () =>
 						this.refreshLatestSummaryAckCallback({
 							proposalHandle: summaryOpHandle,
@@ -294,7 +295,6 @@ export class RunningSummarizer implements IDisposable {
 								throw error;
 							}
 						}),
-					() => {},
 					() => {},
 				);
 			} catch (error) {
@@ -495,14 +495,14 @@ export class RunningSummarizer implements IDisposable {
 	 * Runs single summary action that prevents any other concurrent actions.
 	 * Assumes that caller checked upfront for lack of concurrent action (this.summarizingLock)
 	 * before calling this API. I.e. caller is responsible for either erroring out or waiting on this promise.
-	 * @param action - action to perform.
 	 * @param before - set of instructions to run before running the action.
+	 * @param action - action to perform.
 	 * @param after - set of instructions to run after running the action.
 	 * @returns - result of action.
 	 */
 	private async lockedSummaryAction<T>(
-		action: () => Promise<T>,
 		before: () => void,
+		action: () => Promise<T>,
 		after: () => void,
 	) {
 		assert(
@@ -537,6 +537,9 @@ export class RunningSummarizer implements IDisposable {
 		resultsBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
 		this.lockedSummaryAction(
+			() => {
+				this.beforeSummaryAction();
+			},
 			async () => {
 				const summarizeResult = this.generator.summarize(
 					summarizeProps,
@@ -546,9 +549,6 @@ export class RunningSummarizer implements IDisposable {
 				);
 				// ensure we wait till the end of the process
 				return summarizeResult.receivedSummaryAckOrNack;
-			},
-			() => {
-				this.beforeSummaryAction();
 			},
 			() => {
 				this.afterSummaryAction();
@@ -579,6 +579,9 @@ export class RunningSummarizer implements IDisposable {
 		}
 
 		this.lockedSummaryAction(
+			() => {
+				this.beforeSummaryAction();
+			},
 			async () => {
 				const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
 					{ refreshLatestAck: false, fullTree: false },
@@ -674,9 +677,6 @@ export class RunningSummarizer implements IDisposable {
 				);
 
 				this.stopSummarizerCallback("failToSummarize");
-			},
-			() => {
-				this.beforeSummaryAction();
 			},
 			() => {
 				this.afterSummaryAction();
