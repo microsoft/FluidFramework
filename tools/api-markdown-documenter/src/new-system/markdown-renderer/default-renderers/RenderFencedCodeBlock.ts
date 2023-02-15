@@ -15,6 +15,7 @@ export function renderFencedCodeBlock(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
+	// FencedCodeBlock rendering is multi-line, and so if we are inside a table, we need to use HTML syntax.
 	if (context.insideTable || context.insideHtml) {
 		renderFencedCodeBlockWithHtmlSyntax(node, writer, context);
 	} else {
@@ -44,13 +45,14 @@ function renderFencedCodeBlockWithHtmlSyntax(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	writer.write("<code>");
+	writer.writeLine("<code>");
 	writer.increaseIndent();
 	renderNodes(node.children, writer, {
 		...context,
 		insideCodeBlock: true,
 		insideHtml: true,
 	});
+	writer.ensureNewLine(); // Ensure newline after body content
 	writer.decreaseIndent();
-	writer.write("</code>");
+	writer.writeLine("</code>");
 }
