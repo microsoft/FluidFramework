@@ -1,9 +1,8 @@
 {
 	"scripts": {
-		"build": "pnpm run build:wasm && pnpm i && pnpm run cleanup && tsc --project \"tsconfig.json\" && pnpm run cleanup",
+		"build": "pnpm run build:wasm && pnpm i && tsc --project \"tsconfig.json\"",
 		"build:wasm": "node ./wasm-pack-workspace.js",
-		"build:individual": "node ./wasm-pack-crate.js",
-		"cleanup": "rimraf ./target-web/*/package.json && rimraf ./target-web/*/.gitignore"
+		"build:individual": "node ./wasm-pack-crate.js"
 	},
 	"devDependencies": {
 		"rimraf": "^3.0.2",

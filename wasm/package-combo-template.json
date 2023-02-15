@@ -8,10 +8,7 @@
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework"
   },
-  "files": [
-    "*-nodejs/*!(*.wasm.d.ts)",
-    "*-bundler/*!(*_bg.js|*.wasm.d.ts)"
-  ],
+  "files": [ "Placeholder File" ],
   "main": "Placeholder main",
   "types": "Placeholder types",
   "module": "Placeholder module",
