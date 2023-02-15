@@ -753,7 +753,7 @@ export interface ChildSectionProperties {
 export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
 	config: Required<MarkdownDocumenterConfiguration>,
-	createChildContent: (apiItem) => DocumentationNode,
+	createChildContent: (apiItem) => DocumentationNode[],
 ): HierarchicalSectionNode[] | undefined {
 	const sections: HierarchicalSectionNode[] = [];
 
@@ -765,12 +765,12 @@ export function createChildDetailsSection(
 			!doesItemKindRequireOwnDocument(childItem.itemKind, config.documentBoundaries) &&
 			childItem.items.length > 0
 		) {
-			sections.push(
-				wrapInSection(
-					childItem.items.map((element) => createChildContent(element)),
-					childItem.heading,
-				),
-			);
+			const childContents: DocumentationNode[] = [];
+			for (const item of childItem.items) {
+				childContents.push(...createChildContent(item));
+			}
+
+			sections.push(wrapInSection(childContents, childItem.heading));
 		}
 	}
 

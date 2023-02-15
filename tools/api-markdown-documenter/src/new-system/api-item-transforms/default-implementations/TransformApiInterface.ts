@@ -54,8 +54,8 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
 export function transformApiInterface(
 	apiInterface: ApiInterface,
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode,
-): HierarchicalSectionNode {
+	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode[],
+): HierarchicalSectionNode[] {
 	const childSections: HierarchicalSectionNode[] = [];
 
 	const hasAnyChildren = apiInterface.members.length > 0;

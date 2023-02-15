@@ -2,7 +2,7 @@ import { ApiPackage } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
-import { apiItemToSection } from "./TransformApiItem";
+import { apiItemToSections } from "./TransformApiItem";
 import { createDocument } from "./Utilities";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
 
@@ -31,8 +31,8 @@ export function apiPackageToDocument(
 
 	// Render body contents
 	sections.push(
-		config.transformApiPackage(apiPackage, config, (childItem) =>
-			apiItemToSection(childItem, config),
+		...config.transformApiPackage(apiPackage, config, (childItem) =>
+			apiItemToSections(childItem, config),
 		),
 	);
 

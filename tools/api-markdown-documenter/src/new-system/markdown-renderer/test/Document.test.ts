@@ -16,26 +16,34 @@ import { renderDocument } from "../Render";
 
 describe("Document markdown tests", () => {
 	it("Renders a simple document", () => {
-		const document = new DocumentNode(
-			[
-				new ParagraphNode([
-					new PlainTextNode("This is a sample document. "),
-					new PlainTextNode("It has very basic content.\t"),
-				]),
+		const document = new DocumentNode({
+			children: [
 				new HierarchicalSectionNode(
 					[
 						new ParagraphNode([
-							new PlainTextNode("This is test inside of a paragraph. "),
-							new PlainTextNode("It is also inside of a hierarchical section node. "),
-							SpanNode.createFromPlainText("That's real neat-o.", { italic: true }),
+							new PlainTextNode("This is a sample document. "),
+							new PlainTextNode("It has very basic content.\t"),
 						]),
+						new HierarchicalSectionNode(
+							[
+								new ParagraphNode([
+									new PlainTextNode("This is test inside of a paragraph. "),
+									new PlainTextNode(
+										"It is also inside of a hierarchical section node. ",
+									),
+									SpanNode.createFromPlainText("That's real neat-o.", {
+										italic: true,
+									}),
+								]),
+							],
+							HeadingNode.createFromPlainText("Section Heading"),
+						),
 					],
-					HeadingNode.createFromPlainText("Section Heading"),
+					HeadingNode.createFromPlainText("Sample Document"),
 				),
 			],
-			/* path: */ "./test.md",
-			/* title: */ "Sample Document",
-		);
+			filePath: "./test.md",
+		});
 
 		const expected = [
 			"# Sample Document",

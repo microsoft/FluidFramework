@@ -60,8 +60,8 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
 export function transformApiClass(
 	apiClass: ApiClass,
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode,
-): HierarchicalSectionNode {
+	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode[],
+): HierarchicalSectionNode[] {
 	const sections: HierarchicalSectionNode[] = [];
 
 	const hasAnyChildren = apiClass.members.length > 0;

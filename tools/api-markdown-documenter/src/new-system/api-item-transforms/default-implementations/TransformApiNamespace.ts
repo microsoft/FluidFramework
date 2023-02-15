@@ -14,7 +14,7 @@ import { transformApiModuleLike } from "./TransformApiModuleLike";
 export function transformApiNamespace(
 	apiNamespace: ApiNamespace,
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode,
-): HierarchicalSectionNode {
+	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode[],
+): HierarchicalSectionNode[] {
 	return transformApiModuleLike(apiNamespace, apiNamespace.members, config, generateChildContent);
 }

@@ -27,9 +27,9 @@ export function apiModelToDocument(
 	// Note: We don't render the breadcrumb for Model document, as it is always the root of the file hierarchical
 
 	// Render body contents
-	const section = config.transformApiModel(apiModel, config);
+	const sections = config.transformApiModel(apiModel, config);
 
 	logger.verbose(`API Model document rendered successfully.`);
 
-	return createDocument(apiModel, [section], config);
+	return createDocument(apiModel, sections, config);
 }

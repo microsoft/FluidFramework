@@ -42,7 +42,7 @@ export function createSectionWithChildContent(
 	apiItem: ApiItem,
 	childContent: HierarchicalSectionNode[] | undefined,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode {
+): HierarchicalSectionNode[] {
 	const sections: HierarchicalSectionNode[] = [];
 
 	// Render beta warning if applicable
@@ -100,6 +100,6 @@ export function createSectionWithChildContent(
 	// Add heading to top of section only if this is being rendered to a parent item.
 	// Document items have their headings handled specially.
 	return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
-		? HierarchicalSectionNode.combine(...sections)
-		: wrapInSection(sections, getHeadingForApiItem(apiItem, config));
+		? sections
+		: [wrapInSection(sections, getHeadingForApiItem(apiItem, config))];
 }

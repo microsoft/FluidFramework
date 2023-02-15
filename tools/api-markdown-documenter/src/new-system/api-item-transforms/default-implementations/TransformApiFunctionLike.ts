@@ -14,7 +14,7 @@ import { createParametersSection, createReturnsSection } from "../helpers";
 export function transformApiFunctionLike(
 	apiFunctionLike: ApiFunctionLike,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode {
+): HierarchicalSectionNode[] {
 	const childSections: HierarchicalSectionNode[] = [];
 
 	// Render parameter table (if any parameters)

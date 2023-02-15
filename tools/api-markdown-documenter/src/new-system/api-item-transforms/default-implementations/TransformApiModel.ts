@@ -18,16 +18,21 @@ import { createTableWithHeading } from "../helpers";
 export function transformApiModel(
 	apiModel: ApiModel,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode {
+): HierarchicalSectionNode[] {
 	if (apiModel.packages.length === 0) {
 		// If no packages under model, print simple note.
-		return new HierarchicalSectionNode([
-			new ParagraphNode([
-				createSingleLineSpanFromPlainText("No packages discovered while parsing model.", {
-					italic: true,
-				}),
+		return [
+			new HierarchicalSectionNode([
+				new ParagraphNode([
+					createSingleLineSpanFromPlainText(
+						"No packages discovered while parsing model.",
+						{
+							italic: true,
+						},
+					),
+				]),
 			]),
-		]);
+		];
 	}
 
 	// Render packages table
@@ -46,5 +51,5 @@ export function transformApiModel(
 		);
 	}
 
-	return packagesTableSection;
+	return [packagesTableSection];
 }

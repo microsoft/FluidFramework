@@ -82,7 +82,7 @@ export function apiItemToDocument(
 	}
 
 	// Render body content for the item
-	sections.push(apiItemToSection(apiItem, config));
+	sections.push(...apiItemToSections(apiItem, config));
 
 	logger.verbose(`Document for ${apiItem.displayName} rendered successfully.`);
 
@@ -100,10 +100,10 @@ export function apiItemToDocument(
  * - `Package`
  * - `EntryPoint`
  */
-export function apiItemToSection(
+export function apiItemToSections(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode {
+): HierarchicalSectionNode[] {
 	if (apiItem.kind === ApiItemKind.None) {
 		throw new Error(`Encountered API item with a kind of "None".`);
 	}
@@ -120,75 +120,75 @@ export function apiItemToSection(
 
 	logger.verbose(`Rendering section for ${apiItem.displayName}...`);
 
-	let section: HierarchicalSectionNode;
+	let sections: HierarchicalSectionNode[];
 	switch (apiItem.kind) {
 		case ApiItemKind.CallSignature:
-			section = config.transformApiCallSignature(apiItem as ApiCallSignature, config);
+			sections = config.transformApiCallSignature(apiItem as ApiCallSignature, config);
 			break;
 
 		case ApiItemKind.Class:
-			section = config.transformApiClass(apiItem as ApiClass, config, (childItem) =>
-				apiItemToSection(childItem, config),
+			sections = config.transformApiClass(apiItem as ApiClass, config, (childItem) =>
+				apiItemToSections(childItem, config),
 			);
 			break;
 
 		case ApiItemKind.ConstructSignature:
-			section = config.transformApiConstructor(apiItem as ApiConstructSignature, config);
+			sections = config.transformApiConstructor(apiItem as ApiConstructSignature, config);
 			break;
 
 		case ApiItemKind.Constructor:
-			section = config.transformApiConstructor(apiItem as ApiConstructor, config);
+			sections = config.transformApiConstructor(apiItem as ApiConstructor, config);
 			break;
 
 		case ApiItemKind.Enum:
-			section = config.transformApiEnum(apiItem as ApiEnum, config, (childItem) =>
-				apiItemToSection(childItem, config),
+			sections = config.transformApiEnum(apiItem as ApiEnum, config, (childItem) =>
+				apiItemToSections(childItem, config),
 			);
 			break;
 
 		case ApiItemKind.EnumMember:
-			section = config.transformApiEnumMember(apiItem as ApiEnumMember, config);
+			sections = config.transformApiEnumMember(apiItem as ApiEnumMember, config);
 			break;
 
 		case ApiItemKind.Function:
-			section = config.transformApiFunction(apiItem as ApiFunction, config);
+			sections = config.transformApiFunction(apiItem as ApiFunction, config);
 			break;
 
 		case ApiItemKind.IndexSignature:
-			section = config.transformApiIndexSignature(apiItem as ApiIndexSignature, config);
+			sections = config.transformApiIndexSignature(apiItem as ApiIndexSignature, config);
 			break;
 
 		case ApiItemKind.Interface:
-			section = config.transformApiInterface(apiItem as ApiInterface, config, (childItem) =>
-				apiItemToSection(childItem, config),
+			sections = config.transformApiInterface(apiItem as ApiInterface, config, (childItem) =>
+				apiItemToSections(childItem, config),
 			);
 			break;
 
 		case ApiItemKind.Method:
-			section = config.transformApiMethod(apiItem as ApiMethod, config);
+			sections = config.transformApiMethod(apiItem as ApiMethod, config);
 			break;
 
 		case ApiItemKind.MethodSignature:
-			section = config.transformApiMethod(apiItem as ApiMethodSignature, config);
+			sections = config.transformApiMethod(apiItem as ApiMethodSignature, config);
 			break;
 
 		case ApiItemKind.Namespace:
-			section = config.transformApiNamespace(apiItem as ApiNamespace, config, (childItem) =>
-				apiItemToSection(childItem, config),
+			sections = config.transformApiNamespace(apiItem as ApiNamespace, config, (childItem) =>
+				apiItemToSections(childItem, config),
 			);
 			break;
 
 		case ApiItemKind.Property:
 		case ApiItemKind.PropertySignature:
-			section = config.transformApiProperty(apiItem as ApiPropertyItem, config);
+			sections = config.transformApiProperty(apiItem as ApiPropertyItem, config);
 			break;
 
 		case ApiItemKind.TypeAlias:
-			section = config.transformApiTypeAlias(apiItem as ApiTypeAlias, config);
+			sections = config.transformApiTypeAlias(apiItem as ApiTypeAlias, config);
 			break;
 
 		case ApiItemKind.Variable:
-			section = config.transformApiVariable(apiItem as ApiVariable, config);
+			sections = config.transformApiVariable(apiItem as ApiVariable, config);
 			break;
 
 		default:
@@ -196,5 +196,5 @@ export function apiItemToSection(
 	}
 
 	logger.verbose(`${apiItem.displayName} section rendered successfully!`);
-	return section;
+	return sections;
 }

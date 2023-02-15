@@ -32,7 +32,7 @@ import {
 	TableRowNode,
 	createSingleLineSpanFromPlainText,
 } from "../../documentation-domain";
-import { apiItemToSection } from "../TransformApiItem";
+import { apiItemToSections } from "../TransformApiItem";
 import { createHeadingForApiItem, wrapInSection } from "../helpers";
 
 /**
@@ -236,7 +236,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const config = createConfig(defaultPartialConfig, model);
 
 		const result = config.transformApiInterface(apiInterface, config, (childItem) =>
-			apiItemToSection(childItem, config),
+			apiItemToSections(childItem, config),
 		);
 
 		const expected = new HierarchicalSectionNode([

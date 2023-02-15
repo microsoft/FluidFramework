@@ -60,8 +60,8 @@ export function transformApiModuleLike(
 	apiItem: ApiModuleLike,
 	childItems: readonly ApiItem[],
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode,
-): HierarchicalSectionNode {
+	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode[],
+): HierarchicalSectionNode[] {
 	const children: HierarchicalSectionNode[] = [];
 
 	const hasAnyChildren = apiItem.members.length > 0;

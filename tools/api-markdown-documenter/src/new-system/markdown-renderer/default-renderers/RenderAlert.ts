@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { AlertNode } from "../../documentation-domain";
+import { AlertNode, PlainTextNode } from "../../documentation-domain";
 import type { DocumentWriter } from "../DocumentWriter";
-import { renderNodes } from "../Render";
+import { renderNode, renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
@@ -35,7 +35,10 @@ function renderAlertWithMarkdownSyntax(
 
 	writer.ensureSkippedLine(); // Block quotes require a leading blank line
 	writer.increaseIndent("> "); // Use block quote indentation
-	writer.writeLine(headerText);
+	renderNode(new PlainTextNode(headerText), writer, {
+		...context,
+		bold: true,
+	});
 	writer.ensureSkippedLine(); // Ensure blank line between header and child content
 	renderNodes(node.children, writer, context);
 	writer.decreaseIndent();
@@ -51,7 +54,10 @@ function renderAlertWithHtmlSyntax(
 
 	writer.writeLine("<blockquote>");
 	writer.increaseIndent();
-	writer.writeLine(headerText);
+	renderNode(new PlainTextNode(headerText), writer, {
+		...context,
+		bold: true,
+	});
 	writer.writeLine("<br/><br/>"); // Ensure blank line between header and child content
 	renderNodes(node.children, writer, {
 		...context,

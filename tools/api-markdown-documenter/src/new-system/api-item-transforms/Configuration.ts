@@ -32,33 +32,33 @@ import * as DefaultTransformationImplementations from "./default-implementations
  */
 
 /**
- * Signature for a function which renders a `HierarchicalSectionNode` describing an API item that potentially has child items
- * to be rendered as content under the same section.
+ * Signature for a function which generates one or more {@link HierarchicalSectionNode}s describing an
+ * API item that potentially has child items to be rendered as content under it.
  */
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildSection: (apiItem: ApiItem) => HierarchicalSectionNode,
-) => HierarchicalSectionNode;
+	generateChildSection: (apiItem: ApiItem) => HierarchicalSectionNode[],
+) => HierarchicalSectionNode[];
 
 /**
- * Signature for a function which renders a `HierarchicalSectionNode` describing an API item that does not have child items to
- * be rendered.
+ * Signature for a function which generates one or more {@link HierarchicalSectionNode}s describing an
+ * API item that *does not* have child items to be rendered.
  */
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-) => HierarchicalSectionNode;
+) => HierarchicalSectionNode[];
 
 /**
- * Signature for a function which renders information about an API item with inner content injected into the same
- * section.
+ * Signature for a function which generates information about an API item with inner content injected
+ * into the same section.
  */
-export type CreateSectionWithChildContent = (
+export type CreateChildContentSections = (
 	apiItem: ApiItem,
 	childSections: HierarchicalSectionNode[] | undefined,
 	config: Required<MarkdownDocumenterConfiguration>,
-) => HierarchicalSectionNode;
+) => HierarchicalSectionNode[];
 
 /**
  * Policies for rendering different kinds of API content.
@@ -156,7 +156,7 @@ export interface ApiItemTransformationConfiguration {
 	 * This can be used to adjust the layout of the child rendering section of the rendering policies without
 	 * having to provide new overrides for all of those content types.
 	 */
-	createSectionWithChildContent?: CreateSectionWithChildContent;
+	createSectionWithChildContent?: CreateChildContentSections;
 }
 
 /**

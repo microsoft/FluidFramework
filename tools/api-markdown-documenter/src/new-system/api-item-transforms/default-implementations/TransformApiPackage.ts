@@ -14,8 +14,8 @@ import { transformApiModuleLike } from "./TransformApiModuleLike";
 export function transformApiPackage(
 	apiPackage: ApiPackage,
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode,
-): HierarchicalSectionNode {
+	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode[],
+): HierarchicalSectionNode[] {
 	const entryPoints = apiPackage.entryPoints;
 	if (entryPoints.length !== 1) {
 		throw new Error(

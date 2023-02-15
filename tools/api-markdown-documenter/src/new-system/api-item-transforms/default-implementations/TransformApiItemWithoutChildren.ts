@@ -13,7 +13,7 @@ import { HierarchicalSectionNode } from "../../documentation-domain";
 export function transformApiItemWithoutChildren(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode {
+): HierarchicalSectionNode[] {
 	// Items without children don't have much information to provide other than the default
 	// rendered details.
 	return config.createSectionWithChildContent(apiItem, undefined, config);
