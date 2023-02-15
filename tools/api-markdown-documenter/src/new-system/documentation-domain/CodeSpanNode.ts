@@ -7,7 +7,19 @@ import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 /**
- * @example `Foo`
+ * Represents a simple, single-line code span.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * `Foo`
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <code>Foo</code>
+ * ```
  */
 export class CodeSpanNode
 	extends ParentNodeBase<SingleLineElementNode>
@@ -17,6 +29,11 @@ export class CodeSpanNode
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.CodeSpan;
+
+	/**
+	 * Static singleton representing an empty Code Span node.
+	 */
+	public static readonly Empty: CodeSpanNode = new CodeSpanNode([]);
 
 	public constructor(children: SingleLineElementNode[]) {
 		super(children);
