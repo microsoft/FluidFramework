@@ -6,27 +6,21 @@
 module.exports = {
 	indent: "\t",
 	workspace: false,
+	// semverGroup rules are applied in order to package/dep combinations. First matching rule applies. When running
+	// `syncpack lint-semver-ranges`, the output is grouped into numbered groups. However, the numbers of the groups are
+	// the _inverse_ of their order in this array. That is, Semver Group 1 in the output will correspond to the _last_
+	// rule in this array.
 	semverGroups: [
-		// Rules are applied in order to package/dep combinations. First matching rule applies. When running `syncpack
-		// lint-semver-ranges`, the output is grouped into numbered groups. However, the numbers of the groups are the
-		// _inverse_ of their order in this array. That is, Semver Group 1 in the output will correspond to the _last_
-		// rule in this array.
 		{
+			// PropertyDDS packages' dependencies are ignored because they use a lot of exact deps.
 			dependencies: ["**"],
-			// dependencyTypes: ["devDependencies"],
-			packages: [
-				// PropertyDDS is ignored
-				"@fluid-experimental/property-*",
-				// Ignore all experimental packages
-				// "@fluid-experimental/*",
-			],
+			packages: ["@fluid-experimental/property-*"],
 			isIgnored: true,
 		},
 		{
 			// These dependencies should always be on exact versions
 			dependencies: [
 				"@tiny-calc/*",
-
 				"@graphql-codegen/cli",
 				"@graphql-codegen/typescript",
 				"@types/chrome",
@@ -49,7 +43,6 @@ module.exports = {
 			// changes that may break linting
 			dependencies: [
 				"eslint-plugin-*",
-
 				"eslint-config-prettier",
 				"eslint",
 				"less",
@@ -69,23 +62,11 @@ module.exports = {
 		},
 	],
 	versionGroups: [
-		// {
-		//     // PropertyDDS
-		//     "dependencies": ["**"],
-		//     "packages": ["@fluid-experimental/property-"],
-		// },
-		// {
-		//     // If unmatched, ignore
-		//     packages: ['**'],
-		//     dependencies: ['**'],
-		//     isIgnored: true,
-		// }
 		{
 			// Some dependencies, like typescript and eslint, recommend to use tilde deps because minors introduce
 			// changes that may break linting
 			dependencies: [
 				"eslint-plugin-*",
-
 				"eslint-config-prettier",
 				"eslint",
 				"prettier",
