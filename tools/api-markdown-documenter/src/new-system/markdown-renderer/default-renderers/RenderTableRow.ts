@@ -29,14 +29,15 @@ function renderTableRowWithMarkdownSyntax(
 ): void {
 	writer.ensureNewLine(); // Ensure line break before new row
 	writer.write("| ");
-	for (const child of node.children) {
+	for (let i = 0; i < node.children.length; i++) {
+		const child = node.children[i];
 		renderNode(child, writer, {
 			...context,
 			insideTable: true,
 		});
-		writer.write(" |");
+		writer.write(i === node.children.length - 1 ? " |" : " | ");
 	}
-	writer.ensureNewLine(); // Ensure linebreak after row
+	writer.ensureNewLine(); // Ensure line break after row
 }
 
 function renderTableRowWithHtmlSyntax(

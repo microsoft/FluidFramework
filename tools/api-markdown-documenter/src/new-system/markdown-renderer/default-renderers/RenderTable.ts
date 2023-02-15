@@ -51,7 +51,7 @@ function renderTableWithMarkdownSyntax(
 			new TableRowNode(
 				// eslint-disable-next-line unicorn/new-for-builtins
 				Array<TableCellNode>(headerCellCount).fill(
-					TableCellNode.createFromPlainText(" --- "),
+					TableCellNode.createFromPlainText("---"),
 				),
 			),
 			writer,
