@@ -37,10 +37,6 @@ export class HierarchicalSectionNode extends ParentNodeBase {
 	public constructor(children: DocumentationNode[], heading?: HeadingNode) {
 		super(children);
 
-		if (heading?.level !== undefined) {
-			throw new Error("Hierarchical section headings must not specify a heading level.");
-		}
-
 		this.heading = heading;
 	}
 

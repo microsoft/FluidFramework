@@ -34,7 +34,7 @@ function renderHeadingWithMarkdownSyntax(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	const headingLevel = headingNode.level ?? context.headingLevel;
+	const headingLevel = context.headingLevel;
 
 	writer.ensureSkippedLine(); // Headings require leading blank line
 
@@ -63,7 +63,7 @@ function renderHeadingWithHtmlSyntax(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	const headingLevel = headingNode.level ?? context.headingLevel;
+	const headingLevel = context.headingLevel;
 
 	// HTML only supports heading levels up to 6. If our level is beyond that, we will render as simple
 	// bold text, with an accompanying anchor to ensure we can still link to the text.

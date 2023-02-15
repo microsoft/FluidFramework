@@ -7,9 +7,6 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
-/**
- *
- */
 export class HeadingNode
 	extends ParentNodeBase<SingleLineElementNode>
 	implements Omit<Heading, "title">
@@ -24,20 +21,10 @@ export class HeadingNode
 	 */
 	public readonly id?: string;
 
-	/**
-	 * {@inheritDoc Heading.level}
-	 */
-	public readonly level?: number;
-
-	public constructor(content: SingleLineElementNode[], id?: string, level?: number) {
+	public constructor(content: SingleLineElementNode[], id?: string) {
 		super(content);
 
-		if (level !== undefined && level < 0) {
-			throw new Error(`Heading level must be >= 0. Received: ${level}.`);
-		}
-
 		this.id = id;
-		this.level = level;
 	}
 
 	/**
@@ -46,14 +33,14 @@ export class HeadingNode
 	 * @param id - See {@link Heading.id}
 	 * @param level - See {@link Heading.level}
 	 */
-	public static createFromPlainText(text: string, id?: string, level?: number): HeadingNode {
-		return new HeadingNode([new PlainTextNode(text)], id, level);
+	public static createFromPlainText(text: string, id?: string): HeadingNode {
+		return new HeadingNode([new PlainTextNode(text)], id);
 	}
 
 	/**
 	 * Generates a `HeadingNode` from the provided {@link Heading}.
 	 */
 	public static createFromPlainTextHeading(heading: Heading): HeadingNode {
-		return HeadingNode.createFromPlainText(heading.title, heading.id, heading.level);
+		return HeadingNode.createFromPlainText(heading.title, heading.id);
 	}
 }
