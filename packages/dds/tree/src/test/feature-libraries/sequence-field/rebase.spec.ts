@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { RevisionTag, tagChange } from "../../../core";
+import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import {
@@ -17,9 +17,9 @@ import {
 } from "./utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 
-const tag1: RevisionTag = brand(41);
-const tag2: RevisionTag = brand(42);
-const tag3: RevisionTag = brand(43);
+const tag1: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
 
 function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTag): TestChangeset {
 	return rebaseI(change, tagChange(base, baseRev));
@@ -466,9 +466,9 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("concurrent inserts ↷ delete", () => {
-		const delA = tagChange(Change.delete(0, 1), brand(1));
-		const insertB = tagChange(Change.insert(0, 1), brand(2));
-		const insertC = tagChange(Change.insert(1, 1), brand(3));
+		const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
+		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
+		const insertC = tagChange(Change.insert(1, 1), mintRevisionTag());
 		const insertB2 = rebaseTagged(insertB, delA);
 		const insertC2 = rebaseTagged(insertC, delA, insertB2);
 		const expected = Change.insert(1, 1);
@@ -476,12 +476,12 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("concurrent inserts ↷ connected delete", () => {
-		const delA = tagChange(Change.delete(0, 1), brand(1));
-		const delB = tagChange(Change.delete(1, 1), brand(2));
-		const delC = tagChange(Change.delete(0, 1), brand(3));
+		const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
+		const delB = tagChange(Change.delete(1, 1), mintRevisionTag());
+		const delC = tagChange(Change.delete(0, 1), mintRevisionTag());
 
-		const insertD = tagChange(Change.insert(0, 1), brand(4));
-		const insertE = tagChange(Change.insert(3, 1), brand(5));
+		const insertD = tagChange(Change.insert(0, 1), mintRevisionTag());
+		const insertE = tagChange(Change.insert(3, 1), mintRevisionTag());
 		const insertD2 = rebaseTagged(insertD, delA, delB, delC);
 		const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
 		const expected = Change.insert(1, 1);
@@ -489,9 +489,9 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("concurrent insert and move ↷ delete", () => {
-		const delA = tagChange(Change.delete(0, 1), brand(1));
-		const insertB = tagChange(Change.insert(0, 1), brand(2));
-		const moveC = tagChange(Change.move(2, 1, 1), brand(3));
+		const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
+		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
+		const moveC = tagChange(Change.move(2, 1, 1), mintRevisionTag());
 		const insertB2 = rebaseTagged(insertB, delA);
 		const moveC2 = rebaseTagged(moveC, delA, insertB2);
 		const expected = Change.move(2, 1, 1);
@@ -612,7 +612,7 @@ describe("SequenceField - Rebase", () => {
 			},
 		];
 		const ret2 = Change.return(0, 1, 10, tag3);
-		const actual = rebase(ret2, ret1, brand(1));
+		const actual = rebase(ret2, ret1, mintRevisionTag());
 		normalizeMoveIds(actual);
 		assert.deepEqual(actual, ret2);
 	});

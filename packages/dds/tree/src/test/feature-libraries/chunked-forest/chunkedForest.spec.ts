@@ -17,6 +17,7 @@ import {
 	Checkout,
 	EditManager,
 	FieldKey,
+	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
 	JsonableTree,
@@ -94,7 +95,7 @@ describe("ChunkedForest", () => {
 			forest,
 			changeFamily: defaultChangeFamily,
 			submitEdit: (edit) => {
-				const delta = editManager.addLocalChange(edit);
+				const delta = editManager.addLocalChange(mintRevisionTag(), edit);
 				forest.applyDelta(delta);
 			},
 		};

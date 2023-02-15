@@ -170,6 +170,18 @@ export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
 }
 
 /**
+ * Map one iterable to another by transforming each element one at a time
+ * @param iterable - the iterable to transform
+ * @param map - the transformation function to run on each element of the iterable
+ * @returns a new iterable of elements which have been transformed by the `map` function
+ */
+export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Iterable<U> {
+	for (const t of iterable) {
+		yield map(t);
+	}
+}
+
+/**
  * Use for Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,

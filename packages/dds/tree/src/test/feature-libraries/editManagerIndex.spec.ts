@@ -12,26 +12,26 @@ import {
 	commitEncoderFromChangeEncoder,
 } from "../../feature-libraries";
 
-import { MutableSummaryData, ReadonlySummaryData } from "../../core";
+import { mintRevisionTag, SummaryData } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
 
 describe("EditManagerIndex", () => {
 	it("roundtrip", () => {
+		const tag1 = mintRevisionTag();
+		const tag2 = mintRevisionTag();
 		const encoder = commitEncoderFromChangeEncoder(TestChange.encoder);
-		const input: ReadonlySummaryData<TestChange> = {
+		const input: SummaryData<TestChange> = {
 			trunk: [
 				{
-					seqNumber: brand(1),
-					refNumber: brand(0),
+					revision: tag1,
 					sessionId: "1",
-					changeset: TestChange.mint([0], 1),
+					change: TestChange.mint([0], 1),
 				},
 				{
-					seqNumber: brand(2),
-					refNumber: brand(1),
+					revision: tag2,
 					sessionId: "2",
-					changeset: TestChange.mint([0, 1], 2),
+					change: TestChange.mint([0, 1], 2),
 				},
 			],
 			branches: new Map([
@@ -39,13 +39,12 @@ describe("EditManagerIndex", () => {
 					"3",
 					{
 						isDivergent: false,
-						refSeq: brand(0),
-						localChanges: [
+						base: tag1,
+						commits: [
 							{
-								seqNumber: brand(3),
-								refNumber: brand(0),
 								sessionId: "3",
-								changeset: TestChange.mint([0], 3),
+								revision: mintRevisionTag(),
+								change: TestChange.mint([0], 3),
 							},
 						],
 					},
@@ -54,25 +53,24 @@ describe("EditManagerIndex", () => {
 					"4",
 					{
 						isDivergent: true,
-						refSeq: brand(1),
-						localChanges: [
+						base: tag2,
+						commits: [
 							{
-								seqNumber: brand(4),
-								refNumber: brand(1),
 								sessionId: "4",
-								changeset: TestChange.mint([0, 1], 4),
+								revision: mintRevisionTag(),
+								change: TestChange.mint([0, 1], 4),
 							},
 						],
 					},
 				],
 			]),
-		};
-		const output: MutableSummaryData<TestChange> = {
-			trunk: [],
-			branches: new Map([]),
+			sequenceMap: new Map([
+				[brand(1), tag1],
+				[brand(2), tag2],
+			]),
 		};
 		const s1 = encodeSummary(input, encoder);
-		loadSummary(s1, encoder, output);
+		const output = loadSummary(s1, encoder);
 		assert.deepEqual(output, input);
 		const s2 = encodeSummary(output, encoder);
 		assert.equal(s1, s2);

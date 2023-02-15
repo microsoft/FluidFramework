@@ -316,7 +316,7 @@ flowchart
             forest-->tree
         end
         core-->events-->util
-        id-compressor-->util
+        core-->id-compressor-->util
         feature-->shared-tree-core
         shared-tree-core-->core
         shared-tree-->feature

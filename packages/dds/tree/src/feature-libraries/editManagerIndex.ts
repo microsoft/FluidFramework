@@ -15,19 +15,20 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { JsonCompatibleReadOnly } from "../util";
+import { JsonCompatibleReadOnly, mapIterable } from "../util";
 import {
-	Branch,
 	cachedValue,
 	ChangeEncoder,
 	ChangeFamily,
 	Commit,
 	EditManager,
 	ICachedValue,
-	MutableSummaryData,
-	ReadonlySummaryData,
+	SummaryData,
 	recordDependency,
+	RevisionTag,
 	SessionId,
+	SummaryBranch,
+	SeqNumber,
 } from "../core";
 import {
 	Index,
@@ -134,9 +135,8 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
 		);
 
 		const dataString = bufferToString(schemaBuffer, "utf-8");
-		this.editManager.loadSummaryData((data: MutableSummaryData<TChangeset>) => {
-			parseSummary(dataString, this.commitEncoder, data);
-		});
+		const data = parseSummary(dataString, this.commitEncoder);
+		this.editManager.appendSummaryData(data);
 	}
 }
 
@@ -146,7 +146,8 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
  */
 interface ReadonlyJsonSummaryData {
 	readonly trunk: readonly Readonly<Commit<JsonCompatibleReadOnly>>[];
-	readonly branches: readonly [SessionId, Readonly<Branch<JsonCompatibleReadOnly>>][];
+	readonly branches: readonly [SessionId, Readonly<SummaryBranch<JsonCompatibleReadOnly>>][];
+	readonly sequenceMap: readonly [sequenceNumber: SeqNumber, revision: RevisionTag][];
 }
 
 export interface CommitEncoder<TChange> {
@@ -160,11 +161,11 @@ export function commitEncoderFromChangeEncoder<TChangeset>(
 	return {
 		encode: (commit: Commit<TChangeset>): Commit<JsonCompatibleReadOnly> => ({
 			...commit,
-			changeset: changeEncoder.encodeForJson(0, commit.changeset),
+			change: changeEncoder.encodeForJson(0, commit.change),
 		}),
 		decode: (commit: Commit<JsonCompatibleReadOnly>): Commit<TChangeset> => ({
 			...commit,
-			changeset: changeEncoder.decodeJson(0, commit.changeset),
+			change: changeEncoder.decodeJson(0, commit.change),
 		}),
 	};
 }
@@ -172,31 +173,34 @@ export function commitEncoderFromChangeEncoder<TChangeset>(
 export function parseSummary<TChange>(
 	summary: string,
 	encoder: CommitEncoder<TChange>,
-	destination: MutableSummaryData<TChange>,
-): void {
+): SummaryData<TChange> {
 	const decode = (c: Commit<JsonCompatibleReadOnly>) => encoder.decode(c);
-	const { trunk, branches } = destination;
 	const json: ReadonlyJsonSummaryData = JSON.parse(summary);
-	for (const commit of json.trunk) {
-		trunk.push(decode(commit));
-	}
-	for (const [k, b] of json.branches) {
-		const branch: Branch<TChange> = { ...b, localChanges: b.localChanges.map(decode) };
-		branches.set(k, branch);
-	}
+
+	return {
+		trunk: json.trunk.map(decode),
+		branches: new Map(
+			mapIterable(json.branches, ([sessionId, branch]) => [
+				sessionId,
+				{ ...branch, commits: branch.commits.map(decode) },
+			]),
+		),
+		sequenceMap: new Map(json.sequenceMap),
+	};
 }
 
 export function stringifySummary<TChange>(
-	data: ReadonlySummaryData<TChange>,
+	data: SummaryData<TChange>,
 	encoder: CommitEncoder<TChange>,
 ): string {
 	const encode = (c: Commit<TChange>) => encoder.encode(c);
 	const json: ReadonlyJsonSummaryData = {
 		trunk: data.trunk.map(encode),
-		branches: Array.from(data.branches.entries(), ([k, b]) => [
-			k,
-			{ ...b, localChanges: b.localChanges.map(encode) },
+		branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
+			sessionId,
+			{ ...branch, commits: branch.commits.map(encode) },
 		]),
+		sequenceMap: Array.from(data.sequenceMap.entries()),
 	};
 	return JSON.stringify(json);
 }

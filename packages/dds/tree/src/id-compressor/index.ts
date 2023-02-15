@@ -48,6 +48,7 @@ export {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
+	UuidString,
 } from "./identifiers";
 export {
 	generateStableId,

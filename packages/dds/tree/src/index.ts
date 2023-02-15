@@ -183,3 +183,5 @@ export {
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";
+
+export { StableId, UuidString } from "./id-compressor";

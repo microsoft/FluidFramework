@@ -57,6 +57,7 @@ export {
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
 	makeArray,
+	mapIterable,
 	Mutable,
 	RecursiveReadonly,
 	unreachableCase,

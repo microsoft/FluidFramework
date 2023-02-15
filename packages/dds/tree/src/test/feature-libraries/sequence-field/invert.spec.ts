@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { RevisionTag, tagChange } from "../../../core";
+import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
@@ -16,9 +16,9 @@ function invert(change: TestChangeset): TestChangeset {
 	return invertChange(tagChange(change, tag));
 }
 
-const tag: RevisionTag = brand(41);
-const tag2: RevisionTag = brand(42);
-const tag3: RevisionTag = brand(43);
+const tag: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
 
 const childChange1 = TestChange.mint([0], 1);
 const childChange2 = TestChange.mint([1], 2);
@@ -160,7 +160,7 @@ describe("SequenceField - Invert", () => {
 	it("return => return", () => {
 		const input = composeAnonChanges([
 			Change.modify(0, childChange1),
-			Change.return(0, 2, 3, brand(41)),
+			Change.return(0, 2, 3, tag),
 		]);
 		const expected = composeAnonChanges([
 			Change.modify(3, inverseChildChange1),

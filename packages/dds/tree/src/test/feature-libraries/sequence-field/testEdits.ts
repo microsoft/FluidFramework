@@ -5,12 +5,12 @@
 
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
+import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tag: RevisionTag = brand(42);
+const tag: RevisionTag = mintRevisionTag();
 
 export type TestChangeset = SF.Changeset<TestChange>;
 

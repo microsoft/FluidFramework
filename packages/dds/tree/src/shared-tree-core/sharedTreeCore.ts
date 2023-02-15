@@ -26,7 +26,17 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
-import { ChangeFamily, Commit, EditManager, SeqNumber, AnchorSet, Delta } from "../core";
+import {
+	ChangeFamily,
+	Commit,
+	EditManager,
+	SeqNumber,
+	AnchorSet,
+	Delta,
+	RevisionTag,
+	mintRevisionTag,
+	minimumPossibleSequenceNumber,
+} from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
 
@@ -93,7 +103,7 @@ export class SharedTreeCore<
 	 * This is number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
-	private detachedRevision: SeqNumber | undefined = brand(Number.MIN_SAFE_INTEGER);
+	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
 
 	/**
 	 * The indexes available to this tree.
@@ -193,24 +203,25 @@ export class SharedTreeCore<
 	}
 
 	public submitEdit(edit: TChange): void {
-		const delta = this.editManager.addLocalChange(edit);
+		const revision = mintRevisionTag();
+		const delta = this.editManager.addLocalChange(revision, edit);
 		// Edits performed before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
 		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			const commit: Commit<TChange> = {
-				changeset: edit,
-				refNumber: this.detachedRevision,
-				seqNumber: newRevision,
+				revision,
 				sessionId: this.stableId,
+				change: edit,
 			};
 			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(commit);
+			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
 		}
 		this.indexEventEmitter.emit("newLocalChange", edit);
 		this.indexEventEmitter.emit("newLocalState", delta);
 		const message: Message = {
+			revision,
 			originatorId: this.stableId,
 			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
 		};
@@ -222,20 +233,23 @@ export class SharedTreeCore<
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const { originatorId: stableClientId, changeset } = message.contents as Message;
+		const { revision, originatorId: stableClientId, changeset } = message.contents as Message;
 		const changes = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
 		const commit: Commit<TChange> = {
+			revision,
 			sessionId: stableClientId,
-			seqNumber: brand(message.sequenceNumber),
-			refNumber: brand(message.referenceSequenceNumber),
-			changeset: changes,
+			change: changes,
 		};
 
-		const delta = this.editManager.addSequencedChange(commit);
+		const delta = this.editManager.addSequencedChange(
+			commit,
+			brand(message.sequenceNumber),
+			brand(message.referenceSequenceNumber),
+		);
 		const sequencedChange = this.editManager.getLastSequencedChange();
 		this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
 		this.indexEventEmitter.emit("newLocalState", delta);
-		this.editManager.advanceMinimumSequenceNumber(message.minimumSequenceNumber);
+		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
 	protected onDisconnect() {}
@@ -271,6 +285,10 @@ export class SharedTreeCore<
  * The format of messages that SharedTree sends and receives.
  */
 interface Message {
+	/**
+	 * The revision tag for the change in this message
+	 */
+	readonly revision: RevisionTag;
 	/**
 	 * The stable ID that identifies the originator of the message.
 	 */
