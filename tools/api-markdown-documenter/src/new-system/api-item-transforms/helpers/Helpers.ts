@@ -777,6 +777,11 @@ export function createChildDetailsSection(
 	return sections.length === 0 ? undefined : sections;
 }
 
+/**
+ * Wraps the provided contents in a {@link HierarchicalSectionNode}.
+ * @param nodes - The section's child contents.
+ * @param heading - Optional heading to associate with the section.
+ */
 export function wrapInSection(
 	nodes: DocumentationNode[],
 	heading?: Heading,
