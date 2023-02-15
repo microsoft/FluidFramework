@@ -11,7 +11,6 @@ import {
 	JsonableTree,
 	ITreeCursor,
 	TaggedChange,
-	RevisionTag,
 	ITreeCursorSynchronous,
 	tagChange,
 	TreeSchemaIdentifier,
@@ -245,12 +244,9 @@ export type NodeUpdate =
 	| { set: JsonableTree }
 	| {
 			/**
-			 * The tag of the change that deleted the node being restored.
-			 *
-			 * Undefined when the operation is the product of a tag-less change being inverted.
-			 * It is invalid to try convert such an operation to a delta.
+			 * The node being restored.
 			 */
-			revert: RevisionTag | undefined;
+			revert: ITreeCursorSynchronous;
 	  };
 
 export interface ValueChangeset {
@@ -297,13 +293,15 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 	invert: (
 		{ revision, change }: TaggedChange<ValueChangeset>,
 		invertChild: NodeChangeInverter,
+		reviver: NodeReviver,
 	): ValueChangeset => {
 		const inverse: ValueChangeset = {};
 		if (change.changes !== undefined) {
 			inverse.changes = invertChild(change.changes);
 		}
 		if (change.value !== undefined) {
-			inverse.value = { revert: revision };
+			assert(revision !== undefined, 0x478 /* Unable to revert to undefined revision */);
+			inverse.value = { revert: reviver(revision, 0, 1)[0] };
 		}
 		return inverse;
 	},
@@ -383,17 +381,11 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 	encoder: valueFieldEncoder,
 	editor: valueFieldEditor,
 
-	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
+	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
 		const fieldChanges: Mutable<Delta.FieldChanges> = {};
 		if (change.value !== undefined) {
-			let newValue: ITreeCursorSynchronous;
-			if ("revert" in change.value) {
-				const revision = change.value.revert;
-				assert(revision !== undefined, 0x477 /* Unable to revert to undefined revision */);
-				newValue = reviver(revision, 0, 1)[0];
-			} else {
-				newValue = singleTextCursor(change.value.set);
-			}
+			const newValue: ITreeCursorSynchronous =
+				"revert" in change.value ? change.value.revert : singleTextCursor(change.value.set);
 			fieldChanges.shallow = [
 				{ type: Delta.MarkType.Delete, count: 1 },
 				{
@@ -495,6 +487,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
+		reviver: NodeReviver,
 	): OptionalChangeset => {
 		const inverse: OptionalChangeset = {};
 
@@ -502,7 +495,8 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		if (fieldChange !== undefined) {
 			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
 			if (!fieldChange.wasEmpty) {
-				inverse.fieldChange.newContent = { revert: revision };
+				assert(revision !== undefined, 0x478 /* Unable to revert to undefined revision */);
+				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0] };
 			}
 		}
 
@@ -630,7 +624,7 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 		encoder: optionalFieldEncoder,
 		editor: optionalFieldEditor,
 
-		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
+		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
 			const fieldChanges: Mutable<Delta.FieldChanges> = {};
 			const update = change.fieldChange?.newContent;
 			const shallow = [];
@@ -644,15 +638,9 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 						content: [singleTextCursor(update.set)],
 					});
 				} else {
-					const revision = update.revert;
-					assert(
-						revision !== undefined,
-						0x478 /* Unable to revert to undefined revision */,
-					);
-					const content = reviver(revision, 0, 1);
 					shallow.push({
 						type: Delta.MarkType.Insert,
-						content,
+						content: [update.revert],
 					});
 				}
 			}

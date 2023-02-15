@@ -4,10 +4,9 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
+import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
 import { singleTextCursor } from "../treeTextCursor";
-import { NodeReviver } from "../modular-schema";
 import { MarkList } from "./format";
 import { getInputLength, getOutputLength, isSkipMark } from "./utils";
 
@@ -19,7 +18,6 @@ export type ToDelta<TNodeChange> = (
 export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	reviver: NodeReviver,
 ): Delta.FieldChanges {
 	const markList = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
@@ -69,23 +67,23 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Revive": {
-					if (mark.conflictsWith === undefined) {
-						const insertMark: Delta.Insert = {
-							type: Delta.MarkType.Insert,
-							content: reviver(
-								mark.detachedBy ??
-									mark.lastDetachedBy ??
-									fail(
-										"Unable to get convert revive mark to delta due to missing revision tag",
-									),
-								mark.detachIndex,
-								mark.count,
-							),
-						};
-						markList.pushContent(insertMark);
-					} else if (mark.lastDetachedBy === undefined) {
-						markList.pushOffset(mark.count);
-					}
+					// if (mark.conflictsWith === undefined) {
+					// 	const insertMark: Delta.Insert = {
+					// 		type: Delta.MarkType.Insert,
+					// 		content: reviver(
+					// 			mark.detachedBy ??
+					// 				mark.lastDetachedBy ??
+					// 				fail(
+					// 					"Unable to get convert revive mark to delta due to missing revision tag",
+					// 				),
+					// 			mark.detachIndex,
+					// 			mark.count,
+					// 		),
+					// 	};
+					// 	markList.pushContent(insertMark);
+					// } else if (mark.lastDetachedBy === undefined) {
+					// 	markList.pushOffset(mark.count);
+					// }
 					break;
 				}
 				default:

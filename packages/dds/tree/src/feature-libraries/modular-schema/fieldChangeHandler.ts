@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
+import {
+	FieldKindIdentifier,
+	Delta,
+	FieldKey,
+	Value,
+	TaggedChange,
+	RevisionTag,
+	ITreeCursorSynchronous,
+} from "../../core";
 import { Brand, fail, Invariant, JsonCompatibleReadOnly } from "../../util";
 import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
 
@@ -20,11 +28,7 @@ export interface FieldChangeHandler<
 	rebaser: FieldChangeRebaser<TChangeset>;
 	encoder: FieldChangeEncoder<TChangeset>;
 	editor: TEditor;
-	intoDelta(
-		change: TChangeset,
-		deltaFromChild: ToDelta,
-		reviver: NodeReviver,
-	): Delta.FieldChanges;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.FieldChanges;
 }
 
 /**
@@ -63,6 +67,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
+		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
@@ -74,6 +79,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		invertedChange: TChangeset,
 		originalRevision: RevisionTag | undefined,
 		genId: IdAllocator,
+		// reviver: NodeReviver,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
 
@@ -106,12 +112,12 @@ export interface FieldChangeRebaser<TChangeset> {
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (changes: TChangeset[]) => TChangeset;
-	invert: (change: TChangeset) => TChangeset;
+	invert: (change: TChangeset, reviver: NodeReviver) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
-		invert: (change, _invertChild, _genId) => data.invert(change.change),
+		invert: (change, _invertChild, reviver, _genId) => data.invert(change.change, reviver),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
 	});
 }
@@ -245,12 +251,9 @@ export type ValueChange =
 			revision?: RevisionTag;
 
 			/**
-			 * The tag of the change that overwrote the value being restored.
-			 *
-			 * Undefined when the operation is the product of a tag-less change being inverted.
-			 * It is invalid to try convert such an operation to a delta.
+			 * The value being restored.
 			 */
-			revert: RevisionTag | undefined;
+			revert: ITreeCursorSynchronous;
 	  };
 
 /**
