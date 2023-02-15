@@ -1,0 +1,23 @@
+.dices {
+    min-height: 50%;
+    font-size: 100px;
+    color: red;
+    text-align: center;
+    cursor: pointer;
+}
+
+.dice {
+    min-height: 50%;
+    font-size: 100px;
+    color: red;
+    text-align: center;
+    cursor: pointer;
+    padding: 12px;
+}
+.commit {
+    min-height: 50%;
+    font-size: 100px;
+    color: greenyellow;
+    text-align: center;
+    cursor: pointer;
+}
