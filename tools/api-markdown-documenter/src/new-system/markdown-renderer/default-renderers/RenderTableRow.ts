@@ -36,7 +36,7 @@ function renderTableRowWithMarkdownSyntax(
 		});
 		writer.write(" |");
 	}
-	writer.ensureSkippedLine(); // Ensure blank line after row
+	writer.ensureNewLine(); // Ensure linebreak after row
 }
 
 function renderTableRowWithHtmlSyntax(
