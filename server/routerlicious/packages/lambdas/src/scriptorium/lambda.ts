@@ -29,7 +29,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         protected context: IContext,
         private readonly providerConfig: Record<string, any> | undefined) {
         this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
-        this.telemetryEnabled = this.providerConfig?.enableHandlerTelemetry;
+        this.telemetryEnabled = this.providerConfig?.enableTelemetry;
     }
 
     public handler(message: IQueuedMessage) {
@@ -73,10 +73,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
             return;
         }
 
-        let metric: Lumber<LumberEventName.ScriptoriumHandler>;
+        let metric: Lumber<LumberEventName.ScriptoriumProcessBatch>;
         if (this.telemetryEnabled) {
             metric = Lumberjack.newLumberMetric(
-                LumberEventName.ScriptoriumHandler,
+                LumberEventName.ScriptoriumProcessBatch,
                 { batchOffset: this.pendingOffset?.offset });
         }
 
@@ -97,21 +97,15 @@ export class ScriptoriumLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.current.clear();
-                if (this.telemetryEnabled) {
-                    metric.setProperty("processingComplete", true);
-                }
+                metric?.setProperty("processingComplete", true);
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 this.context.checkpoint(batchOffset!);
-                if (this.telemetryEnabled) {
-                    metric.setProperty("checkpointComplete", true);
-                    metric.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
-                }
+                metric?.setProperty("checkpointComplete", true);
+                metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
                 this.sendPending();
             },
             (error) => {
-                if (this.telemetryEnabled) {
-                    metric.error(`Scriptorium failed to process/checkpoint batch with offset ${batchOffset?.offset}, going to restart`, error);
-                }
+                metric?.error(`Scriptorium failed to process/checkpoint batch with offset ${batchOffset?.offset}, going to restart`, error);
                 this.context.error(error, { restart: true });
             });
     }
@@ -142,7 +136,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             (error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
             undefined /* calculateIntervalMs */,
             undefined /* onErrorFn */,
-            this.providerConfig?.enableRunWithRetryMetricTelemetry,
+            this.telemetryEnabled,
         );
     }
 }
