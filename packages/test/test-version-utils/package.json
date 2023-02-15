@@ -1,7 +1,6 @@
 {
 	"name": "@fluid-internal/test-version-utils",
 	"version": "2.0.0-internal.4.0.0",
-	"private": true,
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
