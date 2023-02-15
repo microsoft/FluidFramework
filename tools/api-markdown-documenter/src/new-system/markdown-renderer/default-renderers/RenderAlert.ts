@@ -34,7 +34,7 @@ function renderAlertWithMarkdownSyntax(
 	const headerText = getAlertHeaderText(node);
 
 	writer.ensureSkippedLine(); // Block quotes require a leading blank line
-	writer.increaseIndent(">"); // Use block quote indentation
+	writer.increaseIndent("> "); // Use block quote indentation
 	writer.writeLine(headerText);
 	writer.ensureSkippedLine(); // Ensure blank line between header and child content
 	renderNodes(node.children, writer, context);

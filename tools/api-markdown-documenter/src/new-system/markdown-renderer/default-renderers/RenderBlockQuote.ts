@@ -32,7 +32,7 @@ function renderBlockQuoteWithMarkdownSyntax(
 	context: MarkdownRenderContext,
 ): void {
 	writer.ensureSkippedLine(); // Block quotes require a leading blank line
-	writer.increaseIndent(">");
+	writer.increaseIndent("> ");
 	renderNodes(node.children, writer, context);
 	writer.decreaseIndent();
 	writer.ensureSkippedLine(); // Block quotes require a trailing blank line

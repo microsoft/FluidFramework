@@ -40,12 +40,13 @@ function renderUnorderedListWithMarkdownSyntax(
 	context: MarkdownRenderContext,
 ): void {
 	writer.ensureSkippedLine(); // Lists require leading blank line
-	writer.increaseIndent("1."); // Use numeric indentation for list
+	writer.increaseIndent("- ");
 	for (const child of node.children) {
 		renderNode(child, writer, context);
 		writer.ensureNewLine(); // Ensure newline after previous list item
 	}
 	writer.ensureSkippedLine(); // Ensure blank line after list
+	writer.decreaseIndent();
 }
 
 function renderUnorderedListWithHtmlSyntax(
