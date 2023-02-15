@@ -2,25 +2,41 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as os from "node:os";
-
 import { expect } from "chai";
 
 import { ParagraphNode, PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
+import { testRender } from "./Utilities";
 
-describe("Paragraph markdown tests", () => {
-	it("Creates a line break from an empty Paragraph", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(new ParagraphNode([]));
-		expect(renderedForm).to.equal(`  ${os.EOL}`);
+describe("ParagraphNode rendering tests", () => {
+	it("Empty paragraph (Markdown)", () => {
+		expect(testRender(ParagraphNode.Empty)).to.equal("\n"); // Paragraphs always create a trailing blank line in Markdown
 	});
-	it("Renders plain text nodes", () => {
-		const node1 = new PlainTextNode("This is some text. ");
-		const node2 = new PlainTextNode("This is more text!");
-		const paragraph = new ParagraphNode([node1, node2]);
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(paragraph);
-		expect(renderedForm).to.equal(`This is some text. This is more text!  ${os.EOL}`);
+
+	it("Simple paragraph (Markdown)", () => {
+		const text1 = "This is some text. ";
+		const text2 = "This is more text!";
+
+		const input = new ParagraphNode([new PlainTextNode(text1), new PlainTextNode(text2)]);
+		const result = testRender(input);
+
+		const expected = [`${text1}${text2}`, "", ""].join("\n");
+		expect(result).to.equal(expected);
+	});
+
+	it("Empty paragraph (HTML)", () => {
+		expect(testRender(ParagraphNode.Empty, undefined, { insideHtml: true })).to.equal(
+			"<p>\n</p>\n",
+		);
+	});
+
+	it("Simple paragraph (HTML)", () => {
+		const text1 = "This is some text. ";
+		const text2 = "This is more text!";
+
+		const input = new ParagraphNode([new PlainTextNode(text1), new PlainTextNode(text2)]);
+		const result = testRender(input, undefined, { insideHtml: true });
+
+		const expected = ["<p>", `  ${text1}${text2}`, "</p>", ""].join("\n");
+		expect(result).to.equal(expected);
 	});
 });

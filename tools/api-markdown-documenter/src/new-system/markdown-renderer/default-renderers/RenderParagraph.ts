@@ -47,6 +47,7 @@ function renderParagraphWithHtmlSyntax(
 		...context,
 		insideHtml: true,
 	});
+	writer.ensureNewLine(); // Ensure line break after content
 	writer.decreaseIndent();
 	writer.writeLine("</p>");
 }
