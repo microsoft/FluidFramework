@@ -4,48 +4,47 @@
  */
 import { expect } from "chai";
 
-import { DocumentationNode, LiteralNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
+import { LiteralNode } from "../../documentation-domain";
+import { DocumentWriter } from "../DocumentWriter";
+import { MarkdownRenderContext } from "../RenderContext";
+import { testRender } from "./Utilities";
 
 /**
  * Mock custom {@link DocumentationNode} for use in the tests below.
  */
 class CustomDocumentationNode implements LiteralNode<string> {
-	public readonly type = "Custom Node";
+	public static readonly type = "Custom Node";
+	public readonly type = CustomDocumentationNode.type;
 	public readonly value: string;
 	public constructor(value: string) {
 		this.value = value;
-	}
-
-	// TODO: remove this
-	public equals(other: DocumentationNode): boolean {
-		return false;
 	}
 }
 
 /**
  * Mock custom renderer for {@link CustomDocumentationNode}.
  */
-function renderCustomDocumentationNode(node: CustomDocumentationNode): string {
-	return node.value;
+function renderCustomDocumentationNode(
+	node: CustomDocumentationNode,
+	writer: DocumentWriter,
+	context: MarkdownRenderContext,
+): void {
+	writer.write(node.value);
 }
 
-describe("CodeSpan markdown tests", () => {
+describe("Custom node rendering tests", () => {
 	it("Can render a custom node type when given a renderer", () => {
-		const renderer = new DocumentationNodeRenderer({
-			["Custom Node"]: (node): string =>
-				renderCustomDocumentationNode(node as CustomDocumentationNode),
+		const input = new CustomDocumentationNode("foo");
+		const result = testRender(input, {
+			[CustomDocumentationNode.type]: (node, writer, context): void =>
+				renderCustomDocumentationNode(node as CustomDocumentationNode, writer, context),
 		});
 
-		const customNode = new CustomDocumentationNode("foo");
-
-		const result = renderer.renderNode(customNode);
 		expect(result).to.equal("foo");
 	});
 
 	it("Throws rendering a custom node type when no renderer is provided for it", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const customNode = new CustomDocumentationNode("foo");
-		expect(() => renderer.renderNode(customNode)).to.throw();
+		const input = new CustomDocumentationNode("foo");
+		expect(() => testRender(input)).to.throw();
 	});
 });
