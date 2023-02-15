@@ -158,7 +158,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			title = "Generate summary tree 10Mb document";
-			maxBenchmarkDurationSeconds = 120000;
+			maxBenchmarkDurationSeconds = 360000;
 			async run() {
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
