@@ -45,6 +45,7 @@ function renderTableRowWithHtmlSyntax(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
+	writer.ensureNewLine(); // Ensure line break before row tag
 	writer.writeLine("<tr>");
 	writer.increaseIndent();
 	renderNodes(node.children, writer, {
@@ -52,6 +53,7 @@ function renderTableRowWithHtmlSyntax(
 		insideTable: true,
 		insideHtml: true,
 	});
+	writer.ensureNewLine(); // Ensure line break after content
 	writer.decreaseIndent();
 	writer.writeLine("</tr>");
 }

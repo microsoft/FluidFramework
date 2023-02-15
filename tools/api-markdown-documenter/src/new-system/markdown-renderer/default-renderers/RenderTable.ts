@@ -90,11 +90,15 @@ function renderTableWithHtmlSyntax(
 		writer.writeLine("</thead>");
 	}
 
-	writer.writeLine("<tbody>");
-	writer.increaseIndent();
-	renderNodes(node.children, writer, childContext);
-	writer.decreaseIndent();
-	writer.writeLine("</tbody>");
+	// Write child contents under `tbody` element if the table has any
+	if (node.hasChildren) {
+		writer.writeLine("<tbody>");
+		writer.increaseIndent();
+		renderNodes(node.children, writer, childContext);
+		writer.decreaseIndent();
+		writer.writeLine("</tbody>");
+	}
+
 	writer.decreaseIndent();
 	writer.writeLine("</table>");
 }

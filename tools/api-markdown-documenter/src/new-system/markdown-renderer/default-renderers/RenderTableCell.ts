@@ -38,4 +38,16 @@ function renderTableCellWithHtmlSyntax(
 	node: TableCellNode,
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
-): void {}
+): void {
+	writer.ensureNewLine(); // Ensure line break before cell tag
+	writer.writeLine("<td>");
+	writer.increaseIndent();
+	renderNodes(node.children, writer, {
+		...context,
+		insideTable: true,
+		insideHtml: true,
+	});
+	writer.ensureNewLine(); // Ensure line break after content
+	writer.decreaseIndent();
+	writer.writeLine("</td>");
+}
