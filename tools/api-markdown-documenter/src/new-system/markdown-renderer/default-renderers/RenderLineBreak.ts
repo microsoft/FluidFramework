@@ -33,5 +33,5 @@ function renderLineBreakWithMarkdownSyntax(writer: DocumentWriter): void {
 
 function renderLineBreakWithHtmlSyntax(writer: DocumentWriter): void {
 	writer.ensureNewLine();
-	writer.writeLine("<br/>");
+	writer.writeLine("<br>");
 }
