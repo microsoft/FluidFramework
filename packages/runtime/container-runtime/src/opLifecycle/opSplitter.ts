@@ -212,27 +212,33 @@ export const splitOp = (op: BatchMessage, chunkSizeInBytes: number): IChunkedOp[
 	);
 
 	const contentLength = op.contents.length;
-	const chunkN = Math.floor((contentLength - 1) / chunkSizeInBytes) + 1;
+	const chunkCount = Math.floor((contentLength - 1) / chunkSizeInBytes) + 2;
 	let offset = 0;
-	for (let i = 1; i <= chunkN; i++) {
+	for (let i = 1; i < chunkCount; i++) {
 		const chunk: IChunkedOp = {
 			chunkId: i,
 			contents: op.contents.substr(offset, chunkSizeInBytes),
 			originalType: op.deserializedContent.type,
-			totalChunks: chunkN,
+			totalChunks: chunkCount,
 		};
-
-		if (i === chunkN) {
-			// We don't need to port these to all the chunks,
-			// as we rebuild the original op when we process the
-			// last chunk, therefore it is the only one that needs it.
-			chunk.originalMetadata = op.metadata;
-			chunk.originalCompression = op.compression;
-		}
 
 		chunks.push(chunk);
 		offset += chunkSizeInBytes;
 	}
+
+	// The last chunk has empty contents, to minimize the risk of the
+	// resulting payload exceeding 1MB due to the overhead from the empty ops 
+	// which will be bundled with this op.
+	chunks.push(
+		{
+			chunkId: chunkCount,
+			contents: "",
+			originalType: op.deserializedContent.type,
+			totalChunks: chunkCount,
+			originalMetadata: op.metadata,
+			originalCompression: op.compression,
+		}
+	);
 
 	return chunks;
 };

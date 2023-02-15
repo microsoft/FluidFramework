@@ -48,15 +48,17 @@ describe("OpSplitter", () => {
 		assert.equal(opSplitter.processRemoteMessage(chunks1[1]).state, "Accepted");
 		assert.equal(opSplitter.processRemoteMessage(chunks2[1]).state, "Accepted");
 
-		const chunks1LastResult = opSplitter.processRemoteMessage(chunks1[2]);
+		assert.equal(opSplitter.processRemoteMessage(chunks1[2]).state, "Accepted");
+		const chunks1LastResult = opSplitter.processRemoteMessage(chunks1[3]);
 		// The last chunk will reconstruct the original message
 		assert.equal(chunks1LastResult.state, "Processed");
 		assertSameMessage(chunks1LastResult.message, op1);
 		assert.equal(opSplitter.chunks.size, 1);
 
 		assert.equal(opSplitter.processRemoteMessage(chunks2[2]).state, "Accepted");
+		assert.equal(opSplitter.processRemoteMessage(chunks2[3]).state, "Accepted");
 
-		const chunks2LastResult = opSplitter.processRemoteMessage(chunks2[3]);
+		const chunks2LastResult = opSplitter.processRemoteMessage(chunks2[4]);
 		// The last chunk will reconstruct the original message
 		assert.equal(chunks2LastResult.state, "Processed");
 		assertSameMessage(chunks2LastResult.message, op2);
@@ -76,6 +78,7 @@ describe("OpSplitter", () => {
 		);
 		opSplitter.processRemoteMessage(chunks[0]);
 		opSplitter.processRemoteMessage(chunks[1]);
+		opSplitter.processRemoteMessage(chunks[2]);
 
 		const otherOpSplitter = new OpSplitter(
 			Array.from(opSplitter.chunks),
@@ -86,8 +89,8 @@ describe("OpSplitter", () => {
 		);
 		opSplitter.clearPartialChunks("testClient");
 
-		otherOpSplitter.processRemoteMessage(chunks[2]);
-		assertSameMessage(otherOpSplitter.processRemoteMessage(chunks[3]).message, op);
+		otherOpSplitter.processRemoteMessage(chunks[3]);
+		assertSameMessage(otherOpSplitter.processRemoteMessage(chunks[4]).message, op);
 	});
 
 	it("Clear chunks", () => {
@@ -269,7 +272,7 @@ describe("OpSplitter", () => {
 			contentSizeInBytes: largeMessage.contents?.length ?? 0,
 		});
 
-		assert.equal(batchesSubmitted.length, 5);
+		assert.equal(batchesSubmitted.length, 6);
 		for (const batch of batchesSubmitted) {
 			assert.equal(batch.length, 1);
 			assert.equal(
@@ -296,7 +299,7 @@ describe("OpSplitter", () => {
 				{
 					eventName: "OpSplitter:Chunked compressed batch",
 					length: result.content.length,
-					chunks: 100 / 20 + 1,
+					chunks: 100 / 20 + 2,
 					chunkSizeInBytes: 20,
 				},
 			]),
@@ -318,7 +321,7 @@ describe("OpSplitter", () => {
 			contentSizeInBytes: largeMessage.contents?.length ?? 0,
 		});
 
-		assert.equal(batchesSubmitted.length, 5);
+		assert.equal(batchesSubmitted.length, 6);
 		for (const batch of batchesSubmitted) {
 			assert.equal(batch.length, 1);
 			assert.equal(
@@ -344,7 +347,7 @@ describe("OpSplitter", () => {
 				{
 					eventName: "OpSplitter:Chunked compressed batch",
 					length: result.content.length,
-					chunks: 100 / 20 + 1,
+					chunks: 100 / 20 + 2,
 					chunkSizeInBytes: 20,
 				},
 			]),
