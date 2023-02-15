@@ -229,6 +229,8 @@ export class TelemetryContext implements ITelemetryContext {
     serialize(): string;
     // (undocumented)
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    // (undocumented)
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public (undocumented)

@@ -357,6 +357,20 @@ export class TelemetryContext implements ITelemetryContext {
 	}
 
 	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.setMultiple}
+	 */
+	setMultiple(
+		prefix: string,
+		property: string,
+		values: Record<string, TelemetryEventPropertyType>,
+	): void {
+		// Set the values individually so that they are logged as a flat list along with other properties.
+		for (const key of Object.keys(values)) {
+			this.set(prefix, `${property}_${key}`, values[key]);
+		}
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
 	get(prefix: string, property: string): TelemetryEventPropertyType {
