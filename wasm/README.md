@@ -21,3 +21,4 @@ To get this working locally:
 1. Build steps/Debug steps for native
 2. Recommended/Required extensions
 3. Docs stuff
+4. New package setup instructions

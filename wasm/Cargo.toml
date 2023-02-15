@@ -7,3 +7,6 @@ opt-level = 2
 lto = true
 # debug = true
 # opt-level = "z"
+
+[metadata]
+fluid-wasm-packages = ["./fluid-experimental-wasm-add", "./fluid-experimental-wasm-subtract"]
