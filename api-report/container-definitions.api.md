@@ -197,7 +197,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
-    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
+    readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)

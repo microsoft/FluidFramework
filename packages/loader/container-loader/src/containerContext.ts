@@ -57,7 +57,7 @@ export class ContainerContext implements IContainerContext {
 		quorum: IQuorum,
 		loader: ILoader,
 		submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
-		submitSummaryFn: (summaryOp: ISummaryContent) => number,
+		submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number,
 		submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number,
 		submitSignalFn: (contents: any) => void,
 		disposeFn: (error?: ICriticalContainerError) => void,
@@ -185,7 +185,10 @@ export class ContainerContext implements IContainerContext {
 			batch: boolean,
 			appData: any,
 		) => number,
-		public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
+		public readonly submitSummaryFn: (
+			summaryOp: ISummaryContent,
+			referenceSequenceNumber?: number,
+		) => number,
 		/** @returns clientSequenceNumber of last message in a batch */
 		public readonly submitBatchFn: (
 			batch: IBatchMessage[],
