@@ -14,6 +14,7 @@ import {
 	FencedCodeBlockNode,
 	HeadingNode,
 	HierarchicalSectionNode,
+	HorizontalRuleNode,
 	LineBreakNode,
 	LinkNode,
 	OrderedListNode,
@@ -34,6 +35,7 @@ import {
 	renderFencedCodeBlock,
 	renderHeading,
 	renderHierarchicalSection,
+	renderHorizontalRule,
 	renderLineBreak,
 	renderLink,
 	renderOrderedList,
@@ -66,6 +68,8 @@ export const defaultNodeRenderers: DocumentationNodeRenderers = {
 		renderLink(node as LinkNode, writer, context),
 	[DocumentationNodeType.HierarchicalSection]: (node, writer, context): void =>
 		renderHierarchicalSection(node as HierarchicalSectionNode, writer, context),
+	[DocumentationNodeType.HorizontalRule]: (node, writer, context): void =>
+		renderHorizontalRule(node as HorizontalRuleNode, writer, context),
 	[DocumentationNodeType.OrderedList]: (node, writer, context): void =>
 		renderOrderedList(node as OrderedListNode, writer, context),
 	[DocumentationNodeType.Paragraph]: (node, writer, context): void =>

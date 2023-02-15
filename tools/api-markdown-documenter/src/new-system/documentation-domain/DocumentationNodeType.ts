@@ -19,6 +19,7 @@ export enum DocumentationNodeType {
 	LineBreak = "LineBreak",
 	Link = "Link",
 	HierarchicalSection = "HierarchicalSection",
+	HorizontalRule = "HorizontalRule",
 	OrderedList = "OrderedList",
 	Paragraph = "Paragraph",
 	PlainText = "PlainText",

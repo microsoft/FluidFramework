@@ -15,6 +15,7 @@ export * from "./DocumentionNode";
 export * from "./FencedCodeBlockNode";
 export * from "./HeadingNode";
 export * from "./HierarchicalSectionNode";
+export * from "./HorizontalRuleNode";
 export * from "./LineBreakNode";
 export * from "./LinkNode";
 export * from "./OrderedListNode";

@@ -9,6 +9,7 @@ export { renderCodeSpan } from "./RenderCodeSpan";
 export { renderFencedCodeBlock } from "./RenderFencedCodeBlock";
 export { renderHeading } from "./RenderHeading";
 export { renderHierarchicalSection } from "./RenderHierarchicalSection";
+export { renderHorizontalRule } from "./RenderHorizontalRule";
 export { renderLineBreak } from "./RenderLineBreak";
 export { renderLink } from "./RenderLink";
 export { renderOrderedList } from "./RenderOrderedList";
