@@ -11,14 +11,14 @@ import type { ITask, ITaskList } from "../model-interface";
 
 interface ITaskRowProps {
 	readonly task: ITask;
-	readonly deleteTask: () => void;
+	readonly deleteDraftTask: () => void;
 }
 
 /**
  * The view for a single task in the TaskListView, as a table row.
  */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-	const { task, deleteTask } = props;
+	const { task, deleteDraftTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
 	const [externalName, setSourceName] = useState<string | undefined>(task.externalName);
 	const [externalPriority, setSourcePriority] = useState<number | undefined>(task.externalPriority);
@@ -101,7 +101,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 				></input>
 			</td>
 			<td>
-				<button onClick={deleteTask} style={{ background: "none", border: "none" }}>
+				<button onClick={deleteDraftTask} style={{ background: "none", border: "none" }}>
 					❌
 				</button>
 			</td>
@@ -134,22 +134,22 @@ export interface ITaskListViewProps {
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
 	const { taskList } = props;
 
-	const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
+	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
 	useEffect(() => {
 		const updateTasks = (): void => {
-			setTasks(taskList.getTasks());
+			setTasks(taskList.getDraftTasks());
 		};
-		taskList.on("taskAdded", updateTasks);
-		taskList.on("taskDeleted", updateTasks);
+		taskList.on("draftTaskAdded", updateTasks);
+		taskList.on("draftTaskDeleted", updateTasks);
 
 		return (): void => {
-			taskList.off("taskAdded", updateTasks);
-			taskList.off("taskDeleted", updateTasks);
+			taskList.off("draftTaskAdded", updateTasks);
+			taskList.off("draftTaskDeleted", updateTasks);
 		};
 	}, [taskList]);
 
 	const taskRows = tasks.map((task: ITask) => (
-		<TaskRow key={task.id} task={task} deleteTask={(): void => taskList.deleteTask(task.id)} />
+		<TaskRow key={task.id} task={task} deleteDraftTask={(): void => taskList.deleteDraftTask(task.id)} />
 	));
 
 	return (

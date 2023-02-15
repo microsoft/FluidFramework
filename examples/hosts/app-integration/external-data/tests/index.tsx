@@ -32,7 +32,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		model = createResponse.model;
 
 		// Add a test task so we can see something.
-		model.taskList.addTask("1", "testName", 3);
+		model.taskList.addDraftTask("1", "testName", 3);
 
 		id = await createResponse.attach();
 	} else {

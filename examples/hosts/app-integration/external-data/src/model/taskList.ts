@@ -144,13 +144,13 @@ export class TaskList extends DataObject implements ITaskList {
 		return this._draftData;
 	}
 
-	public readonly addTask = (id: string, name: string, priority: number): void => {
+	public readonly addDraftTask = (id: string, name: string, priority: number): void => {
 		if (this.tasks.get(id) !== undefined) {
 			throw new Error("Task already exists");
 		}
 		const draftNameString = SharedString.create(this.runtime);
 
-		// TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
+		// TODO: addDraftTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
 		// savedMap will get updated when the data syncs back
 		draftNameString.insertText(0, name);
 
@@ -169,15 +169,15 @@ export class TaskList extends DataObject implements ITaskList {
 		this.draftData.set(id, draftDataPT);
 	};
 
-	public readonly deleteTask = (id: string): void => {
+	public readonly deleteDraftTask = (id: string): void => {
 		this.draftData.delete(id);
 	};
 
-	public readonly getTasks = (): Task[] => {
+	public readonly getDraftTasks = (): Task[] => {
 		return [...this.tasks.values()];
 	};
 
-	public readonly getTask = (id: string): Task | undefined => {
+	public readonly getDraftTask = (id: string): Task | undefined => {
 		return this.tasks.get(id);
 	};
 
@@ -198,7 +198,7 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 		const newTask = new Task(id, nameSharedString, prioritySharedCell);
 		this.tasks.set(id, newTask);
-		this.emit("taskAdded", newTask);
+		this.emit("draftTaskAdded", newTask);
 	};
 
 	private readonly handleDraftTaskDeleted = (id: string): void => {
@@ -206,7 +206,7 @@ export class TaskList extends DataObject implements ITaskList {
 		this.tasks.delete(id);
 		// Here we might want to consider raising an event on the Task object so that anyone holding it can know
 		// that it has been removed from its collection.  Not needed for this example though.
-		this.emit("taskDeleted", deletedTask);
+		this.emit("draftTaskDeleted", deletedTask);
 	};
 
 	/**
@@ -290,7 +290,7 @@ export class TaskList extends DataObject implements ITaskList {
 			const task = this.tasks.get(id);
 			if (task === undefined) {
 				// A new task was added from external source, add it to the Fluid data.
-				this.addTask(id, incomingName, incomingPriority);
+				this.addDraftTask(id, incomingName, incomingPriority);
 				return;
 			}
 			// Incoming external data differs from existing external snapshot AND
@@ -317,11 +317,11 @@ export class TaskList extends DataObject implements ITaskList {
 	 * @returns A promise that resolves when the write completes.
 	 */
 	public readonly writeToExternalServer = async (): Promise<void> => {
-		// TODO: Consider this.getTasks() will include local (un-ack'd) changes to the Fluid data as well.  In
+		// TODO: Consider this.getDraftTasks() will include local (un-ack'd) changes to the Fluid data as well.  In
 		// the "save" button case this might be fine (the user saves what they see), but in more-automatic
 		// sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
 		// as what we do for summarization).
-		const tasks = this.getTasks();
+		const tasks = this.getDraftTasks();
 		const formattedTasks = {};
 		for (const task of tasks) {
 			formattedTasks[task.id] = {

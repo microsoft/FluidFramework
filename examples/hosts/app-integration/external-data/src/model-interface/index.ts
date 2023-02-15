@@ -102,9 +102,13 @@ export interface ITask extends IEventProvider<ITaskEvents> {
  */
 export interface ITaskListEvents extends IEvent {
 	/**
-	 * Emitted when a task is added/removed respectively.
+	 * Emitted when a draft task is added.
 	 */
-	(event: "taskAdded" | "taskDeleted", listener: (task: ITask) => void);
+	(event: "draftTaskAdded" , listener: (task: ITask) => void);
+	/**
+	 * Emitted when a draft task is removed.
+	 */
+	(event: "draftTaskDeleted", listener: (task: ITask) => void);
 }
 
 /**
@@ -120,20 +124,20 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	 * actually be adding this task to the external data source until a sync happens.  What should the ID be in the
 	 * interim period -- e.g. is there a "Fluid ID" vs. the real ID?
 	 */
-	readonly addTask: (id: string, name: string, priority: number) => void;
+	readonly addDraftTask: (id: string, name: string, priority: number) => void;
 	/**
 	 * Delete the task with the specified ID.
 	 */
-	readonly deleteTask: (id: string) => void;
+	readonly deleteDraftTask: (id: string) => void;
 
 	/**
 	 * Get the full list of tasks.
 	 */
-	readonly getTasks: () => ITask[];
+	readonly getDraftTasks: () => ITask[];
 	/**
 	 * Get the task with the specified ID.
 	 */
-	readonly getTask: (id: string) => ITask | undefined;
+	readonly getDraftTask: (id: string) => ITask | undefined;
 
 	/**
 	 * Persist the current state of the Fluid data back to the external data source.
