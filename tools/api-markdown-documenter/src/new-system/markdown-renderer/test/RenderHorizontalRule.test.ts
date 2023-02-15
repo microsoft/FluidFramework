@@ -10,7 +10,7 @@ import { testRender } from "./Utilities";
 describe("HorizontalRule rendering tests", () => {
 	it("Markdown", () => {
 		// Horizontal Rules always create a leading and trailing line breaks
-		expect(testRender(HorizontalRuleNode.Singleton)).to.equal("\n---\n");
+		expect(testRender(HorizontalRuleNode.Singleton)).to.equal("\n---\n\n");
 	});
 
 	it("HTML", () => {
