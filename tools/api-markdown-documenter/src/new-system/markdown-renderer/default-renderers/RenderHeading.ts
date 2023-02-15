@@ -46,7 +46,7 @@ function renderHeadingWithMarkdownSyntax(
 		writer.write(`${headingPreamble} `);
 		renderNodes(headingNode.children, writer, context);
 		if (headingNode.id !== undefined) {
-			writer.write(`#${headingNode.id}`);
+			writer.write(` {#${headingNode.id}}`);
 		}
 	} else {
 		if (headingNode.id !== undefined) {
