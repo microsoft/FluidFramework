@@ -39,16 +39,20 @@ export {
 	MarkedArrayLike,
 	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
+	parentField,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
-export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
+export { SchemaIndex, SchemaEditor } from "./schemaIndex";
+// This is exported because its useful for doing comparisons of schema in tests.
+export { getSchemaString } from "./schemaIndexFormat";
 export {
 	singleStackTreeCursor,
 	CursorAdapter,
 	prefixPath,
 	prefixFieldPath,
+	CursorWithNode,
 } from "./treeCursorUtils";
 export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 

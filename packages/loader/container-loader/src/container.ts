@@ -13,7 +13,7 @@ import {
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IConnectionDetails,
@@ -129,6 +129,10 @@ export interface IContainerLoadOptions {
 	 * use the loader's logger, `Loader.services.subLogger`.
 	 */
 	baseLogger?: ITelemetryBaseLogger;
+	/**
+	 * A scope object to replace the one provided on the Loader.
+	 */
+	scopeOverride?: FluidObject;
 }
 
 export interface IContainerConfig {
@@ -147,6 +151,10 @@ export interface IContainerConfig {
 	 * use the loader's logger, `Loader.services.subLogger`.
 	 */
 	baseLogger?: ITelemetryBaseLogger;
+	/**
+	 * A scope object to replace the one provided on the Loader.
+	 */
+	scopeOverride?: FluidObject;
 }
 
 /**
@@ -277,6 +285,9 @@ export interface IPendingContainerState {
 
 const summarizerClientType = "summarizer";
 
+/**
+ * @deprecated - In the next release Container will no longer be exported, IContainer should be used in its place.
+ */
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
 	implements IContainer
@@ -300,6 +311,7 @@ export class Container
 				canReconnect: loadOptions.canReconnect,
 				serializedContainerState: pendingLocalState,
 				baseLogger: loadOptions.baseLogger,
+				scopeOverride: loadOptions.scopeOverride,
 			},
 			protocolHandlerBuilder,
 		);
@@ -452,6 +464,7 @@ export class Container
 	}
 
 	private readonly clientDetailsOverride: IClientDetails | undefined;
+	private readonly _scopeOverride: FluidObject | undefined;
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
 
@@ -602,7 +615,7 @@ export class Container
 	}
 	public readonly options: ILoaderOptions;
 	private get scope() {
-		return this.loader.services.scope;
+		return this._scopeOverride ?? this.loader.services.scope;
 	}
 	private get codeLoader() {
 		return this.loader.services.codeLoader;
@@ -624,6 +637,7 @@ export class Container
 		});
 
 		this.clientDetailsOverride = config.clientDetailsOverride;
+		this._scopeOverride = config.scopeOverride;
 		this._resolvedUrl = config.resolvedUrl;
 		if (config.canReconnect !== undefined) {
 			this._canReconnect = config.canReconnect;
@@ -907,7 +921,7 @@ export class Container
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerDispose",
-						category: error === undefined ? "generic" : "error",
+						category: "generic",
 					},
 					error,
 				);

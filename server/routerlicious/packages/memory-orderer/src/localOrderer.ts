@@ -343,15 +343,19 @@ export class LocalOrderer implements IOrderer {
             this.tenantId,
             this.documentId,
             this.gitManager,
+            null /* deltaService */,
             scribeMessagesCollection,
-            false,
-            latestSummary.messages);
+            false /* enableWholeSummaryUpload */,
+            latestSummary.messages,
+            false /* getDeltasViaAlfred */);
         const checkpointManager = new CheckpointManager(
             context,
             this.tenantId,
             this.documentId,
             documentCollection,
-            scribeMessagesCollection);
+            scribeMessagesCollection,
+            null /* deltaService */,
+            false /* getDeltasViaAlfred */);
         return new ScribeLambda(
             context,
             this.tenantId,

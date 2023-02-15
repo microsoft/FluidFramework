@@ -54,8 +54,6 @@ module.exports = {
 		"eslint-plugin-tsdoc",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unused-imports
 		"unused-imports",
-		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
-		"react",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
 		"unicorn",
 	],
@@ -355,6 +353,23 @@ module.exports = {
 			settings: {
 				jsdoc: {
 					mode: "typescript",
+				},
+			},
+		},
+		{
+			// Rules only for React files
+			files: ["*.jsx", "*.tsx"],
+			plugins: [
+				// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
+				"react",
+
+				// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react-hooks
+				"react-hooks",
+			],
+			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			settings: {
+				react: {
+					version: "detect",
 				},
 			},
 		},

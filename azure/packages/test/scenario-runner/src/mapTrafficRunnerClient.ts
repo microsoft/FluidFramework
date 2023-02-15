@@ -14,6 +14,39 @@ import { ContainerFactorySchema } from "./interface";
 import { getLogger } from "./logger";
 import { createAzureClient, delay, loadInitialObjSchema } from "./utils";
 
+const eventMap = new Map([
+	[
+		"fluid:telemetry:RouterliciousDriver:FetchOrdererToken",
+		"scenario:runner:DocLoader:Load:FetchOrdererToken",
+	],
+	[
+		"fluid:telemetry:RouterliciousDriver:DiscoverSession",
+		"scenario:runner:DocLoader:Load:DiscoverSession",
+	],
+	[
+		"fluid:telemetry:RouterliciousDriver:FetchStorageToken",
+		"scenario:runner:DocLoader:Load:FetchStorageToken",
+	],
+	[
+		"fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
+		"scenario:runner:DocLoader:Load:GetSummary",
+	],
+	["fluid:telemetry:RouterliciousDriver:GetDeltas", "scenario:runner:DocLoader:Load:GetDeltas"],
+	["fluid:telemetry:Container:Request", "scenario:runner:DocLoader:Load:RequestDataObject"],
+	[
+		"fluid:telemetry:RouterliciousDriver:GetDeltaStreamToken",
+		"scenario:runner:DocLoader:Connection:GetDeltaStreamToken",
+	],
+	[
+		"fluid:telemetry:RouterliciousDriver:ConnectToDeltaStream",
+		"scenario:runner:DocLoader:Connection:ConnectToDeltaStream",
+	],
+	[
+		"fluid:telemetry:Container:ConnectionStateChange",
+		"scenario:runner:DocLoader:Connection:ConnectionStateChange",
+	],
+]);
+
 export interface MapTrafficRunnerConfig {
 	runId: string;
 	scenarioName: string;
@@ -24,6 +57,7 @@ export interface MapTrafficRunnerConfig {
 	sharedMapKey: string;
 	connType: string;
 	connEndpoint: string;
+	region?: string;
 }
 
 async function main() {
@@ -53,6 +87,7 @@ async function main() {
 		.option("-tk, --tenantKey <tenantKey>", "Tenant Key")
 		.option("-furl, --functionUrl <functionUrl>", "Azure Function URL")
 		.option("-st, --secureTokenProvider", "Enable use of secure token provider")
+		.option("-rg, --region <region>", "Alias of Azure region where the tenant is running from")
 		.option(
 			"-l, --log <filter>",
 			"Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -75,6 +110,7 @@ async function main() {
 		functionUrl:
 			commander.functionUrl ?? process.env.azure__fluid__relay__service__function__url,
 		secureTokenProvider: commander.secureTokenProvider,
+		region: commander.region ?? process.env.azure__fluid__relay__service__region,
 	};
 
 	if (commander.log !== undefined) {
@@ -90,11 +126,11 @@ async function main() {
 		{
 			runId: config.runId,
 			scenarioName: config.scenarioName,
+			endpoint: config.connEndpoint,
+			region: config.region,
 		},
-		[
-			"scenario:runner",
-			// "fluid:telemetry:OpPerf"
-		],
+		["scenario:runner"],
+		eventMap,
 	);
 
 	const ac = await createAzureClient({
@@ -115,11 +151,17 @@ async function main() {
 
 async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise<void> {
 	const msBetweenWrites = 60000 / config.writeRatePerMin;
-	const logger = await getLogger({
-		runId: config.runId,
-		scenarioName: config.scenarioName,
-		namespace: "scenario:runner:MapTraffic",
-	});
+	const logger = await getLogger(
+		{
+			runId: config.runId,
+			scenarioName: config.scenarioName,
+			namespace: "scenario:runner:MapTraffic",
+			endpoint: config.connEndpoint,
+			region: config.region,
+		},
+		["scenario:runner"],
+		eventMap,
+	);
 
 	const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
 	const { container } = await PerformanceEvent.timedExecAsync(

@@ -60,5 +60,4 @@ export {
 	mapIterable,
 	Mutable,
 	RecursiveReadonly,
-	unreachableCase,
 } from "./utils";

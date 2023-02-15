@@ -93,7 +93,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // @deprecated (undocumented)
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    get logger(): ITelemetryLogger;
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;

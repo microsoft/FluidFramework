@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "../../util";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { FieldKey, Value } from "./types";
 import * as Delta from "./delta";
 

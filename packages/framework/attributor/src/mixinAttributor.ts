@@ -123,6 +123,12 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				0x508 /* Audience must exist when instantiating attribution-providing runtime */,
 			);
 
+			const mc = loggerToMonitoringContext(context.taggedLogger);
+			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
+			if (shouldTrackAttribution) {
+				(context.options.attribution ??= {}).track = true;
+			}
+
 			const runtime = (await Base.load(
 				context,
 				registryEntries,
@@ -134,8 +140,6 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
-			const mc = loggerToMonitoringContext(runtime.logger);
-
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution
 			// info or we need to summarize. All that really needs to happen immediately is to start recording
@@ -145,7 +149,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				audience,
 				baseSnapshot,
 				async (id) => runtime.storage.readBlob(id),
-				mc.config.getBoolean(enableOnNewFileKey) ?? false,
+				shouldTrackAttribution,
 			);
 			return runtime;
 		}
