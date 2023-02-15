@@ -19,6 +19,7 @@ export function renderAlert(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
+	// Alert rendering is multi-line, and so if we are inside a table, we need to use HTML syntax
 	if (context.insideTable || context.insideHtml) {
 		renderAlertWithHtmlSyntax(node, writer, context);
 	} else {
