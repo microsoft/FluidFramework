@@ -1,0 +1,19 @@
+{
+  "name": "@fluid-experimental/wasm-hello-world",
+  "description": "Placeholder description",
+  "author": "Microsoft and contributors",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework"
+  },
+  "files": [
+    "*-nodejs/*!(*.wasm.d.ts)",
+    "*-bundler/*!(*_bg.js|*.wasm.d.ts)"
+  ],
+  "main": "Placeholder main",
+  "types": "Placeholder types",
+  "module": "Placeholder module",
+  "sideEffects": false
+}

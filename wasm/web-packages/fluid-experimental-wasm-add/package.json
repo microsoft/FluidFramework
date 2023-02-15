@@ -1,0 +1,19 @@
+{
+    "name": "@fluid-experimental/fluid-experimental-wasm-add",
+    "description": "A library for adding two numbers in WASM (wow!)",
+    "author": "Microsoft and contributors",
+    "version": "0.1.0",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/microsoft/FluidFramework"
+    },
+    "files": [
+        "*-nodejs/*!(*.wasm.d.ts)",
+        "*-bundler/*!(*_bg.js|*.wasm.d.ts)"
+    ],
+    "main": "./nodejs/fluid-experimental-wasm-add.js",
+    "types": "./nodejs/fluid-experimental-wasm-add.d.ts",
+    "module": "./bundler/fluid-experimental-wasm-add.js",
+    "sideEffects": false
+}

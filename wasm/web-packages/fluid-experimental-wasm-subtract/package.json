@@ -1,0 +1,18 @@
+{
+    "name": "@fluid-experimental/fluid-experimental-wasm-subtract",
+    "author": "Microsoft and contributors",
+    "version": "0.1.0",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/microsoft/FluidFramework"
+    },
+    "files": [
+        "*-nodejs/*!(*.wasm.d.ts)",
+        "*-bundler/*!(*_bg.js|*.wasm.d.ts)"
+    ],
+    "main": "./nodejs/fluid-experimental-wasm-subtract.js",
+    "types": "./nodejs/fluid-experimental-wasm-subtract.d.ts",
+    "module": "./bundler/fluid-experimental-wasm-subtract.js",
+    "sideEffects": false
+}
