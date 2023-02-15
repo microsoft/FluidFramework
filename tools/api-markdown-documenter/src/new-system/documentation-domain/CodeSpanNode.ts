@@ -13,10 +13,10 @@ export class CodeSpanNode
 	extends ParentNodeBase<SingleLineElementNode>
 	implements SingleLineElementNode
 {
-	public readonly type = DocumentationNodeType.CodeSpan;
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
+	public readonly type = DocumentationNodeType.CodeSpan;
 
 	public constructor(children: SingleLineElementNode[]) {
 		super(children);
