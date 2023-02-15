@@ -8,7 +8,7 @@ export { renderBlockQuote } from "./RenderBlockQuote";
 export { renderCodeSpan } from "./RenderCodeSpan";
 export { renderFencedCodeBlock } from "./RenderFencedCodeBlock";
 export { renderHeading } from "./RenderHeading";
-export { renderHierarchicalSection } from "./RenderHierarchicalSection";
+export { renderSection as renderHierarchicalSection } from "./RenderSection";
 export { renderHorizontalRule } from "./RenderHorizontalRule";
 export { renderLineBreak } from "./RenderLineBreak";
 export { renderLink } from "./RenderLink";

@@ -7,7 +7,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
  * Recursively enumerates an SpanNode to generate markdown from its children. Can be used to apply bold, italic, and strikethrough styles
  *
  * @param node - SpanNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
+ * @param context - See {@link MarkdownRenderContext}.
  * @returns The markdown representation of the SpanNode as a string
  */
 export function renderSpan(

@@ -40,11 +40,11 @@ import {
 	DocumentationNode,
 	FencedCodeBlockNode,
 	HeadingNode,
-	HierarchicalSectionNode,
 	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
+	SectionNode,
 	SingleLineElementNode,
 	SpanNode,
 	UnorderedListNode,
@@ -70,7 +70,7 @@ import { createParametersSummaryTable } from "./TableHelpers";
 export function createSignatureSection(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode | undefined {
+): SectionNode | undefined {
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
 		if (signatureExcerpt !== "") {
@@ -108,7 +108,7 @@ export function createSignatureSection(
 export function createSeeAlsoSection(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode | undefined {
+): SectionNode | undefined {
 	const seeBlocks = getSeeBlocks(apiItem);
 	if (seeBlocks === undefined || seeBlocks.length === 0) {
 		return undefined;
@@ -445,7 +445,7 @@ export function createSummaryParagraph(
 export function createRemarksSection(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode | undefined {
+): SectionNode | undefined {
 	if (
 		!(apiItem instanceof ApiDocumentedItem) ||
 		apiItem.tsdocComment?.remarksBlock === undefined
@@ -475,7 +475,7 @@ export function createRemarksSection(
 export function createThrowsSection(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode | undefined {
+): SectionNode | undefined {
 	const throwsBlocks = getThrowsBlocks(apiItem);
 	if (throwsBlocks === undefined || throwsBlocks.length === 0) {
 		return undefined;
@@ -539,7 +539,7 @@ export function createDeprecationNoticeSection(
 export function createExamplesSection(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode | undefined {
+): SectionNode | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
 
 	if (exampleBlocks === undefined || exampleBlocks.length === 0) {
@@ -551,7 +551,7 @@ export function createExamplesSection(
 		return createExampleSection({ apiItem, content: exampleBlocks[0] }, config);
 	}
 
-	const exampleSections: HierarchicalSectionNode[] = [];
+	const exampleSections: SectionNode[] = [];
 	for (const [i, exampleBlock] of exampleBlocks.entries()) {
 		exampleSections.push(
 			createExampleSection({ apiItem, content: exampleBlock, exampleNumber: i + 1 }, config),
@@ -597,7 +597,7 @@ export interface DocExampleProperties {
 export function createExampleSection(
 	example: DocExampleProperties,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode {
+): SectionNode {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(example.apiItem, config);
 
 	const headingTitle: string =
@@ -626,7 +626,7 @@ export function createExampleSection(
 export function createParametersSection(
 	apiFunctionLike: ApiFunctionLike,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode | undefined {
+): SectionNode | undefined {
 	if (apiFunctionLike.parameters.length === 0) {
 		return undefined;
 	}
@@ -654,7 +654,7 @@ export function createParametersSection(
 export function createReturnsSection(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode | undefined {
+): SectionNode | undefined {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
 	const children: DocumentationNode[] = [];
@@ -737,8 +737,8 @@ export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
 	config: Required<MarkdownDocumenterConfiguration>,
 	createChildContent: (apiItem) => DocumentationNode[],
-): HierarchicalSectionNode[] | undefined {
-	const sections: HierarchicalSectionNode[] = [];
+): SectionNode[] | undefined {
+	const sections: SectionNode[] = [];
 
 	for (const childItem of childItems) {
 		// Only render contents for a section if the item kind is one that gets rendered to its parent's document
@@ -761,15 +761,12 @@ export function createChildDetailsSection(
 }
 
 /**
- * Wraps the provided contents in a {@link HierarchicalSectionNode}.
+ * Wraps the provided contents in a {@link SectionNode}.
  * @param nodes - The section's child contents.
  * @param heading - Optional heading to associate with the section.
  */
-export function wrapInSection(
-	nodes: DocumentationNode[],
-	heading?: Heading,
-): HierarchicalSectionNode {
-	return new HierarchicalSectionNode(
+export function wrapInSection(nodes: DocumentationNode[], heading?: Heading): SectionNode {
+	return new SectionNode(
 		nodes,
 		heading ? HeadingNode.createFromPlainTextHeading(heading) : undefined,
 	);

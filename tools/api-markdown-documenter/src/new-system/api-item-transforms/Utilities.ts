@@ -2,7 +2,7 @@ import { ApiItem } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { getFilePathForApiItem } from "../../utilities";
-import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
+import { DocumentNode, SectionNode } from "../documentation-domain";
 import { wrapInSection } from "./helpers";
 
 /**
@@ -10,7 +10,7 @@ import { wrapInSection } from "./helpers";
  */
 export function createDocument(
 	apiItem: ApiItem,
-	sections: HierarchicalSectionNode[],
+	sections: SectionNode[],
 	config: Required<MarkdownDocumenterConfiguration>,
 ): DocumentNode {
 	const rootSection = wrapInSection(sections, { title: config.headingTitlePolicy(apiItem) });

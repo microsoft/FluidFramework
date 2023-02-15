@@ -7,7 +7,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
  * Recursively enumerates an TableCellNode to generate a markdown fenced code block.
  *
  * @param node - TableCellNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
+ * @param context - See {@link MarkdownRenderContext}.
  * @returns The markdown representation of the TableCellNode as a string
  */
 export function renderTableCell(

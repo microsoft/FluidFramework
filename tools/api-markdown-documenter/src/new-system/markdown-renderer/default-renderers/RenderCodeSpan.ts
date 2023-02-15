@@ -11,7 +11,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
  * Recursively enumerates an {@link CodeSpanNode} to generate a markdown code span block.
  *
  * @param node - CodeSpanNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
+ * @param context - See {@link MarkdownRenderContext}.
  * @returns The markdown representation of the CodeSpanNode as a string
  */
 export function renderCodeSpan(

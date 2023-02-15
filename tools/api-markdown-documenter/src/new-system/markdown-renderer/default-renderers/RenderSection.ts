@@ -2,21 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { HierarchicalSectionNode } from "../../documentation-domain";
+import type { SectionNode } from "../../documentation-domain";
 import type { DocumentWriter } from "../DocumentWriter";
 import { renderNode, renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an {@link HierarchicalSectionNode} to generate a markdown representation of the section, possibly including a header element.
+ * Recursively enumerates an {@link SectionNode} to generate a markdown representation of the section,
+ * possibly including a header element.
  *
- * @param node - HierarchicalSectionNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
- * @remarks Automatically increases the hierarchical depth on the renderer, so that any header descendants rendered in the subtree will have an appropriate heading level.
- * @returns The markdown representation of the HierarchicalSectionNode as a string
+ * @param node - `SectionNode` render into Markdown.
+ * @param writer - Writer context object into which the document contents will be written.
+ * @param context - See {@link MarkdownRenderContext}.
+ *
+ * @remarks
+ *
+ * Automatically increases the context's {@link MarkdownRenderContext.headingLevel}, when rendering child contents,
+ * such that heading levels increase appropriately through nested sections.
  */
-export function renderHierarchicalSection(
-	node: HierarchicalSectionNode,
+export function renderSection(
+	node: SectionNode,
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
@@ -28,7 +33,7 @@ export function renderHierarchicalSection(
 }
 
 function renderHierarchicalSectionWithMarkdownSyntax(
-	node: HierarchicalSectionNode,
+	node: SectionNode,
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
@@ -48,7 +53,7 @@ function renderHierarchicalSectionWithMarkdownSyntax(
 }
 
 function renderHierarchicalSectionWithHtmlSyntax(
-	node: HierarchicalSectionNode,
+	node: SectionNode,
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {

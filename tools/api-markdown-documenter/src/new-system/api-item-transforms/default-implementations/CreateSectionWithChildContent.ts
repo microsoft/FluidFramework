@@ -6,7 +6,7 @@ import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extracto
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
 import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../../../utilities";
-import { HierarchicalSectionNode } from "../../documentation-domain";
+import { SectionNode } from "../../documentation-domain";
 import {
 	betaAlert,
 	createDeprecationNoticeSection,
@@ -40,10 +40,10 @@ import {
  */
 export function createSectionWithChildContent(
 	apiItem: ApiItem,
-	childContent: HierarchicalSectionNode[] | undefined,
+	childContent: SectionNode[] | undefined,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode[] {
-	const sections: HierarchicalSectionNode[] = [];
+): SectionNode[] {
+	const sections: SectionNode[] = [];
 
 	// Render beta warning if applicable
 	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {

@@ -1,7 +1,7 @@
 import { ApiPackage } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
-import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
+import { DocumentNode, SectionNode } from "../documentation-domain";
 import { apiItemToSections } from "./TransformApiItem";
 import { createDocument } from "./Utilities";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
@@ -22,7 +22,7 @@ export function apiPackageToDocument(
 
 	logger.verbose(`Rendering ${apiPackage.name} package document...`);
 
-	const sections: HierarchicalSectionNode[] = [];
+	const sections: SectionNode[] = [];
 
 	// Render breadcrumb
 	if (config.includeBreadcrumb) {

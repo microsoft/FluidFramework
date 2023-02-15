@@ -6,7 +6,7 @@ import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-ext
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
 import { filterByKind } from "../../../utilities";
-import { DocumentationNode, HierarchicalSectionNode } from "../../documentation-domain";
+import { DocumentationNode, SectionNode } from "../../documentation-domain";
 import { createMemberTables, wrapInSection } from "../helpers";
 
 /**
@@ -15,9 +15,9 @@ import { createMemberTables, wrapInSection } from "../helpers";
 export function transformApiEnum(
 	apiEnum: ApiEnum,
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode[],
-): HierarchicalSectionNode[] {
-	const sections: HierarchicalSectionNode[] = [];
+	generateChildContent: (apiItem: ApiItem) => SectionNode[],
+): SectionNode[] {
+	const sections: SectionNode[] = [];
 
 	const hasAnyChildren = apiEnum.members.length > 0;
 

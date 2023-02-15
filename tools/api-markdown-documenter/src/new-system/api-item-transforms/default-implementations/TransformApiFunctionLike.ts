@@ -4,7 +4,7 @@
  */
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
 import { ApiFunctionLike } from "../../../utilities";
-import { HierarchicalSectionNode } from "../../documentation-domain";
+import { SectionNode } from "../../documentation-domain";
 import { createParametersSection, createReturnsSection } from "../helpers";
 
 /**
@@ -14,8 +14,8 @@ import { createParametersSection, createReturnsSection } from "../helpers";
 export function transformApiFunctionLike(
 	apiFunctionLike: ApiFunctionLike,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode[] {
-	const childSections: HierarchicalSectionNode[] = [];
+): SectionNode[] {
+	const childSections: SectionNode[] = [];
 
 	// Render parameter table (if any parameters)
 	const renderedParameterTable = createParametersSection(apiFunctionLike, config);

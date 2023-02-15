@@ -6,16 +6,16 @@ import { expect } from "chai";
 
 import {
 	HeadingNode,
-	HierarchicalSectionNode,
 	HorizontalRuleNode,
 	ParagraphNode,
+	SectionNode,
 } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
 describe("HierarchicalSection rendering tests", () => {
 	describe("Markdown", () => {
 		it("Simple section", () => {
-			const input = new HierarchicalSectionNode(
+			const input = new SectionNode(
 				[
 					ParagraphNode.createFromPlainText("Foo"),
 					HorizontalRuleNode.Singleton,
@@ -46,9 +46,9 @@ describe("HierarchicalSection rendering tests", () => {
 		});
 
 		it("Nested section", () => {
-			const input = new HierarchicalSectionNode(
+			const input = new SectionNode(
 				[
-					new HierarchicalSectionNode(
+					new SectionNode(
 						[ParagraphNode.createFromPlainText("Foo")],
 						/* heading: */ HeadingNode.createFromPlainText(
 							"Sub-Heading 1",
@@ -56,9 +56,9 @@ describe("HierarchicalSection rendering tests", () => {
 						),
 					),
 
-					new HierarchicalSectionNode(
+					new SectionNode(
 						[
-							new HierarchicalSectionNode(
+							new SectionNode(
 								[ParagraphNode.createFromPlainText("Bar")],
 								/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2b"),
 							),
@@ -97,7 +97,7 @@ describe("HierarchicalSection rendering tests", () => {
 
 	describe("HTML", () => {
 		it("Simple section", () => {
-			const input = new HierarchicalSectionNode(
+			const input = new SectionNode(
 				[
 					ParagraphNode.createFromPlainText("Foo"),
 					HorizontalRuleNode.Singleton,
@@ -131,9 +131,9 @@ describe("HierarchicalSection rendering tests", () => {
 		});
 
 		it("Nested section", () => {
-			const input = new HierarchicalSectionNode(
+			const input = new SectionNode(
 				[
-					new HierarchicalSectionNode(
+					new SectionNode(
 						[ParagraphNode.createFromPlainText("Foo")],
 						/* heading: */ HeadingNode.createFromPlainText(
 							"Sub-Heading 1",
@@ -141,9 +141,9 @@ describe("HierarchicalSection rendering tests", () => {
 						),
 					),
 
-					new HierarchicalSectionNode(
+					new SectionNode(
 						[
-							new HierarchicalSectionNode(
+							new SectionNode(
 								[ParagraphNode.createFromPlainText("Bar")],
 								/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2b"),
 							),

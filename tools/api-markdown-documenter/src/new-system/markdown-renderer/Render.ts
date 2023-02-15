@@ -13,13 +13,13 @@ import {
 	DocumentationNodeType,
 	FencedCodeBlockNode,
 	HeadingNode,
-	HierarchicalSectionNode,
 	HorizontalRuleNode,
 	LineBreakNode,
 	LinkNode,
 	OrderedListNode,
 	ParagraphNode,
 	PlainTextNode,
+	SectionNode,
 	SpanNode,
 	TableCellNode,
 	TableNode,
@@ -66,8 +66,8 @@ export const defaultNodeRenderers: DocumentationNodeRenderers = {
 		renderLineBreak(node as LineBreakNode, writer, context),
 	[DocumentationNodeType.Link]: (node, writer, context): void =>
 		renderLink(node as LinkNode, writer, context),
-	[DocumentationNodeType.HierarchicalSection]: (node, writer, context): void =>
-		renderHierarchicalSection(node as HierarchicalSectionNode, writer, context),
+	[DocumentationNodeType.Section]: (node, writer, context): void =>
+		renderHierarchicalSection(node as SectionNode, writer, context),
 	[DocumentationNodeType.HorizontalRule]: (node, writer, context): void =>
 		renderHorizontalRule(node as HorizontalRuleNode, writer, context),
 	[DocumentationNodeType.OrderedList]: (node, writer, context): void =>

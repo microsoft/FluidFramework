@@ -11,7 +11,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
  * Recursively enumerates an LinkNode to generate a link using markdown syntax.
  *
  * @param node - LinkNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
+ * @param context - See {@link MarkdownRenderContext}.
  * @returns The markdown representation of the LinkNode as a string
  */
 export function renderLink(

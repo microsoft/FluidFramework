@@ -24,7 +24,7 @@ import {
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { doesItemRequireOwnDocument } from "../../utilities";
-import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
+import { DocumentNode, SectionNode } from "../documentation-domain";
 import { createDocument } from "./Utilities";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
 
@@ -74,7 +74,7 @@ export function apiItemToDocument(
 
 	logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
 
-	const sections: HierarchicalSectionNode[] = [];
+	const sections: SectionNode[] = [];
 
 	// Render breadcrumb
 	if (config.includeBreadcrumb) {
@@ -103,7 +103,7 @@ export function apiItemToDocument(
 export function apiItemToSections(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode[] {
+): SectionNode[] {
 	if (apiItem.kind === ApiItemKind.None) {
 		throw new Error(`Encountered API item with a kind of "None".`);
 	}
@@ -120,7 +120,7 @@ export function apiItemToSections(
 
 	logger.verbose(`Rendering section for ${apiItem.displayName}...`);
 
-	let sections: HierarchicalSectionNode[];
+	let sections: SectionNode[];
 	switch (apiItem.kind) {
 		case ApiItemKind.CallSignature:
 			sections = config.transformApiCallSignature(apiItem as ApiCallSignature, config);

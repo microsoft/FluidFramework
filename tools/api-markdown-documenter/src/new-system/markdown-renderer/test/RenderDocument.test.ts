@@ -7,9 +7,9 @@ import { expect } from "chai";
 import {
 	DocumentNode,
 	HeadingNode,
-	HierarchicalSectionNode,
 	ParagraphNode,
 	PlainTextNode,
+	SectionNode,
 	SpanNode,
 } from "../../documentation-domain";
 import { renderDocument } from "../Render";
@@ -18,13 +18,13 @@ describe("Document rendering tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
 			children: [
-				new HierarchicalSectionNode(
+				new SectionNode(
 					[
 						new ParagraphNode([
 							new PlainTextNode("This is a sample document. "),
 							new PlainTextNode("It has very basic content.\t"),
 						]),
-						new HierarchicalSectionNode(
+						new SectionNode(
 							[
 								new ParagraphNode([
 									new PlainTextNode("This is test inside of a paragraph. "),

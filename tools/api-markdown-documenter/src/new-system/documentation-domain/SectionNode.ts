@@ -6,20 +6,34 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { HeadingNode } from "./HeadingNode";
 
-// TODOs:
-// - Only Documents and Sections may contain Sections?
-
 /**
  * Represents a hierarchically nested section.
- * Influences things like automatic heading level generation, etc.
+ * Influences things like automatic heading level generation.
  *
- * @example TODO
+ * @example Markdown
+ *
+ * ```md
+ * # Heading Text
+ *
+ * Section contents...
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <section>
+ * 	<h1>
+ * 		Heading Text
+ * 	</h1>
+ * 	Section contents...
+ * </section>
+ * ```
  */
-export class HierarchicalSectionNode extends ParentNodeBase {
+export class SectionNode extends ParentNodeBase {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.HierarchicalSection;
+	public readonly type = DocumentationNodeType.Section;
 
 	/**
 	 * Optional heading to display for the section.
@@ -32,7 +46,7 @@ export class HierarchicalSectionNode extends ParentNodeBase {
 	/**
 	 * Empty section singleton.
 	 */
-	public static readonly Empty = new HierarchicalSectionNode([]);
+	public static readonly Empty = new SectionNode([]);
 
 	public constructor(children: DocumentationNode[], heading?: HeadingNode) {
 		super(children);
@@ -41,15 +55,15 @@ export class HierarchicalSectionNode extends ParentNodeBase {
 	}
 
 	/**
-	 * Merges a list of {@link HierarchicalSectionNode}s into a single section.
+	 * Merges a list of {@link SectionNode}s into a single section.
 	 *
 	 * @remarks This is an option if you wish to group a series of sections without putting them under some parent section
 	 * (which would affect the hierarchy).
 	 * @param sections - The sections to merge.
 	 */
-	public static combine(...sections: HierarchicalSectionNode[]): HierarchicalSectionNode {
+	public static combine(...sections: SectionNode[]): SectionNode {
 		if (sections.length === 0) {
-			return HierarchicalSectionNode.Empty;
+			return SectionNode.Empty;
 		}
 
 		if (sections.length === 1) {
@@ -63,6 +77,6 @@ export class HierarchicalSectionNode extends ParentNodeBase {
 			}
 			childNodes.push(...section.children);
 		}
-		return new HierarchicalSectionNode(childNodes, undefined);
+		return new SectionNode(childNodes, undefined);
 	}
 }

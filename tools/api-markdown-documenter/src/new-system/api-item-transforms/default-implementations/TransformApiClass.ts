@@ -15,7 +15,7 @@ import {
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
 import { ApiModifier, filterByKind, isStatic } from "../../../utilities";
-import { HierarchicalSectionNode } from "../../documentation-domain";
+import { SectionNode } from "../../documentation-domain";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
 /**
@@ -60,9 +60,9 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
 export function transformApiClass(
 	apiClass: ApiClass,
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSectionNode[],
-): HierarchicalSectionNode[] {
-	const sections: HierarchicalSectionNode[] = [];
+	generateChildContent: (apiItem: ApiItem) => SectionNode[],
+): SectionNode[] {
+	const sections: SectionNode[] = [];
 
 	const hasAnyChildren = apiClass.members.length > 0;
 

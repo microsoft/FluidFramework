@@ -28,9 +28,9 @@ import {
 	CodeSpanNode,
 	DocumentationNode,
 	HeadingNode,
-	HierarchicalSectionNode,
 	LinkNode,
 	PlainTextNode,
+	SectionNode,
 	SpanNode,
 	TableCellNode,
 	TableNode,
@@ -87,8 +87,8 @@ export interface TableCreationOptions {
 export function createMemberTables(
 	memberTableProperties: readonly MemberTableProperties[],
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode[] | undefined {
-	const sections: HierarchicalSectionNode[] = [];
+): SectionNode[] | undefined {
+	const sections: SectionNode[] = [];
 
 	for (const member of memberTableProperties) {
 		const table = createTableWithHeading(member, config);
@@ -109,7 +109,7 @@ export function createMemberTables(
 export function createTableWithHeading(
 	memberTableProperties: MemberTableProperties,
 	config: Required<MarkdownDocumenterConfiguration>,
-): HierarchicalSectionNode | undefined {
+): SectionNode | undefined {
 	const table = createSummaryTable(
 		memberTableProperties.items,
 		memberTableProperties.itemKind,
@@ -119,7 +119,7 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new HierarchicalSectionNode(
+		: new SectionNode(
 				[table],
 				HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
 		  );

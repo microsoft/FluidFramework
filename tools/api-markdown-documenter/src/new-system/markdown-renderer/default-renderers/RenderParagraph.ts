@@ -7,7 +7,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
  * Recursively enumerates an ParagraphNode to generate a paragraph of text.
  *
  * @param node - ParagraphNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
+ * @param context - See {@link MarkdownRenderContext}.
  * @remarks If being rendered inside of a table, will output using HTML paragraph tags
  * @returns The markdown representation of the ParagraphNode as a string
  */

@@ -24,7 +24,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
-import { HierarchicalSectionNode } from "../documentation-domain";
+import { SectionNode } from "../documentation-domain";
 import * as DefaultTransformationImplementations from "./default-implementations";
 
 /**
@@ -32,23 +32,23 @@ import * as DefaultTransformationImplementations from "./default-implementations
  */
 
 /**
- * Signature for a function which generates one or more {@link HierarchicalSectionNode}s describing an
+ * Signature for a function which generates one or more {@link SectionNode}s describing an
  * API item that potentially has child items to be rendered as content under it.
  */
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-	generateChildSection: (apiItem: ApiItem) => HierarchicalSectionNode[],
-) => HierarchicalSectionNode[];
+	generateChildSection: (apiItem: ApiItem) => SectionNode[],
+) => SectionNode[];
 
 /**
- * Signature for a function which generates one or more {@link HierarchicalSectionNode}s describing an
+ * Signature for a function which generates one or more {@link SectionNode}s describing an
  * API item that *does not* have child items to be rendered.
  */
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-) => HierarchicalSectionNode[];
+) => SectionNode[];
 
 /**
  * Signature for a function which generates information about an API item with inner content injected
@@ -56,9 +56,9 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
  */
 export type CreateChildContentSections = (
 	apiItem: ApiItem,
-	childSections: HierarchicalSectionNode[] | undefined,
+	childSections: SectionNode[] | undefined,
 	config: Required<MarkdownDocumenterConfiguration>,
-) => HierarchicalSectionNode[];
+) => SectionNode[];
 
 /**
  * Policies for transforming different kinds of API content into {@link DocumentationNode} trees.

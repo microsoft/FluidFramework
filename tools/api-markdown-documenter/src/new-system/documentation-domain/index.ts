@@ -27,13 +27,13 @@ export {
 } from "./DocumentionNode";
 export { FencedCodeBlockChildren, FencedCodeBlockNode } from "./FencedCodeBlockNode";
 export { HeadingNode } from "./HeadingNode";
-export { HierarchicalSectionNode } from "./HierarchicalSectionNode"; // TODO: rename
 export { HorizontalRuleNode } from "./HorizontalRuleNode";
 export { LineBreakNode } from "./LineBreakNode";
 export { LinkNode } from "./LinkNode";
 export { OrderedListNode } from "./OrderedListNode";
 export { ParagraphChildren, ParagraphNode } from "./ParagraphNode";
 export { PlainTextNode } from "./PlainTextNode";
+export { SectionNode } from "./SectionNode";
 export { SpanNode } from "./SpanNode";
 export { TableCellNode } from "./TableCellNode";
 export { TableRowNode } from "./TableRowNode";

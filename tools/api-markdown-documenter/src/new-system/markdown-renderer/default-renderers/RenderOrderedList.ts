@@ -11,7 +11,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
  * Recursively enumerates an OrderedListNode to generate an ordered list in markdown
  *
  * @param node - OrderedListNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
+ * @param context - See {@link MarkdownRenderContext}.
  * @returns The markdown representation of the OrderedListNode as a string
  */
 export function renderOrderedList(

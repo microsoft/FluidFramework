@@ -11,7 +11,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
  * Recursively enumerates an {@link BlockQuoteNode} to generate block quote in Markdown.
  *
  * @param node - BlockQuoteNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
+ * @param context - See {@link MarkdownRenderContext}.
  * @returns The markdown representation of the BlockQuoteNode as a string
  */
 export function renderBlockQuote(

@@ -7,7 +7,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
  * Recursively enumerates an TableRowNode to generate a row of markdown elements.
  *
  * @param node - TableRowNode to convert into markdown
- * @param context - Renderer to recursively render child subtrees
+ * @param context - See {@link MarkdownRenderContext}.
  * @returns The markdown representation of the TableRowNode as a string
  */
 export function renderTableRow(
