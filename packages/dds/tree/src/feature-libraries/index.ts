@@ -19,28 +19,34 @@ export {
 	EditableTreeOrPrimitive,
 	getEditableTreeContext,
 	typeSymbol,
-	typeNameSymbol,
 	indexSymbol,
 	isEditableField,
 	isPrimitive,
-	isPrimitiveValue,
-	getPrimaryField,
 	isUnwrappedNode,
-	PrimitiveValue,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	valueSymbol,
 	getField,
 	createField,
 	replaceField,
+	parentField,
+} from "./editable-tree";
+
+export {
+	typeNameSymbol,
+	valueSymbol,
+	isPrimitiveValue,
+	getPrimaryField,
+	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
 	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
-	parentField,
-} from "./editable-tree";
+	getFieldKind,
+	getFieldSchema,
+} from "./contextuallyTyped";
+
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
