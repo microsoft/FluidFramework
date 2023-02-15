@@ -74,15 +74,15 @@ const foo = bar;
 | --- | --- | --- | --- |
 | [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](./simple-suite-test#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | <code>DEPRECATED</code> | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
 ## Variables
 
 | Variable | Alerts | Modifiers | Description |
 | --- | --- | --- | --- |
-| [testConst](./simple-suite-test#testconst-variable) |  | <code>readonly</code> | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | <code>DEPRECATED</code> | <code>readonly</code> | I have a <code>@deprecated</code> tag with an empty comment block. |
+| [testConst](./simple-suite-test#testconst-variable) |  | `readonly` | Test Constant |
+| [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
 
 ## Namespaces
 

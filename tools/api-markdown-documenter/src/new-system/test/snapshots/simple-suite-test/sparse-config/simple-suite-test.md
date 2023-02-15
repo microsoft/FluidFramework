@@ -72,15 +72,15 @@ const foo = bar;
 | --- | --- | --- | --- |
 | [testFunction(testParameter, testOptionalParameter)](docs/simple-suite-test/testfunction-function) |  | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](docs/simple-suite-test/testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/simple-suite-test/testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](docs/simple-suite-test/testfunctionreturningintersectiontype-function) | <code>DEPRECATED</code> | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](docs/simple-suite-test/testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/simple-suite-test/testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
 ## Variables
 
 | Variable | Alerts | Modifiers | Description |
 | --- | --- | --- | --- |
-| [testConst](docs/simple-suite-test/testconst-variable) |  | <code>readonly</code> | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | <code>DEPRECATED</code> | <code>readonly</code> | I have a <code>@deprecated</code> tag with an empty comment block. |
+| [testConst](docs/simple-suite-test/testconst-variable) |  | `readonly` | Test Constant |
+| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
 
 ## Namespaces
 

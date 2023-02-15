@@ -66,7 +66,7 @@ const bar = foo
 
 | Variable | Modifiers | Description |
 | --- | --- | --- |
-| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | <code>readonly</code> | Test Constant |
+| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `readonly` | Test Constant |
 
 ## Namespaces
 

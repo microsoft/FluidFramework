@@ -8,21 +8,26 @@ import { renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
- * Recursively enumerates an CodeSpanNode to generate a markdown code span block.
+ * Recursively enumerates an {@link CodeSpanNode} to generate a markdown code span block.
  *
- * @param codeSpanNode - CodeSpanNode to convert into markdown
+ * @param node - CodeSpanNode to convert into markdown
  * @param context - Renderer to recursively render child subtrees
  * @returns The markdown representation of the CodeSpanNode as a string
  */
 export function renderCodeSpan(
-	codeSpanNode: CodeSpanNode,
+	node: CodeSpanNode,
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideTable || context.insideHtml) {
-		renderCodeSpanWithHtmlSyntax(codeSpanNode, writer, context);
+	// If the code span is empty, there is no need to render anything.
+	if (!node.hasChildren) {
+		return;
+	}
+
+	if (context.insideHtml) {
+		renderCodeSpanWithHtmlSyntax(node, writer, context);
 	} else {
-		renderCodeSpanWithMarkdownSyntax(codeSpanNode, writer, context);
+		renderCodeSpanWithMarkdownSyntax(node, writer, context);
 	}
 }
 

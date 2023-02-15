@@ -74,15 +74,15 @@ const foo = bar;
 | --- | --- | --- | --- |
 | [testFunction(testParameter, testOptionalParameter)](docs/simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/simple-suite-test#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | <code>DEPRECATED</code> | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
 
 ## Variables
 
 | Variable | Alerts | Modifiers | Description |
 | --- | --- | --- | --- |
-| [testConst](docs/simple-suite-test#testconst-variable) |  | <code>readonly</code> | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | <code>DEPRECATED</code> | <code>readonly</code> | I have a <code>@deprecated</code> tag with an empty comment block. |
+| [testConst](docs/simple-suite-test#testconst-variable) |  | `readonly` | Test Constant |
+| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
 
 ## Namespaces
 
@@ -127,14 +127,14 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
+| [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) | `readonly` | () =&gt; void | Test interface event property |
 
 #### Properties
 
 | Property | Modifiers | Default Value | Type | Description |
 | --- | --- | --- | --- | --- |
 | [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
-| [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | <code>optional</code> | 0 | number | Test optional property |
+| [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
 
 #### Methods
 
@@ -413,16 +413,16 @@ export declare abstract class TestAbstractClass
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [abstractPropertyGetter](docs/simple-suite-test#testabstractclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-| [protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property) | <code>readonly</code> | [TestEnum](docs/simple-suite-test#testenum-enum) | A test protected property. |
+| [abstractPropertyGetter](docs/simple-suite-test#testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+| [protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/simple-suite-test#testenum-enum) | A test protected property. |
 
 #### Methods
 
 | Method | Modifiers | Return Type | Description |
 | --- | --- | --- | --- |
 | [publicAbstractMethod()](docs/simple-suite-test#testabstractclass-publicabstractmethod-method) |  | void | A test public abstract method. |
-| [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) | <code>sealed</code> | string | A test <code>@sealed</code> method. |
-| [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) | <code>virtual</code> | number | A test <code>@virtual</code> method. |
+| [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
+| [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) | `virtual` | number | A test `@virtual` method. |
 
 #### Constructor Details
 
@@ -554,22 +554,22 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | <code>readonly</code> | () =&gt; void | Test class event property |
+| [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
 
 #### Properties
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-| [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | <code>readonly</code>, <code>virtual</code> | number | Test class getter-only property |
-| [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | <code>readonly</code> | TTypeParameterB | Test class property |
+| [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+| [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | `readonly`, `virtual` | number | Test class getter-only property |
+| [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
 #### Methods
 
 | Method | Modifiers | Return Type | Description |
 | --- | --- | --- | --- |
 | [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
-| [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | <code>sealed</code> | TTypeParameterA | Test class method |
+| [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
 | [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test#testabstractclass-virtualmethod-method). |
 
 #### Constructor Details
@@ -991,7 +991,7 @@ testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty co
 
 | Variable | Modifiers | Description |
 | --- | --- | --- |
-| [foo](docs/simple-suite-test#testmodule-foo-variable) | <code>readonly</code> | Test constant in module. |
+| [foo](docs/simple-suite-test#testmodule-foo-variable) | `readonly` | Test constant in module. |
 
 #### Variable Details
 
@@ -1071,7 +1071,7 @@ const bar = foo
 
 | Variable | Modifiers | Description |
 | --- | --- | --- |
-| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | <code>readonly</code> | Test Constant |
+| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `readonly` | Test Constant |
 
 #### Namespaces
 
@@ -1155,7 +1155,7 @@ class TestClass
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [testClassProperty](docs/simple-suite-test#testnamespace-testclass-testclassproperty-property) | <code>readonly</code> | string | Test interface property |
+| [testClassProperty](docs/simple-suite-test#testnamespace-testclass-testclassproperty-property) | `readonly` | string | Test interface property |
 
 ###### Methods
 
