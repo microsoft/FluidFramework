@@ -111,10 +111,22 @@ export class TaskList extends DataObject implements ITaskList {
 	 */
 	private readonly tasks = new Map<string, Task>();
 	/*
-	 * draftData is used for storage of the draft Fluid data. It allows for collboration with
-	 * other Fluid clients.
+	 * externalDataSnapshot stores data retrieved from the external external.
+	 */
+	private _externalDataSnapshot: SharedMap | undefined;
+	/*
+	 * draftData is used for storage of the draft Fluid data. It's used with externalDataSnapshot
+	 * to resolve & synchronize the data.
+	 * TODO: Update^ when the sync mechanism is appropriately defined.
 	 */
 	private _draftData: SharedMap | undefined;
+
+	private get externalDataSnapshot(): SharedMap {
+		if (this._externalDataSnapshot === undefined) {
+			throw new Error("The externalDataSnapshot SharedMap has not yet been initialized.");
+		}
+		return this._externalDataSnapshot;
+	}
 
 	private get draftData(): SharedMap {
 		if (this._draftData === undefined) {
@@ -250,7 +262,39 @@ export class TaskList extends DataObject implements ITaskList {
 
 		// TODO: Delete any items that are in the root but missing from the external data
 		const updateTaskPs = incomingExternalData.map(async ([id, { name: incomingName , priority: incomingPriority }]) => {
-			// Look for differences between draftData and externalDataSnapshot
+			// Write external data into externalDataSnapshot map.
+			const currentTask = this.externalDataSnapshot.get<PersistedTask>(id);
+			let incomingNameDiffersFromSnapshotName = false;
+			let incomingPriorityDiffersFromSnapshotPriority = false;
+			// Create a new task because it doesn't exist already
+			if (currentTask === undefined) {
+				const snapshotNameString = SharedString.create(this.runtime);
+				const snapshotPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+				const externalDataSnapshotPT: PersistedTask = {
+					id,
+					name: snapshotNameString.handle as IFluidHandle<SharedString>,
+					priority: snapshotPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+				};
+				snapshotNameString.insertText(0, incomingName);
+				snapshotPriorityCell.set(incomingPriority);
+				this.externalDataSnapshot.set(id, externalDataSnapshotPT);
+			} else {
+				// Make changes to exisiting saved tasks
+				const [snapshotNameString, snapshotPriorityCell] = await Promise.all([
+					currentTask.name.get(),
+					currentTask.priority.get(),
+				]);
+				if (snapshotNameString.getText() !== incomingName) {
+					incomingNameDiffersFromSnapshotName = true;
+				}
+				if (snapshotPriorityCell.get() !== incomingPriority) {
+					incomingPriorityDiffersFromSnapshotPriority = true;
+				}
+				snapshotNameString.insertText(0, incomingName);
+				snapshotPriorityCell.set(incomingPriority);
+			}
+
+			// Now look for differences between draftData and externalDataSnapshot
 			const task = this.tasks.get(id);
 			if (task === undefined) {
 				// A new task was added from external source, add it to the Fluid data.
@@ -258,11 +302,11 @@ export class TaskList extends DataObject implements ITaskList {
 				return;
 			}
 			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (task.draftName.getText() !== incomingName) {
+			if (incomingNameDiffersFromSnapshotName && task.draftName.getText() !== incomingName) {
 				task.externalNameChanged(incomingName);
 			}
 			// External change has come in AND local change has happened, so there is some conflict to resolve
-			if (task.draftPriority !== incomingPriority) {
+			if (incomingPriorityDiffersFromSnapshotPriority && task.draftPriority !== incomingPriority) {
 				task.externalPriorityChanged(incomingPriority);
 			}
 		});
@@ -309,7 +353,9 @@ export class TaskList extends DataObject implements ITaskList {
 
 	protected async initializingFirstTime(): Promise<void> {
 		this._draftData = SharedMap.create(this.runtime);
+		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
+		this.root.set("externalDataSnapshot", this._externalDataSnapshot.handle);
 		// TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
 		// at some point in the future.
 		await this.importExternalData();
@@ -320,6 +366,12 @@ export class TaskList extends DataObject implements ITaskList {
 	 * DataObject, by registering an event listener for changes to the task list.
 	 */
 	protected async hasInitialized(): Promise<void> {
+		const saved = this.root.get<IFluidHandle<SharedMap>>("externalDataSnapshot");
+		if (saved === undefined) {
+			throw new Error("externalDataSnapshot was not initialized");
+		}
+		this._externalDataSnapshot = await saved.get();
+
 		const draft = this.root.get<IFluidHandle<SharedMap>>("draftData");
 		if (draft === undefined) {
 			throw new Error("draftData was not initialized");
