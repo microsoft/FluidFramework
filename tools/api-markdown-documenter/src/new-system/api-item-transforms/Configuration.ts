@@ -61,61 +61,63 @@ export type CreateChildContentSections = (
 ) => HierarchicalSectionNode[];
 
 /**
- * Policies for rendering different kinds of API content.
+ * Policies for transforming different kinds of API content into {@link DocumentationNode} trees.
  *
- * @remarks For any policies not explicitly provided, {@link defaultApiItemTransformations} will be used to supply default
- * policies.
+ * @remarks
+ *
+ * For any policies not explicitly provided, {@link defaultApiItemTransformations} will be used to
+ * supply defaults.
  */
 export interface ApiItemTransformationConfiguration {
 	/**
-	 * Policy for rendering a section describing a `Call Signature`.
+	 * Policy for transforming a section describing a `Call Signature`.
 	 */
 	transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
 
 	/**
-	 * Policy for rendering a section describing a `Class`.
+	 * Policy for transforming a section describing a `Class`.
 	 */
 	transformApiClass?: TransformApiItemWithChildren<ApiClass>;
 
 	/**
-	 * Policy for rendering a section describing a `Constructor`.
+	 * Policy for transforming a section describing a `Constructor`.
 	 */
 	transformApiConstructor?: TransformApiItemWithoutChildren<
 		ApiConstructSignature | ApiConstructor
 	>;
 
 	/**
-	 * Policy for rendering a section describing an `Enum`.
+	 * Policy for transforming a section describing an `Enum`.
 	 */
 	transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
 
 	/**
-	 * Policy for rendering a section describing an `Enum Member`.
+	 * Policy for transforming a section describing an `Enum Member`.
 	 */
 	transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
 
 	/**
-	 * Policy for rendering a section describing a `Function`.
+	 * Policy for transforming a section describing a `Function`.
 	 */
 	transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
 
 	/**
-	 * Policy for rendering a section describing an `Index Signature`.
+	 * Policy for transforming a section describing an `Index Signature`.
 	 */
 	transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
 
 	/**
-	 * Policy for rendering a section describing an `Interface`.
+	 * Policy for transforming a section describing an `Interface`.
 	 */
 	transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
 
 	/**
-	 * Policy for rendering a section describing a `Method`.
+	 * Policy for transforming a section describing a `Method`.
 	 */
 	transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
 
 	/**
-	 * Policy for rendering a section describing a `Model`.
+	 * Policy for transforming a section describing a `Model`.
 	 *
 	 * @remarks Note that this is a {@link TransformApiItemWithoutChildren} only because we handle `Model`
 	 * and `Package` items specially. We never render `Package` child details directly to the `Modal` document.
@@ -124,27 +126,27 @@ export interface ApiItemTransformationConfiguration {
 	transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
 
 	/**
-	 * Policy for rendering a section describing a `Namespace`.
+	 * Policy for transforming a section describing a `Namespace`.
 	 */
 	transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
 
 	/**
-	 * Policy for rendering a section describing a `Package`.
+	 * Policy for transforming a section describing a `Package`.
 	 */
 	transformApiPackage?: TransformApiItemWithChildren<ApiPackage>;
 
 	/**
-	 * Policy for rendering a section describing a `Property`.
+	 * Policy for transforming a section describing a `Property`.
 	 */
 	transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
 
 	/**
-	 * Policy for rendering a section describing a `Type Alias`.
+	 * Policy for transforming a section describing a `Type Alias`.
 	 */
 	transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
 
 	/**
-	 * Policy for rendering a section describing an `ApiVariable`.
+	 * Policy for transforming a section describing an `ApiVariable`.
 	 */
 	transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
 
@@ -166,83 +168,83 @@ export interface ApiItemTransformationConfiguration {
  */
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration> = {
 	/**
-	 * Default policy for rendering `Call Signature`s.
+	 * Default policy for transforming `Call Signature`s.
 	 */
 	transformApiCallSignature: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 
 	/**
-	 * Default policy for rendering `Classes`.
+	 * Default policy for transforming `Classes`.
 	 */
 	transformApiClass: DefaultTransformationImplementations.transformApiClass,
 
 	/**
-	 * Default policy for rendering `Constructors`.
+	 * Default policy for transforming `Constructors`.
 	 */
 	transformApiConstructor: DefaultTransformationImplementations.transformApiFunctionLike,
 
 	/**
-	 * Default policy for rendering `Enums`.
+	 * Default policy for transforming `Enums`.
 	 */
 	transformApiEnum: DefaultTransformationImplementations.transformApiEnum,
 
 	/**
-	 * Default policy for rendering `Enum Members`.
+	 * Default policy for transforming `Enum Members`.
 	 */
 	transformApiEnumMember: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 
 	/**
-	 * Default policy for rendering `Functions`.
+	 * Default policy for transforming `Functions`.
 	 */
 	transformApiFunction: DefaultTransformationImplementations.transformApiFunctionLike,
 
 	/**
-	 * Default policy for rendering `Index Signatures`.
+	 * Default policy for transforming `Index Signatures`.
 	 */
 	transformApiIndexSignature:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
 
 	/**
-	 * Default policy for rendering `Interfaces`.
+	 * Default policy for transforming `Interfaces`.
 	 */
 	transformApiInterface: DefaultTransformationImplementations.transformApiInterface,
 
 	/**
-	 * Default policy for rendering `Methods`.
+	 * Default policy for transforming `Methods`.
 	 */
 	transformApiMethod: DefaultTransformationImplementations.transformApiFunctionLike,
 
 	/**
-	 * Default policy for rendering `Models`.
+	 * Default policy for transforming `Models`.
 	 */
 	transformApiModel: DefaultTransformationImplementations.transformApiModel,
 
 	/**
-	 * Default policy for rendering `Namespaces`.
+	 * Default policy for transforming `Namespaces`.
 	 */
 	transformApiNamespace: DefaultTransformationImplementations.transformApiNamespace,
 
 	/**
-	 * Default policy for rendering `Packages`.
+	 * Default policy for transforming `Packages`.
 	 */
 	transformApiPackage: DefaultTransformationImplementations.transformApiPackage,
 
 	/**
-	 * Default policy for rendering `Properties`.
+	 * Default policy for transforming `Properties`.
 	 */
 	transformApiProperty: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 
 	/**
-	 * Default policy for rendering `Type Aliases`.
+	 * Default policy for transforming `Type Aliases`.
 	 */
 	transformApiTypeAlias: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 
 	/**
-	 * Default policy for rendering `Variables`.
+	 * Default policy for transforming `Variables`.
 	 */
 	transformApiVariable: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 
 	/**
-	 * Default policy for rendering child content sections.
+	 * Default policy for transforming child content sections.
 	 */
 	createChildContentSections: DefaultTransformationImplementations.createSectionWithChildContent,
 };
