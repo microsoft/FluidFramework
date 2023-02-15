@@ -12,7 +12,7 @@ import {
 } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("HierarchicalSectionNode markdown tests", () => {
+describe("HierarchicalSection rendering tests", () => {
 	it("Simple section (Markdown)", () => {
 		const input = new HierarchicalSectionNode(
 			[

@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { FencedCodeBlockNode, PlainTextNode } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("FencedCodeBlock markdown tests", () => {
+describe("FencedCodeBlock rendering tests", () => {
 	it("Can render a simple FencedCodeBlock (Markdown)", () => {
 		const input = new FencedCodeBlockNode(
 			[new PlainTextNode("console.log('hello world');")],

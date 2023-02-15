@@ -14,7 +14,7 @@ import {
 } from "../../documentation-domain";
 import { renderDocument } from "../Render";
 
-describe("Document markdown tests", () => {
+describe("Document rendering tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
 			children: [

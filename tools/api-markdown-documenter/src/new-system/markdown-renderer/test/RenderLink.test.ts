@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { LinkNode, PlainTextNode } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("Link markdown tests", () => {
+describe("Link rendering tests", () => {
 	it("Can render a simple LinkNode (Markdown)", () => {
 		const linkText = "Some Website";
 		const linkTarget = "https://www.contoso.com";

@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { CodeSpanNode, PlainTextNode } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("CodeSpan markdown tests", () => {
+describe("CodeSpan rendering tests", () => {
 	it("Can render an empty CodeSpan", () => {
 		expect(testRender(CodeSpanNode.Empty)).to.equal("");
 	});

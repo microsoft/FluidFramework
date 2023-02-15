@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { AlertKind, AlertNode, PlainTextNode } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("Alert markdown tests", () => {
+describe("Alert rendering tests", () => {
 	it("Can render an alert with a title", () => {
 		const alertNode = new AlertNode(
 			[

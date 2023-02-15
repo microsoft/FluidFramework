@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { UnorderedListNode } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("UnorderedListNode markdown tests", () => {
+describe("UnorderedListNode rendering tests", () => {
 	it("Empty list (Markdown)", () => {
 		expect(testRender(UnorderedListNode.Empty)).to.equal("\n");
 	});

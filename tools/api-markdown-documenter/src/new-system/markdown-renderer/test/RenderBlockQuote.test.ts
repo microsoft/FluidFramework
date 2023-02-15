@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { BlockQuoteNode, LineBreakNode, PlainTextNode } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("BlockQuote markdown tests", () => {
+describe("BlockQuote rendering tests", () => {
 	it("Can render an empty BlockQuote", () => {
 		expect(testRender(BlockQuoteNode.Empty)).to.equal("");
 	});

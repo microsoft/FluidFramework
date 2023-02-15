@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { LineBreakNode, PlainTextNode, SpanNode, TextFormatting } from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("Span markdown tests", () => {
+describe("Span rendering tests", () => {
 	describe("Markdown", () => {
 		it("Empty span", () => {
 			expect(testRender(SpanNode.Empty)).to.equal("");

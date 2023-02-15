@@ -8,7 +8,7 @@ import { PlainTextNode } from "../../documentation-domain";
 import { MarkdownRenderContext } from "../RenderContext";
 import { testRender } from "./Utilities";
 
-describe("PlainText markdown tests", () => {
+describe("PlainText rendering tests", () => {
 	describe("Markdown", () => {
 		it("Empty text", () => {
 			expect(testRender(PlainTextNode.Empty)).to.equal("");
