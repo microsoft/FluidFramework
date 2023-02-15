@@ -8,29 +8,62 @@ import { BlockQuoteNode, LineBreakNode, PlainTextNode } from "../../documentatio
 import { testRender } from "./Utilities";
 
 describe("BlockQuote rendering tests", () => {
-	it("Can render an empty BlockQuote", () => {
-		expect(testRender(BlockQuoteNode.Empty)).to.equal("");
+	describe("Markdown", () => {
+		it("Can render an empty BlockQuote", () => {
+			expect(testRender(BlockQuoteNode.Empty)).to.equal("\n");
+		});
+
+		it("Can render a simple BlockQuote", () => {
+			const blockQuoteNode = new BlockQuoteNode([
+				new PlainTextNode("Here's a block quote. "),
+				new PlainTextNode("It sure is something!"),
+				new LineBreakNode(),
+				new LineBreakNode(),
+				new PlainTextNode("-BlockQuote"),
+			]);
+			const result = testRender(blockQuoteNode);
+
+			const expected = [
+				"",
+				"> Here's a block quote. It sure is something!",
+				"> ",
+				"> -BlockQuote",
+				"",
+				"",
+			].join("\n");
+
+			expect(result).to.equal(expected);
+		});
 	});
 
-	it("Can render a simple BlockQuote", () => {
-		const blockQuoteNode = new BlockQuoteNode([
-			new PlainTextNode("Here's a block quote. "),
-			new PlainTextNode("It sure is something!"),
-			new LineBreakNode(),
-			new LineBreakNode(),
-			new PlainTextNode("-BlockQuote"),
-		]);
-		const result = testRender(blockQuoteNode);
+	describe("HTML", () => {
+		it("Can render an empty BlockQuote", () => {
+			expect(testRender(BlockQuoteNode.Empty, undefined, { insideHtml: true })).to.equal(
+				"<blockquote>\n</blockquote>\n",
+			);
+		});
 
-		const expected = [
-			"",
-			"> Here's a block quote. It sure is something!",
-			"> ",
-			"> -BlockQuote",
-			"",
-			"",
-		].join("\n");
+		it("Can render a simple BlockQuote", () => {
+			const blockQuoteNode = new BlockQuoteNode([
+				new PlainTextNode("Here's a block quote. "),
+				new PlainTextNode("It sure is something!"),
+				new LineBreakNode(),
+				new LineBreakNode(),
+				new PlainTextNode("-BlockQuote"),
+			]);
+			const result = testRender(blockQuoteNode, undefined, { insideHtml: true });
 
-		expect(result).to.equal(expected);
+			const expected = [
+				"<blockquote>",
+				"  Here's a block quote. It sure is something!",
+				"  <br>",
+				"  <br>",
+				"  -BlockQuote",
+				"</blockquote>",
+				"",
+			].join("\n");
+
+			expect(result).to.equal(expected);
+		});
 	});
 });
