@@ -2,13 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Command, Flags } from "@oclif/core";
-import {
-	FlagInput,
-	OutputFlags,
-	ParserOutput,
-	PrettyPrintableError,
-} from "@oclif/core/lib/interfaces";
+import { Command, Flags, Interfaces } from "@oclif/core";
+import { PrettyPrintableError } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 
 import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
@@ -17,23 +12,23 @@ import { rootPathFlag } from "./flags";
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
 
-/**
- * @remarks This is needed to get type safety working in derived classes.
- * See {@link https://github.com/oclif/oclif.github.io/pull/142}.
- */
-export type InferredFlagsType<T> = T extends FlagInput<infer F>
-	? F & { json: boolean | undefined }
-	: any;
+export type Flags<T extends typeof Command> = Interfaces.InferredFlags<
+	typeof BaseCommand["baseFlags"] & T["flags"]
+>;
+export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
 
 /**
  * A base command that sets up common flags that all commands should have. All commands should have this class in their
  * inheritance chain.
  */
-export abstract class BaseCommand<T extends typeof BaseCommand.flags>
+export abstract class BaseCommand<T extends typeof Command>
 	extends Command
 	implements CommandLogger
 {
-	static flags = {
+	/**
+	 * The flags defined on the base class.
+	 */
+	static baseFlags = {
 		root: rootPathFlag(),
 		verbose: Flags.boolean({
 			char: "v",
@@ -46,60 +41,33 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 		}),
 	};
 
-	protected parsedOutput?: ParserOutput;
-
-	/**
-	 * The processed arguments that were passed to the CLI.
-	 */
-	get processedArgs(): { [name: string]: any } {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return this.parsedOutput?.args ?? {};
-	}
-
-	/**
-	 * The processed flags that were passed to the CLI.
-	 */
-	get processedFlags(): InferredFlagsType<T> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return this.parsedOutput?.flags ?? {};
-	}
-
-	/**
-	 * The flags defined on the base class.
-	 */
-	private get baseFlags() {
-		return this.processedFlags as Partial<OutputFlags<typeof BaseCommand.flags>>;
-	}
-
+	protected flags!: Flags<T>;
+	protected args!: Args<T>;
 	private _context: Context | undefined;
 	private _logger: CommandLogger | undefined;
 
-	/**
-	 * Parses the command arguments and stores them in parsedOutput.
-	 *
-	 * @remarks
-	 *
-	 * This function does nothing if parsedOutput is already defined.
-	 */
-	protected async parseCmdArgs() {
-		if (this.parsedOutput === undefined) {
-			this.parsedOutput = await this.parse(this.ctor);
-		}
+	public async init(): Promise<void> {
+		await super.init();
+
+		const { args, flags } = await this.parse({
+			flags: this.ctor.flags,
+			baseFlags: (super.ctor as typeof BaseCommand).baseFlags,
+			args: this.ctor.args,
+			strict: this.ctor.strict,
+		});
+		this.flags = flags as Flags<T>;
+		this.args = args as Args<T>;
 	}
 
-	async init() {
-		await this.parseCmdArgs();
-	}
-
-	async catch(err: any) {
+	protected async catch(err: Error & { exitCode?: number }): Promise<any> {
 		// add any custom logic to handle errors from the command
 		// or simply return the parent class error handling
 		return super.catch(err);
 	}
 
-	async finally(err: any) {
+	protected async finally(_: Error | undefined): Promise<any> {
 		// called after run and catch regardless of whether or not the command errored
-		return super.finally(err);
+		return super.finally(_);
 	}
 
 	/**
@@ -255,7 +223,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 	 * Logs a verbose log statement.
 	 */
 	public verbose(message: string | Error | undefined): void {
-		if (this.baseFlags.verbose === true) {
+		if (this.flags.verbose === true) {
 			if (typeof message === "string") {
 				this.log(chalk.grey(`VERBOSE: ${message}`));
 			} else {

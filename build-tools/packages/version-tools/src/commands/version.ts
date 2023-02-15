@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Command, Flags } from "@oclif/core";
+import { Args, Command, Flags } from "@oclif/core";
 import * as semver from "semver";
 import { table } from "table";
 
@@ -56,13 +56,13 @@ export default class VersionCommand extends Command {
 		}),
 	};
 
-	static args = [
-		{
+	static args = {
+		version: Args.string({
 			description: "The version to convert.",
 			name: "version",
 			required: true,
-		},
-	];
+		}),
+	};
 
 	static examples = [
 		{

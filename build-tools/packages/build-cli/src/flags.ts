@@ -11,6 +11,8 @@ import {
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isVersionScheme,
+	VersionBumpType,
+	VersionScheme,
 } from "@fluid-tools/version-tools";
 
 import { DependencyUpdateType } from "./lib";
@@ -19,7 +21,7 @@ import { isReleaseGroup } from "./releaseGroups";
 /**
  * A re-usable CLI flag to parse the root directory of the Fluid repo.
  */
-export const rootPathFlag = Flags.build({
+export const rootPathFlag = Flags.custom({
 	description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
 	env: "_FLUID_ROOT_",
 	hidden: true,
@@ -28,7 +30,7 @@ export const rootPathFlag = Flags.build({
 /**
  * A re-usable CLI flag to parse release groups.
  */
-export const releaseGroupFlag = Flags.build({
+export const releaseGroupFlag = Flags.custom({
 	char: "g",
 	description: "Name of the release group",
 	options: [...supportedMonoRepoValues()],
@@ -45,7 +47,7 @@ export const releaseGroupFlag = Flags.build({
 /**
  * A re-usable CLI flag to parse package names.
  */
-export const packageSelectorFlag = Flags.build({
+export const packageSelectorFlag = Flags.custom({
 	char: "p",
 	description: "Name of package.",
 	multiple: false,
@@ -54,7 +56,7 @@ export const packageSelectorFlag = Flags.build({
 /**
  * A re-usable CLI flag to parse semver ranges.
  */
-export const semverRangeFlag = Flags.build<string | undefined>({
+export const semverRangeFlag = Flags.custom<string | undefined>({
 	description: "A semver version range string.",
 	multiple: false,
 	parse: async (input) => {
@@ -66,7 +68,7 @@ export const semverRangeFlag = Flags.build<string | undefined>({
 /**
  * A re-usable CLI flag to parse bump types.
  */
-export const bumpTypeExtendedFlag = Flags.build({
+export const bumpTypeExtendedFlag = Flags.custom({
 	char: "t",
 	description: "Version bump type.",
 	options: ["major", "minor", "patch", "current"],
@@ -80,7 +82,7 @@ export const bumpTypeExtendedFlag = Flags.build({
 /**
  * A re-usable CLI flag to parse bump types.
  */
-export const bumpTypeFlag = Flags.build({
+export const bumpTypeFlag = Flags.custom<VersionBumpType>({
 	char: "t",
 	description: "Version bump type.",
 	options: ["major", "minor", "patch"],
@@ -88,13 +90,15 @@ export const bumpTypeFlag = Flags.build({
 		if (isVersionBumpType(input)) {
 			return input;
 		}
+
+		throw new Error(`Invalid version bump type: ${input}`);
 	},
 });
 
 /**
  * A re-usable CLI flag to parse dependency update types.
  */
-export const dependencyUpdateTypeFlag = Flags.build({
+export const dependencyUpdateTypeFlag = Flags.custom({
 	char: "t",
 	description: "Version bump type.",
 	options: ["latest", "newest", "greatest", "minor", "patch", "@next", "@canary"],
@@ -106,7 +110,7 @@ export const dependencyUpdateTypeFlag = Flags.build({
 /**
  * A re-usable CLI flag to parse version schemes used to adjust versions.
  */
-export const versionSchemeFlag = Flags.build({
+export const versionSchemeFlag = Flags.custom<VersionScheme | undefined>({
 	description: "Version scheme to use.",
 	options: ["semver", "internal", "virtualPatch"],
 	parse: async (input) => {

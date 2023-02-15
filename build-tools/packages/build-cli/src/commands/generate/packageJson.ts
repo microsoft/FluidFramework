@@ -9,7 +9,7 @@ import { Timer, generateMonoRepoInstallPackageJson } from "@fluidframework/build
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
 
-export class GeneratePackageJson extends BaseCommand<typeof GeneratePackageJson.flags> {
+export class GeneratePackageJson extends BaseCommand<typeof GeneratePackageJson> {
 	static description = `Generate mono repo package json`;
 
 	static flags = {
@@ -18,7 +18,7 @@ export class GeneratePackageJson extends BaseCommand<typeof GeneratePackageJson.
 	};
 
 	async run() {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 		const timer = new Timer(flags.timer);
 
 		const context = await this.getContext();

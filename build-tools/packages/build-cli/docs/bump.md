@@ -12,7 +12,7 @@ Bumps the version of a release group or package to the next minor, major, or pat
 
 ```
 USAGE
-  $ flub bump [PACKAGE_OR_RELEASE_GROUP] [-v] [-t major|minor|patch | --exact <value>] [--scheme
+  $ flub bump PACKAGE_OR_RELEASE_GROUP [-v] [-t major|minor|patch | --exact <value>] [--scheme
     semver|internal|virtualPatch | ] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
@@ -59,7 +59,7 @@ Update the dependency version of a specified package or release group. That is, 
 
 ```
 USAGE
-  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-v] [--prerelease -t
+  $ flub bump deps PACKAGE_OR_RELEASE_GROUP [-v] [--prerelease -t
     latest|newest|greatest|minor|patch|@next|@canary] [--onlyBumpPrerelease] [-g client|server|azure|build-tools | -p
     <value>] [-x | --install | --commit |  |  | ]
 

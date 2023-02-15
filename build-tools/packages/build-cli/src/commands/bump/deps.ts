@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
-import type { ArgInput } from "@oclif/core/lib/interfaces";
+import { Args, Flags } from "@oclif/core";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
 
@@ -36,11 +35,13 @@ import { ReleaseGroup, isReleaseGroup } from "../../releaseGroups";
  *
  * This command is roughly equivalent to `fluid-bump-version --dep`.
  */
-export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
+export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 	static description =
 		"Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
 
-	static args: ArgInput = [packageOrReleaseGroupArg];
+	static args = {
+		package_or_release_group: packageOrReleaseGroupArg,
+	};
 
 	static flags = {
 		updateType: dependencyUpdateTypeFlag({
@@ -102,8 +103,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 	 * Runs the `bump deps` command.
 	 */
 	public async run(): Promise<void> {
-		const args = this.processedArgs;
-		const flags = this.processedFlags;
+		const args = this.args;
+		const flags = this.flags;
 
 		const context = await this.getContext();
 		const shouldInstall = flags.install && !flags.skipChecks;
@@ -159,7 +160,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 			context,
 			flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 			depsToUpdate,
-			args.package_or_release_group,
+			isReleaseGroup(args.package_or_release_group)
+				? args.package_or_release_group
+				: undefined,
 			flags.updateType,
 			/* prerelease */ flags.prerelease,
 			/* writeChanges */ true,

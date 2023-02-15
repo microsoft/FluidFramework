@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import type { ArgInput } from "@oclif/core/lib/interfaces";
 import { strict as assert } from "assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
@@ -30,13 +29,15 @@ import {
 } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
-export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
+export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static summary =
 		"Bumps the version of a release group or package to the next minor, major, or patch version.";
 
 	static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release.`;
 
-	static args: ArgInput = [packageOrReleaseGroupArg];
+	static args = {
+		package_or_release_group: packageOrReleaseGroupArg,
+	};
 
 	static flags = {
 		bumpType: bumpTypeFlag({
@@ -84,8 +85,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 	private readonly finalMessages: string[] = [];
 
 	public async run(): Promise<void> {
-		const args = this.processedArgs;
-		const flags = this.processedFlags;
+		const args = this.args;
+		const flags = this.flags;
 
 		const context = await this.getContext();
 		const bumpType: VersionBumpType | undefined = flags.bumpType;

@@ -4,6 +4,7 @@
  */
 import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 
+import { BaseCommand } from "../base";
 import {
 	bumpTypeFlag,
 	checkFlags,
@@ -23,7 +24,7 @@ import { StateMachineCommand } from "../stateMachineCommand";
  * {@link FluidReleaseStateHandler} itself.
  */
 
-export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends StateMachineCommand<T> {
+export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCommand> {
 	static summary = "Releases a package or release group.";
 	static description = `The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
 
@@ -56,7 +57,7 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
 		await super.init();
 
 		const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
-		const flags = this.processedFlags;
+		const flags = this.flags;
 
 		// oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args
 		// passed into the command. If neither are passed, then the default is determined by the branch config.

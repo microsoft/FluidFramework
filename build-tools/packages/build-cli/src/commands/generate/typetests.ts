@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { CliUx, Flags } from "@oclif/core";
+import { ux, Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import {
@@ -14,9 +14,7 @@ import {
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
 
-export default class GenerateTypeTestsCommand extends BaseCommand<
-	typeof GenerateTypeTestsCommand.flags
-> {
+export default class GenerateTypeTestsCommand extends BaseCommand<typeof GenerateTypeTestsCommand> {
 	static description = `Generates type tests based on the individual package settings in package.json.
 
     Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are run for each package. You can run only one part at a time using the --prepare and --generate flags.
@@ -133,7 +131,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
 	];
 
 	public async run(): Promise<void> {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 
 		if (
 			flags.dir === undefined &&
@@ -189,7 +187,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
 		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
 		// spinner, so we only start the spinner if verbose is false.
 		if (!flags.verbose) {
-			CliUx.ux.action.start("Preparing/generating type tests...", "generating", {
+			ux.ux.action.start("Preparing/generating type tests...", "generating", {
 				stdout: true,
 			});
 		}
@@ -271,7 +269,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
 
 		// Stop the spinner if needed.
 		if (!flags.verbose) {
-			CliUx.ux.action.stop("Done");
+			ux.ux.action.stop("Done");
 		}
 
 		if (!results) {
