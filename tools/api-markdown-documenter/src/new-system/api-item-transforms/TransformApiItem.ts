@@ -24,14 +24,16 @@ import {
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { doesItemRequireOwnDocument } from "../../utilities";
-import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
+import { DocumentNode, DocumentationNode, HierarchicalSectionNode } from "../documentation-domain";
 import { createDocument } from "./Utilities";
-import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
+import { createBreadcrumbParagraph } from "./helpers";
 
 /**
  * Creates a {@link DocumentNode} for the specified `apiItem`.
  *
- * @remarks This should only be called for API item kinds that are intended to be rendered to their own document
+ * @remarks
+ *
+ * This should only be called for API item kinds that are intended to be rendered to their own document
  * (as opposed to being rendered to the same document as their parent) per the provided `config`
  * (see {@link PolicyOptions.documentBoundaries}).
  *
@@ -72,25 +74,27 @@ export function apiItemToDocument(
 
 	logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
 
-	const sections: HierarchicalSectionNode[] = [];
+	const contents: DocumentationNode[] = [];
 
 	// Render breadcrumb
 	if (config.includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiItem, config)]));
+		contents.push(createBreadcrumbParagraph(apiItem, config));
 	}
 
 	// Render body content for the item
-	sections.push(apiItemToSection(apiItem, config));
+	contents.push(apiItemToSection(apiItem, config));
 
 	logger.verbose(`Document for ${apiItem.displayName} rendered successfully.`);
 
-	return createDocument(apiItem, sections, config);
+	return createDocument(apiItem, contents, config);
 }
 
 /**
  * Creates a section for the specified `apiItem`.
  *
- * @remarks Must not be called for the following API item kinds, which must be handled specially:
+ * @remarks
+ *
+ * Must not be called for the following API item kinds, which must be handled specially:
  *
  * - `Model`
  * - `Package`

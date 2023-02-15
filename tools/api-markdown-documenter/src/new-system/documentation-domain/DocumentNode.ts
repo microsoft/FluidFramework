@@ -9,53 +9,77 @@ import { DocumentationNode } from "./DocumentionNode";
 import { ParagraphNode } from "./ParagraphNode";
 
 /**
+ * {@link DocumentNode} construction properties.
+ */
+export interface DocumentNodeProps {
+	/**
+	 * {@inheritDoc DocumentationNode.children}
+	 */
+	readonly children: DocumentationNode[];
+
+	/**
+	 * Path to which the resulting document should be saved.
+	 */
+	readonly filePath: string;
+
+	/**
+	 * Optional document front-matter, to be appended above all other content.
+	 */
+	readonly frontMatter?: string;
+
+	/**
+	 * Optional document header section.
+	 */
+	readonly header?: ParagraphNode;
+
+	/**
+	 * Optional document footer section.
+	 */
+	readonly footer?: ParagraphNode;
+}
+
+/**
  * Represents the root of a document.
  *
  * @remarks Note that this node is special. It forms the root of a Documentation tree,
  * and cannot be parented under other Documentation nodes.
  */
-export class DocumentNode implements UnistParent<DocumentationNode> {
+export class DocumentNode implements UnistParent<DocumentationNode>, DocumentNodeProps {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.Document;
 
 	/**
-	 * {@inheritDoc DocumentationNode.children}
+	 * {@inheritDoc DocumentNodeProps.children}
 	 */
 	public readonly children: DocumentationNode[];
 
 	/**
-	 * Path to which the resulting document should be saved.
+	 * {@inheritDoc DocumentNodeProps.filePath}
 	 */
 	public readonly filePath: string;
 
 	/**
-	 * Optional document front-matter, to be appended above all other content.
+	 * {@inheritDoc DocumentNodeProps.frontMatter}
 	 */
 	public readonly frontMatter?: string;
 
 	/**
-	 * Optional document header section.
+	 * {@inheritDoc DocumentNodeProps.header}
 	 */
 	public readonly header?: ParagraphNode;
 
 	/**
-	 * Optional document footer section.
+	 * {@inheritDoc DocumentNodeProps.footer}
 	 */
 	public readonly footer?: ParagraphNode;
 
-	public constructor(
-		children: DocumentationNode[],
-		filePath: string,
-		frontMatter?: string,
-		header?: ParagraphNode,
-		footer?: ParagraphNode,
-	) {
-		this.children = children;
-		this.filePath = filePath;
-		this.frontMatter = frontMatter;
-		this.header = header;
-		this.footer = footer;
+	public constructor(props: DocumentNodeProps) {
+		this.children = props.children;
+		this.filePath = props.filePath;
+		this.frontMatter = props.frontMatter;
+		this.header = props.header;
+		this.footer = props.footer;
 	}
 }
