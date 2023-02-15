@@ -7,7 +7,10 @@ import { NewlineKind } from "@rushstack/node-core-library";
 
 import { Logger, defaultConsoleLogger } from "./Logging";
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
-import { ApiItemTransformationConfiguration, defaultApiItemTransformations } from "./new-system";
+import {
+	ApiItemTransformationConfiguration,
+	defaultApiItemTransformations,
+} from "./api-item-transforms";
 
 /**
  * Configuration options for the Markdown documenter.
