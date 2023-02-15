@@ -51,6 +51,7 @@ export interface IContainerConfig {
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
+    scopeOverride?: FluidObject;
     serializedContainerState?: IPendingContainerState;
 }
 
@@ -62,6 +63,7 @@ export interface IContainerLoadOptions {
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
+    scopeOverride?: FluidObject;
     version: string | undefined;
 }
 
