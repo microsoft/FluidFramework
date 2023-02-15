@@ -25,7 +25,9 @@ export function apiPackageToDocument(
 	const sections: HierarchicalSectionNode[] = [];
 
 	// Render breadcrumb
-	sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
+	if (config.includeBreadcrumb) {
+		sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
+	}
 
 	// Render body contents
 	sections.push(
