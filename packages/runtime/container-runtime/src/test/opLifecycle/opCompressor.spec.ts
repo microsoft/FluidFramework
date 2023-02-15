@@ -23,6 +23,7 @@ describe("OpCompressor", () => {
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
 			.reduce((a, b) => a + b),
+		referenceSequenceNumber: messages[0].referenceSequenceNumber,
 	});
 	const createMessage = (contents: string) => ({
 		metadata: { flag: true },

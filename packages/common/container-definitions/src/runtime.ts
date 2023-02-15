@@ -138,7 +138,7 @@ export interface IContainerContext extends IDisposable {
 	/** @deprecated Please use submitBatchFn & submitSummaryFn */
 	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
 	/** @returns clientSequenceNumber of last message in a batch */
-	readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
 	readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
 	readonly submitSignalFn: (contents: any) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;

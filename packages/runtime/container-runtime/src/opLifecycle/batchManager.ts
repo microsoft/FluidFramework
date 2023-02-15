@@ -75,6 +75,7 @@ export class BatchManager {
 		const batch: IBatch = {
 			content: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
+			referenceSequenceNumber: this.referenceSequenceNumber,
 		};
 
 		this.pendingBatch = [];

@@ -30,6 +30,10 @@ export interface IBatch {
 	 * All the messages in the batch
 	 */
 	readonly content: BatchMessage[];
+	/**
+	 * The reference sequence number for the batch
+	 */
+	readonly referenceSequenceNumber: number | undefined;
 }
 
 export interface IBatchCheckpoint {

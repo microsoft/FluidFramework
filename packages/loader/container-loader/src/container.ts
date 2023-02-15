@@ -1955,7 +1955,7 @@ export class Container
 	}
 
 	/** @returns clientSequenceNumber of last message in a batch */
-	private submitBatch(batch: IBatchMessage[]): number {
+	private submitBatch(batch: IBatchMessage[], referenceSequenceNumber?: number): number {
 		let clientSequenceNumber = -1;
 		for (const message of batch) {
 			clientSequenceNumber = this.submitMessage(
@@ -1964,7 +1964,7 @@ export class Container
 				true, // batch
 				message.metadata,
 				message.compression,
-				message.referenceSequenceNumber,
+				referenceSequenceNumber ?? message.referenceSequenceNumber,
 			);
 		}
 		this._deltaManager.flush();
@@ -2125,7 +2125,8 @@ export class Container
 			(type, contents, batch, metadata) =>
 				this.submitContainerMessage(type, contents, batch, metadata),
 			(summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
-			(batch: IBatchMessage[]) => this.submitBatch(batch),
+			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
+				this.submitBatch(batch, referenceSequenceNumber),
 			(message) => this.submitSignal(message),
 			(error?: ICriticalContainerError) => this.dispose?.(error),
 			(error?: ICriticalContainerError) => this.close(error),

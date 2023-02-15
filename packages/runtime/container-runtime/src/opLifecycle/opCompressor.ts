@@ -54,6 +54,7 @@ export class OpCompressor {
 		return {
 			contentSizeInBytes: compressedContent.length,
 			content: messages,
+			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};
 	}
 

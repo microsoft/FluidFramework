@@ -23,6 +23,7 @@ export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
+	readonly disablePartialFlush: boolean;
 }
 
 export interface IOutboxParameters {
@@ -40,6 +41,15 @@ export class Outbox {
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
 	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
+
+	/**
+	 * Track the number of ops which were detected to have a mismatched
+	 * reference sequence number, in order to self-throttle the telemetry events.
+	 *
+	 * This should be removed as part of ADO:2322
+	 */
+	private readonly maxMismatchedOpsToReport = 3;
+	private mismatchedOpsReported = 0;
 
 	constructor(private readonly params: IOutboxParameters) {
 		this.mc = loggerToMonitoringContext(ChildLogger.create(params.logger, "Outbox"));
@@ -69,22 +79,26 @@ export class Outbox {
 	 */
 	private maybeFlushPartialBatch(batchManager: BatchManager, message: BatchMessage) {
 		const batchReference = batchManager.referenceSequenceNumber;
-		if (batchReference !== undefined && batchReference !== message.referenceSequenceNumber) {
+		if (batchReference === undefined || batchReference === message.referenceSequenceNumber) {
+			// The reference sequence numbers are stable, there is nothing to do
+			return;
+		}
+
+		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "ReferenceSequenceNumberMismatch",
 					referenceSequenceNumber: batchReference,
 					messageReferenceSequenceNumber: message.referenceSequenceNumber,
-					type: message.deserializedContent.type,
 					count: batchManager.length,
 					batchSize: batchManager.contentSizeInBytes,
 				},
 				new UsageError("Submission of an out of order message"),
 			);
+		}
 
-			if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisablePartialFlush") !== true) {
-				this.flushInternal(batchManager.popBatch());
-			}
+		if (!this.params.config.disablePartialFlush) {
+			this.flushInternal(batchManager.popBatch());
 		}
 	}
 
@@ -215,6 +229,10 @@ export class Outbox {
 					compression: message.compression,
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				})),
+				// Partial flushing will ensure that all messages in the same batch have the same
+				// reference sequence number. If disabled, messages may have different sequence numbers
+				// within the same batch, so the loader must rely on individual message reference sequence numbers.
+				this.params.config.disablePartialFlush ? undefined : batch.referenceSequenceNumber,
 			);
 		}
 	}
