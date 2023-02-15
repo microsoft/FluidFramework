@@ -101,13 +101,20 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 this.current.clear();
                 status = "ProcessingComplete";
 
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.context.checkpoint(batchOffset!);
-                status = "CheckpointComplete";
-                
-                metric?.setProperty("status", status);
-                metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
-                this.sendPending(); // continue with next batch
+                // checkpoint batch offset
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.context.checkpoint(batchOffset!);
+                    status = "CheckpointComplete";
+                    metric?.setProperty("status", status);
+                    metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
+                } catch (error) {
+                    const errorMessage = `Scriptorium failed to checkpoint batch with offset ${batchOffset?.offset}`;
+                    this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
+                }
+
+                // continue with next batch
+                this.sendPending();
             },
             (error) => {
                 const errorMessage = `Scriptorium failed to process batch with offset ${batchOffset?.offset}, going to restart`;
