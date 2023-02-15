@@ -6,9 +6,6 @@ import type { LineBreakNode } from "../../documentation-domain";
 import type { DocumentWriter } from "../DocumentWriter";
 import type { MarkdownRenderContext } from "../RenderContext";
 
-// TODOs:
-// - Separate "ToHtml" transform
-
 /**
  * Renders a {@link LineBreakNode}.
  *
