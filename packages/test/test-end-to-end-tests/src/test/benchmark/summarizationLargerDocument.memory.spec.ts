@@ -79,8 +79,8 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	let dataObject2map: SharedMap;
 	let loader: IHostLoader;
 
-	const maxMessageSizeInBytes = 1 * 1024 * 1024; // 1MB
-	const messageCount = 2; // Will result in a 2 MB payload
+	const maxMessageSizeInBytes = 5 * 1024 * 1024; // 1MB
+	const messageCount = 2; // Will result in a 10 MB payload
 
 	const generateRandomStringOfSize = (sizeInBytes: number): string =>
 		crypto.randomBytes(sizeInBytes / 2).toString("hex");
@@ -100,6 +100,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	};
 
 	before(async () => {
+		console.log("running before ", Date.now().toString());
 		provider = getTestObjectProvider();
 		// runId will be populated on the logger.
 		logger =
@@ -155,22 +156,25 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 		assert(!summary.unreferenced, "Root summary should be referenced.");
 	});
 
+	let iteration: number = 0;
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
-			title = "Generate summary tree 2Mb document";
-			maxBenchmarkDurationSeconds = 360000;
+			title = "Generate summary tree 10Mb document";
 			async run() {
+				console.log("running iteration ", iteration++, Date.now().toString());
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
 				await loader.resolve(testRequest);
-
+				console.log("running iteration 1", Date.now().toString());
 				dataObject2 = await requestFluidObject<ITestFluidObject>(
 					mainContainer,
 					defaultDataStoreId,
 				);
 				dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 				dataObject2map.set("setup", "done");
+				console.log("running iteration 2", Date.now().toString());
 				validateMapKeys(dataObject2map, messageCount, maxMessageSizeInBytes);
+				console.log("running iteration 3", Date.now().toString());
 				await provider.ensureSynchronized();
 
 				const containerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;

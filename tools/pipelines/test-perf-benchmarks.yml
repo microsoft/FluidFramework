@@ -492,6 +492,7 @@ stages:
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
+            FLUID_TEST_VERBOSE: "1"
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - execution time local
@@ -556,6 +557,7 @@ stages:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
             FLUID_ENDPOINTNAME: odsp
+            FLUID_TEST_VERBOSE: "1"
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - execution time odsp
