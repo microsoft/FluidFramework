@@ -5,25 +5,32 @@
 import { expect } from "chai";
 
 import { BlockQuoteNode, LineBreakNode, PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
+import { testRender } from "./Utilities";
 
 describe("BlockQuote markdown tests", () => {
+	it("Can render an empty BlockQuote", () => {
+		expect(testRender(BlockQuoteNode.Empty)).to.equal("");
+	});
+
 	it("Can render a simple BlockQuote", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new BlockQuoteNode([
-				new PlainTextNode("Here's a block quote. "),
-				new PlainTextNode("It sure is something!"),
-				new LineBreakNode(),
-				new LineBreakNode(),
-				new PlainTextNode("-BlockQuote"),
-			]),
-		);
-		const expectedOutput = [
+		const blockQuoteNode = new BlockQuoteNode([
+			new PlainTextNode("Here's a block quote. "),
+			new PlainTextNode("It sure is something!"),
+			new LineBreakNode(),
+			new LineBreakNode(),
+			new PlainTextNode("-BlockQuote"),
+		]);
+		const result = testRender(blockQuoteNode);
+
+		const expected = [
+			"",
 			"> Here's a block quote. It sure is something!",
 			"> ",
 			"> -BlockQuote",
-		].join(standardEOL);
-		expect(renderedForm).to.equal(expectedOutput);
+			"",
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
 	});
 });
