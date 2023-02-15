@@ -4,26 +4,56 @@
  */
 import { expect } from "chai";
 
-import { OrderedListNode, PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
+import { OrderedListNode } from "../../documentation-domain";
+import { testRender } from "./Utilities";
 
-describe("OrderedList markdown tests", () => {
-	it("Does nothing with an empty list", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(new OrderedListNode([]));
-		expect(renderedForm).to.equal(`\n`);
+describe("OrderedListNode rendering tests", () => {
+	it("Empty list (Markdown)", () => {
+		expect(testRender(OrderedListNode.Empty)).to.equal("\n");
 	});
 
-	it("Creates an ordered list from content elements", () => {
-		const renderer = new DocumentationNodeRenderer();
-		const renderedForm = renderer.renderNode(
-			new OrderedListNode([
-				new PlainTextNode("Item 1"),
-				new PlainTextNode("Item 2"),
-				new PlainTextNode("Item 3"),
-			]),
+	it("Simple list (Markdown)", () => {
+		const text1 = "Item 1";
+		const text2 = "Item 2";
+		const text3 = "Item 3";
+
+		const input = OrderedListNode.createFromPlainTextEntries([text1, text2, text3]);
+		const result = testRender(input);
+
+		const expected = ["", `1. ${text1}`, `1. ${text2}`, `1. ${text3}`, "", ""].join("\n");
+
+		expect(result).to.equal(expected);
+	});
+
+	it("Empty list (HTML)", () => {
+		expect(testRender(OrderedListNode.Empty, undefined, { insideHtml: true })).to.equal(
+			"<ol>\n</ol>\n",
 		);
-		const expected = ["1. Item 1", "2. Item 2", "3. Item 3", "", ""].join(standardEOL);
-		expect(renderedForm).to.equal(expected);
+	});
+
+	it("Simple list (HTML)", () => {
+		const text1 = "Item 1";
+		const text2 = "Item 2";
+		const text3 = "Item 3";
+
+		const input = OrderedListNode.createFromPlainTextEntries([text1, text2, text3]);
+		const result = testRender(input, undefined, { insideHtml: true });
+
+		const expected = [
+			"<ol>",
+			"  <li>",
+			`    ${text1}`,
+			"  </li>",
+			"  <li>",
+			`    ${text2}`,
+			"  </li>",
+			"  <li>",
+			`    ${text3}`,
+			"  </li>",
+			"</ol>",
+			"",
+		].join("\n");
+
+		expect(result).to.equal(expected);
 	});
 });
