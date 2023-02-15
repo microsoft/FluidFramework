@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { DocumentWriter } from "./DocumentWriter";
 export { renderDocument, renderNode, renderNodes } from "./Render";
 export {
 	DocumentationNodeRenderers,

@@ -16,6 +16,8 @@ export {
 export * from "./documentation-domain";
 
 export {
+	DocumentWriter,
+	MarkdownRenderContext,
 	renderDocument as renderDocumentAsMarkdown,
 	renderNode as renderNodeAsMarkdown,
 	renderNodes as renderNodesAsMarkdown,

@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 import { ApiModel } from "@microsoft/api-extractor-model";
-import { TSDocConfiguration } from "@microsoft/tsdoc";
 import { NewlineKind } from "@rushstack/node-core-library";
 
 import { Logger, defaultConsoleLogger } from "./Logging";
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
 import { ApiItemTransformationConfiguration, defaultApiItemTransformations } from "./new-system";
-import { CustomDocNodes, RenderingPolicies, defaultRenderingPolicies } from "./old-system";
 
 /**
  * Configuration options for the Markdown documenter.
  */
 export interface MarkdownDocumenterConfiguration
 	extends PolicyOptions,
-		RenderingPolicies,
 		ApiItemTransformationConfiguration {
 	/**
 	 * API Model for which the documentation is being generated.
@@ -40,13 +37,6 @@ export interface MarkdownDocumenterConfiguration
 	 */
 	readonly newlineKind?: NewlineKind;
 
-	// TODO: remove this
-	/**
-	 * TSDoc Configuration to use when parsing source-code documentation.
-	 * If not provided, a default configuration will be used.
-	 */
-	readonly tsdocConfiguration?: TSDocConfiguration;
-
 	/**
 	 * Policy object for logging system events.
 	 *
@@ -69,10 +59,8 @@ export function markdownDocumenterConfigurationWithDefaults(
 ): Required<MarkdownDocumenterConfiguration> {
 	return {
 		newlineKind: NewlineKind.OsDefault,
-		tsdocConfiguration: CustomDocNodes.configuration,
 		logger: defaultConsoleLogger,
 		...defaultPolicyOptions,
-		...defaultRenderingPolicies,
 		...defaultApiItemTransformations,
 		...partialConfig,
 	};

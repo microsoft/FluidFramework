@@ -24,28 +24,38 @@ import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
-import { DocEmphasisSpan } from '@microsoft/api-documenter/lib/nodes/DocEmphasisSpan';
-import { DocLinkTag } from '@microsoft/tsdoc';
-import { DocNode } from '@microsoft/tsdoc';
-import { DocNodeContainer } from '@microsoft/tsdoc';
-import { DocNoteBox } from '@microsoft/api-documenter/lib/nodes/DocNoteBox';
 import { DocSection } from '@microsoft/tsdoc';
-import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
-import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
-import { DocTableRow } from '@microsoft/api-documenter/lib/nodes/DocTableRow';
-import { Excerpt } from '@microsoft/api-extractor-model';
-import { IDocNodeContainerParameters } from '@microsoft/tsdoc';
-import { IDocNodeParameters } from '@microsoft/tsdoc';
-import { IMarkdownEmitterContext } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
-import { IMarkdownEmitterOptions } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
-import { MarkdownEmitter as MarkdownEmitter_2 } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
+import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
+import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
-import { Parameter } from '@microsoft/api-extractor-model';
 import type { Parent } from 'unist';
-import { StringBuilder } from '@microsoft/tsdoc';
-import { TSDocConfiguration } from '@microsoft/tsdoc';
-import { TypeParameter } from '@microsoft/api-extractor-model';
+
+// @public
+export enum AlertKind {
+    // (undocumented)
+    Danger = "Danger",
+    // (undocumented)
+    Important = "Important",
+    // (undocumented)
+    Note = "Note",
+    // (undocumented)
+    Tip = "Tip",
+    // (undocumented)
+    Warning = "Warning"
+}
+
+// Warning: (ae-forgotten-export) The symbol "ParentNodeBase" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export class AlertNode extends ParentNodeBase {
+    constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string);
+    readonly alertKind: AlertKind;
+    static createFromPlainText(text: string, alertKind: AlertKind, title?: string): AlertNode;
+    // (undocumented)
+    readonly title?: string;
+    readonly type = DocumentationNodeType.Alert;
+}
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -53,6 +63,26 @@ export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFuncti
 export { ApiItem }
 
 export { ApiItemKind }
+
+// @public
+export interface ApiItemTransformationConfiguration {
+    createChildContentSections?: CreateChildContentSections;
+    transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
+    transformApiClass?: TransformApiItemWithChildren<ApiClass>;
+    transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
+    transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
+    transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
+    transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
+    transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
+    transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
+    transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
+    transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
+    transformApiPackage?: TransformApiItemWithChildren<ApiPackage>;
+    transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
+    transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
+    transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
+}
 
 // @public
 export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
@@ -77,17 +107,29 @@ export { ApiPackage }
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 // @public
-interface ChildSectionProperties {
-    headingTitle: string;
-    itemKind: ApiItemKind;
-    items: readonly ApiItem[];
+export class BlockQuoteNode extends ParentNodeBase {
+    constructor(children: DocumentationNode[]);
+    static createFromPlainText(text: string): BlockQuoteNode;
+    static readonly Empty: BlockQuoteNode;
+    readonly type = DocumentationNodeType.BlockQuote;
 }
 
-// @internal
-export class CustomDocNodes {
-    // (undocumented)
-    static get configuration(): TSDocConfiguration;
+// @public
+export class CodeSpanNode extends ParentNodeBase<SingleLineElementNode> implements SingleLineElementNode {
+    constructor(children: SingleLineElementNode[]);
+    static createFromPlainText(text: string): CodeSpanNode;
+    static readonly Empty: CodeSpanNode;
+    readonly type = DocumentationNodeType.CodeSpan;
 }
+
+// @public
+export type CreateChildContentSections = (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
+
+// @public
+export function createDocuments(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[];
+
+// @public
+export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -106,86 +148,83 @@ export namespace DefaultPolicies {
 // @public
 export const defaultPolicyOptions: Required<PolicyOptions>;
 
-declare namespace DefaultRenderingPolicies {
-    export {
-        renderClassSection,
-        renderEnumSection,
-        renderFunctionLikeSection,
-        renderInterfaceSection,
-        renderItemWithoutChildren,
-        renderModelSection,
-        renderModuleLikeSection,
-        renderNamespaceSection,
-        renderPackageSection,
-        renderChildrenSection
-    }
-}
-export { DefaultRenderingPolicies }
-
 // @public
-export const defaultRenderingPolicies: Required<RenderingPolicies>;
-
-// @public
-export class DocAlert extends DocNode {
-    constructor(parameters: IDocAlertParameters, content: DocNode);
-    readonly content: DocNode;
-    // @override (undocumented)
-    get kind(): string;
-    readonly title: string | undefined;
-    readonly type: DocAlertType | undefined;
+export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
+    readonly type: string;
 }
 
 // @public
-export enum DocAlertType {
+export enum DocumentationNodeType {
     // (undocumented)
-    Danger = "Danger",
+    Alert = "Alert",
     // (undocumented)
-    Important = "Important",
+    BlockQuote = "BlockQuote",
     // (undocumented)
-    Note = "Note",
+    CodeSpan = "CodeSpan",
     // (undocumented)
-    Tip = "Tip",
+    Document = "Document",
     // (undocumented)
-    Warning = "Warning"
+    FencedCode = "FencedCode",
+    // (undocumented)
+    Heading = "Heading",
+    // (undocumented)
+    HorizontalRule = "HorizontalRule",
+    // (undocumented)
+    LineBreak = "LineBreak",
+    // (undocumented)
+    Link = "Link",
+    // (undocumented)
+    OrderedList = "OrderedList",
+    // (undocumented)
+    Paragraph = "Paragraph",
+    // (undocumented)
+    PlainText = "PlainText",
+    // (undocumented)
+    Section = "Section",
+    // (undocumented)
+    Span = "Span",
+    // (undocumented)
+    Table = "Table",
+    // (undocumented)
+    TableCell = "TableCell",
+    // (undocumented)
+    TableRow = "TableRow",
+    // (undocumented)
+    UnorderedList = "UnorderedList"
 }
-
-export { DocEmphasisSpan }
-
-// @public
-interface DocExampleProperties {
-    apiItem: ApiItem;
-    content: DocSection;
-    exampleNumber?: number;
-}
-
-// @public
-export class DocHeading extends DocNode {
-    constructor(parameters: IDocHeadingParameters);
-    readonly id?: string;
-    // @override (undocumented)
-    get kind(): string;
-    readonly level?: number;
-    readonly title: string;
-}
-
-// @public
-export class DocList extends DocNodeContainer {
-    constructor(parameters: IDocListParameters, childNodes?: readonly DocNode[]);
-    // @override (undocumented)
-    get kind(): string;
-    readonly listKind: ListKind;
-}
-
-export { DocNoteBox }
-
-export { DocTable }
-
-export { DocTableCell }
-
-export { DocTableRow }
 
 // @public
 export type DocumentBoundaries = ApiMemberKind[];
+
+// Warning: (ae-forgotten-export) The symbol "DocumentNodeProps" needs to be exported by the entry point index.d.ts
+//
+// @public
+export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
+    constructor(props: DocumentNodeProps);
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
+    //
+    // (undocumented)
+    readonly children: SectionNode[];
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
+    //
+    // (undocumented)
+    readonly filePath: string;
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
+    //
+    // (undocumented)
+    readonly footer?: ParagraphNode;
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
+    //
+    // (undocumented)
+    readonly frontMatter?: string;
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
+    //
+    // (undocumented)
+    readonly header?: ParagraphNode;
+    readonly type = DocumentationNodeType.Document;
+}
+
+export { DocumentWriter }
 
 // @public
 export function doesItemGenerateHierarchy(apiItem: ApiItem, hierarchyBoundaries: HierarchyBoundaries): boolean;
@@ -200,17 +239,14 @@ export function doesItemKindRequireOwnDocument(kind: ApiItemKind, documentBounda
 export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
 
 // @public
-export function emitMarkdown(document: MarkdownDocument, partialConfig: MarkdownDocumenterConfiguration, markdownEmitter?: MarkdownEmitter): string;
+export type FencedCodeBlockChildren = LineBreakNode | SingleLineElementNode;
 
-// @public
-export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
-
-// @public
-export interface EmitterOptions extends IMarkdownEmitterOptions {
-    contextApiItem: ApiItem;
-    getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
-    headingLevel?: number;
-    logger?: Logger;
+// @public (undocumented)
+export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren> {
+    constructor(children: FencedCodeBlockChildren[], language?: string);
+    static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
+    readonly language?: string;
+    readonly type = DocumentationNodeType.FencedCode;
 }
 
 // @public
@@ -227,9 +263,6 @@ export function getDefaultValueBlock(apiItem: ApiItem, config: Required<Markdown
 
 // @public
 export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
-
-// @public
-export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
 export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
@@ -283,6 +316,15 @@ export interface Heading {
     readonly title: string;
 }
 
+// @public (undocumented)
+export class HeadingNode extends ParentNodeBase<SingleLineElementNode> implements Omit<Heading, "title"> {
+    constructor(content: SingleLineElementNode[], id?: string);
+    static createFromPlainText(text: string, id?: string): HeadingNode;
+    static createFromPlainTextHeading(heading: Heading): HeadingNode;
+    readonly id?: string;
+    readonly type = DocumentationNodeType.Heading;
+}
+
 // @public
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
@@ -290,17 +332,9 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 export type HierarchyBoundaries = ApiMemberKind[];
 
 // @public
-export interface IDocAlertParameters extends IDocNodeParameters {
-    title?: string;
-    type?: DocAlertType;
-}
-
-// @public
-export type IDocHeadingParameters = IDocNodeParameters & Heading;
-
-// @public
-export interface IDocListParameters extends IDocNodeContainerParameters {
-    listKind?: ListKind;
+export class HorizontalRuleNode implements DocumentationNode {
+    static readonly Singleton: HorizontalRuleNode;
+    readonly type = DocumentationNodeType.HorizontalRule;
 }
 
 // @public
@@ -319,20 +353,35 @@ export function isReadonly(apiItem: ApiItem): boolean;
 export function isStatic(apiItem: ApiItem): boolean;
 
 // @public
+export class LineBreakNode implements DocumentationNode {
+    constructor();
+    // (undocumented)
+    static readonly Singleton: LineBreakNode;
+    readonly type = DocumentationNodeType.LineBreak;
+}
+
+// @public
 export interface Link {
     readonly target: UrlTarget;
     readonly text: string;
+}
+
+// @public (undocumented)
+export class LinkNode extends ParentNodeBase<SingleLineElementNode> implements SingleLineElementNode, Omit<Link, "text"> {
+    constructor(content: SingleLineElementNode[], target: UrlTarget);
+    static createFromPlainText(text: string, target: UrlTarget): LinkNode;
+    // (undocumented)
+    static createFromPlainTextLink(link: Link): LinkNode;
+    readonly target: UrlTarget;
+    readonly type = DocumentationNodeType.Link;
 }
 
 // @public
 export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
 // @public
-export enum ListKind {
-    // (undocumented)
-    Ordered = "ordered",
-    // (undocumented)
-    Unordered = "unordered"
+export interface LiteralNode<T = unknown> extends Literal<T>, DocumentationNode {
+    readonly type: string;
 }
 
 // @public
@@ -351,20 +400,10 @@ export interface Logger {
 export type LoggingFunction = (message: string | Error, ...args: unknown[]) => void;
 
 // @public
-export interface MarkdownDocument {
-    apiItem: ApiItem;
-    contents: DocSection;
-    path: string;
-}
-
-// Warning: (ae-forgotten-export) The symbol "ApiItemTransformationConfiguration" needs to be exported by the entry point index.d.ts
-//
-// @public
-export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies, ApiItemTransformationConfiguration {
+export interface MarkdownDocumenterConfiguration extends PolicyOptions, ApiItemTransformationConfiguration {
     apiModel: ApiModel;
     readonly logger?: Logger;
     readonly newlineKind?: NewlineKind;
-    readonly tsdocConfiguration?: TSDocConfiguration;
     readonly uriRoot: string;
 }
 
@@ -372,51 +411,54 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
 export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfiguration): Required<MarkdownDocumenterConfiguration>;
 
 // @public
-export class MarkdownEmitter extends MarkdownEmitter_2 {
-    constructor(apiModel: ApiModel, generateFrontMatter?: (contextApiItem: ApiItem) => string);
-    protected readonly apiModel: ApiModel;
-    // @virtual @override
-    emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string;
-    // @virtual
-    protected readonly generateFrontMatter?: (contextApiItem: ApiItem) => string;
-    // @virtual
-    protected writeAlert(docAlert: DocAlert, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual
-    protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual
-    protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual
-    protected writeLink(linkText: string, linkTarget: string, context: EmitterContext): void;
-    // @virtual @override
-    protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
-    // @virtual @override
-    protected writeLinkTagWithUrlDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
-    // @virtual
-    protected writeList(docList: DocList, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual @override
-    protected writeNode(docNode: DocNode, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual
-    protected writeNoteBox(docNoteBox: DocNoteBox, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual
-    protected writeTable(docTable: DocTable, context: EmitterContext, docNodeSiblings: boolean): void;
+export interface MarkdownRenderContext extends TextFormatting {
+    headingLevel: number;
+    readonly insideCodeBlock: boolean;
+    readonly insideHtml: boolean;
+    readonly insideTable: boolean;
+    // Warning: (ae-forgotten-export) The symbol "DocumentationNodeRenderers" needs to be exported by the entry point index.d.ts
+    renderers: DocumentationNodeRenderers;
 }
 
-// @public
-export const maxHeadingLevel = 6;
-
-// @public
-interface MemberTableProperties {
-    headingTitle: string;
-    itemKind: ApiItemKind;
-    items: readonly ApiItem[];
-    options?: TableRenderingOptions;
+// @public (undocumented)
+export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
+    constructor(children: SingleLineElementNode[]);
+    // (undocumented)
+    static createFromPlainTextEntries(entries: string[]): OrderedListNode;
+    static readonly Empty: OrderedListNode;
+    readonly type = DocumentationNodeType.OrderedList;
 }
-
-// @public
-export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
 export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
+
+// @public (undocumented)
+export type ParagraphChildren = LineBreakNode | SingleLineElementNode | SpanNode<LineBreakNode | SingleLineElementNode>;
+
+// @public (undocumented)
+export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
+    constructor(children: ParagraphChildren[]);
+    static combine(...nodes: ParagraphNode[]): ParagraphNode;
+    static createFromPlainText(text: string): ParagraphNode;
+    static readonly Empty: ParagraphNode;
+    readonly type = DocumentationNodeType.Paragraph;
+}
+
+// @public
+interface ParentNode_2<TDocumentationNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentationNode, Data>, DocumentationNode {
+    readonly children: TDocumentationNode[];
+    get hasChildren(): boolean;
+    readonly type: string;
+}
+export { ParentNode_2 as ParentNode }
+
+// @public
+export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode {
+    constructor(value: string);
+    static readonly Empty: PlainTextNode;
+    readonly type = DocumentationNodeType.PlainText;
+    readonly value: string;
+}
 
 // @public
 export interface PolicyOptions {
@@ -433,256 +475,86 @@ export interface PolicyOptions {
 }
 
 // @public
-export function renderApiItemDocument(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
+export function renderDocumentAsMarkdown(document: DocumentNode, customRenderers?: DocumentationNodeRenderers): string;
 
 // @public
-export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection) => DocSection;
+export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, customRenderers?: DocumentationNodeRenderers): Promise<void>;
 
 // @public
-export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
+export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
 
 // @public
-function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+export function renderNodesAsMarkdown(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
-function renderApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderBetaAlert(config: Required<MarkdownDocumenterConfiguration>): DocAlert;
-
-// @public
-function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public
-function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
-
-// @public
-function renderChildrenSection(apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public
-function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, config: Required<MarkdownDocumenterConfiguration>, renderChild: (childItem: ApiItem) => DocSection): DocSection | undefined;
-
-// @public
-function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
-
-// @public
-function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
-
-// @public
-function renderDefaultValueCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderDeprecatedCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderDeprecationNoticeSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration): MarkdownDocument[];
-
-// @public
-function renderEmptyTableCell(config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
-
-// @public
-function renderExampleSection(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public
-function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocNode[] | undefined;
-
-// @public
-export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, markdownEmitter?: MarkdownEmitter): Promise<void>;
-
-// @public
-function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public
-function renderFunctionLikeSummaryTable(apiItems: readonly ApiFunctionLike[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
-
-// @public
-function renderHeading(heading: Heading, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
-
-// @public
-function renderHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
-
-// @public
-function renderHeritageTypes(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-declare namespace RenderingHelpers {
-    export {
-        ChildSectionProperties,
-        DocExampleProperties,
-        renderBetaAlert,
-        renderBreadcrumb,
-        renderChildDetailsSection,
-        renderChildrenUnderHeading,
-        renderDeprecationNoticeSection,
-        renderExampleSection,
-        renderExamplesSection,
-        renderExcerptWithHyperlinks,
-        renderHeading,
-        renderHeadingForApiItem,
-        renderHeritageTypes,
-        renderLink,
-        renderParametersSection,
-        renderRemarksSection,
-        renderReturnsSection,
-        renderSeeAlso,
-        renderSignature,
-        renderSummarySection,
-        renderThrowsSection,
-        renderTypeParameters,
-        MemberTableProperties,
-        renderApiSummaryCell,
-        renderApiTitleCell,
-        renderDefaultSummaryTable,
-        renderDefaultValueCell,
-        renderDeprecatedCell,
-        renderEmptyTableCell,
-        renderFunctionLikeSummaryTable,
-        renderMemberTables,
-        renderModifiersCell,
-        renderPackagesTable,
-        renderParametersSummaryTable,
-        renderParameterSummaryCell,
-        renderParameterTitleCell,
-        renderParameterTypeCell,
-        renderPlainTextCell,
-        renderPropertiesTable,
-        renderPropertyTypeCell,
-        renderReturnTypeCell,
-        renderSummaryTable,
-        renderTableWithHeading,
-        renderTypeExcerptCell,
-        TableRenderingOptions
-    }
-}
-export { RenderingHelpers }
-
-// @public
-export interface RenderingPolicies {
-    renderCallSignatureSection?: RenderApiItemWithoutChildren<ApiCallSignature>;
-    renderChildrenSection?: RenderSectionWithInnerContent;
-    renderClassSection?: RenderApiItemWithChildren<ApiClass>;
-    renderConstructorSection?: RenderApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
-    renderEnumMemberSection?: RenderApiItemWithoutChildren<ApiEnumMember>;
-    renderEnumSection?: RenderApiItemWithChildren<ApiEnum>;
-    renderFunctionSection?: RenderApiItemWithoutChildren<ApiFunction>;
-    renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
-    renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
-    renderMethodSection?: RenderApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-    renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
-    renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
-    renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
-    renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
-    renderTypeAliasSection?: RenderApiItemWithoutChildren<ApiTypeAlias>;
-    renderVariableSection?: RenderApiItemWithoutChildren<ApiVariable>;
+export class SectionNode extends ParentNodeBase {
+    constructor(children: DocumentationNode[], heading?: HeadingNode);
+    static combine(...sections: SectionNode[]): SectionNode;
+    static readonly Empty: SectionNode;
+    readonly heading?: HeadingNode;
+    readonly type = DocumentationNodeType.Section;
 }
 
 // @public
-function renderInterfaceSection(apiInterface: ApiInterface, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+export type SingleLineElementNode = DocumentationNode;
+
+// @public (undocumented)
+export class SpanNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends ParentNodeBase<TDocumentationNode> {
+    constructor(children: TDocumentationNode[], formatting?: TextFormatting);
+    static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
+    static readonly Empty: SpanNode;
+    // (undocumented)
+    readonly textFormatting?: TextFormatting;
+    readonly type = DocumentationNodeType.Span;
+}
+
+// @public (undocumented)
+export class TableCellNode extends ParentNodeBase {
+    constructor(children: DocumentationNode[]);
+    static createFromPlainText(text: string): TableCellNode;
+    static readonly Empty: TableCellNode;
+    readonly type = DocumentationNodeType.TableCell;
+}
+
+// @public (undocumented)
+export class TableNode extends ParentNodeBase<TableRowNode> {
+    constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode);
+    static readonly Empty: TableNode;
+    // (undocumented)
+    readonly headingRow?: TableRowNode;
+    readonly type = DocumentationNodeType.Table;
+}
+
+// @public (undocumented)
+export class TableRowNode extends ParentNodeBase<TableCellNode> {
+    constructor(cells: TableCellNode[]);
+    static readonly Empty: TableRowNode;
+    readonly type = DocumentationNodeType.TableRow;
+}
 
 // @public
-function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+export interface TextFormatting {
+    // (undocumented)
+    readonly bold?: boolean;
+    // (undocumented)
+    readonly italic?: boolean;
+    // (undocumented)
+    readonly strikethrough?: boolean;
+}
 
 // @public
-function renderLink(link: Link, config: Required<MarkdownDocumenterConfiguration>): DocLinkTag;
+export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, generateChildSection: (apiItem: ApiItem) => SectionNode[]) => SectionNode[];
 
 // @public
-function renderMemberTables(memberTableProperties: readonly MemberTableProperties[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
 
-// @public
-export function renderModelDocument(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
-
-// @public
-function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public
-function renderModifiersCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, modifiersToOmit?: ApiModifier[]): DocTableCell;
-
-// @public
-function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly ApiItem[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
-
-// @public
-function renderNamespaceSection(apiNamespace: ApiNamespace, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
-
-// @public
-export function renderPackageDocument(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
-
-// @public
-function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
-
-// @public
-function renderPackagesTable(apiPackages: readonly ApiPackage[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
-
-// @public
-function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-function renderParametersSummaryTable(apiParameters: readonly Parameter[], config: Required<MarkdownDocumenterConfiguration>): DocTable;
-
-// @public
-function renderParameterSummaryCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderParameterTitleCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderParameterTypeCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderPlainTextCell(text: string, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
-
-// @public
-function renderPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderRemarksSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-function renderReturnsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-export type RenderSectionWithInnerContent = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
-
-// @public
-function renderSeeAlso(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-function renderSummarySection(apiItem: ApiItem): DocSection | undefined;
-
-// @public
-function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
-
-// @public
-function renderTableWithHeading(memberTableProperties: MemberTableProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-function renderThrowsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-function renderTypeExcerptCell(typeExcerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
-
-// @public
-function renderTypeParameters(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public
-interface TableRenderingOptions {
-    modifiersToOmit?: ApiModifier[];
+// @public (undocumented)
+export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
+    constructor(children: SingleLineElementNode[]);
+    // (undocumented)
+    static createFromPlainTextEntries(entries: string[]): UnorderedListNode;
+    static readonly Empty: UnorderedListNode;
+    readonly type = DocumentationNodeType.UnorderedList;
 }
 
 // @public

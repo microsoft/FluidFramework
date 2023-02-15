@@ -29,7 +29,7 @@ import { DocumentationNodeRenderers, renderDocument } from "./markdown-renderer"
  */
 
 /**
- * Renders the provided model and its contents to a series of {@link MarkdownDocument}s.
+ * Renders the provided model and its contents to a series of {@link DocumentNode}s.
  *
  * @remarks
  * Which API members get their own documents and which get written to the contents of their parent is

@@ -21,7 +21,7 @@
 // TODO: fix before merging
 /* eslint-disable no-restricted-syntax */
 
-export * from "./old-system";
+export * from "./new-system";
 export * from "./utilities";
 
 export * from "./Configuration";
