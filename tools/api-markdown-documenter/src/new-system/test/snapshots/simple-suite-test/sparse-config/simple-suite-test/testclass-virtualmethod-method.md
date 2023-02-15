@@ -11,5 +11,5 @@ protected virtualMethod(): number;
 
 ## Returns {#virtualmethod-returns}
 
-<b>Return type: </b>number
+**Return type:** number
 

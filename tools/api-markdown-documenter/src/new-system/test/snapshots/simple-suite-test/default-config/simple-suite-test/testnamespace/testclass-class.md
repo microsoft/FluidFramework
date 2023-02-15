@@ -12,24 +12,21 @@ class TestClass
 
 ## Constructors
 
-
-|  Constructor | Description |
-|  --- | --- |
-|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-constructor) | Test class constructor |
+| Constructor | Description |
+| --- | --- |
+| [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-constructor) | Test class constructor |
 
 ## Properties
 
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) | <code>readonly</code> | string | Test interface property |
+| Property | Modifiers | Type | Description |
+| --- | --- | --- | --- |
+| [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) | <code>readonly</code> | string | Test interface property |
 
 ## Methods
 
-
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-method) | Promise&lt;string&gt; | Test class method |
+| Method | Return Type | Description |
+| --- | --- | --- |
+| [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-method) | Promise&lt;string&gt; | Test class method |
 
 ## Constructor Details
 
@@ -45,10 +42,9 @@ constructor(testClassProperty: string);
 
 #### Parameters {#_constructor_-parameters}
 
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  testClassProperty | string | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) |
+| Parameter | Type | Description |
+| --- | --- | --- |
+| testClassProperty | string | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) |
 
 ## Property Details
 
@@ -76,16 +72,15 @@ testClassMethod(testParameter: string): Promise<string>;
 
 #### Parameters {#testclassmethod-parameters}
 
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  testParameter | string | A string |
+| Parameter | Type | Description |
+| --- | --- | --- |
+| testParameter | string | A string |
 
 #### Returns {#testclassmethod-returns}
 
 A Promise
 
-<b>Return type: </b>Promise&lt;string&gt;
+**Return type:** Promise&lt;string&gt;
 
 #### Throws {#testclassmethod-throws}
 

@@ -1,10 +1,8 @@
 # testConstWithEmptyDeprecatedBlock
 
-
-> <bold> [Warning]: Deprecated </bold>
+> **\[Warning\]: Deprecated**
 > 
 > 
-
 
 I have a `@deprecated` tag with an empty comment block.
 
