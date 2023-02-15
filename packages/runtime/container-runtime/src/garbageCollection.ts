@@ -117,7 +117,7 @@ export const GCNodeType = {
 	// Nodes that are neither of the above. For example, root node.
 	Other: "Other",
 };
-export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
+export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
 export interface IGarbageCollectionRuntime {
@@ -222,7 +222,7 @@ export const UnreferencedState = {
 	/** The node is ready to be deleted by the sweep phase. */
 	SweepReady: "SweepReady",
 } as const;
-export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
+export type UnreferencedState = (typeof UnreferencedState)[keyof typeof UnreferencedState];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEventProps {
@@ -1042,7 +1042,10 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// Add the options that are used to run GC to the telemetry context.
-		telemetryContext?.setAll("fluid_GC", "Options", { fullGC, runSweep: options.runSweep });
+		telemetryContext?.setMultiple("fluid_GC", "Options", {
+			fullGC,
+			runSweep: options.runSweep,
+		});
 
 		return PerformanceEvent.timedExecAsync(
 			logger,

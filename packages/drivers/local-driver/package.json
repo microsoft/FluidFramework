@@ -58,7 +58,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.0.0",
+		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/driver-base": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/driver-definitions": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
@@ -80,7 +80,7 @@
 		"@fluid-tools/build-cli": "^0.9.0",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.0.0-internal.3.0.0",
+		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.0.0-internal.3.1.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/jsrsasign": "^8.0.8",
@@ -97,10 +97,10 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"version": "2.0.0-internal.3.1.0",
+		"version": "2.0.0-internal.3.2.0",
 		"previousVersionStyle": "~previousMinor",
-		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
-		"baselineVersion": "2.0.0-internal.3.0.0",
+		"baselineRange": ">=2.0.0-internal.3.1.0 <2.0.0-internal.3.2.0",
+		"baselineVersion": "2.0.0-internal.3.1.0",
 		"broken": {}
 	}
 }

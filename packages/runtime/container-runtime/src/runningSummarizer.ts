@@ -9,7 +9,12 @@ import { UsageError } from "@fluidframework/container-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	isFluidError,
+	loggerToMonitoringContext,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ISummaryConfiguration } from "./containerRuntime";
 import { opSize } from "./opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
@@ -40,6 +45,7 @@ import {
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
+const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
  * Until disposed, the instance of RunningSummarizer can assume that it is
@@ -75,7 +81,7 @@ export class RunningSummarizer implements IDisposable {
 			runtime,
 		);
 
-		// Before doing any heuristics or proceeding with its refreshing, lets refresh latest Summary ack if already available.
+		// Before doing any heuristics or proceeding with its refreshing, lets refresh based on latest Summary ack if already available.
 		const lastAckRefNumber = await summarizer.handleSummaryAck();
 
 		await summarizer.waitStart();
@@ -125,7 +131,8 @@ export class RunningSummarizer implements IDisposable {
 	private readonly pendingAckTimer: PromiseTimer;
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
-	private readonly logger: ITelemetryLogger;
+	private readonly mc: MonitoringContext;
+
 	private enqueuedSummary:
 		| {
 				reason: SummarizeReason;
@@ -160,9 +167,11 @@ export class RunningSummarizer implements IDisposable {
 			summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
 		};
 
-		this.logger = ChildLogger.create(baseLogger, "Running", {
-			all: telemetryProps,
-		});
+		this.mc = loggerToMonitoringContext(
+			ChildLogger.create(baseLogger, "Running", {
+				all: telemetryProps,
+			}),
+		);
 
 		if (configuration.state !== "disableHeuristics") {
 			assert(
@@ -173,7 +182,7 @@ export class RunningSummarizer implements IDisposable {
 				heuristicData,
 				this.configuration,
 				(reason) => this.trySummarize(reason),
-				this.logger,
+				this.mc.logger,
 			);
 		}
 
@@ -193,7 +202,7 @@ export class RunningSummarizer implements IDisposable {
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
-			this.logger.sendErrorEvent({
+			this.mc.logger.sendErrorEvent({
 				eventName: "SummaryAckWaitTimeout",
 				maxAckWaitTime,
 				referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
@@ -204,7 +213,7 @@ export class RunningSummarizer implements IDisposable {
 		// Set up pending ack timeout by op timestamp differences for previous summaries.
 		summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
 			if (this.pendingAckTimer.hasTimer) {
-				this.logger.sendTelemetryEvent({
+				this.mc.logger.sendTelemetryEvent({
 					eventName: "MissingSummaryAckFoundByOps",
 					referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
 					summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
@@ -222,7 +231,7 @@ export class RunningSummarizer implements IDisposable {
 				this.totalSuccessfulAttempts++;
 			},
 			this.summaryWatcher,
-			this.logger,
+			this.mc.logger,
 		);
 
 		// Listen for ops
@@ -231,37 +240,13 @@ export class RunningSummarizer implements IDisposable {
 		});
 	}
 
-	/**
-	 * Responsible for receiving and processing all the summaryAcks.
-	 * @param lastAckRefNumber - Before initializing the summarization, if there is a last Ack to be processed, use it.
-	 */
-	private async handleSummaryAcks(lastAckRefNumber: number) {
-		let refSequenceNumber =
-			lastAckRefNumber > 0
-				? lastAckRefNumber
-				: this.runtime.deltaManager.initialSequenceNumber;
-		while (!this.disposed) {
-			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
-
-			summaryLogger.sendTelemetryEvent({
-				eventName: "handleSummaryAcks",
-				referenceSequenceNumber: refSequenceNumber,
-				lastAckRefNumber,
-			});
-
-			// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
-			// we record undefined, not previous handles.
-			await this.summaryCollection.waitSummaryAck(refSequenceNumber);
-			refSequenceNumber = await this.handleSummaryAck();
-		}
-	}
-
 	private async handleSummaryAck(): Promise<number> {
 		const lastAck: IAckedSummary | undefined = this.summaryCollection.latestAck;
 		let refSequenceNumber = -1;
+		// In case we haven't received the lastestAck yet, just return.
 		if (lastAck !== undefined) {
 			refSequenceNumber = lastAck.summaryOp.referenceSequenceNumber;
-			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
+			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
 			try {
 				const summaryOpHandle = lastAck.summaryOp.contents.handle;
 				const summaryAckHandle = lastAck.summaryAck.contents.handle;
@@ -328,6 +313,32 @@ export class RunningSummarizer implements IDisposable {
 		return refSequenceNumber;
 	}
 
+	/**
+	 * Responsible for receiving and processing all the summaryAcks.
+	 * @param lastAckRefNumber - Before initializing the summarization, if there is a last Ack to be processed, use it.
+	 */
+	private async handleSummaryAcks(lastAckRefNumber: number) {
+		let refSequenceNumber =
+			lastAckRefNumber > 0
+				? lastAckRefNumber
+				: this.runtime.deltaManager.initialSequenceNumber;
+		while (!this.disposed) {
+			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
+
+			// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
+			// we record undefined, not previous handles.
+			await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+
+			summaryLogger.sendTelemetryEvent({
+				eventName: "handleSummaryAcks",
+				referenceSequenceNumber: refSequenceNumber,
+				lastAckRefNumber,
+			});
+
+			refSequenceNumber = await this.handleSummaryAck();
+		}
+	}
+
 	public dispose(): void {
 		this.runtime.deltaManager.off("op", (op) => {
 			this.handleOp(op);
@@ -350,7 +361,7 @@ export class RunningSummarizer implements IDisposable {
 	 */
 	public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
 		this.heuristicData.lastAttempt.refSequenceNumber === summaryOpRefSeq
-			? this.logger
+			? this.mc.logger
 			: undefined;
 
 	/** We only want a single heuristic runner micro-task (will provide better optimized grouping of ops) */
@@ -561,7 +572,7 @@ export class RunningSummarizer implements IDisposable {
 			// lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
 			// if it's still needed
 			this.tryWhileSummarizing = true;
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SummarizeAttemptWithRefreshSummaryAckRunning",
 			});
 			return;
@@ -578,10 +589,24 @@ export class RunningSummarizer implements IDisposable {
 				let overrideDelaySeconds: number | undefined;
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
+				// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
+				let totalAttempts =
+					this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
+					defaultNumberSummarizationAttempts;
+
+				if (totalAttempts > attempts.length) {
+					this.mc.logger.sendTelemetryEvent({
+						eventName: "InvalidSummarizerAttempts",
+						attempts: totalAttempts,
+					});
+					totalAttempts = defaultNumberSummarizationAttempts;
+				} else if (totalAttempts < 1) {
+					throw new UsageError("Invalid number of attempts.");
+				}
 
 				let lastResult: { message: string; error: any } | undefined;
 
-				for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length; ) {
+				for (let summaryAttemptPhase = 0; summaryAttemptPhase < totalAttempts; ) {
 					if (this.cancellationToken.cancelled) {
 						return;
 					}
@@ -595,7 +620,6 @@ export class RunningSummarizer implements IDisposable {
 
 					const { delaySeconds: regularDelaySeconds = 0, ...options } =
 						attempts[summaryAttemptPhase];
-					const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
 					const summarizeProps: ISummarizeTelemetryProperties = {
 						reason,
@@ -604,16 +628,6 @@ export class RunningSummarizer implements IDisposable {
 						summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
 						...options,
 					};
-
-					if (delaySeconds > 0) {
-						this.logger.sendPerformanceEvent({
-							eventName: "SummarizeAttemptDelay",
-							duration: delaySeconds,
-							summaryNackDelay: overrideDelaySeconds !== undefined,
-							...summarizeProps,
-						});
-						await delay(delaySeconds * 1000);
-					}
 
 					// Note: no need to account for cancellationToken.waitCancelled here, as
 					// this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
@@ -635,10 +649,22 @@ export class RunningSummarizer implements IDisposable {
 						summaryAttemptsPerPhase = 0;
 					}
 					lastResult = result;
+
+					const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
+
+					if (delaySeconds > 0) {
+						this.mc.logger.sendPerformanceEvent({
+							eventName: "SummarizeAttemptDelay",
+							duration: delaySeconds,
+							summaryNackDelay: overrideDelaySeconds !== undefined,
+							...summarizeProps,
+						});
+						await delay(delaySeconds * 1000);
+					}
 				}
 
 				// If all attempts failed, log error (with last attempt info) and close the summarizer container
-				this.logger.sendErrorEvent(
+				this.mc.logger.sendErrorEvent(
 					{
 						eventName: "FailToSummarize",
 						reason,
@@ -656,7 +682,7 @@ export class RunningSummarizer implements IDisposable {
 				this.afterSummaryAction();
 			},
 		).catch((error) => {
-			this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+			this.mc.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
 		});
 	}
 
