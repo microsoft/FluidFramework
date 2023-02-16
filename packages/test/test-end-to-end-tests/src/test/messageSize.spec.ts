@@ -332,6 +332,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 						}
 
 						await setupContainers(chunkingBatchesConfig);
+
+						// Force the container into write-mode by sending a small op,
+						// so that it won't resend the whole large batch at reconnection
+						dataObject1map.set("test", "test");
+						await provider.ensureSynchronized();
+
 						const generated: string[] = [];
 						for (let i = 0; i < config.messagesInBatch; i++) {
 							// Ensure that the contents don't get compressed properly, by
