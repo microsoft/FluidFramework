@@ -126,13 +126,13 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 		sharedCell1.set(1);
 		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
 		await provider.ensureSynchronized();
-		
+
 		assertAttributionMatches(sharedCell1, attributor, "detached");
 
 		provider.updateDocumentId(container1.resolvedUrl);
 		const container2 = await provider.loadTestContainer(getTestConfig());
 		const sharedCell2 = await sharedCellFromContainer(container2);
-		sharedCell2.set(2);;
+		sharedCell2.set(2);
 
 		await provider.ensureSynchronized();
 
