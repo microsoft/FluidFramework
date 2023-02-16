@@ -12,8 +12,7 @@ module.exports = {
 		/**
 		 * This package utilizes internals of api-documenter that are not exported by the package root.
 		 *
-		 * TODO: file issue to expose node types, etc. in main package so we don't need to do this, and have better
-		 * guarantees about support.
+		 * TODO: remove once we have completely migrated off of this library.
 		 */
 		"import/no-internal-modules": [
 			"error",
@@ -28,29 +27,6 @@ module.exports = {
 
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
-
-		// TODO: remove before merging
-		"jsdoc/require-jsdoc": [
-			"warn",
-			{
-				publicOnly: true,
-				enableFixer: false,
-				require: {
-					ArrowFunctionExpression: true,
-					ClassDeclaration: true,
-					ClassExpression: true,
-					FunctionDeclaration: true,
-					FunctionExpression: true,
-					MethodDefinition: false,
-				},
-				contexts: [
-					"TSEnumDeclaration",
-					"TSInterfaceDeclaration",
-					"TSTypeAliasDeclaration",
-					"VariableDeclaration",
-				],
-			},
-		],
 	},
 	overrides: [
 		{
