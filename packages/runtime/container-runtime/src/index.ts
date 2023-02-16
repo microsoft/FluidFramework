@@ -27,7 +27,7 @@ export {
 	CompressionAlgorithms,
 } from "./containerRuntime";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { IGCStats } from "./garbageCollection";
+export { IGCStats } from "./gc";
 export {
 	IPendingFlush,
 	IPendingLocalState,
