@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { LineBreakNode } from "./LineBreakNode";
 import { PlainTextNode } from "./PlainTextNode";
 

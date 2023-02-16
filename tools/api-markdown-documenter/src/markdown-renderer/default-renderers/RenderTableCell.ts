@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import type { TableCellNode } from "../../documentation-domain";
 import type { DocumentWriter } from "../DocumentWriter";
 import { renderNodes } from "../Render";
