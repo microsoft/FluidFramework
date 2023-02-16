@@ -35,8 +35,6 @@ export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_IN
 
 const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
 
-// The EditManager
-
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
  * which were based on a given session's branch, to the document history
@@ -99,20 +97,36 @@ export class EditManager<
 	 * @param minimumSequenceNumber - the minimum sequence number for all of the connected clients
 	 */
 	public advanceMinimumSequenceNumber(minimumSequenceNumber: SeqNumber): void {
+		if (minimumSequenceNumber === this.minimumSequenceNumber) {
+			return;
+		}
+
 		assert(
-			minimumSequenceNumber >= this.minimumSequenceNumber,
+			minimumSequenceNumber > this.minimumSequenceNumber,
 			0x476 /* number must be larger or equal to current minimumSequenceNumber. */,
 		);
 
 		this.minimumSequenceNumber = minimumSequenceNumber;
 
-		const newTrunk = this.sequenceMap.getPairOrNextHigher(minimumSequenceNumber)?.[1];
+		const newTrunkTail = this.sequenceMap.getPairOrNextHigher(minimumSequenceNumber)?.[1];
 		this.sequenceMap.deleteRange(minimumPossibleSequenceNumber, minimumSequenceNumber, false);
 
-		if (newTrunk !== undefined) {
-			// TODO: This mutates the trunk, but commits should be immutable. Is this safe? How do we notify
-			// branches off of the trunk of the garbage collected here? What do we do with this junk inside the trunk?
-			(newTrunk as Mutable<GraphCommit<TChangeset>>).parent = this.trunkBase;
+		if (newTrunkTail !== undefined) {
+			// This is dangerous. Commits ought to be immutable, but if they are then changing the trunk tail requires
+			// regenerating the entire commit graph. It is, in general, safe to chop off the tail like this if we know
+			// that there are no outstanding references to any of the commits being removed. For example, there must be
+			// no existing branches that are based off of any of the commits being removed.
+			(newTrunkTail as Mutable<GraphCommit<TChangeset>>).parent = this.trunkBase;
+
+			for (const [sessionId, branch] of this.sessionLocalBranches) {
+				// If a session branch falls behind the min sequence number, then we know that it has been abandoned by Fluid
+				// (because otherwise, it would have already been updated) and we should not receive any more updates for it.
+				if (findCommonAncestor(branch, this.trunkBase) === undefined) {
+					this.sessionLocalBranches.delete(sessionId);
+				}
+			}
+
+			// TODO: when arbitrary local branching is added, the local branches will need to be considered here as well
 		}
 	}
 
