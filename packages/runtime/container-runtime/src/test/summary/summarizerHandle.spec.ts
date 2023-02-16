@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { IFluidHandleContext, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { SummarizerHandle } from "../summarizerHandle";
+import { SummarizerHandle } from "../../summary";
 
 const mockHandleContext: IFluidHandleContext = {
 	absolutePath: "",

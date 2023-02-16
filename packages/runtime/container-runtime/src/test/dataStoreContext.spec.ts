@@ -56,8 +56,8 @@ import {
 	dataStoreAttributesBlobName,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
-} from "../summaryFormat";
-import { summarizerClientType } from "../summarizerClientElection";
+	summarizerClientType,
+} from "../summary";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";

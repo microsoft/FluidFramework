@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GCVersion } from "./summaryFormat";
+import { GCVersion } from "../summary";
 
 /** The stable version of garbage collection in production. */
 export const stableGCVersion: GCVersion = 1;
