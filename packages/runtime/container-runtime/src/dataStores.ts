@@ -66,11 +66,6 @@ import {
 	createAttributesBlob,
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
-import {
-	IContainerRuntimeMetadata,
-	nonDataStorePaths,
-	rootHasIsolatedChannels,
-} from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import {
 	GCNodeType,
@@ -78,7 +73,12 @@ import {
 	throwOnTombstoneLoadKey,
 	sendGCUnexpectedUsageEvent,
 } from "./gc";
-import { summarizerClientType } from "./summarizerClientElection";
+import {
+	summarizerClientType,
+	IContainerRuntimeMetadata,
+	nonDataStorePaths,
+	rootHasIsolatedChannels,
+} from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
 

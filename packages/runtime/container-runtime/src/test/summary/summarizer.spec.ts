@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SummarizerStopReason } from "../summarizerTypes";
-import { Summarizer } from "../summarizer";
+import { SummarizerStopReason, Summarizer } from "../../summary";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {

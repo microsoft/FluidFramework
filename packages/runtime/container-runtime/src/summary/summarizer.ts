@@ -22,13 +22,14 @@ import {
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { ISummaryConfiguration } from "./containerRuntime";
+import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
 import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
+	IConnectableRuntime,
 	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
@@ -37,7 +38,6 @@ import {
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
 import { SummarizeResultBuilder } from "./summaryGenerator";
-import { IConnectableRuntime } from ".";
 
 const summarizingError = "summarizingError";
 

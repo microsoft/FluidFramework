@@ -53,7 +53,7 @@ import {
 	GCVersion,
 	IContainerRuntimeMetadata,
 	IGCMetadata,
-} from "../../summaryFormat";
+} from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 
 /** @see - sweepReadyUsageDetectionSetting */

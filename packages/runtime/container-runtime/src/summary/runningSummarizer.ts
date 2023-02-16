@@ -15,8 +15,8 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ISummaryConfiguration } from "./containerRuntime";
-import { opSize } from "./opProperties";
+import { ISummaryConfiguration } from "../containerRuntime";
+import { opSize } from "../opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
 	IEnqueueSummarizeOptions,

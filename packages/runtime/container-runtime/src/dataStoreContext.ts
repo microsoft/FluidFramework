@@ -70,7 +70,6 @@ import {
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 
-import { ContainerRuntime } from "./containerRuntime";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -79,9 +78,10 @@ import {
 	WriteFluidDataStoreAttributes,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
-} from "./summaryFormat";
+	summarizerClientType,
+} from "./summary";
+import { ContainerRuntime } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
-import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
 	pkg: readonly string[],
