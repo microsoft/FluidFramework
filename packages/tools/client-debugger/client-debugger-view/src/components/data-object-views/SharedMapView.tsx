@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-
+import ReactJson from "react-json-view";
 import { SharedMap } from "@fluidframework/map";
-
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { RenderChild } from "../../RendererOptions";
 
 /**
@@ -27,60 +27,37 @@ export interface SharedMapViewProps {
  * Default {@link @fluidframework/map#SharedMap} viewer.
  */
 export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
-	const { sharedMap, renderChild } = props;
-
-	const [entries, setEntries] = React.useState<[string, unknown][]>([...sharedMap.entries()]);
+	const { sharedMap } = props;
+	const [summary, setSummary] = React.useState<unknown>();
 
 	React.useEffect(() => {
-		function updateEntries(): void {
-			setEntries([...sharedMap.entries()]);
-		}
+		const contentSummary = getTableSummary(sharedMap);
 
-		setEntries([...sharedMap.entries()]);
-		sharedMap.on("valueChanged", updateEntries);
+		contentSummary.then(result => {
+			console.log("Result:", result);
+			console.log("Result Type:", typeof result);
 
-		return (): void => {
-			sharedMap.off("valueChanged", updateEntries);
-		};
-	}, [sharedMap, setEntries]);
+			setSummary(result);
+		}).catch(error => {
+			console.log('Error loading summarizer');
+		});
+	}, [sharedMap, setSummary]);
 
 	return (
-		<table style={{ borderCollapse: "collapse", width: "100%" }}>
-			<thead>
-				<tr>
-					<th>Key</th>
-					<th>Value</th>
-				</tr>
-			</thead>
-			<tbody style={{ borderCollapse: "collapse" }}>
-				{entries.map(([key, value]) => (
-					<tr key={key} style={{ borderCollapse: "collapse", border: "thin solid" }}>
-						<td
-							data-label="Key"
-							style={{ borderCollapse: "collapse", border: "thin solid" }}
-						>
-							{key}
-						</td>
-						<td data-label="Value">{getTableValue(value, renderChild)}</td>
-					</tr>
-				))}
-			</tbody>
-		</table>
+		<div>
+			<ReactJson src={summary} />
+		</div>
 	);
 }
 
-function getTableValue(data: unknown, _renderChild: RenderChild): React.ReactNode {
-	if (data === undefined) {
-		return "undefined";
-	}
+async function getTableSummary(rootMap: SharedMap): Promise<ISummaryTreeWithStats> {
+	const summary = await rootMap.summarize();
 
-	if (data === null) {
-		return "null";
-	}
+	const content = summary.summary.tree.header.content as string;
 
-	if (typeof data === "string" || typeof data === "number") {
-		return <> {data}</>;
-	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const deserializedContent = JSON.parse(content);
 
-	return <>{_renderChild(data)}</>;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+	return deserializedContent.content;
 }
