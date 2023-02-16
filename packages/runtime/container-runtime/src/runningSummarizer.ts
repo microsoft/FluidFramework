@@ -81,7 +81,8 @@ export class RunningSummarizer implements IDisposable {
 			runtime,
 		);
 
-		// Before doing any heuristics or proceeding with its refreshing, lets refresh based on latest Summary ack if already available.
+		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
+		// this summarizer catches up, let's refresh state before proceeding with the summarization.
 		const lastAckRefSeq = await summarizer.handleSummaryAck();
 
 		await summarizer.waitStart();
@@ -338,6 +339,8 @@ export class RunningSummarizer implements IDisposable {
 			});
 
 			refSequenceNumber = await this.handleSummaryAck();
+			// A valid Summary Ack must have been processed.
+			assert(refSequenceNumber >= 0, "Invalid ref sequence number");
 		}
 	}
 
