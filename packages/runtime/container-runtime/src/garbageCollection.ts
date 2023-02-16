@@ -996,7 +996,7 @@ export class GarbageCollector implements IGarbageCollector {
 		 * sweep in phases and we want to track when inactive and sweep ready objects are used in any client.
 		 */
 		if (this.activeConnection() && this.shouldRunGC) {
-			this.initializeGCStateFromBaseSnapshotP.catch((error) => { });
+			this.initializeGCStateFromBaseSnapshotP.catch((error) => {});
 		}
 	}
 
@@ -1019,8 +1019,8 @@ export class GarbageCollector implements IGarbageCollector {
 			options.fullGC ?? (this.gcOptions.runFullGC === true || this.summaryStateNeedsReset);
 		const logger = options.logger
 			? ChildLogger.create(options.logger, undefined, {
-				all: { completedGCRuns: () => this.completedRuns },
-			})
+					all: { completedGCRuns: () => this.completedRuns },
+			  })
 			: this.mc.logger;
 
 		/**
