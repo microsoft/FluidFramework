@@ -38,12 +38,29 @@ export {
 
 export { createDocuments, renderFiles } from "./MarkdownDocumenter";
 
-// TODO: fix before merging
-/* eslint-disable no-restricted-syntax */
-
-export * from "./utilities";
-
-/* eslint-enable no-restricted-syntax */
+export {
+	ApiFunctionLike,
+	ApiMemberKind,
+	ApiModuleLike,
+	ApiSignatureLike,
+	ApiModifier,
+	getDefaultValueBlock,
+	getDeprecatedBlock,
+	getExampleBlocks,
+	getFilePathForApiItem,
+	getHeadingForApiItem,
+	getLinkForApiItem,
+	getModifiers,
+	getQualifiedApiItemName,
+	getReturnsBlock,
+	getSeeBlocks,
+	getThrowsBlocks,
+	getUnscopedPackageName,
+	isDeprecated,
+	isOptional,
+	isReadonly,
+	isStatic,
+} from "./utilities";
 
 export {
 	MarkdownDocumenterConfiguration,

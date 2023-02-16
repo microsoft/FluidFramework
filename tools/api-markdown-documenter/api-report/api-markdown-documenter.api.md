@@ -222,18 +222,6 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 export { DocumentWriter }
 
 // @public
-export function doesItemGenerateHierarchy(apiItem: ApiItem, hierarchyBoundaries: HierarchyBoundaries): boolean;
-
-// @public
-export function doesItemKindGenerateHierarchy(kind: ApiItemKind, hierarchyBoundaries: HierarchyBoundaries): boolean;
-
-// @public
-export function doesItemKindRequireOwnDocument(kind: ApiItemKind, documentBoundaries: DocumentBoundaries): boolean;
-
-// @public
-export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
-
-// @public
 export type FencedCodeBlockChildren = LineBreakNode | SingleLineElementNode;
 
 // @public
@@ -248,12 +236,6 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
 export type FileNamePolicy = (apiItem: ApiItem) => string;
 
 // @public
-export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[];
-
-// @public
-export function getAncestralHierarchy(apiItem: ApiItem, includePredecate: (apiItem: ApiItem) => boolean, breakPredicate?: (apiItem: ApiItem) => boolean): ApiItem[];
-
-// @public
 export function getDefaultValueBlock(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
@@ -263,28 +245,13 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
-export function getFileNameForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
-
-// @public
 export function getFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
-
-// @public
-export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined;
-
-// @public
-export function getFirstAncestorWithOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): ApiItem;
 
 // @public
 export function getHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, headingLevel?: number): Heading;
 
 // @public
-export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
-
-// @public
 export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, textOverride?: string): Link;
-
-// @public
-export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
 
 // @public
 export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
@@ -332,9 +299,6 @@ export class HorizontalRuleNode implements DocumentationNode {
     static readonly Singleton: HorizontalRuleNode;
     readonly type = DocumentationNodeType.HorizontalRule;
 }
-
-// @public
-export function injectSeparator<T>(array: T[], separator: T): T[];
 
 // @public
 export function isDeprecated(apiItem: ApiItem): boolean;
