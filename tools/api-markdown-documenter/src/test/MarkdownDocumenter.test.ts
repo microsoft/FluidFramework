@@ -4,7 +4,7 @@
  */
 import * as Path from "node:path";
 
-import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
@@ -35,12 +35,10 @@ const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "sna
  * @param relativeSnapshotDirectoryPath - Path to the test output (relative to the test directory).
  * Used when outputting raw contents, and when copying those contents to update generate / update snapshots.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
- * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
  */
 async function snapshotTest(
 	relativeSnapshotDirectoryPath: string,
 	config: MarkdownDocumenterConfiguration,
-	generateFrontMatter?: (contextApiItem: ApiItem) => string,
 ): Promise<void> {
 	const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
 	const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
@@ -85,11 +83,6 @@ interface ConfigTestProps {
 	 * The config to use, except the `apiModel`, which will be instantiated in test set-up.
 	 */
 	configLessApiModel: Omit<MarkdownDocumenterConfiguration, "apiModel">;
-
-	/**
-	 * {@inheritDoc MarkdownEmitter.generateFrontMatter}
-	 */
-	generateFrontMatter?: (contextApiItem: ApiItem) => string;
 }
 
 /**
@@ -163,7 +156,6 @@ function apiTestSuite(
 					await snapshotTest(
 						Path.join(modelName, configProps.configName),
 						markdownDocumenterConfig,
-						configProps.generateFrontMatter,
 					);
 				});
 			});
@@ -191,6 +183,8 @@ describe("api-markdown-documenter full-suite tests", () => {
 		documentBoundaries: [], // Render everything to package documents
 		hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 		emptyTableCellText: "---",
+		frontMatterPolicy: (documentItem): string =>
+			`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
 	};
 
 	/**
@@ -232,8 +226,6 @@ describe("api-markdown-documenter full-suite tests", () => {
 		{
 			configName: "flat-config",
 			configLessApiModel: flatConfig,
-			generateFrontMatter: (apiItem): string =>
-				`<!--- This is sample front-matter for API item "${apiItem.displayName}" -->`,
 		},
 		{
 			configName: "sparse-config",

@@ -75,6 +75,7 @@ export {
 	defaultPolicyOptions,
 	DocumentBoundaries,
 	FileNamePolicy,
+	FrontMatterPolicy,
 	HeadingTitlePolicy,
 	HierarchyBoundaries,
 	LinkTextPolicy,

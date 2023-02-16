@@ -134,6 +134,7 @@ export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
     export function defaultFileNamePolicy(apiItem: ApiItem): string;
+    export function defaultFrontMatterPolicy(): undefined;
     export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
     export function defaultLinkTextPolicy(apiItem: ApiItem): string;
     export function defaultPackageFilterPolicy(): boolean;
@@ -226,6 +227,9 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
 
 // @public
 export type FileNamePolicy = (apiItem: ApiItem) => string;
+
+// @public
+export type FrontMatterPolicy = (documentItem: ApiItem) => string | undefined;
 
 // @public
 export function getDefaultValueBlock(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
@@ -416,6 +420,7 @@ export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
     emptyTableCellText?: string;
     fileNamePolicy?: FileNamePolicy;
+    frontMatterPolicy?: FrontMatterPolicy;
     headingTitlePolicy?: HeadingTitlePolicy;
     hierarchyBoundaries?: HierarchyBoundaries;
     includeBreadcrumb?: boolean;

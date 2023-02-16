@@ -13,7 +13,7 @@ import { wrapInSection } from "./helpers";
  * Helper function for creating a {@link DocumentNode} for an API item and its generated documentation contents.
  */
 export function createDocument(
-	apiItem: ApiItem,
+	documentItem: ApiItem,
 	sections: SectionNode[],
 	config: Required<MarkdownDocumenterConfiguration>,
 ): DocumentNode {
@@ -22,13 +22,15 @@ export function createDocument(
 	// If a top-level heading was requested, we will wrap our document sections in a root section
 	// with the appropriate heading to ensure hierarchy is adjusted appropriately.
 	if (config.includeTopLevelDocumentHeading) {
-		contents = [wrapInSection(sections, { title: config.headingTitlePolicy(apiItem) })];
+		contents = [wrapInSection(sections, { title: config.headingTitlePolicy(documentItem) })];
 	}
 
-	// TODO: front-matter
+	const frontMatter =
+		config.frontMatterPolicy === undefined ? undefined : config.frontMatterPolicy(documentItem);
 
 	return new DocumentNode({
 		children: contents,
-		filePath: getFilePathForApiItem(apiItem, config),
+		filePath: getFilePathForApiItem(documentItem, config),
+		frontMatter,
 	});
 }

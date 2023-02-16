@@ -116,10 +116,18 @@ export function renderDocument(
 	const writer = new DocumentWriter(new StringBuilder());
 	renderDocumentNode(document, writer, getRootRenderContext(renderers));
 
-	// Trim leading and trailing whitespace, and ensure file ends with a single newline.
-	const renderedBody = [writer.getText().trim(), ""].join("\n");
+	// Trim any leading and trailing whitespace
+	let renderedDocument = writer.getText().trim();
 
-	return renderedBody;
+	if (document.frontMatter !== undefined) {
+		// Join body contents with front-matter, separated by a blank line.
+		renderedDocument = [document.frontMatter, "", renderedDocument].join("\n");
+	}
+
+	// Ensure file ends with a single newline.
+	renderedDocument = [renderedDocument, ""].join("\n");
+
+	return renderedDocument;
 }
 
 /**
