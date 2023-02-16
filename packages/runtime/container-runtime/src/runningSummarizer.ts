@@ -250,7 +250,7 @@ export class RunningSummarizer implements IDisposable {
 			try {
 				const summaryOpHandle = lastAck.summaryOp.contents.handle;
 				const summaryAckHandle = lastAck.summaryAck.contents.handle;
-				if (this.summarizingLock !== undefined) {
+				while (this.summarizingLock !== undefined) {
 					summaryLogger.sendTelemetryEvent({
 						eventName: "RefreshAttemptWithSummarizerRunning",
 						referenceSequenceNumber: refSequenceNumber,
