@@ -3087,7 +3087,7 @@ export class ContainerRuntime
 			 * state.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				/* before failing, let's try to retrieve the latest snapshot from the ackHandle */
+				/* before failing, let's try to retrieve the latest snapshot for that specific ackHandle */
 				fetchResult = await this.fetchSnapshotFromStorage(
 					summaryLogger,
 					{
@@ -3099,7 +3099,7 @@ export class ContainerRuntime
 					ackHandle,
 				);
 
-				if (fetchResult.versionId !== ackHandle) {
+				if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
 					const error = DataProcessingError.create(
 						"Fetched snapshot is older than the received ack",
 						"RefreshLatestSummaryAck",
