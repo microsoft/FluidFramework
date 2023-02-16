@@ -30,7 +30,7 @@ Container and RelativeLoader are no longer exported. All Container usages should
 
 ### IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed
 
-`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in a prior release, and are now removed.
+`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
 
 # 2.0.0-internal.3.0.0
 
