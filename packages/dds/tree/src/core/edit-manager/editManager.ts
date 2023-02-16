@@ -16,6 +16,7 @@ import {
 	mapIterable,
 	Mutable,
 	RecursiveReadonly,
+	zipIterables,
 } from "../../util";
 import {
 	findAncestor,
@@ -151,7 +152,18 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
-		const trunk = getPathFromBase(this.trunk, this.trunkBase);
+		const trunkPath = getPathFromBase(this.trunk, this.trunkBase);
+		assert(
+			this.sequenceMap.size === trunkPath.length,
+			"Expected sequence map to be the same size as the trunk",
+		);
+		const trunk = Array.from(
+			mapIterable(
+				zipIterables(this.sequenceMap.keys(), trunkPath),
+				([sequenceNumber, commit]) => ({ ...commit, sequenceNumber }),
+			),
+		);
+
 		const branches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.sessionLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
@@ -169,16 +181,19 @@ export class EditManager<
 			}),
 		);
 
-		const sequenceMap = new Map(
-			mapIterable(this.sequenceMap.entries(), ([n, r]) => [n, r.revision]),
-		);
-
-		return { trunk, branches, sequenceMap };
+		return { trunk, branches };
 	}
 
-	// This appends the given trunk commits to the trunk but overwrites the commits in branches.
-	public appendSummaryData(data: SummaryData<TChangeset>): void {
-		this.trunk = data.trunk.reduce(mintCommit, this.trunk);
+	public loadSummaryData(data: SummaryData<TChangeset>): void {
+		this.sequenceMap.clear();
+		this.trunk = data.trunk.reduce((base, c) => {
+			const commit = mintCommit(base, c);
+			this.sequenceMap.set(c.sequenceNumber, commit);
+			return commit;
+		}, this.trunkBase);
+
+		this.localBranch = this.trunk;
+		this.sessionLocalBranches.clear();
 
 		for (const [sessionId, branch] of data.branches) {
 			const commit =
@@ -187,19 +202,6 @@ export class EditManager<
 
 			this.sessionLocalBranches.set(sessionId, branch.commits.reduce(mintCommit, commit));
 		}
-
-		for (const [sequenceNumber, revisionTag] of data.sequenceMap) {
-			// TODO make this more efficient. Need a lookup table [revisionTag -> commit in trunk] in this class.
-			// Or, if we decide that this function replaces the trunk instead of appending to it,
-			// then we can generate a lookup table just above as we parse `data.trunk`
-			this.sequenceMap.set(
-				sequenceNumber,
-				findAncestor(this.trunk, (r) => r.revision === revisionTag) ??
-					fail("Expected to find sequenced revision in trunk"),
-			);
-		}
-
-		this.rebaseLocalBranchOverTrunk();
 	}
 
 	public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
@@ -324,6 +326,10 @@ export class EditManager<
 const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
 	"Received a sequenced change from the local session despite having no local changes";
 
+export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
+	sequenceNumber: SeqNumber;
+}
+
 /** A branch off of the trunk for use in summaries */
 export interface SummarySessionBranch<TChangeset> {
 	readonly base: RevisionTag;
@@ -332,9 +338,8 @@ export interface SummarySessionBranch<TChangeset> {
 
 /** The in-memory data that summaries contain */
 export interface SummaryData<TChangeset> {
-	readonly trunk: readonly Commit<TChangeset>[];
+	readonly trunk: readonly SequencedCommit<TChangeset>[];
 	readonly branches: ReadonlyMap<SessionId, SummarySessionBranch<TChangeset>>;
-	readonly sequenceMap: ReadonlyMap<SeqNumber, RevisionTag>;
 }
 
 /** @returns the path from the base of a branch to its head */

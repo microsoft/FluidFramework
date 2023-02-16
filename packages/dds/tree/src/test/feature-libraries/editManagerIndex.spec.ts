@@ -6,11 +6,7 @@
 import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
-import {
-	loadSummary,
-	encodeSummary,
-	commitEncoderFromChangeEncoder,
-} from "../../feature-libraries";
+import { loadSummary, encodeSummary } from "../../feature-libraries";
 
 import { mintRevisionTag, SummaryData } from "../../core";
 import { TestChange } from "../testChange";
@@ -20,18 +16,19 @@ describe("EditManagerIndex", () => {
 	it("roundtrip", () => {
 		const tag1 = mintRevisionTag();
 		const tag2 = mintRevisionTag();
-		const encoder = commitEncoderFromChangeEncoder(TestChange.encoder);
 		const input: SummaryData<TestChange> = {
 			trunk: [
 				{
 					revision: tag1,
 					sessionId: "1",
 					change: TestChange.mint([0], 1),
+					sequenceNumber: brand(1),
 				},
 				{
 					revision: tag2,
 					sessionId: "2",
 					change: TestChange.mint([0, 1], 2),
+					sequenceNumber: brand(2),
 				},
 			],
 			branches: new Map([
@@ -64,15 +61,11 @@ describe("EditManagerIndex", () => {
 					},
 				],
 			]),
-			sequenceMap: new Map([
-				[brand(1), tag1],
-				[brand(2), tag2],
-			]),
 		};
-		const s1 = encodeSummary(input, encoder);
-		const output = loadSummary(s1, encoder);
+		const s1 = encodeSummary(input, TestChange.encoder);
+		const output = loadSummary(s1, TestChange.encoder);
 		assert.deepEqual(output, input);
-		const s2 = encodeSummary(output, encoder);
+		const s2 = encodeSummary(output, TestChange.encoder);
 		assert.equal(s1, s2);
 	});
 

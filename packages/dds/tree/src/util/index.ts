@@ -60,4 +60,5 @@ export {
 	mapIterable,
 	Mutable,
 	RecursiveReadonly,
+	zipIterables,
 } from "./utils";

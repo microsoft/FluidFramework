@@ -8,6 +8,7 @@ export {
 	EditManager,
 	minimumPossibleSequenceNumber,
 	SeqNumber,
+	SequencedCommit,
 	SummarySessionBranch,
 	SummaryData,
 } from "./editManager";

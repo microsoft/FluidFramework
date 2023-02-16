@@ -157,9 +157,10 @@ export {
 	Commit,
 	EditManager,
 	minimumPossibleSequenceNumber,
+	SeqNumber,
+	SequencedCommit,
 	SummarySessionBranch as SummaryBranch,
 	SummaryData,
-	SeqNumber,
 } from "./edit-manager";
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";

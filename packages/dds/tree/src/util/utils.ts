@@ -164,6 +164,28 @@ export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Ite
 }
 
 /**
+ * Returns an iterable of tuples containing pairs of elements from the given iterables
+ * @param iterableA - an iterable to zip together with `iterableB`
+ * @param iterableB - an iterable to zip together with `iterableA`
+ * @returns in iterable of tuples of elements zipped together from `iterableA` and `iterableB`.
+ * If the input iterables are of different lengths, then the extra elements in the longer will be ignored.
+ */
+export function* zipIterables<T, U>(
+	iterableA: Iterable<T>,
+	iterableB: Iterable<U>,
+): Iterable<[T, U]> {
+	const iteratorA = iterableA[Symbol.iterator]();
+	const iteratorB = iterableB[Symbol.iterator]();
+	for (
+		let nextA = iteratorA.next(), nextB = iteratorB.next();
+		!nextA.done && !nextB.done;
+		nextA = iteratorA.next(), nextB = iteratorB.next()
+	) {
+		yield [nextA.value, nextB.value];
+	}
+}
+
+/**
  * Use for Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,

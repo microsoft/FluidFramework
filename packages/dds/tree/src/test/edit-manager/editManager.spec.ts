@@ -283,16 +283,16 @@ describe("EditManager", () => {
 			// when the trunk is modified by a summary load
 			const { manager } = editManagerFactory({});
 			const revision = mintRevisionTag();
-			manager.appendSummaryData({
+			manager.loadSummaryData({
 				trunk: [
 					{
 						change: TestChange.mint([0], [1]),
 						revision,
 						sessionId: "0",
+						sequenceNumber: brand(1),
 					},
 				],
 				branches: new Map(),
-				sequenceMap: new Map([[brand(1), revision]]),
 			});
 			const delta = manager.addSequencedChange(
 				{
@@ -636,7 +636,7 @@ function runUnitTestScenario(
 					sessionId: `Join${joiners.length}`,
 				}).manager;
 				const summary = clone(summarizer.getSummaryData());
-				joiner.appendSummaryData(summary);
+				joiner.loadSummaryData(summary);
 				joiners.push(joiner);
 			}
 
