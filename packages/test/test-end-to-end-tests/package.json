@@ -73,6 +73,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/sequence-deprecated": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/test-loader-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-internal/test-pairwise-generator": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-internal/test-version-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-tools/benchmark": "^0.45.0",
@@ -111,7 +112,6 @@
 		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-driver-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluid-internal/test-loader-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/undo-redo": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
