@@ -69,8 +69,6 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
 	const result =
 		configExplorer.load("typeValidation.config.json") ?? configExplorer.load("package.json");
 	const config = result?.config;
-	console.log(`loaded from: ${result?.filepath}`);
-
 	const pkgJson: PackageJson = await readJson(packagePath);
 	const oldVersions: string[] = Object.keys(pkgJson.devDependencies ?? {}).filter((k) =>
 		k.startsWith(pkgJson.name),
