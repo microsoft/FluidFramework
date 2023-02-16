@@ -328,6 +328,7 @@ export type HierarchyBoundaries = ApiMemberKind[];
 
 // @public
 export class HorizontalRuleNode implements DocumentationNode {
+    constructor();
     static readonly Singleton: HorizontalRuleNode;
     readonly type = DocumentationNodeType.HorizontalRule;
 }
