@@ -139,8 +139,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
     private logErrorTelemetry(errorMessage: string, error: any, status: string, batchOffset: number | undefined, metric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined) {
         if (this.telemetryEnabled && metric) {
-            metric?.setProperty("status", status);
-            metric?.error(errorMessage, error);
+            metric.setProperty("status", status);
+            metric.error(errorMessage, error);
         } else {
             Lumberjack.error(errorMessage, {batchOffset, status}, error);
         }
