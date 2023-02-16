@@ -10,18 +10,47 @@ import { TableRowNode } from "./TableRowNode";
 // - Support alignment properties in Table, TableRow and TableCell (inherit pattern for resolution)
 
 /**
- * TODO
+ * A table, created from a series of {@link TableRowNode | row}s, and an optional {@link TableNode.headingRow | heading row}.
  *
  * @example Markdown
  *
  * ```md
- *
+ * | Header A | Header CB | Header C |
+ * | --- | --- | --- |
+ * | Foo | Bar | Baz |
+ * | A | B | C |
+ * | 1 | 2| 3 |
  * ```
  *
  * @example HTML
  *
  * ```html
- *
+ * <table>
+ * 	<thead>
+ * 		<tr>
+ * 			<td>Header A</td>
+ * 			<td>Header B</td>
+ * 			<td>Header C</td>
+ * 		</tr>
+ * 	</thead>
+ * 	<tbody>
+ * 		<tr>
+ * 			<td>Foo</td>
+ * 			<td>Bar</td>
+ * 			<td>Baz</td>
+ * 		</tr>
+ * 		<tr>
+ * 			<td>A</td>
+ * 			<td>B</td>
+ * 			<td>C</td>
+ * 		</tr>
+ * 		<tr>
+ * 			<td>1</td>
+ * 			<td>2</td>
+ * 			<td>3</td>
+ * 		</tr>
+ * 	</tbody>
+ * </table>
  * ```
  *
  * @see
