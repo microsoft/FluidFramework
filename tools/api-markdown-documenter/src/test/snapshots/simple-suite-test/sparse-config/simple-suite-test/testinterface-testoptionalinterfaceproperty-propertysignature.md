@@ -7,4 +7,3 @@ Test optional property
 ```typescript
 testOptionalInterfaceProperty?: number;
 ```
-

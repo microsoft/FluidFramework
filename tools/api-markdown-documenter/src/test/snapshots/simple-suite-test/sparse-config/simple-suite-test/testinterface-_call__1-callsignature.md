@@ -11,4 +11,3 @@ Another example call signature
 ## Remarks {#_call__1-remarks}
 
 Here are some remarks about the event call signature
-

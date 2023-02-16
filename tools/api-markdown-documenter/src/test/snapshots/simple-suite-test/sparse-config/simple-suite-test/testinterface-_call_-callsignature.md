@@ -11,4 +11,3 @@ Test interface event call signature
 ## Remarks {#_call_-remarks}
 
 Here are some remarks about the event call signature
-

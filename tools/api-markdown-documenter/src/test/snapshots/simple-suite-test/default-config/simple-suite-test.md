@@ -26,9 +26,9 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (with alias): [function alias text](./simple-suite-test#testfunction-function)
 
-- Bad link (no alias): _InvalidItem_
+- Bad link (no alias): <i>InvalidItem</i>
 
-- Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
+- Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>
 
 ## Example {#simple-suite-test-example}
 
@@ -40,56 +40,56 @@ const foo = bar;
 
 ## Interfaces
 
-| Interface | Description |
-| --- | --- |
-| [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) | An empty interface |
-| [TestInterface](./simple-suite-test/testinterface-interface) | Test interface |
-| [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
-| [TestInterfaceWithIndexSignature](./simple-suite-test/testinterfacewithindexsignature-interface) | An interface with an index signature. |
-| [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
+|  Interface | Description |
+|  --- | --- |
+|  [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) | An empty interface |
+|  [TestInterface](./simple-suite-test/testinterface-interface) | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithIndexSignature](./simple-suite-test/testinterfacewithindexsignature-interface) | An interface with an index signature. |
+|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
 ## Classes
 
-| Class | Description |
-| --- | --- |
-| [TestAbstractClass](./simple-suite-test/testabstractclass-class) | A test abstract class. |
-| [TestClass](./simple-suite-test/testclass-class) | Test class |
+|  Class | Description |
+|  --- | --- |
+|  [TestAbstractClass](./simple-suite-test/testabstractclass-class) | A test abstract class. |
+|  [TestClass](./simple-suite-test/testclass-class) | Test class |
 
 ## Enumerations
 
-| Enum | Description |
-| --- | --- |
-| [TestEnum](./simple-suite-test#testenum-enum) | Test Enum |
+|  Enum | Description |
+|  --- | --- |
+|  [TestEnum](./simple-suite-test#testenum-enum) | Test Enum |
 
 ## Types
 
-| TypeAlias | Description |
-| --- | --- |
-| [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
-| [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
+|  [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
 
 ## Functions
 
-| Function | Alerts | Return Type | Description |
-| --- | --- | --- | --- |
-| [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
-| [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](./simple-suite-test#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
-| [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
+|  Function | Alerts | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
+|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | <code>DEPRECATED</code> | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
+|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
 ## Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [testConst](./simple-suite-test#testconst-variable) |  | `readonly` | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
+|  Variable | Alerts | Modifiers | Description |
+|  --- | --- | --- | --- |
+|  [testConst](./simple-suite-test#testconst-variable) |  | <code>readonly</code> | Test Constant |
+|  [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | <code>DEPRECATED</code> | <code>readonly</code> | I have a <code>@deprecated</code> tag with an empty comment block. |
 
 ## Namespaces
 
-| Namespace | Description |
-| --- | --- |
-| [TestModule](./simple-suite-test/testmodule-namespace) |  |
-| [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
+|  Namespace | Description |
+|  --- | --- |
+|  [TestModule](./simple-suite-test/testmodule-namespace) |  |
+|  [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
 
 ## Enumeration Details
 
@@ -100,7 +100,7 @@ Test Enum
 #### Signature {#testenum-signature}
 
 ```typescript
-export declare enum TestEnum
+export declare enum TestEnum 
 ```
 
 #### Remarks {#testenum-remarks}
@@ -127,11 +127,13 @@ const bar = TestEnum.TestEnumValue2
 
 #### Flags
 
-| Flag | Description |
-| --- | --- |
-| [TestEnumValue1](./simple-suite-test#testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
-| [TestEnumValue2](./simple-suite-test#testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
-| [TestEnumValue3](./simple-suite-test#testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
+|  Flag | Description |
+|  --- | --- |
+|  [TestEnumValue1](./simple-suite-test#testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
+|  [TestEnumValue2](./simple-suite-test#testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
+|  [TestEnumValue3](./simple-suite-test#testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
+
+#### FlagDetails
 
 ##### TestEnumValue1 {#testenum-testenumvalue1-enummember}
 
@@ -225,16 +227,16 @@ This is a test [link](./simple-suite-test/testinterface-interface) to another AP
 
 #### Parameters {#testfunction-parameters}
 
-| Parameter | Modifiers | Type | Description |
-| --- | --- | --- | --- |
-| testParameter |  | TTypeParameter | A test parameter |
-| testOptionalParameter | optional | TTypeParameter |  |
+|  Parameter | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  testParameter |  | TTypeParameter | A test parameter |
+|  testOptionalParameter | optional | TTypeParameter |  |
 
 #### Returns {#testfunction-returns}
 
 The provided parameter
 
-**Return type:** TTypeParameter
+<b>Return type:</b> TTypeParameter
 
 #### Throws {#testfunction-throws}
 
@@ -257,13 +259,14 @@ export declare function testFunctionReturningInlineType(): {
 
 An inline type
 
-**Return type:** {     foo: number;     bar: [TestEnum](./simple-suite-test#testenum-enum); }
+<b>Return type:</b> { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; }
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
-> **\[Warning\]: Deprecated**
+> <b>\[Warning\]: Deprecated</b>
 > 
 > This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
+> 
 > 
 
 Test function that returns an inline type
@@ -278,7 +281,7 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type:** [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt;
+<b>Return type:</b> [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
 
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
@@ -294,7 +297,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type:** string \| [TestInterface](./simple-suite-test/testinterface-interface)
+<b>Return type:</b> string \| [TestInterface](./simple-suite-test/testinterface-interface)
 
 ## Variable Details
 
@@ -314,7 +317,8 @@ Here are some remarks about the variable
 
 ### testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
 
-> **\[Warning\]: Deprecated**
+> <b>\[Warning\]: Deprecated</b>
+> 
 > 
 > 
 
@@ -325,4 +329,3 @@ I have a `@deprecated` tag with an empty comment block.
 ```typescript
 testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty comment block."
 ```
-

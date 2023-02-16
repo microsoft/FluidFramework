@@ -7,4 +7,3 @@ Test enum value 2
 ```typescript
 TestEnumValue2 = 1
 ```
-

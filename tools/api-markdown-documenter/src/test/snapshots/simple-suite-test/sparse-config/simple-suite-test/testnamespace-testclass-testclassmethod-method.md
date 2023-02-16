@@ -10,15 +10,15 @@ testClassMethod(testParameter: string): Promise<string>;
 
 ## Parameters {#testclassmethod-parameters}
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| testParameter | string | A string |
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  testParameter | string | A string |
 
 ## Returns {#testclassmethod-returns}
 
 A Promise
 
-**Return type:** Promise&lt;string&gt;
+<b>Return type:</b> Promise&lt;string&gt;
 
 ## Throws {#testclassmethod-throws}
 
@@ -27,4 +27,3 @@ An Error when something happens for which an error should be thrown. Except in t
 A different kind of error when a thing happens, but not when the first kind of error is thrown instead.
 
 😁
-

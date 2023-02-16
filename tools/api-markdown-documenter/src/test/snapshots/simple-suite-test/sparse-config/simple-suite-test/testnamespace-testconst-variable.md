@@ -7,4 +7,3 @@ Test Constant
 ```typescript
 TestConst = "Hello world!"
 ```
-

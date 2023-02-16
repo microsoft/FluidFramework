@@ -15,17 +15,16 @@ Here are some remarks about the method
 
 ## Parameters {#testclassmethod-parameters}
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| input | TTypeParameterA |  |
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  input | TTypeParameterA | 📝 |
 
 ## Returns {#testclassmethod-returns}
 
-**Return type:** TTypeParameterA
+<b>Return type:</b> TTypeParameterA
 
 ## Throws {#testclassmethod-throws}
 
 Some sort of error in 1 case.
 
 Some other sort of error in another case. For example, a case where some thing happens.
-

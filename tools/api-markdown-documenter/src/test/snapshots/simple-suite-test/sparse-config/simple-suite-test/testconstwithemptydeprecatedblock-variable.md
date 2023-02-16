@@ -1,6 +1,7 @@
 # testConstWithEmptyDeprecatedBlock
 
-> **\[Warning\]: Deprecated**
+> <b>\[Warning\]: Deprecated</b>
+> 
 > 
 > 
 
@@ -11,4 +12,3 @@ I have a `@deprecated` tag with an empty comment block.
 ```typescript
 testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty comment block."
 ```
-

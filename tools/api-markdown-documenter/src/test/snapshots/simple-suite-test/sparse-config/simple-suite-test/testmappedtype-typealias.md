@@ -13,4 +13,3 @@ export declare type TestMappedType = {
 ## Remarks {#testmappedtype-remarks}
 
 Here are some remarks about the mapped type
-

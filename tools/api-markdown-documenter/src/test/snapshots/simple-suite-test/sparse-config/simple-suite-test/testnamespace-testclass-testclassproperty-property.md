@@ -7,4 +7,3 @@ Test interface property
 ```typescript
 readonly testClassProperty: string;
 ```
-

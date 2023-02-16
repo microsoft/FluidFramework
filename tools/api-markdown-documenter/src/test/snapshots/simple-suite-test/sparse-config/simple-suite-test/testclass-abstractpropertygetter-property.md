@@ -7,4 +7,3 @@ A test abstract getter property.
 ```typescript
 get abstractPropertyGetter(): TestMappedType;
 ```
-

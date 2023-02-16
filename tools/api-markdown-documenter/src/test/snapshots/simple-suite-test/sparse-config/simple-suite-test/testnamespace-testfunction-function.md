@@ -10,17 +10,16 @@ function testFunction(testParameter: number): number;
 
 ## Parameters {#testfunction-parameters}
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| testParameter | number |  |
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  testParameter | number | 📝 |
 
 ## Returns {#testfunction-returns}
 
 A number
 
-**Return type:** number
+<b>Return type:</b> number
 
 ## Throws {#testfunction-throws}
 
 An Error
-

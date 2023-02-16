@@ -7,4 +7,3 @@ Test Type-Alias
 ```typescript
 type TestTypeAlias = boolean;
 ```
-

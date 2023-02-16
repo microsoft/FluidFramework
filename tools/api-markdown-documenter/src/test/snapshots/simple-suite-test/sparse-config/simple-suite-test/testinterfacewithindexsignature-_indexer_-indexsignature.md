@@ -9,4 +9,3 @@ Test index signature.
         bar: string;
     };
 ```
-

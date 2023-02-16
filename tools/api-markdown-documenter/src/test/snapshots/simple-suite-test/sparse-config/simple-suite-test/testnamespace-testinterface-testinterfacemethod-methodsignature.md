@@ -7,4 +7,3 @@ Test interface method
 ```typescript
 testInterfaceMethod(): void;
 ```
-

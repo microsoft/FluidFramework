@@ -7,4 +7,3 @@ A test protected property.
 ```typescript
 protected readonly protectedProperty: TestEnum;
 ```
-

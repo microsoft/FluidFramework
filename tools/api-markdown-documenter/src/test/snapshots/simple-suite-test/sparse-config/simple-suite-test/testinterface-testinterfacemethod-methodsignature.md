@@ -11,4 +11,3 @@ testInterfaceMethod(): void;
 ## Remarks {#testinterfacemethod-remarks}
 
 Here are some remarks about the method
-

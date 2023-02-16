@@ -11,4 +11,3 @@ readonly testClassProperty: TTypeParameterB;
 ## Remarks {#testclassproperty-remarks}
 
 Here are some remarks about the property
-

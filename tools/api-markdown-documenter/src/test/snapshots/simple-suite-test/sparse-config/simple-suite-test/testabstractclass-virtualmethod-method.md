@@ -13,5 +13,4 @@ protected virtualMethod(): number;
 
 A number!
 
-**Return type:** number
-
+<b>Return type:</b> number

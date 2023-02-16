@@ -7,4 +7,3 @@ Test constant in module.
 ```typescript
 foo = 2
 ```
-
