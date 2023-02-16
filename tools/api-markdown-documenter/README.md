@@ -111,8 +111,6 @@ The vast majority of these options have default values that have been crafted to
 
 ## Upcoming Work
 
--   Remove support for empty cell substitution
-
 ### Known Bugs
 
 -   Example titles are not respected. See TSDoc [@example spec](https://tsdoc.org/pages/tags/example/) - text on the same line as the tag should be treated as the example title.
@@ -124,19 +122,17 @@ The vast majority of these options have default values that have been crafted to
 
 ### Styling improvements
 
--   Remove leading blank line in documents
--   Excessive blank lines in Signature sections
 -   Fix links to the same file (only need heading component, not file path)
     -   This will require plumbing down a context document item, so we can easily determine if the document to which the link is being generated is the same as the document being linked to.
 -   Config options for parsing TSDoc block comment contents as Markdown (and don't escape the contents)?
--   Render type parameter summary as a table.
 -   Add support for Table Cell alignment
 
 ## Longer-term work
 
 -   Support placing documents _within_ their own hierarchy (support for the "index" model used by systems like DocFX)
 -   Pre-canned policies (flat, index, adjacency)
--   Handle multiple package entrypoints
+-   Handle multiple package entry-points
+-   Add separate HTML transformation path, for consumers that want to go straight to HTML
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
