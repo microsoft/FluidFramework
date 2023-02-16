@@ -218,15 +218,6 @@ export interface PolicyOptions {
 	 * @defaultValue `undefined`
 	 */
 	frontMatterPolicy?: FrontMatterPolicy;
-
-	/**
-	 * Contents to display in what would otherwise be empty table cells.
-	 *
-	 * @defaultValue ""
-	 *
-	 * @privateRemarks TODO: remove
-	 */
-	emptyTableCellText?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -363,7 +354,6 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
 	linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
 	packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
 	frontMatterPolicy: DefaultPolicies.defaultFrontMatterPolicy,
-	emptyTableCellText: "", // TODO: remove
 };
 
 /**

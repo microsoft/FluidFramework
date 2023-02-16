@@ -418,7 +418,6 @@ export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode
 // @public
 export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
-    emptyTableCellText?: string;
     fileNamePolicy?: FileNamePolicy;
     frontMatterPolicy?: FrontMatterPolicy;
     headingTitlePolicy?: HeadingTitlePolicy;
