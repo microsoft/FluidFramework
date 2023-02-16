@@ -110,8 +110,6 @@ import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/ga
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { Summarizer } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
 import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -127,16 +125,15 @@ import {
 	ICreateContainerMetadata,
 	ISummaryMetadataMessage,
 	metadataBlobName,
+	Summarizer,
+	SummaryManager,
 	wrapSummaryInChannelsTree,
-} from "./summaryFormat";
-import { SummaryCollection } from "./summaryCollection";
-import {
+	SummaryCollection,
 	ISerializedElection,
 	OrderedClientCollection,
 	OrderedClientElection,
-} from "./orderedClientElection";
-import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
-import {
+	SummarizerClientElection,
+	summarizerClientType,
 	SubmitSummaryResult,
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
@@ -145,16 +142,18 @@ import {
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	IRefreshSummaryAckOptions,
-} from "./summarizerTypes";
+	RunWhileConnectedCoordinator,
+} from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
-import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
 	GarbageCollector,
 	GCNodeType,
+	gcTombstoneGenerationOptionName,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGCStats,
-} from "./garbageCollection";
+	shouldAllowGcTombstoneEnforcement,
+} from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import {
@@ -171,8 +170,6 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
-import { shouldAllowGcTombstoneEnforcement } from "./garbageCollectionHelpers";
-import { gcTombstoneGenerationOptionName } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -1468,6 +1465,9 @@ export class ContainerRuntime
 		this.removeAllListeners();
 	}
 
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
+	 */
 	public get IFluidTokenProvider() {
 		if (this.options?.intelligence) {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -2307,7 +2307,7 @@ export class ContainerRuntime
 
 		const telemetryContext = new TelemetryContext();
 		// Add the options that are used to generate this summary to the telemetry context.
-		telemetryContext.setAll("fluid_Summarize", "Options", {
+		telemetryContext.setMultiple("fluid_Summarize", "Options", {
 			fullTree,
 			trackState,
 			runGC,

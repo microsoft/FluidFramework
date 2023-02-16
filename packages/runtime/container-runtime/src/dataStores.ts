@@ -66,16 +66,19 @@ import {
 	createAttributesBlob,
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
+import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import {
+	GCNodeType,
+	sweepDatastoresKey,
+	throwOnTombstoneLoadKey,
+	sendGCUnexpectedUsageEvent,
+} from "./gc";
+import {
+	summarizerClientType,
 	IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
-} from "./summaryFormat";
-import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType } from "./garbageCollection";
-import { sweepDatastoresKey, throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
-import { summarizerClientType } from "./summarizerClientElection";
-import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
+} from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
 
