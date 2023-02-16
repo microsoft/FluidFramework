@@ -133,6 +133,9 @@ export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitte
 export const createField: unique symbol;
 
 // @alpha
+export function createSchemaRepository(schemaPolicy?: FullSchemaPolicy, data?: SchemaData): StoredSchemaRepository;
+
+// @alpha
 export interface CrossFieldManager<T = unknown> {
     get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId): T | undefined;
     getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T): T;
@@ -696,6 +699,12 @@ export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
 // @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
+
+// @alpha
+export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldSchema;
+
+// @alpha
+export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeSchema;
 
 // @alpha
 export interface MakeNominal {
