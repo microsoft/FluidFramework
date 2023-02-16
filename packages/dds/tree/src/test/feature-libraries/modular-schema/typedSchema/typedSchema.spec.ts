@@ -52,7 +52,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 		local: { localKey1Name: testField },
 		extraLocalFields: testField,
 		extraGlobalFields: true,
-		global: {},
+		global: [] as const,
 		value: ValueSchema.Serializable,
 	});
 
@@ -90,7 +90,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 		local: {},
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
-		global: {},
+		global: [] as const,
 		value: ValueSchema.Nothing,
 	} as const;
 	const shortData = {
@@ -104,7 +104,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 	{
 		type check1_ = requireAssignableTo<Info["name"], TreeSchemaIdentifier & "X">;
 		type check2_ = requireAssignableTo<{}, Info["local"]>;
-		type check3_ = requireAssignableTo<{}, Info["global"]>;
+		type check3_ = requireAssignableTo<readonly [], Info["global"]>;
 		type check4_ = requireAssignableTo<Info["extraLocalFields"], typeof emptyField>;
 		type check5_ = requireAssignableTo<Info["extraGlobalFields"], false>;
 		type check6_ = requireAssignableTo<Info["value"], ValueSchema.Nothing>;

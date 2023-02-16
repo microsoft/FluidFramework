@@ -60,13 +60,16 @@ export type WithDefault<T, Default> = T extends undefined
 	: T;
 
 /**
- * Converts list of names or named objects into list of branded names.
+ * Converts list of names or named objects into list of names.
  */
-export type AsNames<T extends readonly (TName | Named<TName>)[], TName = string> = {
-	readonly [Index in keyof T]: AsName<T[Index], TName>;
-};
+export type AsNames<
+	T extends readonly [...(unknown | Named<TName>)[]],
+	TName = string,
+> = T extends [infer Head, ...infer Tail]
+	? readonly [AsName<Head>, ...AsNames<Tail, TName>]
+	: readonly [];
 
-export type AsName<T extends TName | Named<TName>, TName = string> = T extends Named<infer Name>
+export type AsName<T extends unknown | Named<TName>, TName = string> = T extends Named<infer Name>
 	? Name
 	: T;
 

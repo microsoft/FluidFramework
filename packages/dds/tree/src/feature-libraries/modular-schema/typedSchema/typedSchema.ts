@@ -45,18 +45,12 @@ export interface TypedFieldSchemaTypeBuilder {
 	readonly kind: FieldKind;
 }
 
-const empty = [] as const;
-type EmptyGlobalFieldKeySymbolArray = typeof empty & readonly GlobalFieldKeySymbol[];
-
 type EmptyObject = Readonly<Record<string, never>>;
 
 export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
 	readonly name: T["name"] & TreeSchemaIdentifier;
 	readonly local: WithDefault<T["local"], EmptyObject>;
-	readonly global: AsNames<
-		WithDefault<T["global"], EmptyGlobalFieldKeySymbolArray>,
-		GlobalFieldKeySymbol
-	> &
+	readonly global: AsNames<WithDefault<T["global"], readonly []>, GlobalFieldKeySymbol> &
 		readonly GlobalFieldKeySymbol[];
 	readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof emptyField>;
 	readonly extraGlobalFields: WithDefault<T["extraGlobalFields"], false>;

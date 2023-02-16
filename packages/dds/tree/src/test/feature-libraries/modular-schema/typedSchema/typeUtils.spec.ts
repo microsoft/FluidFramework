@@ -39,7 +39,7 @@ import { areSafelyAssignable, Brand, isAssignableTo, requireTrue } from "../../.
 	type check2_ = requireTrue<areSafelyAssignable<Obj2, Record<string, never>>>;
 
 	type objGeneric = AsNames<readonly (string | Named<string>)[]>;
-	type check4_ = requireTrue<areSafelyAssignable<objGeneric, readonly string[]>>;
+	type check4_ = requireTrue<areSafelyAssignable<objGeneric, readonly []>>;
 }
 
 // Test ArrayToUnion
