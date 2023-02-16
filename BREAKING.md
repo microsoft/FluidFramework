@@ -26,6 +26,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [Container and RelativeLoader deprecated](#container-and-relativeloader-deprecated)
 -   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
 -   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
+-   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -82,6 +83,10 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `IRootSummarizerNodeWithGC`
 -   `ISummarizerNodeRootContract`
 -   `RefreshSummaryResult`
+
+### web-code-loader and ICodeAllowList deprecated
+
+The `@fluidframework/web-code-loader` and the `ICodeAllowList` interface from the `@fluidframework/container-definitions` package have been deprecated and will be removed in an upcoming release. Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
