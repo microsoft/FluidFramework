@@ -17,6 +17,14 @@ import {
 import { getLumberBaseProperties, Lumberjack, LumberEventName, Lumber } from "@fluidframework/server-services-telemetry";
 import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
 
+enum ScriptoriumStatus {
+    Processing = "Processing",
+    ProcessingComplete = "ProcessingComplete",
+    CheckpointComplete = "CheckpointComplete",
+    ProcessingFailed = "ProcessingFailed",
+    CheckpointFailed = "CheckpointFailed"
+}
+
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
     private pendingOffset: IQueuedMessage | undefined;
@@ -80,7 +88,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 { batchOffset: this.pendingOffset?.offset });
         }
 
-        let status = "Processing";
+        let status = ScriptoriumStatus.Processing;
 
         // Swap current and pending
         const temp = this.current;
@@ -99,24 +107,30 @@ export class ScriptoriumLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.current.clear();
-                status = "ProcessingComplete";
+                status = ScriptoriumStatus.ProcessingComplete;
 
                 // checkpoint batch offset
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     this.context.checkpoint(batchOffset!);
-                    status = "CheckpointComplete";
-                    metric?.setProperty("status", status);
-                    metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
+                    status = ScriptoriumStatus.CheckpointComplete;
                 } catch (error) {
+                    status = ScriptoriumStatus.CheckpointFailed;
                     const errorMessage = `Scriptorium failed to checkpoint batch with offset ${batchOffset?.offset}`;
                     this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
                 }
 
-                // continue with next batch
-                this.sendPending();
+                // if everything is successful, then log the metric and continue with next batch
+                if (status === ScriptoriumStatus.CheckpointComplete) {
+                    metric?.setProperty("status", status);
+                    metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
+                    
+                    // continue with next batch
+                    this.sendPending();
+                }
             },
-            (error) => {
+            (error) => { // catches error if any of the promises failed in Promise.all, i.e. any of the ops failed to write to db
+                status = ScriptoriumStatus.ProcessingFailed;
                 const errorMessage = `Scriptorium failed to process batch with offset ${batchOffset?.offset}, going to restart`;
                 this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
 
