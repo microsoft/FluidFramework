@@ -92,7 +92,7 @@ USAGE
 <!-- prettier-ignore-start -->
 <!-- commands -->
 * [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
-* [`fluv help [COMMAND]`](#fluv-help-command)
+* [`fluv help [COMMANDS]`](#fluv-help-commands)
 * [`fluv version VERSION`](#fluv-version-version)
 * [`fluv version latest`](#fluv-version-latest)
 
@@ -123,18 +123,18 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v1.3.6/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v1.4.6/src/commands/autocomplete/index.ts)_
 
-## `fluv help [COMMAND]`
+## `fluv help [COMMANDS]`
 
 Display help for fluv.
 
 ```
 USAGE
-  $ fluv help [COMMAND] [-n]
+  $ fluv help [COMMANDS] [-n]
 
 ARGUMENTS
-  COMMAND  Command to show help for.
+  COMMANDS  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
@@ -143,7 +143,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.14/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.4/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
@@ -151,7 +151,7 @@ Convert version strings between regular semver and the Fluid internal version sc
 
 ```
 USAGE
-  $ fluv version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
+  $ fluv version VERSION [--json] [-t major|minor|patch|current] [--publicVersion <value>]
 
 ARGUMENTS
   VERSION  The version to convert.

@@ -51,7 +51,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				"An exact string to use as the version. The string must be a valid semver string.",
 			exclusive: ["bumpType", "scheme"],
 		}),
-		exactDepType: Flags.enum({
+		exactDepType: Flags.string({
 			description:
 				"When using the exact flag, controls the type of dependency that is used between packages within the release group.",
 			dependsOn: ["exact"],
