@@ -54,7 +54,6 @@ describe("Document rendering tests", () => {
 			"",
 			"This is test inside of a paragraph. It is also inside of a hierarchical section node. _That's real neat-o._",
 			"",
-			"",
 		].join("\n");
 		expect(renderDocument(document)).to.equal(expected);
 	});

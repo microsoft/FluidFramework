@@ -115,7 +115,9 @@ export function renderDocument(
 
 	const writer = new DocumentWriter(new StringBuilder());
 	renderDocumentNode(document, writer, getRootRenderContext(renderers));
-	const renderedBody = writer.getText().trimStart(); // Trim any leading lines / spaces
+
+	// Trim leading and trailing whitespace, and ensure file ends with a single newline.
+	const renderedBody = [writer.getText().trim(), ""].join("\n");
 
 	return renderedBody;
 }
