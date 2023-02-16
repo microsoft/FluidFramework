@@ -19,8 +19,6 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	summarizeNow,
-	// LocalCodeLoader,
-	// TestFluidObjectFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
@@ -29,7 +27,6 @@ import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
 import { SharedMap } from "@fluidframework/map";
 import { IRequest } from "@fluidframework/core-interfaces";
-// import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createLogger } from "./FileLogger";
 
@@ -58,7 +55,6 @@ const chunkingBatchesConfig: ITestContainerConfig = {
 			compressionAlgorithm: "lz4" as any,
 		},
 		chunkSizeInBytes: 600 * 1024,
-		//		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 	},
 };
 
@@ -112,11 +108,11 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 		logger =
 			process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined
 				? await createLogger({
-						runId: undefined,
-						driverType: provider.driver.type,
-						driverEndpointName: provider.driver.endpointName,
-						profile: "",
-				  })
+					runId: undefined,
+					driverType: provider.driver.type,
+					driverEndpointName: provider.driver.endpointName,
+					profile: "",
+				})
 				: undefined;
 
 		testConfig = {
@@ -157,27 +153,35 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			title = "Generate summary tree 10Mb document";
+			dataObject2map: SharedMap | undefined;
+			container2: IContainer | undefined;
+			summarizerClient2: { container: IContainer, summarizer: ISummarizer } | undefined;
 			async run() {
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
-				const container2 = await loader.resolve(testRequest);
+				this.container2 = await loader.resolve(testRequest);
 				const dataObject2 = await requestFluidObject<ITestFluidObject>(
-					container2,
+					this.container2,
 					defaultDataStoreId,
 				);
-				const dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-				dataObject2map.set("setup", "done");
-				validateMapKeys(dataObject2map, messageCount, maxMessageSizeInBytes);
-				console.log("running iteration 3", Date.now().toString());
+				this.dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
+				this.dataObject2map.set("setup", "done");
+				validateMapKeys(this.dataObject2map, messageCount, maxMessageSizeInBytes);
 				await provider.ensureSynchronized();
 
-				const summarizerClient2 = await createSummarizer(
+				this.summarizerClient2 = await createSummarizer(
 					provider,
-					container2,
+					this.container2,
 					summaryVersion,
 				);
-				assert(summarizerClient2 !== undefined, "summarizerClient2 needs to be defined.");
+				assert(this.summarizerClient2 !== undefined, "summarizerClient2 needs to be defined.");
+			}
+			beforeIteration() {
+				this.dataObject2map = undefined;
+				this.container2 = undefined;
+				this.summarizerClient2 = undefined;
 			}
 		})(),
+
 	);
 });
