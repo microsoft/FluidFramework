@@ -12,10 +12,20 @@ import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	disableTombstoneKey,
+	GCVersion,
+	IGCMetadata,
 	runSweepKey,
 	throwOnTombstoneLoadKey,
 	throwOnTombstoneUsageKey,
 } from "./gcDefinitions";
+
+export function getGCVersion(metadata?: IGCMetadata): GCVersion {
+	if (!metadata) {
+		// Force to 0/disallowed in prior versions
+		return 0;
+	}
+	return metadata.gcFeature ?? 0;
+}
 
 /**
  * Consolidates info / logic for logging when we encounter unexpected usage of GC'd objects. For example, when a

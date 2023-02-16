@@ -15,12 +15,9 @@ import {
 import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IGCRuntimeOptions } from "../containerRuntime";
-import {
-	GCVersion,
-	IContainerRuntimeMetadata,
-	IGCMetadata,
-	ICreateContainerMetadata,
-} from "../summaryFormat";
+import { IContainerRuntimeMetadata, ICreateContainerMetadata } from "../summary";
+
+export type GCVersion = number;
 
 /** The stable version of garbage collection in production. */
 export const stableGCVersion: GCVersion = 1;
@@ -59,6 +56,50 @@ export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
+
+/** @see IGCMetadata.gcFeatureMatrix */
+export interface GCFeatureMatrix {
+	/**
+	 * The Tombstone Generation value in effect when this file was created.
+	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement
+	 * Provided via Container Runtime Options
+	 */
+	tombstoneGeneration?: number;
+}
+
+export interface IGCMetadata {
+	/**
+	 * The version of the GC code that was run to generate the GC data that is written in the summary.
+	 * If the persisted value doesn't match the current value in the code, saved GC data will be discarded and regenerated from scratch.
+	 * Also, used to determine whether GC is enabled for this container or not:
+	 * - A value of 0 or undefined means GC is disabled.
+	 * - A value greater than 0 means GC is enabled.
+	 */
+	readonly gcFeature?: GCVersion;
+
+	/**
+	 * A collection of different numerical "Generations" for different features,
+	 * used to determine feature availability over time.
+	 * This info may come from multiple sources (FF code, config service, app via Container Runtime Options),
+	 * and pertains to aspects of the document that may be fixed for its lifetime.
+	 *
+	 * For each dimension, if the persisted value doesn't match the currently provided value,
+	 * then this file does not support the corresponding feature as currently implemented.
+	 *
+	 * Guidance is that if no value is provided at runtime, it should result in the current default behavior.
+	 */
+	readonly gcFeatureMatrix?: GCFeatureMatrix;
+	/**
+	 * Tells whether the GC sweep phase is enabled for this container.
+	 * - True means sweep phase is enabled.
+	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
+	 */
+	readonly sweepEnabled?: boolean;
+	/** If this is present, the session for this container will expire after this time and the container will close */
+	readonly sessionExpiryTimeoutMs?: number;
+	/** How long to wait after an object is unreferenced before deleting it via GC Sweep */
+	readonly sweepTimeoutMs?: number;
+}
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {

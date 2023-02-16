@@ -22,10 +22,12 @@ export {
 	currentGCVersion,
 	stableGCVersion,
 	GCNodeType,
+	GCVersion,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
 	IGCStats,
+	IGCMetadata,
 	UnreferencedState,
 } from "./gcDefinitions";
 export {

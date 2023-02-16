@@ -53,15 +53,11 @@ import {
 import { IGCRuntimeOptions, RuntimeHeaders } from "../containerRuntime";
 import { getSummaryForDatastores } from "../dataStores";
 import {
-	getGCVersion,
-	GCVersion,
 	IContainerRuntimeMetadata,
 	metadataBlobName,
 	ReadFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
-	IGCMetadata,
 	ICreateContainerMetadata,
-	GCFeatureMatrix,
 } from "../summary";
 import {
 	currentGCVersion,
@@ -84,8 +80,11 @@ import {
 	trackGCStateKey,
 	gcTombstoneGenerationOptionName,
 	UnreferencedState,
+	GCVersion,
+	GCFeatureMatrix,
+	IGCMetadata,
 } from "./gcDefinitions";
-import { generateSortedGCState, sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import { generateSortedGCState, getGCVersion, sendGCUnexpectedUsageEvent } from "./gcHelpers";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
