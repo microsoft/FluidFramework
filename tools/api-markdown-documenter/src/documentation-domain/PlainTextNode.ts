@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { DocumentationLiteralNode, SingleLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { LiteralNode, SingleLineElementNode } from "./DocumentionNode";
 
 /**
  * Plain text.
@@ -15,7 +15,9 @@ import { LiteralNode, SingleLineElementNode } from "./DocumentionNode";
  * To include line breaks in your text, use {@link LineBreakNode} in a container node like
  * {@link SpanNode} or {@link ParagraphNode}.
  */
-export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode {
+export class PlainTextNode
+	implements DocumentationLiteralNode<string>, SingleLineDocumentationNode
+{
 	/**
 	 * Static singleton representing an empty Plain Text node.
 	 */
@@ -25,6 +27,11 @@ export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.PlainText;
+
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public readonly singleLine = true;
 
 	/**
 	 * The text to display.

@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { MultiLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode } from "./DocumentionNode";
 
 /**
  * A horizontal line dividing above and below contents in a document.
@@ -22,7 +22,7 @@ import { DocumentationNode } from "./DocumentionNode";
  *
  * @see {@link https://www.markdownguide.org/basic-syntax#horizontal-rules}
  */
-export class HorizontalRuleNode implements DocumentationNode {
+export class HorizontalRuleNode implements MultiLineDocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -32,6 +32,11 @@ export class HorizontalRuleNode implements DocumentationNode {
 	 * Static `HorizontalRuleNode` singleton.
 	 */
 	public static readonly Singleton = new HorizontalRuleNode();
+
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public readonly singleLine = false;
 
 	public constructor() {}
 }

@@ -2,19 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { DocumentationNode, MultiLineDocumentationNode, ParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
-import { LineBreakNode } from "./LineBreakNode";
-import { SpanNode } from "./SpanNode";
 import { createNodesFromPlainText } from "./Utilities";
-
-/**
- * Child node kinds supported by {@link ParagraphNode}.
- */
-export type ParagraphChildren =
-	| LineBreakNode
-	| SingleLineElementNode
-	| SpanNode<LineBreakNode | SingleLineElementNode>;
 
 /**
  * A grouping of text content, potentially spanning multiple lines.
@@ -40,7 +30,7 @@ export type ParagraphChildren =
  * </p>
  * ```
  */
-export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
+export class ParagraphNode extends ParentNodeBase implements MultiLineDocumentationNode {
 	/**
 	 * Static singleton representing an empty Paragraph node.
 	 */
@@ -51,7 +41,14 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
 	 */
 	public readonly type = DocumentationNodeType.Paragraph;
 
-	public constructor(children: ParagraphChildren[]) {
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public override get singleLine(): false {
+		return false;
+	}
+
+	public constructor(children: DocumentationNode[]) {
 		super(children);
 	}
 

@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 import { Heading } from "../Heading";
+import {
+	MultiLineDocumentationNode,
+	ParentNodeBase,
+	SingleLineDocumentationNode,
+} from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 /**
@@ -27,8 +31,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```
  */
 export class HeadingNode
-	extends ParentNodeBase<SingleLineElementNode>
-	implements Omit<Heading, "title">
+	extends ParentNodeBase<SingleLineDocumentationNode>
+	implements Omit<Heading, "title">, MultiLineDocumentationNode
 {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
@@ -40,7 +44,14 @@ export class HeadingNode
 	 */
 	public readonly id?: string;
 
-	public constructor(content: SingleLineElementNode[], id?: string) {
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public override get singleLine(): false {
+		return false;
+	}
+
+	public constructor(content: SingleLineDocumentationNode[], id?: string) {
 		super(content);
 
 		this.id = id;

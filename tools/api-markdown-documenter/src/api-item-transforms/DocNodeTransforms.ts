@@ -26,8 +26,8 @@ import {
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
-	SingleLineElementNode,
-	SpanNode,
+	SingleLineDocumentationNode,
+	SingleLineSpanNode,
 } from "../documentation-domain";
 
 /**
@@ -151,26 +151,29 @@ export function transformDocFencedCode(
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
 export function transformDocLinkTag(
-	node: DocLinkTag,
+	input: DocLinkTag,
 	options: DocNodeTransformOptions,
-): LinkNode | SpanNode<SingleLineElementNode> {
-	if (node.codeDestination !== undefined) {
+): SingleLineDocumentationNode {
+	if (input.codeDestination !== undefined) {
 		// If link text was not provided, use the name of the referenced element.
-		const linkText = node.linkText?.trim() ?? node.codeDestination.emitAsTsdoc().trim();
+		const linkText = input.linkText?.trim() ?? input.codeDestination.emitAsTsdoc().trim();
 
-		const urlTarget = options.resolveApiReference(node.codeDestination);
+		const urlTarget = options.resolveApiReference(input.codeDestination);
 
-		return urlTarget === undefined
-			? // If the code link could not be resolved, print the unresolved text in italics.
-			  SpanNode.createFromPlainText(linkText, { italic: true })
-			: LinkNode.createFromPlainText(linkText, urlTarget);
+		const output =
+			urlTarget === undefined
+				? // If the code link could not be resolved, print the unresolved text in italics.
+				  SingleLineSpanNode.createFromPlainText(linkText, { italic: true })
+				: LinkNode.createFromPlainText(linkText, urlTarget);
+
+		return output;
 	}
 
-	if (node.urlDestination !== undefined) {
+	if (input.urlDestination !== undefined) {
 		// If link text was not provided, use the name of the referenced element.
-		const linkText = node.linkText ?? node.urlDestination;
+		const linkText = input.linkText ?? input.urlDestination;
 
-		return LinkNode.createFromPlainText(linkText, node.urlDestination);
+		return LinkNode.createFromPlainText(linkText, input.urlDestination);
 	}
 
 	throw new Error(

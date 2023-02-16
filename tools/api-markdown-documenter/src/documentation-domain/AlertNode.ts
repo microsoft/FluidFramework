@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { DocumentationNode, ParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { createNodesFromPlainText } from "./Utilities";
 
 // TODOs:
-// - Does this belong here? Since it has no Markdown or HTML correlary, this might be better left as
+// - Does this belong here? Since it has no Markdown or HTML corollary, this might be better left as
 //   a custom behavior used by FluidFramework's website.
 //   It is currently only used for `beta` and `deprecated` notices, which could be made extensibility
 //   points of the library.

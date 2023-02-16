@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { Link, UrlTarget } from "../Link";
+import { ParentNodeBase, SingleLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 /**
@@ -23,8 +23,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```
  */
 export class LinkNode
-	extends ParentNodeBase<SingleLineElementNode>
-	implements SingleLineElementNode, Omit<Link, "text">
+	extends ParentNodeBase<SingleLineDocumentationNode>
+	implements SingleLineDocumentationNode, Omit<Link, "text">
 {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
@@ -36,12 +36,21 @@ export class LinkNode
 	 */
 	public readonly target: UrlTarget;
 
-	public constructor(content: SingleLineElementNode[], target: UrlTarget) {
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public override get singleLine(): true {
+		return true;
+	}
+
+	public constructor(content: SingleLineDocumentationNode[], target: UrlTarget) {
 		super(content);
 		this.target = target;
 	}
+
 	/**
-	 * Generates a `HeadingNode` from the provided string.
+	 * Generates a {@link LinkNode} from the provided string.
+	 *
 	 * @param text - The node contents. Note: this must not contain newline characters.
 	 * @param target - See {@link LinkNode.target}.
 	 */
@@ -49,6 +58,11 @@ export class LinkNode
 		return new LinkNode([new PlainTextNode(text)], target);
 	}
 
+	/**
+	 * Generates a {@link LinkNode} from the provided {@link Link}.
+	 *
+	 * @param link - The link to represent. Note: its text must not contain newline characters.
+	 */
 	public static createFromPlainTextLink(link: Link): LinkNode {
 		return this.createFromPlainText(link.text, link.target);
 	}

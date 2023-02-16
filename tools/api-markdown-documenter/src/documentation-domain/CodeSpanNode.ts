@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { ParentNodeBase, SingleLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 /**
@@ -22,8 +22,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```
  */
 export class CodeSpanNode
-	extends ParentNodeBase<SingleLineElementNode>
-	implements SingleLineElementNode
+	extends ParentNodeBase<SingleLineDocumentationNode>
+	implements SingleLineDocumentationNode
 {
 	/**
 	 * Static singleton representing an empty Code Span node.
@@ -35,7 +35,14 @@ export class CodeSpanNode
 	 */
 	public readonly type = DocumentationNodeType.CodeSpan;
 
-	public constructor(children: SingleLineElementNode[]) {
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public override get singleLine(): true {
+		return true;
+	}
+
+	public constructor(children: SingleLineDocumentationNode[]) {
 		super(children);
 	}
 

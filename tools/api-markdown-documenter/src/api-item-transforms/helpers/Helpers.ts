@@ -26,14 +26,13 @@ import {
 	DocumentationNode,
 	FencedCodeBlockNode,
 	HeadingNode,
-	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
 	SectionNode,
-	SingleLineElementNode,
+	SingleLineDocumentationNode,
+	SingleLineSpanNode,
 	SpanNode,
-	UnorderedListNode,
 } from "../../documentation-domain";
 import {
 	ApiFunctionLike,
@@ -52,10 +51,6 @@ import {
 import { transformDocSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";
 import { createParametersSummaryTable } from "./TableHelpers";
-
-// TODOs:
-// - Express current Section helpers in terms of (Spans? Paragraphs?) - let consumers wrap in the appropriate
-//   Hierarchical sections (or add helper wrappers as appropriate)
 
 /**
  * Generates a section for an API signature.
@@ -173,7 +168,7 @@ export function createHeritageTypesParagraph(
 		}
 
 		// Render type parameters if there are any.
-		const renderedTypeParameters = createTypeParametersSpan(
+		const renderedTypeParameters = createTypeParametersSection(
 			apiItem.typeParameters,
 			apiItem,
 			config,
@@ -195,7 +190,7 @@ export function createHeritageTypesParagraph(
 		}
 
 		// Render type parameters if there are any.
-		const renderedTypeParameters = createTypeParametersSpan(
+		const renderedTypeParameters = createTypeParametersSection(
 			apiItem.typeParameters,
 			apiItem,
 			config,
@@ -266,42 +261,36 @@ function createHeritageTypeListSpan(
  *
  * @returns The doc section if any type parameters were provided, otherwise `undefined`.
  */
-export function createTypeParametersSpan(
+export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): SpanNode | undefined {
+): SectionNode | undefined {
 	if (typeParameters.length === 0) {
 		return undefined;
 	}
 
 	const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
 
-	const listItemNodes: SingleLineElementNode[] = [];
+	const subSections: SectionNode[] = [];
 	for (const typeParameter of typeParameters) {
-		const innerNodes: SingleLineElementNode[] = [];
-
-		innerNodes.push(SpanNode.createFromPlainText(typeParameter.name, { bold: true }));
+		const innerContent: DocumentationNode[] = [];
 
 		if (typeParameter.tsdocTypeParamBlock !== undefined) {
-			innerNodes.push();
-
-			// TODO: We can probably make this cleaner
-			const paragraph = transformDocSection(
-				typeParameter.tsdocTypeParamBlock.content,
-				docNodeTransformOptions,
+			innerContent.push(
+				transformDocSection(
+					typeParameter.tsdocTypeParamBlock.content,
+					docNodeTransformOptions,
+				),
 			);
-			innerNodes.push(new PlainTextNode(": "), ...paragraph.children);
 		}
 
-		listItemNodes.push(new SpanNode(innerNodes));
+		subSections.push(
+			new SectionNode(innerContent, HeadingNode.createFromPlainText(typeParameter.name)),
+		);
 	}
 
-	return new SpanNode([
-		SpanNode.createFromPlainText("Type parameters: ", { bold: true }),
-		LineBreakNode.Singleton,
-		new UnorderedListNode(listItemNodes),
-	]);
+	return new SectionNode(subSections, HeadingNode.createFromPlainText("Type Parameters"));
 }
 
 /**
@@ -320,12 +309,12 @@ export function createTypeParametersSpan(
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
 	config: Required<MarkdownDocumenterConfiguration>,
-): SpanNode<SingleLineElementNode> | undefined {
+): SingleLineSpanNode | undefined {
 	if (excerpt.isEmpty) {
 		return undefined;
 	}
 
-	const children: DocumentationNode[] = [];
+	const children: SingleLineDocumentationNode[] = [];
 	for (const token of excerpt.spannedTokens) {
 		// Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
 		// the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -356,7 +345,8 @@ export function createExcerptSpanWithHyperlinks(
 			children.push(new PlainTextNode(unwrappedTokenText));
 		}
 	}
-	return new SpanNode(children);
+
+	return new SingleLineSpanNode(children);
 }
 
 /**

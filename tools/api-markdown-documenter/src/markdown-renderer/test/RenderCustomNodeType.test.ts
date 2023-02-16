@@ -4,7 +4,7 @@
  */
 import { expect } from "chai";
 
-import { LiteralNode } from "../../documentation-domain";
+import { DocumentationLiteralNode } from "../../documentation-domain";
 import { DocumentWriter } from "../DocumentWriter";
 import { MarkdownRenderContext } from "../RenderContext";
 import { testRender } from "./Utilities";
@@ -12,10 +12,11 @@ import { testRender } from "./Utilities";
 /**
  * Mock custom {@link DocumentationNode} for use in the tests below.
  */
-class CustomDocumentationNode implements LiteralNode<string> {
+class CustomDocumentationNode implements DocumentationLiteralNode<string> {
 	public static readonly type = "Custom Node";
 	public readonly type = CustomDocumentationNode.type;
 	public readonly value: string;
+	public readonly singleLine: boolean = false;
 	public constructor(value: string) {
 		this.value = value;
 	}

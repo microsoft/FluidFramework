@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { DocumentationNode, MultiLineDocumentationNode, ParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { HeadingNode } from "./HeadingNode";
 
 /**
@@ -29,7 +29,7 @@ import { HeadingNode } from "./HeadingNode";
  * </section>
  * ```
  */
-export class SectionNode extends ParentNodeBase {
+export class SectionNode extends ParentNodeBase implements MultiLineDocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -47,6 +47,13 @@ export class SectionNode extends ParentNodeBase {
 	 * Empty section singleton.
 	 */
 	public static readonly Empty = new SectionNode([]);
+
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public override get singleLine(): false {
+		return false;
+	}
 
 	public constructor(children: DocumentationNode[], heading?: HeadingNode) {
 		super(children);

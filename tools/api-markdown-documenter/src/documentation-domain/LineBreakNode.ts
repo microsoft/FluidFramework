@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { MultiLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode } from "./DocumentionNode";
 
 /**
  * An explicit line break in a document.
@@ -15,7 +15,7 @@ import { DocumentationNode } from "./DocumentionNode";
  * To build up a grouping of text including line breaks, use this type alongside text nodes within a
  * container type like {@link ParagraphNode} or {@link SpanNode}.
  */
-export class LineBreakNode implements DocumentationNode {
+export class LineBreakNode implements MultiLineDocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -25,6 +25,11 @@ export class LineBreakNode implements DocumentationNode {
 	 * Static `LineBreakNode` singleton.
 	 */
 	public static readonly Singleton = new LineBreakNode();
+
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public readonly singleLine = false;
 
 	public constructor() {}
 }

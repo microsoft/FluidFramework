@@ -2,8 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import {
+	DocumentationNode,
+	ParentNodeBase,
+	SingleLineDocumentationNode,
+} from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
+import { PlainTextNode } from "./PlainTextNode";
 import { TextFormatting } from "./TextFormatting";
 import { createNodesFromPlainText } from "./Utilities";
 
@@ -65,8 +70,31 @@ export class SpanNode<
 }
 
 /**
- * Helper type representing {@link SpanNode}s which strictly contain single-line contents.
+ * A {@link SpanNode} that contractually fits on a single line.
  */
-export type SingleLineSpanNode<
-	TDocumentationNode extends SingleLineElementNode = SingleLineElementNode,
-> = SpanNode<TDocumentationNode>;
+export class SingleLineSpanNode
+	extends SpanNode<SingleLineDocumentationNode>
+	implements SingleLineDocumentationNode
+{
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public override get singleLine(): true {
+		return true;
+	}
+
+	public constructor(children: SingleLineDocumentationNode[], formatting?: TextFormatting) {
+		super(children, formatting);
+	}
+
+	/**
+	 * Generates an `SingleLineSpanNode` from the provided string.
+	 * @param text - The node contents.
+	 */
+	public static createFromPlainText(
+		text: string,
+		formatting?: TextFormatting,
+	): SingleLineSpanNode {
+		return new SingleLineSpanNode([new PlainTextNode(text)], formatting);
+	}
+}

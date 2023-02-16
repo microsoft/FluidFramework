@@ -2,15 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { DocumentationNode, MultiLineDocumentationNode, ParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
-import { LineBreakNode } from "./LineBreakNode";
 import { createNodesFromPlainText } from "./Utilities";
-
-/**
- * Types allowed as children under {@link FencedCodeBlockNode}.
- */
-export type FencedCodeBlockChildren = LineBreakNode | SingleLineElementNode;
 
 /**
  * A fenced code block, with an optional associated code language.
@@ -31,7 +25,7 @@ export type FencedCodeBlockChildren = LineBreakNode | SingleLineElementNode;
  * </code>
  * ```
  */
-export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren> {
+export class FencedCodeBlockNode extends ParentNodeBase implements MultiLineDocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -42,7 +36,14 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
 	 */
 	public readonly language?: string;
 
-	public constructor(children: FencedCodeBlockChildren[], language?: string) {
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public override get singleLine(): false {
+		return false;
+	}
+
+	public constructor(children: DocumentationNode[], language?: string) {
 		super(children);
 		this.language = language;
 	}

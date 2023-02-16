@@ -2,8 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import {
+	MultiLineDocumentationNode,
+	ParentNodeBase,
+	SingleLineDocumentationNode,
+} from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 // TODOs:
@@ -30,7 +34,10 @@ import { PlainTextNode } from "./PlainTextNode";
  * </ul>
  * ```
  */
-export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
+export class UnorderedListNode
+	extends ParentNodeBase<SingleLineDocumentationNode>
+	implements MultiLineDocumentationNode
+{
 	/**
 	 * Static singleton representing an empty Unordered List node.
 	 */
@@ -41,7 +48,14 @@ export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
 	 */
 	public readonly type = DocumentationNodeType.UnorderedList;
 
-	public constructor(children: SingleLineElementNode[]) {
+	/**
+	 * {@inheritDoc DocumentationNode.singleLine}
+	 */
+	public override get singleLine(): false {
+		return false;
+	}
+
+	public constructor(children: SingleLineDocumentationNode[]) {
 		super(children);
 	}
 
