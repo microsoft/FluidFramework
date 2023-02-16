@@ -242,6 +242,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						| undefined;
 
 					let method: string;
+					let prefetchWaitStartTime: number = performance.now();
 					if (fetchSource === FetchSource.noCache) {
 						retrievedSnapshot = await this.fetchSnapshot(
 							hostSnapshotOptions,
@@ -330,6 +331,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							method = retrievedSnapshot !== undefined ? "cache" : "network";
 
 							if (retrievedSnapshot === undefined) {
+								prefetchWaitStartTime = performance.now();
 								retrievedSnapshot = await this.fetchSnapshot(
 									hostSnapshotOptions,
 									scenarioName,
@@ -347,9 +349,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						...props,
 						method,
 						avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
-						prefetchDuration:
-							prefetchStartTime !== undefined
-								? performance.now() - prefetchStartTime
+						prefetchSavedDuration:
+							prefetchStartTime !== undefined && method !== "cache"
+								? prefetchWaitStartTime - prefetchStartTime
 								: undefined,
 					});
 					return retrievedSnapshot;
