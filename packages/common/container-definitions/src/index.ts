@@ -17,6 +17,7 @@ export {
 } from "./browserPackage";
 export {
 	IConnectionDetails,
+	IConnectionDetailsInternal,
 	IDeltaHandlerStrategy,
 	IDeltaManager,
 	IDeltaManagerEvents,
