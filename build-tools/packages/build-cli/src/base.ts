@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Command, Flags, Interfaces } from "@oclif/core";
-import { PrettyPrintableError } from "@oclif/core/lib/interfaces";
+import { type PrettyPrintableError } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 
 import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
