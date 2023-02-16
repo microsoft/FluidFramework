@@ -7,7 +7,7 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { createNodesFromPlainText } from "./Utilities";
 
 /**
- * TODO
+ * A quotation block.
  *
  * @example Markdown
  *
