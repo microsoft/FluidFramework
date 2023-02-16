@@ -5,7 +5,6 @@
 import type { Parent as UnistParent } from "unist";
 
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { ParagraphNode } from "./ParagraphNode";
 import { SectionNode } from "./SectionNode";
 
 /**
@@ -26,16 +25,6 @@ export interface DocumentNodeProps {
 	 * Optional document front-matter, to be appended above all other content.
 	 */
 	readonly frontMatter?: string;
-
-	/**
-	 * Optional document header section.
-	 */
-	readonly header?: ParagraphNode;
-
-	/**
-	 * Optional document footer section.
-	 */
-	readonly footer?: ParagraphNode;
 }
 
 /**
@@ -67,21 +56,9 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProps
 	 */
 	public readonly frontMatter?: string;
 
-	/**
-	 * {@inheritDoc DocumentNodeProps.header}
-	 */
-	public readonly header?: ParagraphNode;
-
-	/**
-	 * {@inheritDoc DocumentNodeProps.footer}
-	 */
-	public readonly footer?: ParagraphNode;
-
 	public constructor(props: DocumentNodeProps) {
 		this.children = props.children;
 		this.filePath = props.filePath;
 		this.frontMatter = props.frontMatter;
-		this.header = props.header;
-		this.footer = props.footer;
 	}
 }

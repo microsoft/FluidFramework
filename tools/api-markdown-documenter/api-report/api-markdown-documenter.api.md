@@ -191,32 +191,24 @@ export enum DocumentationNodeType {
 // @public
 export type DocumentBoundaries = ApiMemberKind[];
 
-// Warning: (ae-forgotten-export) The symbol "DocumentNodeProps" needs to be exported by the entry point index.d.ts
-//
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(props: DocumentNodeProps);
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
+    // (undocumented)
+    readonly children: SectionNode[];
+    readonly filePath: string;
+    readonly frontMatter?: string;
+    readonly type = DocumentationNodeType.Document;
+}
+
+// @public
+export interface DocumentNodeProps {
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "children"
     //
     // (undocumented)
     readonly children: SectionNode[];
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
-    //
-    // (undocumented)
     readonly filePath: string;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
-    //
-    // (undocumented)
-    readonly footer?: ParagraphNode;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
-    //
-    // (undocumented)
     readonly frontMatter?: string;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProps"
-    //
-    // (undocumented)
-    readonly header?: ParagraphNode;
-    readonly type = DocumentationNodeType.Document;
 }
 
 export { DocumentWriter }
