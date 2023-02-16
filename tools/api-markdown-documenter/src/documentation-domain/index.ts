@@ -17,7 +17,7 @@
 export { AlertKind, AlertNode } from "./AlertNode";
 export { BlockQuoteNode } from "./BlockQuoteNode";
 export { CodeSpanNode } from "./CodeSpanNode";
-export { DocumentNode } from "./DocumentNode";
+export { DocumentNode, DocumentNodeProps } from "./DocumentNode";
 export { DocumentationNodeType } from "./DocumentationNodeType";
 export {
 	DocumentationNode,
