@@ -491,8 +491,7 @@ stages:
               fi
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-            FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
-            FLUID_TEST_VERBOSE: "1"
+            FLUID_BUILD_ID: $(Build.BuildId)
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - execution time local
@@ -521,13 +520,54 @@ stages:
             FLUID_ENDPOINTNAME: "local"
 
         - task: Bash@3
+          displayName: Send Execution Time Perf Benchmark Measurements to Azure App Insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing execution time performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.executionTimeTestOutputFolder }};
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
+            FLUID_ENDPOINTNAME: "local"
+
+        - task: Bash@3
+          displayName: Send Memory Usage Perf Benchmark Measurements to Azure App Insights
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Writing memory usage performance benchmark output to Azure App Insights..."
+              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
+              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
+            FLUID_ENDPOINTNAME: "local"
+
+        - task: Bash@3
+          displayName: Remove Output Folders
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              ls -laR ${{ variables.executionTimeTestOutputFolder }};
+              echo "Cleanup  ${{ variables.executionTimeTestOutputFolder }}"
+              rm -rf ${{ variables.executionTimeTestOutputFolder }};
+              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
+              echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
+              rm -rf ${{ variables.memoryUsageTestOutputFolder }};
+
+        - task: Bash@3
           displayName: Run tests ODSP
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
               echo "FLUID_TEST_LOGGER_PKG_PATH= ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger"
-              echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
+              echo "FLUID_BUILD_ID $(Build.BuildId)"
 
               # Run execution time tests
               echo "FLUID_ENDPOINTNAME = odsp"
@@ -555,7 +595,7 @@ stages:
             login__microsoft__secret: $(login-microsoft-secret)
             login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-            FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
+            FLUID_BUILD_ID: $(Build.BuildId)
             FLUID_ENDPOINTNAME: odsp
 
         - task: Bash@3
@@ -583,32 +623,6 @@ stages:
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: "odsp"
-
-        - task: Bash@3
-          displayName: Send Execution Time Perf Benchmark Measurments to Azure App Insights
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(toolAbsolutePath)
-            script: |
-              echo "Writing execution time performance benchmark output to Azure App Insights..."
-              ls -laR ${{ variables.executionTimeTestOutputFolder }};
-              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            BRANCH_NAME: $(Build.SourceBranchName)
-
-        - task: Bash@3
-          displayName: Send Memory Usage Perf Benchmark Measurments to Azure App Insights
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(toolAbsolutePath)
-            script: |
-              echo "Writing memory usage performance benchmark output to Azure App Insights..."
-              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
-              node bin/run appInsights --handlerModule $(toolAbsolutePath)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            BRANCH_NAME: $(Build.SourceBranchName)
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - execution time odsp
