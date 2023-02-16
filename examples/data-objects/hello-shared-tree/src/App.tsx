@@ -1,21 +1,21 @@
 /* eslint-disable unused-imports/no-unused-imports */
-/* eslint-disable unicorn/consistent-function-scoping */
-/* eslint-disable jsdoc/no-bad-blocks */
-/* eslint-disable jsdoc/check-indentation */
-/* eslint-disable unicorn/no-array-for-each */
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
+
+
+
+
+
 /* eslint-disable unicorn/prefer-string-slice */
-/* eslint-disable unicorn/no-for-loop */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
+
+
+
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable import/no-default-export */
 /* eslint-disable import/no-internal-modules */
@@ -46,9 +46,12 @@ import {
     typeNameSymbol,
     valueSymbol,
     TreeSchemaIdentifier,
+    TreeSchema,
+    TreeTypeSet,
     NamedTreeSchema,
     UpPath,
     jsonableTreeFromCursor,
+    BrandedType,
 } from "@fluid-internal/tree";
 import { DeltaVisitor, visitDelta, isLocalKey, ITreeCursorSynchronous, isGlobalFieldKey } from "@fluid-internal/tree/dist/core";
 
@@ -56,18 +59,15 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import { initializeWorkspace, Workspace } from "./workspace";
 
-
 const valueKeys: LocalFieldKey = brand("valueKeys");
 
 const drawKeys: LocalFieldKey = brand("drawKeys");
 
-export type Int32 = Brand<number, "myApp:Int32-1.0.0"> & EditableTree;
+export type Int32 = EditableTree & Brand<number, "myApp:Int32-1.0.0">;
 
-export type Dice = EditableTree &
-    Brand<{ valueKeys: Int32[]; }, "myApp:Dice-1.0.0">;
+export type Dice = EditableTree & Brand<{ valueKeys: Int32[]; }, "myApp:Dice-1.0.0">;
 
-export type Draw = EditableTree &
-    Brand<{ drawKeys: Dice[]; }, "myApp:Draw-1.0.0">;
+export type Draw = EditableTree & Brand<{ drawKeys: Dice[]; }, "myApp:Draw-1.0.0">;
 
 const int32Schema = namedTreeSchema({
     name: brand("myApp:Int32-1.0.0"),
@@ -240,15 +240,7 @@ export class InsertVisitor extends PathVisitor {
         if (this.filter.equals(this.path)) {
             const jsonArray: JsonableTree[] = [];
             for (const node of content) {
-                const json = jsonableTreeFromCursor(node);
-                jsonArray.push(json);
-                // console.log('json', JSON.stringify(json, undefined, 2));
-                // const upPath = node.getPath();
-                // console.log('Node upPath', upPath);
-                // console.log('Node type', node.type);
-                // console.log('Node value', node.value);
-                // console.log('Node field key', node.getFieldKey());
-                // console.log('Node field length', node.getFieldLength());
+                jsonArray.push(jsonableTreeFromCursor(node));
             }
             this.callback(this.path, index, jsonArray);
         }
@@ -287,16 +279,24 @@ export default function App() {
                 console.log("Tree error received!");
             });
 
-            const pe1 = new PathElem(drawKeys, undefined, new Set([drawSchema.name]));
-            const pe2 = new PathElem(valueKeys, undefined, new Set([diceSchema.name]));
-            const listenPath = new Path().push(pe1).push(pe2);
+            const listenPath = buildSchemaPath([drawKeys, valueKeys], appSchema);
 
-            register(myWorkspace, listenPath, Operation.Insert, (
-                path: Path,
-                index: number,
-                jsonArray: JsonableTree[]) => {
-                console.log('Operation.Insert callback received', path.toExpr(), index, JSON.stringify(jsonArray, undefined, 2));
-            });
+            registerDomainPath(
+                myWorkspace,
+                listenPath,
+                Operation.Insert,
+                (
+                    index: number,
+                    values: Int32[]
+                ) => {
+                    console.log(`Callback on inserting domain ${values.length} values at index ${index}`);
+                    for (const value of values) {
+                        if (value !== undefined) {
+                            console.log(`Callback on inserting domain value ${value[valueSymbol]} type ${value[typeNameSymbol]}`);
+                        }
+                    }
+                });
+
             insertDrawValues(myWorkspace);
         }
         initWorkspace();
@@ -320,7 +320,22 @@ export default function App() {
         setRollToggle(!rollToggle);
     };
 
-    const register = (w: Workspace, filter: Path, op: Operation, callback: (
+    const registerDomainPath = (
+        w: Workspace,
+        filter: Path,
+        op: Operation,
+        domainCallback: (index: number, diceValues: Int32[]) => void,
+    ) => {
+        registerPath(w, filter, op, (path: Path,
+            index: number,
+            jsonArray: JsonableTree[]): void => {
+            console.log('Callback on Operation.Insert yielding to', path.toExpr(), index);
+            const values: Int32[] = jsonArray.map(json => typedInt32(json));
+            domainCallback(index, values);
+        });
+    };
+
+    const registerPath = (w: Workspace, filter: Path, op: Operation, callback: (
         path: Path,
         index: number,
         jsonArray: JsonableTree[]
@@ -359,6 +374,39 @@ export default function App() {
             </div>
         </div>
     );
+}
+
+function buildSchemaPath(fields: LocalFieldKey[], schema: SchemaData): Path {
+    const rootSchemaIdentifiers = schema.globalFieldSchema.get(rootFieldKey)?.types;
+    let nextSchemaIdentifiers = rootSchemaIdentifiers;
+    const out = new Path();
+    label: for (const field of fields) {
+        let found = false;
+        if (nextSchemaIdentifiers !== undefined) {
+            const nextSchemaIdentifiersExist = nextSchemaIdentifiers as ReadonlySet<TreeSchemaIdentifier>;
+            for (const nextSchemaIdentifier of nextSchemaIdentifiersExist) {
+                const treeSchema: TreeSchema | undefined = schema.treeSchema.get(nextSchemaIdentifier);
+                if (treeSchema !== undefined) {
+                    const localFieldSchema: FieldSchema | undefined = treeSchema.localFields.get(field);
+                    if (localFieldSchema !== undefined) {
+                        out.push(new PathElem(field, undefined, nextSchemaIdentifiersExist));
+                        nextSchemaIdentifiers = localFieldSchema?.types;
+                        found = true;
+                        continue label;
+                    }
+                }
+            }
+        }
+        if (!found) throw new Error(`Path error, field ${field} not found`);
+    }
+    return out;
+}
+
+function typedInt32(json: JsonableTree): Int32 {
+    return {
+        [valueSymbol]: json.value,
+        [typeNameSymbol]: int32Schema.name,
+    } as unknown as Int32;
 }
 
 // ContextuallyTypedNodeData
@@ -417,7 +465,7 @@ function updateSingleValue(workspace: Workspace) {
     console.log(`updateSingleValue called`);
     const tree = workspace.tree;
     const draw: Draw = tree.root as Draw;
-    draw.drawKeys[2].valueKeys[rnd(0, 4)] = {
+    draw.drawKeys[2].valueKeys[3] = {
         [valueSymbol]: rnd(100, 999),
         [typeNameSymbol]: int32Schema.name,
     } as unknown as Int32;
