@@ -99,7 +99,7 @@ export function transformCodeSpan(
 	node: DocCodeSpan,
 	options: DocNodeTransformOptions,
 ): CodeSpanNode {
-	return CodeSpanNode.createFromPlainText(node.code);
+	return CodeSpanNode.createFromPlainText(node.code.trim());
 }
 
 /**
@@ -243,7 +243,7 @@ function transformChildren(
 	// Transform child items into Documentation domain
 	const transformedChildren = children.map((child) => transformDocNode(child, options));
 
-	// Collapse groups of adjacent line breaks to reduce unecessary clutter in the output.
+	// Collapse groups of adjacent line breaks to reduce unnecessary clutter in the output.
 	let filteredChildren = collapseAdjacentLineBreaks(transformedChildren);
 
 	// Remove line breaks adjacent to paragraphs, as they are redundant
