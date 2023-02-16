@@ -6,7 +6,7 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
 
 /**
- * Represents a horizontal rule.
+ * A horizontal line dividing above and below contents in a document.
  *
  * @example Markdown
  *
@@ -33,5 +33,5 @@ export class HorizontalRuleNode implements DocumentationNode {
 	 */
 	public static readonly Singleton = new HorizontalRuleNode();
 
-	private constructor() {}
+	public constructor() {}
 }
