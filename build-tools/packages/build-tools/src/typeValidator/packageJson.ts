@@ -23,6 +23,8 @@ import { Context } from "../bumpVersion/context";
 import { Logger, defaultLogger } from "../common/logging";
 import { PackageJson } from "../common/npmPackage";
 import { BrokenCompatTypes } from "../common/fluidRepo";
+import { getFluidBuildConfig } from "../common/fluidUtils";
+import { cosmiconfigSync } from "cosmiconfig";
 
 export type PackageDetails = {
 	readonly packageDir: string;
@@ -49,13 +51,28 @@ function safeParse(json: string, error: string) {
 }
 
 export async function getPackageDetails(packageDir: string): Promise<PackageDetails> {
-	const packagePath = `${packageDir}/package.json`;
-	if (!(await util.promisify(fs.exists)(packagePath))) {
-		throw new Error(`Package json does not exist: ${packagePath}`);
-	}
-	const content = await util.promisify(fs.readFile)(packagePath);
+  // try loading from typeValidation node in package.json first
+  const fluidBuildConfig = getFluidBuildConfig(packageDir);
+  let config = fluidBuildConfig?.typeTests
+  if( config === undefined) {
+  const configExplorer = cosmiconfigSync("typeValidation", {
+    searchPlaces: ["typeValidation.config.json", "package.json"],
+    packageProp: "typeValidation",
+  });
 
-	const pkgJson: PackageJson = safeParse(content.toString(), packagePath);
+  config = configExplorer.search(packageDir)?.config;
+	if (config === undefined) {
+		throw new Error(`Error loading typeValidation config.`);
+	}
+
+    // const packagePath = `${packageDir}/package.json`;
+    // if (!(await util.promisify(fs.exists)(packagePath))) {
+    //   throw new Error(`Package json does not exist: ${packagePath}`);
+    // }
+    // const content = await util.promisify(fs.readFile)(packagePath);
+    // const pkgJson: PackageJson = safeParse(content.toString(), packagePath);
+  }
+
 
 	const oldVersions: string[] = Object.keys(pkgJson.devDependencies ?? {}).filter((k) =>
 		k.startsWith(pkgJson.name),

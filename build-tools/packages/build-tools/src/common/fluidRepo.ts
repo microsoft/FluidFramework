@@ -55,7 +55,7 @@ export interface IFluidBuildConfig {
 		[name: string]: VersionBumpType | PreviousVersionStyle;
 	};
 
-	typeValidation?: ITypeValidation;
+	typeTests?: ITypeValidation;
 }
 
 /**
