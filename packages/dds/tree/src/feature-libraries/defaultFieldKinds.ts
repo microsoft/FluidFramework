@@ -297,10 +297,11 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 	): ValueChangeset => {
 		const inverse: ValueChangeset = {};
 		if (change.changes !== undefined) {
-			inverse.changes = invertChild(change.changes);
+			inverse.changes = invertChild(change.changes, 0);
 		}
-		if (change.value !== undefined) {
-			assert(revision !== undefined, 0x478 /* Unable to revert to undefined revision */);
+		if (revision !== undefined && change.value !== undefined) {
+			// TODO
+			// assert(revision !== undefined, 0x478 /* Unable to revert to undefined revision */);
 			inverse.value = { revert: reviver(revision, 0, 1)[0] };
 		}
 		return inverse;
@@ -395,7 +396,7 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 			];
 		}
 		if (change.changes !== undefined) {
-			const modify = deltaFromChild(change.changes, 0);
+			const modify = deltaFromChild(change.changes);
 			if (modify) {
 				fieldChanges.afterShallow = [{ ...modify, index: 0 }];
 			}
@@ -501,7 +502,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		}
 
 		if (change.childChange !== undefined) {
-			inverse.childChange = invertChild(change.childChange);
+			inverse.childChange = invertChild(change.childChange, 0);
 		}
 
 		return inverse;
@@ -648,7 +649,7 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 				fieldChanges.shallow = shallow;
 			}
 			if (change.childChange !== undefined) {
-				const childDelta = deltaFromChild(change.childChange, 0);
+				const childDelta = deltaFromChild(change.childChange);
 				if (childDelta) {
 					// TODO: the changeset should be able to represent changes to both the subtree present before
 					// the change and the subtree present after the change.
