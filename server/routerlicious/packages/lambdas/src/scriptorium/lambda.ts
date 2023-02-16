@@ -118,16 +118,14 @@ export class ScriptoriumLambda implements IPartitionLambda {
                     status = ScriptoriumStatus.CheckpointFailed;
                     const errorMessage = `Scriptorium failed to checkpoint batch with offset ${batchOffset?.offset}`;
                     this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
+                    throw error;
                 }
 
-                // if everything is successful, then log the metric and continue with next batch
-                if (status === ScriptoriumStatus.CheckpointComplete) {
-                    metric?.setProperty("status", status);
-                    metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
-                    
-                    // continue with next batch
-                    this.sendPending();
-                }
+                metric?.setProperty("status", status);
+                metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
+                
+                // continue with next batch
+                this.sendPending();
             },
             (error) => { // catches error if any of the promises failed in Promise.all, i.e. any of the ops failed to write to db
                 status = ScriptoriumStatus.ProcessingFailed;
@@ -140,10 +138,12 @@ export class ScriptoriumLambda implements IPartitionLambda {
     }
 
     private logErrorTelemetry(errorMessage: string, error: any, status: string, batchOffset: number | undefined, metric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined) {
-        Lumberjack.error(errorMessage, {batchOffset, status}, error);
-        // log the metric only if enabled by this.telemetryEnabled flag
-        metric?.setProperty("status", status);
-        metric?.error(errorMessage, error);
+        if (this.telemetryEnabled && metric) {
+            metric?.setProperty("status", status);
+            metric?.error(errorMessage, error);
+        } else {
+            Lumberjack.error(errorMessage, {batchOffset, status}, error);
+        }
     }
 
     private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
