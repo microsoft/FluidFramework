@@ -128,20 +128,22 @@ export async function prefetchLatestSnapshot(
 				removeEntries,
 				enableRedeemFallback,
 			)
-				.then((value) => {
+				.then(async (value) => {
 					assert(!!snapshotEpoch, "prefetched snapshot should have a valid epoch");
 					snapshotContentsWithEpochP.resolve({ ...value, fluidEpoch: snapshotEpoch });
+					assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
+					await cacheP;
 				})
 				.catch((err) => {
 					snapshotContentsWithEpochP.reject(err);
 					// Remove from cache if prefetch was not successful.
 					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					throw err;
+				}).finally(() => {
+					// Remove it from the non persistent cache once it is cached in the persistent cache or an error
+					// occured while caching.
+					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 				});
-			assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
-			// Remove it from the non persistent cache once it is cached in the persistent cache or an error
-			// occured while caching.
-			await cacheP.finally(() => snapshotNonPersistentCache?.remove(nonPersistentCacheKey));
 			return true;
 		},
 	).catch(async (error) => {
