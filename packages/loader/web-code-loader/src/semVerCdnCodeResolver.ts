@@ -66,14 +66,14 @@ class FluidPackage {
  * a per scope cdn, `config["@package_scope:cdn"]`. A scope specific cdn base will take precedence over
  * the global cdn.
  *
- * @deprecated Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+ * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
  */
 export class SemVerCdnCodeResolver implements IFluidCodeResolver {
 	// Cache goes CDN -> package -> entrypoint
 	private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
 	/**
-	 * @deprecated Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
 	 */
 	public async resolveCodeDetails(
 		codeDetails: IFluidCodeDetails,

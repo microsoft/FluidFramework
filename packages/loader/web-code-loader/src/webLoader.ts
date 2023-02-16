@@ -16,7 +16,7 @@ import {
 import { ScriptManager } from "./scriptManager";
 
 /**
- * @deprecated Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+ * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
  */
 export class WebCodeLoader implements ICodeDetailsLoader {
 	private readonly loadedModules = new Map<
@@ -26,7 +26,7 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 	private readonly scriptManager = new ScriptManager();
 
 	/**
-	 * @deprecated Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
 	 */
 	constructor(
 		private readonly codeResolver: IFluidCodeResolver,
@@ -34,7 +34,7 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 	) {}
 
 	/**
-	 * @deprecated Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
 	 */
 	public async seedModule(
 		source: IFluidCodeDetails,
@@ -54,7 +54,7 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 	}
 
 	/**
-	 * @deprecated Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
 	 */
 	public async preCache(source: IFluidCodeDetails) {
 		const resolved = await this.codeResolver.resolveCodeDetails(source);
@@ -66,7 +66,7 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 	/**
 	 * @param source - Details of where to find chaincode
 	 *
-	 * @deprecated Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
 	 */
 	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const resolved = await this.codeResolver.resolveCodeDetails(source);
