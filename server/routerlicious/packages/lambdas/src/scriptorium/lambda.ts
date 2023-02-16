@@ -161,13 +161,14 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
         const sequenceNumbers = messages.map((message) => message.operation.sequenceNumber);
         const sequenceNumberRanges = convertSortedNumberArrayToRanges(sequenceNumbers);
+        const insertBatchSize = dbOps.length;
 
         return runWithRetry(
             async () => this.opCollection.insertMany(dbOps, false),
             "insertOpScriptorium",
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
-            { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges } },
+            { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges, insertBatchSize } },
             (error) => error.code === 11000,
             (error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
             undefined /* calculateIntervalMs */,
