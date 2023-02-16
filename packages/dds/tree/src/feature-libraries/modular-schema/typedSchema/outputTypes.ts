@@ -5,12 +5,12 @@
 
 import { Invariant } from "../../../util";
 import {
-	TreeSchemaBuilder,
 	FieldSchema,
 	LocalFieldKey,
 	ValueSchema,
 	TreeSchemaIdentifier,
 	NamedTreeSchema,
+	GlobalFieldKeySymbol,
 } from "../../../core";
 import { FieldKind } from "../fieldKind";
 import { ObjectToMap } from "./typeUtils";
@@ -23,11 +23,11 @@ import { ObjectToMap } from "./typeUtils";
 /**
  * Object for capturing information about a TreeSchema for use at both compile time and runtime.
  */
-export interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
+export interface TreeSchemaTypeInfo {
 	readonly name: TreeSchemaIdentifier;
-	readonly local: { readonly [key: string]: FieldSchemaTypeInfo<any> };
-	readonly global: { readonly [key: string]: MapToken };
-	readonly extraLocalFields: FieldSchemaTypeInfo<any>;
+	readonly local: { readonly [key: string]: FieldSchemaTypeInfo };
+	readonly global: readonly GlobalFieldKeySymbol[];
+	readonly extraLocalFields: FieldSchemaTypeInfo;
 	readonly extraGlobalFields: boolean;
 	readonly value: ValueSchema;
 }
@@ -35,8 +35,8 @@ export interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
 /**
  * Object for capturing information about a FieldSchema for use at both compile time and runtime.
  */
-export interface FieldSchemaTypeInfo<TKind extends FieldKind = FieldKind> extends FieldSchema {
-	readonly kind: TKind;
+export interface FieldSchemaTypeInfo extends FieldSchema {
+	readonly kind: FieldKind;
 }
 
 /**
@@ -48,14 +48,3 @@ export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTr
 	// Allow reading localFields through the normal map, but without losing type information.
 	readonly localFields: ObjectToMap<T["local"], LocalFieldKey, FieldSchema>;
 }
-
-/**
- * Placeholder used as value when storing a set in the keys of an object.
- *
- * These map objects should only be used as ways to capture sets of strings in the type system.
- */
-export const MapToken = "MapToken";
-/**
- * Placeholder type used as value when storing a set in the keys of an object.
- */
-export type MapToken = typeof MapToken;

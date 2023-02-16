@@ -6,19 +6,12 @@
 import {
 	typedTreeSchema as tree,
 	typedFieldSchema as field,
+	TypeInfo,
+	FieldSchemaTypeInfo,
+	LabeledTreeSchema,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema";
-
-import {
-	FieldSchemaTypeInfo,
-	LabeledTreeSchema,
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
-import {
-	TypeInfo,
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../../feature-libraries/modular-schema/typedSchema/typedSchema";
 
 import { TreeSchemaIdentifier, ValueSchema } from "../../../../core";
 import { FieldKinds } from "../../../../feature-libraries";
@@ -46,8 +39,7 @@ export type TypedFields<TMap, TFields extends { [key: string]: FieldSchemaTypeIn
 };
 
 /**
- * Takes in `types?: { readonly [key: string]: MapToken }`
- * `types?: ReadonlySet<brandedTypeNameUnion>`
+ * Takes in `types?: ReadonlySet<brandedTypeNameUnion>`
  * and returns a TypedTree union.
  */
 export type TreeTypesToTypedTreeTypes<

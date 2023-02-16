@@ -189,18 +189,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 	} as const;
 	const shortData = [FieldKinds.value, "number"] as const;
 
-	// const testSchemaFromInfo = typedFieldSchemaFromInfo(info);
-	// type ChildTypes = FieldInfo<typeof testSchemaFromInfo>["types"];
-	// type Kind = FieldInfo<typeof testSchemaFromInfo>["kind"];
-	// {
-	// 	type checkA_ = requireAssignableTo<ChildTypes, { number: MapToken }>;
-	// 	type checkB_ = requireAssignableTo<Kind, typeof FieldKinds.value>;
-	// 	// This really looks redundant, for its possible for it to fail and not the others, somehow.
-	// 	type checkC_ = requireAssignableTo<keyof ChildTypes, "number">;
-	// }
-
 	const testSchema = typedFieldSchema(...shortData);
-	// TODO: forcing this "as const" is bad. Maybe adjust API?
 	const testSchemaInline = typedFieldSchema(FieldKinds.value, "number");
 
 	type T1 = typeof info;
@@ -213,15 +202,6 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 	type check4_ = requireAssignableTo<T2, T3>;
 	type check5_ = requireAssignableTo<T3, T1>;
 	type check6_ = requireAssignableTo<T3, T2>;
-
-	// It seems like that should check the 3 versions for equality,
-	// but it fails to detect some cases which we have actually hit:
-
-	type ChildTypes2 = T2["types"];
-	// type checkA2_ = requireAssignableTo<ChildTypes2, { number: MapToken }>;
-	// For the type `{[key: string]: "MapToken";} & ListToKeys<readonly ["number"], "MapToken">``
-	// The above check passes but this one catches that the type is not `{ number: MapToken }`
-	// type checkC2_ = requireAssignableTo<keyof ChildTypes2, "number">;
 }
 
 {

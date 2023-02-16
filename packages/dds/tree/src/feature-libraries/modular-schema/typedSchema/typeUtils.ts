@@ -44,7 +44,7 @@ export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (inf
 /**
  * Takes in a list of strings, and returns an object with those strings as keys.
  */
-export type ListToKeys<T extends readonly string[], TValue> = {
+export type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
 	[key in T[number]]: TValue;
 };
 
@@ -62,11 +62,13 @@ export type WithDefault<T, Default> = T extends undefined
 /**
  * Converts list of names or named objects into list of branded names.
  */
-export type AsNames<T extends readonly (string | Named<string>)[]> = {
-	readonly [Index in keyof T]: AsName<T[Index]>;
+export type AsNames<T extends readonly (TName | Named<TName>)[], TName = string> = {
+	readonly [Index in keyof T]: AsName<T[Index], TName>;
 };
 
-export type AsName<T extends unknown | Named<string>> = T extends Named<infer Name> ? Name : T;
+export type AsName<T extends TName | Named<TName>, TName = string> = T extends Named<infer Name>
+	? Name
+	: T;
 
 /**
  * Converts list of names or named objects into list of branded names.

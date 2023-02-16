@@ -3,25 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Named, TreeSchemaIdentifier, ValueSchema } from "../../../core";
+import {
+	GlobalFieldKey,
+	GlobalFieldKeySymbol,
+	keyFromSymbol,
+	Named,
+	treeSchema,
+	TreeSchemaBuilder,
+	TreeSchemaIdentifier,
+	ValueSchema,
+} from "../../../core";
 import { brand } from "../../../util";
 import { forbidden } from "../../defaultFieldKinds";
 import { namedTreeSchema } from "../../viewSchemaUtil";
 import { FieldKind } from "../fieldKind";
-import {
-	FieldSchemaTypeInfo,
-	LabeledTreeSchema,
-	MapToken,
-	TreeSchemaTypeInfo,
-} from "./outputTypes";
-import {
-	ArrayToSet,
-	ArrayToUnion,
-	AsBrandedNames,
-	AsNames,
-	ListToKeys,
-	WithDefault,
-} from "./typeUtils";
+import { FieldSchemaTypeInfo, LabeledTreeSchema, TreeSchemaTypeInfo } from "./outputTypes";
+import { ArrayToSet, ArrayToUnion, AsBrandedNames, AsNames, WithDefault } from "./typeUtils";
 
 /**
  * APIs for building typescript types and schema together.
@@ -34,7 +31,7 @@ import {
 export interface TypedTreeSchemaBuilder {
 	readonly name: string;
 	readonly local?: { readonly [key: string]: FieldSchemaTypeInfo };
-	readonly global?: readonly (string | Named<string>)[];
+	readonly global?: readonly (GlobalFieldKeySymbol | Named<GlobalFieldKeySymbol>)[];
 	readonly extraLocalFields?: FieldSchemaTypeInfo;
 	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
@@ -49,27 +46,22 @@ export interface TypedFieldSchemaTypeBuilder {
 }
 
 const empty = [] as const;
-type EmptyStringArray = typeof empty & readonly string[];
+type EmptyGlobalFieldKeySymbolArray = typeof empty & readonly GlobalFieldKeySymbol[];
 
 type EmptyObject = Readonly<Record<string, never>>;
 
 export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
 	readonly name: T["name"] & TreeSchemaIdentifier;
 	readonly local: WithDefault<T["local"], EmptyObject>;
-	readonly global: ProcessNames<WithDefault<T["global"], EmptyStringArray>>;
+	readonly global: AsNames<
+		WithDefault<T["global"], EmptyGlobalFieldKeySymbolArray>,
+		GlobalFieldKeySymbol
+	> &
+		readonly GlobalFieldKeySymbol[];
 	readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof emptyField>;
 	readonly extraGlobalFields: WithDefault<T["extraGlobalFields"], false>;
 	readonly value: WithDefault<T["value"], ValueSchema.Nothing>;
 }
-
-export interface FieldInfoFromBuilder<T extends TypedFieldSchemaTypeBuilder> {
-	readonly kind: T["kind"];
-	readonly types: T["types"] extends undefined
-		? undefined
-		: ProcessNames<WithDefault<T["types"], never>>;
-}
-
-type ProcessNames<T extends readonly (string | Named<string>)[]> = ListToKeys<AsNames<T>, MapToken>;
 
 /**
  * Builds a TreeSchema with the type information also captured in the
@@ -78,9 +70,20 @@ type ProcessNames<T extends readonly (string | Named<string>)[]> = ListToKeys<As
 export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
 	t: T,
 ): LabeledTreeSchema<TreeInfoFromBuilder<T>> {
-	return namedTreeSchema({ ...t, name: brand(t.name) }) as LabeledTreeSchema<
-		TreeInfoFromBuilder<T>
-	>;
+	const data: TreeSchemaBuilder = {
+		localFields: t.local,
+		globalFields:
+			t.global?.map(
+				(key): GlobalFieldKey => keyFromSymbol(typeof key === "symbol" ? key : key.name),
+			) ?? [],
+		extraLocalFields: t.extraLocalFields ?? emptyField,
+		extraGlobalFields: t.extraGlobalFields,
+		value: t.value,
+	};
+	return {
+		name: brand<TreeSchemaIdentifier>(t.name),
+		...treeSchema(data),
+	} as unknown as LabeledTreeSchema<TreeInfoFromBuilder<T>>;
 }
 
 /**
