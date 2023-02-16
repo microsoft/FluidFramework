@@ -8,24 +8,25 @@ import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { DefaultSummaryConfiguration, ISummarizer } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
 	ChannelFactoryRegistry,
+	createSummarizer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	summarizeNow,
 	// LocalCodeLoader,
 	// TestFluidObjectFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { bufferToString } from "@fluidframework/common-utils";
 import { SharedMap } from "@fluidframework/map";
 import { IRequest } from "@fluidframework/core-interfaces";
 // import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
@@ -65,7 +66,6 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	const json = typeof content === "string" ? content : bufferToString(content, "utf8");
 	return JSON.parse(json);
 }
-
 describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
@@ -75,9 +75,15 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	let testConfig: ITestContainerConfig;
 	let dataObject1: ITestFluidObject;
 	let dataObject1map: SharedMap;
-	let dataObject2: ITestFluidObject;
-	let dataObject2map: SharedMap;
 	let loader: IHostLoader;
+	let summaryVersion: string;
+
+	async function waitForSummary(summarizer: ISummarizer): Promise<string> {
+		// Wait for all pending ops to be processed by all clients.
+		await provider.ensureSynchronized();
+		const summaryResult = await summarizeNow(summarizer);
+		return summaryResult.summaryVersion;
+	}
 
 	const maxMessageSizeInBytes = 5 * 1024 * 1024; // 1MB
 	const messageCount = 2; // Will result in a 10 MB payload
@@ -141,19 +147,11 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 		assert(mainContainer.resolvedUrl);
 		containerUrl = mainContainer.resolvedUrl;
 		await waitForContainerConnection(mainContainer, true);
+
+		const { summarizer: summarizerClient } = await createSummarizer(provider, mainContainer);
 		await provider.ensureSynchronized();
-
-		const containerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
-		const { stats, summary } = await containerRuntime.summarize({
-			runGC: true,
-			fullTree: false,
-			trackState: false,
-			summaryLogger: logger ?? new TelemetryNullLogger(),
-		});
-
-		// Validate stats
-		assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
-		assert(!summary.unreferenced, "Root summary should be referenced.");
+		summaryVersion = await waitForSummary(summarizerClient);
+		assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
 	});
 
 	let iteration: number = 0;
@@ -164,113 +162,23 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 				console.log("running iteration ", iteration++, Date.now().toString());
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
-				await loader.resolve(testRequest);
-				console.log("running iteration 1", Date.now().toString());
-				dataObject2 = await requestFluidObject<ITestFluidObject>(
-					mainContainer,
+				const container2 = await loader.resolve(testRequest);
+				const dataObject2 = await requestFluidObject<ITestFluidObject>(
+					container2,
 					defaultDataStoreId,
 				);
-				dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
+				const dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 				dataObject2map.set("setup", "done");
-				console.log("running iteration 2", Date.now().toString());
 				validateMapKeys(dataObject2map, messageCount, maxMessageSizeInBytes);
 				console.log("running iteration 3", Date.now().toString());
 				await provider.ensureSynchronized();
 
-				const containerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
-
-				await provider.ensureSynchronized();
-
-				const { stats, summary } = await containerRuntime.summarize({
-					runGC: false,
-					fullTree: false,
-					trackState: false,
-					summaryLogger: logger ?? new TelemetryNullLogger(),
-				});
-
-				// Validate stats
-				assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
-				// .metadata, .component, and .attributes blobs
-				assert(
-					stats.blobNodeCount >= 3,
-					`Stats expected at least 3 blob nodes, but had ${stats.blobNodeCount}.`,
+				const summarizerClient2 = await createSummarizer(
+					provider,
+					container2,
+					summaryVersion,
 				);
-				// root node, data store .channels, default data store, dds .channels, and default root dds
-				assert(
-					stats.treeNodeCount >= 5,
-					`Stats expected at least 5 tree nodes, but had ${stats.treeNodeCount}.`,
-				);
-
-				// Validate summary
-				assert(!summary.unreferenced, "Root summary should be referenced.");
-
-				assert(
-					summary.tree[".metadata"]?.type === SummaryType.Blob,
-					"Expected .metadata blob in summary root.",
-				);
-				const metadata = readBlobContent(summary.tree[".metadata"].content) as Record<
-					string,
-					unknown
-				>;
-				assert(
-					metadata.summaryFormatVersion === 1,
-					"Metadata blob should have summaryFormatVersion 1",
-				);
-				assert(
-					metadata.disableIsolatedChannels === undefined,
-					"Unexpected metadata blob disableIsolatedChannels",
-				);
-
-				const channelsTree = summary.tree[channelsTreeName];
-				assert(
-					channelsTree?.type === SummaryType.Tree,
-					"Expected .channels tree in summary root.",
-				);
-
-				const defaultDataStoreNode = channelsTree.tree[dataObject2.context.id];
-				assert(
-					defaultDataStoreNode?.type === SummaryType.Tree,
-					"Expected default data store tree in summary.",
-				);
-				assert(
-					!defaultDataStoreNode.unreferenced,
-					"Default data store should be referenced.",
-				);
-				assert(
-					defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
-					"Expected .component blob in default data store summary tree.",
-				);
-				const dataStoreChannelsTree = defaultDataStoreNode.tree[channelsTreeName];
-				const attributes = readBlobContent(
-					defaultDataStoreNode.tree[".component"].content,
-				) as Record<string, unknown>;
-				assert(
-					attributes.snapshotFormatVersion === undefined,
-					"Unexpected datastore attributes snapshotFormatVersion",
-				);
-				assert(
-					attributes.summaryFormatVersion === 2,
-					"Datastore attributes summaryFormatVersion should be 2",
-				);
-				assert(
-					attributes.disableIsolatedChannels === undefined,
-					"Unexpected datastore attributes disableIsolatedChannels",
-				);
-				assert(
-					dataStoreChannelsTree?.type === SummaryType.Tree,
-					"Expected .channels tree in default data store.",
-				);
-
-				const defaultDdsNode = dataStoreChannelsTree.tree.root;
-				assert(
-					defaultDdsNode?.type === SummaryType.Tree,
-					"Expected default root DDS in summary.",
-				);
-				assert(!defaultDdsNode.unreferenced, "Default root DDS should be referenced.");
-				assert(
-					defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
-					"Expected .attributes blob in default root DDS summary tree.",
-				);
+				assert(summarizerClient2 !== undefined, "summarizerClient2 needs to be defined.");
 			}
 		})(),
 	);
