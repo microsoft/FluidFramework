@@ -11,7 +11,10 @@ import { Changeset, Mark, MarkList, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
 
-export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
+export type NodeChangeInverter<TNodeChange> = (
+	change: TNodeChange,
+	index: number | undefined,
+) => TNodeChange;
 
 /**
  * Inverts a given changeset.
@@ -123,7 +126,7 @@ function invertMark<TNodeChange>(
 						: [
 								{
 									type: "Modify",
-									changes: invertChild(mark.changes),
+									changes: invertChild(mark.changes, inputIndex),
 								},
 						  ];
 				}
@@ -134,7 +137,7 @@ function invertMark<TNodeChange>(
 				return [
 					{
 						type: "Modify",
-						changes: invertChild(mark.changes),
+						changes: invertChild(mark.changes, inputIndex),
 					},
 				];
 			}
@@ -155,7 +158,7 @@ function invertMark<TNodeChange>(
 						: [
 								{
 									type: "Modify",
-									changes: invertChild(mark.changes),
+									changes: invertChild(mark.changes, inputIndex),
 								},
 						  ];
 				}
@@ -164,7 +167,7 @@ function invertMark<TNodeChange>(
 						CrossFieldTarget.Destination,
 						mark.revision ?? revision,
 						mark.id,
-						invertChild(mark.changes),
+						invertChild(mark.changes, inputIndex),
 					);
 				}
 				return [

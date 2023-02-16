@@ -166,10 +166,7 @@ export interface FieldEditor<TChangeset> {
  * Returns `undefined` iff the child changes amount to nothing.
  * @alpha
  */
-export type ToDelta = (
-	child: NodeChangeset,
-	index: number | undefined,
-) => Delta.NodeChanges | undefined;
+export type ToDelta = (child: NodeChangeset) => Delta.NodeChanges | undefined;
 
 /**
  * @alpha
@@ -183,7 +180,10 @@ export type NodeReviver = (
 /**
  * @alpha
  */
-export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
+export type NodeChangeInverter = (
+	change: NodeChangeset,
+	index: number | undefined,
+) => NodeChangeset;
 
 /**
  * @alpha

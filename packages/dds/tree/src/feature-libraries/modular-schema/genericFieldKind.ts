@@ -104,7 +104,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return change.map(
 				({ index, nodeChange }: GenericChange): GenericChange => ({
 					index,
-					nodeChange: invertChild(nodeChange),
+					nodeChange: invertChild(nodeChange, index),
 				}),
 			);
 		},
@@ -170,7 +170,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): Delta.FieldChanges => {
 		const beforeShallow: Delta.NestedChange[] = [];
 		for (const { index, nodeChange } of change) {
-			const childDelta = deltaFromChild(nodeChange, index);
+			const childDelta = deltaFromChild(nodeChange);
 			if (childDelta) {
 				beforeShallow.push({ index, ...childDelta });
 			}

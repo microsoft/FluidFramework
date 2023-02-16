@@ -837,7 +837,7 @@ export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangese
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 
 // @alpha (undocumented)
-export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
+export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
 // @alpha (undocumented)
 export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
@@ -1056,7 +1056,7 @@ export interface TaggedChange<TChangeset> {
 }
 
 // @alpha
-export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.NodeChanges | undefined;
+export type ToDelta = (child: NodeChangeset) => Delta.NodeChanges | undefined;
 
 // @alpha (undocumented)
 export enum TransactionResult {

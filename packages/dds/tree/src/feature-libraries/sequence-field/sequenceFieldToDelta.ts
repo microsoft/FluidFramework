@@ -10,10 +10,7 @@ import { singleTextCursor } from "../treeTextCursor";
 import { MarkList } from "./format";
 import { getInputLength, getOutputLength, isSkipMark } from "./utils";
 
-export type ToDelta<TNodeChange> = (
-	child: TNodeChange,
-	index: number | undefined,
-) => Delta.NodeChanges | undefined;
+export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.NodeChanges | undefined;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
@@ -106,7 +103,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				case "MoveOut":
 				case "ReturnFrom": {
 					if (mark.changes !== undefined) {
-						const childDelta = deltaFromChild(mark.changes, inputIndex);
+						const childDelta = deltaFromChild(mark.changes);
 						if (childDelta !== undefined) {
 							beforeShallow.push({ index: inputIndex, ...childDelta });
 						}
@@ -116,7 +113,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				case "Revive":
 				case "Insert": {
 					if (mark.changes !== undefined) {
-						const childDelta = deltaFromChild(mark.changes, undefined);
+						const childDelta = deltaFromChild(mark.changes);
 						if (childDelta !== undefined) {
 							afterShallow.push({ index: outputIndex, ...childDelta });
 						}

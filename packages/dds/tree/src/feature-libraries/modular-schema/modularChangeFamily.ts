@@ -51,7 +51,6 @@ import {
 	ValueChange,
 	ModularChangeset,
 	IdAllocator,
-	NodeReviver,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
@@ -305,13 +304,19 @@ export class ModularChangeFamily
 				fieldChange.fieldKind,
 			).rebaser.invert(
 				{ revision, change: fieldChange.change },
-				(childChanges) =>
+				(childChanges, index) =>
 					this.invertNodeChange(
 						{ revision, change: childChanges },
 						genId,
-						repairStore,
-						reviver,
 						crossFieldTable,
+						repairStore,
+						index === undefined
+							? undefined
+							: {
+									parent: path,
+									parentField: field,
+									parentIndex: index,
+							  },
 					),
 				reviver,
 				genId,
@@ -338,9 +343,9 @@ export class ModularChangeFamily
 	private invertNodeChange(
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
-		repairStore: ReadonlyRepairDataStore,
-		reviver: NodeReviver,
 		crossFieldTable: CrossFieldTable<InvertData>,
+		repairStore: ReadonlyRepairDataStore,
+		path?: UpPath,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -349,9 +354,13 @@ export class ModularChangeFamily
 				!("revert" in change.change.valueChange),
 				0x4a9 /* Inverting inverse changes is currently not supported */,
 			);
+			assert(
+				path !== undefined,
+				0x4aa /* Only existing nodes can have their value restored */,
+			);
 			const revision = change.change.valueChange.revision ?? change.revision;
 			assert(revision !== undefined, 0x477 /* Unable to revert to undefined revision */);
-			inverse.valueChange = { revert: reviver(revision, 0, 1)[0] };
+			inverse.valueChange = { revert: repairStore.getValue(revision, path) };
 		}
 
 		if (change.change.fieldChanges !== undefined) {
@@ -502,7 +511,7 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
-				(childChange, index): Delta.NodeChanges | undefined =>
+				(childChange): Delta.NodeChanges | undefined =>
 					this.deltaFromNodeChange(
 						childChange,
 						// index === undefined

@@ -60,7 +60,7 @@ const singleNodeEncoder: FieldChangeEncoder<NodeChangeset> = {
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
-	invert: (change, invertChild) => invertChild(change.change),
+	invert: (change, invertChild) => invertChild(change.change, 0),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
 	amendCompose: () => fail("Not supported"),
 	amendInvert: () => fail("Not supported"),
@@ -79,7 +79,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	encoder: singleNodeEncoder,
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): Delta.FieldChanges => {
-		const childDelta = deltaFromChild(change, 0);
+		const childDelta = deltaFromChild(change);
 		return childDelta !== undefined ? { beforeShallow: [{ index: 0, ...childDelta }] } : {};
 	},
 };
