@@ -82,13 +82,13 @@ export class RunningSummarizer implements IDisposable {
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, lets refresh based on latest Summary ack if already available.
-		const lastAckRefNumber = await summarizer.handleSummaryAck();
+		const lastAckRefSeq = await summarizer.handleSummaryAck();
 
 		await summarizer.waitStart();
 
 		// Handle summary acks asynchronously
-		// Note: no exceptions are thrown from handleSummaryAcks handler as it handles all exceptions
-		summarizer.handleSummaryAcks(lastAckRefNumber).catch((error) => {
+		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
+		summarizer.processIncomingSummaryAcks(lastAckRefSeq).catch((error) => {
 			logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
 		});
 
@@ -315,13 +315,15 @@ export class RunningSummarizer implements IDisposable {
 
 	/**
 	 * Responsible for receiving and processing all the summaryAcks.
-	 * @param lastAckRefNumber - Before initializing the summarization, if there is a last Ack to be processed, use it.
+	 * In case there was a summary ack processed by the running summarizer before processIncomingSummaryAcks is called,
+	 * it will wait for the summary ack that is newer than the one indicated by the lastAckRefSeq.
+	 * @param lastAckRefSeq - Identifies the minimum reference sequence number the summarizer needs to wait for.
+	 * In case of a negative number, the summarizer will wait for ANY summary ack that is greater than the deltaManager's initial sequence number,
+	 * and, in case of a positive one, it will wait for a summary ack that is greater than this current reference sequence number.
 	 */
-	private async handleSummaryAcks(lastAckRefNumber: number) {
+	private async processIncomingSummaryAcks(lastAckRefSeq: number) {
 		let refSequenceNumber =
-			lastAckRefNumber > 0
-				? lastAckRefNumber
-				: this.runtime.deltaManager.initialSequenceNumber;
+			lastAckRefSeq > 0 ? lastAckRefSeq : this.runtime.deltaManager.initialSequenceNumber;
 		while (!this.disposed) {
 			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
 
@@ -330,9 +332,9 @@ export class RunningSummarizer implements IDisposable {
 			await this.summaryCollection.waitSummaryAck(refSequenceNumber);
 
 			summaryLogger.sendTelemetryEvent({
-				eventName: "handleSummaryAcks",
+				eventName: "processIncomingSummaryAcks",
 				referenceSequenceNumber: refSequenceNumber,
-				lastAckRefNumber,
+				lastAckRefSeq,
 			});
 
 			refSequenceNumber = await this.handleSummaryAck();
