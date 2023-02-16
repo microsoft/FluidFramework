@@ -460,13 +460,7 @@ export class Loader implements IHostLoader {
 	}
 
 	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return (
-			this.cachingEnabled &&
-			headers[LoaderHeader.cache] !== false &&
-			// LoaderHeader.baseLogger and LoaderHeader.scopeOverride must create a new Container to apply the overrides.
-			headers["fluid-base-logger"] === undefined &&
-			headers["fluid-scope-override"] === undefined
-		);
+		return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
 	}
 
 	private parseHeader(parsed: IParsedUrl, request: IRequest) {
@@ -504,8 +498,6 @@ export class Loader implements IHostLoader {
 				resolvedUrl: resolved,
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
-				baseLogger: request.headers?.["fluid-base-logger"],
-				scopeOverride: request.headers?.["fluid-scope-override"],
 			},
 			pendingLocalState,
 			this.protocolHandlerBuilder,
