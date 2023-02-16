@@ -36,7 +36,7 @@ import {
 	getModifiers,
 	isDeprecated,
 } from "../../utilities";
-import { transformSection } from "../DocNodeTransforms";
+import { transformDocSection } from "../DocNodeTransforms";
 import { createExcerptSpanWithHyperlinks } from "./Helpers";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";
 
@@ -475,7 +475,7 @@ export function createApiSummaryCell(
 	if (apiItem instanceof ApiDocumentedItem) {
 		const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 		if (apiItem.tsdocComment !== undefined) {
-			const summaryComment = transformSection(
+			const summaryComment = transformDocSection(
 				apiItem.tsdocComment.summarySection,
 				docNodeTransformOptions,
 			);
@@ -565,7 +565,7 @@ export function createDefaultValueCell(
 		return TableCellNode.Empty;
 	}
 
-	const contents = transformSection(defaultValueSection, docNodeTransformOptions);
+	const contents = transformDocSection(defaultValueSection, docNodeTransformOptions);
 
 	// Since we are sticking the contents into a table cell, we can remove the outer Paragraph node
 	// from the hierarchy to simplify things.
@@ -646,7 +646,7 @@ export function createParameterSummaryCell(
 
 	const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
 
-	const cellContent = transformSection(
+	const cellContent = transformDocSection(
 		apiParameter.tsdocParamBlock.content,
 		docNodeTransformOptions,
 	);

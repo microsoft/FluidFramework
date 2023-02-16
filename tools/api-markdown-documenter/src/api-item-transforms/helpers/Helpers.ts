@@ -49,7 +49,7 @@ import {
 	getThrowsBlocks,
 	injectSeparator,
 } from "../../utilities";
-import { transformSection } from "../DocNodeTransforms";
+import { transformDocSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";
 import { createParametersSummaryTable } from "./TableHelpers";
 
@@ -117,7 +117,7 @@ export function createSeeAlsoSection(
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
 	const contents = seeBlocks.map((seeBlock) =>
-		transformSection(seeBlock, docNodeTransformOptions),
+		transformDocSection(seeBlock, docNodeTransformOptions),
 	);
 
 	return wrapInSection(contents, {
@@ -287,7 +287,7 @@ export function createTypeParametersSpan(
 			innerNodes.push();
 
 			// TODO: We can probably make this cleaner
-			const paragraph = transformSection(
+			const paragraph = transformDocSection(
 				typeParameter.tsdocTypeParamBlock.content,
 				docNodeTransformOptions,
 			);
@@ -427,7 +427,7 @@ export function createSummaryParagraph(
 ): ParagraphNode | undefined {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
-		? transformSection(apiItem.tsdocComment.summarySection, docNodeTransformOptions)
+		? transformDocSection(apiItem.tsdocComment.summarySection, docNodeTransformOptions)
 		: undefined;
 }
 
@@ -456,7 +456,7 @@ export function createRemarksSection(
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
 	return wrapInSection(
-		[transformSection(apiItem.tsdocComment.remarksBlock.content, docNodeTransformOptions)],
+		[transformDocSection(apiItem.tsdocComment.remarksBlock.content, docNodeTransformOptions)],
 		{ title: "Remarks", id: `${getQualifiedApiItemName(apiItem)}-remarks` },
 	);
 }
@@ -484,7 +484,7 @@ export function createThrowsSection(
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
 	const paragraphs = throwsBlocks.map((throwsBlock) =>
-		transformSection(throwsBlock, docNodeTransformOptions),
+		transformDocSection(throwsBlock, docNodeTransformOptions),
 	);
 
 	return wrapInSection(paragraphs, {
@@ -516,7 +516,7 @@ export function createDeprecationNoticeSection(
 	}
 
 	return new AlertNode(
-		[transformSection(deprecatedBlock, docNodeTransformOptions)],
+		[transformDocSection(deprecatedBlock, docNodeTransformOptions)],
 		AlertKind.Warning,
 		"Deprecated",
 	);
@@ -607,7 +607,7 @@ export function createExampleSection(
 		example.exampleNumber === undefined ? "" : example.exampleNumber
 	}`;
 
-	return wrapInSection([transformSection(example.content, docNodeTransformOptions)], {
+	return wrapInSection([transformDocSection(example.content, docNodeTransformOptions)], {
 		title: headingTitle,
 		id: headingId,
 	});
@@ -663,7 +663,7 @@ export function createReturnsSection(
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const returnsBlock = getReturnsBlock(apiItem);
 		if (returnsBlock !== undefined) {
-			children.push(transformSection(returnsBlock, docNodeTransformOptions));
+			children.push(transformDocSection(returnsBlock, docNodeTransformOptions));
 		}
 	}
 
