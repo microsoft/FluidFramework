@@ -10,11 +10,15 @@ import { IDebuggerMessage } from "./Messages";
  *
  * @remarks Thin wrapper to provide some message-wise type-safety.
  *
- * @privateRemarks TODO: remove from package exports.
- *
  * @internal
  */
-export function postWindowMessage<TMessage extends IDebuggerMessage>(message: TMessage): void {
+export function postMessageToWindow<TMessage extends IDebuggerMessage>(
+	message: TMessage,
+	loggingOptions?: MessageLoggingOptions,
+): void {
+	const loggingPreamble =
+		loggingOptions?.context === undefined ? "" : `(${loggingOptions.context}): `;
+	console.log(`${loggingPreamble}Posting message to the window:`, message); // TODO: console.debug
 	globalThis.postMessage(message, "*"); // TODO: verify target is okay
 }
 
@@ -32,13 +36,13 @@ export interface InboundHandlers {
 }
 
 /**
- * Console logging options for {@link handleWindowMessage}.
+ * Console logging options for {@link handleIncomingMessage}.
  *
  * @privateRemarks TODO: Introduce better diagnostic logging infra for the entire library
  *
  * @internal
  */
-export interface LoggingOptions {
+export interface MessageLoggingOptions {
 	/**
 	 * Context to associate with the log text.
 	 * Messages will be logged in the form: `(<context>): <text>`.
@@ -47,7 +51,7 @@ export interface LoggingOptions {
 }
 
 /**
- * Utility function for handling incoming events from the window (globalThis).
+ * Utility function for handling incoming events.
  *
  * @param event - The window event containing the message to handle.
  * @param handlers - List of handlers for particular event types.
@@ -56,16 +60,11 @@ export interface LoggingOptions {
  *
  * @internal
  */
-export function handleWindowMessage(
+export function handleIncomingMessage(
 	event: MessageEvent<Partial<IDebuggerMessage>>,
 	handlers: InboundHandlers,
-	loggingOptions?: LoggingOptions,
+	loggingOptions?: MessageLoggingOptions,
 ): void {
-	if ((event.source as unknown) !== globalThis) {
-		// Ignore events coming from outside of this window / global context
-		return;
-	}
-
 	const message = event.data;
 
 	if (message?.type === undefined) {
@@ -83,6 +82,6 @@ export function handleWindowMessage(
 	if (handled) {
 		const loggingPreamble =
 			loggingOptions?.context === undefined ? "" : `(${loggingOptions.context}): `;
-		console.debug(`${loggingPreamble}"${message.type}" message received.`);
+		console.log(`${loggingPreamble}"${message.type}" message handled:`, message); // TODO: console.debug
 	}
 }

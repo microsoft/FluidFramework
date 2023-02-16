@@ -111,7 +111,7 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
 // @internal
-export function handleWindowMessage(event: MessageEvent<Partial<IDebuggerMessage>>, handlers: InboundHandlers, loggingOptions?: LoggingOptions): void;
+export function handleIncomingMessage(event: MessageEvent<Partial<IDebuggerMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
 // @public
 export interface HasContainerId {
@@ -162,18 +162,18 @@ export interface LogEntry {
 }
 
 // @internal
-export interface LoggingOptions {
-    context?: string;
-}
-
-// @internal
 export enum MemberChangeKind {
     Added = "Added",
     Removed = "Removed"
 }
 
 // @internal
-export function postWindowMessage<TMessage extends IDebuggerMessage>(message: TMessage): void;
+export interface MessageLoggingOptions {
+    context?: string;
+}
+
+// @internal
+export function postMessageToWindow<TMessage extends IDebuggerMessage>(message: TMessage, loggingOptions?: MessageLoggingOptions): void;
 
 // @public
 export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {

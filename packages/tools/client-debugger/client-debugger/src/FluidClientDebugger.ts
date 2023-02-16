@@ -15,11 +15,12 @@ import {
 	ContainerStateChangeMessage,
 	debuggerMessageSource,
 	GetContainerStateMessage,
-	handleWindowMessage,
+	handleIncomingMessage,
 	IDebuggerMessage,
 	InboundHandlers,
 	InitiateDebuggerMessagingMessage,
-	postWindowMessage,
+	MessageLoggingOptions,
+	postMessageToWindow,
 	TerminateDebuggerMessagingMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
@@ -163,9 +164,7 @@ export class FluidClientDebugger
 	private readonly windowMessageHandler = (
 		event: MessageEvent<Partial<IDebuggerMessage>>,
 	): void => {
-		handleWindowMessage(event, this.inboundMessageHandlers, {
-			context: `Debugger(${this.containerId})`,
-		});
+		handleIncomingMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
@@ -193,6 +192,13 @@ export class FluidClientDebugger
 	 * and unset via {@link TerminateDebuggerMessagingMessage}.
 	 */
 	private postMessages: boolean;
+
+	/**
+	 * Message logging options used by the debugger.
+	 */
+	private get messageLoggingOptions(): MessageLoggingOptions {
+		return { context: `Debugger(${this.containerId})` };
+	}
 
 	/**
 	 * Whether or not the instance has been disposed yet.
@@ -291,7 +297,7 @@ export class FluidClientDebugger
 	 */
 	private postMessageIfActive<TMessage extends IDebuggerMessage>(message: TMessage): void {
 		if (this.postMessages) {
-			postWindowMessage<TMessage>(message);
+			postMessageToWindow<TMessage>(message, this.messageLoggingOptions);
 		}
 	}
 }

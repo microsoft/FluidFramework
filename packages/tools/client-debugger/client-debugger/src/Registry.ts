@@ -11,10 +11,11 @@ import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
 import {
 	debuggerMessageSource,
-	handleWindowMessage,
+	handleIncomingMessage,
 	IDebuggerMessage,
 	InboundHandlers,
-	postWindowMessage,
+	MessageLoggingOptions,
+	postMessageToWindow,
 	RegistryChangeMessage,
 } from "./messaging";
 
@@ -22,6 +23,13 @@ import {
 // - Document message posting details:
 //   - Always active (no activation required)
 //   - Will post notifications anytime the registry changes, or when explicitly asked.
+
+/**
+ * Message logging options used by the registry.
+ */
+const registryMessageLoggingOptions: MessageLoggingOptions = {
+	context: "DEBUGGER REGISTRY",
+};
 
 /**
  * Properties for configuring a {@link IFluidClientDebugger}.
@@ -105,25 +113,26 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	private readonly windowMessageHandler = (
 		event: MessageEvent<Partial<IDebuggerMessage>>,
 	): void => {
-		handleWindowMessage(event, this.inboundMessageHandlers, {
-			context: "DEBUGGER REGISTRY",
-		});
+		handleIncomingMessage(event, this.inboundMessageHandlers, registryMessageLoggingOptions);
 	};
 
 	/**
 	 * Posts a {@link RegistryChangeMessage} to the window (globalThis).
 	 */
 	private readonly postRegistryChange = (): void => {
-		postWindowMessage<RegistryChangeMessage>({
-			source: debuggerMessageSource,
-			type: "REGISTRY_CHANGE",
-			data: {
-				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
-					id: clientDebugger.containerId,
-					nickname: clientDebugger.containerNickname,
-				})),
+		postMessageToWindow<RegistryChangeMessage>(
+			{
+				source: debuggerMessageSource,
+				type: "REGISTRY_CHANGE",
+				data: {
+					containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
+						id: clientDebugger.containerId,
+						nickname: clientDebugger.containerNickname,
+					})),
+				},
 			},
-		});
+			registryMessageLoggingOptions,
+		);
 	};
 
 	// #endregion

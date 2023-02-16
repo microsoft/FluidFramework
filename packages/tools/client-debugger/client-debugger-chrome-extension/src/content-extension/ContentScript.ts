@@ -6,9 +6,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { DebuggerPanel } from "../shared-components";
 import { debuggerPanelId } from "./Constants";
 import { isDebuggerPanelOpen } from "./Utilities";
-import { DebuggerPanel } from "./components";
 
 function show(): void {
 	if (isDebuggerPanelOpen()) {

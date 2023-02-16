@@ -7,13 +7,24 @@ import React from "react";
 
 import {
 	ContainerMetadata,
+	handleIncomingMessage,
 	IDebuggerMessage,
+	InboundHandlers,
 	RegistryChangeMessage,
 } from "@fluid-tools/client-debugger";
 import { ContainerSelectionDropdown } from "@fluid-tools/client-debugger-view";
 
-import { ContainerSummaryView } from "./ContainerStateView";
+import { ContainerView } from "./ContainerView";
 import { Waiting } from "./Waiting";
+
+const loggingContext = "EXTENSION(DebuggerPanel)";
+
+// TODO
+// enum PanelOptions {
+// 	ContainerSummary = "Container Summary",
+// 	ContainerData = "Container Data",
+// 	Audience = "Audience",
+// }
 
 /**
  * TODO
@@ -22,48 +33,34 @@ export function DebuggerPanel(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
 
 	React.useEffect(() => {
-		function handleMessage(event: MessageEvent<IDebuggerMessage>): void {
-			function formatLogMessage(message: string): string {
-				return `CONTENT(DebuggerPanel): ${message}`;
-			}
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			["REGISTRY_CHANGE"]: (untypedMessage) => {
+				const message = untypedMessage as RegistryChangeMessage;
+				setContainers(message.data.containers);
+				return true;
+			},
+		};
 
-			if ((event.source as unknown) !== globalThis) {
-				// Ignore events coming from outside of this window / global context
-				console.debug(formatLogMessage("Ignoring incoming message from unknown source."));
-				return;
-			}
-
-			if (event.data?.type === undefined) {
-				console.debug(formatLogMessage("Ignoring incoming message of unknown format."));
-				return;
-			}
-
-			switch (event.data.type) {
-				case "REGISTRY_CHANGE":
-					console.log(formatLogMessage('"REGISTRY_CHANGE" message received!'));
-
-					// eslint-disable-next-line no-case-declarations
-					const message = event.data as RegistryChangeMessage;
-					setContainers(message.data.containers);
-					break;
-				default:
-					console.log(
-						formatLogMessage(
-							`Unhandled inbound message type received: "${event.data.type}".`,
-						),
-					);
-					break;
-			}
+		/**
+		 * Event handler for messages coming from the window (globalThis).
+		 */
+		function messageHandler(event: MessageEvent<Partial<IDebuggerMessage>>): void {
+			handleIncomingMessage(event, inboundMessageHandlers, {
+				context: loggingContext,
+			});
 		}
 
-		globalThis.addEventListener("message", handleMessage);
+		globalThis.addEventListener("message", messageHandler);
 
 		globalThis.postMessage({
 			type: "GET_CONTAINER_LIST",
 		});
 
 		return (): void => {
-			globalThis.removeEventListener("message", handleMessage);
+			globalThis.removeEventListener("message", messageHandler);
 		};
 	}, [setContainers]);
 
@@ -111,7 +108,7 @@ function PopulatedDebuggerPanel(props: PopulatedDebuggerPanelProps): React.React
 		selectedContainerId === undefined ? (
 			<div>Select a Container to view its state.</div>
 		) : (
-			<ContainerSummaryView containerId={selectedContainerId} />
+			<ContainerView containerId={selectedContainerId} />
 		);
 
 	return (
