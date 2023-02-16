@@ -17,9 +17,13 @@ export function createDocument(
 	sections: SectionNode[],
 	config: Required<MarkdownDocumenterConfiguration>,
 ): DocumentNode {
-	const rootSection = wrapInSection(sections, { title: config.headingTitlePolicy(apiItem) });
+	const heading = config.includeTopLevelDocumentHeading
+		? { title: config.headingTitlePolicy(apiItem) }
+		: undefined;
 
-	// TODO: front-matter, header, footer
+	const rootSection = wrapInSection(sections, heading);
+
+	// TODO: front-matter
 
 	return new DocumentNode({
 		children: [rootSection],
