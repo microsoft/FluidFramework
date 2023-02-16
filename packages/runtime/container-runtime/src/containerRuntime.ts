@@ -1469,7 +1469,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * @deprecated ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
+	 * @deprecated 2.0.0-internal.3.2.0 ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
 	 */
 	public get IFluidTokenProvider() {
 		if (this.options?.intelligence) {
