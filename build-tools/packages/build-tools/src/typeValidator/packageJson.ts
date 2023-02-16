@@ -21,7 +21,8 @@ import {
 
 import { Context } from "../bumpVersion/context";
 import { Logger, defaultLogger } from "../common/logging";
-import { BrokenCompatTypes, PackageJson } from "../common/npmPackage";
+import { PackageJson } from "../common/npmPackage";
+import { BrokenCompatTypes } from "../common/fluidRepo";
 
 export type PackageDetails = {
 	readonly packageDir: string;
