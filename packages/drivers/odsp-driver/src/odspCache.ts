@@ -109,7 +109,7 @@ export interface INonPersistentCache {
 	 * Used to store the snapshot fetch promise if the prefetch has been made using the prefetchLatestSnapshot api.
 	 * This is then used later to look for the promise during the container load.
 	 */
-	readonly snapshotPrefetchResultCache: PromiseCache<string, ISnapshotContentsWithEpoch>;
+	readonly snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
 /**
@@ -132,10 +132,11 @@ export class NonPersistentCache implements INonPersistentCache {
 
 	public readonly snapshotPrefetchResultCache = new PromiseCache<
 		string,
-		ISnapshotContentsWithEpoch
+		IPrefetchSnapshotContents
 	>();
 }
 
-export interface ISnapshotContentsWithEpoch extends ISnapshotContents {
+export interface IPrefetchSnapshotContents extends ISnapshotContents {
 	fluidEpoch: string;
+	prefetchStartTime: number;
 }

@@ -128,10 +128,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected persistedCache: IPersistedCache;
     // (undocumented)
     readonly protocolName = "fluid-odsp:";
-    // Warning: (ae-forgotten-export) The symbol "ISnapshotContentsWithEpoch" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
-    get snapshotPrefetchResultCache(): PromiseCache<string, ISnapshotContentsWithEpoch>;
+    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
 // @public @deprecated (undocumented)

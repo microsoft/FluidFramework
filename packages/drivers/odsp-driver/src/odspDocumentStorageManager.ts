@@ -5,7 +5,7 @@
 
 import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay } from "@fluidframework/common-utils";
+import { assert, delay, performance } from "@fluidframework/common-utils";
 import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
@@ -30,7 +30,7 @@ import {
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
@@ -236,7 +236,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				{ eventName: "ObtainSnapshot", fetchSource },
 				async (event: PerformanceEvent) => {
 					const props: GetVersionsTelemetryProps = {};
-					let retrievedSnapshot: ISnapshotContents | undefined;
+					let retrievedSnapshot:
+						| ISnapshotContents
+						| IPrefetchSnapshotContents
+						| undefined;
 
 					let method: string;
 					if (fetchSource === FetchSource.noCache) {
@@ -337,10 +340,17 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					if (method === "network") {
 						props.cacheEntryAge = undefined;
 					}
+					const prefetchStartTime: number | undefined = (
+						retrievedSnapshot as IPrefetchSnapshotContents
+					).prefetchStartTime;
 					event.end({
 						...props,
 						method,
 						avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
+						prefetchDuration:
+							prefetchStartTime !== undefined
+								? performance.now() - prefetchStartTime
+								: undefined,
 					});
 					return retrievedSnapshot;
 				},
@@ -421,7 +431,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private async fetchSnapshotCore(
 		hostSnapshotOptions: ISnapshotOptions | undefined,
 		scenarioName?: string,
-	) {
+	): Promise<ISnapshotContents | IPrefetchSnapshotContents> {
 		// Don't look into cache, if the host specifically tells us so.
 		if (!this.hostPolicy.avoidPrefetchSnapshotCache) {
 			const prefetchCacheKey = getKeyForCacheEntry(

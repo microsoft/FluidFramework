@@ -5,7 +5,7 @@
 
 import { default as AbortController } from "abort-controller";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
@@ -29,7 +29,7 @@ import {
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
-import { ISnapshotContentsWithEpoch } from "./odspCache";
+import { IPrefetchSnapshotContents } from "./odspCache";
 import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
 
 /**
@@ -108,8 +108,9 @@ export async function prefetchLatestSnapshot(
 		odspLogger,
 		{ eventName: "PrefetchLatestSnapshot" },
 		async () => {
+			const prefetchStartTime = performance.now();
 			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
-			const snapshotContentsWithEpochP = new Deferred<ISnapshotContentsWithEpoch>();
+			const snapshotContentsWithEpochP = new Deferred<IPrefetchSnapshotContents>();
 			const nonPersistentCacheKey = getKeyForCacheEntry(snapshotKey);
 			const snapshotNonPersistentCache =
 				odspDocumentServiceFactory?.snapshotPrefetchResultCache;
@@ -130,18 +131,21 @@ export async function prefetchLatestSnapshot(
 			)
 				.then(async (value) => {
 					assert(!!snapshotEpoch, "prefetched snapshot should have a valid epoch");
-					snapshotContentsWithEpochP.resolve({ ...value, fluidEpoch: snapshotEpoch });
+					snapshotContentsWithEpochP.resolve({
+						...value,
+						fluidEpoch: snapshotEpoch,
+						prefetchStartTime,
+					});
 					assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
 					await cacheP;
 				})
 				.catch((err) => {
 					snapshotContentsWithEpochP.reject(err);
-					// Remove from cache if prefetch was not successful.
-					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					throw err;
-				}).finally(() => {
+				})
+				.finally(() => {
 					// Remove it from the non persistent cache once it is cached in the persistent cache or an error
-					// occured while caching.
+					// occured.
 					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 				});
 			return true;
