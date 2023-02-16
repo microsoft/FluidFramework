@@ -18,7 +18,6 @@ describe("BlockQuote rendering tests", () => {
 				new PlainTextNode("Here's a block quote. "),
 				new PlainTextNode("It sure is something!"),
 				new LineBreakNode(),
-				new LineBreakNode(),
 				new PlainTextNode("-BlockQuote"),
 			]);
 			const result = testRender(blockQuoteNode);
@@ -48,7 +47,6 @@ describe("BlockQuote rendering tests", () => {
 				new PlainTextNode("Here's a block quote. "),
 				new PlainTextNode("It sure is something!"),
 				new LineBreakNode(),
-				new LineBreakNode(),
 				new PlainTextNode("-BlockQuote"),
 			]);
 			const result = testRender(blockQuoteNode, undefined, { insideHtml: true });
@@ -56,7 +54,6 @@ describe("BlockQuote rendering tests", () => {
 			const expected = [
 				"<blockquote>",
 				"  Here's a block quote. It sure is something!",
-				"  <br>",
 				"  <br>",
 				"  -BlockQuote",
 				"</blockquote>",

@@ -20,15 +20,27 @@ export function renderLineBreak(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
+	// Markdown tables do not support multi-line Markdown content.
+	// If we encounter a line break in a table context, we will render using HTML syntax.
 	if (context.insideTable || context.insideHtml) {
 		renderLineBreakWithHtmlSyntax(writer);
 	} else {
-		renderLineBreakWithMarkdownSyntax(writer);
+		renderLineBreakWithMarkdownSyntax(writer, context);
 	}
 }
 
-function renderLineBreakWithMarkdownSyntax(writer: DocumentWriter): void {
-	writer.writeLine();
+function renderLineBreakWithMarkdownSyntax(
+	writer: DocumentWriter,
+	context: MarkdownRenderContext,
+): void {
+	// In standard Markdown context, a line break is represented by a blank line.
+	// However, if we are in a code block context, we instead want to treat it as a simple line break,
+	// so as not to alter formatting.
+	if (context.insideCodeBlock) {
+		writer.ensureNewLine();
+	} else {
+		writer.ensureSkippedLine();
+	}
 }
 
 function renderLineBreakWithHtmlSyntax(writer: DocumentWriter): void {

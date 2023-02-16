@@ -33,7 +33,7 @@ describe("Span rendering tests", () => {
 			const node2 = LineBreakNode.Singleton;
 			const node3 = new PlainTextNode(text2);
 			const span = new SpanNode([node1, node2, node3], formatting);
-			expect(testRender(span)).to.equal(`**_This is some text._** \n**_${text2}_**`);
+			expect(testRender(span)).to.equal(`**_This is some text._** \n\n**_${text2}_**`);
 		});
 	});
 
