@@ -105,12 +105,7 @@ export abstract class BaseCommand<T extends typeof Command>
 			this.verbose(`Repo: ${resolvedRoot}`);
 			this.verbose(`Branch: ${branch}`);
 
-			this._context = new Context(
-				gitRepo,
-				"github.com/microsoft/FluidFramework",
-				branch,
-				this.logger,
-			);
+			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch, this.logger);
 		}
 
 		return this._context;
