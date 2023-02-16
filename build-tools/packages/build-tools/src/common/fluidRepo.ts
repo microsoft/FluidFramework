@@ -55,7 +55,7 @@ export interface IFluidBuildConfig {
 		[name: string]: VersionBumpType | PreviousVersionStyle;
 	};
 
-	typeTests?: ITypeValidation;
+	typeTests?: ITypeValidationConfig;
 }
 
 /**
@@ -81,7 +81,7 @@ export interface BrokenCompatSettings {
  */
 export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
-export interface ITypeValidation {
+export interface ITypeValidationConfig {
 	/**
 	 * The version of the package. Should match the version field in package.json.
 	 */

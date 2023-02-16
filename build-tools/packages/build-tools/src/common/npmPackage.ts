@@ -10,7 +10,7 @@ import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
 import { options } from "../fluidBuild/options";
-import { type IFluidBuildConfig, type ITypeValidation } from "./fluidRepo";
+import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
 import {
@@ -70,7 +70,7 @@ export interface PackageJson {
 	 * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
 	 * it at the root of the repo or release group has no effect.
 	 */
-	typeValidation?: ITypeValidation;
+	typeValidation?: ITypeValidationConfig;
 
 	/**
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.

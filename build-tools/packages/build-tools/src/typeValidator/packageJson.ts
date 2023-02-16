@@ -23,7 +23,7 @@ import {
 import { Context } from "../bumpVersion/context";
 import { Logger, defaultLogger } from "../common/logging";
 import { PackageJson } from "../common/npmPackage";
-import { BrokenCompatTypes, ITypeValidation } from "../common/fluidRepo";
+import { BrokenCompatTypes, ITypeValidationConfig } from "../common/fluidRepo";
 import { existsSync, readJson, writeJson } from "fs-extra";
 import { resolve } from "path";
 
@@ -32,7 +32,7 @@ export type PackageDetails = {
 	readonly oldVersions: readonly string[];
 	readonly broken: BrokenCompatTypes;
 	readonly json: PackageJson;
-	typeValidation: ITypeValidation;
+	typeValidation: ITypeValidationConfig;
 };
 
 function createSortedObject<T>(obj: Record<string, T>): Record<string, T> {
