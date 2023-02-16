@@ -15,6 +15,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build-and-test": "npm run build && npm run test",
 		"build:compile": "concurrently npm:tsc npm:build:copy",
 		"build:copy": "copyfiles \"src/**/test-data/**\" dist --up 1",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
@@ -22,7 +23,6 @@
 		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
 		"build:tsc": "tsc --pretty",
-		"build-and-test": "npm run build && npm run test",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
 		"clean": "rimraf _api-extractor-temp nyc dist *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
