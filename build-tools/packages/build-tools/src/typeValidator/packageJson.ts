@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import child_process from "child_process";
+import { cosmiconfigSync } from "cosmiconfig";
 import * as fs from "fs";
 import minimatch from "minimatch";
 import * as semver from "semver";
@@ -22,15 +23,16 @@ import {
 import { Context } from "../bumpVersion/context";
 import { Logger, defaultLogger } from "../common/logging";
 import { PackageJson } from "../common/npmPackage";
-import { BrokenCompatTypes } from "../common/fluidRepo";
-import { getFluidBuildConfig } from "../common/fluidUtils";
-import { cosmiconfigSync } from "cosmiconfig";
+import { BrokenCompatTypes, ITypeValidation } from "../common/fluidRepo";
+import { existsSync, readJson, writeJson } from "fs-extra";
+import { resolve } from "path";
 
 export type PackageDetails = {
 	readonly packageDir: string;
 	readonly oldVersions: readonly string[];
 	readonly broken: BrokenCompatTypes;
 	readonly json: PackageJson;
+	typeValidation: ITypeValidation;
 };
 
 function createSortedObject<T>(obj: Record<string, T>): Record<string, T> {
@@ -51,29 +53,25 @@ function safeParse(json: string, error: string) {
 }
 
 export async function getPackageDetails(packageDir: string): Promise<PackageDetails> {
-  // try loading from typeValidation node in package.json first
-  const fluidBuildConfig = getFluidBuildConfig(packageDir);
-  let config = fluidBuildConfig?.typeTests
-  if( config === undefined) {
-  const configExplorer = cosmiconfigSync("typeValidation", {
-    searchPlaces: ["typeValidation.config.json", "package.json"],
-    packageProp: "typeValidation",
-  });
-
-  config = configExplorer.search(packageDir)?.config;
-	if (config === undefined) {
-		throw new Error(`Error loading typeValidation config.`);
+	const packagePath = `${packageDir}/package.json`;
+	if (!existsSync(packagePath)) {
+		throw new Error(`Package json does not exist: ${packagePath}`);
 	}
 
-    // const packagePath = `${packageDir}/package.json`;
-    // if (!(await util.promisify(fs.exists)(packagePath))) {
-    //   throw new Error(`Package json does not exist: ${packagePath}`);
-    // }
-    // const content = await util.promisify(fs.readFile)(packagePath);
-    // const pkgJson: PackageJson = safeParse(content.toString(), packagePath);
-  }
+	// try loading from typeValidation.config.json, then fall back to package.json
+	const configExplorer = cosmiconfigSync("typeValidation", {
+		searchPlaces: ["typeValidation.config.json", "package.json"],
+		packageProp: "typeValidation",
+		stopDir: resolve(packageDir),
+	});
 
+	// use load instead of search because we don't want to recurse up the directory tree looking for configs
+	const result =
+		configExplorer.load("package.json") ?? configExplorer.load("typeValidation.config.json");
+	const config = result?.config;
+	console.log(`loaded from: ${result?.filepath}`);
 
+	const pkgJson: PackageJson = await readJson(packagePath);
 	const oldVersions: string[] = Object.keys(pkgJson.devDependencies ?? {}).filter((k) =>
 		k.startsWith(pkgJson.name),
 	);
@@ -82,7 +80,8 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
 		json: pkgJson,
 		packageDir,
 		oldVersions,
-		broken: pkgJson.typeValidation?.broken ?? {},
+		broken: config?.broken ?? pkgJson.typeValidation?.broken ?? {},
+		typeValidation: config,
 	};
 }
 
@@ -355,7 +354,7 @@ export async function getAndUpdatePackageDetails(
 	} else if (packageDetails.json.private === true) {
 		// Private packages aren't published, so no need to do type testing for them.
 		return { skipReason: "Skipping package: private package" };
-	} else if (packageDetails.json.typeValidation?.disabled === true) {
+	} else if (packageDetails.typeValidation.disabled === true) {
 		// Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
 		return { skipReason: "Skipping package: type validation disabled" };
 	}
@@ -371,7 +370,7 @@ export async function getAndUpdatePackageDetails(
 	}
 
 	const version = packageDetails.json.version;
-	const cachedPreviousVersionStyle = packageDetails.json.typeValidation?.previousVersionStyle;
+	const cachedPreviousVersionStyle = packageDetails.typeValidation?.previousVersionStyle;
 	const fluidConfig = pkg.monoRepo?.fluidBuildConfig ?? pkg.fluidBuildConfig;
 	const branch = branchName ?? context.originalBranchName;
 	let releaseType: VersionBumpType | undefined;
@@ -482,25 +481,34 @@ export async function getAndUpdatePackageDetails(
 		packageDetails.json.devDependencies = createSortedObject(
 			packageDetails.json.devDependencies,
 		);
-		const disabled = packageDetails.json.typeValidation?.disabled;
+		const disabled = packageDetails.typeValidation?.disabled;
 
-		packageDetails.json.typeValidation = {
+		packageDetails.typeValidation = {
 			version,
 			previousVersionStyle,
 			baselineRange: baseline,
 			baselineVersion: baseline === prevVersion ? undefined : prevVersion,
-			broken: resetBroken === true ? {} : packageDetails.json.typeValidation?.broken ?? {},
+			broken: resetBroken === true ? {} : packageDetails.typeValidation.broken ?? {},
 		};
 
 		if (disabled !== undefined) {
-			packageDetails.json.typeValidation.disabled = disabled;
+			packageDetails.typeValidation.disabled = disabled;
 		}
 
 		if ((writeUpdates ?? false) === true) {
-			await util.promisify(fs.writeFile)(
-				`${packageDir}/package.json`,
-				JSON.stringify(packageDetails.json, undefined, 2).concat("\n"),
+			await writeJson(
+				`${packageDir}/typeValidation.config.json`,
+				packageDetails.typeValidation,
+				{ spaces: "\t" },
 			);
+
+			if (packageDetails.json.typeValidation !== undefined) {
+				// remove the package.json node; prefer external file
+				delete packageDetails.json.typeValidation;
+				await writeJson(`${packageDir}/package.json`, packageDetails.json, {
+					spaces: "\t",
+				});
+			}
 		}
 	}
 
