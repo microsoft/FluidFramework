@@ -4,14 +4,28 @@
  */
 
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import {
+	IGarbageCollectionNodeData,
+	IGarbageCollectionState,
+} from "@fluidframework/runtime-definitions";
 import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	disableTombstoneKey,
+	GCVersion,
+	IGCMetadata,
 	runSweepKey,
 	throwOnTombstoneLoadKey,
 	throwOnTombstoneUsageKey,
-} from "./garbageCollectionConstants";
+} from "./gcDefinitions";
+
+export function getGCVersion(metadata?: IGCMetadata): GCVersion {
+	if (!metadata) {
+		// Force to 0/disallowed in prior versions
+		return 0;
+	}
+	return metadata.gcFeature ?? 0;
+}
 
 /**
  * Consolidates info / logic for logging when we encounter unexpected usage of GC'd objects. For example, when a
@@ -58,4 +72,15 @@ export function shouldAllowGcTombstoneEnforcement(
 		return true;
 	}
 	return persistedGeneration === currentGeneration;
+}
+
+export function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
+	const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(gcState.gcNodes);
+	sortableArray.sort(([a], [b]) => a.localeCompare(b));
+	const sortedGCState: IGarbageCollectionState = { gcNodes: {} };
+	for (const [nodeId, nodeData] of sortableArray) {
+		nodeData.outboundRoutes.sort();
+		sortedGCState.gcNodes[nodeId] = nodeData;
+	}
+	return sortedGCState;
 }

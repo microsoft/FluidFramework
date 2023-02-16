@@ -3,20 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export {
-	UnreferencedState,
-	UnreferencedStateTracker,
-	GarbageCollector,
-	GCNodeType,
-	IGarbageCollectionRuntime,
-	IGarbageCollector,
-	IGarbageCollectorCreateParams,
-	IGCStats,
-} from "./garbageCollection";
-export {
-	sendGCUnexpectedUsageEvent,
-	shouldAllowGcTombstoneEnforcement,
-} from "./garbageCollectionHelpers";
+export { GarbageCollector } from "./garbageCollection";
+export { sendGCUnexpectedUsageEvent, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
 export {
 	defaultSessionExpiryDurationMs,
 	gcTombstoneGenerationOptionName,
@@ -33,9 +21,18 @@ export {
 	gcVersionUpgradeToV2Key,
 	currentGCVersion,
 	stableGCVersion,
-} from "./garbageCollectionConstants";
+	GCNodeType,
+	GCVersion,
+	IGarbageCollectionRuntime,
+	IGarbageCollector,
+	IGarbageCollectorCreateParams,
+	IGCStats,
+	IGCMetadata,
+	UnreferencedState,
+} from "./gcDefinitions";
 export {
 	skipClosureForXDaysKey,
 	closuresMapLocalStorageKey,
 	SweepReadyUsageDetectionHandler,
 } from "./gcSweepReadyUsageDetection";
+export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
