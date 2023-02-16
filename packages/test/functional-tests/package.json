@@ -71,7 +71,7 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/sequence": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-loader-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/test-loader-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
