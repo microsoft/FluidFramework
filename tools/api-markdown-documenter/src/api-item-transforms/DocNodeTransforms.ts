@@ -194,7 +194,7 @@ function createParagraph(
 	// Note: transformChildren does some of its own cleanup on the initial transformed contents
 	let transformedChildren = transformChildren(children, options);
 
-	// Trim leading and trailing line breaks, which are effectively redudant
+	// Trim leading and trailing line breaks, which are effectively redundant
 	transformedChildren = trimLeadingAndTrailingLineBreaks(transformedChildren);
 
 	// Trim leading whitespace from first child if it is plain text,
