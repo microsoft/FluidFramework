@@ -8,7 +8,7 @@ import {
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -129,6 +129,7 @@ export class DataStores implements IDisposable {
 			timestampMs: number,
 			packagePath?: readonly string[],
 		) => void,
+		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
 	) {
@@ -151,6 +152,7 @@ export class DataStores implements IDisposable {
 		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
+			this.runtime.gcTombstoneEnforcementAllowed &&
 			this.runtime.clientDetails.type !== summarizerClientType;
 
 		// Extract stores stored inside the snapshot
@@ -446,6 +448,8 @@ export class DataStores implements IDisposable {
 	) {
 		const envelope = message.contents as IEnvelope;
 		const transformed = { ...message, contents: envelope.contents };
+		const request = { url: envelope.address };
+		this.validateNotDeleted(envelope.address, request);
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
@@ -464,14 +468,72 @@ export class DataStores implements IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 	): Promise<FluidDataStoreContext> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+		const request = { url: id };
+
+		this.validateNotDeleted(id, request, headerData);
 
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
-		const request = { url: id };
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
 			throw responseToException(create404Response(request), request);
 		}
 
+		this.validateNotTombstoned(context, request, requestHeaderData);
+
+		return context;
+	}
+
+	/**
+	 * Validate that the data store had not been deleted by GC.
+	 *
+	 * @param id - data store id
+	 * @param request - the request information to log if the validation detects the data store has been deleted
+	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been deleted
+	 */
+	private validateNotDeleted(
+		id: string,
+		request: IRequest,
+		requestHeaderData?: RuntimeHeaderData,
+	) {
+		const dataStoreNodePath = `/${id}`;
+		if (this.isDataStoreDeleted(dataStoreNodePath)) {
+			assert(
+				!this.contexts.has(id),
+				0x570 /* Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime. */,
+			);
+			// The requested data store is removed by gc. Create a 404 gc response exception.
+			const error = responseToException(
+				createResponseError(404, "DataStore was deleted", request),
+				request,
+			);
+			sendGCUnexpectedUsageEvent(
+				this.mc,
+				{
+					eventName: "GC_Deleted_DataStore_Requested",
+					category: "error",
+					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+					headers: JSON.stringify(requestHeaderData),
+					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
+				},
+				undefined /** packagePath */,
+				error,
+			);
+			throw error;
+		}
+	}
+
+	/**
+	 * Validates that the data store context requested has not been marked as tombstone by GC.
+	 *
+	 * @param context - the data store context in question
+	 * @param request - the request information to log if the validation detects the data store has been tombstoned
+	 * @param headerData - the request header information to log if the validation detects the data store has been tombstoned
+	 */
+	private validateNotTombstoned(
+		context: FluidDataStoreContext,
+		request: IRequest,
+		headerData: RuntimeHeaderData,
+	) {
 		if (context.tombstoned) {
 			const shouldFail = this.throwOnTombstoneLoad && !headerData.allowTombstone;
 
@@ -488,7 +550,8 @@ export class DataStores implements IDisposable {
 					eventName: "GC_Tombstone_DataStore_Requested",
 					category: shouldFail ? "error" : "generic",
 					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-					headers: JSON.stringify(requestHeaderData),
+					headers: JSON.stringify(headerData),
+					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 				},
 				context.isLoaded ? context.packagePath : undefined,
 				error,
@@ -498,11 +561,11 @@ export class DataStores implements IDisposable {
 				throw error;
 			}
 		}
-
-		return context;
 	}
 
 	public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
+		const request = { url: address };
+		this.validateNotDeleted(address, request);
 		const context = this.contexts.get(address);
 		if (!context) {
 			// Attach message may not have been processed yet
@@ -562,10 +625,11 @@ export class DataStores implements IDisposable {
 		await Promise.all(
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
-					// Summarizer works only with clients with no local changes!
+					// Summarizer works only with clients with no local changes. A data store in attaching
+					// state indicates an op was sent to attach a local data store.
 					assert(
 						context.attachState !== AttachState.Attaching,
-						0x165 /* "Summarizer cannot work if client has local changes" */,
+						"Local data store detected in attaching state during summarize",
 					);
 					return context.attachState === AttachState.Attached;
 				})
@@ -663,8 +727,12 @@ export class DataStores implements IDisposable {
 		await Promise.all(
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
-					// Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
-					// graph so any references they might have won't be connected as well.
+					// Summarizer client and hence GC works only with clients with no local changes. A data store in
+					// attaching state indicates an op was sent to attach a local data store.
+					assert(
+						context.attachState !== AttachState.Attaching,
+						"Local data store detected in attaching state while running GC",
+					);
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
@@ -751,7 +819,7 @@ export class DataStores implements IDisposable {
 			}
 
 			const dataStore = this.contexts.get(dataStoreId);
-			assert(dataStore !== undefined, "Attempting to delete unknown dataStore");
+			assert(dataStore !== undefined, 0x571 /* Attempting to delete unknown dataStore */);
 			dataStore.delete();
 
 			// Delete the contexts of unused data stores.

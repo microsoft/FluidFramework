@@ -274,7 +274,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	public atChunkRoot(): boolean {
 		assert(
 			(this.fieldKey === undefined) === (this.mode === CursorLocationType.Nodes),
-			"expect valid field key",
+			0x560 /* expect valid field key */,
 		);
 		return (
 			this.nodePositionInfo === undefined ||
@@ -302,8 +302,11 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.nodePositionInfo = this.positions[positionIndex];
 		this.positionIndex = positionIndex;
 		if (this.nodePositionInfo === undefined) {
-			assert(positionIndex === 0, "expected root at start");
-			assert(this.mode === CursorLocationType.Fields, "expected root to be a field");
+			assert(positionIndex === 0, 0x561 /* expected root at start */);
+			assert(
+				this.mode === CursorLocationType.Fields,
+				0x562 /* expected root to be a field */,
+			);
 		}
 	}
 
@@ -339,7 +342,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 
 	exitField(): void {
 		assert(this.mode === CursorLocationType.Fields, 0x4c9 /* exitField when in wrong mode */);
-		assert(this.nodePositionInfo !== undefined, "can not exit root field");
+		assert(this.nodePositionInfo !== undefined, 0x563 /* can not exit root field */);
 		this.fieldKey = undefined;
 		this.mode = CursorLocationType.Nodes;
 	}

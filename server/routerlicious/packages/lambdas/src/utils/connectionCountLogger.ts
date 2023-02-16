@@ -11,13 +11,13 @@ export interface IConnectionCountLogger {
      * This function will increment and store total connection count per node and per cluster in Redis, and
      * will also log these counters using ConnectionCountPerNode and TotalConnectionCount metrics respectively.
      */
-    incrementConnectionCount(): Promise<void>;
+    incrementConnectionCount(): void;
 
     /**
      * This function will decrement and store total connection count per node and per cluster in Redis, and
      * will also log these counters using ConnectionCountPerNode and TotalConnectionCount metrics respectively.
      */
-    decrementConnectionCount(): Promise<void>;
+    decrementConnectionCount(): void;
 }
 
 export class ConnectionCountLogger implements IConnectionCountLogger {
@@ -27,7 +27,7 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
         this.perNodeKeyName = `totalConnections_${this.nodeName}`;
     }
 
-    public async incrementConnectionCount(): Promise<void> {
+    public incrementConnectionCount(): void {
         const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
         const totalConnectionCountMetric = Lumberjack.newLumberMetric(LumberEventName.TotalConnectionCount);
         if (!this.cache || !this.cache.incr) {
@@ -53,7 +53,7 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
         });
     }
 
-    public async decrementConnectionCount(): Promise<void> {
+    public decrementConnectionCount(): void {
         const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectionCountPerNode);
         const totalConnectionCountMetric = Lumberjack.newLumberMetric(LumberEventName.TotalConnectionCount);
         if (!this.cache || !this.cache.decr) {

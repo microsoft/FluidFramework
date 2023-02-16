@@ -97,15 +97,39 @@ export interface ICreateContainerMetadata {
 	createContainerTimestamp?: number;
 }
 
+/** @see IGCMetadata.gcFeatureMatrix */
+export interface GCFeatureMatrix {
+	/**
+	 * The Tombstone Generation value in effect when this file was created.
+	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement
+	 * Provided via Container Runtime Options
+	 */
+	tombstoneGeneration?: number;
+}
+
 export type GCVersion = number;
 export interface IGCMetadata {
 	/**
 	 * The version of the GC code that was run to generate the GC data that is written in the summary.
+	 * If the persisted value doesn't match the current value in the code, saved GC data will be discarded and regenerated from scratch.
 	 * Also, used to determine whether GC is enabled for this container or not:
 	 * - A value of 0 or undefined means GC is disabled.
 	 * - A value greater than 0 means GC is enabled.
 	 */
 	readonly gcFeature?: GCVersion;
+
+	/**
+	 * A collection of different numerical "Generations" for different features,
+	 * used to determine feature availability over time.
+	 * This info may come from multiple sources (FF code, config service, app via Container Runtime Options),
+	 * and pertains to aspects of the document that may be fixed for its lifetime.
+	 *
+	 * For each dimension, if the persisted value doesn't match the currently provided value,
+	 * then this file does not support the corresponding feature as currently implemented.
+	 *
+	 * Guidance is that if no value is provided at runtime, it should result in the current default behavior.
+	 */
+	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.

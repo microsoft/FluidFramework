@@ -5,7 +5,6 @@
 
 export {
 	typeSymbol,
-	typeNameSymbol,
 	EditableTree,
 	EditableField,
 	EditableTreeOrPrimitive,
@@ -14,23 +13,13 @@ export {
 	proxyTargetSymbol,
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
-	valueSymbol,
 	indexSymbol,
 	getField,
 	createField,
 	replaceField,
+	parentField,
 } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export {
-	PrimitiveValue,
-	isPrimitiveValue,
-	isPrimitive,
-	getPrimaryField,
-	ContextuallyTypedNodeDataObject,
-	ContextuallyTypedNodeData,
-	MarkedArrayLike,
-	isWritableArrayLike,
-	isContextuallyTypedNodeDataObject,
-} from "./utilities";
+export { isPrimitive } from "./utilities";

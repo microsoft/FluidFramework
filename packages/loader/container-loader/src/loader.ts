@@ -58,6 +58,9 @@ function canUseCache(request: IRequest): boolean {
 	return request.headers[LoaderHeader.cache] !== false;
 }
 
+/**
+ * @deprecated - In the next release RelativeLoader will no longer be exported. It is an internal class that should not be used directly.
+ */
 export class RelativeLoader implements ILoader {
 	constructor(
 		private readonly container: Container,
@@ -457,7 +460,13 @@ export class Loader implements IHostLoader {
 	}
 
 	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
+		return (
+			this.cachingEnabled &&
+			headers[LoaderHeader.cache] !== false &&
+			// LoaderHeader.baseLogger and LoaderHeader.scopeOverride must create a new Container to apply the overrides.
+			headers["fluid-base-logger"] === undefined &&
+			headers["fluid-scope-override"] === undefined
+		);
 	}
 
 	private parseHeader(parsed: IParsedUrl, request: IRequest) {
@@ -496,6 +505,7 @@ export class Loader implements IHostLoader {
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
 				baseLogger: request.headers?.["fluid-base-logger"],
+				scopeOverride: request.headers?.["fluid-scope-override"],
 			},
 			pendingLocalState,
 			this.protocolHandlerBuilder,

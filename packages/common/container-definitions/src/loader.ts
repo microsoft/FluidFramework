@@ -546,7 +546,10 @@ export enum LoaderHeader {
 	version = "version",
 
 	// TODO #AB3350: This is a breaking change; it will be enabled in the "next" branch
-	// baseLogger = "fluid-base-logger"
+	// baseLogger = "fluid-base-logger",
+
+	// TODO #AB???: This is a breaking change; it will be enabled in the "next" branch
+	// scopeOverride = "fluid-scope-override",
 }
 
 export interface IContainerLoadMode {

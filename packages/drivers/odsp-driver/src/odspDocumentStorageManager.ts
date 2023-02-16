@@ -569,14 +569,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		assert(
 			this.odspSummaryUploadManager !== undefined,
-			"summary upload manager should have been initialized",
+			0x56e /* summary upload manager should have been initialized */,
 		);
 		const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
 		return id;
 	}
 
 	private async getDelayLoadedSummaryManager() {
-		assert(this.odspSummaryModuleLoaded === false, "Should be loaded only once");
+		assert(this.odspSummaryModuleLoaded === false, 0x56f /* Should be loaded only once */);
 		const module = await import(
 			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager"
 		)

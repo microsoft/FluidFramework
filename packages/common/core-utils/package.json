@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-utils",
-	"version": "2.0.0-internal.3.1.0",
+	"version": "2.0.0-internal.3.2.0",
 	"description": "Fluid agnostic utility functions with zero-dependencies",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -65,11 +65,11 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/benchmark": "^0.45.0",
-		"@fluid-tools/build-cli": "^0.9.0-127618",
+		"@fluid-tools/build-cli": "^0.9.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.9.0-127618",
+		"@fluidframework/build-tools": "^0.9.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/mocha": "^9.1.1",
