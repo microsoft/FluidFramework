@@ -3107,7 +3107,7 @@ export class ContainerRuntime
 						{
 							ackHandle,
 							summaryRefSeq,
-							latestSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+							fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
 						},
 					);
 					this.closeFn(error);
@@ -3217,7 +3217,7 @@ export class ContainerRuntime
 					versionId,
 					1,
 					"refreshLatestSummaryAckFromServer",
-					versionId === null ? FetchSource.noCache : FetchSource.default,
+					versionId === null ? FetchSource.noCache : undefined,
 				);
 				assert(
 					!!versions && !!versions[0],
