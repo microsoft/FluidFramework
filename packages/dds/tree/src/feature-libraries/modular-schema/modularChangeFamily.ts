@@ -293,8 +293,11 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of changes.change) {
 			const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
 
-			const reviver = (revisionTag: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
-				repairStore.getNodes(revisionTag, path, field, index, count);
+			const reviver = (
+				revisionTag: RevisionTag,
+				index: number,
+				count: number,
+			): Delta.ProtoNode[] => repairStore.getNodes(revisionTag, path, field, index, count);
 
 			const manager = newCrossFieldManager(crossFieldTable);
 			const invertedChange = getChangeHandler(

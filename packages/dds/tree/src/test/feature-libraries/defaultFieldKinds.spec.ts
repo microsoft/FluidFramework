@@ -81,7 +81,7 @@ describe("Value field changesets", () => {
 
 	const detachedBy: RevisionTag = brand(42);
 	const revertChange2: FieldKinds.ValueChangeset = {
-		value: { revert: detachedBy },
+		value: { revert: singleTextCursor(tree1) },
 	};
 
 	const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
@@ -152,6 +152,7 @@ describe("Value field changesets", () => {
 		const inverted = fieldHandler.rebaser.invert(
 			makeAnonChange(change1WithChildChange),
 			childInverter,
+			noRepair,
 			idAllocator,
 			crossFieldManager,
 		);
@@ -206,7 +207,7 @@ describe("Value field changesets", () => {
 			afterShallow: [{ index: 0, setValue: "value3" }],
 		};
 
-		const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1, noRepair);
+		const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
 		assertFieldChangesEqual(delta, expected);
 	});
 
@@ -224,7 +225,7 @@ describe("Value field changesets", () => {
 			assert.equal(count, 1);
 			return [singleTextCursor(tree1)];
 		};
-		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1, repair);
+		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1);
 		assertFieldChangesEqual(actual, expected);
 	});
 
@@ -257,7 +258,7 @@ describe("Optional field changesets", () => {
 
 	const detachedBy: RevisionTag = brand(42);
 	const revertChange2: FieldKinds.OptionalChangeset = {
-		fieldChange: { newContent: { revert: detachedBy }, wasEmpty: false },
+		fieldChange: { newContent: { revert: singleTextCursor(tree1) }, wasEmpty: false },
 	};
 
 	const change2: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), false);
@@ -312,10 +313,18 @@ describe("Optional field changesets", () => {
 			childChange: nodeChange2,
 		};
 
+		const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
+			assert.equal(revision, detachedBy);
+			assert.equal(index, 0);
+			assert.equal(count, 1);
+			return [singleTextCursor(tree1)];
+		};
+
 		assert.deepEqual(
 			fieldHandler.rebaser.invert(
 				makeAnonChange(change1),
 				childInverter,
+				repair,
 				idAllocator,
 				crossFieldManager,
 			),
@@ -373,10 +382,7 @@ describe("Optional field changesets", () => {
 			afterShallow: [{ index: 0, setValue: "value3" }],
 		};
 
-		assertFieldChangesEqual(
-			fieldHandler.intoDelta(change1, deltaFromChild1, noRepair),
-			expected,
-		);
+		assertFieldChangesEqual(fieldHandler.intoDelta(change1, deltaFromChild1), expected);
 	});
 
 	it("can be converted to a delta when replacing content", () => {
@@ -387,10 +393,7 @@ describe("Optional field changesets", () => {
 			],
 		};
 
-		assertFieldChangesEqual(
-			fieldHandler.intoDelta(change2, deltaFromChild1, noRepair),
-			expected,
-		);
+		assertFieldChangesEqual(fieldHandler.intoDelta(change2, deltaFromChild1), expected);
 	});
 
 	it("can be converted to a delta when restoring content", () => {
@@ -407,7 +410,7 @@ describe("Optional field changesets", () => {
 			assert.equal(count, 1);
 			return [singleTextCursor(tree1)];
 		};
-		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1, repair);
+		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1);
 		assertFieldChangesEqual(actual, expected);
 	});
 
@@ -416,10 +419,7 @@ describe("Optional field changesets", () => {
 			beforeShallow: [{ index: 0, setValue: "value4" }],
 		};
 
-		assertFieldChangesEqual(
-			fieldHandler.intoDelta(change4, deltaFromChild2, noRepair),
-			expected,
-		);
+		assertFieldChangesEqual(fieldHandler.intoDelta(change4, deltaFromChild2), expected);
 	});
 
 	it("can be encoded in JSON", () => {

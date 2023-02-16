@@ -88,6 +88,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
+		fakeRepair,
 		() => fail("Sequence fields should not generate IDs during invert"),
 		table,
 	);
@@ -113,7 +114,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.FieldChanges {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {

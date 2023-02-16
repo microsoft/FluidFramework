@@ -96,7 +96,7 @@ type IdChangeset = ChangesetLocalId;
 
 const idFieldRebaser: FieldChangeRebaser<IdChangeset> = {
 	compose: (changes, composeChild, genId): IdChangeset => genId(),
-	invert: (change, invertChild, genId): IdChangeset => genId(),
+	invert: (change, invertChild, reviver, genId): IdChangeset => genId(),
 	rebase: (change, over, rebaseChild, genId): IdChangeset => genId(),
 	amendCompose: () => fail("Not supported"),
 	amendInvert: () => fail("Not supported"),
@@ -305,7 +305,7 @@ const nodeValueRevert: ModularChangeset = {
 				fieldKind: genericFieldKind.identifier,
 				change: brand(
 					genericFieldKind.changeHandler.editor.buildChildChange(0, {
-						valueChange: { revert: detachedBy },
+						valueChange: { revert: testValue },
 					}),
 				),
 			},
@@ -744,7 +744,7 @@ describe("ModularChangeFamily", () => {
 					return testValue;
 				},
 			};
-			const actual = family.intoDelta(nodeValueRevert, repair);
+			const actual = family.intoDelta(nodeValueRevert);
 			assertDeltaEqual(actual, expectedDelta);
 		});
 	});

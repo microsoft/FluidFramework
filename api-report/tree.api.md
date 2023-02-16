@@ -329,7 +329,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     encoder: FieldChangeEncoder<TChangeset>;
     // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.FieldChanges;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.FieldChanges;
     // (undocumented)
     rebaser: FieldChangeRebaser<TChangeset>;
     // (undocumented)
@@ -349,7 +349,7 @@ export interface FieldChangeRebaser<TChangeset> {
     amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     // (undocumented)
-    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
 }
 
@@ -736,9 +736,9 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
     // (undocumented)
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
     // (undocumented)
-    intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root;
+    intoDelta(change: ModularChangeset): Delta.Root;
     // (undocumented)
-    invert(change: TaggedChange<ModularChangeset>): ModularChangeset;
+    invert(change: TaggedChange<ModularChangeset>, repairStore?: ReadonlyRepairDataStore): ModularChangeset;
     // (undocumented)
     rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset;
     // (undocumented)
@@ -1147,7 +1147,7 @@ export type ValueChange = {
     value?: Value;
 } | {
     revision?: RevisionTag;
-    revert: RevisionTag | undefined;
+    revert: Value;
 };
 
 // @alpha (undocumented)

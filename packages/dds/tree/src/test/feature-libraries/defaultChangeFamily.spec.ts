@@ -95,7 +95,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		(change) => {
 			const revision: RevisionTag = brand(currentRevision);
 			changes.push({ revision, change });
-			const delta = defaultChangeFamily.intoDelta(change, repairStore);
+			const delta = defaultChangeFamily.intoDelta(change);
 			repairStore.capture(delta, revision);
 			deltas.push(delta);
 			forest.applyDelta(delta);
