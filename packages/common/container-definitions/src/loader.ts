@@ -87,8 +87,13 @@ export interface IFluidCodeResolver {
 
 /**
  * Code AllowListing Interface
+ *
+ * @deprecated Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
  */
 export interface ICodeAllowList {
+	/**
+	 * @deprecated Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
+	 */
 	testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 

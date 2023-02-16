@@ -5,14 +5,35 @@
 
 import { IFluidPackage, IFluidPackageEnvironment } from "@fluidframework/container-definitions";
 
+/**
+ * @deprecated Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+ */
 export interface IPackageIdentifierDetails {
+	/**
+	 * @deprecated Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly fullId: string;
+	/**
+	 * @deprecated Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly nameAndVersion: string;
+	/**
+	 * @deprecated Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly name: string;
+	/**
+	 * @deprecated Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly version: string | undefined;
+	/**
+	 * @deprecated Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly scope: string;
 }
 
+/**
+ * @deprecated Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+ */
 export function extractPackageIdentifierDetails(
 	codeDetailsPackage: string | IFluidPackage,
 ): IPackageIdentifierDetails {
@@ -56,6 +77,9 @@ export function extractPackageIdentifierDetails(
 	};
 }
 
+/**
+ * @deprecated Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+ */
 export function resolveFluidPackageEnvironment(
 	environment: IFluidPackageEnvironment,
 	baseUrl: string,
