@@ -64,7 +64,7 @@ import {
 	IGCMetadata,
 	ICreateContainerMetadata,
 	GCFeatureMatrix,
-} from "../summaryFormat";
+} from "../summary";
 import {
 	currentGCVersion,
 	defaultInactiveTimeoutMs,

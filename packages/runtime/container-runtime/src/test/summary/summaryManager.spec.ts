@@ -15,25 +15,26 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
+import { DefaultSummaryConfiguration } from "../../containerRuntime";
 import {
 	IConnectedEvents,
 	IConnectedState,
 	ISummaryManagerConfig,
 	SummaryManager,
 	SummaryManagerState,
-} from "../summaryManager";
-import { Summarizer } from "../summarizer";
-import { DefaultSummaryConfiguration } from "../containerRuntime";
-import { ISummarizer, ISummarizerEvents, SummarizerStopReason } from "../summarizerTypes";
-import {
+	Summarizer,
+	ISummarizer,
+	ISummarizerEvents,
+	SummarizerStopReason,
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
-} from "../summarizerClientElection";
-import { RunningSummarizer } from "../runningSummarizer";
-import { SummarizeHeuristicData } from "../summarizerHeuristics";
-import { SummaryCollection, ISummaryOpMessage } from "../summaryCollection";
-import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
-import { ISummarizerRuntime } from "..";
+	RunningSummarizer,
+	SummarizeHeuristicData,
+	SummaryCollection,
+	ISummaryOpMessage,
+	neverCancelledSummaryToken,
+	ISummarizerRuntime,
+} from "../../summary";
 
 class MockRuntime {
 	constructor(

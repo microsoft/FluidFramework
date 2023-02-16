@@ -110,8 +110,6 @@ import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/ga
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { Summarizer } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
 import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -127,16 +125,15 @@ import {
 	ICreateContainerMetadata,
 	ISummaryMetadataMessage,
 	metadataBlobName,
+	Summarizer,
+	SummaryManager,
 	wrapSummaryInChannelsTree,
-} from "./summaryFormat";
-import { SummaryCollection } from "./summaryCollection";
-import {
+	SummaryCollection,
 	ISerializedElection,
 	OrderedClientCollection,
 	OrderedClientElection,
-} from "./orderedClientElection";
-import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
-import {
+	SummarizerClientElection,
+	summarizerClientType,
 	SubmitSummaryResult,
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
@@ -145,9 +142,9 @@ import {
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	IRefreshSummaryAckOptions,
-} from "./summarizerTypes";
+	RunWhileConnectedCoordinator,
+} from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
-import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
 	GarbageCollector,
 	GCNodeType,
