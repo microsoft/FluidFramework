@@ -67,7 +67,7 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
 
 	// use load instead of search because we don't want to recurse up the directory tree looking for configs
 	const result =
-		configExplorer.load("package.json") ?? configExplorer.load("typeValidation.config.json");
+		configExplorer.load("typeValidation.config.json") ?? configExplorer.load("package.json");
 	const config = result?.config;
 	console.log(`loaded from: ${result?.filepath}`);
 
