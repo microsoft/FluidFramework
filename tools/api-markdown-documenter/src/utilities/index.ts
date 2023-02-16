@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// TODO: fix before merging
+// This directory strictly contains utilities for use elsewhere in the package.
+// We want to export everything.
 /* eslint-disable no-restricted-syntax */
 
 export * from "./ApiItemUtilities";

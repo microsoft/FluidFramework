@@ -43,14 +43,28 @@ export { createDocuments, renderFiles } from "./MarkdownDocumenter";
 
 export * from "./utilities";
 
-export * from "./Configuration";
-export * from "./Heading";
-export * from "./Link";
-export * from "./LoadModel";
-export * from "./Logging";
-export * from "./Policies";
+/* eslint-enable no-restricted-syntax */
+
+export {
+	MarkdownDocumenterConfiguration,
+	markdownDocumenterConfigurationWithDefaults,
+} from "./Configuration";
+export { Heading } from "./Heading";
+export { Link, UrlTarget } from "./Link";
+export { loadModel } from "./LoadModel";
+export { defaultConsoleLogger, LoggingFunction, Logger, verboseConsoleLogger } from "./Logging";
+export {
+	DefaultPolicies,
+	defaultPolicyOptions,
+	DocumentBoundaries,
+	FileNamePolicy,
+	HeadingTitlePolicy,
+	HierarchyBoundaries,
+	LinkTextPolicy,
+	PackageFilterPolicy,
+	PolicyOptions,
+	UriBaseOverridePolicy,
+} from "./Policies";
 
 // Conveinence re-exports of API model types
 export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
-
-/* eslint-enable no-restricted-syntax */
