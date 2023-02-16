@@ -13,10 +13,6 @@ parameters:
 - name: artifactPipeline
   type: string
 
-- name: env
-  type: object
-  default:
-
 # Custom steps specified by the "caller" of this template, to actually run perf tests
 - name: customSteps
   type: stepList
