@@ -35,7 +35,7 @@
 		"prettier:fix": "prettier --write .",
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:coverage": "nyc npm test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --reporter-option maxDiffSize=100000",
 		"tsc": "tsc"
 	},
