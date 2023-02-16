@@ -33,21 +33,16 @@ import type { Parent } from 'unist';
 
 // @public
 export enum AlertKind {
-    // (undocumented)
     Danger = "Danger",
-    // (undocumented)
     Important = "Important",
-    // (undocumented)
     Note = "Note",
-    // (undocumented)
     Tip = "Tip",
-    // (undocumented)
     Warning = "Warning"
 }
 
 // Warning: (ae-forgotten-export) The symbol "ParentNodeBase" needs to be exported by the entry point index.d.ts
 //
-// @public (undocumented)
+// @public
 export class AlertNode extends ParentNodeBase {
     constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string);
     readonly alertKind: AlertKind;
@@ -241,7 +236,7 @@ export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries:
 // @public
 export type FencedCodeBlockChildren = LineBreakNode | SingleLineElementNode;
 
-// @public (undocumented)
+// @public
 export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren> {
     constructor(children: FencedCodeBlockChildren[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
@@ -316,7 +311,7 @@ export interface Heading {
     readonly title: string;
 }
 
-// @public (undocumented)
+// @public
 export class HeadingNode extends ParentNodeBase<SingleLineElementNode> implements Omit<Heading, "title"> {
     constructor(content: SingleLineElementNode[], id?: string);
     static createFromPlainText(text: string, id?: string): HeadingNode;
@@ -355,7 +350,6 @@ export function isStatic(apiItem: ApiItem): boolean;
 // @public
 export class LineBreakNode implements DocumentationNode {
     constructor();
-    // (undocumented)
     static readonly Singleton: LineBreakNode;
     readonly type = DocumentationNodeType.LineBreak;
 }
@@ -366,7 +360,7 @@ export interface Link {
     readonly text: string;
 }
 
-// @public (undocumented)
+// @public
 export class LinkNode extends ParentNodeBase<SingleLineElementNode> implements SingleLineElementNode, Omit<Link, "text"> {
     constructor(content: SingleLineElementNode[], target: UrlTarget);
     static createFromPlainText(text: string, target: UrlTarget): LinkNode;
@@ -420,7 +414,7 @@ export interface MarkdownRenderContext extends TextFormatting {
     renderers: DocumentationNodeRenderers;
 }
 
-// @public (undocumented)
+// @public
 export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
     constructor(children: SingleLineElementNode[]);
     // (undocumented)
@@ -432,10 +426,10 @@ export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
 // @public
 export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 
-// @public (undocumented)
+// @public
 export type ParagraphChildren = LineBreakNode | SingleLineElementNode | SpanNode<LineBreakNode | SingleLineElementNode>;
 
-// @public (undocumented)
+// @public
 export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
     constructor(children: ParagraphChildren[]);
     static combine(...nodes: ParagraphNode[]): ParagraphNode;
@@ -498,7 +492,7 @@ export class SectionNode extends ParentNodeBase {
 // @public
 export type SingleLineElementNode = DocumentationNode;
 
-// @public (undocumented)
+// @public
 export class SpanNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends ParentNodeBase<TDocumentationNode> {
     constructor(children: TDocumentationNode[], formatting?: TextFormatting);
     static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
@@ -508,7 +502,7 @@ export class SpanNode<TDocumentationNode extends DocumentationNode = Documentati
     readonly type = DocumentationNodeType.Span;
 }
 
-// @public (undocumented)
+// @public
 export class TableCellNode extends ParentNodeBase {
     constructor(children: DocumentationNode[]);
     static createFromPlainText(text: string): TableCellNode;
@@ -516,7 +510,7 @@ export class TableCellNode extends ParentNodeBase {
     readonly type = DocumentationNodeType.TableCell;
 }
 
-// @public (undocumented)
+// @public
 export class TableNode extends ParentNodeBase<TableRowNode> {
     constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode);
     static readonly Empty: TableNode;
@@ -525,7 +519,7 @@ export class TableNode extends ParentNodeBase<TableRowNode> {
     readonly type = DocumentationNodeType.Table;
 }
 
-// @public (undocumented)
+// @public
 export class TableRowNode extends ParentNodeBase<TableCellNode> {
     constructor(cells: TableCellNode[]);
     static readonly Empty: TableRowNode;
@@ -548,7 +542,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: T
 // @public
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
 
-// @public (undocumented)
+// @public
 export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
     constructor(children: SingleLineElementNode[]);
     // (undocumented)

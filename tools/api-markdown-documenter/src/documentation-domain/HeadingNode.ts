@@ -7,6 +7,25 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
+/**
+ * A document heading.
+ *
+ * @remarks
+ *
+ * Heading level is determined by the position in the document in terms of {@link SectionNode} hierarchy.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * # Documentation 101
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <h1>Documentation 101</h1>
+ * ```
+ */
 export class HeadingNode
 	extends ParentNodeBase<SingleLineElementNode>
 	implements Omit<Heading, "title">

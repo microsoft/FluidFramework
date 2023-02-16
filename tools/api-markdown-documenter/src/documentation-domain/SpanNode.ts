@@ -7,6 +7,31 @@ import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./Docu
 import { TextFormatting } from "./TextFormatting";
 import { createNodesFromPlainText } from "./Utilities";
 
+/**
+ * A grouping of text, potentially spanning multiple lines, which may have some {@link TextFormatting}.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * _**Some content with formatting...**_
+ *
+ * **_Some more text with the same formatting...**_
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <span>
+ * 	<i>
+ * 		<b>
+ * 			Some content...
+ *			<br>
+ * 			Some more content...
+ * 		</b>
+ * 	</i>
+ * </span>
+ * ```
+ */
 export class SpanNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
 > extends ParentNodeBase<TDocumentationNode> {

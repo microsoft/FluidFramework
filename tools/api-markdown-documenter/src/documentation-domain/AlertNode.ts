@@ -7,19 +7,65 @@ import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { createNodesFromPlainText } from "./Utilities";
 
 // TODOs:
-// - Document each alert kind
+// - Does this belong here? Since it has no Markdown or HTML correlary, this might be better left as
+//   a custom behavior used by FluidFramework's website.
+//   It is currently only used for `beta` and `deprecated` notices, which could be made extensibility
+//   points of the library.
 
 /**
  * Kind of alert.
  */
 export enum AlertKind {
+	/**
+	 * A suggestion or useful tip for the reader.
+	 */
 	Tip = "Tip",
+
+	/**
+	 * A general note for the user.
+	 */
 	Note = "Note",
+
+	/**
+	 * An important note for the user.
+	 */
 	Important = "Important",
+
+	/**
+	 * A precautionary warning for the user.
+	 */
 	Warning = "Warning",
+
+	/**
+	 * A serious precautionary warning for the user.
+	 */
 	Danger = "Danger",
 }
 
+/**
+ * An highlighted notice about nearby content for the user.
+ *
+ * @remarks See {@link AlertKind} for a list of supported alert kinds.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * > [TIP]: Unit tests are super useful!
+ * >
+ * > More details about unit tests...
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <blockquote>
+ * 	<b>[TIP]: Unit tests are super useful!</b>
+ * 	<br>
+ * 	<br>
+ * 	More details about unit tests...
+ * </blockquote>
+ * ```
+ */
 export class AlertNode extends ParentNodeBase {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}

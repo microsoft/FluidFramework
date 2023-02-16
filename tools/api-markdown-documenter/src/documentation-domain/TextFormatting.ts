@@ -21,7 +21,4 @@ export interface TextFormatting {
 	 * @defaultValue Inherit
 	 */
 	readonly strikethrough?: boolean;
-
-	// TODO: underline?
-	// TODO: what else?
 }

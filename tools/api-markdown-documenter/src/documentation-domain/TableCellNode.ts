@@ -6,6 +6,26 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { createNodesFromPlainText } from "./Utilities";
 
+/**
+ * A cell within a table.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * | I'm in a table cell! |
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <td>I'm in a table cell!</td>
+ * ```
+ *
+ * @see
+ *
+ * - {@link TableNode}
+ * - {@link TableRowNode}
+ */
 export class TableCellNode extends ParentNodeBase {
 	/**
 	 * Static singleton representing an empty Plain Text node.

@@ -7,8 +7,29 @@ import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 // TODOs:
-// - Do we support a special input for doing nested sub-lists?
+// - Add support for nested lists
 
+/**
+ * An ordered (numbered) list of child contents.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * 1. Foo
+ * 2. Bar
+ * 3. Baz
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <ol>
+ * 	<li>Foo</li>
+ * 	<li>Bar</li>
+ * 	<li>Baz</li>
+ * </ol>
+ * ```
+ */
 export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
 	/**
 	 * Static singleton representing an empty Ordered List node.

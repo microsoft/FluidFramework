@@ -8,11 +8,38 @@ import { LineBreakNode } from "./LineBreakNode";
 import { SpanNode } from "./SpanNode";
 import { createNodesFromPlainText } from "./Utilities";
 
+/**
+ * Child node kinds supported by {@link ParagraphNode}.
+ */
 export type ParagraphChildren =
 	| LineBreakNode
 	| SingleLineElementNode
 	| SpanNode<LineBreakNode | SingleLineElementNode>;
 
+/**
+ * A grouping of text content, potentially spanning multiple lines.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * Some content...
+ *
+ * Some more content...
+ *
+ * ```
+ *
+ * Note that a paragraph in Markdown will always include a trailing newline.
+ *
+ * @example HTML
+ *
+ * ```html
+ * <p>
+ * 	Some content...
+ *
+ * 	Some more content...
+ * </p>
+ * ```
+ */
 export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
 	/**
 	 * Static singleton representing an empty Paragraph node.

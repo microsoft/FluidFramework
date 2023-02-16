@@ -9,6 +9,26 @@ import { TableRowNode } from "./TableRowNode";
 // TODOs:
 // - Support alignment properties in Table, TableRow and TableCell (inherit pattern for resolution)
 
+/**
+ * TODO
+ *
+ * @example Markdown
+ *
+ * ```md
+ *
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ *
+ * ```
+ *
+ * @see
+ *
+ * - {@link TableCellNode}
+ * - {@link TableRowNode}
+ */
 export class TableNode extends ParentNodeBase<TableRowNode> {
 	/**
 	 * Static singleton representing an empty Table node.

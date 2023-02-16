@@ -41,8 +41,10 @@ export interface DocumentNodeProps {
 /**
  * Represents the root of a document.
  *
- * @remarks Note that this node is special. It forms the root of a Documentation tree,
- * and cannot be parented under other Documentation nodes.
+ * @remarks
+ *
+ * Note that this node is special.
+ * It forms the root of a Documentation tree, and cannot be parented under other {@link DocumentationNode}s.
  */
 export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProps {
 	/**

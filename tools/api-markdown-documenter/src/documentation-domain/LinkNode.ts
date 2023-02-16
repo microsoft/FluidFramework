@@ -7,6 +7,21 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
+/**
+ * A hyperlink to some other content.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * [Fluid Framework](https://fluidframework.com/)
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <a href="https://fluidframework.com/">Fluid Framework</a>
+ * ```
+ */
 export class LinkNode
 	extends ParentNodeBase<SingleLineElementNode>
 	implements SingleLineElementNode, Omit<Link, "text">

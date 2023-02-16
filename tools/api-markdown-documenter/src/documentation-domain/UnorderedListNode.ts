@@ -7,8 +7,29 @@ import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 // TODOs:
-// - Do we support a special input for doing nested sub-lists?
+// - Support for nested lists
 
+/**
+ * An unordered (bulleted) list.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * - Foo
+ * - Bar
+ * - Baz
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <ul>
+ * 	<li>Foo</li>
+ * 	<li>Bar</li>
+ * 	<li>Baz</li>
+ * </ul>
+ * ```
+ */
 export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
 	/**
 	 * Static singleton representing an empty Unordered List node.

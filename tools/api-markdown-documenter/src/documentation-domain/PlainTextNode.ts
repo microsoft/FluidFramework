@@ -11,7 +11,9 @@ import { LiteralNode, SingleLineElementNode } from "./DocumentionNode";
  * @remarks
  *
  * Must not contain any line breaks.
- * To include line breaks in your text, see {@link LineBreakNode}.
+ *
+ * To include line breaks in your text, use {@link LineBreakNode} in a container node like
+ * {@link SpanNode} or {@link ParagraphNode}.
  */
 export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode {
 	/**

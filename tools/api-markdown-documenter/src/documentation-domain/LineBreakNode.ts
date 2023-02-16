@@ -6,7 +6,14 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
 
 /**
- * Represents a line break in a document.
+ * An explicit line break in a document.
+ *
+ * @remarks
+ *
+ * Note that {@link PlainTextNode} does not support line breaks.
+ *
+ * To build up a grouping of text including line breaks, use this type alongside text nodes within a
+ * container type like {@link ParagraphNode} or {@link SpanNode}.
  */
 export class LineBreakNode implements DocumentationNode {
 	/**
@@ -14,7 +21,9 @@ export class LineBreakNode implements DocumentationNode {
 	 */
 	public readonly type = DocumentationNodeType.LineBreak;
 
-	// TODO: do we want this? What should it be called?
+	/**
+	 * Static `LineBreakNode` singleton.
+	 */
 	public static readonly Singleton = new LineBreakNode();
 
 	public constructor() {}
