@@ -117,7 +117,7 @@ export const GCNodeType = {
 	// Nodes that are neither of the above. For example, root node.
 	Other: "Other",
 };
-export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
+export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
 export interface IGarbageCollectionRuntime {
@@ -222,7 +222,7 @@ export const UnreferencedState = {
 	/** The node is ready to be deleted by the sweep phase. */
 	SweepReady: "SweepReady",
 } as const;
-export type UnreferencedState = (typeof UnreferencedState)[keyof typeof UnreferencedState];
+export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEventProps {
@@ -996,7 +996,7 @@ export class GarbageCollector implements IGarbageCollector {
 		 * sweep in phases and we want to track when inactive and sweep ready objects are used in any client.
 		 */
 		if (this.activeConnection() && this.shouldRunGC) {
-			this.initializeGCStateFromBaseSnapshotP.catch((error) => {});
+			this.initializeGCStateFromBaseSnapshotP.catch((error) => { });
 		}
 	}
 
@@ -1019,8 +1019,8 @@ export class GarbageCollector implements IGarbageCollector {
 			options.fullGC ?? (this.gcOptions.runFullGC === true || this.summaryStateNeedsReset);
 		const logger = options.logger
 			? ChildLogger.create(options.logger, undefined, {
-					all: { completedGCRuns: () => this.completedRuns },
-			  })
+				all: { completedGCRuns: () => this.completedRuns },
+			})
 			: this.mc.logger;
 
 		/**
