@@ -24,7 +24,7 @@
 		"build:tsc": "tsc --pretty",
 		"build-and-test": "npm run build && npm run test",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
-		"clean": "rimraf _api-extractor-temp .nyc_output dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf _api-extractor-temp nyc dist *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -43,8 +43,8 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/**/test/**/*.ts",
+			"dist/**/test/**/*.js"
 		],
 		"exclude-after-remap": false,
 		"include": [
