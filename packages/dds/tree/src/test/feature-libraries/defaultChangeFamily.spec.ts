@@ -15,6 +15,7 @@ import {
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
+	ReadonlyRepairDataStore,
 	RevisionTag,
 	rootFieldKeySymbol,
 	TaggedChange,
@@ -72,6 +73,7 @@ function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 function initializeEditableForest(data?: JsonableTree): {
 	forest: IForestSubscription;
 	builder: DefaultEditBuilder;
+	repairStore: ReadonlyRepairDataStore;
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 } {
@@ -106,6 +108,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	return {
 		forest,
 		builder,
+		repairStore,
 		changes,
 		deltas,
 	};
@@ -147,7 +150,7 @@ describe("DefaultEditBuilder", () => {
 	});
 
 	it("Allows repair data to flow in and out of the repair store", () => {
-		const { builder, deltas, changes, forest } = initializeEditableForest({
+		const { builder, repairStore, changes, forest } = initializeEditableForest({
 			type: jsonNumber.name,
 			value: 41,
 		});
@@ -156,7 +159,7 @@ describe("DefaultEditBuilder", () => {
 		expectForest(forest, { type: jsonNumber.name, value: 42 });
 
 		const change = changes[0];
-		const inverse = family.rebaser.invert(change);
+		const inverse = family.rebaser.invert(change, repairStore);
 		builder.apply(inverse);
 		expectForest(forest, { type: jsonNumber.name, value: 41 });
 	});
