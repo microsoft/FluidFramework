@@ -108,11 +108,11 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 		logger =
 			process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined
 				? await createLogger({
-					runId: undefined,
-					driverType: provider.driver.type,
-					driverEndpointName: provider.driver.endpointName,
-					profile: "",
-				})
+						runId: undefined,
+						driverType: provider.driver.type,
+						driverEndpointName: provider.driver.endpointName,
+						profile: "",
+				  })
 				: undefined;
 
 		testConfig = {
@@ -155,7 +155,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 			title = "Generate summary tree 10Mb document";
 			dataObject2map: SharedMap | undefined;
 			container2: IContainer | undefined;
-			summarizerClient2: { container: IContainer, summarizer: ISummarizer } | undefined;
+			summarizerClient2: { container: IContainer; summarizer: ISummarizer } | undefined;
 			async run() {
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
@@ -174,7 +174,10 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 					this.container2,
 					summaryVersion,
 				);
-				assert(this.summarizerClient2 !== undefined, "summarizerClient2 needs to be defined.");
+				assert(
+					this.summarizerClient2 !== undefined,
+					"summarizerClient2 needs to be defined.",
+				);
 			}
 			beforeIteration() {
 				this.dataObject2map = undefined;
@@ -182,6 +185,5 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 				this.summarizerClient2 = undefined;
 			}
 		})(),
-
 	);
 });
