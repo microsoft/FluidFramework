@@ -3,19 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { fieldSchema, Named, TreeSchemaIdentifier, ValueSchema } from "../../../core";
+import { Named, TreeSchemaIdentifier, ValueSchema } from "../../../core";
 import { brand } from "../../../util";
 import { forbidden } from "../../defaultFieldKinds";
 import { namedTreeSchema } from "../../viewSchemaUtil";
 import { FieldKind } from "../fieldKind";
 import {
 	FieldSchemaTypeInfo,
-	LabeledFieldSchema,
 	LabeledTreeSchema,
 	MapToken,
 	TreeSchemaTypeInfo,
 } from "./outputTypes";
-import { AsNames, ListToKeys, WithDefault } from "./typeUtils";
+import {
+	ArrayToSet,
+	ArrayToUnion,
+	AsBrandedNames,
+	AsNames,
+	ListToKeys,
+	WithDefault,
+} from "./typeUtils";
 
 /**
  * APIs for building typescript types and schema together.
@@ -27,9 +33,9 @@ import { AsNames, ListToKeys, WithDefault } from "./typeUtils";
  */
 export interface TypedTreeSchemaBuilder {
 	readonly name: string;
-	readonly local?: { readonly [key: string]: LabeledFieldSchema<any> };
+	readonly local?: { readonly [key: string]: FieldSchemaTypeInfo };
 	readonly global?: readonly (string | Named<string>)[];
-	readonly extraLocalFields?: LabeledFieldSchema<any>;
+	readonly extraLocalFields?: FieldSchemaTypeInfo;
 	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
 }
@@ -47,13 +53,11 @@ type EmptyStringArray = typeof empty & readonly string[];
 
 type EmptyObject = Readonly<Record<string, never>>;
 
-export const typedEmptyLocalField = typedFieldSchema(forbidden, []);
-
 export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
 	readonly name: T["name"] & TreeSchemaIdentifier;
 	readonly local: WithDefault<T["local"], EmptyObject>;
 	readonly global: ProcessNames<WithDefault<T["global"], EmptyStringArray>>;
-	readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof typedEmptyLocalField>;
+	readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof emptyField>;
 	readonly extraGlobalFields: WithDefault<T["extraGlobalFields"], false>;
 	readonly value: WithDefault<T["value"], ValueSchema.Nothing>;
 }
@@ -85,19 +89,35 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
  */
 export function typedFieldSchema<
 	TKind extends FieldKind,
-	TTypes extends undefined | readonly (string | Named<string>)[],
+	TTypes extends readonly (string | Named<TreeSchemaIdentifier>)[],
 >(
 	kind: TKind,
-	types?: TTypes,
-): LabeledFieldSchema<FieldInfoFromBuilder<{ kind: TKind; types: TTypes }>> {
-	return fieldSchema(
-		kind,
-		types === undefined ? undefined : (extractNames(types) as TreeSchemaIdentifier[]),
-	);
+	...typeArray: TTypes
+): { kind: TKind; types: ArrayToSet<AsBrandedNames<TTypes, TreeSchemaIdentifier>> } {
+	const typeNames: Iterable<ArrayToUnion<AsBrandedNames<TTypes, TreeSchemaIdentifier>>> =
+		extractNames(typeArray);
+	const types: ArrayToSet<AsBrandedNames<TTypes, TreeSchemaIdentifier>> = new Set<
+		ArrayToUnion<AsBrandedNames<TTypes, TreeSchemaIdentifier>>
+	>(typeNames);
+	return { kind, types };
 }
 
-function extractNames(items: readonly (string | Named<string>)[]): readonly string[] {
-	return items.map((item) => (typeof item === "string" ? item : item.name));
+/**
+ * Builds a FieldSchema with the type information also captured in the
+ * typescript type to allow for deriving schema aware APIs.
+ *
+ * For fields with unrestricted polymorphism (meaning all child types are allowed).
+ */
+export function unrestrictedFieldSchema<TKind extends FieldKind>(kind: TKind): { kind: TKind } {
+	return { kind };
+}
+
+function extractNames<T extends readonly (string | Named<string>)[]>(
+	items: T,
+): AsNames<T> & Iterable<ArrayToUnion<AsNames<T>>> {
+	return items.map((item) =>
+		typeof item === "string" ? item : item.name,
+	) as unknown as AsNames<T> & Iterable<ArrayToUnion<AsNames<T>>>;
 }
 
 /**
@@ -109,16 +129,6 @@ export function typedTreeSchemaFromInfo<T extends TreeSchemaTypeInfo>(t: T): Lab
 }
 
 /**
- * Builds a FieldSchema with the type information also captured in the
- * typescript type to allow for deriving schema aware APIs.
- */
-export function typedFieldSchemaFromInfo<T extends FieldSchemaTypeInfo>(
-	t: T,
-): LabeledFieldSchema<T> {
-	return fieldSchema(t.kind, [...Object.keys(t.types as object)] as TreeSchemaIdentifier[]);
-}
-
-/**
  * Returns the `TreeSchemaTypeInfo` associated with `T`.
  */
 export type TypeInfo<T extends LabeledTreeSchema<any>> = T extends LabeledTreeSchema<infer R>
@@ -126,22 +136,9 @@ export type TypeInfo<T extends LabeledTreeSchema<any>> = T extends LabeledTreeSc
 	: InferError;
 
 /**
- * Version of `FieldInfo` with strong input type requirements for use in generic code.
- */
-export type FieldInfoGeneric<T extends LabeledFieldSchema<FieldSchemaTypeInfo>> =
-	T extends LabeledFieldSchema<infer R> ? R : never;
-
-/**
- * Returns the `FieldSchemaTypeInfo` associated with `T`.
- */
-export type FieldInfo<T extends LabeledFieldSchema<any>> = T extends LabeledFieldSchema<infer R>
-	? R
-	: InferError;
-
-/**
  * Schema for a field which must always be empty.
  */
-export const emptyField = typedFieldSchema(forbidden, []);
+export const emptyField = typedFieldSchema(forbidden);
 
 /**
  * Placeholder used for errors inferring types.

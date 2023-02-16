@@ -25,9 +25,9 @@ import { ObjectToMap } from "./typeUtils";
  */
 export interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
 	readonly name: TreeSchemaIdentifier;
-	readonly local: { readonly [key: string]: LabeledFieldSchema<any> };
+	readonly local: { readonly [key: string]: FieldSchemaTypeInfo<any> };
 	readonly global: { readonly [key: string]: MapToken };
-	readonly extraLocalFields: LabeledFieldSchema<any>;
+	readonly extraLocalFields: FieldSchemaTypeInfo<any>;
 	readonly extraGlobalFields: boolean;
 	readonly value: ValueSchema;
 }
@@ -35,9 +35,8 @@ export interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
 /**
  * Object for capturing information about a FieldSchema for use at both compile time and runtime.
  */
-export interface FieldSchemaTypeInfo {
-	readonly kind: FieldKind;
-	readonly types?: { readonly [key: string]: MapToken };
+export interface FieldSchemaTypeInfo<TKind extends FieldKind = FieldKind> extends FieldSchema {
+	readonly kind: TKind;
 }
 
 /**
@@ -48,13 +47,6 @@ export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTr
 
 	// Allow reading localFields through the normal map, but without losing type information.
 	readonly localFields: ObjectToMap<T["local"], LocalFieldKey, FieldSchema>;
-}
-
-/**
- * FieldSchema extended with extra type information for use at compile time.
- */
-export interface LabeledFieldSchema<T extends FieldSchemaTypeInfo> extends FieldSchema {
-	readonly typeCheck?: Invariant<T>;
 }
 
 /**

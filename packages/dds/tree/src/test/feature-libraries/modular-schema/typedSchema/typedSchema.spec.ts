@@ -8,12 +8,10 @@
 import {
 	typedTreeSchema,
 	typedFieldSchema,
-	FieldInfo,
 	TypeInfo,
 	typedTreeSchemaFromInfo,
 	TreeInfoFromBuilder,
 	emptyField,
-	typedFieldSchemaFromInfo,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema/typedSchema";
@@ -21,8 +19,11 @@ import {
 import { TreeSchemaIdentifier, ValueSchema } from "../../../../core";
 import { brand, requireTrue, requireAssignableTo } from "../../../../util";
 import { FieldKinds } from "../../../../feature-libraries";
-/* eslint-disable-next-line import/no-internal-modules */
-import { MapToken } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
+
+import {
+	FieldSchemaTypeInfo,
+	/* eslint-disable-next-line import/no-internal-modules */
+} from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -32,7 +33,18 @@ export const lk2 = "localKey2Name";
 
 export const testTypeIdentifier = "testType";
 
-const testField = typedFieldSchema(FieldKinds.value, [testTypeIdentifier]);
+const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
+// TODO: why does intellisense list type of testField.types as: ArrayToSet<readonly ["testType"]>; ?
+// Why doesn't it inline and get ReadonlySet<"testType">?
+// The compiler knows it could, since:
+{
+	type check1_ = requireAssignableTo<
+		typeof testField,
+		{ kind: typeof FieldKinds.value; types: ReadonlySet<"testType"> }
+	>;
+	const fieldTest1_: FieldSchemaTypeInfo = testField;
+	type check3_ = requireAssignableTo<typeof testField, FieldSchemaTypeInfo>;
+}
 
 {
 	const testTreeSchemaFromInfo = typedTreeSchemaFromInfo({
@@ -59,7 +71,7 @@ const testField = typedFieldSchema(FieldKinds.value, [testTypeIdentifier]);
 
 	type _assert = requireTrue<TestTreeSchema["extraGlobalFields"]>;
 
-	type child = FieldInfo<TestTreeSchema["local"][typeof lk1]>;
+	type child = TestTreeSchema["local"][typeof lk1];
 
 	// @ts-expect-error This is an error since this field does not exist:
 	type invalidChildType = FieldInfo<TestTreeSchema["local"][typeof lk2]>;
@@ -173,27 +185,27 @@ const testField = typedFieldSchema(FieldKinds.value, [testTypeIdentifier]);
 {
 	const info = {
 		kind: FieldKinds.value,
-		types: { number: MapToken },
+		types: new Set(["number"]) as unknown as ReadonlySet<"number" & TreeSchemaIdentifier>,
 	} as const;
-	const shortData = [FieldKinds.value, ["number"]] as const;
+	const shortData = [FieldKinds.value, "number"] as const;
 
-	const testSchemaFromInfo = typedFieldSchemaFromInfo(info);
-	type ChildTypes = FieldInfo<typeof testSchemaFromInfo>["types"];
-	type Kind = FieldInfo<typeof testSchemaFromInfo>["kind"];
-	{
-		type checkA_ = requireAssignableTo<ChildTypes, { number: MapToken }>;
-		type checkB_ = requireAssignableTo<Kind, typeof FieldKinds.value>;
-		// This really looks redundant, for its possible for it to fail and not the others, somehow.
-		type checkC_ = requireAssignableTo<keyof ChildTypes, "number">;
-	}
+	// const testSchemaFromInfo = typedFieldSchemaFromInfo(info);
+	// type ChildTypes = FieldInfo<typeof testSchemaFromInfo>["types"];
+	// type Kind = FieldInfo<typeof testSchemaFromInfo>["kind"];
+	// {
+	// 	type checkA_ = requireAssignableTo<ChildTypes, { number: MapToken }>;
+	// 	type checkB_ = requireAssignableTo<Kind, typeof FieldKinds.value>;
+	// 	// This really looks redundant, for its possible for it to fail and not the others, somehow.
+	// 	type checkC_ = requireAssignableTo<keyof ChildTypes, "number">;
+	// }
 
 	const testSchema = typedFieldSchema(...shortData);
 	// TODO: forcing this "as const" is bad. Maybe adjust API?
-	const testSchemaInline = typedFieldSchema(FieldKinds.value, ["number"] as const);
+	const testSchemaInline = typedFieldSchema(FieldKinds.value, "number");
 
-	type T1 = FieldInfo<typeof testSchemaFromInfo>;
-	type T2 = FieldInfo<typeof testSchema>;
-	type T3 = FieldInfo<typeof testSchemaInline>;
+	type T1 = typeof info;
+	type T2 = typeof testSchema;
+	type T3 = typeof testSchemaInline;
 
 	type check1_ = requireAssignableTo<T1, T2>;
 	type check2_ = requireAssignableTo<T1, T3>;
@@ -206,21 +218,25 @@ const testField = typedFieldSchema(FieldKinds.value, [testTypeIdentifier]);
 	// but it fails to detect some cases which we have actually hit:
 
 	type ChildTypes2 = T2["types"];
-	type checkA2_ = requireAssignableTo<ChildTypes2, { number: MapToken }>;
+	// type checkA2_ = requireAssignableTo<ChildTypes2, { number: MapToken }>;
 	// For the type `{[key: string]: "MapToken";} & ListToKeys<readonly ["number"], "MapToken">``
 	// The above check passes but this one catches that the type is not `{ number: MapToken }`
-	type checkC2_ = requireAssignableTo<keyof ChildTypes2, "number">;
+	// type checkC2_ = requireAssignableTo<keyof ChildTypes2, "number">;
 }
 
 {
 	// A concrete example for a numeric field:
-	const numericField = typedFieldSchema(FieldKinds.value, ["Number"] as const);
-	type NumericFieldInfo = FieldInfo<typeof numericField>;
+	const numericField = typedFieldSchema(FieldKinds.value, "Number");
+	type NumericFieldInfo = typeof numericField;
 	type NumericFieldTypes = NumericFieldInfo["types"];
-	type check1_ = requireAssignableTo<NumericFieldTypes, { Number: MapToken }>;
-	type check2_ = requireAssignableTo<{ Number: MapToken }, NumericFieldTypes>;
-	type ChildName = keyof NumericFieldTypes;
-	type check3_ = requireAssignableTo<ChildName, "Number">;
+	type check1_ = requireAssignableTo<
+		NumericFieldTypes,
+		ReadonlySet<"Number" & TreeSchemaIdentifier>
+	>;
+	type check2_ = requireAssignableTo<
+		ReadonlySet<"Number" & TreeSchemaIdentifier>,
+		NumericFieldTypes
+	>;
 }
 
 // TODO: test and fix passing schema objects in type array instead of strings.

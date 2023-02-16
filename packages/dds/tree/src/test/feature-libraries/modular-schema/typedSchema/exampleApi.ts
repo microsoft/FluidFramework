@@ -12,19 +12,15 @@ import {
 
 import {
 	FieldSchemaTypeInfo,
-	LabeledFieldSchema,
 	LabeledTreeSchema,
-	MapToken,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 import {
 	TypeInfo,
-	FieldInfo,
-	FieldInfoGeneric,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema/typedSchema";
 
-import { ValueSchema } from "../../../../core";
+import { TreeSchemaIdentifier, ValueSchema } from "../../../../core";
 import { FieldKinds } from "../../../../feature-libraries";
 import { requireAssignableTo } from "../../../../util";
 // Aliases for conciseness
@@ -39,18 +35,8 @@ const { optional, value, sequence } = FieldKinds;
  */
 export type TypedTree<TMap, TSchema extends LabeledTreeSchema<any>> = TypedFields<
 	TMap,
-	FieldsInfo<TypeInfo<TSchema>["local"]>
+	TypeInfo<TSchema>["local"]
 >;
-
-/**
- * Takes in a `{ readonly [key: string]: LabeledFieldSchema<any> }` and returns
- * `{ [key: string]: FieldSchemaTypeInfo }`
- */
-export type FieldsInfo<
-	TFields extends { readonly [key: string]: LabeledFieldSchema<FieldSchemaTypeInfo> },
-> = {
-	[key in keyof TFields]: FieldInfoGeneric<TFields[key]>;
-};
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
@@ -61,18 +47,19 @@ export type TypedFields<TMap, TFields extends { [key: string]: FieldSchemaTypeIn
 
 /**
  * Takes in `types?: { readonly [key: string]: MapToken }`
+ * `types?: ReadonlySet<brandedTypeNameUnion>`
  * and returns a TypedTree union.
  */
 export type TreeTypesToTypedTreeTypes<
 	TMap,
-	T extends unknown | { readonly [key: string]: MapToken },
-> = unknown extends T
-	? AnyTree
-	: ValuesOf<{
-			[ChildTypeName in keyof T]: ChildTypeName extends string
+	T extends unknown | ReadonlySet<TreeSchemaIdentifier>,
+> = T extends ReadonlySet<infer Names & TreeSchemaIdentifier>
+	? ValuesOf<{
+			[ChildTypeName in keyof TMap]: ChildTypeName extends Names & string
 				? NameToTreeType<TMap, ChildTypeName>
-				: unknown;
-	  }>;
+				: never;
+	  }>
+	: AnyTree;
 
 interface AnyTree {}
 
@@ -100,8 +87,8 @@ const ballSchema = tree({
 	name: "ball",
 	local: {
 		// TODO: test and fix passing schema objects in type array instead of strings.
-		x: field(value, ["number"] as const),
-		y: field(value, ["number"] as const),
+		x: field(value, "number"),
+		y: field(value, "number"),
 	},
 });
 
@@ -130,26 +117,36 @@ function useBall(b: BallTree): NumberTree {
 
 {
 	// A concrete example for a numeric field:
-	const numericField = field(value, ["Number"] as const);
-	type NumericFieldInfo = FieldInfo<typeof numericField>;
+	const numericField = field(value, "Number");
+	type NumericFieldInfo = typeof numericField;
 	type NumericFieldTypes = NumericFieldInfo["types"];
-	type check1_ = requireAssignableTo<NumericFieldTypes, { Number: MapToken }>;
-	type check2_ = requireAssignableTo<{ Number: MapToken }, NumericFieldTypes>;
-	type ChildName = keyof NumericFieldTypes;
-	type check3_ = requireAssignableTo<ChildName, "Number">;
+	type check1_ = requireAssignableTo<
+		NumericFieldTypes,
+		ReadonlySet<"Number" & TreeSchemaIdentifier>
+	>;
+	type check2_ = requireAssignableTo<
+		ReadonlySet<"Number" & TreeSchemaIdentifier>,
+		NumericFieldTypes
+	>;
 }
 
 {
 	// A concrete example for the "x" field:
-	type BallXFieldInfo = FieldInfo<TypeInfo<typeof ballSchema>["local"]["x"]>;
+	type BallXFieldInfo = TypeInfo<typeof ballSchema>["local"]["x"];
 	type BallXFieldTypes = BallXFieldInfo["types"];
-	type check_ = requireAssignableTo<keyof BallXFieldTypes, "number">;
+	type check_ = requireAssignableTo<
+		BallXFieldTypes,
+		ReadonlySet<"number" & TreeSchemaIdentifier>
+	>;
 
 	type Child = TreeTypesToTypedTreeTypes<SchemaMap, BallXFieldTypes>;
 
 	type check3_ = requireAssignableTo<Child, NumberTree>;
 	type check4_ = requireAssignableTo<NumberTree, Child>;
-	type Child2 = TreeTypesToTypedTreeTypes<SchemaMap, { number: MapToken }>;
+	type Child2 = TreeTypesToTypedTreeTypes<
+		SchemaMap,
+		ReadonlySet<"number" & TreeSchemaIdentifier>
+	>;
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;

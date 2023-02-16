@@ -150,7 +150,7 @@ export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
 	// TODO:
 	// This module currently is assuming use of defaultFieldKinds.
 	// The field kinds should instead come from a view schema registry thats provided somewhere.
-	return fieldKinds.get(fieldSchema.kind) ?? fail("missing field kind");
+	return fieldKinds.get(fieldSchema.kind.identifier) ?? fail("missing field kind");
 }
 
 /**

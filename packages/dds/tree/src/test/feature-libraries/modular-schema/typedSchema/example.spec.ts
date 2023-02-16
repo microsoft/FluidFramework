@@ -26,8 +26,8 @@ const numberSchema = tree({
 const ballSchema = tree({
 	name: "Ball",
 	local: {
-		x: field(value, [numberSchema]),
-		y: field(value, [numberSchema]),
+		x: field(value, numberSchema),
+		y: field(value, numberSchema),
 	},
 });
 
@@ -44,11 +44,11 @@ const invalidChildSchema = ballSchema.localFields.get("z");
 const diagramSchema = tree({
 	name: "Diagram",
 	local: {
-		children: field(sequence, ["Diagram", ballSchema]),
+		children: field(sequence, "Diagram", ballSchema),
 	},
 });
 
-const rootField = field(optional, [diagramSchema]);
+const rootField = field(optional, diagramSchema);
 
 // Collect the schema together.
 // TODO: add APIs for this which preserve the compile time type information.

@@ -372,7 +372,7 @@ export interface FieldEditor<TChangeset> {
 export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
 
 // @alpha @sealed
-export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
+export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> implements FieldKindSpecifier {
     constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
     allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;
@@ -403,6 +403,12 @@ export interface FieldKinds {
 export const FieldKinds: FieldKinds;
 
 // @alpha
+export interface FieldKindSpecifier {
+    // (undocumented)
+    identifier: FieldKindIdentifier;
+}
+
+// @alpha
 export interface FieldLocation {
     // (undocumented)
     readonly key: FieldKey;
@@ -422,7 +428,7 @@ export interface FieldMapObject<TChild> {
 // @alpha (undocumented)
 export interface FieldSchema {
     // (undocumented)
-    readonly kind: FieldKindIdentifier;
+    readonly kind: FieldKindSpecifier;
     readonly types?: TreeTypeSet;
 }
 

@@ -237,7 +237,7 @@ export const counter: BrandedFieldKind<
 	"Counter",
 	Multiplicity.Value,
 	counterHandle,
-	(types, other) => other.kind === counter.identifier,
+	(types, other) => other.kind.identifier === counter.identifier,
 	new Set(),
 );
 
@@ -421,9 +421,9 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 		Multiplicity.Value,
 		valueChangeHandler,
 		(types, other) =>
-			(other.kind === sequence.identifier ||
-				other.kind === value.identifier ||
-				other.kind === optional.identifier) &&
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === value.identifier ||
+				other.kind.identifier === optional.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
 		new Set(),
 	);
@@ -675,7 +675,8 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 		},
 	},
 	(types, other) =>
-		(other.kind === sequence.identifier || other.kind === optional.identifier) &&
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === optional.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set([value.identifier]),
 );
@@ -688,7 +689,7 @@ export const sequence: FieldKind<SequenceFieldEditor> = new FieldKind(
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
 	(types, other) =>
-		other.kind === sequence.identifier &&
+		other.kind.identifier === sequence.identifier &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
@@ -727,7 +728,7 @@ export const forbidden = brandedFieldKind(
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Value,
+	(types, other) => fieldKinds.get(other.kind.identifier)?.multiplicity !== Multiplicity.Value,
 	new Set(),
 );
 

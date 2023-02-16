@@ -10,6 +10,7 @@ import {
 	SchemaPolicy,
 	fieldSchema,
 	SchemaData,
+	FieldKindSpecifier,
 } from "../../core";
 import { isNeverField } from "./comparison";
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
@@ -29,7 +30,9 @@ import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
  * @sealed
  * @alpha
  */
-export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
+export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>>
+	implements FieldKindSpecifier
+{
 	/**
 	 * @param identifier - Globally scoped identifier.
 	 * @param multiplicity - bound on the number of children that fields of this kind may have.

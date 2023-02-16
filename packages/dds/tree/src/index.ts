@@ -82,6 +82,7 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
+	FieldKindSpecifier,
 } from "./core";
 
 export {
