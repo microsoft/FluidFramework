@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, SinonSpy, useFakeTimers, spy } from "sinon";
-import { UnreferencedState, UnreferencedStateTracker } from "../garbageCollection";
+import { UnreferencedState, UnreferencedStateTracker } from "../../gc";
 
 describe("Garbage Collection Tests", () => {
 	let clock: SinonFakeTimers;

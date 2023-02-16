@@ -80,8 +80,7 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 } from "./summaryFormat";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
-import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
+import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
 import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(

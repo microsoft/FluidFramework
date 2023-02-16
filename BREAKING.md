@@ -26,6 +26,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [Container and RelativeLoader deprecated](#container-and-relativeloader-deprecated)
 -   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
 -   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
+-   [IFluidTokenProvider deprecated](#IFluidTokenProvider-deprecated)
 -   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
@@ -83,6 +84,12 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `IRootSummarizerNodeWithGC`
 -   `ISummarizerNodeRootContract`
 -   `RefreshSummaryResult`
+
+### IFluidTokenProvider deprecated
+
+The IFluidTokenProvider interface has been deprecated and will be removed in an upcoming release. Fluid Framework does not prescribe a particular approach to token providers.
+
+`ContainerRuntime.IFluidTokenProvider` has also been deprecated and will be removed in an upcoming release. Token providers, like any dependency, should be accessed using normal provider patterns.
 
 ### web-code-loader and ICodeAllowList deprecated
 
