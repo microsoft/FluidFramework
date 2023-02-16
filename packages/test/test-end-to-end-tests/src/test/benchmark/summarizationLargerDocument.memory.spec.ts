@@ -154,12 +154,10 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 		assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
 	});
 
-	let iteration: number = 0;
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			title = "Generate summary tree 10Mb document";
 			async run() {
-				console.log("running iteration ", iteration++, Date.now().toString());
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
 				const container2 = await loader.resolve(testRequest);
