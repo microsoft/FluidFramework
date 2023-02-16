@@ -224,8 +224,10 @@ export const splitOp = (op: BatchMessage, chunkSizeInBytes: number): IChunkedOp[
 
 		chunks.push(chunk);
 		offset += chunkSizeInBytes;
+		assert(i === chunkCount - 1 || offset <= contentLength, "Content offset within bounds");
 	}
 
+	assert(offset >= contentLength, "Content offset equal or larger than content length");
 	// The last chunk has empty contents, to minimize the risk of the
 	// resulting payload exceeding 1MB due to the overhead from the empty ops
 	// which will be bundled with this op.
