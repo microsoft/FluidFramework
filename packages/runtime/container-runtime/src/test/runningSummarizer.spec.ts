@@ -236,6 +236,7 @@ describe("Runtime", () => {
 							forcedFullTree: false,
 						} as const;
 					},
+					async (options) => {},
 					heuristicData,
 					() => {},
 					summaryCollection,
