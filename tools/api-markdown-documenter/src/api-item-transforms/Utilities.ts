@@ -17,16 +17,18 @@ export function createDocument(
 	sections: SectionNode[],
 	config: Required<MarkdownDocumenterConfiguration>,
 ): DocumentNode {
-	const heading = config.includeTopLevelDocumentHeading
-		? { title: config.headingTitlePolicy(apiItem) }
-		: undefined;
+	let contents: SectionNode[] = sections;
 
-	const rootSection = wrapInSection(sections, heading);
+	// If a top-level heading was requested, we will wrap our document sections in a root section
+	// with the appropriate heading to ensure hierarchy is adjusted appropriately.
+	if (config.includeTopLevelDocumentHeading) {
+		contents = [wrapInSection(sections, { title: config.headingTitlePolicy(apiItem) })];
+	}
 
 	// TODO: front-matter
 
 	return new DocumentNode({
-		children: [rootSection],
+		children: contents,
 		filePath: getFilePathForApiItem(apiItem, config),
 	});
 }
