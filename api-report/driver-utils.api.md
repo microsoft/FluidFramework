@@ -116,7 +116,7 @@ export const canRetryOnError: (error: any) => boolean;
 // @public
 export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): ISummaryTree;
 
-// @public
+// @public @deprecated
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public
@@ -308,26 +308,27 @@ export enum MessageType2 {
     Accept = "accept"
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
+    // @deprecated
     constructor(documentServiceFactories: IDocumentServiceFactory[]);
-    // (undocumented)
+    // @deprecated (undocumented)
     static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory;
-    // (undocumented)
+    // @deprecated (undocumented)
     createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly protocolName = "none:";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class MultiUrlResolver implements IUrlResolver {
-    // (undocumented)
+    // @deprecated (undocumented)
     static create(urlResolver: IUrlResolver | IUrlResolver[]): IUrlResolver;
-    // (undocumented)
+    // @deprecated (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
-    // (undocumented)
+    // @deprecated (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 

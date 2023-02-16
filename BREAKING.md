@@ -101,6 +101,9 @@ The `@fluidframework/web-code-loader` and the `ICodeAllowList` interface from th
 The following members of the `@fluidframework/driver-utils` package have been deprecated and will be removed in an upcoming release:
 
 -   `MapWithExpiration`
+-   `configurableUrlResolver`
+-   `MultiUrlResolver`
+-   `MultiDocumentServiceFactory`
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
