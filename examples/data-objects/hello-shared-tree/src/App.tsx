@@ -1,21 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable unused-imports/no-unused-imports */
-
-
-
-
-
-
-
 /* eslint-disable unicorn/prefer-string-slice */
-
-
-
-
-
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-
-
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable import/no-default-export */
 /* eslint-disable import/no-internal-modules */
@@ -157,10 +146,10 @@ export class Path {
         return true;
     }
     toExpr(): string {
-        return this.content.map(pathElem => {
+        return this.content.length > 0 ? this.content.map(pathElem => {
             const typeExpr = `[${pathElem.typeArray.join(',')}]`;
             return `${pathElem.fieldKey}:${typeExpr}`;
-        }).join('.');
+        }).join('.') : 'root';
     }
 }
 
@@ -169,7 +158,7 @@ enum Mode {
     Field = 2,
 }
 
-export abstract class PathVisitor implements DeltaVisitor {
+export class PathVisitor implements DeltaVisitor {
     protected readonly path: Path = new Path();
     protected mode: Mode | undefined;
     constructor(
@@ -223,17 +212,14 @@ export abstract class PathVisitor implements DeltaVisitor {
     }
 }
 
-export class InsertVisitor extends PathVisitor {
+export class DomainAdapter extends PathVisitor {
 
     constructor(
         protected readonly schemaData: SchemaData,
         protected readonly filter: Path,
         protected readonly schemaIdentifiers: ReadonlySet<TreeSchemaIdentifier>,
-        protected readonly callback: (
-            path: Path,
-            index: number,
-            jsonArray: JsonableTree[]
-        ) => void) {
+        protected readonly listener: DomainListener
+    ) {
         super(schemaData, schemaIdentifiers);
     }
     onInsert(index: number, content: readonly Delta.ProtoNode[]): void {
@@ -242,14 +228,20 @@ export class InsertVisitor extends PathVisitor {
             for (const node of content) {
                 jsonArray.push(jsonableTreeFromCursor(node));
             }
-            this.callback(this.path, index, jsonArray);
+            const values: Int32[] = jsonArray.map(json => typedInt32(json));
+            this.listener.onInsert(this.path, index, values);
         }
+    }
+    onDelete(index: number, count: number): void {
+       // if (this.filter.equals(this.path)) {
+            this.listener.onDelete(this.path, index, count);
+       // }
     }
 }
 
-
-enum Operation {
-    Insert = 1, Delete = 2, Set = 3
+export interface DomainListener {
+    onDelete: (path: Path, index: number, count: number) => void;
+    onInsert: (path: Path, index: number, values: Int32[]) => void;
 }
 
 export default function App() {
@@ -261,41 +253,38 @@ export default function App() {
         [-1, -1, -1, -1, -1]
     ]);
     const containerId = window.location.hash.substring(1) || undefined;
+    const diceListener: DomainListener = {
+        onDelete(path: Path, index: number, count: number): void {
+            console.log(`Callback on deleting ${path.toExpr()} ${count} domain  values at index ${index}`);
+        },
+        onInsert(path: Path, index: number, values: Int32[]): void {
+            console.log(`Callback on inserting domain ${values.length} values at index ${index}`);
+            for (const value of values) {
+                if (value !== undefined) {
+                    console.log(`  - Callback details on inserting ${path.toExpr()} domain value ${value[valueSymbol]} type ${value[typeNameSymbol]}`);
+                }
+            }
+        }
+    };
+
     useEffect(() => {
         async function initWorkspace() {
             const myWorkspace = await initializeWorkspace(containerId);
-            // Update location
             if (myWorkspace.containerId) {
                 window.location.hash = myWorkspace.containerId;
             }
-            // save workspace to react state
             setWorkspace(myWorkspace);
             myWorkspace.tree.storedSchema.update(appSchema);
             myWorkspace.tree.on("op", (event) => {
                 setDrawValues(readDrawValues(myWorkspace));
             });
             myWorkspace.tree.on("error", (event) => {
-                console.log(event);
                 console.log("Tree error received!");
             });
 
             const listenPath = buildSchemaPath([drawKeys, valueKeys], appSchema);
 
-            registerDomainPath(
-                myWorkspace,
-                listenPath,
-                Operation.Insert,
-                (
-                    index: number,
-                    values: Int32[]
-                ) => {
-                    console.log(`Callback on inserting domain ${values.length} values at index ${index}`);
-                    for (const value of values) {
-                        if (value !== undefined) {
-                            console.log(`Callback on inserting domain value ${value[valueSymbol]} type ${value[typeNameSymbol]}`);
-                        }
-                    }
-                });
+            registerPath(myWorkspace, listenPath, diceListener);
 
             insertDrawValues(myWorkspace);
         }
@@ -308,6 +297,10 @@ export default function App() {
         }
     }, [drawValues, rollToggle]);
 
+    const all = () => {
+        updateAllValues(workspace!);
+    };
+
     const many = () => {
         updateDrawValues(workspace!);
     };
@@ -316,46 +309,39 @@ export default function App() {
         updateSingleValue(workspace!);
     };
 
+    const deleteSingle = () => {
+        deleteSingleValue(workspace!);
+    };
+
+    const deleteMany = () => {
+        deleteDrawValues(workspace!);
+    };
+
+    const deleteAll = () => {
+        deleteAllValues(workspace!);
+    };
+
     const toggleRolling = () => {
         setRollToggle(!rollToggle);
     };
 
-    const registerDomainPath = (
-        w: Workspace,
-        filter: Path,
-        op: Operation,
-        domainCallback: (index: number, diceValues: Int32[]) => void,
-    ) => {
-        registerPath(w, filter, op, (path: Path,
-            index: number,
-            jsonArray: JsonableTree[]): void => {
-            console.log('Callback on Operation.Insert yielding to', path.toExpr(), index);
-            const values: Int32[] = jsonArray.map(json => typedInt32(json));
-            domainCallback(index, values);
-        });
-    };
+    const registerPath =
+        (
+            wrksp: Workspace,
+            filter: Path,
+            listener: DomainListener,
+        ) => {
 
-    const registerPath = (w: Workspace, filter: Path, op: Operation, callback: (
-        path: Path,
-        index: number,
-        jsonArray: JsonableTree[]
-    ) => void) => {
-
-        w.tree.context.on("afterDelta", (delta: Delta.Root) => {
-            switch (op) {
-                case Operation.Insert:
-                    visitDelta(delta, new InsertVisitor(
-                        appSchema,
-                        filter,
-                        new Set([drawSchema.name]),
-                        callback));
-                    break;
-                default:
-                    console.log('op', op);
-                    throw new Error('Bad op');
-            }
-        });
-    };
+            wrksp.tree.context.on("afterDelta", (delta: Delta.Root) => {
+                // console.log('After delta', delta.size);
+                // visitDelta(delta, new PathVisitor(appSchema, new Set([drawSchema.name])));
+                visitDelta(delta, new DomainAdapter(
+                    appSchema,
+                    filter,
+                    new Set([drawSchema.name]),
+                    listener));
+            });
+        };
 
     return (
         <div className="App">
@@ -366,11 +352,25 @@ export default function App() {
                     }</div>)
                 }
             </div>
-            <div className="commit" onClick={() => many()}>
-                Many
-            </div>
-            <div className="commit" onClick={() => single()}>
-                One
+            <div className="commit">
+            <span onClick={() => all()}>
+                    U** &nbsp;
+                </span>
+                <span onClick={() => many()}>
+                    U* &nbsp;
+                </span>
+                <span onClick={() => single()}>
+                    U1 &nbsp;
+                </span>
+                <span onClick={() => deleteAll()}>
+                    D** &nbsp;
+                </span>
+                <span onClick={() => deleteMany()}>
+                    D* &nbsp;
+                </span>
+                <span onClick={() => deleteSingle()}>
+                    D1 &nbsp;
+                </span>
             </div>
         </div>
     );
@@ -452,23 +452,79 @@ function insertDrawValues(workspace: Workspace) {
     tree.root = data;
 }
 
-function updateDrawValues(workspace: Workspace) {
-    console.log(`updateManyValues called`);
+function updateAllValues(workspace: Workspace) {
+    // console.log(`updateAllValues called`);
     const tree = workspace.tree;
     const draw: Draw = tree.root as Draw;
-    // draw.drawKeys[0].valueKeys = int32Data();
-    // draw.drawKeys[1].valueKeys = int32Data();
-    draw.drawKeys[2].valueKeys = int32Data();
+    const dicesIndex = draw.drawKeys.length - 1;
+    if (dicesIndex > -1) {
+        for (let i = 0; i <= dicesIndex; i++) {
+            draw.drawKeys[i].valueKeys = int32Data();
+        }
+    } else insertDrawValues(workspace);
+}
+
+function updateDrawValues(workspace: Workspace) {
+    // console.log(`updateManyValues called`);
+    const tree = workspace.tree;
+    const draw: Draw = tree.root as Draw;
+    const dicesIndex = draw.drawKeys.length - 1;
+    if (dicesIndex > -1) {
+        draw.drawKeys[dicesIndex].valueKeys = int32Data();
+    } else insertDrawValues(workspace);
 }
 
 function updateSingleValue(workspace: Workspace) {
-    console.log(`updateSingleValue called`);
+    // console.log(`updateSingleValue called`);
     const tree = workspace.tree;
     const draw: Draw = tree.root as Draw;
-    draw.drawKeys[2].valueKeys[3] = {
-        [valueSymbol]: rnd(100, 999),
-        [typeNameSymbol]: int32Schema.name,
-    } as unknown as Int32;
+    const dicesIndex = draw.drawKeys.length - 1;
+    if (dicesIndex > -1) {
+        const valueIndex = draw.drawKeys[dicesIndex].valueKeys.length - 1;
+        if (valueIndex > -1) {
+            draw.drawKeys[dicesIndex].valueKeys[valueIndex] = {
+                [valueSymbol]: rnd(100, 999),
+                [typeNameSymbol]: int32Schema.name,
+            } as unknown as Int32;
+        }
+    } else insertDrawValues(workspace);
+}
+
+function deleteSingleValue(workspace: Workspace) {
+    // console.log(`deleteSingleValue called`);
+    const tree = workspace.tree;
+    const draw = tree.root!;
+    const dicesField = draw[drawKeys];
+    const dicesIndex = dicesField.length - 1;
+    const dice = dicesField[dicesIndex];
+    const valuesField = dice[valueKeys];
+    const valueIndex = valuesField.length - 1;
+    if (valueIndex > -1) {
+        valuesField.deleteNodes(valueIndex, 1);
+        if (valueIndex === 0 && dicesIndex > -1) {
+            dicesField.deleteNodes(dicesIndex, 1);
+        }
+    }
+}
+
+function deleteDrawValues(workspace: Workspace) {
+    // console.log(`deleteDrawValues called`);
+    const tree = workspace.tree;
+    const draw = tree.root!;
+    const dicesField = draw[drawKeys];
+    const dicesIndex = dicesField.length - 1;
+    if (dicesIndex > -1) {
+        dicesField.deleteNodes(dicesIndex, 1);
+    }
+}
+
+function deleteAllValues(workspace: Workspace) {
+    // console.log(`deleteRoot called`);
+    const tree = workspace.tree;
+    tree.root = {
+        [typeNameSymbol]: drawSchema.name,
+        [drawKeys]: [],
+    } as unknown as Draw;
 }
 
 function readDrawValues(
