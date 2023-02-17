@@ -38,7 +38,7 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
 	const apiReportFilePaths: string[] = [];
 	for (const filename of FileSystem.readFolderItemNames(reportsDirectoryPath)) {
 		if (/\.api\.json$/i.test(filename)) {
-			console.log(`Reading ${filename}`);
+			logger?.verbose(`Reading ${filename}`);
 			const filenamePath: string = Path.join(reportsDirectoryPath, filename);
 			apiReportFilePaths.push(filenamePath);
 		}
@@ -52,7 +52,7 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
 
 	const apiModel = new ApiModel();
 	for (const apiReportFilePath of apiReportFilePaths) {
-		console.log(`Loading package report "${apiReportFilePath}"...`);
+		logger?.verbose(`Loading package report "${apiReportFilePath}"...`);
 		apiModel.loadPackage(apiReportFilePath);
 	}
 
