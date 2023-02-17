@@ -38,7 +38,7 @@ import { doesItemRequireOwnDocument } from "./utilities";
  * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
  */
-export function createDocuments(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[] {
+export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[] {
 	const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 	const apiModel = config.apiModel;
 
@@ -103,7 +103,7 @@ export function createDocuments(partialConfig: MarkdownDocumenterConfiguration):
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
  * @param customRenderers - Custom rendering policies. Specified per {@link DocumentationNode."type"}.
  */
-export async function renderFiles(
+export async function renderApiModelAsMarkdown(
 	partialConfig: MarkdownDocumenterConfiguration,
 	outputDirectoryPath: string,
 	customRenderers?: MarkdownRenderers,
@@ -112,7 +112,7 @@ export async function renderFiles(
 
 	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
-	const documents = createDocuments(config);
+	const documents = transformApiModel(config);
 
 	await Promise.all(
 		documents.map(async (document) => {

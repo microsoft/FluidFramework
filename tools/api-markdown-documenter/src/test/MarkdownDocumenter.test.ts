@@ -14,7 +14,7 @@ import {
 	MarkdownDocumenterConfiguration,
 	markdownDocumenterConfigurationWithDefaults,
 } from "../Configuration";
-import { createDocuments, renderFiles } from "../MarkdownDocumenter";
+import { renderApiModelAsMarkdown, transformApiModel } from "../MarkdownDocumenter";
 import { apiModelToDocument, apiPackageToDocument } from "../api-item-transforms";
 import { DocumentNode } from "../documentation-domain";
 
@@ -50,7 +50,7 @@ async function snapshotTest(
 	// Clear any existing test_temp data
 	await FileSystem.ensureEmptyFolderAsync(outputDirPath);
 
-	await renderFiles(config, outputDirPath);
+	await renderApiModelAsMarkdown(config, outputDirPath);
 
 	// Verify against expected contents
 	const result = await compare(outputDirPath, snapshotDirPath, {
@@ -138,7 +138,7 @@ function apiTestSuite(
 				});
 
 				it("Ensure no duplicate file paths", () => {
-					const documents = createDocuments(markdownDocumenterConfig);
+					const documents = transformApiModel(markdownDocumenterConfig);
 
 					const pathMap = new Map<string, DocumentNode>();
 					for (const document of documents) {

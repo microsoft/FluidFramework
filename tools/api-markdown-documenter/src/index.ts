@@ -38,7 +38,7 @@ export {
 	renderNodes as renderNodesAsMarkdown,
 } from "./markdown-renderer";
 
-export { createDocuments, renderFiles } from "./MarkdownDocumenter";
+export { transformApiModel, renderApiModelAsMarkdown } from "./MarkdownDocumenter";
 
 export {
 	type ApiFunctionLike,
