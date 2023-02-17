@@ -620,6 +620,59 @@ describe("Outbox", () => {
 		]);
 	});
 
+	[
+		[
+			{
+				...createMessage(ContainerMessageType.Attach, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.Attach, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				referenceSequenceNumber: 1,
+			},
+		],
+		[
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.Attach, "0"),
+				referenceSequenceNumber: 1,
+			},
+		],
+	].forEach((ops) => {
+		it("Flushes all batches when an out of order message is detected in either flows", () => {
+			const outbox = getOutbox(getMockContext() as IContainerContext);
+			for (const op of ops) {
+				outbox.submit(op);
+			}
+
+			assert.equal(state.opsSubmitted, ops.length - 1);
+			assert.equal(state.individualOpsSubmitted.length, 0);
+			assert.equal(state.batchesSubmitted.length, 1);
+			assert.deepEqual(
+				state.batchesSubmitted.map((x) => x.messages),
+				[[batchedMessage(ops[0]), batchedMessage(ops[1])]],
+			);
+
+			mockLogger.assertMatch([
+				{
+					eventName: "Outbox:ReferenceSequenceNumberMismatch",
+					category: "error",
+				},
+			]);
+		});
+	});
+
 	it("Does not split the batch when an out of order message is detected, if configured", () => {
 		const outbox = getOutbox(
 			getMockContext() as IContainerContext,

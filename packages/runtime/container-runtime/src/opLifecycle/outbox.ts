@@ -71,15 +71,23 @@ export class Outbox {
 
 	/**
 	 * If we detect that the reference sequence number of the incoming message does not match
-	 * what was already in the batch manager, this means that the batch has been interrupted so
+	 * what was already in the batch managers, this means that batching has been interrupted so
 	 * we will flush the accumulated messages to account for that and create a new batch with the new
 	 * message as the first message.
 	 *
-	 * @param batchManager - the batch manager where the message is supposed to be pushed to
 	 * @param message - the incoming message
 	 */
-	private maybeFlushPartialBatch(batchManager: BatchManager, message: BatchMessage) {
-		const batchReference = batchManager.referenceSequenceNumber;
+	private maybeFlushPartialBatch(message: BatchMessage) {
+		const mainBatchReference = this.mainBatch.referenceSequenceNumber;
+		const attachFlowBatchReference = this.attachFlowBatch.referenceSequenceNumber;
+		assert(
+			mainBatchReference === undefined ||
+				attachFlowBatchReference === undefined ||
+				mainBatchReference === attachFlowBatchReference,
+			"Reference sequence numbers from both batches must be in sync",
+		);
+
+		const batchReference = mainBatchReference ?? attachFlowBatchReference;
 		if (batchReference === undefined || batchReference === message.referenceSequenceNumber) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -91,20 +99,18 @@ export class Outbox {
 					eventName: "ReferenceSequenceNumberMismatch",
 					referenceSequenceNumber: batchReference,
 					messageReferenceSequenceNumber: message.referenceSequenceNumber,
-					count: batchManager.length,
-					batchSize: batchManager.contentSizeInBytes,
 				},
 				new UsageError("Submission of an out of order message"),
 			);
 		}
 
 		if (!this.params.config.disablePartialFlush) {
-			this.flushInternal(batchManager.popBatch());
+			this.flush();
 		}
 	}
 
 	public submit(message: BatchMessage) {
-		this.maybeFlushPartialBatch(this.mainBatch, message);
+		this.maybeFlushPartialBatch(message);
 
 		if (!this.mainBatch.push(message)) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
@@ -117,7 +123,7 @@ export class Outbox {
 	}
 
 	public submitAttach(message: BatchMessage) {
-		this.maybeFlushPartialBatch(this.mainBatch, message);
+		this.maybeFlushPartialBatch(message);
 
 		if (!this.attachFlowBatch.push(message)) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
