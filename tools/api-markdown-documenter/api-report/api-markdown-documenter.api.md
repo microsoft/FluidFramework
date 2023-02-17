@@ -123,9 +123,6 @@ export class CodeSpanNode extends ParentNodeBase<SingleLineDocumentationNode> im
 export type CreateChildContentSections = (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
 
 // @public
-export function createDocuments(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[];
-
-// @public
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
 
 // @public
@@ -442,13 +439,13 @@ export interface PolicyOptions {
 }
 
 // @public
+export function renderApiModelAsMarkdown(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, customRenderers?: MarkdownRenderers): Promise<void>;
+
+// @public
 export function renderDocumentAsMarkdown(document: DocumentNode, customRenderers?: MarkdownRenderers): string;
 
 // @public
 export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends DocumentationNode = DocumentationNode> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
-
-// @public
-export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, customRenderers?: MarkdownRenderers): Promise<void>;
 
 // @public
 export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
@@ -528,6 +525,9 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: T
 
 // @public
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
+
+// @public
+export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[];
 
 // @public
 export class UnorderedListNode extends ParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
