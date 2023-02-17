@@ -77,7 +77,7 @@
 		"express": "^4.16.3",
 		"good-fences": "^1.1.1",
 		"lodash.isequal": "^4.5.0",
-		"node-fetch": "^2.6.1",
+		"node-fetch": "^2.6.9",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"style-loader": "^1.0.0",
