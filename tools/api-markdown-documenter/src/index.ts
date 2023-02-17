@@ -78,7 +78,7 @@ export {
 	verboseConsoleLogger,
 } from "./Logging";
 export {
-	type DefaultPolicies,
+	DefaultPolicies,
 	defaultPolicyOptions,
 	type DocumentBoundaries,
 	type FileNamePolicy,
