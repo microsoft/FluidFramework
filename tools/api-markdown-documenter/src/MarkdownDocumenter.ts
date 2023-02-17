@@ -101,7 +101,7 @@ export function createDocuments(partialConfig: MarkdownDocumenterConfiguration):
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
  * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
- * @param customRenderers - TODO
+ * @param customRenderers - Custom rendering policies. Specified per {@link DocumentationNode."type"}.
  */
 export async function renderFiles(
 	partialConfig: MarkdownDocumenterConfiguration,
@@ -135,7 +135,7 @@ export async function renderFiles(
  * @param documentBoundaryPolicy - The policy defining which items should be rendered to their own documents,
  * and which should be rendered to their parent's document.
  */
-export function getDocumentItems(
+function getDocumentItems(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
 ): ApiItem[] {
