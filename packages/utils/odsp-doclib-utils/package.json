@@ -67,7 +67,7 @@
 		"@fluidframework/driver-utils": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"node-fetch": "^2.6.9"
+		"node-fetch": "^2.6.1"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.9.0",
