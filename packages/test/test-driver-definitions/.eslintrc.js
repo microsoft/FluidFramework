@@ -8,7 +8,7 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-  overrides: [
+	overrides: [
 		{
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
@@ -18,5 +18,4 @@ module.exports = {
 			},
 		},
 	],
-
 };
