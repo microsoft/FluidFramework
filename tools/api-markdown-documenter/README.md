@@ -178,6 +178,8 @@ If you would like to change any or all of this library's default rendering polic
 -   Simplify input configurations
     -   Separate configs for each pipeline segment
     -   Clean up terminology ("policies" in particular is too vague - we should remove this)
+-   Add extensibility options for `DocNode` transformations
+    -   If a consumer has a custom tsdoc config associated with their API-Extractor setup, this will be needed.
 
 ### Known Bugs
 
