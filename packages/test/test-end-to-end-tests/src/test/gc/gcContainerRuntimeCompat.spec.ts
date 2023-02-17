@@ -68,13 +68,14 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 	});
 
 	async function createSummarizer(version: number, summaryVersion?: string) {
-		return createSummarizerFromFactory(
+		const createSummarizerResult = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
 			dataObjectFactory,
 			summaryVersion,
 			getContainerRuntimeApi(pkgVersion, version).ContainerRuntimeFactoryWithDefaultDataStore,
 		);
+		return createSummarizerResult.summarizer;
 	}
 
 	// Set up the tests that will run against the different versions of the container runtime.

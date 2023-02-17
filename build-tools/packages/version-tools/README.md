@@ -5,13 +5,11 @@ Fluid Framework.
 
 <!-- prettier-ignore-start -->
 <!-- toc -->
-
--   [@fluid-tools/version-tools](#fluid-toolsversion-tools)
--   [Version schemes](#version-schemes)
--   [General API](#general-api)
--   [CLI Usage](#cli-usage)
--   [Commands](#commands)
-
+* [@fluid-tools/version-tools](#fluid-toolsversion-tools)
+* [Version schemes](#version-schemes)
+* [General API](#general-api)
+* [CLI Usage](#cli-usage)
+* [Commands](#commands)
 <!-- tocstop -->
 <!-- prettier-ignore-stop -->
 
@@ -80,7 +78,7 @@ $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/0.9.0
+@fluid-tools/version-tools/0.10.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND

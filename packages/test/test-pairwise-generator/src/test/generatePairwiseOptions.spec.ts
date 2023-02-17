@@ -85,7 +85,10 @@ function validateComplexOption(option: ComplexOptions) {
 /**
  * No pruning or optimizations, just calculate and validate all pairs
  */
-function validatePairsExhaustively<T>(matrix: OptionsMatrix<T>, values: T[]) {
+function validatePairsExhaustively<T extends Record<string, any>>(
+	matrix: OptionsMatrix<T>,
+	values: T[],
+) {
 	const keys = Object.keys(matrix);
 	for (const i of keys) {
 		for (const j of keys) {
