@@ -2274,6 +2274,8 @@ declare module "@fluid-experimental/property-properties" {
 			 */
 			public extractDependencies(): Array<any>;
 
+			public static extractDependencies(template: PropertyTemplateType): Array<any>;
+
 			constants: any[];
 
 			context: string;
