@@ -127,7 +127,7 @@ export type CreateChildContentSections = (apiItem: ApiItem, childSections: Secti
 export function createDocumentWriter(): DocumentWriter;
 
 // @public
-export function createMarkdownRenderContext(renderers: MarkdownRenderers): MarkdownRenderContext;
+export function createMarkdownRenderContext(customRenderers?: MarkdownRenderers): MarkdownRenderContext;
 
 // @public
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;

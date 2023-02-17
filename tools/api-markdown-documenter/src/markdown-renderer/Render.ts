@@ -10,9 +10,16 @@ import { MarkdownRenderers, defaultMarkdownRenderers } from "./RenderConfigurati
 import { MarkdownRenderContext } from "./RenderContext";
 
 /**
- * Generates the root {@link MarkdownRenderContext} for rendering a document with the provided `renderers`.
+ * Generates the root {@link MarkdownRenderContext} for rendering a document.
+ *
+ * @param customRenderers - Any custom render implementations to be used in place of or in addition to the defaults.
  */
-export function createRenderContext(renderers: MarkdownRenderers): MarkdownRenderContext {
+export function createRenderContext(customRenderers?: MarkdownRenderers): MarkdownRenderContext {
+	const renderers = {
+		...defaultMarkdownRenderers,
+		...customRenderers,
+	};
+
 	return {
 		headingLevel: 1,
 		renderers,
@@ -21,18 +28,16 @@ export function createRenderContext(renderers: MarkdownRenderers): MarkdownRende
 
 /**
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.
+ *
+ * @param document - The document to render.
+ * @param customRenderers - Any custom render implementations to be used in place of or in addition to the defaults.
  */
 export function renderDocument(
 	document: DocumentNode,
 	customRenderers?: MarkdownRenderers,
 ): string {
-	const renderers = {
-		...defaultMarkdownRenderers,
-		...customRenderers,
-	};
-
 	const writer = new DocumentWriter(new StringBuilder());
-	renderNodes(document.children, writer, createRenderContext(renderers));
+	renderNodes(document.children, writer, createRenderContext(customRenderers));
 
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();
