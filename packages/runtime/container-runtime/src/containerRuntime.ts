@@ -1284,6 +1284,9 @@ export class ContainerRuntime
 				  }
 				: runtimeOptions.compressionOptions;
 
+		const disablePartialFlush = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisablePartialFlush",
+		);
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1293,9 +1296,7 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				disablePartialFlush:
-					this.mc.config.getBoolean("Fluid.ContainerRuntime.DisablePartialFlush") ===
-					true,
+				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
 		});
@@ -1438,6 +1439,7 @@ export class ContainerRuntime
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
+				disablePartialFlush,
 			}),
 		});
 
@@ -2390,18 +2392,23 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This is called to delete objects from the runtime
-	 * @param unusedRoutes - object routes and sub routes that can be deleted
-	 * @returns - routes of objects deleted from the runtime
+	 * @deprecated - Replaced by deleteSweepReadyNodes.
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
-		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		const deletedRoutes: string[] = [];
+		throw new Error("deleteUnusedRoutes should not be called");
+	}
 
-		const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
-		deletedRoutes.push(...deletedDataStoreRoutes);
+	/**
+	 * After GC has run and identified nodes that are sweep ready, this is called to delete the sweep ready nodes.
+	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
+	 * @returns - The routes of nodes that were deleted.
+	 */
+	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
+		const { dataStoreRoutes, blobManagerRoutes } =
+			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
-		return deletedRoutes;
+		const deletedRoutes = this.dataStores.deleteSweepReadyNodes(dataStoreRoutes);
+		return deletedRoutes.concat(this.blobManager.deleteSweepReadyNodes(blobManagerRoutes));
 	}
 
 	/**

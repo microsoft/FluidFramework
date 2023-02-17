@@ -92,9 +92,9 @@ export interface IBatchMessage {
     referenceSequenceNumber?: number;
 }
 
-// @public
+// @public @deprecated
 export interface ICodeAllowList {
-    // (undocumented)
+    // @deprecated (undocumented)
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 

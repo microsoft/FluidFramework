@@ -1301,7 +1301,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private runSweepPhase(sweepReadyNodes: string[], gcData: IGarbageCollectionData) {
 		// TODO: GC:Validation - validate that removed routes are not double deleted
 		// TODO: GC:Validation - validate that the child routes of removed routes are deleted as well
-		const sweptRoutes = this.runtime.deleteUnusedNodes(sweepReadyNodes);
+		const sweptRoutes = this.runtime.deleteSweepReadyNodes(sweepReadyNodes);
 		const updatedGCData = this.deleteSweptRoutes(sweptRoutes, gcData);
 
 		for (const nodeId of sweptRoutes) {
