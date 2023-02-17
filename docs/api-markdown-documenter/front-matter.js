@@ -30,14 +30,23 @@ function createHugoFrontMatter(apiItem, config) {
 		
 	}
     function extractSummary() {
-		const summaryParagraph = transformDocNode(apiItem.tsdocComment, config);
+		const summaryParagraph = transformDocNode(
+			apiItem.tsdocComment.summarySection,
+			apiItem,
+			config);
 		
 		if (!summaryParagraph) {
 			return "";
 		}
 		
 		const documentWriter = createDocumentWriter();
-		renderNodeAsMarkdown(summaryParagraph, documentWriter);
+		renderNodeAsMarkdown(summaryParagraph, documentWriter, {
+			insideTable: false,
+			insideCodeBlock: false,
+			insideHtml: false,
+			headingLevel: 1,
+			renderers,
+		});
 		return documentWriter.getText().replace(/"/g, "'").trim();
     }
 

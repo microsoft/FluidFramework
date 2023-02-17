@@ -329,12 +329,12 @@ export interface ITelemetryContext {
 	set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
 
 	/**
-	 * Sets a set of values for telemetry data being tracked.
+	 * Sets multiple values for telemetry data being tracked.
 	 * @param prefix - unique prefix to tag this data with (ex: "fluid:summarize:")
 	 * @param property - property name of the telemetry data being tracked (ex: "Options")
 	 * @param values - A set of values to attribute to this summary telemetry data.
 	 */
-	setAll(
+	setMultiple(
 		prefix: string,
 		property: string,
 		values: Record<string, TelemetryEventPropertyType>,

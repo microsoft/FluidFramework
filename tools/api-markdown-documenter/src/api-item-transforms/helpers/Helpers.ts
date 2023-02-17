@@ -49,7 +49,7 @@ import {
 	injectSeparator,
 } from "../../utilities";
 import { transformDocSection } from "../DocNodeTransforms";
-import { getDocNodeTransformationOptions } from "./InternalUtilities";
+import { getDocNodeTransformationOptions } from "../Utilities";
 import { createParametersSummaryTable } from "./TableHelpers";
 
 /**

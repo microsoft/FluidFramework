@@ -63,7 +63,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.0.0",
+		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/container-runtime-definitions": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
@@ -80,7 +80,7 @@
 		"@fluidframework/build-tools": "^0.9.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.3.0.0",
+		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.3.1.0",
 		"@microsoft/api-extractor": "^7.22.2",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/mocha": "^9.1.1",
@@ -98,15 +98,11 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"version": "2.0.0-internal.3.1.0",
+		"version": "2.0.0-internal.3.2.0",
 		"previousVersionStyle": "~previousMinor",
-		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
-		"baselineVersion": "2.0.0-internal.3.0.0",
+		"baselineRange": ">=2.0.0-internal.3.1.0 <2.0.0-internal.3.2.0",
+		"baselineVersion": "2.0.0-internal.3.1.0",
 		"broken": {
-			"TypeAliasDeclaration_RefreshSummaryResult": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
 			"ClassDeclaration_TelemetryContext": {
 				"forwardCompat": false
 			}

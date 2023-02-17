@@ -11,8 +11,12 @@ import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 // @public (undocumented)
 export type CacheContentType = "snapshot" | "ops";
 
+// @public
+export function getKeyForCacheEntry(entry: ICacheEntry): string;
+
 // @public (undocumented)
 export interface HostStoragePolicy {
+    avoidPrefetchSnapshotCache?: boolean;
     cacheCreateNewSummary?: boolean;
     // (undocumented)
     concurrentOpsBatches?: number;
