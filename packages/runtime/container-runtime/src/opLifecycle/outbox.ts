@@ -81,14 +81,19 @@ export class Outbox {
 		const mainBatchReference = this.mainBatch.referenceSequenceNumber;
 		const attachFlowBatchReference = this.attachFlowBatch.referenceSequenceNumber;
 		assert(
-			mainBatchReference === undefined ||
+			this.params.config.disablePartialFlush ||
+				mainBatchReference === undefined ||
 				attachFlowBatchReference === undefined ||
 				mainBatchReference === attachFlowBatchReference,
 			"Reference sequence numbers from both batches must be in sync",
 		);
 
-		const batchReference = mainBatchReference ?? attachFlowBatchReference;
-		if (batchReference === undefined || batchReference === message.referenceSequenceNumber) {
+		if (
+			(mainBatchReference === undefined ||
+				mainBatchReference === message.referenceSequenceNumber) &&
+			(attachFlowBatchReference === undefined ||
+				attachFlowBatchReference === message.referenceSequenceNumber)
+		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
 		}
@@ -97,7 +102,8 @@ export class Outbox {
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "ReferenceSequenceNumberMismatch",
-					referenceSequenceNumber: batchReference,
+					mainReferenceSequenceNumber: mainBatchReference,
+					attachReferenceSequenceNumber: attachFlowBatchReference,
 					messageReferenceSequenceNumber: message.referenceSequenceNumber,
 				},
 				new UsageError("Submission of an out of order message"),
