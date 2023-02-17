@@ -267,14 +267,16 @@ function makeOperationGenerator(
 interface LoggingInfo {
 	// Clients to print
 	clientIds: string[];
+	// Set this to true in case you want to debug and print client states and ops.
+	printConsoleLogs?: boolean;
 }
 
-function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
+function logCurrentState(clients: Client[], loggingInfo: LoggingInfo): void {
 	for (const id of loggingInfo.clientIds) {
-		const { sharedDirectory } = state.clients.find((s) => s.sharedDirectory.id === id) ?? {};
+		const { sharedDirectory } = clients.find((s) => s.sharedDirectory.id === id) ?? {};
 		if (sharedDirectory !== undefined) {
 			console.log(`Client ${id}:`);
-			console.log(JSON.stringify(sharedDirectory.getAttachSummary(true), undefined, 4));
+			console.log(JSON.stringify(sharedDirectory.getAttachSummary(true).summary, undefined, 4));
 			console.log("\n");
 		}
 	}
@@ -294,9 +296,11 @@ function runSharedDirectoryFuzz(
 		): Reducer<T, FuzzTestState> =>
 		(state, operation) => {
 			if (loggingInfo !== undefined) {
-				logCurrentState(state, loggingInfo);
-				console.log("-".repeat(20));
-				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
+				if (loggingInfo.printConsoleLogs) {
+					logCurrentState(state.clients, loggingInfo);
+					console.log("-".repeat(20));
+					console.log("Next operation:", JSON.stringify(operation, undefined, 4));
+				}
 			}
 			statefulReducer(state, operation);
 			return state;
@@ -347,7 +351,14 @@ function runSharedDirectoryFuzz(
 			}),
 			synchronize: statefully(({ containerRuntimeFactory, clients }) => {
 				containerRuntimeFactory.processAllMessages();
-				assertEventuallyConsistentDirectoryState(clients);
+				try {
+					assertEventuallyConsistentDirectoryState(clients);
+				} catch (error) {
+					if (loggingInfo !== undefined) {
+						logCurrentState(clients, loggingInfo);
+					}
+					throw error;
+				}
 			}),
 		},
 		initialState,
@@ -355,15 +366,14 @@ function runSharedDirectoryFuzz(
 	);
 }
 
-const directory = dirPath.join(__dirname, "./results");
-
-function getPath(seed: number): string {
-	return dirPath.join(directory, `${seed}.json`);
-}
-
 const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
 
-describeFuzz.skip("SharedDirectory fuzz testing", ({ testCount }) => {
+describeFuzz("SharedDirectory fuzz testing", ({ testCount }) => {
+	const directory = dirPath.join(__dirname, "../../../src/test/mocha/results");
+	function getPath(seed: number): string {
+		return dirPath.join(directory, `${seed}.json`);
+	}
+
 	before(() => {
 		mkdirSync(directory, { recursive: true });
 	});
@@ -396,6 +406,11 @@ describeFuzz.skip("SharedDirectory fuzz testing", ({ testCount }) => {
 				return { containerRuntime, sharedDirectory };
 			});
 
+			const clientIds: string[] = [];
+			for (const c of clients) {
+				clientIds.push(c.sharedDirectory.id);
+			}
+
 			const initialState: FuzzTestState = {
 				clients,
 				containerRuntimeFactory,
@@ -406,13 +421,13 @@ describeFuzz.skip("SharedDirectory fuzz testing", ({ testCount }) => {
 				generator,
 				initialState,
 				{ saveOnFailure: true, filepath: getPath(seed) },
-				loggingInfo,
+				loggingInfo ?? { clientIds, printConsoleLogs: false },
 			);
 		});
 	}
 
 	for (let i = 0; i < testCount; i++) {
-		const generator = take(100, makeOperationGenerator({ validateInterval: 10 }));
+		const generator = take(200, makeOperationGenerator({ validateInterval: 10 }));
 		runTests(i, generator);
 	}
 });
@@ -439,7 +454,7 @@ function assertEventualConsistencyCore(first: SharedDirectory, second: SharedDir
 		first.size,
 		second.size,
 		`Number of keys not same: Number of keys in ` +
-			`${first.id}: ${first.size} and in ${second.id}: ${second.size}`,
+			`${first.id} at path ${first.absolutePath}: ${first.size} and in ${second.id} at path ${second.absolutePath}: ${second.size}`,
 	);
 
 	// Check key/value pairs in both directories.
@@ -448,9 +463,9 @@ function assertEventualConsistencyCore(first: SharedDirectory, second: SharedDir
 			first.get(key),
 			second.get(key),
 			`Key not found or value not matching ` +
-				`key: ${key}, value in dir ${first.id}: ${first.get(key)} and in ${
+				`key: ${key}, value in dir ${first.id} at path ${first.absolutePath}: ${first.get(key)} and in ${
 					second.id
-				}: ${second.get(key)}`,
+				} at path ${second.absolutePath}: ${second.get(key)}`,
 		);
 	}
 
@@ -459,9 +474,9 @@ function assertEventualConsistencyCore(first: SharedDirectory, second: SharedDir
 		first.countSubDirectory(),
 		second.countSubDirectory(),
 		`Number of subDirectories not same: Number of subdirectory in ` +
-			`${first.id}: ${first.countSubDirectory()} and in ${
+			`${first.id} at path ${first.absolutePath}: ${first.countSubDirectory()} and in ${
 				second.id
-			}: ${second.countSubDirectory()}`,
+			} at path ${second.absolutePath}: ${second.countSubDirectory()}`,
 	);
 
 	// Check for consistency of subdirectores with both directories.
