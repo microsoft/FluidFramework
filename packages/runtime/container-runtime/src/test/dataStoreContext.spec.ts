@@ -45,13 +45,13 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
 
-import { BlobCacheStorageService } from "../blobCacheStorageService";
 import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
+import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs";
 import {
 	dataStoreAttributesBlobName,
 	ReadFluidDataStoreAttributes,
@@ -637,7 +637,7 @@ describe("Data Store Context Tests", () => {
 					attributes: ReadFluidDataStoreAttributes,
 				) {
 					const buffer = stringToBuffer(JSON.stringify(attributes), "utf8");
-					const blobCache = new Map<string, ArrayBufferLike>([
+					const attachBlobs = new Map<string, ArrayBufferLike>([
 						["fluidDataStoreAttributes", buffer],
 					]);
 					const snapshotTree: ISnapshotTree = {
@@ -656,9 +656,9 @@ describe("Data Store Context Tests", () => {
 						id: dataStoreId,
 						snapshotTree,
 						runtime: containerRuntime,
-						storage: new BlobCacheStorageService(
+						storage: new StorageServiceWithAttachBlobs(
 							storage as IDocumentStorageService,
-							blobCache,
+							attachBlobs,
 						),
 						scope,
 						createSummarizerNodeFn,
@@ -770,7 +770,7 @@ describe("Data Store Context Tests", () => {
 					summaryFormatVersion: undefined,
 				};
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -784,9 +784,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -809,7 +809,7 @@ describe("Data Store Context Tests", () => {
 					JSON.stringify(dataStoreAttributes),
 					"utf8",
 				);
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -836,9 +836,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -861,7 +861,7 @@ describe("Data Store Context Tests", () => {
 					JSON.stringify(dataStoreAttributes),
 					"utf8",
 				);
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -888,9 +888,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -929,7 +929,7 @@ describe("Data Store Context Tests", () => {
 
 			function updateReferencedStateTest() {
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -942,9 +942,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -1004,7 +1004,7 @@ describe("Data Store Context Tests", () => {
 					isRootDataStore: false,
 				};
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -1017,9 +1017,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
