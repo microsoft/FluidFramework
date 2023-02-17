@@ -194,10 +194,6 @@ export class SummaryGenerator {
 		cancellationToken: ISummaryCancellationToken,
 		resultsBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
-		this.logger.sendTelemetryEvent({
-			eventName: "Summarize_start",
-			...summarizeProps,
-		});
 		this.summarizeCore(summarizeProps, options, resultsBuilder, cancellationToken).catch(
 			(error) => {
 				const message = "UnexpectedSummarizeError";
@@ -232,7 +228,7 @@ export class SummaryGenerator {
 		const summarizeEvent = PerformanceEvent.start(
 			logger,
 			{
-				eventName: "SummarizeCore",
+				eventName: "Summarize",
 				refreshLatestAck,
 				...summarizeTelemetryProps,
 			},
