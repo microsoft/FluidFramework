@@ -618,7 +618,7 @@ describe("Runtime", () => {
 
 			it(
 				`No progress for ${maxReconnects} connection state changes and pending state will ` +
-					"close the container",
+					"not close the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -669,7 +669,7 @@ describe("Runtime", () => {
 			);
 
 			it(
-				`No progress for ${maxReconnects} connection state changes and pending state with` +
+				`No progress for ${maxReconnects} connection state changes and pending state with ` +
 					"feature disabled will not close the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
@@ -681,7 +681,11 @@ describe("Runtime", () => {
 					}
 
 					assert.equal(containerErrors.length, 0);
-					mockLogger.assertMatch([]);
+					mockLogger.assertMatchNone([
+						{
+							eventName: "Container:ContainerClose"
+						}
+					]);
 				},
 			);
 
@@ -697,7 +701,11 @@ describe("Runtime", () => {
 					}
 
 					assert.equal(containerErrors.length, 0);
-					mockLogger.assertMatch([]);
+					mockLogger.assertMatchNone([
+						{
+							eventName: "Container:ContainerClose"
+						}
+					]);
 				},
 			);
 
@@ -725,13 +733,17 @@ describe("Runtime", () => {
 					}
 
 					assert.equal(containerErrors.length, 0);
-					mockLogger.assertMatch([]);
+					mockLogger.assertMatchNone([
+						{
+							eventName: "Container:ContainerClose"
+						}
+					]);
 				},
 			);
 
 			it(
 				`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
-					"processing remote op will close the container",
+					"processing remote op will not close the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
