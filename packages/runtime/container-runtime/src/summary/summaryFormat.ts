@@ -16,6 +16,7 @@ import {
 	gcTreeKey,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
+import { IGCMetadata } from "../gc";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -97,51 +98,6 @@ export interface ICreateContainerMetadata {
 	createContainerTimestamp?: number;
 }
 
-/** @see IGCMetadata.gcFeatureMatrix */
-export interface GCFeatureMatrix {
-	/**
-	 * The Tombstone Generation value in effect when this file was created.
-	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement
-	 * Provided via Container Runtime Options
-	 */
-	tombstoneGeneration?: number;
-}
-
-export type GCVersion = number;
-export interface IGCMetadata {
-	/**
-	 * The version of the GC code that was run to generate the GC data that is written in the summary.
-	 * If the persisted value doesn't match the current value in the code, saved GC data will be discarded and regenerated from scratch.
-	 * Also, used to determine whether GC is enabled for this container or not:
-	 * - A value of 0 or undefined means GC is disabled.
-	 * - A value greater than 0 means GC is enabled.
-	 */
-	readonly gcFeature?: GCVersion;
-
-	/**
-	 * A collection of different numerical "Generations" for different features,
-	 * used to determine feature availability over time.
-	 * This info may come from multiple sources (FF code, config service, app via Container Runtime Options),
-	 * and pertains to aspects of the document that may be fixed for its lifetime.
-	 *
-	 * For each dimension, if the persisted value doesn't match the currently provided value,
-	 * then this file does not support the corresponding feature as currently implemented.
-	 *
-	 * Guidance is that if no value is provided at runtime, it should result in the current default behavior.
-	 */
-	readonly gcFeatureMatrix?: GCFeatureMatrix;
-	/**
-	 * Tells whether the GC sweep phase is enabled for this container.
-	 * - True means sweep phase is enabled.
-	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
-	 */
-	readonly sweepEnabled?: boolean;
-	/** If this is present, the session for this container will expire after this time and the container will close */
-	readonly sessionExpiryTimeoutMs?: number;
-	/** How long to wait after an object is unreferenced before deleting it via GC Sweep */
-	readonly sweepTimeoutMs?: number;
-}
-
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
@@ -195,14 +151,6 @@ export const blobsTreeName = ".blobs";
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
-}
-
-export function getGCVersion(metadata?: IGCMetadata): GCVersion {
-	if (!metadata) {
-		// Force to 0/disallowed in prior versions
-		return 0;
-	}
-	return metadata.gcFeature ?? 0;
 }
 
 export const protocolTreeName = ".protocol";

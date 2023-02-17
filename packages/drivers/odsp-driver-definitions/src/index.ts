@@ -12,6 +12,7 @@ export {
 } from "./factory";
 export {
 	CacheContentType,
+	getKeyForCacheEntry,
 	ICacheEntry,
 	IEntry,
 	IFileEntry,

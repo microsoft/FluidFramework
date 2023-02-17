@@ -41,10 +41,9 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
+import { sendGCUnexpectedUsageEvent, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
-import { summarizerClientType } from "./summarizerClientElection";
-import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
-import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
+import { summarizerClientType } from "./summary";
 
 /**
  * This class represents blob (long string)

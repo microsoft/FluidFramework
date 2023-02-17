@@ -13,11 +13,11 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
+	oneDayMs,
 	skipClosureForXDaysKey,
 	closuresMapLocalStorageKey,
 	SweepReadyUsageDetectionHandler,
-} from "../gcSweepReadyUsageDetection";
-import { oneDayMs } from "../garbageCollectionConstants";
+} from "../../gc";
 
 describe("Garbage Collection Tests", () => {
 	let clock: SinonFakeTimers;

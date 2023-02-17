@@ -28,14 +28,14 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
+import { IGCRuntimeOptions } from "../../containerRuntime";
 import {
 	GarbageCollector,
 	GCNodeType,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
-} from "../garbageCollection";
-import {
+	IGCMetadata,
 	defaultSessionExpiryDurationMs,
 	runSessionExpiryKey,
 	oneDayMs,
@@ -46,18 +46,12 @@ import {
 	disableSweepLogKey,
 	currentGCVersion,
 	stableGCVersion,
+	GCVersion,
 	gcVersionUpgradeToV2Key,
 	gcTombstoneGenerationOptionName,
-} from "../garbageCollectionConstants";
-
-import {
-	dataStoreAttributesBlobName,
-	GCVersion,
-	IContainerRuntimeMetadata,
-	IGCMetadata,
-} from "../summaryFormat";
-import { IGCRuntimeOptions } from "../containerRuntime";
-import { pkgVersion } from "../packageVersion";
+} from "../../gc";
+import { dataStoreAttributesBlobName, IContainerRuntimeMetadata } from "../../summary";
+import { pkgVersion } from "../../packageVersion";
 
 /** @see - sweepReadyUsageDetectionSetting */
 const SweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
