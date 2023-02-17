@@ -35,7 +35,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"tinylicious": "0.5.0"
+		"tinylicious": "0.6.0"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",

@@ -5,14 +5,35 @@
 
 import { IFluidPackage, IFluidPackageEnvironment } from "@fluidframework/container-definitions";
 
+/**
+ * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+ */
 export interface IPackageIdentifierDetails {
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly fullId: string;
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly nameAndVersion: string;
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly name: string;
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly version: string | undefined;
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+	 */
 	readonly scope: string;
 }
 
+/**
+ * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+ */
 export function extractPackageIdentifierDetails(
 	codeDetailsPackage: string | IFluidPackage,
 ): IPackageIdentifierDetails {
@@ -56,6 +77,9 @@ export function extractPackageIdentifierDetails(
 	};
 }
 
+/**
+ * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code details format, rather the code details should be paired with your code loader.  Will be removed in an upcoming release.
+ */
 export function resolveFluidPackageEnvironment(
 	environment: IFluidPackageEnvironment,
 	baseUrl: string,
