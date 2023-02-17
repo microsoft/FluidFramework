@@ -146,6 +146,9 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	private getMatchedEventsCount(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): number {
+		if (expectedEvents.length === 0) {
+			throw new Error("Must specify at least 1 event");
+		}
 		let iExpectedEvent = 0;
 		this.events.forEach((event) => {
 			if (
