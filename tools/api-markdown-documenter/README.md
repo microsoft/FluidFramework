@@ -31,7 +31,7 @@ npm i @fluid-tools/api-markdown-documenter -D
 
 ## Usage
 
-### Quickstart
+### Quick Start
 
 This library is intended to be highly customizable.
 That said, it is also intended to be easy to use out of the box.
