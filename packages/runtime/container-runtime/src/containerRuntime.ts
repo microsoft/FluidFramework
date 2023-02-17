@@ -1140,7 +1140,7 @@ export class ContainerRuntime
 
 		if (
 			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
-			(context.supportedFeatures?.get("referenceSequenceNumbers") !== true)
+			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
 		) {
 			throw new UsageError("Async FlushMode is not supported with this loader version.");
 		}

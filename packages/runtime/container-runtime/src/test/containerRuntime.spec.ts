@@ -83,8 +83,14 @@ describe("Runtime", () => {
 		});
 
 		describe("orderSequentially", () =>
-			[FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
-				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+			[
+				FlushMode.TurnBased,
+				FlushMode.Immediate,
+				FlushModeExperimental.Async as unknown as FlushMode,
+			].forEach((flushMode: FlushMode) => {
+				describe(`orderSequentially with flush mode: ${
+					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
+				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					let mockContext: Partial<IContainerContext>;
 					const submittedOpsMetdata: any[] = [];
@@ -96,6 +102,7 @@ describe("Runtime", () => {
 							deltaManager: new MockDeltaManager(),
 							quorum: new MockQuorumClients(),
 							taggedLogger: new MockLogger(),
+							supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
 							clientDetails: { capabilities: { interactive: true } },
 							closeFn: (error?: ICriticalContainerError): void => {
 								if (error !== undefined) {
@@ -370,8 +377,14 @@ describe("Runtime", () => {
 		});
 
 		describe("orderSequentially with rollback", () =>
-			[FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
-				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+			[
+				FlushMode.TurnBased,
+				FlushMode.Immediate,
+				FlushModeExperimental.Async as unknown as FlushMode,
+			].forEach((flushMode: FlushMode) => {
+				describe(`orderSequentially with flush mode: ${
+					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
+				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					const containerErrors: ICriticalContainerError[] = [];
 
@@ -385,6 +398,7 @@ describe("Runtime", () => {
 								"Fluid.ContainerRuntime.EnableRollback": true,
 							}),
 						) as unknown as MockLogger,
+						supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
 						clientDetails: { capabilities: { interactive: true } },
 						closeFn: (error?: ICriticalContainerError): void => {
 							if (error !== undefined) {
@@ -941,6 +955,7 @@ describe("Runtime", () => {
 						mockLogger,
 						configProvider(featureGates),
 					) as unknown as MockLogger,
+					supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
@@ -1022,6 +1037,63 @@ describe("Runtime", () => {
 						}),
 					},
 				]);
+			});
+		});
+
+		describe("Container feature detection", () => {
+			const getMockContext = (
+				features?: ReadonlyMap<string, unknown>,
+			): Partial<IContainerContext> => {
+				return {
+					attachState: AttachState.Attached,
+					deltaManager: new MockDeltaManager(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: new MockLogger(),
+					supportedFeatures: features,
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (_error?: ICriticalContainerError): void => {},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+				};
+			};
+
+			[
+				undefined,
+				new Map([["referenceSequenceNumbers", false]]),
+				new Map([
+					["other", true],
+					["feature", true],
+				]),
+			].forEach((features) => {
+				it("Loader not supported for async FlushMode", async () => {
+					await assert.rejects(
+						async () => {
+							await ContainerRuntime.loadRuntime({
+								context: getMockContext(features) as IContainerContext,
+								registryEntries: [],
+								existing: false,
+								runtimeOptions: {
+									flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+								},
+							});
+						},
+						{
+							message: "Async FlushMode is not supported with this loader version.",
+						},
+					);
+				});
+			});
+
+			it("Loader supported for async FlushMode", async () => {
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext(
+						new Map([["referenceSequenceNumbers", true]]),
+					) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+					},
+				});
 			});
 		});
 	});
