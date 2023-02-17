@@ -26,9 +26,11 @@ import {
 	ParagraphNode,
 	PlainTextNode,
 	SpanNode,
-	TableCellNode,
+	TableBodyCellNode,
+	TableBodyRowNode,
+	TableHeaderCellNode,
+	TableHeaderRowNode,
 	TableNode,
-	TableRowNode,
 } from "../../documentation-domain";
 import { getHeadingForApiItem } from "../../utilities";
 import { apiItemToSections } from "../TransformApiItem";
@@ -165,28 +167,32 @@ describe("ApiItem to Documentation transformation tests", () => {
 						[
 							new TableNode(
 								[
-									new TableRowNode([
-										TableCellNode.createFromPlainText("testParameter"),
-										TableCellNode.Empty,
-										new TableCellNode([
+									new TableBodyRowNode([
+										TableBodyCellNode.createFromPlainText("testParameter"),
+										TableBodyCellNode.Empty,
+										new TableBodyCellNode([
 											SpanNode.createFromPlainText("TTypeParameter"),
 										]),
-										TableCellNode.createFromPlainText("A test parameter"),
+										TableBodyCellNode.createFromPlainText("A test parameter"),
 									]),
-									new TableRowNode([
-										TableCellNode.createFromPlainText("testOptionalParameter"),
-										TableCellNode.createFromPlainText("optional"),
-										new TableCellNode([
+									new TableBodyRowNode([
+										TableBodyCellNode.createFromPlainText(
+											"testOptionalParameter",
+										),
+										TableBodyCellNode.createFromPlainText("optional"),
+										new TableBodyCellNode([
 											SpanNode.createFromPlainText("TTypeParameter"),
 										]),
-										TableCellNode.createFromPlainText("An optional parameter"),
+										TableBodyCellNode.createFromPlainText(
+											"An optional parameter",
+										),
 									]),
 								],
-								new TableRowNode([
-									TableCellNode.createFromPlainText("Parameter"),
-									TableCellNode.createFromPlainText("Modifiers"),
-									TableCellNode.createFromPlainText("Type"),
-									TableCellNode.createFromPlainText("Description"),
+								new TableHeaderRowNode([
+									TableHeaderCellNode.createFromPlainText("Parameter"),
+									TableHeaderCellNode.createFromPlainText("Modifiers"),
+									TableHeaderCellNode.createFromPlainText("Type"),
+									TableHeaderCellNode.createFromPlainText("Description"),
 								]),
 							),
 						],
@@ -268,25 +274,27 @@ describe("ApiItem to Documentation transformation tests", () => {
 				[
 					new TableNode(
 						[
-							new TableRowNode([
-								new TableCellNode([
+							new TableBodyRowNode([
+								new TableBodyCellNode([
 									LinkNode.createFromPlainText(
 										"testOptionalInterfaceProperty",
 										"./test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
 									),
 								]),
-								new TableCellNode([CodeSpanNode.createFromPlainText("optional")]),
-								TableCellNode.createFromPlainText("0"),
-								new TableCellNode([SpanNode.createFromPlainText("number")]),
-								TableCellNode.createFromPlainText("Test optional property"),
+								new TableBodyCellNode([
+									CodeSpanNode.createFromPlainText("optional"),
+								]),
+								TableBodyCellNode.createFromPlainText("0"),
+								new TableBodyCellNode([SpanNode.createFromPlainText("number")]),
+								TableBodyCellNode.createFromPlainText("Test optional property"),
 							]),
 						],
-						new TableRowNode([
-							TableCellNode.createFromPlainText("Property"),
-							TableCellNode.createFromPlainText("Modifiers"),
-							TableCellNode.createFromPlainText("Default Value"),
-							TableCellNode.createFromPlainText("Type"),
-							TableCellNode.createFromPlainText("Description"),
+						new TableHeaderRowNode([
+							TableHeaderCellNode.createFromPlainText("Property"),
+							TableHeaderCellNode.createFromPlainText("Modifiers"),
+							TableHeaderCellNode.createFromPlainText("Default Value"),
+							TableHeaderCellNode.createFromPlainText("Type"),
+							TableHeaderCellNode.createFromPlainText("Description"),
 						]),
 					),
 				],

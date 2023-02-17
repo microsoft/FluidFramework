@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { TableCellNode } from "../../documentation-domain";
+import { TableCellKind, TableCellNode } from "../../documentation-domain";
 import type { DocumentWriter } from "../DocumentWriter";
 import { renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
@@ -46,7 +46,7 @@ function renderTableCellWithHtmlSyntax(
 	context: MarkdownRenderContext,
 ): void {
 	writer.ensureNewLine(); // Ensure line break before cell tag
-	writer.writeLine("<td>");
+	writer.writeLine(node.cellKind === TableCellKind.Header ? "<th>" : "<td>");
 	writer.increaseIndent();
 	renderNodes(node.children, writer, {
 		...context,
@@ -55,5 +55,5 @@ function renderTableCellWithHtmlSyntax(
 	});
 	writer.ensureNewLine(); // Ensure line break after content
 	writer.decreaseIndent();
-	writer.writeLine("</td>");
+	writer.writeLine(node.cellKind === TableCellKind.Header ? "</th>" : "</td>");
 }

@@ -10,7 +10,9 @@ import { MarkdownRenderers, defaultMarkdownRenderers } from "./RenderConfigurati
 import { MarkdownRenderContext } from "./RenderContext";
 
 /**
- * Generates the root {@link MarkdownRenderContext} for rendering a document with any provided `customRenderers`.
+ * Generates the root {@link MarkdownRenderContext} for rendering a document.
+ *
+ * @param customRenderers - Any custom render implementations to be used in place of or in addition to the defaults.
  */
 export function createRenderContext(customRenderers?: MarkdownRenderers): MarkdownRenderContext {
 	const renderers = {
@@ -26,6 +28,9 @@ export function createRenderContext(customRenderers?: MarkdownRenderers): Markdo
 
 /**
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.
+ *
+ * @param document - The document to render.
+ * @param customRenderers - Any custom render implementations to be used in place of or in addition to the defaults.
  */
 export function renderDocument(
 	document: DocumentNode,

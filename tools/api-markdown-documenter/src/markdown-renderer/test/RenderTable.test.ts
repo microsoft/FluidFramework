@@ -4,7 +4,13 @@
  */
 import { expect } from "chai";
 
-import { TableCellNode, TableNode, TableRowNode } from "../../documentation-domain";
+import {
+	TableBodyCellNode,
+	TableBodyRowNode,
+	TableHeaderCellNode,
+	TableHeaderRowNode,
+	TableNode,
+} from "../../documentation-domain";
 import { testRender } from "./Utilities";
 
 describe("Table rendering tests", () => {
@@ -15,14 +21,14 @@ describe("Table rendering tests", () => {
 
 		it("Simple table without header", () => {
 			const input = new TableNode([
-				new TableRowNode([
-					TableCellNode.createFromPlainText("Cell 1A"),
-					TableCellNode.createFromPlainText("Cell 1B"),
-					TableCellNode.createFromPlainText("Cell 1C"),
+				new TableBodyRowNode([
+					TableBodyCellNode.createFromPlainText("Cell 1A"),
+					TableBodyCellNode.createFromPlainText("Cell 1B"),
+					TableBodyCellNode.createFromPlainText("Cell 1C"),
 				]),
-				new TableRowNode([
-					TableCellNode.createFromPlainText("Cell 2A"),
-					TableCellNode.createFromPlainText("Cell 2B"),
+				new TableBodyRowNode([
+					TableBodyCellNode.createFromPlainText("Cell 2A"),
+					TableBodyCellNode.createFromPlainText("Cell 2B"),
 				]),
 			]);
 
@@ -42,20 +48,20 @@ describe("Table rendering tests", () => {
 		it("Simple table with header", () => {
 			const input = new TableNode(
 				[
-					new TableRowNode([
-						TableCellNode.createFromPlainText("Cell 1A"),
-						TableCellNode.createFromPlainText("Cell 1B"),
+					new TableBodyRowNode([
+						TableBodyCellNode.createFromPlainText("Cell 1A"),
+						TableBodyCellNode.createFromPlainText("Cell 1B"),
 					]),
-					new TableRowNode([
-						TableCellNode.createFromPlainText("Cell 2A"),
-						TableCellNode.createFromPlainText("Cell 2B"),
-						TableCellNode.createFromPlainText("Cell 2C"),
+					new TableBodyRowNode([
+						TableBodyCellNode.createFromPlainText("Cell 2A"),
+						TableBodyCellNode.createFromPlainText("Cell 2B"),
+						TableBodyCellNode.createFromPlainText("Cell 2C"),
 					]),
 				],
-				/* headingRow: */ new TableRowNode([
-					TableCellNode.createFromPlainText("Header A"),
-					TableCellNode.createFromPlainText("Header B"),
-					TableCellNode.createFromPlainText("Header C"),
+				/* headingRow: */ new TableHeaderRowNode([
+					TableHeaderCellNode.createFromPlainText("Header A"),
+					TableHeaderCellNode.createFromPlainText("Header B"),
+					TableHeaderCellNode.createFromPlainText("Header C"),
 				]),
 			);
 
@@ -84,14 +90,14 @@ describe("Table rendering tests", () => {
 
 		it("Simple table without header", () => {
 			const input = new TableNode([
-				new TableRowNode([
-					TableCellNode.createFromPlainText("Cell 1A"),
-					TableCellNode.createFromPlainText("Cell 1B"),
-					TableCellNode.createFromPlainText("Cell 1C"),
+				new TableBodyRowNode([
+					TableBodyCellNode.createFromPlainText("Cell 1A"),
+					TableBodyCellNode.createFromPlainText("Cell 1B"),
+					TableBodyCellNode.createFromPlainText("Cell 1C"),
 				]),
-				new TableRowNode([
-					TableCellNode.createFromPlainText("Cell 2A"),
-					TableCellNode.createFromPlainText("Cell 2B"),
+				new TableBodyRowNode([
+					TableBodyCellNode.createFromPlainText("Cell 2A"),
+					TableBodyCellNode.createFromPlainText("Cell 2B"),
 				]),
 			]);
 
@@ -130,20 +136,20 @@ describe("Table rendering tests", () => {
 		it("Simple table with header", () => {
 			const input = new TableNode(
 				[
-					new TableRowNode([
-						TableCellNode.createFromPlainText("Cell 1A"),
-						TableCellNode.createFromPlainText("Cell 1B"),
+					new TableBodyRowNode([
+						TableBodyCellNode.createFromPlainText("Cell 1A"),
+						TableBodyCellNode.createFromPlainText("Cell 1B"),
 					]),
-					new TableRowNode([
-						TableCellNode.createFromPlainText("Cell 2A"),
-						TableCellNode.createFromPlainText("Cell 2B"),
-						TableCellNode.createFromPlainText("Cell 2C"),
+					new TableBodyRowNode([
+						TableBodyCellNode.createFromPlainText("Cell 2A"),
+						TableBodyCellNode.createFromPlainText("Cell 2B"),
+						TableBodyCellNode.createFromPlainText("Cell 2C"),
 					]),
 				],
-				/* headingRow: */ new TableRowNode([
-					TableCellNode.createFromPlainText("Header A"),
-					TableCellNode.createFromPlainText("Header B"),
-					TableCellNode.createFromPlainText("Header C"),
+				/* headingRow: */ new TableHeaderRowNode([
+					TableHeaderCellNode.createFromPlainText("Header A"),
+					TableHeaderCellNode.createFromPlainText("Header B"),
+					TableHeaderCellNode.createFromPlainText("Header C"),
 				]),
 			);
 
@@ -153,15 +159,15 @@ describe("Table rendering tests", () => {
 				"<table>",
 				"  <thead>",
 				"    <tr>",
-				"      <td>",
+				"      <th>",
 				"        Header A",
-				"      </td>",
-				"      <td>",
+				"      </th>",
+				"      <th>",
 				"        Header B",
-				"      </td>",
-				"      <td>",
+				"      </th>",
+				"      <th>",
 				"        Header C",
-				"      </td>",
+				"      </th>",
 				"    </tr>",
 				"  </thead>",
 				"  <tbody>",

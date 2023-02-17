@@ -24,9 +24,11 @@ import {
 	PlainTextNode,
 	SectionNode,
 	SpanNode,
-	TableCellNode,
+	TableBodyCellNode,
+	TableBodyRowNode,
+	TableHeaderCellNode,
+	TableHeaderRowNode,
 	TableNode,
-	TableRowNode,
 } from "../../documentation-domain";
 import {
 	ApiFunctionLike,
@@ -210,33 +212,33 @@ export function createDefaultSummaryTable(
 		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
 	);
 
-	const headerRowCells: TableCellNode[] = [
-		TableCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
+	const headerRowCells: TableHeaderCellNode[] = [
+		TableHeaderCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
 	];
 	if (hasDeprecated) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
 	}
 	if (hasModifiers) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
 	}
-	headerRowCells.push(TableCellNode.createFromPlainText("Description"));
-	const headerRow = new TableRowNode(headerRowCells);
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
+	const headerRow = new TableHeaderRowNode(headerRowCells);
 
-	const tableRows: TableRowNode[] = [];
+	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiItem of apiItems) {
-		const rowCells: TableCellNode[] = [createApiTitleCell(apiItem, config)];
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItem, config)];
 		if (hasDeprecated) {
-			rowCells.push(createDeprecatedCell(apiItem));
+			bodyRowCells.push(createDeprecatedCell(apiItem));
 		}
 		if (hasModifiers) {
-			rowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
+			bodyRowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
 		}
-		rowCells.push(createApiSummaryCell(apiItem, config));
+		bodyRowCells.push(createApiSummaryCell(apiItem, config));
 
-		tableRows.push(new TableRowNode(rowCells));
+		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
 
-	return new TableNode(tableRows, headerRow);
+	return new TableNode(bodyRows, headerRow);
 }
 
 /**
@@ -255,33 +257,35 @@ export function createParametersSummaryTable(
 	// Only display "Modifiers" column if there are any optional parameters present.
 	const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
 
-	const headerRowCells: TableCellNode[] = [TableCellNode.createFromPlainText("Parameter")];
+	const headerRowCells: TableHeaderCellNode[] = [
+		TableHeaderCellNode.createFromPlainText("Parameter"),
+	];
 	if (hasOptionalParameters) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
 	}
-	headerRowCells.push(TableCellNode.createFromPlainText("Type"));
-	headerRowCells.push(TableCellNode.createFromPlainText("Description"));
-	const headerRow = new TableRowNode(headerRowCells);
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Type"));
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
+	const headerRow = new TableHeaderRowNode(headerRowCells);
 
-	function createModifierCell(apiParameter: Parameter): TableCellNode {
+	function createModifierCell(apiParameter: Parameter): TableBodyCellNode {
 		return apiParameter.isOptional
-			? TableCellNode.createFromPlainText("optional")
-			: TableCellNode.Empty;
+			? TableBodyCellNode.createFromPlainText("optional")
+			: TableBodyCellNode.Empty;
 	}
 
-	const tableRows: TableRowNode[] = [];
+	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiParameter of apiParameters) {
-		const rowCells: TableCellNode[] = [createParameterTitleCell(apiParameter)];
+		const bodyRowCells: TableBodyCellNode[] = [createParameterTitleCell(apiParameter)];
 		if (hasOptionalParameters) {
-			rowCells.push(createModifierCell(apiParameter));
+			bodyRowCells.push(createModifierCell(apiParameter));
 		}
-		rowCells.push(createParameterTypeCell(apiParameter, config));
-		rowCells.push(createParameterSummaryCell(apiParameter, contextApiItem, config));
+		bodyRowCells.push(createParameterTypeCell(apiParameter, config));
+		bodyRowCells.push(createParameterSummaryCell(apiParameter, contextApiItem, config));
 
-		tableRows.push(new TableRowNode(rowCells));
+		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
 
-	return new TableNode(tableRows, headerRow);
+	return new TableNode(bodyRows, headerRow);
 }
 
 /**
@@ -312,39 +316,39 @@ export function createFunctionLikeSummaryTable(
 	);
 	const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
-	const headerRowCells: TableCellNode[] = [
-		TableCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
+	const headerRowCells: TableHeaderCellNode[] = [
+		TableHeaderCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
 	];
 	if (hasDeprecated) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
 	}
 	if (hasModifiers) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
 	}
 	if (hasReturnTypes) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Return Type"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Return Type"));
 	}
-	headerRowCells.push(TableCellNode.createFromPlainText("Description"));
-	const headerRow = new TableRowNode(headerRowCells);
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
+	const headerRow = new TableHeaderRowNode(headerRowCells);
 
-	const tableRows: TableRowNode[] = [];
+	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiItem of apiItems) {
-		const rowCells: TableCellNode[] = [createApiTitleCell(apiItem, config)];
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItem, config)];
 		if (hasDeprecated) {
-			rowCells.push(createDeprecatedCell(apiItem));
+			bodyRowCells.push(createDeprecatedCell(apiItem));
 		}
 		if (hasModifiers) {
-			rowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
+			bodyRowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
 		}
 		if (hasReturnTypes) {
-			rowCells.push(createReturnTypeCell(apiItem, config));
+			bodyRowCells.push(createReturnTypeCell(apiItem, config));
 		}
-		rowCells.push(createApiSummaryCell(apiItem, config));
+		bodyRowCells.push(createApiSummaryCell(apiItem, config));
 
-		tableRows.push(new TableRowNode(rowCells));
+		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
 
-	return new TableNode(tableRows, headerRow);
+	return new TableNode(bodyRows, headerRow);
 }
 
 /**
@@ -375,39 +379,41 @@ export function createPropertiesTable(
 		(apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
 	);
 
-	const headerRowCells: TableCellNode[] = [TableCellNode.createFromPlainText("Property")];
+	const headerRowCells: TableHeaderCellNode[] = [
+		TableHeaderCellNode.createFromPlainText("Property"),
+	];
 	if (hasDeprecated) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
 	}
 	if (hasModifiers) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
 	}
 	if (hasDefaultValues) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Default Value"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Default Value"));
 	}
-	headerRowCells.push(TableCellNode.createFromPlainText("Type"));
-	headerRowCells.push(TableCellNode.createFromPlainText("Description"));
-	const headerRow = new TableRowNode(headerRowCells);
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Type"));
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
+	const headerRow = new TableHeaderRowNode(headerRowCells);
 
-	const tableRows: TableRowNode[] = [];
+	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiProperty of apiProperties) {
-		const rowCells: TableCellNode[] = [createApiTitleCell(apiProperty, config)];
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiProperty, config)];
 		if (hasDeprecated) {
-			rowCells.push(createDeprecatedCell(apiProperty));
+			bodyRowCells.push(createDeprecatedCell(apiProperty));
 		}
 		if (hasModifiers) {
-			rowCells.push(createModifiersCell(apiProperty, options?.modifiersToOmit));
+			bodyRowCells.push(createModifiersCell(apiProperty, options?.modifiersToOmit));
 		}
 		if (hasDefaultValues) {
-			rowCells.push(createDefaultValueCell(apiProperty, config));
+			bodyRowCells.push(createDefaultValueCell(apiProperty, config));
 		}
-		rowCells.push(createPropertyTypeCell(apiProperty, config));
-		rowCells.push(createApiSummaryCell(apiProperty, config));
+		bodyRowCells.push(createPropertyTypeCell(apiProperty, config));
+		bodyRowCells.push(createApiSummaryCell(apiProperty, config));
 
-		tableRows.push(new TableRowNode(rowCells));
+		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
 
-	return new TableNode(tableRows, headerRow);
+	return new TableNode(bodyRows, headerRow);
 }
 
 /**
@@ -429,25 +435,27 @@ export function createPackagesTable(
 	// Only display "Alerts" column if there are any deprecated items in the list.
 	const hasDeprecated = apiPackages.some((element) => isDeprecated(element));
 
-	const headerRowCells: TableCellNode[] = [TableCellNode.createFromPlainText("Package")];
+	const headerRowCells: TableHeaderCellNode[] = [
+		TableHeaderCellNode.createFromPlainText("Package"),
+	];
 	if (hasDeprecated) {
-		headerRowCells.push(TableCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
 	}
-	headerRowCells.push(TableCellNode.createFromPlainText("Description"));
-	const headerRow = new TableRowNode(headerRowCells);
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
+	const headerRow = new TableHeaderRowNode(headerRowCells);
 
-	const tableRows: TableRowNode[] = [];
+	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiPackage of apiPackages) {
-		const rowCells: TableCellNode[] = [createApiTitleCell(apiPackage, config)];
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiPackage, config)];
 		if (hasDeprecated) {
-			rowCells.push(createDeprecatedCell(apiPackage));
+			bodyRowCells.push(createDeprecatedCell(apiPackage));
 		}
-		rowCells.push(createApiSummaryCell(apiPackage, config));
+		bodyRowCells.push(createApiSummaryCell(apiPackage, config));
 
-		tableRows.push(new TableRowNode(rowCells));
+		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
 
-	return new TableNode(tableRows, headerRow);
+	return new TableNode(bodyRows, headerRow);
 }
 
 /**
@@ -460,7 +468,7 @@ export function createPackagesTable(
 export function createApiSummaryCell(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+): TableBodyCellNode {
 	const contents: DocumentationNode[] = [];
 
 	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
@@ -483,7 +491,7 @@ export function createApiSummaryCell(
 		}
 	}
 
-	return contents.length === 0 ? TableCellNode.Empty : new TableCellNode(contents);
+	return contents.length === 0 ? TableBodyCellNode.Empty : new TableBodyCellNode(contents);
 }
 
 /**
@@ -499,10 +507,10 @@ export function createApiSummaryCell(
 export function createReturnTypeCell(
 	apiItem: ApiFunctionLike,
 	config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+): TableBodyCellNode {
 	return ApiReturnTypeMixin.isBaseClassOf(apiItem)
 		? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
-		: TableCellNode.Empty;
+		: TableBodyCellNode.Empty;
 }
 
 /**
@@ -517,9 +525,9 @@ export function createReturnTypeCell(
 export function createApiTitleCell(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+): TableBodyCellNode {
 	const itemLink = getLinkForApiItem(apiItem, config);
-	return new TableCellNode([LinkNode.createFromPlainTextLink(itemLink)]);
+	return new TableBodyCellNode([LinkNode.createFromPlainTextLink(itemLink)]);
 }
 
 /**
@@ -531,7 +539,7 @@ export function createApiTitleCell(
 export function createModifiersCell(
 	apiItem: ApiItem,
 	modifiersToOmit?: ApiModifier[],
-): TableCellNode {
+): TableBodyCellNode {
 	const modifiers = getModifiers(apiItem, modifiersToOmit);
 
 	const contents: DocumentationNode[] = [];
@@ -544,7 +552,7 @@ export function createModifiersCell(
 		needsComma = true;
 	}
 
-	return modifiers.length === 0 ? TableCellNode.Empty : new TableCellNode(contents);
+	return modifiers.length === 0 ? TableBodyCellNode.Empty : new TableBodyCellNode(contents);
 }
 
 /**
@@ -556,20 +564,20 @@ export function createModifiersCell(
 export function createDefaultValueCell(
 	apiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+): TableBodyCellNode {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
 	const defaultValueSection = getDefaultValueBlock(apiItem, config);
 
 	if (defaultValueSection === undefined) {
-		return TableCellNode.Empty;
+		return TableBodyCellNode.Empty;
 	}
 
 	const contents = transformDocSection(defaultValueSection, docNodeTransformOptions);
 
 	// Since we are sticking the contents into a table cell, we can remove the outer Paragraph node
 	// from the hierarchy to simplify things.
-	return new TableCellNode(contents.children);
+	return new TableBodyCellNode(contents.children);
 }
 
 /**
@@ -579,10 +587,10 @@ export function createDefaultValueCell(
  * @param apiItem - The API item for which the deprecation notice will be displayed if appropriate.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function createDeprecatedCell(apiItem: ApiItem): TableCellNode {
+export function createDeprecatedCell(apiItem: ApiItem): TableBodyCellNode {
 	return isDeprecated(apiItem)
-		? new TableCellNode([CodeSpanNode.createFromPlainText("DEPRECATED")])
-		: TableCellNode.Empty;
+		? new TableBodyCellNode([CodeSpanNode.createFromPlainText("DEPRECATED")])
+		: TableBodyCellNode.Empty;
 }
 
 /**
@@ -597,7 +605,7 @@ export function createDeprecatedCell(apiItem: ApiItem): TableCellNode {
 export function createPropertyTypeCell(
 	apiProperty: ApiPropertyItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+): TableBodyCellNode {
 	return createTypeExcerptCell(apiProperty.propertyTypeExcerpt, config);
 }
 
@@ -606,8 +614,8 @@ export function createPropertyTypeCell(
  *
  * @param apiParameter - The parameter whose name will be displayed in the cell.
  */
-export function createParameterTitleCell(apiParameter: Parameter): TableCellNode {
-	return TableCellNode.createFromPlainText(apiParameter.name);
+export function createParameterTitleCell(apiParameter: Parameter): TableBodyCellNode {
+	return TableBodyCellNode.createFromPlainText(apiParameter.name);
 }
 
 /**
@@ -622,7 +630,7 @@ export function createParameterTitleCell(apiParameter: Parameter): TableCellNode
 export function createParameterTypeCell(
 	apiParameter: Parameter,
 	config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+): TableBodyCellNode {
 	return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 }
 
@@ -639,9 +647,9 @@ export function createParameterSummaryCell(
 	apiParameter: Parameter,
 	contextApiItem: ApiItem,
 	config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+): TableBodyCellNode {
 	if (apiParameter.tsdocParamBlock === undefined) {
-		return TableCellNode.Empty;
+		return TableBodyCellNode.Empty;
 	}
 
 	const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
@@ -653,7 +661,7 @@ export function createParameterSummaryCell(
 
 	// Since we are putting the contents into a table cell anyways, omit the Paragraph
 	// node from the hierarchy to simplify it.
-	return new TableCellNode(cellContent.children);
+	return new TableBodyCellNode(cellContent.children);
 }
 
 /**
@@ -667,9 +675,11 @@ export function createParameterSummaryCell(
 export function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
 	config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+): TableBodyCellNode {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
-	return excerptSpan === undefined ? TableCellNode.Empty : new TableCellNode([excerptSpan]);
+	return excerptSpan === undefined
+		? TableBodyCellNode.Empty
+		: new TableBodyCellNode([excerptSpan]);
 }
 
 /**

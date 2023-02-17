@@ -2,7 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TableCellNode, TableNode, TableRowNode } from "../../documentation-domain";
+import {
+	TableBodyCellNode,
+	TableBodyRowNode,
+	TableCellNode,
+	TableNode,
+} from "../../documentation-domain";
 import type { DocumentWriter } from "../DocumentWriter";
 import { renderNode, renderNodes } from "../Render";
 import type { MarkdownRenderContext } from "../RenderContext";
@@ -42,19 +47,19 @@ function renderTableWithMarkdownSyntax(
 
 	writer.ensureSkippedLine(); // Ensure blank line before table
 
-	if (node.headingRow !== undefined) {
-		const headerCellCount = node.headingRow.children.length;
+	if (node.headerRow !== undefined) {
+		const headerCellCount = node.headerRow.children.length;
 
 		// Render heading row
-		renderNode(node.headingRow, writer, childContext);
+		renderNode(node.headerRow, writer, childContext);
 		writer.ensureNewLine();
 
 		// Render separator row
 		renderNode(
-			new TableRowNode(
+			new TableBodyRowNode(
 				// eslint-disable-next-line unicorn/new-for-builtins
 				Array<TableCellNode>(headerCellCount).fill(
-					TableCellNode.createFromPlainText("---"),
+					TableBodyCellNode.createFromPlainText("---"),
 				),
 			),
 			writer,
@@ -84,10 +89,10 @@ function renderTableWithHtmlSyntax(
 	writer.increaseIndent();
 
 	// Write header row if one was specified
-	if (node.headingRow !== undefined) {
+	if (node.headerRow !== undefined) {
 		writer.writeLine("<thead>");
 		writer.increaseIndent();
-		renderNode(node.headingRow, writer, childContext);
+		renderNode(node.headerRow, writer, childContext);
 		writer.ensureNewLine(); // Ensure line break header row contents
 		writer.decreaseIndent();
 		writer.writeLine("</thead>");

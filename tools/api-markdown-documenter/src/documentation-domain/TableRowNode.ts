@@ -4,7 +4,26 @@
  */
 import { ParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { TableCellNode } from "./TableCellNode";
+import { TableCellNode, TableHeaderCellNode } from "./TableCellNode";
+
+/**
+ * Kind of Table Row.
+ */
+export enum TableRowKind {
+	/**
+	 * A row that represents the header of a table.
+	 *
+	 * @see {@link TableHeaderRowNode}
+	 */
+	Header = "Header",
+
+	/**
+	 * A row that lives in the body of a table.
+	 *
+	 * @see {@link TableBodyRowNode}
+	 */
+	Body = "Body",
+}
 
 /**
  * A row in a table.
@@ -30,18 +49,47 @@ import { TableCellNode } from "./TableCellNode";
  * - {@link TableNode}
  * - {@link TableCellNode}
  */
-export class TableRowNode extends ParentNodeBase<TableCellNode> {
-	/**
-	 * Static singleton representing an empty Table Row node.
-	 */
-	public static readonly Empty = new TableRowNode([]);
-
+export abstract class TableRowNode extends ParentNodeBase<TableCellNode> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.TableRow;
 
-	public constructor(cells: TableCellNode[]) {
+	/**
+	 * The kind of row this node represents.
+	 */
+	public readonly rowKind: TableRowKind;
+
+	protected constructor(cells: TableCellNode[], rowKind: TableRowKind) {
 		super(cells);
+		this.rowKind = rowKind;
+	}
+}
+
+/**
+ * A {@link TableRowNode} that represents the header row of a {@link TableNode}.
+ */
+export class TableHeaderRowNode extends TableRowNode {
+	/**
+	 * Static singleton representing an empty Table Header Row.
+	 */
+	public static readonly Empty = new TableHeaderRowNode([]);
+
+	public constructor(cells: TableHeaderCellNode[]) {
+		super(cells, TableRowKind.Header);
+	}
+}
+
+/**
+ * A {@link TableRowNode} that lives in the body of a {@link TableNode}.
+ */
+export class TableBodyRowNode extends TableRowNode {
+	/**
+	 * Static singleton representing an empty Table Body Row.
+	 */
+	public static readonly Empty = new TableBodyRowNode([]);
+
+	public constructor(cells: TableCellNode[]) {
+		super(cells, TableRowKind.Body);
 	}
 }
