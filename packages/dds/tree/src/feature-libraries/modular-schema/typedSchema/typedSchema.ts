@@ -31,7 +31,7 @@ import { ArrayToUnion, AsNames, WithDefault } from "./typeUtils";
 export interface TypedTreeSchemaBuilder {
 	readonly name: string;
 	readonly local?: { readonly [key: string]: FieldSchemaTypeInfo };
-	readonly global?: readonly (GlobalFieldKeySymbol | Named<GlobalFieldKeySymbol>)[];
+	readonly global?: (GlobalFieldKeySymbol | Named<GlobalFieldKeySymbol>)[];
 	readonly extraLocalFields?: FieldSchemaTypeInfo;
 	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
@@ -42,8 +42,7 @@ type EmptyObject = Readonly<Record<string, never>>;
 export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
 	readonly name: T["name"];
 	readonly local: WithDefault<T["local"], EmptyObject>;
-	readonly global: AsNames<WithDefault<T["global"], readonly []>, GlobalFieldKeySymbol> &
-		readonly GlobalFieldKeySymbol[];
+	readonly global: AsNames<WithDefault<T["global"], []>, GlobalFieldKeySymbol>;
 	readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof emptyField>;
 	readonly extraGlobalFields: WithDefault<T["extraGlobalFields"], false>;
 	readonly value: WithDefault<T["value"], ValueSchema.Nothing>;
@@ -78,7 +77,7 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
  */
 export function typedFieldSchema<
 	TKind extends FieldKind,
-	TTypes extends readonly (string | Named<TreeSchemaIdentifier>)[],
+	TTypes extends (string | Named<string>)[],
 >(kind: TKind, ...typeArray: TTypes): { kind: TKind; types: NameSet<AsNames<TTypes>> } {
 	const types = nameSet(...typeArray);
 	return { kind, types };
@@ -94,7 +93,7 @@ export function unrestrictedFieldSchema<TKind extends FieldKind>(kind: TKind): {
 	return { kind };
 }
 
-function extractNames<T extends readonly (string | Named<string>)[]>(
+function extractNames<T extends (string | Named<string>)[]>(
 	items: T,
 ): AsNames<T> & Iterable<ArrayToUnion<AsNames<T>>> {
 	return items.map((item) =>
@@ -102,11 +101,11 @@ function extractNames<T extends readonly (string | Named<string>)[]>(
 	) as unknown as AsNames<T> & Iterable<ArrayToUnion<AsNames<T>>>;
 }
 
-export function nameSetSimple<T extends readonly [...string[]]>(...names: T): NameSet<T> {
+export function nameSetSimple<T extends [...string[]]>(...names: T): NameSet<T> {
 	return new Set(names) as unknown as NameSet<T>;
 }
 
-export function nameSet<T extends readonly [...(string | Named<string>)[]]>(
+export function nameSet<T extends [...(string | Named<string>)[]]>(
 	...names: T
 ): NameSet<AsNames<T>> {
 	return new Set(extractNames(names)) as unknown as NameSet<AsNames<T>>;

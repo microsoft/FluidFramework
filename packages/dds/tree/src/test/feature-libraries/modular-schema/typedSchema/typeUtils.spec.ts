@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Named } from "../../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 import {
@@ -26,7 +25,7 @@ import {
 
 // These tests currently just cover the type checking, so its all compile time.
 {
-	type X2 = WithDefault<undefined, readonly []>;
+	type X2 = WithDefault<undefined, []>;
 
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	type X3 = WithDefault<undefined, {}>;
@@ -46,8 +45,8 @@ import {
 
 	type check2_ = requireTrue<areSafelyAssignable<Obj2, Record<string, never>>>;
 
-	type objGeneric = AsNames<readonly (string | Named<string>)[]>;
-	type check4_ = requireTrue<areSafelyAssignable<objGeneric, readonly []>>;
+	type objGeneric = AsNames<[]>;
+	type check4_ = requireTrue<areSafelyAssignable<objGeneric, []>>;
 }
 
 // Test ArrayToUnion
@@ -84,13 +83,13 @@ import {
 	type check1_ = requireTrue<areSafelyAssignable<ArrayToUnion<[1]>, 1>>;
 	type Case2 = ArrayToSet<[1, 2]>;
 	type check2_ = requireTrue<areSafelyAssignable<Case2, ReadonlySet<1 | 2>>>;
-	type Case3 = ArrayToSet<readonly ["testType", "2"]>;
+	type Case3 = ArrayToSet<["testType", "2"]>;
 	type check3_ = requireTrue<areSafelyAssignable<Case3, ReadonlySet<"testType" | "2">>>;
 }
 
 // Test NameSet
 {
-	type check1_ = requireAssignableTo<NameSet<readonly ["X"]>, NameSet<readonly ["X"]>>;
+	type check1_ = requireAssignableTo<NameSet<["X"]>, NameSet<["X"]>>;
 	// @ts-expect-error Different sets should not be equal
-	type check3_ = requireAssignableTo<NameSet<readonly ["Y"]>, NameSet<readonly ["X"]>>;
+	type check3_ = requireAssignableTo<NameSet<["Y"]>, NameSet<["X"]>>;
 }

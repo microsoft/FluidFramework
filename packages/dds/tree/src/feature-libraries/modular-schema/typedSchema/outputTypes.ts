@@ -49,8 +49,7 @@ export interface FieldSchemaTypeInfo extends FieldSchema {
 /**
  * Set of `TreeSchemaIdentifiers` that has an easy way to get the list names as regular strings out with the type system.
  */
-export interface NameSet<Names extends readonly string[] = any>
-	extends ReadonlySet<TreeSchemaIdentifier> {
+export interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeSchemaIdentifier> {
 	readonly typeCheck?: Invariant<Names>;
 }
 

@@ -41,7 +41,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 {
 	type check1_ = requireAssignableTo<
 		typeof testField,
-		{ kind: typeof FieldKinds.value; types: NameSet<readonly ["testType"]> }
+		{ kind: typeof FieldKinds.value; types: NameSet<["testType"]> }
 	>;
 	const fieldTest1_: FieldSchemaTypeInfo = testField;
 	type check3_ = requireAssignableTo<typeof testField, FieldSchemaTypeInfo>;
@@ -53,7 +53,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 		local: { localKey1Name: testField },
 		extraLocalFields: testField,
 		extraGlobalFields: true,
-		global: [] as const,
+		global: [] as never[] & [],
 		value: ValueSchema.Serializable,
 	});
 
@@ -111,7 +111,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 		local: {},
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
-		global: [] as const,
+		global: [] as never[] & [],
 		value: ValueSchema.Nothing,
 	} as const;
 	const shortData = {
@@ -125,7 +125,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 	{
 		type check1_ = requireAssignableTo<Info["name"], "X">;
 		type check2_ = requireAssignableTo<{}, Info["local"]>;
-		type check3_ = requireAssignableTo<readonly [], Info["global"]>;
+		type check3_ = requireAssignableTo<[], Info["global"]>;
 		type check4_ = requireAssignableTo<Info["extraLocalFields"], typeof emptyField>;
 		type check5_ = requireAssignableTo<Info["extraGlobalFields"], false>;
 		type check6_ = requireAssignableTo<Info["value"], ValueSchema.Nothing>;
@@ -230,8 +230,8 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 	const numericField = typedFieldSchema(FieldKinds.value, "Number");
 	type NumericFieldInfo = typeof numericField;
 	type NumericFieldTypes = NumericFieldInfo["types"];
-	type check1_ = requireAssignableTo<NumericFieldTypes, NameSet<readonly ["Number"]>>;
-	type check2_ = requireAssignableTo<NameSet<readonly ["Number"]>, NumericFieldTypes>;
+	type check1_ = requireAssignableTo<NumericFieldTypes, NameSet<["Number"]>>;
+	type check2_ = requireAssignableTo<NameSet<["Number"]>, NumericFieldTypes>;
 }
 
 // TODO: test and fix passing schema objects in type array instead of strings.

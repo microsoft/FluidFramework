@@ -60,6 +60,7 @@ const schemaData = {
 		number: numberSchema,
 		ball: ballSchema,
 	} as unknown as SchemaMap,
+	allTypes: ["number", "ball"] as const,
 } as const;
 
 interface SchemaMap {
@@ -111,7 +112,7 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	// A concrete example for the "x" field:
 	type BallXFieldInfo = typeof ballSchema.typeInfo.local.x;
 	type BallXFieldTypes = BallXFieldInfo["types"];
-	type check_ = requireAssignableTo<BallXFieldTypes, NameSet<readonly ["number"]>>;
+	type check_ = requireAssignableTo<BallXFieldTypes, NameSet<["number"]>>;
 
 	type Child = TreeTypesToTypedTreeTypes<typeof schemaData, ApiMode.Flexible, BallXFieldTypes>;
 
@@ -120,7 +121,7 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	type Child2 = TreeTypesToTypedTreeTypes<
 		typeof schemaData,
 		ApiMode.Flexible,
-		NameSet<readonly ["number"]>
+		NameSet<["number"]>
 	>;
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;

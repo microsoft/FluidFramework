@@ -130,16 +130,26 @@ export type TreeTypesToTypedTreeTypes<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
 	T extends unknown | NameSet,
-> = T extends NameSet<infer Names> ? ValidContextuallyTypedNodeData<TMap, Mode, Names> : AnyTree;
-
-interface AnyTree {}
+> = ValidContextuallyTypedNodeData<
+	TMap,
+	Mode,
+	T extends NameSet<infer Names> ? Names : TMap["allTypes"]
+>;
 
 type ValuesOf<T> = T[keyof T];
 
 interface TypedSchemaData extends SchemaDataAndPolicy {
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	treeSchemaObject: {}; // readonly [key: string]: TreeSchemaTypeInfo
+	allTypes: readonly string[];
 }
+
+// export function typedSchemaData<T extends LabeledTreeSchema<any>[]>(...t: T): {
+// 	treeSchemaObject: {},
+// 	allTypes:
+// } {
+
+// }
 
 /**
  * This is not an exact match for what `applyFieldTypesFromContext` allows: it does not require discriminators.

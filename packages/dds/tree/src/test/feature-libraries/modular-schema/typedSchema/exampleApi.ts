@@ -114,23 +114,23 @@ function useBall(b: BallTree): NumberTree {
 	const numericField = field(value, "Number");
 	type NumericFieldInfo = typeof numericField;
 	type NumericFieldTypes = NumericFieldInfo["types"];
-	type check1_ = requireAssignableTo<NumericFieldTypes, NameSet<readonly ["Number"]>>;
-	type check2_ = requireAssignableTo<NameSet<readonly ["Number"]>, NumericFieldTypes>;
+	type check1_ = requireAssignableTo<NumericFieldTypes, NameSet<["Number"]>>;
+	type check2_ = requireAssignableTo<NameSet<["Number"]>, NumericFieldTypes>;
 	// @ts-expect-error Different sets should not be equal
-	type check3_ = requireAssignableTo<NumericFieldTypes, NameSet<readonly ["X"]>>;
+	type check3_ = requireAssignableTo<NumericFieldTypes, NameSet<["X"]>>;
 }
 
 {
 	// A concrete example for the "x" field:
 	type BallXFieldInfo = typeof ballSchema.typeInfo.local.x;
 	type BallXFieldTypes = BallXFieldInfo["types"];
-	type check_ = requireAssignableTo<BallXFieldTypes, NameSet<readonly ["number"]>>;
+	type check_ = requireAssignableTo<BallXFieldTypes, NameSet<["number"]>>;
 
 	type Child = TreeTypesToTypedTreeTypes<SchemaMap, BallXFieldTypes>;
 
 	type check3_ = requireAssignableTo<Child, NumberTree>;
 	type check4_ = requireAssignableTo<NumberTree, Child>;
-	type Child2 = TreeTypesToTypedTreeTypes<SchemaMap, NameSet<readonly ["number"]>>;
+	type Child2 = TreeTypesToTypedTreeTypes<SchemaMap, NameSet<["number"]>>;
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;

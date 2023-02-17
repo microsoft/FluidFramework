@@ -76,6 +76,7 @@
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/shared-object-base": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@ungap/structured-clone": "^0.3.4",
+		"hkt-toolbelt": "^0.19.2",
 		"sorted-btree": "^1.8.0",
 		"uuid": "^8.3.1"
 	},
@@ -114,6 +115,6 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",
 		"source-map-support": "^0.5.16",
-		"typescript": "~4.5.5"
+		"typescript": "~4.9.3"
 	}
 }

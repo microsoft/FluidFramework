@@ -3,12 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { $, List, Kind } from "hkt-toolbelt";
+
 import { Named } from "../../../core";
 import { Brand } from "../../../util";
 
 /**
  * Utilities for manipulating types.
  */
+
+/**
+ * https://code.lol/post/programming/higher-kinded-types/
+ */
+export type Assume<T, U> = T extends U ? T : U;
 
 /**
  * Convert a object type into the type of a ReadonlyMap from field name to value.
@@ -62,16 +69,24 @@ export type WithDefault<T, Default> = T extends undefined
 /**
  * Converts list of names or named objects into list of names.
  */
-export type AsNames<
-	T extends readonly [...(unknown | Named<TName>)[]],
-	TName = string,
-> = T extends [infer Head, ...infer Tail]
-	? readonly [AsName<Head>, ...AsNames<Tail, TName>]
-	: readonly [];
+export type AsNames<T extends (TName | Named<TName>)[], TName = string> = Assume<
+	$<$<List.Map, AsNameKind>, T>,
+	TName[]
+>;
 
-export type AsName<T extends unknown | Named<TName>, TName = string> = T extends Named<infer Name>
-	? Name
-	: T;
+export interface AsNameKind extends Kind.Kind {
+	f(x: this[Kind._]): AsName<typeof x>;
+}
+
+export type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
+
+/**
+ * Version of AsNames that does not use "hkt-toolbelt".
+ */
+type AsNamesX<T extends [...(unknown | Named<TName>)[]], TName = string> = Assume<
+	T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNamesX<Tail, TName>] : [],
+	TName[]
+>;
 
 /**
  * Converts list of names or named objects into list of branded names.
