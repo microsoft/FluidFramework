@@ -32,7 +32,7 @@ export type PackageDetails = {
 	readonly oldVersions: readonly string[];
 	readonly broken: BrokenCompatTypes;
 	readonly json: PackageJson;
-	typeValidation: ITypeValidationConfig;
+	typeValidation?: ITypeValidationConfig;
 };
 
 function createSortedObject<T>(obj: Record<string, T>): Record<string, T> {
@@ -83,7 +83,7 @@ export async function getPackageDetails(
 	}
 
 	if (result === null || result === undefined) {
-		throw new Error(`Couldn't find typetest config.`);
+		log.verbose(`no typetest config found for ${packageDir}`);
 	}
 
 	const config = result?.config;
@@ -372,7 +372,7 @@ export async function getAndUpdatePackageDetails(
 	} else if (packageDetails.json.private === true) {
 		// Private packages aren't published, so no need to do type testing for them.
 		return { skipReason: "Skipping package: private package" };
-	} else if (packageDetails.typeValidation.disabled === true) {
+	} else if (packageDetails.typeValidation?.disabled === true) {
 		// Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
 		return { skipReason: "Skipping package: type validation disabled" };
 	}
@@ -506,7 +506,7 @@ export async function getAndUpdatePackageDetails(
 			previousVersionStyle,
 			baselineRange: baseline,
 			baselineVersion: baseline === prevVersion ? undefined : prevVersion,
-			broken: resetBroken === true ? {} : packageDetails.typeValidation.broken ?? {},
+			broken: resetBroken === true ? {} : packageDetails.typeValidation?.broken ?? {},
 		};
 
 		if (disabled !== undefined) {
