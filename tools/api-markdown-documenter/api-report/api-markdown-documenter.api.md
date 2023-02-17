@@ -24,6 +24,7 @@ import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
+import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
 import type { Literal } from 'unist';
@@ -528,6 +529,9 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 
 // @public
 export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[];
+
+// @public
+export function transformDocNode(docNode: DocNode, contextApiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocumentationNode | undefined;
 
 // @public
 export class UnorderedListNode extends ParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {

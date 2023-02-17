@@ -22,6 +22,7 @@ export {
 	defaultApiItemTransformations,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
+	transformDocNode,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.

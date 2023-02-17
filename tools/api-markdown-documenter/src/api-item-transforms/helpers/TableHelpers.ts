@@ -37,8 +37,8 @@ import {
 	isDeprecated,
 } from "../../utilities";
 import { transformDocSection } from "../DocNodeTransforms";
+import { getDocNodeTransformationOptions } from "../Utilities";
 import { createExcerptSpanWithHyperlinks } from "./Helpers";
-import { getDocNodeTransformationOptions } from "./InternalUtilities";
 
 /**
  * Input properties for creating a table of API members

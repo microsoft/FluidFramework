@@ -14,6 +14,7 @@ export {
 	TransformApiItemWithChildren,
 	TransformApiItemWithoutChildren,
 } from "./Configuration";
+export { transformDocNode } from "./DocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export { apiPackageToDocument } from "./TransformApiPackage";
 export { apiModelToDocument } from "./TransformModel";
