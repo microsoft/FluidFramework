@@ -232,7 +232,7 @@ export class SummaryGenerator {
 		const summarizeEvent = PerformanceEvent.start(
 			logger,
 			{
-				eventName: "Summarize",
+				eventName: "SummarizeCore",
 				refreshLatestAck,
 				...summarizeTelemetryProps,
 			},
