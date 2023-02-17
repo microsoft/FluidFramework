@@ -24,6 +24,8 @@ import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
+import { DocDeclarationReference } from '@microsoft/tsdoc';
+import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
 import type { Literal } from 'unist';
@@ -121,6 +123,9 @@ export class CodeSpanNode extends ParentNodeBase<SingleLineDocumentationNode> im
 
 // @public
 export type CreateChildContentSections = (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
+
+// @public
+export function createDocumentWriter(): DocumentWriter;
 
 // @public
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
@@ -528,6 +533,11 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 
 // @public
 export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[];
+
+// Warning: (ae-forgotten-export) The symbol "DocNodeTransformOptions" needs to be exported by the entry point index.d.ts
+//
+// @public
+export function transformDocNode(node: DocNode, options: DocNodeTransformOptions): DocumentationNode | undefined;
 
 // @public
 export class UnorderedListNode extends ParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {

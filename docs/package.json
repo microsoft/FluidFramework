@@ -14,7 +14,7 @@
   "scripts": {
     "build": "npm run build:api && npm run build:md-magic && npm run hugo",
     "build:api": "npm run build:api-rollup && npm run build:api-documentation",
-    "build:api-documentation": "node ./api-markdown-documenter.js",
+    "build:api-documentation": "node ./api-markdown-documenter/index.js",
     "build:api-rollup": "rimraf ./_api-extractor-temp && node ./rollup-api-json.js ../_api-extractor-temp/doc-models/ ./_api-extractor-temp/",
     "build:md-magic": "concurrently npm:build:md-magic:code npm:build:md-magic:website",
     "build:md-magic:code": "node markdown-magic-code.js",
@@ -33,7 +33,7 @@
     "start": "hugo server"
   },
   "dependencies": {
-    "@fluid-tools/api-markdown-documenter": "^0.5.0",
+    "@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
     "@microsoft/api-extractor-model": "^7.23.0",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",

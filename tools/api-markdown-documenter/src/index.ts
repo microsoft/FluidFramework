@@ -22,6 +22,7 @@ export {
 	defaultApiItemTransformations,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
+	transformDocNode,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.
@@ -29,6 +30,7 @@ export {
 export * from "./documentation-domain";
 
 export {
+	createDocumentWriter,
 	DocumentWriter,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
@@ -78,7 +80,7 @@ export {
 	verboseConsoleLogger,
 } from "./Logging";
 export {
-	type DefaultPolicies,
+	DefaultPolicies,
 	defaultPolicyOptions,
 	type DocumentBoundaries,
 	type FileNamePolicy,

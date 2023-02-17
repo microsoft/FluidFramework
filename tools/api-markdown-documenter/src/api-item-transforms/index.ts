@@ -17,3 +17,4 @@ export {
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export { apiPackageToDocument } from "./TransformApiPackage";
 export { apiModelToDocument } from "./TransformModel";
+export { transformDocNode, DocNodeTransformOptions } from "./DocNodeTransforms";

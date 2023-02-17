@@ -92,7 +92,7 @@ export function transformDocNode(
 		case DocNodeKind.LinkTag:
 			return transformDocLinkTag(node as DocLinkTag, options);
 		default:
-			options.logger?.error(`Unsupported DocNode kind: "${node.kind}".`);
+			options.logger?.error(`Unsupported DocNode kind: "${node.kind}".`, node);
 			return undefined;
 	}
 }
