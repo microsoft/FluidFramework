@@ -100,7 +100,6 @@ import {
 	create404Response,
 	exceptionToResponse,
 	requestFluidObject,
-	responseToException,
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
@@ -469,11 +468,6 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
 export enum RuntimeHeaders {
 	/** True to wait for a data store to be created and loaded before returning it. */
 	wait = "wait",
-	/**
-	 * True if the request is from an external app. Used for GC to handle scenarios where a data store
-	 * is deleted and requested via an external app.
-	 */
-	externalRequest = "externalRequest",
 	/** True if the request is coming from an IFluidHandle. */
 	viaHandle = "viaHandle",
 }
@@ -489,7 +483,6 @@ export const TombstoneResponseHeaderKey = "isTombstoned";
  */
 export interface RuntimeHeaderData {
 	wait?: boolean;
-	externalRequest?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
 }
@@ -497,7 +490,6 @@ export interface RuntimeHeaderData {
 /** Default values for Runtime Headers */
 export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
-	externalRequest: false,
 	viaHandle: false,
 	allowTombstone: false,
 };
@@ -1566,29 +1558,6 @@ export class ContainerRuntime
 		await this.dataStores.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
 		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
-
-		/**
-		 * If GC should run and this an external app request with "externalRequest" header, we need to return
-		 * an error if the data store being requested is marked as unreferenced as per the data store's base
-		 * GC data.
-		 *
-		 * This is a workaround to handle scenarios where a data store shared with an external app is deleted
-		 * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
-		 */
-		if (
-			request.headers?.[RuntimeHeaders.externalRequest] &&
-			this.garbageCollector.shouldRunGC
-		) {
-			// The data store is referenced if used routes in the base summary has a route to self.
-			// Older documents may not have used routes in the summary. They are considered referenced.
-			const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
-			if (
-				!(usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/"))
-			) {
-				throw responseToException(create404Response(request), request);
-			}
-		}
-
 		const dataStoreChannel = await dataStoreContext.realize();
 
 		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is

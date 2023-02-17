@@ -100,7 +100,6 @@ interface IUnreferencedEventProps {
 	fromId?: string;
 	timeout?: number;
 	lastSummaryTime?: number;
-	externalRequest?: boolean;
 	viaHandle?: boolean;
 }
 
@@ -1642,7 +1641,6 @@ export class GarbageCollector implements IGarbageCollector {
 			completedGCRuns: this.completedRuns,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			...this.createContainerMetadata,
-			externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 			fromId: fromNodeId,
 		};
