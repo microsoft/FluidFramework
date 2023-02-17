@@ -11,6 +11,7 @@ import {
 } from "../../feature-libraries/modular-schema/typedSchema";
 
 import {
+	ApiMode,
 	NodeDataFor,
 	TreeTypesToTypedTreeTypes,
 	ValidContextuallyTypedNodeData,
@@ -79,11 +80,17 @@ type InlineDeep<T> = {
 };
 
 // Example Use:
-type BallTreeX = InlineOnce<ValidContextuallyTypedNodeData<typeof schemaData, readonly ["ball"]>>;
-type BallTree = NodeDataFor<typeof schemaData, typeof ballSchema>;
+type BallTreeX = InlineOnce<
+	ValidContextuallyTypedNodeData<typeof schemaData, ApiMode.Flexible, readonly ["ball"]>
+>;
+type BallTree = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>;
 
 // We can also get the type for the "number" nodes.
-type NumberTree = ValidContextuallyTypedNodeData<typeof schemaData, readonly ["number"]>;
+type NumberTree = ValidContextuallyTypedNodeData<
+	typeof schemaData,
+	ApiMode.Flexible,
+	readonly ["number"]
+>;
 
 const n1: NumberTree = 5;
 const n2: NumberTree = { [valueSymbol]: 5 };
@@ -106,11 +113,15 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	type BallXFieldTypes = BallXFieldInfo["types"];
 	type check_ = requireAssignableTo<BallXFieldTypes, NameSet<readonly ["number"]>>;
 
-	type Child = TreeTypesToTypedTreeTypes<typeof schemaData, BallXFieldTypes>;
+	type Child = TreeTypesToTypedTreeTypes<typeof schemaData, ApiMode.Flexible, BallXFieldTypes>;
 
 	type check3_ = requireAssignableTo<Child, NumberTree>;
 	type check4_ = requireAssignableTo<NumberTree, Child>;
-	type Child2 = TreeTypesToTypedTreeTypes<typeof schemaData, NameSet<readonly ["number"]>>;
+	type Child2 = TreeTypesToTypedTreeTypes<
+		typeof schemaData,
+		ApiMode.Flexible,
+		NameSet<readonly ["number"]>
+	>;
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;

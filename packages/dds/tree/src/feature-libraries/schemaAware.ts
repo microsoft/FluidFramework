@@ -26,13 +26,20 @@ import { NameSet } from "./modular-schema/typedSchema/outputTypes";
  */
 export type TypedTree<
 	TMap extends TypedSchemaData,
+	Mode extends ApiMode,
 	TSchema extends LabeledTreeSchema<any>,
-> = TypedTreeFromInfo<TMap, TSchema["typeInfo"]>;
+> = TypedTreeFromInfo<TMap, Mode, TSchema["typeInfo"]>;
 
 export type TypedTreeFromInfo<
 	TMap extends TypedSchemaData,
+	Mode extends ApiMode,
 	TSchema extends TreeSchemaTypeInfo,
-> = CollectOptions<TypedFields<TMap, TSchema["local"]>, TSchema["value"], TSchema["name"]>;
+> = CollectOptions<
+	Mode,
+	TypedFields<TMap, Mode, TSchema["local"]>,
+	TSchema["value"],
+	TSchema["name"]
+>;
 
 export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
 	undefined extends TypedValue<TSchema>
@@ -43,22 +50,68 @@ export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
 				[valueSymbol]: TypedValue<TSchema>;
 		  };
 
-type CollectOptions<TTypedFields, TValueSchema extends ValueSchema, TName> =
+export const enum ApiMode {
+	/**
+	 * Allow all forms accepted as ContextuallyTypedNodeData that align with the schema.
+	 * Types are optional.
+	 *
+	 * This also permits some cases which are ambiguous and thus would be rejected by `applyFieldTypesFromContext`.
+	 */
+	Flexible,
+	/**
+	 * Similar to what EditableTree uses.
+	 * No flexibility in representation.
+	 * Nodes are with primitives unwrapped to just the primitive.
+	 * Requires types on all node objects.
+	 *
+	 * TODO: fix ways this differs from editable tree:
+	 * - Does not do primary field inlining.
+	 * - Primitive node handling might not match.
+	 */
+	Normalized,
+	/**
+	 * Always use full node objects for everything.
+	 *
+	 * Fields are still shaped based on their multiplicity.
+	 */
+	Wrapped,
+}
+
+type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
+	[ApiMode.Flexible]: CollectOptionsFlexible<TTypedFields, TValueSchema, TName>;
+	[ApiMode.Normalized]: CollectOptionsNormalized<TTypedFields, TValueSchema, TName>;
+	[ApiMode.Wrapped]: TTypedFields & {
+		[typeNameSymbol]: TName;
+		[valueSymbol]: TypedValue<TValueSchema>;
+	};
+}[Mode];
+
+type CollectOptionsFlexible<TTypedFields, TValueSchema extends ValueSchema, TName> =
 	| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never)
 	| (TTypedFields & {
 			[typeNameSymbol]?: TName;
 	  } & ValueFieldTreeFromSchema<TValueSchema>);
+
+type CollectOptionsNormalized<TTypedFields, TValueSchema extends ValueSchema, TName> = Record<
+	string,
+	never
+> extends TTypedFields
+	? TypedValue<TValueSchema>
+	: TTypedFields & {
+			[typeNameSymbol]: TName;
+	  } & ValueFieldTreeFromSchema<TValueSchema>;
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  */
 export type TypedFields<
 	TMap extends TypedSchemaData,
+	Mode extends ApiMode,
 	TFields extends { [key: string]: FieldSchemaTypeInfo },
 > = {
 	readonly [key in keyof TFields]: ApplyMultiplicity<
 		TFields[key]["kind"]["multiplicity"],
-		TreeTypesToTypedTreeTypes<TMap, TFields[key]["types"]>
+		TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>
 	>;
 };
 
@@ -75,8 +128,9 @@ type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
  */
 export type TreeTypesToTypedTreeTypes<
 	TMap extends TypedSchemaData,
+	Mode extends ApiMode,
 	T extends unknown | NameSet,
-> = T extends NameSet<infer Names> ? ValidContextuallyTypedNodeData<TMap, Names> : AnyTree;
+> = T extends NameSet<infer Names> ? ValidContextuallyTypedNodeData<TMap, Mode, Names> : AnyTree;
 
 interface AnyTree {}
 
@@ -92,12 +146,13 @@ interface TypedSchemaData extends SchemaDataAndPolicy {
  */
 export type ValidContextuallyTypedNodeData<
 	TMap extends TypedSchemaData,
+	Mode extends ApiMode,
 	TNames extends readonly string[],
 > = ValuesOf<{
 	[Property in keyof ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
 		[key in Property]: any;
 	}
-		? TypedTree<TMap, TMap["treeSchemaObject"][Property]>
+		? TypedTree<TMap, Mode, TMap["treeSchemaObject"][Property]>
 		: never;
 }>;
 
@@ -106,5 +161,6 @@ export type ValidContextuallyTypedNodeData<
  */
 export type NodeDataFor<
 	TMap extends TypedSchemaData,
+	Mode extends ApiMode,
 	TSchema extends LabeledTreeSchema<any>,
-> = ValidContextuallyTypedNodeData<TMap, readonly [TSchema["typeInfo"]["name"]]>;
+> = ValidContextuallyTypedNodeData<TMap, Mode, readonly [TSchema["typeInfo"]["name"]]>;
