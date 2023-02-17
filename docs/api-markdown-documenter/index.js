@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const chalk = require("chalk");
+
 const { renderApiDocumentation } = require("./render-api-documentation");
 
 renderApiDocumentation().then(() => {
