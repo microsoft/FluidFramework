@@ -124,6 +124,9 @@ export class CodeSpanNode extends ParentNodeBase<SingleLineDocumentationNode> im
 export type CreateChildContentSections = (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<MarkdownDocumenterConfiguration>) => SectionNode[];
 
 // @public
+export function createMarkdownRenderContext(renderers: MarkdownRenderers): MarkdownRenderContext;
+
+// @public
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
 
 // @public

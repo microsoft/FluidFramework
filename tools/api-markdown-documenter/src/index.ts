@@ -30,6 +30,7 @@ export {
 export * from "./documentation-domain";
 
 export {
+	createRenderContext as createMarkdownRenderContext,
 	DocumentWriter,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,

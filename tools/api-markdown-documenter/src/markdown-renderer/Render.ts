@@ -12,11 +12,8 @@ import { MarkdownRenderContext } from "./RenderContext";
 /**
  * Generates the root {@link MarkdownRenderContext} for rendering a document with the provided `renderers`.
  */
-export function getRootRenderContext(renderers: MarkdownRenderers): MarkdownRenderContext {
+export function createRenderContext(renderers: MarkdownRenderers): MarkdownRenderContext {
 	return {
-		insideTable: false,
-		insideCodeBlock: false,
-		insideHtml: false,
 		headingLevel: 1,
 		renderers,
 	};
@@ -35,7 +32,7 @@ export function renderDocument(
 	};
 
 	const writer = new DocumentWriter(new StringBuilder());
-	renderNodes(document.children, writer, getRootRenderContext(renderers));
+	renderNodes(document.children, writer, createRenderContext(renderers));
 
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();
