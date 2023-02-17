@@ -4,13 +4,14 @@
  */
 
 /**
- * Library for rendering {@link DocumentationNode} trees as Markdown.
+ * Library for rendering {@link DocumentationNode} trees as `Markdown`.
  */
 
+export {
+	defaultMarkdownRenderers,
+	type MarkdownRenderers,
+	type RenderDocumentationNode,
+} from "./RenderConfiguration";
 export { DocumentWriter } from "./DocumentWriter";
 export { renderDocument, renderNode, renderNodes } from "./Render";
-export {
-	DocumentationNodeRenderers,
-	MarkdownRenderContext,
-	RenderDocumentationNode,
-} from "./RenderContext";
+export type { MarkdownRenderContext } from "./RenderContext";

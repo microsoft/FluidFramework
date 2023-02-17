@@ -382,8 +382,12 @@ export interface MarkdownRenderContext extends TextFormatting {
     readonly insideCodeBlock: boolean;
     readonly insideHtml: boolean;
     readonly insideTable: boolean;
-    // Warning: (ae-forgotten-export) The symbol "DocumentationNodeRenderers" needs to be exported by the entry point index.d.ts
-    renderers: DocumentationNodeRenderers;
+    renderers: MarkdownRenderers;
+}
+
+// @public
+export interface MarkdownRenderers {
+    [documentationNodeKind: string]: RenderDocumentationNodeAsMarkdown;
 }
 
 // @public
@@ -438,10 +442,13 @@ export interface PolicyOptions {
 }
 
 // @public
-export function renderDocumentAsMarkdown(document: DocumentNode, customRenderers?: DocumentationNodeRenderers): string;
+export function renderDocumentAsMarkdown(document: DocumentNode, customRenderers?: MarkdownRenderers): string;
 
 // @public
-export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, customRenderers?: DocumentationNodeRenderers): Promise<void>;
+export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends DocumentationNode = DocumentationNode> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+
+// @public
+export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, customRenderers?: MarkdownRenderers): Promise<void>;
 
 // @public
 export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;

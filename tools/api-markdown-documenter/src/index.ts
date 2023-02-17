@@ -17,11 +17,11 @@
 // - bundle helper libraries as module (namespace) exports?
 
 export {
-	ApiItemTransformationConfiguration,
-	CreateChildContentSections,
+	type ApiItemTransformationConfiguration,
+	type CreateChildContentSections,
 	defaultApiItemTransformations,
-	TransformApiItemWithChildren,
-	TransformApiItemWithoutChildren,
+	type TransformApiItemWithChildren,
+	type TransformApiItemWithoutChildren,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.
@@ -30,7 +30,9 @@ export * from "./documentation-domain";
 
 export {
 	DocumentWriter,
-	MarkdownRenderContext,
+	type MarkdownRenderContext,
+	type MarkdownRenderers,
+	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
 	renderDocument as renderDocumentAsMarkdown,
 	renderNode as renderNodeAsMarkdown,
 	renderNodes as renderNodesAsMarkdown,
@@ -39,11 +41,11 @@ export {
 export { createDocuments, renderFiles } from "./MarkdownDocumenter";
 
 export {
-	ApiFunctionLike,
-	ApiMemberKind,
-	ApiModuleLike,
-	ApiSignatureLike,
-	ApiModifier,
+	type ApiFunctionLike,
+	type ApiMemberKind,
+	type ApiModuleLike,
+	type ApiSignatureLike,
+	type ApiModifier,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
@@ -66,23 +68,28 @@ export {
 	MarkdownDocumenterConfiguration,
 	markdownDocumenterConfigurationWithDefaults,
 } from "./Configuration";
-export { Heading } from "./Heading";
-export { Link, UrlTarget } from "./Link";
+export type { Heading } from "./Heading";
+export type { Link, UrlTarget } from "./Link";
 export { loadModel } from "./LoadModel";
-export { defaultConsoleLogger, LoggingFunction, Logger, verboseConsoleLogger } from "./Logging";
 export {
-	DefaultPolicies,
+	defaultConsoleLogger,
+	type LoggingFunction,
+	type Logger,
+	verboseConsoleLogger,
+} from "./Logging";
+export {
+	type DefaultPolicies,
 	defaultPolicyOptions,
-	DocumentBoundaries,
-	FileNamePolicy,
-	FrontMatterPolicy,
-	HeadingTitlePolicy,
-	HierarchyBoundaries,
-	LinkTextPolicy,
-	PackageFilterPolicy,
-	PolicyOptions,
-	UriBaseOverridePolicy,
+	type DocumentBoundaries,
+	type FileNamePolicy,
+	type FrontMatterPolicy,
+	type HeadingTitlePolicy,
+	type HierarchyBoundaries,
+	type LinkTextPolicy,
+	type PackageFilterPolicy,
+	type PolicyOptions,
+	type UriBaseOverridePolicy,
 } from "./Policies";
 
 // Conveinence re-exports of API model types
-export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
+export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

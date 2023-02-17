@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationNode, TextFormatting } from "../documentation-domain";
-import { DocumentWriter } from "./DocumentWriter";
+import type { TextFormatting } from "../documentation-domain";
+import type { MarkdownRenderers } from "./RenderConfiguration";
 
 /**
  * Context passed down during recursive {@link DocumentationNode} rendering.
@@ -55,26 +55,5 @@ export interface MarkdownRenderContext extends TextFormatting {
 	 *
 	 * @remarks Will include default renderers for all {@link DocumentationNode} types enumerated in {@link DocumentationNodeType}.
 	 */
-	renderers: DocumentationNodeRenderers;
-}
-
-/**
- * {@link DocumentationNode} renderer type-signature.
- *
- * @param node - The `DocumentationNode` to render.
- * @param writer - The writing context to render into.
- * @param context - Recursive contextual state.
- */
-export type RenderDocumentationNode<
-	TDocumentationNode extends DocumentationNode = DocumentationNode,
-> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
-
-/**
- * All known node types this renderer supports by default
- */
-export interface DocumentationNodeRenderers {
-	/**
-	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a renderer implementation for that kind of node.
-	 */
-	[documentationNodeKind: string]: RenderDocumentationNode;
+	renderers: MarkdownRenderers;
 }

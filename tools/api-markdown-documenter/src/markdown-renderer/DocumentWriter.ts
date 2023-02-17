@@ -4,5 +4,5 @@
  */
 
 // Convenience re-export to prevent us from having to tunnel into api-documenter in multiple places
-// TODO: consider replacing this with some standard string writer.
+// TODO: consider replacing this with some standard string writer, so we can remove our dependency on api-documenter.
 export { IndentedWriter as DocumentWriter } from "@microsoft/api-documenter/lib/utils/IndentedWriter";

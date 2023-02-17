@@ -13,7 +13,7 @@ import {
 } from "./Configuration";
 import { apiItemToDocument, apiModelToDocument, apiPackageToDocument } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
-import { DocumentationNodeRenderers, renderDocument } from "./markdown-renderer";
+import { MarkdownRenderers, renderDocument } from "./markdown-renderer";
 import { doesItemRequireOwnDocument } from "./utilities";
 
 /**
@@ -106,7 +106,7 @@ export function createDocuments(partialConfig: MarkdownDocumenterConfiguration):
 export async function renderFiles(
 	partialConfig: MarkdownDocumenterConfiguration,
 	outputDirectoryPath: string,
-	customRenderers?: DocumentationNodeRenderers,
+	customRenderers?: MarkdownRenderers,
 ): Promise<void> {
 	const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 

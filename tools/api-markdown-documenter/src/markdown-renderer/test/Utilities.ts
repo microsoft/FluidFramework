@@ -4,21 +4,22 @@
  */
 import { StringBuilder } from "@microsoft/tsdoc";
 
-import { DocumentationNode } from "../../documentation-domain";
+import type { DocumentationNode } from "../../documentation-domain";
 import { DocumentWriter } from "../DocumentWriter";
-import { defaultNodeRenderers, getRootRenderContext, renderNode } from "../Render";
-import { DocumentationNodeRenderers, MarkdownRenderContext } from "../RenderContext";
+import { getRootRenderContext, renderNode } from "../Render";
+import { type MarkdownRenderers, defaultMarkdownRenderers } from "../RenderConfiguration";
+import type { MarkdownRenderContext } from "../RenderContext";
 
 /**
  * Tests the rendering of an individual {@link DocumentationNode}, returning the generated string content.
  */
 export function testRender(
 	node: DocumentationNode,
-	customRenderers?: DocumentationNodeRenderers,
+	customRenderers?: MarkdownRenderers,
 	customContext?: Partial<MarkdownRenderContext>,
 ): string {
-	const renderers: DocumentationNodeRenderers = {
-		...defaultNodeRenderers,
+	const renderers: MarkdownRenderers = {
+		...defaultMarkdownRenderers,
 		...customRenderers,
 	};
 
