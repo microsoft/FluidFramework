@@ -12,7 +12,7 @@ import {
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
-	createSummarizerWithContainer,
+	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
 	mockConfigProvider,
@@ -73,18 +73,15 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		});
 	}
 
-	let documentAbsoluteUrl: string | undefined;
-
 	const makeContainer = async () => {
 		const container = await provider.makeTestContainer(testContainerConfig);
-		documentAbsoluteUrl = await container.getAbsoluteUrl("");
 		return container;
 	};
 
-	const loadSummarizerAndContainer = async (summaryVersion?: string) => {
-		return createSummarizerWithContainer(
+	const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
+		return createSummarizer(
 			provider,
-			documentAbsoluteUrl,
+			container,
 			summaryVersion,
 			gcOptions,
 			mockConfigProvider(settings),
@@ -129,8 +126,9 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		defaultDataObject._root.delete(handleKey);
 
 		// Summarize
-		const { container: summarizingContainer1, summarizer: summarizer1 } =
-			await loadSummarizerAndContainer();
+		const { container: summarizingContainer1, summarizer: summarizer1 } = await loadSummarizer(
+			container,
+		);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
 		// Close the containers as these containers would be closed by session expiry before sweep ready ever occurs
@@ -141,8 +139,10 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		await delay(approximateUnreferenceTimestampMs);
 
 		// Load a new container and summarizer based on the latest summary, summarize
-		const { container: summarizingContainer2, summarizer: summarizer2 } =
-			await loadSummarizerAndContainer(summaryVersion);
+		const { container: summarizingContainer2, summarizer: summarizer2 } = await loadSummarizer(
+			container,
+			summaryVersion,
+		);
 
 		const summarizerDataObject = await requestFluidObject<ITestDataObject>(
 			summarizingContainer2,
