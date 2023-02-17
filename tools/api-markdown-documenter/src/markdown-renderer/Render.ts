@@ -35,7 +35,7 @@ export function renderDocument(
 	};
 
 	const writer = new DocumentWriter(new StringBuilder());
-	renderDocumentNode(document, writer, getRootRenderContext(renderers));
+	renderNodes(document.children, writer, getRootRenderContext(renderers));
 
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();
@@ -49,20 +49,6 @@ export function renderDocument(
 	renderedDocument = [renderedDocument, ""].join("\n");
 
 	return renderedDocument;
-}
-
-/**
- * Renders the provided {@link DocumentNode} representing the root of some document, per the
- * configured policy ({@link MarkdownRenderContext.renderers}).
- */
-function renderDocumentNode(
-	node: DocumentNode,
-	writer: DocumentWriter,
-	context: MarkdownRenderContext,
-): void {
-	renderNodes(node.children, writer, context);
-
-	// TODO: front-matter, header, footer, etc.
 }
 
 /**
