@@ -4,8 +4,6 @@
  */
 
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
 
 // @deprecated this value is no longer used
 export const defaultTimeoutDurationMs = 250;
