@@ -316,14 +316,13 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				benchmarkStats.samples.before.memoryUsage.push(process.memoryUsage());
 				benchmarkStats.samples.before.heap.push(v8.getHeapStatistics());
 				benchmarkStats.samples.before.heapSpace.push(v8.getHeapSpaceStatistics());
-				console.log("Before run...");
-				//				global.gc();
+
+				global.gc();
 				await testObject.run();
 
 				await testObject.afterIteration?.();
-				console.log("After Run/Iteration...");
 
-				//				global.gc();
+				global.gc();
 				benchmarkStats.samples.after.memoryUsage.push(process.memoryUsage());
 				benchmarkStats.samples.after.heap.push(v8.getHeapStatistics());
 				benchmarkStats.samples.after.heapSpace.push(v8.getHeapSpaceStatistics());
