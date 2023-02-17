@@ -1277,6 +1277,9 @@ export class ContainerRuntime
 				  }
 				: runtimeOptions.compressionOptions;
 
+		const disablePartialFlush = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisablePartialFlush",
+		);
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1286,7 +1289,7 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				enableOpReentryCheck: this.enableOpReentryCheck,
+				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
 		});
@@ -1429,6 +1432,7 @@ export class ContainerRuntime
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
+				disablePartialFlush,
 			}),
 		});
 
@@ -2726,7 +2730,7 @@ export class ContainerRuntime
 
 			let clientSequenceNumber: number;
 			try {
-				clientSequenceNumber = this.submitSummaryMessage(summaryMessage);
+				clientSequenceNumber = this.submitSummaryMessage(summaryMessage, summaryRefSeqNum);
 			} catch (error) {
 				return { stage: "upload", ...uploadData, error };
 			}
@@ -2922,7 +2926,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private submitSummaryMessage(contents: ISummaryContent) {
+	private submitSummaryMessage(contents: ISummaryContent, referenceSequenceNumber: number) {
 		this.verifyNotClosed();
 		assert(
 			this.connected,
@@ -2934,7 +2938,7 @@ export class ContainerRuntime
 
 		// back-compat: ADO #1385: Make this call unconditional in the future
 		return this.context.submitSummaryFn !== undefined
-			? this.context.submitSummaryFn(contents)
+			? this.context.submitSummaryFn(contents, referenceSequenceNumber)
 			: this.context.submitFn(MessageType.Summarize, contents, false);
 	}
 
