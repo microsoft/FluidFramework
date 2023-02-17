@@ -92,6 +92,7 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	public readonly taggedLogger: ITelemetryLogger;
+	public readonly supportedFeatures: ReadonlyMap<string, unknown>;
 
 	public get clientId(): string | undefined {
 		return this.container.clientId;
@@ -208,6 +209,8 @@ export class ContainerContext implements IContainerContext {
 		this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(async () =>
 			this.loadCodeModule(_codeDetails),
 		);
+
+		this.supportedFeatures = new Map([["referenceSequenceNumbers", true]]);
 		this.attachListener();
 	}
 

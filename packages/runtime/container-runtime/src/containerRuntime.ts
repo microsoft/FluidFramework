@@ -1139,6 +1139,13 @@ export class ContainerRuntime
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
 			this.defaultMaxConsecutiveReconnects;
 
+		if (
+			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
+			(context.supportedFeatures?.get("referenceSequenceNumbers") !== true)
+		) {
+			throw new UsageError("Async FlushMode is not supported with this loader version.");
+		}
+
 		this._flushMode = runtimeOptions.flushMode;
 
 		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
