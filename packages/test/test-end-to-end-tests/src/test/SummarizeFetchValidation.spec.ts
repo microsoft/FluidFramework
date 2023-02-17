@@ -94,7 +94,7 @@ async function createSummarizer(
 	container: IContainer,
 	summaryVersion?: string,
 ): Promise<ISummarizer> {
-	return createSummarizerFromFactory(
+	const createSummarizerResult = await createSummarizerFromFactory(
 		provider,
 		container,
 		dataStoreFactory1,
@@ -102,6 +102,7 @@ async function createSummarizer(
 		containerRuntimeFactoryWithDefaultDataStore,
 		registryStoreEntries,
 	);
+	return createSummarizerResult.summarizer;
 }
 
 /**

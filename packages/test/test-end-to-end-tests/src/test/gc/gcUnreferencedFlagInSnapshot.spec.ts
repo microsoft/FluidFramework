@@ -110,7 +110,7 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 
 	it("should return the unreferenced flag correctly in snapshot for deleted data stores", async () => {
 		const deletedDataStoreIds: string[] = [];
-		const summarizer = await createSummarizer(provider, mainContainer);
+		const { summarizer } = await createSummarizer(provider, mainContainer);
 
 		// Create couple of data stores.
 		const dataStore2 = await requestFluidObject<ITestDataObject>(
@@ -149,7 +149,7 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 
 	it("should return the unreferenced flag correctly in snapshot for revived data stores", async () => {
 		let deletedDataStoreIds: string[] = [];
-		const summarizer = await createSummarizer(provider, mainContainer);
+		const { summarizer } = await createSummarizer(provider, mainContainer);
 
 		// Create couple of data stores.
 		const dataStore2 = await requestFluidObject<ITestDataObject>(

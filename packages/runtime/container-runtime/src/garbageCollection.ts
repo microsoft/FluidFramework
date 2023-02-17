@@ -1042,7 +1042,10 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// Add the options that are used to run GC to the telemetry context.
-		telemetryContext?.setAll("fluid_GC", "Options", { fullGC, runSweep: options.runSweep });
+		telemetryContext?.setMultiple("fluid_GC", "Options", {
+			fullGC,
+			runSweep: options.runSweep,
+		});
 
 		return PerformanceEvent.timedExecAsync(
 			logger,

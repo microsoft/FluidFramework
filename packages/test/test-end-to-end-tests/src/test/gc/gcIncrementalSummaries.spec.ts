@@ -67,7 +67,7 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 
 	it("only summarizes changed data stores", async () => {
 		const dataStoreSummaryTypesMap: Map<string, SummaryType> = new Map();
-		const summarizer1 = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
 		const dataStoreB = await requestFluidObject<ITestDataObject>(
@@ -102,7 +102,7 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 
 	it("only summarizes changed data stores across multiple summarizer clients", async () => {
 		const dataStoreSummaryTypesMap: Map<string, SummaryType> = new Map();
-		const summarizer1 = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
 		const dataStoreB = await requestFluidObject<ITestDataObject>(
@@ -128,7 +128,11 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 
 		// Close existing summarizer and load a new summarizer from the summary generated above.
 		summarizer1.close();
-		const summarizer2 = await createSummarizer(provider, mainContainer, summaryVersion);
+		const { summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryVersion,
+		);
 
 		// Summarize the new client and validate that all data store entries are handles since none of them changed.
 		dataStoreSummaryTypesMap.set(dataStoreA._context.id, SummaryType.Handle);
@@ -141,7 +145,11 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 
 		// Close existing summarizer and load a new summarizer from the summary generated above.
 		summarizer2.close();
-		const summarizer3 = await createSummarizer(provider, mainContainer, summaryVersion);
+		const { summarizer: summarizer3 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryVersion,
+		);
 
 		// Summarize the new client and validate that dataStoreA's entry is a tree and rest of the data store
 		// entries are handles.
@@ -151,7 +159,7 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 
 	it("summarizes data stores whose reference state changed across summarizer clients", async () => {
 		const dataStoreSummaryTypesMap: Map<string, SummaryType> = new Map();
-		const summarizer1 = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
 		const dataStoreB = await requestFluidObject<ITestDataObject>(
@@ -184,7 +192,11 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 
 		// Close existing summarizer and load a new summarizer from the summary generated above.
 		summarizer1.close();
-		const summarizer2 = await createSummarizer(provider, mainContainer, summaryVersion);
+		const { summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryVersion,
+		);
 
 		// Add back the reference to dataStoreB.
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
@@ -195,7 +207,11 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 
 		// Close existing summarizer and load a new summarizer from the summary generated above.
 		summarizer2.close();
-		const summarizer3 = await createSummarizer(provider, mainContainer, summaryVersion);
+		const { summarizer: summarizer3 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryVersion,
+		);
 
 		// Validate that all data store entries are handles since none of them changed.
 		dataStoreSummaryTypesMap.set(dataStoreA._context.id, SummaryType.Handle);
