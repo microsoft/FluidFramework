@@ -45,7 +45,7 @@ This is overall a safer default because it ensures that unexpected errors which 
 immediately, instead of potentially being hidden by a timeout.
 
 Most use cases should prefer `true`; explicit passing of `false` should only be necessary when the caller expects the
-Container to connect *or* close for some reason.
+Container to connect _or_ close for some reason.
 
 # 2.0.0-internal.3.0.0
 
