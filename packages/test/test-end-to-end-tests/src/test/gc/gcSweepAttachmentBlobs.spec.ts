@@ -21,7 +21,7 @@ import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { blobsTreeName } from "@fluidframework/container-runtime/dist/summaryFormat";
+import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary";
 import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils";
 
