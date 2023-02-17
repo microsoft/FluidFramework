@@ -36,11 +36,13 @@ import {
 import { getDocNodeTransformationOptions } from "./Utilities";
 
 /**
- * Library of transformations from {@link @microsoft/tsdoc#DocNode}_s to {@link DocumentationNode}s.
+ * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
+ * to {@link DocumentationNode}s.
  */
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocNode} to a {@link DocumentationNode}.
+ * Converts a {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode} to a
+ * {@link DocumentationNode}.
  *
  * @remarks
  *
