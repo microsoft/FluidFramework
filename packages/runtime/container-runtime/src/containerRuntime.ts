@@ -956,6 +956,7 @@ export class ContainerRuntime
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
+	private readonly disableAttachReorder: boolean | undefined;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private _perfSignalData: IPerfSignalReport = {
@@ -1099,12 +1100,16 @@ export class ContainerRuntime
 			}),
 		});
 
+		this.disableAttachReorder = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.disableAttachOpReorder",
+		);
+		const disableChunking = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableCompressionChunking",
+		);
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.context.submitBatchFn,
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompressionChunking") === true
-				? Number.POSITIVE_INFINITY
-				: runtimeOptions.chunkSizeInBytes,
+			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
@@ -1116,10 +1121,13 @@ export class ContainerRuntime
 			this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
+		const disableOpReentryCheck = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableOpReentryCheck",
+		);
 		this.enableOpReentryCheck =
 			runtimeOptions.enableOpReentryCheck === true &&
 			// Allow for a break-glass config to override the options
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
+			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.heuristicsDisabled = this.isHeuristicsDisabled();
@@ -1258,8 +1266,11 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 		);
 
+		const disableCompression = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableCompression",
+		);
 		const compressionOptions =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompression") === true
+			disableCompression === true
 				? {
 						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 						compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1412,6 +1423,13 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
+			options: JSON.stringify(runtimeOptions),
+			featureGates: JSON.stringify({
+				disableCompression,
+				disableOpReentryCheck,
+				disableChunking,
+				disableAttachReorder: this.disableAttachReorder,
+			}),
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1931,9 +1949,11 @@ export class ContainerRuntime
 					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 				});
 			} else if (
+				this.consecutiveReconnects === 0 &&
 				envelope.clientSignalSequenceNumber ===
-				this._perfSignalData.trackingSignalSequenceNumber
+					this._perfSignalData.trackingSignalSequenceNumber
 			) {
+				// only logging for the first connection and the trackingSignalSequenceNUmber.
 				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
 			}
@@ -2361,18 +2381,23 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This is called to delete objects from the runtime
-	 * @param unusedRoutes - object routes and sub routes that can be deleted
-	 * @returns - routes of objects deleted from the runtime
+	 * @deprecated - Replaced by deleteSweepReadyNodes.
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
-		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		const deletedRoutes: string[] = [];
+		throw new Error("deleteUnusedRoutes should not be called");
+	}
 
-		const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
-		deletedRoutes.push(...deletedDataStoreRoutes);
+	/**
+	 * After GC has run and identified nodes that are sweep ready, this is called to delete the sweep ready nodes.
+	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
+	 * @returns - The routes of nodes that were deleted.
+	 */
+	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
+		const { dataStoreRoutes, blobManagerRoutes } =
+			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
-		return deletedRoutes;
+		const deletedRoutes = this.dataStores.deleteSweepReadyNodes(dataStoreRoutes);
+		return deletedRoutes.concat(this.blobManager.deleteSweepReadyNodes(blobManagerRoutes));
 	}
 
 	/**
@@ -2835,7 +2860,7 @@ export class ContainerRuntime
 			if (
 				this.currentlyBatching() &&
 				type === ContainerMessageType.Attach &&
-				this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true
+				this.disableAttachReorder !== true
 			) {
 				this.outbox.submitAttach(message);
 			} else {
@@ -3029,7 +3054,7 @@ export class ContainerRuntime
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
 		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			const fetchResult = await this.fetchLatestSnapshotFromStorage(
+			let fetchResult = await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3050,18 +3075,32 @@ export class ContainerRuntime
 			 * state.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				const error = DataProcessingError.create(
-					"Fetched snapshot is older than the received ack",
-					"RefreshLatestSummaryAck",
-					undefined /* sequencedMessage */,
+				/* before failing, let's try to retrieve the latest snapshot for that specific ackHandle */
+				fetchResult = await this.fetchSnapshotFromStorage(
+					summaryLogger,
 					{
+						eventName: "RefreshLatestSummaryAckFetch",
 						ackHandle,
-						summaryRefSeq,
-						latestSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+						targetSequenceNumber: summaryRefSeq,
 					},
+					readAndParseBlob,
+					ackHandle,
 				);
-				this.closeFn(error);
-				throw error;
+
+				if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
+					const error = DataProcessingError.create(
+						"Fetched snapshot is older than the received ack",
+						"RefreshLatestSummaryAck",
+						undefined /* sequencedMessage */,
+						{
+							ackHandle,
+							summaryRefSeq,
+							fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+						},
+					);
+					this.closeFn(error);
+					throw error;
+				}
 			}
 
 			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
@@ -3134,6 +3173,15 @@ export class ContainerRuntime
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
+		return this.fetchSnapshotFromStorage(logger, event, readAndParseBlob, null /* latest */);
+	}
+
+	private async fetchSnapshotFromStorage(
+		logger: ITelemetryLogger,
+		event: ITelemetryGenericEvent,
+		readAndParseBlob: ReadAndParseBlob,
+		versionId: string | null,
+	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
@@ -3154,10 +3202,10 @@ export class ContainerRuntime
 				const trace = Trace.start();
 
 				const versions = await this.storage.getVersions(
-					null,
+					versionId,
 					1,
 					"refreshLatestSummaryAckFromServer",
-					FetchSource.noCache,
+					versionId === null ? FetchSource.noCache : undefined,
 				);
 				assert(
 					!!versions && !!versions[0],
