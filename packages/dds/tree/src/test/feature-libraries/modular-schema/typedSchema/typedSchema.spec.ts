@@ -8,20 +8,21 @@
 import {
 	typedTreeSchema,
 	typedFieldSchema,
-	TypeInfo,
 	typedTreeSchemaFromInfo,
 	TreeInfoFromBuilder,
 	emptyField,
+	nameSet,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema/typedSchema";
 
-import { TreeSchemaIdentifier, ValueSchema } from "../../../../core";
-import { brand, requireTrue, requireAssignableTo } from "../../../../util";
+import { ValueSchema } from "../../../../core";
+import { requireTrue, requireAssignableTo } from "../../../../util";
 import { FieldKinds } from "../../../../feature-libraries";
 
 import {
 	FieldSchemaTypeInfo,
+	NameSet,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 
@@ -40,7 +41,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 {
 	type check1_ = requireAssignableTo<
 		typeof testField,
-		{ kind: typeof FieldKinds.value; types: ReadonlySet<"testType"> }
+		{ kind: typeof FieldKinds.value; types: NameSet<readonly ["testType"]> }
 	>;
 	const fieldTest1_: FieldSchemaTypeInfo = testField;
 	type check3_ = requireAssignableTo<typeof testField, FieldSchemaTypeInfo>;
@@ -48,7 +49,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 
 {
 	const testTreeSchemaFromInfo = typedTreeSchemaFromInfo({
-		name: brand("testTreeSchema"),
+		name: "testTreeSchema",
 		local: { localKey1Name: testField },
 		extraLocalFields: testField,
 		extraGlobalFields: true,
@@ -64,10 +65,30 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 		value: ValueSchema.Serializable,
 	});
 
-	type check_ = requireAssignableTo<typeof testTreeSchemaFromInfo, typeof testTreeSchema>;
-	type check2_ = requireAssignableTo<typeof testTreeSchema, typeof testTreeSchemaFromInfo>;
+	type TT = typeof testTreeSchema;
+	type TT2 = {
+		[Property in keyof TT]: TT[Property];
+	};
 
-	type TestTreeSchema = TypeInfo<typeof testTreeSchema>;
+	type InlineOnce<T> = {
+		[Property in keyof T]: T[Property];
+	};
+
+	type InlineDeep<T> = {
+		[Property in keyof T]: InlineOnce<T[Property]>;
+	};
+
+	type TT3 = InlineOnce<TT>;
+	type TT4 = InlineDeep<TT>;
+
+	type check_ = requireAssignableTo<
+		typeof testTreeSchemaFromInfo.typeInfo.name,
+		typeof testTreeSchema.typeInfo.name
+	>;
+	type check2_ = requireAssignableTo<typeof testTreeSchema, typeof testTreeSchemaFromInfo>;
+	type check3_ = requireAssignableTo<typeof testTreeSchemaFromInfo, typeof testTreeSchema>;
+
+	type TestTreeSchema = typeof testTreeSchema.typeInfo;
 
 	type _assert = requireTrue<TestTreeSchema["extraGlobalFields"]>;
 
@@ -86,7 +107,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 
 {
 	const fullData = {
-		name: brand<TreeSchemaIdentifier>("X") as TreeSchemaIdentifier & "X",
+		name: "X",
 		local: {},
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -102,7 +123,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 
 	type Info = TreeInfoFromBuilder<typeof shortData>;
 	{
-		type check1_ = requireAssignableTo<Info["name"], TreeSchemaIdentifier & "X">;
+		type check1_ = requireAssignableTo<Info["name"], "X">;
 		type check2_ = requireAssignableTo<{}, Info["local"]>;
 		type check3_ = requireAssignableTo<readonly [], Info["global"]>;
 		type check4_ = requireAssignableTo<Info["extraLocalFields"], typeof emptyField>;
@@ -114,8 +135,8 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 	}
 
 	{
-		type T1 = TypeInfo<typeof testTreeSchemaFromInfo>;
-		type T2 = TypeInfo<typeof testTreeSchema>;
+		type T1 = typeof testTreeSchemaFromInfo.typeInfo;
+		type T2 = typeof testTreeSchema.typeInfo;
 
 		type check3_ = requireAssignableTo<T1, T2>;
 		type check4_ = requireAssignableTo<T2, T1>;
@@ -185,7 +206,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 {
 	const info = {
 		kind: FieldKinds.value,
-		types: new Set(["number"]) as unknown as ReadonlySet<"number" & TreeSchemaIdentifier>,
+		types: nameSet("number"),
 	} as const;
 	const shortData = [FieldKinds.value, "number"] as const;
 
@@ -209,14 +230,8 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 	const numericField = typedFieldSchema(FieldKinds.value, "Number");
 	type NumericFieldInfo = typeof numericField;
 	type NumericFieldTypes = NumericFieldInfo["types"];
-	type check1_ = requireAssignableTo<
-		NumericFieldTypes,
-		ReadonlySet<"Number" & TreeSchemaIdentifier>
-	>;
-	type check2_ = requireAssignableTo<
-		ReadonlySet<"Number" & TreeSchemaIdentifier>,
-		NumericFieldTypes
-	>;
+	type check1_ = requireAssignableTo<NumericFieldTypes, NameSet<readonly ["Number"]>>;
+	type check2_ = requireAssignableTo<NameSet<readonly ["Number"]>, NumericFieldTypes>;
 }
 
 // TODO: test and fix passing schema objects in type array instead of strings.

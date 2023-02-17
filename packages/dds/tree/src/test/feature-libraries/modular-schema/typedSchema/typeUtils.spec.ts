@@ -4,6 +4,8 @@
  */
 
 import { Named } from "../../../../core";
+// eslint-disable-next-line import/no-internal-modules
+import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 import {
 	ArrayToSet,
 	ArrayToUnion,
@@ -14,7 +16,13 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema/typeUtils";
-import { areSafelyAssignable, Brand, isAssignableTo, requireTrue } from "../../../../util";
+import {
+	areSafelyAssignable,
+	Brand,
+	isAssignableTo,
+	requireAssignableTo,
+	requireTrue,
+} from "../../../../util";
 
 // These tests currently just cover the type checking, so its all compile time.
 {
@@ -78,4 +86,11 @@ import { areSafelyAssignable, Brand, isAssignableTo, requireTrue } from "../../.
 	type check2_ = requireTrue<areSafelyAssignable<Case2, ReadonlySet<1 | 2>>>;
 	type Case3 = ArrayToSet<readonly ["testType", "2"]>;
 	type check3_ = requireTrue<areSafelyAssignable<Case3, ReadonlySet<"testType" | "2">>>;
+}
+
+// Test NameSet
+{
+	type check1_ = requireAssignableTo<NameSet<readonly ["X"]>, NameSet<readonly ["X"]>>;
+	// @ts-expect-error Different sets should not be equal
+	type check3_ = requireAssignableTo<NameSet<readonly ["Y"]>, NameSet<readonly ["X"]>>;
 }

@@ -6,16 +6,19 @@
 import {
 	typedTreeSchema as tree,
 	typedFieldSchema as field,
-	TypeInfo,
 	FieldSchemaTypeInfo,
 	LabeledTreeSchema,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema";
 
-import { TreeSchemaIdentifier, ValueSchema } from "../../../../core";
+import { ValueSchema } from "../../../../core";
 import { FieldKinds } from "../../../../feature-libraries";
 import { requireAssignableTo } from "../../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
+// eslint-disable-next-line import/no-internal-modules
+import { ArrayToUnion } from "../../../../feature-libraries/modular-schema/typedSchema/typeUtils";
 // Aliases for conciseness
 const { optional, value, sequence } = FieldKinds;
 
@@ -28,7 +31,7 @@ const { optional, value, sequence } = FieldKinds;
  */
 export type TypedTree<TMap, TSchema extends LabeledTreeSchema<any>> = TypedFields<
 	TMap,
-	TypeInfo<TSchema>["local"]
+	TSchema["typeInfo"]["local"]
 >;
 
 /**
@@ -42,12 +45,11 @@ export type TypedFields<TMap, TFields extends { [key: string]: FieldSchemaTypeIn
  * Takes in `types?: ReadonlySet<brandedTypeNameUnion>`
  * and returns a TypedTree union.
  */
-export type TreeTypesToTypedTreeTypes<
-	TMap,
-	T extends unknown | ReadonlySet<TreeSchemaIdentifier>,
-> = T extends ReadonlySet<infer Names & TreeSchemaIdentifier>
+export type TreeTypesToTypedTreeTypes<TMap, T extends unknown | NameSet> = T extends NameSet<
+	infer Names
+>
 	? ValuesOf<{
-			[ChildTypeName in keyof TMap]: ChildTypeName extends Names & string
+			[ChildTypeName in keyof TMap]: ChildTypeName extends ArrayToUnion<Names> & string
 				? NameToTreeType<TMap, ChildTypeName>
 				: never;
 	  }>
@@ -97,7 +99,7 @@ type BallTree = TypedTree<SchemaMap, typeof ballSchema>;
 type NumberTree = TypedTree<SchemaMap, typeof numberSchema>;
 
 function useBall(b: BallTree): NumberTree {
-	// This is type safe, so we can only access fields that are in the schema/
+	// This is type safe, so we can only access fields that are in the schema.
 	// @ts-expect-error THis is an error since it accesses an invalid field.
 	const bad = b.q;
 	// This is not an error, since it is in schema.
@@ -112,33 +114,23 @@ function useBall(b: BallTree): NumberTree {
 	const numericField = field(value, "Number");
 	type NumericFieldInfo = typeof numericField;
 	type NumericFieldTypes = NumericFieldInfo["types"];
-	type check1_ = requireAssignableTo<
-		NumericFieldTypes,
-		ReadonlySet<"Number" & TreeSchemaIdentifier>
-	>;
-	type check2_ = requireAssignableTo<
-		ReadonlySet<"Number" & TreeSchemaIdentifier>,
-		NumericFieldTypes
-	>;
+	type check1_ = requireAssignableTo<NumericFieldTypes, NameSet<readonly ["Number"]>>;
+	type check2_ = requireAssignableTo<NameSet<readonly ["Number"]>, NumericFieldTypes>;
+	// @ts-expect-error Different sets should not be equal
+	type check3_ = requireAssignableTo<NumericFieldTypes, NameSet<readonly ["X"]>>;
 }
 
 {
 	// A concrete example for the "x" field:
-	type BallXFieldInfo = TypeInfo<typeof ballSchema>["local"]["x"];
+	type BallXFieldInfo = typeof ballSchema.typeInfo.local.x;
 	type BallXFieldTypes = BallXFieldInfo["types"];
-	type check_ = requireAssignableTo<
-		BallXFieldTypes,
-		ReadonlySet<"number" & TreeSchemaIdentifier>
-	>;
+	type check_ = requireAssignableTo<BallXFieldTypes, NameSet<readonly ["number"]>>;
 
 	type Child = TreeTypesToTypedTreeTypes<SchemaMap, BallXFieldTypes>;
 
 	type check3_ = requireAssignableTo<Child, NumberTree>;
 	type check4_ = requireAssignableTo<NumberTree, Child>;
-	type Child2 = TreeTypesToTypedTreeTypes<
-		SchemaMap,
-		ReadonlySet<"number" & TreeSchemaIdentifier>
-	>;
+	type Child2 = TreeTypesToTypedTreeTypes<SchemaMap, NameSet<readonly ["number"]>>;
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;

@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { typedTreeSchema, typedFieldSchema, TypeInfo } from "./typedSchema";
+export { typedTreeSchema, typedFieldSchema } from "./typedSchema";
 
 export { FieldSchemaTypeInfo, LabeledTreeSchema, TreeSchemaTypeInfo } from "./outputTypes";

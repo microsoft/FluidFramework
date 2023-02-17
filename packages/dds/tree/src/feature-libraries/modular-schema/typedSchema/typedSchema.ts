@@ -17,8 +17,8 @@ import { brand } from "../../../util";
 import { forbidden } from "../../defaultFieldKinds";
 import { namedTreeSchema } from "../../viewSchemaUtil";
 import { FieldKind } from "../fieldKind";
-import { FieldSchemaTypeInfo, LabeledTreeSchema, TreeSchemaTypeInfo } from "./outputTypes";
-import { ArrayToSet, ArrayToUnion, AsBrandedNames, AsNames, WithDefault } from "./typeUtils";
+import { FieldSchemaTypeInfo, LabeledTreeSchema, NameSet, TreeSchemaTypeInfo } from "./outputTypes";
+import { ArrayToUnion, AsNames, WithDefault } from "./typeUtils";
 
 /**
  * APIs for building typescript types and schema together.
@@ -37,18 +37,10 @@ export interface TypedTreeSchemaBuilder {
 	readonly value?: ValueSchema;
 }
 
-/**
- * Object for capturing information about a FieldSchema for use at both compile time and runtime.
- */
-export interface TypedFieldSchemaTypeBuilder {
-	readonly types?: readonly (string | Named<string>)[];
-	readonly kind: FieldKind;
-}
-
 type EmptyObject = Readonly<Record<string, never>>;
 
 export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
-	readonly name: T["name"] & TreeSchemaIdentifier;
+	readonly name: T["name"];
 	readonly local: WithDefault<T["local"], EmptyObject>;
 	readonly global: AsNames<WithDefault<T["global"], readonly []>, GlobalFieldKeySymbol> &
 		readonly GlobalFieldKeySymbol[];
@@ -87,15 +79,8 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
 export function typedFieldSchema<
 	TKind extends FieldKind,
 	TTypes extends readonly (string | Named<TreeSchemaIdentifier>)[],
->(
-	kind: TKind,
-	...typeArray: TTypes
-): { kind: TKind; types: ArrayToSet<AsBrandedNames<TTypes, TreeSchemaIdentifier>> } {
-	const typeNames: Iterable<ArrayToUnion<AsBrandedNames<TTypes, TreeSchemaIdentifier>>> =
-		extractNames(typeArray);
-	const types: ArrayToSet<AsBrandedNames<TTypes, TreeSchemaIdentifier>> = new Set<
-		ArrayToUnion<AsBrandedNames<TTypes, TreeSchemaIdentifier>>
-	>(typeNames);
+>(kind: TKind, ...typeArray: TTypes): { kind: TKind; types: NameSet<AsNames<TTypes>> } {
+	const types = nameSet(...typeArray);
 	return { kind, types };
 }
 
@@ -117,20 +102,23 @@ function extractNames<T extends readonly (string | Named<string>)[]>(
 	) as unknown as AsNames<T> & Iterable<ArrayToUnion<AsNames<T>>>;
 }
 
+export function nameSetSimple<T extends readonly [...string[]]>(...names: T): NameSet<T> {
+	return new Set(names) as unknown as NameSet<T>;
+}
+
+export function nameSet<T extends readonly [...(string | Named<string>)[]]>(
+	...names: T
+): NameSet<AsNames<T>> {
+	return new Set(extractNames(names)) as unknown as NameSet<AsNames<T>>;
+}
+
 /**
  * Builds a TreeSchema with the type information also captured in the
  * typescript type to allow for deriving schema aware APIs.
  */
 export function typedTreeSchemaFromInfo<T extends TreeSchemaTypeInfo>(t: T): LabeledTreeSchema<T> {
-	return namedTreeSchema(t) as LabeledTreeSchema<T>;
+	return namedTreeSchema({ ...t, name: brand(t.name) }) as LabeledTreeSchema<T>;
 }
-
-/**
- * Returns the `TreeSchemaTypeInfo` associated with `T`.
- */
-export type TypeInfo<T extends LabeledTreeSchema<any>> = T extends LabeledTreeSchema<infer R>
-	? R
-	: InferError;
 
 /**
  * Schema for a field which must always be empty.

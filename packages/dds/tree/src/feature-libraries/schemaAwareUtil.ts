@@ -1,0 +1,35 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { Value, ValueSchema } from "../core";
+import { areSafelyAssignable, isAssignableTo, requireTrue } from "../util";
+import { PrimitiveValue } from "./contextuallyTyped";
+
+/**
+ * `ValueSchema` to allowed types for that schema.
+ */
+export type TypedValue<TValue extends ValueSchema> = {
+	[ValueSchema.Nothing]: undefined;
+	[ValueSchema.Number]: number;
+	[ValueSchema.String]: string;
+	[ValueSchema.Boolean]: boolean;
+	[ValueSchema.Serializable]: Value;
+}[TValue];
+
+/**
+ * `ValueSchema` to allowed types for that schema.
+ */
+export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
+
+{
+	type PrimitiveValue2 = TypedValue<PrimitiveValueSchema>;
+	type check1_ = requireTrue<areSafelyAssignable<PrimitiveValue, PrimitiveValue2>>;
+}
+
+{
+	type Value2 = TypedValue<ValueSchema>;
+	type check2_ = isAssignableTo<Value, Value2>;
+	type check3_ = isAssignableTo<Value2, Value>;
+}

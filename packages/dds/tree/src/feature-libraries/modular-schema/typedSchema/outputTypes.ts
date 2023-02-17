@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "../../../util";
+import { Invariant, requireAssignableTo } from "../../../util";
 import {
 	FieldSchema,
 	LocalFieldKey,
@@ -11,6 +11,8 @@ import {
 	TreeSchemaIdentifier,
 	NamedTreeSchema,
 	GlobalFieldKeySymbol,
+	Named,
+	TreeSchemaBuilder,
 } from "../../../core";
 import { FieldKind } from "../fieldKind";
 import { ObjectToMap } from "./typeUtils";
@@ -24,7 +26,7 @@ import { ObjectToMap } from "./typeUtils";
  * Object for capturing information about a TreeSchema for use at both compile time and runtime.
  */
 export interface TreeSchemaTypeInfo {
-	readonly name: TreeSchemaIdentifier;
+	readonly name: string;
 	readonly local: { readonly [key: string]: FieldSchemaTypeInfo };
 	readonly global: readonly GlobalFieldKeySymbol[];
 	readonly extraLocalFields: FieldSchemaTypeInfo;
@@ -32,19 +34,40 @@ export interface TreeSchemaTypeInfo {
 	readonly value: ValueSchema;
 }
 
+{
+	type check_ = requireAssignableTo<TreeSchemaTypeInfo, TreeSchemaBuilder & Named<string>>;
+}
+
 /**
  * Object for capturing information about a FieldSchema for use at both compile time and runtime.
  */
 export interface FieldSchemaTypeInfo extends FieldSchema {
 	readonly kind: FieldKind;
+	readonly types?: NameSet;
+}
+
+/**
+ * Set of `TreeSchemaIdentifiers` that has an easy way to get the list names as regular strings out with the type system.
+ */
+export interface NameSet<Names extends readonly string[] = any>
+	extends ReadonlySet<TreeSchemaIdentifier> {
+	readonly typeCheck?: Invariant<Names>;
 }
 
 /**
  * TreeSchema extended with extra type information for use at compile time.
  */
 export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTreeSchema {
-	readonly typeCheck?: Invariant<T>;
+	/**
+	 * Extra type information.
+	 *
+	 * This information is accessible through the other fields as well, but those fields are optimized for runtime use.
+	 * This field's contents are in a format optimized for strongly typed declarations and use by the type system.
+	 */
+	readonly typeInfo: T;
 
 	// Allow reading localFields through the normal map, but without losing type information.
 	readonly localFields: ObjectToMap<T["local"], LocalFieldKey, FieldSchema>;
+
+	// readonly name: T["name"] & TreeSchemaIdentifier;
 }
