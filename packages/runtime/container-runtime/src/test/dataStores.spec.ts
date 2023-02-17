@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { getSummaryForDatastores } from "../dataStores";
-import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summaryFormat";
+import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summary";
 
 describe("Runtime", () => {
 	describe("Container Runtime", () => {

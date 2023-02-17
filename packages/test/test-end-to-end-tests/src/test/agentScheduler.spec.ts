@@ -186,13 +186,13 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
 			await provider.ensureSynchronized();
 			await scheduler1.release("task4").catch((err) => {
-				assert.deepStrictEqual(err.message, "Task was never picked");
+				assert.deepStrictEqual(err.message, "Task is not currently picked");
 			});
 			await scheduler2.release("task1").catch((err) => {
-				assert.deepStrictEqual(err.message, "Task was never picked");
+				assert.deepStrictEqual(err.message, "Task is not currently picked");
 			});
 			await scheduler2.release("task2").catch((err) => {
-				assert.deepStrictEqual(err.message, "Task was never picked");
+				assert.deepStrictEqual(err.message, "Task is not currently picked");
 			});
 		});
 
