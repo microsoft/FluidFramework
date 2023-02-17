@@ -1277,6 +1277,9 @@ export class ContainerRuntime
 				  }
 				: runtimeOptions.compressionOptions;
 
+		const disablePartialFlush = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisablePartialFlush",
+		);
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1286,9 +1289,7 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				disablePartialFlush:
-					this.mc.config.getBoolean("Fluid.ContainerRuntime.DisablePartialFlush") ===
-					true,
+				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
 		});
@@ -1431,6 +1432,7 @@ export class ContainerRuntime
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
+				disablePartialFlush,
 			}),
 		});
 
