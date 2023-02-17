@@ -6,11 +6,8 @@ import { DocumentationNode, ParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { createNodesFromPlainText } from "./Utilities";
 
-// TODOs:
-// - Does this belong here? Since it has no Markdown or HTML corollary, this might be better left as
-//   a custom behavior used by FluidFramework's website.
-//   It is currently only used for `beta` and `deprecated` notices, which could be made extensibility
-//   points of the library.
+// TODO: This type really doesn't belong here. It isn't a core Documentation concept.
+// The FluidFramework website's build should define this as a custom transformation policy for `beta` and `deprecation` notices instead.
 
 /**
  * Kind of alert.
