@@ -276,7 +276,9 @@ function logCurrentState(clients: Client[], loggingInfo: LoggingInfo): void {
 		const { sharedDirectory } = clients.find((s) => s.sharedDirectory.id === id) ?? {};
 		if (sharedDirectory !== undefined) {
 			console.log(`Client ${id}:`);
-			console.log(JSON.stringify(sharedDirectory.getAttachSummary(true).summary, undefined, 4));
+			console.log(
+				JSON.stringify(sharedDirectory.getAttachSummary(true).summary, undefined, 4),
+			);
 			console.log("\n");
 		}
 	}
@@ -463,9 +465,9 @@ function assertEventualConsistencyCore(first: SharedDirectory, second: SharedDir
 			first.get(key),
 			second.get(key),
 			`Key not found or value not matching ` +
-				`key: ${key}, value in dir ${first.id} at path ${first.absolutePath}: ${first.get(key)} and in ${
-					second.id
-				} at path ${second.absolutePath}: ${second.get(key)}`,
+				`key: ${key}, value in dir ${first.id} at path ${first.absolutePath}: ${first.get(
+					key,
+				)} and in ${second.id} at path ${second.absolutePath}: ${second.get(key)}`,
 		);
 	}
 

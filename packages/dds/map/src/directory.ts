@@ -2042,13 +2042,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				);
 				// Remove all pendingMessageIds lower than first pendingClearMessageId.
 				const lowestPendingClearMessageId = this.pendingClearMessageIds[0];
-				const pendingKeyMessageId = this.pendingKeys.get(op.key);
-				if (pendingKeyMessageId !== undefined) {
-					while (pendingKeyMessageId[0] < lowestPendingClearMessageId) {
-						pendingKeyMessageId.shift();
+				const pendingKeyMessageIdArray = this.pendingKeys.get(op.key);
+				if (pendingKeyMessageIdArray !== undefined) {
+					let index = 0;
+					while (pendingKeyMessageIdArray[index] < lowestPendingClearMessageId) {
+						index += 1;
 					}
-					if (pendingKeyMessageId.length === 0) {
+					const newPendingKeyMessageId = pendingKeyMessageIdArray.splice(index);
+					if (newPendingKeyMessageId.length === 0) {
 						this.pendingKeys.delete(op.key);
+					} else {
+						this.pendingKeys.set(op.key, newPendingKeyMessageId);
 					}
 				}
 			}
