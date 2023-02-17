@@ -26,10 +26,14 @@ module.exports = {
 		},
 	},
 
-	// semverGroup rules are applied in order to package/dep combinations. First matching rule applies. When running
-	// `syncpack lint-semver-ranges`, the output is grouped into numbered groups. However, the numbers of the groups are
-	// the _inverse_ of their order in this array. That is, Semver Group 1 in the output will correspond to the _last_
-	// rule in this array.
+	/**
+	 * SemverGroups are used to ensure that groups of packages use the same semver range for dependencies.
+	 *
+	 * semverGroup rules are applied in order to package/dep combinations. First matching rule applies. When running
+	 * `syncpack lint-semver-ranges`, the output is grouped into numbered groups. However, the numbers of the groups are
+	 * the _inverse_ of their order in this array. That is, Semver Group 1 in the output will correspond to the _last_
+	 * rule in this array.
+	 */
 	semverGroups: [
 		// GROUP 8
 		// engines.node should always use >= range
@@ -126,11 +130,28 @@ module.exports = {
 		},
 	],
 
-	// versionGroup rules are applied in order to package/dep combinations. First matching rule applies. When running
-	// `syncpack list-mismatches`, the output is grouped into numbered groups. However, the numbers of the groups are
-	// the _inverse_ of their order in this array. That is, Version Group 1 in the output will correspond to the _last_
-	// rule in this array.
+	/**
+	 *  VersionGroups are used to ensure that groups of packages use the same version of dependencies.
+	 *
+	 * versionGroup rules are applied in order to package/dep combinations. First matching rule applies. When running
+	 * `syncpack list-mismatches`, the output is grouped into numbered groups. However, the numbers of the groups are the
+	 * _inverse_ of their order in this array. That is, Version Group 1 in the output will correspond to the _last_ rule
+	 * in this array.
+	 */
 	versionGroups: [
+		// GROUP 4
+		// TODO: This group doesn't seem to work and it's not clear why
+		// All dependencies on common Fluid packages outside the release group should match
+		{
+			dependencies: [
+				"@fluidframework/build-common",
+				"@fluidframework/eslint-config-fluid",
+				"@fluidframework/build-tools",
+				"@fluid-tools/build-cli",
+			],
+			packages: ["**"],
+		},
+
 		// GROUP 3
 		// engines.npm field should match
 		{
@@ -140,7 +161,8 @@ module.exports = {
 		},
 
 		// GROUP 2
-		// packageManager field versions should match
+		// packageManager field versions should match, though this field is only used in the release group root
+		// package.json today.
 		{
 			dependencyTypes: ["packageManager"],
 			dependencies: ["**"],
@@ -148,10 +170,25 @@ module.exports = {
 		},
 
 		// GROUP 1
-		// If unmatched by earlier rules, ignore. This is needed because syncpack doesn't understand our >= < semver ranges.
+		// Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our
+		// >= < semver ranges.
 		{
-			packages: ["**"],
-			dependencies: ["**"],
+			packages: [
+				"@fluid-example/**",
+				"@fluid-experimental/**",
+				"@fluid-internal/**",
+				"@fluid-tools/**",
+				"@fluidframework/**",
+				"fluid-framework",
+			],
+			dependencies: [
+				"@fluid-example/**",
+				"@fluid-experimental/**",
+				"@fluid-internal/**",
+				"@fluid-tools/**",
+				"@fluidframework/**",
+				"fluid-framework",
+			],
 			isIgnored: true,
 		},
 	],
