@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -20,9 +20,15 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const { task, deleteDraftTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
-	const [externalName, setSourceName] = useState<string | undefined>(task.externalName);
-	const [externalPriority, setSourcePriority] = useState<number | undefined>(task.externalPriority);
-	const [changeType, setChangeType] = useState<string | undefined>(task.changeType);
+	const [externalName, setSourceName] = useState<string | undefined>(
+		task.externalDataSnapshot.name,
+	);
+	const [externalPriority, setSourcePriority] = useState<number | undefined>(
+		task.externalDataSnapshot.priority,
+	);
+	const [changeType, setChangeType] = useState<string | undefined>(
+		task.externalDataSnapshot.changeType,
+	);
 	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
 		const updateFromRemotePriority = (): void => {
@@ -31,12 +37,12 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			}
 		};
 		const updateExternalPriority = (): void => {
-			setSourcePriority(task.externalPriority);
-			setChangeType(task.changeType);
+			setSourcePriority(task.externalDataSnapshot.priority);
+			setChangeType(task.externalDataSnapshot.changeType);
 		};
 		const updateExternalName = (): void => {
-			setSourceName(task.externalName);
-			setChangeType(task.changeType);
+			setSourceName(task.externalDataSnapshot.name);
+			setChangeType(task.externalDataSnapshot.changeType);
 		};
 		const updateShowConflictUI = (value: boolean): void => {
 			setShowConflictUI(value);
@@ -61,10 +67,12 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 
 	const showPriorityDiff =
 		showConflictUI &&
-		task.externalPriority !== undefined &&
-		task.externalPriority !== task.draftPriority;
+		task.externalDataSnapshot.priority !== undefined &&
+		task.externalDataSnapshot.priority !== task.draftPriority;
 	const showNameDiff =
-		showConflictUI && task.externalName !== undefined && task.externalName !== task.draftName.getText();
+		showConflictUI &&
+		task.externalDataSnapshot.name !== undefined &&
+		task.externalDataSnapshot.name !== task.draftName.getText();
 	const showAcceptButton = showConflictUI ? "visible" : "hidden";
 
 	let diffColor: string = "white";
@@ -149,7 +157,11 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	}, [taskList]);
 
 	const taskRows = tasks.map((task: ITask) => (
-		<TaskRow key={task.id} task={task} deleteDraftTask={(): void => taskList.deleteDraftTask(task.id)} />
+		<TaskRow
+			key={task.id}
+			task={task}
+			deleteDraftTask={(): void => taskList.deleteDraftTask(task.id)}
+		/>
 	));
 
 	return (

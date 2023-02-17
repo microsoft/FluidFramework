@@ -30,7 +30,10 @@ function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string)
 		},
 		body: messageBody,
 	}).catch((error) => {
-		console.error("CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:", error);
+		console.error(
+			"CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:",
+			error,
+		);
 	});
 }
 

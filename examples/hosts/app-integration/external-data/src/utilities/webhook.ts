@@ -56,7 +56,9 @@ export class MockWebhook<TData = unknown> {
 		if (this._subscribers.has(subscriber)) {
 			this._subscribers.delete(subscriber);
 		} else {
-			console.warn(`EXTERNAL DATA SERVICE WEBHOOK: URL "${subscriber}" is not registered for data notifications.`);
+			console.warn(
+				`EXTERNAL DATA SERVICE WEBHOOK: URL "${subscriber}" is not registered for data notifications.`,
+			);
 		}
 	}
 
@@ -78,7 +80,10 @@ export class MockWebhook<TData = unknown> {
 				},
 				body: messageBody,
 			}).catch((error) => {
-				console.error("EXTERNAL DATA SERVICE WEBHOOK: Encountered an error while notifying subscribers:", error);
+				console.error(
+					"EXTERNAL DATA SERVICE WEBHOOK: Encountered an error while notifying subscribers:",
+					error,
+				);
 			});
 		}
 	}

@@ -7,6 +7,16 @@ import type { IEvent, IEventProvider } from "@fluidframework/common-definitions"
 import { SharedString } from "@fluidframework/sequence";
 
 /**
+ * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.
+ */
+export interface ExternalSnapshotTask {
+	id: string | undefined;
+	name: string | undefined;
+	priority: number | undefined;
+	changeType: string | undefined;
+}
+
+/**
  * Events emitted by {@link IAppModel}.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -74,27 +84,28 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	/**
 	 * The task name coming in from the external server.
 	 */
-	readonly externalName: string | undefined;
-	/**
-	 * The task priority coming in from the external server.
-	 */
-	readonly externalPriority: number | undefined;
-	/**
-	 * The type of change to the task coming in from the external server.
-	 */
-	readonly changeType: string | undefined;
-	/**
-	 * Trigger event to render change to UI.
-	 */
-	readonly externalNameChanged: (name: string) => void;
-	/**
-	 * Trigger event to render change to UI.
-	 */
-	readonly externalPriorityChanged: (priority: number) => void;
+	// readonly externalName: string | undefined;
+	// /**
+	//  * The task priority coming in from the external server.
+	//  */
+	// readonly externalPriority: number | undefined;
+	// /**
+	//  * The type of change to the task coming in from the external server.
+	//  */
+	// readonly changeType: string | undefined;
+	// /**
+	//  * Trigger event to render change to UI.
+	//  */
+	// readonly externalNameChanged: (name: string) => void;
+	// /**
+	//  * Trigger event to render change to UI.
+	//  */
+	// readonly externalPriorityChanged: (priority: number) => void;
 	/**
 	 * Save the proposed changes to SavedData.
 	 */
 	readonly overwriteWithExternalData: () => void;
+	readonly externalDataSnapshot: ExternalSnapshotTask;
 }
 
 /**
@@ -104,7 +115,7 @@ export interface ITaskListEvents extends IEvent {
 	/**
 	 * Emitted when a draft task is added.
 	 */
-	(event: "draftTaskAdded" , listener: (task: ITask) => void);
+	(event: "draftTaskAdded", listener: (task: ITask) => void);
 	/**
 	 * Emitted when a draft task is removed.
 	 */

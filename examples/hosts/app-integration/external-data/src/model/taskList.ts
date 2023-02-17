@@ -10,7 +10,13 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
+import type {
+	ITask,
+	ITaskEvents,
+	ITaskList,
+	TaskData,
+	ExternalSnapshotTask,
+} from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
@@ -31,31 +37,28 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public set draftPriority(newPriority: number) {
 		this._draftPriority.set(newPriority);
 	}
-	public get externalName(): string | undefined {
-		return this._externalName;
+	public get externalDataSnapshot(): ExternalSnapshotTask {
+		return this._externalDataSnapshot;
 	}
-	public set externalName(newValue: string | undefined) {
-		this._externalName = newValue;
-		this.emit("externalNameChanged");
-	}
-	public get changeType(): string | undefined {
-		return this._changeType;
-	}
-	public set changeType(newValue: string | undefined) {
-		const changesAvailable = newValue !== undefined;
-		this._changeType = newValue;
+	public set externalDataSnapshot(newValue: ExternalSnapshotTask) {
+		const changesAvailable = newValue.changeType !== undefined;
+		this._externalDataSnapshot.changeType = newValue.changeType;
 		this.emit("changesAvailable", changesAvailable);
+		if (this._externalDataSnapshot.name !== newValue.name) {
+			this._externalDataSnapshot.name = newValue.name;
+			this.emit("externalNameChanged", newValue.name);
+		}
+		if (this._externalDataSnapshot.priority !== newValue.priority) {
+			this._externalDataSnapshot.priority = newValue.priority;
+			this.emit("externalPriorityChanged", newValue.priority);
+		}
 	}
-	public get externalPriority(): number | undefined {
-		return this._externalPriority;
-	}
-	public set externalPriority(newValue: number | undefined) {
-		this._externalPriority = newValue;
-		this.emit("externalPriorityChanged");
-	}
-	private _externalName: string | undefined;
-	private _externalPriority: number | undefined;
-	private _changeType: string | undefined;
+	private readonly _externalDataSnapshot: ExternalSnapshotTask = {
+		id: undefined,
+		name: undefined,
+		priority: undefined,
+		changeType: undefined,
+	};
 	public constructor(
 		private readonly _id: string,
 		private readonly _draftName: SharedString,
@@ -69,22 +72,15 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 			this.emit("draftPriorityChanged");
 		});
 	}
-	public externalNameChanged = (incomingName: string): void => {
-		this.changeType = "change";
-		this.externalName = incomingName;
-	};
-	public externalPriorityChanged = (incomingPriority: number): void => {
-		this.changeType = "change";
-		this.externalPriority = incomingPriority;
-	};
 	public overwriteWithExternalData = (): void => {
-		this.changeType = undefined;
-		if (this.externalPriority !== undefined) {
-			this._draftPriority.set(this.externalPriority);
+		this.externalDataSnapshot.changeType = undefined;
+		this.emit("changesAvailable", false);
+		if (this.externalDataSnapshot.priority !== undefined) {
+			this._draftPriority.set(this.externalDataSnapshot.priority);
 		}
-		if (this.externalName !== undefined) {
+		if (this.externalDataSnapshot.name !== undefined) {
 			const oldString = this._draftName.getText();
-			this._draftName.replaceText(0, oldString.length, this.externalName);
+			this._draftName.replaceText(0, oldString.length, this.externalDataSnapshot.name);
 		}
 	};
 }
@@ -96,15 +92,6 @@ interface PersistedTask {
 	id: string;
 	name: IFluidHandle<SharedString>;
 	priority: IFluidHandle<ISharedCell<number>>;
-}
-
-/**
- * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.
- */
-interface ExternalSnapshotTask {
-	id: string;
-	name: string;
-	priority: number;
 }
 
 /**
@@ -270,40 +257,46 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		// TODO: Delete any items that are in the root but missing from the external data
-		const updateTaskPs = incomingExternalData.map(async ([id, { name: incomingName , priority: incomingPriority }]) => {
-			// Write external data into externalDataSnapshot map.
-			const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
-			// Create a new task because it doesn't exist already
-			if (currentTask === undefined) {
-				const externalDataSnapshotPT: ExternalSnapshotTask = {
-					id,
-					name: incomingName,
-					priority: incomingPriority,
-				};
-				this.externalDataSnapshot.set(id, externalDataSnapshotPT);
-			} else {
-				currentTask.name = incomingName;
-				currentTask.priority = incomingPriority;
-			}
+		const updateTaskPs = incomingExternalData.map(
+			async ([id, { name: incomingName, priority: incomingPriority }]) => {
+				// Write external data into externalDataSnapshot map.
+				const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
+				// Create a new task because it doesn't exist already
+				if (currentTask === undefined) {
+					const externalDataSnapshotTask: ExternalSnapshotTask = {
+						id,
+						name: incomingName,
+						priority: incomingPriority,
+						changeType: "add",
+					};
+					this.externalDataSnapshot.set(id, externalDataSnapshotTask);
+				} else {
+					currentTask.name = incomingName;
+					currentTask.priority = incomingPriority;
+					currentTask.changeType = "change";
+				}
 
-			// Now look for differences between draftData and externalDataSnapshot
-			const task = this.tasks.get(id);
-			if (task === undefined) {
-				// A new task was added from external source, add it to the Fluid data.
-				this.addDraftTask(id, incomingName, incomingPriority);
-				return;
-			}
-			// Incoming external data differs from existing external snapshot AND
-			// local change has happened, so there is some conflict to resolve
-			if (task.draftName.getText() !== incomingName) {
-				task.externalNameChanged(incomingName);
-			}
-			// Incoming external data differs from existing external snapshot AND
-			// local change has happened, so there is some conflict to resolve
-			if (task.draftPriority !== incomingPriority) {
-				task.externalPriorityChanged(incomingPriority);
-			}
-		});
+				// Now look for differences between draftData and externalDataSnapshot
+				const task = this.tasks.get(id);
+				if (task === undefined) {
+					// A new task was added from external source, add it to the Fluid data.
+					this.addDraftTask(id, incomingName, incomingPriority);
+					return;
+				}
+				if (
+					task.draftName.getText() !== incomingName ||
+					task.draftPriority !== incomingPriority
+				) {
+					const externalDataSnapshotTask: ExternalSnapshotTask = {
+						id,
+						name: incomingName,
+						priority: incomingPriority,
+						changeType: "change",
+					};
+					task.externalDataSnapshot = externalDataSnapshotTask;
+				}
+			},
+		);
 		await Promise.all(updateTaskPs);
 	}
 	/**
