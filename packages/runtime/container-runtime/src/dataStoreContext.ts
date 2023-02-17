@@ -70,7 +70,6 @@ import {
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 
-import { ContainerRuntime } from "./containerRuntime";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -79,10 +78,10 @@ import {
 	WriteFluidDataStoreAttributes,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
-} from "./summaryFormat";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
-import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
-import { summarizerClientType } from "./summarizerClientElection";
+	summarizerClientType,
+} from "./summary";
+import { ContainerRuntime } from "./containerRuntime";
+import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -136,7 +135,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 /** Properties necessary for creating a remote FluidDataStoreContext */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly snapshotTree: ISnapshotTree | undefined;
-	readonly getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>;
 }
 
 /**
@@ -262,10 +260,10 @@ export abstract class FluidDataStoreContext
 
 	/**
 	 * If the summarizer makes local changes, a telemetry event is logged. This has the potential to be very noisy.
-	 * So, adding a threshold of how many telemetry events can be logged per data store context. This can be
+	 * So, adding a count of how many telemetry events are logged per data store context. This can be
 	 * controlled via feature flags.
 	 */
-	private localChangesTelemetryThreshold: number;
+	private localChangesTelemetryCount: number;
 
 	// The used routes of this node as per the last GC run. This is used to update the used routes of the channel
 	// if it realizes after GC is run.
@@ -324,7 +322,6 @@ export abstract class FluidDataStoreContext
 		this.summarizerNode = props.createSummarizerNodeFn(
 			thisSummarizeInternal,
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-			async () => this.getBaseGCDetails(),
 		);
 
 		this.mc = loggerToMonitoringContext(
@@ -341,9 +338,9 @@ export abstract class FluidDataStoreContext
 			this._containerRuntime.gcTombstoneEnforcementAllowed &&
 			this.clientDetails.type !== summarizerClientType;
 
-		// By default, a data store can log maximum 100 local changes telemetry in summarizer.
-		this.localChangesTelemetryThreshold =
-			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryThreshold") ?? 100;
+		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
+		this.localChangesTelemetryCount =
+			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 	}
 
 	public dispose(): void {
@@ -822,7 +819,12 @@ export abstract class FluidDataStoreContext
 		this._isInMemoryRoot = true;
 	}
 
-	public abstract getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+	/**
+	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 */
+	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
+		return {};
+	}
 
 	public reSubmit(contents: any, localOpMetadata: unknown) {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
@@ -901,35 +903,34 @@ export abstract class FluidDataStoreContext
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
 	protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
-		if (this.clientDetails.type === summarizerClientType) {
-			// If the count of telemetry logged has crossed the threshold, don't log any more.
-			if (this.localChangesTelemetryThreshold > 0) {
-				return;
-			}
-
-			// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
-			// this is happening and which data stores do this. The eventual goal is to disallow local changes
-			// in the summarizer and the data will help us plan this.
-			this.mc.logger.sendTelemetryEvent({
-				eventName,
-				type,
-				fluidDataStoreId: {
-					value: this.id,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
-				packageName: packagePathToTelemetryProperty(this.pkg),
-				isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
-				stack: generateStack(),
-			});
-			this.localChangesTelemetryThreshold--;
+		if (
+			this.clientDetails.type !== summarizerClientType ||
+			this.localChangesTelemetryCount <= 0
+		) {
+			return;
 		}
+
+		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+		// this is happening and which data stores do this. The eventual goal is to disallow local changes
+		// in the summarizer and the data will help us plan this.
+		this.mc.logger.sendTelemetryEvent({
+			eventName,
+			type,
+			fluidDataStoreId: {
+				value: this.id,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			packageName: packagePathToTelemetryProperty(this.pkg),
+			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
+			stack: generateStack(),
+		});
+		this.localChangesTelemetryCount--;
 	}
 
 	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-			getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 		) =>
 			this.summarizerNode.createChild(
 				summarizeInternal,
@@ -938,7 +939,6 @@ export abstract class FluidDataStoreContext
 				// DDS will not create failure summaries
 				{ throwOnFailure: true },
 				getGCDataFn,
-				getBaseGCDetailsFn,
 			);
 	}
 
@@ -949,7 +949,6 @@ export abstract class FluidDataStoreContext
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initSnapshotValue: ISnapshotTree | undefined;
-	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, BindState.Bound, false /* isLocalDataStore */, () => {
@@ -957,9 +956,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		});
 
 		this.initSnapshotValue = props.snapshotTree;
-		this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
-			return (await props.getBaseGCDetails()) ?? {};
-		});
 
 		if (props.snapshotTree !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
@@ -1017,10 +1013,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
 		return this.initialSnapshotDetailsP;
-	}
-
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-		return this.baseGCDetailsP;
 	}
 
 	public generateAttachMessage(): IAttachMessage {
@@ -1139,11 +1131,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			isRootDataStore,
 			snapshot,
 		};
-	}
-
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-		// Local data store does not have initial summary.
-		return {};
 	}
 
 	/**

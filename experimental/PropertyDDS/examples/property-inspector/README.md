@@ -1,4 +1,4 @@
-# @fluid-experimental/property-inspector
+# @fluid-example/property-inspector
 
 An app for inspecting documents created by PropertyDDS using an efficient table-tree.
 
