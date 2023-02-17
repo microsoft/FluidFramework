@@ -11,12 +11,15 @@ import type {
 
 /**
  * Base type for documentation nodes.
+ *
+ * @typeParam TData - The kind of data used by the node to represent its child content.
+ * See {@link https://github.com/syntax-tree/unist#data}.
  */
 export interface DocumentationNode<TData extends object = UnistData> extends UnistNode<TData> {
 	/**
 	 * The type of Documentation domain node.
 	 *
-	 * See {@link unist#Node."type"}.
+	 * @see {@link https://github.com/syntax-tree/unist#type}.
 	 */
 	readonly type: string;
 

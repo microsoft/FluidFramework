@@ -75,9 +75,8 @@ function resolveSymbolicLink(
 
 	if (resolvedReference.resolvedApiItem === undefined) {
 		logger.warning(
-			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}": ${
-				resolvedReference.errorMessage
-			}`,
+			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}":`,
+			resolvedReference.errorMessage,
 		);
 
 		return undefined;
