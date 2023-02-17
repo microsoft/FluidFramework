@@ -96,7 +96,6 @@ api-report/synthesize.api.md                                              @micro
 api-report/task-manager.api.md                                            @microsoft/fluid-cr-dds
 api-report/telemetry-utils.api.md                                         @microsoft/fluid-cr-telemetry
 api-report/test-driver-definitions.api.md                                 @microsoft/fluid-cr-drivers
-api-report/test-drivers.api.md                                            @microsoft/fluid-cr-drivers
 api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
 api-report/test-utils.api.md                                              @microsoft/fluid-cr-test
 api-report/tool-utils.api.md                                              @microsoft/fluid-cr-tools
