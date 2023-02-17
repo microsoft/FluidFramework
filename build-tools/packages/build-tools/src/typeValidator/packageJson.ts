@@ -7,8 +7,8 @@ import { cosmiconfigSync } from "cosmiconfig";
 import type { CosmiconfigResult } from "cosmiconfig/dist/types";
 import { existsSync, readdirSync, readJson, writeJson } from "fs-extra";
 import minimatch from "minimatch";
+import path from "path";
 import * as semver from "semver";
-import * as util from "util";
 
 import {
 	ReleaseVersion,
@@ -25,6 +25,7 @@ import { Context } from "../bumpVersion/context";
 import { Logger, defaultLogger } from "../common/logging";
 import { PackageJson } from "../common/npmPackage";
 import { BrokenCompatTypes, ITypeValidationConfig } from "../common/fluidRepo";
+import { typeValidationConfigFile, typeValidationPropertyName } from "./typeData";
 
 export type PackageDetails = {
 	readonly packageDir: string;
@@ -55,25 +56,25 @@ export async function getPackageDetails(
 	packageDir: string,
 	log = defaultLogger,
 ): Promise<PackageDetails> {
-	const packagePath = `${packageDir}/package.json`;
+	const packagePath = path.join(packageDir, "package.json");
 	if (!existsSync(packagePath)) {
 		throw new Error(`Package json does not exist: ${packagePath}`);
 	}
 
-	// try loading from typeValidation.config.json, then fall back to package.json
-	const configExplorer = cosmiconfigSync("typeValidation", {
-		packageProp: "typeValidation",
-	});
-
+	// try loading from external config file, then fall back to package.json
 	let result: CosmiconfigResult | undefined;
 	let loadFromPackage = false;
 
+	const configExplorer = cosmiconfigSync(typeValidationPropertyName, {
+		packageProp: typeValidationPropertyName,
+	});
+
 	// use load instead of search because we don't want to recurse up the directory tree looking for configs
 	try {
-		const configPath = `${packageDir}/typeValidation.config.json`;
+		const configPath = path.join(packageDir, typeValidationConfigFile);
 		result = configExplorer.load(configPath);
 	} catch {
-		log.verbose(`Couldn't load from typeValidation.config.json; checking package.json...`);
+		log.verbose(`Couldn't load from ${typeValidationConfigFile}; checking package.json...`);
 		loadFromPackage = true;
 	}
 
@@ -514,7 +515,7 @@ export async function getAndUpdatePackageDetails(
 
 		if ((writeUpdates ?? false) === true) {
 			await writeJson(
-				`${packageDir}/typeValidation.config.json`,
+				path.join(packageDir, typeValidationConfigFile),
 				packageDetails.typeValidation,
 				{ spaces: "\t" },
 			);
@@ -522,7 +523,7 @@ export async function getAndUpdatePackageDetails(
 			if (packageDetails.json.typeValidation !== undefined) {
 				// remove the package.json node; prefer external file
 				delete packageDetails.json.typeValidation;
-				await writeJson(`${packageDir}/package.json`, packageDetails.json, {
+				await writeJson(path.join(packageDir, "package.json"), packageDetails.json, {
 					spaces: "\t",
 				});
 			}
