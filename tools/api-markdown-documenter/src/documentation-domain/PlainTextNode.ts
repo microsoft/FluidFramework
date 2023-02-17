@@ -40,10 +40,16 @@ export class PlainTextNode
 	 */
 	public readonly value: string;
 
-	public constructor(value: string) {
+	/**
+	 * Whether or not the text content has already been escaped.
+	 */
+	public readonly escaped: boolean;
+
+	public constructor(value: string, escaped?: boolean) {
 		if (value.includes("\n")) {
 			throw new Error("Invalid value: Plain text nodes may not contain newline characters");
 		}
 		this.value = value;
+		this.escaped = escaped ?? false;
 	}
 }

@@ -79,8 +79,9 @@ function renderPlainTextWithMarkdownSyntax(
 		writer.write("~~");
 	}
 
-	// Don't escape text within a code block in Markdown
-	const text = context.insideCodeBlock === true ? body : getMarkdownEscapedText(body);
+	// Don't escape text within a code block in Markdown, or if it has already been escaped
+	const text =
+		context.insideCodeBlock === true || node.escaped ? body : getMarkdownEscapedText(body);
 	writer.write(text);
 
 	if (context.strikethrough === true) {
@@ -118,7 +119,7 @@ function renderPlainTextWithHtmlSyntax(
 		writer.write("<s>");
 	}
 
-	writer.write(getHtmlEscapedText(body));
+	writer.write(node.escaped ? body : getHtmlEscapedText(body));
 
 	if (context.strikethrough === true) {
 		writer.write("</s>");

@@ -6,7 +6,10 @@ import { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	DocCodeSpan,
 	DocDeclarationReference,
+	DocEscapedText,
 	DocFencedCode,
+	DocHtmlEndTag,
+	DocHtmlStartTag,
 	DocLinkTag,
 	DocNode,
 	DocNodeKind,
@@ -101,6 +104,12 @@ export function _transformDocNode(
 	switch (node.kind) {
 		case DocNodeKind.CodeSpan:
 			return transformDocCodeSpan(node as DocCodeSpan, options);
+		case DocNodeKind.EscapedText:
+			return transformDocEscapedText(node as DocEscapedText, options);
+		case DocNodeKind.HtmlStartTag:
+			return transformDocHtmlTag(node as DocHtmlStartTag, options);
+		case DocNodeKind.HtmlEndTag:
+			return transformDocHtmlTag(node as DocHtmlEndTag, options);
 		case DocNodeKind.Paragraph:
 			return transformDocParagraph(node as DocParagraph, options);
 		case DocNodeKind.Section:
@@ -157,6 +166,26 @@ export function transformDocPlainText(
 	options: DocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.text);
+}
+
+/**
+ * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
+ */
+export function transformDocEscapedText(
+	node: DocEscapedText,
+	options: DocNodeTransformOptions,
+): PlainTextNode {
+	return new PlainTextNode(node.encodedText, /* escaped: */ true);
+}
+
+/**
+ * Converts a {@link @microsoft/tsdoc#DocHtmlStartTag} | {@link @microsoft/tsdoc#DocHtmlEndTag} to a {@link PlainTextNode}.
+ */
+export function transformDocHtmlTag(
+	node: DocHtmlStartTag | DocHtmlEndTag,
+	options: DocNodeTransformOptions,
+): PlainTextNode {
+	return new PlainTextNode(node.emitAsHtml(), /* escaped: */ true);
 }
 
 /**

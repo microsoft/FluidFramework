@@ -424,8 +424,9 @@ export class ParagraphNode extends ParentNodeBase implements MultiLineDocumentat
 
 // @public
 export class PlainTextNode implements DocumentationLiteralNode<string>, SingleLineDocumentationNode {
-    constructor(value: string);
+    constructor(value: string, escaped?: boolean);
     static readonly Empty: PlainTextNode;
+    readonly escaped: boolean;
     readonly singleLine = true;
     readonly type = DocumentationNodeType.PlainText;
     readonly value: string;
