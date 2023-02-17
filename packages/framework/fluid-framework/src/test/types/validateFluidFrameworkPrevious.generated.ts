@@ -251,7 +251,6 @@ declare function get_current_EnumDeclaration_DriverErrorType():
 declare function use_old_EnumDeclaration_DriverErrorType(
     use: TypeOnly<old.DriverErrorType>);
 use_old_EnumDeclaration_DriverErrorType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_DriverErrorType());
 
 /*
