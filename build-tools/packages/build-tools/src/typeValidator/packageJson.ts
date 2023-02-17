@@ -4,7 +4,8 @@
  */
 import child_process from "child_process";
 import { cosmiconfigSync } from "cosmiconfig";
-import * as fs from "fs";
+import type { CosmiconfigResult } from "cosmiconfig/dist/types";
+import { existsSync, readdirSync, readJson, writeJson } from "fs-extra";
 import minimatch from "minimatch";
 import * as semver from "semver";
 import * as util from "util";
@@ -24,8 +25,6 @@ import { Context } from "../bumpVersion/context";
 import { Logger, defaultLogger } from "../common/logging";
 import { PackageJson } from "../common/npmPackage";
 import { BrokenCompatTypes, ITypeValidationConfig } from "../common/fluidRepo";
-import { existsSync, readJson, writeJson } from "fs-extra";
-import { resolve } from "path";
 
 export type PackageDetails = {
 	readonly packageDir: string;
@@ -52,7 +51,10 @@ function safeParse(json: string, error: string) {
 	}
 }
 
-export async function getPackageDetails(packageDir: string): Promise<PackageDetails> {
+export async function getPackageDetails(
+	packageDir: string,
+	log = defaultLogger,
+): Promise<PackageDetails> {
 	const packagePath = `${packageDir}/package.json`;
 	if (!existsSync(packagePath)) {
 		throw new Error(`Package json does not exist: ${packagePath}`);
@@ -60,15 +62,32 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
 
 	// try loading from typeValidation.config.json, then fall back to package.json
 	const configExplorer = cosmiconfigSync("typeValidation", {
-		searchPlaces: ["typeValidation.config.json", "package.json"],
 		packageProp: "typeValidation",
-		stopDir: resolve(packageDir),
 	});
 
+	let result: CosmiconfigResult | undefined;
+	let loadFromPackage = false;
+
 	// use load instead of search because we don't want to recurse up the directory tree looking for configs
-	const result =
-		configExplorer.load("typeValidation.config.json") ?? configExplorer.load("package.json");
+	try {
+		const configPath = `${packageDir}/typeValidation.config.json`;
+		result = configExplorer.load(configPath);
+	} catch {
+		log.verbose(`Couldn't load from typeValidation.config.json; checking package.json...`);
+		loadFromPackage = true;
+	}
+
+	if (loadFromPackage) {
+		result = configExplorer.load(packagePath);
+	}
+
+	if (result === null || result === undefined) {
+		throw new Error(`Couldn't find typetest config.`);
+	}
+
 	const config = result?.config;
+	log.verbose(`typeValidation config loaded from: ${result?.filepath}`);
+
 	const pkgJson: PackageJson = await readJson(packagePath);
 	const oldVersions: string[] = Object.keys(pkgJson.devDependencies ?? {}).filter((k) =>
 		k.startsWith(pkgJson.name),
@@ -524,12 +543,11 @@ export async function findPackagesUnderPath(path: string) {
 	const packages: string[] = [];
 	while (searchPaths.length > 0) {
 		const search = searchPaths.shift()!;
-		if (await util.promisify(fs.exists)(`${search}/package.json`)) {
+		if (existsSync(`${search}/package.json`)) {
 			packages.push(search);
 		} else {
 			searchPaths.push(
-				...fs
-					.readdirSync(search, { withFileTypes: true })
+				...readdirSync(search, { withFileTypes: true })
 					.filter((t) => t.isDirectory())
 					.map((d) => `${search}/${d.name}`),
 			);
