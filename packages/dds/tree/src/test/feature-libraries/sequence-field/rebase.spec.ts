@@ -8,14 +8,12 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import { RevisionTag, tagChange } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
 import {
 	checkDeltaEquality,
 	composeAnonChanges,
-	getMaxId,
-	idAllocatorFromMaxId,
 	normalizeMoveIds,
 	rebaseTagged,
+	rebase as rebaseI,
 } from "./utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 
@@ -24,14 +22,7 @@ const tag2: RevisionTag = brand(42);
 const tag3: RevisionTag = brand(43);
 
 function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTag): TestChangeset {
-	deepFreeze(change);
-	deepFreeze(base);
-	return SF.rebase(
-		change,
-		tagChange(base, baseRev),
-		TestChange.rebase,
-		idAllocatorFromMaxId(getMaxId(change, base)),
-	);
+	return rebaseI(change, tagChange(base, baseRev));
 }
 
 describe("SequenceField - Rebase", () => {

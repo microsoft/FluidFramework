@@ -3,42 +3,28 @@ services:
     alfred:
         volumes:
             - .:/usr/src/server
-            - /usr/src/server/node_modules/zookeeper
-            - /usr/src/server/node_modules/node-rdkafka
-            - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+            - /usr/src/server/node_modules
     deli:
         volumes:
             - .:/usr/src/server
-            - /usr/src/server/node_modules/zookeeper
-            - /usr/src/server/node_modules/node-rdkafka
-            - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+            - /usr/src/server/node_modules
     scriptorium:
         volumes:
             - .:/usr/src/server
-            - /usr/src/server/node_modules/zookeeper
-            - /usr/src/server/node_modules/node-rdkafka
-            - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+            - /usr/src/server/node_modules
     copier:
         volumes:
             - .:/usr/src/server
-            - /usr/src/server/node_modules/zookeeper
-            - /usr/src/server/node_modules/node-rdkafka
-            - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+            - /usr/src/server/node_modules
     scribe:
         volumes:
             - .:/usr/src/server
-            - /usr/src/server/node_modules/zookeeper
-            - /usr/src/server/node_modules/node-rdkafka
-            - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+            - /usr/src/server/node_modules
     foreman:
         volumes:
             - .:/usr/src/server
-            - /usr/src/server/node_modules/zookeeper
-            - /usr/src/server/node_modules/node-rdkafka
-            - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+            - /usr/src/server/node_modules
     riddler:
         volumes:
             - .:/usr/src/server
-            - /usr/src/server/node_modules/zookeeper
-            - /usr/src/server/node_modules/node-rdkafka
-            - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+            - /usr/src/server/node_modules

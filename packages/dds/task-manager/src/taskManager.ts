@@ -64,8 +64,6 @@ const placeholderClientId = "placeholder";
  *
  * @remarks
  *
- * For an in-depth overview, see [TaskManager](https://fluidframework.com/docs/data-structures/task-manager/).
- *
  * ### Creation
  *
  * To create a `TaskManager`, call the static create method:

@@ -67,6 +67,7 @@ export class OdspDocumentService implements IDocumentService {
 	public static async create(
 		resolvedUrl: IResolvedUrl,
 		getStorageToken: InstrumentedStorageTokenFetcher,
+		// eslint-disable-next-line @rushstack/no-new-null
 		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
 		logger: ITelemetryLogger,
 		cache: IOdspCache,
@@ -285,7 +286,7 @@ export class OdspDocumentService implements IDocumentService {
 	}
 
 	public dispose(error?: any) {
-		// Error might indicate mismatch between client & server knowlege about file
+		// Error might indicate mismatch between client & server knowledge about file
 		// (DriverErrorType.fileOverwrittenInStorage).
 		// For example, file might have been overwritten in storage without generating new epoch
 		// In such case client cached info is stale and has to be removed.

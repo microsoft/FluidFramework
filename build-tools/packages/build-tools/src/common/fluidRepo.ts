@@ -67,6 +67,54 @@ export interface PolicyConfig {
 }
 
 /**
+ * Metadata about known-broken types.
+ */
+export interface BrokenCompatSettings {
+	backCompat?: false;
+	forwardCompat?: false;
+}
+
+/**
+ * A mapping of a type name to its {@link BrokenCompatSettings}.
+ */
+export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
+
+export interface ITypeValidationConfig {
+	/**
+	 * The version of the package. Should match the version field in package.json.
+	 */
+	version: string;
+
+	/**
+	 * An object containing types that are known to be broken.
+	 */
+	broken: BrokenCompatTypes;
+
+	/**
+	 * If true, disables type test preparation and generation for the package.
+	 */
+	disabled?: boolean;
+
+	/**
+	 * The previous version style that was used when the prepare phase was run. This value is cached so that
+	 * generation can work even on branches without the correct config.
+	 */
+	previousVersionStyle?: PreviousVersionStyle;
+
+	/**
+	 * The version range used as the "previous" version to compare against when generating type tests. This may be
+	 * an exact version or a range string.
+	 */
+	baselineRange?: string;
+
+	/**
+	 * The exact version used as the "previous" version to compare against when generating type tests. This should
+	 * always be an exact version.
+	 */
+	baselineVersion?: string;
+}
+
+/**
  * Configures a package or release group
  */
 export interface IFluidRepoPackage {
@@ -96,24 +144,24 @@ export class FluidRepo {
 	public readonly packages: Packages;
 
 	/**
-	 * @deprecated Use monoRepos.get() instead.
+	 * @deprecated Use releaseGroups.get() instead.
 	 */
 	public get clientMonoRepo(): MonoRepo {
-		return this.monoRepos.get(MonoRepoKind.Client)!;
+		return this.releaseGroups.get(MonoRepoKind.Client)!;
 	}
 
 	/**
-	 * @deprecated Use monoRepos.get() instead.
+	 * @deprecated Use releaseGroups.get() instead.
 	 */
 	public get serverMonoRepo(): MonoRepo | undefined {
-		return this.monoRepos.get(MonoRepoKind.Server);
+		return this.releaseGroups.get(MonoRepoKind.Server);
 	}
 
 	/**
-	 * @deprecated Use monoRepos.get() instead.
+	 * @deprecated Use releaseGroups.get() instead.
 	 */
 	public get azureMonoRepo(): MonoRepo | undefined {
-		return this.monoRepos.get(MonoRepoKind.Azure);
+		return this.releaseGroups.get(MonoRepoKind.Azure);
 	}
 
 	constructor(
@@ -149,7 +197,7 @@ export class FluidRepo {
 			if (isMonoRepoKind(group)) {
 				const { directory, ignoredDirs } = item as IFluidRepoPackage;
 				const monorepo = new MonoRepo(group, directory, ignoredDirs, logger);
-				this.monoRepos.set(group, monorepo);
+				this.releaseGroups.set(group, monorepo);
 				loadedPackages.push(...monorepo.packages);
 			} else if (group !== "services" || services) {
 				if (Array.isArray(item)) {
@@ -162,7 +210,7 @@ export class FluidRepo {
 			}
 		}
 
-		if (!this.monoRepos.has(MonoRepoKind.Client)) {
+		if (!this.releaseGroups.has(MonoRepoKind.Client)) {
 			throw new Error("client entry does not exist in package.json");
 		}
 		this.packages = new Packages(loadedPackages);

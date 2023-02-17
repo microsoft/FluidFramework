@@ -166,14 +166,13 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(change: TestChange): Delta.Modify {
+function toDelta(change: TestChange): Delta.NodeChanges | undefined {
 	if (change.intentions.length > 0) {
 		return {
-			type: Delta.MarkType.Modify,
 			setValue: change.intentions.map(String).join("|"),
 		};
 	}
-	return { type: Delta.MarkType.Modify };
+	return undefined;
 }
 
 export interface AnchorRebaseData {

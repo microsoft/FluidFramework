@@ -408,10 +408,23 @@ Using the interval collection API has two main benefits:
 
 SharedString supports storing information attributing each character position to the user who inserted it and the time at which that insertion happened.
 This functionality is off by default.
-Enable it by setting `{ attribution: { track: true } }` on the `IFluidDataStoreRuntime` options used to initialize the SharedString.
-If the config flag `"Fluid.Attribution.EnableOnNewFile"` is set, its value will override the runtime options one.
+To enable this functionality, first ensure that all clients are created with an attribution policy factory in the loader settings:
 
-Attribution information is stored on the `attribution` field of the SharedString's segments.
+```typescript
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+// Use these options in the IContainerContext used to instantiate your container runtime.
+const options: ILoaderOptions = {
+	attribution: {
+		policyFactory: createInsertOnlyAttributionPolicy,
+	},
+};
+```
+
+This ensures that the client is able to load existing documents containing attribution information,
+and specifies which kinds of operations should be attributed at the SharedString level (currently, only insertions).
+The stored attribution information can be found on the `attribution` field of the SharedString's segments.
+
+Next, enable the `"Fluid.Attribution.EnableOnNewFile"` config flag to start tracking attribution information for new files.
 
 ```typescript
 const { segment, offset } = sharedString.getContainingSegment(5);
@@ -419,6 +432,10 @@ const key = segment.attribution.getAtOffset(offset);
 // `key` can be used with an IAttributor to recover user/timestamp info about the insertion of the character at offset 5.
 // See the @fluidframework/attributor package for more details.
 ```
+
+For further reading on attribution, see the [@fluidframework/attributor README](../../framework/attributor/README.md).
+
+There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
 
 ### Examples
 

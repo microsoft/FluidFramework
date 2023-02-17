@@ -50,6 +50,7 @@ export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
 			0,
 			0,
 			0,
+			undefined,
 		);
 	}
 

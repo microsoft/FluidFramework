@@ -234,6 +234,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public static async create(
 		tenantId: string,
 		documentId: string,
+		// eslint-disable-next-line @rushstack/no-new-null
 		token: string | null,
 		client: IClient,
 		url: string,
@@ -295,7 +296,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		try {
 			await deltaConnection.initialize(connectMessage, timeoutMs);
-			await epochTracker.validateEpochFromPush(deltaConnection.details);
+			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
 		} catch (errorObject: any) {
 			if (errorObject !== null && typeof errorObject === "object") {
 				// We have to special-case error types here in terms of what is re-triable.
@@ -621,6 +622,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						clientIdOrDocumentId === this.documentId ||
 						clientIdOrDocumentId === this.clientId;
 					const { code, type, message, retryAfter } = nacks[0]?.content ?? {};
+					const { clientSequenceNumber, referenceSequenceNumber } =
+						nacks[0]?.operation ?? {};
 					this.logger.sendTelemetryEvent({
 						eventName: "ServerNack",
 						code,
@@ -629,6 +632,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						retryAfterSeconds: retryAfter,
 						clientId: this.clientId,
 						handle,
+						clientSequenceNumber,
+						referenceSequenceNumber,
+						opType: nacks[0]?.operation?.type,
 					});
 					if (handle) {
 						this.emit("nack", clientIdOrDocumentId, nacks);
@@ -646,7 +652,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Critical path where we need to also close the socket for an error.
 	 * @param error - Error causing the socket to close.
 	 */
-	protected closeSocket(error: IAnyDriverError) {
+	protected closeSocketCore(error: IAnyDriverError) {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x416 /* reentrancy not supported in close socket */);
 		socket.closeSocket(error);

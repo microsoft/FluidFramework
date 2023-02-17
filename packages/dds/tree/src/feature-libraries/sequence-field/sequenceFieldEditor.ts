@@ -26,8 +26,13 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	 * @param sourceIndex - The index of the first node move
 	 * @param count - The number of nodes to move
 	 * @param destIndex - The index the nodes should be moved to, interpreted after removing the moving nodes
+	 * @returns a tuple containing a changeset for the move out and a changeset for the move in
 	 */
-	move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
+	move(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+	): [Changeset<never>, Changeset<never>];
 	return(
 		sourceIndex: number,
 		count: number,
@@ -71,12 +76,12 @@ export const sequenceFieldEditor = {
 		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
-	move(sourceIndex: number, count: number, destIndex: number): Changeset<never> {
-		if (count === 0 || sourceIndex === destIndex) {
-			// TODO: Should we allow creating a move which has no observable effect?
-			return [];
-		}
 
+	move(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+	): [Changeset<never>, Changeset<never>] {
 		const moveOut: Mark<never> = {
 			type: "MoveOut",
 			id: brand(0),
@@ -89,19 +94,7 @@ export const sequenceFieldEditor = {
 			count,
 		};
 
-		const factory = new MarkListFactory<never>();
-		if (sourceIndex < destIndex) {
-			factory.pushOffset(sourceIndex);
-			factory.pushContent(moveOut);
-			factory.pushOffset(destIndex - sourceIndex);
-			factory.pushContent(moveIn);
-		} else {
-			factory.pushOffset(destIndex);
-			factory.pushContent(moveIn);
-			factory.pushOffset(sourceIndex - destIndex);
-			factory.pushContent(moveOut);
-		}
-		return factory.list;
+		return [markAtIndex(sourceIndex, moveOut), markAtIndex(destIndex, moveIn)];
 	},
 
 	return(

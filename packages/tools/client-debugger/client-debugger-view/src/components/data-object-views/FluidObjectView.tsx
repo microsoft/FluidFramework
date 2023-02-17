@@ -41,7 +41,7 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
 		fluidObjectHandle.get().then(setResolvedData, (error) => {
 			throw error;
 		});
-	}, [resolvedData]);
+	}, [fluidObjectHandle, setResolvedData]);
 
 	if (resolvedData === undefined) {
 		return <Spinner />;
@@ -54,7 +54,7 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
 		return renderOptions[dataObjectType] === undefined ? (
 			<Stack>
 				<StackItem>
-					No renderer provided for shared object type "{dataObjectType}"
+					No renderer provided for shared object type &quot;{dataObjectType}&quot;
 				</StackItem>
 			</Stack>
 		) : (

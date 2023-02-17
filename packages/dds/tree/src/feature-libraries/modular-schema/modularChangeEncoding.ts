@@ -13,13 +13,8 @@ import {
 	symbolFromKey,
 } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
-import {
-	ChangesetLocalId,
-	FieldChangeMap,
-	ModularChangeset,
-	NodeChangeset,
-	ValueChange,
-} from "./fieldChangeHandler";
+import { ChangesetLocalId } from "./crossFieldQueries";
+import { FieldChangeMap, ModularChangeset, NodeChangeset, ValueChange } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { getChangeHandler } from "./modularChangeFamily";
 

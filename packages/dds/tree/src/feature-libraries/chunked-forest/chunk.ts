@@ -109,6 +109,22 @@ export function tryGetChunk(cursor: ITreeCursor): undefined | TreeChunk {
 	return (cursor as WithChunk)[cursorChunk];
 }
 
+/**
+ * Cursor for a chunk which can be wrapped by another cursor.
+ *
+ * @remarks See `BasicChunkCursor` which uses this.
+ */
 export interface ChunkedCursor extends ITreeCursorSynchronous, WithChunk {
-	readonly [cursorChunk]?: TreeChunk;
+	/**
+	 * Checks if the cursor is in the top level nodes of the chunk.
+	 *
+	 * @returns true iff cursor is within the root field, including at a node within that field.
+	 */
+	atChunkRoot(): boolean;
+
+	/**
+	 * Clones the cursor to produce a new independent cursor.
+	 * Does not add any counted references to any chunks.
+	 */
+	fork(): ChunkedCursor;
 }

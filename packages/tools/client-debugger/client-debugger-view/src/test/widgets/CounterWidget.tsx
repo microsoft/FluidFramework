@@ -55,7 +55,7 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 		return (): void => {
 			counter.off("incremented", updateCounterValue);
 		};
-	}, [counter]);
+	}, [counter, setCounterValue]);
 
 	/**
 	 * Decrement the shared counter by 1.

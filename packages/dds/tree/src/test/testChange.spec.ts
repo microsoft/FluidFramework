@@ -73,15 +73,12 @@ describe("TestChange", () => {
 	it("can be represented as a delta", () => {
 		const change1 = TestChange.mint([0, 1], [2, 3]);
 		const delta = TestChange.toDelta(change1);
-		const expected = {
-			type: Delta.MarkType.Modify,
+		const expected: Delta.NodeChanges = {
 			setValue: "2|3",
 		};
 
 		assert.deepEqual(delta, expected);
-		assert.deepEqual(TestChange.toDelta(TestChange.mint([0, 1], [])), {
-			type: Delta.MarkType.Modify,
-		});
+		assert.deepEqual(TestChange.toDelta(TestChange.mint([0, 1], [])), undefined);
 	});
 
 	it("can be encoded in JSON", () => {

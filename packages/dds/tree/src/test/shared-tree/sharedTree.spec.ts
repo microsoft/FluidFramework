@@ -31,6 +31,7 @@ import {
 	SchemaData,
 } from "../../core";
 import { SharedTreeCore } from "../../shared-tree-core";
+import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -448,6 +449,56 @@ describe("SharedTree", () => {
 				readCursor.free();
 			}
 		});
+
+		it("can move nodes across fields", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [
+						{ type: brand("Node"), value: "a" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "c" },
+					],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "e" },
+						{ type: brand("Node"), value: "f" },
+					],
+				},
+			};
+			initializeTestTree(tree1, initialState);
+
+			tree1.runTransaction((forest, editor) => {
+				const rootPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+				editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
+				return TransactionResult.Apply;
+			});
+
+			await provider.ensureSynchronized();
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "c" },
+						{ type: brand("Node"), value: "e" },
+						{ type: brand("Node"), value: "f" },
+					],
+				},
+			};
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
+		});
 	});
 
 	describe("Rebasing", () => {
@@ -466,6 +517,90 @@ describe("SharedTree", () => {
 			const expected = ["x", "y", "a", "b", "c"];
 			validateRootField(tree1, expected);
 			validateRootField(tree2, expected);
+		});
+
+		it("can rebase delete over move", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			insert(tree1, 0, "a", "b");
+			await provider.ensureSynchronized();
+
+			// Move b before a
+			tree1.runTransaction((forest, editor) => {
+				editor.move(undefined, rootFieldKeySymbol, 1, 1, undefined, rootFieldKeySymbol, 0);
+				return TransactionResult.Apply;
+			});
+
+			// Delete b
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.delete(1, 1);
+				return TransactionResult.Apply;
+			});
+
+			await provider.ensureSynchronized();
+
+			const expected = ["a"];
+			validateRootField(tree1, expected);
+			validateRootField(tree2, expected);
+		});
+
+		it.skip("can rebase delete over cross-field move", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [
+						{ type: brand("Node"), value: "a" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "c" },
+					],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "e" },
+					],
+				},
+			};
+			initializeTestTree(tree1, initialState);
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			// Move bc between d and e.
+			tree1.runTransaction((forest, editor) => {
+				editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
+				return TransactionResult.Apply;
+			});
+
+			// Delete c
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("foo"));
+				field.delete(2, 1);
+				return TransactionResult.Apply;
+			});
+
+			await provider.ensureSynchronized();
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "e" },
+					],
+				},
+			};
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
 		});
 	});
 
@@ -505,6 +640,509 @@ describe("SharedTree", () => {
 				parentIndex: 1,
 			};
 			assert(compareUpPaths(childPath, expected));
+		});
+	});
+	describe.skip("Fuzz Test fail cases", () => {
+		it("Invalid operation", async () => {
+			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
+			const initialTreeState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [
+						{ type: brand("Number"), value: 0 },
+						{ type: brand("Number"), value: 1 },
+						{ type: brand("Number"), value: 2 },
+					],
+					foo2: [
+						{ type: brand("Number"), value: 0 },
+						{ type: brand("Number"), value: 1 },
+						{ type: brand("Number"), value: 2 },
+					],
+				},
+			};
+			initializeTestTree(provider.trees[0], initialTreeState, testSchema);
+			await provider.ensureSynchronized();
+
+			const tree0 = provider.trees[0];
+			const tree1 = provider.trees[1];
+			const tree2 = provider.trees[2];
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			let path: UpPath;
+			// edit 1
+			let readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			path = {
+				parent: rootPath,
+				parentField: brand("foo2"),
+				parentIndex: 1,
+			};
+			tree1.runTransaction((forest, editor) => {
+				editor.setValue(path, 7419365656138425);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 2
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("Test"));
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			// edit 3
+			await provider.ensureSynchronized();
+
+			// edit 4
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree1.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("Test"));
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 5
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("foo"));
+				field.delete(1, 1);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 6
+			await provider.ensureSynchronized();
+
+			// edit 7
+			await provider.ensureSynchronized();
+
+			// edit 8
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree1.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.insert(
+					1,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			path = {
+				parent: rootPath,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			// edit 9
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree2.runTransaction((forest, editor) => {
+				editor.setValue(path, -3697253287396999);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 10
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree0.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("foo"));
+				field.delete(1, 1);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 11
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree1.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("Test"));
+				field.delete(0, 1);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			// edit 12
+			await provider.ensureSynchronized();
+
+			// edit 13
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree0.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("Test"));
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+		});
+		it("Anchor Stability fails when root node is deleted", async () => {
+			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+			const initialTreeState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [
+						{ type: brand("Number"), value: 0 },
+						{ type: brand("Number"), value: 1 },
+						{ type: brand("Number"), value: 2 },
+					],
+					foo2: [
+						{ type: brand("Number"), value: 0 },
+						{ type: brand("Number"), value: 1 },
+						{ type: brand("Number"), value: 2 },
+					],
+				},
+			};
+			initializeTestTree(provider.trees[0], initialTreeState, testSchema);
+			const tree = provider.trees[0];
+
+			// building the anchor for anchor stability test
+			const cursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, cursor);
+			cursor.enterNode(0);
+			cursor.getPath();
+			cursor.firstField();
+			cursor.getFieldKey();
+			cursor.enterNode(1);
+			const firstAnchor = cursor.buildAnchor();
+			cursor.free();
+
+			let anchorPath;
+
+			// validate anchor
+			const expectedPath: UpPath = {
+				parent: {
+					parent: undefined,
+					parentIndex: 0,
+					parentField: rootFieldKeySymbol,
+				},
+				parentField: brand("foo"),
+				parentIndex: 1,
+			};
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			let path: UpPath;
+			// edit 1
+			let readCursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, readCursor);
+			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			// eslint-disable-next-line prefer-const
+			path = {
+				parent: rootPath,
+				parentField: brand("foo2"),
+				parentIndex: 1,
+			};
+			tree.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.insert(
+					1,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Abort;
+			});
+
+			anchorPath = tree.locate(firstAnchor);
+			assert(compareUpPaths(expectedPath, anchorPath));
+
+			readCursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 2
+			tree.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.delete(0, 1);
+				return TransactionResult.Abort;
+			});
+			readCursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			anchorPath = tree.locate(firstAnchor);
+			assert(compareUpPaths(expectedPath, anchorPath));
+		});
+		it("ensureSynchronized shows diverged trees", async () => {
+			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
+			const initialTreeState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [
+						{ type: brand("Number"), value: 0 },
+						{ type: brand("Number"), value: 1 },
+						{ type: brand("Number"), value: 2 },
+					],
+					foo2: [
+						{ type: brand("Number"), value: 0 },
+						{ type: brand("Number"), value: 1 },
+						{ type: brand("Number"), value: 2 },
+					],
+				},
+			};
+			initializeTestTree(provider.trees[0], initialTreeState, testSchema);
+			await provider.ensureSynchronized();
+
+			const tree0 = provider.trees[0];
+			const tree1 = provider.trees[1];
+			const tree2 = provider.trees[2];
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			let path: UpPath;
+			// edit 1
+			await provider.ensureSynchronized();
+
+			// edit 2
+			let readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.insert(
+					1,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 3
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree0.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("Test"));
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 4
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree0.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 5
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree1.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("Test"));
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 6
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree0.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("Test"));
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 7
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 8
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.delete(0, 1);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 9
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			// eslint-disable-next-line prefer-const
+			path = {
+				parent: rootPath,
+				parentField: brand("Test"),
+				parentIndex: 0,
+			};
+			tree0.runTransaction((forest, editor) => {
+				editor.setValue(path, 3969223090210651);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 10
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree0.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(rootPath, brand("Test"));
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree0.forest.allocateCursor();
+			moveToDetachedField(tree0.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 10
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+			tree2.runTransaction((forest, editor) => {
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.insert(
+					0,
+					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+				);
+				return TransactionResult.Apply;
+			});
+			readCursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, readCursor);
+			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+			readCursor.free();
+
+			// edit 11
+			await provider.ensureSynchronized();
+
+			checkTreesAreSynchronized(provider);
 		});
 	});
 });

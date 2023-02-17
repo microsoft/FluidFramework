@@ -17,4 +17,16 @@ export class TestCache implements ICache {
         const result = this.map.delete(key);
         return result;
     }
+    public async incr(key: string): Promise<number> {
+        let val = parseInt(this.map.get(key), 10) ?? 0;
+        val += 1;
+        this.map.set(key, val.toString());
+        return val;
+    }
+    public async decr(key: string): Promise<number> {
+        let val = parseInt(this.map.get(key), 10) ?? 0;
+        val -= 1;
+        this.map.set(key, val.toString());
+        return val;
+    }
 }

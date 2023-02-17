@@ -9,14 +9,17 @@ import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime
 import { ReadAndParseBlob } from "../utils";
 
 /**
- * Return value of refreshSummaryAck function. There can be three different scenarios based on the passed params:
+ * Return type of refreshSummaryAck function. There can be three different scenarios based on the passed params:
  *
- * 1. The latest summary was not udpated.
+ * 1. The latest summary was not updated.
  *
  * 2. The latest summary was updated and the summary corresponding to the params was tracked by this client.
  *
  * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
- * latest summary is updated based on the downloaded snapshot which is also returned.
+ * latest snapshot is fetched and the latest summary state is updated based on it.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
  */
 export type RefreshSummaryResult =
 	| {
@@ -25,13 +28,30 @@ export type RefreshSummaryResult =
 	| {
 			latestSummaryUpdated: true;
 			wasSummaryTracked: true;
+			summaryRefSeq: number;
 	  }
 	| {
 			latestSummaryUpdated: true;
 			wasSummaryTracked: false;
-			snapshot: ISnapshotTree;
+			snapshotTree: ISnapshotTree;
+			summaryRefSeq: number;
 	  };
 
+/**
+ * Result of snapshot fetch during refreshing latest summary state.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
+ */
+export interface IFetchSnapshotResult {
+	snapshotTree: ISnapshotTree;
+	snapshotRefSeq: number;
+}
+
+/**
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
+ */
 export interface ISummarizerNodeRootContract {
 	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 	completeSummary(proposalHandle: string): void;
@@ -39,7 +59,7 @@ export interface ISummarizerNodeRootContract {
 	refreshLatestSummary(
 		proposalHandle: string | undefined,
 		summaryRefSeq: number,
-		getSnapshot: () => Promise<ISnapshotTree>,
+		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
 		readAndParseBlob: ReadAndParseBlob,
 		correlatedSummaryLogger: ITelemetryLogger,
 	): Promise<RefreshSummaryResult>;
@@ -134,23 +154,6 @@ export class SummaryNode {
 }
 
 /**
- * Parameter to help encode summary with conditional behavior.
- * When fromSummary is true, it will contain the SummaryNode of
- * its previous summary, which it can use to point to with a handle.
- * When fromSummary is false, it will use an actual summary tree
- * as its base summary in case the first summary is a differential summary.
- */
-export type EncodeSummaryParam =
-	| {
-			fromSummary: true;
-			summaryNode: SummaryNode;
-	  }
-	| {
-			fromSummary: false;
-			initialSummary: ISummaryTreeWithStats;
-	  };
-
-/**
  * Information about the initial summary tree found from an attach op.
  */
 export interface IInitialSummary {
@@ -169,6 +172,8 @@ export interface ICreateChildDetails {
 	latestSummary: SummaryNode | undefined;
 	/** Sequence number of latest known change to the node */
 	changeSequenceNumber: number;
+	/** A unique id of this child to be logged when sending telemetry. */
+	telemetryNodeId: string;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {

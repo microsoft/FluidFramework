@@ -5,7 +5,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { FluidClientDebugger } from "./Debugger";
+import { FluidClientDebuggers } from "./Debugger";
 
 /**
  * Renders Fluid client debug view by appending it to the provided DOM element.
@@ -29,7 +29,7 @@ export async function renderClientDebuggerView(
 
 	return new Promise<boolean>((resolve) => {
 		try {
-			ReactDOM.render(React.createElement(FluidClientDebugger), debuggerElement, () => {
+			ReactDOM.render(React.createElement(FluidClientDebuggers), debuggerElement, () => {
 				resolve(true);
 			});
 		} catch (error) {

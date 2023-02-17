@@ -41,6 +41,7 @@ import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonableTree}.
+ * @alpha
  */
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous {
 	return singleStackTreeCursor(root, adapter);
