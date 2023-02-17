@@ -4,6 +4,7 @@
  */
 
 import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
 	bufferToString,
 	fromBase64ToUtf8,
@@ -114,6 +115,29 @@ export function addBlobToSummary(
 	summary.summary.tree[key] = blob;
 	summary.stats.blobNodeCount++;
 	summary.stats.totalBlobSize += getBlobSize(content);
+}
+
+export function addBlobToSummaryViaPath(summary: ISummaryTree, stats: ISummaryStats, path: string[], content: string | Uint8Array) {
+	const firstName = path.shift();
+	if (firstName === undefined) {
+		throw new LoggingError("Path can't be empty");
+	}
+
+	let blob: ISummaryTree | ISummaryBlob = {
+		type: SummaryType.Blob,
+		content,
+	};
+	stats.blobNodeCount++;
+	stats.totalBlobSize += content.length;
+
+	for (const name of path.reverse()) {
+		blob = {
+			type: SummaryType.Tree,
+			tree: { [name]: blob },
+		};
+		stats.treeNodeCount++;
+	}
+	summary.tree[firstName] = blob;
 }
 
 export function addTreeToSummary(

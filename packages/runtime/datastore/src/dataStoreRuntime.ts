@@ -68,6 +68,7 @@ import {
 	exceptionToResponse,
 	requestFluidObject,
 	packagePathToTelemetryProperty,
+	addBlobToSummaryViaPath,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -1161,34 +1162,11 @@ export const mixinSummaryHandler = (
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) =>
 	class RuntimeWithSummarizerHandler extends Base {
-		private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
-			const firstName = path.shift();
-			if (firstName === undefined) {
-				throw new LoggingError("Path can't be empty");
-			}
-
-			let blob: ISummaryTree | ISummaryBlob = {
-				type: SummaryType.Blob,
-				content,
-			};
-			summary.stats.blobNodeCount++;
-			summary.stats.totalBlobSize += content.length;
-
-			for (const name of path.reverse()) {
-				blob = {
-					type: SummaryType.Tree,
-					tree: { [name]: blob },
-				};
-				summary.stats.treeNodeCount++;
-			}
-			summary.summary.tree[firstName] = blob;
-		}
-
 		async summarize(...args: any[]) {
 			const summary = await super.summarize(...args);
 			const content = await handler(this);
 			if (content !== undefined) {
-				this.addBlob(summary, content.path, content.content);
+				addBlobToSummaryViaPath(summary.summary, summary.stats, content.path, content.content);
 			}
 			return summary;
 		}
