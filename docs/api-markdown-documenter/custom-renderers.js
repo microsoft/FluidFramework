@@ -68,10 +68,10 @@ function renderTableNode(tableNode, writer, context) {
 	writer.increaseIndent();
 
 	// Write header row if one was specified
-	if (tableNode.headingRow !== undefined) {
+	if (tableNode.headerRow !== undefined) {
 		writer.writeLine("<thead>");
 		writer.increaseIndent();
-		renderNodeAsMarkdown(tableNode.headingRow, writer, childContext);
+		renderNodeAsMarkdown(tableNode.headerRow, writer, childContext);
 		writer.ensureNewLine(); // Ensure line break header row contents
 		writer.decreaseIndent();
 		writer.writeLine("</thead>");
