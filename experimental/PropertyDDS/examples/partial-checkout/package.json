@@ -47,7 +47,7 @@
 		"@fluid-experimental/property-inspector-table": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluid-experimental/property-properties": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluid-experimental/property-proxy": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/schemas": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
+		"@fluid-example/schemas": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/aqueduct": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
