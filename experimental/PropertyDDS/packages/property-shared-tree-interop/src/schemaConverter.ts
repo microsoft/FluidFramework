@@ -4,10 +4,10 @@
  */
 
 import {
+	fail,
 	emptyField,
 	FieldKinds,
 	FieldSchema,
-	LocalFieldKey,
 	NamedTreeSchema,
 	neverTree,
 	rootFieldKey,
@@ -17,7 +17,9 @@ import {
 	ValueSchema,
 	lookupTreeSchema,
 	fieldSchema,
+	namedTreeSchema,
 	brand,
+	EmptyKey,
 } from "@fluid-internal/tree";
 import { PropertyFactory, PropertyTemplate } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
@@ -35,15 +37,31 @@ const numberTypes = new Set([
 	"Float32",
 	"Float64",
 ]);
+const primitiveTypes = new Set([
+	"Bool",
+	"String",
+	"Int8",
+	"Uint8",
+	"Int16",
+	"Uint16",
+	"Int32",
+	"Int64",
+	"Uint64",
+	"Uint32",
+	"Float32",
+	"Float64",
+]);
 
-export function convertPSetSchema(
-	typeid: string,
+export function convertPSetSchemaToSharedTreeLls(
 	repository: StoredSchemaRepository,
 	rootFieldSchema: FieldSchema,
 ): void {
-	const treeSchema = new Map();
+	const globalTreeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
 	// Extract all referenced typeids for the schema
-	const unprocessedTypeIds = [typeid];
+	const unprocessedTypeIds: TreeSchemaIdentifier[] = [];
+	for (const type of rootFieldSchema.types ?? fail("expected at least one root type")) {
+		unprocessedTypeIds.push(type);
+	}
 	const referencedTypeIDs = new Set<TreeSchemaIdentifier>();
 
 	while (unprocessedTypeIds.length > 0) {
@@ -53,18 +71,18 @@ export function convertPSetSchema(
 			return;
 		}
 
-		referencedTypeIDs.add(unprocessedTypeID as TreeSchemaIdentifier);
+		referencedTypeIDs.add(unprocessedTypeID);
 
 		const schemaTemplate = PropertyFactory.getTemplate(unprocessedTypeID);
 		if (schemaTemplate === undefined) {
-			throw new Error(`Unknown typeid: ${typeid}`);
+			throw new Error(`Unknown typeid: ${unprocessedTypeID}`);
 		}
 		const dependencies = PropertyTemplate.extractDependencies(
 			schemaTemplate,
 		) as TreeSchemaIdentifier[];
 		for (const dependencyTypeId of dependencies) {
 			if (!referencedTypeIDs.has(dependencyTypeId)) {
-				unprocessedTypeIds.push(dependencyTypeId as string);
+				unprocessedTypeIds.push(dependencyTypeId);
 			}
 		}
 
@@ -87,6 +105,13 @@ export function convertPSetSchema(
 			}
 		};
 		extractContexts(schemaTemplate.properties);
+	}
+
+	for (const type of primitiveTypes) {
+		const typeid: TreeSchemaIdentifier = brand(type);
+		if (!referencedTypeIDs.has(typeid)) {
+			referencedTypeIDs.add(typeid);
+		}
 	}
 
 	// Now we create the actual schemas, since we are now able to reference the dependent types
@@ -136,29 +161,20 @@ export function convertPSetSchema(
 					throw new Error(`Unknown primitive typeid: ${splitTypeId.typeid}`);
 				}
 
-				typeSchema = {
+				typeSchema = namedTreeSchema({
 					name: referencedTypeId,
-					localFields: new Map(),
-					globalFields: new Set(),
 					extraLocalFields: emptyField,
-					extraGlobalFields: false,
 					value: valueType,
-				};
+				});
 				// }
 			} else {
 				if (splitTypeId.typeid === "NodeProperty") {
-					typeSchema = {
+					typeSchema = namedTreeSchema({
 						name: referencedTypeId,
-						localFields: new Map(),
-						globalFields: new Set(),
-						extraLocalFields: {
-							kind: FieldKinds.optional.identifier,
-						},
-						extraGlobalFields: false,
-						value: ValueSchema.Nothing,
-					};
+						extraLocalFields: fieldSchema(FieldKinds.optional),
+					});
 				} else {
-					const localFields = new Map<LocalFieldKey, FieldSchema>();
+					const localFields = {};
 					const inheritanceChain = PropertyFactory.getAllParentsForTemplate(
 						splitTypeId.typeid,
 					);
@@ -181,92 +197,65 @@ export function convertPSetSchema(
 							} else {
 								let currentTypeid = property.typeid as string;
 								if (property.context && property.context !== "single") {
-									currentTypeid = `${property.context}<${
-										property.currentTypeid || ""
-									}>`;
+									currentTypeid = `${property.context}<${property.typeid || ""}>`;
 								}
 
-								localFields.set(
-									property.id as LocalFieldKey,
-									fieldSchema(
-										property.optional ? FieldKinds.optional : FieldKinds.value,
-										[brand(currentTypeid)],
-									),
+								localFields[property.id] = fieldSchema(
+									property.optional ? FieldKinds.optional : FieldKinds.value,
+									[brand(currentTypeid)],
 								);
 							}
 						}
 					}
 
-					typeSchema = {
+					typeSchema = namedTreeSchema({
 						name: referencedTypeId,
 						localFields,
-						globalFields: new Set(),
 						extraLocalFields: PropertyFactory.inheritsFrom(
 							splitTypeId.typeid,
 							"NodeProperty",
 						)
-							? {
-									kind: FieldKinds.optional.identifier,
-							  }
+							? fieldSchema(FieldKinds.optional)
 							: emptyField,
-						extraGlobalFields: false,
-						value: ValueSchema.Nothing,
-					};
+					});
 				}
 			}
 		} else {
-			const kind =
-				splitTypeId.context === "array"
-					? FieldKinds.sequence.identifier
-					: FieldKinds.optional.identifier;
+			const fieldKind =
+				splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
 
-			const fieldType =
+			const fieldType = fieldSchema(
+				fieldKind,
 				splitTypeId.typeid !== "" && splitTypeId.typeid !== "BaseProperty"
-					? {
-							kind,
-							types: new Set([
-								// TODO: How do we handle inheritance here?
-								splitTypeId.typeid as TreeSchemaIdentifier,
-							]),
-					  }
-					: {
-							kind,
-					  };
+					? [brand(splitTypeId.typeid)]
+					: undefined,
+			);
 			switch (splitTypeId.context) {
 				case "map":
 				case "set":
-					typeSchema = {
+					typeSchema = namedTreeSchema({
 						name: referencedTypeId,
-						localFields: new Map(),
-						globalFields: new Set(),
 						extraLocalFields: fieldType,
-						extraGlobalFields: false,
-						value: ValueSchema.Nothing,
-					};
+					});
 
 					break;
 				case "array":
-					typeSchema = {
+					typeSchema = namedTreeSchema({
 						name: referencedTypeId,
-						localFields: new Map<LocalFieldKey, FieldSchema>([
-							// TODO: What should be the key we use for the entries?
-							// Should this be standardized?
-							["entries" as LocalFieldKey, fieldType],
-						]),
-						globalFields: new Set(),
+						localFields: {
+							[EmptyKey]: fieldType,
+						},
 						extraLocalFields: emptyField,
-						extraGlobalFields: false,
-						value: ValueSchema.Nothing,
-					};
+					});
 					break;
 				default:
 					throw new Error(`Unknown context in typeid: ${splitTypeId.context}`);
 			}
 		}
-		treeSchema.set(referencedTypeId, typeSchema);
+		globalTreeSchema.set(referencedTypeId, typeSchema);
 	}
 	const fullSchemaData: SchemaData = {
-		treeSchema,
+		treeSchema: globalTreeSchema,
 		globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
 	};
 	repository.update(fullSchemaData);
