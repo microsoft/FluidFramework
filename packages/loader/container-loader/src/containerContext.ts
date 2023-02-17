@@ -210,7 +210,14 @@ export class ContainerContext implements IContainerContext {
 			this.loadCodeModule(_codeDetails),
 		);
 
-		this.supportedFeatures = new Map([["referenceSequenceNumbers", true]]);
+		this.supportedFeatures = new Map([
+			/**
+			 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
+			 * as a parameter to the `submitBatchFn` and `submitSummaryFn` functions.
+			 * This is then used to set the reference sequence numbers of the submitted ops in the DeltaManager.
+			 */
+			["referenceSequenceNumbers", true],
+		]);
 		this.attachListener();
 	}
 

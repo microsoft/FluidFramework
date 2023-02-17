@@ -1041,6 +1041,12 @@ describe("Runtime", () => {
 		});
 
 		describe("Container feature detection", () => {
+			const mockLogger = new MockLogger();
+
+			beforeEach(() => {
+				mockLogger.clear();
+			});
+
 			const getMockContext = (
 				features?: ReadonlyMap<string, unknown>,
 			): Partial<IContainerContext> => {
@@ -1048,7 +1054,7 @@ describe("Runtime", () => {
 					attachState: AttachState.Attached,
 					deltaManager: new MockDeltaManager(),
 					quorum: new MockQuorumClients(),
-					taggedLogger: new MockLogger(),
+					taggedLogger: mockLogger,
 					supportedFeatures: features,
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
@@ -1064,27 +1070,28 @@ describe("Runtime", () => {
 					["feature", true],
 				]),
 			].forEach((features) => {
-				it("Loader not supported for async FlushMode", async () => {
-					await assert.rejects(
-						async () => {
-							await ContainerRuntime.loadRuntime({
-								context: getMockContext(features) as IContainerContext,
-								registryEntries: [],
-								existing: false,
-								runtimeOptions: {
-									flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-								},
-							});
+				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
+					const runtime = await ContainerRuntime.loadRuntime({
+						context: getMockContext(features) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 						},
+					});
+
+					assert.equal(runtime.flushMode, FlushMode.TurnBased);
+					mockLogger.assertMatchAny([
 						{
-							message: "Async FlushMode is not supported with this loader version.",
+							eventName: "ContainerRuntime:FlushModeFallback",
+							category: "error",
 						},
-					);
+					]);
 				});
 			});
 
 			it("Loader supported for async FlushMode", async () => {
-				await ContainerRuntime.loadRuntime({
+				const runtime = await ContainerRuntime.loadRuntime({
 					context: getMockContext(
 						new Map([["referenceSequenceNumbers", true]]),
 					) as IContainerContext,
@@ -1094,6 +1101,14 @@ describe("Runtime", () => {
 						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 					},
 				});
+
+				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
+				mockLogger.assertMatchNone([
+					{
+						eventName: "ContainerRuntime:FlushModeFallback",
+						category: "error",
+					},
+				]);
 			});
 		});
 	});
