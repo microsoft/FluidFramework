@@ -301,8 +301,15 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				"default",
 			);
 
+			// Upload the same blob again in container3.
 			const container3BlobHandle = await container3MainDataStore._runtime.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
+			);
+
+			// Load the blobs in container2 and container3 and validate that they are still available.
+			await assert.doesNotReject(
+				container2BlobHandle.get(),
+				"Container2 should be able to get the blob",
 			);
 			await assert.doesNotReject(
 				container3BlobHandle.get(),

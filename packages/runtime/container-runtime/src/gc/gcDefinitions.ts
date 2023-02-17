@@ -149,10 +149,11 @@ export interface IGarbageCollectionRuntime {
 	/** After GC has run, called to notify the runtime of routes that are unused in it. */
 	updateUnusedRoutes(unusedRoutes: string[]): void;
 	/**
-	 * After GC has run, called to notify the runtime of deletable routes. The runtime is responsible
-	 * for telling the garbage collector the routes of the objects it has deleted
+	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
+	 * should return the routes of nodes that were deleted.
+	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 */
-	deleteUnusedNodes(unusedNodes: string[]): string[];
+	deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
 	/** Called to notify the runtime of routes that are tombstones. */
 	updateTombstonedRoutes(tombstoneRoutes: string[]): void;
 	/** Returns a referenced timestamp to be used to track unreferenced nodes. */

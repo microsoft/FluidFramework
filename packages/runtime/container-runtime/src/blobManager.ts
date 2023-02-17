@@ -41,7 +41,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey throwOnTombstoneLoadKey } from "./gc";
+import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summary";
 
@@ -713,12 +713,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * This is called to delete unused blobs and returns that list so that other systems can remove those nodes from
-	 * their states (i.e. garbage collection when sweep is run).
-	 * @param unusedRoutes - The routes of attachment blobs that should be deleted.
-	 * @returns - routes of deleted nodes such that garbage collection can delete those nodes from its state.
+	 * Delete attachment blobs that are sweep ready.
+	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted.
+	 * @returns - The routes of blobs that were deleted.
 	 */
-	public deleteUnusedRoutes(unusedRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
 		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
 		if (this.mc.config.getBoolean(sweepAttachmentBlobsKey) !== true) {
 			return [];
@@ -726,7 +725,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		// The routes or blob node paths are in the same format as returned in getGCData -
 		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of unusedRoutes) {
+		for (const route of sweepReadyBlobRoutes) {
 			const pathParts = route.split("/");
 			assert(
 				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
@@ -741,7 +740,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			}
 			this.redirectTable.delete(blobId);
 		}
-		return Array.from(unusedRoutes);
+		return Array.from(sweepReadyBlobRoutes);
 	}
 
 	/**

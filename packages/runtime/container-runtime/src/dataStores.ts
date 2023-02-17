@@ -795,17 +795,17 @@ export class DataStores implements IDisposable {
 	}
 
 	/**
-	 * This is called to delete unused nodes and returns that list so that other
-	 * systems can remove those nodes from their states (i.e. garbage collection when sweep is run).
-	 * @param unusedRoutes - The routes of data stores and DDSes that should be deleted.
-	 * @returns - routes of deleted nodes such that garbage collection can delete those nodes from its state.
+	 * Delete data stores and its objects that are sweep ready.
+	 * @param sweepReadyDataStoreRoutes - The routes of data stores and its objects that are sweep ready and should
+	 * be deleted.
+	 * @returns - The routes of data stores and its objects that were deleted.
 	 */
-	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: string[]): string[] {
 		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
 		if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
 			return [];
 		}
-		for (const route of unusedRoutes) {
+		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
 
@@ -827,12 +827,12 @@ export class DataStores implements IDisposable {
 			assert(dataStore !== undefined, 0x571 /* Attempting to delete unknown dataStore */);
 			dataStore.delete();
 
-			// Delete the contexts of unused data stores.
+			// Delete the contexts of sweep ready data stores.
 			this.contexts.delete(dataStoreId);
-			// Delete the summarizer node of the unused data stores.
+			// Delete the summarizer node of the sweep ready data stores.
 			this.deleteChildSummarizerNodeFn(dataStoreId);
 		}
-		return Array.from(unusedRoutes);
+		return Array.from(sweepReadyDataStoreRoutes);
 	}
 
 	/**
