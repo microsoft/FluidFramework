@@ -189,3 +189,12 @@ jobs:
           searchFolder: ${{ parameters.buildDirectory }}/nyc
           mergeTestResults: false
         condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+    # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+    - task: Bash@3
+      displayName: Prune pnpm store
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          pnpm store prune

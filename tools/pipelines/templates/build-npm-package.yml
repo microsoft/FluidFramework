@@ -543,6 +543,16 @@ stages:
               script: |
                 git checkout HEAD -- pnpm-lock.yaml
 
+          # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+          - task: Bash@3
+            displayName: Prune pnpm store
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                pnpm store prune
+
+
         - task: Bash@3
           displayName: Check for extraneous modified files
           inputs:
