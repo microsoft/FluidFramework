@@ -23,7 +23,7 @@ export function renderTable(
 ): void {
 	// Render as HTML if we are in an HTML context already, or if we are rendering this table
 	// under another table (not supported by Markdown).
-	if (context.insideTable || context.insideHtml) {
+	if (context.insideTable === true || context.insideHtml === true) {
 		renderTableWithHtmlSyntax(node, writer, context);
 	} else {
 		renderTableWithMarkdownSyntax(node, writer, context);

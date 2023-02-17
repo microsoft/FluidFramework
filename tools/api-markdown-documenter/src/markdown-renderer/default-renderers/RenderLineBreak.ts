@@ -22,7 +22,7 @@ export function renderLineBreak(
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a line break in a table context, we will render using HTML syntax.
-	if (context.insideTable || context.insideHtml) {
+	if (context.insideTable === true || context.insideHtml === true) {
 		renderLineBreakWithHtmlSyntax(writer);
 	} else {
 		renderLineBreakWithMarkdownSyntax(writer, context);
@@ -36,7 +36,7 @@ function renderLineBreakWithMarkdownSyntax(
 	// In standard Markdown context, a line break is represented by a blank line.
 	// However, if we are in a code block context, we instead want to treat it as a simple line break,
 	// so as not to alter formatting.
-	if (context.insideCodeBlock) {
+	if (context.insideCodeBlock === true) {
 		writer.ensureNewLine();
 	} else {
 		writer.ensureSkippedLine();

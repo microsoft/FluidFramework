@@ -127,6 +127,9 @@ export type CreateChildContentSections = (apiItem: ApiItem, childSections: Secti
 export function createDocumentWriter(): DocumentWriter;
 
 // @public
+export function createMarkdownRenderContext(customRenderers?: MarkdownRenderers): MarkdownRenderContext;
+
+// @public
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
 
 // @public
@@ -380,9 +383,9 @@ export function markdownDocumenterConfigurationWithDefaults(partialConfig: Markd
 // @public
 export interface MarkdownRenderContext extends TextFormatting {
     headingLevel: number;
-    readonly insideCodeBlock: boolean;
-    readonly insideHtml: boolean;
-    readonly insideTable: boolean;
+    readonly insideCodeBlock?: boolean;
+    readonly insideHtml?: boolean;
+    readonly insideTable?: boolean;
     renderers: MarkdownRenderers;
 }
 

@@ -30,7 +30,7 @@ export function renderPlainText(
 		return;
 	}
 
-	if (context.insideHtml) {
+	if (context.insideHtml === true) {
 		renderPlainTextWithHtmlSyntax(node, writer, context);
 	} else {
 		renderPlainTextWithMarkdownSyntax(node, writer, context);
@@ -80,7 +80,7 @@ function renderPlainTextWithMarkdownSyntax(
 	}
 
 	// Don't escape text within a code block in Markdown
-	const text = context.insideCodeBlock ? body : getMarkdownEscapedText(body);
+	const text = context.insideCodeBlock === true ? body : getMarkdownEscapedText(body);
 	writer.write(text);
 
 	if (context.strikethrough === true) {

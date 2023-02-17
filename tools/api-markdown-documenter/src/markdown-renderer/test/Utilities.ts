@@ -6,7 +6,7 @@ import { StringBuilder } from "@microsoft/tsdoc";
 
 import type { DocumentationNode } from "../../documentation-domain";
 import { DocumentWriter } from "../DocumentWriter";
-import { getRootRenderContext, renderNode } from "../Render";
+import { createRenderContext, renderNode } from "../Render";
 import { type MarkdownRenderers, defaultMarkdownRenderers } from "../RenderConfiguration";
 import type { MarkdownRenderContext } from "../RenderContext";
 
@@ -23,7 +23,7 @@ export function testRender(
 		...customRenderers,
 	};
 
-	const context = { ...getRootRenderContext(renderers), ...customContext };
+	const context = { ...createRenderContext(renderers), ...customContext };
 
 	const writer = new DocumentWriter(new StringBuilder());
 

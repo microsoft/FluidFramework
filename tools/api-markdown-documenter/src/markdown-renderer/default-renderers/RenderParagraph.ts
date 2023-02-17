@@ -21,9 +21,9 @@ export function renderParagraph(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	// Since paragraphs involve line-breaks (which are not allowed within a Markdown table cell),
-	// render using HTML syntax if we are in a table context.
-	if (context.insideTable || context.insideHtml) {
+	// Markdown tables do not support multi-line Markdown content.
+	// If we encounter a paragraph in a table context, we will render using HTML syntax.
+	if (context.insideTable === true || context.insideHtml === true) {
 		renderParagraphWithHtmlSyntax(node, writer, context);
 	} else {
 		renderParagraphWithMarkdownSyntax(node, writer, context);

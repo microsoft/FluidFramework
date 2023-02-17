@@ -6,7 +6,7 @@
 // TODOs:
 // - Organize like transformations
 
-// TODO: fix before merging
+// These are primarily internal utilities. We want to export everything.
 /* eslint-disable no-restricted-syntax */
 
 export * from "./Helpers";

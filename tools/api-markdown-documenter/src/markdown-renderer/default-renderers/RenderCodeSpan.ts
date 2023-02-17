@@ -21,7 +21,7 @@ export function renderCodeSpan(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideHtml) {
+	if (context.insideHtml === true) {
 		renderCodeSpanWithHtmlSyntax(node, writer, context);
 	} else {
 		renderCodeSpanWithMarkdownSyntax(node, writer, context);

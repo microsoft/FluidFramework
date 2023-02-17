@@ -21,7 +21,7 @@ export function renderLink(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideHtml) {
+	if (context.insideHtml === true) {
 		renderLinkWithHtmlSyntax(node, writer, context);
 	} else {
 		renderLinkWithMarkdownSyntax(node, writer, context);

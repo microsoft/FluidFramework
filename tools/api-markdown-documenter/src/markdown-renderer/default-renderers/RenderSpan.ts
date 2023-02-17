@@ -21,7 +21,9 @@ export function renderSpan(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideHtml) {
+	// Markdown tables do not support multi-line Markdown content.
+	// If we encounter a multi-line span in a table context, we will render using HTML syntax.
+	if (context.insideHtml === true || (!node.singleLine && context.insideTable === true)) {
 		renderSpanWithHtmlSyntax(node, writer, context);
 	} else {
 		renderSpanWithMarkdownSyntax(node, writer, context);
