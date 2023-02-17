@@ -479,6 +479,8 @@ export interface IFluidDataStoreContext
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
+	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 *
 	 * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
 	 * and its children with the GC details from the previous summary.
 	 */

@@ -215,6 +215,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     ensureNoDataModelChanges<T>(callback: () => T): T;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
+    // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
