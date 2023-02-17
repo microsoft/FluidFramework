@@ -311,13 +311,9 @@ actual:
 			mockLogger = new MockLogger();
 		});
 
-		it("throws if passed an empty events list", () => {
-			try {
-				mockLogger.assertMatchStrict([]);
-				assert.fail("Did not throw as expected");
-			} catch (err: any) {
-				assert.strictEqual(err?.message, "Must specify at least 1 event");
-			}
+		it("doesn't throw when expecting no events and none are found", () => {
+			mockLogger.assertMatchStrict([]);
+			// Doesn't throw
 		});
 
 		it("doesn't throw when exactly the expected events are found", () => {
@@ -328,6 +324,24 @@ actual:
 				{ eventName: "B", a: 2 },
 			]);
 			// Doesn't throw
+		});
+
+		it("throws if no events are expected but some are found", () => {
+			mockLogger.sendTelemetryEvent({ eventName: "A", a: 1 });
+			try {
+				mockLogger.assertMatchStrict([], "my error message");
+				assert.fail("Did not throw as expected");
+			} catch (err: any) {
+				assert.strictEqual(
+					err?.message,
+					`my error message
+expected:
+[]
+
+actual:
+[{"category":"generic","eventName":"A","a":1}]`,
+				);
+			}
 		});
 
 		it("throws if not all the expected events are found", () => {

@@ -39,6 +39,9 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
+		if (expectedEvents.length === 0) {
+			throw new Error("Must specify at least 1 event");
+		}
 		return this.getMatchedEventsCount(expectedEvents) === expectedEvents.length;
 	}
 
@@ -72,6 +75,9 @@ ${JSON.stringify(actualEvents)}`);
 	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
+		if (expectedEvents.length === 0) {
+			throw new Error("Must specify at least 1 event");
+		}
 		return this.getMatchedEventsCount(expectedEvents) > 0;
 	}
 
@@ -104,9 +110,11 @@ ${JSON.stringify(actualEvents)}`);
 	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
-		// Note: order matters here; we need to compare against this.events.length before calling this.matchEvents, because
-		// that function will clear this.events.
-		return expectedEvents.length === this.events.length && this.matchEvents(expectedEvents);
+		// Note: order matters here; we need to save the value of this.events.length before calling this.getMatchedEventCount,
+		// because that function will clear this.events.
+		// But we *have* to call it to ensure that the events buffer is cleared.
+		const existingEventCount = this.events.length;
+		return expectedEvents.length === this.getMatchedEventsCount(expectedEvents) && expectedEvents.length === existingEventCount;
 	}
 
 	/**
@@ -146,9 +154,6 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	private getMatchedEventsCount(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): number {
-		if (expectedEvents.length === 0) {
-			throw new Error("Must specify at least 1 event");
-		}
 		let iExpectedEvent = 0;
 		this.events.forEach((event) => {
 			if (
