@@ -398,6 +398,7 @@ export class DocumentDeltaConnection
 
 		if (this.trackLatencyTimer !== undefined) {
 			clearInterval(this.trackLatencyTimer);
+			this.trackLatencyTimer = undefined;
 		}
 
 		// We set the disposed flag as a part of the contract for overriding the disconnect method. This is used by
