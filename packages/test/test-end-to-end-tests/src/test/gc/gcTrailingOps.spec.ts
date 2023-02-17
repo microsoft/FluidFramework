@@ -95,7 +95,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			);
 
 			// Create a summarizer
-			const mainSummarizer = await createSummarizer(
+			const { summarizer: mainSummarizer } = await createSummarizer(
 				provider,
 				mainContainer,
 				undefined,
@@ -127,7 +127,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			mainSummarizer.close();
 
 			// Load a new container/summarizer from the summary and trailing ops
-			const summarizer = await createSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
 				summary1.summaryVersion,
@@ -184,7 +184,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				);
 
 				// Create a summarizer
-				const mainSummarizer = await createSummarizer(
+				const { summarizer: mainSummarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined,
@@ -223,7 +223,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				mainSummarizer.close();
 
 				// Load a new container/summarizer from the summary and trailing ops
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					summary1.summaryVersion,

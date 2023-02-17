@@ -139,7 +139,8 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
 		mainDataStore._root.set("test", "value");
 		await waitForContainerConnection(mainContainer);
 
-		summarizer = await createSummarizerFromFactory(provider, mainContainer, dataStoreFactory);
+		summarizer = (await createSummarizerFromFactory(provider, mainContainer, dataStoreFactory))
+			.summarizer;
 	});
 
 	describe("SharedMatrix", () => {
