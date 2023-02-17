@@ -1931,9 +1931,11 @@ export class ContainerRuntime
 					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 				});
 			} else if (
+				this.consecutiveReconnects === 0 &&
 				envelope.clientSignalSequenceNumber ===
-				this._perfSignalData.trackingSignalSequenceNumber
+					this._perfSignalData.trackingSignalSequenceNumber
 			) {
+				// only logging for the first connection and the trackingSignalSequenceNUmber.
 				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
 			}
@@ -3029,7 +3031,7 @@ export class ContainerRuntime
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
 		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			const fetchResult = await this.fetchLatestSnapshotFromStorage(
+			let fetchResult = await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3050,18 +3052,32 @@ export class ContainerRuntime
 			 * state.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				const error = DataProcessingError.create(
-					"Fetched snapshot is older than the received ack",
-					"RefreshLatestSummaryAck",
-					undefined /* sequencedMessage */,
+				/* before failing, let's try to retrieve the latest snapshot for that specific ackHandle */
+				fetchResult = await this.fetchSnapshotFromStorage(
+					summaryLogger,
 					{
+						eventName: "RefreshLatestSummaryAckFetch",
 						ackHandle,
-						summaryRefSeq,
-						latestSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+						targetSequenceNumber: summaryRefSeq,
 					},
+					readAndParseBlob,
+					ackHandle,
 				);
-				this.closeFn(error);
-				throw error;
+
+				if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
+					const error = DataProcessingError.create(
+						"Fetched snapshot is older than the received ack",
+						"RefreshLatestSummaryAck",
+						undefined /* sequencedMessage */,
+						{
+							ackHandle,
+							summaryRefSeq,
+							fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+						},
+					);
+					this.closeFn(error);
+					throw error;
+				}
 			}
 
 			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
@@ -3134,6 +3150,15 @@ export class ContainerRuntime
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
+		return this.fetchSnapshotFromStorage(logger, event, readAndParseBlob, null /* latest */);
+	}
+
+	private async fetchSnapshotFromStorage(
+		logger: ITelemetryLogger,
+		event: ITelemetryGenericEvent,
+		readAndParseBlob: ReadAndParseBlob,
+		versionId: string | null,
+	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
@@ -3154,10 +3179,10 @@ export class ContainerRuntime
 				const trace = Trace.start();
 
 				const versions = await this.storage.getVersions(
-					null,
+					versionId,
 					1,
 					"refreshLatestSummaryAckFromServer",
-					FetchSource.noCache,
+					versionId === null ? FetchSource.noCache : undefined,
 				);
 				assert(
 					!!versions && !!versions[0],
