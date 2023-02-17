@@ -79,5 +79,5 @@ function logErrorToConsole(message: string | Error): void {
  * Logs a "success" message to the console in green, prefixed with "SUCCESS: ".
  */
 function logSuccessToConsole(message: string | Error): void {
-	console.log(`${chalk.green(`WARNING`)}: ${message}`);
+	console.log(`${chalk.green(`SUCCESS`)}: ${message}`);
 }
