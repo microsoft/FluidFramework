@@ -7,17 +7,12 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 
 /**
  * IDocumentStorageService adapter with pre-cached blobs.
- *
- * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
  */
 export class BlobCacheStorageService extends DocumentStorageServiceProxy {
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	constructor(
 		internalStorageService: IDocumentStorageService,
 		private readonly blobs: Map<string, ArrayBufferLike>,
@@ -25,16 +20,10 @@ export class BlobCacheStorageService extends DocumentStorageServiceProxy {
 		super(internalStorageService);
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		const blob = this.blobs.get(id);
 		if (blob !== undefined) {

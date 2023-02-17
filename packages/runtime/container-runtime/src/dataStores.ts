@@ -43,10 +43,11 @@ import {
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
+import { BlobCacheStorageService } from "./blobCacheStorageService";
 import { DataStoreContexts } from "./dataStoreContexts";
 import {
 	ContainerRuntime,

@@ -10,7 +10,6 @@ import { LazyPromise, stringToBuffer } from "@fluidframework/common-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import {
 	IBlob,
@@ -44,8 +43,9 @@ import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
+
+import { BlobCacheStorageService } from "../blobCacheStorageService";
 import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
