@@ -75,7 +75,6 @@ import {
 	IFluidDataStoreRegistry,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 	IEnvelope,
 	IInboundSignalMessage,
 	ISignalEnvelope,
@@ -1202,7 +1201,6 @@ export class ContainerRuntime
 				(
 					summarizeInternal: SummarizeInternalFn,
 					getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-					getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 				) =>
 					this.summarizerNode.createChild(
 						summarizeInternal,
@@ -1210,11 +1208,9 @@ export class ContainerRuntime
 						createParam,
 						undefined,
 						getGCDataFn,
-						getBaseGCDetailsFn,
 					),
 			(id: string) => this.summarizerNode.deleteChild(id),
 			this.mc.logger,
-			async () => this.garbageCollector.getBaseGCDetails(),
 			(path: string, timestampMs: number, packagePath?: readonly string[]) =>
 				this.garbageCollector.nodeUpdated(path, "Changed", timestampMs, packagePath),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
