@@ -620,7 +620,64 @@ describe("Outbox", () => {
 		]);
 	});
 
-	it("Does not split the batch when an out of order message is detected, if configured", () => {
+	[
+		[
+			{
+				...createMessage(ContainerMessageType.Attach, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.Attach, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				referenceSequenceNumber: 1,
+			},
+		],
+		[
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				referenceSequenceNumber: 0,
+			},
+			{
+				...createMessage(ContainerMessageType.Attach, "0"),
+				referenceSequenceNumber: 1,
+			},
+		],
+	].forEach((ops) => {
+		it("Flushes all batches when an out of order message is detected in either flows", () => {
+			const outbox = getOutbox(getMockContext() as IContainerContext);
+			for (const op of ops) {
+				if (op.deserializedContent.type === ContainerMessageType.Attach) {
+					outbox.submitAttach(op);
+				} else {
+					outbox.submit(op);
+				}
+			}
+
+			assert.equal(state.opsSubmitted, ops.length - 1);
+			assert.equal(state.individualOpsSubmitted.length, 0);
+			assert.equal(state.batchesSubmitted.length, 1);
+			assert.deepEqual(
+				state.batchesSubmitted.map((x) => x.messages),
+				[[batchedMessage(ops[0]), batchedMessage(ops[1])]],
+			);
+
+			mockLogger.assertMatch([
+				{
+					eventName: "Outbox:ReferenceSequenceNumberMismatch",
+					category: "error",
+				},
+			]);
+		});
+	});
+
+	it("Does not flush the batch when an out of order message is detected, if configured", () => {
 		const outbox = getOutbox(
 			getMockContext() as IContainerContext,
 			undefined, // maxBatchSize
@@ -637,31 +694,31 @@ describe("Outbox", () => {
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
 				referenceSequenceNumber: 1,
 			},
+			{
+				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+				referenceSequenceNumber: 2,
+			},
+			{
+				...createMessage(ContainerMessageType.Attach, "1"),
+				referenceSequenceNumber: 3,
+			},
+			{
+				...createMessage(ContainerMessageType.Attach, "1"),
+				referenceSequenceNumber: 3,
+			},
 		];
 
-		outbox.submit(messages[0]);
-		outbox.submit(messages[1]);
-		outbox.flush();
+		for (const message of messages) {
+			if (message.deserializedContent.type === ContainerMessageType.Attach) {
+				outbox.submitAttach(message);
+			} else {
+				outbox.submit(message);
+			}
+		}
 
-		assert.equal(state.opsSubmitted, messages.length);
+		assert.equal(state.opsSubmitted, 0);
 		assert.equal(state.individualOpsSubmitted.length, 0);
-		assert.equal(state.batchesSubmitted.length, 1);
-		assert.deepEqual(state.batchesSubmitted[0].messages, [
-			batchedMessage(messages[0]),
-			batchedMessage(messages[1]),
-		]);
-		assert.equal(state.batchesSubmitted[0].referenceSequenceNumber, 1);
-		assert.equal(state.deltaManagerFlushCalls, 0);
-		const rawMessagesInFlushOrder = [messages[0], messages[1]];
-		assert.deepEqual(
-			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-				opMetadata: message.metadata,
-			})),
-		);
+		assert.equal(state.batchesSubmitted.length, 0);
 
 		mockLogger.assertMatch([
 			{

@@ -1943,7 +1943,7 @@ export class Container
 		return clientSequenceNumber;
 	}
 
-	private submitSummaryMessage(summary: ISummaryContent) {
+	private submitSummaryMessage(summary: ISummaryContent, referenceSequenceNumber?: number) {
 		// github #6451: this is only needed for staging so the server
 		// know when the protocol tree is included
 		// this can be removed once all clients send
@@ -1956,6 +1956,9 @@ export class Container
 			MessageType.Summarize,
 			JSON.stringify(summary),
 			false /* batch */,
+			undefined /* metadata */,
+			undefined /* compression */,
+			referenceSequenceNumber,
 		);
 	}
 
@@ -2096,7 +2099,8 @@ export class Container
 			loader,
 			(type, contents, batch, metadata) =>
 				this.submitContainerMessage(type, contents, batch, metadata),
-			(summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
+			(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
+				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
 			(message) => this.submitSignal(message),
