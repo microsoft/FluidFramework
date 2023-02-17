@@ -194,13 +194,23 @@ export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayL
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
  * @alpha
  */
-export interface MarkedArrayLike<T> extends ArrayLike<T> {
-	/**
-	 * `ArrayLike` numeric indexed access, but writable.
-	 */
-	[n: number]: T;
+export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
 	readonly [arrayLikeMarkerSymbol]: true;
-	[Symbol.iterator](): IterableIterator<T>;
+	[Symbol.iterator](): IterableIterator<TGet>;
+}
+
+/**
+ * `ArrayLike` numeric indexed access, but writable.
+ *
+ * @remarks
+ * Note that due to language limitations, this also allows reading as TSet.
+ * This is why `TSet extends TGet` is required.
+ *
+ * See https://github.com/microsoft/TypeScript/issues/43826.
+ * @alpha
+ */
+export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<TGet> {
+	[n: number]: TSet;
 }
 
 /**
@@ -266,7 +276,7 @@ export interface ContextuallyTypedNodeDataObject {
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	readonly [typeNameSymbol]?: TreeSchemaIdentifier;
+	readonly [typeNameSymbol]?: string;
 
 	/**
 	 * Fields of this node, indexed by their field keys.

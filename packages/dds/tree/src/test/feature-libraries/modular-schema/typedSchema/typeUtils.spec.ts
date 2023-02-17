@@ -6,9 +6,12 @@
 // eslint-disable-next-line import/no-internal-modules
 import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 import {
+	AllowOptional,
 	ArrayToUnion,
 	AsNames,
 	ListToKeys,
+	PartialWithoutUndefined,
+	RemoveOptionalFields,
 	WithDefault,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
@@ -65,4 +68,19 @@ import {
 	type check1_ = requireAssignableTo<NameSet<["X"]>, NameSet<["X"]>>;
 	// @ts-expect-error Different sets should not be equal
 	type check3_ = requireAssignableTo<NameSet<["Y"]>, NameSet<["X"]>>;
+}
+
+// Test RemoveOptionalFields
+{
+	type a = RemoveOptionalFields<{ a: 5; b: undefined | 5; c: undefined }>;
+}
+
+// Test PartialWithoutUndefined
+{
+	type a = PartialWithoutUndefined<{ a: 5; b: undefined | 5; c: undefined }>;
+}
+
+// Test AllowOptional
+{
+	type c = AllowOptional<{ a: 5; b: undefined | 5; c: undefined }>;
 }

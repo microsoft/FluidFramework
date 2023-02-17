@@ -45,6 +45,7 @@ export {
 	isContextuallyTypedNodeDataObject,
 	getFieldKind,
 	getFieldSchema,
+	ArrayLikeMut,
 } from "./contextuallyTyped";
 
 export { ForestIndex } from "./forestIndex";
@@ -100,11 +101,8 @@ export {
 	GenericChangeset,
 	genericFieldKind,
 	NodeReviver,
+	TypedSchema,
 } from "./modular-schema";
-
-// Split this up into separate import and export for compatibility with API-Extractor.
-import * as FieldKinds from "./defaultFieldKinds";
-export { FieldKinds };
 
 export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUtils";
 
@@ -123,3 +121,8 @@ export { runSynchronousTransaction } from "./defaultTransaction";
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest } from "./chunked-forest";
+
+// Split into separate import and export for compatibility with API-Extractor.
+import * as SchemaAware from "./schemaAware";
+import * as FieldKinds from "./defaultFieldKinds";
+export { SchemaAware, FieldKinds };

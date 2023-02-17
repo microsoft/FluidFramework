@@ -3,18 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	typedTreeSchema as tree,
-	typedFieldSchema as field,
-	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../../feature-libraries/modular-schema/typedSchema";
-
 import { rootFieldKey, SchemaDataAndPolicy, ValueSchema } from "../../../../core";
-import { defaultSchemaPolicy, FieldKinds } from "../../../../feature-libraries";
+import { defaultSchemaPolicy, FieldKinds, TypedSchema } from "../../../../feature-libraries";
 
 // Aliases for conciseness
 const { optional, value, sequence } = FieldKinds;
+const { tree, field } = TypedSchema;
 
 // Declare a simple type which just holds a number.
 const numberSchema = tree({

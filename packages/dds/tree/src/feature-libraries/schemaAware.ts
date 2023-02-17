@@ -2,8 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { $, List, Object as KObject } from "hkt-toolbelt";
 
-import { SchemaDataAndPolicy, ValueSchema } from "../core";
+import {
+	FieldSchema,
+	GlobalFieldKey,
+	SchemaDataAndPolicy,
+	TreeSchemaIdentifier,
+	ValueSchema,
+} from "../core";
 import {
 	FieldSchemaTypeInfo,
 	LabeledTreeSchema,
@@ -11,12 +18,13 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "./modular-schema/typedSchema";
 import { typeNameSymbol, valueSymbol } from "./contextuallyTyped";
-import { TypedValue } from "./schemaAwareUtil";
+import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 import { Multiplicity } from "./modular-schema";
 // eslint-disable-next-line import/no-internal-modules
-import { ListToKeys } from "./modular-schema/typedSchema/typeUtils";
+import { AllowOptional, ListToKeys } from "./modular-schema/typedSchema/typeUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { NameSet } from "./modular-schema/typedSchema/outputTypes";
+import { defaultSchemaPolicy } from "./defaultSchema";
 /**
  * Example strong type for an API derived from schema.
  *
@@ -80,26 +88,30 @@ export const enum ApiMode {
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
 	[ApiMode.Flexible]: CollectOptionsFlexible<TTypedFields, TValueSchema, TName>;
 	[ApiMode.Normalized]: CollectOptionsNormalized<TTypedFields, TValueSchema, TName>;
-	[ApiMode.Wrapped]: TTypedFields & {
+	[ApiMode.Wrapped]: {
 		[typeNameSymbol]: TName;
 		[valueSymbol]: TypedValue<TValueSchema>;
-	};
+	} & TTypedFields;
 }[Mode];
 
 type CollectOptionsFlexible<TTypedFields, TValueSchema extends ValueSchema, TName> =
-	| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never)
-	| (TTypedFields & {
-			[typeNameSymbol]?: TName;
-	  } & ValueFieldTreeFromSchema<TValueSchema>);
+	| ({ [typeNameSymbol]?: TName } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields)
+	| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never);
 
 type CollectOptionsNormalized<TTypedFields, TValueSchema extends ValueSchema, TName> = Record<
 	string,
 	never
 > extends TTypedFields
-	? TypedValue<TValueSchema>
-	: TTypedFields & {
-			[typeNameSymbol]: TName;
-	  } & ValueFieldTreeFromSchema<TValueSchema>;
+	? TValueSchema extends PrimitiveValueSchema
+		? TypedValue<TValueSchema>
+		: {
+				[typeNameSymbol]: TName & TreeSchemaIdentifier;
+		  } & ValueFieldTreeFromSchema<TValueSchema> &
+				TTypedFields
+	: {
+			[typeNameSymbol]: TName & TreeSchemaIdentifier;
+	  } & ValueFieldTreeFromSchema<TValueSchema> &
+			TTypedFields;
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
@@ -108,17 +120,17 @@ export type TypedFields<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
 	TFields extends { [key: string]: FieldSchemaTypeInfo },
-> = {
+> = AllowOptional<{
 	readonly [key in keyof TFields]: ApplyMultiplicity<
 		TFields[key]["kind"]["multiplicity"],
 		TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>
 	>;
-};
+}>;
 
 type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
-	[Multiplicity.Forbidden]: never;
-	[Multiplicity.Optional]: undefined | TypedChild; // TODO: need to refactor this to allow field to be omitted not just undefined.
-	[Multiplicity.Sequence]: readonly TypedChild[];
+	[Multiplicity.Forbidden]: undefined;
+	[Multiplicity.Optional]: undefined | TypedChild;
+	[Multiplicity.Sequence]: TypedChild[];
 	[Multiplicity.Value]: TypedChild;
 }[TMultiplicity];
 
@@ -138,18 +150,52 @@ export type TreeTypesToTypedTreeTypes<
 
 type ValuesOf<T> = T[keyof T];
 
-interface TypedSchemaData extends SchemaDataAndPolicy {
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	treeSchemaObject: {}; // readonly [key: string]: TreeSchemaTypeInfo
+export interface TypedSchemaData extends SchemaDataAndPolicy {
+	// TODO: can we use a more specific type here?
+	treeSchemaObject: Record<string, any>; // LabeledTreeSchema<any>
 	allTypes: readonly string[];
 }
 
-// export function typedSchemaData<T extends LabeledTreeSchema<any>[]>(...t: T): {
-// 	treeSchemaObject: {},
-// 	allTypes:
-// } {
+// AtPath does not seem to work for this case due to missing index signature, so use `At` twice.
+type NamesFromSchema<T extends LabeledTreeSchema<any>[]> = $<
+	$<List.Map, $<KObject.At, "name">>,
+	$<$<List.Map, $<KObject.At, "typeInfo">>, T>
+>;
 
-// }
+export function typedSchemaData<T extends LabeledTreeSchema<any>[]>(
+	globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>,
+	...t: T
+): SchemaDataAndPolicy & {
+	treeSchemaObject: {
+		[schema in T[number] as schema["typeInfo"]["name"]]: schema;
+	};
+
+	allTypes: NamesFromSchema<T>;
+} {
+	const treeSchemaObject = {};
+	const allTypes = [];
+	for (const schema of t) {
+		Object.defineProperty(treeSchemaObject, schema.name, {
+			enumerable: true,
+			configurable: true,
+			writable: false,
+			value: schema,
+		});
+		allTypes.push(schema.name);
+	}
+	const schemaData = {
+		policy: defaultSchemaPolicy,
+		globalFieldSchema,
+		treeSchema: new Map<TreeSchemaIdentifier, LabeledTreeSchema<any>>(
+			t.map((schema) => [schema.name, schema]),
+		),
+		treeSchemaObject: treeSchemaObject as {
+			[schema in T[number] as schema["typeInfo"]["name"]]: schema;
+		},
+		allTypes: allTypes as NamesFromSchema<T>,
+	} as const;
+	return schemaData;
+}
 
 /**
  * This is not an exact match for what `applyFieldTypesFromContext` allows: it does not require discriminators.

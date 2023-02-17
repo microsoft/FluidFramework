@@ -192,6 +192,9 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	TypedSchema,
+	SchemaAware,
+	ArrayLikeMut,
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:

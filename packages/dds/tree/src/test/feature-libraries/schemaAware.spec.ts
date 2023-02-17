@@ -4,16 +4,11 @@
  */
 
 import {
-	typedTreeSchema as tree,
-	typedFieldSchema as field,
-	LabeledTreeSchema,
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../feature-libraries/modular-schema/typedSchema";
-
-import {
 	ApiMode,
 	NodeDataFor,
 	TreeTypesToTypedTreeTypes,
+	TypedSchemaData,
+	typedSchemaData,
 	ValidContextuallyTypedNodeData,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/schemaAware";
@@ -25,12 +20,17 @@ import {
 	FieldKinds,
 	defaultSchemaPolicy,
 	typeNameSymbol,
+	TypedSchema,
+	ContextuallyTypedNodeDataObject,
 } from "../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { NameSet } from "../../feature-libraries/modular-schema/typedSchema/outputTypes";
+import {
+	InlineOnce,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/modular-schema/typedSchema/typeUtils";
 
 // Aliases for conciseness
 const { optional, value, sequence } = FieldKinds;
+const { tree, field } = TypedSchema;
 
 // Example Schema:
 
@@ -46,13 +46,17 @@ const ballSchema = tree({
 		// TODO: test and fix passing schema objects in type array instead of strings.
 		x: field(value, "number"),
 		y: field(value, "number"),
+		size: field(optional, "number"),
 	},
 });
 
-const schemaData = {
+type x = typeof numberSchema.typeInfo.name;
+const schemaData = typedSchemaData(new Map(), numberSchema, ballSchema);
+
+const schemaData2 = {
 	policy: defaultSchemaPolicy,
 	globalFieldSchema: new Map(),
-	treeSchema: new Map<TreeSchemaIdentifier, LabeledTreeSchema<any>>([
+	treeSchema: new Map<TreeSchemaIdentifier, TypedSchema.LabeledTreeSchema<any>>([
 		[numberSchema.name, numberSchema],
 		[ballSchema.name, ballSchema],
 	]),
@@ -63,28 +67,31 @@ const schemaData = {
 	allTypes: ["number", "ball"] as const,
 } as const;
 
+{
+	type check1_ = requireAssignableTo<typeof schemaData, TypedSchemaData>;
+	type check2_ = requireAssignableTo<typeof schemaData2, TypedSchemaData>;
+}
+
 interface SchemaMap {
 	number: typeof numberSchema;
 	ball: typeof ballSchema;
 }
 
-/**
- * Return a type thats equivalent to the input, but with different intellisense.
- * Inlines some top level type meta-functions.
- */
-export type InlineOnce<T> = {
-	[Property in keyof T]: T[Property];
-};
+const extractedNumber = schemaData.treeSchemaObject.number;
+const extractedNumber2 = schemaData2.treeSchemaObject.number;
 
-type InlineDeep<T> = {
-	[Property in keyof T]: InlineOnce<T[Property]>;
-};
+const extractedTypes = schemaData.allTypes;
+const extractedTypes2 = schemaData2.allTypes;
 
 // Example Use:
 type BallTreeX = InlineOnce<
 	ValidContextuallyTypedNodeData<typeof schemaData, ApiMode.Flexible, readonly ["ball"]>
 >;
-type BallTree = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>;
+type BallTree = InlineOnce<NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>>;
+
+{
+	type check1_ = requireAssignableTo<BallTree, ContextuallyTypedNodeDataObject>;
+}
 
 // We can also get the type for the "number" nodes.
 type NumberTree = ValidContextuallyTypedNodeData<
@@ -97,7 +104,8 @@ const n1: NumberTree = 5;
 const n2: NumberTree = { [valueSymbol]: 5 };
 const n3: NumberTree = { [typeNameSymbol]: "number", [valueSymbol]: 5 };
 
-const b1: BallTree = { x: 1, y: 2 };
+const b1: BallTree = { x: 1, y: 2, size: 10 };
+const b1x: BallTree = { x: 1, y: 2 };
 const b2: BallTree = { [typeNameSymbol]: "ball", x: 1, y: 2 };
 const b4: BallTree = { [typeNameSymbol]: "ball", x: 1, y: n3 };
 
@@ -112,7 +120,7 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	// A concrete example for the "x" field:
 	type BallXFieldInfo = typeof ballSchema.typeInfo.local.x;
 	type BallXFieldTypes = BallXFieldInfo["types"];
-	type check_ = requireAssignableTo<BallXFieldTypes, NameSet<["number"]>>;
+	type check_ = requireAssignableTo<BallXFieldTypes, TypedSchema.NameSet<["number"]>>;
 
 	type Child = TreeTypesToTypedTreeTypes<typeof schemaData, ApiMode.Flexible, BallXFieldTypes>;
 
@@ -121,7 +129,7 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	type Child2 = TreeTypesToTypedTreeTypes<
 		typeof schemaData,
 		ApiMode.Flexible,
-		NameSet<["number"]>
+		TypedSchema.NameSet<["number"]>
 	>;
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;

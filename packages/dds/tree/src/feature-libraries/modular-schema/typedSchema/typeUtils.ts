@@ -81,3 +81,39 @@ type AsNamesX<T extends [...(unknown | Named<TName>)[]], TName = string> = Assum
 	T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNamesX<Tail, TName>] : [],
 	TName[]
 >;
+
+/**
+ * Return a type thats equivalent to the input, but with different intellisense.
+ * Inlines some top level type meta-functions.
+ *
+ * TODO: figure out why this sometimes works and sometimes does not.
+ */
+export type InlineOnce<T> = {
+	[Property in keyof T]: T[Property];
+};
+
+/**
+ * TODO: does not work.
+ */
+export type InlineDeep<T> = {
+	[Property in keyof T as Property]: T[Property];
+};
+
+/**
+ *
+ */
+export type RemoveOptionalFields<T> = {
+	[P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
+};
+
+/**
+ * Like Partial but removes files which are must be undefined.
+ */
+export type PartialWithoutUndefined<T> = {
+	[P in keyof T as T[P] extends undefined ? never : P]?: T[P];
+};
+
+/**
+ * Converts properties of an object which permit undefined into optional properties.
+ */
+export type AllowOptional<T> = InlineOnce<PartialWithoutUndefined<T> & RemoveOptionalFields<T>>;

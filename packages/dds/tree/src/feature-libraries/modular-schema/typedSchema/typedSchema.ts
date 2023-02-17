@@ -51,6 +51,7 @@ export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
 /**
  * Builds a TreeSchema with the type information also captured in the
  * typescript type to allow for deriving schema aware APIs.
+ * @alpha
  */
 export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
 	t: T,
@@ -74,6 +75,7 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
 /**
  * Builds a FieldSchema with the type information also captured in the
  * typescript type to allow for deriving schema aware APIs.
+ * @alpha
  */
 export function typedFieldSchema<
 	TKind extends FieldKind,

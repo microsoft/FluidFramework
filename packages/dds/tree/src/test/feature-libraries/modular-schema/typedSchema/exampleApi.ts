@@ -3,17 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	typedTreeSchema as tree,
-	typedFieldSchema as field,
-	FieldSchemaTypeInfo,
-	LabeledTreeSchema,
-	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../../feature-libraries/modular-schema/typedSchema";
-
 import { ValueSchema } from "../../../../core";
-import { FieldKinds } from "../../../../feature-libraries";
+import { FieldKinds, TypedSchema } from "../../../../feature-libraries";
 import { requireAssignableTo } from "../../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
@@ -21,6 +12,7 @@ import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchem
 import { ArrayToUnion } from "../../../../feature-libraries/modular-schema/typedSchema/typeUtils";
 // Aliases for conciseness
 const { optional, value, sequence } = FieldKinds;
+const { tree, field } = TypedSchema;
 
 /**
  * Example strong type for an API derived from schema.
@@ -29,7 +21,7 @@ const { optional, value, sequence } = FieldKinds;
  *
  * For now this just supports local fields:
  */
-export type TypedTree<TMap, TSchema extends LabeledTreeSchema<any>> = TypedFields<
+export type TypedTree<TMap, TSchema extends TypedSchema.LabeledTreeSchema<any>> = TypedFields<
 	TMap,
 	TSchema["typeInfo"]["local"]
 >;
@@ -37,7 +29,10 @@ export type TypedTree<TMap, TSchema extends LabeledTreeSchema<any>> = TypedField
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  */
-export type TypedFields<TMap, TFields extends { [key: string]: FieldSchemaTypeInfo }> = {
+export type TypedFields<
+	TMap,
+	TFields extends { [key: string]: TypedSchema.FieldSchemaTypeInfo },
+> = {
 	readonly [key in keyof TFields]: TreeTypesToTypedTreeTypes<TMap, TFields[key]["types"]>;
 };
 
@@ -62,7 +57,7 @@ interface AnyTree {}
  * and returns a TypedTree union.
  */
 export type NameToTreeType<TMap, T extends string> = TMap extends {
-	[key in T]: LabeledTreeSchema<any>;
+	[key in T]: TypedSchema.LabeledTreeSchema<any>;
 }
 	? TypedTree<TMap, TMap[T]>
 	: never;

@@ -24,6 +24,7 @@ import { ObjectToMap } from "./typeUtils";
 
 /**
  * Object for capturing information about a TreeSchema for use at both compile time and runtime.
+ * @alpha
  */
 export interface TreeSchemaTypeInfo {
 	readonly name: string;
@@ -40,6 +41,7 @@ export interface TreeSchemaTypeInfo {
 
 /**
  * Object for capturing information about a FieldSchema for use at both compile time and runtime.
+ * @alpha
  */
 export interface FieldSchemaTypeInfo extends FieldSchema {
 	readonly kind: FieldKind;
@@ -48,6 +50,7 @@ export interface FieldSchemaTypeInfo extends FieldSchema {
 
 /**
  * Set of `TreeSchemaIdentifiers` that has an easy way to get the list names as regular strings out with the type system.
+ * @alpha
  */
 export interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeSchemaIdentifier> {
 	readonly typeCheck?: Invariant<Names>;
@@ -55,6 +58,7 @@ export interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeS
 
 /**
  * TreeSchema extended with extra type information for use at compile time.
+ * @alpha
  */
 export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTreeSchema {
 	/**
