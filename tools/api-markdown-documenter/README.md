@@ -175,6 +175,10 @@ If you would like to change any or all of this library's default rendering polic
 
 ## Upcoming Work
 
+-   Simplify input configurations
+    -   Separate configs for each pipeline segment
+    -   Clean up terminology ("policies" in particular is too vague - we should remove this)
+
 ### Known Bugs
 
 -   Example titles are not respected. See TSDoc [@example spec](https://tsdoc.org/pages/tags/example/) - text on the same line as the tag should be treated as the example title.
