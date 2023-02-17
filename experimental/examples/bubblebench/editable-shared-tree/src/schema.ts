@@ -4,43 +4,46 @@
  */
 
 import {
-	brand,
 	EditableTree,
 	FieldKinds,
-	fieldSchema,
-	namedTreeSchema,
 	rootFieldKey,
-	SchemaData,
 	ValueSchema,
+	TypedSchema,
+	SchemaAware,
+	EditableField,
 } from "@fluid-internal/tree";
 
-export const stringSchema = namedTreeSchema({
-	name: brand("String"),
+// Aliases for conciseness
+const { value, sequence } = FieldKinds;
+const { tree, field } = TypedSchema;
+
+export const stringSchema = tree({
+	name: "String",
 	value: ValueSchema.String,
 });
 
-export const numberSchema = namedTreeSchema({
-	name: brand("number"),
+export const numberSchema = tree({
+	name: "number",
 	value: ValueSchema.Number,
 });
 
-export const bubbleSchema = namedTreeSchema({
-	name: brand("Test:BubbleBenchAppStateBubble-1.0.0"),
+export const bubbleSchema = tree({
+	name: "Test:BubbleBenchAppStateBubble-1.0.0",
 	localFields: {
-		x: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		y: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		r: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		vx: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		vy: fieldSchema(FieldKinds.value, [numberSchema.name]),
+		x: field(value, numberSchema),
+		y: field(value, numberSchema),
+		r: field(value, numberSchema),
+		vx: field(value, numberSchema),
+		vy: field(value, numberSchema),
 	},
 });
 
-export const clientSchema = namedTreeSchema({
-	name: brand("Test:BubbleBenchAppStateClient-1.0.0"),
+export const clientSchema = tree({
+	name: "Test:BubbleBenchAppStateClient-1.0.0",
 	localFields: {
-		clientId: fieldSchema(FieldKinds.value, [stringSchema.name]),
-		color: fieldSchema(FieldKinds.value, [stringSchema.name]),
-		bubbles: fieldSchema(FieldKinds.sequence, [bubbleSchema.name]),
+		clientId: field(value, stringSchema),
+		color: field(value, stringSchema),
+		bubbles: field(sequence, bubbleSchema),
 	},
 });
 
@@ -53,6 +56,17 @@ export type BubbleTreeProxy = EditableTree & {
 	r: number;
 };
 
+export type FlexBubble = SchemaAware.NodeDataFor<
+	typeof appSchemaData,
+	SchemaAware.ApiMode.Flexible,
+	typeof bubbleSchema
+>;
+export type FlexClient = SchemaAware.NodeDataFor<
+	typeof appSchemaData,
+	SchemaAware.ApiMode.Flexible,
+	typeof clientSchema
+>;
+
 // TODO: Generate this from schema automatically instead of hand coding it.
 export type ClientTreeProxy = EditableTree & {
 	clientId: string;
@@ -60,14 +74,15 @@ export type ClientTreeProxy = EditableTree & {
 	bubbles: BubbleTreeProxy[];
 };
 
-export const rootAppStateSchema = fieldSchema(FieldKinds.sequence, [clientSchema.name]);
+// TODO: Generate this from schema automatically instead of hand coding it.
+export type ClientsField = EditableField & ClientTreeProxy[];
 
-export const appSchemaData: SchemaData = {
-	treeSchema: new Map([
-		[stringSchema.name, stringSchema],
-		[numberSchema.name, numberSchema],
-		[bubbleSchema.name, bubbleSchema],
-		[clientSchema.name, clientSchema],
-	]),
-	globalFieldSchema: new Map([[rootFieldKey, rootAppStateSchema]]),
-};
+export const rootAppStateSchema = field(sequence, clientSchema);
+
+export const appSchemaData = SchemaAware.typedSchemaData(
+	new Map([[rootFieldKey, rootAppStateSchema]]),
+	stringSchema,
+	numberSchema,
+	bubbleSchema,
+	clientSchema,
+);

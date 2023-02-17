@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 import { IAppState, IClient, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { brand, EditableField, FieldKey } from "@fluid-internal/tree";
+import { brand, FieldKey } from "@fluid-internal/tree";
 import { Client } from "./client";
-import { ClientTreeProxy } from "./schema";
+import { ClientsField, ClientTreeProxy } from "./schema";
 
 export class AppState implements IAppState {
 	static clientsFieldKey: FieldKey = brand("clients");
 	readonly localClient: Client;
 
 	constructor(
-		private readonly clientsSequence: ClientTreeProxy[] & EditableField,
+		private readonly clientsSequence: ClientsField,
 		public width: number,
 		public height: number,
 		numBubbles: number,
