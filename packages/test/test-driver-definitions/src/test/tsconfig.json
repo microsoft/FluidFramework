@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../dist/test",
-		"types": ["node", "mocha"],
+		"types": ["mocha"],
 		"declaration": false,
 		"declarationMap": false,
 		"skipLibCheck": true,
