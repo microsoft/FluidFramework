@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const { renderNodesAsMarkdown } = require("@fluid-tools/api-markdown-documenter");
+const { renderNodeAsMarkdown, renderNodesAsMarkdown } = require("@fluid-tools/api-markdown-documenter");
 
 /**
  * Renders an {@link @fluid-tools/api-markdown-documenter#AlertNode} using Hugo syntax.
@@ -54,11 +54,11 @@ function renderBlockQuoteNode(
 /**
  * Renders a {@link TableNode} using HTML syntax, and applies the desired CSS class to it.
  *
- * @param {TableNode} node - The node to render.
+ * @param {TableNode} tableNode - The node to render.
  * @param {DocumentWriter} writer - Writer context object into which the document contents will be written.
  * @param {MarkdownRenderContext} context - See {@link @fluid-tools/api-markdown-documenter#MarkdownRenderContext}.
  */
-function renderTableNode(tableNode, context) {
+function renderTableNode(tableNode, writer, context) {
     const childContext = {
 		...context,
 		insideTable: true,
@@ -68,20 +68,20 @@ function renderTableNode(tableNode, context) {
 	writer.increaseIndent();
 
 	// Write header row if one was specified
-	if (node.headingRow !== undefined) {
+	if (tableNode.headingRow !== undefined) {
 		writer.writeLine("<thead>");
 		writer.increaseIndent();
-		renderNode(node.headingRow, writer, childContext);
+		renderNodeAsMarkdown(tableNode.headingRow, writer, childContext);
 		writer.ensureNewLine(); // Ensure line break header row contents
 		writer.decreaseIndent();
 		writer.writeLine("</thead>");
 	}
 
 	// Write child contents under `tbody` element if the table has any
-	if (node.hasChildren) {
+	if (tableNode.hasChildren) {
 		writer.writeLine("<tbody>");
 		writer.increaseIndent();
-		renderNodes(node.children, writer, childContext);
+		renderNodesAsMarkdown(tableNode.children, writer, childContext);
 		writer.decreaseIndent();
 		writer.writeLine("</tbody>");
 	}

@@ -8,7 +8,7 @@ const {
     DefaultPolicies,
     DocumentationNodeType,
     markdownDocumenterConfigurationWithDefaults,
-    renderDocument,
+    renderDocumentAsMarkdown,
     transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
@@ -74,15 +74,13 @@ async function renderApiDocumentation() {
 
     console.log("Writing API documents to disk...");
     console.group();
-    
-
 
     await Promise.all(documents.map(async (document) => {
         let fileContents;
         try {
-            fileContents = renderDocument(document, customRenderers);
+            fileContents = renderDocumentAsMarkdown(document, customRenderers);
         } catch (error) {
-            console.error(`Encountered error while rendering Markdown for "${document.apiItem.displayName}":`, error);
+            console.error("Encountered error while rendering Markdown:", error);
             throw error;
         }
 
