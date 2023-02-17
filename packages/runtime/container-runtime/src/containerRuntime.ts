@@ -957,6 +957,7 @@ export class ContainerRuntime
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
+	private readonly disableAttachReorder: boolean | undefined;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private _perfSignalData: IPerfSignalReport = {
@@ -1100,12 +1101,16 @@ export class ContainerRuntime
 			}),
 		});
 
+		this.disableAttachReorder = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.disableAttachOpReorder",
+		);
+		const disableChunking = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableCompressionChunking",
+		);
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.context.submitBatchFn,
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompressionChunking") === true
-				? Number.POSITIVE_INFINITY
-				: runtimeOptions.chunkSizeInBytes,
+			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
@@ -1117,10 +1122,13 @@ export class ContainerRuntime
 			this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
+		const disableOpReentryCheck = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableOpReentryCheck",
+		);
 		this.enableOpReentryCheck =
 			runtimeOptions.enableOpReentryCheck === true &&
 			// Allow for a break-glass config to override the options
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
+			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.heuristicsDisabled = this.isHeuristicsDisabled();
@@ -1262,8 +1270,11 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 		);
 
+		const disableCompression = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableCompression",
+		);
 		const compressionOptions =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompression") === true
+			disableCompression === true
 				? {
 						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 						compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1416,6 +1427,13 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
+			options: JSON.stringify(runtimeOptions),
+			featureGates: JSON.stringify({
+				disableCompression,
+				disableOpReentryCheck,
+				disableChunking,
+				disableAttachReorder: this.disableAttachReorder,
+			}),
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -2839,7 +2857,7 @@ export class ContainerRuntime
 			if (
 				this.currentlyBatching() &&
 				type === ContainerMessageType.Attach &&
-				this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true
+				this.disableAttachReorder !== true
 			) {
 				this.outbox.submitAttach(message);
 			} else {
