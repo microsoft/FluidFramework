@@ -35,9 +35,6 @@ export const lk2 = "localKey2Name";
 export const testTypeIdentifier = "testType";
 
 const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
-// TODO: why does intellisense list type of testField.types as: ArrayToSet<readonly ["testType"]>; ?
-// Why doesn't it inline and get ReadonlySet<"testType">?
-// The compiler knows it could, since:
 {
 	type check1_ = requireAssignableTo<
 		typeof testField,

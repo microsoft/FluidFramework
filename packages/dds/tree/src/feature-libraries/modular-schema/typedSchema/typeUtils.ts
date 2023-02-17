@@ -6,7 +6,6 @@
 import { $, List, Kind } from "hkt-toolbelt";
 
 import { Named } from "../../../core";
-import { Brand } from "../../../util";
 
 /**
  * Utilities for manipulating types.
@@ -33,11 +32,6 @@ export type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = R
 export type ObjectToSet<ObjectMap, MapKey extends number | string> = ReadonlySet<MapKey> & {
 	values<TKey extends keyof ObjectMap>(key: TKey): keyof ObjectMap[];
 };
-
-/**
- * Convert a Array type into the type of a ReadonlySet from field name to value.
- */
-export type ArrayToSet<T extends readonly unknown[]> = ReadonlySet<ArrayToUnion<T>>;
 
 /**
  * Convert a Array type into the type of ReadonlySet.
@@ -87,18 +81,3 @@ type AsNamesX<T extends [...(unknown | Named<TName>)[]], TName = string> = Assum
 	T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNamesX<Tail, TName>] : [],
 	TName[]
 >;
-
-/**
- * Converts list of names or named objects into list of branded names.
- */
-export type AsBrandedNames<
-	T extends readonly (string | Named<TBranded>)[],
-	TBranded extends Brand<any, string>,
-> = {
-	readonly [Index in keyof T]: AsBrandedName<T[Index], TBranded>;
-};
-
-export type AsBrandedName<
-	T extends unknown | Named<TBranded>,
-	TBranded extends Brand<any, string>,
-> = T extends Named<infer Name> ? Name : T & TBranded;

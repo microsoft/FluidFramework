@@ -6,9 +6,7 @@
 // eslint-disable-next-line import/no-internal-modules
 import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 import {
-	ArrayToSet,
 	ArrayToUnion,
-	AsBrandedNames,
 	AsNames,
 	ListToKeys,
 	WithDefault,
@@ -17,7 +15,6 @@ import {
 } from "../../../../feature-libraries/modular-schema/typedSchema/typeUtils";
 import {
 	areSafelyAssignable,
-	Brand,
 	isAssignableTo,
 	requireAssignableTo,
 	requireTrue,
@@ -58,33 +55,9 @@ import {
 	type check2_ = requireTrue<areSafelyAssignable<Case2, 1 | 2>>;
 }
 
-{
-	type NameSet1 = ArrayToSet<AsNames<["testType"]>>;
-	type NameSet2 = ArrayToSet<["testType"]>;
-}
-
 // Test AsNames
 {
 	type NameSet1 = AsNames<["testType", { name: "2" }]>;
-	type NameSet2 = ArrayToSet<["testType"]>;
-}
-
-// Test AsBrandedNames
-{
-	type TestBrand = Brand<string, "tree.TestBrand">;
-	type NameSet1 = AsBrandedNames<["testType", { name: "2" & TestBrand }], TestBrand>;
-	type NameSet2 = ArrayToSet<["testType"]>;
-}
-
-// Test ArrayToSet
-{
-	type Empty = ArrayToSet<[]>;
-	type checkEmpty_ = requireTrue<isAssignableTo<Empty, ReadonlySet<never>>>;
-	type check1_ = requireTrue<areSafelyAssignable<ArrayToUnion<[1]>, 1>>;
-	type Case2 = ArrayToSet<[1, 2]>;
-	type check2_ = requireTrue<areSafelyAssignable<Case2, ReadonlySet<1 | 2>>>;
-	type Case3 = ArrayToSet<["testType", "2"]>;
-	type check3_ = requireTrue<areSafelyAssignable<Case3, ReadonlySet<"testType" | "2">>>;
 }
 
 // Test NameSet
