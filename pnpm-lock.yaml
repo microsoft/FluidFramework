@@ -2,7 +2,6 @@ lockfileVersion: 5.4
 
 overrides:
   '@types/node': ^14.18.36
-  node-fetch@<2.6.7: '>=2.6.7'
 
 importers:
 
@@ -14974,8 +14973,6 @@ packages:
       cross-fetch: 3.0.6
       graphql: 15.8.0
       tslib: 2.0.3
-    transitivePeerDependencies:
-      - encoding
     dev: true
 
   /@graphql-tools/batch-delegate/7.0.2_graphql@15.8.0:
@@ -15049,7 +15046,6 @@ packages:
       graphql: 15.8.0
       tslib: 2.0.3
     transitivePeerDependencies:
-      - encoding
       - supports-color
 
   /@graphql-tools/graphql-file-loader/6.2.7_graphql@15.8.0:
@@ -15111,7 +15107,6 @@ packages:
       is-promise: 4.0.0
       tslib: 2.1.0
     transitivePeerDependencies:
-      - encoding
       - react
       - subscriptions-transport-ws
     dev: false
@@ -24304,24 +24299,18 @@ packages:
   /cross-fetch/3.0.6:
     resolution: {integrity: sha512-KBPUbqgFjzWlVcURG+Svp9TlhA5uliYtiNx/0r8nv0pdypeQCRJ9IaSIc3q/x3q8t3F75cHuwxVql1HFGHCNJQ==}
     dependencies:
-      node-fetch: 2.6.7
-    transitivePeerDependencies:
-      - encoding
+      node-fetch: 2.6.1
 
   /cross-fetch/3.1.2:
     resolution: {integrity: sha512-+JhD65rDNqLbGmB3Gzs3HrEKC0aQnD+XA3SY6RjgkF88jV2q5cTc5+CwxlS3sdmLk98gpPt5CF9XRnPdlxZe6w==}
     dependencies:
-      node-fetch: 2.6.7
-    transitivePeerDependencies:
-      - encoding
+      node-fetch: 2.6.1
     dev: false
 
   /cross-fetch/3.1.4:
     resolution: {integrity: sha512-1eAtFWdIubi6T4XPy6ei9iUFoKpUkIF971QLN8lIvvvwueI65+Nw5haMNKUwfJxabqlIIDODJKGrQ66gxC0PbQ==}
     dependencies:
-      node-fetch: 2.6.7
-    transitivePeerDependencies:
-      - encoding
+      node-fetch: 2.6.1
 
   /cross-fetch/3.1.5:
     resolution: {integrity: sha512-lvb1SBsI0Z7GDwmuid+mU3kWVBwTVUbe7S0H52yaaAdQOXq2YktTCZdlAcNKFzE6QtRz0snpw9bNiPeOIkkQvw==}
@@ -33087,6 +33076,10 @@ packages:
     dependencies:
       minimatch: 3.1.2
     dev: true
+
+  /node-fetch/2.6.1:
+    resolution: {integrity: sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==}
+    engines: {node: 4.x || >=6.0.0}
 
   /node-fetch/2.6.7:
     resolution: {integrity: sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==}
