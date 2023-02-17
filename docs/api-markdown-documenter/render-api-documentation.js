@@ -35,6 +35,13 @@ async function renderApiDocumentation() {
     console.group();
 
     const apiModel = await loadModel(apiReportsDirectoryPath);
+    
+    // Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
+    const customRenderers = {
+        [DocumentationNodeType.Alert]: renderAlertNode,
+        [DocumentationNodeType.BlockQuote]: renderBlockQuoteNode,
+        [DocumentationNodeType.Table]: renderTableNode,
+    };
 
     console.groupEnd();
 
@@ -49,7 +56,7 @@ async function renderApiDocumentation() {
                 ? "index"
                 : DefaultPolicies.defaultFileNamePolicy(apiItem);
         },
-        frontMatterPolicy: (apiItem) => createHugoFrontMatter(apiItem, config),
+        frontMatterPolicy: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
     });
 
     console.log("Generating API documentation...");
@@ -68,13 +75,7 @@ async function renderApiDocumentation() {
     console.log("Writing API documents to disk...");
     console.group();
     
-    // Specify our custom renderers, so we can utilize Hugo syntax for certain kinds
-    // of documentation elements.
-    const customRenderers = {
-        [DocumentationNodeType.Alert]: renderAlertNode,
-        [DocumentationNodeType.BlockQuote]: renderBlockQuoteNode,
-        [DocumentationNodeType.Table]: renderTableNode,
-    };
+
 
     await Promise.all(documents.map(async (document) => {
         let fileContents;
