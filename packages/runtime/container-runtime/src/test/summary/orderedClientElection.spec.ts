@@ -13,7 +13,7 @@ import {
 	ITrackedClient,
 	OrderedClientCollection,
 	OrderedClientElection,
-} from "../orderedClientElection";
+} from "../../summary";
 import { TestQuorumClients } from "./testQuorumClients";
 
 describe("Ordered Client Collection", () => {

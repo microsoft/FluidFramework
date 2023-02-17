@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { shouldAllowGcTombstoneEnforcement } from "../garbageCollectionHelpers";
+import { shouldAllowGcTombstoneEnforcement } from "../../gc";
 
 describe("Garbage Collection Helpers Tests", () => {
 	describe("shouldAllowGcTombstoneEnforcement", () => {
