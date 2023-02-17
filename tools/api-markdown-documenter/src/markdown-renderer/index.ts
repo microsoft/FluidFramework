@@ -12,6 +12,6 @@ export {
 	type MarkdownRenderers,
 	type RenderDocumentationNode,
 } from "./RenderConfiguration";
-export { DocumentWriter } from "./DocumentWriter";
+export { createDocumentWriter, DocumentWriter } from "./DocumentWriter";
 export { createRenderContext, renderDocument, renderNode, renderNodes } from "./Render";
 export type { MarkdownRenderContext } from "./RenderContext";
