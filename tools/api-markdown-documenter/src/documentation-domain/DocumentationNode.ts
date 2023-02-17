@@ -58,6 +58,8 @@ export interface MultiLineDocumentationNode<TData extends object = UnistData>
 
 /**
  * A documentation node that has child nodes.
+ *
+ * @see {@link https://github.com/syntax-tree/unist#parent}
  */
 export interface DocumentationParentNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
@@ -71,7 +73,7 @@ export interface DocumentationParentNode<
 	/**
 	 * Child nodes.
 	 *
-	 * See {@link unist#Parent.children}.
+	 * @see {@link https://github.com/syntax-tree/unist#parent}.
 	 */
 	readonly children: TDocumentationNode[];
 
@@ -83,6 +85,8 @@ export interface DocumentationParentNode<
 
 /**
  * A documentation node that is a terminal (i.e. has no children).
+ *
+ * @see {@link https://github.com/syntax-tree/unist#literal}
  */
 export interface DocumentationLiteralNode<T = unknown> extends UnistLiteral<T>, DocumentationNode {
 	/**
