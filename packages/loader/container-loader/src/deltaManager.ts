@@ -18,7 +18,7 @@ import {
 	IDeltaQueue,
 	ICriticalContainerError,
 	IThrottlingWarning,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { normalizeError, logIfFalse, safeRaiseEvent } from "@fluidframework/telemetry-utils";
@@ -57,6 +57,7 @@ export interface IConnectionArgs {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
+	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
 }
 
 /**
@@ -358,7 +359,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
 			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
-			connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
+			connectHandler: (connection: IConnectionDetailsInternal) =>
+				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
 				safeRaiseEvent(this, this.logger, "readonly", readonly),
@@ -401,7 +403,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
 	}
 
-	private connectHandler(connection: IConnectionDetails) {
+	private connectHandler(connection: IConnectionDetailsInternal) {
 		this.refreshDelayInfo(this.deltaStreamDelayId);
 
 		const props = this.connectionManager.connectionVerboseProps;

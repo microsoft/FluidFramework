@@ -10,7 +10,7 @@ import {
 	describeFullCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
