@@ -26,7 +26,9 @@ export function renderSection(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideTable || context.insideHtml) {
+	// Markdown tables do not support multi-line Markdown content.
+	// If we encounter a section in a table context, we will render using HTML syntax.
+	if (context.insideTable === true || context.insideHtml === true) {
 		renderHierarchicalSectionWithHtmlSyntax(node, writer, context);
 	} else {
 		renderHierarchicalSectionWithMarkdownSyntax(node, writer, context);

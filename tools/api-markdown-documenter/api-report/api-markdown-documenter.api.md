@@ -377,9 +377,9 @@ export function markdownDocumenterConfigurationWithDefaults(partialConfig: Markd
 // @public
 export interface MarkdownRenderContext extends TextFormatting {
     headingLevel: number;
-    readonly insideCodeBlock: boolean;
-    readonly insideHtml: boolean;
-    readonly insideTable: boolean;
+    readonly insideCodeBlock?: boolean;
+    readonly insideHtml?: boolean;
+    readonly insideTable?: boolean;
     renderers: MarkdownRenderers;
 }
 

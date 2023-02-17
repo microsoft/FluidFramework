@@ -22,7 +22,7 @@ export function renderHorizontalRule(
 ): void {
 	// Horizontal rule syntax conflicts with table syntax in Markdown,
 	// so if we are inside of a table, we must render using HTML syntax.
-	if (context.insideTable || context.insideHtml) {
+	if (context.insideTable === true || context.insideHtml === true) {
 		renderHorizontalRuleWithHtmlSyntax(writer);
 	} else {
 		renderHorizontalRuleWithMarkdownSyntax(writer);

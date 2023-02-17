@@ -21,8 +21,9 @@ export function renderFencedCodeBlock(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	// FencedCodeBlock rendering is multi-line, and so if we are inside a table, we need to use HTML syntax.
-	if (context.insideTable || context.insideHtml) {
+	// Markdown tables do not support multi-line Markdown content.
+	// If we encounter a line break in a table context, we will render using HTML syntax.
+	if (context.insideTable === true || context.insideHtml === true) {
 		renderFencedCodeBlockWithHtmlSyntax(node, writer, context);
 	} else {
 		renderFencedCodeBlockWithMarkdownSyntax(node, writer, context);

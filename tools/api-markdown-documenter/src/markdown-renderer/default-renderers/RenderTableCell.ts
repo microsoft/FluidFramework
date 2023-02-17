@@ -21,7 +21,7 @@ export function renderTableCell(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideHtml) {
+	if (context.insideHtml === true) {
 		renderTableCellWithHtmlSyntax(node, writer, context);
 	} else {
 		renderTableCellWithMarkdownSyntax(node, writer, context);

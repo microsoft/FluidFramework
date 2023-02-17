@@ -32,7 +32,9 @@ export function renderHeading(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (context.insideTable || context.insideHtml) {
+	// Markdown tables do not support multi-line Markdown content.
+	// If we encounter a header in a table context, we will render using HTML syntax.
+	if (context.insideTable === true || context.insideHtml === true) {
 		renderHeadingWithHtmlSyntax(headingNode, writer, context);
 	} else {
 		renderHeadingWithMarkdownSyntax(headingNode, writer, context);
