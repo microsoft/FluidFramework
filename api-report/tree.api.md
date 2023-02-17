@@ -230,6 +230,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
     readonly fieldSchema: FieldSchema;
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    readonly parent?: EditableTree;
     readonly primaryType?: TreeSchemaIdentifier;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
@@ -239,6 +240,10 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
     readonly [indexSymbol]: number;
+    readonly [parentField]: {
+        readonly parent: EditableField;
+        readonly index: number;
+    };
     readonly [proxyTargetSymbol]: object;
     [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [Symbol.iterator](): IterableIterator<EditableField>;
@@ -876,6 +881,9 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueTy
 export interface OptionalFieldEditBuilder {
     set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
 }
+
+// @alpha
+export const parentField: unique symbol;
 
 // @alpha
 export interface PathRootPrefix {

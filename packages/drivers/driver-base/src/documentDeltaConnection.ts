@@ -182,6 +182,24 @@ export class DocumentDeltaConnection
 					this.emit(event, ...args);
 				});
 			}
+
+			// log latency every minute
+			this.trackLatencyTimer = setInterval(() => {
+				const start = Date.now();
+
+				// emit pong event every minute. If latency is longer than 1 min, log separately
+				this.socket.emit("pong", () => {
+					const latency = Date.now() - start;
+					if (latency > 1000 * 60) {
+						this.mc.logger.sendPerformanceEvent({
+							eventName: "LatencyTooLong",
+							driverVersion,
+							latency,
+						});
+					}
+					return latency;
+				});
+			}, 1000 * 60);
 		});
 	}
 
@@ -389,6 +407,7 @@ export class DocumentDeltaConnection
 	}
 
 	protected disconnect(err: IAnyDriverError) {
+		clearInterval(this.trackLatencyTimer);
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.

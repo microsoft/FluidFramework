@@ -201,7 +201,7 @@ function composeMarks<TNodeChange>(
 					return baseMark;
 				}
 				default:
-					fail(`Not implemented: ${newType}`);
+					fail("Not implemented newType");
 			}
 		case "Modify": {
 			switch (newType) {
@@ -223,7 +223,7 @@ function composeMarks<TNodeChange>(
 					);
 				}
 				default:
-					fail(`Not implemented: ${newType}`);
+					fail("Not implemented newType");
 			}
 		}
 		case "MoveIn": {
@@ -291,7 +291,7 @@ function composeMarks<TNodeChange>(
 					}
 				}
 				default:
-					fail(`Not implemented: ${newType}`);
+					fail("Not implemented newType");
 			}
 		}
 		case "ReturnTo": {
@@ -399,11 +399,11 @@ function composeMarks<TNodeChange>(
 					}
 				}
 				default:
-					fail(`Not implemented: ${newType}`);
+					fail("Not implemented newType");
 			}
 		}
 		default:
-			fail(`Composing ${baseType} and ${newType} is not implemented`);
+			fail("Composing this baseType and this newType is not implemented");
 	}
 }
 

@@ -190,6 +190,7 @@ export {
 	singleStackTreeCursor,
 	CursorAdapter,
 	CursorWithNode,
+	parentField,
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:

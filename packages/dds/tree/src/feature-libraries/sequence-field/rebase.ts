@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { clone, fail, unreachableCase } from "../../util";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { clone, fail } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import {
