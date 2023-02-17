@@ -43,7 +43,7 @@ import {
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
-import { summarizerClientType } from "./summarizerClientElection";
+import { summarizerClientType } from "./summary";
 
 /**
  * This class represents blob (long string)

@@ -18,9 +18,9 @@ import {
 	IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
+import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 import { SummarizeReason } from "./summaryGenerator";
-import { ISummaryConfigurationHeuristics } from ".";
 
 /**
  * @deprecated This will be removed in a later release.

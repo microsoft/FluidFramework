@@ -35,6 +35,7 @@ import {
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
+	IGCMetadata,
 	defaultSessionExpiryDurationMs,
 	runSessionExpiryKey,
 	oneDayMs,
@@ -45,15 +46,11 @@ import {
 	disableSweepLogKey,
 	currentGCVersion,
 	stableGCVersion,
+	GCVersion,
 	gcVersionUpgradeToV2Key,
 	gcTombstoneGenerationOptionName,
 } from "../../gc";
-import {
-	dataStoreAttributesBlobName,
-	GCVersion,
-	IContainerRuntimeMetadata,
-	IGCMetadata,
-} from "../../summaryFormat";
+import { dataStoreAttributesBlobName, IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 
 /** @see - sweepReadyUsageDetectionSetting */

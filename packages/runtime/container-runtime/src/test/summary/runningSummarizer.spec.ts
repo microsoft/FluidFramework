@@ -18,13 +18,15 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { ISummaryConfiguration } from "../containerRuntime";
-import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
-import { RunningSummarizer } from "../runningSummarizer";
-import { SummaryCollection } from "../summaryCollection";
-import { SummarizeHeuristicData } from "../summarizerHeuristics";
-import { ISummarizerRuntime } from "..";
-import { ISummarizeHeuristicData } from "../summarizerTypes";
+import { ISummaryConfiguration } from "../../containerRuntime";
+import {
+	neverCancelledSummaryToken,
+	RunningSummarizer,
+	SummaryCollection,
+	SummarizeHeuristicData,
+	ISummarizerRuntime,
+	ISummarizeHeuristicData,
+} from "../../summary";
 
 class MockRuntime {
 	constructor(

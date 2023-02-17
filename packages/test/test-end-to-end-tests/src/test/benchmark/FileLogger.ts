@@ -11,7 +11,7 @@ import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { pkgName, pkgVersion } from "./packageVersion";
+import { pkgName, pkgVersion } from "../../packageVersion";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 

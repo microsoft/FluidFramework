@@ -21,7 +21,6 @@ import {
 	IEnvelope,
 	IFluidDataStoreContextDetached,
 	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 	IInboundSignalMessage,
 	InboundAttachMessage,
 	ISummarizeResult,
@@ -45,13 +44,9 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
-import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import {
-	GCDataBuilder,
-	unpackChildNodesGCDetails,
-	unpackChildNodesUsedRoutes,
-} from "@fluidframework/garbage-collector";
+import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import {
 	ContainerRuntime,
@@ -66,11 +61,6 @@ import {
 	createAttributesBlob,
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
-import {
-	IContainerRuntimeMetadata,
-	nonDataStorePaths,
-	rootHasIsolatedChannels,
-} from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import {
 	GCNodeType,
@@ -78,7 +68,12 @@ import {
 	throwOnTombstoneLoadKey,
 	sendGCUnexpectedUsageEvent,
 } from "./gc";
-import { summarizerClientType } from "./summarizerClientElection";
+import {
+	summarizerClientType,
+	IContainerRuntimeMetadata,
+	nonDataStorePaths,
+	rootHasIsolatedChannels,
+} from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -126,7 +121,6 @@ export class DataStores implements IDisposable {
 		) => CreateChildSummarizerNodeFn,
 		private readonly deleteChildSummarizerNodeFn: (id: string) => void,
 		baseLogger: ITelemetryBaseLogger,
-		getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
 		private readonly gcNodeUpdated: (
 			nodePath: string,
 			timestampMs: number,
@@ -143,15 +137,6 @@ export class DataStores implements IDisposable {
 			this.runtime.IFluidHandleContext,
 		);
 
-		const baseGCDetailsP = new LazyPromise(async () => {
-			const baseGCDetails = await getBaseGCDetails();
-			return unpackChildNodesGCDetails(baseGCDetails);
-		});
-		// Returns the base GC details for the data store with the given id.
-		const dataStoreBaseGCDetails = async (dataStoreId: string) => {
-			const baseGCDetails = await baseGCDetailsP;
-			return baseGCDetails.get(dataStoreId);
-		};
 		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
@@ -180,7 +165,6 @@ export class DataStores implements IDisposable {
 				dataStoreContext = new RemoteFluidDataStoreContext({
 					id: key,
 					snapshotTree: value,
-					getBaseGCDetails: async () => dataStoreBaseGCDetails(key),
 					runtime: this.runtime,
 					storage: this.runtime.storage,
 					scope: this.runtime.scope,
@@ -273,10 +257,6 @@ export class DataStores implements IDisposable {
 		const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
 			id: attachMessage.id,
 			snapshotTree,
-			// New data stores begin with empty GC details since GC hasn't run on them yet.
-			getBaseGCDetails: async () => {
-				return {};
-			},
 			runtime: this.runtime,
 			storage: new BlobCacheStorageService(this.runtime.storage, flatBlobs),
 			scope: this.runtime.scope,

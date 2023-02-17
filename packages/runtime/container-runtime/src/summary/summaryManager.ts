@@ -12,8 +12,8 @@ import {
 import { assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { IThrottler } from "../throttler";
 import { ISummarizerClientElection } from "./summarizerClientElection";
-import { IThrottler } from "./throttler";
 import { ISummarizer, SummarizerStopReason } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 import { Summarizer } from "./summarizer";

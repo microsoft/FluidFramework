@@ -11,11 +11,16 @@ import {
 	ISerializedElection,
 	OrderedClientCollection,
 	OrderedClientElection,
-} from "../orderedClientElection";
-import { ISummaryCollectionOpEvents } from "../summaryCollection";
-import { SummarizerClientElection, summarizerClientType } from "../summarizerClientElection";
-import { IConnectedEvents, IConnectedState, SummaryManager } from "../summaryManager";
-import { ISummarizer, ISummarizerEvents, SummarizerStopReason } from "../summarizerTypes";
+	ISummaryCollectionOpEvents,
+	SummarizerClientElection,
+	summarizerClientType,
+	IConnectedEvents,
+	IConnectedState,
+	SummaryManager,
+	ISummarizer,
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "../../summary";
 import { TestQuorumClients } from "./testQuorumClients";
 
 describe("Summarizer Client Election", () => {
