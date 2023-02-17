@@ -36,8 +36,13 @@ export { ParagraphNode } from "./ParagraphNode";
 export { PlainTextNode } from "./PlainTextNode";
 export { SectionNode } from "./SectionNode";
 export { SpanNode, SingleLineSpanNode } from "./SpanNode";
-export { TableCellNode } from "./TableCellNode";
-export { TableRowNode } from "./TableRowNode";
+export {
+	TableCellNode,
+	TableBodyCellNode,
+	TableHeaderCellNode,
+	TableCellKind,
+} from "./TableCellNode";
+export { TableRowNode, TableBodyRowNode, TableHeaderRowNode, TableRowKind } from "./TableRowNode";
 export { TableNode } from "./TableNode";
 export { TextFormatting } from "./TextFormatting";
 export { UnorderedListNode } from "./UnorderedListNode";

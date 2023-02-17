@@ -4,13 +4,13 @@
  */
 import { MultiLineDocumentationNode, ParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { TableRowNode } from "./TableRowNode";
+import { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode";
 
 // TODOs:
 // - Support alignment properties in Table, TableRow and TableCell (inherit pattern for resolution)
 
 /**
- * A table, created from a series of {@link TableRowNode | row}s, and an optional {@link TableNode.headingRow | heading row}.
+ * A table, created from a series of {@link TableRowNode | row}s, and an optional {@link TableNode.headerRow | heading row}.
  *
  * @example Markdown
  *
@@ -28,9 +28,9 @@ import { TableRowNode } from "./TableRowNode";
  * <table>
  * 	<thead>
  * 		<tr>
- * 			<td>Header A</td>
- * 			<td>Header B</td>
- * 			<td>Header C</td>
+ * 			<th>Header A</th>
+ * 			<th>Header B</th>
+ * 			<th>Header C</th>
  * 		</tr>
  * 	</thead>
  * 	<tbody>
@@ -58,7 +58,10 @@ import { TableRowNode } from "./TableRowNode";
  * - {@link TableCellNode}
  * - {@link TableRowNode}
  */
-export class TableNode extends ParentNodeBase<TableRowNode> implements MultiLineDocumentationNode {
+export class TableNode
+	extends ParentNodeBase<TableBodyRowNode>
+	implements MultiLineDocumentationNode
+{
 	/**
 	 * Static singleton representing an empty Table node.
 	 */
@@ -76,10 +79,10 @@ export class TableNode extends ParentNodeBase<TableRowNode> implements MultiLine
 		return false;
 	}
 
-	public readonly headingRow?: TableRowNode;
+	public readonly headerRow?: TableHeaderRowNode;
 
-	public constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode) {
+	public constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode) {
 		super(bodyRows);
-		this.headingRow = headingRow;
+		this.headerRow = headingRow;
 	}
 }

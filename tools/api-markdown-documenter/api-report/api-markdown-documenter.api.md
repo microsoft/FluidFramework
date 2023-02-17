@@ -493,27 +493,64 @@ export class SpanNode<TDocumentationNode extends DocumentationNode = Documentati
 }
 
 // @public
-export class TableCellNode extends ParentNodeBase {
+export class TableBodyCellNode extends TableCellNode {
     constructor(children: DocumentationNode[]);
-    static createFromPlainText(text: string): TableCellNode;
-    static readonly Empty: TableCellNode;
+    static createFromPlainText(text: string): TableBodyCellNode;
+    static readonly Empty: TableBodyCellNode;
+}
+
+// @public
+export class TableBodyRowNode extends TableRowNode {
+    constructor(cells: TableCellNode[]);
+    static readonly Empty: TableBodyRowNode;
+}
+
+// @public
+export enum TableCellKind {
+    Body = "Body",
+    Header = "Header"
+}
+
+// @public
+export abstract class TableCellNode extends ParentNodeBase {
+    protected constructor(children: DocumentationNode[], cellKind: TableCellKind);
+    readonly cellKind: TableCellKind;
     readonly type = DocumentationNodeType.TableCell;
 }
 
 // @public
-export class TableNode extends ParentNodeBase<TableRowNode> implements MultiLineDocumentationNode {
-    constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode);
+export class TableHeaderCellNode extends TableCellNode {
+    constructor(children: DocumentationNode[]);
+    static createFromPlainText(text: string): TableHeaderCellNode;
+    static readonly Empty: TableHeaderCellNode;
+}
+
+// @public
+export class TableHeaderRowNode extends TableRowNode {
+    constructor(cells: TableHeaderCellNode[]);
+    static readonly Empty: TableHeaderRowNode;
+}
+
+// @public
+export class TableNode extends ParentNodeBase<TableBodyRowNode> implements MultiLineDocumentationNode {
+    constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode);
     static readonly Empty: TableNode;
     // (undocumented)
-    readonly headingRow?: TableRowNode;
+    readonly headerRow?: TableHeaderRowNode;
     get singleLine(): false;
     readonly type = DocumentationNodeType.Table;
 }
 
 // @public
-export class TableRowNode extends ParentNodeBase<TableCellNode> {
-    constructor(cells: TableCellNode[]);
-    static readonly Empty: TableRowNode;
+export enum TableRowKind {
+    Body = "Body",
+    Header = "Header"
+}
+
+// @public
+export abstract class TableRowNode extends ParentNodeBase<TableCellNode> {
+    protected constructor(cells: TableCellNode[], rowKind: TableRowKind);
+    readonly rowKind: TableRowKind;
     readonly type = DocumentationNodeType.TableRow;
 }
 
