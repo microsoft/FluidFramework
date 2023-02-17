@@ -45,25 +45,21 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 // @public (undocumented)
 export interface IContainerConfig {
-    baseLogger?: ITelemetryBaseLogger;
     // (undocumented)
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
-    scopeOverride?: FluidObject;
     serializedContainerState?: IPendingContainerState;
 }
 
 // @public (undocumented)
 export interface IContainerLoadOptions {
-    baseLogger?: ITelemetryBaseLogger;
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
-    scopeOverride?: FluidObject;
     version: string | undefined;
 }
 

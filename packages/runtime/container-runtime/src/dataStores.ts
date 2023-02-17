@@ -72,10 +72,13 @@ import {
 	rootHasIsolatedChannels,
 } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType } from "./garbageCollection";
-import { sweepDatastoresKey, throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
+import {
+	GCNodeType,
+	sweepDatastoresKey,
+	throwOnTombstoneLoadKey,
+	sendGCUnexpectedUsageEvent,
+} from "./gc";
 import { summarizerClientType } from "./summarizerClientElection";
-import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 
 type PendingAliasResolve = (success: boolean) => void;
 
