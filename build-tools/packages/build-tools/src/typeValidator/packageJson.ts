@@ -83,7 +83,7 @@ export async function getPackageDetails(
 	}
 
 	if (result === null || result === undefined) {
-		log.verbose(`no typetest config found for ${packageDir}`);
+		log.verbose(`No typetest config found for ${packageDir}`);
 	}
 
 	const config = result?.config;
