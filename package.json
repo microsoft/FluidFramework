@@ -203,7 +203,8 @@
 	},
 	"pnpm": {
 		"overrides": {
-			"@types/node": "^14.18.36"
+			"@types/node": "^14.18.36",
+			"node-fetch@<2.6.7": ">=2.6.7"
 		},
 		"peerDependencyRules": {
 			"allowedVersions": {
