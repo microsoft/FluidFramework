@@ -243,7 +243,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			if (result.error) {
 				const failureMessage = result.error.message.includes("ENOBUFS")
 					? "Child process tried to write too much data to stdout (too many iterations?). " +
-					  "The maxBuffer option might need to be tweaked."
+					"The maxBuffer option might need to be tweaked."
 					: `Child process reported an error: ${result.error.message}`;
 				assert.fail(failureMessage);
 			}
@@ -316,13 +316,14 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				benchmarkStats.samples.before.memoryUsage.push(process.memoryUsage());
 				benchmarkStats.samples.before.heap.push(v8.getHeapStatistics());
 				benchmarkStats.samples.before.heapSpace.push(v8.getHeapSpaceStatistics());
-
-				global.gc();
+				console.log("Before run...");
+				//				global.gc();
 				await testObject.run();
 
 				await testObject.afterIteration?.();
+				console.log("After Run/Iteration...");
 
-				global.gc();
+				//				global.gc();
 				benchmarkStats.samples.after.memoryUsage.push(process.memoryUsage());
 				benchmarkStats.samples.after.heap.push(v8.getHeapStatistics());
 				benchmarkStats.samples.after.heapSpace.push(v8.getHeapSpaceStatistics());
@@ -333,7 +334,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				for (let i = 0; i < benchmarkStats.samples.before.memoryUsage.length; i++) {
 					heapUsedArray.push(
 						benchmarkStats.samples.after.memoryUsage[i].heapUsed -
-							benchmarkStats.samples.before.memoryUsage[i].heapUsed,
+						benchmarkStats.samples.before.memoryUsage[i].heapUsed,
 					);
 				}
 				heapUsedStats = getArrayStatistics(heapUsedArray, options.samplePercentageToUse);

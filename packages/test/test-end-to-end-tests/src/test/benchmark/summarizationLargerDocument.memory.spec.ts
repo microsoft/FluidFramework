@@ -102,7 +102,6 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 	};
 
 	before(async () => {
-		console.log("running before ", Date.now().toString());
 		provider = getTestObjectProvider();
 		// runId will be populated on the logger.
 		logger =
