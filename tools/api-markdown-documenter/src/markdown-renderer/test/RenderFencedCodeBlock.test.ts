@@ -27,7 +27,7 @@ describe("FencedCodeBlock rendering tests", () => {
 			[new PlainTextNode("console.log('hello world');")],
 			"typescript",
 		);
-		const result = testRender(input, undefined, { insideHtml: true });
+		const result = testRender(input, { insideHtml: true });
 
 		const expected = ["<code>", "  console.log('hello world');", "</code>", ""].join("\n");
 

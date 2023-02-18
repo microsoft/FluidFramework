@@ -27,9 +27,7 @@ describe("ParagraphNode rendering tests", () => {
 
 	describe("HTML", () => {
 		it("Empty paragraph", () => {
-			expect(testRender(ParagraphNode.Empty, undefined, { insideHtml: true })).to.equal(
-				"<p>\n</p>\n",
-			);
+			expect(testRender(ParagraphNode.Empty, { insideHtml: true })).to.equal("<p>\n</p>\n");
 		});
 
 		it("Simple paragraph", () => {
@@ -37,7 +35,7 @@ describe("ParagraphNode rendering tests", () => {
 			const text2 = "This is more text!";
 
 			const input = new ParagraphNode([new PlainTextNode(text1), new PlainTextNode(text2)]);
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = ["<p>", `  ${text1}${text2}`, "</p>", ""].join("\n");
 			expect(result).to.equal(expected);

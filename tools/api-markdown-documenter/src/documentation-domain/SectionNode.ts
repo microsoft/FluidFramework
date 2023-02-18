@@ -2,7 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationNode, MultiLineDocumentationNode, ParentNodeBase } from "./DocumentationNode";
+import {
+	DocumentationNode,
+	DocumentationParentNodeBase,
+	MultiLineDocumentationNode,
+} from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { HeadingNode } from "./HeadingNode";
 
@@ -29,7 +33,7 @@ import { HeadingNode } from "./HeadingNode";
  * </section>
  * ```
  */
-export class SectionNode extends ParentNodeBase implements MultiLineDocumentationNode {
+export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */

@@ -83,7 +83,7 @@ describe("Table rendering tests", () => {
 
 	describe("HTML", () => {
 		it("Empty table", () => {
-			expect(testRender(TableNode.Empty, undefined, { insideHtml: true })).to.equal(
+			expect(testRender(TableNode.Empty, { insideHtml: true })).to.equal(
 				"<table>\n</table>\n",
 			);
 		});
@@ -101,7 +101,7 @@ describe("Table rendering tests", () => {
 				]),
 			]);
 
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = [
 				"<table>",
@@ -153,7 +153,7 @@ describe("Table rendering tests", () => {
 				]),
 			);
 
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = [
 				"<table>",

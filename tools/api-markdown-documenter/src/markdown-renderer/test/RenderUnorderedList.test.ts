@@ -29,7 +29,7 @@ describe("UnorderedListNode rendering tests", () => {
 
 	describe("HTML", () => {
 		it("Empty list", () => {
-			expect(testRender(UnorderedListNode.Empty, undefined, { insideHtml: true })).to.equal(
+			expect(testRender(UnorderedListNode.Empty, { insideHtml: true })).to.equal(
 				"<ul>\n</ul>\n",
 			);
 		});
@@ -40,7 +40,7 @@ describe("UnorderedListNode rendering tests", () => {
 			const text3 = "Item 3";
 
 			const input = UnorderedListNode.createFromPlainTextEntries([text1, text2, text3]);
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = [
 				"<ul>",

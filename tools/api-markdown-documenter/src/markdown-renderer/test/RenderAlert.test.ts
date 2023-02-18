@@ -66,7 +66,7 @@ describe("Alert rendering tests", () => {
 				AlertKind.Warning,
 				/* title: */ "This is a test",
 			);
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = [
 				"<blockquote>",
@@ -86,7 +86,7 @@ describe("Alert rendering tests", () => {
 				[new PlainTextNode("PRO TIP: Unit tests are awesome!")],
 				AlertKind.Tip,
 			);
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = [
 				"<blockquote>",

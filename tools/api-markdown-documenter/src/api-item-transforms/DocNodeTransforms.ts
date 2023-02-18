@@ -108,22 +108,22 @@ export function _transformDocNode(
 			return transformDocCodeSpan(node as DocCodeSpan, options);
 		case DocNodeKind.EscapedText:
 			return transformDocEscapedText(node as DocEscapedText, options);
+		case DocNodeKind.FencedCode:
+			return transformDocFencedCode(node as DocFencedCode, options);
 		case DocNodeKind.HtmlStartTag:
 			return transformDocHtmlTag(node as DocHtmlStartTag, options);
 		case DocNodeKind.HtmlEndTag:
 			return transformDocHtmlTag(node as DocHtmlEndTag, options);
+		case DocNodeKind.LinkTag:
+			return transformDocLinkTag(node as DocLinkTag, options);
 		case DocNodeKind.Paragraph:
 			return transformDocParagraph(node as DocParagraph, options);
+		case DocNodeKind.PlainText:
+			return transformDocPlainText(node as DocPlainText, options);
 		case DocNodeKind.Section:
 			return transformDocSection(node as DocSection, options);
 		case DocNodeKind.SoftBreak:
 			return LineBreakNode.Singleton;
-		case DocNodeKind.PlainText:
-			return transformDocPlainText(node as DocPlainText, options);
-		case DocNodeKind.FencedCode:
-			return transformDocFencedCode(node as DocFencedCode, options);
-		case DocNodeKind.LinkTag:
-			return transformDocLinkTag(node as DocLinkTag, options);
 		default:
 			options.logger?.error(`Unsupported DocNode kind: "${node.kind}".`, node);
 			return undefined;

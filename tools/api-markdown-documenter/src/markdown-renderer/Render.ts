@@ -6,38 +6,21 @@ import { StringBuilder } from "@microsoft/tsdoc";
 
 import type { DocumentNode, DocumentationNode } from "../documentation-domain";
 import { DocumentWriter } from "./DocumentWriter";
-import { MarkdownRenderers, defaultMarkdownRenderers } from "./RenderConfiguration";
-import { MarkdownRenderContext } from "./RenderContext";
-
-/**
- * Generates the root {@link MarkdownRenderContext} for rendering a document.
- *
- * @param customRenderers - Any custom render implementations to be used in place of or in addition to the defaults.
- */
-export function createRenderContext(customRenderers?: MarkdownRenderers): MarkdownRenderContext {
-	const renderers = {
-		...defaultMarkdownRenderers,
-		...customRenderers,
-	};
-
-	return {
-		headingLevel: 1,
-		renderers,
-	};
-}
+import { MarkdownRenderContext, getContextWithDefaults } from "./RenderContext";
 
 /**
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.
  *
  * @param document - The document to render.
- * @param customRenderers - Any custom render implementations to be used in place of or in addition to the defaults.
+ * @param context - Optional, partial {@link MarkdownRenderContext}.
+ * Any missing parameters will be filled in with system defaults.
  */
 export function renderDocument(
 	document: DocumentNode,
-	customRenderers?: MarkdownRenderers,
+	context?: Partial<MarkdownRenderContext>,
 ): string {
 	const writer = new DocumentWriter(new StringBuilder());
-	renderNodes(document.children, writer, createRenderContext(customRenderers));
+	renderNodes(document.children, writer, getContextWithDefaults(context));
 
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();

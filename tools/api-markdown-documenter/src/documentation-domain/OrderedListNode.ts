@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import {
+	DocumentationParentNodeBase,
 	MultiLineDocumentationNode,
-	ParentNodeBase,
 	SingleLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
@@ -35,7 +35,7 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```
  */
 export class OrderedListNode
-	extends ParentNodeBase<SingleLineDocumentationNode>
+	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
 	implements MultiLineDocumentationNode
 {
 	/**
@@ -59,6 +59,9 @@ export class OrderedListNode
 		super(children);
 	}
 
+	/**
+	 * Creates an {@link OrderedListNode} from a list of single-line string entries.
+	 */
 	public static createFromPlainTextEntries(entries: string[]): OrderedListNode {
 		return new OrderedListNode(entries.map((entry) => new PlainTextNode(entry)));
 	}

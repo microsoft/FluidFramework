@@ -14,8 +14,6 @@ describe("HorizontalRule rendering tests", () => {
 	});
 
 	it("HTML", () => {
-		expect(testRender(HorizontalRuleNode.Singleton, undefined, { insideHtml: true })).to.equal(
-			"<hr>\n",
-		);
+		expect(testRender(HorizontalRuleNode.Singleton, { insideHtml: true })).to.equal("<hr>\n");
 	});
 });

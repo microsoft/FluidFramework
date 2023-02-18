@@ -29,7 +29,7 @@ describe("OrderedListNode rendering tests", () => {
 
 	describe("HTML", () => {
 		it("Empty list", () => {
-			expect(testRender(OrderedListNode.Empty, undefined, { insideHtml: true })).to.equal(
+			expect(testRender(OrderedListNode.Empty, { insideHtml: true })).to.equal(
 				"<ol>\n</ol>\n",
 			);
 		});
@@ -40,7 +40,7 @@ describe("OrderedListNode rendering tests", () => {
 			const text3 = "Item 3";
 
 			const input = OrderedListNode.createFromPlainTextEntries([text1, text2, text3]);
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = [
 				"<ol>",

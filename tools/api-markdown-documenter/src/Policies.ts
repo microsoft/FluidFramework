@@ -220,6 +220,9 @@ export interface PolicyOptions {
 	frontMatterPolicy?: FrontMatterPolicy;
 }
 
+/**
+ * Contains a list of default transformation policies, used by {@link PolicyOptions}.
+ */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultPolicies {
 	/**

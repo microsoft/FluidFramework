@@ -14,8 +14,6 @@ describe("LineBreak rendering tests", () => {
 	});
 
 	it("HTML", () => {
-		expect(testRender(LineBreakNode.Singleton, undefined, { insideHtml: true })).to.equal(
-			"<br>\n",
-		);
+		expect(testRender(LineBreakNode.Singleton, { insideHtml: true })).to.equal("<br>\n");
 	});
 });

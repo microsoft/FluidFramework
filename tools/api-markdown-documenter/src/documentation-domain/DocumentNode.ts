@@ -12,7 +12,9 @@ import { SectionNode } from "./SectionNode";
  */
 export interface DocumentNodeProps {
 	/**
-	 * {@inheritDoc DocumentationNode.children}
+	 * Child nodes.
+	 *
+	 * @see {@link https://github.com/syntax-tree/unist#parent}.
 	 */
 	readonly children: SectionNode[];
 

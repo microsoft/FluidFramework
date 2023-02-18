@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationNode, ParentNodeBase } from "./DocumentationNode";
+import { DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { createNodesFromPlainText } from "./Utilities";
 
@@ -63,7 +63,7 @@ export enum AlertKind {
  * </blockquote>
  * ```
  */
-export class AlertNode extends ParentNodeBase {
+export class AlertNode extends DocumentationParentNodeBase {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -73,6 +73,10 @@ export class AlertNode extends ParentNodeBase {
 	 * See {@link AlertKind}.
 	 */
 	public readonly alertKind: AlertKind;
+
+	/**
+	 * Optional alert title text, to be rendered alongside the {@link AlertNode.alertKind} label.
+	 */
 	public readonly title?: string;
 
 	public constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string) {

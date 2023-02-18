@@ -27,16 +27,14 @@ describe("CodeSpan rendering tests", () => {
 
 	describe("HTML", () => {
 		it("Empty CodeSpan", () => {
-			expect(testRender(CodeSpanNode.Empty, undefined, { insideHtml: true })).to.equal(
-				"<code></code>",
-			);
+			expect(testRender(CodeSpanNode.Empty, { insideHtml: true })).to.equal("<code></code>");
 		});
 
 		it("Simple CodeSpan", () => {
 			const codeSpanNode = new CodeSpanNode([
 				new PlainTextNode("console.log('hello world');"),
 			]);
-			const result = testRender(codeSpanNode, undefined, { insideHtml: true });
+			const result = testRender(codeSpanNode, { insideHtml: true });
 
 			const expected = "<code>console.log('hello world');</code>";
 

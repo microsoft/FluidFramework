@@ -98,7 +98,7 @@ export interface DocumentationLiteralNode<T = unknown> extends UnistLiteral<T>, 
 /**
  * Helper base class for {@link DocumentationParentNode} implementations.
  */
-export abstract class ParentNodeBase<
+export abstract class DocumentationParentNodeBase<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
 > implements DocumentationParentNode<TDocumentationNode>
 {
@@ -108,7 +108,7 @@ export abstract class ParentNodeBase<
 	public abstract type: string;
 
 	/**
-	 * {@inheritDoc ParentNode.children}
+	 * {@inheritDoc DocumentationParentNode.children}
 	 */
 	public readonly children: TDocumentationNode[];
 
@@ -129,7 +129,7 @@ export abstract class ParentNodeBase<
 	}
 
 	/**
-	 * {@inheritDoc ParentNode.hasChildren}
+	 * {@inheritDoc DocumentationParentNode.hasChildren}
 	 */
 	public get hasChildren(): boolean {
 		return this.children.length > 0;

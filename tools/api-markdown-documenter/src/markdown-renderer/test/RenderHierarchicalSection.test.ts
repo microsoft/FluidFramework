@@ -109,7 +109,7 @@ describe("HierarchicalSection rendering tests", () => {
 				),
 			);
 
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = [
 				"<section>",
@@ -157,7 +157,7 @@ describe("HierarchicalSection rendering tests", () => {
 				),
 			);
 
-			const result = testRender(input, undefined, { insideHtml: true });
+			const result = testRender(input, { insideHtml: true });
 
 			const expected = [
 				"<section>",

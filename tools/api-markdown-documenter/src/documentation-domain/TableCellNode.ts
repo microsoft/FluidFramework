@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationNode, ParentNodeBase } from "./DocumentationNode";
+import { DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { createNodesFromPlainText } from "./Utilities";
 
@@ -45,7 +45,7 @@ export enum TableCellKind {
  * - {@link TableNode}
  * - {@link TableRowNode}
  */
-export abstract class TableCellNode extends ParentNodeBase {
+export abstract class TableCellNode extends DocumentationParentNodeBase {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */

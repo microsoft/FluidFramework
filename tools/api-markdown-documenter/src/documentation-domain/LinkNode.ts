@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Link, UrlTarget } from "../Link";
-import { ParentNodeBase, SingleLineDocumentationNode } from "./DocumentationNode";
+import { DocumentationParentNodeBase, SingleLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { PlainTextNode } from "./PlainTextNode";
 
@@ -23,7 +23,7 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```
  */
 export class LinkNode
-	extends ParentNodeBase<SingleLineDocumentationNode>
+	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
 	implements SingleLineDocumentationNode, Omit<Link, "text">
 {
 	/**

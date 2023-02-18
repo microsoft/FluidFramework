@@ -2,7 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationNode, MultiLineDocumentationNode, ParentNodeBase } from "./DocumentationNode";
+import {
+	DocumentationNode,
+	DocumentationParentNodeBase,
+	MultiLineDocumentationNode,
+} from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { createNodesFromPlainText } from "./Utilities";
 
@@ -25,7 +29,10 @@ import { createNodesFromPlainText } from "./Utilities";
  * </code>
  * ```
  */
-export class FencedCodeBlockNode extends ParentNodeBase implements MultiLineDocumentationNode {
+export class FencedCodeBlockNode
+	extends DocumentationParentNodeBase
+	implements MultiLineDocumentationNode
+{
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */

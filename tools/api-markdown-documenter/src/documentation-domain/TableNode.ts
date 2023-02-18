@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { MultiLineDocumentationNode, ParentNodeBase } from "./DocumentationNode";
+import { DocumentationParentNodeBase, MultiLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode";
 
@@ -59,7 +59,7 @@ import { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode";
  * - {@link TableRowNode}
  */
 export class TableNode
-	extends ParentNodeBase<TableBodyRowNode>
+	extends DocumentationParentNodeBase<TableBodyRowNode>
 	implements MultiLineDocumentationNode
 {
 	/**
@@ -79,6 +79,9 @@ export class TableNode
 		return false;
 	}
 
+	/**
+	 * Optional table header row.
+	 */
 	public readonly headerRow?: TableHeaderRowNode;
 
 	public constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode) {

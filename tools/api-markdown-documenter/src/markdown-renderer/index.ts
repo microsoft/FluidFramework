@@ -9,9 +9,10 @@
 
 export {
 	defaultMarkdownRenderers,
+	getRenderersWithDefaults,
 	type MarkdownRenderers,
 	type RenderDocumentationNode,
 } from "./RenderConfiguration";
 export { createDocumentWriter, DocumentWriter } from "./DocumentWriter";
-export { createRenderContext, renderDocument, renderNode, renderNodes } from "./Render";
-export type { MarkdownRenderContext } from "./RenderContext";
+export { renderDocument, renderNode, renderNodes } from "./Render";
+export { getContextWithDefaults, type MarkdownRenderContext } from "./RenderContext";
