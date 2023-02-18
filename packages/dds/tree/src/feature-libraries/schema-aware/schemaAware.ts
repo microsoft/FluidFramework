@@ -10,27 +10,29 @@ import {
 	SchemaDataAndPolicy,
 	TreeSchemaIdentifier,
 	ValueSchema,
-} from "../core";
+} from "../../core";
 import {
 	FieldSchemaTypeInfo,
 	LabeledTreeSchema,
 	TreeSchemaTypeInfo,
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "./modular-schema/typedSchema";
-import { typeNameSymbol, valueSymbol } from "./contextuallyTyped";
+} from "../modular-schema/typedSchema";
+import { typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import { Multiplicity } from "../modular-schema";
+// eslint-disable-next-line import/no-internal-modules
+import { AllowOptional, ListToKeys } from "../modular-schema/typedSchema/typeUtils";
+// eslint-disable-next-line import/no-internal-modules
+import { NameSet } from "../modular-schema/typedSchema/outputTypes";
+import { defaultSchemaPolicy } from "../defaultSchema";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
-import { Multiplicity } from "./modular-schema";
-// eslint-disable-next-line import/no-internal-modules
-import { AllowOptional, ListToKeys } from "./modular-schema/typedSchema/typeUtils";
-// eslint-disable-next-line import/no-internal-modules
-import { NameSet } from "./modular-schema/typedSchema/outputTypes";
-import { defaultSchemaPolicy } from "./defaultSchema";
+
 /**
  * Example strong type for an API derived from schema.
  *
  * A type similar to this could be used with EditableTree to provide a schema aware API.
  *
  * For now this just supports local fields:
+ * @alpha
  */
 export type TypedTree<
 	TMap extends TypedSchemaData,
@@ -137,6 +139,7 @@ type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
 /**
  * Takes in `types?: ReadonlySet<brandedTypeNameUnion>`
  * and returns a TypedTree union.
+ * @alpha
  */
 export type TreeTypesToTypedTreeTypes<
 	TMap extends TypedSchemaData,
@@ -150,6 +153,9 @@ export type TreeTypesToTypedTreeTypes<
 
 type ValuesOf<T> = T[keyof T];
 
+/**
+ * @alpha
+ */
 export interface TypedSchemaData extends SchemaDataAndPolicy {
 	// TODO: can we use a more specific type here?
 	treeSchemaObject: Record<string, any>; // LabeledTreeSchema<any>
@@ -162,6 +168,9 @@ type NamesFromSchema<T extends LabeledTreeSchema<any>[]> = $<
 	$<$<List.Map, $<KObject.At, "typeInfo">>, T>
 >;
 
+/**
+ * @alpha
+ */
 export function typedSchemaData<T extends LabeledTreeSchema<any>[]>(
 	globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>,
 	...t: T
@@ -199,6 +208,7 @@ export function typedSchemaData<T extends LabeledTreeSchema<any>[]>(
 
 /**
  * This is not an exact match for what `applyFieldTypesFromContext` allows: it does not require discriminators.
+ * @alpha
  */
 export type ValidContextuallyTypedNodeData<
 	TMap extends TypedSchemaData,
@@ -214,6 +224,7 @@ export type ValidContextuallyTypedNodeData<
 
 /**
  * This is not an exact match for what `applyFieldTypesFromContext` allows: it does not require discriminators.
+ * @alpha
  */
 export type NodeDataFor<
 	TMap extends TypedSchemaData,

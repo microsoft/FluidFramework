@@ -11,7 +11,7 @@ import {
 	typedSchemaData,
 	ValidContextuallyTypedNodeData,
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../feature-libraries/schemaAware";
+} from "../../feature-libraries/schema-aware/schemaAware";
 
 import { TreeSchemaIdentifier, ValueSchema } from "../../core";
 import { requireAssignableTo } from "../../util";

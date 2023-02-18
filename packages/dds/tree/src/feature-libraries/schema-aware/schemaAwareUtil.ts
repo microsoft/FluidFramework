@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Value, ValueSchema } from "../core";
-import { areSafelyAssignable, isAssignableTo, requireTrue } from "../util";
-import { PrimitiveValue } from "./contextuallyTyped";
+import { Value, ValueSchema } from "../../core";
+import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../util";
+import { PrimitiveValue } from "../contextuallyTyped";
 
 /**
  * `ValueSchema` to allowed types for that schema.

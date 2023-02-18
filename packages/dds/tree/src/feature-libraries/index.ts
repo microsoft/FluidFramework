@@ -123,6 +123,6 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 export { TreeChunk, chunkTree, buildChunkedForest } from "./chunked-forest";
 
 // Split into separate import and export for compatibility with API-Extractor.
-import * as SchemaAware from "./schemaAware";
+import * as SchemaAware from "./schema-aware";
 import * as FieldKinds from "./defaultFieldKinds";
 export { SchemaAware, FieldKinds };
