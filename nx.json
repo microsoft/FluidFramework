@@ -3,43 +3,38 @@
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
+        "parallel": 6,
         "cacheableOperations": [
-          "build",
           "build:compile",
-          "build:esnext",
-          "build:full",
-          "build:full:compile",
-          "eslint",
-          "eslint:fix",
-          "format",
-          "lint",
-          "lint:fix",
-          "prettier",
-          "prettier:fix",
-          "test",
-          "test:jest",
-          "webpack",
-          "webpack:dev",
-          "build:copy",
-          "build:commonjs",
-          "build:test",
-          "test:mocha",
-          "tsc"
+          "lint"
         ],
         "accessToken": "ZmY4MzQ3MDUtOWU1YS00MzJiLTg4ZTgtY2M3OWNlZjlhODk4fHJlYWQtd3JpdGU="
       }
     }
   },
+  "namedInputs": {
+		"default": ["{projectRoot}/**/*"],
+		"src": [
+			"{projectRoot}/package.json",
+			"{projectRoot}/tsconfig.*",
+			"{projectRoot}/src/**/*",
+			"!{projectRoot}/src/test/**/*"
+		],
+		"test": ["{projectRoot}/package.json", "{projectRoot}/src/test/**/*"],
+		"docs": [
+			"{projectRoot}/package.json",
+			"{projectRoot}/api-extractor.json",
+			"{projectRoot}/src/test/**/*"
+		]
+	},
   "targetDefaults": {
-    "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
-    },
+		"build": {
+			"inputs": ["src", "^src"],
+			"dependsOn": ["^build"],
+			"outputs": ["{projectRoot}/dist", "{projectRoot}/lib", "{projectRoot}/*.tsbuildinfo"]
+		},
     "build:compile": {
+			"inputs": ["src", "^src"],
       "dependsOn": [
         "^build:compile"
       ],
@@ -55,27 +50,6 @@
         "{projectRoot}/lib"
       ]
     },
-    "build:full": {
-      "dependsOn": [
-        "^build:full"
-      ],
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
-    },
-    "build:full:compile": {
-      "dependsOn": [
-        "^build:full:compile"
-      ],
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
-    },
-    "eslint": {
-      "dependsOn": [
-        "^eslint"
-      ]
-    },
     "lint": {
       "dependsOn": [
         "^lint"
@@ -87,11 +61,6 @@
       ],
       "outputs": [
         "{projectRoot}/dist/test"
-      ]
-    },
-    "test:jest": {
-      "dependsOn": [
-        "^test:jest"
       ]
     },
     "build:commonjs": {
@@ -110,37 +79,14 @@
         "{projectRoot}/dist/test"
       ]
     },
-    "test:mocha": {
-      "dependsOn": [
-        "^test:mocha"
-      ]
-    },
-    "tsc": {
-      "dependsOn": [
-        "^tsc"
-      ],
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
-    },
+		"tsc": {
+			"inputs": ["src", "^src"],
+			"dependsOn": ["^tsc"],
+			"outputs": ["{projectRoot}/dist"]
+		},
     "build:docs": {
       "dependsOn": [
         "^build:docs"
-      ]
-    },
-    "build:genver": {
-      "dependsOn": [
-        "^build:genver"
-      ]
-    },
-    "typetests:gen": {
-      "dependsOn": [
-        "^typetests:gen"
-      ]
-    },
-    "typetests:prepare": {
-      "dependsOn": [
-        "^typetests:prepare"
       ]
     }
   }
