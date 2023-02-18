@@ -408,7 +408,6 @@ export interface MultiLineDocumentationNode<TData extends object = Data> extends
 // @public
 export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
     constructor(children: SingleLineDocumentationNode[]);
-    // (undocumented)
     static createFromPlainTextEntries(entries: string[]): OrderedListNode;
     static readonly Empty: OrderedListNode;
     get singleLine(): false;
@@ -586,7 +585,6 @@ export function transformDocNode(docNode: DocNode, contextApiItem: ApiItem, conf
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
     constructor(children: SingleLineDocumentationNode[]);
-    // (undocumented)
     static createFromPlainTextEntries(entries: string[]): UnorderedListNode;
     static readonly Empty: UnorderedListNode;
     get singleLine(): false;

@@ -59,6 +59,9 @@ export class OrderedListNode
 		super(children);
 	}
 
+	/**
+	 * Creates an {@link OrderedListNode} from a list of single-line string entries.
+	 */
 	public static createFromPlainTextEntries(entries: string[]): OrderedListNode {
 		return new OrderedListNode(entries.map((entry) => new PlainTextNode(entry)));
 	}

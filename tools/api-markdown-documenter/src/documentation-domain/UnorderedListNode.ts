@@ -59,6 +59,9 @@ export class UnorderedListNode
 		super(children);
 	}
 
+	/**
+	 * Creates an {@link UnorderedListNode} from a list of single-line string entries.
+	 */
 	public static createFromPlainTextEntries(entries: string[]): UnorderedListNode {
 		return new UnorderedListNode(entries.map((entry) => new PlainTextNode(entry)));
 	}
