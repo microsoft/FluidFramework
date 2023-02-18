@@ -4,7 +4,7 @@
 			"runner": "@nrwl/nx-cloud",
 			"options": {
 				"parallel": 6,
-				"cacheableOperations": ["build:compile", "lint", "format"],
+				"cacheableOperations": ["build:compile", "build:genver", "lint", "format"],
 				"accessToken": "ZmY4MzQ3MDUtOWU1YS00MzJiLTg4ZTgtY2M3OWNlZjlhODk4fHJlYWQtd3JpdGU="
 			}
 		}
