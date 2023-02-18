@@ -130,6 +130,7 @@ stages:
           releaseBuildVar: $[variables.releaseBuild]
           ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
             targetBranchName: $(System.PullRequest.TargetBranch)
+            NX_BRANCH: $(System.PullRequest.PullRequestNumber)
         steps:
         # Setup
         - checkout: self
