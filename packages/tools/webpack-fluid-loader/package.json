@@ -82,7 +82,6 @@
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/tool-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/view-adapters": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/view-interfaces": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/web-code-loader": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"axios": "^0.26.0",
