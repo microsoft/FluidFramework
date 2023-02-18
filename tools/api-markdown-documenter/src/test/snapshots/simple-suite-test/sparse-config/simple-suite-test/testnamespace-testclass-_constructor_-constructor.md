@@ -12,4 +12,4 @@ constructor(testClassProperty: string);
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| testClassProperty | string | See [TestClass.testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) |
+| testClassProperty | string | See [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) |

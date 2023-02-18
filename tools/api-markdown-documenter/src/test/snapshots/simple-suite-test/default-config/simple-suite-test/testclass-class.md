@@ -14,13 +14,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 ### Type Parameters
 
-#### TTypeParameterA
-
-A type parameter
-
-#### TTypeParameterB
-
-Another type parameter
+| Parameter | Description |
+| --- | --- |
+| TTypeParameterA | A type parameter |
+| TTypeParameterB | Another type parameter |
 
 ## Remarks {#testclass-remarks}
 
@@ -64,7 +61,7 @@ Here are some remarks about the class
 | --- | --- | --- | --- |
 | [publicAbstractMethod()](./simple-suite-test/testclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
 | [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](./simple-suite-test/testclass-class#virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod](./simple-suite-test/testabstractclass-class#virtualmethod-method). |
+| [virtualMethod()](./simple-suite-test/testclass-class#virtualmethod-method) |  | number | Overrides [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method). |
 
 ## Constructor Details
 
@@ -87,9 +84,9 @@ Here are some remarks about the constructor
 | Parameter | Type | Description |
 | --- | --- | --- |
 | privateProperty | number | See [TestAbstractClass](./simple-suite-test/testabstractclass-class)'s constructor. |
-| protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) | See [TestAbstractClass.protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property). |
-| testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property). |
-| testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property). |
+| protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) | See [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property). |
+| testClassProperty | TTypeParameterB | See [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property). |
+| testClassEventProperty | () =&gt; void | See [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property). |
 
 ## Event Details
 
@@ -225,7 +222,7 @@ static testClassStaticMethod(foo: number): string;
 
 ### virtualMethod {#virtualmethod-method}
 
-Overrides [TestAbstractClass.virtualMethod](./simple-suite-test/testabstractclass-class#virtualmethod-method).
+Overrides [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method).
 
 #### Signature {#virtualmethod-signature}
 

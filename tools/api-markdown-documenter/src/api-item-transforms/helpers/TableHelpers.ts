@@ -13,6 +13,7 @@ import {
 	Excerpt,
 	Parameter,
 	ReleaseTag,
+	TypeParameter,
 } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
@@ -281,6 +282,55 @@ export function createParametersSummaryTable(
 		}
 		bodyRowCells.push(createParameterTypeCell(apiParameter, config));
 		bodyRowCells.push(createParameterSummaryCell(apiParameter, contextApiItem, config));
+
+		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+	}
+
+	return new TableNode(bodyRows, headerRow);
+}
+
+/**
+ * Creates a simple summary table for a series of type parameters.
+ * Displays each parameter's name, type, and description ({@link https://tsdoc.org/pages/tags/typeparam/ | @typeParam}) comment.
+ *
+ * @param apiTypeParameters - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
+ * @param contextApiItem - The API item with which the parameter is associated.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function createTypeParametersSummaryTable(
+	apiTypeParameters: readonly TypeParameter[],
+	contextApiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
+): TableNode {
+	// Only display "Modifiers" column if there are any optional parameters present.
+	const hasOptionalParameters = apiTypeParameters.some(
+		(apiTypeParameter) => apiTypeParameter.isOptional,
+	);
+
+	const headerRowCells: TableHeaderCellNode[] = [
+		TableHeaderCellNode.createFromPlainText("Parameter"),
+	];
+	if (hasOptionalParameters) {
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+	}
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
+	const headerRow = new TableHeaderRowNode(headerRowCells);
+
+	function createModifierCell(apiParameter: TypeParameter): TableBodyCellNode {
+		return apiParameter.isOptional
+			? TableBodyCellNode.createFromPlainText("optional")
+			: TableBodyCellNode.Empty;
+	}
+
+	const bodyRows: TableBodyRowNode[] = [];
+	for (const apiTypeParameter of apiTypeParameters) {
+		const bodyRowCells: TableBodyCellNode[] = [
+			TableBodyCellNode.createFromPlainText(apiTypeParameter.name),
+		];
+		if (hasOptionalParameters) {
+			bodyRowCells.push(createModifierCell(apiTypeParameter));
+		}
+		bodyRowCells.push(createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config));
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
@@ -656,6 +706,36 @@ export function createParameterSummaryCell(
 
 	const cellContent = transformDocSection(
 		apiParameter.tsdocParamBlock.content,
+		docNodeTransformOptions,
+	);
+
+	// Since we are putting the contents into a table cell anyways, omit the Paragraph
+	// node from the hierarchy to simplify it.
+	return new TableBodyCellNode(cellContent.children);
+}
+
+/**
+ * Creates a table cell containing the description ({@link https://tsdoc.org/pages/tags/typeparam/ | @typeParam}) comment
+ * of the provided parameter.
+ * If the parameter has no documentation, an empty cell will be used.
+ *
+ * @param apiTypeParameter - The type parameter whose comment will be displayed in the cell.
+ * @param contextApiItem - The API item with which the parameter is associated.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function createTypeParameterSummaryCell(
+	apiTypeParameter: TypeParameter,
+	contextApiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
+): TableBodyCellNode {
+	if (apiTypeParameter.tsdocTypeParamBlock === undefined) {
+		return TableBodyCellNode.Empty;
+	}
+
+	const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
+
+	const cellContent = transformDocSection(
+		apiTypeParameter.tsdocTypeParamBlock.content,
 		docNodeTransformOptions,
 	);
 

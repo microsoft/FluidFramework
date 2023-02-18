@@ -46,10 +46,10 @@ Here are some remarks about the interface
 
 ## See Also {#testinterface-see-also}
 
-[TestInterface.testInterfaceMethod](docs/simple-suite-test/testinterface-testinterfacemethod-methodsignature)
+[testInterfaceMethod()](docs/simple-suite-test/testinterface-testinterfacemethod-methodsignature)
 
-[TestInterface.testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature)
+[testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature)
 
-[TestInterface.testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature)
+[testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature)
 
-[TestInterface.testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature)
+[testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature)

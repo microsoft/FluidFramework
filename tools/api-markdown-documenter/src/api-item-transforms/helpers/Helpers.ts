@@ -50,7 +50,7 @@ import {
 } from "../../utilities";
 import { transformDocSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "../Utilities";
-import { createParametersSummaryTable } from "./TableHelpers";
+import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers";
 
 /**
  * Generates a section for an API signature.
@@ -270,27 +270,9 @@ export function createTypeParametersSection(
 		return undefined;
 	}
 
-	const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
+	const typeParamTable = createTypeParametersSummaryTable(typeParameters, contextApiItem, config);
 
-	const subSections: SectionNode[] = [];
-	for (const typeParameter of typeParameters) {
-		const innerContent: DocumentationNode[] = [];
-
-		if (typeParameter.tsdocTypeParamBlock !== undefined) {
-			innerContent.push(
-				transformDocSection(
-					typeParameter.tsdocTypeParamBlock.content,
-					docNodeTransformOptions,
-				),
-			);
-		}
-
-		subSections.push(
-			new SectionNode(innerContent, HeadingNode.createFromPlainText(typeParameter.name)),
-		);
-	}
-
-	return new SectionNode(subSections, HeadingNode.createFromPlainText("Type Parameters"));
+	return new SectionNode([typeParamTable], HeadingNode.createFromPlainText("Type Parameters"));
 }
 
 /**

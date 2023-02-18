@@ -12,9 +12,9 @@ export interface TestInterfaceWithTypeParameter<T>
 
 ### Type Parameters
 
-#### T
-
-A type parameter
+| Parameter | Description |
+| --- | --- |
+| T | A type parameter |
 
 ## Remarks {#testinterfacewithtypeparameter-remarks}
 
