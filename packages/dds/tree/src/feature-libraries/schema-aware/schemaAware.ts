@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { $, List, Object as KObject } from "hkt-toolbelt";
 
 import {
 	FieldSchema,
@@ -24,7 +23,7 @@ import { AllowOptional, ListToKeys } from "../modular-schema/typedSchema/typeUti
 // eslint-disable-next-line import/no-internal-modules
 import { NameSet } from "../modular-schema/typedSchema/outputTypes";
 import { defaultSchemaPolicy } from "../defaultSchema";
-import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
+import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
 
 /**
  * Example strong type for an API derived from schema.
@@ -40,6 +39,9 @@ export type TypedTree<
 	TSchema extends LabeledTreeSchema<any>,
 > = TypedTreeFromInfo<TMap, Mode, TSchema["typeInfo"]>;
 
+/**
+ * @alpha
+ */
 export type TypedTreeFromInfo<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
@@ -51,6 +53,9 @@ export type TypedTreeFromInfo<
 	TSchema["name"]
 >;
 
+/**
+ * @alpha
+ */
 export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
 	undefined extends TypedValue<TSchema>
 		? {
@@ -60,6 +65,9 @@ export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
 				[valueSymbol]: TypedValue<TSchema>;
 		  };
 
+/**
+ * @alpha
+ */
 export const enum ApiMode {
 	/**
 	 * Allow all forms accepted as ContextuallyTypedNodeData that align with the schema.
@@ -87,7 +95,15 @@ export const enum ApiMode {
 	Wrapped,
 }
 
-type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
+/**
+ * @alpha
+ */
+export type CollectOptions<
+	Mode extends ApiMode,
+	TTypedFields,
+	TValueSchema extends ValueSchema,
+	TName,
+> = {
 	[ApiMode.Flexible]: CollectOptionsFlexible<TTypedFields, TValueSchema, TName>;
 	[ApiMode.Normalized]: CollectOptionsNormalized<TTypedFields, TValueSchema, TName>;
 	[ApiMode.Wrapped]: {
@@ -96,14 +112,21 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 	} & TTypedFields;
 }[Mode];
 
-type CollectOptionsFlexible<TTypedFields, TValueSchema extends ValueSchema, TName> =
+/**
+ * @alpha
+ */
+export type CollectOptionsFlexible<TTypedFields, TValueSchema extends ValueSchema, TName> =
 	| ({ [typeNameSymbol]?: TName } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields)
 	| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never);
 
-type CollectOptionsNormalized<TTypedFields, TValueSchema extends ValueSchema, TName> = Record<
-	string,
-	never
-> extends TTypedFields
+/**
+ * @alpha
+ */
+export type CollectOptionsNormalized<
+	TTypedFields,
+	TValueSchema extends ValueSchema,
+	TName,
+> = Record<string, never> extends TTypedFields
 	? TValueSchema extends PrimitiveValueSchema
 		? TypedValue<TValueSchema>
 		: {
@@ -117,6 +140,7 @@ type CollectOptionsNormalized<TTypedFields, TValueSchema extends ValueSchema, TN
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
+ * @alpha
  */
 export type TypedFields<
 	TMap extends TypedSchemaData,
@@ -129,7 +153,10 @@ export type TypedFields<
 	>;
 }>;
 
-type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
+/**
+ * @alpha
+ */
+export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
 	[Multiplicity.Forbidden]: undefined;
 	[Multiplicity.Optional]: undefined | TypedChild;
 	[Multiplicity.Sequence]: TypedChild[];
@@ -151,8 +178,6 @@ export type TreeTypesToTypedTreeTypes<
 	T extends NameSet<infer Names> ? Names : TMap["allTypes"]
 >;
 
-type ValuesOf<T> = T[keyof T];
-
 /**
  * @alpha
  */
@@ -161,12 +186,6 @@ export interface TypedSchemaData extends SchemaDataAndPolicy {
 	treeSchemaObject: Record<string, any>; // LabeledTreeSchema<any>
 	allTypes: readonly string[];
 }
-
-// AtPath does not seem to work for this case due to missing index signature, so use `At` twice.
-type NamesFromSchema<T extends LabeledTreeSchema<any>[]> = $<
-	$<List.Map, $<KObject.At, "name">>,
-	$<$<List.Map, $<KObject.At, "typeInfo">>, T>
->;
 
 /**
  * @alpha

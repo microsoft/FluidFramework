@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { $, List, Kind } from "hkt-toolbelt";
+// import { $, List, Kind } from "hkt-toolbelt";
 
 import { Named } from "../../../core";
 
@@ -13,11 +13,14 @@ import { Named } from "../../../core";
 
 /**
  * https://code.lol/post/programming/higher-kinded-types/
+ *
+ * @alpha
  */
 export type Assume<T, U> = T extends U ? T : U;
 
 /**
  * Convert a object type into the type of a ReadonlyMap from field name to value.
+ * @alpha
  */
 export type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<
 	MapKey,
@@ -44,6 +47,7 @@ export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (inf
 
 /**
  * Takes in a list of strings, and returns an object with those strings as keys.
+ * @alpha
  */
 export type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
 	[key in T[number]]: TValue;
@@ -53,6 +57,7 @@ export type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
  * Replaces undefined and unknown with a default value.
  * Handling of `unknown` this way is required to make this work with optional fields,
  * since they seem to infer the `unknown` type, not undefined.
+ * @alpha
  */
 export type WithDefault<T, Default> = T extends undefined
 	? Default
@@ -62,23 +67,30 @@ export type WithDefault<T, Default> = T extends undefined
 
 /**
  * Converts list of names or named objects into list of names.
+ * Uses "hkt-toolbelt"
  */
-export type AsNames<T extends (TName | Named<TName>)[], TName = string> = Assume<
-	$<$<List.Map, AsNameKind>, T>,
-	TName[]
->;
+// export type AsNames<T extends (TName | Named<TName>)[], TName = string> = Assume<
+// 	$<$<List.Map, AsNameKind>, T>,
+// 	TName[]
+// >;
 
-export interface AsNameKind extends Kind.Kind {
-	f(x: this[Kind._]): AsName<typeof x>;
-}
+// export interface AsNameKind extends Kind.Kind {
+// 	f(x: this[Kind._]): AsName<typeof x>;
+// }
 
+/**
+ * @alpha
+ */
 export type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
 
 /**
+ * Converts list of names or named objects into list of names.
+ *
  * Version of AsNames that does not use "hkt-toolbelt".
+ * @alpha
  */
-type AsNamesX<T extends [...(unknown | Named<TName>)[]], TName = string> = Assume<
-	T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNamesX<Tail, TName>] : [],
+export type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<
+	T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNames<Tail, TName>] : [],
 	TName[]
 >;
 
@@ -100,7 +112,7 @@ export type InlineDeep<T> = {
 };
 
 /**
- *
+ *@alpha
  */
 export type RemoveOptionalFields<T> = {
 	[P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
@@ -108,6 +120,7 @@ export type RemoveOptionalFields<T> = {
 
 /**
  * Like Partial but removes files which are must be undefined.
+ * @alpha
  */
 export type PartialWithoutUndefined<T> = {
 	[P in keyof T as T[P] extends undefined ? never : P]?: T[P];
@@ -115,5 +128,6 @@ export type PartialWithoutUndefined<T> = {
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
+ * @alpha
  */
-export type AllowOptional<T> = InlineOnce<PartialWithoutUndefined<T> & RemoveOptionalFields<T>>;
+export type AllowOptional<T> = PartialWithoutUndefined<T> & RemoveOptionalFields<T>;

@@ -27,6 +27,7 @@ import { ArrayToUnion, AsNames, WithDefault } from "./typeUtils";
 
 /**
  * Object for capturing information about a TreeSchema for use at both compile time and runtime.
+ * @alpha
  */
 export interface TypedTreeSchemaBuilder {
 	readonly name: string;
@@ -37,11 +38,12 @@ export interface TypedTreeSchemaBuilder {
 	readonly value?: ValueSchema;
 }
 
-type EmptyObject = Readonly<Record<string, never>>;
-
+/**
+ * @alpha
+ */
 export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
 	readonly name: T["name"];
-	readonly local: WithDefault<T["local"], EmptyObject>;
+	readonly local: WithDefault<T["local"], Record<string, never>>;
 	readonly global: AsNames<WithDefault<T["global"], []>, GlobalFieldKeySymbol>;
 	readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof emptyField>;
 	readonly extraGlobalFields: WithDefault<T["extraGlobalFields"], false>;
@@ -123,11 +125,6 @@ export function typedTreeSchemaFromInfo<T extends TreeSchemaTypeInfo>(t: T): Lab
 
 /**
  * Schema for a field which must always be empty.
+ * @alpha
  */
 export const emptyField = typedFieldSchema(forbidden);
-
-/**
- * Placeholder used for errors inferring types.
- * Used instead of "never" since "never" can propagate in hard to track ways through type meta programming.
- */
-export type InferError = "InferError";

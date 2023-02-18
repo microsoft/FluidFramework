@@ -4,17 +4,16 @@
 
 ```ts
 
-import { $ } from 'hkt-toolbelt';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { Kind } from 'hkt-toolbelt';
-import { List } from 'hkt-toolbelt';
-import { Object as Object_2 } from 'hkt-toolbelt';
 import { Serializable } from '@fluidframework/datastore-definitions';
+
+// @alpha
+type AllowOptional<T> = PartialWithoutUndefined<T> & RemoveOptionalFields<T>;
 
 // @alpha
 export type Anchor = Brand<number, "rebaser.Anchor">;
@@ -36,18 +35,35 @@ export class AnchorSet {
     track(path: UpPath | null): Anchor;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 const enum ApiMode {
     Flexible = 0,
     Normalized = 1,
     Wrapped = 2
 }
 
+// @alpha (undocumented)
+type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
+    [Multiplicity.Forbidden]: undefined;
+    [Multiplicity.Optional]: undefined | TypedChild;
+    [Multiplicity.Sequence]: TypedChild[];
+    [Multiplicity.Value]: TypedChild;
+}[TMultiplicity];
+
 // @alpha
 export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<TGet> {
     // (undocumented)
     [n: number]: TSet;
 }
+
+// @alpha (undocumented)
+type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
+
+// @alpha
+type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNames<Tail, TName>] : [], TName[]>;
+
+// @alpha
+type Assume<T, U> = T extends U ? T : U;
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -119,6 +135,28 @@ export interface ChildLocation {
     // (undocumented)
     readonly index: number;
 }
+
+// @alpha (undocumented)
+type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
+    [ApiMode.Flexible]: CollectOptionsFlexible<TTypedFields, TValueSchema, TName>;
+    [ApiMode.Normalized]: CollectOptionsNormalized<TTypedFields, TValueSchema, TName>;
+    [ApiMode.Wrapped]: {
+        [typeNameSymbol]: TName;
+        [valueSymbol]: TypedValue<TValueSchema>;
+    } & TTypedFields;
+}[Mode];
+
+// @alpha (undocumented)
+type CollectOptionsFlexible<TTypedFields, TValueSchema extends ValueSchema, TName> = ({
+    [typeNameSymbol]?: TName;
+} & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields) | (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never);
+
+// @alpha (undocumented)
+type CollectOptionsNormalized<TTypedFields, TValueSchema extends ValueSchema, TName> = Record<string, never> extends TTypedFields ? TValueSchema extends PrimitiveValueSchema ? TypedValue<TValueSchema> : {
+    [typeNameSymbol]: TName & TreeSchemaIdentifier;
+} & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields : {
+    [typeNameSymbol]: TName & TreeSchemaIdentifier;
+} & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields;
 
 // @alpha
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
@@ -299,6 +337,15 @@ export interface EditDescription {
 
 // @alpha
 export const emptyField: FieldSchema;
+
+// @alpha
+const emptyField_2: {
+    kind: FieldKind<FieldEditor<0>> & {
+        identifier: "Forbidden" & BrandedType<string, "tree.FieldKindIdentifier">;
+        multiplicity: import("../fieldKind").Multiplicity.Forbidden;
+    };
+    types: NameSet<[]>;
+};
 
 // @alpha
 export const EmptyKey: LocalFieldKey;
@@ -576,7 +623,19 @@ declare namespace InternalTypes {
     export {
         TreeTypesToTypedTreeTypes,
         TypedSchemaData,
-        ValidContextuallyTypedNodeData
+        ValidContextuallyTypedNodeData,
+        TypedTree,
+        TypedTreeFromInfo,
+        CollectOptions,
+        TypedFields,
+        CollectOptionsFlexible,
+        CollectOptionsNormalized,
+        ApplyMultiplicity,
+        ValueFieldTreeFromSchema,
+        NamesFromSchema,
+        ValuesOf,
+        TypedValue,
+        PrimitiveValueSchema
     }
 }
 
@@ -741,6 +800,11 @@ interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTreeSchem
 }
 
 // @alpha
+type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
+    [key in T[number]]: TValue;
+};
+
+// @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @alpha
@@ -870,6 +934,15 @@ interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeSchemaId
 }
 
 // @alpha (undocumented)
+type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema<any>[]> = T extends [
+infer Head,
+...infer Tail
+] ? [
+TypedSchema.Assume<Head, TypedSchema.LabeledTreeSchema<any>>["typeInfo"]["name"],
+...NamesFromSchema<TypedSchema.Assume<Tail, TypedSchema.LabeledTreeSchema<any>[]>>
+] : [];
+
+// @alpha (undocumented)
 type NestedChange<TTree = ProtoNode> = ChildIndex & NodeChanges<TTree>;
 
 // @alpha
@@ -922,6 +995,11 @@ type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema ext
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 // @alpha
+type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<MapKey, MapValue> & {
+    get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
+};
+
+// @alpha
 export interface ObservingDependent extends Dependent {
     // @override
     listDependees(): Iterable<Dependee>;
@@ -940,6 +1018,11 @@ export interface OptionalFieldEditBuilder {
 export const parentField: unique symbol;
 
 // @alpha
+type PartialWithoutUndefined<T> = {
+    [P in keyof T as T[P] extends undefined ? never : P]?: T[P];
+};
+
+// @alpha
 export interface PathRootPrefix {
     indexOffset?: number;
     parent?: UpPath | undefined;
@@ -954,6 +1037,9 @@ export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | un
 
 // @alpha (undocumented)
 export type PrimitiveValue = string | boolean | number;
+
+// @alpha
+type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
 
 // @alpha (undocumented)
 export interface ProgressiveEditBuilder<TChange> {
@@ -988,6 +1074,11 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 
 // @alpha
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
+
+// @alpha (undocumented)
+type RemoveOptionalFields<T> = {
+    [P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
+};
 
 // @alpha
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
@@ -1131,6 +1222,22 @@ export enum TransactionResult {
 }
 
 // @alpha (undocumented)
+interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
+    // (undocumented)
+    readonly extraGlobalFields: WithDefault<T["extraGlobalFields"], false>;
+    // (undocumented)
+    readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof emptyField_2>;
+    // (undocumented)
+    readonly global: AsNames<WithDefault<T["global"], []>, GlobalFieldKeySymbol>;
+    // (undocumented)
+    readonly local: WithDefault<T["local"], Record<string, never>>;
+    // (undocumented)
+    readonly name: T["name"];
+    // (undocumented)
+    readonly value: WithDefault<T["value"], ValueSchema.Nothing>;
+}
+
+// @alpha (undocumented)
 export interface TreeLocation {
     // (undocumented)
     readonly index: number;
@@ -1205,6 +1312,13 @@ export interface TreeValue extends Serializable {
 }
 
 // @alpha
+type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
+    [key: string]: FieldSchemaTypeInfo;
+}> = AllowOptional<{
+    readonly [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>>;
+}>;
+
+// @alpha
 function typedFieldSchema<TKind extends FieldKind, TTypes extends (string | Named<string>)[]>(kind: TKind, ...typeArray: TTypes): {
     kind: TKind;
     types: NameSet<AsNames<TTypes>>;
@@ -1214,10 +1328,22 @@ declare namespace TypedSchema {
     export {
         typedTreeSchema as tree,
         typedFieldSchema as field,
+        TreeInfoFromBuilder,
+        emptyField_2 as emptyField,
+        TypedTreeSchemaBuilder,
         FieldSchemaTypeInfo,
         LabeledTreeSchema,
         TreeSchemaTypeInfo,
-        NameSet
+        NameSet,
+        ObjectToMap,
+        AsNames,
+        Assume,
+        WithDefault,
+        AsName,
+        ListToKeys,
+        AllowOptional,
+        PartialWithoutUndefined,
+        RemoveOptionalFields
     }
 }
 export { TypedSchema }
@@ -1239,7 +1365,40 @@ function typedSchemaData<T extends LabeledTreeSchema<any>[]>(globalFieldSchema: 
 };
 
 // @alpha
+type TypedTree<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends LabeledTreeSchema<any>> = TypedTreeFromInfo<TMap, Mode, TSchema["typeInfo"]>;
+
+// @alpha (undocumented)
+type TypedTreeFromInfo<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TreeSchemaTypeInfo> = CollectOptions<Mode, TypedFields<TMap, Mode, TSchema["local"]>, TSchema["value"], TSchema["name"]>;
+
+// @alpha
 function typedTreeSchema<T extends TypedTreeSchemaBuilder>(t: T): LabeledTreeSchema<TreeInfoFromBuilder<T>>;
+
+// @alpha
+interface TypedTreeSchemaBuilder {
+    // (undocumented)
+    readonly extraGlobalFields?: boolean;
+    // (undocumented)
+    readonly extraLocalFields?: FieldSchemaTypeInfo;
+    // (undocumented)
+    readonly global?: (GlobalFieldKeySymbol | Named<GlobalFieldKeySymbol>)[];
+    // (undocumented)
+    readonly local?: {
+        readonly [key: string]: FieldSchemaTypeInfo;
+    };
+    // (undocumented)
+    readonly name: string;
+    // (undocumented)
+    readonly value?: ValueSchema;
+}
+
+// @alpha
+type TypedValue<TValue extends ValueSchema> = {
+    [ValueSchema.Nothing]: undefined;
+    [ValueSchema.Number]: number;
+    [ValueSchema.String]: string;
+    [ValueSchema.Boolean]: boolean;
+    [ValueSchema.Serializable]: Value;
+}[TValue];
 
 // @alpha
 export const typeNameSymbol: unique symbol;
@@ -1284,6 +1443,13 @@ export interface ValueFieldEditBuilder {
     set(newContent: ITreeCursor): void;
 }
 
+// @alpha (undocumented)
+type ValueFieldTreeFromSchema<TSchema extends ValueSchema> = undefined extends TypedValue<TSchema> ? {
+    [valueSymbol]?: TypedValue<TSchema>;
+} : {
+    [valueSymbol]: TypedValue<TSchema>;
+};
+
 // @alpha
 export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
@@ -1300,8 +1466,14 @@ export enum ValueSchema {
     String = 2
 }
 
+// @alpha (undocumented)
+type ValuesOf<T> = T[keyof T];
+
 // @alpha
 export const valueSymbol: unique symbol;
+
+// @alpha
+type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
 
 // (No @packageDocumentation comment for this package)
 

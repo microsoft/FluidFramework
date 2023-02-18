@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
+// import { $, List, Object as KObject } from "hkt-toolbelt";
+
 import { Value, ValueSchema } from "../../core";
 import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../util";
 import { PrimitiveValue } from "../contextuallyTyped";
+import { TypedSchema } from "../modular-schema";
 
 /**
  * `ValueSchema` to allowed types for that schema.
+ * @alpha
  */
 export type TypedValue<TValue extends ValueSchema> = {
 	[ValueSchema.Nothing]: undefined;
@@ -20,6 +24,7 @@ export type TypedValue<TValue extends ValueSchema> = {
 
 /**
  * `ValueSchema` to allowed types for that schema.
+ * @alpha
  */
 export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
 
@@ -33,3 +38,27 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
 	type check2_ = isAssignableTo<Value, Value2>;
 	type check3_ = isAssignableTo<Value2, Value>;
 }
+
+// AtPath does not seem to work for this case due to missing index signature, so use `At` twice.
+// type NamesFromSchema<T extends LabeledTreeSchema<any>[]> = $<
+// 	$<List.Map, $<KObject.At, "name">>,
+// 	$<$<List.Map, $<KObject.At, "typeInfo">>, T>
+// >;
+
+/**
+ * @alpha
+ */
+export type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema<any>[]> = T extends [
+	infer Head,
+	...infer Tail,
+]
+	? [
+			TypedSchema.Assume<Head, TypedSchema.LabeledTreeSchema<any>>["typeInfo"]["name"],
+			...NamesFromSchema<TypedSchema.Assume<Tail, TypedSchema.LabeledTreeSchema<any>[]>>,
+	  ]
+	: [];
+
+/**
+ * @alpha
+ */
+export type ValuesOf<T> = T[keyof T];
