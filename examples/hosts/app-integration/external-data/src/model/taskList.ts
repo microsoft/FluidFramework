@@ -43,18 +43,17 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public set externalDataSnapshot(newValue: ExternalSnapshotTask) {
 		const changesAvailable = newValue.changeType !== undefined;
 		this._externalDataSnapshot.changeType = newValue.changeType;
-		this.emit("changesAvailable", changesAvailable);
+		this._externalDataSnapshot.id = newValue.id;
 		if (this._externalDataSnapshot.name !== newValue.name) {
 			this._externalDataSnapshot.name = newValue.name;
-			this.emit("externalNameChanged", newValue.name);
 		}
 		if (this._externalDataSnapshot.priority !== newValue.priority) {
 			this._externalDataSnapshot.priority = newValue.priority;
-			this.emit("externalPriorityChanged", newValue.priority);
 		}
+		this.emit("changesAvailable", changesAvailable);
 	}
 	private readonly _externalDataSnapshot: ExternalSnapshotTask = {
-		id: undefined,
+		id: this._id,
 		name: undefined,
 		priority: undefined,
 		changeType: undefined,
@@ -74,7 +73,6 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	}
 	public overwriteWithExternalData = (): void => {
 		this.externalDataSnapshot.changeType = undefined;
-		this.emit("changesAvailable", false);
 		if (this.externalDataSnapshot.priority !== undefined) {
 			this._draftPriority.set(this.externalDataSnapshot.priority);
 		}
@@ -82,6 +80,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 			const oldString = this._draftName.getText();
 			this._draftName.replaceText(0, oldString.length, this.externalDataSnapshot.name);
 		}
+		this.emit("changesAvailable", false);
 	};
 }
 
@@ -275,7 +274,6 @@ export class TaskList extends DataObject implements ITaskList {
 					currentTask.priority = incomingPriority;
 					currentTask.changeType = "change";
 				}
-
 				// Now look for differences between draftData and externalDataSnapshot
 				const task = this.tasks.get(id);
 				if (task === undefined) {

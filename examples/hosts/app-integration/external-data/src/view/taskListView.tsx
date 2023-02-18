@@ -7,7 +7,7 @@ import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import type { ITask, ITaskList } from "../model-interface";
+import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
 
 interface ITaskRowProps {
 	readonly task: ITask;
@@ -20,14 +20,8 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const { task, deleteDraftTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
-	const [externalName, setSourceName] = useState<string | undefined>(
-		task.externalDataSnapshot.name,
-	);
-	const [externalPriority, setSourcePriority] = useState<number | undefined>(
-		task.externalDataSnapshot.priority,
-	);
-	const [changeType, setChangeType] = useState<string | undefined>(
-		task.externalDataSnapshot.changeType,
+	const [externalDataSnapshot, setExternalDataSnapshot] = useState<ExternalSnapshotTask>(
+		task.externalDataSnapshot,
 	);
 	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
@@ -36,27 +30,18 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 				priorityRef.current.value = task.draftPriority.toString();
 			}
 		};
-		const updateExternalPriority = (): void => {
-			setSourcePriority(task.externalDataSnapshot.priority);
-			setChangeType(task.externalDataSnapshot.changeType);
-		};
-		const updateExternalName = (): void => {
-			setSourceName(task.externalDataSnapshot.name);
-			setChangeType(task.externalDataSnapshot.changeType);
-		};
-		const updateShowConflictUI = (value: boolean): void => {
+		const updateExternalSnapshotData = (value: boolean): void => {
+			setExternalDataSnapshot(task.externalDataSnapshot);
 			setShowConflictUI(value);
+			console.log('task.externalDataSnapshot');
+			console.log(task.externalDataSnapshot);
 		};
 		task.on("draftPriorityChanged", updateFromRemotePriority);
-		task.on("externalPriorityChanged", updateExternalPriority);
-		task.on("externalNameChanged", updateExternalName);
-		task.on("changesAvailable", updateShowConflictUI);
+		task.on("changesAvailable", updateExternalSnapshotData);
 		updateFromRemotePriority();
 		return (): void => {
 			task.off("draftPriorityChanged", updateFromRemotePriority);
-			task.off("externalPriorityChanged", updateExternalPriority);
-			task.off("externalNameChanged", updateExternalName);
-			task.off("changesAvailable", updateShowConflictUI);
+			task.off("changesAvailable", updateExternalSnapshotData);
 		};
 	}, [task, priorityRef]);
 
@@ -67,16 +52,16 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 
 	const showPriorityDiff =
 		showConflictUI &&
-		task.externalDataSnapshot.priority !== undefined &&
-		task.externalDataSnapshot.priority !== task.draftPriority;
+		externalDataSnapshot.priority !== undefined &&
+		externalDataSnapshot.priority !== task.draftPriority;
 	const showNameDiff =
 		showConflictUI &&
-		task.externalDataSnapshot.name !== undefined &&
-		task.externalDataSnapshot.name !== task.draftName.getText();
+		externalDataSnapshot.name !== undefined &&
+		externalDataSnapshot.name !== task.draftName.getText();
 	const showAcceptButton = showConflictUI ? "visible" : "hidden";
 
 	let diffColor: string = "white";
-	switch (changeType) {
+	switch (externalDataSnapshot.changeType) {
 		case "add": {
 			diffColor = "green";
 			break;
@@ -113,9 +98,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 					❌
 				</button>
 			</td>
-			{showNameDiff && <td style={{ backgroundColor: diffColor }}>{externalName}</td>}
+			{showNameDiff && <td style={{ backgroundColor: diffColor }}>{externalDataSnapshot.name}</td>}
 			{showPriorityDiff && (
-				<td style={{ backgroundColor: diffColor, width: "30px" }}>{externalPriority}</td>
+				<td style={{ backgroundColor: diffColor, width: "30px" }}>{externalDataSnapshot.priority}</td>
 			)}
 			<td>
 				<button
