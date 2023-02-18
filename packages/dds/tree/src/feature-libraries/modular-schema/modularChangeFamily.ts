@@ -368,15 +368,7 @@ export class ModularChangeFamily
 				{ ...change, change: change.change.fieldChanges },
 				genId,
 				repairStore,
-				undefined,
-				// TODO
-				// index === undefined
-				// 	? undefined
-				// 	: {
-				// 			parent: path,
-				// 			parentField: field,
-				// 			parentIndex: index,
-				// 		},
+				path,
 				crossFieldTable,
 			);
 		}
