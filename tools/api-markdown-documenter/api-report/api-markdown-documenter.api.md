@@ -248,6 +248,9 @@ export function getHeadingForApiItem(apiItem: ApiItem, config: Required<Markdown
 export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, textOverride?: string): Link;
 
 // @public
+export function getMarkdownRenderContextWithDefaults(partialContext: Partial<MarkdownRenderContext> | undefined): MarkdownRenderContext;
+
+// @public
 export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
 
 // @public

@@ -255,13 +255,13 @@ Here are some remarks about the event call signature
 
 ### See Also {#testinterface-see-also}
 
-[TestInterface.testInterfaceMethod](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature)
+[testInterfaceMethod()](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature)
 
-[TestInterface.testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature)
+[testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature)
 
-[TestInterface.testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature)
+[testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature)
 
-[TestInterface.testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature)
+[testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature)
 
 ## TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
 
@@ -577,7 +577,7 @@ Here are some remarks about the class
 | --- | --- | --- | --- |
 | [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
 | [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test#testabstractclass-virtualmethod-method). |
+| [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) |  | number | Overrides [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method). |
 
 ### Constructor Details
 
@@ -600,9 +600,9 @@ Here are some remarks about the constructor
 | Parameter | Type | Description |
 | --- | --- | --- |
 | privateProperty | number | See [TestAbstractClass](docs/simple-suite-test#testabstractclass-class)'s constructor. |
-| protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) | See [TestAbstractClass.protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property). |
-| testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property). |
-| testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property). |
+| protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) | See [protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property). |
+| testClassProperty | TTypeParameterB | See [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property). |
+| testClassEventProperty | () =&gt; void | See [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property). |
 
 ### Event Details
 
@@ -738,7 +738,7 @@ static testClassStaticMethod(foo: number): string;
 
 #### virtualMethod {#testclass-virtualmethod-method}
 
-Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test#testabstractclass-virtualmethod-method).
+Overrides [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method).
 
 ##### Signature {#virtualmethod-signature}
 
@@ -1186,7 +1186,7 @@ constructor(testClassProperty: string);
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| testClassProperty | string | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |
+| testClassProperty | string | See [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |
 
 ##### Property Details
 

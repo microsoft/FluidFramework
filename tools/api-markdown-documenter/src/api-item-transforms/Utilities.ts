@@ -6,9 +6,9 @@ import { ApiItem, IResolveDeclarationReferenceResult } from "@microsoft/api-extr
 import { DocDeclarationReference } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../Configuration";
-import { UrlTarget } from "../Link";
+import { Link } from "../Link";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { getFilePathForApiItem, getLinkUrlForApiItem } from "../utilities";
+import { getFilePathForApiItem, getLinkForApiItem } from "../utilities";
 import { DocNodeTransformOptions } from "./DocNodeTransforms";
 import { wrapInSection } from "./helpers";
 
@@ -50,7 +50,7 @@ export function getDocNodeTransformationOptions(
 ): DocNodeTransformOptions {
 	return {
 		contextApiItem,
-		resolveApiReference: (codeDestination): string | undefined =>
+		resolveApiReference: (codeDestination): Link | undefined =>
 			resolveSymbolicLink(contextApiItem, codeDestination, config),
 		logger: config.logger,
 	};
@@ -67,7 +67,7 @@ function resolveSymbolicLink(
 	contextApiItem: ApiItem,
 	codeDestination: DocDeclarationReference,
 	config: Required<MarkdownDocumenterConfiguration>,
-): UrlTarget | undefined {
+): Link | undefined {
 	const { apiModel, logger } = config;
 
 	const resolvedReference: IResolveDeclarationReferenceResult =
@@ -82,5 +82,5 @@ function resolveSymbolicLink(
 		return undefined;
 	}
 
-	return getLinkUrlForApiItem(resolvedReference.resolvedApiItem, config);
+	return getLinkForApiItem(resolvedReference.resolvedApiItem, config);
 }

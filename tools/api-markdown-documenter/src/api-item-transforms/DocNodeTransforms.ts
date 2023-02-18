@@ -19,7 +19,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../Configuration";
-import { UrlTarget } from "../Link";
+import { Link } from "../Link";
 import { Logger } from "../Logging";
 import {
 	CodeSpanNode,
@@ -78,9 +78,7 @@ export interface DocNodeTransformOptions {
 	 *
 	 * @returns The appropriate URL target if the reference can be resolved. Otherwise, `undefined`.
 	 */
-	readonly resolveApiReference: (
-		codeDestination: DocDeclarationReference,
-	) => UrlTarget | undefined;
+	readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
 
 	/**
 	 * Optional policy for logging system information.
@@ -208,18 +206,17 @@ export function transformDocLinkTag(
 	options: DocNodeTransformOptions,
 ): SingleLineDocumentationNode {
 	if (input.codeDestination !== undefined) {
-		// If link text was not provided, use the name of the referenced element.
-		const linkText = input.linkText?.trim() ?? input.codeDestination.emitAsTsdoc().trim();
+		const link = options.resolveApiReference(input.codeDestination);
 
-		const urlTarget = options.resolveApiReference(input.codeDestination);
-
-		const output =
-			urlTarget === undefined
-				? // If the code link could not be resolved, print the unresolved text in italics.
-				  SingleLineSpanNode.createFromPlainText(linkText, { italic: true })
-				: LinkNode.createFromPlainText(linkText, urlTarget);
-
-		return output;
+		if (link === undefined) {
+			// If the code link could not be resolved, print the unresolved text in italics.
+			const linkText = input.linkText?.trim() ?? input.codeDestination.emitAsTsdoc().trim();
+			return SingleLineSpanNode.createFromPlainText(linkText, { italic: true });
+		} else {
+			const linkText = input.linkText?.trim() ?? link.text;
+			const linkTarget = link.target;
+			return LinkNode.createFromPlainText(linkText, linkTarget);
+		}
 	}
 
 	if (input.urlDestination !== undefined) {
