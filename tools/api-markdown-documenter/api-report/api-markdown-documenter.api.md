@@ -127,9 +127,6 @@ export type CreateChildContentSections = (apiItem: ApiItem, childSections: Secti
 export function createDocumentWriter(): DocumentWriter;
 
 // @public
-export function createMarkdownRenderContext(customRenderers?: MarkdownRenderers): MarkdownRenderContext;
-
-// @public
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
 
 // @public
@@ -450,7 +447,7 @@ export interface PolicyOptions {
 export function renderApiModelAsMarkdown(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, customRenderers?: MarkdownRenderers): Promise<void>;
 
 // @public
-export function renderDocumentAsMarkdown(document: DocumentNode, customRenderers?: MarkdownRenderers): string;
+export function renderDocumentAsMarkdown(document: DocumentNode, context?: Partial<MarkdownRenderContext>): string;
 
 // @public
 export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends DocumentationNode = DocumentationNode> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;

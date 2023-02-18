@@ -24,7 +24,7 @@ describe("PlainText rendering tests", () => {
 			const context: Partial<MarkdownRenderContext> = {
 				italic: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(`_${text}_`);
+			expect(testRender(new PlainTextNode(text), context)).to.equal(`_${text}_`);
 		});
 
 		it("Bold text", () => {
@@ -32,7 +32,7 @@ describe("PlainText rendering tests", () => {
 			const context: Partial<MarkdownRenderContext> = {
 				bold: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(`**${text}**`);
+			expect(testRender(new PlainTextNode(text), context)).to.equal(`**${text}**`);
 		});
 
 		it("Strikethrough text", () => {
@@ -40,7 +40,7 @@ describe("PlainText rendering tests", () => {
 			const context: Partial<MarkdownRenderContext> = {
 				strikethrough: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(`~~${text}~~`);
+			expect(testRender(new PlainTextNode(text), context)).to.equal(`~~${text}~~`);
 		});
 
 		it("Text with complex formatting", () => {
@@ -50,9 +50,7 @@ describe("PlainText rendering tests", () => {
 				bold: true,
 				strikethrough: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
-				`**_~~${text}~~_**`,
-			);
+			expect(testRender(new PlainTextNode(text), context)).to.equal(`**_~~${text}~~_**`);
 		});
 	});
 
@@ -61,7 +59,7 @@ describe("PlainText rendering tests", () => {
 			const context: Partial<MarkdownRenderContext> = {
 				insideHtml: true,
 			};
-			expect(testRender(PlainTextNode.Empty, undefined, context)).to.equal("");
+			expect(testRender(PlainTextNode.Empty, context)).to.equal("");
 		});
 
 		it("Simple text", () => {
@@ -69,7 +67,7 @@ describe("PlainText rendering tests", () => {
 			const context: Partial<MarkdownRenderContext> = {
 				insideHtml: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(text);
+			expect(testRender(new PlainTextNode(text), context)).to.equal(text);
 		});
 
 		it("Italic text", () => {
@@ -78,9 +76,7 @@ describe("PlainText rendering tests", () => {
 				insideHtml: true,
 				italic: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
-				`<i>${text}</i>`,
-			);
+			expect(testRender(new PlainTextNode(text), context)).to.equal(`<i>${text}</i>`);
 		});
 
 		it("Bold text", () => {
@@ -89,9 +85,7 @@ describe("PlainText rendering tests", () => {
 				insideHtml: true,
 				bold: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
-				`<b>${text}</b>`,
-			);
+			expect(testRender(new PlainTextNode(text), context)).to.equal(`<b>${text}</b>`);
 		});
 
 		it("Strikethrough text", () => {
@@ -100,9 +94,7 @@ describe("PlainText rendering tests", () => {
 				insideHtml: true,
 				strikethrough: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
-				`<s>${text}</s>`,
-			);
+			expect(testRender(new PlainTextNode(text), context)).to.equal(`<s>${text}</s>`);
 		});
 
 		it("Text with complex formatting", () => {
@@ -113,7 +105,7 @@ describe("PlainText rendering tests", () => {
 				bold: true,
 				strikethrough: true,
 			};
-			expect(testRender(new PlainTextNode(text), undefined, context)).to.equal(
+			expect(testRender(new PlainTextNode(text), context)).to.equal(
 				`<b><i><s>${text}</s></i></b>`,
 			);
 		});

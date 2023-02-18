@@ -6,20 +6,17 @@ import { StringBuilder } from "@microsoft/tsdoc";
 
 import type { DocumentationNode } from "../../documentation-domain";
 import { DocumentWriter } from "../DocumentWriter";
-import { createRenderContext, renderNode } from "../Render";
-import { type MarkdownRenderers } from "../RenderConfiguration";
-import type { MarkdownRenderContext } from "../RenderContext";
+import { renderNode } from "../Render";
+import { MarkdownRenderContext, getContextWithDefaults } from "../RenderContext";
 
 /**
  * Tests the rendering of an individual {@link DocumentationNode}, returning the generated string content.
  */
 export function testRender(
 	node: DocumentationNode,
-	customRenderers?: MarkdownRenderers,
-	customContext?: Partial<MarkdownRenderContext>,
+	partialContext?: Partial<MarkdownRenderContext>,
 ): string {
-	const context = { ...createRenderContext(customRenderers), ...customContext };
-
+	const context = getContextWithDefaults(partialContext);
 	const writer = new DocumentWriter(new StringBuilder());
 
 	renderNode(node, writer, context);

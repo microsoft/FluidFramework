@@ -111,3 +111,14 @@ export const defaultMarkdownRenderers: MarkdownRenderers = {
 	[DocumentationNodeType.UnorderedList]: (node, writer, context): void =>
 		renderUnorderedList(node as UnorderedListNode, writer, context),
 };
+
+/**
+ * Constructs a complete list of {@link MarkdownRenderers} using provided optional renderer overrides, and filling
+ * in the rest with system defaults.
+ */
+export function getRenderersWithDefaults(customRenderers?: MarkdownRenderers): MarkdownRenderers {
+	return {
+		...defaultMarkdownRenderers,
+		...customRenderers,
+	};
+}

@@ -37,7 +37,7 @@ describe("BlockQuote rendering tests", () => {
 
 	describe("HTML", () => {
 		it("Empty BlockQuote", () => {
-			expect(testRender(BlockQuoteNode.Empty, undefined, { insideHtml: true })).to.equal(
+			expect(testRender(BlockQuoteNode.Empty, { insideHtml: true })).to.equal(
 				"<blockquote>\n</blockquote>\n",
 			);
 		});
@@ -49,7 +49,7 @@ describe("BlockQuote rendering tests", () => {
 				new LineBreakNode(),
 				new PlainTextNode("-BlockQuote"),
 			]);
-			const result = testRender(blockQuoteNode, undefined, { insideHtml: true });
+			const result = testRender(blockQuoteNode, { insideHtml: true });
 
 			const expected = [
 				"<blockquote>",

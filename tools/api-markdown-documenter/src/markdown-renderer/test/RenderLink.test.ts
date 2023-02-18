@@ -20,11 +20,9 @@ describe("Link rendering tests", () => {
 	it("Can render a simple LinkNode (HTML)", () => {
 		const linkText = "Some Website";
 		const linkTarget = "https://www.contoso.com";
-		const result = testRender(
-			new LinkNode([new PlainTextNode(linkText)], linkTarget),
-			undefined,
-			{ insideHtml: true },
-		);
+		const result = testRender(new LinkNode([new PlainTextNode(linkText)], linkTarget), {
+			insideHtml: true,
+		});
 
 		const expected = `<a href='${linkTarget}'>${linkText}</a>`;
 		expect(result).to.equal(expected);

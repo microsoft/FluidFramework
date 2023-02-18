@@ -39,8 +39,10 @@ describe("Custom node rendering tests", () => {
 	it("Can render a custom node type when given a renderer", () => {
 		const input = new CustomDocumentationNode("foo");
 		const result = testRender(input, {
-			[CustomDocumentationNode.type]: (node, writer, context): void =>
-				renderCustomDocumentationNode(node as CustomDocumentationNode, writer, context),
+			renderers: {
+				[CustomDocumentationNode.type]: (node, writer, context): void =>
+					renderCustomDocumentationNode(node as CustomDocumentationNode, writer, context),
+			},
 		});
 
 		expect(result).to.equal("foo");
