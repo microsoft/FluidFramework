@@ -11,11 +11,11 @@ import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
 import type {
+	ExternalSnapshotTask,
 	ITask,
 	ITaskEvents,
 	ITaskList,
 	TaskData,
-	ExternalSnapshotTask,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 

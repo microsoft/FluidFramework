@@ -82,29 +82,12 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	 */
 	draftPriority: number;
 	/**
-	 * The task name coming in from the external server.
-	 */
-	// readonly externalName: string | undefined;
-	// /**
-	//  * The task priority coming in from the external server.
-	//  */
-	// readonly externalPriority: number | undefined;
-	// /**
-	//  * The type of change to the task coming in from the external server.
-	//  */
-	// readonly changeType: string | undefined;
-	// /**
-	//  * Trigger event to render change to UI.
-	//  */
-	// readonly externalNameChanged: (name: string) => void;
-	// /**
-	//  * Trigger event to render change to UI.
-	//  */
-	// readonly externalPriorityChanged: (priority: number) => void;
-	/**
 	 * Save the proposed changes to SavedData.
 	 */
 	readonly overwriteWithExternalData: () => void;
+	/**
+	 * The data coming in from the external server.
+	 */
 	readonly externalDataSnapshot: ExternalSnapshotTask;
 }
 
