@@ -46,7 +46,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 
 {
 	const testTreeSchemaFromInfo = typedTreeSchemaFromInfo({
-		name: "testTreeSchema",
+		name: "testTreeSchema" as const,
 		local: { localKey1Name: testField },
 		extraLocalFields: testField,
 		extraGlobalFields: true,
@@ -54,8 +54,7 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 		value: ValueSchema.Serializable,
 	});
 
-	const testTreeSchema = typedTreeSchema({
-		name: "testTreeSchema",
+	const testTreeSchema = typedTreeSchema("testTreeSchema", {
 		local: { localKey1Name: testField },
 		extraLocalFields: testField,
 		extraGlobalFields: true,
@@ -116,9 +115,9 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 		local: {},
 	} as const;
 	const testTreeSchemaFromInfo = typedTreeSchemaFromInfo(fullData);
-	const testTreeSchema = typedTreeSchema(shortData);
+	const testTreeSchema = typedTreeSchema("X", shortData);
 
-	type Info = TreeInfoFromBuilder<typeof shortData>;
+	type Info = TreeInfoFromBuilder<typeof shortData, "X">;
 	{
 		type check1_ = requireAssignableTo<Info["name"], "X">;
 		type check2_ = requireAssignableTo<{}, Info["local"]>;
@@ -143,58 +142,60 @@ const testField = typedFieldSchema(FieldKinds.value, testTypeIdentifier);
 // Test TreeInfoFromBuilder's handling of "local"
 {
 	type empty_ = requireAssignableTo<
-		TreeInfoFromBuilder<{
-			name: "X";
-			local: {};
-		}>["local"],
+		TreeInfoFromBuilder<
+			{
+				local: {};
+			},
+			"X"
+		>["local"],
 		{}
 	>;
 	type empty2_ = requireAssignableTo<
 		{},
-		TreeInfoFromBuilder<{
-			name: "X";
-			local: {};
-		}>["local"]
+		TreeInfoFromBuilder<
+			{
+				local: {};
+			},
+			"X"
+		>["local"]
 	>;
 	type undefined_ = requireAssignableTo<
-		TreeInfoFromBuilder<{
-			name: "X";
-			local: undefined;
-		}>["local"],
+		TreeInfoFromBuilder<
+			{
+				local: undefined;
+			},
+			"X"
+		>["local"],
 		{}
 	>;
 	type undefined2_ = requireAssignableTo<
 		{},
-		TreeInfoFromBuilder<{
-			name: "X";
-			local: undefined;
-		}>["local"]
+		TreeInfoFromBuilder<
+			{
+				local: undefined;
+			},
+			"X"
+		>["local"]
 	>;
-	type omitted_ = requireAssignableTo<
-		TreeInfoFromBuilder<{
-			name: "X";
-		}>["local"],
-		{}
-	>;
-	type omitted2_ = requireAssignableTo<
-		{},
-		TreeInfoFromBuilder<{
-			name: "X";
-		}>["local"]
-	>;
+	type omitted_ = requireAssignableTo<TreeInfoFromBuilder<{}, "X">["local"], {}>;
+	type omitted2_ = requireAssignableTo<{}, TreeInfoFromBuilder<{}, "X">["local"]>;
 	type used_ = requireAssignableTo<
-		TreeInfoFromBuilder<{
-			name: "X";
-			local: { a: typeof testField };
-		}>["local"],
+		TreeInfoFromBuilder<
+			{
+				local: { a: typeof testField };
+			},
+			"X"
+		>["local"],
 		{ a: typeof testField }
 	>;
 	type used2_ = requireAssignableTo<
 		{ a: typeof testField },
-		TreeInfoFromBuilder<{
-			name: "X";
-			local: { a: typeof testField };
-		}>["local"]
+		TreeInfoFromBuilder<
+			{
+				local: { a: typeof testField };
+			},
+			"X"
+		>["local"]
 	>;
 }
 

@@ -454,17 +454,17 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> impl
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 // @alpha (undocumented)
-export interface FieldKinds {
-    // (undocumented)
-    optional: FieldKind;
-    // (undocumented)
-    sequence: FieldKind;
-    // (undocumented)
-    value: FieldKind;
-}
-
-// @alpha (undocumented)
-export const FieldKinds: FieldKinds;
+export const FieldKinds: {
+    readonly value: FieldKind<FieldEditor<any>> & {
+        multiplicity: Multiplicity.Value;
+    };
+    readonly optional: FieldKind<FieldEditor<any>> & {
+        multiplicity: Multiplicity.Optional;
+    };
+    readonly sequence: FieldKind<FieldEditor<any>> & {
+        multiplicity: Multiplicity.Sequence;
+    };
+};
 
 // @alpha
 export interface FieldKindSpecifier {
@@ -796,6 +796,8 @@ export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTreeSchema {
     // (undocumented)
     readonly localFields: ObjectToMap<T["local"], LocalFieldKey, FieldSchema>;
+    // (undocumented)
+    readonly name: T["name"] & TreeSchemaIdentifier;
     readonly typeInfo: T;
 }
 
@@ -1222,7 +1224,7 @@ export enum TransactionResult {
 }
 
 // @alpha (undocumented)
-interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
+interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder, TName extends string> {
     // (undocumented)
     readonly extraGlobalFields: WithDefault<T["extraGlobalFields"], false>;
     // (undocumented)
@@ -1232,7 +1234,7 @@ interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
     // (undocumented)
     readonly local: WithDefault<T["local"], Record<string, never>>;
     // (undocumented)
-    readonly name: T["name"];
+    readonly name: TName;
     // (undocumented)
     readonly value: WithDefault<T["value"], ValueSchema.Nothing>;
 }
@@ -1315,13 +1317,13 @@ export interface TreeValue extends Serializable {
 type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
     [key: string]: FieldSchemaTypeInfo;
 }> = AllowOptional<{
-    readonly [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>>;
+    [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>>;
 }>;
 
 // @alpha
 function typedFieldSchema<TKind extends FieldKind, TTypes extends (string | Named<string>)[]>(kind: TKind, ...typeArray: TTypes): {
     kind: TKind;
-    types: NameSet<AsNames<TTypes>>;
+    types: NameSet<UnbrandList<AsNames<TTypes>, TreeSchemaIdentifier>>;
 };
 
 declare namespace TypedSchema {
@@ -1343,7 +1345,9 @@ declare namespace TypedSchema {
         ListToKeys,
         AllowOptional,
         PartialWithoutUndefined,
-        RemoveOptionalFields
+        RemoveOptionalFields,
+        Unbrand,
+        UnbrandList
     }
 }
 export { TypedSchema }
@@ -1371,7 +1375,7 @@ type TypedTree<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema exten
 type TypedTreeFromInfo<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TreeSchemaTypeInfo> = CollectOptions<Mode, TypedFields<TMap, Mode, TSchema["local"]>, TSchema["value"], TSchema["name"]>;
 
 // @alpha
-function typedTreeSchema<T extends TypedTreeSchemaBuilder>(t: T): LabeledTreeSchema<TreeInfoFromBuilder<T>>;
+function typedTreeSchema<T extends TypedTreeSchemaBuilder, TName extends string>(name: TName, t: T): LabeledTreeSchema<TreeInfoFromBuilder<T, TName>>;
 
 // @alpha
 interface TypedTreeSchemaBuilder {
@@ -1385,8 +1389,6 @@ interface TypedTreeSchemaBuilder {
     readonly local?: {
         readonly [key: string]: FieldSchemaTypeInfo;
     };
-    // (undocumented)
-    readonly name: string;
     // (undocumented)
     readonly value?: ValueSchema;
 }
@@ -1405,6 +1407,12 @@ export const typeNameSymbol: unique symbol;
 
 // @alpha
 export const typeSymbol: unique symbol;
+
+// @alpha
+type Unbrand<T, B> = T extends infer S & B ? S : T;
+
+// @alpha
+type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail] ? [Unbrand<Head, B>, ...UnbrandList<Tail, B>] : [];
 
 // @alpha
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;

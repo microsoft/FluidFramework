@@ -67,13 +67,11 @@ type ValuesOf<T> = T[keyof T];
 // Example Schema:
 
 // Declare a simple type which just holds a number.
-const numberSchema = tree({
-	name: "number",
+const numberSchema = tree("number", {
 	value: ValueSchema.Number,
 });
 
-const ballSchema = tree({
-	name: "ball",
+const ballSchema = tree("ball", {
 	local: {
 		// TODO: test and fix passing schema objects in type array instead of strings.
 		x: field(value, "number"),

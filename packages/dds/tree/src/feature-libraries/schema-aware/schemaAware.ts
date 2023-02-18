@@ -147,7 +147,7 @@ export type TypedFields<
 	Mode extends ApiMode,
 	TFields extends { [key: string]: FieldSchemaTypeInfo },
 > = AllowOptional<{
-	readonly [key in keyof TFields]: ApplyMultiplicity<
+	[key in keyof TFields]: ApplyMultiplicity<
 		TFields[key]["kind"]["multiplicity"],
 		TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>
 	>;

@@ -35,13 +35,22 @@ const { tree, field } = TypedSchema;
 // Example Schema:
 
 // Declare a simple type which just holds a number.
-const numberSchema = tree({
-	name: "number" as const,
+const numberSchema = tree("number", {
 	value: ValueSchema.Number,
 });
 
-const ballSchema = tree({
-	name: "ball" as const,
+{
+	const numberField1 = field(value, numberSchema);
+	const numberField2 = field(value, numberSchema.name);
+	const numberField3 = field(value, numberSchema.typeInfo.name);
+	const numberField4 = field(value, "number");
+	type check1_ = requireAssignableTo<typeof numberField1, typeof numberField2>;
+	type check2_ = requireAssignableTo<typeof numberField2, typeof numberField3>;
+	type check3_ = requireAssignableTo<typeof numberField3, typeof numberField4>;
+	type check4_ = requireAssignableTo<typeof numberField4, typeof numberField1>;
+}
+
+const ballSchema = tree("ball", {
 	local: {
 		// TODO: test and fix passing schema objects in type array instead of strings.
 		x: field(value, "number"),
@@ -87,7 +96,7 @@ const extractedTypes2 = schemaData2.allTypes;
 type BallTreeX = InlineOnce<
 	ValidContextuallyTypedNodeData<typeof schemaData, ApiMode.Flexible, readonly ["ball"]>
 >;
-type BallTree = InlineOnce<NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>>;
+type BallTree = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>;
 
 {
 	type check1_ = requireAssignableTo<BallTree, ContextuallyTypedNodeDataObject>;
@@ -108,6 +117,7 @@ const b1: BallTree = { x: 1, y: 2, size: 10 };
 const b1x: BallTree = { x: 1, y: 2 };
 const b2: BallTree = { [typeNameSymbol]: "ball", x: 1, y: 2 };
 const b4: BallTree = { [typeNameSymbol]: "ball", x: 1, y: n3 };
+const b6: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, y: n3 };
 
 // This is type safe, so we can only access fields that are in the schema.
 // @ts-expect-error This is an error since it accesses an invalid field.

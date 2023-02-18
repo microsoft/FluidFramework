@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import { $, List, Kind } from "hkt-toolbelt";
-
 import { Named } from "../../../core";
 
 /**
@@ -66,19 +64,6 @@ export type WithDefault<T, Default> = T extends undefined
 	: T;
 
 /**
- * Converts list of names or named objects into list of names.
- * Uses "hkt-toolbelt"
- */
-// export type AsNames<T extends (TName | Named<TName>)[], TName = string> = Assume<
-// 	$<$<List.Map, AsNameKind>, T>,
-// 	TName[]
-// >;
-
-// export interface AsNameKind extends Kind.Kind {
-// 	f(x: this[Kind._]): AsName<typeof x>;
-// }
-
-/**
  * @alpha
  */
 export type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
@@ -93,6 +78,24 @@ export type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assu
 	T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNames<Tail, TName>] : [],
 	TName[]
 >;
+
+/**
+ * Converts list of names or named objects into list of names.
+ *
+ * Version of AsNames that does not use "hkt-toolbelt".
+ * @alpha
+ */
+export type Unbrand<T, B> = T extends infer S & B ? S : T;
+
+/**
+ * Converts list of names or named objects into list of names.
+ *
+ * Version of AsNames that does not use "hkt-toolbelt".
+ * @alpha
+ */
+export type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail]
+	? [Unbrand<Head, B>, ...UnbrandList<Tail, B>]
+	: [];
 
 /**
  * Return a type thats equivalent to the input, but with different intellisense.

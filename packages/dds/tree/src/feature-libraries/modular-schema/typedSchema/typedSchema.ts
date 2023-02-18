@@ -18,7 +18,7 @@ import { forbidden } from "../../defaultFieldKinds";
 import { namedTreeSchema } from "../../viewSchemaUtil";
 import { FieldKind } from "../fieldKind";
 import { FieldSchemaTypeInfo, LabeledTreeSchema, NameSet, TreeSchemaTypeInfo } from "./outputTypes";
-import { ArrayToUnion, AsNames, WithDefault } from "./typeUtils";
+import { ArrayToUnion, AsNames, UnbrandList, WithDefault } from "./typeUtils";
 
 /**
  * APIs for building typescript types and schema together.
@@ -30,7 +30,6 @@ import { ArrayToUnion, AsNames, WithDefault } from "./typeUtils";
  * @alpha
  */
 export interface TypedTreeSchemaBuilder {
-	readonly name: string;
 	readonly local?: { readonly [key: string]: FieldSchemaTypeInfo };
 	readonly global?: (GlobalFieldKeySymbol | Named<GlobalFieldKeySymbol>)[];
 	readonly extraLocalFields?: FieldSchemaTypeInfo;
@@ -41,8 +40,8 @@ export interface TypedTreeSchemaBuilder {
 /**
  * @alpha
  */
-export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
-	readonly name: T["name"];
+export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder, TName extends string> {
+	readonly name: TName;
 	readonly local: WithDefault<T["local"], Record<string, never>>;
 	readonly global: AsNames<WithDefault<T["global"], []>, GlobalFieldKeySymbol>;
 	readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof emptyField>;
@@ -53,11 +52,17 @@ export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
 /**
  * Builds a TreeSchema with the type information also captured in the
  * typescript type to allow for deriving schema aware APIs.
+ *
+ * @remarks
+ * The name is passed is separate instead of part of the builder to the caller does not have to
+ * do "as const" after the name for its type to be captured properly.
+ *
  * @alpha
  */
-export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
+export function typedTreeSchema<T extends TypedTreeSchemaBuilder, TName extends string>(
+	name: TName,
 	t: T,
-): LabeledTreeSchema<TreeInfoFromBuilder<T>> {
+): LabeledTreeSchema<TreeInfoFromBuilder<T, TName>> {
 	const data: TreeSchemaBuilder = {
 		localFields: t.local,
 		globalFields:
@@ -69,9 +74,9 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
 		value: t.value,
 	};
 	return {
-		name: brand<TreeSchemaIdentifier>(t.name),
+		name: brand<TreeSchemaIdentifier>(name),
 		...treeSchema(data),
-	} as unknown as LabeledTreeSchema<TreeInfoFromBuilder<T>>;
+	} as unknown as LabeledTreeSchema<TreeInfoFromBuilder<T, TName>>;
 }
 
 /**
@@ -82,7 +87,10 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
 export function typedFieldSchema<
 	TKind extends FieldKind,
 	TTypes extends (string | Named<string>)[],
->(kind: TKind, ...typeArray: TTypes): { kind: TKind; types: NameSet<AsNames<TTypes>> } {
+>(
+	kind: TKind,
+	...typeArray: TTypes
+): { kind: TKind; types: NameSet<UnbrandList<AsNames<TTypes>, TreeSchemaIdentifier>> } {
 	const types = nameSet(...typeArray);
 	return { kind, types };
 }
@@ -111,8 +119,10 @@ export function nameSetSimple<T extends [...string[]]>(...names: T): NameSet<T> 
 
 export function nameSet<T extends [...(string | Named<string>)[]]>(
 	...names: T
-): NameSet<AsNames<T>> {
-	return new Set(extractNames(names)) as unknown as NameSet<AsNames<T>>;
+): NameSet<UnbrandList<AsNames<T>, TreeSchemaIdentifier>> {
+	return new Set(extractNames(names)) as unknown as NameSet<
+		UnbrandList<AsNames<T>, TreeSchemaIdentifier>
+	>;
 }
 
 /**

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TreeSchemaIdentifier } from "../../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 import {
@@ -12,6 +13,7 @@ import {
 	ListToKeys,
 	PartialWithoutUndefined,
 	RemoveOptionalFields,
+	Unbrand,
 	WithDefault,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
@@ -83,4 +85,9 @@ import {
 // Test AllowOptional
 {
 	type c = AllowOptional<{ a: 5; b: undefined | 5; c: undefined }>;
+}
+
+// Test Unbrand
+{
+	type c = Unbrand<"x" & TreeSchemaIdentifier, TreeSchemaIdentifier>;
 }

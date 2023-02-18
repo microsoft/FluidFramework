@@ -72,5 +72,5 @@ export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTr
 	// Allow reading localFields through the normal map, but without losing type information.
 	readonly localFields: ObjectToMap<T["local"], LocalFieldKey, FieldSchema>;
 
-	// readonly name: T["name"] & TreeSchemaIdentifier;
+	readonly name: T["name"] & TreeSchemaIdentifier;
 }

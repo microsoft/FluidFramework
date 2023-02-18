@@ -11,14 +11,12 @@ const { optional, value, sequence } = FieldKinds;
 const { tree, field } = TypedSchema;
 
 // Declare a simple type which just holds a number.
-const numberSchema = tree({
-	name: "number",
+const numberSchema = tree("number", {
 	value: ValueSchema.Number,
 });
 
 // Declare an aggregate type with local fields
-const ballSchema = tree({
-	name: "Ball",
+const ballSchema = tree("Ball", {
 	local: {
 		x: field(value, numberSchema),
 		y: field(value, numberSchema),
@@ -35,8 +33,7 @@ const invalidChildSchema = ballSchema.localFields.get("z");
 
 // Declare an recursive aggregate type via local fields.
 // Note that the type name can be used instead of the schema to allow recursion.
-const diagramSchema = tree({
-	name: "Diagram",
+const diagramSchema = tree("Diagram", {
 	local: {
 		children: field(sequence, "Diagram", ballSchema),
 	},

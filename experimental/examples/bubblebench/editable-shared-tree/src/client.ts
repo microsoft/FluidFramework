@@ -5,7 +5,7 @@
 import { IClient } from "@fluid-example/bubblebench-common";
 import { brand, EditableField, FieldKey } from "@fluid-internal/tree";
 import { Bubble } from "./bubble";
-import { ClientTreeProxy, BubbleTreeProxy } from "./schema";
+import { ClientTreeProxy, FlexBubble } from "./schema";
 
 export class Client implements IClient {
 	static bubblesFieldKey: FieldKey = brand("bubbles");
@@ -33,9 +33,10 @@ export class Client implements IClient {
 		);
 	}
 
-	public increaseBubbles(bubble: { x: number; y: number; r: number; vx: number; vy: number }) {
+	public increaseBubbles(bubble: FlexBubble) {
 		const bubblesSequenceNode = this.clientTreeProxy.bubbles;
-		bubblesSequenceNode[bubblesSequenceNode.length] = bubble as BubbleTreeProxy;
+		const field: EditableField = bubblesSequenceNode;
+		field[field.length] = bubble;
 	}
 
 	public decreaseBubbles() {
