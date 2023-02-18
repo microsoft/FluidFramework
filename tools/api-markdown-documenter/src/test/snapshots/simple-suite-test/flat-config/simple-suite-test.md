@@ -363,9 +363,9 @@ export interface TestInterfaceWithTypeParameter<T>
 
 #### Type Parameters
 
-##### T
-
-A type parameter
+| Parameter | Description |
+| --- | --- |
+| T | A type parameter |
 
 ### Remarks {#testinterfacewithtypeparameter-remarks}
 
@@ -527,13 +527,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 #### Type Parameters
 
-##### TTypeParameterA
-
-A type parameter
-
-##### TTypeParameterB
-
-Another type parameter
+| Parameter | Description |
+| --- | --- |
+| TTypeParameterA | A type parameter |
+| TTypeParameterB | Another type parameter |
 
 ### Remarks {#testclass-remarks}
 

@@ -12,13 +12,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 ### Type Parameters
 
-#### TTypeParameterA
-
-A type parameter
-
-#### TTypeParameterB
-
-Another type parameter
+| Parameter | Description |
+| --- | --- |
+| TTypeParameterA | A type parameter |
+| TTypeParameterB | Another type parameter |
 
 ## Remarks {#testclass-remarks}
 
