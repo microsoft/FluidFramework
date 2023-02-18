@@ -32,6 +32,7 @@ import { IGCRuntimeOptions } from "../../containerRuntime";
 import {
 	GarbageCollector,
 	GCNodeType,
+	GCSummaryStateTracker,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
@@ -46,9 +47,9 @@ import {
 	disableSweepLogKey,
 	currentGCVersion,
 	stableGCVersion,
-	GCVersion,
 	gcVersionUpgradeToV2Key,
 	gcTombstoneGenerationOptionName,
+	GCVersion,
 } from "../../gc";
 import { dataStoreAttributesBlobName, IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
@@ -63,7 +64,9 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly shouldRunSweep: boolean;
 	readonly trackGCState: boolean;
 	readonly testMode: boolean;
-	readonly latestSummaryGCVersion: GCVersion;
+	readonly summaryStateTracker: Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
+		latestSummaryGCVersion: GCVersion;
+	};
 	readonly sessionExpiryTimeoutMs: number | undefined;
 	readonly inactiveTimeoutMs: number;
 	readonly sweepTimeoutMs: number | undefined;
@@ -208,23 +211,39 @@ describe("Garbage Collection Tests", () => {
 				assert(!gc.sweepEnabled, "sweepEnabled incorrect");
 				assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
 				assert(gc.sweepTimeoutMs === undefined, "sweepTimeoutMs incorrect");
-				assert.equal(gc.latestSummaryGCVersion, 0, "latestSummaryGCVersion incorrect");
+				assert.equal(
+					gc.summaryStateTracker.latestSummaryGCVersion,
+					0,
+					"latestSummaryGCVersion incorrect",
+				);
 			});
 			it("gcFeature 0", () => {
 				gc = createGcWithPrivateMembers({ gcFeature: 0 });
 				assert(!gc.gcEnabled, "gcEnabled incorrect");
-				assert.equal(gc.latestSummaryGCVersion, 0, "latestSummaryGCVersion incorrect");
+				assert.equal(
+					gc.summaryStateTracker.latestSummaryGCVersion,
+					0,
+					"latestSummaryGCVersion incorrect",
+				);
 			});
 			it("gcFeature 0, sweepEnabled true", () => {
 				gc = createGcWithPrivateMembers({ gcFeature: 0, sweepEnabled: true });
 				assert(!gc.gcEnabled, "gcEnabled incorrect");
 				assert(gc.sweepEnabled, "sweepEnabled incorrect");
-				assert.equal(gc.latestSummaryGCVersion, 0, "latestSummaryGCVersion incorrect");
+				assert.equal(
+					gc.summaryStateTracker.latestSummaryGCVersion,
+					0,
+					"latestSummaryGCVersion incorrect",
+				);
 			});
 			it("gcFeature 1", () => {
 				gc = createGcWithPrivateMembers({ gcFeature: 1 });
 				assert(gc.gcEnabled, "gcEnabled incorrect");
-				assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
+				assert.equal(
+					gc.summaryStateTracker.latestSummaryGCVersion,
+					1,
+					"latestSummaryGCVersion incorrect",
+				);
 			});
 			it("sweepEnabled false", () => {
 				gc = createGcWithPrivateMembers({ sweepEnabled: false });
@@ -303,7 +322,7 @@ describe("Garbage Collection Tests", () => {
 				assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
 				assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
 				assert.equal(
-					gc.latestSummaryGCVersion,
+					gc.summaryStateTracker.latestSummaryGCVersion,
 					stableGCVersion,
 					"latestSummaryGCVersion incorrect",
 				);

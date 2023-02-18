@@ -336,7 +336,7 @@ export class GCSummaryStateTracker {
 		// If there is no snapshot data, it means this snapshot was generated with GC disabled. Unset all GC state.
 		if (gcSnapshotData === undefined) {
 			this.latestSummaryData = undefined;
-			return undefined;
+			return;
 		}
 
 		// If tracking state across summaries, update latest summary data from the snapshot's GC data.

@@ -31,6 +31,7 @@ export {
 	UnreferencedState,
 } from "./gcDefinitions";
 export { sendGCUnexpectedUsageEvent, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
+export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,
 	closuresMapLocalStorageKey,
