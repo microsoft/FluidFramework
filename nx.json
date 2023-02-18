@@ -1,0 +1,146 @@
+{
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "nx/tasks-runners/default",
+      "options": {
+        "cacheableOperations": [
+          "build",
+          "build:compile",
+          "build:esnext",
+          "build:full",
+          "build:full:compile",
+          "eslint",
+          "eslint:fix",
+          "format",
+          "lint",
+          "lint:fix",
+          "prettier",
+          "prettier:fix",
+          "test",
+          "test:jest",
+          "webpack",
+          "webpack:dev",
+          "build:copy",
+          "build:commonjs",
+          "build:test",
+          "test:mocha",
+          "tsc"
+        ]
+      }
+    }
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ]
+    },
+    "build:compile": {
+      "dependsOn": [
+        "^build:compile"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ]
+    },
+    "build:esnext": {
+      "dependsOn": [
+        "^build:esnext"
+      ],
+      "outputs": [
+        "{projectRoot}/lib"
+      ]
+    },
+    "build:full": {
+      "dependsOn": [
+        "^build:full"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ]
+    },
+    "build:full:compile": {
+      "dependsOn": [
+        "^build:full:compile"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ]
+    },
+    "eslint": {
+      "dependsOn": [
+        "^eslint"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "^lint"
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        "^test"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/test"
+      ]
+    },
+    "test:jest": {
+      "dependsOn": [
+        "^test:jest"
+      ]
+    },
+    "build:commonjs": {
+      "dependsOn": [
+        "^build:commonjs"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ]
+    },
+    "build:test": {
+      "dependsOn": [
+        "^build:test"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/test"
+      ]
+    },
+    "test:mocha": {
+      "dependsOn": [
+        "^test:mocha"
+      ]
+    },
+    "tsc": {
+      "dependsOn": [
+        "^tsc"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ]
+    },
+    "build:docs": {
+      "dependsOn": [
+        "^build:docs"
+      ]
+    },
+    "build:genver": {
+      "dependsOn": [
+        "^build:genver"
+      ]
+    },
+    "typetests:gen": {
+      "dependsOn": [
+        "^typetests:gen"
+      ]
+    },
+    "typetests:prepare": {
+      "dependsOn": [
+        "^typetests:prepare"
+      ]
+    }
+  }
+}
