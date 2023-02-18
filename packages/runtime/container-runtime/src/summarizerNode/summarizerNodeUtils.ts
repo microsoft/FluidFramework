@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "../utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 
 /**
  * Return type of refreshSummaryAck function. There can be three different scenarios based on the passed params:

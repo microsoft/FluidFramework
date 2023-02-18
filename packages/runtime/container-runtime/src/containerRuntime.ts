@@ -93,9 +93,6 @@ import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	addTreeToSummary,
-	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
-	IRootSummarizerNodeWithGC,
 	RequestParser,
 	create404Response,
 	exceptionToResponse,
@@ -136,6 +133,11 @@ import {
 	OrderedClientElection,
 } from "./orderedClientElection";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
+import {
+	createRootSummarizerNodeWithGC,
+	IFetchSnapshotResult,
+	IRootSummarizerNodeWithGC,
+} from "./summarizerNode";
 import {
 	SubmitSummaryResult,
 	IConnectableRuntime,

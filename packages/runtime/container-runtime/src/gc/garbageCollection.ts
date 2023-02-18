@@ -40,7 +40,6 @@ import {
 	mergeStats,
 	packagePathToTelemetryProperty,
 	ReadAndParseBlob,
-	RefreshSummaryResult,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import {
@@ -54,6 +53,7 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "../containerRuntime";
 import { getSummaryForDatastores } from "../dataStores";
+import { RefreshSummaryResult } from "../summarizerNode";
 import {
 	getGCVersion,
 	GCVersion,

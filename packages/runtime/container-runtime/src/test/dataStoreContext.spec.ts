@@ -29,11 +29,7 @@ import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import {
-	createRootSummarizerNodeWithGC,
-	IRootSummarizerNodeWithGC,
-	packagePathToTelemetryProperty,
-} from "@fluidframework/runtime-utils";
+import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
 	isFluidError,
 	MockLogger,
@@ -58,6 +54,7 @@ import {
 	WriteFluidDataStoreAttributes,
 } from "../summaryFormat";
 import { summarizerClientType } from "../summarizerClientElection";
+import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNode";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";

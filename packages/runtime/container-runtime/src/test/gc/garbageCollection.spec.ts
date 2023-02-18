@@ -26,7 +26,7 @@ import {
 	TelemetryDataTag,
 	ConfigTypes,
 } from "@fluidframework/telemetry-utils";
-import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import { IGCRuntimeOptions } from "../../containerRuntime";
 import {
@@ -48,6 +48,7 @@ import {
 	gcVersionUpgradeToV2Key,
 	gcTombstoneGenerationOptionName,
 } from "../../gc";
+import { RefreshSummaryResult } from "../../summarizerNode";
 import {
 	dataStoreAttributesBlobName,
 	GCVersion,

@@ -22,13 +22,17 @@ import {
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
+	convertToSummaryTree,
+	calculateStats,
+	mergeStats,
+	ReadAndParseBlob,
+} from "@fluidframework/runtime-utils";
+import {
 	ChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
-import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
-import { ReadAndParseBlob } from "../utils";
 import {
 	EscapedPath,
 	ICreateChildDetails,

@@ -22,10 +22,23 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ## 2.0.0-internal.4.0.0 Breaking changes
 
 -   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+-   [Summarizer node and related items removed](#Summarizer-node-and-related-items-removed)
 
 ### Container and RelativeLoader no longer exported
 
 Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
+### Summarizer node and related items removed
+
+The following functions, interfaces, and types currently available in `@fluidframework/runtime-utils` were deprecated in 2.0.0-internal.3.0.0 and are now removed.
+
+-   `createRootSummarizerNode`
+-   `createRootSummarizerNodeWithGC`
+-   `IFetchSnapshotResult`
+-   `IRootSummarizerNode`
+-   `IRootSummarizerNodeWithGC`
+-   `ISummarizerNodeRootContract`
+-   `RefreshSummaryResult`
 
 # 2.0.0-internal.3.0.0
 

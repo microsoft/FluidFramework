@@ -17,6 +17,7 @@ import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions";
+import { mergeStats } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
 import {
@@ -26,7 +27,6 @@ import {
 } from "../summarizerNode";
 // eslint-disable-next-line import/no-internal-modules
 import { SummarizerNode } from "../summarizerNode/summarizerNode";
-import { mergeStats } from "../summaryUtils";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {

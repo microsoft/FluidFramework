@@ -24,7 +24,7 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "../utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
 	EscapedPath,

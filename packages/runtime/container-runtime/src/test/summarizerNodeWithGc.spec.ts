@@ -16,13 +16,13 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
+import { mergeStats } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summarizerNode/summarizerNodeWithGc";
-import { mergeStats } from "../summaryUtils";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";

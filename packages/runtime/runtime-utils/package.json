@@ -68,7 +68,6 @@
 		"@fluidframework/container-runtime-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/garbage-collector": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/protocol-base": "^0.1038.2000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
@@ -105,6 +104,34 @@
 		"broken": {
 			"ClassDeclaration_TelemetryContext": {
 				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_createRootSummarizerNode": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_createRootSummarizerNodeWithGC": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFetchSnapshotResult": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IRootSummarizerNode": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IRootSummarizerNodeWithGC": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISummarizerNodeRootContract": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_RefreshSummaryResult": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
