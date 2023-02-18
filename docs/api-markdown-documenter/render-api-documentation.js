@@ -78,7 +78,10 @@ async function renderApiDocumentation() {
     await Promise.all(documents.map(async (document) => {
         let fileContents;
         try {
-            fileContents = renderDocumentAsMarkdown(document, customRenderers);
+            fileContents = renderDocumentAsMarkdown(document, {
+                headingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
+                renderers: customRenderers,
+            });
         } catch (error) {
             console.error("Encountered error while rendering Markdown:", error);
             throw error;

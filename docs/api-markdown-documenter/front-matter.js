@@ -9,7 +9,7 @@ const {
     getUnscopedPackageName,
 	renderNodeAsMarkdown,
     transformDocNode,
-	createMarkdownRenderContext,
+	getMarkdownRenderContextWithDefaults,
 } = require("@fluid-tools/api-markdown-documenter");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const os = require("os");
@@ -38,8 +38,9 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 		}
 		
 		const documentWriter = createDocumentWriter();
-		const renderContext = createMarkdownRenderContext(customRenderers);
-		renderNodeAsMarkdown(summaryParagraph, documentWriter, renderContext);
+		renderNodeAsMarkdown(summaryParagraph, documentWriter, getMarkdownRenderContextWithDefaults({
+			renderers: customRenderers
+		}));
 		return documentWriter.getText().replace(/"/g, "'").trim();
     }
 

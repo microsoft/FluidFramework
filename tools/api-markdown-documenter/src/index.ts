@@ -32,6 +32,7 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
+	getContextWithDefaults as getMarkdownRenderContextWithDefaults,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
