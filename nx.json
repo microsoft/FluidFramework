@@ -4,7 +4,7 @@
 			"runner": "@nrwl/nx-cloud",
 			"options": {
 				"parallel": 6,
-				"cacheableOperations": ["build:compile", "lint"],
+				"cacheableOperations": ["build:compile", "lint", "format"],
 				"accessToken": "ZmY4MzQ3MDUtOWU1YS00MzJiLTg4ZTgtY2M3OWNlZjlhODk4fHJlYWQtd3JpdGU="
 			}
 		}
@@ -29,6 +29,11 @@
 			"inputs": ["src", "^src"],
 			"dependsOn": ["^build:compile"],
 			"outputs": ["{projectRoot}/dist"]
+		},
+		"format": {
+			"inputs": ["src"],
+			"dependsOn": [],
+			"outputs": ["{projectRoot}/src/**/*"]
 		},
 		"build:esnext": {
 			"dependsOn": ["^build:esnext"],
