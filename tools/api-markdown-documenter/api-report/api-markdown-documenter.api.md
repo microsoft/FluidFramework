@@ -41,10 +41,8 @@ export enum AlertKind {
     Warning = "Warning"
 }
 
-// Warning: (ae-forgotten-export) The symbol "ParentNodeBase" needs to be exported by the entry point index.d.ts
-//
 // @public
-export class AlertNode extends ParentNodeBase {
+export class AlertNode extends DocumentationParentNodeBase {
     constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string);
     readonly alertKind: AlertKind;
     static createFromPlainText(text: string, alertKind: AlertKind, title?: string): AlertNode;
@@ -103,7 +101,7 @@ export { ApiPackage }
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 // @public
-export class BlockQuoteNode extends ParentNodeBase implements MultiLineDocumentationNode {
+export class BlockQuoteNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[]);
     static createFromPlainText(text: string): BlockQuoteNode;
     static readonly Empty: BlockQuoteNode;
@@ -112,7 +110,7 @@ export class BlockQuoteNode extends ParentNodeBase implements MultiLineDocumenta
 }
 
 // @public
-export class CodeSpanNode extends ParentNodeBase<SingleLineDocumentationNode> implements SingleLineDocumentationNode {
+export class CodeSpanNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements SingleLineDocumentationNode {
     constructor(children: SingleLineDocumentationNode[]);
     static createFromPlainText(text: string): CodeSpanNode;
     static readonly Empty: CodeSpanNode;
@@ -206,12 +204,26 @@ export interface DocumentationParentNode<TDocumentationNode extends Documentatio
 }
 
 // @public
+export abstract class DocumentationParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode> implements DocumentationParentNode<TDocumentationNode> {
+    protected constructor(children: TDocumentationNode[]);
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "ParentNode"
+    //
+    // (undocumented)
+    readonly children: TDocumentationNode[];
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "ParentNode"
+    //
+    // (undocumented)
+    get hasChildren(): boolean;
+    get singleLine(): boolean;
+    abstract type: string;
+}
+
+// @public
 export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(props: DocumentNodeProps);
-    // (undocumented)
     readonly children: SectionNode[];
     readonly filePath: string;
     readonly frontMatter?: string;
@@ -220,9 +232,6 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 
 // @public
 export interface DocumentNodeProps {
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "children"
-    //
-    // (undocumented)
     readonly children: SectionNode[];
     readonly filePath: string;
     readonly frontMatter?: string;
@@ -231,7 +240,7 @@ export interface DocumentNodeProps {
 export { DocumentWriter }
 
 // @public
-export class FencedCodeBlockNode extends ParentNodeBase implements MultiLineDocumentationNode {
+export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
     readonly language?: string;
@@ -289,7 +298,7 @@ export interface Heading {
 }
 
 // @public
-export class HeadingNode extends ParentNodeBase<SingleLineDocumentationNode> implements Omit<Heading, "title">, MultiLineDocumentationNode {
+export class HeadingNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements Omit<Heading, "title">, MultiLineDocumentationNode {
     constructor(content: SingleLineDocumentationNode[], id?: string);
     static createFromPlainText(text: string, id?: string): HeadingNode;
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
@@ -339,7 +348,7 @@ export interface Link {
 }
 
 // @public
-export class LinkNode extends ParentNodeBase<SingleLineDocumentationNode> implements SingleLineDocumentationNode, Omit<Link, "text"> {
+export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements SingleLineDocumentationNode, Omit<Link, "text"> {
     constructor(content: SingleLineDocumentationNode[], target: UrlTarget);
     static createFromPlainText(text: string, target: UrlTarget): LinkNode;
     static createFromPlainTextLink(link: Link): LinkNode;
@@ -397,7 +406,7 @@ export interface MultiLineDocumentationNode<TData extends object = Data> extends
 }
 
 // @public
-export class OrderedListNode extends ParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
+export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
     constructor(children: SingleLineDocumentationNode[]);
     // (undocumented)
     static createFromPlainTextEntries(entries: string[]): OrderedListNode;
@@ -410,7 +419,7 @@ export class OrderedListNode extends ParentNodeBase<SingleLineDocumentationNode>
 export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 
 // @public
-export class ParagraphNode extends ParentNodeBase implements MultiLineDocumentationNode {
+export class ParagraphNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[]);
     static combine(...nodes: ParagraphNode[]): ParagraphNode;
     static createFromPlainText(text: string): ParagraphNode;
@@ -459,7 +468,7 @@ export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWr
 export function renderNodesAsMarkdown(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
-export class SectionNode extends ParentNodeBase implements MultiLineDocumentationNode {
+export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[], heading?: HeadingNode);
     static combine(...sections: SectionNode[]): SectionNode;
     static readonly Empty: SectionNode;
@@ -481,7 +490,7 @@ export class SingleLineSpanNode extends SpanNode<SingleLineDocumentationNode> im
 }
 
 // @public
-export class SpanNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends ParentNodeBase<TDocumentationNode> {
+export class SpanNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends DocumentationParentNodeBase<TDocumentationNode> {
     constructor(children: TDocumentationNode[], formatting?: TextFormatting);
     static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
     static readonly Empty: SpanNode;
@@ -510,7 +519,7 @@ export enum TableCellKind {
 }
 
 // @public
-export abstract class TableCellNode extends ParentNodeBase {
+export abstract class TableCellNode extends DocumentationParentNodeBase {
     protected constructor(children: DocumentationNode[], cellKind: TableCellKind);
     readonly cellKind: TableCellKind;
     readonly type = DocumentationNodeType.TableCell;
@@ -530,7 +539,7 @@ export class TableHeaderRowNode extends TableRowNode {
 }
 
 // @public
-export class TableNode extends ParentNodeBase<TableBodyRowNode> implements MultiLineDocumentationNode {
+export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> implements MultiLineDocumentationNode {
     constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode);
     static readonly Empty: TableNode;
     // (undocumented)
@@ -546,7 +555,7 @@ export enum TableRowKind {
 }
 
 // @public
-export abstract class TableRowNode extends ParentNodeBase<TableCellNode> {
+export abstract class TableRowNode extends DocumentationParentNodeBase<TableCellNode> {
     protected constructor(cells: TableCellNode[], rowKind: TableRowKind);
     readonly rowKind: TableRowKind;
     readonly type = DocumentationNodeType.TableRow;
@@ -575,7 +584,7 @@ export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration
 export function transformDocNode(docNode: DocNode, contextApiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocumentationNode | undefined;
 
 // @public
-export class UnorderedListNode extends ParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
+export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
     constructor(children: SingleLineDocumentationNode[]);
     // (undocumented)
     static createFromPlainTextEntries(entries: string[]): UnorderedListNode;
