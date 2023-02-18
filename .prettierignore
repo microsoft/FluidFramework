@@ -35,6 +35,7 @@ tools/pipelines/
 **/*.api.md
 
 # Test json
+experimental/dds/tree/src/test/documents/
 packages/dds/merge-tree/src/test/literature/*.txt
 packages/dds/merge-tree/src/test/results/*.json
 packages/dds/sequence/src/test/snapshots/**/*.json

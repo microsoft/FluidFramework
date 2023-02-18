@@ -1,430 +1,356 @@
 {
-    // Use IntelliSense to learn about possible Node.js debug attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            // Update /build-tools/packages/bundle-size-tools/src/utilities/gitCommands.ts to your remote (i.e. upstream instead of main)
-            // Don't forget to run `npm run bundle-analysis:collect`
-            // Reminder, update the command values
-            "command": "npx danger pr https://github.com/microsoft/FluidFramework/pull/{A-RECENT-PR-HERE} -d {WORKSPACE WITH /'s}/build-tools/packages/build-tools/dist/bundleSizeAnalysis/dangerfile.js",
-            "name": "bundleSizeAnalysis",
-            "request": "launch",
-            "type": "node-terminal",
-            "env": {
-                // Your ADO PAT (Personal Access Token) User settings > Personal Access Tokens > New Token (check read permissions, likely Build, Release, Packaging, and Test Management)
-                "ADO_API_TOKEN": "",
-                // Your Github PAT (Personal Access Token) Your Icon > Settings > Developer settings > Personal Access Tokens > Fine-grained tokens (Public Repositories (read-only) should be enough)
-                "DANGER_GITHUB_API_TOKEN": "",
-                "TARGET_BRANCH_NAME": "main"
-            }
-        },
-        {
-            "name": "npm test build-cli",
-            "cwd": "${workspaceFolder}/build-tools/packages/build-cli",
-            "request": "launch",
-            "runtimeArgs": [
-                "run-script",
-                "test"
-            ],
-            "runtimeExecutable": "npm",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node"
-        },
-        {
-            "name": "flub",
-            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
-            "cwd": "${workspaceFolder}",
-            "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node",
-            "args": [
-                "release",
-                "-g",
-                "client",
-                "-v",
-                "--no-policyCheck",
-            ],
-        },
-        {
-            // Runs the `flub release report --all` command with a debugger attached.
-            "name": "flub release report",
-            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
-            "cwd": "${workspaceFolder}",
-            "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node",
-            "args": [
-                "release",
-                "report",
-                "--all",
-                "-v",
-            ],
-        },
-        {
-            "name": "flub bump deps",
-            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
-            "cwd": "${workspaceFolder}",
-            "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node",
-            "args": [
-                "bump",
-                "deps",
-                "server",
-                "-t",
-                "greatest",
-                "-p",
-                // "-g",
-                // "azure",
-                "--no-commit",
-                "--no-install"
-            ],
-        },
-        {
-            "name": "fluid-bump-version",
-            "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/bumpVersion/bumpVersionCli.js",
-            "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node",
-            "args": [
-                "-d",
-                "@fluidframework/common-utils@^0.33.1000",
-            ],
-        },
-        {
-            "name": "layer-check",
-            "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/layerCheck/layerCheck.js",
-            "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "args": [
-                "--verbose"
-            ],
-            "cwd": "${workspaceFolder}",
-            "type": "node"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach by Process ID",
-            "processId": "${command:PickProcess}"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Matrix Bench",
-            "cwd": "${workspaceFolder}/packages/dds/matrix/bench",
-            "args": [
-                "-r",
-                "ts-node/register",
-                "-r",
-                "source-map-support/register",
-                "src/index.ts",
-                "--runInBand"
-            ],
-            "env": {
-                "TS_NODE_PROJECT": "tsconfig.json",
-            },
-            // "skipFiles": ["<node_internals>/**"],
-            "console": "integratedTerminal",
-            "smartStep": true,
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Mocha Tests",
-            "cwd": "${workspaceFolder}/",
-            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
-            "args": [
-                "--recursive",
-                "dist/test/",
-                "--grep Checked"
-            ],
-            "internalConsoleOptions": "openOnSessionStart"
-        },
-        {
-            "name": "Chrome",
-            "type": "chrome",
-            "request": "attach",
-            "port": 9222,
-            "sourceMaps": true,
-            "url": "localhost:3000/sharedText/oct18-3",
-            "pathMapping": {
-                "/public/scripts/dist/src/": "${workspaceFolder}/dist"
-            }
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "sourceMaps": true,
-            "protocol": "inspector",
-            "name": "Mocha attach",
-            "port": 9229
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Beast",
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "program": "${workspaceFolder}/dist/test/merge-tree/beastTest.js"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Farm",
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/packages/runtime/sequence/dist/test/*.js"
-            ],
-            "protocol": "inspector",
-            "program": "${workspaceFolder}/packages/runtime/sequence/dist/test/testFarm.js"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to alfred",
-            "address": "localhost",
-            "port": 5858,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceFolder}/server/routerlicious",
-            "remoteRoot": "/usr/src/server",
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to riddler",
-            "address": "localhost",
-            "port": 5865,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceFolder}/server/routerlicious",
-            "remoteRoot": "/usr/src/server",
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to gateway",
-            "address": "localhost",
-            "port": 5866,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceRoot}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to delieh",
-            "address": "localhost",
-            "port": 5867,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceRoot}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to broadcastereh",
-            "address": "localhost",
-            "port": 5868,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceRoot}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to deli",
-            "address": "localhost",
-            "port": 5859,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to paparazzi",
-            "address": "localhost",
-            "port": 5860,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to scriptorium",
-            "address": "localhost",
-            "port": 5861,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to copier",
-            "address": "localhost",
-            "port": 5867,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to foreman",
-            "address": "localhost",
-            "port": 5862,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "protocol": "inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Debug Current Mocha Test",
-            "env": {
-                // "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-                // "FLUID_TEST_VERBOSE": "1"
-            },
-            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
-            "windows": {
-                "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd"
-            },
-            "sourceMaps": true,
-            "stopOnEntry": false,
-            "pauseForSourceMap": false,
-            "program": "${file}",
-            "args": [
-                // "--fgrep",               // Uncomment to filter by test case name
-                // "<test case name>",
-                "--no-timeouts",
-                "--exit",
-            ],
-            "cwd": "${fileDirname}",
-            "skipFiles": [
-                "<node_internals>/**",
-                "**/node_modules/**"
-            ],
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/**/dist/**",
-                "!**/node_modules/**"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/**/dist/**/*.js",
-                "!**/node_modules/**"
-            ],
-            "preLaunchTask": "Build Current Tests",
-            "internalConsoleOptions": "openOnSessionStart",
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Debug Current Test (JS)",
-            // "env": { "FLUID_TEST_VERBOSE": "1" },
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "args": [
-                "--no-timeouts",
-                "--exit",
-                "../../dist/test/${fileBasenameNoExtension}.js",
-                "../../../dist/test/**/${fileBasenameNoExtension}.js",
-            ],
-            "cwd": "${fileDirname}",
-            "outFiles": [
-                "${fileDirname}/../../dist/**/*.js",
-                "${fileDirname}/../../../dist/**/*.js"
-            ],
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Debug Current Jest Test (JS)",
-            "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
-            "cwd": "${fileDirname}/..",
-            "args": [
-                "--verbose",
-                "-i",
-                "--no-cache",
-                "${file}"
-            ],
-            "runtimeArgs": [
-                "--unhandled-rejections=strict"
-            ],
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
-        }
-    ]
+	// Use IntelliSense to learn about possible Node.js debug attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			// Update /build-tools/packages/bundle-size-tools/src/utilities/gitCommands.ts to your remote (i.e. upstream instead of main)
+			// Don't forget to run `npm run bundle-analysis:collect`
+			// Reminder, update the command values
+			"command": "npx danger pr https://github.com/microsoft/FluidFramework/pull/{A-RECENT-PR-HERE} -d {WORKSPACE WITH /'s}/build-tools/packages/build-tools/dist/bundleSizeAnalysis/dangerfile.js",
+			"name": "bundleSizeAnalysis",
+			"request": "launch",
+			"type": "node-terminal",
+			"env": {
+				// Your ADO PAT (Personal Access Token) User settings > Personal Access Tokens > New Token (check read permissions, likely Build, Release, Packaging, and Test Management)
+				"ADO_API_TOKEN": "",
+				// Your Github PAT (Personal Access Token) Your Icon > Settings > Developer settings > Personal Access Tokens > Fine-grained tokens (Public Repositories (read-only) should be enough)
+				"DANGER_GITHUB_API_TOKEN": "",
+				"TARGET_BRANCH_NAME": "main"
+			}
+		},
+		{
+			"name": "npm test build-cli",
+			"cwd": "${workspaceFolder}/build-tools/packages/build-cli",
+			"request": "launch",
+			"runtimeArgs": ["run-script", "test"],
+			"runtimeExecutable": "npm",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node"
+		},
+		{
+			"name": "flub",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["release", "-g", "client", "-v", "--no-policyCheck"]
+		},
+		{
+			// Runs the `flub release report --all` command with a debugger attached.
+			"name": "flub release report",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["release", "report", "-g", "build-tools", "-v"]
+		},
+		{
+			"name": "flub bump deps",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [
+				"bump",
+				"deps",
+				"server",
+				"-t",
+				"greatest",
+				"-p",
+				// "-g",
+				// "azure",
+				"--no-commit",
+				"--no-install"
+			]
+		},
+		{
+			"name": "fluid-bump-version",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/dist/bumpVersion/bumpVersionCli.js",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["-d", "@fluidframework/common-utils@^0.33.1000"]
+		},
+		{
+			"name": "layer-check",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/dist/layerCheck/layerCheck.js",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"args": ["--verbose"],
+			"cwd": "${workspaceFolder}",
+			"type": "node"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach by Process ID",
+			"processId": "${command:PickProcess}"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Matrix Bench",
+			"cwd": "${workspaceFolder}/packages/dds/matrix/bench",
+			"args": [
+				"-r",
+				"ts-node/register",
+				"-r",
+				"source-map-support/register",
+				"src/index.ts",
+				"--runInBand"
+			],
+			"env": {
+				"TS_NODE_PROJECT": "tsconfig.json"
+			},
+			// "skipFiles": ["<node_internals>/**"],
+			"console": "integratedTerminal",
+			"smartStep": true
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Mocha Tests",
+			"cwd": "${workspaceFolder}/",
+			"program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
+			"args": ["--recursive", "dist/test/", "--grep Checked"],
+			"internalConsoleOptions": "openOnSessionStart"
+		},
+		{
+			"name": "Chrome",
+			"type": "chrome",
+			"request": "attach",
+			"port": 9222,
+			"sourceMaps": true,
+			"url": "localhost:3000/sharedText/oct18-3",
+			"pathMapping": {
+				"/public/scripts/dist/src/": "${workspaceFolder}/dist"
+			}
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"sourceMaps": true,
+			"protocol": "inspector",
+			"name": "Mocha attach",
+			"port": 9229
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Beast",
+			"sourceMaps": true,
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"protocol": "inspector",
+			"program": "${workspaceFolder}/dist/test/merge-tree/beastTest.js"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Farm",
+			"sourceMaps": true,
+			"outFiles": ["${workspaceFolder}/packages/runtime/sequence/dist/test/*.js"],
+			"protocol": "inspector",
+			"program": "${workspaceFolder}/packages/runtime/sequence/dist/test/testFarm.js"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to alfred",
+			"address": "localhost",
+			"port": 5858,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceFolder}/server/routerlicious",
+			"remoteRoot": "/usr/src/server",
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to riddler",
+			"address": "localhost",
+			"port": 5865,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceFolder}/server/routerlicious",
+			"remoteRoot": "/usr/src/server",
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to gateway",
+			"address": "localhost",
+			"port": 5866,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceRoot}",
+			"remoteRoot": "/usr/src/server",
+			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to delieh",
+			"address": "localhost",
+			"port": 5867,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceRoot}",
+			"remoteRoot": "/usr/src/server",
+			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to broadcastereh",
+			"address": "localhost",
+			"port": 5868,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceRoot}",
+			"remoteRoot": "/usr/src/server",
+			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to deli",
+			"address": "localhost",
+			"port": 5859,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceFolder}",
+			"remoteRoot": "/usr/src/server",
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to paparazzi",
+			"address": "localhost",
+			"port": 5860,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceFolder}",
+			"remoteRoot": "/usr/src/server",
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to scriptorium",
+			"address": "localhost",
+			"port": 5861,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceFolder}",
+			"remoteRoot": "/usr/src/server",
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to copier",
+			"address": "localhost",
+			"port": 5867,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceFolder}",
+			"remoteRoot": "/usr/src/server",
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to foreman",
+			"address": "localhost",
+			"port": 5862,
+			"restart": true,
+			"sourceMaps": true,
+			"localRoot": "${workspaceFolder}",
+			"remoteRoot": "/usr/src/server",
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"protocol": "inspector",
+			"trace": "sm"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Current Mocha Test",
+			"env": {
+				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
+				// "FLUID_TEST_VERBOSE": "1"
+			},
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
+			"windows": {
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd"
+			},
+			"sourceMaps": true,
+			"stopOnEntry": false,
+			"pauseForSourceMap": false,
+			"program": "${file}",
+			"args": [
+				// "--fgrep",               // Uncomment to filter by test case name
+				// "<test case name>",
+				"--no-timeouts",
+				"--exit"
+			],
+			"cwd": "${fileDirname}",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+			"resolveSourceMapLocations": ["${workspaceFolder}/**/dist/**", "!**/node_modules/**"],
+			"outFiles": ["${workspaceFolder}/**/dist/**/*.js", "!**/node_modules/**"],
+			"preLaunchTask": "Build Current Tests",
+			"internalConsoleOptions": "openOnSessionStart"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Current Test (JS)",
+			// "env": { "FLUID_TEST_VERBOSE": "1" },
+			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"args": [
+				"--no-timeouts",
+				"--exit",
+				"../../dist/test/${fileBasenameNoExtension}.js",
+				"../../../dist/test/**/${fileBasenameNoExtension}.js"
+			],
+			"cwd": "${fileDirname}",
+			"outFiles": ["${fileDirname}/../../dist/**/*.js", "${fileDirname}/../../../dist/**/*.js"]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Current Jest Test (JS)",
+			"program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+			"cwd": "${fileDirname}/..",
+			"args": ["--verbose", "-i", "--no-cache", "${file}"],
+			"runtimeArgs": ["--unhandled-rejections=strict"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen"
+		}
+	]
 }

@@ -491,7 +491,7 @@ stages:
               fi
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-            FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
+            FLUID_BUILD_ID: $(Build.BuildId)
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - execution time local
@@ -548,13 +548,26 @@ stages:
             FLUID_ENDPOINTNAME: "local"
 
         - task: Bash@3
+          displayName: Remove Output Folders
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              ls -laR ${{ variables.executionTimeTestOutputFolder }};
+              echo "Cleanup  ${{ variables.executionTimeTestOutputFolder }}"
+              rm -rf ${{ variables.executionTimeTestOutputFolder }};
+              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
+              echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
+              rm -rf ${{ variables.memoryUsageTestOutputFolder }};
+
+        - task: Bash@3
           displayName: Run tests ODSP
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
               echo "FLUID_TEST_LOGGER_PKG_PATH= ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger"
-              echo "FLUID_BUILD_ID ${{ variables.artifactBuildId }}"
+              echo "FLUID_BUILD_ID $(Build.BuildId)"
 
               # Run execution time tests
               echo "FLUID_ENDPOINTNAME = odsp"
@@ -582,7 +595,7 @@ stages:
             login__microsoft__secret: $(login-microsoft-secret)
             login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-            FLUID_BUILD_ID: ${{ variables.artifactBuildId }}
+            FLUID_BUILD_ID: $(Build.BuildId)
             FLUID_ENDPOINTNAME: odsp
 
         - task: Bash@3
