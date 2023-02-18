@@ -33,8 +33,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 		const updateExternalSnapshotData = (value: boolean): void => {
 			setExternalDataSnapshot(task.externalDataSnapshot);
 			setShowConflictUI(value);
-			console.log('task.externalDataSnapshot');
-			console.log(task.externalDataSnapshot);
 		};
 		task.on("draftPriorityChanged", updateFromRemotePriority);
 		task.on("changesAvailable", updateExternalSnapshotData);
@@ -98,9 +96,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 					❌
 				</button>
 			</td>
-			{showNameDiff && <td style={{ backgroundColor: diffColor }}>{externalDataSnapshot.name}</td>}
+			{showNameDiff && (
+				<td style={{ backgroundColor: diffColor }}>{externalDataSnapshot.name}</td>
+			)}
 			{showPriorityDiff && (
-				<td style={{ backgroundColor: diffColor, width: "30px" }}>{externalDataSnapshot.priority}</td>
+				<td style={{ backgroundColor: diffColor, width: "30px" }}>
+					{externalDataSnapshot.priority}
+				</td>
 			)}
 			<td>
 				<button
