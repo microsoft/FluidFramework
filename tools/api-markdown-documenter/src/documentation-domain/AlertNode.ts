@@ -73,6 +73,10 @@ export class AlertNode extends DocumentationParentNodeBase {
 	 * See {@link AlertKind}.
 	 */
 	public readonly alertKind: AlertKind;
+
+	/**
+	 * Optional alert title text, to be rendered alongside the {@link AlertNode.alertKind} label.
+	 */
 	public readonly title?: string;
 
 	public constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string) {

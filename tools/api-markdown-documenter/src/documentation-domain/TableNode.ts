@@ -79,6 +79,9 @@ export class TableNode
 		return false;
 	}
 
+	/**
+	 * Optional table header row.
+	 */
 	public readonly headerRow?: TableHeaderRowNode;
 
 	public constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode) {

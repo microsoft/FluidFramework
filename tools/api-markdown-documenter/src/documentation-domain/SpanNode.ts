@@ -51,6 +51,8 @@ export class SpanNode<
 	public readonly type = DocumentationNodeType.Span;
 
 	/**
+	 * Formatting to apply to all {@link DocumentationParentNode.children}.
+	 *
 	 * @defaultValue Inherit
 	 */
 	public readonly textFormatting?: TextFormatting;

@@ -46,7 +46,6 @@ export class AlertNode extends DocumentationParentNodeBase {
     constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string);
     readonly alertKind: AlertKind;
     static createFromPlainText(text: string, alertKind: AlertKind, title?: string): AlertNode;
-    // (undocumented)
     readonly title?: string;
     readonly type = DocumentationNodeType.Alert;
 }
@@ -130,7 +129,7 @@ export const defaultApiItemTransformations: Required<ApiItemTransformationConfig
 // @public
 export const defaultConsoleLogger: Logger;
 
-// @public (undocumented)
+// @public
 export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
@@ -158,41 +157,23 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 
 // @public
 export enum DocumentationNodeType {
-    // (undocumented)
     Alert = "Alert",
-    // (undocumented)
     BlockQuote = "BlockQuote",
-    // (undocumented)
     CodeSpan = "CodeSpan",
-    // (undocumented)
     Document = "Document",
-    // (undocumented)
     FencedCode = "FencedCode",
-    // (undocumented)
     Heading = "Heading",
-    // (undocumented)
     HorizontalRule = "HorizontalRule",
-    // (undocumented)
     LineBreak = "LineBreak",
-    // (undocumented)
     Link = "Link",
-    // (undocumented)
     OrderedList = "OrderedList",
-    // (undocumented)
     Paragraph = "Paragraph",
-    // (undocumented)
     PlainText = "PlainText",
-    // (undocumented)
     Section = "Section",
-    // (undocumented)
     Span = "Span",
-    // (undocumented)
     Table = "Table",
-    // (undocumented)
     TableCell = "TableCell",
-    // (undocumented)
     TableRow = "TableRow",
-    // (undocumented)
     UnorderedList = "UnorderedList"
 }
 
@@ -206,13 +187,7 @@ export interface DocumentationParentNode<TDocumentationNode extends Documentatio
 // @public
 export abstract class DocumentationParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode> implements DocumentationParentNode<TDocumentationNode> {
     protected constructor(children: TDocumentationNode[]);
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "ParentNode"
-    //
-    // (undocumented)
     readonly children: TDocumentationNode[];
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "ParentNode"
-    //
-    // (undocumented)
     get hasChildren(): boolean;
     get singleLine(): boolean;
     abstract type: string;
@@ -493,7 +468,6 @@ export class SpanNode<TDocumentationNode extends DocumentationNode = Documentati
     constructor(children: TDocumentationNode[], formatting?: TextFormatting);
     static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
     static readonly Empty: SpanNode;
-    // (undocumented)
     readonly textFormatting?: TextFormatting;
     readonly type = DocumentationNodeType.Span;
 }
@@ -541,7 +515,6 @@ export class TableHeaderRowNode extends TableRowNode {
 export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> implements MultiLineDocumentationNode {
     constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode);
     static readonly Empty: TableNode;
-    // (undocumented)
     readonly headerRow?: TableHeaderRowNode;
     get singleLine(): false;
     readonly type = DocumentationNodeType.Table;
@@ -562,11 +535,8 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
 
 // @public
 export interface TextFormatting {
-    // (undocumented)
     readonly bold?: boolean;
-    // (undocumented)
     readonly italic?: boolean;
-    // (undocumented)
     readonly strikethrough?: boolean;
 }
 

@@ -108,7 +108,7 @@ export abstract class DocumentationParentNodeBase<
 	public abstract type: string;
 
 	/**
-	 * {@inheritDoc ParentNode.children}
+	 * {@inheritDoc DocumentationParentNode.children}
 	 */
 	public readonly children: TDocumentationNode[];
 
@@ -129,7 +129,7 @@ export abstract class DocumentationParentNodeBase<
 	}
 
 	/**
-	 * {@inheritDoc ParentNode.hasChildren}
+	 * {@inheritDoc DocumentationParentNode.hasChildren}
 	 */
 	public get hasChildren(): boolean {
 		return this.children.length > 0;
