@@ -4,7 +4,7 @@
  */
 import {
 	DocumentationNode,
-	ParentNodeBase,
+	DocumentationParentNodeBase,
 	SingleLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
@@ -39,7 +39,7 @@ import { createNodesFromPlainText } from "./Utilities";
  */
 export class SpanNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
-> extends ParentNodeBase<TDocumentationNode> {
+> extends DocumentationParentNodeBase<TDocumentationNode> {
 	/**
 	 * Static singleton representing an empty Span Text node.
 	 */

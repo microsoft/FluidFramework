@@ -2,7 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationNode, MultiLineDocumentationNode, ParentNodeBase } from "./DocumentationNode";
+import {
+	DocumentationNode,
+	DocumentationParentNodeBase,
+	MultiLineDocumentationNode,
+} from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { createNodesFromPlainText } from "./Utilities";
 
@@ -27,7 +31,10 @@ import { createNodesFromPlainText } from "./Utilities";
  * </blockquote>
  * ```
  */
-export class BlockQuoteNode extends ParentNodeBase implements MultiLineDocumentationNode {
+export class BlockQuoteNode
+	extends DocumentationParentNodeBase
+	implements MultiLineDocumentationNode
+{
 	/**
 	 * Static singleton representing an empty Block Quote node.
 	 */

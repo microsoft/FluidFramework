@@ -4,8 +4,8 @@
  */
 import { Heading } from "../Heading";
 import {
+	DocumentationParentNodeBase,
 	MultiLineDocumentationNode,
-	ParentNodeBase,
 	SingleLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
@@ -31,7 +31,7 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```
  */
 export class HeadingNode
-	extends ParentNodeBase<SingleLineDocumentationNode>
+	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
 	implements Omit<Heading, "title">, MultiLineDocumentationNode
 {
 	/**

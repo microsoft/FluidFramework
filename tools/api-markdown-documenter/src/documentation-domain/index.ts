@@ -23,6 +23,7 @@ export {
 	DocumentationLiteralNode,
 	MultiLineDocumentationNode,
 	DocumentationParentNode,
+	DocumentationParentNodeBase,
 	SingleLineDocumentationNode,
 } from "./DocumentationNode";
 export { DocumentationNodeType } from "./DocumentationNodeType";

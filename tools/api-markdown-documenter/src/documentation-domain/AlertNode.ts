@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationNode, ParentNodeBase } from "./DocumentationNode";
+import { DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { createNodesFromPlainText } from "./Utilities";
 
@@ -63,7 +63,7 @@ export enum AlertKind {
  * </blockquote>
  * ```
  */
-export class AlertNode extends ParentNodeBase {
+export class AlertNode extends DocumentationParentNodeBase {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
