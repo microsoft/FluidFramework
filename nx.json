@@ -1,25 +1,17 @@
 {
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nrwl/nx-cloud",
-      "options": {
-        "parallel": 6,
-        "cacheableOperations": [
-          "build:compile",
-          "lint"
-        ],
-        "accessToken": "ZmY4MzQ3MDUtOWU1YS00MzJiLTg4ZTgtY2M3OWNlZjlhODk4fHJlYWQtd3JpdGU="
-      }
-    }
-  },
-  "namedInputs": {
+	"tasksRunnerOptions": {
+		"default": {
+			"runner": "@nrwl/nx-cloud",
+			"options": {
+				"parallel": 6,
+				"cacheableOperations": ["build:compile", "lint"],
+				"accessToken": "ZmY4MzQ3MDUtOWU1YS00MzJiLTg4ZTgtY2M3OWNlZjlhODk4fHJlYWQtd3JpdGU="
+			}
+		}
+	},
+	"namedInputs": {
 		"default": ["{projectRoot}/**/*"],
-		"src": [
-			"{projectRoot}/package.json",
-			"{projectRoot}/tsconfig.*",
-			"{projectRoot}/src/**/*",
-			"!{projectRoot}/src/test/**/*"
-		],
+		"src": ["{projectRoot}/tsconfig.*", "{projectRoot}/src/**/*", "!{projectRoot}/src/test/**/*"],
 		"test": ["{projectRoot}/package.json", "{projectRoot}/src/test/**/*"],
 		"docs": [
 			"{projectRoot}/package.json",
@@ -27,67 +19,43 @@
 			"{projectRoot}/src/test/**/*"
 		]
 	},
-  "targetDefaults": {
+	"targetDefaults": {
 		"build": {
 			"inputs": ["src", "^src"],
 			"dependsOn": ["^build"],
 			"outputs": ["{projectRoot}/dist", "{projectRoot}/lib", "{projectRoot}/*.tsbuildinfo"]
 		},
-    "build:compile": {
+		"build:compile": {
 			"inputs": ["src", "^src"],
-      "dependsOn": [
-        "^build:compile"
-      ],
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
-    },
-    "build:esnext": {
-      "dependsOn": [
-        "^build:esnext"
-      ],
-      "outputs": [
-        "{projectRoot}/lib"
-      ]
-    },
-    "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
-    },
-    "test": {
-      "dependsOn": [
-        "^test"
-      ],
-      "outputs": [
-        "{projectRoot}/dist/test"
-      ]
-    },
-    "build:commonjs": {
-      "dependsOn": [
-        "^build:commonjs"
-      ],
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
-    },
-    "build:test": {
-      "dependsOn": [
-        "^build:test"
-      ],
-      "outputs": [
-        "{projectRoot}/dist/test"
-      ]
-    },
+			"dependsOn": ["^build:compile"],
+			"outputs": ["{projectRoot}/dist"]
+		},
+		"build:esnext": {
+			"dependsOn": ["^build:esnext"],
+			"outputs": ["{projectRoot}/lib"]
+		},
+		"lint": {
+			"dependsOn": ["^lint"]
+		},
+		"test": {
+			"dependsOn": ["^test"],
+			"outputs": ["{projectRoot}/dist/test"]
+		},
+		"build:commonjs": {
+			"dependsOn": ["^build:commonjs"],
+			"outputs": ["{projectRoot}/dist"]
+		},
+		"build:test": {
+			"dependsOn": ["^build:test"],
+			"outputs": ["{projectRoot}/dist/test"]
+		},
 		"tsc": {
 			"inputs": ["src", "^src"],
 			"dependsOn": ["^tsc"],
 			"outputs": ["{projectRoot}/dist"]
 		},
-    "build:docs": {
-      "dependsOn": [
-        "^build:docs"
-      ]
-    }
-  }
+		"build:docs": {
+			"dependsOn": ["^build:docs"]
+		}
+	}
 }
