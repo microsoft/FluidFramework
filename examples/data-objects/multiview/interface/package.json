@@ -63,5 +63,14 @@
 				"library": "main"
 			}
 		}
+	},
+	"nx": {
+		"targets": {
+			"build:compile": {
+				"outputs": [
+					"{projectRoot}/lib"
+				]
+			}
+		}
 	}
 }
