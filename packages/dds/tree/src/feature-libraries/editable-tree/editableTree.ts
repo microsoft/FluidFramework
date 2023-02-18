@@ -28,16 +28,11 @@ import { brand, fail } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import {
-	AdaptingProxyHandler,
-	adaptWithProxy,
 	getFieldKind,
 	getFieldSchema,
 	getPrimaryField,
-	isPrimitive,
 	isPrimitiveValue,
 	PrimitiveValue,
-	keyIsValidIndex,
-	getOwnArrayKeys,
 	assertPrimitiveValueType,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -46,6 +41,15 @@ import {
 	applyFieldTypesFromContext,
 	applyTypesFromContext,
 	getPossibleTypes,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped";
+import {
+	AdaptingProxyHandler,
+	adaptWithProxy,
+	isPrimitive,
+	keyIsValidIndex,
+	getOwnArrayKeys,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 
@@ -61,21 +65,6 @@ export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarge
  * @alpha
  */
 export const typeSymbol: unique symbol = Symbol("editable-tree:type");
-
-/**
- * A symbol to get the type name of {@link EditableTree} in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
-
-/**
- * A symbol to get and set the value of {@link EditableTree} in contexts where string keys are already in use for fields.
- *
- * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
- * Concurrently setting the value will follow the "last-write-wins" semantics.
- * @alpha
- */
-export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
 /**
  * A symbol to get the index of {@link EditableTree} within its parent field

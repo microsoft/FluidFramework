@@ -67,6 +67,54 @@ export interface PolicyConfig {
 }
 
 /**
+ * Metadata about known-broken types.
+ */
+export interface BrokenCompatSettings {
+	backCompat?: false;
+	forwardCompat?: false;
+}
+
+/**
+ * A mapping of a type name to its {@link BrokenCompatSettings}.
+ */
+export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
+
+export interface ITypeValidationConfig {
+	/**
+	 * The version of the package. Should match the version field in package.json.
+	 */
+	version: string;
+
+	/**
+	 * An object containing types that are known to be broken.
+	 */
+	broken: BrokenCompatTypes;
+
+	/**
+	 * If true, disables type test preparation and generation for the package.
+	 */
+	disabled?: boolean;
+
+	/**
+	 * The previous version style that was used when the prepare phase was run. This value is cached so that
+	 * generation can work even on branches without the correct config.
+	 */
+	previousVersionStyle?: PreviousVersionStyle;
+
+	/**
+	 * The version range used as the "previous" version to compare against when generating type tests. This may be
+	 * an exact version or a range string.
+	 */
+	baselineRange?: string;
+
+	/**
+	 * The exact version used as the "previous" version to compare against when generating type tests. This should
+	 * always be an exact version.
+	 */
+	baselineVersion?: string;
+}
+
+/**
  * Configures a package or release group
  */
 export interface IFluidRepoPackage {
