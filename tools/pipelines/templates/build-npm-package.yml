@@ -251,15 +251,6 @@ stages:
             script: |
               ${{ parameters.packageManagerInstallCommand }}
 
-        # Set version
-        - template: include-set-package-version.yml
-          parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-            tagName: ${{ parameters.tagName }}
-            usesPrettier: ${{ parameters.usesPrettier }}
-
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
           - task: Npm@1
@@ -268,6 +259,15 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ${{ parameters.taskBuild }}'
+
+        # Set version
+        - template: include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+            tagName: ${{ parameters.tagName }}
+            usesPrettier: ${{ parameters.usesPrettier }}
 
         # Lint
         - ${{ if ne(parameters.taskLint, false) }}:
