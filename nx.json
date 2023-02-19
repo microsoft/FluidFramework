@@ -21,12 +21,12 @@
 	},
 	"targetDefaults": {
 		"build": {
-			"inputs": ["src", "^src"],
+			"inputs": ["src"],
 			"dependsOn": ["^build"],
 			"outputs": ["{projectRoot}/dist", "{projectRoot}/lib", "{projectRoot}/*.tsbuildinfo"]
 		},
 		"build:compile": {
-			"inputs": ["src", "^src"],
+			"inputs": ["src"],
 			"dependsOn": ["^build:compile"],
 			"outputs": ["{projectRoot}/dist"]
 		},
@@ -40,17 +40,21 @@
 			"outputs": ["{projectRoot}/lib"]
 		},
 		"lint": {
+			"inputs": ["src"],
 			"dependsOn": ["^lint"]
 		},
 		"test": {
+			"inputs": ["test"],
 			"dependsOn": ["^test"],
 			"outputs": ["{projectRoot}/dist/test"]
 		},
 		"build:commonjs": {
+			"inputs": ["src"],
 			"dependsOn": ["^build:commonjs"],
 			"outputs": ["{projectRoot}/dist"]
 		},
 		"build:test": {
+			"inputs": ["src"],
 			"dependsOn": ["^build:test"],
 			"outputs": ["{projectRoot}/dist/test"]
 		},
