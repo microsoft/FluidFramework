@@ -35,6 +35,7 @@ import {
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
+	IGCMetadata,
 	defaultSessionExpiryDurationMs,
 	runSessionExpiryKey,
 	oneDayMs,
@@ -45,15 +46,11 @@ import {
 	disableSweepLogKey,
 	currentGCVersion,
 	stableGCVersion,
+	GCVersion,
 	gcVersionUpgradeToV2Key,
 	gcTombstoneGenerationOptionName,
 } from "../../gc";
-import {
-	dataStoreAttributesBlobName,
-	GCVersion,
-	IContainerRuntimeMetadata,
-	IGCMetadata,
-} from "../../summaryFormat";
+import { dataStoreAttributesBlobName, IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 
 /** @see - sweepReadyUsageDetectionSetting */
@@ -129,7 +126,7 @@ describe("Garbage Collection Tests", () => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
 			updateUnusedRoutes: (unusedRoutes: string[]) => {},
-			deleteUnusedNodes: (deletableRoutes: string[]): string[] => {
+			deleteSweepReadyNodes: (sweepReadyRoutes: string[]): string[] => {
 				return [];
 			},
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},

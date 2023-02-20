@@ -70,7 +70,6 @@ import {
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 
-import { ContainerRuntime } from "./containerRuntime";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -79,9 +78,10 @@ import {
 	WriteFluidDataStoreAttributes,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
-} from "./summaryFormat";
+	summarizerClientType,
+} from "./summary";
+import { ContainerRuntime } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
-import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -135,7 +135,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 /** Properties necessary for creating a remote FluidDataStoreContext */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly snapshotTree: ISnapshotTree | undefined;
-	readonly getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>;
 }
 
 /**
@@ -323,7 +322,6 @@ export abstract class FluidDataStoreContext
 		this.summarizerNode = props.createSummarizerNodeFn(
 			thisSummarizeInternal,
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-			async () => this.getBaseGCDetails(),
 		);
 
 		this.mc = loggerToMonitoringContext(
@@ -821,7 +819,12 @@ export abstract class FluidDataStoreContext
 		this._isInMemoryRoot = true;
 	}
 
-	public abstract getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+	/**
+	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 */
+	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
+		return {};
+	}
 
 	public reSubmit(contents: any, localOpMetadata: unknown) {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
@@ -928,7 +931,6 @@ export abstract class FluidDataStoreContext
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-			getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 		) =>
 			this.summarizerNode.createChild(
 				summarizeInternal,
@@ -937,7 +939,6 @@ export abstract class FluidDataStoreContext
 				// DDS will not create failure summaries
 				{ throwOnFailure: true },
 				getGCDataFn,
-				getBaseGCDetailsFn,
 			);
 	}
 
@@ -948,7 +949,6 @@ export abstract class FluidDataStoreContext
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initSnapshotValue: ISnapshotTree | undefined;
-	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, BindState.Bound, false /* isLocalDataStore */, () => {
@@ -956,9 +956,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		});
 
 		this.initSnapshotValue = props.snapshotTree;
-		this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
-			return (await props.getBaseGCDetails()) ?? {};
-		});
 
 		if (props.snapshotTree !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
@@ -1016,10 +1013,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
 		return this.initialSnapshotDetailsP;
-	}
-
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-		return this.baseGCDetailsP;
 	}
 
 	public generateAttachMessage(): IAttachMessage {
@@ -1138,11 +1131,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			isRootDataStore,
 			snapshot,
 		};
-	}
-
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-		// Local data store does not have initial summary.
-		return {};
 	}
 
 	/**

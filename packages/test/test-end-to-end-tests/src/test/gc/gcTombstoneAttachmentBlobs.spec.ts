@@ -397,8 +397,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			const container3BlobHandle = await container3MainDataStore._runtime.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
 			);
-			// Ideally, this should not reject but currently it will because of a bug with how blob de-dup interacts
-			// with GC.
 			await assert.doesNotReject(
 				container3BlobHandle.get(),
 				"Container3 should be able to get the blob",
