@@ -233,9 +233,9 @@ export class DomainAdapter extends PathVisitor {
         }
     }
     onDelete(index: number, count: number): void {
-       // if (this.filter.equals(this.path)) {
+        if (this.filter.equals(this.path)) {
             this.listener.onDelete(this.path, index, count);
-       // }
+        }
     }
 }
 
@@ -255,13 +255,13 @@ export default function App() {
     const containerId = window.location.hash.substring(1) || undefined;
     const diceListener: DomainListener = {
         onDelete(path: Path, index: number, count: number): void {
-            console.log(`Callback on deleting ${path.toExpr()} ${count} domain  values at index ${index}`);
+            console.log(`Callback on DELETE  at index ${index} ${count} domain  values ${path.toExpr()}`);
         },
         onInsert(path: Path, index: number, values: Int32[]): void {
-            console.log(`Callback on inserting domain ${values.length} values at index ${index}`);
+            console.log(`Callback on INSERT at index ${index} ${values.length} domain values`);
             for (const value of values) {
                 if (value !== undefined) {
-                    console.log(`  - Callback details on inserting ${path.toExpr()} domain value ${value[valueSymbol]} type ${value[typeNameSymbol]}`);
+                    console.log(`  - Callback details on INSERT domain value ${value[valueSymbol]} type ${value[typeNameSymbol]} ${path.toExpr()}`);
                 }
             }
         }
@@ -270,7 +270,8 @@ export default function App() {
     useEffect(() => {
         async function initWorkspace() {
             const myWorkspace = await initializeWorkspace(containerId);
-            if (myWorkspace.containerId) {
+            const first = containerId === undefined;
+            if (myWorkspace.containerId && first) {
                 window.location.hash = myWorkspace.containerId;
             }
             setWorkspace(myWorkspace);
@@ -281,12 +282,11 @@ export default function App() {
             myWorkspace.tree.on("error", (event) => {
                 console.log("Tree error received!");
             });
-
             const listenPath = buildSchemaPath([drawKeys, valueKeys], appSchema);
-
             registerPath(myWorkspace, listenPath, diceListener);
-
-            insertDrawValues(myWorkspace);
+            if (first) {
+                insertDrawValues(myWorkspace);
+            }
         }
         initWorkspace();
     }, []);
@@ -333,8 +333,7 @@ export default function App() {
         ) => {
 
             wrksp.tree.context.on("afterDelta", (delta: Delta.Root) => {
-                // console.log('After delta', delta.size);
-                // visitDelta(delta, new PathVisitor(appSchema, new Set([drawSchema.name])));
+                console.log(JSON.stringify(delta, replacer, 2));
                 visitDelta(delta, new DomainAdapter(
                     appSchema,
                     filter,
@@ -353,7 +352,7 @@ export default function App() {
                 }
             </div>
             <div className="commit">
-            <span onClick={() => all()}>
+                <span onClick={() => all()}>
                     U** &nbsp;
                 </span>
                 <span onClick={() => many()}>
@@ -542,3 +541,12 @@ function readDrawValues(
     }
     return dices;
 }
+
+function replacer(key, value) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return value instanceof Map ? {
+        dataType: 'Map',
+        value: [...value.entries()], // or with spread: value: [...value]
+    } : value;
+}
+
