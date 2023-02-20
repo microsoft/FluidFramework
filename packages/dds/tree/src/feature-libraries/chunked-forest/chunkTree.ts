@@ -428,7 +428,7 @@ export function insertValues(
  * This cannot be used if other shapes are possible for this type.
  *
  * If this stops early due to the type changing, `skipLastNavigation` is not involved:
- * `skipLastNavigation` only determines if the cursor will be left on the node after the last one (possibly existing the field)
+ * `skipLastNavigation` only determines if the cursor will be left on the node after the last one (possibly exiting the field)
  * if the full length is used.
  */
 export function uniformChunkFromCursor(
