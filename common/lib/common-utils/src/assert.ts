@@ -22,7 +22,7 @@ export function assert(condition: boolean, message: string | number): asserts co
 
 /**
  * Fails an assertion.
- * `fail(message)` is the same as `assert(false, message)`.
+ * `fail(message)` is the same as `assert(false, message)` but shorter and with more useful typing.
  * See {@link assert}.
  *
  * @remarks
