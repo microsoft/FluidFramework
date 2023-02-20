@@ -239,7 +239,7 @@ function tryShapeForFieldSchema(
 }
 
 /**
- * Default settings for use for ChunkPolicy/
+ * Default settings for use for {@link ChunkPolicy}.
  * Use `makeTreeChunker` to create a policy with the defaults, but leverages to schema.
  */
 export const defaultChunkPolicy: ChunkPolicy = {
