@@ -7,7 +7,7 @@
 		"noImplicitAny": true,
 		"composite": true,
 		"preserveConstEnums": true,
-		// TODO: enforce "_" prefix for them in linter and/or remove this and come up with a different pattern fro type assertions.
+		// TODO: enforce "_" prefix for unused locals in linter and/or remove this and come up with a different pattern for type assertions.
 		"noUnusedLocals": false,
 	},
 	"include": ["src/**/*"],
