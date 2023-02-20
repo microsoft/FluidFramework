@@ -17,6 +17,7 @@
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "npm run build:tsc",
+		"build:compile:fast": "fluid-build . -s build:compile",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
@@ -30,6 +31,7 @@
 		"format-and-build": "npm run format && npm run build",
 		"format-and-compile": "npm run format && npm run build:compile",
 		"lint": "npm run prettier && npm run eslint",
+		"lint:fast": "fluid-build . -s lint -s build:compile",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",

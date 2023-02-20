@@ -17,6 +17,7 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
+		"build:compile:fast": "fluid-build . -s build:compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "concurrently npm:build npm:webpack",
 		"build:full:compile": "concurrently npm:build:compile npm:webpack",
@@ -26,6 +27,7 @@
 		"format": "npm run prettier:fix",
 		"good-fences": "gf",
 		"lint": "npm run prettier && npm run good-fences && npm run eslint",
+		"lint:fast": "fluid-build . -s lint -s build:compile",
 		"lint:fences": "npm run good-fences",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prepack": "npm run webpack",

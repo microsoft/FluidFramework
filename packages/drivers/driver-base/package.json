@@ -17,6 +17,7 @@
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
+		"build:compile:fast": "fluid-build . -s build:compile",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
@@ -28,6 +29,7 @@
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
+		"lint:fast": "fluid-build . -s lint -s build:compile",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",

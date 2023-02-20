@@ -17,6 +17,7 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
+		"build:compile:fast": "fluid-build . -s build:compile",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
@@ -27,6 +28,7 @@
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
+		"lint:fast": "fluid-build . -s lint -s build:compile",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"postpack": "tar -cf ./experimental-tree.test-files.tar ./src/test ./dist/test",
 		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",

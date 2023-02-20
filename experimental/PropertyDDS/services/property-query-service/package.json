@@ -35,7 +35,9 @@
 		"start": "node server.js",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"build:compile:fast": "fluid-build . -s build:compile",
+		"lint:fast": "fluid-build . -s lint -s build:compile"
 	},
 	"nyc": {
 		"reporter": [
