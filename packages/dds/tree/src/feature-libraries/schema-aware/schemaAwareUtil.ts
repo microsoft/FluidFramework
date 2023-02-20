@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import { $, List, Object as KObject } from "hkt-toolbelt";
-
 import { Value, ValueSchema } from "../../core";
 import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../util";
 import { PrimitiveValue } from "../contextuallyTyped";
@@ -38,12 +36,6 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
 	type check2_ = isAssignableTo<Value, Value2>;
 	type check3_ = isAssignableTo<Value2, Value>;
 }
-
-// AtPath does not seem to work for this case due to missing index signature, so use `At` twice.
-// type NamesFromSchema<T extends LabeledTreeSchema<any>[]> = $<
-// 	$<List.Map, $<KObject.At, "name">>,
-// 	$<$<List.Map, $<KObject.At, "typeInfo">>, T>
-// >;
 
 /**
  * @alpha
