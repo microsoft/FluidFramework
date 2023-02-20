@@ -18,8 +18,8 @@ import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 
@@ -29,14 +29,12 @@ export interface IRunConfig {
 	testConfig: ILoadTestConfig;
 	verbose: boolean;
 	randEng: random.Engine;
+	logger: ITelemetryLogger;
 }
 
 export interface ILoadTest {
-	run(config: IRunConfig, reset: boolean, logger): Promise<boolean>;
-	detached(
-		config: Omit<IRunConfig, "runId" | "profileName">,
-		logger,
-	): Promise<LoadTestDataStoreModel>;
+	run(config: IRunConfig, reset: boolean): Promise<boolean>;
+	detached(config: Omit<IRunConfig, "runId" | "profileName">): Promise<LoadTestDataStoreModel>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
 }
 
@@ -146,7 +144,6 @@ export class LoadTestDataStoreModel {
 		root: ISharedDirectory,
 		runtime: IFluidDataStoreRuntime,
 		containerRuntime: IContainerRuntimeBase,
-		logger: TelemetryLogger,
 	) {
 		await LoadTestDataStoreModel.waitForCatchup(runtime);
 
@@ -192,7 +189,6 @@ export class LoadTestDataStoreModel {
 			sharedmap,
 			runDir,
 			gcDataStore.handle,
-			logger,
 		);
 
 		if (reset) {
@@ -226,7 +222,6 @@ export class LoadTestDataStoreModel {
 		public readonly sharedmap: ISharedMap,
 		private readonly runDir: IDirectory,
 		private readonly gcDataStoreHandle: IFluidHandle,
-		private readonly logger: TelemetryLogger,
 	) {
 		const halfClients = Math.floor(this.config.testConfig.numClients / 2);
 		// The runners are paired up and each pair shares a single taskId
@@ -241,7 +236,10 @@ export class LoadTestDataStoreModel {
 					}
 				},
 				(error) =>
-					this.logger.sendErrorEvent({ eventName: "TaskManager_OnValueChanged" }, error),
+					this.config.logger.sendErrorEvent(
+						{ eventName: "TaskManager_OnValueChanged" },
+						error,
+					),
 			);
 		};
 		this.taskManager.on("lost", changed);
@@ -288,7 +286,8 @@ export class LoadTestDataStoreModel {
 							);
 						}
 					},
-					(error) => this.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error),
+					(error) =>
+						this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error),
 				),
 			);
 		}
@@ -307,7 +306,7 @@ export class LoadTestDataStoreModel {
 					.get<IFluidHandle>(key)!
 					.get()
 					.catch((error) => {
-						this.logger.sendErrorEvent(
+						this.config.logger.sendErrorEvent(
 							{
 								eventName: "ReadBlobFailed_OnValueChanged",
 								key,
@@ -496,25 +495,23 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 	}
 
-	public async detached(config: Omit<IRunConfig, "runId">, logger) {
+	public async detached(config: Omit<IRunConfig, "runId">) {
 		return LoadTestDataStoreModel.createRunnerInstance(
 			{ ...config, runId: -1 },
 			false,
 			this.root,
 			this.runtime,
 			this.context.containerRuntime,
-			logger,
 		);
 	}
 
-	public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
+	public async run(config: IRunConfig, reset: boolean) {
 		const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
 			config,
 			reset,
 			this.root,
 			this.runtime,
 			this.context.containerRuntime,
-			logger,
 		);
 
 		const leaderElection = new LeaderElection(this.runtime);
@@ -559,9 +556,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
 		const opSizeinBytes =
-			typeof config.testConfig.opSizeinBytes === "undefined"
+			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
-				: config.testConfig.opSizeinBytes;
+				: config.testConfig.content.opSizeinBytes;
 		assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
 
 		const generateStringOfSize = (sizeInBytes: number): string =>
@@ -569,34 +566,25 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const generateRandomStringOfSize = (sizeInBytes: number): string =>
 			crypto.randomBytes(sizeInBytes / 2).toString("hex");
 		const generateContentOfSize =
-			config.testConfig.useRandomContent === true
+			config.testConfig.content?.useRandomContent === true
 				? generateRandomStringOfSize
 				: generateStringOfSize;
 		const getOpSizeInBytes = () =>
-			config.testConfig.useVariableOpSize === true
+			config.testConfig.content?.useVariableOpSize === true
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
-
-		const sendSingleOp =
-			opSizeinBytes === 0
-				? () => {
-						dataModel.counter.increment(1);
-				  }
-				: () => {
-						const opPayload = generateContentOfSize(getOpSizeInBytes());
-						const opKey = Math.random().toString();
-						dataModel.sharedmap.set(opKey, opPayload);
-				  };
-
+		const largeOpRate = config.testConfig.content?.largeOpRate ?? 1;
 		let opsSent = 0;
-		const updateOpsSent =
-			opSizeinBytes === 0
-				? () => {
-						opsSent = dataModel.counter.value;
-				  }
-				: () => {
-						opsSent++;
-				  };
+
+		const sendSingleOp = () => {
+			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === 1) {
+				dataModel.sharedmap.set(`key${opsSent}`, generateContentOfSize(getOpSizeInBytes()));
+			} else {
+				dataModel.counter.increment(1);
+			}
+
+			opsSent++;
+		};
 
 		const enableQuickRampDown = () => {
 			return opsSendType === "staggeredReadWrite" && opSizeinBytes === 0 ? true : false;
@@ -607,7 +595,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? async () => {
 						if (dataModel.assigned()) {
 							sendSingleOp();
-							updateOpsSent();
 							if (opsSent % opsPerCycle === 0) {
 								dataModel.abandonTask();
 								await delay(cycleMs / 2);
@@ -622,7 +609,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  }
 				: async () => {
 						sendSingleOp();
-						updateOpsSent();
 						await delay(
 							opsGapMs + opsGapMs * random.real(0, 0.5, true)(config.randEng),
 						);

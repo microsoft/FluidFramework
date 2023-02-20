@@ -86,6 +86,8 @@ export class LocalServerTestDriver implements ITestDriver {
     // (undocumented)
     createUrlResolver(): IUrlResolver;
     // (undocumented)
+    readonly endpointName = "local";
+    // (undocumented)
     get server(): ILocalDeltaConnectionServer;
     // (undocumented)
     readonly type = "local";
@@ -180,6 +182,8 @@ export class TinyliciousTestDriver implements ITestDriver {
     createDocumentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)
     createUrlResolver(): InsecureTinyliciousUrlResolver;
+    // (undocumented)
+    readonly endpointName = "local";
     // (undocumented)
     readonly type = "tinylicious";
     // (undocumented)

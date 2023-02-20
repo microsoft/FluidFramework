@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-proxy",
-	"version": "2.0.0-internal.3.1.0",
+	"version": "2.0.0-internal.3.2.0",
 	"description": "Proxify PropertyTree to interact with them in a JavaScript like manner",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,7 +25,7 @@
 		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -39,11 +39,11 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluid-experimental/property-changeset": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-properties": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0"
+		"@fluid-experimental/property-changeset": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
+		"@fluid-experimental/property-properties": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.12.10",
+		"@babel/core": "^7.13.0",
 		"@babel/plugin-transform-runtime": "^7.2.0",
 		"@babel/preset-env": "^7.2.0",
 		"@fluid-experimental/property-proxy-previous": "npm:@fluid-experimental/property-proxy@2.0.0-internal.2.1.0",

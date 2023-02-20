@@ -13,7 +13,11 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { FlushMode, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import {
+	FlushMode,
+	FlushModeExperimental,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -25,11 +29,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import {
+	CompressionAlgorithms,
 	ContainerMessageType,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { PendingStateManager } from "../pendingStateManager";
+import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -611,7 +616,6 @@ describe("Runtime", () => {
 				pendingStateManager.onSubmitMessage(
 					ContainerMessageType.FluidDataStoreOp,
 					0,
-					0,
 					"",
 					"",
 					undefined,
@@ -874,6 +878,151 @@ describe("Runtime", () => {
 				"mixed in return",
 			);
 			assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
+		});
+
+		describe("Op content modification", () => {
+			let containerRuntime: ContainerRuntime;
+			let pendingStateManager: PendingStateManager;
+
+			const getMockContext = (): Partial<IContainerContext> => {
+				return {
+					attachState: AttachState.Attached,
+					deltaManager: new MockDeltaManager(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: new MockLogger(),
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (_error?: ICriticalContainerError): void => {},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+				};
+			};
+
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+				});
+				pendingStateManager = (containerRuntime as any).pendingStateManager;
+			});
+
+			it("modifying op content after submit does not reflect in PendingStateManager", () => {
+				const content = { prop1: 1 };
+				containerRuntime.submitDataStoreOp("1", content);
+				(containerRuntime as any).flush();
+
+				content.prop1 = 2;
+
+				const state = pendingStateManager.getLocalState();
+
+				assert.notStrictEqual(state, undefined, "expect pending local state");
+				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
+				assert.deepStrictEqual(
+					(state?.pendingStates[0] as IPendingMessage).content.contents,
+					{
+						prop1: 1,
+					},
+					"content of pending local message has changed",
+				);
+			});
+		});
+
+		describe("Container logging when loaded", () => {
+			let mockLogger: MockLogger;
+
+			const getMockContext = (
+				featureGates: Record<string, ConfigTypes> = {},
+			): Partial<IContainerContext> => {
+				return {
+					attachState: AttachState.Attached,
+					deltaManager: new MockDeltaManager(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: mixinMonitoringContext(
+						mockLogger,
+						configProvider(featureGates),
+					) as unknown as MockLogger,
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (_error?: ICriticalContainerError): void => {},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+				};
+			};
+
+			beforeEach(async () => {
+				mockLogger = new MockLogger();
+			});
+
+			const runtimeOptions = {
+				compressionOptions: {
+					minimumBatchSizeInBytes: 1024 * 1024,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				chunkSizeInBytes: 800 * 1024,
+				gcOptions: {
+					gcAllowed: true,
+				},
+				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+			};
+
+			const defaultRuntimeOptions = {
+				summaryOptions: {},
+				gcOptions: {},
+				loadSequenceNumberVerification: "close",
+				flushMode: FlushMode.TurnBased,
+				enableOfflineLoad: false,
+				compressionOptions: {
+					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				maxBatchSizeInBytes: 950 * 1024,
+				chunkSizeInBytes: Number.POSITIVE_INFINITY,
+				enableOpReentryCheck: false,
+			};
+			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
+
+			it("Container load stats", async () => {
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions,
+				});
+
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(mergedRuntimeOptions),
+						featureGates: JSON.stringify({}),
+					},
+				]);
+			});
+
+			it("Container load stats with feature gate overrides", async () => {
+				const featureGates = {
+					"Fluid.ContainerRuntime.DisableCompression": true,
+					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
+					"Fluid.ContainerRuntime.DisableCompressionChunking": true,
+				};
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext(featureGates) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions,
+				});
+
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(mergedRuntimeOptions),
+						featureGates: JSON.stringify({
+							disableCompression: true,
+							disableOpReentryCheck: false,
+							disableChunking: true,
+						}),
+					},
+				]);
+			});
 		});
 	});
 });

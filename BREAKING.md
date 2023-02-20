@@ -19,12 +19,15 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 
--   [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
 -   [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
-
-### Deprecated IPendingFlush
-
-`IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+-   [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
+-   [Deprecated IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter](#Deprecated-IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter)
+-   [Some test packages will no longer be published](#some-test-packages-will-no-longer-be-published)
+-   [Container and RelativeLoader deprecated](#container-and-relativeloader-deprecated)
+-   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
+-   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
+-   [IFluidTokenProvider deprecated](#IFluidTokenProvider-deprecated)
+-   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -34,6 +37,63 @@ used in applications where [Garbage Collection](packages/runtime/container-runti
 In a subsequent major release, the policy `IDocumentStorageServicePolicies.maximumCacheDurationMs`
 (and likewise `IDocumentStorageService.policies` itself) may become required,
 to ensure all drivers take note of this requirement and enforce this policy.
+
+### Deprecated PendingStateManager interfaces
+
+The following interfaces used by the `PendingStateManager` have been deprecated and will no longer be exported in a future version:
+
+-   `IPendingMessage`
+-   `IPendingFlush`
+-   `IPendingState`
+-   `IPendingLocalState`
+
+### Deprecated IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter
+
+`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` have been deprecated. It is recommended not to bundle view code with Fluid data, and instead apply the views from outside the container (see https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/external-views for an example of this approach). For those views, a dedicated view framework is recommended (see view sampler demo https://github.com/microsoft/FluidFramework/tree/main/examples/apps/view-framework-sampler)
+
+### Some test packages will no longer be published
+
+These packages are currently published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-drivers`
+-   `@fluidframework/test-pairwise-generator`
+-   `@fluidframework/test-version-utils`
+
+These will be moved to the `@fluid-internal` scope and will no longer be published.
+
+### Container and RelativeLoader deprecated
+
+The Container and RelativeLoader classes in `@fluidframework/container-loader` have been deprecated and will be removed in the next major release.
+
+-   Container usage should be replaced with usage of the interface IContainer from `@fluidframework/container-definitions`.
+-   RelativeLoader is an internal class and should not be used directly.
+
+### BlobAggregationStorage and SnapshotExtractor deprecated
+
+The Container and RelativeLoader classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
+the next major release. These classes were experimental and never widely used. There are no replacements.
+
+### Summarizer node and related items deprecated
+
+The following functions, interfaces, and types currently available in `@fluidframework/runtime-utils` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+
+-   `createRootSummarizerNode`
+-   `createRootSummarizerNodeWithGC`
+-   `IFetchSnapshotResult`
+-   `IRootSummarizerNode`
+-   `IRootSummarizerNodeWithGC`
+-   `ISummarizerNodeRootContract`
+-   `RefreshSummaryResult`
+
+### IFluidTokenProvider deprecated
+
+The IFluidTokenProvider interface has been deprecated and will be removed in an upcoming release. Fluid Framework does not prescribe a particular approach to token providers.
+
+`ContainerRuntime.IFluidTokenProvider` has also been deprecated and will be removed in an upcoming release. Token providers, like any dependency, should be accessed using normal provider patterns.
+
+### web-code-loader and ICodeAllowList deprecated
+
+The `@fluidframework/web-code-loader` and the `ICodeAllowList` interface from the `@fluidframework/container-definitions` package have been deprecated and will be removed in an upcoming release. Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

@@ -355,10 +355,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		const disconnectReason =
-			error !== undefined
-				? `Closing DeltaManager (${error.message})`
-				: "Closing DeltaManager";
+		const disconnectReason = "Closing DeltaManager";
 
 		// This raises "disconnect" event if we have active connection.
 		this.disconnectFromDeltaStream(disconnectReason);

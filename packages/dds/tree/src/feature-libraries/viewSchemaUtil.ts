@@ -15,6 +15,7 @@ import { emptyField } from "./defaultSchema";
 
 /**
  * Helper for building {@link NamedTreeSchema}.
+ * @alpha
  */
 export function namedTreeSchema(
 	data: Partial<TreeSchemaBuilder> & Named<TreeSchemaIdentifier>,

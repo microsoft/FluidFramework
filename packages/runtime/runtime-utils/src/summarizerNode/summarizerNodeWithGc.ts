@@ -35,6 +35,10 @@ import {
 	SummaryNode,
 } from "./summarizerNodeUtils";
 
+/**
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
+ */
 export interface IRootSummarizerNodeWithGC
 	extends ISummarizerNodeWithGC,
 		ISummarizerNodeRootContract {}
@@ -67,7 +71,7 @@ class SummaryNodeWithGC extends SummaryNode {
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
-export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
+class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
 	// Tracks the work-in-progress used routes during summary.
 	private wipSerializedUsedRoutes: string | undefined;
 
@@ -109,6 +113,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		wipSummaryLogger?: ITelemetryLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
+		/** A unique id of this node to be logged when sending telemetry. */
+		telemetryId?: string,
 	) {
 		super(
 			logger,
@@ -119,6 +125,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			latestSummary,
 			initialSummary,
 			wipSummaryLogger,
+			telemetryId,
 		);
 
 		this.gcDisabled = config.gcDisabled === true;
@@ -164,9 +171,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		// If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
+		// If GC is not disabled and a summary is in progress, GC should have run and updated the used routes for this
 		// summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
-		if (!this.gcDisabled && this.isTrackingInProgress()) {
+		if (!this.gcDisabled && this.isSummaryInProgress()) {
 			assert(
 				this.wipSerializedUsedRoutes !== undefined,
 				0x1b1 /* "wip used routes should be set if tracking a summary" */,
@@ -239,10 +246,21 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
 			wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
-			assert(
-				wipSerializedUsedRoutes !== undefined,
-				0x1b5 /* "We should have been tracking used routes" */,
-			);
+			/**
+			 * The absence of wip used routes indicates that GC was not run on this node. This can happen if:
+			 * 1. A child node was created after GC was already run on the parent. For example, a data store
+			 * is realized (loaded) after GC was run on it creating summarizer nodes for its DDSes. In this
+			 * case, the used routes of the parent should be passed on the child nodes and it should be fine.
+			 * 2. A new node was created but GC was never run on it. This can mean that the GC data generated
+			 * during summarize is complete . We should not continue, log and throw an error. This will help us
+			 * identify these cases and take appropriate action.
+			 */
+			if (wipSerializedUsedRoutes === undefined) {
+				this.throwUnexpectedError({
+					eventName: "NodeDidNotRunGC",
+					proposalHandle,
+				});
+			}
 		}
 
 		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
@@ -436,7 +454,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
 		const child = new SummarizerNodeWithGC(
-			this.defaultLogger,
+			this.logger,
 			summarizeInternalFn,
 			{
 				...config,
@@ -449,6 +467,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			this.wipSummaryLogger,
 			getGCDataFn,
 			async () => getChildBaseGCDetailsP,
+			createDetails.telemetryNodeId,
 		);
 
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
@@ -482,9 +501,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		// are in the same order.
 		this.usedRoutes = usedRoutes.sort();
 
-		// If GC is not disabled and we are tracking a summary, update the work-in-progress used routes so that it can
+		// If GC is not disabled and a summary is in progress, update the work-in-progress used routes so that it can
 		// be tracked for this summary.
-		if (!this.gcDisabled && this.isTrackingInProgress()) {
+		if (!this.gcDisabled && this.isSummaryInProgress()) {
 			this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
 		}
 	}
@@ -531,6 +550,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param config - Configure behavior of summarizer node
  * @param getGCDataFn - Function to get the GC data of this node
  * @param baseGCDetailsP - Function to get the initial GC details of this node
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
  */
 export const createRootSummarizerNodeWithGC = (
 	logger: ITelemetryLogger,
@@ -553,4 +575,5 @@ export const createRootSummarizerNodeWithGC = (
 		undefined /* wipSummaryLogger */,
 		getGCDataFn,
 		getBaseGCDetailsFn,
+		"" /* telemetryId */,
 	);

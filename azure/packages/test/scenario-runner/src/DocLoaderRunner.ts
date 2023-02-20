@@ -15,6 +15,7 @@ export interface AzureClientConfig {
 	key?: string;
 	tenantId?: string;
 	useSecureTokenProvider?: boolean;
+	region?: string;
 }
 
 export interface DocLoaderSchema {
@@ -64,6 +65,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 				connection.type,
 				...(connection.endpoint ? ["--connEndpoint", connection.endpoint] : []),
 				...(connection.useSecureTokenProvider ? ["--secureTokenProvider"] : []),
+				...(connection.region ? ["--region", connection.region] : []),
 			];
 			childArgs.push("--verbose");
 			runnerArgs.push(childArgs);
