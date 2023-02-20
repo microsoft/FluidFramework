@@ -4,7 +4,13 @@
 			"runner": "@nrwl/nx-cloud",
 			"options": {
 				"parallel": 6,
-				"cacheableOperations": ["build:compile", "build:genver", "lint", "format"],
+				"cacheableOperations": [
+					"build:compile",
+					"build:compile:fast",
+					"build:genver",
+					"lint",
+					"format"
+				],
 				"accessToken": "ZmY4MzQ3MDUtOWU1YS00MzJiLTg4ZTgtY2M3OWNlZjlhODk4fHJlYWQtd3JpdGU="
 			}
 		}
@@ -27,8 +33,13 @@
 		},
 		"build:compile": {
 			"inputs": ["src"],
-			"dependsOn": ["^build:compile"],
-			"outputs": ["{projectRoot}/dist"]
+			"dependsOn": ["^build:compile:fast"],
+			"outputs": [
+				"{projectRoot}/dist",
+				"{projectRoot}/lib",
+				"{projectRoot}/flub generate typetests-*.done.build.log",
+				"{projectRoot}/.tsbuildinfo"
+			]
 		},
 		"format": {
 			"inputs": ["src"],

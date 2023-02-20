@@ -13,7 +13,7 @@
 	"scripts": {
 		"build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
 		"build:ci": "npm run build:genver && npm run build:compile",
-		"build:compile": "nx run-many --target build:compile && npm run prettier:root:fix",
+		"build:compile": "nx run-many --target build:compile:fast && npm run prettier:root:fix",
 		"build:docs": "lerna run build:docs --stream --parallel",
 		"build:fast": "fluid-build --root .",
 		"build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
