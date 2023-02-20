@@ -26,9 +26,9 @@ function assertAncestor(
 ): void {
 	const path: Node[] = [];
 	const foundAncestor = findAncestor([descendant, path], (n) => n === expectedAncestor);
-	assert.strictEqual(foundAncestor, expectedAncestor);
+	assert.equal(foundAncestor, expectedAncestor);
 	if (expectedPath !== undefined) {
-		assert.deepStrictEqual(path, expectedPath);
+		assert.equal(path, expectedPath);
 	}
 }
 
@@ -42,9 +42,9 @@ function assertCommonAncestor(
 	const foundPathA: Node[] = [];
 	const foundPathB: Node[] = [];
 	const foundAncestor = findCommonAncestor([a, foundPathA], [b, foundPathB]);
-	assert.strictEqual(foundAncestor, expectedAncestor, "Found unexpected ancestor node");
-	assert.deepStrictEqual(foundPathA, expectedPathA);
-	assert.deepStrictEqual(foundPathB, expectedPathB);
+	assert.equal(foundAncestor, expectedAncestor, "Found unexpected ancestor node");
+	assert.deepEqual(foundPathA, expectedPathA);
+	assert.deepEqual(foundPathB, expectedPathB);
 }
 
 describe("findAncestor", () => {
@@ -81,8 +81,8 @@ describe("findAncestor", () => {
 		const c = { parent: p, id: "c" }; // Child
 		const path: Parented[] = [];
 		const ancestor = findAncestor<Parented>([c, path], (n) => n.id === "g");
-		assert.strictEqual(ancestor, g);
-		assert.deepStrictEqual(path, [p, c]);
+		assert.equal(ancestor, g);
+		assert.deepEqual(path, [p, c]);
 	});
 });
 
@@ -162,7 +162,7 @@ describe("findCommonAncestor", () => {
 		const b2 = { parent: b1 };
 		const pathB: Parented[] = [];
 		const ancestor = findCommonAncestor<Parented>(a, [b2, pathB]);
-		assert.strictEqual(ancestor, shared);
-		assert.deepStrictEqual(pathB, [b1, b2]);
+		assert.equal(ancestor, shared);
+		assert.deepEqual(pathB, [b1, b2]);
 	});
 });

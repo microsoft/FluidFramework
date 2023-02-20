@@ -505,8 +505,6 @@ describe("SharedTree", () => {
 		it("can rebase two inserts", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
-			(tree1 as any).tag = 1;
-			(tree2 as any).tag = 2;
 			insert(tree1, 0, "y");
 			await provider.ensureSynchronized();
 

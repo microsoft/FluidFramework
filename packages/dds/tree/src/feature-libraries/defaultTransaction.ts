@@ -20,7 +20,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 	{ forest, changeFamily, submitEdit }: Checkout<TEditor, TChange>,
 	command: (forest: IForestSubscription, editor: TEditor) => TransactionResult,
 ): TransactionResult {
-	// This revision number is solely used within the scope of this transaction for the purpose of
+	// These revision numbers are solely used within the scope of this transaction for the purpose of
 	// populating and querying the repair data store. Both the revision numbers and the repair data
 	// are scoped to this transaction.
 	const revisions: RevisionTag[] = [];

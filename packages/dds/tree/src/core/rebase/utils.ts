@@ -54,11 +54,9 @@ export function findAncestor<T extends { parent?: T }>(
 /**
  * Find a common ancestor between two descendants that are linked by parent pointers.
  * @param descendantA - a descendant. If an empty `path` array is included, it will be populated
- * with the chain of ancestry for `descendantA` from most distant to closest (including `descendantA`,
- * but not including the ancestor shared with `descendantB`).
+ * with the chain of commits from the ancestor to `descendantA` (not including the ancestor).
  * @param descendantB - another descendant. If an empty `path` array is included, it will be populated
- * with the chain of ancestry for `descendantB` from most distant to closest (including `descendantB`,
- * but not including the ancestor shared with `descendantA`).
+ * with the chain of commits from the ancestor to `descendantB` (not including the ancestor).
  * @returns the common ancestor of `descendantA` and `descendantB`, or `undefined` if no such ancestor exists.
  * @example
  * ```ts

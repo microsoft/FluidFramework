@@ -44,7 +44,9 @@ export class EditManager<
 	TChangeset,
 	TChangeFamily extends ChangeFamily<any, TChangeset>,
 > extends SimpleDependee {
-	/** The trunk represents the list of received sequenced changes. */
+	/**
+	 * The head commit of the "trunk" branch. The trunk represents the list of received sequenced changes.
+	 */
 	private trunk: GraphCommit<TChangeset>;
 
 	/**
@@ -54,7 +56,9 @@ export class EditManager<
 	 */
 	private readonly sessionLocalBranches: Map<SessionId, GraphCommit<TChangeset>> = new Map();
 
-	/** This branch holds the changes made by this client which have not yet been confirmed as sequenced changes. */
+	/**
+	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
+	 */
 	private localBranch: GraphCommit<TChangeset>;
 
 	private localSessionId?: SessionId;
@@ -162,7 +166,7 @@ export class EditManager<
 		// Note that option (A) would be a simple change to `addSequencedChange` whereas (B) would likely require
 		// rebasing trunk changes over the inverse of trunk changes.
 		assert(
-			getPathFromBase(this.localBranch, this.trunk).length === 0,
+			this.localBranch === this.trunk,
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
@@ -250,8 +254,13 @@ export class EditManager<
 			// change in the incoming commit.
 			const localPath = getPathFromBase(this.localBranch, this.trunk);
 			// Get the first revision in the local branch, and then remove it
-			const { change } = localPath.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
+			const { change } =
+				localPath.shift() ??
+				fail(
+					"Received a sequenced change from the local session despite having no local changes",
+				);
 			this.pushToTrunk(sequenceNumber, { ...newCommit, change });
+			// TODO: Can this be optimized by simply mutating the localPath parent pointers? Is it safe to do that?
 			this.localBranch = localPath.reduce(mintCommit, this.trunk);
 			return emptyDelta;
 		}
@@ -337,26 +346,29 @@ export class EditManager<
 	}
 }
 
-const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
-	"Received a sequenced change from the local session despite having no local changes";
-
 export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
 	sequenceNumber: SeqNumber;
 }
 
-/** A branch off of the trunk for use in summaries */
+/**
+ * A branch off of the trunk for use in summaries
+ */
 export interface SummarySessionBranch<TChangeset> {
 	readonly base: RevisionTag;
 	readonly commits: Commit<TChangeset>[];
 }
 
-/** The in-memory data that summaries contain */
+/**
+ * The in-memory data that summaries contain
+ */
 export interface SummaryData<TChangeset> {
 	readonly trunk: readonly SequencedCommit<TChangeset>[];
 	readonly branches: ReadonlyMap<SessionId, SummarySessionBranch<TChangeset>>;
 }
 
-/** @returns the path from the base of a branch to its head */
+/**
+ * @returns the path from the base of a branch to its head
+ */
 function getPathFromBase<TChange>(
 	branchHead: GraphCommit<TChange>,
 	baseBranchHead: GraphCommit<TChange>,
