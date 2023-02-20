@@ -65,7 +65,7 @@
 		"@fluidframework/aqueduct": "^1.4.0-121020",
 		"@fluidframework/azure-client": "^1.2.0",
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.0.0",
+		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "^1.4.0-121020",
 		"@fluidframework/core-interfaces": "^1.4.0-121020",
 		"@fluidframework/counter": "^1.4.0-121020",
@@ -87,11 +87,11 @@
 		"mocha": "^10.0.0",
 		"sinon": "^7.4.2",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "0.5.0",
+		"tinylicious": "0.6.0",
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.8.0",
+		"@fluid-tools/build-cli": "^0.9.0",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
@@ -107,5 +107,8 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",
 		"typescript": "~4.5.5"
+	},
+	"typeValidation": {
+		"disabled": true
 	}
 }

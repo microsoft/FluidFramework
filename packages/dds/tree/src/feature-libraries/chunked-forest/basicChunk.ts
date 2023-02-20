@@ -17,7 +17,7 @@ import {
 } from "../../core";
 import { fail } from "../../util";
 import { prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, cursorChunk, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * General purpose one node chunk.
@@ -102,7 +102,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	 * it creates the `nestedCursor` over that chunk, and delegates all operations to it.
 	 */
 	public constructor(
-		protected root: BasicChunk[],
+		protected root: readonly TreeChunk[],
 		protected readonly siblingStack: SiblingsOrKey[],
 		protected readonly indexStack: number[],
 		protected readonly indexOfChunkStack: number[],
@@ -118,15 +118,19 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		super();
 	}
 
-	// TODO implements `[cursorChunk]`, handling:
-	// 1. root chunk
-	// 2. nested basic chunk
-	// 3. inner chunks
-	// public readonly get [cursorChunk](): TreeChunk ;
+	public get [cursorChunk](): TreeChunk | undefined {
+		if (this.nestedCursor !== undefined) {
+			return this.nestedCursor[cursorChunk];
+		}
+		assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
+		return (this.siblings as TreeChunk[])[this.indexOfChunk];
+	}
 
 	public atChunkRoot(): boolean {
-		// TODO: test/confirm this is right
-		return this.siblingStack.length > 2;
+		return (
+			this.siblingStack.length < 2 &&
+			(this.nestedCursor === undefined || this.nestedCursor.atChunkRoot())
+		);
 	}
 
 	public fork(): BasicChunkCursor {
@@ -215,15 +219,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	public getPath(prefix?: PathRootPrefix): UpPath {
 		if (this.nestedCursor !== undefined) {
-			// TODO: this uses index offset for actual node, when it should use offset for start of chunk
-			const rootPath: UpPath =
-				this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
 			return (
-				this.nestedCursor.getPath({
-					indexOffset: this.nestedOffset(),
-					rootFieldOverride: rootPath.parentField,
-					parent: rootPath.parent,
-				}) ?? fail("nested cursors should not be root")
+				this.nestedCursor.getPath(this.nestedPathPrefix(prefix)) ??
+				fail("nested cursors should not be root")
 			);
 		}
 		assert(this.mode === CursorLocationType.Nodes, 0x524 /* must be in nodes mode */);
@@ -232,16 +230,21 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return path;
 	}
 
+	private nestedPathPrefix(prefix?: PathRootPrefix): PathRootPrefix {
+		// This uses index offset for actual node, when it should use offset for start of chunk.
+		// To compensate, subtract this.indexWithinChunk below.
+		const rootPath: UpPath =
+			this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
+		return {
+			indexOffset: rootPath.parentIndex - this.indexWithinChunk,
+			rootFieldOverride: rootPath.parentField,
+			parent: rootPath.parent,
+		};
+	}
+
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
 		if (this.nestedCursor !== undefined) {
-			// TODO: this uses index offset for actual node, when it should use offset for start of chunk
-			const rootPath: UpPath =
-				this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
-			return this.nestedCursor.getFieldPath({
-				indexOffset: this.nestedOffset(),
-				rootFieldOverride: rootPath.parentField,
-				parent: rootPath.parent,
-			});
+			return this.nestedCursor.getFieldPath(this.nestedPathPrefix(prefix));
 		}
 		assert(this.mode === CursorLocationType.Fields, 0x525 /* must be in fields mode */);
 		return {
@@ -528,6 +531,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return this.index;
 	}
 
+	/**
+	 * Within the field that `nestedCursor` is nested in:
+	 * returns the index within that field of the first node that is part of the chunk nestedCursor traverses.
+	 */
 	private nestedOffset(): number {
 		assert(this.nestedCursor !== undefined, 0x55e /* nested offset requires nested cursor */);
 		assert(
