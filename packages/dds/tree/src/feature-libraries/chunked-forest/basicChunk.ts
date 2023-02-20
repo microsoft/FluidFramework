@@ -529,8 +529,8 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	}
 
 	/**
-	 * Withing the field that `nestedCursor` is nested in:
-	 * returns the index withing that field od the first node that is part of the chunk nestedCursor traverses.
+	 * Within the field that `nestedCursor` is nested in:
+	 * returns the index within that field of the first node that is part of the chunk nestedCursor traverses.
 	 */
 	private nestedOffset(): number {
 		assert(this.nestedCursor !== undefined, "nested offset requires nested cursor");
