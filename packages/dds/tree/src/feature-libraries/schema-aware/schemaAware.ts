@@ -10,18 +10,8 @@ import {
 	TreeSchemaIdentifier,
 	ValueSchema,
 } from "../../core";
-import {
-	FieldSchemaTypeInfo,
-	LabeledTreeSchema,
-	TreeSchemaTypeInfo,
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../modular-schema/typedSchema";
 import { typeNameSymbol, valueSymbol } from "../contextuallyTyped";
-import { Multiplicity } from "../modular-schema";
-// eslint-disable-next-line import/no-internal-modules
-import { AllowOptional, ListToKeys } from "../modular-schema/typedSchema/typeUtils";
-// eslint-disable-next-line import/no-internal-modules
-import { NameSet } from "../modular-schema/typedSchema/outputTypes";
+import { Multiplicity, TypedSchema } from "../modular-schema";
 import { defaultSchemaPolicy } from "../defaultSchema";
 import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
 
@@ -36,7 +26,7 @@ import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./s
 export type TypedTree<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
-	TSchema extends LabeledTreeSchema<any>,
+	TSchema extends TypedSchema.LabeledTreeSchema<any>,
 > = TypedTreeFromInfo<TMap, Mode, TSchema["typeInfo"]>;
 
 /**
@@ -45,7 +35,7 @@ export type TypedTree<
 export type TypedTreeFromInfo<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
-	TSchema extends TreeSchemaTypeInfo,
+	TSchema extends TypedSchema.TreeSchemaTypeInfo,
 > = CollectOptions<
 	Mode,
 	TypedFields<TMap, Mode, TSchema["local"]>,
@@ -145,8 +135,8 @@ export type CollectOptionsNormalized<
 export type TypedFields<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
-	TFields extends { [key: string]: FieldSchemaTypeInfo },
-> = AllowOptional<{
+	TFields extends { [key: string]: TypedSchema.FieldSchemaTypeInfo },
+> = TypedSchema.AllowOptional<{
 	[key in keyof TFields]: ApplyMultiplicity<
 		TFields[key]["kind"]["multiplicity"],
 		TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>
@@ -171,11 +161,11 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
 export type TreeTypesToTypedTreeTypes<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
-	T extends unknown | NameSet,
+	T extends unknown | TypedSchema.NameSet,
 > = ValidContextuallyTypedNodeData<
 	TMap,
 	Mode,
-	T extends NameSet<infer Names> ? Names : TMap["allTypes"]
+	T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"]
 >;
 
 /**
@@ -190,7 +180,7 @@ export interface TypedSchemaData extends SchemaDataAndPolicy {
 /**
  * @alpha
  */
-export function typedSchemaData<T extends LabeledTreeSchema<any>[]>(
+export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(
 	globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>,
 	...t: T
 ): SchemaDataAndPolicy & {
@@ -214,7 +204,7 @@ export function typedSchemaData<T extends LabeledTreeSchema<any>[]>(
 	const schemaData = {
 		policy: defaultSchemaPolicy,
 		globalFieldSchema,
-		treeSchema: new Map<TreeSchemaIdentifier, LabeledTreeSchema<any>>(
+		treeSchema: new Map<TreeSchemaIdentifier, TypedSchema.LabeledTreeSchema<any>>(
 			t.map((schema) => [schema.name, schema]),
 		),
 		treeSchemaObject: treeSchemaObject as {
@@ -234,7 +224,7 @@ export type ValidContextuallyTypedNodeData<
 	Mode extends ApiMode,
 	TNames extends readonly string[],
 > = ValuesOf<{
-	[Property in keyof ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
+	[Property in keyof TypedSchema.ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
 		[key in Property]: any;
 	}
 		? TypedTree<TMap, Mode, TMap["treeSchemaObject"][Property]>
@@ -248,5 +238,5 @@ export type ValidContextuallyTypedNodeData<
 export type NodeDataFor<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
-	TSchema extends LabeledTreeSchema<any>,
+	TSchema extends TypedSchema.LabeledTreeSchema<any>,
 > = ValidContextuallyTypedNodeData<TMap, Mode, readonly [TSchema["typeInfo"]["name"]]>;

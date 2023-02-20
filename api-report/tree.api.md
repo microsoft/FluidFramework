@@ -991,7 +991,7 @@ export interface NodeData {
 }
 
 // @alpha
-type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends LabeledTreeSchema<any>> = ValidContextuallyTypedNodeData<TMap, Mode, readonly [TSchema["typeInfo"]["name"]]>;
+type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema<any>> = ValidContextuallyTypedNodeData<TMap, Mode, readonly [TSchema["typeInfo"]["name"]]>;
 
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
@@ -1307,7 +1307,7 @@ export type TreeType = TreeSchemaIdentifier;
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @alpha
-type TreeTypesToTypedTreeTypes<TMap extends TypedSchemaData, Mode extends ApiMode, T extends unknown | NameSet> = ValidContextuallyTypedNodeData<TMap, Mode, T extends NameSet<infer Names> ? Names : TMap["allTypes"]>;
+type TreeTypesToTypedTreeTypes<TMap extends TypedSchemaData, Mode extends ApiMode, T extends unknown | TypedSchema.NameSet> = ValidContextuallyTypedNodeData<TMap, Mode, T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"]>;
 
 // @alpha
 export interface TreeValue extends Serializable {
@@ -1315,8 +1315,8 @@ export interface TreeValue extends Serializable {
 
 // @alpha
 type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
-    [key: string]: FieldSchemaTypeInfo;
-}> = AllowOptional<{
+    [key: string]: TypedSchema.FieldSchemaTypeInfo;
+}> = TypedSchema.AllowOptional<{
     [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>>;
 }>;
 
@@ -1361,7 +1361,7 @@ interface TypedSchemaData extends SchemaDataAndPolicy {
 }
 
 // @alpha (undocumented)
-function typedSchemaData<T extends LabeledTreeSchema<any>[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy & {
+function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy & {
     treeSchemaObject: {
         [schema in T[number] as schema["typeInfo"]["name"]]: schema;
     };
@@ -1369,10 +1369,10 @@ function typedSchemaData<T extends LabeledTreeSchema<any>[]>(globalFieldSchema: 
 };
 
 // @alpha
-type TypedTree<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends LabeledTreeSchema<any>> = TypedTreeFromInfo<TMap, Mode, TSchema["typeInfo"]>;
+type TypedTree<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema<any>> = TypedTreeFromInfo<TMap, Mode, TSchema["typeInfo"]>;
 
 // @alpha (undocumented)
-type TypedTreeFromInfo<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TreeSchemaTypeInfo> = CollectOptions<Mode, TypedFields<TMap, Mode, TSchema["local"]>, TSchema["value"], TSchema["name"]>;
+type TypedTreeFromInfo<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.TreeSchemaTypeInfo> = CollectOptions<Mode, TypedFields<TMap, Mode, TSchema["local"]>, TSchema["value"], TSchema["name"]>;
 
 // @alpha
 function typedTreeSchema<T extends TypedTreeSchemaBuilder, TName extends string>(name: TName, t: T): LabeledTreeSchema<TreeInfoFromBuilder<T, TName>>;
@@ -1429,7 +1429,7 @@ export interface UpPath {
 
 // @alpha
 type ValidContextuallyTypedNodeData<TMap extends TypedSchemaData, Mode extends ApiMode, TNames extends readonly string[]> = ValuesOf<{
-    [Property in keyof ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
+    [Property in keyof TypedSchema.ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
         [key in Property]: any;
     } ? TypedTree<TMap, Mode, TMap["treeSchemaObject"][Property]> : never;
 }>;

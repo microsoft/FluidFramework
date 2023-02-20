@@ -73,9 +73,19 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder, TName extends 
 		extraGlobalFields: t.extraGlobalFields,
 		value: t.value,
 	};
+	// TreeInfoFromBuilder<T, TName>
+	const typeInfo: TreeSchemaTypeInfo = {
+		name,
+		local: t.local ?? {},
+		global: extractNames(t.global ?? []),
+		extraLocalFields: t.extraLocalFields ?? emptyField,
+		extraGlobalFields: t.extraGlobalFields ?? false,
+		value: t.value ?? ValueSchema.Nothing,
+	};
 	return {
 		name: brand<TreeSchemaIdentifier>(name),
 		...treeSchema(data),
+		typeInfo,
 	} as unknown as LabeledTreeSchema<TreeInfoFromBuilder<T, TName>>;
 }
 
@@ -105,11 +115,11 @@ export function unrestrictedFieldSchema<TKind extends FieldKind>(kind: TKind): {
 	return { kind };
 }
 
-function extractNames<T extends (string | Named<string>)[]>(
+function extractNames<T extends (string | symbol | Named<string | symbol>)[]>(
 	items: T,
 ): AsNames<T> & Iterable<ArrayToUnion<AsNames<T>>> {
 	return items.map((item) =>
-		typeof item === "string" ? item : item.name,
+		typeof item === "object" ? item.name : item,
 	) as unknown as AsNames<T> & Iterable<ArrayToUnion<AsNames<T>>>;
 }
 
