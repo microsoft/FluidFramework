@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/bundle-size-tools";
-export const pkgVersion = "0.9.0";
+export const pkgVersion = "0.10.0";

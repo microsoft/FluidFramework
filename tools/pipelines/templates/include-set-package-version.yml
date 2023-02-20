@@ -47,7 +47,6 @@ steps:
         npm i -g pnpm
         pnpm config set store-dir $(pnpmStorePath)
         pnpm i
-        npm run build:compile
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -79,16 +78,9 @@ steps:
   - task: Bash@3
     displayName: Check package.json formatting
     inputs:
-      targetType: 'inline'
+      targetType: 'filePath'
       workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        if [ -f "lerna.json" ]; then
-          # Run on all the release group packages, if in a release group
-          npx --no-install lerna exec prettier -- --check package.json
-        fi
-
-        # Check the package.json at the root of the release group/package
-        npx --no-install prettier --check package.json
+      filePath: $(Build.SourcesDirectory)/scripts/check-pkg-json-formatting.sh
 
 - task: Bash@3
   name: SetVersion
@@ -132,10 +124,15 @@ steps:
         echo SETVERSION_VERSION=$SETVERSION_VERSION
         echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
         echo RELEASE_GROUP=$RELEASE_GROUP
-        echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv"
 
         if [ -f "lerna.json" ]; then
-          flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv
+          if [ "$VERSION_RELEASE" = "release" ]; then
+            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"^\" -xv"
+            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="^" -xv
+          else
+            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"\" -xv"
+            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="" -xv
+          fi
         else
           npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
         fi

@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 import { ApiModel } from "@microsoft/api-extractor-model";
-import { TSDocConfiguration } from "@microsoft/tsdoc";
 import { NewlineKind } from "@rushstack/node-core-library";
 
 import { Logger, defaultConsoleLogger } from "./Logging";
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
-import { CustomDocNodes } from "./doc-nodes";
-import { RenderingPolicies, defaultRenderingPolicies } from "./rendering";
+import {
+	ApiItemTransformationConfiguration,
+	defaultApiItemTransformations,
+} from "./api-item-transforms";
 
 /**
  * Configuration options for the Markdown documenter.
  */
-export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
+export interface MarkdownDocumenterConfiguration
+	extends PolicyOptions,
+		ApiItemTransformationConfiguration {
 	/**
 	 * API Model for which the documentation is being generated.
 	 * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
@@ -38,12 +41,6 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
 	readonly newlineKind?: NewlineKind;
 
 	/**
-	 * TSDoc Configuration to use when parsing source-code documentation.
-	 * If not provided, a default configuration will be used.
-	 */
-	readonly tsdocConfiguration?: TSDocConfiguration;
-
-	/**
 	 * Policy object for logging system events.
 	 *
 	 * @remarks A custom logger can be provided for customized policy, or for a target other than the console.
@@ -65,10 +62,9 @@ export function markdownDocumenterConfigurationWithDefaults(
 ): Required<MarkdownDocumenterConfiguration> {
 	return {
 		newlineKind: NewlineKind.OsDefault,
-		tsdocConfiguration: CustomDocNodes.configuration,
 		logger: defaultConsoleLogger,
 		...defaultPolicyOptions,
-		...defaultRenderingPolicies,
+		...defaultApiItemTransformations,
 		...partialConfig,
 	};
 }

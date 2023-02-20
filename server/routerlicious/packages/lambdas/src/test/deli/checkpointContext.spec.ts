@@ -43,6 +43,7 @@ describe("Routerlicious", () => {
                         lastSentMSN: 0,
                         nackMessages: undefined,
                         successfullyStartedLambdas: [],
+                        checkpointTimestamp: Date.now(),
                     },
                     deliCheckpointMessage: queuedMessage,
                     kafkaCheckpointMessage: queuedMessage,

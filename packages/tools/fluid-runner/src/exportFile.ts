@@ -99,7 +99,7 @@ export async function createContainerAndExecute(
 		urlResolver: new FakeUrlResolver(),
 		documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
 		codeLoader: await fluidFileConverter.getCodeLoader(logger),
-		scope: fluidFileConverter.scope,
+		scope: await fluidFileConverter.getScope?.(logger),
 		logger,
 	});
 
