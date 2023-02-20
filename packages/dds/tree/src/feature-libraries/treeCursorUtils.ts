@@ -40,6 +40,8 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 }
 
 /**
+ * Create a cursor, in `nodes` mode at the root of the provided tree.
+ *
  * @returns an {@link ITreeCursorSynchronous} for a single root.
  * @alpha
  */

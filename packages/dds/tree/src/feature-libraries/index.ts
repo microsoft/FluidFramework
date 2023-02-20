@@ -120,7 +120,7 @@ export { dummyRepairDataStore } from "./fakeRepairDataStore";
 export { runSynchronousTransaction } from "./defaultTransaction";
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
-export { TreeChunk, chunkTree, buildChunkedForest } from "./chunked-forest";
+export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
