@@ -230,10 +230,7 @@ export class SnapshotLegacy {
 		let totalLength: number = 0;
 		segs.map((segment) => {
 			totalLength += segment.cachedLength;
-			if (
-				segment.properties !== undefined &&
-				Object.entries(segment.properties).length === 0
-			) {
+			if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 				segment.properties = undefined;
 				segment.propertyManager = undefined;
 			}
