@@ -18,7 +18,6 @@ import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
@@ -30,7 +29,11 @@ import {
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
 import { CounterWidget } from "../widgets";
+import { initializeFluentUiIcons } from "../../InitializeIcons";
 import { FluidClientDebuggers } from "../../Debugger";
+
+// Ensure FluentUI icons are initialized.
+initializeFluentUiIcons();
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -107,26 +110,16 @@ function useContainerInfo(): {
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(
 		() => {
-			async function getFluidData(): Promise<ContainerInfo> {
-				let container: IFluidContainer;
-				let audience: ITinyliciousAudience;
-				let containerId = getContainerIdFromLocation(window.location);
-				if (containerId.length === 0) {
-					({ container, audience, containerId } = await createFluidContainer(
-						containerSchema,
-						populateRootMap,
-					));
-				} else {
-					({ container, audience } = await loadExistingFluidContainer(
-						containerId,
-						containerSchema,
-					));
-				}
+			async function getSharedFluidData(): Promise<ContainerInfo> {
+				const containerNickname = "Shared Container";
 
-				return { container, audience, containerId, containerNickname: "Shared Container" };
+				const containerId = getContainerIdFromLocation(window.location);
+				return containerId.length === 0
+					? createFluidContainer(containerSchema, populateRootMap, containerNickname)
+					: loadExistingFluidContainer(containerId, containerSchema, containerNickname);
 			}
 
-			getFluidData().then(
+			getSharedFluidData().then(
 				(data) => {
 					if (getContainerIdFromLocation(window.location) !== data.containerId) {
 						window.location.hash = data.containerId;
@@ -143,11 +136,7 @@ function useContainerInfo(): {
 			async function getPrivateContainerData(): Promise<ContainerInfo> {
 				// Always create a new container for the private view.
 				// This isn't shared with other collaborators.
-				const containerInfo = await createFluidContainer(containerSchema, populateRootMap);
-				return {
-					...containerInfo,
-					containerNickname: "Private Container",
-				};
+				return createFluidContainer(containerSchema, populateRootMap, "Private Container");
 			}
 
 			getPrivateContainerData().then(
@@ -238,7 +227,7 @@ export function App(): React.ReactElement {
 					<AppView containerInfo={sharedContainer} />
 				)}
 			</StackItem>
-			<StackItem style={{ height: "100%" }}>
+			<StackItem>
 				{privateContainer === undefined ? (
 					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 						<Spinner />

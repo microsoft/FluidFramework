@@ -23,7 +23,7 @@
 export {
 	_ContainerSummaryView,
 	_ContainerSummaryViewProps,
-	AudienceMemberViewProps,
+	AudienceMemberViewProps, // TODO: remove this
 	ClientDebugView,
 	clientDebugViewClassName,
 	ClientDebugViewProps,

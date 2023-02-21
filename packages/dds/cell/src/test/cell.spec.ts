@@ -24,24 +24,23 @@ function createConnectedCell(
 ): ISharedCell {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
+
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
-	const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes, options);
+	const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
 	cell.connect(services);
 	return cell;
 }
 
 function createLocalCell(id: string, options?: ICellOptions): ISharedCell {
-	const subCell = new SharedCell(
-		id,
-		new MockFluidDataStoreRuntime(),
-		CellFactory.Attributes,
-		options,
-	);
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
+	const subCell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
 	return subCell;
 }
 
@@ -307,32 +306,53 @@ describe("Cell", () => {
 
 				containerRuntimeFactory.processSomeMessages(1);
 
-				// Verify the attributon is not undefined
-				assert.notEqual(
-					cell1.getAttribution(),
-					undefined,
+				let key1 = cell1.getAttribution();
+				let key2 = cell2.getAttribution();
+
+				assert.equal(
+					key1?.type === "op" && key1?.seq,
+					1,
 					"the first cell does not have valid attribution",
 				);
-				// Verify the attribution of SharedCell with 1 pending message
-				assert.notEqual(
-					cell1.getAttribution()?.seq,
-					cell2.getAttribution()?.seq,
-					"the attribution key should not be consistent",
+
+				assert.equal(
+					key2,
+					undefined,
+					"the second cell has attribution with a pending local edit",
 				);
 
-				containerRuntimeFactory.processAllMessages();
+				containerRuntimeFactory.processSomeMessages(1);
 
-				// Verify the attributon is not undefined
-				assert.notEqual(
-					cell2.getAttribution(),
-					undefined,
+				key1 = cell1.getAttribution();
+				key2 = cell2.getAttribution();
+
+				assert.equal(
+					key1?.type === "op" && key1?.seq,
+					2,
+					"the first cell does not have valid attribution",
+				);
+
+				assert.equal(
+					key2?.type === "op" && key2?.seq,
+					2,
 					"the second cell does not have valid attribution",
 				);
-				// Verify the attribution of SharedCell with all pending messages processed
+
+				containerRuntimeFactory.processSomeMessages(1);
+
+				key1 = cell1.getAttribution();
+				key2 = cell2.getAttribution();
+
 				assert.equal(
-					cell1.getAttribution()?.seq,
-					cell2.getAttribution()?.seq,
-					"the attribution key should be consistent",
+					key1?.type === "op" && key1?.seq,
+					3,
+					"the first cell does not have valid attribution after clearing",
+				);
+
+				assert.equal(
+					key2?.type === "op" && key2?.seq,
+					3,
+					"the second cell does not have valid attribution after clearing",
 				);
 			});
 		});

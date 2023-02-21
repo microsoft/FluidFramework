@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 import child_process from "child_process";
-import * as fs from "fs";
+import { cosmiconfigSync } from "cosmiconfig";
+import type { CosmiconfigResult } from "cosmiconfig/dist/types";
+import { existsSync, readdirSync, readJson, writeJson } from "fs-extra";
 import minimatch from "minimatch";
+import path from "path";
 import * as semver from "semver";
-import * as util from "util";
 
 import {
 	ReleaseVersion,
@@ -21,13 +23,16 @@ import {
 
 import { Context } from "../bumpVersion/context";
 import { Logger, defaultLogger } from "../common/logging";
-import { BrokenCompatTypes, PackageJson } from "../common/npmPackage";
+import { PackageJson } from "../common/npmPackage";
+import { BrokenCompatTypes, ITypeValidationConfig } from "../common/fluidRepo";
+import { typeValidationConfigFile, typeValidationPropertyName } from "./typeData";
 
 export type PackageDetails = {
 	readonly packageDir: string;
 	readonly oldVersions: readonly string[];
 	readonly broken: BrokenCompatTypes;
 	readonly json: PackageJson;
+	typeValidation?: ITypeValidationConfig;
 };
 
 function createSortedObject<T>(obj: Record<string, T>): Record<string, T> {
@@ -47,15 +52,44 @@ function safeParse(json: string, error: string) {
 	}
 }
 
-export async function getPackageDetails(packageDir: string): Promise<PackageDetails> {
-	const packagePath = `${packageDir}/package.json`;
-	if (!(await util.promisify(fs.exists)(packagePath))) {
+export async function getPackageDetails(
+	packageDir: string,
+	log = defaultLogger,
+): Promise<PackageDetails> {
+	const packagePath = path.join(packageDir, "package.json");
+	if (!existsSync(packagePath)) {
 		throw new Error(`Package json does not exist: ${packagePath}`);
 	}
-	const content = await util.promisify(fs.readFile)(packagePath);
 
-	const pkgJson: PackageJson = safeParse(content.toString(), packagePath);
+	// try loading from external config file, then fall back to package.json
+	let result: CosmiconfigResult | undefined;
+	let loadFromPackage = false;
 
+	const configExplorer = cosmiconfigSync(typeValidationPropertyName, {
+		packageProp: typeValidationPropertyName,
+	});
+
+	// use load instead of search because we don't want to recurse up the directory tree looking for configs
+	try {
+		const configPath = path.join(packageDir, typeValidationConfigFile);
+		result = configExplorer.load(configPath);
+	} catch {
+		log.verbose(`Couldn't load from ${typeValidationConfigFile}; checking package.json...`);
+		loadFromPackage = true;
+	}
+
+	if (loadFromPackage) {
+		result = configExplorer.load(packagePath);
+	}
+
+	if (result === null || result === undefined) {
+		log.verbose(`No typetest config found for ${packageDir}`);
+	}
+
+	const config = result?.config;
+	log.verbose(`typeValidation config loaded from: ${result?.filepath}`);
+
+	const pkgJson: PackageJson = await readJson(packagePath);
 	const oldVersions: string[] = Object.keys(pkgJson.devDependencies ?? {}).filter((k) =>
 		k.startsWith(pkgJson.name),
 	);
@@ -64,7 +98,8 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
 		json: pkgJson,
 		packageDir,
 		oldVersions,
-		broken: pkgJson.typeValidation?.broken ?? {},
+		broken: config?.broken ?? pkgJson.typeValidation?.broken ?? {},
+		typeValidation: config,
 	};
 }
 
@@ -337,7 +372,7 @@ export async function getAndUpdatePackageDetails(
 	} else if (packageDetails.json.private === true) {
 		// Private packages aren't published, so no need to do type testing for them.
 		return { skipReason: "Skipping package: private package" };
-	} else if (packageDetails.json.typeValidation?.disabled === true) {
+	} else if (packageDetails.typeValidation?.disabled === true) {
 		// Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
 		return { skipReason: "Skipping package: type validation disabled" };
 	}
@@ -353,7 +388,7 @@ export async function getAndUpdatePackageDetails(
 	}
 
 	const version = packageDetails.json.version;
-	const cachedPreviousVersionStyle = packageDetails.json.typeValidation?.previousVersionStyle;
+	const cachedPreviousVersionStyle = packageDetails.typeValidation?.previousVersionStyle;
 	const fluidConfig = pkg.monoRepo?.fluidBuildConfig ?? pkg.fluidBuildConfig;
 	const branch = branchName ?? context.originalBranchName;
 	let releaseType: VersionBumpType | undefined;
@@ -464,25 +499,34 @@ export async function getAndUpdatePackageDetails(
 		packageDetails.json.devDependencies = createSortedObject(
 			packageDetails.json.devDependencies,
 		);
-		const disabled = packageDetails.json.typeValidation?.disabled;
+		const disabled = packageDetails.typeValidation?.disabled;
 
-		packageDetails.json.typeValidation = {
+		packageDetails.typeValidation = {
 			version,
 			previousVersionStyle,
 			baselineRange: baseline,
 			baselineVersion: baseline === prevVersion ? undefined : prevVersion,
-			broken: resetBroken === true ? {} : packageDetails.json.typeValidation?.broken ?? {},
+			broken: resetBroken === true ? {} : packageDetails.typeValidation?.broken ?? {},
 		};
 
 		if (disabled !== undefined) {
-			packageDetails.json.typeValidation.disabled = disabled;
+			packageDetails.typeValidation.disabled = disabled;
 		}
 
 		if ((writeUpdates ?? false) === true) {
-			await util.promisify(fs.writeFile)(
-				`${packageDir}/package.json`,
-				JSON.stringify(packageDetails.json, undefined, 2).concat("\n"),
+			await writeJson(
+				path.join(packageDir, typeValidationConfigFile),
+				packageDetails.typeValidation,
+				{ spaces: "\t" },
 			);
+
+			if (packageDetails.json.typeValidation !== undefined) {
+				// remove the package.json node; prefer external file
+				delete packageDetails.json.typeValidation;
+				await writeJson(path.join(packageDir, "package.json"), packageDetails.json, {
+					spaces: "\t",
+				});
+			}
 		}
 	}
 
@@ -500,12 +544,11 @@ export async function findPackagesUnderPath(path: string) {
 	const packages: string[] = [];
 	while (searchPaths.length > 0) {
 		const search = searchPaths.shift()!;
-		if (await util.promisify(fs.exists)(`${search}/package.json`)) {
+		if (existsSync(`${search}/package.json`)) {
 			packages.push(search);
 		} else {
 			searchPaths.push(
-				...fs
-					.readdirSync(search, { withFileTypes: true })
+				...readdirSync(search, { withFileTypes: true })
 					.filter((t) => t.isDirectory())
 					.map((d) => `${search}/${d.name}`),
 			);

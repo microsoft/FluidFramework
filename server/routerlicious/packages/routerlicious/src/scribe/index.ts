@@ -39,6 +39,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
     const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
     const internalAlfredUrl = config.get("worker:alfredUrl");
+    const getDeltasViaAlfred = config.get("scribe:getDeltasViaAlfred") as boolean;
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
@@ -117,7 +118,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         deltaManager,
         tenantManager,
         serviceConfiguration,
-        enableWholeSummaryUpload);
+        enableWholeSummaryUpload,
+        getDeltasViaAlfred);
 }
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {

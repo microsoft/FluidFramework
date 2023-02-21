@@ -14,7 +14,6 @@ import {
 	ITestObjectProvider,
 	createSummarizer,
 	waitForContainerConnection,
-	createSummarizerWithContainer,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
@@ -48,18 +47,6 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		};
 		return provider.makeTestContainer(testContainerConfig);
 	};
-
-	/**
-	 * Creates a summarizer with the given summary version and returns the IContainer along with the ISummarizer.
-	 * If disableGC is true, GC is disabled via container runtime GC options.
-	 */
-	async function createSummarizerAndContainer(
-		summaryVersion: string | undefined = undefined,
-		disableGC = false,
-	) {
-		const url = await mainContainer.getAbsoluteUrl("");
-		return createSummarizerWithContainer(provider, url, summaryVersion, { disableGC });
-	}
 
 	/**
 	 * Generated a summary for the given client and validates the GC state in the summary as per the params:
@@ -196,7 +183,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC enabled as well.
-		const summarizer1 = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
 		const newDataStore = await requestFluidObject<ITestDataObject>(
@@ -218,9 +205,14 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
 		// Load a new summarizer from the last summary with GC disabled.
 		summarizer1.close();
-		const summarizer2 = await createSummarizer(provider, mainContainer, summaryVersion, {
-			disableGC: true,
-		});
+		const { summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryVersion,
+			{
+				disableGC: true,
+			},
+		);
 
 		// Validate that GC does not run and the summary is regenerated because GC was disabled.
 		await summarizeAndValidateGCState(
@@ -246,7 +238,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC disabled.
-		const summarizer1 = await createSummarizer(
+		const { summarizer: summarizer1 } = await createSummarizer(
 			provider,
 			mainContainer,
 			undefined /* summaryVersion */,
@@ -272,7 +264,11 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
 		// Load a new summarizer from the last summary with GC enabled.
 		summarizer1.close();
-		const summarizer2 = await createSummarizer(provider, mainContainer, summaryVersion);
+		const { summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryVersion,
+		);
 
 		// Validate that GC ran and the summary is regenerated with unreferenced data store correctly marked.
 		await summarizeAndValidateGCState(
@@ -294,9 +290,14 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
 		// Load a new summarizer from the last summary with GC disabled.
 		summarizer2.close();
-		const summarizer3 = await createSummarizer(provider, mainContainer, summaryVersion, {
-			disableGC: true,
-		});
+		const { summarizer: summarizer3 } = await createSummarizer(
+			provider,
+			mainContainer,
+			summaryVersion,
+			{
+				disableGC: true,
+			},
+		);
 		// Validate that GC does not run and the summary is regenerated.
 		await summarizeAndValidateGCState(
 			summarizer3,
@@ -326,7 +327,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		mainDataStore._root.delete("newDataStore");
 
 		// Create a summarizer with GC enabled and summarize.
-		const { summarizer: summarizerGCEnabled } = await createSummarizerAndContainer();
+		const { summarizer: summarizerGCEnabled } = await createSummarizer(provider, mainContainer);
 
 		// Summarize with GC enabled and validate that GC ran.
 		let summaryVersion = await summarizeAndValidateGCState(
@@ -339,9 +340,9 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		// Create a summarizer with GC disabled and another one with GC enabled from the above summary where GC was
 		// enabled.
 		const { container: containerGCDisabled, summarizer: summarizerGCDisabled } =
-			await createSummarizerAndContainer(summaryVersion, true /* gcDisabled */);
+			await createSummarizer(provider, mainContainer, summaryVersion, { disableGC: true });
 		const { container: containerGCEnabled2, summarizer: summarizerGCEnabled2 } =
-			await createSummarizerAndContainer(summaryVersion);
+			await createSummarizer(provider, mainContainer, summaryVersion);
 
 		// Close the previous summarizer such that the summarizer with GC disabled is chosen as the current summarizer.
 		summarizerGCEnabled.close();
@@ -380,7 +381,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC disabled.
-		const summarizer = await createSummarizer(
+		const { summarizer } = await createSummarizer(
 			provider,
 			mainContainer,
 			undefined /* summaryVersion */,
@@ -410,7 +411,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 
 		// Get a new summarizer that sets gcAllowed option to true.
-		const summarizer = await createSummarizer(
+		const { summarizer } = await createSummarizer(
 			provider,
 			mainContainer,
 			undefined /* summaryVersion */,

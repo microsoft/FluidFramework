@@ -81,6 +81,7 @@ describe("Routerlicious", () => {
                     testDeltaManager,
                     testTenantManager,
                     DefaultServiceConfiguration,
+                    false,
                     false);
 
                 testContext = new TestContext();

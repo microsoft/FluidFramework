@@ -87,8 +87,13 @@ export interface IFluidCodeResolver {
 
 /**
  * Code AllowListing Interface
+ *
+ * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
  */
 export interface ICodeAllowList {
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
+	 */
 	testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
@@ -544,9 +549,6 @@ export enum LoaderHeader {
 	 * otherwise, version sha to load snapshot
 	 */
 	version = "version",
-
-	// TODO #AB3350: This is a breaking change; it will be enabled in the "next" branch
-	// baseLogger = "fluid-base-logger"
 }
 
 export interface IContainerLoadMode {

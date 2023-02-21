@@ -14,6 +14,10 @@ import { HasClientDebugger } from "../CommonProps";
 import { useMyClientConnection, useMyClientId } from "../ReactHooks";
 import { connectionStateToString } from "../Utilities";
 
+// TODOs:
+// - Add info tooltips (with question mark icons?) for each piece of Container status info to
+//   help education consumers as to what the different statuses mean.
+
 /**
  * {@link ContainerSummaryView} input props.
  */
@@ -28,6 +32,10 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
 	const myClientId = useMyClientId(clientDebugger);
 	const myClientConnection = useMyClientConnection(clientDebugger);
+
+	// #endregion
+
+	// #region Container State
 
 	const [containerAttachState, setContainerAttachState] = React.useState<AttachState>(
 		container.attachState,
@@ -54,6 +62,10 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		container.on("connected", onContainerConnectionChange);
 		container.on("disconnected", onContainerConnectionChange);
 		container.on("closed", onContainerClosed);
+
+		setContainerAttachState(container.attachState);
+		setContainerConnectionState(container.connectionState);
+		setIsContainerClosed(container.closed);
 
 		return (): void => {
 			container.off("attached", onContainerAttached);

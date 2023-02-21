@@ -66,6 +66,14 @@ parameters:
   type: string
   default: repo
 
+- name: packageManager
+  type: string
+  default: npm
+
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
 # If true, then this pipeline will check and format package.json files according to prettier settings.
 - name: usesPrettier
   type: boolean
@@ -217,8 +225,36 @@ stages:
           buildDirectory: ${{ parameters.buildDirectory }}
           requireNotice: ${{ eq(variables.releaseImage, true) }}
 
+    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+      - task: Cache@2
+        displayName: Cache pnpm store
+        inputs:
+          # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+          # in the cache key
+          key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+          path: ${{ variables.pnpmStorePath }}
+          restoreKeys: |
+            pnpm-store | "$(Agent.OS)"
+
+      - task: Bash@3
+        displayName: Install and configure pnpm
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            npm i -g pnpm
+            pnpm config set store-dir $(pnpmStorePath)
+
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
+      - task: Bash@3
+        displayName: Install dependencies
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            ${{ parameters.packageManagerInstallCommand }}
+
       - template: include-set-package-version.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
@@ -383,6 +419,16 @@ stages:
           customCommand: rmi ${{ variables.latestContainerTag }}
         continueOnError: true
         condition: succeededOrFailed()
+
+    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+      # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+      - task: Bash@3
+        displayName: Prune pnpm store
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            pnpm store prune
 
 # Publish stage
 - ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
