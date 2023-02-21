@@ -175,9 +175,9 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
     driverVersion: string | undefined;
 };
 
-// @public
+// @public @deprecated
 export class EmptyDocumentDeltaStorageService implements IDocumentDeltaStorageService {
-    // (undocumented)
+    // @deprecated (undocumented)
     fetchMessages(from: number, _to: number | undefined, _abortSignal?: AbortSignal, _cachedOnly?: boolean, _fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
 }
 

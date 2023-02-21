@@ -105,6 +105,7 @@ The following members of the `@fluidframework/driver-utils` package have been de
 -   `MultiUrlResolver`
 -   `MultiDocumentServiceFactory`
 -   `BlobCacheStorageService`
+-   `EmptyDocumentDeltaStorageService`
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
