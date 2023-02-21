@@ -130,7 +130,7 @@ describe("SharedTree benchmarks", () => {
 	describe("Direct JS Object", () => {
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
 			for (const [i, benchmarkType] of nodesCountDeep) {
-				let tree: ISharedTree;
+				let tree: Jsonable;
 				benchmark({
 					type: benchmarkType,
 					title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): reads with ${i} nodes`,
@@ -143,7 +143,7 @@ describe("SharedTree benchmarks", () => {
 				});
 			}
 			for (const [i, benchmarkType] of nodesCountWide) {
-				let tree: ISharedTree;
+				let tree: Jsonable;
 				benchmark({
 					type: benchmarkType,
 					title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): reads with ${i} nodes`,
@@ -156,7 +156,7 @@ describe("SharedTree benchmarks", () => {
 				});
 			}
 			for (const [i, benchmarkType] of nodesCountDeep) {
-				let tree: ISharedTree;
+				let tree: Jsonable;
 				benchmark({
 					type: benchmarkType,
 					title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): writes with ${i} nodes`,
@@ -167,7 +167,7 @@ describe("SharedTree benchmarks", () => {
 				});
 			}
 			for (const [i, benchmarkType] of nodesCountWide) {
-				let tree: ISharedTree;
+				let tree: Jsonable;
 				benchmark({
 					type: benchmarkType,
 					title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): writes with ${i} nodes`,
@@ -179,20 +179,22 @@ describe("SharedTree benchmarks", () => {
 			}
 			describe(`Edit JS Object ${TestPrimitives[dataType]}`, () => {
 				for (const [i, benchmarkType] of nodesCountDeep) {
-					let tree: ISharedTree;
+					let tree: Jsonable;
+					let leafNode: Jsonable;
 					benchmark({
 						type: benchmarkType,
 						title: `Update value at leaf of ${i} deep tree`,
 						before: async () => {
 							tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType);
+							leafNode = getLeafNodeFromJSObject(tree)
 						},
 						benchmarkFn: () => {
-							manipulateTreeAsJSObject(tree, dataType);
+							manipulateTreeAsJSObject(leafNode, TreeShape.Deep);
 						},
 					});
 				}
 				for (const [i, benchmarkType] of nodesCountWide) {
-					let tree: ISharedTree;
+					let tree: Jsonable;
 					benchmark({
 						type: benchmarkType,
 						title: `Update value at leaf of ${i} Wide tree`,
@@ -200,7 +202,7 @@ describe("SharedTree benchmarks", () => {
 							tree = getTestTreeAsJSObject(i, TreeShape.Wide, dataType);
 						},
 						benchmarkFn: () => {
-							manipulateTreeAsJSObject(tree, dataType);
+							manipulateTreeAsJSObject(tree, TreeShape.Wide);
 						},
 					});
 				}
@@ -682,12 +684,32 @@ function readTreeAsJSObject(tree: Jsonable) {
 	}
 }
 
-function manipulateTreeAsJSObject(tree: Jsonable, dataType: TestPrimitives): void {
+function manipulateTreeAsJSObject(tree: Jsonable, shape:TreeShape): void {
+	let nodesUnderRoot;
+	switch (shape) {
+		case TreeShape.Deep:
+			tree[0].value = 123;
+			break;
+		case TreeShape.Wide:
+			nodesUnderRoot = tree.fields.foo.length;
+			if (nodesUnderRoot === 0){
+				tree.fields.value = 123;
+			} else {
+				tree.fields.foo[nodesUnderRoot-1].value = 123;
+			}
+			break;
+		default:
+			unreachableCase(shape);
+	}
+}
+
+function getLeafNodeFromJSObject(tree: Jsonable): Jsonable {
 	for (const key of Object.keys(tree)) {
-		if (typeof tree[key] === "object" && tree[key] !== null)
-			manipulateTreeAsJSObject(tree[key], dataType);
-		if (key === "value") {
-			tree[key] = generateTreeData(dataType).value;
+		if (typeof tree[key] === "object" && tree[key] !== null){
+			if (tree[key].type !== undefined && tree[key].fields === undefined){
+				return tree
+			}
+			return getLeafNodeFromJSObject(tree[key]);
 		}
 	}
 }
