@@ -50,6 +50,8 @@ export const gcVersionUpgradeToV2Key = "Fluid.GarbageCollection.GCVersionUpgrade
 // Feature gate to enable GC sweep for datastores.
 // TODO: Remove Test from the flag when we are confident to turn on sweep
 export const sweepDatastoresKey = "Fluid.GarbageCollection.Test.SweepDataStores";
+// Feature gate to enable GC sweep for attachment blobs.
+export const sweepAttachmentBlobsKey = "Fluid.GarbageCollection.Test.SweepAttachmentBlobs";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -147,10 +149,11 @@ export interface IGarbageCollectionRuntime {
 	/** After GC has run, called to notify the runtime of routes that are unused in it. */
 	updateUnusedRoutes(unusedRoutes: string[]): void;
 	/**
-	 * After GC has run, called to notify the runtime of deletable routes. The runtime is responsible
-	 * for telling the garbage collector the routes of the objects it has deleted
+	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
+	 * should return the routes of nodes that were deleted.
+	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 */
-	deleteUnusedNodes(unusedNodes: string[]): string[];
+	deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
 	/** Called to notify the runtime of routes that are tombstones. */
 	updateTombstonedRoutes(tombstoneRoutes: string[]): void;
 	/** Returns a referenced timestamp to be used to track unreferenced nodes. */
@@ -169,7 +172,6 @@ export interface IGarbageCollector {
 	readonly shouldRunGC: boolean;
 	/** Tells whether the GC state in summary needs to be reset in the next summary. */
 	readonly summaryStateNeedsReset: boolean;
-	readonly trackGCState: boolean;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */

@@ -13,10 +13,13 @@ import { BatchMessage, IChunkedOp, OpSplitter, splitOp } from "../../opLifecycle
 import { CompressionAlgorithms } from "../../containerRuntime";
 
 describe("OpSplitter", () => {
-	const batchesSubmitted: IBatchMessage[][] = [];
+	const batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[] = [];
 
-	const mockSubmitBatchFn = (batch: IBatchMessage[]): number => {
-		batchesSubmitted.push(batch);
+	const mockSubmitBatchFn = (
+		batch: IBatchMessage[],
+		referenceSequenceNumber?: number,
+	): number => {
+		batchesSubmitted.push({ messages: batch, referenceSequenceNumber });
 		return batchesSubmitted.length;
 	};
 
@@ -184,6 +187,7 @@ describe("OpSplitter", () => {
 			opSplitter.splitCompressedBatch({
 				content: [compressedMessage],
 				contentSizeInBytes: 0,
+				referenceSequenceNumber: 0,
 			}),
 		);
 
@@ -192,6 +196,7 @@ describe("OpSplitter", () => {
 			opSplitter.splitCompressedBatch({
 				content: [],
 				contentSizeInBytes: 1,
+				referenceSequenceNumber: 0,
 			}),
 		);
 
@@ -200,6 +205,7 @@ describe("OpSplitter", () => {
 			opSplitter.splitCompressedBatch({
 				content: [compressedMessage],
 				contentSizeInBytes: 1,
+				referenceSequenceNumber: 0,
 			}),
 		);
 
@@ -208,6 +214,7 @@ describe("OpSplitter", () => {
 			opSplitter.splitCompressedBatch({
 				content: [regularMessage],
 				contentSizeInBytes: 3,
+				referenceSequenceNumber: 0,
 			}),
 		);
 
@@ -222,6 +229,7 @@ describe("OpSplitter", () => {
 			).splitCompressedBatch({
 				content: [compressedMessage],
 				contentSizeInBytes: 3,
+				referenceSequenceNumber: 0,
 			}),
 		);
 
@@ -230,6 +238,7 @@ describe("OpSplitter", () => {
 			new OpSplitter([], undefined, 0, maxBatchSizeInBytes, mockLogger).splitCompressedBatch({
 				content: [compressedMessage],
 				contentSizeInBytes: 3,
+				referenceSequenceNumber: 0,
 			}),
 		);
 
@@ -238,6 +247,7 @@ describe("OpSplitter", () => {
 			new OpSplitter([], mockSubmitBatchFn, 2, 1, mockLogger).splitCompressedBatch({
 				content: [compressedMessage],
 				contentSizeInBytes: 3,
+				referenceSequenceNumber: 0,
 			}),
 		);
 
@@ -252,6 +262,7 @@ describe("OpSplitter", () => {
 			).splitCompressedBatch({
 				content: [compressedMessage],
 				contentSizeInBytes: 3,
+				referenceSequenceNumber: 0,
 			}),
 		);
 	});
@@ -270,15 +281,17 @@ describe("OpSplitter", () => {
 		const result = opSplitter.splitCompressedBatch({
 			content: [largeMessage, emptyMessage, emptyMessage, emptyMessage],
 			contentSizeInBytes: largeMessage.contents?.length ?? 0,
+			referenceSequenceNumber: 0,
 		});
 
 		assert.equal(batchesSubmitted.length, 6);
 		for (const batch of batchesSubmitted) {
-			assert.equal(batch.length, 1);
+			assert.equal(batch.messages.length, 1);
 			assert.equal(
-				(batch[0] as BatchMessage).deserializedContent.type,
+				(batch.messages[0] as BatchMessage).deserializedContent.type,
 				ContainerMessageType.ChunkedOp,
 			);
+			assert.equal(batch.referenceSequenceNumber, 0);
 		}
 
 		assert.equal(result.content.length, 4);
@@ -287,7 +300,9 @@ describe("OpSplitter", () => {
 		assert.deepStrictEqual(result.content.slice(1), [emptyMessage, emptyMessage, emptyMessage]);
 		assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 		const contentSentSeparately = batchesSubmitted.map(
-			(x) => ((x[0] as BatchMessage).deserializedContent.contents as IChunkedOp).contents,
+			(x) =>
+				((x.messages[0] as BatchMessage).deserializedContent.contents as IChunkedOp)
+					.contents,
 		);
 		const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
 			(accumulator, current) => `${accumulator}${current}`,
@@ -319,15 +334,17 @@ describe("OpSplitter", () => {
 		const result = opSplitter.splitCompressedBatch({
 			content: [largeMessage],
 			contentSizeInBytes: largeMessage.contents?.length ?? 0,
+			referenceSequenceNumber: 0,
 		});
 
 		assert.equal(batchesSubmitted.length, 6);
 		for (const batch of batchesSubmitted) {
-			assert.equal(batch.length, 1);
+			assert.equal(batch.messages.length, 1);
 			assert.equal(
-				(batch[0] as BatchMessage).deserializedContent.type,
+				(batch.messages[0] as BatchMessage).deserializedContent.type,
 				ContainerMessageType.ChunkedOp,
 			);
+			assert.equal(batch.referenceSequenceNumber, 0);
 		}
 
 		assert.equal(result.content.length, 1);
@@ -335,7 +352,9 @@ describe("OpSplitter", () => {
 		const lastChunk = result.content[0].deserializedContent.contents as IChunkedOp;
 		assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
 		const contentSentSeparately = batchesSubmitted.map(
-			(x) => ((x[0] as BatchMessage).deserializedContent.contents as IChunkedOp).contents,
+			(x) =>
+				((x.messages[0] as BatchMessage).deserializedContent.contents as IChunkedOp)
+					.contents,
 		);
 		const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
 			(accumulator, current) => `${accumulator}${current}`,

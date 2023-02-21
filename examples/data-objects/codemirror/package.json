@@ -64,7 +64,7 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
-		"@types/codemirror": "^5.60.7",
+		"@types/codemirror": "5.60.7",
 		"@types/node": "^14.18.36",
 		"@types/react": "^17.0.44",
 		"concurrently": "^6.2.0",

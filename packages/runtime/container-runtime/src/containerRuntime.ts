@@ -956,6 +956,7 @@ export class ContainerRuntime
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
+	private readonly disableAttachReorder: boolean | undefined;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private _perfSignalData: IPerfSignalReport = {
@@ -1099,12 +1100,16 @@ export class ContainerRuntime
 			}),
 		});
 
+		this.disableAttachReorder = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.disableAttachOpReorder",
+		);
+		const disableChunking = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableCompressionChunking",
+		);
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.context.submitBatchFn,
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompressionChunking") === true
-				? Number.POSITIVE_INFINITY
-				: runtimeOptions.chunkSizeInBytes,
+			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
@@ -1116,10 +1121,13 @@ export class ContainerRuntime
 			this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
+		const disableOpReentryCheck = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableOpReentryCheck",
+		);
 		this.enableOpReentryCheck =
 			runtimeOptions.enableOpReentryCheck === true &&
 			// Allow for a break-glass config to override the options
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
+			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.heuristicsDisabled = this.isHeuristicsDisabled();
@@ -1130,7 +1138,16 @@ export class ContainerRuntime
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
 			this.defaultMaxConsecutiveReconnects;
 
-		this._flushMode = runtimeOptions.flushMode;
+		if (
+			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
+			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
+		) {
+			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
+			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
+			this._flushMode = FlushMode.TurnBased;
+		} else {
+			this._flushMode = runtimeOptions.flushMode;
+		}
 
 		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
 		const baseSnapshot: ISnapshotTree | undefined =
@@ -1258,14 +1275,20 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 		);
 
+		const disableCompression = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableCompression",
+		);
 		const compressionOptions =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompression") === true
+			disableCompression === true
 				? {
 						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 						compressionAlgorithm: CompressionAlgorithms.lz4,
 				  }
 				: runtimeOptions.compressionOptions;
 
+		const disablePartialFlush = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisablePartialFlush",
+		);
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1275,7 +1298,7 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				enableOpReentryCheck: this.enableOpReentryCheck,
+				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
 		});
@@ -1412,6 +1435,14 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
+			options: JSON.stringify(runtimeOptions),
+			featureGates: JSON.stringify({
+				disableCompression,
+				disableOpReentryCheck,
+				disableChunking,
+				disableAttachReorder: this.disableAttachReorder,
+				disablePartialFlush,
+			}),
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -2363,18 +2394,23 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This is called to delete objects from the runtime
-	 * @param unusedRoutes - object routes and sub routes that can be deleted
-	 * @returns - routes of objects deleted from the runtime
+	 * @deprecated - Replaced by deleteSweepReadyNodes.
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
-		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		const deletedRoutes: string[] = [];
+		throw new Error("deleteUnusedRoutes should not be called");
+	}
 
-		const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
-		deletedRoutes.push(...deletedDataStoreRoutes);
+	/**
+	 * After GC has run and identified nodes that are sweep ready, this is called to delete the sweep ready nodes.
+	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
+	 * @returns - The routes of nodes that were deleted.
+	 */
+	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
+		const { dataStoreRoutes, blobManagerRoutes } =
+			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
-		return deletedRoutes;
+		const deletedRoutes = this.dataStores.deleteSweepReadyNodes(dataStoreRoutes);
+		return deletedRoutes.concat(this.blobManager.deleteSweepReadyNodes(blobManagerRoutes));
 	}
 
 	/**
@@ -2703,7 +2739,7 @@ export class ContainerRuntime
 
 			let clientSequenceNumber: number;
 			try {
-				clientSequenceNumber = this.submitSummaryMessage(summaryMessage);
+				clientSequenceNumber = this.submitSummaryMessage(summaryMessage, summaryRefSeqNum);
 			} catch (error) {
 				return { stage: "upload", ...uploadData, error };
 			}
@@ -2837,7 +2873,7 @@ export class ContainerRuntime
 			if (
 				this.currentlyBatching() &&
 				type === ContainerMessageType.Attach &&
-				this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true
+				this.disableAttachReorder !== true
 			) {
 				this.outbox.submitAttach(message);
 			} else {
@@ -2899,7 +2935,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private submitSummaryMessage(contents: ISummaryContent) {
+	private submitSummaryMessage(contents: ISummaryContent, referenceSequenceNumber: number) {
 		this.verifyNotClosed();
 		assert(
 			this.connected,
@@ -2911,7 +2947,7 @@ export class ContainerRuntime
 
 		// back-compat: ADO #1385: Make this call unconditional in the future
 		return this.context.submitSummaryFn !== undefined
-			? this.context.submitSummaryFn(contents)
+			? this.context.submitSummaryFn(contents, referenceSequenceNumber)
 			: this.context.submitFn(MessageType.Summarize, contents, false);
 	}
 

@@ -28,8 +28,9 @@ import {
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
+import { FullSchemaPolicy } from "../modular-schema";
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk";
-import { chunkTree } from "./chunkTree";
+import { basicChunkTree, ChunkPolicy, chunkTree, Disposable, makeTreeChunker } from "./chunkTree";
 import { ChunkedCursor, TreeChunk } from "./chunk";
 
 function makeRoot(): BasicChunk {
@@ -48,24 +49,27 @@ interface StackNode {
  */
 class ChunkedForest extends SimpleDependee implements IEditableForest {
 	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
+	// TODO: dispose of this when forest is disposed.
+	private readonly chunker: Disposable & ChunkPolicy;
 
 	private readonly events = createEmitter<ForestEvents>();
 
 	public constructor(
 		public roots: BasicChunk,
-		public readonly schema: StoredSchemaRepository,
+		public readonly schema: StoredSchemaRepository<FullSchemaPolicy>,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 	) {
 		super("object-forest.ChunkedForest");
 		// Invalidate forest if schema change.
 		recordDependency(this.dependent, this.schema);
+		this.chunker = makeTreeChunker(schema);
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	clone(schema: StoredSchemaRepository, anchors: AnchorSet): ChunkedForest {
+	clone(schema: StoredSchemaRepository<FullSchemaPolicy>, anchors: AnchorSet): ChunkedForest {
 		this.roots.referenceAdded();
 		return new ChunkedForest(this.roots, schema, anchors);
 	}
@@ -114,7 +118,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				visitor.onMoveOut(index, count);
 			},
 			onInsert: (index: number, content: Delta.ProtoNode[]): void => {
-				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.schema));
+				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.chunker));
 				const field = this.newDetachedField();
 				this.roots.fields.set(detachedFieldAsKey(field), chunks);
 				moveIn(index, field);
@@ -164,11 +168,20 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 						fail("missing edited node");
 					}
 				}
-				const found = chunks[indexOfChunk];
-				assert(
-					found instanceof BasicChunk,
-					0x536 /* mixed chunk support not yet implemented */,
-				);
+				let found = chunks[indexOfChunk];
+				if (!(found instanceof BasicChunk)) {
+					// TODO:Perf: support in place editing of other chunk formats when possible:
+					// 1. Support updating values in uniform chunks.
+					// 2. Support traversing sequence chunks.
+					//
+					// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
+
+					const newChunk = basicChunkTree(found.cursor(), this.chunker);
+					chunks[indexOfChunk] = newChunk;
+					found.referenceRemoved();
+					found = newChunk;
+				}
+				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
 				if (found.isShared()) {
 					mutableChunk = chunks[indexOfChunk] = found.clone();
 					found.referenceRemoved();
@@ -302,7 +315,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 	public constructor(
 		public readonly forest: ChunkedForest,
 		public state: ITreeSubscriptionCursorState,
-		root: BasicChunk[],
+		root: readonly TreeChunk[],
 		siblingStack: SiblingsOrKey[],
 		indexStack: number[],
 		indexOfChunkStack: number[],
@@ -383,7 +396,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
 export function buildChunkedForest(
-	schema: StoredSchemaRepository,
+	schema: StoredSchemaRepository<FullSchemaPolicy>,
 	anchors?: AnchorSet,
 ): IEditableForest {
 	return new ChunkedForest(makeRoot(), schema, anchors);
