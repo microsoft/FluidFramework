@@ -48,15 +48,15 @@ export class OpCompressor {
 		});
 
 		for (const message of batch.content.slice(1)) {
+			// Add an empty placeholder message to reserve the sequence numbers
 			messages.push({
-				...message,
-				contents: undefined,
 				deserializedContent: {
-					...message.deserializedContent,
 					contents: undefined,
+					type: message.deserializedContent.type,
 				},
-				metadata: undefined,
 				localOpMetadata: undefined,
+				metadata: undefined,
+				referenceSequenceNumber: message.referenceSequenceNumber,
 			});
 		}
 
