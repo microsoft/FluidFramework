@@ -222,12 +222,12 @@ export class Outbox {
 			for (const message of batch.content) {
 				// Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
 				if (message.metadata?.compressed) {
-					delete message.metadata.compressed;
+					message.metadata = { ...message.metadata, compressed: undefined };
 				}
 
 				this.params.containerContext.submitFn(
 					MessageType.Operation,
-					message.deserializedContent,
+					message.contents === undefined ? undefined : JSON.parse(message.contents),
 					true, // batch
 					message.metadata,
 				);
