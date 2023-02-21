@@ -131,10 +131,6 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 	});
 
 	it("attributes content created in a detached state", async () => {
-		if (provider.driver.type === "odsp") {
-			// TODO:#3451: Investigate why this test fails against odsp and re-enable.
-			return;
-		}
 		const attributor = createRuntimeAttributor();
 		const loader = provider.makeTestLoader(getTestConfig(attributor));
 		const defaultCodeDetails: IFluidCodeDetails = {
@@ -150,7 +146,10 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		provider.updateDocumentId(container1.resolvedUrl);
-		const container2 = await provider.loadTestContainer(getTestConfig());
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined);
+		const container2 = await loader.resolve({ url });
+
 		const sharedString2 = await sharedStringFromContainer(container2);
 		sharedString2.insertText(0, "client 2, ");
 
