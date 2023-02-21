@@ -274,7 +274,7 @@ export class EditManager<
 		const [rebasedBranch] = this.rebaser.rebaseBranch(
 			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
 			baseRevisionInTrunk,
-			this.trunk
+			this.trunk,
 		);
 
 		if (rebasedBranch === this.trunk) {

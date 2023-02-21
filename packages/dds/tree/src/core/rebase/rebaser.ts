@@ -47,7 +47,10 @@ export class Rebaser<TChange> {
 			// If the base is not in the target path, then it is either disjoint from `target` or it is behind/at
 			// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
 			// TODO: Ideally, this would be an "assertExpensive"
-			assert(findCommonAncestor(targetBase, targetBranch) !== undefined, "base is not in target branch");
+			assert(
+				findCommonAncestor(targetBase, targetBranch) !== undefined,
+				"base is not in target branch",
+			);
 			return [source, this.changeRebaser.compose([])];
 		}
 
