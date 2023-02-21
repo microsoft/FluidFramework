@@ -88,11 +88,13 @@ export interface IBatchMessage {
     contents?: string;
     // (undocumented)
     metadata: Record<string, unknown> | undefined;
+    // (undocumented)
+    referenceSequenceNumber?: number;
 }
 
-// @public
+// @public @deprecated
 export interface ICodeAllowList {
-    // (undocumented)
+    // @deprecated (undocumented)
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
@@ -189,13 +191,13 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
-    readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+    readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
     // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
-    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
+    readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)
