@@ -113,7 +113,7 @@ jobs:
       - name: Create PR using octokit
         uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # ratchet:actions/github-script@v6
         with:
-          token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
+          token: ${{ secrets.FLUIDBOTPAT }}
           script: |
             const { Octokit } = require("@octokit/core");
             const token = `${{ secrets.GITHUB_TOKEN }}`;
