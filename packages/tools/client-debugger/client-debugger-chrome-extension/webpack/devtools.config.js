@@ -18,7 +18,7 @@ module.exports = {
 	devtool: "inline-source-map", // TODO: remove this
 	entry: {
 		// The Devtools script
-		Devtools: path.join(devtoolsExtensionSourcePath, "Devtools.ts"),
+		DevtoolsScript: path.join(devtoolsExtensionSourcePath, "DevtoolsScript.ts"),
 
 		// The Background script
 		BackgroundScript: path.join(devtoolsExtensionSourcePath, "BackgroundScript.ts"),
@@ -30,7 +30,7 @@ module.exports = {
 		RootView: path.join(devtoolsExtensionSourcePath, "RootView.ts"),
 
 		// The action button pop-up script
-		Popup: path.join(devtoolsExtensionSourcePath, "PopupScript.ts"),
+		PopupScript: path.join(devtoolsExtensionSourcePath, "PopupScript.ts"),
 	},
 	output: {
 		path: devtoolsExtensionBuildPath,
