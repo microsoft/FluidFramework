@@ -38,6 +38,10 @@ import {
 	ValueSchema,
 } from "../../core";
 
+/**
+ * Wide - Each node is inserted directly 1 layer below the root node, making a wide tree.
+ * Deep - Each node is inserted one layer below the previous node, making a stick-like tree.
+ */
 enum TreeShape {
 	Wide = 0,
 	Deep = 1,
@@ -284,7 +288,7 @@ describe("SharedTree benchmarks", () => {
 						path = getCursorLeafNode(i, TreeShape.Deep)
 					},
 					benchmarkFn: () => {
-						manipulateCursorTree(tree, TreeShape.Deep, path, dataType);
+						manipulateCursorTree(tree, path, dataType);
 					},
 				});
 			}
@@ -303,7 +307,7 @@ describe("SharedTree benchmarks", () => {
 						path = getCursorLeafNode(i, TreeShape.Wide)
 					},
 					benchmarkFn: () => {
-						manipulateCursorTree(tree, TreeShape.Wide, path, dataType);
+						manipulateCursorTree(tree, path, dataType);
 					},
 				});
 			}
@@ -709,29 +713,22 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
 	readCursor.free();
 }
 
+/**
+ * Given a tree and path, changes the node value to a different one.
+ * @param tree - tree that you need to manipulate
+ * @param path - location where you need to apply the edit
+ * @param dataType - the primitive data type of the value to store
+ */
 function manipulateCursorTree(
 	tree: ISharedTree,
-	shape: TreeShape,
 	path: UpPath,
 	dataType: TestPrimitives,
 ) {
 	const value = generateTreeData(dataType);
-	switch (shape) {
-		case TreeShape.Deep:
-			tree.runTransaction((forest, editor) => {
-				editor.setValue(path, { type: brand("Test"), value });
-				return TransactionResult.Apply;
-			});
-			break;
-		case TreeShape.Wide:
-			tree.runTransaction((forest, editor) => {
-				editor.setValue(path, { type: brand("Test"), value });
-				return TransactionResult.Apply;
-			});
-			break;
-		default:
-			unreachableCase(shape);
-	}
+	tree.runTransaction((forest, editor) => {
+		editor.setValue(path, { type: brand("Test"), value });
+		return TransactionResult.Apply;
+	});
 }
 
 function getCursorLeafNode(
@@ -739,7 +736,6 @@ function getCursorLeafNode(
 	shape: TreeShape,
 ): UpPath {
 	let path: UpPath;
-	let nodeIndex: number;
 	switch (shape) {
 		case TreeShape.Deep:
 			path = {
