@@ -356,7 +356,7 @@ importers:
       '@fluid-tools/fluidapp-odsp-urlresolver': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/odsp-doclib-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/odsp-driver': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -389,7 +389,7 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-tools/fluidapp-odsp-urlresolver': link:../../../packages/drivers/fluidapp-odsp-urlResolver
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/odsp-doclib-utils': link:../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver': link:../../../packages/drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../../packages/drivers/odsp-driver-definitions
@@ -1466,7 +1466,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/test-tools': ^0.2.3074
       '@fluidframework/tinylicious-client': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -1497,7 +1497,7 @@ importers:
     dependencies:
       '@fluid-experimental/data-objects': link:../../../experimental/framework/data-objects
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/tinylicious-client': link:../../../packages/framework/tinylicious-client
       fluid-framework: link:../../../packages/framework/fluid-framework
     devDependencies:
@@ -1534,7 +1534,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -1585,7 +1585,7 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
@@ -1644,7 +1644,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -1699,7 +1699,7 @@ importers:
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
@@ -1760,7 +1760,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -1796,7 +1796,7 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
@@ -1842,7 +1842,7 @@ importers:
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -1872,7 +1872,7 @@ importers:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
@@ -1924,11 +1924,14 @@ importers:
       '@types/react': ^17.0.44
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
+      css-loader: ^1.0.0
       eslint: ~8.6.0
       prettier: ~2.6.2
       react: ^17.0.1
       rimraf: ^2.6.2
       source-map-loader: ^2.0.0
+      style-loader: ^1.0.0
+      ts-loader: ^9.3.0
       typescript: ~4.5.5
       url-loader: ^2.1.0
       webpack: ^5.72.0
@@ -1948,8 +1951,6 @@ importers:
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       '@tiny-calc/micro': 0.0.0-alpha.5
       react: 17.0.2
-      source-map-loader: 2.0.2_webpack@5.75.0
-      url-loader: 2.3.0_webpack@5.75.0
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
@@ -1959,10 +1960,15 @@ importers:
       '@types/react': 17.0.52
       concurrently: 6.3.0
       copyfiles: 2.4.1
+      css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       prettier: 2.6.2
       rimraf: 2.7.1
+      source-map-loader: 2.0.2_webpack@5.75.0
+      style-loader: 1.3.0_webpack@5.75.0
+      ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
       typescript: 4.5.5
+      url-loader: 2.3.0_webpack@5.75.0
       webpack: 5.75.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
       webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
@@ -1976,7 +1982,7 @@ importers:
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -2017,7 +2023,7 @@ importers:
       '@fluid-experimental/oldest-client-observer': link:../../../packages/framework/oldest-client-observer
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
@@ -2154,7 +2160,7 @@ importers:
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/data-object-base': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -2172,12 +2178,14 @@ importers:
       '@types/node': ^14.18.36
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
+      assert: ^2.0.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
       css-loader: ^1.0.0
       debug: ^4.1.1
       eslint: ~8.6.0
+      events: ^3.1.0
       file-loader: ^3.0.1
       html-loader: ^3.1.0
       ignore-styles: ^5.0.1
@@ -2205,7 +2213,7 @@ importers:
       '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/data-object-base': link:../../../packages/framework/data-object-base
       '@fluidframework/map': link:../../../packages/dds/map
@@ -2213,7 +2221,9 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
+      assert: 2.0.0
       debug: 4.3.4
+      events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
@@ -2356,7 +2366,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -2435,7 +2445,7 @@ importers:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/cell': link:../../../../packages/dds/cell
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
@@ -2599,7 +2609,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -2663,7 +2673,7 @@ importers:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/cell': link:../../../../packages/dds/cell
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
@@ -2852,7 +2862,7 @@ importers:
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -2886,7 +2896,7 @@ importers:
       '@fluid-experimental/pact-map': link:../../../packages/dds/pact-map
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
@@ -2933,7 +2943,7 @@ importers:
       '@fluid-experimental/schemas': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -2996,7 +3006,7 @@ importers:
       '@fluid-experimental/property-proxy': link:../../packages/property-proxy
       '@fluid-experimental/schemas': link:../schemas
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/container-runtime': link:../../../../packages/runtime/container-runtime
@@ -3064,7 +3074,7 @@ importers:
       '@fluid-experimental/schemas': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -3131,7 +3141,7 @@ importers:
       '@fluid-experimental/property-proxy': link:../../packages/property-proxy
       '@fluid-experimental/schemas': link:../schemas
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/container-runtime': link:../../../../packages/runtime/container-runtime
@@ -3441,7 +3451,7 @@ importers:
       '@fluid-experimental/property-properties': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-internal/test-drivers': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -3486,7 +3496,7 @@ importers:
     dependencies:
       '@fluid-experimental/property-changeset': link:../property-changeset
       '@fluid-experimental/property-properties': link:../property-properties
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
@@ -3836,7 +3846,7 @@ importers:
       '@fluid-experimental/property-dds': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-experimental/property-properties': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-experimental/property-query': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/local-driver': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -3918,7 +3928,7 @@ importers:
       sleep-promise: 8.0.1
     devDependencies:
       '@fluid-experimental/property-dds': link:../../packages/property-dds
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
@@ -3958,7 +3968,7 @@ importers:
     specifiers:
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -3983,7 +3993,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
       '@fluidframework/protocol-definitions': 1.1.0
@@ -4016,7 +4026,7 @@ importers:
       '@fluid-experimental/ot': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -4041,7 +4051,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluid-experimental/ot': link:../../ot
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../../../packages/runtime/datastore-definitions
       '@fluidframework/protocol-definitions': 1.1.0
@@ -4075,7 +4085,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -4100,7 +4110,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
@@ -4138,7 +4148,7 @@ importers:
       '@fluid-tools/benchmark': ^0.45.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -4183,7 +4193,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
@@ -4236,7 +4246,7 @@ importers:
     specifiers:
       '@fluid-experimental/tree': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -4262,7 +4272,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluid-experimental/tree': link:../tree
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@graphql-codegen/plugin-helpers': 1.18.8_graphql@15.8.0
       '@graphql-codegen/visitor-plugin-common': 1.22.0_graphql@15.8.0
       graphql: 15.8.0
@@ -4684,7 +4694,7 @@ importers:
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -4703,7 +4713,7 @@ importers:
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
@@ -4782,7 +4792,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/merge-tree': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -4800,7 +4810,7 @@ importers:
     dependencies:
       '@fluidframework/cell': link:../../../packages/dds/cell
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       react: 17.0.2
@@ -4984,7 +4994,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/cell-previous': npm:@fluidframework/cell@2.0.0-internal.3.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5009,7 +5019,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -5045,7 +5055,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/counter-previous': npm:@fluidframework/counter@2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5070,7 +5080,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -5104,7 +5114,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5129,7 +5139,7 @@ importers:
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -5167,7 +5177,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5197,7 +5207,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': link:../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
@@ -5241,7 +5251,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -5279,7 +5289,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/merge-tree': link:../merge-tree
@@ -5331,7 +5341,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5365,7 +5375,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-utils': link:../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -5411,7 +5421,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -5437,7 +5447,7 @@ importers:
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/protocol-definitions': 1.1.0
@@ -5473,7 +5483,7 @@ importers:
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5501,7 +5511,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -5537,7 +5547,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -5562,7 +5572,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/protocol-base': 0.1038.2000
@@ -5601,7 +5611,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5638,7 +5648,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-utils': link:../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -5687,7 +5697,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5721,7 +5731,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-utils': link:../../loader/container-utils
@@ -5763,7 +5773,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5790,7 +5800,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -5830,7 +5840,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5860,7 +5870,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -5936,7 +5946,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -5978,7 +5988,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
@@ -6031,7 +6041,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/debugger-previous': npm:@fluidframework/debugger@2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6051,7 +6061,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 1.1.0
@@ -6080,7 +6090,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/driver-base-previous': npm:@fluidframework/driver-base@2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6099,7 +6109,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 1.1.0
@@ -6173,7 +6183,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -6191,7 +6201,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 1.1.0
@@ -6218,7 +6228,7 @@ importers:
       '@fluid-tools/fluidapp-odsp-urlresolver-previous': npm:@fluid-tools/fluidapp-odsp-urlresolver@2.0.0-internal.3.1.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -6236,7 +6246,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/odsp-driver': link:../odsp-driver
@@ -6264,7 +6274,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-base': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6299,7 +6309,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -6342,7 +6352,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-base': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6379,7 +6389,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -6507,7 +6517,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -6529,7 +6539,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 1.1.0
@@ -6560,7 +6570,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/driver-base': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6600,7 +6610,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -6648,7 +6658,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -6670,7 +6680,7 @@ importers:
       typescript: ~4.5.5
       url: ^0.11.0
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 1.1.0
@@ -6758,7 +6768,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6783,7 +6793,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-utils': link:../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6819,7 +6829,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6851,7 +6861,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -6893,7 +6903,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6925,7 +6935,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
@@ -6967,7 +6977,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -6994,7 +7004,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7028,7 +7038,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/dds-interceptions-previous': npm:@fluidframework/dds-interceptions@2.0.0-internal.3.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -7055,7 +7065,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
@@ -7142,7 +7152,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -7173,7 +7183,7 @@ importers:
     dependencies:
       '@fluidframework/aqueduct': link:../aqueduct
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
@@ -7213,7 +7223,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -7235,7 +7245,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/protocol-definitions': 1.1.0
     devDependencies:
@@ -7266,7 +7276,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -7293,7 +7303,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
@@ -7418,7 +7428,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -7450,7 +7460,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -7601,8 +7611,6 @@ importers:
       '@fluidframework/view-interfaces-previous': npm:@fluidframework/view-interfaces@2.0.0-internal.3.1.0
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
-      '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -7618,8 +7626,6 @@ importers:
       '@fluidframework/view-interfaces-previous': /@fluidframework/view-interfaces/2.0.0-internal.3.1.0
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -7633,7 +7639,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader-previous': npm:@fluidframework/container-loader@2.0.0-internal.3.1.0
       '@fluidframework/container-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -7672,7 +7678,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-utils': link:../container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7720,7 +7726,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-utils-previous': npm:@fluidframework/container-utils@2.0.0-internal.3.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -7743,7 +7749,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -7775,7 +7781,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils-previous': npm:@fluidframework/driver-utils@2.0.0-internal.3.1.0
@@ -7806,7 +7812,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/gitresources': 0.1038.2000
@@ -7898,7 +7904,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -7912,7 +7918,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../driver-utils
       '@fluidframework/protocol-definitions': 1.1.0
@@ -7977,7 +7983,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-previous': npm:@fluidframework/container-runtime@2.0.0-internal.3.1.0
@@ -8018,7 +8024,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/container-utils': link:../../loader/container-utils
@@ -8111,7 +8117,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8146,7 +8152,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-utils': link:../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8190,7 +8196,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions-previous': npm:@fluidframework/datastore-definitions@2.0.0-internal.3.1.0
@@ -8207,7 +8213,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/protocol-definitions': 1.1.0
@@ -8233,7 +8239,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/garbage-collector-previous': npm:@fluidframework/garbage-collector@2.0.0-internal.3.1.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8255,7 +8261,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
@@ -8286,7 +8292,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8303,7 +8309,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -8329,7 +8335,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8359,7 +8365,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8398,7 +8404,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8433,7 +8439,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../datastore-definitions
@@ -8475,7 +8481,7 @@ importers:
     specifiers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8506,7 +8512,7 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli': 0.9.0_webpack-cli@4.10.0
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -8537,7 +8543,7 @@ importers:
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8594,7 +8600,7 @@ importers:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/cell': link:../../dds/cell
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -8696,7 +8702,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8732,7 +8738,7 @@ importers:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-internal/replay-tool': link:../../tools/replay-tool
       '@fluidframework/cell': link:../../dds/cell
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8772,7 +8778,7 @@ importers:
     specifiers:
       '@fluid-tools/benchmark': ^0.45.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@rushstack/eslint-config': ^2.5.1
@@ -8791,7 +8797,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       best-random: 1.0.3
     devDependencies:
       '@fluid-tools/benchmark': 0.45.112032
@@ -8907,7 +8913,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -8942,7 +8948,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluid-internal/test-pairwise-generator': link:../test-pairwise-generator
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
@@ -8993,7 +8999,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9058,7 +9064,7 @@ importers:
       '@fluidframework/attributor': link:../../framework/attributor
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -9126,7 +9132,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9167,7 +9173,7 @@ importers:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -9210,7 +9216,7 @@ importers:
     specifiers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-pairwise-generator-previous': npm:@fluidframework/test-pairwise-generator@2.0.0-internal.3.1.0
@@ -9227,7 +9233,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       random-js: 1.0.8
     devDependencies:
       '@fluid-tools/build-cli': 0.9.0
@@ -9256,7 +9262,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9297,7 +9303,7 @@ importers:
       '@fluid-internal/test-pairwise-generator': link:../test-pairwise-generator
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -9345,7 +9351,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9393,7 +9399,7 @@ importers:
     dependencies:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -9454,7 +9460,7 @@ importers:
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9506,7 +9512,7 @@ importers:
       '@fluidframework/attributor': link:../../framework/attributor
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -9561,7 +9567,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9587,7 +9593,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
@@ -9812,7 +9818,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluid-tools/fluidapp-odsp-urlresolver': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9838,7 +9844,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluid-tools/fluidapp-odsp-urlresolver': link:../../drivers/fluidapp-odsp-urlResolver
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -9934,7 +9940,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9975,7 +9981,7 @@ importers:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -10022,7 +10028,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader-previous': npm:@fluid-tools/webpack-fluid-loader@2.0.0-internal.3.1.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -10042,7 +10048,6 @@ importers:
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/tool-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/view-adapters': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/view-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/web-code-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@rushstack/eslint-config': ^2.5.1
@@ -10071,7 +10076,7 @@ importers:
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -10089,7 +10094,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tool-utils': link:../../utils/tool-utils
-      '@fluidframework/view-adapters': link:../../framework/view-adapters
       '@fluidframework/view-interfaces': link:../../framework/view-interfaces
       '@fluidframework/web-code-loader': link:../../loader/web-code-loader
       axios: 0.26.1
@@ -10131,7 +10135,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -10154,7 +10158,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
@@ -10186,7 +10190,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils-previous': npm:@fluidframework/telemetry-utils@2.0.0-internal.3.1.0
@@ -10212,7 +10216,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       debug: 4.3.4
       events: 3.3.0
       uuid: 8.3.2
@@ -10246,7 +10250,7 @@ importers:
       '@fluid-tools/build-cli': ^0.9.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
-      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/odsp-doclib-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -10273,7 +10277,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/odsp-doclib-utils': link:../odsp-doclib-utils
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
@@ -12488,7 +12492,7 @@ packages:
     dependencies:
       '@fluid-experimental/property-changeset': 2.0.0-internal.2.4.0
       '@fluid-experimental/property-properties': 2.0.0-internal.2.4.0
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.2.4.0
@@ -12546,7 +12550,7 @@ packages:
   /@fluid-experimental/sequence-deprecated/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-kZ0zg3UBWlWt2gxsGbEzZt2WyXr14Qacn3joBosuRN4lsj07Bh8KaMTcUGIwmPqX/L7rXiMH5faAjtHDgzm4KQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/merge-tree': 2.0.0-internal.3.1.0
@@ -12561,7 +12565,7 @@ packages:
     resolution: {integrity: sha512-7oRVdnok0F5ijo2DftLzae68KsFT3KlyhSKgfjwBlV5T14TqdkJTUXSDbmMtGPOy7MiHqlPmlHaNLQip0jtVSw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
@@ -12672,7 +12676,7 @@ packages:
   /@fluid-tools/fluidapp-odsp-urlresolver/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-ssjOZuumEqFh3TKZKIn6hXXpToDWu4me69lZxsDb4p8EUAUZX3E0P408j4F8QxPBOZefYfriV+ZdDYC0E6ft4g==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/odsp-driver': 2.0.0-internal.3.1.0
@@ -12707,7 +12711,7 @@ packages:
   /@fluid-tools/webpack-fluid-loader/2.0.0-internal.3.1.0_yun2zgl4yozo3m574tzxmts4re:
     resolution: {integrity: sha512-dUGqZW8f+zG8PWdIGTY92BcshNS8sO7F2Q3gnvev4LT5wPk3dvx3Mg8AWY5DnpZaLzzvXFPVE7/4iuFJVR8l6w==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-loader': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -12750,7 +12754,7 @@ packages:
     resolution: {integrity: sha512-amIWsqjZTd6XlYTJeBPm7g0ADgEnvIp80qgjaD/e/X4d8j9hgpO+5DGG/psXaKWB4cA85ZMfcCWVlUL6mWHNug==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -12771,7 +12775,7 @@ packages:
     resolution: {integrity: sha512-qKpN8RtwgH2UDldE/0oYCw+HrgI6MKpo7ArgPAZWGROQ27ULa2UfeIttX8PKJRwL/VNEu6Ku9EJN8zw3RRU45w==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-loader': 2.0.0-internal.2.4.0
       '@fluidframework/container-runtime': 2.0.0-internal.2.4.0
@@ -12795,7 +12799,7 @@ packages:
     resolution: {integrity: sha512-fW8NHqV9JZVEVDg2o5u99ibfRNhKwTQgi/kFGy9rlLW+5535VUaKeXjdomMVUTMmwmbzNuQX55R+P+UPY3atYw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-loader': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime': 2.0.0-internal.3.1.0
@@ -12819,7 +12823,7 @@ packages:
     resolution: {integrity: sha512-fW8NHqV9JZVEVDg2o5u99ibfRNhKwTQgi/kFGy9rlLW+5535VUaKeXjdomMVUTMmwmbzNuQX55R+P+UPY3atYw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-loader': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/container-runtime': 2.0.0-internal.3.1.0_debug@4.3.4
@@ -12842,7 +12846,7 @@ packages:
   /@fluidframework/attributor/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-8oGCM8JT/UBar7zu9dOfYHGLVsZVnqf/XlV2n9iqFscx7UBLApfYWtXjAaYBrU78sKT2YTZeBHUOgj0UNgTyVg==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.1.0
@@ -12979,7 +12983,7 @@ packages:
   /@fluidframework/cell/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-ndhz1eHJlhhjnID0+ScVvdz5rivz+wcZ0wXanKFd992F05avLI+O0tfaijTcrQzU1HKa2kOIDfpUIAEpEkEiiQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
@@ -12995,8 +12999,8 @@ packages:
   /@fluidframework/common-definitions/0.20.1:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
 
-  /@fluidframework/common-utils/1.0.0:
-    resolution: {integrity: sha512-O3UoZ2dQR/ZWMXTSbDcTH93WMqHmEKoYhYMn6cybESswmMOA2E9UF3B2TkJ+aofBLOLllDKXXGtuhPmu/9rTqQ==}
+  /@fluidframework/common-utils/1.1.1:
+    resolution: {integrity: sha512-XCPEFE1JAg+juQZYQQVZjHZJlM5+Wm9NxRbsnsix05M1tSq0p3SLqwgfaSGssXhLLX5QtG+aF1QD5a3LA1qtNQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@types/events': 3.0.0
@@ -13030,7 +13034,7 @@ packages:
     resolution: {integrity: sha512-TQnDixAD4JYWE5rHZHkwNPrhCK8SWDsMTyJH+dFGSjF9MjBzxiodnRE4JaO688aJWeff6IBxZZJ7E0K10NaDeQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-utils': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
@@ -13054,7 +13058,7 @@ packages:
     resolution: {integrity: sha512-Kc5apLtps2CoI9/pPwy3xVBeSCuJe1FxHYPsvA0XQoId5vtEwxxS6Iqap6DflZDWopfRVXIdObTWj5c8v11Vjg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -13078,7 +13082,7 @@ packages:
     resolution: {integrity: sha512-Kc5apLtps2CoI9/pPwy3xVBeSCuJe1FxHYPsvA0XQoId5vtEwxxS6Iqap6DflZDWopfRVXIdObTWj5c8v11Vjg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -13124,7 +13128,7 @@ packages:
     resolution: {integrity: sha512-ki2fSbvDxvAmtjl+uO83jvpEcoakCdG+lVXiGyyzRNjZap1zLlrnJFTZo7X2/1FnNHcYBn3kVKZah3QkBuR5Gw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-utils': 2.0.0-internal.2.4.0
@@ -13151,7 +13155,7 @@ packages:
     resolution: {integrity: sha512-CzVTtjq6Tsc342dec7l2spWsb0AFZ3DTZSV9PhjayUUg/IIfpXf40HZWH/Akchxkq4ji/b0AlESp4H8W67L0Rw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
@@ -13178,7 +13182,7 @@ packages:
     resolution: {integrity: sha512-CzVTtjq6Tsc342dec7l2spWsb0AFZ3DTZSV9PhjayUUg/IIfpXf40HZWH/Akchxkq4ji/b0AlESp4H8W67L0Rw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
@@ -13205,7 +13209,7 @@ packages:
     resolution: {integrity: sha512-arXFcu2jAgVVTmDDQpKN4TifrFKjf8B1WQpy6SIRC6jGvCtw58tvw7XBm9APJ9L6obJbtubbGp+VeMsek8fKsA==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.2.4.0
@@ -13217,7 +13221,7 @@ packages:
     resolution: {integrity: sha512-R3XBiqeXHmihaIKwmPKBnudHra0H4H5iN04nJHZZSnTDiYCBugapiChmhCxHS44Rkhha1LXWQy20/oXXTcHUrg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.1.0
@@ -13236,7 +13240,7 @@ packages:
   /@fluidframework/counter/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-/dvu6kMUOgwbpgRnWmeRvzwmQJUNYX4TDUZ1ZenOxzxeTXDrOTMMrsFsby8+4iJYShbAtAMoFbwDzwQMjWHDXQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
@@ -13252,7 +13256,7 @@ packages:
     resolution: {integrity: sha512-tuhzvNycjGO/VBrrr3+nJuX0sUX6Okm3VZ/JZ1RHmwKefvZlUieNGiNpfnPbbJFgpvK2z9kqAUNO/jTxjC0nrQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -13271,7 +13275,7 @@ packages:
     resolution: {integrity: sha512-aHm94gMa35ITiLb82JGewW8PpsFsilwKGy2wudP3vYiTMs6rJiJjASX6bySQO7hSARc2hdmsvYVIvaESErHBaQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -13282,7 +13286,7 @@ packages:
     resolution: {integrity: sha512-kVWxpqO7RxPweXLnZGMBWhtdR6Yx3r05jIcnPhpENWl2vObgQhxjAE8ry2eRHGAqQmNIqXeRhdy8tLCfgm3cJg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -13293,7 +13297,7 @@ packages:
     resolution: {integrity: sha512-g+0veJ+1RJQBLE+AVKKP5V6K66cc9JS2E4HnbNkSGhyrOLPEqB/pYzJCIkYezCZpn+SCpUV7AkY6N+ny7ElOpw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-utils': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
@@ -13317,7 +13321,7 @@ packages:
     resolution: {integrity: sha512-C6iB0C7RXBApyisOU9dAp2hLBPbfpxZF7qCqfsNHBxsVVoWxrAbBXCiByiqqAD1qZXpY7JXh5HGukiHLUzx+mQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -13341,7 +13345,7 @@ packages:
     resolution: {integrity: sha512-C6iB0C7RXBApyisOU9dAp2hLBPbfpxZF7qCqfsNHBxsVVoWxrAbBXCiByiqqAD1qZXpY7JXh5HGukiHLUzx+mQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -13364,7 +13368,7 @@ packages:
   /@fluidframework/dds-interceptions/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-kMkScfi+QkyLVg14LYkKE+2diAcdvuLs4Abf5B3KV5yXTdO9DkpGPGFu9SidFLmQEdkKj+8d5C70k6ewp5DLzQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/map': 2.0.0-internal.3.1.0
       '@fluidframework/merge-tree': 2.0.0-internal.3.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.1.0
@@ -13377,7 +13381,7 @@ packages:
   /@fluidframework/debugger/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-WadsiDxc6PAWtRq/FJFf+Tx4CKzU46+Y8V4abMG0GPBJjqa/fOMP0k7Ft+VXcHV1pZki+ql9+eQr/o2OFauY2w==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -13392,7 +13396,7 @@ packages:
     resolution: {integrity: sha512-J8O/UBo2f7k3FLHWInsTW/QZ2pdSvzIXyasUumx2u48lBQArykEouHdQPK8Hct2CbuHNhY0Vq7SO0Rle3Wgqng==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -13406,7 +13410,7 @@ packages:
     resolution: {integrity: sha512-J8O/UBo2f7k3FLHWInsTW/QZ2pdSvzIXyasUumx2u48lBQArykEouHdQPK8Hct2CbuHNhY0Vq7SO0Rle3Wgqng==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/protocol-definitions': 1.1.0
@@ -13436,7 +13440,7 @@ packages:
     resolution: {integrity: sha512-rl0/4fsbmvVsjpbzJTu/XCCfM/xysNs9xQQ+TfK9Rcdh6xZABL1Dgzc/iz7So/aRI8OjjDI9fi/Xglmkq7md5g==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/gitresources': 0.1038.2000
@@ -13455,7 +13459,7 @@ packages:
     resolution: {integrity: sha512-QNis7N8deKKTWAfKzEaud4j/7hvbybsqs5a9mQTLfg/c5wNgNU0r1BFo/fZikrUb4wmmmI7HyPy5JHQkjzHE2g==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/gitresources': 0.1038.2000
@@ -13474,7 +13478,7 @@ packages:
     resolution: {integrity: sha512-QNis7N8deKKTWAfKzEaud4j/7hvbybsqs5a9mQTLfg/c5wNgNU0r1BFo/fZikrUb4wmmmI7HyPy5JHQkjzHE2g==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/gitresources': 0.1038.2000
@@ -13530,7 +13534,7 @@ packages:
     resolution: {integrity: sha512-iwiBnsoXjxO/qgNOUIBTSyQH4ZGOkT2pHDeUWjy+aedbue1MN2y+u7xXRyryNeLeJT0sAqbbl4O+57vmdOafDQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -13568,7 +13572,7 @@ packages:
     dependencies:
       '@fluidframework/aqueduct': 2.0.0-internal.2.4.0
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-loader': 2.0.0-internal.2.4.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.4.0
@@ -13588,7 +13592,7 @@ packages:
     dependencies:
       '@fluidframework/aqueduct': 2.0.0-internal.3.1.0
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-loader': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.1.0
@@ -13607,7 +13611,7 @@ packages:
     resolution: {integrity: sha512-kET9OCET+SgojGG6W011EPrEO9X+K8wDWYIUjTVyn60ZTfQRHJ4IJzR/xyV6F28Q0pXVTJSHVR5xLCQWcNI4VQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
     dev: true
@@ -13616,7 +13620,7 @@ packages:
     resolution: {integrity: sha512-1wBOsep4KwGs6k01UG/jSBgglHP+Jky5XziiEXoUP6SWWs0AMyd8zNSgzE86y0XKIbnu7kCLcMgFRd1zw1BzNA==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.1.0
     dev: true
@@ -13627,7 +13631,7 @@ packages:
   /@fluidframework/ink/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-HZm5IvHJoBDMCS5KbcmmXyQI+i5mvyxXzbBTM6c72La68mUFEvM73Uj+6cEH61TCLgXjX1vUqz9HqM/FAkjxhg==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
@@ -13644,7 +13648,7 @@ packages:
     resolution: {integrity: sha512-ato6fpQhy+AbOZRIcuTjy3PT5940sbsvwm6DrXEIH2eQlxDqov0u6oJygQibnbAq/fMJOIsupASSMWbSdLCNuQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-base': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
@@ -13673,7 +13677,7 @@ packages:
     resolution: {integrity: sha512-ato6fpQhy+AbOZRIcuTjy3PT5940sbsvwm6DrXEIH2eQlxDqov0u6oJygQibnbAq/fMJOIsupASSMWbSdLCNuQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-base': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
@@ -13713,7 +13717,7 @@ packages:
     resolution: {integrity: sha512-PVEwpPx63bW2d/tb1lOEf61/1llm2llBJ9+W7SVLPUPXJtQQQB1QycE6gmx9W5/3Px2KwDlvGDVz7Vz+yctx/g==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.2.4.0
@@ -13732,7 +13736,7 @@ packages:
     resolution: {integrity: sha512-tvdOOshLtCbDBNXVZC5PeLgbUeMUwGWBhqFHQNnrRas+zm9itmV59bVZdW1OCsxc5yMLIrEWbXAL+VMV8Xj3VA==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
@@ -13751,7 +13755,7 @@ packages:
     resolution: {integrity: sha512-tvdOOshLtCbDBNXVZC5PeLgbUeMUwGWBhqFHQNnrRas+zm9itmV59bVZdW1OCsxc5yMLIrEWbXAL+VMV8Xj3VA==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
@@ -13770,7 +13774,7 @@ packages:
     resolution: {integrity: sha512-8uFxameyPF5O8Sp5z2bDCw7wo/iJ46my45l05YAXTDlJa+qfhphg40jw4ZacSpvRtZZ2DyvXauZ1ys80zg19gQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/merge-tree': 2.0.0-internal.3.1.0
@@ -13792,7 +13796,7 @@ packages:
     resolution: {integrity: sha512-X0QZWGhho2zLfmBYN4KhpyMkb2nG/58g2h211b87L+4hAKkugAEb76bzs6YjSE0BFKEZy18BMdKqYcgT24qMhQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-utils': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
@@ -13811,7 +13815,7 @@ packages:
     resolution: {integrity: sha512-/Hu7Ytke3xJgSde+EY/qnNVIKh9bROeJkHxBXAvThHdGbr+k4dx/HBfn4cgQ0zfqP8zO4FGXc46xJY9D+qCNsg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -13838,7 +13842,7 @@ packages:
     resolution: {integrity: sha512-Sv47A4jGSycmBgolM42ir2/OO+BfA2Vj5JGvDdtTm10UQp5xBsVCY6Z0U6/aPZ4j05D8XaahX5+6HJ5fJ0KIuw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.3.1.0
@@ -13854,7 +13858,7 @@ packages:
     resolution: {integrity: sha512-Sv47A4jGSycmBgolM42ir2/OO+BfA2Vj5JGvDdtTm10UQp5xBsVCY6Z0U6/aPZ4j05D8XaahX5+6HJ5fJ0KIuw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.3.1.0
@@ -13876,7 +13880,7 @@ packages:
     resolution: {integrity: sha512-7BoZGHSKxjv9czZBHEGdM/wVrdqLQ2UCEfMBleRAX/aSW/iUoGzsqfwSpI3L9A13+iAfY04Lypfh7Wth0uNewQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-base': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
@@ -13917,7 +13921,7 @@ packages:
   /@fluidframework/ordered-collection/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-gBTJL4G8OYRw1dSe1Xf6YKsz8PCzFwUaHcGzgLGMregdtlbnjyHPvr0igpuggyTIsQxCd+/rMrAnnYQQ5jtWSg==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -13933,7 +13937,7 @@ packages:
   /@fluidframework/protocol-base/0.1038.2000:
     resolution: {integrity: sha512-2yqIvtt3NBKWfZgQk/nxthf+evIZ0cOW4Klz/zgdIzSFSHLNjo1eItkQc+7wLG3F7v1tD5tn9AVOQsFrDWdvYg==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       lodash: 4.17.21
@@ -13946,7 +13950,7 @@ packages:
   /@fluidframework/register-collection/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-pE7++Vp7QOqTq8eGtaxMOAjAf7NTlRUxbkT+Ev5qzN0q7UxC7aWmkjXPs/yQHfXIxY65CT0tuhOZIHqEeIbasQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-base': 0.1038.2000
@@ -13962,7 +13966,7 @@ packages:
     resolution: {integrity: sha512-nGgGyMN9FYmSsTSlk0o2gKKdSU0TTd+WIUHCFQqckOn+D+1Lh/kGBRtLE50cDmSMYyMN4SQTZicm4cupErN64g==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -13975,7 +13979,7 @@ packages:
   /@fluidframework/request-handler/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-b/p5j5EXljtGZb/GSPsLJMP7pqyTSHvBKs+Zzv8ZaW4DDsgMO8VfQnLASXOakhB4GTN10iFu8Me+sdW5KDVIMg==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
@@ -13987,7 +13991,7 @@ packages:
   /@fluidframework/request-handler/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-cJLxF6bpiwBspO/idJY9ktR5dYWkZ+UJpO7/ENAXQkPlpS0nvxyJ00St5aL7M43+7U+zRnA9vmXD7MzElVnE1Q==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.1.0
@@ -14000,7 +14004,7 @@ packages:
     resolution: {integrity: sha512-6dk+i2Ac/aybpeS6JnLIFLAwgNb5XF3oLxyL9G+dQ1r1HvoVr/8y3FVZTGjxSUb+MdVv5axytLbNlVy41vlIIQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-base': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
@@ -14027,7 +14031,7 @@ packages:
     resolution: {integrity: sha512-6dk+i2Ac/aybpeS6JnLIFLAwgNb5XF3oLxyL9G+dQ1r1HvoVr/8y3FVZTGjxSUb+MdVv5axytLbNlVy41vlIIQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-base': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0_debug@4.3.4
@@ -14053,7 +14057,7 @@ packages:
   /@fluidframework/routerlicious-urlresolver/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-gyZThjWTjuSJGFDJ4PDYd/H8PcBKArBFnGObS6iaVK/NZdubGqrccnQgPMsmO7Y3aChgtmzuxjUnKc4XlsDPCQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -14065,7 +14069,7 @@ packages:
     resolution: {integrity: sha512-RP22j5+lEP+1s7IAyl8qq5HCti8BdzQafPgoV75nN85dizB1fkuFC0/CSarxNZ/JeaxHd7Eaj2gQtPIc4JxVDg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
@@ -14076,7 +14080,7 @@ packages:
     resolution: {integrity: sha512-d+MgQ2fLQ+6Gpw2ZL1Hz7dQ4WJEEvIM8uJ8JS4f+9RR1W2NNqP18hQbndpokh4RGs+RBZBxkwM20CIgP1I/RcA==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
@@ -14087,7 +14091,7 @@ packages:
     resolution: {integrity: sha512-9rtuhFQz/Nivhi3LqLxTq8a11m0ooyQ4hdMetdpxsZEvRtVsg2x5We8NwKw3ahM+PJ1I8Iw7ikau6eyksrR1Og==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
@@ -14105,7 +14109,7 @@ packages:
     resolution: {integrity: sha512-wj++gtOu6LdJ80xp8fv2TE45Jb3BHZP4QblyTY6g3ZHCU47vtY4DEklFGmYJK5pWAxbwj9kcDEkp0On6qlvgpQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -14123,7 +14127,7 @@ packages:
     resolution: {integrity: sha512-amvOAnwb2M1iPeLD1HQdLgdg0aCDyPj4BojBR7LTZb01Xjd3k6P5D/CkPCnBgTSoRCQoLw3jnchCRNvNftkYaQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-utils': 2.0.0-internal.2.4.0
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
@@ -14144,7 +14148,7 @@ packages:
     resolution: {integrity: sha512-INsbIn6GmGt7Kwbg+ExEoe4X3BNsNVWhRSgaj9dnWv/gQtySHOiXNF71RslAuNdzZ8ssfQwqjvHimt/Kvvqmzg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -14164,7 +14168,7 @@ packages:
   /@fluidframework/server-lambdas-driver/0.1038.2000:
     resolution: {integrity: sha512-uyk1hFfRHah8/iMxiuQw/xC10v5tmJKp4mA8+ombtLPWtWuVl6dzX3XIfrF1tIqjahzzWqMVuHWVMEAESOFblg==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/server-services-core': 0.1038.2000
       '@fluidframework/server-services-telemetry': 0.1038.2000
@@ -14177,7 +14181,7 @@ packages:
     resolution: {integrity: sha512-r3T2gix3IcsGNJCtzWef/8BHF1mwl32Zq8e3eWKmFFSnXYnsW0u1JUuozSXdRByi8P6py39yDK2CmfAnxwWnUg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
@@ -14204,7 +14208,7 @@ packages:
     resolution: {integrity: sha512-r3T2gix3IcsGNJCtzWef/8BHF1mwl32Zq8e3eWKmFFSnXYnsW0u1JUuozSXdRByi8P6py39yDK2CmfAnxwWnUg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
@@ -14230,7 +14234,7 @@ packages:
   /@fluidframework/server-local-server/0.1038.2000:
     resolution: {integrity: sha512-kf+IsWeSiPiXT92h2Wexx2n4gVu+1eygYAc5KLVG/M6yyFqr8GYEHjluyjg2JMqaLh6vPGa44F0HzKIv3FppOw==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-lambdas': 0.1038.2000_debug@4.3.4
       '@fluidframework/server-memory-orderer': 0.1038.2000
@@ -14249,7 +14253,7 @@ packages:
   /@fluidframework/server-memory-orderer/0.1038.2000:
     resolution: {integrity: sha512-A+oIAJ5evNzEwEit5NBQSvOTQrzf6Zx+1yBES0v89ypjcIXYoT8oqJWvzuaFbxu4RH6w8JMFMkVZ1gnF1WGpog==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-lambdas': 0.1038.2000_debug@4.3.4
@@ -14275,7 +14279,7 @@ packages:
   /@fluidframework/server-services-client/0.1038.2000:
     resolution: {integrity: sha512-A8oB7jKUDCqlU1qFSc72o7zMcGAeo52WDWWhoSYgZzMV3ZHgaPjq+FYTTpGiJPACnYUhV644UPiFvGWriLIzDA==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
@@ -14294,7 +14298,7 @@ packages:
   /@fluidframework/server-services-core/0.1038.2000:
     resolution: {integrity: sha512-kAYxPg1AAqRJxXzN7lXPlShSI31vr3MpDvBLeEQG4fcAWlZHcS5a0DtiA+kV8qKrhJCHfC+KyoS/UruJ4L2yxQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
@@ -14309,7 +14313,7 @@ packages:
   /@fluidframework/server-services-shared/0.1038.2000:
     resolution: {integrity: sha512-Qh/ZN8E/LTLXsWkmU2zBhiTzrVy9+sL/Jf1+qyN2incu6R4lbB5zCQ9shDBuImboWFhD39yBBm/j5iDspOoOhQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
@@ -14337,7 +14341,7 @@ packages:
   /@fluidframework/server-services-telemetry/0.1038.2000:
     resolution: {integrity: sha512-RBDh+uYZ53GfvXsH1XKDTAsCWpBIFZAl6IHaDZkLE11Zw4ZRk3Bz4063buuBklZ4K3HnLhv+p9Eu9jVsK+v3jA==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       json-stringify-safe: 5.0.1
       path-browserify: 1.0.1
       serialize-error: 8.1.0
@@ -14368,7 +14372,7 @@ packages:
   /@fluidframework/server-test-utils/0.1038.2000:
     resolution: {integrity: sha512-w08VsOC+x0hzXZs5YIrmjFyG2gV+6bMXzMsxSeDuLPkwz1xQXNJxpVG1FM9hAJUke41kzxbRvielSdMfzp3N6A==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
@@ -14386,7 +14390,7 @@ packages:
     resolution: {integrity: sha512-Std8EzMRrkeiKMwOvPeu7X4WAjVkGtvJQ8hAEWq6GqmK0kelObW3R8+HAUd6Te4FIkTXba2TT0xJAeULkg9isQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/container-runtime': 2.0.0-internal.2.4.0
       '@fluidframework/container-utils': 2.0.0-internal.2.4.0
@@ -14407,7 +14411,7 @@ packages:
     resolution: {integrity: sha512-uT8YD12XmNvj0JX8++vuVNmGSVHw36L0NwBXqjZA/ghpfxzTAFOMxxfL05iBXcCPHtzSEbXMmmno6tBXU4sopg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime': 2.0.0-internal.3.1.0
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
@@ -14428,7 +14432,7 @@ packages:
     resolution: {integrity: sha512-uT8YD12XmNvj0JX8++vuVNmGSVHw36L0NwBXqjZA/ghpfxzTAFOMxxfL05iBXcCPHtzSEbXMmmno6tBXU4sopg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/container-utils': 2.0.0-internal.3.1.0
@@ -14448,7 +14452,7 @@ packages:
   /@fluidframework/shared-summary-block/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-+1vo7IGiGHB8LeEemNDkyyrzxJIdauSFswr2eXiNkW49PWkY80eZo9NFkjZPz2ahKN+3gb88SLeDHtpLJjG3QA==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
@@ -14472,7 +14476,7 @@ packages:
     resolution: {integrity: sha512-Z4El3LxUud+cXlZhK3n5wRqcPsej9XmavTpoPDL4EjIX5YwpwaLjRBi4anyZkO3i6Howp2oKQYUSJ7gGTkOKbA==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
@@ -14491,7 +14495,7 @@ packages:
     resolution: {integrity: sha512-lCODM/TUikeCDm0hY9KM/HIQnCLpthQGwxMZIQ2V8LE7HWn7BTd7vq2xetulzCrbEqcRqcT0hyza7gla/Y+A6A==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       debug: 4.3.4
       events: 3.3.0
       uuid: 8.3.2
@@ -14503,7 +14507,7 @@ packages:
     resolution: {integrity: sha512-Cbb1DmxzVu71A/Ip2/qgyVf2xBz59OuykePnNHQL7rsBGPzFV1/Hqs93eQATHJGbJwRiXvh8lCdwHeHbj0N8Bw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       debug: 4.3.4
       events: 3.3.0
       uuid: 8.3.2
@@ -14549,7 +14553,7 @@ packages:
   /@fluidframework/test-drivers/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-D4Zy71wSjXTyg509pp92eKtpLuOx3UvTx7rRfH2K/NH7XFruP4TK2Mqonmt8Pb2dUgOiPBLDQUi5l1/gFw0RVg==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
@@ -14581,7 +14585,7 @@ packages:
     resolution: {integrity: sha512-VsGG3r9U+hv/2mKHrqUoPGfPyqCxzSQtqKKm3V0D8gY5XHp9EdTX7pjGcLFzdtlNS9sVV902IO6Z2VCI+untEQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/driver-utils': 2.0.0-internal.3.1.0
       '@fluidframework/protocol-definitions': 1.1.0
@@ -14593,7 +14597,7 @@ packages:
   /@fluidframework/test-pairwise-generator/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-+i6WPEosbBY/E++C8annToPVdWUGpzSjY5STZB1T+L/kFNncpFlfsmq8fuYwM/yA6chgUlcR49j0qRBRcTJObA==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       random-js: 1.0.8
     dev: true
 
@@ -14601,7 +14605,7 @@ packages:
     resolution: {integrity: sha512-0tZWzxz0lkYvC5IfdizuOnKj6RiSq2q14S5znjcGSx87LQpxrZZWLOV9I/O5PVFgxLW1rPFyzJARnCUfr6ecqw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
@@ -14628,7 +14632,7 @@ packages:
     resolution: {integrity: sha512-0tZWzxz0lkYvC5IfdizuOnKj6RiSq2q14S5znjcGSx87LQpxrZZWLOV9I/O5PVFgxLW1rPFyzJARnCUfr6ecqw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/core-interfaces': 2.0.0-internal.3.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.1.0
@@ -14661,7 +14665,7 @@ packages:
     dependencies:
       '@fluidframework/aqueduct': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-loader': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/container-runtime': 2.0.0-internal.3.1.0_debug@4.3.4
@@ -14700,7 +14704,7 @@ packages:
       '@fluidframework/attributor': 2.0.0-internal.3.1.0
       '@fluidframework/cell': 2.0.0-internal.3.1.0
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-loader': 2.0.0-internal.3.1.0
       '@fluidframework/container-runtime': 2.0.0-internal.3.1.0
@@ -14740,7 +14744,7 @@ packages:
         optional: true
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.1.0
       '@fluidframework/container-loader': 2.0.0-internal.3.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.1.0
@@ -14782,7 +14786,7 @@ packages:
   /@fluidframework/tool-utils/2.0.0-internal.3.1.0:
     resolution: {integrity: sha512-2NoJc64YmvYNy5LUdhP+Ng3P7PDX1UgF4IUQjHAUW5Z7plWydxsxsX46pD/cgsOqHyiOG6Oy5cQkLMlzvk2KoQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/odsp-doclib-utils': 2.0.0-internal.3.1.0_debug@4.3.4
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
@@ -21655,7 +21659,6 @@ packages:
       is-nan: 1.3.2
       object-is: 1.1.5
       util: 0.12.5
-    dev: true
 
   /assertion-error/1.1.0:
     resolution: {integrity: sha512-jgsaNduz+ndvGyFt3uSuWqvy4lCnIJiovtouQN5JZHOKCS2QuhEdbcQHFhVksz2N2U9hXJo8odG7ETyWlEeuDw==}
@@ -21761,7 +21764,6 @@ packages:
   /available-typed-arrays/1.0.5:
     resolution: {integrity: sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==}
     engines: {node: '>= 0.4'}
-    dev: true
 
   /aws-sdk/2.1260.0:
     resolution: {integrity: sha512-iciXVukPbhmh44xcF+5/CO15jtESqRkXuEH54XaU8IpCzbYkAcPBaS29vLRN2SRuN1Dy2S3X7SaZZxFJWLAHrg==}
@@ -22673,7 +22675,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -22681,7 +22683,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -25709,7 +25711,6 @@ packages:
 
   /es6-object-assign/1.1.0:
     resolution: {integrity: sha512-MEl9uirslVwqQU369iHNWZXsI8yaZYGg/D65aOgZkeyFJwHYSxilf7rQzXKI7DdDuBPrBXbfk3sl9hJhmd5AUw==}
-    dev: true
 
   /es6-promise/4.2.8:
     resolution: {integrity: sha512-HJDGx5daxeIvxdBxvG2cb9g4tEvwIk3i8+nhX0yGrYmZUzbkdg8QbDevheDB8gd0//uPj4c1EQua8Q+MViT0/w==}
@@ -27133,7 +27134,6 @@ packages:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
     dependencies:
       is-callable: 1.2.7
-    dev: true
 
   /for-in/0.1.8:
     resolution: {integrity: sha512-F0to7vbBSHP8E3l6dCjxNOLuSFAACIxFy3UehTUlG7svlXi37HHsDkyVcHo0Pq8QwrE+pXvWSVX3ZT1T9wAZ9g==}
@@ -27929,7 +27929,6 @@ packages:
     resolution: {integrity: sha512-d65bNlIadxvpb/A2abVdlqKqV563juRnZ1Wtk6s1sIR8uNsXR70xqIzVqxVf1eTqDunwT2MkczEeaezCKTZhwA==}
     dependencies:
       get-intrinsic: 1.1.3
-    dev: true
 
   /got/10.7.0:
     resolution: {integrity: sha512-aWTDeNw9g+XqEZNcTjMMZSy7B7yE9toWOFYip7ofFTLleJhvZwUxxTxkTpKvF+p1SAA4VHmuEy7PiHTHyq8tJg==}
@@ -29459,7 +29458,6 @@ packages:
     engines: {node: '>= 0.4'}
     dependencies:
       has-tostringtag: 1.0.0
-    dev: true
 
   /is-glob/3.1.0:
     resolution: {integrity: sha512-UFpDDrPgM6qpnFNI+rh/p3bUaq9hKLZN8bMUWzxmcnZVS3omf4IPK+BrewlnWjO1WmUsMYuSjKh4UJuV4+Lqmw==}
@@ -29527,7 +29525,6 @@ packages:
     dependencies:
       call-bind: 1.0.2
       define-properties: 1.1.4
-    dev: true
 
   /is-negated-glob/1.0.0:
     resolution: {integrity: sha512-czXVVn/QEmgvej1f50BZ648vUI+em0xqMq2Sn+QncCLN4zj1UAxlT+kw/6ggQTOaZPd1HqKQGEqbpQVtJucWug==}
@@ -29734,7 +29731,6 @@ packages:
       for-each: 0.3.3
       gopd: 1.0.1
       has-tostringtag: 1.0.0
-    dev: true
 
   /is-typedarray/1.0.0:
     resolution: {integrity: sha512-cyA56iCMHAh5CdzjJIa4aohJyeO1YbwLi3Jc35MmRU6poroFjIGZzUzupGiRPOjgHg9TLu43xbpwXk523fMxKA==}
@@ -32445,6 +32441,7 @@ packages:
     resolution: {integrity: sha512-USPkMeET31rOMiarsBNIHZKLGgvKc/LrjofAnBlOttf5ajRvqiRA8QsenbcooctK6d6Ts6aqZXBA+XbkKthiQg==}
     engines: {node: '>=4.0.0'}
     hasBin: true
+    dev: true
 
   /mimic-fn/1.2.0:
     resolution: {integrity: sha512-jf84uxzwiuiIVKiOLpfYk7N46TSy8ubTonmneY9vrpHNAnp0QBt2BxWV9dO3/j+BoVAb+a5G6YDPW3M5HOdMWQ==}
@@ -38814,7 +38811,7 @@ packages:
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
@@ -39793,6 +39790,7 @@ packages:
       mime: 2.6.0
       schema-utils: 2.7.1
       webpack: 5.75.0_webpack-cli@4.10.0
+    dev: true
 
   /url-loader/4.1.1_lit45vopotvaqup7lrvlnvtxwy:
     resolution: {integrity: sha512-3BTV812+AVHHOJQO8O5MkWgZ5aosP7GnROJwvzLS9hWDj00lZ6Z0wNak423Lp9PBZN05N+Jk/N5Si8jRAlGyWA==}
@@ -39940,7 +39938,6 @@ packages:
       is-generator-function: 1.0.10
       is-typed-array: 1.1.10
       which-typed-array: 1.1.9
-    dev: true
 
   /utila/0.4.0:
     resolution: {integrity: sha512-Z0DbgELS9/L/75wZbro8xAnT50pBVFQZ+hUEueGDU5FN51YSCYM+jdxsfCiHjwNP/4LCDD0i/graKpeBnOXKRA==}
@@ -40884,7 +40881,6 @@ packages:
       gopd: 1.0.1
       has-tostringtag: 1.0.0
       is-typed-array: 1.1.10
-    dev: true
 
   /which/1.3.1:
     resolution: {integrity: sha512-HxJdYWq1MTIQbJ3nw0cqssHoTNU267KlrDuGZ1WYlxDStUtKUhOaJmh112/TZmHxxUfuJqPXSOm7tDyas0OSIQ==}

@@ -262,7 +262,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				},
 			);
 
-			const largeString = generateStringOfSize(500000);
+			const largeString = generateStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 10;
 			assert.throws(() => setMapKeys(dataObject1map, messageCount, largeString));
 			await provider.ensureSynchronized();
@@ -302,7 +302,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 					minimumBatchSizeInBytes: 1024 * 1024,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
-				chunkSizeInBytes: 600 * 1024,
+				chunkSizeInBytes: 800 * 1024,
 				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 			},
 		};
@@ -312,12 +312,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			[
 				{ messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
 				{ messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
-				{ messagesInBatch: 50, messageSize: 215 * 1024 }, // Many small messages
+				{ messagesInBatch: 1500, messageSize: 4 * 1024 }, // Many small messages
 			].forEach((config) => {
 				it(
 					"Large payloads pass when compression enabled, " +
 						"compressed content is over max op size and chunking enabled. " +
-						`${config.messagesInBatch} messages of ${config.messageSize}b == ` +
+						`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
 						`${((config.messagesInBatch * config.messageSize) / (1024 * 1024)).toFixed(
 							2,
 						)} MB`,
@@ -332,12 +332,35 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 						}
 
 						await setupContainers(chunkingBatchesConfig);
-						const largeString = generateRandomStringOfSize(config.messageSize);
-						setMapKeys(dataObject1map, config.messagesInBatch, largeString);
+
+						// Force the container into write-mode by sending a small op,
+						// so that it won't resend the whole large batch at reconnection
+						dataObject1map.set("test", "test");
 						await provider.ensureSynchronized();
 
-						assertMapValues(dataObject2map, config.messagesInBatch, largeString);
-						assertMapValues(dataObject1map, config.messagesInBatch, largeString);
+						const generated: string[] = [];
+						for (let i = 0; i < config.messagesInBatch; i++) {
+							// Ensure that the contents don't get compressed properly, by
+							// generating a random string for each map value instead of repeating it
+							const content = generateRandomStringOfSize(config.messageSize);
+							generated.push(content);
+							dataObject1map.set(`key${i}`, content);
+						}
+
+						await provider.ensureSynchronized();
+
+						for (let i = 0; i < config.messagesInBatch; i++) {
+							assert.strictEqual(
+								dataObject1map.get(`key${i}`),
+								generated[i],
+								`Wrong value for key${i} in local map`,
+							);
+							assert.strictEqual(
+								dataObject2map.get(`key${i}`),
+								generated[i],
+								`Wrong value for key${i} in remote map`,
+							);
+						}
 					},
 				).timeout(chunkingBatchesTimeoutMs);
 			}));

@@ -28,13 +28,10 @@ import {
 	getField,
 	isUnwrappedNode,
 	indexSymbol,
-} from "../../../feature-libraries";
-import {
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/editable-tree/utilities";
+} from "../../../feature-libraries";
 import { schemaMap } from "./mockData";
 
 /**
