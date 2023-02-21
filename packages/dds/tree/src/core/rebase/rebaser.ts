@@ -22,34 +22,32 @@ export class Rebaser<TChange> {
 	 *
 	 * Given a commit as the "head", a branch is defined as the ancestry path of that head commit.
 	 * The source and target branch must share an ancestor. Respectively, they must not contain any commits
-	 * in their path with duplicate tags, or this function will have undefined behavior. If there are any commits
-	 * in `source` that have the same tag as any commits in `target`, then this function will treat each pair as
-	 * semantically equivalent (i.e. one is a pre-existing rebase of the other) and will attempt to minimize the amount
-	 * of rebasing performed for those changes across the branches.
-	 * @param source - the head of a branch
-	 * @param target - the head of branch to rebase `source` onto
-	 * @param base - the commit in the target branch up to which to perform the rebase. Defaults to `target`. Source will be
-	 * rebased up to at least this commit, but it may rebase farther if it is trivial to do so.
+	 * in their path with duplicate tags, or this function will have undefined behavior.
+	 * @param source - the head of a branch to rebase
+	 * @param targetBase - the commit to rebase `source` onto
+	 * @param targetBranch - An optional head of the branch that `targetBase` belongs to. If this branch contains commits
+	 * past `targetBase` that are semantically equivalent to commits in `source`, then this function will rebase over
+	 * those commits as well (rebasing over and past `targetBase`).
 	 * @returns the head of a rebased source branch and the cumulative change to the source branch
 	 */
 	public rebaseBranch(
 		source: GraphCommit<TChange>,
-		target: GraphCommit<TChange>,
-		base = target,
+		targetBase: GraphCommit<TChange>,
+		targetBranch = targetBase,
 	): [newSource: GraphCommit<TChange>, sourceChange: TChange] {
 		// Get both source and target as path arrays
 		const sourcePath: GraphCommit<TChange>[] = [];
 		const targetPath: GraphCommit<TChange>[] = [];
-		const ancestor = findCommonAncestor([source, sourcePath], [target, targetPath]);
+		const ancestor = findCommonAncestor([source, sourcePath], [targetBranch, targetPath]);
 		assert(ancestor !== undefined, "branch A and branch B must be related");
 
 		// Find where `base` is in the target branch
-		const baseIndex = targetPath.findIndex((r) => r === base);
+		const baseIndex = targetPath.findIndex((r) => r === targetBase);
 		if (baseIndex === -1) {
 			// If the base is not in the target path, then it is either disjoint from `target` or it is behind/at
 			// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
 			// TODO: Ideally, this would be an "assertExpensive"
-			assert(findCommonAncestor(base, target) !== undefined, "base is not in target branch");
+			assert(findCommonAncestor(targetBase, targetBranch) !== undefined, "base is not in target branch");
 			return [source, this.changeRebaser.compose([])];
 		}
 
@@ -98,8 +96,8 @@ export class Rebaser<TChange> {
 	/**
 	 * Rebase a change over the given source and target branches
 	 * @param change - the change to rebase
-	 * @param source - the source branch to rebase backwards over
-	 * @param target - the target branch to rebase forwards over
+	 * @param source - the branch that `change` is based on
+	 * @param target - the branch to rebase `change` onto
 	 * @returns the rebased change
 	 */
 	public rebaseChange(

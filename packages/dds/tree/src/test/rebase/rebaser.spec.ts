@@ -131,9 +131,9 @@ describe("rebaser", () => {
 				const base =
 					baseInMain !== undefined
 						? tester[baseInMain] ?? fail("Expected baseInMain to be in main")
-						: undefined;
+						: tester.main;
 
-				const [result] = rebaser.rebaseBranch(tester.branch, tester.main, base);
+				const [result] = rebaser.rebaseBranch(tester.branch, base, tester.main);
 				// The `expected` parameter starts at the base of the branch. Prepend the rest of the main
 				// branch to it so that it can be fully compared against the `BranchTester`'s `main`.
 				const expectedBaseIndex = main.indexOf(expected[0]);

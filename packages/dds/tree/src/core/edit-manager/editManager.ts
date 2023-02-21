@@ -273,14 +273,14 @@ export class EditManager<
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const [rebasedBranch] = this.rebaser.rebaseBranch(
 			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
-			this.trunk,
 			baseRevisionInTrunk,
+			this.trunk
 		);
 
 		if (rebasedBranch === this.trunk) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
 			this.pushToTrunk(sequenceNumber, newCommit);
-			this.peerLocalBranches.set(newCommit.sessionId, this.trunk);
+			this.peerLocalBranches.delete(newCommit.sessionId);
 		} else {
 			const newChangeFullyRebased = this.rebaser.rebaseChange(
 				newCommit.change,
