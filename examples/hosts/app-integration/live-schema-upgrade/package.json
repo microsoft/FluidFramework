@@ -1,13 +1,13 @@
 {
-	"name": "@fluid-example/live-schema-upgrade",
+	"name": "@fluid-example/app-integration-live-schema-upgrade",
 	"version": "2.0.0-internal.3.1.0",
 	"private": true,
-	"description": "Example application that injects a data object to a live container.",
+	"description": "Example application that demonstrates how to add a data object to a live container.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/hosts/app-integration/external-views"
+		"directory": "examples/hosts/app-integration/live-schema-upgrade"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
