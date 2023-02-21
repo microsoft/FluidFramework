@@ -11,4 +11,5 @@ labels:
 
   # PRs from contributors without write access to the repo should be labeled
 - label: "community-contribution"
-  author-can-merge: False
+  author-can-merge: True
+  negate: True
