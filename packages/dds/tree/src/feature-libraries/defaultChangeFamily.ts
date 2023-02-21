@@ -24,6 +24,7 @@ import {
 	ModularEditBuilder,
 	FieldChangeset,
 	ModularChangeset,
+	NodeReviver,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
 
@@ -218,6 +219,7 @@ export class DefaultEditBuilder
 				index: number,
 				count: number,
 				detachedBy: RevisionTag,
+				reviver: NodeReviver,
 				detachIndex: number,
 				isIntention?: true,
 			): void => {
@@ -226,6 +228,7 @@ export class DefaultEditBuilder
 						index,
 						count,
 						detachedBy,
+						reviver,
 						detachIndex,
 						isIntention,
 					),
@@ -297,6 +300,7 @@ export interface SequenceFieldEditBuilder {
 	 * @param index - The index at which to revive the node (this will become the index of the first revived node).
 	 * @param count - The number of nodes to revive.
 	 * @param detachedBy - The revision of the edit that deleted the nodes.
+	 * @param reviver - The NodeReviver used to retrieve repair data.
 	 * @param detachIndex - The index of the first node to revive in the input context of edit `detachedBy`.
 	 * @param isIntention - If true, the node will be revived even if edit `detachedBy` did not ultimately
 	 * delete them. If false, only those nodes that were deleted by `detachedBy` (and not revived) will be revived.
@@ -305,6 +309,7 @@ export interface SequenceFieldEditBuilder {
 		index: number,
 		count: number,
 		detachedBy: RevisionTag,
+		reviver: NodeReviver,
 		detachIndex: number,
 		isIntention?: true,
 	): void;

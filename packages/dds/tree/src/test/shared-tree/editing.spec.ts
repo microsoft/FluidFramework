@@ -6,6 +6,7 @@ import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
 import { brand, JsonCompatible } from "../../util";
+import { noRepair } from "../utils";
 import { rootFieldKeySymbol } from "../../core";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
@@ -172,7 +173,7 @@ describe("Editing", () => {
 
 			const revABC = tree2.runTransaction((forest, editor) => {
 				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.revive(0, 3, brand(seqDelABC.seqNumber), 1);
+				field.revive(0, 3, brand(seqDelABC.seqNumber), noRepair, 1);
 			});
 
 			const seqRevABC = sequencer.sequence(revABC);
@@ -198,7 +199,7 @@ describe("Editing", () => {
 
 			const revABC = tree2.runTransaction((forest, editor) => {
 				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.revive(0, 3, brand(seqDelABC.seqNumber), 1, true);
+				field.revive(0, 3, brand(seqDelABC.seqNumber), noRepair, 1, true);
 			});
 
 			const seqRevABC = sequencer.sequence(revABC);

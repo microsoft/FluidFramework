@@ -8,7 +8,7 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import { RevisionTag, tagChange, tagInverse } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { deepFreeze, noRepair } from "../../utils";
 import {
 	checkDeltaEquality,
 	compose,
@@ -35,8 +35,8 @@ const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
 	],
 	["Insert", (i) => Change.insert(i, 2, 42)],
 	["Delete", (i) => Change.delete(i, 2)],
-	["Revive", (i) => Change.revive(2, 2, tag1, i)],
-	["ConflictedRevive", (i) => Change.revive(2, 2, tag2, i, tag3)],
+	["Revive", (i) => Change.revive(2, 2, tag1, noRepair, i)],
+	["ConflictedRevive", (i) => Change.revive(2, 2, tag2, noRepair, i, tag3)],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
 	["MoveIn", (i) => Change.move(1, 2, i)],
 	["ReturnFrom", (i) => Change.return(i, 2, 1, tag4)],
@@ -261,7 +261,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("[Delete ABC, Revive ABC] ↷ Delete B", () => {
 		const delB = tagChange(Change.delete(1, 1), brand(1));
 		const delABC = tagChange(Change.delete(0, 3), brand(2));
-		const revABC = tagChange(Change.revive(0, 3, brand(2), 0), brand(3));
+		const revABC = tagChange(Change.revive(0, 3, brand(2), noRepair, 0), brand(3));
 		const delABC2 = rebaseTagged(delABC, delB);
 		const invDelABC = invert(delABC);
 		const revABC2 = rebaseTagged(revABC, tagInverse(invDelABC, delABC2.revision));
@@ -298,7 +298,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
 		const addB = tagChange(Change.insert(1, 1), brand(1));
 		const delAC = tagChange(Change.delete(0, 2), brand(2));
-		const revAC = tagChange(Change.revive(0, 2, brand(2), 0), brand(3));
+		const revAC = tagChange(Change.revive(0, 2, brand(2), noRepair, 0), brand(3));
 		const delAC2 = rebaseTagged(delAC, addB);
 		const invDelAC = invert(delAC);
 		const revAC2 = rebaseTagged(revAC, tagInverse(invDelAC, delAC2.revision));

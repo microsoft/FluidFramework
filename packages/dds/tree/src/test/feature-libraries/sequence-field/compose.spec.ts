@@ -11,9 +11,10 @@ import {
 	TaggedChange,
 	TreeSchemaIdentifier,
 } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
+import { noRepair } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
 
@@ -128,17 +129,19 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("revive ○ modify", () => {
-		const revive = Change.revive(0, 3, tag1, 0);
+		const revive = Change.revive(0, 3, tag1, noRepair, 0);
 		const modify = Change.modify(0, { valueChange: { value: 2 } });
+		const cursor = singleTextCursor({ type: brand("Foo") });
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
+				content: [cursor],
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 0,
 				changes: { valueChange: { value: 2 } },
 			},
-			{ type: "Revive", count: 2, detachedBy: tag1, detachIndex: 1 },
+			{ type: "Revive", content: [cursor], count: 2, detachedBy: tag1, detachIndex: 1 },
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(modify)]);
 		assert.deepEqual(actual, expected);
@@ -151,9 +154,11 @@ describe("SequenceField - Compose", () => {
 			makeAnonChange(childChangeA),
 			makeAnonChange(childChangeB),
 		]);
+		const cursor = singleTextCursor({ type: brand("Foo") });
 		const revive: TestChangeset = [
 			{
 				type: "Revive",
+				content: [cursor],
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 0,
@@ -169,6 +174,7 @@ describe("SequenceField - Compose", () => {
 		const expected: TestChangeset = [
 			{
 				type: "Revive",
+				content: [cursor],
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 0,
@@ -363,7 +369,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("revive ○ delete", () => {
-		const revive = Change.revive(0, 5, tag1, 0);
+		const revive = Change.revive(0, 5, tag1, noRepair, 0);
 		const deletion: SF.Changeset = [
 			1,
 			{ type: "Delete", count: 1 },
@@ -371,9 +377,10 @@ describe("SequenceField - Compose", () => {
 			{ type: "Delete", count: 3 },
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(deletion)]);
+		const cursor = singleTextCursor({ type: brand("Foo") });
 		const expected: SF.Changeset = [
-			{ type: "Revive", count: 1, detachedBy: tag1, detachIndex: 0 },
-			{ type: "Revive", count: 1, detachedBy: tag1, detachIndex: 2 },
+			{ type: "Revive", content: [cursor], count: 1, detachedBy: tag1, detachIndex: 0 },
+			{ type: "Revive", content: [cursor], count: 1, detachedBy: tag1, detachIndex: 2 },
 			{ type: "Delete", count: 1 },
 		];
 		assert.deepEqual(actual, expected);
@@ -383,6 +390,7 @@ describe("SequenceField - Compose", () => {
 		const revive: SF.Changeset = [
 			{
 				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
 				count: 1,
 				revision: tag1,
 				detachedBy: tag1,
@@ -423,12 +431,18 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("revive ○ insert", () => {
-		const revive = Change.revive(0, 5, tag1, 0);
+		const revive = Change.revive(0, 5, tag1, noRepair, 0);
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
 		const expected: SF.Changeset = [
 			{ type: "Insert", content: [{ type, value: 2 }] },
-			{ type: "Revive", count: 5, detachedBy: tag1, detachIndex: 0 },
+			{
+				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
+				count: 5,
+				detachedBy: tag1,
+				detachIndex: 0,
+			},
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(insert)]);
 		assert.deepEqual(actual, expected);
@@ -466,9 +480,15 @@ describe("SequenceField - Compose", () => {
 
 	it("modify ○ revive", () => {
 		const modify = Change.modify(0, { valueChange: { value: 1 } });
-		const revive = Change.revive(0, 2, tag1, 0);
+		const revive = Change.revive(0, 2, tag1, noRepair, 0);
 		const expected: SF.Changeset = [
-			{ type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
+			{
+				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
+				count: 2,
+				detachedBy: tag1,
+				detachIndex: 0,
+			},
 			{
 				type: "Modify",
 				changes: { valueChange: { value: 1 } },
@@ -481,11 +501,12 @@ describe("SequenceField - Compose", () => {
 	it("delete ○ revive (different earlier nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
 		const revive = makeAnonChange(
-			Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 0 }]),
+			Change.revive(0, 2, tag2, noRepair, 0, undefined, [{ revision: tag1, offset: 0 }]),
 		);
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
 				count: 2,
 				detachedBy: tag2,
 				detachIndex: 0,
@@ -500,12 +521,13 @@ describe("SequenceField - Compose", () => {
 	it("delete ○ revive (different in-between nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
 		const revive = makeAnonChange(
-			Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 1 }]),
+			Change.revive(0, 2, tag2, noRepair, 0, undefined, [{ revision: tag1, offset: 1 }]),
 		);
 		const expected: SF.Changeset = [
 			{ type: "Delete", count: 1, revision: tag1 },
 			{
 				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
 				count: 2,
 				detachedBy: tag2,
 				detachIndex: 0,
@@ -520,12 +542,13 @@ describe("SequenceField - Compose", () => {
 	it("delete ○ revive (different later nodes)", () => {
 		const deletion = tagChange(Change.delete(0, 2), tag1);
 		const revive = makeAnonChange(
-			Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 2 }]),
+			Change.revive(0, 2, tag2, noRepair, 0, undefined, [{ revision: tag1, offset: 2 }]),
 		);
 		const expected: SF.Changeset = [
 			{ type: "Delete", count: 2, revision: tag1 },
 			{
 				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
 				count: 2,
 				detachedBy: tag2,
 				detachIndex: 0,
@@ -541,7 +564,9 @@ describe("SequenceField - Compose", () => {
 		const delete2 = Change.delete(0, 2);
 		// The revive needs lineage to describe the precise gap in which it is reviving the nodes.
 		// Such lineage would normally be acquired by rebasing the revive over the second delete.
-		const revive = Change.revive(0, 1, tag1, 2, undefined, [{ revision: tag2, offset: 1 }]);
+		const revive = Change.revive(0, 1, tag1, noRepair, 2, undefined, [
+			{ revision: tag2, offset: 1 },
+		]);
 		const expected: SF.Changeset = [
 			{ type: "Delete", count: 1, revision: tag2 },
 			{ type: "Delete", count: 1, revision: tag1 },
@@ -560,7 +585,7 @@ describe("SequenceField - Compose", () => {
 	it("delete1 ○ delete2 ○ revive (delete2)", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
-		const revive = Change.revive(0, 2, tag2, 0);
+		const revive = Change.revive(0, 2, tag2, noRepair, 0);
 		const expected: SF.Changeset = [1, { type: "Delete", count: 3, revision: tag1 }];
 		const actual = shallowCompose([
 			tagChange(delete1, tag1),
@@ -571,12 +596,21 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveAA ○ reviveB => BAA", () => {
-		const reviveAA = Change.revive(0, 2, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
-		const reviveB = Change.revive(0, 1, tag2, 0);
+		const reviveAA = Change.revive(0, 2, tag1, noRepair, 1, undefined, [
+			{ revision: tag2, offset: 1 },
+		]);
+		const reviveB = Change.revive(0, 1, tag2, noRepair, 0);
 		const expected: SF.Changeset = [
-			{ type: "Revive", count: 1, detachedBy: tag2, detachIndex: 0 },
 			{
 				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
+				count: 1,
+				detachedBy: tag2,
+				detachIndex: 0,
+			},
+			{
+				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
 				count: 2,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -588,19 +622,34 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveA ○ reviveBB => BAB", () => {
-		const reviveA = Change.revive(0, 1, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
-		const reviveB1 = Change.revive(0, 1, tag2, 0);
-		const reviveB2 = Change.revive(2, 1, tag2, 1);
+		const reviveA = Change.revive(0, 1, tag1, noRepair, 1, undefined, [
+			{ revision: tag2, offset: 1 },
+		]);
+		const reviveB1 = Change.revive(0, 1, tag2, noRepair, 0);
+		const reviveB2 = Change.revive(2, 1, tag2, noRepair, 1);
 		const expected: SF.Changeset = [
-			{ type: "Revive", count: 1, detachedBy: tag2, detachIndex: 0 },
 			{
 				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
+				count: 1,
+				detachedBy: tag2,
+				detachIndex: 0,
+			},
+			{
+				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 1,
 				lineage: [{ revision: tag2, offset: 1 }],
 			},
-			{ type: "Revive", count: 1, detachedBy: tag2, detachIndex: 1 },
+			{
+				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
+				count: 1,
+				detachedBy: tag2,
+				detachIndex: 1,
+			},
 		];
 		const actual = shallowCompose([
 			makeAnonChange(reviveA),
@@ -611,33 +660,50 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("reviveAA ○ reviveB => AAB", () => {
-		const reviveA = Change.revive(0, 2, tag1, 0, undefined, [{ revision: tag2, offset: 0 }]);
-		const reviveB = Change.revive(2, 1, tag2, 0);
+		const reviveA = Change.revive(0, 2, tag1, noRepair, 0, undefined, [
+			{ revision: tag2, offset: 0 },
+		]);
+		const reviveB = Change.revive(2, 1, tag2, noRepair, 0);
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
 				count: 2,
 				detachedBy: tag1,
 				detachIndex: 0,
 				lineage: [{ revision: tag2, offset: 0 }],
 			},
-			{ type: "Revive", count: 1, detachedBy: tag2, detachIndex: 0 },
+			{
+				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
+				count: 1,
+				detachedBy: tag2,
+				detachIndex: 0,
+			},
 		];
 		const actual = shallowCompose([makeAnonChange(reviveA), makeAnonChange(reviveB)]);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("revive ○ conflicted revive", () => {
-		const reviveA = Change.revive(0, 2, tag1, 0);
-		const reviveB = Change.revive(0, 2, tag1, 0, tag2);
+		const reviveA = Change.revive(0, 2, tag1, noRepair, 0);
+		const reviveB = Change.revive(0, 2, tag1, noRepair, 0, tag2);
 		const expected: SF.Changeset = [
-			{ type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0, revision: tag2 },
+			{
+				type: "Revive",
+				content: [singleTextCursor({ type: brand("Foo") })],
+				count: 2,
+				detachedBy: tag1,
+				detachIndex: 0,
+				revision: tag2,
+			},
 		];
 		const actual = shallowCompose([tagChange(reviveA, tag2), makeAnonChange(reviveB)]);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert ○ revive", () => {
+		const cursor = singleTextCursor({ type: brand("Foo") });
 		const insert: SF.Changeset = [
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }] },
 			2,
@@ -651,17 +717,45 @@ describe("SequenceField - Compose", () => {
 			},
 		];
 		const revive: SF.Changeset = [
-			{ type: "Revive", revision: tag3, count: 1, detachedBy: tag1, detachIndex: 0 },
+			{
+				type: "Revive",
+				revision: tag3,
+				content: [cursor],
+				count: 1,
+				detachedBy: tag1,
+				detachIndex: 0,
+			},
 			4,
-			{ type: "Revive", revision: tag4, count: 1, detachedBy: tag1, detachIndex: 0 },
+			{
+				type: "Revive",
+				revision: tag4,
+				content: [cursor],
+				count: 1,
+				detachedBy: tag1,
+				detachIndex: 0,
+			},
 		];
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)]);
 		const expected: SF.Changeset = [
-			{ type: "Revive", revision: tag3, count: 1, detachedBy: tag1, detachIndex: 0 },
+			{
+				type: "Revive",
+				revision: tag3,
+				count: 1,
+				content: [cursor],
+				detachedBy: tag1,
+				detachIndex: 0,
+			},
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }] },
 			2,
 			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }] },
-			{ type: "Revive", revision: tag4, count: 1, detachedBy: tag1, detachIndex: 0 },
+			{
+				type: "Revive",
+				revision: tag4,
+				content: [cursor],
+				count: 1,
+				detachedBy: tag1,
+				detachIndex: 0,
+			},
 			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }] },
 		];
 		assert.deepEqual(actual, expected);

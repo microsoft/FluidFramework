@@ -13,7 +13,7 @@ import {
 } from "../../../feature-libraries";
 import { brand, brandOpaque } from "../../../util";
 import { TestChange } from "../../testChange";
-import { assertFieldChangesEqual, deepFreeze } from "../../utils";
+import { assertFieldChangesEqual, deepFreeze, noRepair } from "../../utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { composeAnonChanges } from "./utils";
 
@@ -74,13 +74,14 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("revive => insert", () => {
-		const changeset = Change.revive(0, 1, tag, 0);
 		function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
 			assert.equal(revision, tag);
 			assert.equal(index, 0);
 			assert.equal(count, 1);
 			return contentCursor;
 		}
+
+		const changeset = Change.revive(0, 1, tag, reviver, 0);
 		const actual = toDelta(changeset);
 		const expected: Delta.FieldChanges = {
 			shallow: [
@@ -95,7 +96,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("conflicted revive => skip", () => {
 		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, 0, tag2),
+			Change.revive(0, 1, tag, noRepair, 0, tag2),
 			Change.delete(1, 1),
 		]);
 		const actual = toDelta(changeset);
@@ -107,7 +108,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("blocked revive => nil", () => {
 		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, 0, tag2, undefined, tag3),
+			Change.revive(0, 1, tag, noRepair, 0, tag2, undefined, tag3),
 			Change.delete(1, 1),
 		]);
 		const actual = toDelta(changeset);
@@ -121,7 +122,14 @@ describe("SequenceField - toDelta", () => {
 		const dummyNodeChange = "Dummy Child Change" as NodeChangeset;
 		const dummyNodeDelta = "Dummy Child Delta" as Delta.NodeChanges;
 		const changeset: SF.Changeset = [
-			{ type: "Revive", count: 1, detachedBy: tag, detachIndex: 0, changes: dummyNodeChange },
+			{
+				type: "Revive",
+				content: contentCursor,
+				count: 1,
+				detachedBy: tag,
+				detachIndex: 0,
+				changes: dummyNodeChange,
+			},
 		];
 		const deltaFromChild = (child: NodeChangeset): Delta.NodeChanges => {
 			assert.deepEqual(child, dummyNodeChange);

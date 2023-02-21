@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
-import { NodeChangeset, SequenceField as SF } from "../../../feature-libraries";
+import { NodeChangeset, SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 
 const dummyMark: SF.Detach = { type: "Delete", count: 1 };
@@ -124,17 +124,20 @@ describe("SequenceField - MarkListFactory", () => {
 	});
 
 	it("Can merge consecutive revives", () => {
+		const cursor = singleTextCursor({ type: brand("Foo") });
 		const factory = new SF.MarkListFactory();
 		const revive1: SF.Reattach = {
 			type: "Revive",
 			detachedBy,
 			detachIndex: 0,
+			content: [cursor],
 			count: 1,
 		};
 		const revive2: SF.Reattach = {
 			type: "Revive",
 			detachedBy,
 			detachIndex: 1,
+			content: [cursor],
 			count: 1,
 		};
 		factory.pushContent(revive1);
@@ -143,23 +146,27 @@ describe("SequenceField - MarkListFactory", () => {
 			type: "Revive",
 			detachedBy,
 			detachIndex: 0,
+			content: [cursor],
 			count: 2,
 		};
 		assert.deepStrictEqual(factory.list, [expected]);
 	});
 
 	it("Does not merge revives with gaps", () => {
+		const cursor = singleTextCursor({ type: brand("Foo") });
 		const factory = new SF.MarkListFactory();
 		const revive1: SF.Reattach = {
 			type: "Revive",
 			detachedBy,
 			detachIndex: 0,
+			content: [cursor],
 			count: 1,
 		};
 		const revive2: SF.Reattach = {
 			type: "Revive",
 			detachedBy,
 			detachIndex: 2,
+			content: [cursor],
 			count: 1,
 		};
 		factory.pushContent(revive1);

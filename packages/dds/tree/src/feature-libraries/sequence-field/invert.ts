@@ -101,11 +101,13 @@ function invertMark<TNodeChange>(
 				];
 			}
 			case "Delete": {
+				assert(revision !== undefined, 0x477 /* Unable to revert to undefined revision */);
 				return [
 					{
 						type: "Revive",
 						detachedBy: mark.revision ?? revision,
 						detachIndex: inputIndex,
+						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
 					},
 				];

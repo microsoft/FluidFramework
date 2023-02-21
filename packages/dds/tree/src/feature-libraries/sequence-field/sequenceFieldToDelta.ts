@@ -64,23 +64,15 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Revive": {
-					// if (mark.conflictsWith === undefined) {
-					// 	const insertMark: Delta.Insert = {
-					// 		type: Delta.MarkType.Insert,
-					// 		content: reviver(
-					// 			mark.detachedBy ??
-					// 				mark.lastDetachedBy ??
-					// 				fail(
-					// 					"Unable to get convert revive mark to delta due to missing revision tag",
-					// 				),
-					// 			mark.detachIndex,
-					// 			mark.count,
-					// 		),
-					// 	};
-					// 	markList.pushContent(insertMark);
-					// } else if (mark.lastDetachedBy === undefined) {
-					// 	markList.pushOffset(mark.count);
-					// }
+					if (mark.conflictsWith === undefined) {
+						const insertMark: Delta.Insert = {
+							type: Delta.MarkType.Insert,
+							content: mark.content,
+						};
+						markList.pushContent(insertMark);
+					} else if (mark.lastDetachedBy === undefined) {
+						markList.pushOffset(mark.count);
+					}
 					break;
 				}
 				default:
