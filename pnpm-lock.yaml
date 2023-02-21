@@ -22,7 +22,7 @@ importers:
       pretty-quick: ^3.1.3
       rimraf: ^2.6.2
       run-script-os: ^1.1.6
-      syncpack: ^9.3.2
+      syncpack: ^9.8.4
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.9.0
@@ -40,7 +40,7 @@ importers:
       pretty-quick: 3.1.3_prettier@2.6.2
       rimraf: 2.7.1
       run-script-os: 1.1.6
-      syncpack: 9.3.2
+      syncpack: 9.8.4
       typescript: 4.5.5
 
   examples/apps/collaborative-textarea:
@@ -10703,7 +10703,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-validator-identifier': 7.19.1
-      chalk: 2.4.1
+      chalk: 2.4.2
       js-tokens: 4.0.0
 
   /@babel/parser/7.12.16:
@@ -16231,7 +16231,7 @@ packages:
     dependencies:
       '@lerna/package': 5.1.8
       '@lerna/validation-error': 5.1.8
-      cosmiconfig: 7.0.1
+      cosmiconfig: 7.1.0
       dedent: 0.7.0
       dot-prop: 6.0.1
       glob-parent: 5.1.2
@@ -17085,7 +17085,7 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
       '@npmcli/promise-spawn': 3.0.0
-      lru-cache: 7.14.1
+      lru-cache: 7.16.2
       mkdirp: 1.0.4
       npm-pick-manifest: 7.0.2
       proc-log: 2.0.1
@@ -17102,7 +17102,7 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       '@npmcli/promise-spawn': 6.0.1
-      lru-cache: 7.14.1
+      lru-cache: 7.16.2
       mkdirp: 1.0.4
       npm-pick-manifest: 8.0.1
       proc-log: 3.0.0
@@ -17138,7 +17138,7 @@ packages:
     dependencies:
       '@npmcli/name-from-folder': 1.0.1
       glob: 8.1.0
-      minimatch: 5.1.2
+      minimatch: 5.1.6
       read-package-json-fast: 2.0.3
     dev: true
 
@@ -22343,7 +22343,7 @@ packages:
     hasBin: true
     dependencies:
       arg-parser: 1.2.0
-      commander: 9.4.1
+      commander: 9.5.0
       semver: 7.3.8
     dev: true
 
@@ -22809,7 +22809,7 @@ packages:
       fs-minipass: 2.1.0
       glob: 8.1.0
       infer-owner: 1.0.4
-      lru-cache: 7.14.1
+      lru-cache: 7.16.2
       minipass: 3.3.4
       minipass-collect: 1.0.2
       minipass-flush: 1.0.5
@@ -22831,7 +22831,7 @@ packages:
       '@npmcli/fs': 3.1.0
       fs-minipass: 2.1.0
       glob: 8.1.0
-      lru-cache: 7.14.1
+      lru-cache: 7.16.2
       minipass: 3.3.4
       minipass-collect: 1.0.2
       minipass-flush: 1.0.5
@@ -23097,7 +23097,6 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
-    dev: true
 
   /chalk/3.0.0:
     resolution: {integrity: sha512-4D3B6Wf41KOYRFdszmDqMCGq5VV/uMAB273JILmO+3jAlh8X4qDtdtgCR3fxtbLEMzSx22QdhnDcJvu2u1fVwg==}
@@ -23760,8 +23759,8 @@ packages:
     engines: {node: '>= 12'}
     dev: true
 
-  /commander/9.4.1:
-    resolution: {integrity: sha512-5EEkTNyHNGFPD2H+c/dXXfQZYa/scCKasxWcXJaWnNJ99pnQN9Vnmqow+p+PlFPE63Q6mThaZws1T+HxfpgtPw==}
+  /commander/9.5.0:
+    resolution: {integrity: sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ==}
     engines: {node: ^12.20.0 || >=14}
     dev: true
 
@@ -24192,6 +24191,17 @@ packages:
       yaml: 1.10.2
     dev: true
 
+  /cosmiconfig/7.1.0:
+    resolution: {integrity: sha512-AdmX6xUzdNASswsFtmwSt7Vj8po9IuqXm0UXz7QKPuEUmPB4XyjGfaAr2PSuELMwkRMVH1EpIkX5bTZGRB3eCA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@types/parse-json': 4.0.0
+      import-fresh: 3.3.0
+      parse-json: 5.2.0
+      path-type: 4.0.0
+      yaml: 1.10.2
+    dev: true
+
   /cosmiconfig/8.0.0:
     resolution: {integrity: sha512-da1EafcpH6b/TD8vDRaWV7xFINlHlF6zKsGwS1TsuVJTZRkquaS5HTMq7uq6h31619QjbsYl21gVDOm32KM1vQ==}
     engines: {node: '>=14'}
@@ -24608,7 +24618,7 @@ packages:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2_@octokit+core@4.0.5
       async-retry: 1.2.3
-      chalk: 2.4.1
+      chalk: 2.4.2
       commander: 2.20.3
       debug: 4.3.4
       fast-json-patch: 3.1.1
@@ -26906,7 +26916,7 @@ packages:
   /filelist/1.0.4:
     resolution: {integrity: sha512-w1cEuf3S+DrLCQL7ET6kz+gmlJdbq9J7yXCSjK/OZCPA+qEN1WyF4ZAf0YYJa4/shHJra2t/d/r8SV4Ji+x+8Q==}
     dependencies:
-      minimatch: 5.1.2
+      minimatch: 5.1.6
     dev: true
 
   /fill-range/4.0.0:
@@ -27772,7 +27782,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 5.1.2
+      minimatch: 5.1.6
       once: 1.4.0
 
   /global-dirs/0.1.1:
@@ -28444,14 +28454,14 @@ packages:
     resolution: {integrity: sha512-xIcQYMnhcx2Nr4JTjsFmwwnr9vldugPy9uVm0o87bjqqWMv9GaqsTeT+i99wTl0mk1uLxJtHxLb8kymqTENQsw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
-      lru-cache: 7.14.1
+      lru-cache: 7.16.2
     dev: true
 
   /hosted-git-info/6.1.1:
     resolution: {integrity: sha512-r0EI+HBMcXadMrugk0GCQ+6BQV39PiWAZVfq7oIckeGiN7sjRGyQxPdft3nQekFTCQbYxLBH+/axZMeH8UX6+w==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      lru-cache: 7.14.1
+      lru-cache: 7.16.2
     dev: true
 
   /hotloop/1.2.0:
@@ -28904,14 +28914,14 @@ packages:
     resolution: {integrity: sha512-yemi4pMf51WKT7khInJqAvsIGzoqYXblnsz0ql8tM+yi1EKYTY1evX4NAbJrLL/Aanr2HyZeluqU+Oi7MGHokw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
-      minimatch: 5.1.2
+      minimatch: 5.1.6
     dev: true
 
   /ignore-walk/6.0.0:
     resolution: {integrity: sha512-bTf9UWe/UP1yxG3QUrj/KOvEhTAUWPcv+WvbFZ28LcqznXabp7Xu6o9y1JEC18+oqODuS7VhTpekV5XvFwsxJg==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      minimatch: 5.1.2
+      minimatch: 5.1.6
     dev: true
 
   /ignore/3.3.10:
@@ -31884,8 +31894,8 @@ packages:
     dependencies:
       yallist: 4.0.0
 
-  /lru-cache/7.14.1:
-    resolution: {integrity: sha512-ysxwsnTKdAx96aTRdhDOCQfDgbHnt8SK0KY8SEjO0wHinhWOFTESbjVCMPbU1uGXg/ch4lifqx0wfjOawU2+WA==}
+  /lru-cache/7.16.2:
+    resolution: {integrity: sha512-t6D6OM05Y3f+61zNnXh/+0D69kAgJKVEWLuWL1r38CIHRPTWpNjwpR7S+nmiQlG5GmUB1BDiiMjU1Ihs4YBLlg==}
     engines: {node: '>=12'}
 
   /lru-queue/0.1.0:
@@ -31945,7 +31955,7 @@ packages:
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
       is-lambda: 1.0.1
-      lru-cache: 7.14.1
+      lru-cache: 7.16.2
       minipass: 3.3.4
       minipass-collect: 1.0.2
       minipass-fetch: 2.1.2
@@ -31969,7 +31979,7 @@ packages:
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
       is-lambda: 1.0.1
-      lru-cache: 7.14.1
+      lru-cache: 7.16.2
       minipass: 3.3.4
       minipass-collect: 1.0.2
       minipass-fetch: 3.0.0
@@ -32527,14 +32537,14 @@ packages:
     dependencies:
       brace-expansion: 2.0.1
 
-  /minimatch/5.1.2:
-    resolution: {integrity: sha512-bNH9mmM9qsJ2X4r2Nat1B//1dJVcn3+iBLa3IgqJ7EbGaDNepL9QSHOxN4ng33s52VMMhhIfgCYDk3C4ZmlDAg==}
+  /minimatch/5.1.6:
+    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
 
-  /minimatch/6.1.6:
-    resolution: {integrity: sha512-6bR3UIeh/DF8+p6A9Spyuy67ShOq42rOkHWi7eUe3Ua99Zo5lZfGC6lJJWkeoK4k9jQFT3Pl7czhTXimG2XheA==}
+  /minimatch/6.2.0:
+    resolution: {integrity: sha512-sauLxniAmvnhhRjFwPNnJKaPFYyddAgbYdeUpHULtCT/GhzdCx/MDNy+Y40lBxTQUrMzDE8e0S43Z5uqfO0REg==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
@@ -33416,7 +33426,7 @@ packages:
     dependencies:
       chalk: 5.2.0
       cli-table: 0.3.11
-      commander: 9.4.1
+      commander: 9.5.0
       fast-memoize: 2.5.2
       find-up: 5.0.0
       fp-and-or: 0.1.3
@@ -33427,7 +33437,7 @@ packages:
       json-parse-helpfulerror: 1.0.3
       jsonlines: 0.1.1
       lodash: 4.17.21
-      minimatch: 5.1.2
+      minimatch: 5.1.6
       p-map: 4.0.0
       pacote: 15.0.6
       parse-github-url: 1.0.2
@@ -33520,7 +33530,7 @@ packages:
       ajv: 6.12.6
       ajv-errors: 1.0.1_ajv@6.12.6
       chalk: 4.1.2
-      cosmiconfig: 7.0.1
+      cosmiconfig: 7.1.0
       debug: 4.3.4
       globby: 11.1.0
       ignore: 5.2.0
@@ -35636,7 +35646,7 @@ packages:
     resolution: {integrity: sha512-pB2X5AduTl78J+xRSxQiEmga1jQV0j43jOPs/MTgTLApGFEOn6NgdE2dEjp7nvDtjkIOZbvFIojAiYUx6ep3zg==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       debug: 4.3.4
       execa: 0.10.0
       fs-extra: 6.0.1
@@ -38579,9 +38589,9 @@ packages:
     resolution: {integrity: sha512-qImOD23aDfnIDNqlG1NOehdB9IYsn1V9oByPjKY1nakv2MQYCEMyX033/q+aEtYCpmYK1cv2+NTmlH+ra6GA5A==}
     dev: true
 
-  /syncpack/9.3.2:
-    resolution: {integrity: sha512-XGBPBUidz2d7U+AtdieVuYd+WUXhy2uOJGj8Uh9XKE+A4AD+oDpOT3PO8irLe3pUDr0fp6vaPLFPRUsKPF2Muw==}
-    engines: {node: '>=10'}
+  /syncpack/9.8.4:
+    resolution: {integrity: sha512-i81rO+dHuJ2dO8YQq6SCExcyN0x9ZVTY7cVPn8pWjS5Dml0A8uM0cOaneOludFesdrLXMZUA/uEWa74ddBgkPQ==}
+    engines: {node: '>=14'}
     hasBin: true
     dependencies:
       '@mobily/ts-belt': 3.13.1
@@ -38591,7 +38601,7 @@ packages:
       expect-more: 1.3.0
       fs-extra: 11.1.0
       glob: 8.1.0
-      minimatch: 6.1.6
+      minimatch: 6.2.0
       read-yaml-file: 2.1.0
       semver: 7.3.8
       zod: 3.20.6
@@ -38772,7 +38782,7 @@ packages:
       schema-utils: 3.1.1
       serialize-javascript: 6.0.0
       terser: 5.15.1
-      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack: 5.75.0
 
   /terser/4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -40852,7 +40862,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: true
 
   /webpack/5.75.0_webpack-cli@4.10.0:
     resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}
