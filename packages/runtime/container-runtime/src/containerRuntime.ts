@@ -1138,7 +1138,16 @@ export class ContainerRuntime
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
 			this.defaultMaxConsecutiveReconnects;
 
-		this._flushMode = runtimeOptions.flushMode;
+		if (
+			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
+			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
+		) {
+			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
+			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
+			this._flushMode = FlushMode.TurnBased;
+		} else {
+			this._flushMode = runtimeOptions.flushMode;
+		}
 
 		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
 		const baseSnapshot: ISnapshotTree | undefined =
