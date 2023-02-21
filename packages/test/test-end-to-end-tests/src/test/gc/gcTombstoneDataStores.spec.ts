@@ -14,7 +14,6 @@ import {
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
-	createSummarizerWithContainer,
 	summarizeNow,
 	waitForContainerConnection,
 	mockConfigProvider,
@@ -95,18 +94,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		});
 	}
 
-	let documentAbsoluteUrl: string | undefined;
-
 	const makeContainer = async (config: ITestContainerConfig = testContainerConfig) => {
-		const container = await provider.makeTestContainer(config);
-		documentAbsoluteUrl = await container.getAbsoluteUrl("");
-		return container;
+		return provider.makeTestContainer(config);
 	};
 
-	const loadSummarizerAndContainer = async (summaryVersion?: string) => {
-		return createSummarizerWithContainer(
+	const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
+		return createSummarizer(
 			provider,
-			documentAbsoluteUrl,
+			container,
 			summaryVersion,
 			testContainerConfig.runtimeOptions?.gcOptions,
 			mockConfigProvider(settings),
@@ -143,8 +138,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		defaultDataObject._root.delete(handleKey);
 
 		// Summarize
-		const { container: summarizingContainer1, summarizer: summarizer1 } =
-			await loadSummarizerAndContainer();
+		const { container: summarizingContainer1, summarizer: summarizer1 } = await loadSummarizer(
+			container,
+		);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
 		// TODO: trailing op test - note because of the way gc is currently structured, the error isn't logged,
@@ -160,8 +156,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		await delay(approximateUnreferenceTimestampMs);
 
 		// Load a new container and summarizer based on the latest summary, summarize
-		const { container: summarizingContainer2, summarizer: summarizer2 } =
-			await loadSummarizerAndContainer(summaryVersion);
+		const { container: summarizingContainer2, summarizer: summarizer2 } = await loadSummarizer(
+			container,
+			summaryVersion,
+		);
 
 		return {
 			unreferencedId,
@@ -1076,7 +1074,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			const mainDataStoreUrl = `/${mainDataStore._context.id}`;
 			await waitForContainerConnection(mainContainer);
 
-			const summarizer = await createSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
@@ -1133,7 +1131,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			const mainDataStoreUrl = `/${mainDataStore._context.id}`;
 			await waitForContainerConnection(mainContainer);
 
-			const summarizer = await createSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
@@ -1204,7 +1202,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 				const mockLogger = new MockLogger();
 
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
@@ -1312,7 +1310,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			);
 			await waitForContainerConnection(mainContainer);
 
-			const summarizer = await createSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
 				undefined /* summaryVersion */,
@@ -1383,7 +1381,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const mainDataStoreUrl = `/${mainDataStore._context.id}`;
 				await waitForContainerConnection(mainContainer);
 
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,

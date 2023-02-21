@@ -17,6 +17,9 @@ import { ReadAndParseBlob } from "../utils";
  *
  * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
  * latest snapshot is fetched and the latest summary state is updated based on it.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
  */
 export type RefreshSummaryResult =
 	| {
@@ -36,12 +39,19 @@ export type RefreshSummaryResult =
 
 /**
  * Result of snapshot fetch during refreshing latest summary state.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
  */
 export interface IFetchSnapshotResult {
 	snapshotTree: ISnapshotTree;
 	snapshotRefSeq: number;
 }
 
+/**
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
+ */
 export interface ISummarizerNodeRootContract {
 	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 	completeSummary(proposalHandle: string): void;
@@ -144,23 +154,6 @@ export class SummaryNode {
 }
 
 /**
- * Parameter to help encode summary with conditional behavior.
- * When fromSummary is true, it will contain the SummaryNode of
- * its previous summary, which it can use to point to with a handle.
- * When fromSummary is false, it will use an actual summary tree
- * as its base summary in case the first summary is a differential summary.
- */
-export type EncodeSummaryParam =
-	| {
-			fromSummary: true;
-			summaryNode: SummaryNode;
-	  }
-	| {
-			fromSummary: false;
-			initialSummary: ISummaryTreeWithStats;
-	  };
-
-/**
  * Information about the initial summary tree found from an attach op.
  */
 export interface IInitialSummary {
@@ -179,6 +172,8 @@ export interface ICreateChildDetails {
 	latestSummary: SummaryNode | undefined;
 	/** Sequence number of latest known change to the node */
 	changeSequenceNumber: number;
+	/** A unique id of this child to be logged when sending telemetry. */
+	telemetryNodeId: string;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {

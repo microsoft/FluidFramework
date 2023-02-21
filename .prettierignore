@@ -13,6 +13,7 @@ SECURITY.md
 **/dist/*
 **/lib/*
 !common/lib/*
+!**/src/lib/**
 common/lib/**/lib
 common/build/eslint-config-fluid/printed-configs/
 build-tools/packages/*/docs/*.md
@@ -34,6 +35,7 @@ tools/pipelines/
 **/*.api.md
 
 # Test json
+experimental/dds/tree/src/test/documents/
 packages/dds/merge-tree/src/test/literature/*.txt
 packages/dds/merge-tree/src/test/results/*.json
 packages/dds/sequence/src/test/snapshots/**/*.json

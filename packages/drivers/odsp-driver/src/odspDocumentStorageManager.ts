@@ -5,7 +5,7 @@
 
 import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay } from "@fluidframework/common-utils";
+import { assert, delay, performance } from "@fluidframework/common-utils";
 import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
@@ -15,6 +15,7 @@ import {
 	ISnapshotOptions,
 	OdspErrorType,
 	InstrumentedStorageTokenFetcher,
+	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import {
 	IDocumentStorageGetVersionsResponse,
@@ -29,7 +30,7 @@ import {
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
@@ -235,9 +236,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				{ eventName: "ObtainSnapshot", fetchSource },
 				async (event: PerformanceEvent) => {
 					const props: GetVersionsTelemetryProps = {};
-					let retrievedSnapshot: ISnapshotContents | undefined;
+					let retrievedSnapshot:
+						| ISnapshotContents
+						| IPrefetchSnapshotContents
+						| undefined;
 
 					let method: string;
+					let prefetchWaitStartTime: number = performance.now();
 					if (fetchSource === FetchSource.noCache) {
 						retrievedSnapshot = await this.fetchSnapshot(
 							hostSnapshotOptions,
@@ -326,6 +331,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							method = retrievedSnapshot !== undefined ? "cache" : "network";
 
 							if (retrievedSnapshot === undefined) {
+								prefetchWaitStartTime = performance.now();
 								retrievedSnapshot = await this.fetchSnapshot(
 									hostSnapshotOptions,
 									scenarioName,
@@ -336,7 +342,18 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					if (method === "network") {
 						props.cacheEntryAge = undefined;
 					}
-					event.end({ ...props, method });
+					const prefetchStartTime: number | undefined = (
+						retrievedSnapshot as IPrefetchSnapshotContents
+					).prefetchStartTime;
+					event.end({
+						...props,
+						method,
+						avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
+						prefetchSavedDuration:
+							prefetchStartTime !== undefined && method !== "cache"
+								? prefetchWaitStartTime - prefetchStartTime
+								: undefined,
+					});
 					return retrievedSnapshot;
 				},
 			);
@@ -416,7 +433,35 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private async fetchSnapshotCore(
 		hostSnapshotOptions: ISnapshotOptions | undefined,
 		scenarioName?: string,
-	) {
+	): Promise<ISnapshotContents | IPrefetchSnapshotContents> {
+		// Don't look into cache, if the host specifically tells us so.
+		if (!this.hostPolicy.avoidPrefetchSnapshotCache) {
+			const prefetchCacheKey = getKeyForCacheEntry(
+				createCacheSnapshotKey(this.odspResolvedUrl),
+			);
+			const result = await this.cache.snapshotPrefetchResultCache
+				?.get(prefetchCacheKey)
+				?.then(async (response) => {
+					// Validate the epoch from the prefetched snapshot result.
+					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
+					return response;
+				})
+				.catch(async (err) => {
+					this.logger.sendTelemetryEvent(
+						{
+							eventName: "PrefetchSnapshotError",
+							concurrentSnapshotFetch: this.hostPolicy.concurrentSnapshotFetch,
+						},
+						err,
+					);
+					return undefined;
+				});
+			// If the prefetch call, is successful, then return the contents otherwise as backup for now, just
+			// proceed with the old snapshot fetch flow.
+			if (result !== undefined) {
+				return result;
+			}
+		}
 		const snapshotOptions: ISnapshotOptions = {
 			mds: this.maxSnapshotSizeLimit,
 			...hostSnapshotOptions,

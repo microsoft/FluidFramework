@@ -59,6 +59,19 @@ export enum FlushMode {
 	TurnBased,
 }
 
+export enum FlushModeExperimental {
+	/**
+	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
+	 * batch when all micro-tasks are complete.
+	 *
+	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
+	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
+	 *
+	 * @experimental - Not ready for use
+	 */
+	Async = 2,
+}
+
 /**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
@@ -469,6 +482,8 @@ export interface IFluidDataStoreContext
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
+	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 *
 	 * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
 	 * and its children with the GC details from the previous summary.
 	 */
