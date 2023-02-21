@@ -9,27 +9,71 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
+import { getLatestVersion } from "../app";
 import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller";
 import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter";
 
 /**
  * The data model for our application.
  *
- * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
- * complex models.
+ * @remarks Note that this version of the model has a dice counter object in addition to the dice roller object.
  */
 export interface IDiceRollerAppModel {
+	/**
+	 * DiceRoller data object to track the current dice roll.
+	 */
 	readonly diceRoller: IDiceRoller;
+
+	/**
+	 * DiceCounter data object to track the number of times the dice have been rolled.
+	 */
 	readonly diceCounter: IDiceCounter;
+
+	/**
+	 * Returns the current version of the container.
+	 */
+	readonly getCurrentVersion: () => string;
+
+	/**
+	 * Perform the code proposal to upgrade the container to the latest version.
+	 */
+	readonly upgrade: () => Promise<void>;
 }
 
 class DiceRollerAppModel implements IDiceRollerAppModel {
-	// public readonly version = "2.0";
-
 	public constructor(
 		public readonly diceRoller: IDiceRoller,
 		public readonly diceCounter: IDiceCounter,
+		public readonly container: IContainer,
 	) {}
+
+	public getCurrentVersion() {
+		return this.container.getSpecifiedCodeDetails()?.package as string;
+	}
+
+	public async upgrade() {
+		const currentVersion = this.getCurrentVersion();
+		const latestVersion = await getLatestVersion();
+		if (currentVersion === latestVersion) {
+			// We should try to upgrade if we are already on the latest version.
+			return;
+		}
+		console.log(`Upgrading to ${latestVersion}`);
+		if (this.container.connectionState !== ConnectionState.Connected) {
+			await new Promise((resolve) => {
+				this.container.once("connected", resolve);
+			});
+		}
+		const proposal: IFluidCodeDetails = { package: latestVersion };
+		this.container
+			.proposeCodeDetails(proposal)
+			.then((accepted: boolean) => {
+				console.log(`Upgrade accepted: ${accepted}`);
+			})
+			.catch((error) => {
+				console.error("Failed to upgrade:", error);
+			});
+	}
 }
 
 const diceRollerId = "dice-roller";
@@ -62,33 +106,12 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const currentDetails = container.getSpecifiedCodeDetails();
-		console.log("currentDetails:", currentDetails);
-		if (currentDetails?.package !== "2.0") {
-			console.log("upgrading to 2.0");
-			if (container.connectionState !== ConnectionState.Connected) {
-				await new Promise((resolve) => {
-					container.once("connected", resolve);
-				});
-			}
-			const proposal: IFluidCodeDetails = { package: "2.0" };
-			container
-				.proposeCodeDetails(proposal)
-				.then((success) => {
-					console.log("proposeCodeDetails() success:", success);
-					if (success) {
-						console.log("currentDetails:", container.getSpecifiedCodeDetails());
-					}
-				})
-				.catch((error) => {
-					console.log("proposeCodeDetails() error:", error);
-				});
-		}
-
 		const diceRoller = await requestFluidObject<IDiceRoller>(
 			await runtime.getRootDataStore(diceRollerId),
 			"",
 		);
+		// Note: Since at this point is unclear whether or not this is the first time the app is being loaded with the
+		// new model, we should try to get the DiceCounter object and if it doesn't exist, create it.
 		let diceCounter: IDiceCounter;
 		try {
 			diceCounter = await requestFluidObject<IDiceCounter>(
@@ -106,6 +129,6 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 			);
 		}
 
-		return new DiceRollerAppModel(diceRoller, diceCounter);
+		return new DiceRollerAppModel(diceRoller, diceCounter, container);
 	}
 }

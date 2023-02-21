@@ -21,9 +21,14 @@ export interface IDiceRoller extends EventEmitter {
 	roll: () => void;
 
 	/**
+	 * Close the dice roller.  Will cause a "closed" event to be emitted.
+	 */
+	close: () => void;
+
+	/**
 	 * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
 	 */
-	on(event: "diceRolled", listener: () => void): this;
+	on(event: "diceRolled" | "closed", listener: () => void): this;
 }
 
 // The root is map-like, so we'll use this key for storing the value.
@@ -62,6 +67,10 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 	public readonly roll = () => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
 		this.root.set(diceValueKey, rollValue);
+	};
+
+	public readonly close = () => {
+		this.emit("closed");
 	};
 }
 

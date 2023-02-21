@@ -13,15 +13,24 @@ import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller";
 /**
  * The data model for our application.
  *
- * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
- * complex models.
+ * @remarks Note that this version of the model only has a dice roller object.
  */
 export interface IDiceRollerAppModel {
+	/**
+	 * DiceRoller data object to track the current dice roll.
+	 */
 	readonly diceRoller: IDiceRoller;
 }
 
 class DiceRollerAppModel implements IDiceRollerAppModel {
-	public constructor(public readonly diceRoller: IDiceRoller) {}
+	public constructor(
+		public readonly diceRoller: IDiceRoller,
+		public readonly container: IContainer,
+	) {
+		container.on("closed", () => {
+			diceRoller.close();
+		});
+	}
 }
 
 const diceRollerId = "dice-roller";
@@ -52,6 +61,6 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 			await runtime.getRootDataStore(diceRollerId),
 			"",
 		);
-		return new DiceRollerAppModel(diceRoller);
+		return new DiceRollerAppModel(diceRoller, container);
 	}
 }

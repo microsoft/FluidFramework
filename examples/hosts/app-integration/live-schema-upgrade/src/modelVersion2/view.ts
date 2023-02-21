@@ -35,12 +35,6 @@ export function renderDiceRoller(
 	const counter = document.createElement("div");
 	counter.textContent = `Counter: ${diceCounter.count}`;
 
-	// injectButton.style.fontSize = "20px";
-	// injectButton.style.marginTop = "15px";
-	// injectButton.textContent = "Inject SharedCounter";
-	// // Call the injectCounter method to modify the shared data when the button is clicked.
-	// injectButton.addEventListener("click", diceRoller.injectCounter);
-
 	wrapperDiv.append(diceCharDiv, rollButton, counter);
 
 	// Get the current value of the shared data to update the view whenever it changes.
@@ -59,4 +53,12 @@ export function renderDiceRoller(
 		counter.textContent = `Counter: ${diceCounter.count}`;
 	};
 	diceCounter.on("incremented", updateCounter);
+
+	const onClosed = () => {
+		rollButton.disabled = true;
+		const closedText = document.createElement("div");
+		closedText.textContent = "Container closed";
+		wrapperDiv.append(closedText);
+	};
+	diceRoller.on("closed", onClosed);
 }

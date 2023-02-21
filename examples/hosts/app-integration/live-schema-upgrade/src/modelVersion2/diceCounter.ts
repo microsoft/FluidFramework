@@ -29,22 +29,20 @@ export interface IDiceCounter extends EventEmitter {
 	on(event: "incremented", listener: () => void): this;
 }
 
-// Used for intalizing the SharedCounter DDS.
+// Used for initializing the SharedCounter DDS.
 const sharedCounterKey = "counter";
 
 /**
  * The DiceCounter is our data object that implements the IDiceCounter interface.
  */
 export class DiceCounter extends DataObject implements IDiceCounter {
+	private _counter: ISharedCounter | undefined;
+	public count: number = 0;
+
 	/**
 	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
 	 * initialize the state of the DataObject.
 	 */
-
-	private _counter: ISharedCounter | undefined;
-
-	public count: number = 0;
-
 	protected async initializingFirstTime() {
 		this._counter = SharedCounter.create(this.runtime, sharedCounterKey);
 		this.root.set(sharedCounterKey, this._counter.handle);
@@ -60,19 +58,16 @@ export class DiceCounter extends DataObject implements IDiceCounter {
 				this.root.get<IFluidHandle<ISharedCounter>>(sharedCounterKey);
 			assert(sharedCounterHandle !== undefined, "sharedCounterHandle should be defined");
 			this._counter = await sharedCounterHandle.get();
+			this.count = this._counter.value;
 		}
 
 		this._counter.on("incremented", (incrementAmount: number, newValue: number) => {
-			console.log(
-				`The counter incremented by ${incrementAmount} and now has a value of ${newValue}`,
-			);
 			this.count = newValue;
 			this.emit("incremented");
 		});
 	}
 
 	public readonly increment = () => {
-		console.log("incrementing!!!");
 		assert(this._counter !== undefined, "this._counter should be defined");
 		this._counter.increment(1);
 	};
