@@ -188,7 +188,7 @@ export function create(
             ensureSingleUseToken: true,
             singleUseTokenCache,
         }),
-        throttle(throttler, winston, commonThrottleOptions),
+        throttle(tenantThrottler, winston, tenantThrottleOptions),
         async (request, response, next) => {
             console.log(`Received token revocation request: ${JSON.stringify(request.body)}`);
             const documentId = getParam(request.params, "id");
