@@ -35,7 +35,7 @@ function getCallsiteString(msg: Node) {
 const assertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]]);
 
 /**
- * Given a source file this function will look for all assert functions contained in it, and return the message parameters.
+ * Given a source file, this function will look for all assert functions contained in it and return the message parameters.
  * This includes both functions named "assert" and ones named "fail"
  * all the functions which is the message parameter
  * @param sourceFile - The file to get the assert message parameters for.
@@ -188,7 +188,7 @@ export const handler: Handler = {
 			// another policy may have changed the file, so reload it
 			s.refreshFromFileSystemSync();
 			for (const msg of getAssertMessageParams(s)) {
-				// here we only want to looks at those messages that are strings,
+				// here we only want to look at those messages that are strings,
 				// as we validated existing short codes above
 				if (isStringLiteral(msg)) {
 					// resolve === fix
