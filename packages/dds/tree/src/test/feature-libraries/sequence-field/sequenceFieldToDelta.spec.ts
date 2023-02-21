@@ -13,7 +13,7 @@ import {
 } from "../../../feature-libraries";
 import { brand, brandOpaque } from "../../../util";
 import { TestChange } from "../../testChange";
-import { assertFieldChangesEqual, deepFreeze, noRepair } from "../../utils";
+import { assertFieldChangesEqual, deepFreeze, fakeRepair } from "../../utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { composeAnonChanges } from "./utils";
 
@@ -96,7 +96,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("conflicted revive => skip", () => {
 		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, noRepair, 0, tag2),
+			Change.revive(0, 1, tag, fakeRepair, 0, tag2),
 			Change.delete(1, 1),
 		]);
 		const actual = toDelta(changeset);
@@ -108,7 +108,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("blocked revive => nil", () => {
 		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, noRepair, 0, tag2, undefined, tag3),
+			Change.revive(0, 1, tag, fakeRepair, 0, tag2, undefined, tag3),
 			Change.delete(1, 1),
 		]);
 		const actual = toDelta(changeset);
