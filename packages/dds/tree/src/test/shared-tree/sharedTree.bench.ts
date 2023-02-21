@@ -99,9 +99,9 @@ const dataSchema = namedTreeSchema({
 });
 
 // number of nodes in test for wide trees
-const nodesCountWide = [1, 100, 500];
+const nodesCountWide = [[1, BenchmarkType.Measurement], [100, BenchmarkType.Perspective], [500, BenchmarkType.Measurement]];
 // number of nodes in test for deep trees
-const nodesCountDeep = [1, 10, 100];
+const nodesCountDeep = [[1, BenchmarkType.Measurement], [10, BenchmarkType.Perspective], [100, BenchmarkType.Measurement]];
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
@@ -126,10 +126,10 @@ describe("SharedTree benchmarks", () => {
 	describe("Direct JS Object", () => {
 		const random = makeRandom(0);
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): reads with ${i} nodes`,
 					before: async () => {
 						tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType);
@@ -139,10 +139,10 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): reads with ${i} nodes`,
 					before: async () => {
 						tree = getTestTreeAsJSObject(i, TreeShape.Wide, dataType);
@@ -152,10 +152,10 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): writes with ${i} nodes`,
 					before: async () => {},
 					benchmarkFn: () => {
@@ -163,10 +163,10 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): writes with ${i} nodes`,
 					before: async () => {},
 					benchmarkFn: () => {
@@ -174,10 +174,10 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): manipulations with ${i} nodes`,
 					before: async () => {
 						tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType);
@@ -187,10 +187,10 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): manipulations with ${i} nodes`,
 					before: async () => {
 						tree = getTestTreeAsJSObject(i, TreeShape.Wide, dataType);
@@ -204,12 +204,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let tree: ISharedTree;
 				let provider: ITestTreeProvider;
 				const random = makeRandom(0);
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: reads with ${i} nodes`,
 					before: async () => {
 						provider = await TestTreeProvider.create(1);
@@ -222,12 +222,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let tree: ISharedTree;
 				let provider: ITestTreeProvider;
 				const random = makeRandom(0);
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: reads with ${i} nodes`,
 					before: async () => {
 						provider = await TestTreeProvider.create(1);
@@ -240,12 +240,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let tree: ISharedTree;
 				let provider: ITestTreeProvider;
 				const random = makeRandom(0);
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: writes ${i} nodes`,
 					before: async () => {
 						provider = await TestTreeProvider.create(1);
@@ -257,12 +257,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let tree: ISharedTree;
 				let provider: ITestTreeProvider;
 				const random = makeRandom(0);
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: writes ${i} nodes`,
 					before: async () => {
 						provider = await TestTreeProvider.create(1);
@@ -274,12 +274,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let tree: ISharedTree;
 				let provider: ITestTreeProvider;
 				const random = makeRandom(0);
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: manipulations with ${i} nodes`,
 					before: async () => {
 						provider = await TestTreeProvider.create(1);
@@ -292,12 +292,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let tree: ISharedTree;
 				let provider: ITestTreeProvider;
 				const random = makeRandom(0);
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: manipulations with ${i} nodes`,
 					before: async () => {
 						provider = await TestTreeProvider.create(1);
@@ -315,12 +315,12 @@ describe("SharedTree benchmarks", () => {
 	describe("EditableTree", () => {
 		const random = makeRandom(0);
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let provider: ITestTreeProvider;
 				let trees: readonly ISharedTree[];
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: reads with ${i} nodes`,
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
@@ -336,12 +336,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let provider: ITestTreeProvider;
 				let trees: readonly ISharedTree[];
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree (${TestPrimitives[dataType]}) with Editable Tree: reads with ${i} nodes`,
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
@@ -357,12 +357,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let provider: ITestTreeProvider;
 				let trees: readonly ISharedTree[];
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: writes ${i} nodes`,
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
@@ -382,12 +382,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let provider: ITestTreeProvider;
 				let trees: readonly ISharedTree[];
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree (${TestPrimitives[dataType]}) with Editable Tree: writes ${i} nodes`,
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
@@ -407,12 +407,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountDeep) {
+			for (const [i, benchmarkType] of nodesCountDeep) {
 				let provider: ITestTreeProvider;
 				let trees: readonly ISharedTree[];
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: manipulations with ${i} nodes`,
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
@@ -433,12 +433,12 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const i of nodesCountWide) {
+			for (const [i, benchmarkType] of nodesCountWide) {
 				let provider: ITestTreeProvider;
 				let trees: readonly ISharedTree[];
 				let tree: ISharedTree;
 				benchmark({
-					type: BenchmarkType.Measurement,
+					type: benchmarkType,
 					title: `Wide Tree (${TestPrimitives[dataType]}) with Editable Tree: manipulations with ${i} nodes`,
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
