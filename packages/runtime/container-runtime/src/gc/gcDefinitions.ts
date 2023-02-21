@@ -232,6 +232,50 @@ export interface IGarbageCollectorCreateParams {
 	readonly getContainerDiagnosticId: () => string;
 }
 
+/**
+ * The configurations for Garbage Collector that determines what runs and how.
+ */
+export interface IGarbageCollectorConfigs {
+	/**
+	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
+	 * throughout its lifetime.
+	 */
+	gcEnabled: boolean;
+	/**
+	 * Tracks if sweep phase is enabled for this document. This is specified during document creation and doesn't change
+	 * throughout its lifetime.
+	 */
+	sweepEnabled: boolean;
+	/**
+	 * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
+	 * disabled via runtime options or feature flags.
+	 */
+	shouldRunGC: boolean;
+	/**
+	 * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
+	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
+	 */
+	shouldRunSweep: boolean;
+	/** The time in ms to expire a session for a client for gc. */
+	sessionExpiryTimeoutMs: number | undefined;
+	/** The time after which an unreferenced node is ready to be swept. */
+	sweepTimeoutMs: number | undefined;
+	/** The time after which an unreferenced node is inactive. */
+	inactiveTimeoutMs: number;
+	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
+	testMode: boolean;
+	/**
+	 * Tracks whether GC should run in tombstone mode. In this mode, sweep ready objects are marked as tombstones.
+	 * Tombstone objects behave as if they are deleted but are present for recovery purposes.
+	 */
+	tombstoneMode: boolean;
+	/**
+	 * Tracks whether GC state should be tracked. If true, for unchanged GC data across summaries, a summary
+	 * handle is written to summary instead of a summary tree / blob.
+	 */
+	trackGCState: boolean;
+}
+
 /** The state of node that is unreferenced. */
 export const UnreferencedState = {
 	/** The node is active, i.e., it can become referenced again. */

@@ -5,11 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
-import {
-	ClientSessionExpiredError,
-	DataProcessingError,
-	UsageError,
-} from "@fluidframework/container-utils";
+import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	cloneGCData,
@@ -27,7 +23,6 @@ import {
 	IGarbageCollectionState,
 	ISummarizeResult,
 	ITelemetryContext,
-	IGarbageCollectionSummaryDetailsLegacy,
 } from "@fluidframework/runtime-definitions";
 import {
 	packagePathToTelemetryProperty,
@@ -44,34 +39,26 @@ import {
 } from "@fluidframework/telemetry-utils";
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "../containerRuntime";
-import { getSummaryForDatastores } from "../dataStores";
+import { ICreateContainerMetadata } from "../summary";
+import { generateGCConfigs } from "./gcConfigs";
 import {
-	ReadFluidDataStoreAttributes,
-	dataStoreAttributesBlobName,
-	ICreateContainerMetadata,
-} from "../summary";
-import {
-	defaultInactiveTimeoutMs,
-	defaultSessionExpiryDurationMs,
 	disableSweepLogKey,
-	disableTombstoneKey,
 	GCNodeType,
-	gcTestModeKey,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
 	IGarbageCollectionRuntime,
 	IGCStats,
-	oneDayMs,
-	runGCKey,
-	runSessionExpiryKey,
-	runSweepKey,
-	trackGCStateKey,
 	gcTombstoneGenerationOptionName,
 	UnreferencedState,
 	GCFeatureMatrix,
 	IGCMetadata,
+	IGarbageCollectorConfigs,
 } from "./gcDefinitions";
-import { getGCVersion, sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import {
+	getGCVersion,
+	getSnapshotDataFromOldSnapshotFormat,
+	sendGCUnexpectedUsageEvent,
+} from "./gcHelpers";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
@@ -118,33 +105,13 @@ export class GarbageCollector implements IGarbageCollector {
 		return new GarbageCollector(createParams);
 	}
 
-	/**
-	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
-	 * throughout its lifetime.
-	 */
-	private readonly gcEnabled: boolean;
-	/**
-	 * Tracks if sweep phase is enabled for this document. This is specified during document creation and doesn't change
-	 * throughout its lifetime.
-	 */
-	private readonly sweepEnabled: boolean;
-
-	/**
-	 * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
-	 * disabled via runtime options or feature flags.
-	 */
-	public readonly shouldRunGC: boolean;
-	/**
-	 * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
-	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
-	 */
-	private readonly shouldRunSweep: boolean;
-
-	public readonly trackGCState: boolean;
-
-	private readonly testMode: boolean;
-	private readonly tombstoneMode: boolean;
 	private readonly mc: MonitoringContext;
+
+	private readonly configs: IGarbageCollectorConfigs;
+
+	public get shouldRunGC(): boolean {
+		return this.configs.shouldRunGC;
+	}
 
 	// Feature Support info persisted to this container's summary
 	private readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
@@ -184,13 +151,6 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly gcOptions: IGCRuntimeOptions;
 	private readonly isSummarizerClient: boolean;
 
-	/** The time in ms to expire a session for a client for gc. */
-	private readonly sessionExpiryTimeoutMs: number | undefined;
-	/** The time after which an unreferenced node is inactive. */
-	private readonly inactiveTimeoutMs: number;
-	/** The time after which an unreferenced node is ready to be swept. */
-	private readonly sweepTimeoutMs: number | undefined;
-
 	private readonly summaryStateTracker: GCSummaryStateTracker;
 
 	/** For a given node path, returns the node's package path. */
@@ -201,23 +161,6 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly getLastSummaryTimestampMs: () => number | undefined;
 	/** Returns true if connection is active, i.e. it's "write" connection and the runtime is connected. */
 	private readonly activeConnection: () => boolean;
-
-	/** Returns a list of all the configurations for garbage collection. */
-	private get configs() {
-		return {
-			gcEnabled: this.gcEnabled,
-			sweepEnabled: this.sweepEnabled,
-			runGC: this.shouldRunGC,
-			runSweep: this.shouldRunSweep,
-			testMode: this.testMode,
-			tombstoneMode: this.tombstoneMode,
-			sessionExpiry: this.sessionExpiryTimeoutMs,
-			sweepTimeout: this.sweepTimeoutMs,
-			inactiveTimeout: this.inactiveTimeoutMs,
-			trackGCState: this.trackGCState,
-			...this.gcOptions,
-		};
-	}
 
 	public get summaryStateNeedsReset(): boolean {
 		return this.summaryStateTracker.doesSummaryStateNeedReset();
@@ -236,7 +179,6 @@ export class GarbageCollector implements IGarbageCollector {
 		this.activeConnection = createParams.activeConnection;
 
 		const baseSnapshot = createParams.baseSnapshot;
-		const metadata = createParams.metadata;
 		const readAndParseBlob = createParams.readAndParseBlob;
 
 		this.mc = loggerToMonitoringContext(
@@ -252,68 +194,10 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 
 		let gcVersionInBaseSnapshot: number | undefined;
-
-		/**
-		 * Sweep timeout is the time after which unreferenced content can be swept.
-		 * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
-		 *
-		 * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days.
-		 * The buffer is added to account for any clock skew or other edge cases.
-		 * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
-		 */
-		function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined) {
-			const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
-			const bufferMs = oneDayMs;
-			return (
-				sessionExpiryTimeoutMs &&
-				sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs
-			);
-		}
-
-		/**
-		 * The following GC state is enabled during container creation and cannot be changed throughout its lifetime:
-		 * 1. Whether running GC mark phase is allowed or not.
-		 * 2. Whether running GC sweep phase is allowed or not.
-		 * 3. Whether GC session expiry is enabled or not.
-		 * For existing containers, we get this information from the metadata blob of its summary.
-		 */
 		if (createParams.existing) {
-			gcVersionInBaseSnapshot = getGCVersion(metadata);
-			// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
-			// other existing documents, GC is enabled.
-			this.gcEnabled = gcVersionInBaseSnapshot > 0;
-			this.sweepEnabled = metadata?.sweepEnabled ?? false;
-			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-			this.sweepTimeoutMs =
-				metadata?.sweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
-			this.persistedGcFeatureMatrix = metadata?.gcFeatureMatrix;
+			gcVersionInBaseSnapshot = getGCVersion(createParams.metadata);
+			this.persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 		} else {
-			// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
-			// scenario but explicitly failing makes it clearer and promotes correct usage.
-			if (this.gcOptions.sweepAllowed && this.gcOptions.gcAllowed === false) {
-				throw new UsageError(
-					"GC sweep phase cannot be enabled without enabling GC mark phase",
-				);
-			}
-
-			// This Test Override only applies for new containers
-			const testOverrideSweepTimeoutMs = this.mc.config.getNumber(
-				"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs",
-			);
-
-			// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
-			// flag in GC options to false.
-			this.gcEnabled = this.gcOptions.gcAllowed !== false;
-			// The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-			this.sweepEnabled = this.gcOptions.sweepAllowed === true;
-
-			// Set the Session Expiry only if the flag is enabled and GC is enabled.
-			if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
-				this.sessionExpiryTimeoutMs =
-					this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
-			}
-			this.sweepTimeoutMs =
-				testOverrideSweepTimeoutMs ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
 			if (this.gcOptions[gcTombstoneGenerationOptionName] !== undefined) {
 				this.persistedGcFeatureMatrix = {
 					tombstoneGeneration: this.gcOptions[gcTombstoneGenerationOptionName],
@@ -321,13 +205,21 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 		}
 
+		this.configs = generateGCConfigs(
+			this.gcOptions,
+			createParams.metadata,
+			gcVersionInBaseSnapshot,
+			createParams.existing,
+			this.mc,
+		);
+
 		// If session expiry is enabled, we need to close the container when the session expiry timeout expires.
-		if (this.sessionExpiryTimeoutMs !== undefined) {
+		if (this.configs.sessionExpiryTimeoutMs !== undefined) {
 			// If Test Override config is set, override Session Expiry timeout.
 			const overrideSessionExpiryTimeoutMs = this.mc.config.getNumber(
 				"Fluid.GarbageCollection.TestOverride.SessionExpiryMs",
 			);
-			const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
+			const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.configs.sessionExpiryTimeoutMs;
 
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
 				this.runtime.closeFn(
@@ -337,62 +229,10 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimer.start();
 		}
 
-		/**
-		 * Whether GC should run or not. The following conditions have to be met to run sweep:
-		 *
-		 * 1. GC should be enabled for this container.
-		 *
-		 * 2. GC should not be disabled via disableGC GC option.
-		 *
-		 * These conditions can be overridden via runGCKey feature flag.
-		 */
-		this.shouldRunGC =
-			this.mc.config.getBoolean(runGCKey) ??
-			// GC must be enabled for the document.
-			(this.gcEnabled &&
-				// GC must not be disabled via GC options.
-				!this.gcOptions.disableGC);
-
-		/**
-		 * Whether sweep should run or not. The following conditions have to be met to run sweep:
-		 *
-		 * 1. Overall GC or mark phase must be enabled (this.shouldRunGC).
-		 * 2. Sweep timeout should be available. Without this, we wouldn't know when an object should be deleted.
-		 * 3. The driver must implement the policy limiting the age of snapshots used for loading. Otherwise
-		 * the Sweep Timeout calculation is not valid. We use the persisted value to ensure consistency over time.
-		 * 4. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
-		 * feature flag.
-		 */
-		this.shouldRunSweep =
-			this.shouldRunGC &&
-			this.sweepTimeoutMs !== undefined &&
-			(this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
-
-		this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
-
-		// Override inactive timeout if test config or gc options to override it is set.
-		this.inactiveTimeoutMs =
-			this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
-			this.gcOptions.inactiveTimeoutMs ??
-			defaultInactiveTimeoutMs;
-
-		// Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
-		if (this.sweepTimeoutMs !== undefined && this.inactiveTimeoutMs > this.sweepTimeoutMs) {
-			throw new UsageError("inactive timeout should not be greater than the sweep timeout");
-		}
-
-		// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-		this.testMode =
-			this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
-		// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
-		// via feature flags.
-		this.tombstoneMode =
-			!this.shouldRunSweep && this.mc.config.getBoolean(disableTombstoneKey) !== true;
-
 		this.summaryStateTracker = new GCSummaryStateTracker(
 			this.shouldRunGC,
-			this.trackGCState,
-			this.tombstoneMode,
+			this.configs.trackGCState,
+			this.configs.tombstoneMode,
 			this.mc,
 			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
 			gcVersionInBaseSnapshot,
@@ -413,71 +253,20 @@ export class GarbageCollector implements IGarbageCollector {
 						return getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 					}
 
-					// back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
-					// consolidate into IGarbageCollectionState format.
-					// Add a node for the root node that is not present in older snapshot format.
-					const gcState: IGarbageCollectionState = {
-						gcNodes: { "/": { outboundRoutes: [] } },
-					};
-					const dataStoreSnapshotTree = getSummaryForDatastores(baseSnapshot, metadata);
-					assert(
-						dataStoreSnapshotTree !== undefined,
-						0x2a8 /* "Expected data store snapshot tree in base snapshot" */,
+					// back-compat - Older documents will have the GC blobs in each data store's snapshot tree.
+					return getSnapshotDataFromOldSnapshotFormat(
+						baseSnapshot,
+						createParams.metadata,
+						readAndParseBlob,
 					);
-					for (const [dsId, dsSnapshotTree] of Object.entries(
-						dataStoreSnapshotTree.trees,
-					)) {
-						const blobId = dsSnapshotTree.blobs[gcTreeKey];
-						if (blobId === undefined) {
-							continue;
-						}
-
-						const gcSummaryDetails =
-							await readAndParseBlob<IGarbageCollectionSummaryDetailsLegacy>(blobId);
-						// If there are no nodes for this data store, skip it.
-						if (gcSummaryDetails.gcData?.gcNodes === undefined) {
-							continue;
-						}
-
-						const dsRootId = `/${dsId}`;
-						// Since we used to write GC data at data store level, we won't have an entry for the root ("/").
-						// Construct that entry by adding root data store ids to its outbound routes.
-						const initialSnapshotDetails =
-							await readAndParseBlob<ReadFluidDataStoreAttributes>(
-								dsSnapshotTree.blobs[dataStoreAttributesBlobName],
-							);
-						if (initialSnapshotDetails.isRootDataStore) {
-							gcState.gcNodes["/"].outboundRoutes.push(dsRootId);
-						}
-
-						for (const [id, outboundRoutes] of Object.entries(
-							gcSummaryDetails.gcData.gcNodes,
-						)) {
-							// Prefix the data store id to the GC node ids to make them relative to the root from being
-							// relative to the data store. Similar to how its done in DataStore::getGCData.
-							const rootId = id === "/" ? dsRootId : `${dsRootId}${id}`;
-							gcState.gcNodes[rootId] = {
-								outboundRoutes: Array.from(outboundRoutes),
-							};
-						}
-						assert(
-							gcState.gcNodes[dsRootId] !== undefined,
-							0x2a9 /* GC nodes for data store not in GC blob */,
-						);
-						gcState.gcNodes[dsRootId].unreferencedTimestampMs =
-							gcSummaryDetails.unrefTimestamp;
-					}
-					// If there is only one node (root node just added above), either GC is disabled or we are loading from
-					// the first summary generated by detached container. In both cases, GC was not run - return undefined.
-					return Object.keys(gcState.gcNodes).length === 1
-						? undefined
-						: { gcState, tombstones: undefined, deletedNodes: undefined };
 				} catch (error) {
 					const dpe = DataProcessingError.wrapIfUnrecognized(
 						error,
 						"FailedToInitializeGC",
 					);
-					dpe.addTelemetryProperties({ gcConfigs: JSON.stringify(this.configs) });
+					dpe.addTelemetryProperties({
+						details: JSON.stringify({ ...this.configs, ...this.gcOptions }),
+					});
 					throw dpe;
 				}
 			},
@@ -502,7 +291,7 @@ export class GarbageCollector implements IGarbageCollector {
 				// Log an event so we can evaluate how often we run into this scenario.
 				this.mc.logger.sendErrorEvent({
 					eventName: "GarbageCollectorInitializedWithoutTimestamp",
-					gcConfigs: JSON.stringify(this.configs),
+					details: JSON.stringify({ ...this.configs, ...this.gcOptions }),
 				});
 				return;
 			}
@@ -544,7 +333,7 @@ export class GarbageCollector implements IGarbageCollector {
 		if (this.isSummarizerClient) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "GarbageCollectorLoaded",
-				gcConfigs: JSON.stringify(this.configs),
+				details: JSON.stringify({ ...this.configs, ...this.gcOptions }),
 			});
 		}
 	}
@@ -573,7 +362,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// If running in tombstone mode, initialize the tombstone state from the snapshot. Also, notify the runtime of
 		// tombstone routes.
-		if (this.tombstoneMode && baseSnapshotData.tombstones !== undefined) {
+		if (this.configs.tombstoneMode && baseSnapshotData.tombstones !== undefined) {
 			// Create a copy since we are writing from a source we don't control
 			this.tombstones = Array.from(baseSnapshotData.tombstones);
 			this.runtime.updateTombstonedRoutes(this.tombstones);
@@ -614,7 +403,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// tombstones.
 		// If this call is because we are refreshing from a snapshot due to an ack, it is likely that the GC state
 		// in the snapshot is newer than this client's. And so, the deleted / tombstone nodes need to be updated.
-		if (this.shouldRunSweep) {
+		if (this.configs.shouldRunSweep) {
 			const snapshotDeletedNodes = snapshotData?.deletedNodes
 				? new Set(snapshotData.deletedNodes)
 				: undefined;
@@ -631,7 +420,7 @@ export class GarbageCollector implements IGarbageCollector {
 					// Call container runtime to delete these nodes and add deleted nodes to this.deletedNodes.
 				}
 			}
-		} else if (this.tombstoneMode) {
+		} else if (this.configs.tombstoneMode) {
 			// The snapshot may contain more or fewer tombstone nodes than this client. Update tombstone state and
 			// notify the runtime to update its state as well.
 			this.tombstones = snapshotData?.tombstones ? Array.from(snapshotData.tombstones) : [];
@@ -656,9 +445,9 @@ export class GarbageCollector implements IGarbageCollector {
 					nodeId,
 					new UnreferencedStateTracker(
 						nodeData.unreferencedTimestampMs,
-						this.inactiveTimeoutMs,
+						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
-						this.sweepTimeoutMs,
+						this.configs.sweepTimeoutMs,
 					),
 				);
 			}
@@ -687,7 +476,7 @@ export class GarbageCollector implements IGarbageCollector {
 		 * Ideally, this initialization should only be done for summarizer client. However, we are currently rolling out
 		 * sweep in phases and we want to track when inactive and sweep ready objects are used in any client.
 		 */
-		if (this.activeConnection() && this.shouldRunGC) {
+		if (this.activeConnection() && this.configs.shouldRunGC) {
 			this.initializeGCStateFromBaseSnapshotP.catch((error) => {});
 		}
 	}
@@ -730,7 +519,7 @@ export class GarbageCollector implements IGarbageCollector {
 			// Log an event so we can evaluate how often we run into this scenario.
 			logger.sendErrorEvent({
 				eventName: "CollectGarbageCalledWithoutTimestamp",
-				gcConfigs: JSON.stringify(this.configs),
+				details: JSON.stringify({ ...this.configs, ...this.gcOptions }),
 			});
 			return undefined;
 		}
@@ -797,13 +586,13 @@ export class GarbageCollector implements IGarbageCollector {
 
 		let updatedGCData: IGarbageCollectionData = gcData;
 
-		if (this.shouldRunSweep) {
+		if (this.configs.shouldRunSweep) {
 			updatedGCData = this.runSweepPhase(sweepReadyNodes, gcData);
-		} else if (this.testMode) {
+		} else if (this.configs.testMode) {
 			// If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
 			// involving access to deleted data.
 			this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
-		} else if (this.tombstoneMode) {
+		} else if (this.configs.tombstoneMode) {
 			this.tombstones = sweepReadyNodes;
 			// If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
 			// involving access to "deleted" data without actually deleting the data from summaries.
@@ -831,7 +620,7 @@ export class GarbageCollector implements IGarbageCollector {
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummarizeResult | undefined {
-		if (!this.shouldRunGC || this.gcDataFromLastRun === undefined) {
+		if (!this.configs.shouldRunGC || this.gcDataFromLastRun === undefined) {
 			return;
 		}
 
@@ -859,11 +648,11 @@ export class GarbageCollector implements IGarbageCollector {
 			 * If GC is enabled, the GC data is written using the current GC version and that is the gcFeature that goes
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
-			gcFeature: this.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
+			gcFeature: this.configs.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
 			gcFeatureMatrix: this.persistedGcFeatureMatrix,
-			sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
-			sweepEnabled: this.sweepEnabled,
-			sweepTimeoutMs: this.sweepTimeoutMs,
+			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
+			sweepEnabled: this.configs.sweepEnabled,
+			sweepTimeoutMs: this.configs.sweepTimeoutMs,
 		};
 	}
 
@@ -927,7 +716,7 @@ export class GarbageCollector implements IGarbageCollector {
 		packagePath?: readonly string[],
 		requestHeaders?: IRequestHeader,
 	) {
-		if (!this.shouldRunGC) {
+		if (!this.configs.shouldRunGC) {
 			return;
 		}
 
@@ -953,7 +742,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param toNodePath - The node to which the reference is added.
 	 */
 	public addedOutboundReference(fromNodePath: string, toNodePath: string) {
-		if (!this.shouldRunGC) {
+		if (!this.configs.shouldRunGC) {
 			return;
 		}
 
@@ -1052,9 +841,9 @@ export class GarbageCollector implements IGarbageCollector {
 					nodeId,
 					new UnreferencedStateTracker(
 						currentReferenceTimestampMs,
-						this.inactiveTimeoutMs,
+						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
-						this.sweepTimeoutMs,
+						this.configs.sweepTimeoutMs,
 					),
 				);
 			} else {
@@ -1334,7 +1123,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private logSweepEvents(logger: ITelemetryLogger, currentReferenceTimestampMs: number) {
 		if (
 			this.mc.config.getBoolean(disableSweepLogKey) === true ||
-			this.sweepTimeoutMs === undefined
+			this.configs.sweepTimeoutMs === undefined
 		) {
 			return;
 		}
@@ -1360,7 +1149,7 @@ export class GarbageCollector implements IGarbageCollector {
 				id: nodeId,
 				type: nodeType,
 				age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
-				timeout: this.sweepTimeoutMs,
+				timeout: this.configs.sweepTimeoutMs,
 				completedGCRuns: this.completedRuns,
 				lastSummaryTime: this.getLastSummaryTimestampMs(),
 			});
@@ -1410,8 +1199,8 @@ export class GarbageCollector implements IGarbageCollector {
 			age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
 			timeout:
 				nodeStateTracker.state === UnreferencedState.Inactive
-					? this.inactiveTimeoutMs
-					: this.sweepTimeoutMs,
+					? this.configs.inactiveTimeoutMs
+					: this.configs.sweepTimeoutMs,
 			completedGCRuns: this.completedRuns,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			...this.createContainerMetadata,

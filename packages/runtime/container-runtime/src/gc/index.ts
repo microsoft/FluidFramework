@@ -16,6 +16,7 @@ export {
 	gcVersionUpgradeToV2Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
+	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
 	IGCStats,
