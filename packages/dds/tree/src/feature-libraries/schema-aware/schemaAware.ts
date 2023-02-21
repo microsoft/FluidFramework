@@ -27,20 +27,11 @@ export type TypedTree<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
 	TSchema extends TypedSchema.LabeledTreeSchema<any>,
-> = TypedTreeFromInfo<TMap, Mode, TSchema["typeInfo"]>;
-
-/**
- * @alpha
- */
-export type TypedTreeFromInfo<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	TSchema extends TypedSchema.TreeSchemaTypeInfo,
 > = CollectOptions<
 	Mode,
-	TypedFields<TMap, Mode, TSchema["local"]>,
-	TSchema["value"],
-	TSchema["name"]
+	TypedFields<TMap, Mode, TSchema["typeInfo"]["local"]>,
+	TSchema["typeInfo"]["value"],
+	TSchema["typeInfo"]["name"]
 >;
 
 /**

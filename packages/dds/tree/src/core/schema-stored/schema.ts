@@ -30,7 +30,7 @@ export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
  * Also known as "Definition"
  * @alpha
  */
-export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
+export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeSchema.

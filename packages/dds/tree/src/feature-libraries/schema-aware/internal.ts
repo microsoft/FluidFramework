@@ -9,11 +9,8 @@ export {
 	TypedSchemaData,
 	ValidContextuallyTypedNodeData,
 	TypedTree,
-	TypedTreeFromInfo,
 	CollectOptions,
 	TypedFields,
-	CollectOptionsFlexible,
-	CollectOptionsNormalized,
 	ApplyMultiplicity,
 	ValueFieldTreeFromSchema,
 } from "./schemaAware";

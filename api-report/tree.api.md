@@ -138,25 +138,19 @@ export interface ChildLocation {
 
 // @alpha (undocumented)
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
-    [ApiMode.Flexible]: CollectOptionsFlexible<TTypedFields, TValueSchema, TName>;
-    [ApiMode.Normalized]: CollectOptionsNormalized<TTypedFields, TValueSchema, TName>;
+    [ApiMode.Flexible]: TypedSchema.AllowOptional<({
+        [typeNameSymbol]?: TName;
+    } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields) | (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never)>;
+    [ApiMode.Normalized]: Record<string, never> extends TTypedFields ? TValueSchema extends PrimitiveValueSchema ? TypedValue<TValueSchema> : TypedSchema.AllowOptional<{
+        [typeNameSymbol]: TName & TreeSchemaIdentifier;
+    } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields> : TypedSchema.AllowOptional<{
+        [typeNameSymbol]: TName & TreeSchemaIdentifier;
+    } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields>;
     [ApiMode.Wrapped]: {
         [typeNameSymbol]: TName;
         [valueSymbol]: TypedValue<TValueSchema>;
     } & TTypedFields;
 }[Mode];
-
-// @alpha (undocumented)
-type CollectOptionsFlexible<TTypedFields, TValueSchema extends ValueSchema, TName> = ({
-    [typeNameSymbol]?: TName;
-} & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields) | (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never);
-
-// @alpha (undocumented)
-type CollectOptionsNormalized<TTypedFields, TValueSchema extends ValueSchema, TName> = Record<string, never> extends TTypedFields ? TValueSchema extends PrimitiveValueSchema ? TypedValue<TValueSchema> : {
-    [typeNameSymbol]: TName & TreeSchemaIdentifier;
-} & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields : {
-    [typeNameSymbol]: TName & TreeSchemaIdentifier;
-} & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields;
 
 // @alpha
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
@@ -340,9 +334,8 @@ export const emptyField: FieldSchema;
 
 // @alpha
 const emptyField_2: {
-    kind: FieldKind<FieldEditor<0>> & {
+    kind: FieldKind<FieldEditor<0>, import("../fieldKind").Multiplicity.Forbidden> & {
         identifier: "Forbidden" & BrandedType<string, "tree.FieldKindIdentifier">;
-        multiplicity: import("../fieldKind").Multiplicity.Forbidden;
     };
     types: NameSet<[]>;
 };
@@ -436,8 +429,8 @@ export interface FieldEditor<TChangeset> {
 export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
 
 // @alpha @sealed
-export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> implements FieldKindSpecifier {
-    constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
+export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMultiplicity extends Multiplicity = Multiplicity> implements FieldKindSpecifier {
+    constructor(identifier: FieldKindIdentifier, multiplicity: TMultiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
     allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;
     // (undocumented)
@@ -447,7 +440,7 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> impl
     // (undocumented)
     readonly identifier: FieldKindIdentifier;
     // (undocumented)
-    readonly multiplicity: Multiplicity;
+    readonly multiplicity: TMultiplicity;
 }
 
 // @alpha
@@ -455,13 +448,13 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 // @alpha (undocumented)
 export const FieldKinds: {
-    readonly value: FieldKind<FieldEditor<any>> & {
+    readonly value: FieldKind<FieldEditor<any>, Multiplicity> & {
         multiplicity: Multiplicity.Value;
     };
-    readonly optional: FieldKind<FieldEditor<any>> & {
+    readonly optional: FieldKind<FieldEditor<any>, Multiplicity> & {
         multiplicity: Multiplicity.Optional;
     };
-    readonly sequence: FieldKind<FieldEditor<any>> & {
+    readonly sequence: FieldKind<FieldEditor<any>, Multiplicity> & {
         multiplicity: Multiplicity.Sequence;
     };
 };
@@ -625,11 +618,8 @@ declare namespace InternalTypes {
         TypedSchemaData,
         ValidContextuallyTypedNodeData,
         TypedTree,
-        TypedTreeFromInfo,
         CollectOptions,
         TypedFields,
-        CollectOptionsFlexible,
-        CollectOptionsNormalized,
         ApplyMultiplicity,
         ValueFieldTreeFromSchema,
         NamesFromSchema,
@@ -1316,9 +1306,9 @@ export interface TreeValue extends Serializable {
 // @alpha
 type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
     [key: string]: TypedSchema.FieldSchemaTypeInfo;
-}> = TypedSchema.AllowOptional<{
+}> = {
     [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>>;
-}>;
+};
 
 // @alpha
 function typedFieldSchema<TKind extends FieldKind, TTypes extends (string | Named<string>)[]>(kind: TKind, ...typeArray: TTypes): {
@@ -1353,7 +1343,7 @@ declare namespace TypedSchema {
 export { TypedSchema }
 
 // @alpha (undocumented)
-interface TypedSchemaData extends SchemaDataAndPolicy {
+interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
     // (undocumented)
     allTypes: readonly string[];
     // (undocumented)
@@ -1361,7 +1351,7 @@ interface TypedSchemaData extends SchemaDataAndPolicy {
 }
 
 // @alpha (undocumented)
-function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy & {
+function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & {
     treeSchemaObject: {
         [schema in T[number] as schema["typeInfo"]["name"]]: schema;
     };
@@ -1369,10 +1359,7 @@ function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(globalF
 };
 
 // @alpha
-type TypedTree<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema<any>> = TypedTreeFromInfo<TMap, Mode, TSchema["typeInfo"]>;
-
-// @alpha (undocumented)
-type TypedTreeFromInfo<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.TreeSchemaTypeInfo> = CollectOptions<Mode, TypedFields<TMap, Mode, TSchema["local"]>, TSchema["value"], TSchema["name"]>;
+type TypedTree<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema<any>> = CollectOptions<Mode, TypedFields<TMap, Mode, TSchema["typeInfo"]["local"]>, TSchema["typeInfo"]["value"], TSchema["typeInfo"]["name"]>;
 
 // @alpha
 function typedTreeSchema<T extends TypedTreeSchemaBuilder, TName extends string>(name: TName, t: T): LabeledTreeSchema<TreeInfoFromBuilder<T, TName>>;
