@@ -3903,7 +3903,7 @@ importers:
       nyc: ^15.0.0
       prettier: ~2.6.2
       promisify: 0.0.3
-      qs: 6.7.0
+      qs: 6.11.0
       request: ^2.88.0
       request-promise-native: 1.0.7
       rimraf: ^2.6.2
@@ -3937,7 +3937,7 @@ importers:
       long: 4.0.0
       lru-cache: 6.0.0
       nconf: 0.12.0
-      qs: 6.7.0
+      qs: 6.11.0
       rmfr: 2.0.0
       sanitize: 2.1.0
       sleep-promise: 8.0.1
@@ -36073,6 +36073,7 @@ packages:
   /qs/6.7.0:
     resolution: {integrity: sha512-VCdBRNFTX1fyE7Nb6FYoURo/SPe62QCaAyzJvUjwRaIsc+NePBEniHlvxFmmX56+HZphIGtV0XeCirBtpDrTyQ==}
     engines: {node: '>=0.6'}
+    dev: true
 
   /query-string/4.3.4:
     resolution: {integrity: sha512-O2XLNDBIg1DnTOa+2XrIwSiXEV8h2KImXUnjhhn2+UsvZ+Es2uyd5CCRTNQlDGbzUQOW3aYCBx9rVA6dzsiY7Q==}
