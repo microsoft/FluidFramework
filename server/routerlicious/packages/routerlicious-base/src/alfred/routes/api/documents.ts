@@ -19,11 +19,13 @@ import {
     IThrottleMiddlewareOptions,
     getParam,
     getTokenFromRequest,
+    validateTokenRevocationClaims,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
 import { IAlfredTenant, ISession } from "@fluidframework/server-services-client";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, getSession } from "../../../utils";
@@ -180,6 +182,7 @@ export function create(
         "/:tenantId/document/:id/revokeToken",
         validateRequestParams("tenantId", "id"),
         getTokenFromRequest(),
+        validateTokenRevocationClaims(),
         verifyStorageToken(tenantManager, config, {
             requireDocumentId: false,
             ensureSingleUseToken: true,
@@ -187,7 +190,14 @@ export function create(
         }),
         throttle(throttler, winston, commonThrottleOptions),
         async (request, response, next) => {
-
+            console.log(`Received token revocation request: ${JSON.stringify(request.body)}`);
+            const documentId = getParam(request.params, "id");
+            const tenantId = getParam(request.params, "tenantId");
+            const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+            Lumberjack.info(
+                `Received and start processing request: ${JSON.stringify(request.body)}`,
+                lumberjackProperties);
+            response.status(200).json("Request received!");
         });
     return router;
 }
