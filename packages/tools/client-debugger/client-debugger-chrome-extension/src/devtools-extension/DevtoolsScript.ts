@@ -12,7 +12,6 @@ import {
 } from "./messaging";
 
 // TODOs:
-// - Rename this to "DevtoolsScript"
 // - Document messaging relationships
 
 const loggingContext = "EXTENSION(DEVTOOLS)";
