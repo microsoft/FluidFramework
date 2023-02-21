@@ -5,6 +5,7 @@
 
 import { NodeReviver, SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
+import { fakeRepair } from "../../utils";
 import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
@@ -32,13 +33,7 @@ export const cases: {
 		createModifyChangeset(1, TestChange.mint([], 2)),
 	]),
 	delete: createDeleteChangeset(1, 3),
-	revive: createReviveChangeset(
-		2,
-		2,
-		tag,
-		(revision, index, count) => [singleTextCursor({ type: brand("Foo") })],
-		0,
-	),
+	revive: createReviveChangeset(2, 2, tag, fakeRepair, 0),
 	move: createMoveChangeset(1, 2, 2),
 	return: createReturnChangeset(1, 3, 0, tag),
 };
