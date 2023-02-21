@@ -422,7 +422,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
                     // Check for document inactivity.
                     if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
-                        && this.noActiveClients) {
+                        && this.noActiveClients
+                        && !this.serviceConfiguration.deli.disableNoClientMessage) {
                         this.lastNoClientP = this.sendToRawDeltas(this.createOpMessage(MessageType.NoClient))
                             .catch((error) => {
                                 const errorMsg = "Could not send no client message";
@@ -819,6 +820,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     // Return if the client has already been removed due to a prior leave message.
                     return;
                 }
+
+                if (this.serviceConfiguration.deli.enableLeaveOpNoClientServerMetadata &&
+                    this.clientSeqManager.count() === 0) {
+                    // add server metadata to indicate the last client left
+                    (message.operation.serverMetadata ??= {}).noClient = true;
+                }
+
             } else if (message.operation.type === MessageType.ClientJoin) {
                 const clientJoinMessage = dataContent as IClientJoin;
 
@@ -1511,6 +1519,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             lastSentMSN: this.lastSentMSN,
             nackMessages: Array.from(this.nackMessages),
             successfullyStartedLambdas: this.successfullyStartedLambdas,
+            checkpointTimestamp: Date.now(),
         };
     }
 

@@ -41,10 +41,9 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
+import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
-import { summarizerClientType } from "./summarizerClientElection";
-import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
-import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
+import { summarizerClientType } from "./summary";
 
 /**
  * This class represents blob (long string)
@@ -711,6 +710,37 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			const blobId = pathParts[2];
 			this.redirectTable.delete(blobId);
 		}
+	}
+
+	/**
+	 * Delete attachment blobs that are sweep ready.
+	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted.
+	 * @returns - The routes of blobs that were deleted.
+	 */
+	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
+		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
+		if (this.mc.config.getBoolean(sweepAttachmentBlobsKey) !== true) {
+			return [];
+		}
+
+		// The routes or blob node paths are in the same format as returned in getGCData -
+		// `/<BlobManager.basePath>/<blobId>`.
+		for (const route of sweepReadyBlobRoutes) {
+			const pathParts = route.split("/");
+			assert(
+				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+				"Invalid blob node id in deleted routes.",
+			);
+			const blobId = pathParts[2];
+			if (!this.redirectTable.has(blobId)) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "DeletedAttachmentBlobNotFound",
+					blobId,
+				});
+			}
+			this.redirectTable.delete(blobId);
+		}
+		return Array.from(sweepReadyBlobRoutes);
 	}
 
 	/**

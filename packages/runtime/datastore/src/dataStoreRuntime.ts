@@ -52,7 +52,6 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	VisibilityState,
@@ -76,12 +75,7 @@ import {
 	IFluidDataStoreRuntimeEvents,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import {
-	GCDataBuilder,
-	removeRouteFromAllNodes,
-	unpackChildNodesGCDetails,
-	unpackChildNodesUsedRoutes,
-} from "@fluidframework/garbage-collector";
+import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import {
@@ -212,16 +206,12 @@ export class FluidDataStoreRuntime
 		return this.mc.logger;
 	}
 
-	// A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
-	// channel contexts.
-	private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
-
 	/**
 	 * If the summarizer makes local changes, a telemetry event is logged. This has the potential to be very noisy.
-	 * So, adding a threshold of how many telemetry events can be logged per data store context. This can be
+	 * So, adding a count of how many telemetry events are logged per data store context. This can be
 	 * controlled via feature flags.
 	 */
-	private localChangesTelemetryThreshold: number;
+	private localChangesTelemetryCount: number;
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
@@ -275,11 +265,6 @@ export class FluidDataStoreRuntime
 		this.audience = dataStoreContext.getAudience();
 
 		const tree = dataStoreContext.baseSnapshot;
-
-		this.channelsBaseGCDetails = new LazyPromise(async () => {
-			const baseGCDetails = await this.dataStoreContext.getBaseGCDetails();
-			return unpackChildNodesGCDetails(baseGCDetails);
-		});
 
 		// Must always receive the data store type inside of the attributes
 		if (tree?.trees !== undefined) {
@@ -337,7 +322,6 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext.getCreateChildSummarizerNodeFn(path, {
 							type: CreateSummarizerNodeSource.FromSummary,
 						}),
-						async () => this.getChannelBaseGCDetails(path),
 					);
 				}
 				const deferred = new Deferred<IChannelContext>();
@@ -386,9 +370,9 @@ export class FluidDataStoreRuntime
 			this.deferredAttached.resolve();
 		}
 
-		// By default, a data store can log maximum 100 local changes telemetry in summarizer.
-		this.localChangesTelemetryThreshold =
-			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryThreshold") ?? 100;
+		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
+		this.localChangesTelemetryCount =
+			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 	}
 
 	public dispose(): void {
@@ -657,7 +641,6 @@ export class FluidDataStoreRuntime
 								sequenceNumber: message.sequenceNumber,
 								snapshot: attachMessage.snapshot,
 							}),
-							async () => this.getChannelBaseGCDetails(id),
 							attachMessage.type,
 						);
 
@@ -804,34 +787,6 @@ export class FluidDataStoreRuntime
 	 */
 	private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
 		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
-	}
-
-	/**
-	 * Returns the base GC details for the channel with the given id. This is used to initialize its GC state.
-	 * @param channelId - The id of the channel context that is asked for the initial GC details.
-	 * @returns the requested channel's base GC details.
-	 */
-	private async getChannelBaseGCDetails(
-		channelId: string,
-	): Promise<IGarbageCollectionDetailsBase> {
-		let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
-		if (channelBaseGCDetails === undefined) {
-			channelBaseGCDetails = {};
-		} else if (channelBaseGCDetails.gcData?.gcNodes !== undefined) {
-			// Note: if the child channel has an explicit handle route to its parent, it will be removed here and
-			// expected to be added back by the parent when getGCData is called.
-			removeRouteFromAllNodes(channelBaseGCDetails.gcData.gcNodes, this.absolutePath);
-		}
-
-		// Currently, channel context's are always considered used. So, it there are no used routes for it, we still
-		// need to mark it as used. Add self-route (empty string) to the channel context's used routes.
-		if (
-			channelBaseGCDetails.usedRoutes === undefined ||
-			channelBaseGCDetails.usedRoutes.length === 0
-		) {
-			channelBaseGCDetails.usedRoutes = [""];
-		}
-		return channelBaseGCDetails;
 	}
 
 	/**
@@ -1146,33 +1101,30 @@ export class FluidDataStoreRuntime
 		channelId: string,
 		channelType: string,
 	) {
-		if (this.clientDetails.type === "summarizer") {
-			// If the count of telemetry logged has crossed the threshold, don't log any more.
-			if (this.localChangesTelemetryThreshold > 0) {
-				return;
-			}
-
-			// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
-			// this is happening and which data stores do this. The eventual goal is to disallow local changes
-			// in the summarizer and the data will help us plan this.
-			this.mc.logger.sendTelemetryEvent({
-				eventName,
-				channelType,
-				channelId: {
-					value: channelId,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
-				fluidDataStoreId: {
-					value: this.id,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
-				fluidDataStorePackagePath: packagePathToTelemetryProperty(
-					this.dataStoreContext.packagePath,
-				),
-				stack: generateStack(),
-			});
-			this.localChangesTelemetryThreshold--;
+		if (this.clientDetails.type !== "summarizer" || this.localChangesTelemetryCount <= 0) {
+			return;
 		}
+
+		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+		// this is happening and which data stores do this. The eventual goal is to disallow local changes
+		// in the summarizer and the data will help us plan this.
+		this.mc.logger.sendTelemetryEvent({
+			eventName,
+			channelType,
+			channelId: {
+				value: channelId,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			fluidDataStoreId: {
+				value: this.id,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			fluidDataStorePackagePath: packagePathToTelemetryProperty(
+				this.dataStoreContext.packagePath,
+			),
+			stack: generateStack(),
+		});
+		this.localChangesTelemetryCount--;
 	}
 }
 
