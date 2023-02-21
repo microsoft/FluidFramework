@@ -48,7 +48,16 @@ export class OpCompressor {
 		});
 
 		for (const message of batch.content.slice(1)) {
-			messages.push({ ...message, contents: undefined });
+			messages.push({
+				...message,
+				contents: undefined,
+				deserializedContent: {
+					...message.deserializedContent,
+					contents: undefined,
+				},
+				metadata: undefined,
+				localOpMetadata: undefined,
+			});
 		}
 
 		return {
