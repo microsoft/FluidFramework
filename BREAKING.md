@@ -23,6 +23,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
 -   [Some test packages no longer published](#some-test-packages-no-longer-published)
+-   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
 
 ### Container and RelativeLoader no longer exported
 
@@ -39,6 +40,10 @@ These packages were previously published under the `@fluidframework` scope:
 
 These have been moved to the `@fluid-internal` scope and are no longer published.
 
+### IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed
+
+`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
@@ -50,6 +55,7 @@ These have been moved to the `@fluid-internal` scope and are no longer published
 -   [Container and RelativeLoader deprecated](#container-and-relativeloader-deprecated)
 -   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
 -   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
+-   [IFluidTokenProvider deprecated](#IFluidTokenProvider-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -106,6 +112,12 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `IRootSummarizerNodeWithGC`
 -   `ISummarizerNodeRootContract`
 -   `RefreshSummaryResult`
+
+### IFluidTokenProvider deprecated
+
+The IFluidTokenProvider interface has been deprecated and will be removed in an upcoming release. Fluid Framework does not prescribe a particular approach to token providers.
+
+`ContainerRuntime.IFluidTokenProvider` has also been deprecated and will be removed in an upcoming release. Token providers, like any dependency, should be accessed using normal provider patterns.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

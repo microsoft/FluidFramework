@@ -52,8 +52,19 @@ import {
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
-import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
-import { getSummaryForDatastores } from "./dataStores";
+import { IGCRuntimeOptions, RuntimeHeaders } from "../containerRuntime";
+import { getSummaryForDatastores } from "../dataStores";
+import {
+	getGCVersion,
+	GCVersion,
+	IContainerRuntimeMetadata,
+	metadataBlobName,
+	ReadFluidDataStoreAttributes,
+	dataStoreAttributesBlobName,
+	IGCMetadata,
+	ICreateContainerMetadata,
+	GCFeatureMatrix,
+} from "../summaryFormat";
 import {
 	currentGCVersion,
 	defaultInactiveTimeoutMs,
@@ -72,17 +83,6 @@ import {
 } from "./garbageCollectionConstants";
 import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
-import {
-	getGCVersion,
-	GCVersion,
-	IContainerRuntimeMetadata,
-	metadataBlobName,
-	ReadFluidDataStoreAttributes,
-	dataStoreAttributesBlobName,
-	IGCMetadata,
-	ICreateContainerMetadata,
-	GCFeatureMatrix,
-} from "./summaryFormat";
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {

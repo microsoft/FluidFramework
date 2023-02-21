@@ -7611,8 +7611,6 @@ importers:
       '@fluidframework/view-interfaces-previous': npm:@fluidframework/view-interfaces@2.0.0-internal.3.1.0
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
-      '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -7628,8 +7626,6 @@ importers:
       '@fluidframework/view-interfaces-previous': /@fluidframework/view-interfaces/2.0.0-internal.3.1.0
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -10050,7 +10046,6 @@ importers:
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/tool-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/view-adapters': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/view-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/web-code-loader': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@rushstack/eslint-config': ^2.5.1
@@ -10097,7 +10092,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tool-utils': link:../../utils/tool-utils
-      '@fluidframework/view-adapters': link:../../framework/view-adapters
       '@fluidframework/view-interfaces': link:../../framework/view-interfaces
       '@fluidframework/web-code-loader': link:../../loader/web-code-loader
       axios: 0.26.1

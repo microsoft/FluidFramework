@@ -13,7 +13,8 @@ import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-
 import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework/common-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { createLogger } from "./FileLogger";
 
 const defaultDataStoreId = "default";

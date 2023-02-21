@@ -151,10 +151,12 @@ import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
 	GarbageCollector,
 	GCNodeType,
+	gcTombstoneGenerationOptionName,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGCStats,
-} from "./garbageCollection";
+	shouldAllowGcTombstoneEnforcement,
+} from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import {
@@ -171,8 +173,6 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
-import { shouldAllowGcTombstoneEnforcement } from "./garbageCollectionHelpers";
-import { gcTombstoneGenerationOptionName } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -1468,6 +1468,9 @@ export class ContainerRuntime
 		this.removeAllListeners();
 	}
 
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
+	 */
 	public get IFluidTokenProvider() {
 		if (this.options?.intelligence) {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
