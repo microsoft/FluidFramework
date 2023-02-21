@@ -106,6 +106,9 @@ The following members of the `@fluidframework/driver-utils` package have been de
 -   `MultiDocumentServiceFactory`
 -   `BlobCacheStorageService`
 -   `EmptyDocumentDeltaStorageService`
+-   `convertSnapshotAndBlobsToSummaryTree`
+-   `ISummaryTreeAssemblerProps`
+-   `SummaryTreeAssembler`
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

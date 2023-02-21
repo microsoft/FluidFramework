@@ -120,7 +120,7 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 // @public @deprecated
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
-// @public
+// @public @deprecated
 export function convertSnapshotAndBlobsToSummaryTree(snapshot: ISnapshotTree, blobs: Map<string, ArrayBuffer>): ISummaryTree;
 
 // @public
@@ -251,8 +251,9 @@ export function isRuntimeMessage(message: {
     type: string;
 }): boolean;
 
-// @public
+// @public @deprecated
 export interface ISummaryTreeAssemblerProps {
+    // @deprecated
     unreferenced?: true;
 }
 
@@ -457,13 +458,19 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 // @public (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
 
-// @public
+// @public @deprecated
 export class SummaryTreeAssembler {
+    // @deprecated
     constructor(props?: ISummaryTreeAssemblerProps | undefined);
+    // @deprecated
     addAttachment(id: string): void;
+    // @deprecated
     addBlob(key: string, content: string | Uint8Array): void;
+    // @deprecated
     addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
+    // @deprecated
     addTree(key: string, summary: ISummaryTree): void;
+    // @deprecated
     get summary(): ISummaryTree;
 }
 
