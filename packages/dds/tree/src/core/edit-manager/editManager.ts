@@ -52,9 +52,9 @@ export class EditManager<
 	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
 	 * at the time of submitting the latest known edit on the branch.
-	 * This means the head of one of these branches is always in its original (non-rebased) form.
+	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	private readonly sessionLocalBranches: Map<SessionId, GraphCommit<TChangeset>> = new Map();
+	private readonly peerLocalBranches: Map<SessionId, GraphCommit<TChangeset>> = new Map();
 
 	/**
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
@@ -122,11 +122,11 @@ export class EditManager<
 			// no existing branches that are based off of any of the commits being removed.
 			(newTrunkTail as Mutable<GraphCommit<TChangeset>>).parent = this.trunkBase;
 
-			for (const [sessionId, branch] of this.sessionLocalBranches) {
+			for (const [sessionId, branch] of this.peerLocalBranches) {
 				// If a session branch falls behind the min sequence number, then we know that it has been abandoned by Fluid
 				// (because otherwise, it would have already been updated) and we should not receive any more updates for it.
 				if (findCommonAncestor(branch, this.trunkBase) === undefined) {
-					this.sessionLocalBranches.delete(sessionId);
+					this.peerLocalBranches.delete(sessionId);
 				}
 			}
 
@@ -151,7 +151,7 @@ export class EditManager<
 	public isEmpty(): boolean {
 		return (
 			this.trunk === this.trunkBase &&
-			this.sessionLocalBranches.size === 0 &&
+			this.peerLocalBranches.size === 0 &&
 			this.localBranch === this.trunk
 		);
 	}
@@ -183,7 +183,7 @@ export class EditManager<
 		);
 
 		const branches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
-			mapIterable(this.sessionLocalBranches.entries(), ([sessionId, branch]) => {
+			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
 				const ancestor =
 					findCommonAncestor([branch, branchPath], this.trunk) ??
@@ -211,14 +211,14 @@ export class EditManager<
 		}, this.trunkBase);
 
 		this.localBranch = this.trunk;
-		this.sessionLocalBranches.clear();
+		this.peerLocalBranches.clear();
 
 		for (const [sessionId, branch] of data.branches) {
 			const commit =
 				findAncestor(this.trunk, (r) => r.revision === branch.base) ??
 				fail("Expected summary branch to be based off of a revision in the trunk");
 
-			this.sessionLocalBranches.set(sessionId, branch.commits.reduce(mintCommit, commit));
+			this.peerLocalBranches.set(sessionId, branch.commits.reduce(mintCommit, commit));
 		}
 	}
 
@@ -272,7 +272,7 @@ export class EditManager<
 		// Rebase that branch over the part of the trunk up to the base revision
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const [rebasedBranch] = this.rebaser.rebaseBranch(
-			getOrCreate(this.sessionLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
+			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
 			this.trunk,
 			baseRevisionInTrunk,
 		);
@@ -280,7 +280,7 @@ export class EditManager<
 		if (rebasedBranch === this.trunk) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
 			this.pushToTrunk(sequenceNumber, newCommit);
-			this.sessionLocalBranches.set(newCommit.sessionId, this.trunk);
+			this.peerLocalBranches.set(newCommit.sessionId, this.trunk);
 		} else {
 			const newChangeFullyRebased = this.rebaser.rebaseChange(
 				newCommit.change,
@@ -288,10 +288,7 @@ export class EditManager<
 				this.trunk,
 			);
 
-			this.sessionLocalBranches.set(
-				newCommit.sessionId,
-				mintCommit(rebasedBranch, newCommit),
-			);
+			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
 
 			this.pushToTrunk(sequenceNumber, {
 				...newCommit,
