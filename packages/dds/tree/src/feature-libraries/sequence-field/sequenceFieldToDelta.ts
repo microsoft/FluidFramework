@@ -67,7 +67,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					if (mark.conflictsWith === undefined) {
 						const insertMark: Delta.Insert = {
 							type: Delta.MarkType.Insert,
-							content: mark.content,
+							content: mark.content.map(singleTextCursor),
 						};
 						markList.pushContent(insertMark);
 					} else if (mark.lastDetachedBy === undefined) {
