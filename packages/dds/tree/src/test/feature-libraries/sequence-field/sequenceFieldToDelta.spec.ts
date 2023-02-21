@@ -7,6 +7,7 @@ import { fail, strict as assert } from "assert";
 import { RevisionTag, Delta, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
 import {
 	ChangesetLocalId,
+	NodeChangeset,
 	SequenceField as SF,
 	singleTextCursor,
 } from "../../../feature-libraries";
@@ -112,6 +113,35 @@ describe("SequenceField - toDelta", () => {
 		const actual = toDelta(changeset);
 		const expected: Delta.FieldChanges = {
 			shallow: [1, { type: Delta.MarkType.Delete, count: 1 }],
+		};
+		assertFieldChangesEqual(actual, expected);
+	});
+
+	it("revive and modify => insert", () => {
+		const dummyNodeChange = "Dummy Child Change" as NodeChangeset;
+		const dummyNodeDelta = "Dummy Child Delta" as Delta.NodeChanges;
+		const changeset: SF.Changeset = [
+			{ type: "Revive", count: 1, detachedBy: tag, detachIndex: 0, changes: dummyNodeChange },
+		];
+		const deltaFromChild = (child: NodeChangeset): Delta.NodeChanges => {
+			assert.deepEqual(child, dummyNodeChange);
+			return dummyNodeDelta;
+		};
+		function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
+			assert.equal(revision, tag);
+			assert.equal(index, 0);
+			assert.equal(count, 1);
+			return contentCursor;
+		}
+		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+		const expected: Delta.FieldChanges = {
+			shallow: [
+				{
+					type: Delta.MarkType.Insert,
+					content: contentCursor,
+				},
+			],
+			afterShallow: [{ index: 0, ...dummyNodeDelta }],
 		};
 		assertFieldChangesEqual(actual, expected);
 	});
