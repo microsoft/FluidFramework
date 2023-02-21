@@ -6,16 +6,37 @@
 import { IDebuggerMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
 import { relayMessageToWindow, relayMessageToPort, isValidDebuggerMessage } from "./messaging";
 
+/**
+ * This module is the extension's Content Script.
+ * It lives in the tab context alongside the page being communicated with.
+ *
+ * From an implementation perspective, this script strictly relays messages between the page
+ * and the Background Script. We do not do any rendering to the page, nor do we directly
+ * analyze any page contents. All interaction with the page is done via message passing.
+ *
+ * TODO link to docs on Content script + Devtools extension flow
+ */
+
 // TODOs:
 // - Document messaging relationship
 // - Perform event source validation?
+// - Dedupe logging functionality with other scripts
 
+/**
+ * Context string for logging.
+ */
 const loggingContext = "EXTENSION(CONTENT)";
 
+/**
+ * Configuration for console logging.
+ */
 const messageLoggingOptions: MessageLoggingOptions = {
 	context: loggingContext,
 };
 
+/**
+ * Formats the provided log message with the appropriate context information.
+ */
 function formatForLogging(text: string): string {
 	return `${loggingContext}: ${text}`;
 }
