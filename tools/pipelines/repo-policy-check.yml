@@ -3,11 +3,6 @@
 
 # repo-policy-check pipeline to ensure repo conventions
 
-parameters:
-- name: taskBuild
-  type: string
-  default: ci:build
-
 trigger:
 - main
 - next
@@ -53,13 +48,7 @@ steps:
     customCommand: 'run policy-check'
 
 - task: Npm@1
-  displayName: Version Check
+  displayName: Layer Check
   inputs:
     command: 'custom'
-    customCommand: 'run syncpack:versions'
-
-- task: Npm@1
-  displayName: Dependency Check
-  inputs:
-    command: 'custom'
-    customCommand: 'run syncpack:deps'
+    customCommand: 'run layer-check'
