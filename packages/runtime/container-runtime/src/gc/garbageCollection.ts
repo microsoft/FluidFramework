@@ -19,11 +19,8 @@ import {
 	runGarbageCollection,
 	trimLeadingSlashes,
 } from "@fluidframework/garbage-collector";
-import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcTreeKey,
-	gcBlobPrefix,
-	gcTombstoneBlobKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	IGarbageCollectionSnapshotData,
@@ -31,15 +28,11 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 	IGarbageCollectionSummaryDetailsLegacy,
-	ISummaryTreeWithStats,
-	gcDeletedBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
-	mergeStats,
 	packagePathToTelemetryProperty,
 	ReadAndParseBlob,
 	RefreshSummaryResult,
-	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
@@ -53,20 +46,16 @@ import {
 import { IGCRuntimeOptions, RuntimeHeaders } from "../containerRuntime";
 import { getSummaryForDatastores } from "../dataStores";
 import {
-	IContainerRuntimeMetadata,
-	metadataBlobName,
 	ReadFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
 	ICreateContainerMetadata,
 } from "../summary";
 import {
-	currentGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableSweepLogKey,
 	disableTombstoneKey,
 	GCNodeType,
-	gcVersionUpgradeToV2Key,
 	gcTestModeKey,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
@@ -76,15 +65,14 @@ import {
 	runGCKey,
 	runSessionExpiryKey,
 	runSweepKey,
-	stableGCVersion,
 	trackGCStateKey,
 	gcTombstoneGenerationOptionName,
 	UnreferencedState,
-	GCVersion,
 	GCFeatureMatrix,
 	IGCMetadata,
 } from "./gcDefinitions";
-import { generateSortedGCState, getGCVersion, sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import { getGCVersion, sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
@@ -101,15 +89,6 @@ interface IUnreferencedEventProps {
 	timeout?: number;
 	lastSummaryTime?: number;
 	viaHandle?: boolean;
-}
-
-/**
- * The GC data that is tracked for a summary that is submitted.
- */
-interface IGCSummaryTrackingData {
-	serializedGCState: string | undefined;
-	serializedTombstones: string | undefined;
-	serializedDeletedNodes: string | undefined;
 }
 
 /**
@@ -140,28 +119,6 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Tells whether the GC state needs to be reset in the next summary. We need to do this if:
-	 *
-	 * 1. GC was enabled and is now disabled. The GC state needs to be removed and everything becomes referenced.
-	 *
-	 * 2. GC was disabled and is now enabled. The GC state needs to be regenerated and added to summary.
-	 *
-	 * 3. GC is enabled and the latest summary state is refreshed from a snapshot that had GC disabled and vice-versa.
-	 *
-	 * 4. The GC version in the latest summary is different from the current GC version. This can happen if:
-	 *
-	 * 4.1. The summary this client loaded with has data from a different GC version.
-	 *
-	 * 4.2. This client's latest summary was updated from a snapshot that has a different GC version.
-	 */
-	public get summaryStateNeedsReset(): boolean {
-		return (
-			this.gcStateNeedsReset ||
-			(this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion)
-		);
-	}
-
-	/**
 	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
 	 * throughout its lifetime.
 	 */
@@ -189,31 +146,6 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly tombstoneMode: boolean;
 	private readonly mc: MonitoringContext;
 
-	/**
-	 * Tells whether the GC state needs to be reset. This can happen under 3 conditions:
-	 *
-	 * 1. The base snapshot contains GC state but GC is disabled. This will happen the first time GC is disabled after
-	 * it was enabled before. GC state needs to be removed from summary and all nodes should be marked referenced.
-	 *
-	 * 2. The base snapshot does not have GC state but GC is enabled. This will happen the very first time GC runs on
-	 * a document and the first time GC is enabled after is was disabled before.
-	 *
-	 * 3. GC is enabled and the latest summary state is refreshed from a snapshot that had GC disabled and vice-versa.
-	 *
-	 * Note that the state will be reset only once for the first summary generated after this returns true. After that,
-	 * this will return false.
-	 */
-	private get gcStateNeedsReset(): boolean {
-		return this.wasGCRunInLatestSummary !== this.shouldRunGC;
-	}
-	// Tracks whether there was GC was run in latest summary being tracked.
-	private wasGCRunInLatestSummary: boolean;
-
-	// The current GC version that this container is running.
-	private readonly currentGCVersion: GCVersion;
-	// This is the version of GC data in the latest summary being tracked.
-	private latestSummaryGCVersion: GCVersion;
-
 	// Feature Support info persisted to this container's summary
 	private readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 
@@ -226,15 +158,6 @@ export class GarbageCollector implements IGarbageCollector {
 	private tombstones: string[] = [];
 	// A list of nodes that have been deleted during sweep phase.
 	private deletedNodes: Set<string> = new Set();
-
-	/**
-	 * Keeps track of the GC data from the latest summary successfully submitted to and acked from the server.
-	 */
-	private latestSummaryData: IGCSummaryTrackingData | undefined;
-	/**
-	 * Keeps track of the GC data from the last summary submitted to the server but not yet acked.
-	 */
-	private pendingSummaryData: IGCSummaryTrackingData | undefined;
 
 	// Promise when resolved returns the GC data data in the base snapshot.
 	private readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
@@ -268,6 +191,8 @@ export class GarbageCollector implements IGarbageCollector {
 	/** The time after which an unreferenced node is ready to be swept. */
 	private readonly sweepTimeoutMs: number | undefined;
 
+	private readonly summaryStateTracker: GCSummaryStateTracker;
+
 	/** For a given node path, returns the node's package path. */
 	private readonly getNodePackagePath: (
 		nodePath: string,
@@ -294,6 +219,10 @@ export class GarbageCollector implements IGarbageCollector {
 		};
 	}
 
+	public get summaryStateNeedsReset(): boolean {
+		return this.summaryStateTracker.doesSummaryStateNeedReset();
+	}
+
 	/** Handler to respond to when a SweepReady object is used */
 	private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
 
@@ -316,19 +245,13 @@ export class GarbageCollector implements IGarbageCollector {
 			}),
 		);
 
-		// If version upgrade is not enabled, fall back to the stable GC version.
-		this.currentGCVersion =
-			this.mc.config.getBoolean(gcVersionUpgradeToV2Key) === true
-				? currentGCVersion
-				: stableGCVersion;
-
 		this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
 			createParams.getContainerDiagnosticId(),
 			this.mc,
 			this.runtime.closeFn,
 		);
 
-		let prevSummaryGCVersion: number | undefined;
+		let gcVersionInBaseSnapshot: number | undefined;
 
 		/**
 		 * Sweep timeout is the time after which unreferenced content can be swept.
@@ -355,10 +278,10 @@ export class GarbageCollector implements IGarbageCollector {
 		 * For existing containers, we get this information from the metadata blob of its summary.
 		 */
 		if (createParams.existing) {
-			prevSummaryGCVersion = getGCVersion(metadata);
+			gcVersionInBaseSnapshot = getGCVersion(metadata);
 			// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
 			// other existing documents, GC is enabled.
-			this.gcEnabled = prevSummaryGCVersion > 0;
+			this.gcEnabled = gcVersionInBaseSnapshot > 0;
 			this.sweepEnabled = metadata?.sweepEnabled ?? false;
 			this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 			this.sweepTimeoutMs =
@@ -414,10 +337,6 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimer.start();
 		}
 
-		// For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
-		// latest tracked GC version. For new documents, we will be writing the first summary with the current version.
-		this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
-
 		/**
 		 * Whether GC should run or not. The following conditions have to be met to run sweep:
 		 *
@@ -470,8 +389,14 @@ export class GarbageCollector implements IGarbageCollector {
 		this.tombstoneMode =
 			!this.shouldRunSweep && this.mc.config.getBoolean(disableTombstoneKey) !== true;
 
-		// If GC ran in the container that generated the base snapshot, it will have a GC tree.
-		this.wasGCRunInLatestSummary = baseSnapshot?.trees[gcTreeKey] !== undefined;
+		this.summaryStateTracker = new GCSummaryStateTracker(
+			this.shouldRunGC,
+			this.trackGCState,
+			this.tombstoneMode,
+			this.mc,
+			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
+			gcVersionInBaseSnapshot,
+		);
 
 		// Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
 		// it involves fetching blobs from storage which is expensive.
@@ -713,10 +638,12 @@ export class GarbageCollector implements IGarbageCollector {
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
 
+		// Update the summary state tracker's state from this snapshot.
+		this.summaryStateTracker.updateStateFromSnapshotData(snapshotData);
+
 		// If there is no snapshot data, it means this snapshot was generated with GC disabled. Unset all GC state.
 		if (snapshotData === undefined) {
 			this.gcDataFromLastRun = undefined;
-			this.latestSummaryData = undefined;
 			return;
 		}
 
@@ -738,15 +665,6 @@ export class GarbageCollector implements IGarbageCollector {
 			gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
 		}
 		this.gcDataFromLastRun = { gcNodes };
-
-		// If tracking state across summaries, update latest summary data from the snapshot's GC data.
-		if (this.trackGCState) {
-			this.latestSummaryData = {
-				serializedGCState: JSON.stringify(generateSortedGCState(snapshotData.gcState)),
-				serializedTombstones: JSON.stringify(snapshotData.tombstones),
-				serializedDeletedNodes: JSON.stringify(snapshotData.deletedNodes),
-			};
-		}
 	}
 
 	/**
@@ -790,7 +708,9 @@ export class GarbageCollector implements IGarbageCollector {
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
 		const fullGC =
-			options.fullGC ?? (this.gcOptions.runFullGC === true || this.summaryStateNeedsReset);
+			options.fullGC ??
+			(this.gcOptions.runFullGC === true ||
+				this.summaryStateTracker.doesSummaryStateNeedReset());
 		const logger = options.logger
 			? ChildLogger.create(options.logger, undefined, {
 					all: { completedGCRuns: () => this.completedRuns },
@@ -924,130 +844,13 @@ export class GarbageCollector implements IGarbageCollector {
 			};
 		}
 
-		const serializedGCState = JSON.stringify(generateSortedGCState(gcState));
-		// Serialize and write deleted nodes, if any. This is done irrespective of whether sweep is enabled or not so
-		// to identify deleted nodes' usage.
-		const serializedDeletedNodes =
-			this.deletedNodes.size > 0
-				? JSON.stringify(Array.from(this.deletedNodes).sort())
-				: undefined;
-		// If running in tombstone mode, serialize and write tombstones, if any.
-		const serializedTombstones = this.tombstoneMode
-			? this.tombstones.length > 0
-				? JSON.stringify(this.tombstones.sort())
-				: undefined
-			: undefined;
-
-		/**
-		 * Incremental summary of GC data - If none of GC state, deleted nodes or tombstones changed since last summary,
-		 * write summary handle instead of summary tree for GC.
-		 * Otherwise, write the GC summary tree. In the tree, for each of these that changed, write a summary blob and
-		 * for each of these that did not change, write a summary handle.
-		 */
-		if (this.trackGCState) {
-			this.pendingSummaryData = {
-				serializedGCState,
-				serializedTombstones,
-				serializedDeletedNodes,
-			};
-			if (trackState && !fullTree && this.latestSummaryData !== undefined) {
-				// If nothing changed since last summary, send a summary handle for the entire GC data.
-				if (
-					this.latestSummaryData.serializedGCState === serializedGCState &&
-					this.latestSummaryData.serializedTombstones === serializedTombstones
-				) {
-					const stats = mergeStats();
-					stats.handleNodeCount++;
-					return {
-						summary: {
-							type: SummaryType.Handle,
-							handle: `/${gcTreeKey}`,
-							handleType: SummaryType.Tree,
-						},
-						stats,
-					};
-				}
-
-				// If some state changed, build a GC summary tree.
-				return this.buildGCSummaryTree(
-					serializedGCState,
-					serializedTombstones,
-					serializedDeletedNodes,
-					true /* trackState */,
-				);
-			}
-		}
-		// If not tracking GC state, build a GC summary tree without any summary handles.
-		return this.buildGCSummaryTree(
-			serializedGCState,
-			serializedTombstones,
-			serializedDeletedNodes,
-			false /* trackState */,
+		return this.summaryStateTracker.summarize(
+			fullTree,
+			trackState,
+			gcState,
+			this.deletedNodes,
+			this.tombstones,
 		);
-	}
-
-	/**
-	 * Builds the GC summary tree which contains GC state, deleted nodes and tombstones.
-	 * If trackState is false, all of GC state, deleted nodes and tombstones are written as summary blobs.
-	 * If trackState is true, only states that changed are written. Rest are written as handles.
-	 * @param serializedGCState - The GC state serialized as string.
-	 * @param serializedTombstones - The tombstone state serialized as string.
-	 * @param serializedDeletedNodes - Deleted nodes serialized as string.
-	 * @param trackState - Whether we are tracking GC state across summaries.
-	 * @returns the GC summary tree.
-	 */
-	private buildGCSummaryTree(
-		serializedGCState: string,
-		serializedTombstones: string | undefined,
-		serializedDeletedNodes: string | undefined,
-		trackState: boolean,
-	): ISummaryTreeWithStats {
-		const gcStateBlobKey = `${gcBlobPrefix}_root`;
-		const builder = new SummaryTreeBuilder();
-
-		// If the GC state hasn't changed, write a summary handle, else write a summary blob for it.
-		if (this.latestSummaryData?.serializedGCState === serializedGCState && trackState) {
-			builder.addHandle(gcStateBlobKey, SummaryType.Blob, `/${gcTreeKey}/${gcStateBlobKey}`);
-		} else {
-			builder.addBlob(gcStateBlobKey, serializedGCState);
-		}
-
-		// If tombstones exist, write a summary handle if it hasn't changed. If it has changed, write a
-		// summary blob.
-		if (serializedTombstones !== undefined) {
-			if (
-				this.latestSummaryData?.serializedTombstones === serializedTombstones &&
-				trackState
-			) {
-				builder.addHandle(
-					gcTombstoneBlobKey,
-					SummaryType.Blob,
-					`/${gcTreeKey}/${gcTombstoneBlobKey}`,
-				);
-			} else {
-				builder.addBlob(gcTombstoneBlobKey, serializedTombstones);
-			}
-		}
-
-		// If there are no deleted nodes, return the summary tree.
-		if (serializedDeletedNodes === undefined) {
-			return builder.getSummaryTree();
-		}
-
-		// If the deleted nodes hasn't changed, write a summary handle, else write a summary blob for it.
-		if (
-			this.latestSummaryData?.serializedDeletedNodes === serializedDeletedNodes &&
-			trackState
-		) {
-			builder.addHandle(
-				gcDeletedBlobKey,
-				SummaryType.Blob,
-				`/${gcTreeKey}/${gcDeletedBlobKey}`,
-			);
-		} else {
-			builder.addBlob(gcDeletedBlobKey, serializedDeletedNodes);
-		}
-		return builder.getSummaryTree();
 	}
 
 	public getMetadata(): IGCMetadata {
@@ -1056,7 +859,7 @@ export class GarbageCollector implements IGarbageCollector {
 			 * If GC is enabled, the GC data is written using the current GC version and that is the gcFeature that goes
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
-			gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
+			gcFeature: this.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
 			gcFeatureMatrix: this.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
 			sweepEnabled: this.sweepEnabled,
@@ -1081,61 +884,32 @@ export class GarbageCollector implements IGarbageCollector {
 		result: RefreshSummaryResult,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<void> {
-		// If the latest summary was updated and the summary was tracked, this client is the one that generated this
-		// summary. So, update wasGCRunInLatestSummary.
-		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
-		// true in scenarios where GC is disabled but enabled in the snapshot we loaded from.
-		if (result.latestSummaryUpdated && result.wasSummaryTracked) {
-			this.wasGCRunInLatestSummary = this.shouldRunGC;
-		}
+		const latestSnapshotData = await this.summaryStateTracker.refreshLatestSummary(
+			proposalHandle,
+			result,
+			readAndParseBlob,
+		);
 
-		if (!result.latestSummaryUpdated || !this.shouldRunGC) {
-			return;
-		}
-
-		// If the summary was tracked by this client, it was the one that generated the summary in the first place.
-		// Update latest state from pending.
-		if (result.wasSummaryTracked) {
-			this.latestSummaryGCVersion = this.currentGCVersion;
-			if (this.trackGCState) {
-				this.latestSummaryData = this.pendingSummaryData;
-				this.pendingSummaryData = undefined;
+		// If the latest summary was updated but it was not tracked by this client, our state needs to be updated from
+		// this snapshot data.
+		if (this.shouldRunGC && result.latestSummaryUpdated && !result.wasSummaryTracked) {
+			// The current reference timestamp should be available if we are refreshing state from a snapshot. There has
+			// to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
+			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
+			if (currentReferenceTimestampMs === undefined) {
+				throw DataProcessingError.create(
+					"No reference timestamp when updating GC state from snapshot",
+					"refreshLatestSummary",
+					undefined,
+					{
+						proposalHandle,
+						summaryRefSeq: result.summaryRefSeq,
+						details: JSON.stringify(this.configs),
+					},
+				);
 			}
-			return;
+			this.updateStateFromSnapshotData(latestSnapshotData, currentReferenceTimestampMs);
 		}
-
-		// If the summary was not tracked by this client, the state should be updated from the downloaded snapshot.
-		const snapshotTree = result.snapshotTree;
-		const metadataBlobId = snapshotTree.blobs[metadataBlobName];
-		if (metadataBlobId) {
-			const metadata = await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId);
-			this.latestSummaryGCVersion = getGCVersion(metadata);
-		}
-
-		// The current reference timestamp should be available if we are refreshing state from a snapshot. There has
-		// to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
-		const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-		if (currentReferenceTimestampMs === undefined) {
-			throw DataProcessingError.create(
-				"No reference timestamp when updating GC state from snapshot",
-				"refreshLatestSummary",
-				undefined,
-				{
-					proposalHandle,
-					summaryRefSeq: result.summaryRefSeq,
-					details: JSON.stringify(this.configs),
-				},
-			);
-		}
-		const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
-		// If GC ran in the container that generated this snapshot, it will have a GC tree.
-		this.wasGCRunInLatestSummary = gcSnapshotTree !== undefined;
-		let latestGCData: IGarbageCollectionSnapshotData | undefined;
-		if (gcSnapshotTree !== undefined) {
-			latestGCData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
-		}
-		this.updateStateFromSnapshotData(latestGCData, currentReferenceTimestampMs);
-		this.pendingSummaryData = undefined;
 	}
 
 	/**
