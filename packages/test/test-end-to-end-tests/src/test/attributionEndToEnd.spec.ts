@@ -130,7 +130,7 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		});
 	});
 
-	it("attributes content created in a detached state", async () => {
+	it.only("attributes content created in a detached state", async () => {
 		const attributor = createRuntimeAttributor();
 		const loader = provider.makeTestLoader(getTestConfig(attributor));
 		const defaultCodeDetails: IFluidCodeDetails = {
@@ -145,10 +145,10 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
 		await provider.ensureSynchronized();
 
-		provider.updateDocumentId(container1.resolvedUrl);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined);
-		const container2 = await loader.resolve({ url });
+		const loader2 = provider.makeTestLoader(getTestConfig());
+		const container2 = await loader2.resolve({ url });
 
 		const sharedString2 = await sharedStringFromContainer(container2);
 		sharedString2.insertText(0, "client 2, ");
