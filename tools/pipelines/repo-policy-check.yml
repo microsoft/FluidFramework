@@ -52,3 +52,15 @@ steps:
   inputs:
     command: 'custom'
     customCommand: 'run layer-check'
+
+- task: Npm@1
+  displayName: Version Check
+  inputs:
+    command: 'custom'
+    customCommand: 'run syncpack:versions'
+
+- task: Npm@1
+  displayName: Dependency Check
+  inputs:
+    command: 'custom'
+    customCommand: 'run syncpack:deps'
