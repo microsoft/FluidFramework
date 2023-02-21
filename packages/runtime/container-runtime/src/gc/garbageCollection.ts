@@ -835,11 +835,19 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
+		const gcState: IGarbageCollectionState = { gcNodes: {} };
+		for (const [nodeId, outboundRoutes] of Object.entries(this.gcDataFromLastRun.gcNodes)) {
+			gcState.gcNodes[nodeId] = {
+				outboundRoutes,
+				unreferencedTimestampMs:
+					this.unreferencedNodesState.get(nodeId)?.unreferencedTimestampMs,
+			};
+		}
+
 		return this.summaryStateTracker.summarize(
 			fullTree,
 			trackState,
-			this.unreferencedNodesState,
-			this.gcDataFromLastRun,
+			gcState,
 			this.deletedNodes,
 			this.tombstones,
 		);

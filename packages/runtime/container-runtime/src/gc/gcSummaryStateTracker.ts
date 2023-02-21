@@ -10,7 +10,6 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	IGarbageCollectionData,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	ISummarizeResult,
@@ -31,7 +30,6 @@ import {
 	stableGCVersion,
 } from "./gcDefinitions";
 import { generateSortedGCState, getGCVersion } from "./gcHelpers";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
 /**
  * The GC data that is tracked for a summary.
@@ -135,22 +133,12 @@ export class GCSummaryStateTracker {
 	public summarize(
 		fullTree: boolean,
 		trackState: boolean,
-		unreferencedNodesState: Map<string, UnreferencedStateTracker>,
-		gcData: IGarbageCollectionData,
+		gcState: IGarbageCollectionState,
 		deletedNodes: Set<string>,
 		tombstones: string[],
 	): ISummarizeResult | undefined {
 		if (!this.shouldRunGC) {
 			return;
-		}
-
-		const gcState: IGarbageCollectionState = { gcNodes: {} };
-		for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-			gcState.gcNodes[nodeId] = {
-				outboundRoutes,
-				unreferencedTimestampMs:
-					unreferencedNodesState.get(nodeId)?.unreferencedTimestampMs,
-			};
 		}
 
 		const serializedGCState = JSON.stringify(generateSortedGCState(gcState));
