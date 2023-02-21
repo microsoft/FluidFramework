@@ -114,7 +114,10 @@ ${JSON.stringify(actualEvents)}`);
 		// because that function will clear this.events.
 		// But we *have* to call it to ensure that the events buffer is cleared.
 		const existingEventCount = this.events.length;
-		return expectedEvents.length === this.getMatchedEventsCount(expectedEvents) && expectedEvents.length === existingEventCount;
+		return (
+			expectedEvents.length === this.getMatchedEventsCount(expectedEvents) &&
+			expectedEvents.length === existingEventCount
+		);
 	}
 
 	/**
