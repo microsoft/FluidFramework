@@ -61,7 +61,10 @@ describe("OpCompressor", () => {
 					assert.strictEqual(compressedBatch.content[1].compression, undefined);
 					assert.strictEqual(compressedBatch.content[1].metadata, undefined);
 					assert.strictEqual(compressedBatch.content[1].localOpMetadata, undefined);
-					assert.strictEqual(compressedBatch.content[1].deserializedContent.contents, undefined);
+					assert.strictEqual(
+						compressedBatch.content[1].deserializedContent.contents,
+						undefined,
+					);
 				}
 			});
 		}));
