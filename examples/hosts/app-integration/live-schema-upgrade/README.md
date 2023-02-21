@@ -4,7 +4,6 @@ This example experiments with an approach for upgrading the schema on a containe
 
 Please note that the ideas explored here are experimental and under development. They are not yet recommended for broad use in production.
 
-
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 
 <!-- prettier-ignore-start -->
