@@ -47,10 +47,7 @@ export type TypedTreeFromInfo<
  * @alpha
  */
 export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
-	TypedValue<TSchema> extends undefined
-		? // eslint-disable-next-line @typescript-eslint/ban-types
-		  {}
-		: undefined extends TypedValue<TSchema>
+	undefined extends TypedValue<TSchema>
 		? {
 				[valueSymbol]?: TypedValue<TSchema>;
 		  }
@@ -97,20 +94,25 @@ export type CollectOptions<
 	TValueSchema extends ValueSchema,
 	TName,
 > = {
-	[ApiMode.Flexible]:
+	[ApiMode.Flexible]: TypedSchema.AllowOptional<
 		| ({ [typeNameSymbol]?: TName } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields)
-		| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never);
+		| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never)
+	>;
 	[ApiMode.Normalized]: Record<string, never> extends TTypedFields
 		? TValueSchema extends PrimitiveValueSchema
 			? TypedValue<TValueSchema>
-			: {
+			: TypedSchema.AllowOptional<
+					{
+						[typeNameSymbol]: TName & TreeSchemaIdentifier;
+					} & ValueFieldTreeFromSchema<TValueSchema> &
+						TTypedFields
+			  >
+		: TypedSchema.AllowOptional<
+				{
 					[typeNameSymbol]: TName & TreeSchemaIdentifier;
-			  } & ValueFieldTreeFromSchema<TValueSchema> &
+				} & ValueFieldTreeFromSchema<TValueSchema> &
 					TTypedFields
-		: {
-				[typeNameSymbol]: TName & TreeSchemaIdentifier;
-		  } & ValueFieldTreeFromSchema<TValueSchema> &
-				TTypedFields;
+		  >;
 	[ApiMode.Wrapped]: {
 		[typeNameSymbol]: TName;
 		[valueSymbol]: TypedValue<TValueSchema>;
@@ -125,12 +127,12 @@ export type TypedFields<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
 	TFields extends { [key: string]: TypedSchema.FieldSchemaTypeInfo },
-> = TypedSchema.AllowOptional<{
+> = {
 	[key in keyof TFields]: ApplyMultiplicity<
 		TFields[key]["kind"]["multiplicity"],
 		TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>
 	>;
-}>;
+};
 
 /**
  * @alpha

@@ -170,15 +170,15 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;
 }
 
-interface Typer<TMap extends TypedSchemaData, TSchema extends TypedSchema.LabeledTreeSchema<any>> {
-	a: InlineOnce<NodeDataFor<TMap, ApiMode.Flexible, TSchema>>;
-	b: InlineOnce<NodeDataFor<TMap, ApiMode.Normalized, TSchema>>;
-	c: InlineOnce<NodeDataFor<TMap, ApiMode.Wrapped, TSchema>>;
+interface TypeBuilder<TSchema extends TypedSchema.LabeledTreeSchema<any>> {
+	a: InlineOnce<NodeDataFor<typeof schemaData, ApiMode.Flexible, TSchema>>;
+	b: InlineOnce<NodeDataFor<typeof schemaData, ApiMode.Normalized, TSchema>>;
+	c: InlineOnce<NodeDataFor<typeof schemaData, ApiMode.Wrapped, TSchema>>;
 }
 
 // Test non recursive cases:
 {
-	type F = Typer<typeof schemaData, typeof ballSchema>;
+	type F = TypeBuilder<typeof ballSchema>;
 	type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>;
 	type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof ballSchema>;
 	type AC = NodeDataFor<typeof schemaData, ApiMode.Wrapped, typeof ballSchema>;
@@ -188,32 +188,69 @@ interface Typer<TMap extends TypedSchemaData, TSchema extends TypedSchema.Labele
 }
 
 // Test recursive cases:
-// Currently only the wrapped mode works.
 {
-	type F = Typer<typeof schemaData, typeof boxSchema>;
-	// type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof boxSchema>;
-	// type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof boxSchema>;
+	type F = TypeBuilder<typeof boxSchema>;
+	type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof boxSchema>;
+	type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof boxSchema>;
 	type AC = NodeDataFor<typeof schemaData, ApiMode.Wrapped, typeof boxSchema>;
-	// type XA = F["a"];
-	// type XB = F["b"];
+	type XA = F["a"];
+	type XB = F["b"];
 	type XC = F["c"];
 
-	const w: XC = {
-		[typeNameSymbol]: "box",
-		children: [],
-		[valueSymbol]: undefined,
-	};
-	const w2: XC = {
-		[typeNameSymbol]: "box",
-		children: [
-			w,
-			{
-				[typeNameSymbol]: "ball",
-				[valueSymbol]: undefined,
-				x: { [typeNameSymbol]: "number", [valueSymbol]: 1 },
-				y: { [typeNameSymbol]: "number", [valueSymbol]: 2 },
-			},
-		],
-		[valueSymbol]: undefined,
-	};
+	{
+		const child: XA = {
+			children: [],
+		};
+		const parent: XA = {
+			children: [
+				child,
+				{
+					// TODO: this should be required to disambiguate but currently its not.
+					[typeNameSymbol]: "ball",
+					x: 1,
+					y: { [typeNameSymbol]: "number", [valueSymbol]: 2 },
+				},
+			],
+		};
+	}
+
+	{
+		const child: XB = {
+			[typeNameSymbol]: boxSchema.name,
+			children: [],
+		};
+		const parent: XB = {
+			[typeNameSymbol]: boxSchema.name,
+			children: [
+				child,
+				{
+					[typeNameSymbol]: ballSchema.name,
+					x: 1,
+					y: 2,
+				},
+			],
+		};
+	}
+
+	{
+		const child: XC = {
+			[typeNameSymbol]: "box",
+			children: [],
+			[valueSymbol]: undefined,
+		};
+		const parent: XC = {
+			[typeNameSymbol]: "box",
+			children: [
+				child,
+				{
+					[typeNameSymbol]: "ball",
+					[valueSymbol]: undefined,
+					x: { [typeNameSymbol]: "number", [valueSymbol]: 1 },
+					y: { [typeNameSymbol]: "number", [valueSymbol]: 2 },
+					size: undefined,
+				},
+			],
+			[valueSymbol]: undefined,
+		};
+	}
 }

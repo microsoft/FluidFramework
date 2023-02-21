@@ -122,7 +122,7 @@ export type RemoveOptionalFields<T> = {
 };
 
 /**
- * Like Partial but removes files which are must be undefined.
+ * Like Partial but removes files which may be undefined.
  * @alpha
  */
 export type PartialWithoutUndefined<T> = {
