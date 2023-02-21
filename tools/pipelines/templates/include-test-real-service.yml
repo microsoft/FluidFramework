@@ -362,7 +362,7 @@ jobs:
         inputs:
           targetType: inline
           script: |
-            failedTests=$(node report-parser.js '$(variables.testPackageDir)/testFiles')
+            failedTests=$(node report-parser.js '$(Build.SourcesDirectory)/nyc')
             if [ $failedTests == [] ]
             then
               echo "No failed tests."
