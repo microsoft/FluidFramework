@@ -10,7 +10,7 @@ import { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench";
 export { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench";
 
 const bubblebenchViewCallback = (model: Bubblebench) =>
-    React.createElement(AppView, { app: model.appState });
+	React.createElement(AppView, { app: model.appState });
 
 /**
  * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
@@ -18,6 +18,6 @@ const bubblebenchViewCallback = (model: Bubblebench) =>
  * appropriate view.
  */
 export const fluidExport = new ContainerViewRuntimeFactory(
-    BubblebenchInstantiationFactory,
-    bubblebenchViewCallback,
+	BubblebenchInstantiationFactory,
+	bubblebenchViewCallback,
 );

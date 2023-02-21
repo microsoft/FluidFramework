@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { getSchemaString, parseSchemaString } from "../../feature-libraries/schemaIndex";
+import { getSchemaString, parseSchemaString } from "../../feature-libraries/schemaIndexFormat";
 
 import { SchemaData, rootFieldKey } from "../../core";
 import { jsonSchemaData, jsonRoot } from "../../domains";

@@ -467,7 +467,6 @@ declare function get_current_TypeAliasDeclaration_OdspError():
 declare function use_old_TypeAliasDeclaration_OdspError(
     use: TypeOnly<old.OdspError>);
 use_old_TypeAliasDeclaration_OdspError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_OdspError());
 
 /*

@@ -263,7 +263,6 @@ declare function get_old_ClassDeclaration_LocalServerTestDriver():
 declare function use_current_ClassDeclaration_LocalServerTestDriver(
     use: TypeOnly<current.LocalServerTestDriver>);
 use_current_ClassDeclaration_LocalServerTestDriver(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalServerTestDriver());
 
 /*
@@ -432,7 +431,6 @@ declare function get_old_ClassDeclaration_TinyliciousTestDriver():
 declare function use_current_ClassDeclaration_TinyliciousTestDriver(
     use: TypeOnly<current.TinyliciousTestDriver>);
 use_current_ClassDeclaration_TinyliciousTestDriver(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TinyliciousTestDriver());
 
 /*

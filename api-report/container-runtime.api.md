@@ -116,6 +116,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
+    deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
+    // @deprecated (undocumented)
     deleteUnusedNodes(unusedRoutes: string[]): string[];
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -154,7 +156,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
     // @deprecated (undocumented)
@@ -652,7 +654,6 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @public
 export enum RuntimeHeaders {
-    externalRequest = "externalRequest",
     viaHandle = "viaHandle",
     wait = "wait"
 }

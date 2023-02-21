@@ -31,7 +31,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^1.0.0",
+    "@fluidframework/common-utils": "^1.1.1",
     "@fluidframework/gitresources": "^0.1038.3000-117199",
     "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/server-services": "^0.1038.3000-117199",

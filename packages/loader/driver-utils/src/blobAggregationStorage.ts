@@ -63,9 +63,11 @@ class BlobAggregator {
 	}
 }
 
-/*
+/**
  * Base class that deals with unpacking snapshots (in place) containing aggregated blobs
  * It relies on abstract methods for reads and storing unpacked blobs.
+ *
+ * @deprecated This class was introduced experimentally and is no longer used.
  */
 export abstract class SnapshotExtractor {
 	protected readonly aggregatedBlobName = "__big";
@@ -149,10 +151,12 @@ class SnapshotExtractorInPlace extends SnapshotExtractor {
 	}
 }
 
-/*
+/**
  * Snapshot packer and extractor.
  * When summary is written it will find and aggregate small blobs into bigger blobs
  * When snapshot is read, it will unpack aggregated blobs and provide them transparently to caller.
+ *
+ * @deprecated This class was introduced experimentally and is no longer used.
  */
 export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
 	// Tells data store if it can use incremental summary (i.e. reuse DDSes from previous summary
@@ -299,12 +303,12 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 	// - data store either reuses previous summary, or generates full summary, i.e. there is no partial (some DDS)
 	// summary produced by data stores.
 	// These simplifications allow us not to touch handles, as they are self-contained (either do not use aggregated
-	// blob Or contain aggregated blob that stays relevant for that sub-tree)
+	// blob or contain aggregated blob that stays relevant for that sub-tree)
 	// Note:
-	// From perf perspective, it makes sense to place aggregated blobs one level up in the tree not to create extra
+	// From perf perspective, it makes sense to place aggregated blobs one level up in the tree to not create extra
 	// tree nodes (i.e. have shallow tree with less edges). But that creates problems with reusability of trees at
 	// incremental summary time - we would need to understand handles and parse them. In current design we can skip
-	// that step because if data store is reused, the hole sub-tree is reused included aggregated blob embedded into it
+	// that step because if data store is reused, the whole sub-tree is reused including aggregated blob embedded into it
 	// and that means we can do nothing and be correct!
 	private async compressSmallBlobs(
 		summary: ISummaryTree,
@@ -345,7 +349,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 				case SummaryType.Tree:
 					// If client created empty tree, keep it as is
 					// Also do not package search blobs - they are part of storage contract
-					if (obj.tree !== {} && key !== "__search") {
+					if (Object.keys(obj).length !== 0 && key !== "__search") {
 						const tree = await this.compressSmallBlobs(
 							obj,
 							newPath,
@@ -353,7 +357,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 							aggregator,
 						);
 						newSummary.tree[key] = tree;
-						if (tree.tree === {}) {
+						if (Object.keys(obj).length === 0) {
 							// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 							delete newSummary.tree[key];
 						}
