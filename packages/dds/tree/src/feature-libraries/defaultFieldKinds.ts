@@ -44,9 +44,8 @@ type BrandedFieldKind<
 	TName extends string,
 	TMultiplicity extends Multiplicity,
 	TEditor extends FieldEditor<any>,
-> = FieldKind<TEditor> & {
+> = FieldKind<TEditor, TMultiplicity> & {
 	identifier: TName & FieldKindIdentifier;
-	multiplicity: TMultiplicity;
 };
 
 function brandedFieldKind<
@@ -63,13 +62,13 @@ function brandedFieldKind<
 	) => boolean,
 	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 ): BrandedFieldKind<TName, TMultiplicity, TEditor> {
-	return new FieldKind<TEditor>(
+	return new FieldKind<TEditor, TMultiplicity>(
 		brand(identifier),
 		multiplicity,
 		changeHandler,
 		allowsTreeSupersetOf,
 		handlesEditsFrom,
-	) as unknown as BrandedFieldKind<TName, TMultiplicity, TEditor>;
+	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
 }
 
 /**
@@ -622,7 +621,7 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 /**
  * 0 or 1 items.
  */
-export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
+export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = new FieldKind(
 	brand("Optional"),
 	Multiplicity.Optional,
 	{
@@ -684,7 +683,7 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 /**
  * 0 or more items.
  */
-export const sequence: FieldKind<SequenceFieldEditor> = new FieldKind(
+export const sequence: FieldKind<SequenceFieldEditor, Multiplicity.Sequence> = new FieldKind(
 	brand("Sequence"),
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,

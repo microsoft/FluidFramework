@@ -27,11 +27,12 @@ import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
  *
- * @sealed
- * @alpha
+ * @sealed @alpha
  */
-export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>>
-	implements FieldKindSpecifier
+export class FieldKind<
+	TEditor extends FieldEditor<any> = FieldEditor<any>,
+	TMultiplicity extends Multiplicity = Multiplicity,
+> implements FieldKindSpecifier
 {
 	/**
 	 * @param identifier - Globally scoped identifier.
@@ -50,7 +51,7 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>>
 	 */
 	public constructor(
 		public readonly identifier: FieldKindIdentifier,
-		public readonly multiplicity: Multiplicity,
+		public readonly multiplicity: TMultiplicity,
 		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
 		private readonly allowsTreeSupersetOf: (
 			originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,

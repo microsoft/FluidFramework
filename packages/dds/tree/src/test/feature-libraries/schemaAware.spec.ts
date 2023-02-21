@@ -13,7 +13,13 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/schema-aware/schemaAware";
 
-import { TreeSchemaIdentifier, ValueSchema } from "../../core";
+import {
+	FieldSchema,
+	GlobalFieldKey,
+	TreeSchema,
+	TreeSchemaIdentifier,
+	ValueSchema,
+} from "../../core";
 import { requireAssignableTo } from "../../util";
 import {
 	valueSymbol,
@@ -52,38 +58,56 @@ const numberSchema = tree("number", {
 
 const ballSchema = tree("ball", {
 	local: {
-		// TODO: test and fix passing schema objects in type array instead of strings.
-		x: field(value, "number"),
+		// Test schema objects in as well as strings.
+		x: field(value, numberSchema),
 		y: field(value, "number"),
 		size: field(optional, "number"),
 	},
 });
 
+const boxSchema = tree("box", {
+	local: {
+		// Use name for recursive case:
+		children: field(sequence, ballSchema, "box"),
+	},
+});
+
 type x = typeof numberSchema.typeInfo.name;
-const schemaData = typedSchemaData(new Map(), numberSchema, ballSchema);
+const schemaData = typedSchemaData(new Map(), numberSchema, ballSchema, boxSchema);
 
 const schemaData2 = {
 	policy: defaultSchemaPolicy,
-	globalFieldSchema: new Map(),
-	treeSchema: new Map<TreeSchemaIdentifier, TypedSchema.LabeledTreeSchema<any>>([
+	globalFieldSchema: new Map() as ReadonlyMap<GlobalFieldKey, FieldSchema>,
+	treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>([
 		[numberSchema.name, numberSchema],
 		[ballSchema.name, ballSchema],
-	]),
+		[boxSchema.name, boxSchema],
+	]) as ReadonlyMap<TreeSchemaIdentifier, TreeSchema>,
 	treeSchemaObject: {
 		number: numberSchema,
 		ball: ballSchema,
+		box: boxSchema,
 	} as unknown as SchemaMap,
-	allTypes: ["number", "ball"] as const,
+	allTypes: constArray("number", "ball", "box"),
 } as const;
 
 {
 	type check1_ = requireAssignableTo<typeof schemaData, TypedSchemaData>;
 	type check2_ = requireAssignableTo<typeof schemaData2, TypedSchemaData>;
+	type check3_ = requireAssignableTo<typeof schemaData, typeof schemaData2>;
+	type check4_ = requireAssignableTo<typeof schemaData2, typeof schemaData>;
+}
+
+// Infers more specific type for the items than an array literal would, but doesn't add "readonly".
+// Useful since "readonly" is mostly just noise for arrays with have statically known content.
+function constArray<T extends string[]>(...a: T): T {
+	return a;
 }
 
 interface SchemaMap {
 	number: typeof numberSchema;
 	ball: typeof ballSchema;
+	box: typeof boxSchema;
 }
 
 const extractedNumber = schemaData.treeSchemaObject.number;
@@ -144,4 +168,52 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;
+}
+
+interface Typer<TMap extends TypedSchemaData, TSchema extends TypedSchema.LabeledTreeSchema<any>> {
+	a: InlineOnce<NodeDataFor<TMap, ApiMode.Flexible, TSchema>>;
+	b: InlineOnce<NodeDataFor<TMap, ApiMode.Normalized, TSchema>>;
+	c: InlineOnce<NodeDataFor<TMap, ApiMode.Wrapped, TSchema>>;
+}
+
+// Test non recursive cases:
+{
+	type F = Typer<typeof schemaData, typeof ballSchema>;
+	type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>;
+	type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof ballSchema>;
+	type AC = NodeDataFor<typeof schemaData, ApiMode.Wrapped, typeof ballSchema>;
+	type XA = F["a"];
+	type XB = F["b"];
+	type XC = F["c"];
+}
+
+// Test recursive cases:
+// Currently only the wrapped mode works.
+{
+	type F = Typer<typeof schemaData, typeof boxSchema>;
+	// type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof boxSchema>;
+	// type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof boxSchema>;
+	type AC = NodeDataFor<typeof schemaData, ApiMode.Wrapped, typeof boxSchema>;
+	// type XA = F["a"];
+	// type XB = F["b"];
+	type XC = F["c"];
+
+	const w: XC = {
+		[typeNameSymbol]: "box",
+		children: [],
+		[valueSymbol]: undefined,
+	};
+	const w2: XC = {
+		[typeNameSymbol]: "box",
+		children: [
+			w,
+			{
+				[typeNameSymbol]: "ball",
+				[valueSymbol]: undefined,
+				x: { [typeNameSymbol]: "number", [valueSymbol]: 1 },
+				y: { [typeNameSymbol]: "number", [valueSymbol]: 2 },
+			},
+		],
+		[valueSymbol]: undefined,
+	};
 }

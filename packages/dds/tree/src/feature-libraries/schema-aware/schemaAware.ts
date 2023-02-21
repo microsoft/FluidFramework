@@ -11,7 +11,7 @@ import {
 	ValueSchema,
 } from "../../core";
 import { typeNameSymbol, valueSymbol } from "../contextuallyTyped";
-import { Multiplicity, TypedSchema } from "../modular-schema";
+import { FullSchemaPolicy, Multiplicity, TypedSchema } from "../modular-schema";
 import { defaultSchemaPolicy } from "../defaultSchema";
 import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
 
@@ -47,7 +47,10 @@ export type TypedTreeFromInfo<
  * @alpha
  */
 export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
-	undefined extends TypedValue<TSchema>
+	TypedValue<TSchema> extends undefined
+		? // eslint-disable-next-line @typescript-eslint/ban-types
+		  {}
+		: undefined extends TypedValue<TSchema>
 		? {
 				[valueSymbol]?: TypedValue<TSchema>;
 		  }
@@ -94,39 +97,25 @@ export type CollectOptions<
 	TValueSchema extends ValueSchema,
 	TName,
 > = {
-	[ApiMode.Flexible]: CollectOptionsFlexible<TTypedFields, TValueSchema, TName>;
-	[ApiMode.Normalized]: CollectOptionsNormalized<TTypedFields, TValueSchema, TName>;
+	[ApiMode.Flexible]:
+		| ({ [typeNameSymbol]?: TName } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields)
+		| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never);
+	[ApiMode.Normalized]: Record<string, never> extends TTypedFields
+		? TValueSchema extends PrimitiveValueSchema
+			? TypedValue<TValueSchema>
+			: {
+					[typeNameSymbol]: TName & TreeSchemaIdentifier;
+			  } & ValueFieldTreeFromSchema<TValueSchema> &
+					TTypedFields
+		: {
+				[typeNameSymbol]: TName & TreeSchemaIdentifier;
+		  } & ValueFieldTreeFromSchema<TValueSchema> &
+				TTypedFields;
 	[ApiMode.Wrapped]: {
 		[typeNameSymbol]: TName;
 		[valueSymbol]: TypedValue<TValueSchema>;
 	} & TTypedFields;
 }[Mode];
-
-/**
- * @alpha
- */
-export type CollectOptionsFlexible<TTypedFields, TValueSchema extends ValueSchema, TName> =
-	| ({ [typeNameSymbol]?: TName } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields)
-	| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never);
-
-/**
- * @alpha
- */
-export type CollectOptionsNormalized<
-	TTypedFields,
-	TValueSchema extends ValueSchema,
-	TName,
-> = Record<string, never> extends TTypedFields
-	? TValueSchema extends PrimitiveValueSchema
-		? TypedValue<TValueSchema>
-		: {
-				[typeNameSymbol]: TName & TreeSchemaIdentifier;
-		  } & ValueFieldTreeFromSchema<TValueSchema> &
-				TTypedFields
-	: {
-			[typeNameSymbol]: TName & TreeSchemaIdentifier;
-	  } & ValueFieldTreeFromSchema<TValueSchema> &
-			TTypedFields;
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
@@ -171,7 +160,7 @@ export type TreeTypesToTypedTreeTypes<
 /**
  * @alpha
  */
-export interface TypedSchemaData extends SchemaDataAndPolicy {
+export interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
 	// TODO: can we use a more specific type here?
 	treeSchemaObject: Record<string, any>; // LabeledTreeSchema<any>
 	allTypes: readonly string[];
@@ -183,7 +172,7 @@ export interface TypedSchemaData extends SchemaDataAndPolicy {
 export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(
 	globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>,
 	...t: T
-): SchemaDataAndPolicy & {
+): SchemaDataAndPolicy<FullSchemaPolicy> & {
 	treeSchemaObject: {
 		[schema in T[number] as schema["typeInfo"]["name"]]: schema;
 	};
