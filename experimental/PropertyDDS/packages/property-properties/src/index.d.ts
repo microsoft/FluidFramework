@@ -1309,6 +1309,10 @@ declare module "@fluid-experimental/property-properties" {
 			 */
 			register(in_input: PropertyTemplate | object | string | any[]): void;
 			/**
+			 * Returns the array of the names of the registered types.
+			 */
+			listRegisteredTypes(): string[];
+			/**
 			 * Recursively parses the object of the specified type and returns the created
 			 * array of PropertySets Templates. It does the same thing as the registerFrom()
 			 * function, but it returns the array of templates instead of registering them.

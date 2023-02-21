@@ -593,6 +593,13 @@ class PropertyFactory {
 			}
 		}
 	}
+	/**
+	 * Returns the array of the names of the registered types.
+	 * @returns {Array.<string>} Array of the names of the registered types.
+	 */
+	listRegisteredTypes() {
+		return Array.from(this._localPrimitivePropertiesAndTemplates.keys);
+	}
 
 	/**
 	 * Recursively parses the object of the specified type and returns the created

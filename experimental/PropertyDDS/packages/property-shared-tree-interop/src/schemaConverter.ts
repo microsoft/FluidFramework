@@ -20,6 +20,8 @@ import {
 	namedTreeSchema,
 	brand,
 	EmptyKey,
+	TreeTypeSet,
+	TreeType,
 } from "@fluid-internal/tree";
 import { PropertyFactory, PropertyTemplate } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
@@ -36,6 +38,7 @@ const numberTypes = new Set([
 	"Uint32",
 	"Float32",
 	"Float64",
+	"Enum",
 ]);
 const primitiveTypes = new Set([
 	"Bool",
@@ -50,18 +53,64 @@ const primitiveTypes = new Set([
 	"Uint32",
 	"Float32",
 	"Float64",
+	"Enum",
 ]);
+
+function isIgnoreNestedProperties(typeid: string): boolean {
+	return typeid === "Enum";
+}
+
+function loadInheritedChildren(): Map<string, Set<string>> {
+	const inheritedChildren: Map<string, Set<string>> = new Map();
+	const allTypes = PropertyFactory.listRegisteredTypes();
+	for (const typeid of allTypes) {
+		const parents = PropertyFactory.getAllParentsForTemplate(typeid);
+		for (const parent of parents) {
+			if (!inheritedChildren.has(parent)) {
+				inheritedChildren.set(parent, new Set());
+			}
+			inheritedChildren.get(parent)?.add(typeid);
+		}
+	}
+	return inheritedChildren;
+}
+
+function getInheritedChildrenForType(
+	inheritedChildrenByType: Map<string, ReadonlySet<string>>,
+	typeid: string,
+): ReadonlySet<TreeSchemaIdentifier> {
+	return getInheritedChildrenForTypes(inheritedChildrenByType, new Set([typeid]));
+}
+
+function getInheritedChildrenForTypes(
+	inheritedChildrenByType: Map<string, ReadonlySet<string>>,
+	types: ReadonlySet<string>,
+): ReadonlySet<TreeSchemaIdentifier> {
+	const result = new Set<TreeSchemaIdentifier>();
+	for (const type of types) {
+		result.add(brand(type));
+		const strSet = inheritedChildrenByType.get(type) ?? new Set();
+		for (const str of strSet) {
+			result.add(brand(str));
+		}
+	}
+	return result;
+}
 
 export function convertPSetSchemaToSharedTreeLls(
 	repository: StoredSchemaRepository,
 	rootFieldSchema: FieldSchema,
 ): void {
+	const inheritedChildrenByType = loadInheritedChildren();
 	const globalTreeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
 	// Extract all referenced typeids for the schema
 	const unprocessedTypeIds: TreeSchemaIdentifier[] = [];
-	for (const type of rootFieldSchema.types ?? fail("expected at least one root type")) {
+	const rootBaseTypes = rootFieldSchema.types ?? fail("Expected root types");
+	const rootTypes = getInheritedChildrenForTypes(inheritedChildrenByType, rootBaseTypes);
+	for (const type of rootTypes) {
 		unprocessedTypeIds.push(type);
 	}
+	const unprocessedTypeIdsSet: Set<string> = new Set(unprocessedTypeIds);
 	const referencedTypeIDs = new Set<TreeSchemaIdentifier>();
 
 	while (unprocessedTypeIds.length > 0) {
@@ -81,26 +130,32 @@ export function convertPSetSchemaToSharedTreeLls(
 			schemaTemplate,
 		) as TreeSchemaIdentifier[];
 		for (const dependencyTypeId of dependencies) {
-			if (!referencedTypeIDs.has(dependencyTypeId)) {
-				unprocessedTypeIds.push(dependencyTypeId);
-			}
+			const idsSet = getInheritedChildrenForType(inheritedChildrenByType, dependencyTypeId);
+			idsSet.forEach((id) => {
+				if (!referencedTypeIDs.has(dependencyTypeId) && !unprocessedTypeIdsSet.has(id)) {
+					unprocessedTypeIds.push(id);
+					unprocessedTypeIdsSet.add(id);
+				}
+			});
 		}
 
 		// Extract context information (i.e. array, map and set types)
 		const extractContexts = (properties: any[]): void => {
-			for (const property of properties || []) {
-				if (property.properties) {
-					// We have a nested set of properties
-					// TODO: We have to create a corresponding nested type
-					extractContexts(property.properties);
-				}
-				if (property.context && property.context !== "single") {
-					referencedTypeIDs.add(
-						`${property.context}<${property.typeid}>` as TreeSchemaIdentifier,
-					);
-				}
-				if (TypeIdHelper.isPrimitiveType(property.typeid)) {
-					referencedTypeIDs.add(property.typeid);
+			if (properties !== undefined) {
+				for (const property of properties || []) {
+					if (property.properties) {
+						// We have a nested set of properties
+						// TODO: We have to create a corresponding nested type
+						extractContexts(property.properties);
+					}
+					if (property.context && property.context !== "single") {
+						referencedTypeIDs.add(
+							`${property.context}<${property.typeid}>` as TreeSchemaIdentifier,
+						);
+					}
+					if (TypeIdHelper.isPrimitiveType(property.typeid)) {
+						referencedTypeIDs.add(property.typeid);
+					}
 				}
 			}
 		};
@@ -150,7 +205,8 @@ export function convertPSetSchemaToSharedTreeLls(
 					valueType = ValueSchema.Number;
 				} else if (
 					splitTypeId.typeid === "String" ||
-					splitTypeId.typeid.startsWith("Reference<")
+					splitTypeId.typeid.startsWith("Reference<") ||
+					splitTypeId.typeid === "Reference"
 				) {
 					valueType = ValueSchema.String;
 				} else if (booleanTypes.has(splitTypeId.typeid)) {
@@ -191,19 +247,34 @@ export function convertPSetSchemaToSharedTreeLls(
 								`Unknown typeid referenced: ${typeIdInInheritanceChain}`,
 							);
 						}
-						for (const property of schema.properties) {
-							if (property.properties) {
-								// TODO: Handle nested properties
-							} else {
-								let currentTypeid = property.typeid as string;
-								if (property.context && property.context !== "single") {
-									currentTypeid = `${property.context}<${property.typeid || ""}>`;
-								}
+						if (schema.properties !== undefined) {
+							for (const property of schema.properties) {
+								if (
+									property.properties &&
+									!isIgnoreNestedProperties(property.typeid)
+								) {
+									// TODO: Handle nested properties
+								} else {
+									let currentTypeid = property.typeid as string;
+									let types;
+									if (property.context && property.context !== "single") {
+										currentTypeid = `${property.context}<${
+											property.typeid || ""
+										}>`;
+										types = new Set<TreeSchemaIdentifier>();
+										types.add(currentTypeid as TreeSchemaIdentifier);
+									} else {
+										types = getInheritedChildrenForType(
+											inheritedChildrenByType,
+											currentTypeid,
+										);
+									}
 
-								localFields[property.id] = fieldSchema(
-									property.optional ? FieldKinds.optional : FieldKinds.value,
-									[brand(currentTypeid)],
-								);
+									localFields[property.id] = fieldSchema(
+										property.optional ? FieldKinds.optional : FieldKinds.value,
+										types,
+									);
+								}
 							}
 						}
 					}
@@ -256,9 +327,30 @@ export function convertPSetSchemaToSharedTreeLls(
 	}
 	const fullSchemaData: SchemaData = {
 		treeSchema: globalTreeSchema,
-		globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
+		globalFieldSchema: new Map([
+			[rootFieldKey, convertRootFieldSchema(inheritedChildrenByType, rootFieldSchema)],
+		]),
 	};
 	repository.update(fullSchemaData);
+}
+
+function convertRootFieldSchema(
+	inheritedChildrenByType,
+	rootFieldSchema: FieldSchema,
+): FieldSchema {
+	const types: Set<TreeType> = new Set();
+	const myFieldSchema: FieldSchema = {
+		kind: rootFieldSchema.kind,
+		types,
+	};
+	const origTypes: TreeTypeSet = rootFieldSchema.types ?? new Set();
+	if (myFieldSchema.types) {
+		for (const type of origTypes) {
+			const children = getInheritedChildrenForType(inheritedChildrenByType, type);
+			children.forEach((child) => types.add(brand(child)));
+		}
+	}
+	return myFieldSchema;
 }
 
 // Concepts currently not mapped / represented in the compiled schema:

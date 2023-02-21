@@ -23,7 +23,13 @@ describe("schema converter", () => {
 	});
 
 	it(`can use "NodeProperty" as root`, () => {
-		const rootFieldSchema = fieldSchema(FieldKinds.optional, [brand("NodeProperty")]);
+		const rootFieldSchema = fieldSchema(FieldKinds.optional, [
+			brand("NodeProperty"),
+			brand("NamedNodeProperty"),
+			brand("RelationshipProperty"),
+			brand("Test:Address-1.0.0"),
+			brand("Test:Person-1.0.0"),
+		]);
 		const schemaRepository = createSchemaRepository();
 		convertPSetSchemaToSharedTreeLls(schemaRepository, rootFieldSchema);
 
@@ -31,7 +37,7 @@ describe("schema converter", () => {
 		expect(schemaRepository.globalFieldSchema.size).toEqual(1);
 		expect(lookupGlobalFieldSchema(schemaRepository, rootFieldKey)).toEqual(rootFieldSchema);
 
-		expect(schemaRepository.treeSchema.size).toEqual(13);
+		expect(schemaRepository.treeSchema.size).toEqual(31);
 		const nodePropertySchema = lookupTreeSchema(schemaRepository, brand("NodeProperty"));
 		expect(nodePropertySchema).toEqual({
 			name: "NodeProperty",
