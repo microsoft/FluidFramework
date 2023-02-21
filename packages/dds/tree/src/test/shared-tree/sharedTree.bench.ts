@@ -177,32 +177,34 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const [i, benchmarkType] of nodesCountDeep) {
-				let tree: ISharedTree;
-				benchmark({
-					type: benchmarkType,
-					title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): manipulations with ${i} nodes`,
-					before: async () => {
-						tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType);
-					},
-					benchmarkFn: () => {
-						manipulateTreeAsJSObject(tree, dataType);
-					},
-				});
-			}
-			for (const [i, benchmarkType] of nodesCountWide) {
-				let tree: ISharedTree;
-				benchmark({
-					type: benchmarkType,
-					title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): manipulations with ${i} nodes`,
-					before: async () => {
-						tree = getTestTreeAsJSObject(i, TreeShape.Wide, dataType);
-					},
-					benchmarkFn: () => {
-						manipulateTreeAsJSObject(tree, dataType);
-					},
-				});
-			}
+			describe(`Edit JS Object ${TestPrimitives[dataType]}`, () => {
+				for (const [i, benchmarkType] of nodesCountDeep) {
+					let tree: ISharedTree;
+					benchmark({
+						type: benchmarkType,
+						title: `Update value at leaf of ${i} deep tree`,
+						before: async () => {
+							tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType);
+						},
+						benchmarkFn: () => {
+							manipulateTreeAsJSObject(tree, dataType);
+						},
+					});
+				}
+				for (const [i, benchmarkType] of nodesCountWide) {
+					let tree: ISharedTree;
+					benchmark({
+						type: benchmarkType,
+						title: `Update value at leaf of ${i} Wide tree`,
+						before: async () => {
+							tree = getTestTreeAsJSObject(i, TreeShape.Wide, dataType);
+						},
+						benchmarkFn: () => {
+							manipulateTreeAsJSObject(tree, dataType);
+						},
+					});
+				}
+			});
 		}
 	});
 	describe("Cursors", () => {
@@ -273,44 +275,46 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const [i, benchmarkType] of nodesCountDeep) {
-				let tree: ISharedTree;
-				let provider: ITestTreeProvider;
-				let path: UpPath;
-				benchmark({
-					type: benchmarkType,
-					title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: manipulations with ${i} nodes`,
-					before: async () => {
-						provider = await TestTreeProvider.create(1);
-						tree = provider.trees[0]
-						tree.storedSchema.update(testSchema);
-						await insertNodesToTestTree(provider, tree, i, TreeShape.Deep, dataType);
-						path = getCursorLeafNode(i, TreeShape.Deep)
-					},
-					benchmarkFn: () => {
-						manipulateCursorTree(tree, path, dataType);
-					},
-				});
-			}
-			for (const [i, benchmarkType] of nodesCountWide) {
-				let tree: ISharedTree;
-				let provider: ITestTreeProvider;
-				let path: UpPath;
-				benchmark({
-					type: benchmarkType,
-					title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: manipulations with ${i} nodes`,
-					before: async () => {
-						provider = await TestTreeProvider.create(1);
-						tree = provider.trees[0]
-						tree.storedSchema.update(testSchema);
-						await insertNodesToTestTree(provider, tree, i, TreeShape.Wide, dataType);
-						path = getCursorLeafNode(i, TreeShape.Wide)
-					},
-					benchmarkFn: () => {
-						manipulateCursorTree(tree, path, dataType);
-					},
-				});
-			}
+			describe(`Edit Cursor Tree ${TestPrimitives[dataType]}`, () => {
+				for (const [i, benchmarkType] of nodesCountDeep) {
+					let tree: ISharedTree;
+					let provider: ITestTreeProvider;
+					let path: UpPath;
+					benchmark({
+						type: benchmarkType,
+						title: `Update value at leaf of ${i} deep tree`,
+						before: async () => {
+							provider = await TestTreeProvider.create(1);
+							tree = provider.trees[0]
+							tree.storedSchema.update(testSchema);
+							await insertNodesToTestTree(provider, tree, i, TreeShape.Deep, dataType);
+							path = getCursorLeafNode(i, TreeShape.Deep)
+						},
+						benchmarkFn: () => {
+							manipulateCursorTree(tree, path, dataType);
+						},
+					});
+				}
+				for (const [i, benchmarkType] of nodesCountWide) {
+					let tree: ISharedTree;
+					let provider: ITestTreeProvider;
+					let path: UpPath;
+					benchmark({
+						type: benchmarkType,
+						title: `Update value at leaf of ${i} wide tree`,
+						before: async () => {
+							provider = await TestTreeProvider.create(1);
+							tree = provider.trees[0]
+							tree.storedSchema.update(testSchema);
+							await insertNodesToTestTree(provider, tree, i, TreeShape.Wide, dataType);
+							path = getCursorLeafNode(i, TreeShape.Wide)
+						},
+						benchmarkFn: () => {
+							manipulateCursorTree(tree, path, dataType);
+						},
+					});
+				}
+			});
 		}
 	});
 	describe("EditableTree", () => {
@@ -407,62 +411,64 @@ describe("SharedTree benchmarks", () => {
 					},
 				});
 			}
-			for (const [i, benchmarkType] of nodesCountDeep) {
-				let provider: ITestTreeProvider;
-				let trees: readonly ISharedTree[];
-				let tree: ISharedTree;
-				let editableField: EditableField;
-				benchmark({
-					type: benchmarkType,
-					title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: manipulations with ${i} nodes`,
-					before: async () => {
-						[provider, trees] = await createSharedTrees(
-							getTestSchema(FieldKinds.sequence),
-							[{ type: rootSchemaName }],
-							1,
-						);
-						tree = trees[0]
-						insertNodesToEditableTree(
-							tree,
-							i,
-							TreeShape.Deep,
-							dataType,
-						);
-						editableField = getEditableLeafNode(tree, i, TreeShape.Deep)
-					},
-					benchmarkFn: () => {
-						manipulateEditableTree(tree, i, TreeShape.Deep, dataType, editableField);
-					},
-				});
-			}
-			for (const [i, benchmarkType] of nodesCountWide) {
-				let provider: ITestTreeProvider;
-				let trees: readonly ISharedTree[];
-				let tree: ISharedTree;
-				let editableField: EditableField;
-				benchmark({
-					type: benchmarkType,
-					title: `Wide Tree (${TestPrimitives[dataType]}) with Editable Tree: manipulations with ${i} nodes`,
-					before: async () => {
-						[provider, trees] = await createSharedTrees(
-							getTestSchema(FieldKinds.sequence),
-							[{ type: rootSchemaName }],
-							1,
-						);
-						tree = trees[0]
-						insertNodesToEditableTree(
-							tree,
-							i,
-							TreeShape.Wide,
-							dataType,
-						);
-						editableField = getEditableLeafNode(tree, i, TreeShape.Wide)
-					},
-					benchmarkFn: () => {
-						manipulateEditableTree(tree, i, TreeShape.Wide, dataType, editableField);
-					},
-				});
-			}
+			describe(`Edit EditableTree ${TestPrimitives[dataType]}`, () => {
+				for (const [i, benchmarkType] of nodesCountDeep) {
+					let provider: ITestTreeProvider;
+					let trees: readonly ISharedTree[];
+					let tree: ISharedTree;
+					let editableField: EditableField;
+					benchmark({
+						type: benchmarkType,
+						title: `Update value at leaf of ${i} Deep tree`,
+						before: async () => {
+							[provider, trees] = await createSharedTrees(
+								getTestSchema(FieldKinds.sequence),
+								[{ type: rootSchemaName }],
+								1,
+							);
+							tree = trees[0]
+							insertNodesToEditableTree(
+								tree,
+								i,
+								TreeShape.Deep,
+								dataType,
+							);
+							editableField = getEditableLeafNode(tree, i, TreeShape.Deep)
+						},
+						benchmarkFn: () => {
+							manipulateEditableTree(tree, i, TreeShape.Deep, dataType, editableField);
+						},
+					});
+				}
+				for (const [i, benchmarkType] of nodesCountWide) {
+					let provider: ITestTreeProvider;
+					let trees: readonly ISharedTree[];
+					let tree: ISharedTree;
+					let editableField: EditableField;
+					benchmark({
+						type: benchmarkType,
+						title: `Update value at leaf of ${i} wide tree`,
+						before: async () => {
+							[provider, trees] = await createSharedTrees(
+								getTestSchema(FieldKinds.sequence),
+								[{ type: rootSchemaName }],
+								1,
+							);
+							tree = trees[0]
+							insertNodesToEditableTree(
+								tree,
+								i,
+								TreeShape.Wide,
+								dataType,
+							);
+							editableField = getEditableLeafNode(tree, i, TreeShape.Wide)
+						},
+						benchmarkFn: () => {
+							manipulateEditableTree(tree, i, TreeShape.Wide, dataType, editableField);
+						},
+					});
+				}
+			});
 		}
 	});
 });
