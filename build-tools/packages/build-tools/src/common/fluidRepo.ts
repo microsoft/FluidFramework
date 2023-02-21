@@ -96,24 +96,24 @@ export class FluidRepo {
 	public readonly packages: Packages;
 
 	/**
-	 * @deprecated Use monoRepos.get() instead.
+	 * @deprecated Use releaseGroups.get() instead.
 	 */
 	public get clientMonoRepo(): MonoRepo {
-		return this.monoRepos.get(MonoRepoKind.Client)!;
+		return this.releaseGroups.get(MonoRepoKind.Client)!;
 	}
 
 	/**
-	 * @deprecated Use monoRepos.get() instead.
+	 * @deprecated Use releaseGroups.get() instead.
 	 */
 	public get serverMonoRepo(): MonoRepo | undefined {
-		return this.monoRepos.get(MonoRepoKind.Server);
+		return this.releaseGroups.get(MonoRepoKind.Server);
 	}
 
 	/**
-	 * @deprecated Use monoRepos.get() instead.
+	 * @deprecated Use releaseGroups.get() instead.
 	 */
 	public get azureMonoRepo(): MonoRepo | undefined {
-		return this.monoRepos.get(MonoRepoKind.Azure);
+		return this.releaseGroups.get(MonoRepoKind.Azure);
 	}
 
 	constructor(
@@ -149,7 +149,7 @@ export class FluidRepo {
 			if (isMonoRepoKind(group)) {
 				const { directory, ignoredDirs } = item as IFluidRepoPackage;
 				const monorepo = new MonoRepo(group, directory, ignoredDirs, logger);
-				this.monoRepos.set(group, monorepo);
+				this.releaseGroups.set(group, monorepo);
 				loadedPackages.push(...monorepo.packages);
 			} else if (group !== "services" || services) {
 				if (Array.isArray(item)) {
@@ -162,7 +162,7 @@ export class FluidRepo {
 			}
 		}
 
-		if (!this.monoRepos.has(MonoRepoKind.Client)) {
+		if (!this.releaseGroups.has(MonoRepoKind.Client)) {
 			throw new Error("client entry does not exist in package.json");
 		}
 		this.packages = new Packages(loadedPackages);

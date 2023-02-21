@@ -18,7 +18,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { RuntimeHeaders, ISummarizer } from "@fluidframework/container-runtime";
 import { defaultGCConfig } from "./gcTestConfigs";
 
@@ -65,7 +65,7 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
 		mainDataStore._root.set("test", "value");
 		await waitForContainerConnection(mainContainer);
 
-		summarizer = await createSummarizer(provider, mainContainer);
+		summarizer = (await createSummarizer(provider, mainContainer)).summarizer;
 	});
 
 	it("should fail requests with externalRequest flag for unreferenced data stores", async () => {

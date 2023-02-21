@@ -26,7 +26,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
@@ -139,7 +139,8 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
 		mainDataStore._root.set("test", "value");
 		await waitForContainerConnection(mainContainer);
 
-		summarizer = await createSummarizerFromFactory(provider, mainContainer, dataStoreFactory);
+		summarizer = (await createSummarizerFromFactory(provider, mainContainer, dataStoreFactory))
+			.summarizer;
 	});
 
 	describe("SharedMatrix", () => {

@@ -18,7 +18,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 
 /**
@@ -128,7 +128,7 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
 		let dataStoresAsHandles: string[] = [];
 
 		// Create a summarizer client.
-		const summarizer1 = await createSummarizerFromFactory(
+		const { summarizer: summarizer1 } = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
 			dataObjectFactory,
@@ -146,7 +146,7 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
 
 		// Create a new summarizer with a new GC version and the latest summary that has been generated.
 		summarizer1.close();
-		const summarizer2 = await createSummarizerFromFactory(
+		const { summarizer: summarizer2 } = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
 			dataObjectFactory,

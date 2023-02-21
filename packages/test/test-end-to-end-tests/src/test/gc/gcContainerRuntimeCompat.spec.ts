@@ -20,7 +20,7 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
+import { describeFullCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
 import { pkgVersion } from "../../packageVersion";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
@@ -68,13 +68,14 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 	});
 
 	async function createSummarizer(version: number, summaryVersion?: string) {
-		return createSummarizerFromFactory(
+		const createSummarizerResult = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
 			dataObjectFactory,
 			summaryVersion,
 			getContainerRuntimeApi(pkgVersion, version).ContainerRuntimeFactoryWithDefaultDataStore,
 		);
+		return createSummarizerResult.summarizer;
 	}
 
 	// Set up the tests that will run against the different versions of the container runtime.

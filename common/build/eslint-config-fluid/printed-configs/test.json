@@ -22,7 +22,6 @@
     "plugins": [
         "eslint-comments",
         "import",
-        "react",
         "unused-imports",
         "promise",
         "jsdoc",

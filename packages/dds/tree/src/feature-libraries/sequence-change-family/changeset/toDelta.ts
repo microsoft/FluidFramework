@@ -76,7 +76,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 					break;
 				}
 				case "MMoveIn":
-					fail(ERR_NOT_IMPLEMENTED);
+					fail("MMoveIn not implemented");
 				case "Bounce":
 				case "Intake":
 					// These have no impacts on the document state.
@@ -145,7 +145,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 				case "Return":
 				case "MReturn":
 				case "Gap":
-					fail(ERR_NOT_IMPLEMENTED);
+					fail("Gap not implemented");
 				case "Tomb": {
 					// These tombs are only used to precisely describe the location of other attaches.
 					// They have no impact on the current state.
@@ -170,8 +170,6 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 }
 
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
-
-const ERR_NOT_IMPLEMENTED = "Not implemented";
 
 /**
  * Modifications to a subtree as described by a Changeset.

@@ -29,7 +29,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { PendingStateManager } from "../pendingStateManager";
+import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -611,7 +611,6 @@ describe("Runtime", () => {
 				pendingStateManager.onSubmitMessage(
 					ContainerMessageType.FluidDataStoreOp,
 					0,
-					0,
 					"",
 					"",
 					undefined,
@@ -874,6 +873,53 @@ describe("Runtime", () => {
 				"mixed in return",
 			);
 			assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
+		});
+
+		describe("Op content modification", () => {
+			let containerRuntime: ContainerRuntime;
+			let pendingStateManager: PendingStateManager;
+
+			const getMockContext = (): Partial<IContainerContext> => {
+				return {
+					attachState: AttachState.Attached,
+					deltaManager: new MockDeltaManager(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: new MockLogger(),
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (_error?: ICriticalContainerError): void => {},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+				};
+			};
+
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+				});
+				pendingStateManager = (containerRuntime as any).pendingStateManager;
+			});
+
+			it("modifying op content after submit does not reflect in PendingStateManager", () => {
+				const content = { prop1: 1 };
+				containerRuntime.submitDataStoreOp("1", content);
+				(containerRuntime as any).flush();
+
+				content.prop1 = 2;
+
+				const state = pendingStateManager.getLocalState();
+
+				assert.notStrictEqual(state, undefined, "expect pending local state");
+				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
+				assert.deepStrictEqual(
+					(state?.pendingStates[0] as IPendingMessage).content.contents,
+					{
+						prop1: 1,
+					},
+					"content of pending local message has changed",
+				);
+			});
 		});
 	});
 });

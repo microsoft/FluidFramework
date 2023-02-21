@@ -229,6 +229,9 @@ export interface ISummarizerNode {
 	): ISummarizerNode;
 
 	getChild(id: string): ISummarizerNode | undefined;
+
+	/** True if a summary is currently in progress */
+	isSummaryInProgress?(): boolean;
 }
 
 /**
@@ -324,6 +327,18 @@ export interface ITelemetryContext {
 	 * @param value - value to attribute to this summary telemetry data
 	 */
 	set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+
+	/**
+	 * Sets multiple values for telemetry data being tracked.
+	 * @param prefix - unique prefix to tag this data with (ex: "fluid:summarize:")
+	 * @param property - property name of the telemetry data being tracked (ex: "Options")
+	 * @param values - A set of values to attribute to this summary telemetry data.
+	 */
+	setMultiple(
+		prefix: string,
+		property: string,
+		values: Record<string, TelemetryEventPropertyType>,
+	): void;
 
 	/**
 	 * Get the telemetry data being tracked

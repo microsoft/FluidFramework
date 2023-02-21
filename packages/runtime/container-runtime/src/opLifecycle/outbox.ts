@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
@@ -113,9 +112,9 @@ export class Outbox {
 
 	private flushInternal(rawBatch: IBatch) {
 		const processedBatch = this.compressBatch(rawBatch);
-		const clientSequenceNumber = this.sendBatch(processedBatch);
+		this.sendBatch(processedBatch);
 
-		this.persistBatch(clientSequenceNumber, rawBatch.content);
+		this.persistBatch(rawBatch.content);
 	}
 
 	private compressBatch(batch: IBatch): IBatch {
@@ -153,17 +152,14 @@ export class Outbox {
 	 * Sends the batch object to the container context to be sent over the wire.
 	 *
 	 * @param batch - batch to be sent
-	 * @returns the client sequence number of the last batched op which was sent and
-	 * -1 if there are no ops or the container cannot send ops.
 	 */
-	private sendBatch(batch: IBatch): number {
-		let clientSequenceNumber: number = -1;
+	private sendBatch(batch: IBatch) {
 		const length = batch.content.length;
 
 		// Did we disconnect in the middle of turn-based batch?
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		if (length === 0 || !this.params.shouldSend()) {
-			return clientSequenceNumber;
+			return;
 		}
 
 		if (this.params.containerContext.submitBatchFn === undefined) {
@@ -175,7 +171,7 @@ export class Outbox {
 					delete message.metadata.compressed;
 				}
 
-				clientSequenceNumber = this.params.containerContext.submitFn(
+				this.params.containerContext.submitFn(
 					MessageType.Operation,
 					message.deserializedContent,
 					true, // batch
@@ -185,8 +181,7 @@ export class Outbox {
 
 			this.params.containerContext.deltaManager.flush();
 		} else {
-			// returns clientSequenceNumber of last message in a batch
-			clientSequenceNumber = this.params.containerContext.submitBatchFn(
+			this.params.containerContext.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
 					metadata: message.metadata,
@@ -194,28 +189,19 @@ export class Outbox {
 				})),
 			);
 		}
-
-		// Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
-		clientSequenceNumber -= length - 1;
-		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
-		return clientSequenceNumber;
 	}
 
-	private persistBatch(initialClientSequenceNumber: number, batch: BatchMessage[]) {
-		let clientSequenceNumber = initialClientSequenceNumber;
+	private persistBatch(batch: BatchMessage[]) {
 		// Let the PendingStateManager know that a message was submitted.
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
 			this.params.pendingStateManager.onSubmitMessage(
 				message.deserializedContent.type,
-				clientSequenceNumber,
 				message.referenceSequenceNumber,
 				message.deserializedContent.contents,
 				message.localOpMetadata,
 				message.metadata,
 			);
-
-			clientSequenceNumber++;
 		}
 	}
 

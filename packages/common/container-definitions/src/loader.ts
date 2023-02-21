@@ -544,9 +544,6 @@ export enum LoaderHeader {
 	 * otherwise, version sha to load snapshot
 	 */
 	version = "version",
-
-	// TODO #AB3350: This is a breaking change; it will be enabled in the "next" branch
-	// baseLogger = "fluid-base-logger"
 }
 
 export interface IContainerLoadMode {

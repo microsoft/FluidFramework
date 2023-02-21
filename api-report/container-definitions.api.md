@@ -385,10 +385,10 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
     // (undocumented)
     intelligence: {
@@ -454,7 +454,7 @@ export interface IProvideFluidCodeDetailsComparer {
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidTokenProvider {
     // (undocumented)
     readonly IFluidTokenProvider: IFluidTokenProvider;
@@ -482,7 +482,9 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
+    // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+    notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;

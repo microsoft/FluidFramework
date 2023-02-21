@@ -146,6 +146,18 @@ export enum CrossFieldTarget {
     Source = 0
 }
 
+// @alpha
+export interface CursorAdapter<TNode> {
+    // (undocumented)
+    getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
+    // (undocumented)
+    keysFromNode(node: TNode): readonly FieldKey[];
+    // (undocumented)
+    type(node: TNode): TreeType;
+    // (undocumented)
+    value(node: TNode): Value;
+}
+
 // @alpha (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -154,6 +166,12 @@ export const enum CursorLocationType {
 
 // @alpha
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
+
+// @alpha
+export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
+    fork(): CursorWithNode<TNode>;
+    getNode(): TNode;
+}
 
 // @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
@@ -212,6 +230,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
     readonly fieldSchema: FieldSchema;
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    readonly parent?: EditableTree;
     readonly primaryType?: TreeSchemaIdentifier;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
@@ -221,6 +240,10 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
     readonly [indexSymbol]: number;
+    readonly [parentField]: {
+        readonly parent: EditableField;
+        readonly index: number;
+    };
     readonly [proxyTargetSymbol]: object;
     [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [Symbol.iterator](): IterableIterator<EditableField>;
@@ -860,6 +883,9 @@ export interface OptionalFieldEditBuilder {
 }
 
 // @alpha
+export const parentField: unique symbol;
+
+// @alpha
 export interface PathRootPrefix {
     indexOffset?: number;
     parent?: UpPath | undefined;
@@ -999,6 +1025,9 @@ export class SimpleDependee implements Dependee {
 
 // @alpha
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
+
+// @alpha (undocumented)
+export function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
 
 // @alpha (undocumented)
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
