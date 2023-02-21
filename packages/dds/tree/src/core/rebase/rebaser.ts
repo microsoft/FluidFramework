@@ -46,7 +46,8 @@ export class Rebaser<TChange> {
 		// Find where `base` is in the target branch
 		const baseIndex = targetPath.findIndex((r) => r === base);
 		if (baseIndex === -1) {
-			assert(base === ancestor, "base is not in target branch");
+			// TODO: Ideally, this would be an "assertExpensive"
+			assert(findCommonAncestor(base, target) !== undefined, "base is not in target branch");
 			// Here, `base` must be `ancestor`, and therefore the source branch is already up to date with `base`.
 			return [source, this.changeRebaser.compose([])];
 		}
