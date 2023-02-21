@@ -683,8 +683,8 @@ describe("Runtime", () => {
 					assert.equal(containerErrors.length, 0);
 					mockLogger.assertMatchNone([
 						{
-							eventName: "Container:ContainerClose"
-						}
+							eventName: "Container:ContainerClose",
+						},
 					]);
 				},
 			);
@@ -703,8 +703,8 @@ describe("Runtime", () => {
 					assert.equal(containerErrors.length, 0);
 					mockLogger.assertMatchNone([
 						{
-							eventName: "Container:ContainerClose"
-						}
+							eventName: "Container:ContainerClose",
+						},
 					]);
 				},
 			);
@@ -735,8 +735,8 @@ describe("Runtime", () => {
 					assert.equal(containerErrors.length, 0);
 					mockLogger.assertMatchNone([
 						{
-							eventName: "Container:ContainerClose"
-						}
+							eventName: "Container:ContainerClose",
+						},
 					]);
 				},
 			);
