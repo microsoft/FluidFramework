@@ -168,7 +168,7 @@ export function getLinkForApiItem(
 	const url = getLinkUrlForApiItem(apiItem, config);
 	return {
 		text,
-		url,
+		target: url,
 	};
 }
 
@@ -273,7 +273,7 @@ function getApiItemPath(
  * To get the path, use {@link getFilePathForApiItem}.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the file name.
  */
 export function getFileNameForApiItem(
