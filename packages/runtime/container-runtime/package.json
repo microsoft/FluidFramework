@@ -117,6 +117,9 @@
 		"broken": {
 			"EnumDeclaration_RuntimeHeaders": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_ContainerRuntime": {
+				"forwardCompat": false
 			}
 		}
 	}

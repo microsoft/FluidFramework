@@ -18,6 +18,7 @@ export {
 	defaultInactiveTimeoutMs,
 	gcTestModeKey,
 	disableSweepLogKey,
+	sweepAttachmentBlobsKey,
 	gcVersionUpgradeToV2Key,
 	currentGCVersion,
 	stableGCVersion,
