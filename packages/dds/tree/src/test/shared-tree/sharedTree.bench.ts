@@ -629,7 +629,6 @@ function getTestTreeAsJSObject(
 	shape: TreeShape,
 	dataType: TestPrimitives,
 ): Jsonable {
-	const seed = 0;
 	let tree;
 	switch (shape) {
 		case TreeShape.Deep:
@@ -641,8 +640,7 @@ function getTestTreeAsJSObject(
 		default:
 			unreachableCase(shape);
 	}
-	const testTreeJS = JSON.parse(JSON.stringify(tree));
-	return testTreeJS;
+	return tree;
 }
 
 function getJSTestTreeWide(numberOfNodes: number, dataType: TestPrimitives): Jsonable {
@@ -688,6 +686,11 @@ function readTreeAsJSObject(tree: Jsonable) {
 	}
 }
 
+/**
+ * changes the value of the leaf node of the Jsonable tree.
+ * @param tree - tree in form of a Jsonable object
+ * @param shape - shape of the tree (wide vs deep)
+ */
 function manipulateTreeAsJSObject(tree: Jsonable, shape:TreeShape): void {
 	let nodesUnderRoot;
 	switch (shape) {
