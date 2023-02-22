@@ -280,7 +280,7 @@ export class EditManager<
 		if (rebasedBranch === this.trunk) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
 			this.pushToTrunk(sequenceNumber, newCommit);
-			this.peerLocalBranches.delete(newCommit.sessionId);
+			this.peerLocalBranches.set(newCommit.sessionId, this.trunk);
 		} else {
 			const newChangeFullyRebased = this.rebaser.rebaseChange(
 				newCommit.change,
