@@ -449,12 +449,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 					0x044 /* "On annotate ack, missing segment property manager!" */,
 				);
 				this.propertyManager.ackPendingProperties(opArgs.op);
-				if (
-					!this.propertyManager.hasPendingProperties() &&
-					Object.entries(this.properties!).length === 0
-				) {
-					this.propertyManager = undefined;
-				}
 				return true;
 
 			case MergeTreeDeltaType.INSERT:
