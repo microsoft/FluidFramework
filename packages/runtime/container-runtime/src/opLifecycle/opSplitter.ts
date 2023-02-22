@@ -13,6 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
+import { estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";
 
 /**
@@ -181,11 +182,12 @@ export class OpSplitter {
 		);
 
 		this.logger.sendPerformanceEvent({
-			eventName: "Chunked compressed batch",
+			eventName: "CompressedChunkedBatch",
 			length: batch.content.length,
 			sizeInBytes: batch.contentSizeInBytes,
 			chunks: chunks.length,
 			chunkSizeInBytes: this.chunkSizeInBytes,
+			networkSize: estimateSocketSize(batch),
 		});
 
 		return {
