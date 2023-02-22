@@ -389,7 +389,6 @@ export class DocumentDeltaConnection
 	}
 
 	protected disconnect(err: IAnyDriverError) {
-		clearInterval(this.trackLatencyTimer);
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.

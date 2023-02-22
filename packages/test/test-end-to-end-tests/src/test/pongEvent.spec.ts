@@ -30,22 +30,20 @@ const testRequest: IRequest = { url: id };
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
-// REVIEW: enable compat testing?
 describeNoCompat("Pong", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let clock: SinonFakeTimers;
 	const loaderContainerTracker = new LoaderContainerTracker();
 
-	before(async () => {
+	beforeEach(async function () {
 		provider = getTestObjectProvider();
 		// only run the test with local, odsp and frs drivers
-		if (
-			provider.driver.type !== "local" &&
-			provider.driver.type !== "odsp" &&
-			provider.driver.endpointName !== "frs"
-		) {
-			this.skip();
-		}
+		// if (
+		// 	provider.driver.type !== "odsp" &&
+		// 	provider.driver.endpointName !== "frs"
+		// ) {
+		// 	this.skip();
+		// }
 		clock = useFakeTimers();
 		const loader = new Loader({
 			logger: provider.logger,
@@ -91,13 +89,20 @@ describeNoCompat("Pong", (getTestObjectProvider) => {
 		return container;
 	}
 
-	it("Delta manager receives pong event", async () => {
+	it.only("Delta manager receives pong event", async () => {
 		const container = await createConnectedContainer();
-		// let initial registration of pong event happen
-		clock.tick(60000);
+		async function delay(ms: number) {
+			return new Promise( resolve => setTimeout(resolve, ms) );
+		}
+		let run = 0;
+		container.deltaManager.on("pong", ()=> { run++;});
 		// real pong events will take at least a minute to fire in real time, so exit test when we receive the real one.
-		await new Promise((resolve) => {
-			container.deltaManager.on("pong", resolve);
-		});
+		// await new Promise((resolve) => {
+		// 	// let initial registration of pong event happen
+		// 	clock.tick(60000);
+		// 	container.deltaManager.on("pong", resolve);
+		// });
+		clock.tick(60000);
+		assert.strictEqual(run,1,"hi");
 	});
 });

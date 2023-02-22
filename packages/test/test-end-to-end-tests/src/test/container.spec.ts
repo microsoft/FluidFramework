@@ -145,12 +145,20 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			"Client details should be set with interactive as true",
 		);
 	});
-	it("Delta manager receives pong event", async () => {
+	it("Delta manager receives pong event", async function () {
+		if (
+			provider.driver.type !== "local" &&
+			provider.driver.type !== "odsp" &&
+			provider.driver.endpointName !== "frs"
+		) {
+			this.skip();
+		}
 		const container = await createConnectedContainer();
-		// let initial registration of pong event happen
-		clock.tick(60000);
+		
 		// real pong events will take at least a minute to fire in real time, so exit test when we receive the real one.
 		await new Promise((resolve) => {
+			// let initial registration of pong event happen
+			clock.tick(60000);
 			container.deltaManager.on("pong", resolve);
 		});
 	});
