@@ -16,11 +16,11 @@ import { defaultSchemaPolicy } from "../defaultSchema";
 import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
 
 /**
- * Example strong type for an API derived from schema.
+ * Schema aware API for a specific Schema.
  *
- * A type similar to this could be used with EditableTree to provide a schema aware API.
- *
- * For now this just supports local fields:
+ * `Mode` specifies what API to provide.
+ * `TMap` provides access to all the schema and is used to look up child schema.
+ * `TSchema` specifies which type of node to generate the API for.
  * @alpha
  */
 export type TypedTree<
@@ -47,6 +47,7 @@ export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
 		  };
 
 /**
+ * Different schema aware APIs that can be generated.
  * @alpha
  */
 export const enum ApiMode {
@@ -77,6 +78,7 @@ export const enum ApiMode {
 }
 
 /**
+ * Collects the various parts of the API together.
  * @alpha
  */
 export type CollectOptions<
@@ -106,6 +108,7 @@ export type CollectOptions<
 }[Mode];
 
 /**
+ * The name and value part of the `Flexible` API.
  * @alpha
  */
 export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
@@ -118,6 +121,9 @@ export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
+ *
+ * TODO:
+ * Extend this to support global fields.
  * @alpha
  */
 export type TypedFields<
@@ -128,12 +134,13 @@ export type TypedFields<
 	{
 		[key in keyof TFields]: ApplyMultiplicity<
 			TFields[key]["kind"]["multiplicity"],
-			TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>
+			TypeSetToTypedTrees<TMap, Mode, TFields[key]["types"]>
 		>;
 	},
 ][TypedSchema._dummy];
 
 /**
+ * Adjusts the API for a field based on its Multiplicity.
  * @alpha
  */
 export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
@@ -144,11 +151,10 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
 }[TMultiplicity];
 
 /**
- * Takes in `types?: ReadonlySet<brandedTypeNameUnion>`
- * and returns a TypedTree union.
+ * Takes in `types?: unknown | TypedSchema.NameSet` and returns a TypedTree union.
  * @alpha
  */
-export type TreeTypesToTypedTreeTypes<
+export type TypeSetToTypedTrees<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
 	T extends unknown | TypedSchema.NameSet,
@@ -157,6 +163,7 @@ export type TreeTypesToTypedTreeTypes<
 ][TypedSchema._dummy];
 
 /**
+ * Interface which strongly typed schema collections extend.
  * @alpha
  */
 export interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
@@ -166,6 +173,15 @@ export interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
 }
 
 /**
+ * Collects schema into a `TypedSchemaData` without losing type information.
+ *
+ * TODO:
+ * 1. Extend this to support global fields.
+ * 2. Extend this to better support use in libraries
+ * which only have partial knowledge of what schema exist.
+ * Currently unbounded polymorphism is not correct in that case.
+ *
+ *
  * @alpha
  */
 export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(
@@ -204,10 +220,12 @@ export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(
 }
 
 /**
- * This is not an exact match for what `applyFieldTypesFromContext` allows: it does not require discriminators.
+ * Generate a schema aware API for a list of types.
  *
  * @remarks
  * The arguments here are in an order that makes the truncated strings printed for the types more useful.
+ * This is important since this generic type is not inlined when recursing.
+ * That mens it will show up in IntelliSense and errors.
  * @alpha
  */
 export type TypedNode<
@@ -223,7 +241,7 @@ export type TypedNode<
 }>;
 
 /**
- * This is not an exact match for what `applyFieldTypesFromContext` allows: it does not require discriminators.
+ * Generate a schema aware API for a single tree schema.
  * @alpha
  */
 export type NodeDataFor<

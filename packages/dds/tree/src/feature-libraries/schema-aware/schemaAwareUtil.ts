@@ -9,7 +9,7 @@ import { PrimitiveValue } from "../contextuallyTyped";
 import { TypedSchema } from "../modular-schema";
 
 /**
- * `ValueSchema` to allowed types for that schema.
+ * {@link ValueSchema} to allowed types for that schema.
  * @alpha
  */
 export type TypedValue<TValue extends ValueSchema> = {
@@ -21,7 +21,7 @@ export type TypedValue<TValue extends ValueSchema> = {
 }[TValue];
 
 /**
- * `ValueSchema` to allowed types for that schema.
+ * {@link ValueSchema} for privative types.
  * @alpha
  */
 export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
@@ -38,6 +38,10 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
 }
 
 /**
+ * Extract names from a list of `LabeledTreeSchema`.
+ *
+ * @remarks
+ * This uses the inner name from `typeInfo` to avoid the unneeded branding that `T["name"]` has.
  * @alpha
  */
 export type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema<any>[]> = T extends [

@@ -10,11 +10,18 @@ import { Named } from "../../../core";
  */
 
 /**
- * https://code.lol/post/programming/higher-kinded-types/
+ * Assume that `TInput` is a `TAssumeToBe`.
+ *
+ * @remarks
+ * This is useful in generic code when it is impractical (or messy)
+ * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
+ * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow complication of the generic code.
+ * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
+ * it will behave like `TInput` was used directly.
  *
  * @alpha
  */
-export type Assume<T, U> = T extends U ? T : U;
+export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 /**
  * Convert a object type into the type of a ReadonlyMap from field name to value.
@@ -28,13 +35,6 @@ export type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = R
 };
 
 /**
- * Convert a object type into the type of a ReadonlySet from field name to value.
- */
-export type ObjectToSet<ObjectMap, MapKey extends number | string> = ReadonlySet<MapKey> & {
-	values<TKey extends keyof ObjectMap>(key: TKey): keyof ObjectMap[];
-};
-
-/**
  * Convert a Array type into the type of ReadonlySet.
  *
  * Same as `keyof ListToKeys<T, unknown>` but work for values that are not valid keys.
@@ -44,7 +44,7 @@ export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (inf
 	: never;
 
 /**
- * Takes in a list of strings, and returns an object with those strings as keys.
+ * Takes in a list and returns an object with its members as keys.
  * @alpha
  */
 export type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
@@ -64,14 +64,13 @@ export type WithDefault<T, Default> = T extends undefined
 	: T;
 
 /**
+ * Normalize a name or `Named` into the name.
  * @alpha
  */
 export type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
 
 /**
  * Converts list of names or named objects into list of names.
- *
- * Version of AsNames that does not use "hkt-toolbelt".
  * @alpha
  */
 export type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<
@@ -80,17 +79,13 @@ export type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assu
 >;
 
 /**
- * Converts list of names or named objects into list of names.
- *
- * Version of AsNames that does not use "hkt-toolbelt".
+ * Removes a type brand. See {@link brand}.
  * @alpha
  */
 export type Unbrand<T, B> = T extends infer S & B ? S : T;
 
 /**
- * Converts list of names or named objects into list of names.
- *
- * Version of AsNames that does not use "hkt-toolbelt".
+ * Converts list of branded types into list of unbranded ones.
  * @alpha
  */
 export type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail]
@@ -105,7 +100,8 @@ export type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infe
 export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_dummy];
 
 /**
- *@alpha
+ * Remove all fields which permit undefined from `T`.
+ * @alpha
  */
 export type RequiredFields<T> = [
 	{
@@ -114,7 +110,7 @@ export type RequiredFields<T> = [
 ][_dummy];
 
 /**
- * Like Partial but removes fields which may not be undefined and fields which can only be undefined.
+ * Extract fields which permit undefined but can also hold other types.
  * @alpha
  */
 export type OptionalFields<T> = [
@@ -129,14 +125,21 @@ export type OptionalFields<T> = [
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
+ * Removes fields which only allow undefined.
  *
+ * @remarks
+ * This version does not flatten the resulting type.
+ * This version exists because some cases recursive types need to avoid this
+ * flattening since it causes complication issues.
+ *
+ * See also `AllowOptional`.
  * @alpha
  */
 export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
- *
+ * Removes fields which only allow undefined.
  * @alpha
  */
 export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_dummy];

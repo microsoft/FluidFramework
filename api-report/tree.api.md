@@ -38,14 +38,14 @@ export class AnchorSet {
     track(path: UpPath | null): Anchor;
 }
 
-// @alpha (undocumented)
+// @alpha
 const enum ApiMode {
     Flexible = 0,
     Normalized = 1,
     Wrapped = 2
 }
 
-// @alpha (undocumented)
+// @alpha
 type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
     [Multiplicity.Forbidden]: undefined;
     [Multiplicity.Optional]: undefined | TypedChild;
@@ -59,14 +59,14 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
     [n: number]: TSet;
 }
 
-// @alpha (undocumented)
+// @alpha
 type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
 
 // @alpha
 type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNames<Tail, TName>] : [], TName[]>;
 
 // @alpha
-type Assume<T, U> = T extends U ? T : U;
+type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -139,7 +139,7 @@ export interface ChildLocation {
     readonly index: number;
 }
 
-// @alpha (undocumented)
+// @alpha
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
     [ApiMode.Flexible]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
     [ApiMode.Normalized]: [Record<string, never>, TValueSchema] extends [
@@ -526,7 +526,7 @@ type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
 }][_dummy];
 
-// @alpha (undocumented)
+// @alpha
 type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
 TypedSchema.FlattenKeys<{
     [typeNameSymbol]?: TName;
@@ -631,7 +631,7 @@ interface Insert<TTree = ProtoNode> {
 
 declare namespace InternalTypes {
     export {
-        TreeTypesToTypedTreeTypes,
+        TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
         TypedSchemaData,
         TypedNode,
         TypedTree,
@@ -943,7 +943,7 @@ interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeSchemaId
     readonly typeCheck?: Invariant<Names>;
 }
 
-// @alpha (undocumented)
+// @alpha
 type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema<any>[]> = T extends [
 infer Head,
 ...infer Tail
@@ -1095,7 +1095,7 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 // @alpha
 export const replaceField: unique symbol;
 
-// @alpha (undocumented)
+// @alpha
 type RequiredFields<T> = [
     {
     [P in keyof T as undefined extends T[P] ? never : P]: T[P];
@@ -1326,11 +1326,6 @@ export type TreeType = TreeSchemaIdentifier;
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @alpha
-type TreeTypesToTypedTreeTypes<TMap extends TypedSchemaData, Mode extends ApiMode, T extends unknown | TypedSchema.NameSet> = [
-TypedNode<T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"], Mode, TMap>
-][TypedSchema._dummy];
-
-// @alpha
 export interface TreeValue extends Serializable {
 }
 
@@ -1339,7 +1334,7 @@ type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields ext
     [key: string]: TypedSchema.FieldSchemaTypeInfo;
 }> = [
     {
-    [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>>;
+    [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TypeSetToTypedTrees<TMap, Mode, TFields[key]["types"]>>;
 }
 ][TypedSchema._dummy];
 
@@ -1385,7 +1380,7 @@ declare namespace TypedSchema {
 }
 export { TypedSchema }
 
-// @alpha (undocumented)
+// @alpha
 interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
     // (undocumented)
     allTypes: readonly string[];
@@ -1393,7 +1388,7 @@ interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
     treeSchemaObject: Record<string, any>;
 }
 
-// @alpha (undocumented)
+// @alpha
 function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & {
     treeSchemaObject: {
         [schema in T[number] as schema["typeInfo"]["name"]]: schema;
@@ -1434,6 +1429,11 @@ type TypedValue<TValue extends ValueSchema> = {
 
 // @alpha
 export const typeNameSymbol: unique symbol;
+
+// @alpha
+type TypeSetToTypedTrees<TMap extends TypedSchemaData, Mode extends ApiMode, T extends unknown | TypedSchema.NameSet> = [
+TypedNode<T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"], Mode, TMap>
+][TypedSchema._dummy];
 
 // @alpha
 export const typeSymbol: unique symbol;

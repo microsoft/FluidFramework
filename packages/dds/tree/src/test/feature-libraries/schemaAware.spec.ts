@@ -6,7 +6,7 @@
 import {
 	ApiMode,
 	NodeDataFor,
-	TreeTypesToTypedTreeTypes,
+	TypeSetToTypedTrees,
 	TypedSchemaData,
 	typedSchemaData,
 	TypedNode,
@@ -45,6 +45,7 @@ const numberSchema = tree("number", {
 	value: ValueSchema.Number,
 });
 
+// Check the various ways to refer to child types produce the same results
 {
 	const numberField1 = field(value, numberSchema);
 	const numberField2 = field(value, numberSchema.name);
@@ -150,11 +151,11 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	type BallXFieldTypes = BallXFieldInfo["types"];
 	type check_ = requireAssignableTo<BallXFieldTypes, TypedSchema.NameSet<["number"]>>;
 
-	type Child = TreeTypesToTypedTreeTypes<typeof schemaData, ApiMode.Flexible, BallXFieldTypes>;
+	type Child = TypeSetToTypedTrees<typeof schemaData, ApiMode.Flexible, BallXFieldTypes>;
 
 	type check3_ = requireAssignableTo<Child, NumberTree>;
 	type check4_ = requireAssignableTo<NumberTree, Child>;
-	type Child2 = TreeTypesToTypedTreeTypes<
+	type Child2 = TypeSetToTypedTrees<
 		typeof schemaData,
 		ApiMode.Flexible,
 		TypedSchema.NameSet<["number"]>

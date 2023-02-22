@@ -5,7 +5,7 @@
 
 // Used by put public types, but not part of the desired API surface
 export {
-	TreeTypesToTypedTreeTypes,
+	TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
 	TypedSchemaData,
 	TypedNode,
 	TypedTree,
