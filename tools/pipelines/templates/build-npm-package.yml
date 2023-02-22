@@ -102,6 +102,7 @@ parameters:
 # a pipeline stage separate from the build stage.
 - name: checks
   type: object
+  default: []
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
