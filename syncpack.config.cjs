@@ -126,7 +126,6 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped into numbered groups.
 	 */
 	versionGroups: [
-		// All dependencies on these common Fluid packages outside the release group should match
 		{
       label: "Versions of common Fluid packages should all match",
 			dependencies: [
@@ -138,7 +137,6 @@ module.exports = {
 			packages: ["**"],
 		},
 
-		// engines.node and engines.npm versions should match
 		{
       label: "Versions in engines field should all match",
 			dependencyTypes: ["engines"],
@@ -146,9 +144,6 @@ module.exports = {
 			packages: ["**"],
 		},
 
-		// Version Group 3
-		// packageManager versions should match, though this field is only used in the release group root
-		// package.json today.
 		{
       label: "Versions in packageManager field should all match",
       dependencyTypes: ["packageManager"],
@@ -156,8 +151,6 @@ module.exports = {
 			packages: ["**"],
 		},
 
-		// Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our
-		// >= < semver ranges.
 		{
       label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
 			isIgnored: true,
