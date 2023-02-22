@@ -54,6 +54,7 @@ export function renderDiceRoller(
 	};
 	diceCounter.on("incremented", updateCounter);
 
+	// Use the diceRolled close event to disable the roll button and add a message.
 	const onClosed = () => {
 		rollButton.disabled = true;
 		const closedText = document.createElement("div");

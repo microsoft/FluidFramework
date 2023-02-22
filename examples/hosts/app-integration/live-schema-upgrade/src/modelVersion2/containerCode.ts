@@ -55,7 +55,7 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 		const currentVersion = this.getCurrentVersion();
 		const latestVersion = await getLatestVersion();
 		if (currentVersion === latestVersion) {
-			// We should try to upgrade if we are already on the latest version.
+			// We shouldn't try to upgrade if we are already on the latest version.
 			return;
 		}
 		console.log(`Upgrading to ${latestVersion}`);

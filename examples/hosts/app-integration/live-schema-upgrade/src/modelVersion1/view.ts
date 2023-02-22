@@ -37,6 +37,7 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
 	// Use the diceRolled event to trigger the rerender whenever the value changes.
 	diceRoller.on("diceRolled", updateDiceChar);
 
+	// Use the diceRolled close event to disable the roll button and add a message.
 	const onClosed = () => {
 		rollButton.disabled = true;
 		const closedText = document.createElement("div");

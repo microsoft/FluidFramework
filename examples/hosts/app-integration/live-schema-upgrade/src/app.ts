@@ -56,10 +56,15 @@ async function start() {
 	let model: IDiceRollerAppModel;
 
 	if (modelVersion === "1.0") {
+		// In this example, if modelVersion is 1.0 then we are creating a new container. We will create it using the 
+		// 1.0 container schema, which does not have the DiceCounter data object.
 		const createResponse = await modelLoader.createDetached("1.0");
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
+		// In this example, if modelVersion is not 1.0 then we will be loading an existing container. This container
+		// may or may not be using using the 1.0 container schema, so we will check the version of the container below
+		// and upgrade the model if necessary.
 		id = location.hash.substring(1);
 		model = await modelLoader.loadExisting(id);
 		assert(
@@ -77,6 +82,9 @@ async function start() {
 	document.title = id;
 
 	const contentDiv = document.getElementById("content") as HTMLDivElement;
+	// Depending on the modelVersion, we will render the app differently since the 1.0 model will not have a counter.
+	// This will likely not be necessary in a production app, since you will likely know which version of the model you
+	// are trying to render.
 	if (modelVersion === "1.0") {
 		renderDiceRoller1(model.diceRoller, contentDiv);
 	} else {
