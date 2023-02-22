@@ -3,9 +3,10 @@
 
 # include-policy-check
 #
-# This template
+# This template can be included in pipelines that run check scripts as part of their pipeline. The check scripts are
+# executed serially in a separate stage from the main build.
 #
-# IMPORTANT: Only works with pnpm. Don't use in any pipelines that use another package manager.
+# IMPORTANT: This template only works with pnpm. Don't use in any pipelines that use another package manager.
 
 parameters:
 - name: buildDirectory
