@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EditableField, fail, ISharedTree, SharedTreeFactory } from "@fluid-internal/tree";
+import { fail, ISharedTree, SharedTreeFactory } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./appState";
-import { appSchemaData, ClientTreeProxy } from "./schema";
+import { appSchemaData, ClientsField } from "./schema";
 
 export class Bubblebench extends DataObject {
 	public static get Name() {
@@ -39,7 +39,7 @@ export class Bubblebench extends DataObject {
 			throw new Error("hasInitialized called but tree is still undefined");
 		}
 		this.maybeAppState = new AppState(
-			this.tree.root as ClientTreeProxy[] & EditableField,
+			this.tree.root as ClientsField,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,

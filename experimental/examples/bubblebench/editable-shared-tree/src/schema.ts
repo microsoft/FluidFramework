@@ -17,13 +17,8 @@ import {
 const { value, sequence } = FieldKinds;
 const { tree, field } = TypedSchema;
 
-export const stringSchema = tree("String", {
-	value: ValueSchema.String,
-});
-
-export const numberSchema = tree("number", {
-	value: ValueSchema.Number,
-});
+export const stringSchema = tree("string", { value: ValueSchema.String });
+export const numberSchema = tree("number", { value: ValueSchema.Number });
 
 export const bubbleSchema = tree("BubbleBenchAppStateBubble-1.0.0", {
 	local: {
@@ -44,41 +39,28 @@ export const clientSchema = tree("BubbleBenchAppStateClient-1.0.0", {
 });
 
 // TODO: Generate this from schema automatically instead of hand coding it.
-export type BubbleTreeProxy = EditableTree & NormalizedBubble;
+export type Bubble = EditableTree & NormalizedBubble;
 
-export type FlexBubble = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
-	SchemaAware.ApiMode.Flexible,
-	typeof bubbleSchema
->;
+type Typed<
+	TSchema extends TypedSchema.LabeledTreeSchema<any>,
+	TMode extends SchemaAware.ApiMode = SchemaAware.ApiMode.Normalized,
+> = SchemaAware.NodeDataFor<typeof appSchemaData, TMode, TSchema>;
 
-export type NormalizedBubble = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
-	SchemaAware.ApiMode.Normalized,
-	typeof bubbleSchema
->;
+export type NormalizedBubble = Typed<typeof bubbleSchema>;
+export type NormalizedClient = Typed<typeof clientSchema>;
 
-export type FlexClient = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
-	SchemaAware.ApiMode.Flexible,
-	typeof clientSchema
->;
-
-export type NormalizedClient = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
-	SchemaAware.ApiMode.Normalized,
-	typeof clientSchema
->;
+export type FlexBubble = Typed<typeof bubbleSchema, SchemaAware.ApiMode.Flexible>;
+export type FlexClient = Typed<typeof clientSchema, SchemaAware.ApiMode.Flexible>;
 
 // TODO: Generate this from schema automatically instead of hand coding it.
-export type ClientTreeProxy = EditableTree & {
+export type Client = EditableTree & {
 	clientId: string;
 	color: string;
-	bubbles: EditableField & BubbleTreeProxy[];
+	bubbles: EditableField & Bubble[];
 };
 
 // TODO: Generate this from schema automatically instead of hand coding it.
-export type ClientsField = EditableField & ClientTreeProxy[];
+export type ClientsField = EditableField & Client[];
 
 export const rootAppStateSchema = field(sequence, clientSchema);
 
