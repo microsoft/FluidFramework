@@ -124,6 +124,17 @@ function createMockClient(clientId: string): IClient {
 	};
 }
 
+function createMockClient(clientId: string): IClient {
+	return {
+		mode: "read",
+		details: { capabilities: { interactive: false } },
+		permission: [],
+		user: { id: clientId },
+		scopes: [],
+		timestamp: Date.now(),
+	};
+}
+
 /**
  * Creates a mock {@link @fluidframework/container-definitions#IContainer} for use in tests.
  *

@@ -70,9 +70,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-tools/version-tools": "^0.10.0",
-		"@fluidframework/build-tools": "^0.10.0",
-		"@fluidframework/bundle-size-tools": "^0.10.0",
+		"@fluid-tools/version-tools": "workspace:^",
+		"@fluidframework/build-tools": "workspace:^",
+		"@fluidframework/bundle-size-tools": "workspace:^",
 		"@oclif/core": "^1.9.5",
 		"@oclif/plugin-autocomplete": "^1.3.5",
 		"@oclif/plugin-commands": "^2.2.0",
