@@ -28,7 +28,7 @@ function assertAncestor(
 	const foundAncestor = findAncestor([descendant, path], (n) => n === expectedAncestor);
 	assert.equal(foundAncestor, expectedAncestor);
 	if (expectedPath !== undefined) {
-		assert.equal(path, expectedPath);
+		assert.deepEqual(path, expectedPath);
 	}
 }
 
