@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { IDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -16,7 +17,6 @@ import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Less batches", (getTestObjectProvider) => {
