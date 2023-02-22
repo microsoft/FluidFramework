@@ -7,12 +7,13 @@
 export {
 	TreeTypesToTypedTreeTypes,
 	TypedSchemaData,
-	ValidContextuallyTypedNodeData,
+	TypedNode,
 	TypedTree,
 	CollectOptions,
 	TypedFields,
 	ApplyMultiplicity,
 	ValueFieldTreeFromSchema,
+	FlexibleObject,
 } from "./schemaAware";
 
 export { NamesFromSchema, ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";

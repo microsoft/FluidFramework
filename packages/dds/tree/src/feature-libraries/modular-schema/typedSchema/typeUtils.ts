@@ -100,37 +100,34 @@ export type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infe
 /**
  * Return a type thats equivalent to the input, but with different IntelliSense.
  * This tends to convert unions and intersections into objects.
+ * @alpha
  */
-export type FlattenKeys<T> = {
-	_dummy: { [Property in keyof T]: T[Property] };
-}[_dummy];
+export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_dummy];
 
 /**
  *@alpha
  */
-export type RemoveOptionalFields<T> = {
-	_dummy: {
+export type RemoveOptionalFields<T> = [
+	{
 		[P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
-	};
-}[_dummy];
+	},
+][_dummy];
 
 /**
  * Like Partial but removes files which may be undefined.
  * @alpha
  */
-export type PartialWithoutUndefined<T> = {
-	_dummy: {
+export type PartialWithoutUndefined<T> = [
+	{
 		[P in keyof T as T[P] extends undefined ? never : P]?: T[P];
-	};
-}[_dummy];
+	},
+][_dummy];
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
  * @alpha
  */
-export type AllowOptional<T> = {
-	_dummy: PartialWithoutUndefined<T> & RemoveOptionalFields<T>;
-}[_dummy];
+export type AllowOptional<T> = [PartialWithoutUndefined<T> & RemoveOptionalFields<T>][_dummy];
 
 /**
  * Field to use for trick to "inline" generic types.
@@ -143,13 +140,16 @@ export type AllowOptional<T> = {
  * For example:
  * ```typescript
  * type MyGeneric<T1, T2> = {x: T1 extends [] ? T1 : T2 };
- * type MyGenericExpanded<T1, T2> = {_dummy: {x: T1 extends [] ? T1 : T2 }}['_dummy']
+ * type MyGenericExpanded<T1, T2> = [{x: T1 extends [] ? T1 : T2 }][_dummy]
  *
  * // Type is MyGeneric<5, string>
  * const foo: MyGeneric<5, string> = {x: "x"}
  * // Type is {x: "x"}
  * const foo2: MyGenericExpanded<5, string> = {x: "x"}
  * ```
+ *
+ * This constant is defined to provide a way to find this documentation from types which use this pattern,
+ * and to locate types which use this pattern in case they need updating for compiler changes.
  * @alpha
  */
-export type _dummy = "_dummy";
+export type _dummy = 0;

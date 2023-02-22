@@ -85,19 +85,14 @@ export type CollectOptions<
 	TValueSchema extends ValueSchema,
 	TName,
 > = {
-	[ApiMode.Flexible]: TypedSchema.AllowOptional<
-		| ({ [typeNameSymbol]?: TName } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields)
-		| (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never)
-	>;
-	[ApiMode.Normalized]: Record<string, never> extends TTypedFields
-		? TValueSchema extends PrimitiveValueSchema
-			? TypedValue<TValueSchema>
-			: TypedSchema.AllowOptional<
-					{
-						[typeNameSymbol]: TName & TreeSchemaIdentifier;
-					} & ValueFieldTreeFromSchema<TValueSchema> &
-						TTypedFields
-			  >
+	[ApiMode.Flexible]: Record<string, never> extends TTypedFields
+		? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName>
+		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptional<TTypedFields>;
+	[ApiMode.Normalized]: [Record<string, never>, TValueSchema] extends [
+		TTypedFields,
+		PrimitiveValueSchema,
+	]
+		? TypedValue<TValueSchema>
 		: TypedSchema.AllowOptional<
 				{
 					[typeNameSymbol]: TName & TreeSchemaIdentifier;
@@ -111,6 +106,17 @@ export type CollectOptions<
 }[Mode];
 
 /**
+ * @alpha
+ */
+export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
+	TypedSchema.FlattenKeys<
+		{ [typeNameSymbol]?: TName } & TypedSchema.AllowOptional<
+			ValueFieldTreeFromSchema<TValueSchema>
+		>
+	>,
+][TypedSchema._dummy];
+
+/**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  * @alpha
  */
@@ -118,12 +124,14 @@ export type TypedFields<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
 	TFields extends { [key: string]: TypedSchema.FieldSchemaTypeInfo },
-> = {
-	[key in keyof TFields]: ApplyMultiplicity<
-		TFields[key]["kind"]["multiplicity"],
-		TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>
-	>;
-};
+> = [
+	{
+		[key in keyof TFields]: ApplyMultiplicity<
+			TFields[key]["kind"]["multiplicity"],
+			TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>
+		>;
+	},
+][TypedSchema._dummy];
 
 /**
  * @alpha
@@ -144,11 +152,9 @@ export type TreeTypesToTypedTreeTypes<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
 	T extends unknown | TypedSchema.NameSet,
-> = ValidContextuallyTypedNodeData<
-	TMap,
-	Mode,
-	T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"]
->;
+> = [
+	TypedNode<T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"], Mode, TMap>,
+][TypedSchema._dummy];
 
 /**
  * @alpha
@@ -199,12 +205,15 @@ export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(
 
 /**
  * This is not an exact match for what `applyFieldTypesFromContext` allows: it does not require discriminators.
+ *
+ * @remarks
+ * The arguments here are in an order that makes the truncated strings printed for the types more useful.
  * @alpha
  */
-export type ValidContextuallyTypedNodeData<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
+export type TypedNode<
 	TNames extends readonly string[],
+	Mode extends ApiMode,
+	TMap extends TypedSchemaData,
 > = ValuesOf<{
 	[Property in keyof TypedSchema.ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
 		[key in Property]: any;
@@ -221,4 +230,4 @@ export type NodeDataFor<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
 	TSchema extends TypedSchema.LabeledTreeSchema<any>,
-> = ValidContextuallyTypedNodeData<TMap, Mode, readonly [TSchema["typeInfo"]["name"]]>;
+> = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;

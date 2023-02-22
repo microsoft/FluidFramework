@@ -13,9 +13,7 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @alpha
-type AllowOptional<T> = {
-    _dummy: PartialWithoutUndefined<T> & RemoveOptionalFields<T>;
-}[_dummy];
+type AllowOptional<T> = [PartialWithoutUndefined<T> & RemoveOptionalFields<T>][_dummy];
 
 // @alpha
 export type Anchor = Brand<number, "rebaser.Anchor">;
@@ -140,12 +138,11 @@ export interface ChildLocation {
 
 // @alpha (undocumented)
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
-    [ApiMode.Flexible]: TypedSchema.AllowOptional<({
-        [typeNameSymbol]?: TName;
-    } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields) | (Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : never)>;
-    [ApiMode.Normalized]: Record<string, never> extends TTypedFields ? TValueSchema extends PrimitiveValueSchema ? TypedValue<TValueSchema> : TypedSchema.AllowOptional<{
-        [typeNameSymbol]: TName & TreeSchemaIdentifier;
-    } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields> : TypedSchema.AllowOptional<{
+    [ApiMode.Flexible]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptional<TTypedFields>;
+    [ApiMode.Normalized]: [Record<string, never>, TValueSchema] extends [
+    TTypedFields,
+    PrimitiveValueSchema
+    ] ? TypedValue<TValueSchema> : TypedSchema.AllowOptional<{
         [typeNameSymbol]: TName & TreeSchemaIdentifier;
     } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields>;
     [ApiMode.Wrapped]: {
@@ -274,7 +271,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @alpha
-type _dummy = "_dummy";
+type _dummy = 0;
 
 // @alpha
 export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | ContextuallyTypedNodeData> {
@@ -522,6 +519,18 @@ export interface FieldUpPath {
 }
 
 // @alpha
+type FlattenKeys<T> = [{
+    [Property in keyof T]: T[Property];
+}][_dummy];
+
+// @alpha (undocumented)
+type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
+TypedSchema.FlattenKeys<{
+    [typeNameSymbol]?: TName;
+} & TypedSchema.AllowOptional<ValueFieldTreeFromSchema<TValueSchema>>>
+][TypedSchema._dummy];
+
+// @alpha
 export interface ForestEvents {
     afterDelta(delta: Delta.Root): void;
     beforeDelta(delta: Delta.Root): void;
@@ -621,12 +630,13 @@ declare namespace InternalTypes {
     export {
         TreeTypesToTypedTreeTypes,
         TypedSchemaData,
-        ValidContextuallyTypedNodeData,
+        TypedNode,
         TypedTree,
         CollectOptions,
         TypedFields,
         ApplyMultiplicity,
         ValueFieldTreeFromSchema,
+        FlexibleObject,
         NamesFromSchema,
         ValuesOf,
         TypedValue,
@@ -986,7 +996,7 @@ export interface NodeData {
 }
 
 // @alpha
-type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema<any>> = ValidContextuallyTypedNodeData<TMap, Mode, readonly [TSchema["typeInfo"]["name"]]>;
+type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema<any>> = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;
 
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
@@ -1015,11 +1025,11 @@ export interface OptionalFieldEditBuilder {
 export const parentField: unique symbol;
 
 // @alpha
-type PartialWithoutUndefined<T> = {
-    _dummy: {
-        [P in keyof T as T[P] extends undefined ? never : P]?: T[P];
-    };
-}[_dummy];
+type PartialWithoutUndefined<T> = [
+    {
+    [P in keyof T as T[P] extends undefined ? never : P]?: T[P];
+}
+][_dummy];
 
 // @alpha
 export interface PathRootPrefix {
@@ -1075,11 +1085,11 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha (undocumented)
-type RemoveOptionalFields<T> = {
-    _dummy: {
-        [P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
-    };
-}[_dummy];
+type RemoveOptionalFields<T> = [
+    {
+    [P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
+}
+][_dummy];
 
 // @alpha
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
@@ -1306,7 +1316,9 @@ export type TreeType = TreeSchemaIdentifier;
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @alpha
-type TreeTypesToTypedTreeTypes<TMap extends TypedSchemaData, Mode extends ApiMode, T extends unknown | TypedSchema.NameSet> = ValidContextuallyTypedNodeData<TMap, Mode, T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"]>;
+type TreeTypesToTypedTreeTypes<TMap extends TypedSchemaData, Mode extends ApiMode, T extends unknown | TypedSchema.NameSet> = [
+TypedNode<T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"], Mode, TMap>
+][TypedSchema._dummy];
 
 // @alpha
 export interface TreeValue extends Serializable {
@@ -1315,15 +1327,24 @@ export interface TreeValue extends Serializable {
 // @alpha
 type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
     [key: string]: TypedSchema.FieldSchemaTypeInfo;
-}> = {
+}> = [
+    {
     [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TreeTypesToTypedTreeTypes<TMap, Mode, TFields[key]["types"]>>;
-};
+}
+][TypedSchema._dummy];
 
 // @alpha
 function typedFieldSchema<TKind extends FieldKind, TTypes extends (string | Named<string>)[]>(kind: TKind, ...typeArray: TTypes): {
     kind: TKind;
     types: NameSet<UnbrandList<AsNames<TTypes>, TreeSchemaIdentifier>>;
 };
+
+// @alpha
+type TypedNode<TNames extends readonly string[], Mode extends ApiMode, TMap extends TypedSchemaData> = ValuesOf<{
+    [Property in keyof TypedSchema.ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
+        [key in Property]: any;
+    } ? TypedTree<TMap, Mode, TMap["treeSchemaObject"][Property]> : never;
+}>;
 
 declare namespace TypedSchema {
     export {
@@ -1347,7 +1368,8 @@ declare namespace TypedSchema {
         RemoveOptionalFields,
         Unbrand,
         UnbrandList,
-        _dummy
+        _dummy,
+        FlattenKeys
     }
 }
 export { TypedSchema }
@@ -1423,13 +1445,6 @@ export interface UpPath {
     readonly parentField: FieldKey;
     readonly parentIndex: number;
 }
-
-// @alpha
-type ValidContextuallyTypedNodeData<TMap extends TypedSchemaData, Mode extends ApiMode, TNames extends readonly string[]> = ValuesOf<{
-    [Property in keyof TypedSchema.ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
-        [key in Property]: any;
-    } ? TypedTree<TMap, Mode, TMap["treeSchemaObject"][Property]> : never;
-}>;
 
 // @alpha
 export type Value = undefined | TreeValue;

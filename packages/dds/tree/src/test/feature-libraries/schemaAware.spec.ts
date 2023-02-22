@@ -9,7 +9,7 @@ import {
 	TreeTypesToTypedTreeTypes,
 	TypedSchemaData,
 	typedSchemaData,
-	ValidContextuallyTypedNodeData,
+	TypedNode,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/schema-aware/schemaAware";
 
@@ -117,9 +117,7 @@ const extractedTypes = schemaData.allTypes;
 const extractedTypes2 = schemaData2.allTypes;
 
 // Example Use:
-type BallTreeX = FlattenKeys<
-	ValidContextuallyTypedNodeData<typeof schemaData, ApiMode.Flexible, readonly ["ball"]>
->;
+type BallTreeX = FlattenKeys<TypedNode<readonly ["ball"], ApiMode.Flexible, typeof schemaData>>;
 type BallTree = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>;
 
 {
@@ -127,11 +125,7 @@ type BallTree = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSche
 }
 
 // We can also get the type for the "number" nodes.
-type NumberTree = ValidContextuallyTypedNodeData<
-	typeof schemaData,
-	ApiMode.Flexible,
-	readonly ["number"]
->;
+type NumberTree = TypedNode<readonly ["number"], ApiMode.Flexible, typeof schemaData>;
 
 const n1: NumberTree = 5;
 const n2: NumberTree = { [valueSymbol]: 5 };
@@ -171,9 +165,20 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 }
 
 interface TypeBuilder<TSchema extends TypedSchema.LabeledTreeSchema<any>> {
-	a: FlattenKeys<NodeDataFor<typeof schemaData, ApiMode.Flexible, TSchema>>;
-	b: FlattenKeys<NodeDataFor<typeof schemaData, ApiMode.Normalized, TSchema>>;
-	c: FlattenKeys<NodeDataFor<typeof schemaData, ApiMode.Wrapped, TSchema>>;
+	a: NodeDataFor<typeof schemaData, ApiMode.Flexible, TSchema>;
+	b: NodeDataFor<typeof schemaData, ApiMode.Normalized, TSchema>;
+	c: NodeDataFor<typeof schemaData, ApiMode.Wrapped, TSchema>;
+}
+
+// Test terminal cases:
+{
+	type F = TypeBuilder<typeof numberSchema>;
+	type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof numberSchema>;
+	type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof numberSchema>;
+	type AC = NodeDataFor<typeof schemaData, ApiMode.Wrapped, typeof numberSchema>;
+	type XA = F["a"];
+	type XB = F["b"];
+	type XC = F["c"];
 }
 
 // Test non recursive cases:
