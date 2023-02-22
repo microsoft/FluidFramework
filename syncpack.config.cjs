@@ -29,34 +29,30 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped into numbered groups.
 	 */
 	semverGroups: [
-		// Semver Group 1
-		// engines.node should always use >= range
 		{
+      label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
 			dependencies: ["node"],
 			packages: ["**"],
 			range: ">=",
 		},
 
-		// Semver Group 2
-		// engines.npm should always use ^ range
 		{
+      label: "engines.npm should always use caret ranges",
 			dependencyTypes: ["engines"],
 			dependencies: ["npm"],
 			packages: ["**"],
 			range: "^",
 		},
 
-		// Semver Group 3
-		// packageManager should always use exact version
 		{
+      label: "packageManager should always use exact dependency ranges",
 			dependencyTypes: ["packageManager"],
 			dependencies: ["**"],
 			packages: ["**"],
 			range: "",
 		},
 
-		// Semver Group 4
 		// PropertyDDS packages' dependencies are ignored because they use a lot of exact deps.
 		{
 			dependencies: ["**"],
@@ -64,18 +60,16 @@ module.exports = {
 			isIgnored: true,
 		},
 
-		// Semver Group 5
-		// Dependencies declared in pnpm overrides should use caret.
 		{
+      label: "Deps in pnpm overrides should use caret dependency ranges",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
 			packages: ["**"],
 			range: "^",
 		},
 
-		// Semver Group 6
-		// These dependencies should always be on exact versions
 		{
+      label: "Must use exact dependency ranges",
 			dependencies: [
 				"@tiny-calc/*",
 				"@graphql-codegen/cli",
@@ -97,10 +91,10 @@ module.exports = {
 			range: "",
 		},
 
-		// Semver Group 7
 		// Some dependencies, like typescript and eslint, recommend to use tilde deps because minors introduce
 		// changes that may break linting
 		{
+      label: "Must use tilde dependency ranges",
 			dependencies: [
 				"eslint-plugin-*",
 				"eslint-config-prettier",
@@ -115,9 +109,9 @@ module.exports = {
 			range: "~",
 		},
 
-		// Semver Group 8
 		// All deps should use caret ranges unless previously overridden
 		{
+      label: "Dependencies should use caret dependency ranges",
 			dependencies: ["**"],
 			dependencyTypes: ["dev", "peer", "prod"],
 			packages: ["**"],
@@ -132,9 +126,9 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped into numbered groups.
 	 */
 	versionGroups: [
-		// Version Group 1
 		// All dependencies on these common Fluid packages outside the release group should match
 		{
+      label: "Versions of common Fluid packages should all match",
 			dependencies: [
 				"@fluidframework/build-common",
 				"@fluidframework/eslint-config-fluid",
@@ -144,9 +138,9 @@ module.exports = {
 			packages: ["**"],
 		},
 
-		// Version Group 2
 		// engines.node and engines.npm versions should match
 		{
+      label: "Versions in engines field should all match",
 			dependencyTypes: ["engines"],
 			dependencies: ["**"],
 			packages: ["**"],
@@ -156,15 +150,16 @@ module.exports = {
 		// packageManager versions should match, though this field is only used in the release group root
 		// package.json today.
 		{
-			dependencyTypes: ["packageManager"],
+      label: "Versions in packageManager field should all match",
+      dependencyTypes: ["packageManager"],
 			dependencies: ["**"],
 			packages: ["**"],
 		},
 
-		// Version Group 4
 		// Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our
 		// >= < semver ranges.
 		{
+      label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
 			isIgnored: true,
 			packages: [
 				"@fluid-example/**",
