@@ -184,7 +184,7 @@ export type HookFunction = () => void | Promise<unknown>;
 
 /**
  * Arguments that can be passed to `benchmark` for optional test setup/teardown. Hooks execute once per test body
- * (*not* on each cycle or sample). Hooks--along with the benchmarked function--are run without additional error
+ * (*not* on each cycle or iteration). Hooks--along with the benchmarked function--are run without additional error
  * validation. This means any exception thrown from either a hook or the benchmarked function will cause test
  * failure, and subsequent operations won't be run.
  * @public
@@ -192,6 +192,7 @@ export type HookFunction = () => void | Promise<unknown>;
 export interface HookArguments {
 	before?: HookFunction;
 	after?: HookFunction;
+	onCycle?: HookFunction;
 }
 
 /**

@@ -6,12 +6,26 @@
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeDeltaType } from "../ops";
-import { loadSnapshot, TestString } from "./snapshot.utils";
 import { insertText } from "./testUtils";
 
-describe("insertion perf", () => {
-	let summary;
+function constructTree(numOfSegments: number): MergeTree {
+	const mergeTree = new MergeTree();
+	for (let i = 0; i < numOfSegments; i++) {
+		insertText({
+			mergeTree,
+			pos: 0,
+			refSeq: i,
+			clientId: 0,
+			seq: i,
+			text: "a",
+			props: undefined,
+			opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+		});
+	}
+	return mergeTree;
+}
 
+describe("insertion perf", () => {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert into empty tree",
@@ -30,22 +44,13 @@ describe("insertion perf", () => {
 		},
 	});
 
+	let startTree = constructTree(1000);
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert at start of large tree",
-		before: () => {
-			const str = new TestString("id", {});
-			for (let i = 0; i < 1000; i++) {
-				str.append("a", false);
-			}
-
-			summary = str.getSummary();
-		},
-		benchmarkFn: async () => {
-			const str = await loadSnapshot(summary);
-
+		benchmarkFn: () => {
 			insertText({
-				mergeTree: str.mergeTree,
+				mergeTree: startTree,
 				pos: 0,
 				refSeq: 1000,
 				clientId: 0,
@@ -55,25 +60,19 @@ describe("insertion perf", () => {
 				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
 			});
 		},
+		onCycle: () => {
+			startTree = constructTree(1000);
+		},
 	});
 
+	let middleTree = constructTree(1000);
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert at middle of large tree",
-		before: () => {
-			const str = new TestString("id", {});
-			for (let i = 0; i < 1000; i++) {
-				str.append("a", false);
-			}
-
-			summary = str.getSummary();
-		},
-		benchmarkFn: async () => {
-			const str = await loadSnapshot(summary);
-
+		benchmarkFn: () => {
 			insertText({
-				mergeTree: str.mergeTree,
-				pos: 1000,
+				mergeTree: middleTree,
+				pos: 500,
 				refSeq: 1000,
 				clientId: 0,
 				seq: 1001,
@@ -81,25 +80,19 @@ describe("insertion perf", () => {
 				props: undefined,
 				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
 			});
+		},
+		onCycle: () => {
+			middleTree = constructTree(1000);
 		},
 	});
 
+	let endTree = constructTree(1000);
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert at end of large tree",
-		before: () => {
-			const str = new TestString("id", {});
-			for (let i = 0; i < 1000; i++) {
-				str.append("a", false);
-			}
-
-			summary = str.getSummary();
-		},
 		benchmarkFn: async () => {
-			const str = await loadSnapshot(summary);
-
 			insertText({
-				mergeTree: str.mergeTree,
+				mergeTree: endTree,
 				pos: 1000,
 				refSeq: 1000,
 				clientId: 0,
@@ -108,6 +101,9 @@ describe("insertion perf", () => {
 				props: undefined,
 				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
 			});
+		},
+		onCycle: () => {
+			endTree = constructTree(1000);
 		},
 	});
 });
