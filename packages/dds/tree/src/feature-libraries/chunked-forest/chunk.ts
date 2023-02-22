@@ -121,7 +121,10 @@ interface WithChunk {
  * See {@link WithChunk}.
  */
 export function tryGetChunk(cursor: ITreeCursor): undefined | TreeChunk {
-	assert(cursor.mode === CursorLocationType.Nodes, 0x57b /* cursorChunk only accessible in nodes mode */);
+	assert(
+		cursor.mode === CursorLocationType.Nodes,
+		0x57b /* cursorChunk only accessible in nodes mode */,
+	);
 	return (cursor as WithChunk)[cursorChunk];
 }
 

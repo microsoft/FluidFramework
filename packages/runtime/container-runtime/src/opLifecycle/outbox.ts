@@ -235,7 +235,10 @@ export class Outbox {
 
 			this.params.containerContext.deltaManager.flush();
 		} else {
-			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
+			assert(
+				batch.referenceSequenceNumber !== undefined,
+				0x58e /* Batch must not be empty */,
+			);
 			this.params.containerContext.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,

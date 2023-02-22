@@ -234,7 +234,10 @@ export const splitOp = (op: BatchMessage, chunkSizeInBytes: number): IChunkedOp[
 
 		chunks.push(chunk);
 		offset += chunkSizeInBytes;
-		assert(i === chunkCount - 1 || offset <= contentLength, 0x58b /* Content offset within bounds */);
+		assert(
+			i === chunkCount - 1 || offset <= contentLength,
+			0x58b /* Content offset within bounds */,
+		);
 	}
 
 	assert(offset >= contentLength, 0x58c /* Content offset equal or larger than content length */);
