@@ -10,9 +10,10 @@ import { relayMessageToWindow, relayMessageToPort, isValidDebuggerMessage } from
  * This module is the extension's Content Script.
  * It lives in the tab context alongside the page being communicated with.
  *
- * From an implementation perspective, this script strictly relays messages between the page
- * and the Background Script. We do not do any rendering to the page, nor do we directly
- * analyze any page contents. All interaction with the page is done via message passing.
+ * From an implementation perspective, this script strictly relays messages between the page and the Background Script.
+ * The Background Script is then responsible for relaying messages between this script and the Devtools script.
+ * We do not do any rendering to the page, nor do we directly analyze any page contents.
+ * All interaction with the page is done via message passing.
  *
  * TODO link to docs on Content script + Devtools extension flow
  */

@@ -8,7 +8,8 @@ import { DevToolsInitMessage, isValidDebuggerMessage, relayMessageToPort } from 
 
 /**
  * This module is the extension's Background Script.
- * It runs in a background worker, and is initialized by the Devtools script when needed.
+ * It runs in a background worker, and has no direct access to the page or any of its resources.
+ * It is initialized by the Devtools script when needed.
  *
  * From an implementation perspective, this script strictly relays messages between the page
  * (via the Content Script) to the Devtool Script.
