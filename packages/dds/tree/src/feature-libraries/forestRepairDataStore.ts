@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
+	castCursorToSynchronous,
 	Delta,
 	EmptyKey,
 	FieldKey,
@@ -12,7 +13,6 @@ import {
 	IForestSubscription,
 	ITreeCursorSynchronous,
 	keyAsDetachedField,
-	MapTree,
 	moveToDetachedField,
 	RepairDataStore,
 	RevisionTag,
@@ -20,12 +20,11 @@ import {
 	UpPath,
 	Value,
 } from "../core";
-import { unreachableCase } from "../util";
-import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
+import { chunkTree, TreeChunk, defaultChunkPolicy } from "./chunked-forest";
 
 interface RepairData {
 	value?: Map<RevisionTag, Value>;
-	node?: Map<RevisionTag, MapTree>;
+	node?: Map<RevisionTag, TreeChunk>;
 }
 type RepairDataNode = SparseNode<RepairData | undefined>;
 
@@ -138,7 +137,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 				const fork = cursor.fork();
 				const index = startIndex + i;
 				fork.enterNode(index);
-				const nodeData = mapTreeFromCursor(fork);
+				const nodeData = chunkTree(castCursorToSynchronous(fork), defaultChunkPolicy);
 				fork.free();
 				const child = parent.getOrCreateChild(key, index, repairDataFactory);
 				if (child.data === undefined) {
@@ -175,7 +174,14 @@ export class ForestRepairDataStore implements RepairDataStore {
 		return sparseField.slice(sparseIndex, sparseIndex + count).map((node) => {
 			const repair = node.data?.node?.get(revision);
 			assert(repair !== undefined, 0x47d /* No repair data found */);
-			return singleMapTreeCursor(repair);
+			const cursor = repair.cursor();
+			// TODO: leverage TreeChunk's ability to represent a range of contiguous nodes
+			assert(
+				cursor.getFieldLength() === 1,
+				0x55b /* only one node should have been chunked */,
+			);
+			cursor.firstNode();
+			return cursor;
 		});
 	}
 

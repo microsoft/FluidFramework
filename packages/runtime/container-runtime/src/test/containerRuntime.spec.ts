@@ -13,7 +13,11 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { FlushMode, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import {
+	FlushMode,
+	FlushModeExperimental,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -25,11 +29,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import {
+	CompressionAlgorithms,
 	ContainerMessageType,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { PendingStateManager } from "../pendingStateManager";
+import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -83,8 +88,14 @@ describe("Runtime", () => {
 		});
 
 		describe("orderSequentially", () =>
-			[FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
-				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+			[
+				FlushMode.TurnBased,
+				FlushMode.Immediate,
+				FlushModeExperimental.Async as unknown as FlushMode,
+			].forEach((flushMode: FlushMode) => {
+				describe(`orderSequentially with flush mode: ${
+					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
+				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					let mockContext: Partial<IContainerContext>;
 					const submittedOpsMetdata: any[] = [];
@@ -96,6 +107,7 @@ describe("Runtime", () => {
 							deltaManager: new MockDeltaManager(),
 							quorum: new MockQuorumClients(),
 							taggedLogger: new MockLogger(),
+							supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
 							clientDetails: { capabilities: { interactive: true } },
 							closeFn: (error?: ICriticalContainerError): void => {
 								if (error !== undefined) {
@@ -355,31 +367,35 @@ describe("Runtime", () => {
 		});
 
 		describe("orderSequentially with rollback", () =>
-			[FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
-				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+			[
+				FlushMode.TurnBased,
+				FlushMode.Immediate,
+				FlushModeExperimental.Async as unknown as FlushMode,
+			].forEach((flushMode: FlushMode) => {
+				describe(`orderSequentially with flush mode: ${
+					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
+				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					const containerErrors: ICriticalContainerError[] = [];
 
-					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
-						return {
-							attachState: AttachState.Attached,
-							deltaManager: new MockDeltaManager(),
-							quorum: new MockQuorumClients(),
-							taggedLogger: mixinMonitoringContext(
-								new MockLogger(),
-								configProvider({
-									"Fluid.ContainerRuntime.EnableRollback": true,
-								}),
-							) as unknown as MockLogger,
-							clientDetails: { capabilities: { interactive: true } },
-							closeFn: (error?: ICriticalContainerError): void => {
-								if (error !== undefined) {
-									containerErrors.push(error);
-								}
-							},
-							updateDirtyContainerState: (dirty: boolean) => {},
-						};
-					};
+					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => ({
+						attachState: AttachState.Attached,
+						deltaManager: new MockDeltaManager(),
+						quorum: new MockQuorumClients(),
+						taggedLogger: mixinMonitoringContext(
+							new MockLogger(),
+							configProvider({
+								"Fluid.ContainerRuntime.EnableRollback": true,
+							}),
+						) as unknown as MockLogger,
+						clientDetails: { capabilities: { interactive: true } },
+						closeFn: (error?: ICriticalContainerError): void => {
+							if (error !== undefined) {
+								containerErrors.push(error);
+							}
+						},
+						updateDirtyContainerState: (dirty: boolean) => {},
+					});
 
 					beforeEach(async () => {
 						containerRuntime = await ContainerRuntime.loadRuntime({
@@ -602,7 +618,6 @@ describe("Runtime", () => {
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
 				pendingStateManager.onSubmitMessage(
 					ContainerMessageType.FluidDataStoreOp,
-					0,
 					0,
 					"",
 					"",
@@ -954,6 +969,212 @@ describe("Runtime", () => {
 					myEntryPoint,
 					"entryPoint does not match expected object",
 				);
+			});
+		});
+
+		describe("Op content modification", () => {
+			let containerRuntime: ContainerRuntime;
+			let pendingStateManager: PendingStateManager;
+
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+				});
+				pendingStateManager = (containerRuntime as any).pendingStateManager;
+			});
+
+			it("modifying op content after submit does not reflect in PendingStateManager", () => {
+				const content = { prop1: 1 };
+				containerRuntime.submitDataStoreOp("1", content);
+				(containerRuntime as any).flush();
+
+				content.prop1 = 2;
+
+				const state = pendingStateManager.getLocalState();
+
+				assert.notStrictEqual(state, undefined, "expect pending local state");
+				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
+				assert.deepStrictEqual(
+					(state?.pendingStates[0] as IPendingMessage).content.contents,
+					{
+						prop1: 1,
+					},
+					"content of pending local message has changed",
+				);
+			});
+		});
+
+		describe("Container logging when loaded", () => {
+			let mockLogger: MockLogger;
+
+			const localGetMockContext = (
+				featureGates: Record<string, ConfigTypes> = {},
+			): Partial<IContainerContext> => {
+				return {
+					attachState: AttachState.Attached,
+					deltaManager: new MockDeltaManager(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: mixinMonitoringContext(
+						mockLogger,
+						configProvider(featureGates),
+					) as unknown as MockLogger,
+					supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (_error?: ICriticalContainerError): void => {},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+				};
+			};
+
+			beforeEach(async () => {
+				mockLogger = new MockLogger();
+			});
+
+			const runtimeOptions = {
+				compressionOptions: {
+					minimumBatchSizeInBytes: 1024 * 1024,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				chunkSizeInBytes: 800 * 1024,
+				gcOptions: {
+					gcAllowed: true,
+				},
+				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+			};
+
+			const defaultRuntimeOptions = {
+				summaryOptions: {},
+				gcOptions: {},
+				loadSequenceNumberVerification: "close",
+				flushMode: FlushMode.TurnBased,
+				enableOfflineLoad: false,
+				compressionOptions: {
+					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				maxBatchSizeInBytes: 950 * 1024,
+				chunkSizeInBytes: Number.POSITIVE_INFINITY,
+				enableOpReentryCheck: false,
+			};
+			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
+
+			it("Container load stats", async () => {
+				await ContainerRuntime.loadRuntime({
+					context: localGetMockContext({}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions,
+				});
+
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(mergedRuntimeOptions),
+						featureGates: JSON.stringify({}),
+					},
+				]);
+			});
+
+			it("Container load stats with feature gate overrides", async () => {
+				const featureGates = {
+					"Fluid.ContainerRuntime.DisableCompression": true,
+					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
+					"Fluid.ContainerRuntime.DisableCompressionChunking": true,
+				};
+				await ContainerRuntime.loadRuntime({
+					context: localGetMockContext(featureGates) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions,
+				});
+
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(mergedRuntimeOptions),
+						featureGates: JSON.stringify({
+							disableCompression: true,
+							disableOpReentryCheck: false,
+							disableChunking: true,
+						}),
+					},
+				]);
+			});
+		});
+
+		describe("Container feature detection", () => {
+			const mockLogger = new MockLogger();
+
+			beforeEach(() => {
+				mockLogger.clear();
+			});
+
+			const localGetMockContext = (
+				features?: ReadonlyMap<string, unknown>,
+			): Partial<IContainerContext> => {
+				return {
+					attachState: AttachState.Attached,
+					deltaManager: new MockDeltaManager(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: mockLogger,
+					supportedFeatures: features,
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (_error?: ICriticalContainerError): void => {},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+				};
+			};
+
+			[
+				undefined,
+				new Map([["referenceSequenceNumbers", false]]),
+				new Map([
+					["other", true],
+					["feature", true],
+				]),
+			].forEach((features) => {
+				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
+					const runtime = await ContainerRuntime.loadRuntime({
+						context: localGetMockContext(features) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+						},
+					});
+
+					assert.equal(runtime.flushMode, FlushMode.TurnBased);
+					mockLogger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:FlushModeFallback",
+							category: "error",
+						},
+					]);
+				});
+			});
+
+			it("Loader supported for async FlushMode", async () => {
+				const runtime = await ContainerRuntime.loadRuntime({
+					context: localGetMockContext(
+						new Map([["referenceSequenceNumbers", true]]),
+					) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+					},
+				});
+
+				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
+				mockLogger.assertMatchNone([
+					{
+						eventName: "ContainerRuntime:FlushModeFallback",
+						category: "error",
+					},
+				]);
 			});
 		});
 	});

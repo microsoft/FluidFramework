@@ -17,7 +17,6 @@ import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
@@ -29,6 +28,10 @@ import {
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
 import { CounterWidget } from "../widgets";
+import { initializeFluentUiIcons } from "../../InitializeIcons";
+
+// Ensure FluentUI icons are initialized.
+initializeFluentUiIcons();
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -91,7 +94,10 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(): (ContainerInfo | undefined)[] {
+function useContainerInfo(): {
+	privateContainer: ContainerInfo | undefined;
+	sharedContainer: ContainerInfo | undefined;
+} {
 	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
 		ContainerInfo | undefined
 	>();
@@ -100,67 +106,62 @@ function useContainerInfo(): (ContainerInfo | undefined)[] {
 	>();
 
 	// Get the Fluid Data data on app startup and store in the state
-	React.useEffect(() => {
-		async function getFluidData(): Promise<ContainerInfo> {
-			let container: IFluidContainer;
-			let audience: ITinyliciousAudience;
-			let containerId = getContainerIdFromLocation(window.location);
-			if (containerId.length === 0) {
-				({ container, audience, containerId } = await createFluidContainer(
-					containerSchema,
-					populateRootMap,
-				));
-			} else {
-				({ container, audience } = await loadExistingFluidContainer(
-					containerId,
-					containerSchema,
-				));
+	React.useEffect(
+		() => {
+			async function getSharedFluidData(): Promise<ContainerInfo> {
+				const containerNickname = "Shared Container";
+
+				const containerId = getContainerIdFromLocation(window.location);
+				return containerId.length === 0
+					? createFluidContainer(containerSchema, populateRootMap, containerNickname)
+					: loadExistingFluidContainer(containerId, containerSchema, containerNickname);
 			}
 
-			return { container, audience, containerId };
-		}
+			getSharedFluidData().then(
+				(data) => {
+					if (getContainerIdFromLocation(window.location) !== data.containerId) {
+						window.location.hash = data.containerId;
+					}
 
-		getFluidData().then(
-			(data) => {
-				if (getContainerIdFromLocation(window.location) !== data.containerId) {
-					window.location.hash = data.containerId;
+					initializeFluidClientDebugger(data);
+					setSharedContainerInfo(data);
+				},
+				(error) => {
+					console.error(error);
+				},
+			);
+
+			async function getPrivateContainerData(): Promise<ContainerInfo> {
+				// Always create a new container for the private view.
+				// This isn't shared with other collaborators.
+				return createFluidContainer(containerSchema, populateRootMap, "Private Container");
+			}
+
+			getPrivateContainerData().then(
+				(data) => {
+					initializeFluidClientDebugger(data);
+					setPrivateContainerInfo(data);
+				},
+				(error) => {
+					console.error(error);
+				},
+			);
+
+			return (): void => {
+				if (sharedContainerInfo !== undefined) {
+					closeFluidClientDebugger(sharedContainerInfo.containerId);
 				}
+				if (privateContainerInfo !== undefined) {
+					closeFluidClientDebugger(privateContainerInfo.containerId);
+				}
+			};
+		},
+		// This app never changes the containers after initialization, so we just want to run this effect once.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
 
-				initializeFluidClientDebugger(data);
-				setSharedContainerInfo(data);
-			},
-			(error) => {
-				console.error(error);
-			},
-		);
-
-		async function getPrivateContainerData(): Promise<ContainerInfo> {
-			// Always create a new container for the private view.
-			// This isn't shared with other collaborators.
-			return createFluidContainer(containerSchema, populateRootMap);
-		}
-
-		getPrivateContainerData().then(
-			(data) => {
-				initializeFluidClientDebugger(data);
-				setPrivateContainerInfo(data);
-			},
-			(error) => {
-				console.error(error);
-			},
-		);
-
-		return (): void => {
-			if (sharedContainerInfo !== undefined) {
-				closeFluidClientDebugger(sharedContainerInfo.containerId);
-			}
-			if (privateContainerInfo !== undefined) {
-				closeFluidClientDebugger(privateContainerInfo.containerId);
-			}
-		};
-	}, []);
-
-	return [sharedContainerInfo, privateContainerInfo];
+	return { sharedContainer: sharedContainerInfo, privateContainer: privateContainerInfo };
 }
 
 const appTheme = createTheme({
@@ -207,34 +208,28 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Load the collaborative SharedString object
-	const containers = useContainerInfo();
-
-	if (containers.length !== 2) {
-		console.error(
-			`Initialization created an unexpected number of containers: ${containers.length}`,
-		);
-	}
+	const { privateContainer, sharedContainer } = useContainerInfo();
 
 	const view = (
 		<Stack horizontal>
 			<StackItem>
-				{containers[0] === undefined ? (
+				{sharedContainer === undefined ? (
 					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 						<Spinner />
-						<div>Loading Fluid container...</div>
+						<div>Loading Shared container...</div>
 					</Stack>
 				) : (
-					<AppView containerInfo={containers[0]} />
+					<AppView containerInfo={sharedContainer} />
 				)}
 			</StackItem>
 			<StackItem>
-				{containers[1] === undefined ? (
+				{privateContainer === undefined ? (
 					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 						<Spinner />
-						<div>Loading Fluid container...</div>
+						<div>Loading Private container...</div>
 					</Stack>
 				) : (
-					<AppView containerInfo={containers[1]} />
+					<AppView containerInfo={privateContainer} />
 				)}
 			</StackItem>
 		</Stack>
@@ -257,7 +252,7 @@ interface AppViewProps {
  */
 function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
-	const { container } = containerInfo;
+	const { container, containerId, containerNickname } = containerInfo;
 
 	const rootMap = container.initialObjects.rootMap as SharedMap;
 	if (rootMap === undefined) {
@@ -277,6 +272,17 @@ function AppView(props: AppViewProps): React.ReactElement {
 	return (
 		<Stack horizontal className={rootStackStyles}>
 			<StackItem className={appViewPaneStackStyles}>
+				<h4>
+					{containerNickname === undefined ? (
+						<></>
+					) : (
+						<>
+							{containerNickname}
+							<br />
+						</>
+					)}
+					{containerId}
+				</h4>
 				<Stack>
 					<StackItem>
 						<CounterView sharedCounterHandle={sharedCounterHandle} />

@@ -18,7 +18,8 @@ Shared Tree is the response to that feedback.
 
 Shared Tree is a DDS designed to keep hierarchical data synchronized between clients.
 Its development is being driven by significant feedback from developers looking for Fluid data structures that map more closely to their application data models.
-This document lays out the goals for Shared Tree development and the motivation behind those goals. Here is a list of the key scenarios described in this document:
+This document lays out the goals for Shared Tree development and the motivation behind those goals.
+Here is a list of the key scenarios described in this document:
 
 -   [Read and write data to the Shared Tree without an in-memory JavaScript representation](#tree-reading-and-writing-without-reification)
 -   [Apply sets of related changes atomically with no interleaved changes (transactions)](#isolation-of-synchronous-non-overlapping-transaction)
@@ -87,7 +88,9 @@ In Shared Tree, the core algorithms for processing edits to the tree have the du
 The scaling requirement means that these algorithms should be able to operate without reifying (loading/reading) the tree data and should be a function only of the operations themselves.
 The intention preservation requirement dictates that all editing operations should have an intuitive effect on the tree even during concurrency.
 
-The mechanism in Shared Tree responsible for satisfying these criteria is called the Rebaser. Some of the resulting design documents can be found [here](../docs). The operations available in the editing API (e.g., insert, delete) are rolled out incrementally in future milestones.
+The mechanism in Shared Tree responsible for satisfying these criteria is called the Rebaser.
+Some of the resulting design documents can be found [here](../docs).
+The operations available in the editing API (e.g., insert, delete) are rolled out incrementally in future milestones.
 
 ## UUID Compression Scheme
 
@@ -156,7 +159,8 @@ See also [undo/redo](#undoredo).
 A key objective of Shared Tree is that it be intuitive and easy for developers to use.
 To enable this, Shared Tree will include a high-level API that presents the tree as if it were composed of JavaScript objects.
 This is ideally suited for developers who prioritize familiarity and speed of development over low-level performance.
-Note that this API is a wrapper that uses JavaScript proxies and does not impose any schema. Schema will be supported but not as part of this milestone.
+Note that this API is a wrapper that uses JavaScript proxies and does not impose any schema.
+Schema will be supported but not as part of this milestone.
 
 This API is called the Editable Tree API and is [here](../src/feature-libraries/editable-tree/README.md).
 
@@ -217,7 +221,8 @@ At this stage, developers using the legacy tree DDS can (and should) switch to S
 To make this transition as painless as possible, the following will be true:
 
 -   Developers will have access to a data migration system.
-    This mechanism can be used to safely and losslessly migrate data from the legacy tree to the Shared Tree. The migration is performed client-side and can be run on demand (at load time, in response to a user action, etc.).
+    This mechanism can be used to safely and losslessly migrate data from the legacy tree to the Shared Tree.
+    The migration is performed client-side and can be run on demand (at load time, in response to a user action, etc.).
 -   The persisted format is stable and backward compatibility is guaranteed.
     This means that all versions of data (ops and summaries) ever written by the new Shared Tree are supported for reading (loading) forever.
 -   As the Shared Tree data format evolves, there will—for every new data version released—always exist a Shared Tree package that supports writing both the latest major version and the one just prior.
@@ -253,7 +258,8 @@ The constraints delivered in this milestone include specifying that a given node
 
 > Pending
 
-Schema determines how the data in the Shared Tree is structured and modified based on user-defined rules. Nodes in the tree include a _type_ field;
+Schema determines how the data in the Shared Tree is structured and modified based on user-defined rules.
+Nodes in the tree include a _type_ field;
 these types are associated with rules that govern the shape of the data (e.g., which types are allowed in which fields).
 This metadata is stored in the tree ([schema specification](../src/core/schema-stored/README.md)) and the Shared Tree uses it to guarantee that data conforms to the schema even in the face of concurrent editing.
 This milestone exposes the ability to author a schema, create schematized data, and guarantees that edits will never violate that schema.

@@ -88,11 +88,13 @@ export interface IBatchMessage {
     contents?: string;
     // (undocumented)
     metadata: Record<string, unknown> | undefined;
+    // (undocumented)
+    referenceSequenceNumber?: number;
 }
 
-// @public
+// @public @deprecated
 export interface ICodeAllowList {
-    // (undocumented)
+    // @deprecated (undocumented)
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
@@ -191,13 +193,15 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
-    readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+    readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
     // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
-    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
+    readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
+    // (undocumented)
+    readonly supportedFeatures?: ReadonlyMap<string, unknown>;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)
@@ -385,10 +389,10 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
     // (undocumented)
     intelligence: {
@@ -454,7 +458,7 @@ export interface IProvideFluidCodeDetailsComparer {
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidTokenProvider {
     // (undocumented)
     readonly IFluidTokenProvider: IFluidTokenProvider;
@@ -483,7 +487,9 @@ export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint?(): Promise<FluidObject | undefined>;
     getPendingLocalState(): unknown;
+    // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+    notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;

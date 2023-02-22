@@ -10,21 +10,19 @@ const _ = require("lodash");
  * @return {Object} ChangeSet with encoded template information
  */
 function getEncodedTemplates(changeSet) {
-    if (
-        !changeSet ||
-        !changeSet.insertTemplates ||
-        Object.keys(changeSet.insertTemplates).length === 0
-    ) {
-        return {};
-    }
+	if (
+		!changeSet ||
+		!changeSet.insertTemplates ||
+		Object.keys(changeSet.insertTemplates).length === 0
+	) {
+		return {};
+	}
 
-    return {
-        insert: {
-            String: _.mapValues(changeSet.insertTemplates, (val) =>
-                JSON.stringify(val)
-            ),
-        },
-    };
+	return {
+		insert: {
+			String: _.mapValues(changeSet.insertTemplates, (val) => JSON.stringify(val)),
+		},
+	};
 }
 
 /**
@@ -33,23 +31,21 @@ function getEncodedTemplates(changeSet) {
  * @return {Object} Decoded templates section, ready to be assigned to a ChangeSet
  */
 function getDecodedTemplates(changeSet) {
-    if (
-        !changeSet ||
-        !changeSet.insert ||
-        !changeSet.insert.String ||
-        Object.keys(changeSet.insert.String).length === 0
-    ) {
-        return {};
-    }
+	if (
+		!changeSet ||
+		!changeSet.insert ||
+		!changeSet.insert.String ||
+		Object.keys(changeSet.insert.String).length === 0
+	) {
+		return {};
+	}
 
-    return {
-        insertTemplates: _.mapValues(changeSet.insert.String, (val) =>
-            JSON.parse(val)
-        ),
-    };
+	return {
+		insertTemplates: _.mapValues(changeSet.insert.String, (val) => JSON.parse(val)),
+	};
 }
 
 module.exports = {
-    getEncodedTemplates,
-    getDecodedTemplates,
+	getEncodedTemplates,
+	getDecodedTemplates,
 };

@@ -9,7 +9,7 @@ import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import nock from "nock";
 import { RouterliciousOrdererRestWrapper } from "../restWrapper";
-import { R11sErrorType } from "../errorUtils";
+import { RouterliciousErrorType } from "../errorUtils";
 import { DefaultTokenProvider } from "../defaultTokenProvider";
 import { ITokenResponse } from "../tokens";
 
@@ -121,7 +121,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost).get(testPath).reply(404);
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: false,
-				errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
+				errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
@@ -184,7 +184,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost).post(testPath).reply(404);
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: false,
-				errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
+				errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
@@ -247,7 +247,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost).patch(testPath).reply(404);
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: false,
-				errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
+				errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
@@ -310,7 +310,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost).delete(testPath).reply(404);
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: false,
-				errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
+				errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {

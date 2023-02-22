@@ -4,7 +4,8 @@
  */
 
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
-import { brand, JsonCompatibleReadOnly } from "../../util";
+import { brand, fail, JsonCompatibleReadOnly } from "../../util";
+import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
 	NodeChangeset,
@@ -15,6 +16,7 @@ import {
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	IdAllocator,
+	isolatedFieldChangeRebaser,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -55,7 +57,7 @@ export type EncodedGenericChangeset = EncodedGenericChange[];
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
  */
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
-	rebaser: {
+	rebaser: isolatedFieldChangeRebaser({
 		compose: (
 			changes: TaggedChange<GenericChangeset>[],
 			composeChildren: NodeChangeComposer,
@@ -134,7 +136,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			rebased.push(...change.slice(iChange));
 			return rebased;
 		},
-	},
+	}),
 	encoder: {
 		encodeForJson(
 			formatVersion: number,
@@ -204,5 +206,12 @@ export function convertGenericChange<TChange>(
 	const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
 		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
 	);
-	return target.rebaser.compose(perIndex, composeChild, genId);
+
+	return target.rebaser.compose(perIndex, composeChild, genId, invalidCrossFieldManager);
 }
+
+const invalidFunc = () => fail("Should not be called when converting generic changes");
+const invalidCrossFieldManager: CrossFieldManager = {
+	getOrCreate: invalidFunc,
+	get: invalidFunc,
+};

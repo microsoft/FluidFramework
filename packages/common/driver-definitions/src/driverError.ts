@@ -74,7 +74,7 @@ export enum DriverErrorType {
 	 * This error occurs when the file is modified externally (not through Fluid protocol) in storage.
 	 * It will occur in cases where client has some state or cache that is based on old content (identity) of a file,
 	 * and storage / driver / loader detects such mismatch.
-	 * When it's hit, client needs to forget all the knowlege about this file and start over.
+	 * When it's hit, client needs to forget all the knowledge about this file and start over.
 	 */
 	fileOverwrittenInStorage = "fileOverwrittenInStorage",
 

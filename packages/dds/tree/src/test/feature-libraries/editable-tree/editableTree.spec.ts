@@ -21,8 +21,9 @@ import {
 	GlobalFieldKey,
 	ValueSchema,
 	LocalFieldKey,
+	rootFieldKeySymbol,
 } from "../../../core";
-import { brand, clone, isAssignableTo, requireTrue } from "../../../util";
+import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
 import {
 	defaultSchemaPolicy,
 	getEditableTreeContext,
@@ -48,11 +49,13 @@ import {
 	ContextuallyTypedNodeData,
 	ContextuallyTypedNodeDataObject,
 	MarkedArrayLike,
+	EditableTreeContext,
 } from "../../../feature-libraries";
 
 import {
 	FieldProxyTarget,
 	NodeProxyTarget,
+	parentField,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/editable-tree/editableTree";
@@ -81,18 +84,15 @@ function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest 
 	return forest;
 }
 
-function buildTestProxy(
-	data: JsonableTree,
-): readonly [SchemaDataAndPolicy, UnwrappedEditableField] {
+function buildTestTree(data: JsonableTree): EditableTreeContext {
 	const forest = setupForest(fullSchemaData, [data]);
 	const context = getEditableTreeContext(forest);
-	const root: UnwrappedEditableField = context.unwrappedRoot;
-	return [forest.schema, root];
+	return context;
 }
 
 function buildTestPerson(): readonly [SchemaDataAndPolicy, Person] {
-	const [schema, proxy] = buildTestProxy(personData);
-	return [schema, proxy as Person];
+	const context = buildTestTree(personData);
+	return [context.schema, context.unwrappedRoot as Person];
 }
 
 describe("editable-tree: read-only", () => {
@@ -342,20 +342,20 @@ describe("editable-tree: read-only", () => {
 		// Value does not show up when empty:
 		assert.equal(valueSymbol in personProxy, false);
 
-		const [, emptyOptional] = buildTestProxy(emptyNode);
+		const emptyOptional = buildTestTree(emptyNode).unwrappedRoot;
 		assert(isUnwrappedNode(emptyOptional));
 		// Check empty field does not show up:
 		assert.equal("child" in emptyOptional, false);
 
-		const [, fullOptional] = buildTestProxy({
+		const fullOptional = buildTestTree({
 			type: optionalChildSchema.name,
 			fields: { child: [{ type: int32Schema.name, value: 1 }] },
-		});
+		}).unwrappedRoot;
 		assert(isUnwrappedNode(fullOptional));
 		// Check full field does show up:
 		assert("child" in fullOptional);
 
-		const [, hasValue] = buildTestProxy({ type: optionalChildSchema.name, value: 1 });
+		const hasValue = buildTestTree({ type: optionalChildSchema.name, value: 1 }).unwrappedRoot;
 		assert(isUnwrappedNode(hasValue));
 		// Value does show up when not empty:
 		assert(valueSymbol in hasValue);
@@ -600,6 +600,42 @@ describe("editable-tree: read-only", () => {
 		}
 	});
 
+	describe("parent access", () => {
+		it("root node", () => {
+			const context = buildTestTree(personData);
+			const tree = context.unwrappedRoot;
+			assert(isUnwrappedNode(tree));
+			const { index, parent: rootParent } = tree[parentField];
+			assert.equal(index, 0);
+			expectFieldEquals(context.schema, rootParent, [personData]);
+			assert.equal(rootParent.parent, undefined);
+			assert.equal(rootParent.fieldKey, rootFieldKeySymbol);
+		});
+
+		it("child field", () => {
+			const context = buildTestTree(personData);
+			const tree = context.unwrappedRoot;
+			assert(isUnwrappedNode(tree));
+			const childField = tree[getField](brand("name"));
+			const rootNodeAgain = childField.parent;
+			expectTreeEquals(context.schema, rootNodeAgain, personData);
+
+			const child = childField.getNode(0);
+			expectTreeEquals(context.schema, child, { value: "Adam", type: stringSchema.name });
+
+			const parentInfo = child[parentField];
+			assert.equal(parentInfo.index, 0);
+			expectFieldEquals(context.schema, parentInfo.parent, [
+				{ value: "Adam", type: stringSchema.name },
+			]);
+
+			// Check that navigating up multiple times works.
+			const rootAgain =
+				parentInfo.parent.parent?.[parentField].parent ?? fail("missing parent");
+			expectFieldEquals(context.schema, rootAgain, [personData]);
+		});
+	});
+
 	it("read downwards", () => {
 		const [, proxy] = buildTestPerson();
 		assert.equal(proxy.name, "Adam");
@@ -663,6 +699,7 @@ describe("editable-tree: read-only", () => {
 			"fieldKey",
 			"fieldSchema",
 			"primaryType",
+			"parent",
 		]);
 		assert.equal(proxy.address.phones.primaryType, phonesSchema.name);
 		const act = [...proxy.address.phones].map(

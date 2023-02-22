@@ -89,14 +89,23 @@ export interface IRuntime extends IDisposable {
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
+	 * @experimental
+	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState(): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state
 	 * @param snapshot - snapshot created at attach time
+	 * @deprecated - not necessary after op replay moved to Container
 	 */
 	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+
+	/**
+	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
+	 * stashed ops) after having processed it.
+	 */
+	notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
 
 	/**
 	 * Exposes the entryPoint for the container runtime.
@@ -117,6 +126,7 @@ export interface IBatchMessage {
 	contents?: string;
 	metadata: Record<string, unknown> | undefined;
 	compression?: string;
+	referenceSequenceNumber?: number;
 }
 
 /**
@@ -139,8 +149,11 @@ export interface IContainerContext extends IDisposable {
 	/** @deprecated Please use submitBatchFn & submitSummaryFn */
 	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
 	/** @returns clientSequenceNumber of last message in a batch */
-	readonly submitBatchFn: (batch: IBatchMessage[]) => number;
-	readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
+	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
+	readonly submitSummaryFn: (
+		summaryOp: ISummaryContent,
+		referenceSequenceNumber?: number,
+	) => number;
 	readonly submitSignalFn: (contents: any) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
@@ -182,6 +195,9 @@ export interface IContainerContext extends IDisposable {
 	getLoadedFromVersion(): IVersion | undefined;
 
 	updateDirtyContainerState(dirty: boolean): void;
+
+	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
+
 	/**
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
 	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers

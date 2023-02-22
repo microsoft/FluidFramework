@@ -58,6 +58,9 @@ function canUseCache(request: IRequest): boolean {
 	return request.headers[LoaderHeader.cache] !== false;
 }
 
+/**
+ * @deprecated - In the next release RelativeLoader will no longer be exported. It is an internal class that should not be used directly.
+ */
 export class RelativeLoader implements ILoader {
 	constructor(
 		private readonly container: Container,

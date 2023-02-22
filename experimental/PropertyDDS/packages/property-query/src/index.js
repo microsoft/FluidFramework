@@ -19,20 +19,20 @@ const SimpleQueryExecution = require("./materialized_history_service/query_pipel
 const ScanTraversalUtils = require("./materialized_history_service/query_pipeline/scan_traversal_utils");
 
 module.exports = {
-    MaterializedHistoryService,
-    ScanTraversalUtils,
-    ComparatorFactory,
-    MultipleQueriesExecution,
-    SimpleQueryExecution,
-    BranchWriteQueue,
-    StorageManager,
-    SerializerFactory,
-    ModuleLogger,
-    BackendFactory,
-    SerializationFactory,
-    NodeDependencyManager,
-    BranchManager,
-    StorageBackends: {
-        InMemoryBackend,
-    },
+	MaterializedHistoryService,
+	ScanTraversalUtils,
+	ComparatorFactory,
+	MultipleQueriesExecution,
+	SimpleQueryExecution,
+	BranchWriteQueue,
+	StorageManager,
+	SerializerFactory,
+	ModuleLogger,
+	BackendFactory,
+	SerializationFactory,
+	NodeDependencyManager,
+	BranchManager,
+	StorageBackends: {
+		InMemoryBackend,
+	},
 };

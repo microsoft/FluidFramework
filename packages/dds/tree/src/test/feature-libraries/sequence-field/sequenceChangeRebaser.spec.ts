@@ -11,8 +11,10 @@ import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import {
 	checkDeltaEquality,
+	compose,
 	composeAnonChanges,
 	continuingAllocator,
+	invert,
 	normalizeMoveIds,
 	rebaseTagged,
 	toDelta,
@@ -73,10 +75,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 								if (!SF.areRebasable(change1.change, change2.change)) {
 									continue;
 								}
-								const inv = tagInverse(
-									SF.invert(change2, TestChange.invert),
-									change2.revision,
-								);
+								const inv = tagInverse(invert(change2), change2.revision);
 								const r1 = rebaseTagged(change1, change2);
 								tracker.apply(change2);
 								const r2 = rebaseTagged(r1, inv);
@@ -128,10 +127,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 								if (!SF.areRebasable(change1.change, change2.change)) {
 									continue;
 								}
-								const inv = tagChange(
-									SF.invert(change2, TestChange.invert),
-									brand(3),
-								);
+								const inv = tagChange(invert(change2), brand(3));
 								const r1 = rebaseTagged(change1, change2);
 								tracker.apply(change2);
 								const r2 = rebaseTagged(r1, inv);
@@ -171,10 +167,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 							if (!SF.areRebasable(change1.change, change2.change)) {
 								continue;
 							}
-							const inverse2 = tagInverse(
-								SF.invert(change2, TestChange.invert),
-								change2.revision,
-							);
+							const inverse2 = tagInverse(invert(change2), change2.revision);
 							const r1 = rebaseTagged(change1, change2);
 							tracker.apply(change2);
 							normalizeMoveIds(r1.change);
@@ -206,13 +199,9 @@ describe("SequenceField - Rebaser Axioms", () => {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const change = makeChange(0);
 				const taggedChange = tagChange(change, brand(1));
-				const inv = SF.invert(taggedChange, TestChange.invert);
+				const inv = invert(taggedChange);
 				const changes = [taggedChange, tagInverse(inv, taggedChange.revision)];
-				const actual = SF.compose(
-					changes,
-					TestChange.compose,
-					continuingAllocator(changes),
-				);
+				const actual = compose(changes);
 				const delta = toDelta(actual);
 				assert.deepEqual(delta, {});
 			});
@@ -230,10 +219,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 					const tracker = new SF.DetachedNodeTracker();
 					const change = makeChange(0);
 					const taggedChange = tagChange(change, brand(1));
-					const inv = tagInverse(
-						SF.invert(taggedChange, TestChange.invert),
-						taggedChange.revision,
-					);
+					const inv = tagInverse(invert(taggedChange), taggedChange.revision);
 					tracker.apply(taggedChange);
 					tracker.apply(inv);
 					const updatedChange = tracker.update(
@@ -241,11 +227,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 						continuingAllocator([taggedChange]),
 					);
 					const changes = [inv, updatedChange];
-					const actual = SF.compose(
-						changes,
-						TestChange.compose,
-						continuingAllocator(changes),
-					);
+					const actual = compose(changes);
 					const delta = toDelta(actual);
 					assert.deepEqual(delta, {});
 				});
@@ -258,7 +240,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("Nested inserts", () => {
 		const insertA = tagChange(Change.insert(0, 2), brand(1));
 		const insertB = tagChange(Change.insert(1, 1), brand(2));
-		const inverseA = SF.invert(insertA, TestChange.invert);
+		const inverseA = invert(insertA);
 		const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
 		const insertB3 = rebaseTagged(insertB2, insertA);
 		assert.deepEqual(insertB3.change, insertB.change);
@@ -268,7 +250,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const insertX = tagChange(Change.insert(0, 1), brand(1));
 		const insertA = tagChange(Change.insert(1, 2), brand(2));
 		const insertB = tagChange(Change.insert(2, 1), brand(3));
-		const inverseA = SF.invert(insertA, TestChange.invert);
+		const inverseA = invert(insertA);
 		const insertA2 = rebaseTagged(insertA, insertX);
 		const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
 		const insertB3 = rebaseTagged(insertB2, insertX);
@@ -281,15 +263,11 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const delABC = tagChange(Change.delete(0, 3), brand(2));
 		const revABC = tagChange(Change.revive(0, 3, brand(2), 0), brand(3));
 		const delABC2 = rebaseTagged(delABC, delB);
-		const invDelABC = SF.invert(delABC, TestChange.invert);
+		const invDelABC = invert(delABC);
 		const revABC2 = rebaseTagged(revABC, tagInverse(invDelABC, delABC2.revision));
 		const revABC3 = rebaseTagged(revABC2, delB);
 		const revABC4 = rebaseTagged(revABC3, delABC2);
-		const actual = SF.compose(
-			[delABC2, revABC4],
-			TestChange.compose,
-			continuingAllocator([delABC2, revABC4]),
-		);
+		const actual = compose([delABC2, revABC4]);
 		const delta = toDelta(actual);
 		assert.deepEqual(delta, {});
 	});
@@ -299,7 +277,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const movABC = tagChange(Change.move(0, 3, 1), brand(2));
 		const retABC = tagChange(Change.return(1, 3, 0, brand(2)), brand(3));
 		const movABC2 = rebaseTagged(movABC, delB);
-		const invMovABC = SF.invert(movABC, TestChange.invert);
+		const invMovABC = invert(movABC);
 		const retABC2 = rebaseTagged(retABC, tagInverse(invMovABC, movABC2.revision));
 		const retABC3 = rebaseTagged(retABC2, delB);
 		// This next rebase fails for two reasons:
@@ -312,11 +290,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		// This will be easier to rectify once movABC2 carries (conflicted) marks for B as opposed to those marks
 		// being deleted when rebasing over the deleted of B.
 		const retABC4 = rebaseTagged(retABC3, movABC2);
-		const actual = SF.compose(
-			[movABC2, retABC4],
-			TestChange.compose,
-			continuingAllocator([movABC2, retABC4]),
-		);
+		const actual = compose([movABC2, retABC4]);
 		const delta = toDelta(actual);
 		assert.deepEqual(delta, {});
 	});
@@ -326,15 +300,11 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const delAC = tagChange(Change.delete(0, 2), brand(2));
 		const revAC = tagChange(Change.revive(0, 2, brand(2), 0), brand(3));
 		const delAC2 = rebaseTagged(delAC, addB);
-		const invDelAC = SF.invert(delAC, TestChange.invert);
+		const invDelAC = invert(delAC);
 		const revAC2 = rebaseTagged(revAC, tagInverse(invDelAC, delAC2.revision));
 		const revAC3 = rebaseTagged(revAC2, addB);
 		const revAC4 = rebaseTagged(revAC3, delAC2);
-		const actual = SF.compose(
-			[delAC2, revAC4],
-			TestChange.compose,
-			continuingAllocator([delAC2, revAC4]),
-		);
+		const actual = compose([delAC2, revAC4]);
 		const delta = toDelta(actual);
 		assert.deepEqual(delta, {});
 	});

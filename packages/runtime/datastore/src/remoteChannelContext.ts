@@ -20,7 +20,6 @@ import {
 	CreateChildSummarizerNodeFn,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
@@ -63,7 +62,6 @@ export class RemoteChannelContext implements IChannelContext {
 		private readonly registry: ISharedObjectRegistry,
 		extraBlobs: Map<string, ArrayBufferLike> | undefined,
 		createSummarizerNode: CreateChildSummarizerNodeFn,
-		getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
 		private readonly attachMessageType?: string,
 	) {
 		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
@@ -91,7 +89,6 @@ export class RemoteChannelContext implements IChannelContext {
 		this.summarizerNode = createSummarizerNode(
 			thisSummarizeInternal,
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-			async () => getBaseGCDetails(),
 		);
 
 		this.thresholdOpsCounter = new ThresholdCounter(

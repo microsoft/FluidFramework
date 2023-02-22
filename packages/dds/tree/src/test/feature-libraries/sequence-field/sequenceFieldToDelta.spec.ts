@@ -4,13 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import {
-	makeAnonChange,
-	RevisionTag,
-	Delta,
-	ITreeCursorSynchronous,
-	TreeSchemaIdentifier,
-} from "../../../core";
+import { RevisionTag, Delta, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
 import {
 	ChangesetLocalId,
 	NodeChangeset,
@@ -22,7 +16,7 @@ import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertFieldChangesEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { composeAnonChanges, idAllocatorFromMaxId } from "./utils";
+import { composeAnonChanges } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
@@ -210,15 +204,11 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("multiple changes", () => {
-		const changeset = SF.sequenceFieldChangeRebaser.compose(
-			[
-				makeAnonChange(Change.delete(0, 10)),
-				makeAnonChange(Change.insert(3, 1)),
-				makeAnonChange(Change.modify(5, childChange1)),
-			],
-			TestChange.compose,
-			idAllocatorFromMaxId(),
-		);
+		const changeset = composeAnonChanges([
+			Change.delete(0, 10),
+			Change.insert(3, 1),
+			Change.modify(5, childChange1),
+		]);
 		const del: Delta.Delete = {
 			type: Delta.MarkType.Delete,
 			count: 10,
@@ -236,11 +226,7 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("insert and modify => insert and nested change", () => {
-		const changeset = SF.sequenceFieldChangeRebaser.compose(
-			[makeAnonChange(Change.insert(0, 1)), makeAnonChange(Change.modify(0, childChange1))],
-			TestChange.compose,
-			idAllocatorFromMaxId(),
-		);
+		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
 			content: [
@@ -259,11 +245,7 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("modify and delete => delete", () => {
-		const changeset = SF.sequenceFieldChangeRebaser.compose(
-			[makeAnonChange(Change.modify(0, childChange1)), makeAnonChange(Change.delete(0, 1))],
-			TestChange.compose,
-			idAllocatorFromMaxId(),
-		);
+		const changeset = composeAnonChanges([Change.modify(0, childChange1), Change.delete(0, 1)]);
 		const mark: Delta.Delete = {
 			type: Delta.MarkType.Delete,
 			count: 1,

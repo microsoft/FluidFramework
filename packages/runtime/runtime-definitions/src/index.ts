@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-export { AttributionInfo, AttributionKey } from "./attribution";
+export {
+	AttributionInfo,
+	AttributionKey,
+	DetachedAttributionKey,
+	OpAttributionKey,
+} from "./attribution";
 export {
 	AliasResult,
 	BindState,
 	CreateChildSummarizerNodeFn,
 	FlushMode,
+	FlushModeExperimental,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,

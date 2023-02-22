@@ -18,6 +18,7 @@ import { fail } from "../util";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
+ * @alpha
  */
 export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 	/**
@@ -39,7 +40,10 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 }
 
 /**
+ * Create a cursor, in `nodes` mode at the root of the provided tree.
+ *
  * @returns an {@link ITreeCursorSynchronous} for a single root.
+ * @alpha
  */
 export function singleStackTreeCursor<TNode>(
 	root: TNode,
@@ -50,6 +54,7 @@ export function singleStackTreeCursor<TNode>(
 
 /**
  * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
+ * @alpha
  */
 export interface CursorAdapter<TNode> {
 	/**

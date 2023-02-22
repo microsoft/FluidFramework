@@ -16,6 +16,10 @@ import {
 
 import { RenderOptions } from "./RendererOptions";
 import { ClientDebugView, ContainerSelectionDropdown } from "./components";
+import { initializeFluentUiIcons } from "./InitializeIcons";
+
+// Ensure FluentUI icons are initialized.
+initializeFluentUiIcons();
 
 /**
  * {@link FluidClientDebuggers} input props.
@@ -42,6 +46,8 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 		getFluidClientDebuggers(),
 	);
 
+	// This function is pure, so there are no state concerns here.
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	function getDefaultDebuggerSelectionId(options: IFluidClientDebugger[]): string | undefined {
 		return options.length === 0 ? undefined : options[0].containerId;
 	}

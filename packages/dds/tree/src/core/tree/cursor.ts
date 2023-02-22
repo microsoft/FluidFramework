@@ -10,11 +10,29 @@ import { FieldKey, TreeType, Value } from "./types";
 /**
  * A stateful low-level interface for reading tree data.
  * @alpha
+ *
+ * @remarks Cursor exists so that specialized data formats can be viewed through a common abstraction.
+ * This allows performance optimizations to be done based on a data.
  */
 export interface ITreeCursor {
 	/**
 	 * What kind of place the cursor is at.
 	 * Determines which operations are allowed.
+	 *
+	 * @remarks
+	 * Users of cursors frequently need to refer to places in trees, both fields and nodes.
+	 * Approaches other than having the cursor have separate modes for these cases had issues even worse than having the two modes.
+	 *
+	 * For example, modeling fields as parent + key has issues when there is no parent, and doesn't provide a great way to do iteration over
+	 * fields while also having a nice API and making it easy for the implementation to track state (like its current
+	 * location inside a sequence tree of fields) while traversing without having to allocate some state management for that.
+	 *
+	 * Another approach, of using arrays of cursors for fields (like we currently do for inserting content) is very inefficient and
+	 * better addressed by a duel mode cursor.
+	 *
+	 * Another approach, of using the first node in a field when referring to the field gets confusing since it's unclear if a given cursor
+	 * means that node, or that node, and the ones after it, and in the second case, it's hard to restore the cursor back to the right state
+	 * when returning. It also doesn't work for empty fields. Overall there just didn't seem to be a way that sucked less than the duel mode API.
 	 */
 	readonly mode: CursorLocationType;
 
@@ -343,4 +361,13 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
 		f(cursor);
 	}
+}
+
+/**
+ * Casts a cursor to an {@link ITreeCursorSynchronous}.
+ *
+ * TODO: #1404: Handle this properly for partial data loading support.
+ */
+export function castCursorToSynchronous(cursor: ITreeCursor): ITreeCursorSynchronous {
+	return cursor as ITreeCursorSynchronous;
 }

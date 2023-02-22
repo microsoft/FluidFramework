@@ -32,6 +32,7 @@ export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
  * Helper for building {@link FieldSchema}.
+ * @alpha
  */
 export function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
@@ -47,6 +48,7 @@ const defaultExtraGlobalFields = false;
 
 /**
  * See {@link TreeSchema} for details.
+ * @alpha
  */
 export interface TreeSchemaBuilder {
 	readonly localFields?: { [key: string]: FieldSchema };
