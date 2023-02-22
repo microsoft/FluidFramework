@@ -27,7 +27,7 @@ module.exports = {
 		ContentScript: path.join(devtoolsExtensionSourcePath, "ContentScript.ts"),
 
 		// View scripts used by Devtools
-		RootView: path.join(devtoolsExtensionSourcePath, "RootView.ts"),
+		RootView: path.join(devtoolsExtensionSourcePath, "RootView.tsx"),
 
 		// The action button pop-up script
 		PopupScript: path.join(devtoolsExtensionSourcePath, "PopupScript.ts"),

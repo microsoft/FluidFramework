@@ -24,15 +24,9 @@ export interface IMessageReceiverEvents<TMessage extends IDebuggerMessage = IDeb
 /**
  * A message receiver for {@link IDebuggerMessage}s.
  */
-export interface IMessageReceiver<TMessage extends IDebuggerMessage = IDebuggerMessage>
-	extends IEventProvider<IMessageReceiverEvents<TMessage>> {
-	/**
-	 * Type-safe override of {@link chrome.runtime.Port.onMessage}.
-	 *
-	 * @override
-	 */
-	onMessage: chrome.events.Event<(message: TMessage) => void>;
-}
+export type IMessageReceiver<TMessage extends IDebuggerMessage = IDebuggerMessage> = IEventProvider<
+	IMessageReceiverEvents<TMessage>
+>;
 
 /**
  * A message sender for {@link IDebuggerMessage}s.

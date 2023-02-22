@@ -4,3 +4,4 @@
  */
 
 export { DebuggerPanel } from "./DebuggerPanel";
+export { MessageRelayContext } from "./MessageRelayContext";

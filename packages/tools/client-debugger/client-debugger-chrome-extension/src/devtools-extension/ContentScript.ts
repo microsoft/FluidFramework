@@ -36,13 +36,6 @@ const messageLoggingOptions: MessageLoggingOptions = {
 };
 
 /**
- * Formats the provided log message with the appropriate context information.
- */
-function formatForLogging(text: string): string {
-	return `${loggingContext}: ${text}`;
-}
-
-/**
  * This script is injected into the inspected window and receives any messages from the window.
  * This script relays messages between the inspected window and the background worker.
  */
@@ -52,14 +45,9 @@ chrome.runtime.onConnect.addListener((port: chrome.runtime.Port) => {
 	 */
 	function relayMessageFromPageToBackground(event: MessageEvent): void {
 		const message = event.data as Partial<IDebuggerMessage>;
-		if (!isValidDebuggerMessage(message)) {
-			console.error(
-				formatForLogging("Received malformed message from Devtools script:"),
-				message,
-			);
-			return;
+		if (isValidDebuggerMessage(message)) {
+			relayMessageToPort(message, "page", port, messageLoggingOptions);
 		}
-		relayMessageToPort(message, "page", port, messageLoggingOptions);
 	}
 
 	// Relay messages to the background worker as appropriate.

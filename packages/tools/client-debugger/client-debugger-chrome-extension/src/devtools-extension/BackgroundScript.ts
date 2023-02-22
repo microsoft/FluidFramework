@@ -25,7 +25,7 @@ import { DevToolsInitMessage, isValidDebuggerMessage, relayMessageToPort } from 
 /**
  * Context string for logging.
  */
-const loggingContext = "EXTENSION(BACKGROUND)";
+const loggingContext = "EXTENSION(BACKGROUND SCRIPT)";
 
 /**
  * Configuration for console logging.
@@ -47,7 +47,7 @@ function formatForLogging(text: string): string {
  * and relays messages from the inspected tab back to DevtoolPanel.
  */
 chrome.runtime.onConnect.addListener((devToolsConnection: chrome.runtime.Port): void => {
-	let tabPort: chrome.runtime.Port | undefined;
+	let tabConnection: chrome.runtime.Port | undefined;
 
 	console.log(formatForLogging("Initializing background script..."));
 
@@ -56,10 +56,6 @@ chrome.runtime.onConnect.addListener((devToolsConnection: chrome.runtime.Port): 
 	 */
 	const devToolsListener = (message: Partial<IDebuggerMessage>): void => {
 		if (!isValidDebuggerMessage(message)) {
-			console.error(
-				formatForLogging("Received malformed message from Devtools script:"),
-				message,
-			);
 			return;
 		}
 
@@ -74,38 +70,36 @@ chrome.runtime.onConnect.addListener((devToolsConnection: chrome.runtime.Port): 
 			chrome.tabs.get(tabId).then(() => {
 				console.log(formatForLogging("Connecting to tab:"), tabId);
 
-				tabPort = chrome.tabs.connect(tabId);
+				tabConnection = chrome.tabs.connect(tabId);
 
 				// Forward incoming messages from the tab (Content script) to the Devtools script
 				const tabListener = (tabMessage: Partial<IDebuggerMessage>): void => {
-					if (!isValidDebuggerMessage(tabMessage)) {
-						console.error(
-							formatForLogging("Received malformed message from the Content Script:"),
+					if (isValidDebuggerMessage(tabMessage)) {
+						relayMessageToPort(
 							tabMessage,
+							"content script",
+							devToolsConnection,
+							messageLoggingOptions,
 						);
-						return;
 					}
-					relayMessageToPort(
-						tabMessage,
-						"content script",
-						devToolsConnection,
-						messageLoggingOptions,
-					);
 				};
-				tabPort.onMessage.addListener(tabListener);
+				tabConnection.onMessage.addListener(tabListener);
 
 				// On tab disconnect, clean up listeners
-				tabPort.onDisconnect.addListener(() => {
+				tabConnection.onDisconnect.addListener(() => {
 					devToolsConnection.disconnect();
 				});
 			}, console.error);
 		} else {
-			console.log("BACKGROUND: Relaying message from devtools to webpage:", message);
 			// Relay message from the Devtools script to the tab (Content script)
-			if (tabPort !== undefined) {
-				relayMessageToPort(message, "devtools script", tabPort, messageLoggingOptions);
+			if (tabConnection !== undefined) {
+				relayMessageToPort(
+					message,
+					"devtools script",
+					tabConnection,
+					messageLoggingOptions,
+				);
 			}
-			tabPort?.postMessage(message);
 		}
 	};
 
@@ -113,6 +107,6 @@ chrome.runtime.onConnect.addListener((devToolsConnection: chrome.runtime.Port): 
 	devToolsConnection.onMessage.addListener(devToolsListener);
 
 	devToolsConnection.onDisconnect.addListener(() => {
-		tabPort?.disconnect();
+		tabConnection?.disconnect();
 	});
 });

@@ -43,9 +43,9 @@ export function relayMessageToPort<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
 ): void {
 	const loggingPreamble =
-		loggingOptions?.context === undefined ? "" : `(${loggingOptions.context}): `;
+		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
 	console.log(
-		`${loggingPreamble}Relaying message from "${messageSource}" to port "${targetPort}":`,
+		`${loggingPreamble}Relaying message from "${messageSource}" to port "${targetPort.name}":`,
 		message,
 	); // TODO: console.debug
 	targetPort.postMessage(message);

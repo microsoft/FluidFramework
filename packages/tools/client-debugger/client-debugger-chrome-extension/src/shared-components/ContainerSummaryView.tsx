@@ -9,14 +9,13 @@ import {
 	ContainerStateChangeMessage,
 	IDebuggerMessage,
 	InboundHandlers,
-	handleIncomingWindowMessage,
-	postMessageToWindow,
-	GetContainerStateMessage,
+	handleIncomingMessage,
 } from "@fluid-tools/client-debugger";
 import { HasContainerId, _ContainerSummaryView } from "@fluid-tools/client-debugger-view";
 
 import { extensionMessageSource } from "../messaging";
 import { Waiting } from "./Waiting";
+import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(ContainerSummaryView)";
 
@@ -37,6 +36,13 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 		ContainerStateMetadata | undefined
 	>();
 
+	const messageRelay = React.useContext(MessageRelayContext);
+	if (messageRelay === undefined) {
+		throw new Error(
+			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
+		);
+	}
+
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to the registry.
@@ -53,15 +59,15 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 		};
 
 		/**
-		 * Event handler for messages coming from the window (globalThis).
+		 * Event handler for messages coming from the webpage.
 		 */
-		function messageHandler(event: MessageEvent<Partial<IDebuggerMessage>>): void {
-			handleIncomingWindowMessage(event, inboundMessageHandlers, {
+		function messageHandler(message: Partial<IDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
 		}
 
-		globalThis.addEventListener("message", messageHandler);
+		messageRelay.on("message", messageHandler);
 
 		// Reset Container State data, to ensure we aren't displaying stats for the wrong container while
 		// we wait for a response from the new debugger.
@@ -69,7 +75,7 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 		setContainerState(undefined);
 
 		// Request state info for the newly specified containerId
-		postMessageToWindow<GetContainerStateMessage>({
+		messageRelay.postMessage({
 			source: extensionMessageSource,
 			type: "GET_CONTAINER_STATE",
 			data: {
@@ -78,9 +84,9 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 		});
 
 		return (): void => {
-			globalThis.removeEventListener("message", messageHandler);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, setContainerState]);
+	}, [containerId, setContainerState, messageRelay]);
 
 	if (containerState === undefined) {
 		return <Waiting />;

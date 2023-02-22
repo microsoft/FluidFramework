@@ -6,8 +6,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DebuggerPanel } from "../shared-components";
-import { BackgroundConnection } from "./messaging/BackgroundConnection";
+import { DebuggerPanel, MessageRelayContext } from "../shared-components";
+import { BackgroundConnection } from "./messaging";
 
 // TODOs:
 // - Dedupe logging infra
@@ -19,11 +19,15 @@ panelElement.style.height = "100%";
 panelElement.style.width = "100%";
 
 function RootView(): React.ReactElement {
-	const messageRelay = React.useMemo(() => new BackgroundConnection(), []);
-	return (<React.ContextProvider value={messageRelay}></React.ContextProvider>);
+	const messageRelay = React.useMemo<BackgroundConnection>(() => new BackgroundConnection(), []);
+	return (
+		<MessageRelayContext.Provider value={messageRelay}>
+			<DebuggerPanel />
+		</MessageRelayContext.Provider>
+	);
 }
 
-ReactDOM.render(React.createElement(DebuggerPanel), panelElement, () => {
+ReactDOM.render(<RootView />, panelElement, () => {
 	document.body.append(panelElement);
 	console.log("DEVTOOLS PANEL: Rendered debug view!");
 });

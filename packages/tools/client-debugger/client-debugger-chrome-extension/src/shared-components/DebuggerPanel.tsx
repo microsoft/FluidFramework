@@ -14,10 +14,10 @@ import {
 } from "@fluid-tools/client-debugger";
 import { ContainerSelectionDropdown } from "@fluid-tools/client-debugger-view";
 
+import { extensionMessageSource } from "../messaging";
 import { ContainerView } from "./ContainerView";
 import { Waiting } from "./Waiting";
-import { IMessageRelay } from "../messaging";
-import { messageRelayContext } from "./MessageRelayContext";
+import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel)";
 
@@ -28,30 +28,20 @@ const loggingContext = "EXTENSION(DebuggerPanel)";
 // 	Audience = "Audience",
 // }
 
-export interface DebuggerPanelProps {
-	/**
-	 * Message handler for communicating with the webpage.
-	 * Any message listening / posting should go through here, rather than directly through the
-	 * `window` (`globalThis`) to ensure general compatibility regardless of how the Chrome Extension
-	 * is configured / what context the components are run in.
-	 */
-	messageRelay: IMessageRelay;
-}
-
 /**
  * Root Debugger view.
- * 
+ *
  * @remarks Must be run under a {@link messageRelayContext}.
  */
 export function DebuggerPanel(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
-	
-	const context = React.useContext(messageRelayContext);
-	if(context === undefined) {
-		throw new Error("messageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.")
+
+	const messageRelay = React.useContext(MessageRelayContext);
+	if (messageRelay === undefined) {
+		throw new Error(
+			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
+		);
 	}
-	
-	const { messageRelay } = context;
 
 	React.useEffect(() => {
 		/**
@@ -73,17 +63,19 @@ export function DebuggerPanel(): React.ReactElement {
 				context: loggingContext,
 			});
 		}
-		
+
 		messageRelay.on("message", messageHandler);
 
-		globalThis.postMessage({
+		messageRelay.postMessage({
 			type: "GET_CONTAINER_LIST",
+			source: extensionMessageSource,
+			data: undefined,
 		});
 
 		return (): void => {
-			globalThis.removeEventListener("message", messageHandler);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [setContainers]);
+	}, [setContainers, messageRelay]);
 
 	return containers === undefined ? (
 		<Waiting />

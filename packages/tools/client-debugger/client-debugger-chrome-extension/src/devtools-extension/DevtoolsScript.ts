@@ -44,7 +44,7 @@ chrome.devtools.panels.create(
 	"images/icon.png",
 	"rootView.html",
 	(panel) => {
-		console.log(formatForLogging("Initializing debugger view..."));
+		console.log(formatForLogging("Debugger view initialized!"));
 	},
 );
 
