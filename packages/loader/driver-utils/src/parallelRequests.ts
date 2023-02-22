@@ -380,6 +380,7 @@ export class Queue<T> implements IStream<T> {
 }
 
 const waitForOnline = async (): Promise<void> => {
+	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
 	if (navigator?.onLine === false && window?.addEventListener !== undefined) {
 		return new Promise<void>((resolve) => {
 			const resolveAndRemoveListener = () => {
