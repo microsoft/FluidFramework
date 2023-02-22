@@ -182,6 +182,7 @@ export class OpSplitter {
 		);
 
 		this.logger.sendPerformanceEvent({
+			// Used to be "Chunked compressed batch"
 			eventName: "CompressedChunkedBatch",
 			length: batch.content.length,
 			sizeInBytes: batch.contentSizeInBytes,
