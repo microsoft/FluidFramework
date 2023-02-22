@@ -368,9 +368,9 @@ export function runSharedTreeVersioningTests(
 
 			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
 			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-			expect(events.unexpectedErrors.length).to.equal(5);
+			expect(events.unexpectedErrors.length).to.equal(1);
 			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:BatchManager:ReferenceSequenceNumberMismatch'
+				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
 			);
 		});
 
@@ -426,7 +426,7 @@ export function runSharedTreeVersioningTests(
 			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
 			expect(events.unexpectedErrors.length).to.equal(1);
 			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:BatchManager:ReferenceSequenceNumberMismatch'
+				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
 			);
 		});
 
@@ -502,7 +502,7 @@ export function runSharedTreeVersioningTests(
 			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
 			expect(events.unexpectedErrors.length).to.equal(1);
 			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:BatchManager:ReferenceSequenceNumberMismatch'
+				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
 			);
 		});
 

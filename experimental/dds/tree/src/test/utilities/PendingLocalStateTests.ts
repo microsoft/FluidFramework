@@ -49,7 +49,7 @@ export function runPendingLocalStateTests(
 			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
 			expect(events.unexpectedErrors.length).to.equal(1);
 			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:BatchManager:ReferenceSequenceNumberMismatch'
+				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
 			);
 		});
 		it('applies and submits ops from 0.1.1 in 0.1.1', async () =>
