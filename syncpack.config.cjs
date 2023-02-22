@@ -70,11 +70,11 @@ module.exports = {
 		},
 
 		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
+			label: "Deps in pnpm overrides are ignored",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
 			packages: ["**"],
-			range: "^",
+			isIgnored: true
 		},
 
 		{
@@ -93,6 +93,7 @@ module.exports = {
 				"@types/url-parse",
 				"fake-indexeddb",
 				"json-stringify-safe",
+				"sort-package-json",
 				"tinylicious",
 				"yargs",
 			],
@@ -105,6 +106,7 @@ module.exports = {
 		{
 			label: "Must use tilde dependency ranges",
 			dependencies: [
+				"@typescript-eslint/*",
 				"eslint-plugin-*",
 				"eslint-config-prettier",
 				"eslint",
