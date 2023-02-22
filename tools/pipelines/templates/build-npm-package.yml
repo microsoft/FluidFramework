@@ -98,7 +98,10 @@ parameters:
   type: boolean
   default: true
 
-trigger: none
+# A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
+# a pipeline stage separate from the build stage.
+- name: checks
+  type: object
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -117,9 +120,15 @@ variables:
     readonly: true
 
 stages:
+  - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+    - template: include-policy-check.yml
+      parameters:
+        checks: ${{ parameters.checks }}
+
   # Install / Build / Test Stage
   - stage: build
     displayName: Build Stage
+    dependsOn: [] # this stage doesn't depend on preceding stage
     jobs:
       # Job - Build
       - job: build

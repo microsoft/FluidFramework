@@ -99,3 +99,8 @@ extends:
     - ci:test:realsvc:tinylicious
     - ci:test:stress:tinylicious
     - test:copyresults
+    checks:
+    - policy-check
+    - layer-check
+    - syncpack:deps
+    - syncpack:versions
