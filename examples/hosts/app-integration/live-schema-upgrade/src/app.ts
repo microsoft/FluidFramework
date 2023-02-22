@@ -56,7 +56,7 @@ async function start() {
 	let model: IDiceRollerAppModel;
 
 	if (modelVersion === "1.0") {
-		// In this example, if modelVersion is 1.0 then we are creating a new container. We will create it using the 
+		// In this example, if modelVersion is 1.0 then we are creating a new container. We will create it using the
 		// 1.0 container schema, which does not have the DiceCounter data object.
 		const createResponse = await modelLoader.createDetached("1.0");
 		model = createResponse.model;

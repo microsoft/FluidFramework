@@ -9,6 +9,7 @@ Please note that the ideas explored here are experimental and under development.
 Once a Fluid container has been created, it will contain some set of persisted data in the form of the summary as well as any unsummarized ops. This persisted data can only be correctly interpreted by a compatible container code (typically the same one that created it, or a newer backwards-compatible one). This container code knows the appropriate data stores to load to interpret the summary and process the outstanding ops, as well as provides public access to those data stores for use.
 
 However, suppose you want to change your application's schema by adding an additional data object, but you don't want to migrate all of the existing container data to a brand new container.
+
 ## Strategy overview
 
 There are two main approaches to this problem:
