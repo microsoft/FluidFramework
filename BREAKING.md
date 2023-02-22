@@ -22,11 +22,23 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ## 2.0.0-internal.4.0.0 Breaking changes
 
 -   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+-   [Some test packages no longer published](#some-test-packages-no-longer-published)
 -   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
 
 ### Container and RelativeLoader no longer exported
 
 Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
+### Some test packages no longer published
+
+These packages were previously published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-drivers`
+-   `@fluidframework/test-pairwise-generator`
+-   `@fluidframework/test-version-utils`
+-   `@fluidframework/test-loader-utils`
+
+These have been moved to the `@fluid-internal` scope and are no longer published.
 
 ### IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed
 
@@ -118,7 +130,6 @@ The IFluidTokenProvider interface has been deprecated and will be removed in an 
 -   [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
 -   [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
 -   [Remove deprecated experimental get-container package](#Remove-deprecated-experimental-get-container-package)
--   [Some test packages no longer published](#some-test-packages-no-longer-published)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 
@@ -209,16 +220,6 @@ Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDet
 ### Remove deprecated experimental get-container package
 
 The @fluid-experimental/get-container package was deprecated in version 0.39 and has now been removed.
-
-### Some test packages no longer published
-
-These packages were previously published under the `@fluidframework` scope:
-
--   `@fluidframework/test-drivers`
--   `@fluidframework/test-pairwise-generator`
--   `@fluidframework/test-version-utils`
-
-These have been moved to the `@fluid-internal` scope and are no longer published.
 
 # 2.0.0-internal.2.4.0
 
