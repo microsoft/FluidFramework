@@ -184,6 +184,9 @@ export interface IContainerContext extends IDisposable {
 	getLoadedFromVersion(): IVersion | undefined;
 
 	updateDirtyContainerState(dirty: boolean): void;
+
+	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
+
 	/**
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
 	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers

@@ -111,7 +111,6 @@ export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUti
 export {
 	EditManagerIndex,
 	CommitEncoder,
-	commitEncoderFromChangeEncoder,
 	parseSummary as loadSummary,
 	stringifySummary as encodeSummary,
 } from "./editManagerIndex";
@@ -122,4 +121,4 @@ export { dummyRepairDataStore } from "./fakeRepairDataStore";
 export { runSynchronousTransaction } from "./defaultTransaction";
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
-export { TreeChunk, chunkTree, buildChunkedForest } from "./chunked-forest";
+export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
