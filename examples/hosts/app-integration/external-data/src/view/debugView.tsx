@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from "react";
 import isEqual from "lodash.isequal";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import type { IAppModel, TaskData } from "../model-interface";
+import type { IAppModel, ITaskList, TaskData } from "../model-interface";
 
 /**
  * Helper function used in several of the views to fetch data form the external app
@@ -46,7 +46,6 @@ export interface IDebugViewProps {
 	 * The Task List app model to be visualized.
 	 */
 	model: IAppModel;
-	unresolvedChanges: boolean;
 }
 
 /**
@@ -60,7 +59,7 @@ export interface IDebugViewProps {
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
-	const { model, unresolvedChanges } = props;
+	const { model } = props;
 	// Flag that represents the state in which clients are actively fetching external data.
 	const [fetchingExternalData, setFetchingExternalData] = useState(false);
 	return (
@@ -68,10 +67,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
 			<ExternalAppForm model={model} setFetchingExternalData={setFetchingExternalData} />
 			<ExternalDataView setFetchingExternalData={setFetchingExternalData} />
-			<SyncStatusView
-				fetchingData={fetchingExternalData}
-				unresolvedChanges={unresolvedChanges}
-			/>
+			<SyncStatusView fetchingData={fetchingExternalData} taskList={model.taskList} />
 			<ControlsView model={model} />
 		</div>
 	);
@@ -90,12 +86,12 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 			console.error,
 		);
 
-		// HACK: Poll every 3 seconds
+		// HACK: Poll every 6 seconds
 		const timer = setInterval(() => {
 			pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
 				console.error,
 			);
-		}, 8000);
+		}, 6000);
 
 		return (): void => {
 			clearInterval(timer);
@@ -133,23 +129,24 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 
 interface ISyncStatusViewProps {
 	fetchingData: boolean;
-	unresolvedChanges: boolean;
+	taskList: ITaskList;
 }
 
 // TODO: Implement the statuses below
-const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
-	const { fetchingData, unresolvedChanges } = props;
+const SyncStatusView: React.FC<ISyncStatusViewProps> = React.memo((props: ISyncStatusViewProps) => {
+	const { fetchingData, taskList } = props;
 	return (
 		<div>
 			<h3>Sync status</h3>
 			<div style={{ margin: "10px 0" }}>
 				Current sync activity:{" "}
-				{fetchingData ? "fetching" : unresolvedChanges ? "resolving conflicts" : "idle"}
+				{fetchingData ? "fetching" : taskList.unresolved ? "resolving conflicts" : "idle"}
 				<br />
 			</div>
 		</div>
 	);
-};
+});
+SyncStatusView.displayName = "SyncStatusView";
 
 interface IControlsViewProps {
 	model: IAppModel;

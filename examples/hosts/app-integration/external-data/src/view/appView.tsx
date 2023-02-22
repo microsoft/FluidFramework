@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import type { IAppModel } from "../model-interface";
-import { DebugView } from "./debugView";
 import { TaskListView } from "./taskListView";
 
 /**
@@ -23,17 +22,9 @@ export interface IAppViewProps {
  */
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 	const { model } = props;
-	// The DebugView is just for demo purposes, to offer manual controls and inspectability for things that normally
-	// would be some external system or arbitrarily occurring.
-	const showExternalServerView: boolean = true;
-	// Flag that represents presence/absence of unresolved changes after fetching external data.
-	const [unresolvedChanges, setUnresolvedChanges] = useState(false);
-	// useEffect(() => {console.log("hooks changed")}, [unresolvedChanges, fetchingExternalData]);
-	const debugView = <DebugView model={model} unresolvedChanges={unresolvedChanges} />;
 	return (
 		<div>
-			{showExternalServerView && debugView}
-			<TaskListView taskList={model.taskList} setUnresolvedChanges={setUnresolvedChanges} />
+			<TaskListView taskList={model.taskList} />
 		</div>
 	);
 };

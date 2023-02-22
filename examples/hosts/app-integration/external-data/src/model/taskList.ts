@@ -111,6 +111,7 @@ export class TaskList extends DataObject implements ITaskList {
 	 */
 	private readonly tasks = new Map<string, Task>();
 
+	public unresolved: boolean = false;
 	/*
 	 * savedData stores data retrieved from the external source.
 	 */
@@ -220,6 +221,10 @@ export class TaskList extends DataObject implements ITaskList {
 		// Here we might want to consider raising an event on the Task object so that anyone holding it can know
 		// that it has been removed from its collection.  Not needed for this example though.
 		this.emit("taskDeleted", deletedTask);
+	};
+
+	public readonly setUnresolvedChanges = (unresolved: boolean): void => {
+		this.unresolved = unresolved;
 	};
 
 	/**
@@ -374,6 +379,7 @@ export class TaskList extends DataObject implements ITaskList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
+		this.unresolved = false;
 		this._draftData = SharedMap.create(this.runtime);
 		this._savedData = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import ReactDOM from "react-dom";
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
@@ -28,9 +28,7 @@ export interface ITestViewProps {
  */
 export const TestView: React.FC<ITestViewProps> = (props: ITestViewProps) => {
 	const { taskList } = props;
-	const [_, setUnresolvedChanges] = useState(false);
-
-	return <TaskListView taskList={taskList} setUnresolvedChanges={setUnresolvedChanges} />;
+	return <TaskListView taskList={taskList} />;
 };
 
 /**

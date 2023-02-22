@@ -125,14 +125,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
  */
 export interface ITaskListViewProps {
 	readonly taskList: ITaskList;
-	setUnresolvedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-	const { taskList, setUnresolvedChanges } = props;
+	const { taskList } = props;
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
 
 	const trackChanges = (): void => {
@@ -142,7 +141,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				unresolved = true;
 			}
 		}
-		setUnresolvedChanges(unresolved);
+		taskList.setUnresolvedChanges(unresolved);
 	};
 	useEffect(() => {
 		const updateTasks = (): void => {
@@ -155,7 +154,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			taskList.off("taskAdded", updateTasks);
 			taskList.off("taskDeleted", updateTasks);
 		};
-	}, [taskList, setUnresolvedChanges]);
+	}, [taskList]);
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow

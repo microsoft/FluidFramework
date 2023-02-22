@@ -142,6 +142,16 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	readonly saveChanges: () => Promise<void>;
 
 	/**
+	 * A flag representing whether there are unresolved changes in Fluid data.
+	 */
+	unresolved: boolean;
+
+	/**
+	 * A setter that updates the `unresolved` property based on the current state of the task list.
+	 * @param unresolved - boolean: true if any tasks are unresolved
+	 */
+	readonly setUnresolvedChanges: (unresolved: boolean) => void;
+	/**
 	 * Kick off fetching external data directly from the TaskList.
 	 * Triggered on receipt of ExternalDataChanged signal from container.
 	 */
