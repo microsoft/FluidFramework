@@ -26,7 +26,7 @@ module.exports = {
 	 * SemverGroups are used to ensure that groups of packages use the same semver range for dependencies.
 	 *
 	 * semverGroup rules are applied in order to package/dep combinations. First matching rule applies. When running
-	 * `syncpack lint-semver-ranges`, the output is grouped into numbered groups.
+	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
 		{
@@ -123,7 +123,7 @@ module.exports = {
 	 *  VersionGroups are used to ensure that groups of packages use the same version of dependencies.
 	 *
 	 * versionGroup rules are applied in order to package/dep combinations. First matching rule applies. When running
-	 * `syncpack list-mismatches`, the output is grouped into numbered groups.
+	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
 		{
