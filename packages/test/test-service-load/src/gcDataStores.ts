@@ -58,18 +58,26 @@ interface IActivityObjectDetails {
  * On run, the attachment blob is retrieved on a regular interval.
  */
 class AttachmentBlobObject implements IGCActivityObject {
-	private myId: string | undefined;
-	private shouldRun: boolean = false;
+	private get nodeId(): string {
+		assert(this._nodeId !== undefined, "id accessed before run");
+		return this._nodeId;
+	}
+	private _nodeId: string | undefined;
+	private running: boolean = false;
 
 	constructor(public handle: IFluidHandle<ArrayBufferLike>) {}
 
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
+		if (this.running) {
+			return true;
+		}
+
 		console.log(`~~~~~~~~~~~ Started attachment blob [${id}]`);
-		this.myId = id;
-		this.shouldRun = true;
+		this._nodeId = id;
+		this.running = true;
 		let done = true;
 		const delayBetweenBlobGetMs = (60 * 1000) / config.testConfig.opRatePerMin;
-		while (this.shouldRun) {
+		while (this.running) {
 			try {
 				await this.handle.get();
 			} catch (error) {
@@ -86,9 +94,9 @@ class AttachmentBlobObject implements IGCActivityObject {
 	}
 
 	public stop() {
-		if (this.shouldRun) {
-			console.log(`~~~~~~~~~~~ Stopped attachment blob [${this.myId}]`);
-			this.shouldRun = false;
+		if (this.running) {
+			console.log(`~~~~~~~~~~~ Stopped attachment blob [${this.nodeId}]`);
+			this.running = false;
 		}
 	}
 }
@@ -127,19 +135,27 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 		return "DataObjectLeaf";
 	}
 
-	private myId: string | undefined;
-	private shouldRun: boolean = false;
+	private get nodeId(): string {
+		assert(this._nodeId !== undefined, "id accessed before run");
+		return this._nodeId;
+	}
+	private _nodeId: string | undefined;
+	private running: boolean = false;
 
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
+		if (this.running) {
+			return true;
+		}
+
 		console.log(`+++++++++ Started leaf child [${id}]`);
-		this.myId = id;
-		this.shouldRun = true;
+		this._nodeId = id;
+		this.running = true;
 		const delayBetweenOpsMs = (60 * 1000) / config.testConfig.opRatePerMin;
 		let localSendCount = 0;
-		while (this.shouldRun && !this.runtime.disposed) {
+		while (this.running && !this.runtime.disposed) {
 			if (localSendCount % 10 === 0) {
 				console.log(
-					`+++++++++ Leaf child [${this.myId}]: ${localSendCount} / ${this.counter.value}`,
+					`+++++++++ Leaf child [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
 				);
 			}
 
@@ -151,17 +167,17 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 			);
 		}
 		console.log(
-			`+++++++++ Stopped leaf child [${this.myId}]: ${localSendCount} / ${this.counter.value}`,
+			`+++++++++ Stopped leaf child [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
 		);
 		return !this.runtime.disposed;
 	}
 
 	public stop() {
-		if (this.shouldRun) {
+		if (this.running) {
 			console.log(
-				`+++++++++ Stopped leaf child (in stop) [${this.myId}]: ${this.counter.value}`,
+				`+++++++++ Stopped leaf child (in stop) [${this.nodeId}]: ${this.counter.value}`,
 			);
-			this.shouldRun = false;
+			this.running = false;
 		}
 	}
 }
@@ -189,8 +205,12 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		return "DataObjectNonCollab";
 	}
 
-	protected myId: string | undefined;
-	private shouldRun: boolean = false;
+	protected get nodeId(): string {
+		assert(this._nodeId !== undefined, "id accessed before run");
+		return this._nodeId;
+	}
+	protected _nodeId: string | undefined;
+	protected running: boolean = false;
 
 	/** The number of child data objects created. */
 	private childCount = 1;
@@ -271,6 +291,11 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		// Initialize the referenced data object list from the data object map.
 		for (const childDetails of this.dataObjectMap) {
 			const childId = childDetails[0];
+			// Only run child data object created by this node.
+			if (!childId.startsWith(this.nodeId)) {
+				continue;
+			}
+
 			const childHandle = childDetails[1] as IFluidHandle<DataObjectLeaf>;
 			const childObject = await childHandle.get();
 			this.referencedChildDataObjects.push({
@@ -283,6 +308,11 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		// Initialize the referenced blob list from the blob map.
 		for (const blobDetails of this.blobMap) {
 			const blobId = blobDetails[0];
+			// Only run child blob created by this node.
+			if (!blobId.startsWith(this.nodeId)) {
+				continue;
+			}
+
 			const blobObject = new AttachmentBlobObject(
 				blobDetails[1] as IFluidHandle<ArrayBufferLike>,
 			);
@@ -297,9 +327,13 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
+		if (this.running) {
+			return true;
+		}
+
 		console.log(`########## Started child [${id}]`);
-		this.myId = id;
-		this.shouldRun = true;
+		this._nodeId = id;
+		this.running = true;
 		/**
 		 * Adjust the totalSendCount and opRatePerMin such that this data store and its child data objects collectively
 		 * send totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafChildren children
@@ -342,7 +376,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			});
 
 		while (
-			this.shouldRun &&
+			this.running &&
 			this.counter.value < totalSendCount &&
 			!this.runtime.disposed &&
 			!activityFailed
@@ -350,7 +384,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			// After every activityThresholdOpCount ops, perform activities.
 			if (localSendCount % activityThresholdOpCount === 0) {
 				console.log(
-					`########## child data object [${this.myId}]: ${localSendCount} / ${this.counter.value} / ${totalSendCount}`,
+					`########## child data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value} / ${totalSendCount}`,
 				);
 
 				// We do no await for the activity because we want any child created to run asynchronously.
@@ -388,7 +422,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		}
 
 		console.log(
-			`########## Stopped child [${this.myId}]: ${localSendCount} / ${this.counter.value}`,
+			`########## Stopped child [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
 		);
 		this.stop();
 		const notDone = this.runtime.disposed || activityFailed;
@@ -396,7 +430,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 
 	public stop() {
-		this.shouldRun = false;
+		this.running = false;
 		this.referencedChildDataObjects.forEach((childDetails: IActivityObjectDetails) => {
 			childDetails.object.stop();
 		});
@@ -463,7 +497,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 */
 	private async createAndReferenceChild(): Promise<boolean> {
 		// Give each child a unique id w.r.t. this data store's id.
-		const childId = `${this.myId}/ds-${this.childCount.toString()}`;
+		const childId = `${this.nodeId}/ds-${this.childCount.toString()}`;
 		console.log(`########## Creating child [${childId}]`);
 		this.childCount++;
 
@@ -518,7 +552,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			switch (blobAction) {
 				case GCActivityType.CreateAndReference: {
 					// Give each blob a unique id w.r.t. this data store's id.
-					const blobId = `${this.myId}/blob-${this.blobCount.toString()}`;
+					const blobId = `${this.nodeId}/blob-${this.blobCount.toString()}`;
 					console.log(`########## Creating blob [${blobId}]`);
 					const blobContents = `Content - ${this.uniqueBlobContentId}-${this.blobCount}`;
 					this.blobCount++;
@@ -598,7 +632,11 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 	}
 
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
-		this.myId = id;
+		if (this.running) {
+			return true;
+		}
+
+		this._nodeId = id;
 
 		/**
 		 * Just some weird math to get the ids of two other clients to collaborate with.
@@ -610,7 +648,7 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 		const partnerId1 = `client${partnerRunId1}`;
 		const partnerId2 = `client${partnerRunId2}`;
 		console.log(
-			`---------- Collab data store partners [${this.myId}]: ${partnerId1} / ${partnerId2}`,
+			`---------- Collab data store partners [${this.nodeId}]: ${partnerId1} / ${partnerId2}`,
 		);
 
 		/**
@@ -645,7 +683,7 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 					.then((child: IGCActivityObject) => {
 						console.log(`---------- Running remote child [${changed.key}]`);
 						child
-							.run(this.childRunConfig, `${this.myId}/${changed.key}`)
+							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
 							.catch((error) => {});
 					})
 					.catch((error) => {});
