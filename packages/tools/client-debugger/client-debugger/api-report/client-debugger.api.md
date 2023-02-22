@@ -159,6 +159,9 @@ export interface InitiateDebuggerMessagingMessage extends IDebuggerMessage<HasCo
     type: "INITIATE_DEBUGGER_MESSAGING";
 }
 
+// @public
+export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage;
+
 // @internal
 export interface LogEntry {
     timestamp: number;
