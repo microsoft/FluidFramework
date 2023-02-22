@@ -109,7 +109,6 @@ export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUti
 export {
 	EditManagerIndex,
 	CommitEncoder,
-	commitEncoderFromChangeEncoder,
 	parseSummary as loadSummary,
 	stringifySummary as encodeSummary,
 } from "./editManagerIndex";

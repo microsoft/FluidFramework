@@ -3,223 +3,142 @@
  * Licensed under the MIT License.
  */
 
-import { brand, Brand, Invariant } from "../../util";
-import { AnchorSet } from "../tree";
+import { assert } from "@fluidframework/common-utils";
+import { ChangeRebaser, TaggedChange, tagInverse } from "./changeRebaser";
+import type { GraphCommit } from "./types";
+import { findCommonAncestor } from "./utils";
 
 /**
- * A way to refer to a particular revision within a given `Rebaser` instance.
- * @alpha
+ * Handles the rebasing of commits in the commit graph and their changes
  */
-export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
-
-/**
- * A collection of branches which can rebase changes between them.
- *
- * @sealed
- */
-export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
-	private lastRevision = 0;
-
-	private makeRevision(): RevisionTag {
-		this.lastRevision++;
-		return brand(this.lastRevision);
-	}
-
-	public readonly empty: RevisionTag = brand(0);
+export class Rebaser<TChange> {
+	/**
+	 * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits given to this rebaser
+	 */
+	public constructor(public readonly changeRebaser: ChangeRebaser<TChange>) {}
 
 	/**
-	 * All the actual state needed to do the rebases.
+	 * Rebases a branch (the source) onto another branch (the target).
 	 *
-	 * Source and destination can both walk this to find common ancestor,
-	 * then rebase across using changes found on walk.
+	 * Given a commit as the "head", a branch is defined as the ancestry path of that head commit.
+	 * The source and target branch must share an ancestor. Respectively, they must not contain any commits
+	 * in their path with duplicate tags, or this function will have undefined behavior.
+	 * @param source - the head of a branch to rebase
+	 * @param targetBase - the commit to rebase `source` onto
+	 * @param targetBranch - An optional head of the branch that `targetBase` belongs to. If this branch contains commits
+	 * past `targetBase` that are semantically equivalent to commits in `source`, then this function will rebase over
+	 * those commits as well (rebasing over and past `targetBase`).
+	 * @returns the head of a rebased source branch and the cumulative change to the source branch
 	 */
-	private readonly revisionTree: Map<
-		RevisionTag,
-		{ before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser> }
-	> = new Map();
+	public rebaseBranch(
+		source: GraphCommit<TChange>,
+		targetBase: GraphCommit<TChange>,
+		targetBranch = targetBase,
+	): [newSource: GraphCommit<TChange>, sourceChange: TChange] {
+		// Get both source and target as path arrays
+		const sourcePath: GraphCommit<TChange>[] = [];
+		const targetPath: GraphCommit<TChange>[] = [];
+		const ancestor = findCommonAncestor([source, sourcePath], [targetBranch, targetPath]);
+		assert(ancestor !== undefined, "branch A and branch B must be related");
 
-	public constructor(public readonly rebaser: TChangeRebaser) {
-		// TODO
-	}
-
-	/**
-	 * Rebase `changes` from being applied to the `from` state to able to be applied to the `to` state.
-	 * @returns a RevisionTag for the state after applying changes to `to`, and the rebased changes themselves.
-	 */
-	public rebase(
-		changes: ChangesetFromChangeRebaser<TChangeRebaser>,
-		from: RevisionTag,
-		to: RevisionTag,
-	): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>] {
-		const over = this.getResolutionPath(from, to);
-		const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> = this.rebaser.rebase(
-			changes,
-			over,
-		);
-		const newRevision = this.makeRevision();
-		this.revisionTree.set(newRevision, {
-			before: to,
-			change: finalChangeset,
-		});
-		return [newRevision, finalChangeset];
-	}
-
-	/**
-	 * Modifies `anchors` to be valid at the destination.
-	 */
-	public rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void {
-		const over = this.getResolutionPath(from, to);
-		this.rebaser.rebaseAnchors(anchors, over);
-	}
-
-	// Separated out for easier testing
-	private getRawResolutionPath(
-		from: RevisionTag,
-		to: RevisionTag,
-	): ChangesetFromChangeRebaser<TChangeRebaser>[] {
-		if (from !== to) {
-			throw Error("Not implemented"); // TODO: rebase
+		// Find where `base` is in the target branch
+		const baseIndex = targetPath.findIndex((r) => r === targetBase);
+		if (baseIndex === -1) {
+			// If the base is not in the target path, then it is either disjoint from `target` or it is behind/at
+			// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
+			// TODO: Ideally, this would be an "assertExpensive"
+			assert(
+				findCommonAncestor(targetBase, targetBranch) !== undefined,
+				"base is not in target branch",
+			);
+			return [source, this.changeRebaser.compose([])];
 		}
-		return [];
+
+		// Iterate through the target path and look for commits that are also present on the source branch (i.e. they
+		// have matching tags). Each commit found in the target branch can be skipped when processing the source branch
+		// because it has already been rebased onto the target. In the case that one or more of these commits are present
+		// directly after `base`, then the base can be advanced further without having to do any work.
+		const sourceSet = new Set(sourcePath.map((r) => r.revision));
+		let effectiveBaseIndex = baseIndex;
+		for (let t = 0; t < targetPath.length; t += 1) {
+			const r = targetPath[t].revision;
+			if (sourceSet.has(r)) {
+				effectiveBaseIndex = Math.max(effectiveBaseIndex, t);
+				sourceSet.delete(r);
+			} else if (t >= baseIndex) {
+				break;
+			}
+		}
+
+		// Figure out how much of the trunk to start rebasing over.
+		const targetRebasePath = targetPath.slice(0, effectiveBaseIndex + 1);
+		let effectiveBase = targetPath[effectiveBaseIndex];
+
+		// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
+		// rebase forwards over the rest of the commits up to the new base before advancing the new base.
+		const inverses: TaggedChange<TChange>[] = [];
+		for (const c of sourcePath) {
+			if (sourceSet.has(c.revision)) {
+				let change = this.rebaseChangeOverChanges(c.change, inverses);
+				change = this.rebaseChangeOverCommits(change, targetRebasePath);
+				effectiveBase = {
+					revision: c.revision,
+					sessionId: c.sessionId,
+					change,
+					parent: effectiveBase,
+				};
+				targetRebasePath.push({ ...c, change });
+			}
+			inverses.unshift(tagInverse(this.changeRebaser.invert(c), c.revision));
+		}
+
+		// Compose all changes together to get a single change that represents the entire rebase operation
+		return [effectiveBase, this.changeRebaser.compose([...inverses, ...targetRebasePath])];
 	}
 
-	public getResolutionPath(
-		from: RevisionTag,
-		to: RevisionTag,
-	): ChangesetFromChangeRebaser<TChangeRebaser> {
-		// TODO: fix typing
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return this.rebaser.compose(this.getRawResolutionPath(from, to));
+	/**
+	 * Rebase a change over the given source and target branches
+	 * @param change - the change to rebase
+	 * @param source - the branch that `change` is based on
+	 * @param target - the branch to rebase `change` onto
+	 * @returns the rebased change
+	 */
+	public rebaseChange(
+		change: TChange,
+		source: GraphCommit<TChange>,
+		target: GraphCommit<TChange>,
+	): TChange {
+		const sourcePath: GraphCommit<TChange>[] = [];
+		const targetPath: GraphCommit<TChange>[] = [];
+		assert(
+			findCommonAncestor([source, sourcePath], [target, targetPath]) !== undefined,
+			"branch A and branch B must be related",
+		);
+
+		const changeRebasedToRef = sourcePath.reduceRight(
+			(newChange, branchCommit) =>
+				this.changeRebaser.rebase(newChange, this.inverseFromCommit(branchCommit)),
+			change,
+		);
+
+		return targetPath.reduce((a, b) => this.changeRebaser.rebase(a, b), changeRebasedToRef);
 	}
 
-	/**
-	 * Informs the Rebaser that `revision` will not be used again,
-	 * and internal resources related to it may be freed.
-	 */
-	public discardRevision(revision: RevisionTag): void {
-		throw Error("Not implemented"); // TODO
+	private rebaseChangeOverCommits(changeToRebase: TChange, commits: GraphCommit<TChange>[]) {
+		return this.rebaseChangeOverChanges(changeToRebase, commits);
 	}
-}
 
-// TODO: managing the types with this is not working well (inferring any for methods in Rebaser). Do something else.
-export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> =
-	TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
+	private rebaseChangeOverChanges(
+		changeToRebase: TChange,
+		changesToRebaseOver: TaggedChange<TChange>[],
+	) {
+		return changesToRebaseOver.reduce(
+			(a, b) => this.changeRebaser.rebase(a, b),
+			changeToRebase,
+		);
+	}
 
-/**
- * Rebasing logic for a particular kind of change.
- *
- * This interface is used to provide rebase policy to `Rebaser`.
- *
- * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
- * - `compose([])` is the identity element.
- * - associativity is defined as `compose([...a, ...b])` is equal to
- * `compose([compose(a), compose(b)])` for all `a` and `b`.
- * - `inverse(a)` gives the inverse element of `a`.
- *
- * In these requirements the definition of equality is up to the implementer,
- * but it is required that any two changes which are considered equal:
- * - have the same impact when applied to any tree.
- * - can be substituted for each-other in all methods on this
- * interface and produce equal (by this same definition) results.
- *
- * For the sake of testability, implementations will likely want to have a concrete equality implementation.
- *
- * This API uses `compose` on arrays instead of an explicit identity element and associative binary operator
- * to allow the implementation more room for optimization,
- * but should otherwise be equivalent to the identity element and binary operator group approach.
- *
- * TODO:
- * Be more specific about the above requirements.
- * For example, would something that is close to forming a group but has precision issues
- * (ex: the floating point numbers and addition) be ok?
- * Would this cause decoherence (and thus be absolutely not ok),
- * or just minor semantic precision issues, which could be tolerated.
- * For now assume that such issues are not ok.
- *
- * @alpha
- */
-export interface ChangeRebaser<TChangeset> {
-	_typeCheck?: Invariant<TChangeset>;
-
-	/**
-	 * Compose a collection of changesets into a single one.
-	 * See {@link ChangeRebaser} for requirements.
-	 */
-	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
-
-	/**
-	 * @returns the inverse of `changes`.
-	 *
-	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
-	 * See {@link ChangeRebaser} for details.
-	 */
-	invert(changes: TaggedChange<TChangeset>): TChangeset;
-
-	/**
-	 * Rebase `change` over `over`.
-	 *
-	 * The resulting changeset should, as much as possible, replicate the same semantics as `change`,
-	 * except be valid to apply after `over` instead of before it.
-	 *
-	 * Requirements:
-	 * The implementation must ensure that for all possible changesets `a`, `b` and `c`:
-	 * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
-	 * - `rebase(compose([a, b]), c)` is equal to
-	 * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
-	 * - `rebase(a, compose([]))` is equal to `a`.
-	 * - `rebase(compose([]), a)` is equal to `a`.
-	 */
-	rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
-
-	// TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
-	// This isn't ideal, but it might be fine?
-	// Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
-	rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
-}
-
-/**
- * @alpha
- */
-export interface TaggedChange<TChangeset> {
-	readonly revision: RevisionTag | undefined;
-
-	/**
-	 * Whether this change represents the inverse of the specified revision.
-	 * Considered false if undefined.
-	 */
-	readonly isInverse?: boolean;
-	readonly change: TChangeset;
-}
-
-export function tagChange<T>(
-	change: T,
-	tag: RevisionTag | undefined,
-	isInverse?: boolean,
-): TaggedChange<T> {
-	return { revision: tag, isInverse, change };
-}
-
-export function tagInverse<T>(
-	inverseChange: T,
-	invertedRevision: RevisionTag | undefined,
-): TaggedChange<T> {
-	return {
-		revision: invertedRevision,
-		isInverse: true,
-		change: inverseChange,
-	};
-}
-
-export function makeAnonChange<T>(change: T): TaggedChange<T> {
-	return { revision: undefined, change };
-}
-
-export interface FinalChange {
-	readonly status: FinalChangeStatus;
-}
-
-export enum FinalChangeStatus {
-	conflicted,
-	rebased,
-	commuted,
+	private inverseFromCommit(commit: GraphCommit<TChange>): TaggedChange<TChange> {
+		return tagInverse(this.changeRebaser.invert(commit), commit.revision);
+	}
 }

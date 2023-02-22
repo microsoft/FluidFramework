@@ -218,3 +218,5 @@ export const FieldKinds = {
 } as const;
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";
+
+export { StableId, UuidString } from "./id-compressor";
