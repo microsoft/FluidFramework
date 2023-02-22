@@ -13,7 +13,9 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @alpha
-type AllowOptional<T> = PartialWithoutUndefined<T> & RemoveOptionalFields<T>;
+type AllowOptional<T> = {
+    _dummy: PartialWithoutUndefined<T> & RemoveOptionalFields<T>;
+}[_dummy];
 
 // @alpha
 export type Anchor = Brand<number, "rebaser.Anchor">;
@@ -270,6 +272,9 @@ export interface Dependent extends NamedComputation {
 // @alpha
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
+
+// @alpha
+type _dummy = "_dummy";
 
 // @alpha
 export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | ContextuallyTypedNodeData> {
@@ -1011,8 +1016,10 @@ export const parentField: unique symbol;
 
 // @alpha
 type PartialWithoutUndefined<T> = {
-    [P in keyof T as T[P] extends undefined ? never : P]?: T[P];
-};
+    _dummy: {
+        [P in keyof T as T[P] extends undefined ? never : P]?: T[P];
+    };
+}[_dummy];
 
 // @alpha
 export interface PathRootPrefix {
@@ -1069,8 +1076,10 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 
 // @alpha (undocumented)
 type RemoveOptionalFields<T> = {
-    [P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
-};
+    _dummy: {
+        [P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
+    };
+}[_dummy];
 
 // @alpha
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
@@ -1270,7 +1279,7 @@ export interface TreeSchemaBuilder {
 }
 
 // @alpha
-export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
+export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 
 // @alpha
 interface TreeSchemaTypeInfo {
@@ -1337,7 +1346,8 @@ declare namespace TypedSchema {
         PartialWithoutUndefined,
         RemoveOptionalFields,
         Unbrand,
-        UnbrandList
+        UnbrandList,
+        _dummy
     }
 }
 export { TypedSchema }

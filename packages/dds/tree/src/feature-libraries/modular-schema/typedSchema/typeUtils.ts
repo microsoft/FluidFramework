@@ -98,39 +98,58 @@ export type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infe
 	: [];
 
 /**
- * Return a type thats equivalent to the input, but with different intellisense.
- * Inlines some top level type meta-functions.
- *
- * TODO: figure out why this sometimes works and sometimes does not.
+ * Return a type thats equivalent to the input, but with different IntelliSense.
+ * This tends to convert unions and intersections into objects.
  */
-export type InlineOnce<T> = {
-	[Property in keyof T]: T[Property];
-};
-
-/**
- * TODO: does not work.
- */
-export type InlineDeep<T> = {
-	[Property in keyof T as Property]: T[Property];
-};
+export type FlattenKeys<T> = {
+	_dummy: { [Property in keyof T]: T[Property] };
+}[_dummy];
 
 /**
  *@alpha
  */
 export type RemoveOptionalFields<T> = {
-	[P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
-};
+	_dummy: {
+		[P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
+	};
+}[_dummy];
 
 /**
  * Like Partial but removes files which may be undefined.
  * @alpha
  */
 export type PartialWithoutUndefined<T> = {
-	[P in keyof T as T[P] extends undefined ? never : P]?: T[P];
-};
+	_dummy: {
+		[P in keyof T as T[P] extends undefined ? never : P]?: T[P];
+	};
+}[_dummy];
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
  * @alpha
  */
-export type AllowOptional<T> = PartialWithoutUndefined<T> & RemoveOptionalFields<T>;
+export type AllowOptional<T> = {
+	_dummy: PartialWithoutUndefined<T> & RemoveOptionalFields<T>;
+}[_dummy];
+
+/**
+ * Field to use for trick to "inline" generic types.
+ *
+ * @remarks
+ * The TypeScript compiler can be convinced to inline a generic type
+ * (so the result of evaluating the generic type show up in IntelliSense and error messages instead of just the invocation of the generic type)
+ * by creating an object with a field, and returning the type of that field.
+ *
+ * For example:
+ * ```typescript
+ * type MyGeneric<T1, T2> = {x: T1 extends [] ? T1 : T2 };
+ * type MyGenericExpanded<T1, T2> = {_dummy: {x: T1 extends [] ? T1 : T2 }}['_dummy']
+ *
+ * // Type is MyGeneric<5, string>
+ * const foo: MyGeneric<5, string> = {x: "x"}
+ * // Type is {x: "x"}
+ * const foo2: MyGenericExpanded<5, string> = {x: "x"}
+ * ```
+ * @alpha
+ */
+export type _dummy = "_dummy";

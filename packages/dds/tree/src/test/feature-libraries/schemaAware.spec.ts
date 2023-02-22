@@ -30,7 +30,7 @@ import {
 	ContextuallyTypedNodeDataObject,
 } from "../../feature-libraries";
 import {
-	InlineOnce,
+	FlattenKeys,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/typedSchema/typeUtils";
 
@@ -117,7 +117,7 @@ const extractedTypes = schemaData.allTypes;
 const extractedTypes2 = schemaData2.allTypes;
 
 // Example Use:
-type BallTreeX = InlineOnce<
+type BallTreeX = FlattenKeys<
 	ValidContextuallyTypedNodeData<typeof schemaData, ApiMode.Flexible, readonly ["ball"]>
 >;
 type BallTree = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>;
@@ -171,9 +171,9 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 }
 
 interface TypeBuilder<TSchema extends TypedSchema.LabeledTreeSchema<any>> {
-	a: InlineOnce<NodeDataFor<typeof schemaData, ApiMode.Flexible, TSchema>>;
-	b: InlineOnce<NodeDataFor<typeof schemaData, ApiMode.Normalized, TSchema>>;
-	c: InlineOnce<NodeDataFor<typeof schemaData, ApiMode.Wrapped, TSchema>>;
+	a: FlattenKeys<NodeDataFor<typeof schemaData, ApiMode.Flexible, TSchema>>;
+	b: FlattenKeys<NodeDataFor<typeof schemaData, ApiMode.Normalized, TSchema>>;
+	c: FlattenKeys<NodeDataFor<typeof schemaData, ApiMode.Wrapped, TSchema>>;
 }
 
 // Test non recursive cases:
