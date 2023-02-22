@@ -123,6 +123,7 @@ stages:
   - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
     - template: include-policy-check.yml
       parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
         checks: ${{ parameters.checks }}
 
   # Install / Build / Test Stage
