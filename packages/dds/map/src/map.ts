@@ -125,8 +125,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 */
 	private readonly kernel: MapKernel;
 
-	// private readonly options: IMapOptions | undefined;
-
 	/**
 	 * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
 	 *
