@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
+import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { Changeset, Mark, MarkList, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
@@ -107,7 +108,9 @@ function invertMark<TNodeChange>(
 						type: "Revive",
 						detachedBy: mark.revision ?? revision,
 						detachIndex: inputIndex,
-						content: reviver(revision, inputIndex, mark.count),
+						content: reviver(revision, inputIndex, mark.count).map(
+							jsonableTreeFromCursor,
+						),
 						count: mark.count,
 					},
 				];
