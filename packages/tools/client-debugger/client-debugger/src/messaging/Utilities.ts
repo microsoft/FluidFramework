@@ -65,13 +65,7 @@ export function handleIncomingWindowMessage(
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	const message = event.data;
-
-	if (message === undefined || message.type === undefined) {
-		return;
-	}
-
-	return handleIncomingMessage(message as IDebuggerMessage, handlers, loggingOptions);
+	return handleIncomingMessage(event.data, handlers, loggingOptions);
 }
 
 /**
@@ -85,10 +79,14 @@ export function handleIncomingWindowMessage(
  * @internal
  */
 export function handleIncomingMessage(
-	message: IDebuggerMessage,
+	message: Partial<IDebuggerMessage>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
+	if (message === undefined || !isDebuggerMessage(message)) {
+		return;
+	}
+
 	if (handlers[message.type] === undefined) {
 		// No handler for this type provided. No-op.
 		return;
@@ -102,4 +100,8 @@ export function handleIncomingMessage(
 			loggingOptions?.context === undefined ? "" : `(${loggingOptions.context}): `;
 		console.log(`${loggingPreamble}"${message.type}" message handled:`, message); // TODO: console.debug
 	}
+}
+
+function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage {
+	return typeof value.source === "string" && typeof value.type === "string";
 }
