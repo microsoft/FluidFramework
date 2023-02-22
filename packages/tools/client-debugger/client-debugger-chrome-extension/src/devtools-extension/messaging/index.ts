@@ -8,7 +8,6 @@
 
 export { devtoolsMessageSource } from "./Constants";
 export * from "./Messages";
-export { TypedPortConnection } from "./TypedPortConnection";
 export * from "./Utilities";
 
 /* eslint-enable no-restricted-syntax */

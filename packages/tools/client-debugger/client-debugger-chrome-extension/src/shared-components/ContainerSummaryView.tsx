@@ -9,7 +9,7 @@ import {
 	ContainerStateChangeMessage,
 	IDebuggerMessage,
 	InboundHandlers,
-	handleIncomingMessage,
+	handleIncomingWindowMessage,
 	postMessageToWindow,
 	GetContainerStateMessage,
 } from "@fluid-tools/client-debugger";
@@ -56,7 +56,7 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 		 * Event handler for messages coming from the window (globalThis).
 		 */
 		function messageHandler(event: MessageEvent<Partial<IDebuggerMessage>>): void {
-			handleIncomingMessage(event, inboundMessageHandlers, {
+			handleIncomingWindowMessage(event, inboundMessageHandlers, {
 				context: loggingContext,
 			});
 		}

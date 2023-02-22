@@ -15,7 +15,7 @@ import {
 	ContainerStateChangeMessage,
 	debuggerMessageSource,
 	GetContainerStateMessage,
-	handleIncomingMessage,
+	handleIncomingWindowMessage,
 	IDebuggerMessage,
 	InboundHandlers,
 	InitiateDebuggerMessagingMessage,
@@ -164,7 +164,7 @@ export class FluidClientDebugger
 	private readonly windowMessageHandler = (
 		event: MessageEvent<Partial<IDebuggerMessage>>,
 	): void => {
-		handleIncomingMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
+		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
@@ -265,6 +265,9 @@ export class FluidClientDebugger
 		// Unbind Audience events
 		this.audience.off("addMember", this.audienceMemberAddedHandler);
 		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
+
+		// Unbind window event listener
+		globalThis.removeEventListener("message", this.windowMessageHandler);
 
 		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 

@@ -7,7 +7,7 @@ import React from "react";
 
 import {
 	ContainerMetadata,
-	handleIncomingMessage,
+	handleIncomingWindowMessage,
 	IDebuggerMessage,
 	InboundHandlers,
 	RegistryChangeMessage,
@@ -48,7 +48,7 @@ export function DebuggerPanel(): React.ReactElement {
 		 * Event handler for messages coming from the window (globalThis).
 		 */
 		function messageHandler(event: MessageEvent<Partial<IDebuggerMessage>>): void {
-			handleIncomingMessage(event, inboundMessageHandlers, {
+			handleIncomingWindowMessage(event, inboundMessageHandlers, {
 				context: loggingContext,
 			});
 		}

@@ -36,7 +36,7 @@ export interface InboundHandlers {
 }
 
 /**
- * Console logging options for {@link handleIncomingMessage}.
+ * Console logging options for {@link handleIncomingWindowMessage}.
  *
  * @privateRemarks TODO: Introduce better diagnostic logging infra for the entire library
  *
@@ -60,23 +60,41 @@ export interface MessageLoggingOptions {
  *
  * @internal
  */
-export function handleIncomingMessage(
+export function handleIncomingWindowMessage(
 	event: MessageEvent<Partial<IDebuggerMessage>>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
 	const message = event.data;
 
-	if (message?.type === undefined) {
+	if (message === undefined || message.type === undefined) {
 		return;
 	}
 
+	return handleIncomingMessage(message as IDebuggerMessage, handlers, loggingOptions);
+}
+
+/**
+ * Utility function for handling incoming events.
+ *
+ * @param message - The window event containing the message to handle.
+ * @param handlers - List of handlers for particular event types.
+ * If the incoming event's message type has a corresponding handler callback, that callback will be invoked.
+ * Otherwise, this function will no-op.
+ *
+ * @internal
+ */
+export function handleIncomingMessage(
+	message: IDebuggerMessage,
+	handlers: InboundHandlers,
+	loggingOptions?: MessageLoggingOptions,
+): void {
 	if (handlers[message.type] === undefined) {
 		// No handler for this type provided. No-op.
 		return;
 	}
 
-	const handled = handlers[message.type](message as IDebuggerMessage);
+	const handled = handlers[message.type](message);
 
 	// Only log if the message was actually handled by the recipient.
 	if (handled) {

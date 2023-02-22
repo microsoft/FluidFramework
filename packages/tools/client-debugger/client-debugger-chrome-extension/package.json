@@ -47,6 +47,8 @@
 		"@fluentui/react-hooks": "^8.6.12",
 		"@fluentui/react-icons-mdl2": "^1.3.22",
 		"@fluentui/react-tabs": "^9.1.6",
+		"@fluidframework/common-definitions": "^0.20.1",
+		"@fluidframework/common-utils": "^1.1.1",
 		"@fluid-tools/client-debugger": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluid-tools/client-debugger-view": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"react": "^17.0.1",

@@ -11,7 +11,7 @@ import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
 import {
 	debuggerMessageSource,
-	handleIncomingMessage,
+	handleIncomingWindowMessage,
 	IDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
@@ -113,7 +113,11 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	private readonly windowMessageHandler = (
 		event: MessageEvent<Partial<IDebuggerMessage>>,
 	): void => {
-		handleIncomingMessage(event, this.inboundMessageHandlers, registryMessageLoggingOptions);
+		handleIncomingWindowMessage(
+			event,
+			this.inboundMessageHandlers,
+			registryMessageLoggingOptions,
+		);
 	};
 
 	/**

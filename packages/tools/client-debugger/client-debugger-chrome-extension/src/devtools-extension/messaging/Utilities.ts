@@ -4,7 +4,7 @@
  */
 
 import { IDebuggerMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
-import { TypedPortConnection } from "./TypedPortConnection";
+import { TypedPortConnection } from "../../messaging";
 
 /**
  * Relays the provided message to the window (globalThis).
@@ -23,6 +23,8 @@ export function relayMessageToWindow<TMessage extends IDebuggerMessage>(
 	console.log(
 		`${loggingPreamble}Relaying message from "${messageSource}" to the window:`,
 		message,
+
+		chrome,
 	); // TODO: console.debug
 	window.postMessage(message, "*"); // TODO: verify target is okay
 }

@@ -9570,6 +9570,8 @@ importers:
       '@fluid-tools/client-debugger-view': '>=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.9.0
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.22.2
       '@types/chrome': 0.0.200
@@ -9605,6 +9607,8 @@ importers:
       '@fluentui/react-tabs': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluid-tools/client-debugger': link:../client-debugger
       '@fluid-tools/client-debugger-view': link:../client-debugger-view
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       scheduler: 0.20.2

@@ -3,46 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { IDebuggerMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
-import {
-	DevToolsInitMessage,
-	devtoolsMessageSource,
-	isValidDebuggerMessage,
-	relayMessageToPort,
-} from "./messaging";
+/**
+ * This module is the extension's Devtools Script.
+ * It runs in the context of the browser's Devtools panel, and has no direct access to the page or any of its resources.
+ * It will be initialized as soon as a user clicks on this extension's tab in the Devtools panel.
+ *
+ * From an implementation perspective, this script renders our debugger visuals and initiates message passing
+ * between the visuals and the webpage with registered Fluid Debugger(s).
+ *
+ * In terms of messaging, this script strictly communicates with the Background Script, which is responsible for
+ * relaying messages between this script and the webpage.
+ *
+ * - Note: Messaging is initiated by the root of our visualizer, rather than in this script directly.
+ * See `RootView.ts`.
+ *
+ * TODO link to docs on Devtools script + Devtools extension flow
+ */
 
 // TODOs:
 // - Document messaging relationships
+// - Dedupe logging infra
 
+/**
+ * Context string for logging.
+ */
 const loggingContext = "EXTENSION(DEVTOOLS)";
 
-const messageLoggingOptions: MessageLoggingOptions = {
-	context: loggingContext,
-};
-
+/**
+ * Formats the provided log message with the appropriate context information.
+ */
 function formatForLogging(text: string): string {
 	return `${loggingContext}: ${text}`;
 }
 
-console.log("DEVTOOLS HOST: Initializing background script...");
-
-// Create a connection to the background service worker.
-const backgroundPageConnection = chrome.runtime.connect({
-	name: "devtools-page",
-});
-
-// Relay the tab ID to the background service worker.
-const initMessage: DevToolsInitMessage = {
-	source: devtoolsMessageSource,
-	type: "initializeDevtools",
-	data: {
-		tabId: chrome.devtools.inspectedWindow.tabId,
-	},
-};
-
-backgroundPageConnection.postMessage(initMessage);
-
-console.log("DEVTOOLS HOST: Initializing devtools panel view...");
+console.log(formatForLogging("Initializing debugger view..."));
 
 // When our extension view is launched, open the root visualization view.
 chrome.devtools.panels.create(
@@ -50,58 +44,101 @@ chrome.devtools.panels.create(
 	"images/icon.png",
 	"rootView.html",
 	(panel) => {
-		// When the panel is first shown, register to relay messages from its window to the background worker
-		panel.onShown.addListener((panelWindow) => {
-			/**
-			 * Relay messages from the background service worker to the panel window
-			 */
-			function relayMessageFromBackgroundToPanel(event: MessageEvent): void {
-				const message = event.data as Partial<IDebuggerMessage>;
-				if (!isValidDebuggerMessage(message)) {
-					console.error(
-						formatForLogging("Received malformed message from Devtools script:"),
-						message,
-					);
-					return;
-				}
-				console.log(
-					`${loggingContext}: Posting message to devtools panel window:`,
-					message,
-				); // TODO: console.debug
-				panelWindow.postMessage(message);
-			}
-
-			/**
-			 * Relay messages from the panel window to the background service worker
-			 */
-			function relayMessageFromPanelToBackground(event: MessageEvent): void {
-				const message = event.data as Partial<IDebuggerMessage>;
-				if (!isValidDebuggerMessage(message)) {
-					console.error(
-						formatForLogging("Received malformed message from Devtools script:"),
-						message,
-					);
-					return;
-				}
-				relayMessageToPort(
-					message,
-					"devtools panel",
-					backgroundPageConnection,
-					messageLoggingOptions,
-				);
-			}
-
-			// Relay messages from the background service worker to the as appropriate
-			backgroundPageConnection.onMessage.addListener(relayMessageFromBackgroundToPanel);
-
-			// Relay messages from the devtools panel window to the background worker as appropriate
-			panelWindow.addEventListener("message", relayMessageFromPanelToBackground);
-		});
-
-		// TODO: do we need to remove listeners when panel is hidden?
+		console.log(formatForLogging("Initializing debugger view..."));
 	},
 );
 
-backgroundPageConnection.onDisconnect.addListener((port) => {
-	// TODO: do we need to do anything here? Or
-});
+// // TODOs:
+// // - Document messaging relationships
+
+// const loggingContext = "EXTENSION(DEVTOOLS)";
+
+// const messageLoggingOptions: MessageLoggingOptions = {
+// 	context: loggingContext,
+// };
+
+// function formatForLogging(text: string): string {
+// 	return `${loggingContext}: ${text}`;
+// }
+
+// console.log("DEVTOOLS HOST: Initializing background script...");
+
+// // Create a connection to the background service worker.
+// const backgroundPageConnection = chrome.runtime.connect({
+// 	name: "devtools-page",
+// });
+
+// // Relay the tab ID to the background service worker.
+// const initMessage: DevToolsInitMessage = {
+// 	source: devtoolsMessageSource,
+// 	type: "initializeDevtools",
+// 	data: {
+// 		tabId: chrome.devtools.inspectedWindow.tabId,
+// 	},
+// };
+
+// backgroundPageConnection.postMessage(initMessage);
+
+// console.log("DEVTOOLS HOST: Initializing devtools panel view...");
+
+// // When our extension view is launched, open the root visualization view.
+// chrome.devtools.panels.create(
+// 	"Fluid Client Debugger",
+// 	"images/icon.png",
+// 	"rootView.html",
+// 	(panel) => {
+// 		// When the panel is first shown, register to relay messages from its window to the background worker
+// 		panel.onShown.addListener((panelWindow) => {
+// 			/**
+// 			 * Relay messages from the background service worker to the panel window
+// 			 */
+// 			function relayMessageFromBackgroundToPanel(event: MessageEvent): void {
+// 				const message = event.data as Partial<IDebuggerMessage>;
+// 				if (!isValidDebuggerMessage(message)) {
+// 					console.error(
+// 						formatForLogging("Received malformed message from Devtools script:"),
+// 						message,
+// 					);
+// 					return;
+// 				}
+// 				console.log(
+// 					`${loggingContext}: Posting message to devtools panel window:`,
+// 					message,
+// 				); // TODO: console.debug
+// 				panelWindow.postMessage(message);
+// 			}
+
+// 			/**
+// 			 * Relay messages from the panel window to the background service worker
+// 			 */
+// 			function relayMessageFromPanelToBackground(event: MessageEvent): void {
+// 				const message = event.data as Partial<IDebuggerMessage>;
+// 				if (!isValidDebuggerMessage(message)) {
+// 					console.error(
+// 						formatForLogging("Received malformed message from Devtools script:"),
+// 						message,
+// 					);
+// 					return;
+// 				}
+// 				relayMessageToPort(
+// 					message,
+// 					"devtools panel",
+// 					backgroundPageConnection,
+// 					messageLoggingOptions,
+// 				);
+// 			}
+
+// 			// Relay messages from the background service worker to the as appropriate
+// 			backgroundPageConnection.onMessage.addListener(relayMessageFromBackgroundToPanel);
+
+// 			// Relay messages from the devtools panel window to the background worker as appropriate
+// 			panelWindow.addEventListener("message", relayMessageFromPanelToBackground);
+// 		});
+
+// 		// TODO: do we need to remove listeners when panel is hidden?
+// 	},
+// );
+
+// backgroundPageConnection.onDisconnect.addListener((port) => {
+// 	// TODO: do we need to do anything here? Or
+// });
