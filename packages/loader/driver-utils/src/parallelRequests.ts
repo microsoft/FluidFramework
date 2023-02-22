@@ -8,7 +8,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
-import { waitForConnectedState, logNetworkFailure } from "./networkUtils";
+import { logNetworkFailure } from "./networkUtils";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion";
 
@@ -379,6 +379,18 @@ export class Queue<T> implements IStream<T> {
 	}
 }
 
+const waitForOnline = async (): Promise<void> => {
+	if (navigator?.onLine === false && window?.addEventListener !== undefined) {
+		return new Promise<void>((resolve) => {
+			const resolveAndRemoveListener = () => {
+				resolve();
+				window.removeEventListener("online", resolveAndRemoveListener);
+			};
+			window.addEventListener("online", resolveAndRemoveListener);
+		});
+	}
+};
+
 /**
  * Retrieve single batch of ops
  * @param request - request index
@@ -477,7 +489,15 @@ async function getSingleOpBatch(
 			}
 		}
 
-		await waitForConnectedState(delay);
+		// First, wait for the amount of time we think is appropriate.
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, delay);
+		});
+
+		// Then, if we believe we're offline, we assume there's no point in trying until we at least think we're online.
+		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
+		// should probably live in the driver.
+		await waitForOnline();
 	}
 
 	return nothing;
