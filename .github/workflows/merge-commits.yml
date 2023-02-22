@@ -116,7 +116,7 @@ jobs:
           token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           script: |
             const { Octokit } = require("@octokit/core");
-            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const token = `${{ secrets.FLUIDBOTPAT }}`;
             const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
             const author = '${{needs.dequeue.outputs.AUTHOR}}';
             const description = `
