@@ -29,7 +29,9 @@ export function closeFluidClientDebugger(containerId: string): void;
 
 // @internal
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
+    changeKind: "attached" | "connected" | "contextChanged" | "disconnected" | "disposed" | "closed";
     clientId: string | undefined;
+    containerId: string | undefined;
 }
 
 // @internal

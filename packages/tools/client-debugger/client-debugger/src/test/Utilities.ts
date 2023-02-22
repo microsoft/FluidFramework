@@ -11,9 +11,11 @@ import {
 	IAudienceOwner,
 	IContainer,
 	IContainerEvents,
+	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -86,9 +88,28 @@ class MockContainer
 		this.emit("connected");
 	}
 
+	public contextChanged(): void {
+		this.emit("contextChanged");
+	}
+
 	public disconnect(): void {
 		this._connectionState = ConnectionState.Disconnected;
 		this.emit("disconnected");
+	}
+
+	public async attach(request: IRequest): Promise<void> {
+		this._connectionState = ConnectionState.Connected;
+		this.emit("attached");
+	}
+
+	public dispose(error?: IErrorBase | undefined): void {
+		this._connectionState = ConnectionState.Disconnected;
+		this.emit("dispose");
+	}
+
+	public close(): void {
+		this._connectionState = ConnectionState.Disconnected;
+		this.emit("closed");
 	}
 }
 

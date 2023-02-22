@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IAudience, IContainer } from "@fluidframework/container-definitions";
+import { IAudience, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -66,11 +66,33 @@ export class FluidClientDebugger
 
 	// #region Container-related event handlers
 
+	private readonly containerAttachedHandler = (): void => {
+		this._connectionStateLog.push({
+			newState: ConnectionState.Connected,
+			timestamp: Date.now(),
+			clientId: undefined,
+			containerId: this.containerId,
+			changeKind: "attached",
+		});
+	};
+
 	private readonly containerConnectedHandler = (clientId: string): void => {
 		this._connectionStateLog.push({
 			newState: ConnectionState.Connected,
 			timestamp: Date.now(),
 			clientId,
+			containerId: this.containerId,
+			changeKind: "connected",
+		});
+	};
+
+	private readonly containerContextChangedHandler = (codeDetails: IFluidCodeDetails): void => {
+		this._connectionStateLog.push({
+			newState: ConnectionState.Connected,
+			timestamp: Date.now(),
+			clientId: undefined,
+			containerId: this.containerId,
+			changeKind: "contextChanged",
 		});
 	};
 
@@ -79,6 +101,28 @@ export class FluidClientDebugger
 			newState: ConnectionState.Disconnected,
 			timestamp: Date.now(),
 			clientId: undefined,
+			containerId: this.containerId,
+			changeKind: "disconnected",
+		});
+	};
+
+	private readonly containerClosedHandler = (): void => {
+		this._connectionStateLog.push({
+			newState: ConnectionState.Disconnected,
+			timestamp: Date.now(),
+			clientId: undefined,
+			containerId: this.containerId,
+			changeKind: "closed",
+		});
+	};
+
+	private readonly containerDisposeddHandler = (): void => {
+		this._connectionStateLog.push({
+			newState: ConnectionState.Connected,
+			timestamp: Date.now(),
+			clientId: undefined,
+			containerId: this.containerId,
+			changeKind: "disposed",
 		});
 	};
 
@@ -130,8 +174,12 @@ export class FluidClientDebugger
 		this._audienceChangeLog = [];
 
 		// Bind Container events required for change-logging
+		this.container.on("attached", this.containerAttachedHandler);
 		this.container.on("connected", this.containerConnectedHandler);
+		this.container.on("contextChanged", this.containerContextChangedHandler);
 		this.container.on("disconnected", this.containerDisconnectedHandler);
+		this.container.on("disposed", this.containerDisposeddHandler);
+		this.container.on("closed", this.containerClosedHandler);
 
 		// Bind Audience events required for change-logging
 		this.audience.on("addMember", this.audienceMemberAddedHandler);
@@ -161,8 +209,12 @@ export class FluidClientDebugger
 	 */
 	public dispose(): void {
 		// Unbind Container events
+		this.container.off("attached", this.containerAttachedHandler);
 		this.container.off("connected", this.containerConnectedHandler);
+		this.container.off("contextChanged", this.containerContextChangedHandler);
 		this.container.off("disconnected", this.containerDisconnectedHandler);
+		this.container.off("disposed", this.containerDisposeddHandler);
+		this.container.off("closed", this.containerClosedHandler);
 
 		// Unbind Audience events
 		this.audience.off("addMember", this.audienceMemberAddedHandler);

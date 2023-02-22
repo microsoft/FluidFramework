@@ -44,6 +44,22 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 	 * Will always be undefined for disconnects.
 	 */
 	clientId: string | undefined;
+
+	/**
+	 * The ID of container that has state changed.
+	 */
+	containerId: string | undefined;
+
+	/**
+	 * Whether the change represents a container being connected to or disconnected from the collaborative session.
+	 */
+	changeKind:
+		| "attached"
+		| "connected"
+		| "contextChanged"
+		| "disconnected"
+		| "disposed"
+		| "closed";
 }
 
 /**
