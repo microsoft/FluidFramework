@@ -11,6 +11,7 @@ import {
 	ICriticalContainerError,
 	ConnectionState,
 } from "@fluidframework/container-definitions";
+import { ConnectionState as ConnectionStateEnum } from "@fluidframework/container-loader";
 import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from "./types";
 
 /**
@@ -219,6 +220,42 @@ export class FluidContainer
 		container.on("disconnected", this.disconnectedHandler);
 		container.on("saved", this.savedHandler);
 		container.on("dirty", this.dirtyHandler);
+
+		// We observed that most users of platform do not check FluidContainer.connectionState event on load, causing bugs
+		// As such, we are raising events when new listener pops up.
+		// Note that we can raise both "disconnected" & "connected" events at the same time, if we are in connecting stage.
+		this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
+			// Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
+			Promise.resolve()
+				.then(() => {
+					switch (event) {
+						case "dirty":
+							if (this.isDirty) {
+								listener();
+							}
+							break;
+						case "saved":
+							if (!this.isDirty) {
+								listener();
+							}
+							break;
+						case "connected":
+							if (this.connectionState === ConnectionStateEnum.Connected) {
+								listener(this.container.clientId);
+							}
+							break;
+						case "disconnected":
+							if (this.connectionState !== ConnectionStateEnum.Disconnected) {
+								listener();
+							}
+							break;
+						default:
+					}
+				})
+				.catch((error) => {
+					throw new Error("Cannot raise event");
+				});
+		});
 	}
 
 	/**
