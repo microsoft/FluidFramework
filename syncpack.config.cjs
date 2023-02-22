@@ -6,9 +6,6 @@
 module.exports = {
 	indent: "\t",
 
-	// Don't set dep versions based on the version of the package in the workspace
-	workspace: false,
-
 	// Custom types are used to define additional fields in package.json that contain versions that should be
 	// checked/synced. See https://jamiemason.github.io/syncpack/config/custom-types for more details.
 	customTypes: {
