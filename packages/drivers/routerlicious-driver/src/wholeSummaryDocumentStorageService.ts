@@ -10,6 +10,7 @@ import {
 	ISummaryContext,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
+import { convertSnapshotAndBlobsToSummaryTree } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -27,7 +28,6 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 import { IRouterliciousDriverPolicies } from "./policies";
-import { convertSnapshotAndBlobsToSummaryTree } from "./treeUtils";
 
 const latestSnapshotId: string = "latest";
 
