@@ -159,7 +159,7 @@ export interface InitiateDebuggerMessagingMessage extends IDebuggerMessage<HasCo
     type: "INITIATE_DEBUGGER_MESSAGING";
 }
 
-// @public
+// @internal
 export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage;
 
 // @internal
