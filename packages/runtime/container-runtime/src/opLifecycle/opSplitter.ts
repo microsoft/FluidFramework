@@ -25,7 +25,9 @@ export class OpSplitter {
 
 	constructor(
 		chunks: [string, string[]][],
-		private readonly submitBatchFn: ((batch: IBatchMessage[]) => number) | undefined,
+		private readonly submitBatchFn:
+			| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
+			| undefined,
 		private readonly chunkSizeInBytes: number,
 		private readonly maxBatchSizeInBytes: number,
 		logger: ITelemetryLogger,
@@ -138,6 +140,10 @@ export class OpSplitter {
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
 			0x514 /* Batch needs to be non-empty */,
 		);
+		assert(
+			batch.referenceSequenceNumber !== undefined,
+			"Batch must have a reference sequence number if non-empty",
+		);
 		assert(this.chunkSizeInBytes !== 0, 0x515 /* Chunk size needs to be non-zero */);
 		assert(
 			this.chunkSizeInBytes < this.maxBatchSizeInBytes,
@@ -160,14 +166,17 @@ export class OpSplitter {
 		assert(this.submitBatchFn !== undefined, 0x519 /* We don't support old loaders */);
 		// Send the first N-1 chunks immediately
 		for (const chunk of chunks.slice(0, -1)) {
-			this.submitBatchFn([chunkToBatchMessage(chunk, firstMessage.referenceSequenceNumber)]);
+			this.submitBatchFn(
+				[chunkToBatchMessage(chunk, batch.referenceSequenceNumber)],
+				batch.referenceSequenceNumber,
+			);
 		}
 
 		// The last chunk will be part of the new batch and needs to
 		// preserve the batch metadata of the original batch
 		const lastChunk = chunkToBatchMessage(
 			chunks[chunks.length - 1],
-			firstMessage.referenceSequenceNumber,
+			batch.referenceSequenceNumber,
 			{ batch: firstMessage.metadata?.batch },
 		);
 
@@ -182,6 +191,7 @@ export class OpSplitter {
 		return {
 			content: [lastChunk, ...restOfMessages],
 			contentSizeInBytes: lastChunk.contents?.length ?? 0,
+			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};
 	}
 }
@@ -212,27 +222,33 @@ export const splitOp = (op: BatchMessage, chunkSizeInBytes: number): IChunkedOp[
 	);
 
 	const contentLength = op.contents.length;
-	const chunkN = Math.floor((contentLength - 1) / chunkSizeInBytes) + 1;
+	const chunkCount = Math.floor((contentLength - 1) / chunkSizeInBytes) + 2;
 	let offset = 0;
-	for (let i = 1; i <= chunkN; i++) {
+	for (let i = 1; i < chunkCount; i++) {
 		const chunk: IChunkedOp = {
 			chunkId: i,
 			contents: op.contents.substr(offset, chunkSizeInBytes),
 			originalType: op.deserializedContent.type,
-			totalChunks: chunkN,
+			totalChunks: chunkCount,
 		};
-
-		if (i === chunkN) {
-			// We don't need to port these to all the chunks,
-			// as we rebuild the original op when we process the
-			// last chunk, therefore it is the only one that needs it.
-			chunk.originalMetadata = op.metadata;
-			chunk.originalCompression = op.compression;
-		}
 
 		chunks.push(chunk);
 		offset += chunkSizeInBytes;
+		assert(i === chunkCount - 1 || offset <= contentLength, "Content offset within bounds");
 	}
+
+	assert(offset >= contentLength, "Content offset equal or larger than content length");
+	// The last chunk has empty contents, to minimize the risk of the
+	// resulting payload exceeding 1MB due to the overhead from the empty ops
+	// which will be bundled with this op.
+	chunks.push({
+		chunkId: chunkCount,
+		contents: "",
+		originalType: op.deserializedContent.type,
+		totalChunks: chunkCount,
+		originalMetadata: op.metadata,
+		originalCompression: op.compression,
+	});
 
 	return chunks;
 };

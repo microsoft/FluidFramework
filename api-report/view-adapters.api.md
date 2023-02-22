@@ -24,7 +24,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
     render(elm: HTMLElement, options?: IFluidHTMLOptions): void;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IReactViewAdapterProps {
     view: FluidObject;
 }
@@ -42,11 +42,13 @@ export class MountableView implements IFluidMountableView {
     unmount(): void;
 }
 
-// @public
+// @public @deprecated
 export class ReactViewAdapter extends React_2.Component<IReactViewAdapterProps> {
+    // @deprecated
     constructor(props: IReactViewAdapterProps);
+    // @deprecated
     static canAdapt(view: FluidObject): boolean;
-    // (undocumented)
+    // @deprecated
     render(): JSX.Element;
 }
 

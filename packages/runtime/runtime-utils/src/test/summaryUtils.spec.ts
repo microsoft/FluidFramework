@@ -327,13 +327,19 @@ describe("Summary Utils", () => {
 			telemetryContext.set("pre2_", "prop1", "10");
 			telemetryContext.set("pre2_", "prop2", true);
 			telemetryContext.set("pre1_", "prop2", undefined);
+			telemetryContext.setMultiple("pre3_", "obj1", { prop1: "1", prop2: 2, prop3: true });
 
-			const obj = JSON.parse(telemetryContext.serialize());
+			const serialized = telemetryContext.serialize();
+
+			const obj = JSON.parse(serialized);
 
 			assert.strictEqual(obj.pre1_prop1, 10);
 			assert.strictEqual(obj.pre1_prop2, undefined);
 			assert.strictEqual(obj.pre2_prop1, "10");
 			assert.strictEqual(obj.pre2_prop2, true);
+			assert.strictEqual(obj.pre3_obj1_prop1, "1");
+			assert.strictEqual(obj.pre3_obj1_prop2, 2);
+			assert.strictEqual(obj.pre3_obj1_prop3, true);
 		});
 	});
 });

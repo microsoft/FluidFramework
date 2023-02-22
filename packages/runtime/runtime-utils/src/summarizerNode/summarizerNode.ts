@@ -19,8 +19,14 @@ import {
 	ISnapshotTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
+import {
+	ChildLogger,
+	LoggingError,
+	PerformanceEvent,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
 import { ReadAndParseBlob } from "../utils";
 import {
@@ -35,6 +41,10 @@ import {
 	SummaryNode,
 } from "./summarizerNodeUtils";
 
+/**
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
+ */
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
 /**
@@ -61,9 +71,39 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 	protected readonly children = new Map<string, SummarizerNode>();
 	protected readonly pendingSummaries = new Map<string, SummaryNode>();
-	private wipReferenceSequenceNumber: number | undefined;
+	protected wipReferenceSequenceNumber: number | undefined;
 	private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath } | undefined;
 	private wipSkipRecursion = false;
+
+	protected readonly logger: ITelemetryLogger;
+
+	/**
+	 * Do not call constructor directly.
+	 * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
+	 */
+	public constructor(
+		baseLogger: ITelemetryLogger,
+		private readonly summarizeInternalFn: SummarizeInternalFn,
+		config: ISummarizerNodeConfig,
+		private _changeSequenceNumber: number,
+		/** Undefined means created without summary */
+		private _latestSummary?: SummaryNode,
+		private readonly initialSummary?: IInitialSummary,
+		protected wipSummaryLogger?: ITelemetryLogger,
+		/** A unique id of this node to be logged when sending telemetry. */
+		protected telemetryNodeId?: string,
+	) {
+		this.canReuseHandle = config.canReuseHandle ?? true;
+		// All logs posted by the summarizer node should include the telemetryNodeId.
+		this.logger = ChildLogger.create(baseLogger, undefined /* namespace */, {
+			all: {
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: this.telemetryNodeId,
+				},
+			},
+		});
+	}
 
 	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
 		assert(
@@ -89,7 +129,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		assert(
-			this.isTrackingInProgress(),
+			this.isSummaryInProgress(),
 			0x1a1 /* "summarize should not be called when not tracking the summary" */,
 		);
 		assert(
@@ -176,10 +216,21 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		// This should come from wipLocalPaths in normal cases, or from the latestSummary
-		// if parentIsFailure or parentIsReused is true.
-		// If there is no latestSummary, clearSummary and return before reaching this code.
-		assert(!!localPathsToUse, 0x1a5 /* "Tracked summary local paths not set" */);
+		/**
+		 * The absence of wip local path indicates that summarize was not called for this node. This can happen if:
+		 * 1. A child node was created after summarize was already called on the parent. For example, a data store
+		 * is realized (loaded) after summarize was called on it creating summarizer nodes for its DDSes. In this case,
+		 * parentSkipRecursion will be true and the if block above would handle it.
+		 * 2. A new node was created but summarize was never called on it. This can mean that the summary that is
+		 * generated may not have the data from this node. We should not continue, log and throw an error. This
+		 * will help us identify these cases and take appropriate action.
+		 */
+		if (localPathsToUse === undefined) {
+			this.throwUnexpectedError({
+				eventName: "NodeNotSummarized",
+				proposalHandle,
+			});
+		}
 
 		const summary = new SummaryNode({
 			...localPathsToUse,
@@ -235,66 +286,104 @@ export class SummarizerNode implements IRootSummarizerNode {
 		readAndParseBlob: ReadAndParseBlob,
 		correlatedSummaryLogger: ITelemetryLogger,
 	): Promise<RefreshSummaryResult> {
-		this.defaultLogger.sendTelemetryEvent({
-			eventName: "refreshLatestSummary_start",
+		const eventProps: {
+			proposalHandle: string | undefined;
+			summaryRefSeq: number;
+			referenceSequenceNumber: number;
+			latestSummaryUpdated?: boolean;
+			wasSummaryTracked?: boolean;
+		} = {
 			proposalHandle,
-			referenceSequenceNumber: this.referenceSequenceNumber,
 			summaryRefSeq,
-		});
-
-		if (proposalHandle !== undefined) {
-			const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
-
-			if (maybeSummaryNode !== undefined) {
-				this.refreshLatestSummaryFromPending(
-					proposalHandle,
-					maybeSummaryNode.referenceSequenceNumber,
-				);
-				return { latestSummaryUpdated: true, wasSummaryTracked: true, summaryRefSeq };
-			}
-
-			const props = {
-				summaryRefSeq,
-				pendingSize: this.pendingSummaries.size ?? undefined,
-			};
-			this.defaultLogger.sendTelemetryEvent({
-				eventName: "PendingSummaryNotFound",
-				proposalHandle,
-				referenceSequenceNumber: this.referenceSequenceNumber,
-				details: JSON.stringify(props),
-			});
-		}
-
-		// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
-		if (this.referenceSequenceNumber >= summaryRefSeq) {
-			return { latestSummaryUpdated: false };
-		}
-
-		// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
-		// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
-		const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } = await fetchLatestSnapshot();
-
-		// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
-		// snapshot is older than the latest tracked summary, ignore it.
-		if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
-			return { latestSummaryUpdated: false };
-		}
-
-		await this.refreshLatestSummaryFromSnapshot(
-			fetchedSnapshotRefSeq,
-			snapshotTree,
-			undefined,
-			EscapedPath.create(""),
-			correlatedSummaryLogger,
-			readAndParseBlob,
-		);
-
-		return {
-			latestSummaryUpdated: true,
-			wasSummaryTracked: false,
-			snapshotTree,
-			summaryRefSeq: fetchedSnapshotRefSeq,
+			referenceSequenceNumber: this.referenceSequenceNumber,
 		};
+		return PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: "refreshLatestSummary",
+				...eventProps,
+			},
+			async (event) => {
+				// Refresh latest summary should not happen while a summary is in progress. If it does, it can result
+				// in inconsistent state, so, we should not continue;
+				if (this.isSummaryInProgress()) {
+					throw new LoggingError("UnexpectedRefreshDuringSummarize", {
+						inProgressSummaryRefSeq: this.wipReferenceSequenceNumber,
+					});
+				}
+
+				if (proposalHandle !== undefined) {
+					const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
+
+					if (maybeSummaryNode !== undefined) {
+						this.refreshLatestSummaryFromPending(
+							proposalHandle,
+							maybeSummaryNode.referenceSequenceNumber,
+						);
+						eventProps.wasSummaryTracked = true;
+						eventProps.latestSummaryUpdated = true;
+						event.end(eventProps);
+						return {
+							latestSummaryUpdated: true,
+							wasSummaryTracked: true,
+							summaryRefSeq,
+						};
+					}
+
+					const props = {
+						summaryRefSeq,
+						pendingSize: this.pendingSummaries.size ?? undefined,
+					};
+					this.logger.sendTelemetryEvent({
+						eventName: "PendingSummaryNotFound",
+						proposalHandle,
+						referenceSequenceNumber: this.referenceSequenceNumber,
+						details: JSON.stringify(props),
+					});
+				}
+
+				// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
+				if (this.referenceSequenceNumber >= summaryRefSeq) {
+					eventProps.latestSummaryUpdated = false;
+					event.end(eventProps);
+					return { latestSummaryUpdated: false };
+				}
+
+				// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
+				// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
+				const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } =
+					await fetchLatestSnapshot();
+
+				// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
+				// snapshot is older than the latest tracked summary, ignore it.
+				if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
+					eventProps.latestSummaryUpdated = false;
+					event.end(eventProps);
+					return { latestSummaryUpdated: false };
+				}
+
+				await this.refreshLatestSummaryFromSnapshot(
+					fetchedSnapshotRefSeq,
+					snapshotTree,
+					undefined,
+					EscapedPath.create(""),
+					correlatedSummaryLogger,
+					readAndParseBlob,
+				);
+
+				eventProps.latestSummaryUpdated = true;
+				eventProps.wasSummaryTracked = false;
+				eventProps.summaryRefSeq = fetchedSnapshotRefSeq;
+				event.end(eventProps);
+				return {
+					latestSummaryUpdated: true,
+					wasSummaryTracked: false,
+					snapshotTree,
+					summaryRefSeq: fetchedSnapshotRefSeq,
+				};
+			},
+			{ start: true, end: true, cancel: "error" },
+		);
 	}
 	/**
 	 * Called when we get an ack from the server for a summary we've just sent. Updates the reference state of this node
@@ -428,23 +517,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 	protected readonly canReuseHandle: boolean;
 
-	/**
-	 * Do not call constructor directly.
-	 * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
-	 */
-	public constructor(
-		protected readonly defaultLogger: ITelemetryLogger,
-		private readonly summarizeInternalFn: SummarizeInternalFn,
-		config: ISummarizerNodeConfig,
-		private _changeSequenceNumber: number,
-		/** Undefined means created without summary */
-		private _latestSummary?: SummaryNode,
-		private readonly initialSummary?: IInitialSummary,
-		protected wipSummaryLogger?: ITelemetryLogger,
-	) {
-		this.canReuseHandle = config.canReuseHandle ?? true;
-	}
-
 	public createChild(
 		/** Summarize function */
 		summarizeInternalFn: SummarizeInternalFn,
@@ -462,13 +534,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
 		const child = new SummarizerNode(
-			this.defaultLogger,
+			this.logger,
 			summarizeInternalFn,
 			config,
 			createDetails.changeSequenceNumber,
 			createDetails.latestSummary,
 			createDetails.initialSummary,
 			this.wipSummaryLogger,
+			createDetails.telemetryNodeId,
 		);
 
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
@@ -574,10 +647,13 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
+		const childtelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
+
 		return {
 			initialSummary,
 			latestSummary,
 			changeSequenceNumber,
+			telemetryNodeId: childtelemetryNodeId,
 		};
 	}
 
@@ -589,9 +665,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * @param child - The child node whose state is to be updated.
 	 */
 	protected maybeUpdateChildState(child: SummarizerNode) {
-		// If we are tracking a summary, this child was created after the tracking started. So, we need to update the
-		// child's tracking state as well.
-		if (this.isTrackingInProgress()) {
+		// If a summary is in progress, this child was created after the summary started. So, we need to update the
+		// child's summary state as well.
+		if (this.isSummaryInProgress()) {
 			child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
 		}
 		// In case we have pending summaries on the parent, let's initialize it on the child.
@@ -611,11 +687,28 @@ export class SummarizerNode implements IRootSummarizerNode {
 	protected addPendingSummary(key: string, summary: SummaryNode) {
 		this.pendingSummaries.set(key, summary);
 	}
+
 	/**
 	 * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
 	 */
-	protected isTrackingInProgress(): boolean {
+	public isSummaryInProgress(): boolean {
 		return this.wipReferenceSequenceNumber !== undefined;
+	}
+
+	/**
+	 * Creates and throws an error due to unexpected conditions.
+	 */
+	protected throwUnexpectedError(eventProps: ITelemetryErrorEvent): never {
+		const error = new LoggingError(eventProps.eventName, {
+			...eventProps,
+			referenceSequenceNumber: this.wipReferenceSequenceNumber,
+			id: {
+				tag: TelemetryDataTag.CodeArtifact,
+				value: this.telemetryNodeId,
+			},
+		});
+		this.logger.sendErrorEvent(eventProps, error);
+		throw error;
 	}
 }
 
@@ -627,6 +720,9 @@ export class SummarizerNode implements IRootSummarizerNode {
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
  */
 export const createRootSummarizerNode = (
 	logger: ITelemetryLogger,
@@ -643,4 +739,7 @@ export const createRootSummarizerNode = (
 		referenceSequenceNumber === undefined
 			? undefined
 			: SummaryNode.createForRoot(referenceSequenceNumber),
+		undefined /* initialSummary */,
+		undefined /* wipSummaryLogger */,
+		"" /* telemetryNodeId */,
 	);

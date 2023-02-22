@@ -448,6 +448,30 @@ use_old_FunctionDeclaration_getNormalizedObjectStoragePathParts(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFetchSnapshotResult": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IFetchSnapshotResult():
+    TypeOnly<old.IFetchSnapshotResult>;
+declare function use_current_InterfaceDeclaration_IFetchSnapshotResult(
+    use: TypeOnly<current.IFetchSnapshotResult>);
+use_current_InterfaceDeclaration_IFetchSnapshotResult(
+    get_old_InterfaceDeclaration_IFetchSnapshotResult());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFetchSnapshotResult": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IFetchSnapshotResult():
+    TypeOnly<current.IFetchSnapshotResult>;
+declare function use_old_InterfaceDeclaration_IFetchSnapshotResult(
+    use: TypeOnly<old.IFetchSnapshotResult>);
+use_old_InterfaceDeclaration_IFetchSnapshotResult(
+    get_current_InterfaceDeclaration_IFetchSnapshotResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRootSummarizerNode": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRootSummarizerNode():
@@ -647,7 +671,6 @@ declare function get_old_TypeAliasDeclaration_RefreshSummaryResult():
 declare function use_current_TypeAliasDeclaration_RefreshSummaryResult(
     use: TypeOnly<current.RefreshSummaryResult>);
 use_current_TypeAliasDeclaration_RefreshSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_RefreshSummaryResult());
 
 /*
@@ -660,7 +683,6 @@ declare function get_current_TypeAliasDeclaration_RefreshSummaryResult():
 declare function use_old_TypeAliasDeclaration_RefreshSummaryResult(
     use: TypeOnly<old.RefreshSummaryResult>);
 use_old_TypeAliasDeclaration_RefreshSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_RefreshSummaryResult());
 
 /*
@@ -817,6 +839,7 @@ declare function get_old_ClassDeclaration_TelemetryContext():
 declare function use_current_ClassDeclaration_TelemetryContext(
     use: TypeOnly<current.TelemetryContext>);
 use_current_ClassDeclaration_TelemetryContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TelemetryContext());
 
 /*

@@ -14,19 +14,30 @@ import {
     runWithRetry,
     isRetryEnabled,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getLumberBaseProperties, Lumberjack, LumberEventName, Lumber } from "@fluidframework/server-services-telemetry";
 import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
+
+enum ScriptoriumStatus {
+    Processing = "Processing",
+    ProcessingComplete = "ProcessingComplete",
+    CheckpointComplete = "CheckpointComplete",
+    ProcessingFailed = "ProcessingFailed",
+    CheckpointFailed = "CheckpointFailed"
+}
+
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
     private pendingOffset: IQueuedMessage | undefined;
     private current = new Map<string, ISequencedOperationMessage[]>();
     private readonly clientFacadeRetryEnabled: boolean;
+    private readonly telemetryEnabled: boolean;
 
     constructor(
         private readonly opCollection: ICollection<any>,
         protected context: IContext,
         private readonly providerConfig: Record<string, any> | undefined) {
         this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
+        this.telemetryEnabled = this.providerConfig?.enableTelemetry;
     }
 
     public handler(message: IQueuedMessage) {
@@ -70,6 +81,15 @@ export class ScriptoriumLambda implements IPartitionLambda {
             return;
         }
 
+        let metric: Lumber<LumberEventName.ScriptoriumProcessBatch>;
+        if (this.telemetryEnabled) {
+            metric = Lumberjack.newLumberMetric(
+                LumberEventName.ScriptoriumProcessBatch,
+                { batchOffset: this.pendingOffset?.offset });
+        }
+
+        let status = ScriptoriumStatus.Processing;
+
         // Swap current and pending
         const temp = this.current;
         this.current = this.pending;
@@ -87,14 +107,43 @@ export class ScriptoriumLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.current.clear();
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.context.checkpoint(batchOffset!);
+                status = ScriptoriumStatus.ProcessingComplete;
+
+                // checkpoint batch offset
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.context.checkpoint(batchOffset!);
+                    status = ScriptoriumStatus.CheckpointComplete;
+                } catch (error) {
+                    status = ScriptoriumStatus.CheckpointFailed;
+                    const errorMessage = `Scriptorium failed to checkpoint batch with offset ${batchOffset?.offset}`;
+                    this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
+                    throw error;
+                }
+
+                metric?.setProperty("status", status);
+                metric?.success(`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`);
+                
+                // continue with next batch
                 this.sendPending();
             },
-            (error) => {
-                Lumberjack.error("An error occured in scriptorium, going to restart", {}, error);
+            (error) => { // catches error if any of the promises failed in Promise.all, i.e. any of the ops failed to write to db
+                status = ScriptoriumStatus.ProcessingFailed;
+                const errorMessage = `Scriptorium failed to process batch with offset ${batchOffset?.offset}, going to restart`;
+                this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
+
+                // Restart scriptorium
                 this.context.error(error, { restart: true });
             });
+    }
+
+    private logErrorTelemetry(errorMessage: string, error: any, status: string, batchOffset: number | undefined, metric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined) {
+        if (this.telemetryEnabled && metric) {
+            metric.setProperty("status", status);
+            metric.error(errorMessage, error);
+        } else {
+            Lumberjack.error(errorMessage, {batchOffset, status}, error);
+        }
     }
 
     private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
@@ -112,18 +161,19 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
         const sequenceNumbers = messages.map((message) => message.operation.sequenceNumber);
         const sequenceNumberRanges = convertSortedNumberArrayToRanges(sequenceNumbers);
+        const insertBatchSize = dbOps.length;
 
         return runWithRetry(
             async () => this.opCollection.insertMany(dbOps, false),
             "insertOpScriptorium",
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
-            { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges } },
+            { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges, insertBatchSize } },
             (error) => error.code === 11000,
             (error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
             undefined /* calculateIntervalMs */,
             undefined /* onErrorFn */,
-            this.providerConfig?.enableRunWithRetryMetricTelemetry,
+            this.telemetryEnabled,
         );
     }
 }

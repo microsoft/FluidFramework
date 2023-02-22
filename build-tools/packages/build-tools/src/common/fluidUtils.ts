@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 import * as path from "path";
+import { cosmiconfigSync } from "cosmiconfig";
 
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { existsSync, lookUpDirAsync, readJsonAsync, readJsonSync, realpathAsync } from "./utils";
+import { existsSync, lookUpDirAsync, readJsonAsync, realpathAsync } from "./utils";
 
 const { verbose } = defaultLogger;
 
@@ -17,7 +18,7 @@ async function isFluidRootLerna(dir: string) {
 		verbose(`InferRoot: lerna.json not found`);
 		return false;
 	}
-	const rootPackageManifest = await getFluidBuildConfig(dir);
+	const rootPackageManifest = getFluidBuildConfig(dir);
 	if (
 		rootPackageManifest.repoPackages.server !== undefined &&
 		!existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))
@@ -102,16 +103,30 @@ export async function getResolvedFluidRoot() {
 }
 
 /**
- * Loads an IFluidBuildConfig from a package.json file in a directory.
+ * A cosmiconfig explorer to find the fluidBuild config. First looks for javascript config files and falls back to the
+ * fluidBuild propert in package.json. We create a single explorer here because cosmiconfig internally caches configs
+ * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
+ */
+const configExplorer = cosmiconfigSync("fluidBuild", {
+	searchPlaces: [`fluidBuild.config.cjs`, `fluidBuild.config.js`, "package.json"],
+	packageProp: "fluidBuild",
+});
+
+/**
+ * Loads an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
  *
  * @param rootDir - The path to the root package.json to load.
+ * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
  * @returns The fluidBuild section of the package.json.
  */
-export function getFluidBuildConfig(rootDir: string): IFluidBuildConfig {
-	const jsonPath = path.join(rootDir, "package.json");
-	if (!existsSync(jsonPath)) {
-		throw new Error(`Root package.json not found in: ${rootDir}`);
+export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBuildConfig {
+	if (noCache === true) {
+		configExplorer.clearCaches();
 	}
-	const pkgJson = readJsonSync(jsonPath);
-	return pkgJson?.fluidBuild;
+
+	const config = configExplorer.search(rootDir);
+	if (config?.config === undefined) {
+		throw new Error(`Error loading config.`);
+	}
+	return config.config;
 }

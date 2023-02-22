@@ -156,7 +156,11 @@ export class EditManager<
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
 			// `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
 			// change in the incoming commit.
-			const change = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
+			const change =
+				this.localChanges.shift() ??
+				fail(
+					"Received a sequenced change from the local session despite having no local changes",
+				);
 
 			// TODO: The local change may contain references to local revision tags.
 			// When other clients rebase this change, they will instead use the corresponding sequence numbers
@@ -401,9 +405,6 @@ export interface Branch<TChangeset> {
 	localChanges: Commit<TChangeset>[];
 	refSeq: SeqNumber;
 }
-
-const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
-	"Received a sequenced change from the local session despite having no local changes";
 
 /**
  * The in-memory data that summaries contain.
