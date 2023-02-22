@@ -13,7 +13,10 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @alpha
-type AllowOptional<T> = [PartialWithoutUndefined<T> & RemoveOptionalFields<T>][_dummy];
+type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_dummy];
+
+// @alpha
+type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
 
 // @alpha
 export type Anchor = Brand<number, "rebaser.Anchor">;
@@ -138,11 +141,11 @@ export interface ChildLocation {
 
 // @alpha (undocumented)
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
-    [ApiMode.Flexible]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptional<TTypedFields>;
+    [ApiMode.Flexible]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
     [ApiMode.Normalized]: [Record<string, never>, TValueSchema] extends [
     TTypedFields,
     PrimitiveValueSchema
-    ] ? TypedValue<TValueSchema> : TypedSchema.AllowOptional<{
+    ] ? TypedValue<TValueSchema> : TypedSchema.AllowOptionalNotFlattened<{
         [typeNameSymbol]: TName & TreeSchemaIdentifier;
     } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields>;
     [ApiMode.Wrapped]: {
@@ -1022,14 +1025,14 @@ export interface OptionalFieldEditBuilder {
 }
 
 // @alpha
-export const parentField: unique symbol;
-
-// @alpha
-type PartialWithoutUndefined<T> = [
+type OptionalFields<T> = [
     {
-    [P in keyof T as T[P] extends undefined ? never : P]?: T[P];
+    [P in keyof T as undefined extends T[P] ? T[P] extends undefined ? never : P : never]?: T[P];
 }
 ][_dummy];
+
+// @alpha
+export const parentField: unique symbol;
 
 // @alpha
 export interface PathRootPrefix {
@@ -1084,13 +1087,6 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 // @alpha
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
-// @alpha (undocumented)
-type RemoveOptionalFields<T> = [
-    {
-    [P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
-}
-][_dummy];
-
 // @alpha
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
     capture(change: Delta.Root, revision: RevisionTag): void;
@@ -1098,6 +1094,13 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 
 // @alpha
 export const replaceField: unique symbol;
+
+// @alpha (undocumented)
+type RequiredFields<T> = [
+    {
+    [P in keyof T as undefined extends T[P] ? never : P]: T[P];
+}
+][_dummy];
 
 // @alpha
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
@@ -1364,12 +1367,13 @@ declare namespace TypedSchema {
         AsName,
         ListToKeys,
         AllowOptional,
-        PartialWithoutUndefined,
-        RemoveOptionalFields,
+        RequiredFields,
+        OptionalFields,
         Unbrand,
         UnbrandList,
         _dummy,
-        FlattenKeys
+        FlattenKeys,
+        AllowOptionalNotFlattened
     }
 }
 export { TypedSchema }
