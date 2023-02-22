@@ -190,6 +190,8 @@ export interface IPendingContainerState {
     // (undocumented)
     clientId?: string;
     // (undocumented)
+    deltaManagerState?: unknown;
+    // (undocumented)
     pendingRuntimeState: unknown;
     // (undocumented)
     protocol: IProtocolState;

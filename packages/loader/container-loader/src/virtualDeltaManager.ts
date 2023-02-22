@@ -27,6 +27,8 @@ const GroupedBatchOpType = "groupedBatch";
 class VirtualDeltaQueueProxy<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
     private readonly _trackedListeners: Map<string, (...args: any[]) => void> = new Map();
 
+    private _pushListenerRegistered = false;
+
     constructor(
         private readonly _queue: IDeltaQueue<T>,
         private readonly _virtualizeValue: (value: Readonly<T>) => T[],
@@ -34,25 +36,33 @@ class VirtualDeltaQueueProxy<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> 
     ) {
         super();
 
+        // ! This is needed as not all consumers will register listeners on "push" event
+        this.addTrackedListener("push", (task: T) => {
+            // Let VirtualDeltaManager know it should update sequence number map (for inbound)
+            _observeValue(task);
+
+            if (this._pushListenerRegistered) {
+                // Emit event for each decomposed op as if that's how they were pushed to the DeltaQueue
+                this._virtualizeValue(task).forEach((it) => this.emit("push", it));
+            }
+        });
+
         this.on("newListener", (event, _listener) => {
-            assert((this.listeners(event).length !== 0) === this._trackedListeners.has(event), "mismatch");
+            if (event !== "push") {
+                assert((this.listeners(event).length !== 0) === this._trackedListeners.has(event), "mismatch");
+            }
+
             if (!this._trackedListeners.has(event)) {
-                let listener: (...args: any[]) => void;
-
-                // eslint-disable-next-line unicorn/prefer-ternary
-                if (event === "push" || event === "op") {
-                    listener = (task: T) => {
-                        // Let VirtualDeltaManager know it should update sequence number map (for inbound)
-                        _observeValue(task);
-
+                if (event === "push") {
+                    this._pushListenerRegistered = true;
+                } else if (event === "op") {
+                    this.addTrackedListener("op", (task: T) => {
                         // Emit event for each decomposed op as if that's how they were pushed to the DeltaQueue
-                        this._virtualizeValue(task).forEach((it) => this.emit(event, it));
-                    }
+                        this._virtualizeValue(task).forEach((it) => this.emit("op", it));
+                    });
                 } else {
-                    listener = (...args: any[]) => { this.emit(event, ...args); };
+                    this.addTrackedListener(event, (...args: any[]) => { this.emit(event, ...args); });
                 }
-
-                this.addTrackedListener(event, listener);
             }
         });
     }
@@ -270,7 +280,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
      * Provided "real" sequence number (one sent over the wire), return its "virtual" counter-part for use by other consumers
      */
     public virtualizeSequenceNumber(sequenceNumber: number): number {
-        if (sequenceNumber < 0) {
+        if (sequenceNumber <= 0) {
             return sequenceNumber;
         }
         const virtualizedSequenceNumber = this._sequenceNumberMap.get(sequenceNumber);

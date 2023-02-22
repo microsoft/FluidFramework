@@ -1124,6 +1124,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.connect(args);
     }
 
+    private _deltaManagerInitialized = false;
+
     /**
      * Load container.
      *
@@ -1142,23 +1144,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.subLogger,
             this.client.details.type === summarizerClientType,
         );
-
-        // Ideally we always connect as "read" by default.
-        // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
-        // We should not rely on it by (one of them will address the issue, but we need to address both)
-        // 1) switching create new flow to one where we create file by posting snapshot
-        // 2) Fixing quorum workflows (have retry logic)
-        // That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
-        // connections to same file) in two ways:
-        // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
-        // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
-        const connectionArgs: IConnectionArgs = { reason: "DocumentOpen", mode: "write", fetchOpsFromStorage: false };
-
-        // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
-        // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-        if (loadMode.deltaConnection === undefined) {
-            this.connectToDeltaStream(connectionArgs);
-        }
 
         if (!pendingLocalState) {
             await this.storageService.connectToService(this.service);
@@ -1192,6 +1177,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (deltaManagerState !== undefined) {
             this._deltaManager.initializeFromState(deltaManagerState);
+        }
+        this._deltaManagerInitialized = true;
+
+        // Ideally we always connect as "read" by default.
+        // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
+        // We should not rely on it by (one of them will address the issue, but we need to address both)
+        // 1) switching create new flow to one where we create file by posting snapshot
+        // 2) Fixing quorum workflows (have retry logic)
+        // That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
+        // connections to same file) in two ways:
+        // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
+        // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
+        const connectionArgs: IConnectionArgs = { reason: "DocumentOpen", mode: "write", fetchOpsFromStorage: false };
+
+        // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
+        // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
+        if (loadMode.deltaConnection === undefined) {
+            this.connectToDeltaStream(connectionArgs);
         }
 
         const attributes: IDocumentAttributes =
@@ -1615,7 +1618,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-            } else {
+            } else if (this._deltaManagerInitialized) {
                 // This info is of most interest on establishing connection only.
                 checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
                 if (this.deltaManager.hasCheckpointSequenceNumber) {
