@@ -21,7 +21,7 @@
  */
 
 export {
-	AudienceMemberViewProps,
+	AudienceMemberViewProps, // TODO: remove this
 	ClientDebugView,
 	clientDebugViewClassName,
 	ClientDebugViewProps,

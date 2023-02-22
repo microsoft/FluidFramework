@@ -12,7 +12,14 @@ import {
 	NodeReviver,
 	singleTextCursor,
 } from "../../feature-libraries";
-import { makeAnonChange, RevisionTag, TaggedChange, TreeSchemaIdentifier, Delta } from "../../core";
+import {
+	makeAnonChange,
+	RevisionTag,
+	TaggedChange,
+	TreeSchemaIdentifier,
+	Delta,
+	mintRevisionTag,
+} from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import { assertFieldChangesEqual, noRepair } from "../utils";
 
@@ -79,7 +86,7 @@ describe("Value field changesets", () => {
 	const change1 = fieldHandler.editor.set(singleTextCursor(tree1));
 	const change2 = fieldHandler.editor.set(singleTextCursor(tree2));
 
-	const detachedBy: RevisionTag = brand(42);
+	const detachedBy: RevisionTag = mintRevisionTag();
 	const revertChange2: FieldKinds.ValueChangeset = {
 		value: { revert: detachedBy },
 	};
@@ -255,7 +262,7 @@ describe("Optional field changesets", () => {
 		childChange: nodeChange1,
 	};
 
-	const detachedBy: RevisionTag = brand(42);
+	const detachedBy: RevisionTag = mintRevisionTag();
 	const revertChange2: FieldKinds.OptionalChangeset = {
 		fieldChange: { newContent: { revert: detachedBy }, wasEmpty: false },
 	};

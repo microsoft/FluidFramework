@@ -17,6 +17,10 @@ parameters:
 - name: customSteps
   type: stepList
 
+- name: loggerPackage
+  type: string
+  default: '@ff-internal/aria-logger'
+
 jobs:
   - job: runTests
     displayName: Run tests
@@ -76,6 +80,15 @@ jobs:
       inputs:
         workingFile: ${{ parameters.testWorkspace }}/.npmrc
         customEndpoint: 'Office Packages - Readonly'
+
+    # Install test and logger package
+    - task: Npm@1
+      displayName: 'npm install aria logger'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.testWorkspace }}
+        customCommand: 'install ${{ parameters.loggerPackage }}'
+        customRegistry: 'useNpmrc'
 
     - task: Bash@3
       displayName: Print Parameters

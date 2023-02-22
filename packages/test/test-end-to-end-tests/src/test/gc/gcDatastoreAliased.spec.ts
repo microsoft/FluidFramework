@@ -113,7 +113,7 @@ describeNoCompat("GC Data Store Aliased No Compat", (getTestObjectProvider) => {
 		await aliasedDataStore.trySetAlias(alias);
 
 		// summarize
-		const summarizer = await createSummarizer(provider, container);
+		const { summarizer } = await createSummarizer(provider, container);
 		const { summaryTree } = await summarizeNow(summarizer);
 		const gcState = getGCStateFromSummary(summaryTree);
 		assert(
@@ -149,7 +149,7 @@ describeNoCompat("GC Data Store Aliased No Compat", (getTestObjectProvider) => {
 		mainDatastore._root.delete(handleKey);
 
 		// summarize
-		const summarizer = await createSummarizer(provider, container);
+		const { summarizer } = await createSummarizer(provider, container);
 		const { summaryTree } = await summarizeNow(summarizer);
 		const gcState = getGCStateFromSummary(summaryTree);
 		assert(
