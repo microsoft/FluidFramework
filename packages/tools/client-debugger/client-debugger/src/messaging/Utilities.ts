@@ -104,6 +104,8 @@ export function handleIncomingMessage(
 
 /**
  * Determines whether the provided event message data is an {@link IDebuggerMessage}.
+ *
+ * @internal
  */
 export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage {
 	return typeof value.source === "string" && typeof value.type === "string";
