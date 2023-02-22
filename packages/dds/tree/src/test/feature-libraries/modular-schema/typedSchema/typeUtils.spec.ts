@@ -8,11 +8,12 @@ import { TreeSchemaIdentifier } from "../../../../core";
 import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 import {
 	AllowOptional,
+	AllowOptionalNotFlattened,
 	ArrayToUnion,
 	AsNames,
 	ListToKeys,
-	PartialWithoutUndefined,
-	RemoveOptionalFields,
+	OptionalFields,
+	RequiredFields,
 	Unbrand,
 	WithDefault,
 	// Allow importing from this specific file which is being tested:
@@ -74,17 +75,30 @@ import {
 
 // Test RemoveOptionalFields
 {
-	type a = RemoveOptionalFields<{ a: 5; b: undefined | 5; c: undefined }>;
+	type a = OptionalFields<{ a: 5; b: undefined | 5; c: undefined }>;
+	type check1_ = requireAssignableTo<a, { b?: 5 }>;
+	type check2_ = requireAssignableTo<{ b?: 5 }, a>;
 }
 
 // Test PartialWithoutUndefined
 {
-	type a = PartialWithoutUndefined<{ a: 5; b: undefined | 5; c: undefined }>;
+	type a = RequiredFields<{ a: 5; b: undefined | 5; c: undefined }>;
+	type check1_ = requireAssignableTo<a, { a: 5 }>;
+	type check2_ = requireAssignableTo<{ a: 5 }, a>;
 }
 
 // Test AllowOptional
 {
-	type c = AllowOptional<{ a: 5; b: undefined | 5; c: undefined }>;
+	type a = AllowOptional<{ a: 5; b: undefined | 5; c: undefined }>;
+	type check1_ = requireAssignableTo<a, { a: 5; b?: 5 }>;
+	type check2_ = requireAssignableTo<{ a: 5; b?: 5 }, a>;
+}
+
+// Test AllowOptionalNotFlattened
+{
+	type a = AllowOptionalNotFlattened<{ a: 5; b: undefined | 5; c: undefined }>;
+	type check1_ = requireAssignableTo<a, { a: 5; b?: 5 }>;
+	type check2_ = requireAssignableTo<{ a: 5; b?: 5 }, a>;
 }
 
 // Test Unbrand

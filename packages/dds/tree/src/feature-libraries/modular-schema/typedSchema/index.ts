@@ -22,10 +22,11 @@ export {
 	AsName,
 	ListToKeys,
 	AllowOptional,
-	PartialWithoutUndefined,
-	RemoveOptionalFields,
+	RequiredFields,
+	OptionalFields,
 	Unbrand,
 	UnbrandList,
 	_dummy,
 	FlattenKeys,
+	AllowOptionalNotFlattened,
 } from "./typeUtils";

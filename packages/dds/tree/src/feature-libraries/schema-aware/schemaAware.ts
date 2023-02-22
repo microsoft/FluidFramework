@@ -87,13 +87,13 @@ export type CollectOptions<
 > = {
 	[ApiMode.Flexible]: Record<string, never> extends TTypedFields
 		? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName>
-		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptional<TTypedFields>;
+		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
 	[ApiMode.Normalized]: [Record<string, never>, TValueSchema] extends [
 		TTypedFields,
 		PrimitiveValueSchema,
 	]
 		? TypedValue<TValueSchema>
-		: TypedSchema.AllowOptional<
+		: TypedSchema.AllowOptionalNotFlattened<
 				{
 					[typeNameSymbol]: TName & TreeSchemaIdentifier;
 				} & ValueFieldTreeFromSchema<TValueSchema> &

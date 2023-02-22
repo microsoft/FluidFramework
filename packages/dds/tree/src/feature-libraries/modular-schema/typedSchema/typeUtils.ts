@@ -107,27 +107,39 @@ export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_dummy];
 /**
  *@alpha
  */
-export type RemoveOptionalFields<T> = [
+export type RequiredFields<T> = [
 	{
-		[P in keyof T as T[P] extends Exclude<T[P], undefined> ? P : never]: T[P];
+		[P in keyof T as undefined extends T[P] ? never : P]: T[P];
 	},
 ][_dummy];
 
 /**
- * Like Partial but removes files which may be undefined.
+ * Like Partial but removes fields which may not be undefined and fields which can only be undefined.
  * @alpha
  */
-export type PartialWithoutUndefined<T> = [
+export type OptionalFields<T> = [
 	{
-		[P in keyof T as T[P] extends undefined ? never : P]?: T[P];
+		[P in keyof T as undefined extends T[P]
+			? T[P] extends undefined
+				? never
+				: P
+			: never]?: T[P];
 	},
 ][_dummy];
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
+ *
  * @alpha
  */
-export type AllowOptional<T> = [PartialWithoutUndefined<T> & RemoveOptionalFields<T>][_dummy];
+export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
+
+/**
+ * Converts properties of an object which permit undefined into optional properties.
+ *
+ * @alpha
+ */
+export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_dummy];
 
 /**
  * Field to use for trick to "inline" generic types.

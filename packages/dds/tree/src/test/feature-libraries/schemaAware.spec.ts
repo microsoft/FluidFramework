@@ -20,7 +20,7 @@ import {
 	TreeSchemaIdentifier,
 	ValueSchema,
 } from "../../core";
-import { requireAssignableTo } from "../../util";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
 import {
 	valueSymbol,
 	FieldKinds,
@@ -170,37 +170,83 @@ interface TypeBuilder<TSchema extends TypedSchema.LabeledTreeSchema<any>> {
 	c: NodeDataFor<typeof schemaData, ApiMode.Wrapped, TSchema>;
 }
 
+type FlexNumber =
+	| number
+	| {
+			[typeNameSymbol]?: "number" | undefined;
+			[valueSymbol]: number;
+	  };
+
+// This type type checks differently if its an interface, which breaks.
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type WrappedNumber = {
+	[typeNameSymbol]: "number";
+	[valueSymbol]: number;
+};
+
 // Test terminal cases:
 {
 	type F = TypeBuilder<typeof numberSchema>;
-	type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof numberSchema>;
-	type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof numberSchema>;
-	type AC = NodeDataFor<typeof schemaData, ApiMode.Wrapped, typeof numberSchema>;
 	type XA = F["a"];
 	type XB = F["b"];
 	type XC = F["c"];
+	type _check1 = requireTrue<areSafelyAssignable<XA, FlexNumber>>;
+	type _check2 = requireTrue<areSafelyAssignable<XB, number>>;
+	type _check3 = requireTrue<areSafelyAssignable<XC, WrappedNumber>>;
 }
+
+interface FlexBall {
+	[typeNameSymbol]?: "ball" | undefined;
+	x: FlexNumber;
+	y: FlexNumber;
+	size?: FlexNumber | undefined;
+}
+
+interface NormalizedBall {
+	[typeNameSymbol]: typeof ballSchema.name;
+	x: number;
+	y: number;
+	size?: number;
+}
+
+// This type type checks differently if its an interface, which breaks.
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type WrappedBall = {
+	[typeNameSymbol]: "ball";
+	[valueSymbol]: undefined;
+	x: WrappedNumber;
+	y: WrappedNumber;
+	size: WrappedNumber | undefined;
+};
 
 // Test non recursive cases:
 {
 	type F = TypeBuilder<typeof ballSchema>;
-	type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof ballSchema>;
-	type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof ballSchema>;
-	type AC = NodeDataFor<typeof schemaData, ApiMode.Wrapped, typeof ballSchema>;
 	type XA = F["a"];
 	type XB = F["b"];
 	type XC = F["c"];
+	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBall>>;
+	type _check2 = requireTrue<areSafelyAssignable<XB, NormalizedBall>>;
+	type _check3 = requireTrue<areSafelyAssignable<XC, WrappedBall>>;
 }
 
 // Test recursive cases:
 {
 	type F = TypeBuilder<typeof boxSchema>;
-	type AA = NodeDataFor<typeof schemaData, ApiMode.Flexible, typeof boxSchema>;
-	type AB = NodeDataFor<typeof schemaData, ApiMode.Normalized, typeof boxSchema>;
-	type AC = NodeDataFor<typeof schemaData, ApiMode.Wrapped, typeof boxSchema>;
 	type XA = F["a"];
 	type XB = F["b"];
 	type XC = F["c"];
+
+	interface FlexBox {
+		[typeNameSymbol]?: "box";
+		children: (FlexBall | FlexBox)[];
+	}
+	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBox>>;
+	interface NormalizedBox {
+		[typeNameSymbol]: typeof boxSchema.name;
+		children: (NormalizedBall | NormalizedBox)[];
+	}
+	type _check2 = requireTrue<areSafelyAssignable<XB, NormalizedBox>>;
 
 	{
 		const child: XA = {
