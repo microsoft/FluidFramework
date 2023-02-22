@@ -175,21 +175,6 @@
 			}
 		},
 		"policy": {
-			"dependencies": {
-				"requireTilde": [
-					"@typescript-eslint/eslint-plugin",
-					"@typescript-eslint/parser",
-					"eslint-config-prettier",
-					"eslint-plugin-eslint-comments",
-					"eslint-plugin-import",
-					"eslint-plugin-unicorn",
-					"eslint-plugin-unused-imports",
-					"eslint",
-					"prettier",
-					"typescript",
-					"webpack-dev-server"
-				]
-			},
 			"additionalLockfilePaths": [
 				"common/build/build-common",
 				"common/build/eslint-config-fluid",
@@ -209,7 +194,7 @@
 	"packageManager": "pnpm@7.27.0",
 	"pnpm": {
 		"overrides": {
-			"@types/node": "^14.18.36"
+			"@types/node": "14.18.36"
 		},
 		"peerDependencyRules": {
 			"allowedVersions": {
