@@ -85,7 +85,7 @@ export class Outbox {
 				mainBatchReference === undefined ||
 				attachFlowBatchReference === undefined ||
 				mainBatchReference === attachFlowBatchReference,
-			"Reference sequence numbers from both batches must be in sync",
+			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
 		if (
@@ -235,7 +235,7 @@ export class Outbox {
 
 			this.params.containerContext.deltaManager.flush();
 		} else {
-			assert(batch.referenceSequenceNumber !== undefined, "Batch must not be empty");
+			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
 			this.params.containerContext.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
