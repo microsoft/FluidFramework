@@ -28,6 +28,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
 -   [IFluidTokenProvider deprecated](#IFluidTokenProvider-deprecated)
 -   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
+-   [driver-utils members deprecated](#driver-utils-members-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -95,6 +96,12 @@ The IFluidTokenProvider interface has been deprecated and will be removed in an 
 ### web-code-loader and ICodeAllowList deprecated
 
 The `@fluidframework/web-code-loader` and the `ICodeAllowList` interface from the `@fluidframework/container-definitions` package have been deprecated and will be removed in an upcoming release. Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.
+
+### driver-utils members deprecated
+
+The following members of the `@fluidframework/driver-utils` package have been deprecated and will be removed in an upcoming release:
+
+-   `waitForConnectedState`
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

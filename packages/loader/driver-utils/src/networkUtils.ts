@@ -38,6 +38,8 @@ export function logNetworkFailure(
  * or machine connected to router that is not connected to internet)
  * But there should be no false negatives.
  * The only exception - Opera returns false when user enters "Work Offline" mode, regardless of actual connectivity.
+ *
+ * @deprecated - @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
  */
 // eslint-disable-next-line @typescript-eslint/promise-function-async
 export function waitForConnectedState(minDelay: number): Promise<void> {
