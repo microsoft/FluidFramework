@@ -84,7 +84,7 @@ function getTestSchema(fieldKind: { identifier: FieldKindIdentifier }): SchemaDa
 	testSchemaMap.set(rootSchemaName, testRootNodeSchema);
 	testSchemaMap.set(dataSchema.name, dataSchema);
 	return {
-		treeSchema:testSchemaMap,
+		treeSchema: testSchemaMap,
 		globalFieldSchema: new Map([]),
 	};
 }
@@ -98,9 +98,17 @@ const dataSchema = namedTreeSchema({
 });
 
 // number of nodes in test for wide trees
-const nodesCountWide = [[1, BenchmarkType.Measurement], [100, BenchmarkType.Perspective], [500, BenchmarkType.Measurement]];
+const nodesCountWide = [
+	[1, BenchmarkType.Measurement],
+	[100, BenchmarkType.Perspective],
+	[500, BenchmarkType.Measurement],
+];
 // number of nodes in test for deep trees
-const nodesCountDeep = [[1, BenchmarkType.Measurement], [10, BenchmarkType.Perspective], [100, BenchmarkType.Measurement]];
+const nodesCountDeep = [
+	[1, BenchmarkType.Measurement],
+	[10, BenchmarkType.Perspective],
+	[100, BenchmarkType.Measurement],
+];
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
@@ -128,7 +136,7 @@ describe("SharedTree benchmarks", () => {
 			[{ type: rootSchemaName }],
 			1,
 		);
-		const tree = trees[0]
+		const tree = trees[0];
 		insertNodesToEditableTree(tree, 4, TreeShape.Wide, TestPrimitives.Float);
 	});
 	describe("Direct JS Object", () => {
@@ -190,7 +198,7 @@ describe("SharedTree benchmarks", () => {
 						title: `Update value at leaf of ${i} deep tree`,
 						before: async () => {
 							tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType);
-							leafNode = getLeafNodeFromJSObject(tree)
+							leafNode = getLeafNodeFromJSObject(tree);
 						},
 						benchmarkFn: () => {
 							manipulateTreeAsJSObject(leafNode, TreeShape.Deep);
@@ -257,7 +265,7 @@ describe("SharedTree benchmarks", () => {
 					title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: writes ${i} nodes`,
 					before: async () => {
 						provider = await TestTreeProvider.create(1);
-						tree = provider.trees[0]
+						tree = provider.trees[0];
 						tree.storedSchema.update(testSchema);
 					},
 					benchmarkFn: async () => {
@@ -273,7 +281,7 @@ describe("SharedTree benchmarks", () => {
 					title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: writes ${i} nodes`,
 					before: async () => {
 						provider = await TestTreeProvider.create(1);
-						tree = provider.trees[0]
+						tree = provider.trees[0];
 						tree.storedSchema.update(testSchema);
 					},
 					benchmarkFn: async () => {
@@ -291,10 +299,16 @@ describe("SharedTree benchmarks", () => {
 						title: `Update value at leaf of ${i} deep tree`,
 						before: async () => {
 							provider = await TestTreeProvider.create(1);
-							tree = provider.trees[0]
+							tree = provider.trees[0];
 							tree.storedSchema.update(testSchema);
-							await insertNodesToTestTree(provider, tree, i, TreeShape.Deep, dataType);
-							path = getCursorLeafNode(i, TreeShape.Deep)
+							await insertNodesToTestTree(
+								provider,
+								tree,
+								i,
+								TreeShape.Deep,
+								dataType,
+							);
+							path = getCursorLeafNode(i, TreeShape.Deep);
 						},
 						benchmarkFn: () => {
 							manipulateCursorTree(tree, path, dataType);
@@ -310,10 +324,16 @@ describe("SharedTree benchmarks", () => {
 						title: `Update value at leaf of ${i} wide tree`,
 						before: async () => {
 							provider = await TestTreeProvider.create(1);
-							tree = provider.trees[0]
+							tree = provider.trees[0];
 							tree.storedSchema.update(testSchema);
-							await insertNodesToTestTree(provider, tree, i, TreeShape.Wide, dataType);
-							path = getCursorLeafNode(i, TreeShape.Wide)
+							await insertNodesToTestTree(
+								provider,
+								tree,
+								i,
+								TreeShape.Wide,
+								dataType,
+							);
+							path = getCursorLeafNode(i, TreeShape.Wide);
 						},
 						benchmarkFn: () => {
 							manipulateCursorTree(tree, path, dataType);
@@ -338,7 +358,7 @@ describe("SharedTree benchmarks", () => {
 							[{ type: rootSchemaName }],
 							1,
 						);
-						tree = trees[0]
+						tree = trees[0];
 						insertNodesToEditableTree(tree, i, TreeShape.Deep, dataType);
 					},
 					benchmarkFn: () => {
@@ -359,7 +379,7 @@ describe("SharedTree benchmarks", () => {
 							[{ type: rootSchemaName }],
 							1,
 						);
-						tree = trees[0]
+						tree = trees[0];
 						insertNodesToEditableTree(tree, i, TreeShape.Wide, dataType);
 					},
 					benchmarkFn: () => {
@@ -380,15 +400,10 @@ describe("SharedTree benchmarks", () => {
 							[{ type: rootSchemaName }],
 							1,
 						);
-						tree = trees[0]
+						tree = trees[0];
 					},
 					benchmarkFn: async () => {
-						insertNodesToEditableTree(
-							tree,
-							i,
-							TreeShape.Deep,
-							dataType,
-						);
+						insertNodesToEditableTree(tree, i, TreeShape.Deep, dataType);
 					},
 				});
 			}
@@ -405,15 +420,10 @@ describe("SharedTree benchmarks", () => {
 							[{ type: rootSchemaName }],
 							1,
 						);
-						tree = trees[0]
+						tree = trees[0];
 					},
 					benchmarkFn: async () => {
-						insertNodesToEditableTree(
-							tree,
-							i,
-							TreeShape.Wide,
-							dataType,
-						);
+						insertNodesToEditableTree(tree, i, TreeShape.Wide, dataType);
 					},
 				});
 			}
@@ -432,17 +442,18 @@ describe("SharedTree benchmarks", () => {
 								[{ type: rootSchemaName }],
 								1,
 							);
-							tree = trees[0]
-							insertNodesToEditableTree(
+							tree = trees[0];
+							insertNodesToEditableTree(tree, i, TreeShape.Deep, dataType);
+							editableField = getEditableLeafNode(tree, i, TreeShape.Deep);
+						},
+						benchmarkFn: () => {
+							manipulateEditableTree(
 								tree,
 								i,
 								TreeShape.Deep,
 								dataType,
+								editableField,
 							);
-							editableField = getEditableLeafNode(tree, i, TreeShape.Deep)
-						},
-						benchmarkFn: () => {
-							manipulateEditableTree(tree, i, TreeShape.Deep, dataType, editableField);
 						},
 					});
 				}
@@ -460,17 +471,18 @@ describe("SharedTree benchmarks", () => {
 								[{ type: rootSchemaName }],
 								1,
 							);
-							tree = trees[0]
-							insertNodesToEditableTree(
+							tree = trees[0];
+							insertNodesToEditableTree(tree, i, TreeShape.Wide, dataType);
+							editableField = getEditableLeafNode(tree, i, TreeShape.Wide);
+						},
+						benchmarkFn: () => {
+							manipulateEditableTree(
 								tree,
 								i,
 								TreeShape.Wide,
 								dataType,
+								editableField,
 							);
-							editableField = getEditableLeafNode(tree, i, TreeShape.Wide)
-						},
-						benchmarkFn: () => {
-							manipulateEditableTree(tree, i, TreeShape.Wide, dataType, editableField);
 						},
 					});
 				}
@@ -691,7 +703,7 @@ function readTreeAsJSObject(tree: Jsonable) {
  * @param tree - tree in form of a Jsonable object
  * @param shape - shape of the tree (wide vs deep)
  */
-function manipulateTreeAsJSObject(tree: Jsonable, shape:TreeShape): void {
+function manipulateTreeAsJSObject(tree: Jsonable, shape: TreeShape): void {
 	let nodesUnderRoot;
 	switch (shape) {
 		case TreeShape.Deep:
@@ -699,10 +711,10 @@ function manipulateTreeAsJSObject(tree: Jsonable, shape:TreeShape): void {
 			break;
 		case TreeShape.Wide:
 			nodesUnderRoot = tree.fields.foo.length;
-			if (nodesUnderRoot === 0){
+			if (nodesUnderRoot === 0) {
 				tree.fields.value = 123;
 			} else {
-				tree.fields.foo[nodesUnderRoot-1].value = 123;
+				tree.fields.foo[nodesUnderRoot - 1].value = 123;
 			}
 			break;
 		default:
@@ -712,9 +724,9 @@ function manipulateTreeAsJSObject(tree: Jsonable, shape:TreeShape): void {
 
 function getLeafNodeFromJSObject(tree: Jsonable): Jsonable {
 	for (const key of Object.keys(tree)) {
-		if (typeof tree[key] === "object" && tree[key] !== null){
-			if (tree[key].type !== undefined && tree[key].fields === undefined){
-				return tree
+		if (typeof tree[key] === "object" && tree[key] !== null) {
+			if (tree[key].type !== undefined && tree[key].fields === undefined) {
+				return tree;
 			}
 			return getLeafNodeFromJSObject(tree[key]);
 		}
@@ -754,11 +766,7 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
  * @param path - location where you need to apply the edit
  * @param dataType - the primitive data type of the value to store
  */
-function manipulateCursorTree(
-	tree: ISharedTree,
-	path: UpPath,
-	dataType: TestPrimitives,
-) {
+function manipulateCursorTree(tree: ISharedTree, path: UpPath, dataType: TestPrimitives) {
 	const value = generateTreeData(dataType);
 	tree.runTransaction((forest, editor) => {
 		editor.setValue(path, { type: brand("Test"), value });
@@ -766,10 +774,7 @@ function manipulateCursorTree(
 	});
 }
 
-function getCursorLeafNode(
-	numberOfNodes: number,
-	shape: TreeShape,
-): UpPath {
+function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
 	let path: UpPath;
 	switch (shape) {
 		case TreeShape.Deep:
@@ -794,19 +799,15 @@ function getCursorLeafNode(
 					parentIndex: 0,
 				},
 				parentField: localFieldKey,
-				parentIndex: numberOfNodes-1,
+				parentIndex: numberOfNodes - 1,
 			};
-			return path
+			return path;
 		default:
 			unreachableCase(shape);
 	}
 }
 
-function readEditableTree(
-	tree: ISharedTree,
-	numberOfNodes: number,
-	shape: TreeShape,
-) {
+function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeShape) {
 	assert(isUnwrappedNode(tree.root));
 	let currField;
 	let currNode;
@@ -814,7 +815,7 @@ function readEditableTree(
 		case TreeShape.Deep:
 			currField = tree.root[getField](localFieldKey);
 			currNode = currField.getNode(0);
-			for (let j = 0; j < numberOfNodes-1; j++) {
+			for (let j = 0; j < numberOfNodes - 1; j++) {
 				currField = currNode[getField](localFieldKey);
 				currNode = currField.getNode(0);
 			}
@@ -843,12 +844,8 @@ function manipulateEditableTree(
 			editableField.replaceNodes(0, singleTextCursor(generateTreeData(dataType)), 1);
 			break;
 		case TreeShape.Wide:
-			nodeIndex = numberOfNodes > 1 ? numberOfNodes-2: 0
-			editableField.replaceNodes(
-				nodeIndex,
-				singleTextCursor(generateTreeData(dataType)),
-				1,
-			);
+			nodeIndex = numberOfNodes > 1 ? numberOfNodes - 2 : 0;
+			editableField.replaceNodes(nodeIndex, singleTextCursor(generateTreeData(dataType)), 1);
 			break;
 		default:
 			unreachableCase(shape);
@@ -871,7 +868,7 @@ function getEditableLeafNode(
 				currField = currNode[getField](localFieldKey);
 				currNode = currField.getNode(0);
 			}
-			return currField
+			return currField;
 		case TreeShape.Wide:
 			return tree.root[getField](localFieldKey);
 		default:
