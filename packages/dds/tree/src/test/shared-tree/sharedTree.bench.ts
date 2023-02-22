@@ -18,10 +18,6 @@ import { brand, unreachableCase } from "../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import {
-	schemaMap,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../feature-libraries/editable-tree/mockData";
-import {
 	FieldKindIdentifier,
 	fieldSchema,
 	GlobalFieldKey,
@@ -29,6 +25,7 @@ import {
 	JsonableTree,
 	LocalFieldKey,
 	moveToDetachedField,
+	NamedTreeSchema,
 	rootFieldKey,
 	rootFieldKeySymbol,
 	SchemaData,
@@ -83,14 +80,12 @@ function getTestSchema(fieldKind: { identifier: FieldKindIdentifier }): SchemaDa
 		globalFields: [globalFieldKey],
 		value: ValueSchema.Serializable,
 	});
-	schemaMap.set(rootSchemaName, testRootNodeSchema);
-	schemaMap.set(dataSchema.name, dataSchema);
+	const testSchemaMap: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
+	testSchemaMap.set(rootSchemaName, testRootNodeSchema);
+	testSchemaMap.set(dataSchema.name, dataSchema);
 	return {
-		treeSchema: schemaMap,
-		globalFieldSchema: new Map([
-			[rootFieldKey, fieldSchema(FieldKinds.optional, [rootSchemaName])],
-			[globalFieldKey, fieldSchema(fieldKind)],
-		]),
+		treeSchema:testSchemaMap,
+		globalFieldSchema: new Map([]),
 	};
 }
 
@@ -127,6 +122,15 @@ const testSchema: SchemaData = {
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
+	it("can move nodes across fields", async () => {
+		const [provider, trees] = await createSharedTrees(
+			getTestSchema(FieldKinds.sequence),
+			[{ type: rootSchemaName }],
+			1,
+		);
+		const tree = trees[0]
+		insertNodesToEditableTree(tree, 4, TreeShape.Wide, TestPrimitives.Float);
+	});
 	describe("Direct JS Object", () => {
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
 			for (const [i, benchmarkType] of nodesCountDeep) {
