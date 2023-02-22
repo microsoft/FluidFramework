@@ -252,6 +252,7 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+            const connectDocumentStartTime = Date.now();
             const throttleErrorPerCluster = checkThrottleAndUsage(
                 connectThrottlerPerCluster,
                 getSocketConnectThrottleId("connectDoc"),
@@ -425,7 +426,7 @@ export function configureWebSocketServices(
                     socket.disconnect(true);
                 });
 
-                connection.connect()
+                connection.connect(connectDocumentStartTime)
                     .catch(async (err) => {
                         const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
                         connectDocumentOrdererConnectionMetric.error("Failed to establish orderer connection", err);
