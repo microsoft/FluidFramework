@@ -31,7 +31,7 @@ export interface IMessageReceiver<TMessage extends IDebuggerMessage = IDebuggerM
 	 *
 	 * @override
 	 */
-	onMessage: chrome.events.Event<(message: TMessage, source: IMessageSender<TMessage>) => void>;
+	onMessage: chrome.events.Event<(message: TMessage) => void>;
 }
 
 /**

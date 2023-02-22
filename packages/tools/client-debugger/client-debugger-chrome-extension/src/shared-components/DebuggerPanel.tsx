@@ -7,7 +7,7 @@ import React from "react";
 
 import {
 	ContainerMetadata,
-	handleIncomingWindowMessage,
+	handleIncomingMessage,
 	IDebuggerMessage,
 	InboundHandlers,
 	RegistryChangeMessage,
@@ -16,6 +16,8 @@ import { ContainerSelectionDropdown } from "@fluid-tools/client-debugger-view";
 
 import { ContainerView } from "./ContainerView";
 import { Waiting } from "./Waiting";
+import { IMessageRelay } from "../messaging";
+import { messageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel)";
 
@@ -26,11 +28,30 @@ const loggingContext = "EXTENSION(DebuggerPanel)";
 // 	Audience = "Audience",
 // }
 
+export interface DebuggerPanelProps {
+	/**
+	 * Message handler for communicating with the webpage.
+	 * Any message listening / posting should go through here, rather than directly through the
+	 * `window` (`globalThis`) to ensure general compatibility regardless of how the Chrome Extension
+	 * is configured / what context the components are run in.
+	 */
+	messageRelay: IMessageRelay;
+}
+
 /**
- * TODO
+ * Root Debugger view.
+ * 
+ * @remarks Must be run under a {@link messageRelayContext}.
  */
 export function DebuggerPanel(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
+	
+	const context = React.useContext(messageRelayContext);
+	if(context === undefined) {
+		throw new Error("messageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.")
+	}
+	
+	const { messageRelay } = context;
 
 	React.useEffect(() => {
 		/**
@@ -45,15 +66,15 @@ export function DebuggerPanel(): React.ReactElement {
 		};
 
 		/**
-		 * Event handler for messages coming from the window (globalThis).
+		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(event: MessageEvent<Partial<IDebuggerMessage>>): void {
-			handleIncomingWindowMessage(event, inboundMessageHandlers, {
+		function messageHandler(message: Partial<IDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
 		}
-
-		globalThis.addEventListener("message", messageHandler);
+		
+		messageRelay.on("message", messageHandler);
 
 		globalThis.postMessage({
 			type: "GET_CONTAINER_LIST",
