@@ -226,8 +226,12 @@ stages:
           - task: Cache@2
             displayName: Cache pnpm store
             inputs:
-              key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+              # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+              # in the cache key
+              key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
               path: ${{ variables.pnpmStorePath }}
+              restoreKeys: |
+                pnpm-store | "$(Agent.OS)"
 
           - task: Bash@3
             displayName: Install and configure pnpm
@@ -357,7 +361,7 @@ stages:
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
-                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm && \
+                  npx lerna exec --no-private --no-sort -- ${{ parameters.packageManager }} pack && \
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
                   npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
 
@@ -365,7 +369,7 @@ stages:
                   # Each package name is modified to match the packed tar files.
                   npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
                 else
-                  npm pack --unsafe-perm && \
+                  ${{ parameters.packageManager }} pack && \
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
 
@@ -538,6 +542,16 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 git checkout HEAD -- pnpm-lock.yaml
+
+          # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+          - task: Bash@3
+            displayName: Prune pnpm store
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                pnpm store prune
+
 
         - task: Bash@3
           displayName: Check for extraneous modified files

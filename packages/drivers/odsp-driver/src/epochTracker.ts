@@ -12,7 +12,6 @@ import {
 	NonRetryableError,
 	LocationRedirectionError,
 } from "@fluidframework/driver-utils";
-import { IConnected } from "@fluidframework/protocol-definitions";
 import {
 	snapshotKey,
 	ICacheEntry,
@@ -182,13 +181,12 @@ export class EpochTracker implements IPersistedFileCache {
 		return this._fluidEpoch;
 	}
 
-	public async validateEpochFromPush(details: IConnected) {
-		const epoch = details.epoch;
-		assert(epoch !== undefined, 0x09d /* "Connection details should contain epoch" */);
+	public async validateEpoch(epoch: string | undefined, fetchType: FetchType) {
+		assert(epoch !== undefined, "response should contain epoch");
 		try {
-			this.validateEpochFromResponse(epoch, "push");
+			this.validateEpochFromResponse(epoch, fetchType);
 		} catch (error) {
-			await this.checkForEpochError(error, epoch, "push");
+			await this.checkForEpochError(error, epoch, fetchType);
 			throw error;
 		}
 	}
