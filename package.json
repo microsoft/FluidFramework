@@ -210,7 +210,7 @@
 	"pnpm": {
 		"overrides": {
 			"@types/node": "^14.18.36",
-      "node-fetch": "^2.6.9"
+			"node-fetch": "^2.6.9"
 		},
 		"peerDependencyRules": {
 			"allowedVersions": {
