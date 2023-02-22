@@ -7,7 +7,9 @@
 		"noImplicitAny": true,
 		"composite": true,
 		"preserveConstEnums": true,
-		// TODO: enforce "_" prefix for unused locals in linter and/or remove this and come up with a different pattern for type assertions.
+		// Allow unused locals.
+		// This is needed for type assertions using the TypeCheck library.
+		// Linter us used to enforce "_" prefix for unused locals to prevent accidentally having unused locals.
 		"noUnusedLocals": false,
 	},
 	"include": ["src/**/*"],

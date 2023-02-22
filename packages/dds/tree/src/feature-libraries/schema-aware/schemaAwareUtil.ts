@@ -28,13 +28,13 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
 
 {
 	type PrimitiveValue2 = TypedValue<PrimitiveValueSchema>;
-	type check1_ = requireTrue<areSafelyAssignable<PrimitiveValue, PrimitiveValue2>>;
+	type _check1 = requireTrue<areSafelyAssignable<PrimitiveValue, PrimitiveValue2>>;
 }
 
 {
 	type Value2 = TypedValue<ValueSchema>;
-	type check2_ = isAssignableTo<Value, Value2>;
-	type check3_ = isAssignableTo<Value2, Value>;
+	type _check2 = isAssignableTo<Value, Value2>;
+	type _check3 = isAssignableTo<Value2, Value>;
 }
 
 /**

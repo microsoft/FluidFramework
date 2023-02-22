@@ -12,5 +12,21 @@ module.exports = {
 		"@typescript-eslint/no-namespace": "off",
 		"@typescript-eslint/no-empty-interface": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"@typescript-eslint/no-unused-vars": [
+			"error",
+			{
+				argsIgnorePattern: "^",
+				varsIgnorePattern: "^_",
+				caughtErrorsIgnorePattern: "^_",
+			},
+		],
 	},
+	overrides: [
+		{
+			files: ["src/test/**/*"],
+			rules: {
+				"@typescript-eslint/no-unused-vars": ["off"],
+			},
+		},
+	],
 };

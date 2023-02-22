@@ -36,7 +36,7 @@ export interface TreeSchemaTypeInfo {
 }
 
 {
-	type check_ = requireAssignableTo<TreeSchemaTypeInfo, TreeSchemaBuilder & Named<string>>;
+	type _check = requireAssignableTo<TreeSchemaTypeInfo, TreeSchemaBuilder & Named<string>>;
 }
 
 /**
