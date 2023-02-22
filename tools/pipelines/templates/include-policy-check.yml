@@ -26,7 +26,8 @@ stages:
   displayName: Policy checks
   pool: Small
   jobs:
-  - job: Run checks
+  - job:
+    displayName: Run checks
     steps:
     - task: UseNode@1
       displayName: Use Node 14.x
