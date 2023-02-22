@@ -30,7 +30,7 @@ module.exports = {
 	 */
 	semverGroups: [
 		{
-      label: "engines.node should always use >= ranges",
+			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
 			dependencies: ["node"],
 			packages: ["**"],
@@ -38,7 +38,7 @@ module.exports = {
 		},
 
 		{
-      label: "engines.npm should always use caret ranges",
+			label: "engines.npm should always use caret ranges",
 			dependencyTypes: ["engines"],
 			dependencies: ["npm"],
 			packages: ["**"],
@@ -46,7 +46,7 @@ module.exports = {
 		},
 
 		{
-      label: "packageManager should always use exact dependency ranges",
+			label: "packageManager should always use exact dependency ranges",
 			dependencyTypes: ["packageManager"],
 			dependencies: ["**"],
 			packages: ["**"],
@@ -61,7 +61,7 @@ module.exports = {
 		},
 
 		{
-      label: "Deps in pnpm overrides should use caret dependency ranges",
+			label: "Deps in pnpm overrides should use caret dependency ranges",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
 			packages: ["**"],
@@ -69,7 +69,7 @@ module.exports = {
 		},
 
 		{
-      label: "Must use exact dependency ranges",
+			label: "Must use exact dependency ranges",
 			dependencies: [
 				"@tiny-calc/*",
 				"@graphql-codegen/cli",
@@ -94,7 +94,7 @@ module.exports = {
 		// Some dependencies, like typescript and eslint, recommend to use tilde deps because minors introduce
 		// changes that may break linting
 		{
-      label: "Must use tilde dependency ranges",
+			label: "Must use tilde dependency ranges",
 			dependencies: [
 				"eslint-plugin-*",
 				"eslint-config-prettier",
@@ -111,7 +111,7 @@ module.exports = {
 
 		// All deps should use caret ranges unless previously overridden
 		{
-      label: "Dependencies should use caret dependency ranges",
+			label: "Dependencies should use caret dependency ranges",
 			dependencies: ["**"],
 			dependencyTypes: ["dev", "peer", "prod"],
 			packages: ["**"],
@@ -127,7 +127,7 @@ module.exports = {
 	 */
 	versionGroups: [
 		{
-      label: "Versions of common Fluid packages should all match",
+			label: "Versions of common Fluid packages should all match",
 			dependencies: [
 				"@fluidframework/build-common",
 				"@fluidframework/eslint-config-fluid",
@@ -138,21 +138,21 @@ module.exports = {
 		},
 
 		{
-      label: "Versions in engines field should all match",
+			label: "Versions in engines field should all match",
 			dependencyTypes: ["engines"],
 			dependencies: ["**"],
 			packages: ["**"],
 		},
 
 		{
-      label: "Versions in packageManager field should all match",
-      dependencyTypes: ["packageManager"],
+			label: "Versions in packageManager field should all match",
+			dependencyTypes: ["packageManager"],
 			dependencies: ["**"],
 			packages: ["**"],
 		},
 
 		{
-      label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
+			label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
 			isIgnored: true,
 			packages: [
 				"@fluid-example/**",
