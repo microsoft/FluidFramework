@@ -130,6 +130,7 @@ module.exports = {
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
 				"@fluidframework/build-common",
+				"@fluidframework/common-utils",
 				"@fluidframework/eslint-config-fluid",
 				"@fluidframework/build-tools",
 				"@fluid-tools/build-cli",

@@ -3196,7 +3196,7 @@ importers:
       underscore: ^1.13.6
       webpack: ^5.72.0
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@fluid-experimental/property-changeset': link:../property-changeset
       '@fluid-experimental/property-dds': link:../property-dds
       '@fluid-experimental/property-properties': link:../property-properties
@@ -3440,7 +3440,7 @@ importers:
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
       lz4js: 0.2.0
-      msgpackr: 1.8.1
+      msgpackr: 1.8.3
       pako: 2.1.0
       uuid: 8.3.2
     devDependencies:
@@ -5226,7 +5226,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/merge-tree': link:../merge-tree
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
@@ -5508,7 +5508,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -5601,7 +5601,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.9.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/gitresources': 0.1038.3000
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence-previous': /@fluidframework/sequence/2.0.0-internal.3.1.0
       '@fluidframework/server-services-client': 0.1038.2000
@@ -6247,7 +6247,7 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
       '@fluidframework/server-local-server': 0.1038.2000
@@ -6327,10 +6327,10 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/gitresources': 0.1038.3000
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       abort-controller: 3.0.0
@@ -6547,14 +6547,14 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 0.1038.2000
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       cross-fetch: 3.1.5
       json-stringify-safe: 5.0.1
-      querystring: 0.2.0
+      querystring: 0.2.1
       socket.io-client: 4.5.4
       url-parse: 1.5.10
       uuid: 8.3.2
@@ -7621,7 +7621,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../driver-utils
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       abort-controller: 3.0.0
@@ -7752,8 +7752,8 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/gitresources': 0.1038.2000
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 0.26.1
@@ -7970,7 +7970,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/garbage-collector': link:../garbage-collector
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -8097,7 +8097,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/garbage-collector': link:../garbage-collector
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -8308,7 +8308,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/garbage-collector': link:../garbage-collector
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -10220,7 +10220,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/odsp-doclib-utils': link:../odsp-doclib-utils
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       async-mutex: 0.3.2
       debug: 4.3.4
@@ -10703,7 +10703,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-validator-identifier': 7.19.1
-      chalk: 2.4.2
+      chalk: 2.4.1
       js-tokens: 4.0.0
 
   /@babel/parser/7.12.16:
@@ -11782,12 +11782,6 @@ packages:
       source-map-support: 0.5.21
     dev: true
 
-  /@babel/runtime/7.20.7:
-    resolution: {integrity: sha512-UF0tvkUtxwAgZ5W/KrkHf0Rn0fdnLDU9ScxBrEVNUprE/MzirjK4MJUX1/BVDv00Sv8cljtukVK1aky++X1SjQ==}
-    engines: {node: '>=6.9.0'}
-    dependencies:
-      regenerator-runtime: 0.13.11
-
   /@babel/runtime/7.21.0:
     resolution: {integrity: sha512-xwII0//EObnq89Ji5AKYQaRYiW/nZ3llSv29d49IuxPhKbtJoLP+9QUUZ4nVragQVtaVGeZrpB+ZtG/Pdy/POw==}
     engines: {node: '>=6.9.0'}
@@ -12125,7 +12119,7 @@ packages:
       '@fluentui/utilities': 8.13.4_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /@fluentui/react-icon-provider/1.3.26_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-WskkrGK9S5uhQnkZDz6AiE1DVIgjRE3V5I/vP9t/Q1cdAn5icUljt5Ncu+kzPIvmCaoy1Cf4C2Yc+h3BgsldaQ==}
@@ -12154,7 +12148,7 @@ packages:
       '@fluentui/utilities': 8.13.4_q5o373oqrklnndq2vhekyuzhxi
       '@microsoft/load-themed-styles': 1.10.295
       react: 17.0.2
-      tslib: 2.4.1
+      tslib: 2.5.0
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
@@ -12202,7 +12196,7 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       scheduler: 0.20.2
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: false
 
   /@fluentui/react-tabster/9.3.6_74b3ggvk3akyhuq4eydyx3fqim:
@@ -12297,7 +12291,7 @@ packages:
       '@types/react-dom': 17.0.18
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /@fluentui/set-version/8.2.3:
     resolution: {integrity: sha512-/+5vrI1Bq/ZsNDEK9++RClnDOeCILS8RXxZb7OAqmOc8GnPScxKcIN8e/1bosUxTjb2EB1KbVk6XeUpk0WvQIg==}
@@ -13572,9 +13566,6 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.1.0
     dev: true
 
-  /@fluidframework/gitresources/0.1038.2000:
-    resolution: {integrity: sha512-cbxiG5ygZtGHHXqvkaeGzPbE6fKZcuCo5ZgOPstpH7hvZsUdikohx9h2z0q0KwiW8oV/54S++UOaRAmKTPoh8w==}
-
   /@fluidframework/gitresources/0.1038.3000:
     resolution: {integrity: sha512-w4vuRUnb6t5hPVq5/4vYDC41NRhS3SXBwcaRIPJ1jT8/H792BjVT0tKnR5x/sqR6maKOLdll3Z4itzq+pdeisQ==}
 
@@ -13883,14 +13874,6 @@ packages:
       - debug
       - supports-color
     dev: true
-
-  /@fluidframework/protocol-base/0.1038.2000:
-    resolution: {integrity: sha512-2yqIvtt3NBKWfZgQk/nxthf+evIZ0cOW4Klz/zgdIzSFSHLNjo1eItkQc+7wLG3F7v1tD5tn9AVOQsFrDWdvYg==}
-    dependencies:
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.2000
-      '@fluidframework/protocol-definitions': 1.1.0
-      lodash: 4.17.21
 
   /@fluidframework/protocol-base/0.1038.3000:
     resolution: {integrity: sha512-e0G1JSlcpWiZTgIJqpU28EnmqNyfmwoiTZOL8DVrxOWArawqhEsBFBZUhL3zP2Y4vobrcjS9lMhQDsSXptwYSg==}
@@ -14239,8 +14222,8 @@ packages:
     resolution: {integrity: sha512-A8oB7jKUDCqlU1qFSc72o7zMcGAeo52WDWWhoSYgZzMV3ZHgaPjq+FYTTpGiJPACnYUhV644UPiFvGWriLIzDA==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.2000
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       axios: 0.26.1_debug@4.3.4
       crc-32: 1.2.0
@@ -14248,7 +14231,7 @@ packages:
       json-stringify-safe: 5.0.1
       jsrsasign: 10.6.1
       jwt-decode: 3.1.2
-      querystring: 0.2.0
+      querystring: 0.2.1
       sillyname: 0.1.0
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -14258,7 +14241,7 @@ packages:
     resolution: {integrity: sha512-kAYxPg1AAqRJxXzN7lXPlShSI31vr3MpDvBLeEQG4fcAWlZHcS5a0DtiA+kV8qKrhJCHfC+KyoS/UruJ4L2yxQ==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/gitresources': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/server-services-telemetry': 0.1038.2000
@@ -14332,8 +14315,8 @@ packages:
     resolution: {integrity: sha512-w08VsOC+x0hzXZs5YIrmjFyG2gV+6bMXzMsxSeDuLPkwz1xQXNJxpVG1FM9hAJUke41kzxbRvielSdMfzp3N6A==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.2000
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/server-services-core': 0.1038.2000
@@ -16229,7 +16212,7 @@ packages:
     dependencies:
       '@lerna/package': 5.1.8
       '@lerna/validation-error': 5.1.8
-      cosmiconfig: 7.1.0
+      cosmiconfig: 7.0.1
       dedent: 0.7.0
       dot-prop: 6.0.1
       glob-parent: 5.1.2
@@ -16472,7 +16455,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@material-ui/styles': 4.11.5_gzv7pa6nrbev3fs6gyzn7sadkq
       '@material-ui/system': 4.12.2_gzv7pa6nrbev3fs6gyzn7sadkq
       '@material-ui/types': 5.1.0_@types+react@17.0.52
@@ -16501,7 +16484,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@material-ui/styles': 4.11.5_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/system': 4.12.2_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/types': 5.1.0
@@ -16530,7 +16513,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@material-ui/core': 4.12.4_gzv7pa6nrbev3fs6gyzn7sadkq
       '@material-ui/utils': 4.11.3_sfoxds7t5ydpegc3knd667wn6m
       '@types/react': 17.0.52
@@ -16554,7 +16537,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/utils': 4.11.3_sfoxds7t5ydpegc3knd667wn6m
       clsx: 1.2.1
@@ -16576,7 +16559,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@emotion/hash': 0.8.0
       '@material-ui/types': 5.1.0_@types+react@17.0.52
       '@material-ui/utils': 4.11.3_sfoxds7t5ydpegc3knd667wn6m
@@ -16609,7 +16592,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@emotion/hash': 0.8.0
       '@material-ui/types': 5.1.0
       '@material-ui/utils': 4.11.3_sfoxds7t5ydpegc3knd667wn6m
@@ -16827,28 +16810,11 @@ packages:
       glob-to-regexp: 0.3.0
     dev: true
 
-  /@msgpackr-extract/msgpackr-extract-darwin-arm64/2.2.0:
-    resolution: {integrity: sha512-Z9LFPzfoJi4mflGWV+rv7o7ZbMU5oAU9VmzCgL240KnqDW65Y2HFCT3MW06/ITJSnbVLacmcEJA8phywK7JinQ==}
-    cpu: [arm64]
-    os: [darwin]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /@msgpackr-extract/msgpackr-extract-darwin-arm64/3.0.0:
     resolution: {integrity: sha512-5qpnNHUyyEj9H3sm/4Um/bnx1lrQGhe8iqry/1d+cQYCRd/gzYA0YLeq0ezlk4hKx4vO+dsEsNyeowqRqslwQA==}
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
-    dev: true
-    optional: true
-
-  /@msgpackr-extract/msgpackr-extract-darwin-x64/2.2.0:
-    resolution: {integrity: sha512-vq0tT8sjZsy4JdSqmadWVw6f66UXqUCabLmUVHZwUFzMgtgoIIQjT4VVRHKvlof3P/dMCkbMJ5hB1oJ9OWHaaw==}
-    cpu: [x64]
-    os: [darwin]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-darwin-x64/3.0.0:
@@ -16856,15 +16822,6 @@ packages:
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
-    dev: true
-    optional: true
-
-  /@msgpackr-extract/msgpackr-extract-linux-arm/2.2.0:
-    resolution: {integrity: sha512-SaJ3Qq4lX9Syd2xEo9u3qPxi/OB+5JO/ngJKK97XDpa1C587H9EWYO6KD8995DAjSinWvdHKRrCOXVUC5fvGOg==}
-    cpu: [arm]
-    os: [linux]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-linux-arm/3.0.0:
@@ -16872,15 +16829,6 @@ packages:
     cpu: [arm]
     os: [linux]
     requiresBuild: true
-    dev: true
-    optional: true
-
-  /@msgpackr-extract/msgpackr-extract-linux-arm64/2.2.0:
-    resolution: {integrity: sha512-hlxxLdRmPyq16QCutUtP8Tm6RDWcyaLsRssaHROatgnkOxdleMTgetf9JsdncL8vLh7FVy/RN9i3XR5dnb9cRA==}
-    cpu: [arm64]
-    os: [linux]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-linux-arm64/3.0.0:
@@ -16888,15 +16836,6 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
-    dev: true
-    optional: true
-
-  /@msgpackr-extract/msgpackr-extract-linux-x64/2.2.0:
-    resolution: {integrity: sha512-94y5PJrSOqUNcFKmOl7z319FelCLAE0rz/jPCWS+UtdMZvpa4jrQd+cJPQCLp2Fes1yAW/YUQj/Di6YVT3c3Iw==}
-    cpu: [x64]
-    os: [linux]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-linux-x64/3.0.0:
@@ -16904,15 +16843,6 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
-    dev: true
-    optional: true
-
-  /@msgpackr-extract/msgpackr-extract-win32-x64/2.2.0:
-    resolution: {integrity: sha512-XrC0JzsqQSvOyM3t04FMLO6z5gCuhPE6k4FXuLK5xf52ZbdvcFe1yBmo7meCew9B8G2f0T9iu9t3kfTYRYROgA==}
-    cpu: [x64]
-    os: [win32]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /@msgpackr-extract/msgpackr-extract-win32-x64/3.0.0:
@@ -16920,7 +16850,6 @@ packages:
     cpu: [x64]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@nicolo-ribaudo/eslint-scope-5-internals/5.1.1-v1:
@@ -17083,7 +17012,7 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
       '@npmcli/promise-spawn': 3.0.0
-      lru-cache: 7.16.2
+      lru-cache: 7.14.1
       mkdirp: 1.0.4
       npm-pick-manifest: 7.0.2
       proc-log: 2.0.1
@@ -17100,7 +17029,7 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       '@npmcli/promise-spawn': 6.0.1
-      lru-cache: 7.16.2
+      lru-cache: 7.14.1
       mkdirp: 1.0.4
       npm-pick-manifest: 8.0.1
       proc-log: 3.0.0
@@ -17136,7 +17065,7 @@ packages:
     dependencies:
       '@npmcli/name-from-folder': 1.0.1
       glob: 8.1.0
-      minimatch: 5.1.6
+      minimatch: 5.1.2
       read-package-json-fast: 2.0.3
     dev: true
 
@@ -19394,7 +19323,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       '@babel/code-frame': 7.18.6
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@types/aria-query': 5.0.1
       aria-query: 5.1.3
       chalk: 4.1.2
@@ -19408,7 +19337,7 @@ packages:
     engines: {node: '>=8', npm: '>=6', yarn: '>=1'}
     dependencies:
       '@adobe/css-tools': 4.0.1
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@types/testing-library__jest-dom': 5.14.5
       aria-query: 5.1.3
       chalk: 3.0.0
@@ -19425,7 +19354,7 @@ packages:
       react: <18.0.0 || 17.0.2
       react-dom: <18.0.0 || 17.0.2
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@testing-library/dom': 8.19.1
       '@types/react-dom': 17.0.18
       react: 17.0.2
@@ -21698,7 +21627,7 @@ packages:
   /async-mutex/0.3.2:
     resolution: {integrity: sha512-HuTK7E7MT7jZEh1P9GtRW9+aTWiDWWi9InbZ5hjxrnRa39KS4BW04+xLBhYNS2aXhHUIKZSw3gj4Pn1pj+qGAA==}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /async-retry/1.2.3:
     resolution: {integrity: sha512-tfDb02Th6CE6pJUF2gjW5ZVjsgwlucVXOEQMvEX9JgSJMs9gAX+Nz3xRuJBKuUYjTSYORqvDBORdAQ3LU59g7Q==}
@@ -22341,7 +22270,7 @@ packages:
     hasBin: true
     dependencies:
       arg-parser: 1.2.0
-      commander: 9.5.0
+      commander: 9.4.1
       semver: 7.3.8
     dev: true
 
@@ -22807,7 +22736,7 @@ packages:
       fs-minipass: 2.1.0
       glob: 8.1.0
       infer-owner: 1.0.4
-      lru-cache: 7.16.2
+      lru-cache: 7.14.1
       minipass: 3.3.4
       minipass-collect: 1.0.2
       minipass-flush: 1.0.5
@@ -22829,7 +22758,7 @@ packages:
       '@npmcli/fs': 3.1.0
       fs-minipass: 2.1.0
       glob: 8.1.0
-      lru-cache: 7.16.2
+      lru-cache: 7.14.1
       minipass: 3.3.4
       minipass-collect: 1.0.2
       minipass-flush: 1.0.5
@@ -23095,6 +23024,7 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
+    dev: true
 
   /chalk/3.0.0:
     resolution: {integrity: sha512-4D3B6Wf41KOYRFdszmDqMCGq5VV/uMAB273JILmO+3jAlh8X4qDtdtgCR3fxtbLEMzSx22QdhnDcJvu2u1fVwg==}
@@ -23757,8 +23687,8 @@ packages:
     engines: {node: '>= 12'}
     dev: true
 
-  /commander/9.5.0:
-    resolution: {integrity: sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ==}
+  /commander/9.4.1:
+    resolution: {integrity: sha512-5EEkTNyHNGFPD2H+c/dXXfQZYa/scCKasxWcXJaWnNJ99pnQN9Vnmqow+p+PlFPE63Q6mThaZws1T+HxfpgtPw==}
     engines: {node: ^12.20.0 || >=14}
     dev: true
 
@@ -24189,17 +24119,6 @@ packages:
       yaml: 1.10.2
     dev: true
 
-  /cosmiconfig/7.1.0:
-    resolution: {integrity: sha512-AdmX6xUzdNASswsFtmwSt7Vj8po9IuqXm0UXz7QKPuEUmPB4XyjGfaAr2PSuELMwkRMVH1EpIkX5bTZGRB3eCA==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@types/parse-json': 4.0.0
-      import-fresh: 3.3.0
-      parse-json: 5.2.0
-      path-type: 4.0.0
-      yaml: 1.10.2
-    dev: true
-
   /cosmiconfig/8.0.0:
     resolution: {integrity: sha512-da1EafcpH6b/TD8vDRaWV7xFINlHlF6zKsGwS1TsuVJTZRkquaS5HTMq7uq6h31619QjbsYl21gVDOm32KM1vQ==}
     engines: {node: '>=14'}
@@ -24616,7 +24535,7 @@ packages:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2_@octokit+core@4.0.5
       async-retry: 1.2.3
-      chalk: 2.4.2
+      chalk: 2.4.1
       commander: 2.20.3
       debug: 4.3.4
       fast-json-patch: 3.1.1
@@ -26914,7 +26833,7 @@ packages:
   /filelist/1.0.4:
     resolution: {integrity: sha512-w1cEuf3S+DrLCQL7ET6kz+gmlJdbq9J7yXCSjK/OZCPA+qEN1WyF4ZAf0YYJa4/shHJra2t/d/r8SV4Ji+x+8Q==}
     dependencies:
-      minimatch: 5.1.6
+      minimatch: 5.1.2
     dev: true
 
   /fill-range/4.0.0:
@@ -27780,7 +27699,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 5.1.6
+      minimatch: 5.1.2
       once: 1.4.0
 
   /global-dirs/0.1.1:
@@ -28452,14 +28371,14 @@ packages:
     resolution: {integrity: sha512-xIcQYMnhcx2Nr4JTjsFmwwnr9vldugPy9uVm0o87bjqqWMv9GaqsTeT+i99wTl0mk1uLxJtHxLb8kymqTENQsw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
-      lru-cache: 7.16.2
+      lru-cache: 7.14.1
     dev: true
 
   /hosted-git-info/6.1.1:
     resolution: {integrity: sha512-r0EI+HBMcXadMrugk0GCQ+6BQV39PiWAZVfq7oIckeGiN7sjRGyQxPdft3nQekFTCQbYxLBH+/axZMeH8UX6+w==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      lru-cache: 7.16.2
+      lru-cache: 7.14.1
     dev: true
 
   /hotloop/1.2.0:
@@ -28912,14 +28831,14 @@ packages:
     resolution: {integrity: sha512-yemi4pMf51WKT7khInJqAvsIGzoqYXblnsz0ql8tM+yi1EKYTY1evX4NAbJrLL/Aanr2HyZeluqU+Oi7MGHokw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
-      minimatch: 5.1.6
+      minimatch: 5.1.2
     dev: true
 
   /ignore-walk/6.0.0:
     resolution: {integrity: sha512-bTf9UWe/UP1yxG3QUrj/KOvEhTAUWPcv+WvbFZ28LcqznXabp7Xu6o9y1JEC18+oqODuS7VhTpekV5XvFwsxJg==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      minimatch: 5.1.6
+      minimatch: 5.1.2
     dev: true
 
   /ignore/3.3.10:
@@ -31892,8 +31811,8 @@ packages:
     dependencies:
       yallist: 4.0.0
 
-  /lru-cache/7.16.2:
-    resolution: {integrity: sha512-t6D6OM05Y3f+61zNnXh/+0D69kAgJKVEWLuWL1r38CIHRPTWpNjwpR7S+nmiQlG5GmUB1BDiiMjU1Ihs4YBLlg==}
+  /lru-cache/7.14.1:
+    resolution: {integrity: sha512-ysxwsnTKdAx96aTRdhDOCQfDgbHnt8SK0KY8SEjO0wHinhWOFTESbjVCMPbU1uGXg/ch4lifqx0wfjOawU2+WA==}
     engines: {node: '>=12'}
 
   /lru-queue/0.1.0:
@@ -31953,7 +31872,7 @@ packages:
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
       is-lambda: 1.0.1
-      lru-cache: 7.16.2
+      lru-cache: 7.14.1
       minipass: 3.3.4
       minipass-collect: 1.0.2
       minipass-fetch: 2.1.2
@@ -31977,7 +31896,7 @@ packages:
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
       is-lambda: 1.0.1
-      lru-cache: 7.16.2
+      lru-cache: 7.14.1
       minipass: 3.3.4
       minipass-collect: 1.0.2
       minipass-fetch: 3.0.0
@@ -32535,8 +32454,8 @@ packages:
     dependencies:
       brace-expansion: 2.0.1
 
-  /minimatch/5.1.6:
-    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
+  /minimatch/5.1.2:
+    resolution: {integrity: sha512-bNH9mmM9qsJ2X4r2Nat1B//1dJVcn3+iBLa3IgqJ7EbGaDNepL9QSHOxN4ng33s52VMMhhIfgCYDk3C4ZmlDAg==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
@@ -32891,22 +32810,6 @@ packages:
       isarray: 1.0.0
     dev: true
 
-  /msgpackr-extract/2.2.0:
-    resolution: {integrity: sha512-0YcvWSv7ZOGl9Od6Y5iJ3XnPww8O7WLcpYMDwX+PAA/uXLDtyw94PJv9GLQV/nnp3cWlDhMoyKZIQLrx33sWog==}
-    hasBin: true
-    requiresBuild: true
-    dependencies:
-      node-gyp-build-optional-packages: 5.0.3
-    optionalDependencies:
-      '@msgpackr-extract/msgpackr-extract-darwin-arm64': 2.2.0
-      '@msgpackr-extract/msgpackr-extract-darwin-x64': 2.2.0
-      '@msgpackr-extract/msgpackr-extract-linux-arm': 2.2.0
-      '@msgpackr-extract/msgpackr-extract-linux-arm64': 2.2.0
-      '@msgpackr-extract/msgpackr-extract-linux-x64': 2.2.0
-      '@msgpackr-extract/msgpackr-extract-win32-x64': 2.2.0
-    dev: false
-    optional: true
-
   /msgpackr-extract/3.0.0:
     resolution: {integrity: sha512-oy6KCk1+X4Bn5m6Ycq5N1EWl9npqG/cLrE8ga8NX7ZqfqYUUBS08beCQaGq80fjbKBySur0E6x//yZjzNJDt3A==}
     hasBin: true
@@ -32920,20 +32823,12 @@ packages:
       '@msgpackr-extract/msgpackr-extract-linux-arm64': 3.0.0
       '@msgpackr-extract/msgpackr-extract-linux-x64': 3.0.0
       '@msgpackr-extract/msgpackr-extract-win32-x64': 3.0.0
-    dev: true
     optional: true
-
-  /msgpackr/1.8.1:
-    resolution: {integrity: sha512-05fT4J8ZqjYlR4QcRDIhLCYKUOHXk7C/xa62GzMKj74l3up9k2QZ3LgFc6qWdsPHl91QA2WLWqWc8b8t7GLNNw==}
-    optionalDependencies:
-      msgpackr-extract: 2.2.0
-    dev: false
 
   /msgpackr/1.8.3:
     resolution: {integrity: sha512-m2JefwcKNzoHYXkH/5jzHRxAw7XLWsAdvu0FOJ+OLwwozwOV/J6UA62iLkfIMbg7G8+dIuRwgg6oz+QoQ4YkoA==}
     optionalDependencies:
       msgpackr-extract: 3.0.0
-    dev: true
 
   /multicast-dns-service-types/1.1.0:
     resolution: {integrity: sha512-cnAsSVxIDsYt0v7HmC0hWZFwwXSh+E6PgCrREDuN/EsjgLwA5XRmlMHhSiDPrt6HxY1gTivEa/Zh7GtODoLevQ==}
@@ -33167,16 +33062,9 @@ packages:
     resolution: {integrity: sha512-PPmu8eEeG9saEUvI97fm4OYxXVB6bFvyNTyiUOBichBpFG8A1Ljw3bY62+5oOjDEMHRnd0Y7HQ+x7uzxOzC6JA==}
     engines: {node: '>= 6.0.0'}
 
-  /node-gyp-build-optional-packages/5.0.3:
-    resolution: {integrity: sha512-k75jcVzk5wnnc/FMxsf4udAoTEUv2jY3ycfdSd3yWu6Cnd1oee6/CfZJApyscA4FJOmdoixWwiwOyf16RzD5JA==}
-    hasBin: true
-    dev: false
-    optional: true
-
   /node-gyp-build-optional-packages/5.0.7:
     resolution: {integrity: sha512-YlCCc6Wffkx0kHkmam79GKvDQ6x+QZkMjFGrIMxgFNILFvGSbCp2fCBC55pGTT9gVaz8Na5CLmxt/urtzRv36w==}
     hasBin: true
-    dev: true
     optional: true
 
   /node-gyp-build/4.5.0:
@@ -33424,7 +33312,7 @@ packages:
     dependencies:
       chalk: 5.2.0
       cli-table: 0.3.11
-      commander: 9.5.0
+      commander: 9.4.1
       fast-memoize: 2.5.2
       find-up: 5.0.0
       fp-and-or: 0.1.3
@@ -33435,7 +33323,7 @@ packages:
       json-parse-helpfulerror: 1.0.3
       jsonlines: 0.1.1
       lodash: 4.17.21
-      minimatch: 5.1.6
+      minimatch: 5.1.2
       p-map: 4.0.0
       pacote: 15.0.6
       parse-github-url: 1.0.2
@@ -33528,7 +33416,7 @@ packages:
       ajv: 6.12.6
       ajv-errors: 1.0.1_ajv@6.12.6
       chalk: 4.1.2
-      cosmiconfig: 7.1.0
+      cosmiconfig: 7.0.1
       debug: 4.3.4
       globby: 11.1.0
       ignore: 5.2.0
@@ -35644,7 +35532,7 @@ packages:
     resolution: {integrity: sha512-pB2X5AduTl78J+xRSxQiEmga1jQV0j43jOPs/MTgTLApGFEOn6NgdE2dEjp7nvDtjkIOZbvFIojAiYUx6ep3zg==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      chalk: 2.4.2
+      chalk: 2.4.1
       debug: 4.3.4
       execa: 0.10.0
       fs-extra: 6.0.1
@@ -35854,7 +35742,7 @@ packages:
       react: ^16.0.0 || ^17.0.0 || 17.0.2
       react-dom: ^16.0.0 || ^17.0.0 || 17.0.2
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       classnames: 2.3.2
       memoize-one: 5.2.1
       prop-types: 15.8.1
@@ -38917,8 +38805,8 @@ packages:
     hasBin: true
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.2000
-      '@fluidframework/protocol-base': 0.1038.2000
+      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-lambdas': 0.1038.2000
       '@fluidframework/server-local-server': 0.1038.2000
@@ -39287,9 +39175,6 @@ packages:
 
   /tslib/2.3.1:
     resolution: {integrity: sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==}
-
-  /tslib/2.4.1:
-    resolution: {integrity: sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==}
 
   /tslib/2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
