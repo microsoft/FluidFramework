@@ -103,6 +103,11 @@ export enum FlushMode {
     TurnBased = 1
 }
 
+// @public (undocumented)
+export enum FlushModeExperimental {
+    Async = 2
+}
+
 // @public
 export const gcBlobPrefix = "__gc";
 
@@ -242,6 +247,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     ensureNoDataModelChanges<T>(callback: () => T): T;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
+    // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
@@ -438,6 +444,7 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
+    isSummaryInProgress?(): boolean;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
@@ -497,6 +504,7 @@ export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @alpha

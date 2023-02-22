@@ -111,7 +111,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger?: ITelemetryLogger;
         runSweep?: boolean;
         fullGC?: boolean;
-    }): Promise<IGCStats | undefined>;
+    }, telemetryContext?: ITelemetryContext): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -123,6 +123,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
+    deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
+    // @deprecated (undocumented)
     deleteUnusedNodes(unusedRoutes: string[]): string[];
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -137,6 +139,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
+    readonly gcTombstoneEnforcementAllowed: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
@@ -162,7 +165,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
     // @deprecated (undocumented)
@@ -660,7 +663,6 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @public
 export enum RuntimeHeaders {
-    externalRequest = "externalRequest",
     viaHandle = "viaHandle",
     wait = "wait"
 }

@@ -4,3 +4,4 @@
  */
 
 export { MockWebhook, SubscriberUrl } from "./webhook";
+export { fluidServicePort } from "./fluidService";

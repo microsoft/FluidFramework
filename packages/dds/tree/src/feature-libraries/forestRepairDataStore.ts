@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	castCursorToSynchronous,
 	Delta,
@@ -20,8 +20,7 @@ import {
 	UpPath,
 	Value,
 } from "../core";
-import { unreachableCase } from "../util";
-import { chunkTree, TreeChunk } from "./chunked-forest";
+import { chunkTree, TreeChunk, defaultChunkPolicy } from "./chunked-forest";
 
 interface RepairData {
 	value?: Map<RevisionTag, Value>;
@@ -138,7 +137,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 				const fork = cursor.fork();
 				const index = startIndex + i;
 				fork.enterNode(index);
-				const nodeData = chunkTree(castCursorToSynchronous(fork));
+				const nodeData = chunkTree(castCursorToSynchronous(fork), defaultChunkPolicy);
 				fork.free();
 				const child = parent.getOrCreateChild(key, index, repairDataFactory);
 				if (child.data === undefined) {
@@ -177,7 +176,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 			assert(repair !== undefined, 0x47d /* No repair data found */);
 			const cursor = repair.cursor();
 			// TODO: leverage TreeChunk's ability to represent a range of contiguous nodes
-			assert(cursor.getFieldLength() === 1, "only one node should have been chunked");
+			assert(
+				cursor.getFieldLength() === 1,
+				0x55b /* only one node should have been chunked */,
+			);
 			cursor.firstNode();
 			return cursor;
 		});

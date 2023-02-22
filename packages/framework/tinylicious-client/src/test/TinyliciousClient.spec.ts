@@ -90,7 +90,7 @@ describe("TinyliciousClient", () => {
 	});
 
 	/**
-	 * Scenario: test if TinyliciousClient can get a non-exiting container.
+	 * Scenario: test if TinyliciousClient can get a non-existing container.
 	 *
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
@@ -216,7 +216,7 @@ describe("TinyliciousClient", () => {
 	 * can be added during runtime and be returned by the container.
 	 *
 	 * Expected behavior: added loadable object can be retrieved from the container. Loadable
-	 * object's id and containeronfig ID should be identical since it's now attached to
+	 * object's id and containerConfig ID should be identical since it's now attached to
 	 * the container.
 	 */
 	it("can create/add loadable objects (DDS) dynamically during runtime", async () => {
@@ -251,7 +251,7 @@ describe("TinyliciousClient", () => {
 	 * can be added during runtime and be returned by the container.
 	 *
 	 * Expected behavior: added loadable object can be retrieved from the container. Loadable
-	 * object's id and containeronfig ID should be identical since it's now attached to
+	 * object's id and containerConfig ID should be identical since it's now attached to
 	 * the container.
 	 */
 	it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
