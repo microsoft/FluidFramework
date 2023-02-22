@@ -9,7 +9,7 @@ import { IConnectionDetails, IDeltaHandlerStrategy, IDeltaQueue, IDeltaQueueEven
 import { IDocumentService } from "@fluidframework/driver-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
-import { DeltaManager } from "./deltaManager";
+import { DeltaManager, IDeltaManagerSerialized } from "./deltaManager";
 
 const GroupedBatchOpType = "groupedBatch";
 
@@ -177,8 +177,14 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
                 }
                 return [virtualizedMessages];
             },
-            () => {}, // empty callback (nothing to be done on observing new value)
+            () => { }, // empty callback (nothing to be done on observing new value)
         );
+    }
+
+    public initializeFromState(deltaManageState: IDeltaManagerSerialized): void {
+        for (const [key, value] of Object.entries(deltaManageState.state)) {
+            this._sequenceNumberMap.set(Number(key), value);
+        }
     }
 
     public async attachOpHandler(
@@ -189,10 +195,6 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
         prefetchType: "cached" | "all" | "none" = "none",
     ) {
         this._virtualSequenceNumber = sequenceNumber;
-
-        // TODO: need to restore from previous state properly
-        this._sequenceNumberMap.set(sequenceNumber, sequenceNumber);
-        this._sequenceNumberMap.set(minSequenceNumber, minSequenceNumber);
 
         return super.attachOpHandler(minSequenceNumber, sequenceNumber, term, handler, prefetchType);
     }
@@ -353,6 +355,15 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
             }
         }
         assert(false, "virtual sequence number not found"); // TODO: https://github.com/microsoft/FluidFramework/pull/13963 if merged
+    }
+
+    public getLocalState(): IDeltaManagerSerialized {
+        const localState: IDeltaManagerSerialized = { state: {} };
+        for (const [key, value] of this._sequenceNumberMap.entries()) {
+            localState.state[key] = value;
+        }
+
+        return localState;
     }
 
     // TODO: need to review how these numbers are being used in other layers

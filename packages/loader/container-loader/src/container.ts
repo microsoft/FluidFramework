@@ -88,7 +88,7 @@ import {
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
-import { DeltaManager, IConnectionArgs } from "./deltaManager";
+import { IDeltaManagerSerialized, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
@@ -114,6 +114,8 @@ const detachedContainerRefSeqNumber = 0;
 
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
+
+const deltaManagerBlobName = ".deltaManager";
 
 export interface IContainerLoadOptions {
     /**
@@ -265,6 +267,7 @@ export interface IPendingContainerState {
     protocol: IProtocolState;
     term: number;
     clientId?: string;
+    deltaManagerState?: unknown;
 }
 
 const summarizerClientType = "summarizer";
@@ -411,7 +414,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
-    private readonly _deltaManager: DeltaManager<ConnectionManager>;
+    private readonly _deltaManager: VirtualDeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
 
     private _context: ContainerContext | undefined;
@@ -627,8 +630,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             summarizeProtocolTree,
         };
 
-        const virtualDeltaManager = this.createDeltaManager();
-        this._deltaManager = virtualDeltaManager;
+        this._deltaManager = this.createDeltaManager();
 
         this._clientId = config.serializedContainerState?.clientId;
         this.connectionStateHandler = createConnectionStateHandler(
@@ -682,8 +684,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this.storageService = new VirtualContainerStorageAdapter(
-            (virtualSequenceNumber: number) => virtualDeltaManager.getRealSequenceNumber(virtualSequenceNumber),
-            (sequenceNumber: number) => virtualDeltaManager.virtualizeSequenceNumber(sequenceNumber),
+            (virtualSequenceNumber: number) => this._deltaManager.getRealSequenceNumber(virtualSequenceNumber),
+            (sequenceNumber: number) => this._deltaManager.virtualizeSequenceNumber(sequenceNumber),
+            (summaryTree: ISummaryTree) => this.addDeltaManagerStateToSummary(summaryTree),
             this.loader.services.detachedBlobStorage,
             this.mc.logger,
             this.options.summarizeProtocolTree === true
@@ -825,6 +828,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             protocol: this.protocolHandler.getProtocolState(),
             term: this._protocolHandler.attributes.term,
             clientId: this.clientId,
+            deltaManagerState: this._deltaManager.getLocalState(),
         };
 
         this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState" });
@@ -1171,13 +1175,33 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             : { snapshot: undefined, versionId: undefined };
         assert(snapshot !== undefined || pendingLocalState !== undefined, 0x237 /* "Snapshot should exist" */);
 
-        const attributes: IDocumentAttributes = pendingLocalState === undefined
-            ? await this.getDocumentAttributes(snapshot)
-            : {
-                sequenceNumber: pendingLocalState.protocol.sequenceNumber,
-                minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
-                term: pendingLocalState.term,
-            };
+        // !!!!!! TODO: need to separate "getDocumentAttributes" method somehow. Currently, I'm relying on VirtualDeltaManager already having the info before passing the info to it
+        // > need to differentiate between the two flows (before everything has been initialized and we're ready to virtualize and after)
+
+        let deltaManagerState: IDeltaManagerSerialized | undefined;
+
+        if (pendingLocalState === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const blobId = snapshot!.blobs[deltaManagerBlobName];
+            if (blobId) {
+                deltaManagerState = await readAndParse<IDeltaManagerSerialized>(this.storage, blobId);
+            }
+        } else {
+            deltaManagerState = pendingLocalState.deltaManagerState as IDeltaManagerSerialized;
+        }
+
+        if (deltaManagerState !== undefined) {
+            this._deltaManager.initializeFromState(deltaManagerState);
+        }
+
+        const attributes: IDocumentAttributes =
+            pendingLocalState === undefined
+                ? await this.getDocumentAttributes(snapshot)
+                : {
+                    sequenceNumber: pendingLocalState.protocol.sequenceNumber,
+                    minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
+                    term: pendingLocalState.term,
+                };
 
         let opsBeforeReturnP: Promise<void> | undefined;
 
@@ -1629,8 +1653,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
         // This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
         if (!initialTransition &&
-                this.connectionState !== ConnectionState.Connected &&
-                this.connectionState !== ConnectionState.Disconnected) {
+            this.connectionState !== ConnectionState.Connected &&
+            this.connectionState !== ConnectionState.Disconnected) {
             return;
         }
         const state = this.connectionState === ConnectionState.Connected;
@@ -1703,10 +1727,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private submitMessage(type: MessageType,
-                          contents?: string,
-                          batch?: boolean,
-                          metadata?: any,
-                          compression?: string): number {
+        contents?: string,
+        batch?: boolean,
+        metadata?: any,
+        compression?: string): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
@@ -1862,5 +1886,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
              */
             this.context.setConnectionState(state && !readonly, this.clientId);
         }
+    }
+
+    private addDeltaManagerStateToSummary(summary: ISummaryTree) {
+        summary.tree[deltaManagerBlobName] = {
+            type: SummaryType.Blob,
+            content: JSON.stringify(this._deltaManager.getLocalState()),
+        };
     }
 }

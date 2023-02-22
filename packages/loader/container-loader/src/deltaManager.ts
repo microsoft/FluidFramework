@@ -70,6 +70,10 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
 }
 
+export interface IDeltaManagerSerialized {
+    state: Record<number, number>,
+}
+
 /**
  * Determines if message was sent by client, not service
  */
@@ -998,5 +1002,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (this.lastObservedSeqNumber < seq) {
             this.lastObservedSeqNumber = seq;
         }
+    }
+
+    public getLocalState(): IDeltaManagerSerialized {
+        return {state: {}};
     }
 }

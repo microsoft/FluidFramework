@@ -17,6 +17,7 @@ export class VirtualContainerStorageAdapter extends ContainerStorageAdapter {
     constructor(
         private readonly getRealSequenceNumber: (virtualSequenceNumber: number) => number,
         private readonly getVirtualSequenceNumber: (sequenceNumber: number) => number,
+        private readonly adjustSummaryTree: (summary: ISummaryTree) => void,
         detachedBlobStorage: IDetachedBlobStorage | undefined,
         logger: ITelemetryLogger,
         captureProtocolSummary?: () => ISummaryTree,
@@ -29,6 +30,8 @@ export class VirtualContainerStorageAdapter extends ContainerStorageAdapter {
             ...context,
             referenceSequenceNumber: this.getRealSequenceNumber(context.referenceSequenceNumber),
         }
+
+        this.adjustSummaryTree(summary);
         return super.uploadSummaryWithContext(summary, newContext);
     }
 
