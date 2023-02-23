@@ -6,8 +6,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DebuggerPanel } from "../shared-components";
 import { debuggerPanelId } from "./Constants";
+import { RootView } from "./RootView";
 import { isDebuggerPanelOpen } from "./Utilities";
 
 function show(): void {
@@ -26,9 +26,9 @@ function show(): void {
 	panelElement.style.zIndex = "9000000000000000000"; // Ensure the panel appears on top of all other content
 	panelElement.style.width = "400px";
 
-	ReactDOM.render(React.createElement(DebuggerPanel), panelElement, () => {
+	ReactDOM.render(React.createElement(RootView), panelElement, () => {
 		document.body.append(panelElement);
-		console.log("CONTENT: Rendered debug view!");
+		console.log("EXTENSION(CONTENT_SCRIPT): Rendered debug view!");
 	});
 }
 
