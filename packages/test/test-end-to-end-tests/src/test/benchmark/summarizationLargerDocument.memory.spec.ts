@@ -178,13 +178,14 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 				}
 				await provider.ensureSynchronized();
 
-				const { summarizer: summarizerClient } = await createSummarizer(
+				this.summarizerClient2 = await createSummarizer(
 					provider,
-					mainContainer,
+					this.container2,
+					summaryVersion,
 				);
-				summaryVersion = await waitForSummary(summarizerClient);
+				summaryVersion = await waitForSummary(this.summarizerClient2.summarizer);
 				assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
-				summarizerClient.close();
+				this.summarizerClient2.summarizer.close();
 			}
 			beforeIteration() {
 				this.dataObject2map = undefined;
