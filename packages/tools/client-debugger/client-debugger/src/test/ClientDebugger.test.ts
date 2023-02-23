@@ -126,19 +126,23 @@ describe("ClientDebugger unit tests", () => {
 		container!.connect();
 
 		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(1);
-		expect(clientDebugger?.getContainerConnectionLog()[0].changeKind).to.equal("connected");
+		expect(clientDebugger?.getContainerConnectionLog()[0].newState).to.equal("connected");
 
 		await container!.attach({ url: "test-url" });
 		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(2);
-		expect(clientDebugger?.getContainerConnectionLog()[1].changeKind).to.equal("attached");
+		expect(clientDebugger?.getContainerConnectionLog()[1].newState).to.equal("attached");
 
 		container!.disconnect();
 		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(3);
-		expect(clientDebugger?.getContainerConnectionLog()[2].changeKind).to.equal("disconnected");
+		expect(clientDebugger?.getContainerConnectionLog()[2].newState).to.equal("disconnected");
 
 		container!.close();
 		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(4);
-		expect(clientDebugger?.getContainerConnectionLog()[3].changeKind).to.equal("closed");
+		expect(clientDebugger?.getContainerConnectionLog()[3].newState).to.equal("closed");
+
+		container!.dispose?.();
+		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(5);
+		expect(clientDebugger?.getContainerConnectionLog()[4].newState).to.equal("disposed");
 	});
 
 	it("Closing debugger removes it from global (window) registry and disposes it.", () => {

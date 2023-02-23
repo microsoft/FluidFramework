@@ -13,7 +13,6 @@ import {
 	IContainerEvents,
 	IErrorBase,
 } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 
@@ -77,14 +76,7 @@ class MockContainer
 {
 	public readonly audience: IAudience = new MockAudience();
 
-	private _connectionState: ConnectionState = ConnectionState.Disconnected;
-
-	public get connectionState(): ConnectionState {
-		return this._connectionState;
-	}
-
 	public connect(): void {
-		this._connectionState = ConnectionState.Connected;
 		this.emit("connected");
 	}
 
@@ -93,35 +85,20 @@ class MockContainer
 	}
 
 	public disconnect(): void {
-		this._connectionState = ConnectionState.Disconnected;
 		this.emit("disconnected");
 	}
 
 	public async attach(request: IRequest): Promise<void> {
-		this._connectionState = ConnectionState.Connected;
 		this.emit("attached");
 	}
 
 	public dispose(error?: IErrorBase | undefined): void {
-		this._connectionState = ConnectionState.Disconnected;
-		this.emit("dispose");
+		this.emit("disposed");
 	}
 
 	public close(): void {
-		this._connectionState = ConnectionState.Disconnected;
 		this.emit("closed");
 	}
-}
-
-function createMockClient(clientId: string): IClient {
-	return {
-		mode: "read",
-		details: { capabilities: { interactive: false } },
-		permission: [],
-		user: { id: clientId },
-		scopes: [],
-		timestamp: Date.now(),
-	};
 }
 
 function createMockClient(clientId: string): IClient {

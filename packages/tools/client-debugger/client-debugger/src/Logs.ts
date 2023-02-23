@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ContainerStateChangeKind } from "./Container";
 
 /**
  * Base interface for data logs, associating data with a timestamp at which the data was recorded by the debugger.
@@ -36,7 +36,8 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
  *
  * @internal
  */
-export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
+export interface ConnectionStateChangeLogEntry
+	extends StateChangeLogEntry<ContainerStateChangeKind> {
 	/**
 	 * When associated with a new connection (i.e. state transition to
 	 * {@link @fluidframework/container-loader#ConnectionState.Connected}), this will be the new client ID.
@@ -44,22 +45,6 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 	 * Will always be undefined for disconnects.
 	 */
 	clientId: string | undefined;
-
-	/**
-	 * The ID of container that has state changed.
-	 */
-	containerId: string | undefined;
-
-	/**
-	 * Whether the change represents a container being connected to or disconnected from the collaborative session.
-	 */
-	changeKind:
-		| "attached"
-		| "connected"
-		| "contextChanged"
-		| "disconnected"
-		| "disposed"
-		| "closed";
 }
 
 /**
