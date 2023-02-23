@@ -43,16 +43,6 @@ export interface AttributionInfo {
 // @alpha
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey;
 
-// @public @deprecated (undocumented)
-export enum BindState {
-    // (undocumented)
-    Binding = "Binding",
-    // (undocumented)
-    Bound = "Bound",
-    // (undocumented)
-    NotBound = "NotBound"
-}
-
 // @public (undocumented)
 export const blobCountPropertyName = "BlobCount";
 
@@ -189,7 +179,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
-    readonly visibilityState?: VisibilityState_2;
+    readonly visibilityState: VisibilityState_2;
 }
 
 // @public

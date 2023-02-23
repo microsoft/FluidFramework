@@ -36,7 +36,6 @@ import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IFluidResolvedUrl,
-	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -106,22 +105,6 @@ export class RelativeLoader implements ILoader {
 		}
 		return this.loader.request(request);
 	}
-}
-
-function createCachedResolver(resolver: IUrlResolver) {
-	const cacheResolver = Object.create(resolver) as IUrlResolver;
-	const resolveCache = new Map<string, Promise<IResolvedUrl | undefined>>();
-	cacheResolver.resolve = async (request: IRequest): Promise<IResolvedUrl | undefined> => {
-		if (!canUseCache(request)) {
-			return resolver.resolve(request);
-		}
-		if (!resolveCache.has(request.url)) {
-			resolveCache.set(request.url, resolver.resolve(request));
-		}
-
-		return resolveCache.get(request.url);
-	};
-	return cacheResolver;
 }
 
 export interface ILoaderOptions extends ILoaderOptions1 {
@@ -302,7 +285,7 @@ export class Loader implements IHostLoader {
 		);
 
 		this.services = {
-			urlResolver: createCachedResolver(loaderProps.urlResolver),
+			urlResolver: loaderProps.urlResolver,
 			documentServiceFactory: loaderProps.documentServiceFactory,
 			codeLoader: loaderProps.codeLoader,
 			options: loaderProps.options ?? {},

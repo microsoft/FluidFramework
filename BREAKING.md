@@ -59,6 +59,7 @@ These packages are currently published under the `@fluidframework` scope:
 -   `@fluidframework/test-drivers`
 -   `@fluidframework/test-pairwise-generator`
 -   `@fluidframework/test-version-utils`
+-   `@fluidframework/test-loader-utils`
 
 These will be moved to the `@fluid-internal` scope and will no longer be published.
 
