@@ -120,7 +120,8 @@ async function main() {
 	fileLogger.observer.on("logEvent", (logEvent: ITelemetryBaseEvent) => {
 		if (
 			logEvent.eventName.includes("InactiveObject") ||
-			logEvent.eventName.includes("SweepReadyObject")
+			logEvent.eventName.includes("SweepReadyObject") ||
+			logEvent.eventName.startsWith("GC_Tombstone")
 		) {
 			testFailed = true;
 			console.error(`xxxxxxxxx ${JSON.stringify(logEvent)}`);
