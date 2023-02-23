@@ -182,7 +182,7 @@ export class EpochTracker implements IPersistedFileCache {
 	}
 
 	public async validateEpoch(epoch: string | undefined, fetchType: FetchType) {
-		assert(epoch !== undefined, "response should contain epoch");
+		assert(epoch !== undefined, 0x584 /* response should contain epoch */);
 		try {
 			this.validateEpochFromResponse(epoch, fetchType);
 		} catch (error) {

@@ -9,6 +9,7 @@ import {
 	AnchorSet,
 	Commit,
 	EditManager,
+	mintRevisionTag,
 	IEditableForest,
 	IForestSubscription,
 	initializeForest,
@@ -21,6 +22,7 @@ import {
 	SeqNumber,
 	SessionId,
 	TransactionResult,
+	RevisionTag,
 } from "../../core";
 import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
 import {
@@ -38,7 +40,8 @@ export interface TestTreeEdit {
 	sessionId: SessionId;
 	sessionEditNumber: number;
 	refNumber: SeqNumber;
-	changeset: DefaultChangeset;
+	change: DefaultChangeset;
+	revision: RevisionTag;
 }
 
 export interface TestTreeOptions {
@@ -157,12 +160,14 @@ export class TestTree {
 			result === TransactionResult.Apply && changeset !== undefined,
 			"The transaction should result in an edit being submitted",
 		);
-		const delta = this.editManager.addLocalChange(changeset);
+		const revision = mintRevisionTag();
+		const delta = this.editManager.addLocalChange(revision, changeset);
 		const resultingEdit: TestTreeEdit = {
 			sessionId: this.sessionId,
-			changeset,
+			change: changeset,
 			sessionEditNumber: this._localEditsApplied,
 			refNumber: brand(this.refNumber),
+			revision,
 		};
 		this.forest.applyDelta(delta);
 		this._localEditsApplied += 1;
@@ -178,7 +183,7 @@ export class TestTree {
 			return;
 		}
 		for (const edit of edits) {
-			const delta = this.editManager.addSequencedChange(edit);
+			const delta = this.editManager.addSequencedChange(edit, edit.seqNumber, edit.refNumber);
 			this.forest.applyDelta(delta);
 			this._remoteEditsApplied += 1;
 			this.refNumber = edit.seqNumber;
@@ -186,7 +191,8 @@ export class TestTree {
 	}
 }
 
-export type CommittedTestTreeEdit = TestTreeEdit & Commit<DefaultChangeset>;
+export type CommittedTestTreeEdit = TestTreeEdit &
+	Commit<DefaultChangeset> & { seqNumber: SeqNumber };
 
 interface ClientData {
 	localEditNumber: number;
