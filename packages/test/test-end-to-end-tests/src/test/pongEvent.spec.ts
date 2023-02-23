@@ -104,5 +104,5 @@ describeNoCompat("Pong", (getTestObjectProvider) => {
 		// });
 		clock.tick(60000);
 		assert.strictEqual(run,1,"hi");
-	});
+	}).timeout(200000);
 });

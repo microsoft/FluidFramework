@@ -53,10 +53,17 @@ class SocketIoServer implements core.IWebSocketServer {
         private readonly io: Server,
         private readonly pub: Redis.Redis,
         private readonly sub: Redis.Redis) {
-        this.io.on("connection", (socket: Socket) => {
-            const webSocket = new SocketIoSocket(socket);
-            this.events.emit("connection", webSocket);
-        });
+            this.io.on("connection", (socket: Socket) => {
+                const webSocket = new SocketIoSocket(socket);
+                this.events.emit("connection", webSocket);
+
+                // server side listening for pong events.
+                socket.on("pong", (cb) => {
+                if (typeof cb === "function") {
+                    cb();
+                    }
+                });
+            });
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
