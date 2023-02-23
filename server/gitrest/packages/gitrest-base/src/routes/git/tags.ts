@@ -25,7 +25,8 @@ export function create(
 
     // https://developer.github.com/v3/git/tags/
 
-    router.post("/repos/:owner/:repo/git/tags", async (request, response, next) => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      router.post("/repos/:owner/:repo/git/tags", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager) => {
@@ -36,7 +37,8 @@ export function create(
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
-    router.get("/repos/:owner/:repo/git/tags/*", async (request, response, next) => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      router.get("/repos/:owner/:repo/git/tags/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => {

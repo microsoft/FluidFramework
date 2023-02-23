@@ -23,7 +23,8 @@ export function create(
     const router: Router = Router();
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
-    router.post("/repos/:owner/:repo/git/trees", async (request, response, next) => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      router.post("/repos/:owner/:repo/git/trees", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager) => {
@@ -34,7 +35,8 @@ export function create(
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
-    router.get("/repos/:owner/:repo/git/trees/:sha", async (request, response, next) => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      router.get("/repos/:owner/:repo/git/trees/:sha", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => {
