@@ -482,7 +482,8 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	 * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
 	 * summary tracking state needs to be updated too.
 	 * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
-	 * pending summary as well.
+	 * pending summary as well. Finally, if the pendingSummaries entries have serializedRoutes, replicate them to the
+	 * pendingSummaries from the child nodes.
 	 * @param child - The child node whose state is to be updated.
 	 */
 	protected maybeUpdateChildState(child: SummarizerNodeWithGC) {
