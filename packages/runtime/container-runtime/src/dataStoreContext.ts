@@ -723,7 +723,7 @@ export abstract class FluidDataStoreContext
 		assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
 		assert(
 			this.channel.visibilityState === VisibilityState.LocallyVisible,
-			"Channel must be locally visible",
+			0x590 /* Channel must be locally visible */,
 		);
 		this.makeLocallyVisibleFn();
 	}
