@@ -8,9 +8,9 @@
  * whole repo, while others apply only to the client release group.
  */
 module.exports = {
-  // This defines the layout of the repo for fluid-build. It applies to the whole repo.
+	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
-    // Release groups
+		// Release groups
 		"azure": "azure",
 		"client": {
 			directory: "",
@@ -19,13 +19,13 @@ module.exports = {
 		"build-tools": "build-tools",
 		"server": "server/routerlicious",
 
-    // Independent packages
+		// Independent packages
 		"build": "common/build",
 		"common-def": "common/lib/common-definitions",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
-    // Tools
+		// Tools
 		"tools": [
 			"tools/api-markdown-documenter",
 			"tools/benchmark",
@@ -34,17 +34,17 @@ module.exports = {
 			"server/tinylicious",
 		],
 
-    // Services
+		// Services
 		"services": {
 			directory: "server",
 			ignoredDirs: ["routerlicious", "tinylicious"],
 		},
 	},
 
-  // `flub check policy` config. It applies to the whole repo.
+	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		dependencies: {
-      // Packages require tilde dependencies
+			// Packages require tilde dependencies
 			requireTilde: [
 				"@typescript-eslint/eslint-plugin",
 				"@typescript-eslint/parser",
@@ -60,7 +60,7 @@ module.exports = {
 			],
 		},
 
-    // Lockfiles should only be found at these paths in the repo
+		// Lockfiles should only be found at these paths in the repo
 		additionalLockfilePaths: [
 			"common/build/build-common",
 			"common/build/eslint-config-fluid",
@@ -71,8 +71,8 @@ module.exports = {
 		],
 	},
 
-  // This defines the branch release types for type tests. It applies only to the client release group. Settings for
-  // other release groups is in their root fluid-build config.
+	// This defines the branch release types for type tests. It applies only to the client release group. Settings for
+	// other release groups is in their root fluid-build config.
 	branchReleaseTypes: {
 		"main": "minor",
 		"lts": "minor",
