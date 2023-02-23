@@ -131,7 +131,7 @@ export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): 
 export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk[] {
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
-	assert(started, "field to chunk should have at least one node");
+	assert(started, 0x57c /* field to chunk should have at least one node */);
 	return chunkRange(cursor, policy, length, false);
 }
 
@@ -156,7 +156,7 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
 	// TODO: move this to a top level policy validation
 	assert(
 		withDefaults.sequenceChunkSplitThreshold >= 2,
-		"sequenceChunkThreshold must be at least 2",
+		0x57d /* sequenceChunkThreshold must be at least 2 */,
 	);
 
 	return withDefaults;
@@ -303,11 +303,11 @@ export function chunkRange(
 	length: number,
 	skipLastNavigation: boolean,
 ): TreeChunk[] {
-	assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes");
+	assert(cursor.mode === CursorLocationType.Nodes, 0x57e /* should be in nodes */);
 	let output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
-		assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes");
+		assert(cursor.mode === CursorLocationType.Nodes, 0x57f /* should be in nodes */);
 		const start = cursor.chunkStart;
 		let reusedChunk = false;
 		// symbol based fast path to check for chunk:
@@ -342,7 +342,7 @@ export function chunkRange(
 		}
 
 		if (!reusedChunk) {
-			assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes");
+			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
 			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
 			const shape = policy.schemaToShape(type);
@@ -388,7 +388,7 @@ export function chunkRange(
 			newOutput.push(new SequenceChunk(output.slice(previousEnd, end)));
 			previousEnd = end;
 		}
-		assert(previousEnd === output.length, "chunks should add up to total");
+		assert(previousEnd === output.length, 0x581 /* chunks should add up to total */);
 		output = newOutput;
 	}
 
@@ -400,7 +400,7 @@ export function insertValues(
 	shape: TreeShape,
 	values: Value[],
 ): void {
-	assert(shape.type === cursor.type, "shape and type must match");
+	assert(shape.type === cursor.type, 0x582 /* shape and type must match */);
 
 	// TODO:Perf:
 	// Fast path for already part of a uniform chunk with matching shape
@@ -417,7 +417,7 @@ export function insertValues(
 			count++;
 		}
 		cursor.exitField();
-		assert(length === count, "unexpected field length");
+		assert(length === count, 0x583 /* unexpected field length */);
 	}
 }
 

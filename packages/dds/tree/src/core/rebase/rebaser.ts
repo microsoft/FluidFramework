@@ -39,7 +39,7 @@ export class Rebaser<TChange> {
 		const sourcePath: GraphCommit<TChange>[] = [];
 		const targetPath: GraphCommit<TChange>[] = [];
 		const ancestor = findCommonAncestor([source, sourcePath], [targetBranch, targetPath]);
-		assert(ancestor !== undefined, "branch A and branch B must be related");
+		assert(ancestor !== undefined, 0x574 /* branch A and branch B must be related */);
 
 		// Find where `base` is in the target branch
 		const baseIndex = targetPath.findIndex((r) => r === targetBase);
@@ -49,7 +49,7 @@ export class Rebaser<TChange> {
 			// TODO: Ideally, this would be an "assertExpensive"
 			assert(
 				findCommonAncestor(targetBase, targetBranch) !== undefined,
-				"base is not in target branch",
+				0x575 /* base is not in target branch */,
 			);
 			return [source, this.changeRebaser.compose([])];
 		}
@@ -112,7 +112,7 @@ export class Rebaser<TChange> {
 		const targetPath: GraphCommit<TChange>[] = [];
 		assert(
 			findCommonAncestor([source, sourcePath], [target, targetPath]) !== undefined,
-			"branch A and branch B must be related",
+			0x576 /* branch A and branch B must be related */,
 		);
 
 		const changeRebasedToRef = sourcePath.reduceRight(
