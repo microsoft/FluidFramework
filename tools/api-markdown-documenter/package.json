@@ -92,5 +92,10 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",
 		"typescript": "~4.5.5"
+	},
+	"overrides": {
+		"awesome-typescript-loader": {
+			"socket.io-parser": "^4.2.1"
+		}
 	}
 }
