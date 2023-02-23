@@ -48,10 +48,13 @@ class MockAudience extends EventEmitter implements IAudienceOwner {
 	}
 
 	public addMember(clientId: string, member: IClient): void {
+		this.emit("addMember", clientId, member);
 		this.audienceMembers.set(clientId, member);
 	}
 
 	public removeMember(clientId: string): boolean {
+		const member = this.audienceMembers.get(clientId);
+		this.emit("removeMember", clientId, member);
 		return this.audienceMembers.delete(clientId);
 	}
 
@@ -89,6 +92,17 @@ class MockContainer
 	}
 }
 
+function createMockClient(clientId: string): IClient {
+	return {
+		mode: "read",
+		details: { capabilities: { interactive: false } },
+		permission: [],
+		user: { id: clientId },
+		scopes: [],
+		timestamp: Date.now(),
+	};
+}
+
 /**
  * Creates a mock {@link @fluidframework/container-definitions#IContainer} for use in tests.
  *
@@ -101,4 +115,23 @@ export function createMockContainer(): IContainer {
 	return new MockContainer() as unknown as IContainer;
 }
 
+/**
+ * Add a member for mock audience from mock container for use in tests.
+ * @returns member id
+ */
+export function addAudienceMember(container: IContainer): string {
+	const audience = container.audience as MockAudience;
+	const testClientId = Math.random().toString(36).slice(2, 7);
+	audience.addMember(testClientId, createMockClient(testClientId));
+
+	return testClientId;
+}
+
+/**
+ * Remove a member for mock audience from mock container for use in tests.
+ */
+export function removeAudienceMember(container: IContainer, clientId: string): void {
+	const audience = container.audience as MockAudience;
+	audience.removeMember(clientId);
+}
 /* eslint-enable @typescript-eslint/no-explicit-any */
