@@ -1,15 +1,15 @@
 {
-  // File path is already set in .mocharc.js, so this should not be required,
-  // but something seems to be overriding that path, and this is needed to make it work.
-  // Also for unknown (but likely related reasons) this cannot be just "dist/test" which is used in the config.
-  // This is not limited to "spec.js" so that benchmarks are included (which will be run in correctness mode).
-  "mochaExplorer.files": ["dist/test/**/*.js"],
-  // "pruneFiles" is disabled because it causesd "source-map-support/register" to give `Unknown file extension ".ts"` errors.
-  // "mochaExplorer.pruneFiles": true,
-  "mochaExplorer.require": [
-    "node_modules/@fluidframework/mocha-test-setup",
-    "source-map-support/register"
-  ],
-  "mochaExplorer.configFile": ".mocharc.js",
-  "mochaExplorer.timeout": 999999
+	// File path is already set in .mocharc.js, so this should not be required,
+	// but something seems to be overriding that path, and this is needed to make it work.
+	// Also for unknown (but likely related reasons) this cannot be just "dist/test" which is used in the config.
+	// This is not limited to "spec.js" so that benchmarks are included (which will be run in correctness mode).
+	"mochaExplorer.files": ["dist/test/**/*.js"],
+	// "pruneFiles" is disabled because it causesd "source-map-support/register" to give `Unknown file extension ".ts"` errors.
+	// "mochaExplorer.pruneFiles": true,
+	"mochaExplorer.require": [
+		"node_modules/@fluidframework/mocha-test-setup",
+		"source-map-support/register"
+	],
+	"mochaExplorer.configFile": ".mocharc.js",
+	"mochaExplorer.timeout": 999999
 }

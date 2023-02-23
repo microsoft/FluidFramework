@@ -4,9 +4,9 @@
  */
 
 export {
-    getSimpleVersion,
-    getVersionsFromStrings,
-    getIsLatest,
+	getSimpleVersion,
+	getVersionsFromStrings,
+	getIsLatest,
 } from "./buildVersion/buildVersionLib";
 export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
 export { bumpRepo } from "./bumpVersion/bumpVersion";
@@ -24,11 +24,11 @@ export { Package } from "./common/npmPackage";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
 export {
-    execAsync,
-    execWithErrorAsync,
-    readJsonAsync,
-    readFileAsync,
-    writeFileAsync,
+	execAsync,
+	execWithErrorAsync,
+	readJsonAsync,
+	readFileAsync,
+	writeFileAsync,
 } from "./common/utils";
 export { Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";

@@ -23,6 +23,7 @@ export enum LumberEventName {
     ScribeHandler = "ScribeHandler",
     ServiceSummary = "ServiceSummary",
     SummaryReader = "SummaryReader",
+    ScriptoriumProcessBatch = "ScriptoriumProcessBatch",
 
     // Retries
     RunWithRetry = "RunWithRetry",
@@ -42,4 +43,6 @@ export enum LumberEventName {
     CreateDocInitialSummaryWrite = "CreateDocInitialSummaryWrite",
     RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
     HttpRequest = "HttpRequest",
+    TotalConnectionCount = "TotalConnectionCount",
+    ConnectionCountPerNode = "ConnectionCountPerNode",
 }

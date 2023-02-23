@@ -13,17 +13,17 @@ import { Named } from "../../../core";
  * Convert a object type into the type of a ReadonlyMap from field name to value.
  */
 export type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<
-    MapKey,
-    MapValue
+	MapKey,
+	MapValue
 > & {
-    get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
+	get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
 };
 
 /**
  * Takes in a list of strings, and returns an object with those strings as keys.
  */
 export type ListToKeys<T extends readonly string[], TValue> = {
-    [key in T[number]]: TValue;
+	[key in T[number]]: TValue;
 };
 
 /**
@@ -32,18 +32,18 @@ export type ListToKeys<T extends readonly string[], TValue> = {
  * since they seem to infer the `unknown` type, not undefined.
  */
 export type WithDefault<T, Default> = T extends undefined
-    ? Default
-    : unknown extends T
-    ? Default
-    : T;
+	? Default
+	: unknown extends T
+	? Default
+	: T;
 
 /**
  * Replaces undefined with a default value.
  */
 export type AsNames<T extends readonly (string | Named<string>)[]> = {
-    readonly [Index in keyof T]: T[Index] extends string
-        ? T[Index]
-        : T[Index] extends Named<string>
-        ? T[Index]["name"]
-        : string; // This case should not be needed, but gets used in generic code for some reason.
+	readonly [Index in keyof T]: T[Index] extends string
+		? T[Index]
+		: T[Index] extends Named<string>
+		? T[Index]["name"]
+		: string; // This case should not be needed, but gets used in generic code for some reason.
 };

@@ -8,9 +8,9 @@
  * The operations that can be performed on the array
  */
 export enum ArrayIteratorOperationTypes {
-    INSERT,
-    REMOVE,
-    MODIFY,
-    // MOVE, // reserved, not implemented yet
-    NOP,
+	INSERT,
+	REMOVE,
+	MODIFY,
+	// MOVE, // reserved, not implemented yet
+	NOP,
 }

@@ -143,10 +143,10 @@ Dynamic objects are loaded on-demand to optimize for data virtualization. To get
 
 ```typescript
 const schema = {
-    initialObjects: {
-        map1: SharedMap,
-    },
-    dynamicObjectTypes: [SharedString],
+	initialObjects: {
+		map1: SharedMap,
+	},
+	dynamicObjectTypes: [SharedString],
 };
 
 const { container, services } = await azureClient.getContainer("_unique-id_", schema);

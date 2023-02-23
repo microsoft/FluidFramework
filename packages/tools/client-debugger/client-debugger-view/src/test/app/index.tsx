@@ -11,10 +11,10 @@ import { App } from "./App";
 console.log("Rendering app!");
 
 ReactDOM.render(
-    <React.StrictMode>
-        <App />
-    </React.StrictMode>,
-    document.querySelector("#content"),
+	<React.StrictMode>
+		<App />
+	</React.StrictMode>,
+	document.querySelector("#content"),
 );
 
 renderClientDebuggerView(document.body).catch((error) => console.error(error));

@@ -13,16 +13,6 @@ import { SharedString } from "@fluidframework/sequence";
 export interface IAppModelEvents extends IEvent {}
 
 /**
- * Mock model for external task data
- */
-export interface TaskData {
-	[key: string]: {
-		name: string;
-		priority: number;
-	};
-}
-
-/**
  * For this simple demo, our app model only needs a single member taskList.
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {
@@ -32,11 +22,10 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	readonly taskList: ITaskList;
 
 	/**
-	 * Send custom signals to the server which will cause the server to respond
-	 * with the (currently experimental) RuntimeMessage Signal to communicate
-	 * an external data change and and possibly the changed data as well
+	 * Send custom signal to simulate being the RuntimeMessage signal
+	 * from alfred while that signal is in prototype state on the dev branch.
 	 */
-	readonly debugSendCustomSignal: () => void;
+	readonly sendCustomDebugSignal: () => void;
 }
 
 /**
@@ -44,9 +33,21 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
  */
 export interface ITaskEvents extends IEvent {
 	/**
-	 * Emitted when the name or priority have changed respectively.
+	 * Emitted when the name has changed.
 	 */
-	(event: "nameChanged" | "priorityChanged", listener: () => void);
+	(event: "nameChanged", listener: () => void);
+	/**
+	 * Emitted when the priority has changed to either the incoming value or to the NONE default value.
+	 */
+	(event: "priorityChanged", listener: () => void);
+	/**
+	 * Emitted when the incomingName has changed to either the incoming value or to the NONE default value.
+	 */
+	(event: "incomingNameChanged", listener: () => void);
+	/**
+	 * Emitted when incomingPriority has changed to either the incoming value or to the NONE default value.
+	 */
+	(event: "incomingPriorityChanged", listener: () => void);
 }
 
 /**
@@ -66,6 +67,30 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	 * The task priority.  Modifications are persisted in Fluid and shared amongst collaborators.
 	 */
 	priority: number;
+	/**
+	 * The task name coming in from the external server.
+	 */
+	readonly incomingName: string | undefined;
+	/**
+	 * The task priority coming in from the external server.
+	 */
+	readonly incomingPriority: number | undefined;
+	/**
+	 * The type of change to the task coming in from the external server.
+	 */
+	readonly incomingType: string | undefined;
+	/**
+	 * Trigger event to render change to UI.
+	 */
+	readonly incomingNameChanged: (name: string) => void;
+	/**
+	 * Trigger event to render change to UI.
+	 */
+	readonly incomingPriorityChanged: (priority: number) => void;
+	/**
+	 * Save the proposed changes to SavedData.
+	 */
+	readonly overwriteWithIncomingData: () => void;
 }
 
 /**
@@ -126,3 +151,5 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// Alternate: inject an EventEmitter that raises the events from external.
 	// readonly handleExternalMessage: (message) => void;
 }
+
+export { assertValidTaskData, TaskData } from "./TaskData";

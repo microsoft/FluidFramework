@@ -35,7 +35,6 @@ declare function get_current_ClassDeclaration_AuthorizationError():
 declare function use_old_ClassDeclaration_AuthorizationError(
     use: TypeOnly<old.AuthorizationError>);
 use_old_ClassDeclaration_AuthorizationError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_AuthorizationError());
 
 /*
@@ -324,7 +323,6 @@ declare function get_current_ClassDeclaration_DeltaStreamConnectionForbiddenErro
 declare function use_old_ClassDeclaration_DeltaStreamConnectionForbiddenError(
     use: TypeOnly<old.DeltaStreamConnectionForbiddenError>);
 use_old_ClassDeclaration_DeltaStreamConnectionForbiddenError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DeltaStreamConnectionForbiddenError());
 
 /*
@@ -469,7 +467,6 @@ declare function get_current_ClassDeclaration_FluidInvalidSchemaError():
 declare function use_old_ClassDeclaration_FluidInvalidSchemaError(
     use: TypeOnly<old.FluidInvalidSchemaError>);
 use_old_ClassDeclaration_FluidInvalidSchemaError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FluidInvalidSchemaError());
 
 /*
@@ -494,7 +491,6 @@ declare function get_current_ClassDeclaration_GenericNetworkError():
 declare function use_old_ClassDeclaration_GenericNetworkError(
     use: TypeOnly<old.GenericNetworkError>);
 use_old_ClassDeclaration_GenericNetworkError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_GenericNetworkError());
 
 /*
@@ -807,7 +803,6 @@ declare function get_current_ClassDeclaration_LocationRedirectionError():
 declare function use_old_ClassDeclaration_LocationRedirectionError(
     use: TypeOnly<old.LocationRedirectionError>);
 use_old_ClassDeclaration_LocationRedirectionError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocationRedirectionError());
 
 /*
@@ -833,6 +828,30 @@ declare function use_old_FunctionDeclaration_logNetworkFailure(
     use: TypeOnly<typeof old.logNetworkFailure>);
 use_old_FunctionDeclaration_logNetworkFailure(
     get_current_FunctionDeclaration_logNetworkFailure());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_MapWithExpiration": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_MapWithExpiration():
+    TypeOnly<old.MapWithExpiration>;
+declare function use_current_ClassDeclaration_MapWithExpiration(
+    use: TypeOnly<current.MapWithExpiration>);
+use_current_ClassDeclaration_MapWithExpiration(
+    get_old_ClassDeclaration_MapWithExpiration());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_MapWithExpiration": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_MapWithExpiration():
+    TypeOnly<current.MapWithExpiration>;
+declare function use_old_ClassDeclaration_MapWithExpiration(
+    use: TypeOnly<old.MapWithExpiration>);
+use_old_ClassDeclaration_MapWithExpiration(
+    get_current_ClassDeclaration_MapWithExpiration());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1288,7 +1307,6 @@ declare function get_current_ClassDeclaration_ThrottlingError():
 declare function use_old_ClassDeclaration_ThrottlingError(
     use: TypeOnly<old.ThrottlingError>);
 use_old_ClassDeclaration_ThrottlingError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ThrottlingError());
 
 /*
@@ -1313,7 +1331,6 @@ declare function get_current_ClassDeclaration_UsageError():
 declare function use_old_ClassDeclaration_UsageError(
     use: TypeOnly<old.UsageError>);
 use_old_ClassDeclaration_UsageError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_UsageError());
 
 /*

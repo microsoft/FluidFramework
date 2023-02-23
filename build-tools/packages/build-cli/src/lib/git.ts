@@ -13,9 +13,9 @@ import { CommandLogger } from "../logging";
  * Default options passed to the git client.
  */
 const defaultGitOptions: Partial<SimpleGitOptions> = {
-    binary: "git",
-    maxConcurrentProcesses: 6,
-    trimmed: true,
+	binary: "git",
+	maxConcurrentProcesses: 6,
+	trimmed: true,
 };
 
 /**
@@ -29,55 +29,55 @@ const defaultGitOptions: Partial<SimpleGitOptions> = {
  * @internal
  */
 export class Repository {
-    private readonly git: SimpleGit;
+	private readonly git: SimpleGit;
 
-    /**
-     * A git client for the repository that can be used to call git directly.
-     *
-     * @internal
-     */
-    public get gitClient(): SimpleGit {
-        return this.git;
-    }
+	/**
+	 * A git client for the repository that can be used to call git directly.
+	 *
+	 * @internal
+	 */
+	public get gitClient(): SimpleGit {
+		return this.git;
+	}
 
-    constructor(
-        gitOptions: SetRequired<Partial<SimpleGitOptions>, "baseDir">,
-        protected readonly log?: CommandLogger,
-    ) {
-        const options: SetRequired<Partial<SimpleGitOptions>, "baseDir"> = {
-            ...gitOptions,
-            ...defaultGitOptions,
-        };
-        log?.verbose("gitOptions:");
-        log?.verbose(JSON.stringify(options));
-        this.git = simpleGit(options);
-    }
+	constructor(
+		gitOptions: SetRequired<Partial<SimpleGitOptions>, "baseDir">,
+		protected readonly log?: CommandLogger,
+	) {
+		const options: SetRequired<Partial<SimpleGitOptions>, "baseDir"> = {
+			...gitOptions,
+			...defaultGitOptions,
+		};
+		log?.verbose("gitOptions:");
+		log?.verbose(JSON.stringify(options));
+		this.git = simpleGit(options);
+	}
 
-    /**
-     * Returns the SHA hash for a branch. If a remote is provided, the SHA for the remote ref is returned.
-     */
-    public async getShaForBranch(branch: string, remote?: string): Promise<string> {
-        const refspec =
-            remote === undefined ? `refs/heads/${branch}` : `refs/remotes/${remote}/${branch}`;
-        const result = await this.git.raw(`show-ref`, refspec);
+	/**
+	 * Returns the SHA hash for a branch. If a remote is provided, the SHA for the remote ref is returned.
+	 */
+	public async getShaForBranch(branch: string, remote?: string): Promise<string> {
+		const refspec =
+			remote === undefined ? `refs/heads/${branch}` : `refs/remotes/${remote}/${branch}`;
+		const result = await this.git.raw(`show-ref`, refspec);
 
-        return result;
-    }
+		return result;
+	}
 
-    /**
-     * Get the remote based on the partial Url. It will match the first remote that contains the partialUrl case
-     * insensitively.
-     *
-     * @param partialUrl - partial url to match case insensitively
-     */
-    public async getRemote(partialUrl: string): Promise<string | undefined> {
-        const lowerPartialUrl = partialUrl.toLowerCase();
-        const remotes = await this.git.getRemotes(/* verbose */ true);
+	/**
+	 * Get the remote based on the partial Url. It will match the first remote that contains the partialUrl case
+	 * insensitively.
+	 *
+	 * @param partialUrl - partial url to match case insensitively
+	 */
+	public async getRemote(partialUrl: string): Promise<string | undefined> {
+		const lowerPartialUrl = partialUrl.toLowerCase();
+		const remotes = await this.git.getRemotes(/* verbose */ true);
 
-        for (const r of remotes) {
-            if (r.refs.fetch.toLowerCase().includes(lowerPartialUrl)) {
-                return r.name;
-            }
-        }
-    }
+		for (const r of remotes) {
+			if (r.refs.fetch.toLowerCase().includes(lowerPartialUrl)) {
+				return r.name;
+			}
+		}
+	}
 }

@@ -36,6 +36,7 @@ const config: webpack.Configuration = {
         fallback: {
             // Since this config is just used to test that code webpacks, and is not otherwise used,
             // minimize the dependencies/polyfills used.
+            assert: false,
             buffer: false,
             util: false,
         },

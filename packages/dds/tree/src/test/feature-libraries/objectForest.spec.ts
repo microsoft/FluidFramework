@@ -13,7 +13,7 @@ import { defaultSchemaPolicy } from "../../feature-libraries";
 import { testForest } from "../forestTestSuite";
 
 testForest({
-    suiteName: "object-forest",
-    factory: () =>
-        buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
+	suiteName: "object-forest",
+	factory: () =>
+		buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
 });

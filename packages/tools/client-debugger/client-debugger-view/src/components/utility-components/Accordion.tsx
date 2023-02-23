@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 import {
-    AnimationClassNames,
-    DefaultPalette,
-    IStackItemStyles,
-    IStackStyles,
-    IconButton,
-    Stack,
-    StackItem,
-    mergeStyleSets,
+	AnimationClassNames,
+	DefaultPalette,
+	IStackItemStyles,
+	IStackStyles,
+	IconButton,
+	Stack,
+	StackItem,
+	mergeStyleSets,
 } from "@fluentui/react";
 import React from "react";
 
@@ -24,21 +24,21 @@ import React from "react";
  * @remarks May be overridden by {@link AccordionProps.headerStyles}.
  */
 const accordionHeaderStyles: IStackItemStyles = {
-    root: {
-        background: DefaultPalette.neutralLight,
-        padding: 5,
-    },
+	root: {
+		background: DefaultPalette.neutralLight,
+		padding: 5,
+	},
 };
 
 /**
  * Style used by the Accordion's body component.
  */
 const accordionStyles: IStackStyles = {
-    root: {
-        borderStyle: "solid",
-        borderWidth: 1,
-        borderColor: DefaultPalette.neutralTertiary,
-    },
+	root: {
+		borderStyle: "solid",
+		borderWidth: 1,
+		borderColor: DefaultPalette.neutralTertiary,
+	},
 };
 
 /**
@@ -46,38 +46,38 @@ const accordionStyles: IStackStyles = {
  * @remarks May be overridden by {@link AccordionProps.contentStyles}.
  */
 const accordionContentStyles: IStackStyles = {
-    root: {
-        padding: 10,
-    },
+	root: {
+		padding: 10,
+	},
 };
 
 /**
  * {@link Accordion} input props.
  */
 export type AccordionProps = React.PropsWithChildren<{
-    /**
-     * Element to display as the accordion header.
-     *
-     * @remarks Will always be displayed, even when collapsed.
-     */
-    header: React.ReactElement;
+	/**
+	 * Element to display as the accordion header.
+	 *
+	 * @remarks Will always be displayed, even when collapsed.
+	 */
+	header: React.ReactElement;
 
-    /**
-     * Whether or not the accordion should start in the collapsed state.
-     *
-     * @defaultValue `true`
-     */
-    initiallyCollapsed?: boolean;
+	/**
+	 * Whether or not the accordion should start in the collapsed state.
+	 *
+	 * @defaultValue `true`
+	 */
+	initiallyCollapsed?: boolean;
 
-    /**
-     * Optional styling for the Accordion's header component.
-     */
-    headerStyles?: IStackStyles;
+	/**
+	 * Optional styling for the Accordion's header component.
+	 */
+	headerStyles?: IStackStyles;
 
-    /**
-     * Optional styling for each of the Accordion's child items.
-     */
-    contentStyles?: IStackStyles;
+	/**
+	 * Optional styling for each of the Accordion's child items.
+	 */
+	contentStyles?: IStackStyles;
 }>;
 
 /**
@@ -86,32 +86,32 @@ export type AccordionProps = React.PropsWithChildren<{
  * Displays a header, and a series of child items. May be collapsed or expanded via UI button.
  */
 export function Accordion(props: AccordionProps): React.ReactElement {
-    const { header, children, initiallyCollapsed, headerStyles, contentStyles } = props;
+	const { header, children, initiallyCollapsed, headerStyles, contentStyles } = props;
 
-    const [collapsed, setCollapsed] = React.useState<boolean>(initiallyCollapsed ?? true);
+	const [collapsed, setCollapsed] = React.useState<boolean>(initiallyCollapsed ?? true);
 
-    return (
-        <Stack horizontal={false} styles={accordionStyles}>
-            <StackItem styles={mergeStyleSets(accordionHeaderStyles, headerStyles)}>
-                <Stack horizontal={true} onClick={(): void => setCollapsed(!collapsed)}>
-                    <StackItem>
-                        <IconButton
-                            iconProps={{
-                                iconName: collapsed ? "ChevronRight" : "ChevronDown",
-                            }}
-                        />
-                    </StackItem>
-                    <StackItem align="center">{header}</StackItem>
-                </Stack>
-            </StackItem>
-            {!collapsed && (
-                <StackItem
-                    className={AnimationClassNames.slideDownIn20}
-                    styles={mergeStyleSets(contentStyles, accordionContentStyles)}
-                >
-                    {children}
-                </StackItem>
-            )}
-        </Stack>
-    );
+	return (
+		<Stack horizontal={false} styles={accordionStyles}>
+			<StackItem styles={mergeStyleSets(accordionHeaderStyles, headerStyles)}>
+				<Stack horizontal={true} onClick={(): void => setCollapsed(!collapsed)}>
+					<StackItem>
+						<IconButton
+							iconProps={{
+								iconName: collapsed ? "ChevronRight" : "ChevronDown",
+							}}
+						/>
+					</StackItem>
+					<StackItem align="center">{header}</StackItem>
+				</Stack>
+			</StackItem>
+			{!collapsed && (
+				<StackItem
+					className={AnimationClassNames.slideDownIn20}
+					styles={mergeStyleSets(contentStyles, accordionContentStyles)}
+				>
+					{children}
+				</StackItem>
+			)}
+		</Stack>
+	);
 }

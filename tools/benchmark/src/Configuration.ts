@@ -23,47 +23,47 @@ import { assert } from "chai";
  * @public
  */
 export enum BenchmarkType {
-    /**
-     * Tests which exist to be compared to other tests to reason about cost/overhead of features.
-     */
-    Perspective,
+	/**
+	 * Tests which exist to be compared to other tests to reason about cost/overhead of features.
+	 */
+	Perspective,
 
-    /**
-     * Tests that measure the actual performance of features.
-     * These tests are the ones that should be optimized for to improve actual user experience, and thus
-     * should be used to compare across versions to look for regressions and improvements.
-     */
-    Measurement,
+	/**
+	 * Tests that measure the actual performance of features.
+	 * These tests are the ones that should be optimized for to improve actual user experience, and thus
+	 * should be used to compare across versions to look for regressions and improvements.
+	 */
+	Measurement,
 
-    /**
-     * Tests that provide extra details which typically aren't useful unless looking into some specific area.
-     *
-     * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are
-     * measuring what they claim accurately.
-     *
-     * Diagnostic tests can also be used when a particular feature/area has enough Measurement tests to detect changes,
-     * but some extra tests would be helpful for understanding the changes when they occur. Extra tests,
-     * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running
-     * generally, can be marked as Diagnostic to enable skipping them unless they are specifically needed.
-     */
-    Diagnostic,
+	/**
+	 * Tests that provide extra details which typically aren't useful unless looking into some specific area.
+	 *
+	 * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are
+	 * measuring what they claim accurately.
+	 *
+	 * Diagnostic tests can also be used when a particular feature/area has enough Measurement tests to detect changes,
+	 * but some extra tests would be helpful for understanding the changes when they occur. Extra tests,
+	 * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running
+	 * generally, can be marked as Diagnostic to enable skipping them unless they are specifically needed.
+	 */
+	Diagnostic,
 
-    /**
-     * Tests which verify correctness of the `benchmark` helper library. Generally not useful for any other scenario.
-     */
-    OwnCorrectness,
+	/**
+	 * Tests which verify correctness of the `benchmark` helper library. Generally not useful for any other scenario.
+	 */
+	OwnCorrectness,
 }
 
 export enum TestType {
-    /**
-     * Tests that measure execution time
-     */
-    ExecutionTime,
+	/**
+	 * Tests that measure execution time
+	 */
+	ExecutionTime,
 
-    /**
-     * Tests that measure memory usage
-     */
-    MemoryUsage,
+	/**
+	 * Tests that measure memory usage
+	 */
+	MemoryUsage,
 }
 
 /**
@@ -72,9 +72,9 @@ export enum TestType {
 export const benchmarkTypes: string[] = [];
 
 for (const type of Object.values(BenchmarkType)) {
-    if (typeof type === "string") {
-        benchmarkTypes.push(type);
-    }
+	if (typeof type === "string") {
+		benchmarkTypes.push(type);
+	}
 }
 
 /**
@@ -83,9 +83,9 @@ for (const type of Object.values(BenchmarkType)) {
 export const testTypes: string[] = [];
 
 for (const type of Object.values(TestType)) {
-    if (typeof type === "string") {
-        testTypes.push(type);
-    }
+	if (typeof type === "string") {
+		testTypes.push(type);
+	}
 }
 
 /**
@@ -99,15 +99,15 @@ export type BenchmarkArguments = BenchmarkSyncArguments | BenchmarkAsyncArgument
  * @public
  */
 export interface BenchmarkSyncArguments extends BenchmarkOptions {
-    /**
-     * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-     */
-    title: string;
+	/**
+	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+	 */
+	title: string;
 
-    /**
-     * The (synchronous) function to benchmark.
-     */
-    benchmarkFn: () => void;
+	/**
+	 * The (synchronous) function to benchmark.
+	 */
+	benchmarkFn: () => void;
 }
 
 /**
@@ -115,18 +115,18 @@ export interface BenchmarkSyncArguments extends BenchmarkOptions {
  * @public
  */
 export interface BenchmarkAsyncArguments extends BenchmarkOptions {
-    /**
-     * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-     */
-    title: string;
+	/**
+	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+	 */
+	title: string;
 
-    /**
-     * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
-     * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
-     * in the body will always take at least 4ms per operation due to timeout throttling:
-     * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
-     */
-    benchmarkFnAsync: () => Promise<unknown>;
+	/**
+	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
+	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
+	 * in the body will always take at least 4ms per operation due to timeout throttling:
+	 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
+	 */
+	benchmarkFnAsync: () => Promise<unknown>;
 }
 
 /**
@@ -135,33 +135,33 @@ export interface BenchmarkAsyncArguments extends BenchmarkOptions {
  * @public
  */
 export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
-    /**
-     * The max time in seconds to run the benchmark.
-     */
-    maxBenchmarkDurationSeconds?: number;
+	/**
+	 * The max time in seconds to run the benchmark.
+	 */
+	maxBenchmarkDurationSeconds?: number;
 
-    /**
-     * The min sample count to reach.
-     * @remarks This takes precedence over {@link BenchmarkOptions.maxBenchmarkDurationSeconds}.
-     */
-    minSampleCount?: number;
+	/**
+	 * The min sample count to reach.
+	 * @remarks This takes precedence over {@link BenchmarkOptions.maxBenchmarkDurationSeconds}.
+	 */
+	minSampleCount?: number;
 
-    /**
-     * The minimum time in seconds to run an individual sample.
-     */
-    minSampleDurationSeconds?: number;
+	/**
+	 * The minimum time in seconds to run an individual sample.
+	 */
+	minSampleDurationSeconds?: number;
 
-    /**
-     * The kind of benchmark.
-     */
-    type?: BenchmarkType;
+	/**
+	 * The kind of benchmark.
+	 */
+	type?: BenchmarkType;
 
-    /**
-     * A free-form field to add a category to the test. This gets added to an internal version of the test name
-     * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
-     * only execute specific tests.
-     */
-    category?: string;
+	/**
+	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
+	 * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
+	 * only execute specific tests.
+	 */
+	category?: string;
 }
 
 /**
@@ -170,10 +170,10 @@ export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
  * @public
  */
 export interface MochaExclusiveOptions {
-    /**
-     * When true, `mocha`-provided functions should use their `.only` counterparts (so as to aid individual test runs)
-     */
-    only?: boolean;
+	/**
+	 * When true, `mocha`-provided functions should use their `.only` counterparts (so as to aid individual test runs)
+	 */
+	only?: boolean;
 }
 
 /**
@@ -183,15 +183,123 @@ export interface MochaExclusiveOptions {
 export type HookFunction = () => void | Promise<unknown>;
 
 /**
- * Arguments that can be passed to `benchmark` for optional test setup/teardown. Hooks execute once per test body
- * (*not* on each cycle or sample). Hooks--along with the benchmarked function--are run without additional error
- * validation. This means any exception thrown from either a hook or the benchmarked function will cause test
- * failure, and subsequent operations won't be run.
+ * Arguments that can be passed to `benchmark` for optional test setup/teardown.
+ * Hooks--along with the benchmarked function--are run without additional error validation.
+ * This means any exception thrown from either a hook or the benchmarked function will cause test failure,
+ * and subsequent operations won't be run.
+ * @remarks
+ *
+ * Be careful when writing non-pure benchmark functions!
+ * Benchmark.js is written with the assumption that each cycle it runs is an independent sample.
+ * This can typically be achieved by using the `onCycle` hook to reset state, with some caveats.
+ * For more details, read below.
+ *
+ * Benchmark.js runs the benchmark function in two hierarchical groups: cycles and iterations.
+ * One iteration consists of a single execution of `benchmarkFn`.
+ * Since the time taken by a single iteration might be significantly smaller than the clock resolution, benchmark
+ * dynamically decides to run a number of iterations per cycle.
+ * After a warmup period, this number is fixed across cycles (i.e. if Benchmark.js decides to run 10,000 iterations
+ * per cycle, all statistical analysis will be performed on cycles which consist of 10,000 iterations)
+ * This strategy also helps minimize noise from JITting code.
+ *
+ * Statistical analysis is performed at the cycle level: Benchmark.js treats each cycle's timing information as a data
+ * point taken from a normal distribution, and runs cycles until the root-mean error is below a threshhold or its max
+ * time has been reached.
+ * The statistical analysis it uses is invalid if cycles aren't independent trials: consider the test
+ * ```typescript
+ * const myList = [];
+ * benchmark({
+ *     title: "insert at start of a list",
+ *     benchmarkFn: () => {
+ *         myList.unshift(0);
+ *     }
+ * });
+ * ```
+ *
+ * If each cycle has 10k iterations, the first cycle will time how long it takes to repeatedly insert elements 0 through 10k
+ * into the start `myList`.
+ * The second cycle will time how long it takes to repeatedly insert elements 10k through 20k at the start, and so on.
+ * As inserting an element at the start of the list is O(list size), it's clear that cycles will take longer and longer.
+ * We can use the `onCycle` hook to alleviate this problem:
+ * ```typescript
+ * let myList = [];
+ * benchmark({
+ *     title: "insert at start of a list",
+ *     onCycle: () => {
+ *         myList = [];
+ *     }
+ *     benchmarkFn: () => {
+ *         myList.unshift(0);
+ *     }
+ * });
+ * ```
+ *
+ * With this change, it's more reasonable to model each cycle as an independent event.
+ *
+ * Note that this approach is slightly misleading in the data it measures: if Benchmark.js chooses a cycle size of 10k,
+ * the time reported per iteration is really an average of the time taken to insert 10k elements at the start, and not
+ * the average time to insert an element to the start of the empty list as the test body might suggest at a glance.
+ * @example
+ *
+ * ```typescript
+ * let iterations = 0;
+ * let cycles = 0;
+ * benchmark({
+ *     title: "my sample performance test"
+ *     before: () => {
+ *         console.log("setup goes here")
+ *     },
+ *     onCycle: () => {
+ *         cycles++;
+ *     },
+ *     after: () => {
+ *         console.log("iterations", iterations);
+ *         console.log("cycles", cycles);
+ *         console.log("teardown goes here")
+ *     }
+ *     benchmarkFn: () => {
+ *         iterations++;
+ *     }
+ * });
+ *
+ * // Sample console output in correctness mode:
+ * //
+ * // setup goes here
+ * // iterations 1
+ * // cycles 1
+ * // teardown goes here
+ * //
+ * // Sample console output in perf mode, if benchmark dynamically chose to run 40 cycles of 14k iterations each:
+ * //
+ * // setup goes here
+ * // iterations 560,000
+ * // cycles 40
+ * // teardown goes here
+ * ```
  * @public
  */
 export interface HookArguments {
-    before?: HookFunction;
-    after?: HookFunction;
+	/**
+	 * Executes once, before the test body it's declared for.
+	 *
+	 * @remarks This does *not* execute on each iteration or cycle.
+	 */
+	before?: HookFunction;
+	/**
+	 * Executes once, after the test body it's declared for.
+	 *
+	 * @remarks This does *not* execute on each iteration or cycle.
+	 */
+	after?: HookFunction;
+	/**
+	 * Executes before the start of each cycle. This has the same semantics as benchmarkjs's `onCycle`:
+	 * https://benchmarkjs.com/docs/#options_onCycle
+	 *
+	 * @remarks
+	 * Beware that cycles run `benchmarkFn` more than once: a typical microbenchmark might involve 10k
+	 * iterations per cycle.
+	 */
+	onCycle?: HookFunction;
 }
 
 /**
@@ -199,22 +307,22 @@ export interface HookArguments {
  * @public
  */
 export function validateBenchmarkArguments(
-    args: BenchmarkArguments,
+	args: BenchmarkArguments,
 ):
-    | { isAsync: true; benchmarkFn: () => Promise<unknown> }
-    | { isAsync: false; benchmarkFn: () => void } {
-    const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
-    const isSync = intersection.benchmarkFn !== undefined;
-    const isAsync = intersection.benchmarkFnAsync !== undefined;
-    assert(
-        isSync !== isAsync,
-        "Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.",
-    );
-    if (isSync) {
-        return { isAsync: false, benchmarkFn: intersection.benchmarkFn };
-    }
+	| { isAsync: true; benchmarkFn: () => Promise<unknown> }
+	| { isAsync: false; benchmarkFn: () => void } {
+	const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
+	const isSync = intersection.benchmarkFn !== undefined;
+	const isAsync = intersection.benchmarkFnAsync !== undefined;
+	assert(
+		isSync !== isAsync,
+		"Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.",
+	);
+	if (isSync) {
+		return { isAsync: false, benchmarkFn: intersection.benchmarkFn };
+	}
 
-    return { isAsync: true, benchmarkFn: intersection.benchmarkFnAsync };
+	return { isAsync: true, benchmarkFn: intersection.benchmarkFnAsync };
 }
 
 /**
@@ -260,5 +368,5 @@ export const userCategoriesSplitter = ":ff-cat:";
  * Reporter output location
  */
 export interface ReporterOptions {
-    reportDir?: string;
+	reportDir?: string;
 }

@@ -16,14 +16,14 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
  * @internal
  */
 export function resolvedUrlToString(resolvedUrl: IResolvedUrl): string {
-    switch (resolvedUrl.type) {
-        case "fluid":
-            return resolvedUrl.url;
-        case "web":
-            return resolvedUrl.data;
-        default:
-            throw new Error("Unrecognized IResolvedUrl type.");
-    }
+	switch (resolvedUrl.type) {
+		case "fluid":
+			return resolvedUrl.url;
+		case "web":
+			return resolvedUrl.data;
+		default:
+			throw new Error("Unrecognized IResolvedUrl type.");
+	}
 }
 
 /**
@@ -32,16 +32,16 @@ export function resolvedUrlToString(resolvedUrl: IResolvedUrl): string {
  * @internal
  */
 export function connectionStateToString(connectionState: ConnectionState): string {
-    switch (connectionState) {
-        case ConnectionState.CatchingUp:
-            return "Catching up";
-        case ConnectionState.Connected:
-            return "Connected";
-        case ConnectionState.Disconnected:
-            return "Disconnected";
-        case ConnectionState.EstablishingConnection:
-            return "Establishing connection";
-        default:
-            throw new TypeError(`Unrecognized ConnectionState value: "${connectionState}".`);
-    }
+	switch (connectionState) {
+		case ConnectionState.CatchingUp:
+			return "Catching up";
+		case ConnectionState.Connected:
+			return "Connected";
+		case ConnectionState.Disconnected:
+			return "Disconnected";
+		case ConnectionState.EstablishingConnection:
+			return "Establishing connection";
+		default:
+			throw new TypeError(`Unrecognized ConnectionState value: "${connectionState}".`);
+	}
 }

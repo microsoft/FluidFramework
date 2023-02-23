@@ -1,654 +1,654 @@
 [
-    {
-        "type": "addText",
-        "index": 0,
-        "content": "WWvBBmJ",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 0,
-        "content": "XKvr",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 6,
-        "content": "MVNhrzSj",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 4,
-        "content": "gw5jhJj",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 2,
-        "content": "",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 0,
-        "content": "Q4jtPB8NC6",
-        "stringId": "C"
-    },
-    {
-        "type": "annotateRange",
-        "start": 1,
-        "end": 3,
-        "properties": {
-            "prop3": "2jBYx"
-        },
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 1,
-        "content": "ZjVRc7VqHo",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 5,
-        "content": "X6",
-        "stringId": "A"
-    },
-    {
-        "type": "removeRange",
-        "start": 7,
-        "end": 8,
-        "stringId": "C"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "addText",
-        "index": 19,
-        "content": "nK",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 37,
-        "content": "7DiE",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 40,
-        "content": "WDwVHNHSm",
-        "stringId": "C"
-    },
-    {
-        "type": "removeRange",
-        "start": 46,
-        "end": 47,
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 1,
-        "content": "cW",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 10,
-        "content": "TTtJzwfa",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 21,
-        "content": "PZt1zDY",
-        "stringId": "C"
-    },
-    {
-        "type": "annotateRange",
-        "start": 45,
-        "end": 46,
-        "properties": {
-            "prop3": "jG7kN",
-            "prop2": "cwKiT"
-        },
-        "stringId": "B"
-    },
-    {
-        "type": "removeRange",
-        "start": 56,
-        "end": 71,
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 38,
-        "content": "AkspUPJ",
-        "stringId": "C"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "annotateRange",
-        "start": 50,
-        "end": 55,
-        "properties": {
-            "prop2": "kEg5q"
-        },
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 26,
-        "content": "pFvi54r",
-        "stringId": "B"
-    },
-    {
-        "type": "annotateRange",
-        "start": 36,
-        "end": 45,
-        "properties": {
-            "prop1": "UYgwc"
-        },
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 65,
-        "content": "VitnqLL",
-        "stringId": "C"
-    },
-    {
-        "type": "annotateRange",
-        "start": 0,
-        "end": 10,
-        "properties": {
-            "prop3": "ZCYqA",
-            "prop1": "8Ykh5",
-            "prop2": "W44Ny"
-        },
-        "stringId": "C"
-    },
-    {
-        "type": "annotateRange",
-        "start": 34,
-        "end": 61,
-        "properties": {
-            "prop3": "sYeko",
-            "prop1": "KSkup"
-        },
-        "stringId": "B"
-    },
-    {
-        "type": "annotateRange",
-        "start": 51,
-        "end": 64,
-        "properties": {
-            "prop1": "kVJXY",
-            "prop3": "LeHjZ"
-        },
-        "stringId": "B"
-    },
-    {
-        "type": "annotateRange",
-        "start": 2,
-        "end": 39,
-        "properties": {
-            "prop1": "K6gw5",
-            "prop3": "NmWbm"
-        },
-        "stringId": "A"
-    },
-    {
-        "type": "removeRange",
-        "start": 26,
-        "end": 33,
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 42,
-        "content": "XJM2",
-        "stringId": "A"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "removeRange",
-        "start": 13,
-        "end": 75,
-        "stringId": "C"
-    },
-    {
-        "type": "removeRange",
-        "start": 74,
-        "end": 75,
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 57,
-        "content": "",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 33,
-        "content": "DDsd",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 8,
-        "content": "FzMj6",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 7,
-        "content": "",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 19,
-        "content": "5PWgrnX3",
-        "stringId": "C"
-    },
-    {
-        "type": "removeRange",
-        "start": 4,
-        "end": 12,
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 36,
-        "content": "UVLNcujjoT",
-        "stringId": "A",
-        "props": {
-            "prop1": "4QKwr",
-            "prop3": "wrDoT",
-            "prop2": "NhFnu"
-        }
-    },
-    {
-        "type": "removeRange",
-        "start": 24,
-        "end": 36,
-        "stringId": "A"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "addText",
-        "index": 15,
-        "content": "JpD",
-        "stringId": "A"
-    },
-    {
-        "type": "annotateRange",
-        "start": 1,
-        "end": 14,
-        "properties": {
-            "prop1": "T17Ub",
-            "prop3": "CErX3"
-        },
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 24,
-        "content": "u21A8SreGk",
-        "stringId": "B"
-    },
-    {
-        "type": "annotateRange",
-        "start": 24,
-        "end": 32,
-        "properties": {
-            "prop3": "4ZtTj",
-            "prop1": "GecrM"
-        },
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 14,
-        "content": "j",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 4,
-        "content": "FoCHRrMN",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 34,
-        "content": "HeT",
-        "stringId": "C"
-    },
-    {
-        "type": "removeRange",
-        "start": 31,
-        "end": 32,
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 16,
-        "content": "hzdpxu",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 9,
-        "content": "FwbBxy3xu",
-        "stringId": "A"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "addText",
-        "index": 48,
-        "content": "Wf3Dc7",
-        "stringId": "C"
-    },
-    {
-        "type": "annotateRange",
-        "start": 25,
-        "end": 40,
-        "properties": {
-            "prop3": "cH58M",
-            "prop1": "Hwwvq",
-            "prop2": "HTC7C"
-        },
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 5,
-        "content": "PJKWq5P",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 14,
-        "content": "duk",
-        "stringId": "B",
-        "props": {
-            "prop1": "7LqTM",
-            "prop2": "5TjZr"
-        }
-    },
-    {
-        "type": "addText",
-        "index": 15,
-        "content": "D5qT9t",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 11,
-        "content": "p",
-        "stringId": "B"
-    },
-    {
-        "type": "annotateRange",
-        "start": 53,
-        "end": 78,
-        "properties": {
-            "prop2": "whoZs"
-        },
-        "stringId": "C"
-    },
-    {
-        "type": "removeRange",
-        "start": 21,
-        "end": 42,
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 47,
-        "content": "Zcu",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 18,
-        "content": "",
-        "stringId": "A"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "addText",
-        "index": 73,
-        "content": "Hsyau9",
-        "stringId": "A"
-    },
-    {
-        "type": "removeRange",
-        "start": 13,
-        "end": 21,
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 3,
-        "content": "r",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 39,
-        "content": "7dFx",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 15,
-        "content": "52ikq",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 37,
-        "content": "Nqwgn",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 63,
-        "content": "4CaSSnD",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 41,
-        "content": "zG",
-        "stringId": "B"
-    },
-    {
-        "type": "removeRange",
-        "start": 66,
-        "end": 74,
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 38,
-        "content": "GFP1",
-        "stringId": "B"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "annotateRange",
-        "start": 59,
-        "end": 66,
-        "properties": {
-            "prop1": "28bxC"
-        },
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 8,
-        "content": "4BEj",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 63,
-        "content": "uQ",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 39,
-        "content": "u2weMKNqi",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 27,
-        "content": "sQdsKCFyt",
-        "stringId": "A"
-    },
-    {
-        "type": "addText",
-        "index": 97,
-        "content": "32uGpREx",
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 8,
-        "content": "J7ao",
-        "stringId": "A",
-        "props": {
-            "prop1": "SS7fD",
-            "prop3": "JTwq4",
-            "prop2": "nM1AA"
-        }
-    },
-    {
-        "type": "removeRange",
-        "start": 79,
-        "end": 98,
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 76,
-        "content": "7",
-        "stringId": "B"
-    },
-    {
-        "type": "annotateRange",
-        "start": 81,
-        "end": 84,
-        "properties": {
-            "prop2": "LWMP2",
-            "prop1": "y2em6"
-        },
-        "stringId": "A"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "removeRange",
-        "start": 80,
-        "end": 102,
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 52,
-        "content": "BPBs",
-        "stringId": "B"
-    },
-    {
-        "type": "removeRange",
-        "start": 40,
-        "end": 94,
-        "stringId": "B"
-    },
-    {
-        "type": "annotateRange",
-        "start": 21,
-        "end": 48,
-        "properties": {
-            "prop2": "v1BgG",
-            "prop1": "m4xRB",
-            "prop3": "8e12Q"
-        },
-        "stringId": "B"
-    },
-    {
-        "type": "removeRange",
-        "start": 44,
-        "end": 57,
-        "stringId": "B"
-    },
-    {
-        "type": "addText",
-        "index": 22,
-        "content": "",
-        "stringId": "B"
-    },
-    {
-        "type": "annotateRange",
-        "start": 30,
-        "end": 74,
-        "properties": {
-            "prop2": "dHWn1",
-            "prop3": "5KoWp"
-        },
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 84,
-        "content": "yc5Bz",
-        "stringId": "C"
-    },
-    {
-        "type": "addText",
-        "index": 90,
-        "content": "mQny",
-        "stringId": "C"
-    },
-    {
-        "type": "removeRange",
-        "start": 31,
-        "end": 58,
-        "stringId": "A"
-    },
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "addText",
-        "index": 4,
-        "content": "x2NAdmR",
-        "stringId": "B"
-    },
-    {
-        "type": "synchronize"
-    }
+	{
+		"type": "addText",
+		"index": 0,
+		"content": "WWvBBmJ",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 0,
+		"content": "XKvr",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 6,
+		"content": "MVNhrzSj",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 4,
+		"content": "gw5jhJj",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 2,
+		"content": "",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 0,
+		"content": "Q4jtPB8NC6",
+		"stringId": "C"
+	},
+	{
+		"type": "annotateRange",
+		"start": 1,
+		"end": 3,
+		"properties": {
+			"prop3": "2jBYx"
+		},
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 1,
+		"content": "ZjVRc7VqHo",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 5,
+		"content": "X6",
+		"stringId": "A"
+	},
+	{
+		"type": "removeRange",
+		"start": 7,
+		"end": 8,
+		"stringId": "C"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "addText",
+		"index": 19,
+		"content": "nK",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 37,
+		"content": "7DiE",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 40,
+		"content": "WDwVHNHSm",
+		"stringId": "C"
+	},
+	{
+		"type": "removeRange",
+		"start": 46,
+		"end": 47,
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 1,
+		"content": "cW",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 10,
+		"content": "TTtJzwfa",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 21,
+		"content": "PZt1zDY",
+		"stringId": "C"
+	},
+	{
+		"type": "annotateRange",
+		"start": 45,
+		"end": 46,
+		"properties": {
+			"prop3": "jG7kN",
+			"prop2": "cwKiT"
+		},
+		"stringId": "B"
+	},
+	{
+		"type": "removeRange",
+		"start": 56,
+		"end": 71,
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 38,
+		"content": "AkspUPJ",
+		"stringId": "C"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "annotateRange",
+		"start": 50,
+		"end": 55,
+		"properties": {
+			"prop2": "kEg5q"
+		},
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 26,
+		"content": "pFvi54r",
+		"stringId": "B"
+	},
+	{
+		"type": "annotateRange",
+		"start": 36,
+		"end": 45,
+		"properties": {
+			"prop1": "UYgwc"
+		},
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 65,
+		"content": "VitnqLL",
+		"stringId": "C"
+	},
+	{
+		"type": "annotateRange",
+		"start": 0,
+		"end": 10,
+		"properties": {
+			"prop3": "ZCYqA",
+			"prop1": "8Ykh5",
+			"prop2": "W44Ny"
+		},
+		"stringId": "C"
+	},
+	{
+		"type": "annotateRange",
+		"start": 34,
+		"end": 61,
+		"properties": {
+			"prop3": "sYeko",
+			"prop1": "KSkup"
+		},
+		"stringId": "B"
+	},
+	{
+		"type": "annotateRange",
+		"start": 51,
+		"end": 64,
+		"properties": {
+			"prop1": "kVJXY",
+			"prop3": "LeHjZ"
+		},
+		"stringId": "B"
+	},
+	{
+		"type": "annotateRange",
+		"start": 2,
+		"end": 39,
+		"properties": {
+			"prop1": "K6gw5",
+			"prop3": "NmWbm"
+		},
+		"stringId": "A"
+	},
+	{
+		"type": "removeRange",
+		"start": 26,
+		"end": 33,
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 42,
+		"content": "XJM2",
+		"stringId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "removeRange",
+		"start": 13,
+		"end": 75,
+		"stringId": "C"
+	},
+	{
+		"type": "removeRange",
+		"start": 74,
+		"end": 75,
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 57,
+		"content": "",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 33,
+		"content": "DDsd",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 8,
+		"content": "FzMj6",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 7,
+		"content": "",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 19,
+		"content": "5PWgrnX3",
+		"stringId": "C"
+	},
+	{
+		"type": "removeRange",
+		"start": 4,
+		"end": 12,
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 36,
+		"content": "UVLNcujjoT",
+		"stringId": "A",
+		"props": {
+			"prop1": "4QKwr",
+			"prop3": "wrDoT",
+			"prop2": "NhFnu"
+		}
+	},
+	{
+		"type": "removeRange",
+		"start": 24,
+		"end": 36,
+		"stringId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "addText",
+		"index": 15,
+		"content": "JpD",
+		"stringId": "A"
+	},
+	{
+		"type": "annotateRange",
+		"start": 1,
+		"end": 14,
+		"properties": {
+			"prop1": "T17Ub",
+			"prop3": "CErX3"
+		},
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 24,
+		"content": "u21A8SreGk",
+		"stringId": "B"
+	},
+	{
+		"type": "annotateRange",
+		"start": 24,
+		"end": 32,
+		"properties": {
+			"prop3": "4ZtTj",
+			"prop1": "GecrM"
+		},
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 14,
+		"content": "j",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 4,
+		"content": "FoCHRrMN",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 34,
+		"content": "HeT",
+		"stringId": "C"
+	},
+	{
+		"type": "removeRange",
+		"start": 31,
+		"end": 32,
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 16,
+		"content": "hzdpxu",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 9,
+		"content": "FwbBxy3xu",
+		"stringId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "addText",
+		"index": 48,
+		"content": "Wf3Dc7",
+		"stringId": "C"
+	},
+	{
+		"type": "annotateRange",
+		"start": 25,
+		"end": 40,
+		"properties": {
+			"prop3": "cH58M",
+			"prop1": "Hwwvq",
+			"prop2": "HTC7C"
+		},
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 5,
+		"content": "PJKWq5P",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 14,
+		"content": "duk",
+		"stringId": "B",
+		"props": {
+			"prop1": "7LqTM",
+			"prop2": "5TjZr"
+		}
+	},
+	{
+		"type": "addText",
+		"index": 15,
+		"content": "D5qT9t",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 11,
+		"content": "p",
+		"stringId": "B"
+	},
+	{
+		"type": "annotateRange",
+		"start": 53,
+		"end": 78,
+		"properties": {
+			"prop2": "whoZs"
+		},
+		"stringId": "C"
+	},
+	{
+		"type": "removeRange",
+		"start": 21,
+		"end": 42,
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 47,
+		"content": "Zcu",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 18,
+		"content": "",
+		"stringId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "addText",
+		"index": 73,
+		"content": "Hsyau9",
+		"stringId": "A"
+	},
+	{
+		"type": "removeRange",
+		"start": 13,
+		"end": 21,
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 3,
+		"content": "r",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 39,
+		"content": "7dFx",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 15,
+		"content": "52ikq",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 37,
+		"content": "Nqwgn",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 63,
+		"content": "4CaSSnD",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 41,
+		"content": "zG",
+		"stringId": "B"
+	},
+	{
+		"type": "removeRange",
+		"start": 66,
+		"end": 74,
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 38,
+		"content": "GFP1",
+		"stringId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "annotateRange",
+		"start": 59,
+		"end": 66,
+		"properties": {
+			"prop1": "28bxC"
+		},
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 8,
+		"content": "4BEj",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 63,
+		"content": "uQ",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 39,
+		"content": "u2weMKNqi",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 27,
+		"content": "sQdsKCFyt",
+		"stringId": "A"
+	},
+	{
+		"type": "addText",
+		"index": 97,
+		"content": "32uGpREx",
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 8,
+		"content": "J7ao",
+		"stringId": "A",
+		"props": {
+			"prop1": "SS7fD",
+			"prop3": "JTwq4",
+			"prop2": "nM1AA"
+		}
+	},
+	{
+		"type": "removeRange",
+		"start": 79,
+		"end": 98,
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 76,
+		"content": "7",
+		"stringId": "B"
+	},
+	{
+		"type": "annotateRange",
+		"start": 81,
+		"end": 84,
+		"properties": {
+			"prop2": "LWMP2",
+			"prop1": "y2em6"
+		},
+		"stringId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "removeRange",
+		"start": 80,
+		"end": 102,
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 52,
+		"content": "BPBs",
+		"stringId": "B"
+	},
+	{
+		"type": "removeRange",
+		"start": 40,
+		"end": 94,
+		"stringId": "B"
+	},
+	{
+		"type": "annotateRange",
+		"start": 21,
+		"end": 48,
+		"properties": {
+			"prop2": "v1BgG",
+			"prop1": "m4xRB",
+			"prop3": "8e12Q"
+		},
+		"stringId": "B"
+	},
+	{
+		"type": "removeRange",
+		"start": 44,
+		"end": 57,
+		"stringId": "B"
+	},
+	{
+		"type": "addText",
+		"index": 22,
+		"content": "",
+		"stringId": "B"
+	},
+	{
+		"type": "annotateRange",
+		"start": 30,
+		"end": 74,
+		"properties": {
+			"prop2": "dHWn1",
+			"prop3": "5KoWp"
+		},
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 84,
+		"content": "yc5Bz",
+		"stringId": "C"
+	},
+	{
+		"type": "addText",
+		"index": 90,
+		"content": "mQny",
+		"stringId": "C"
+	},
+	{
+		"type": "removeRange",
+		"start": 31,
+		"end": 58,
+		"stringId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "addText",
+		"index": 4,
+		"content": "x2NAdmR",
+		"stringId": "B"
+	},
+	{
+		"type": "synchronize"
+	}
 ]

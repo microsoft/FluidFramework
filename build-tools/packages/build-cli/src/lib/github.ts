@@ -30,11 +30,11 @@ const TITLE = "Automate: Main Next Integrate";
  * @returns Returns true if pull request exists
  */
 export async function pullRequestExists(token: string, log: CommandLogger): Promise<boolean> {
-    log.verbose("Checking if pull request exists----------------");
-    const octokit = new Octokit({ auth: token });
-    const response = await octokit.request(PULL_REQUEST_EXISTS, { owner: OWNER, repo: REPO_NAME });
+	log.verbose("Checking if pull request exists----------------");
+	const octokit = new Octokit({ auth: token });
+	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner: OWNER, repo: REPO_NAME });
 
-    return response.data.some((d) => d.title === TITLE);
+	return response.data.some((d) => d.title === TITLE);
 }
 
 /**
@@ -43,19 +43,19 @@ export async function pullRequestExists(token: string, log: CommandLogger): Prom
  * @param commit_sha - Commit id for which we need pull request information
  */
 export async function pullRequestInfo(
-    token: string,
-    commit_sha: string,
-    log: CommandLogger,
+	token: string,
+	commit_sha: string,
+	log: CommandLogger,
 ): Promise<any> {
-    const octokit = new Octokit({ auth: token });
-    const prInfo = await octokit.request(PULL_REQUEST_INFO, {
-        owner: OWNER,
-        repo: REPO_NAME,
-        commit_sha,
-    });
+	const octokit = new Octokit({ auth: token });
+	const prInfo = await octokit.request(PULL_REQUEST_INFO, {
+		owner: OWNER,
+		repo: REPO_NAME,
+		commit_sha,
+	});
 
-    log.verbose(`Get pull request info for ${commit_sha}: ${prInfo}`);
-    return prInfo;
+	log.verbose(`Get pull request info for ${commit_sha}: ${prInfo}`);
+	return prInfo;
 }
 
 /**
@@ -64,16 +64,16 @@ export async function pullRequestInfo(
  * @returns Lists the user who have push access to this branch
  */
 export async function getUserAccess(token: string, log: CommandLogger): Promise<any> {
-    const octokit = new Octokit({ auth: token });
+	const octokit = new Octokit({ auth: token });
 
-    const user = await octokit.request(GET_USER, {
-        owner: OWNER,
-        repo: REPO_NAME,
-        branch: "main",
-    });
+	const user = await octokit.request(GET_USER, {
+		owner: OWNER,
+		repo: REPO_NAME,
+		branch: "main",
+	});
 
-    log.verbose(`Get list of users with push access ${user}`);
-    return user;
+	log.verbose(`Get list of users with push access ${user}`);
+	return user;
 }
 
 /**
@@ -85,47 +85,47 @@ export async function getUserAccess(token: string, log: CommandLogger): Promise<
  * @returns Pull request number
  */
 export async function createPullRequest(
-    token: string,
-    source: string,
-    target: string,
-    assignee: string,
-    log: CommandLogger,
+	token: string,
+	source: string,
+	target: string,
+	assignee: string,
+	log: CommandLogger,
 ): Promise<any> {
-    log.verbose(`Creating a pull request---------------`);
-    const octokit = new Octokit({ auth: token });
-    const author = assignee === undefined || assignee === "" ? "sonalivdeshpande" : assignee;
-    const newPr = await octokit.request(PULL_REQUEST, {
-        owner: OWNER,
-        repo: REPO_NAME,
-        title: TITLE,
-        body: DESCRIPTION,
-        head: source,
-        base: target,
-    });
+	log.verbose(`Creating a pull request---------------`);
+	const octokit = new Octokit({ auth: token });
+	const author = assignee === undefined || assignee === "" ? "sonalivdeshpande" : assignee;
+	const newPr = await octokit.request(PULL_REQUEST, {
+		owner: OWNER,
+		repo: REPO_NAME,
+		title: TITLE,
+		body: DESCRIPTION,
+		head: source,
+		base: target,
+	});
 
-    log.verbose(`Assigning ${author} to pull request ${newPr.data.number}`);
-    await octokit.request(ASSIGNEE, {
-        owner: OWNER,
-        repo: REPO_NAME,
-        issue_number: newPr.data.number,
-        assignees: [author],
-    });
+	log.verbose(`Assigning ${author} to pull request ${newPr.data.number}`);
+	await octokit.request(ASSIGNEE, {
+		owner: OWNER,
+		repo: REPO_NAME,
+		issue_number: newPr.data.number,
+		assignees: [author],
+	});
 
-    log.verbose(`Adding reviewer to pull request ${newPr.data.number}`);
-    await octokit.request(REVIEWER, {
-        owner: OWNER,
-        repo: REPO_NAME,
-        pull_number: newPr.data.number,
-        reviewer: [],
-    });
+	log.verbose(`Adding reviewer to pull request ${newPr.data.number}`);
+	await octokit.request(REVIEWER, {
+		owner: OWNER,
+		repo: REPO_NAME,
+		pull_number: newPr.data.number,
+		reviewer: [],
+	});
 
-    log.verbose(`Adding label to pull request ${newPr.data.number}`);
-    await octokit.request(LABEL, {
-        owner: OWNER,
-        repo: REPO_NAME,
-        issue_number: newPr.data.number,
-        labels: ["main-next-integrate", "do-not-squash-merge"],
-    });
+	log.verbose(`Adding label to pull request ${newPr.data.number}`);
+	await octokit.request(LABEL, {
+		owner: OWNER,
+		repo: REPO_NAME,
+		issue_number: newPr.data.number,
+		labels: ["main-next-integrate", "do-not-squash-merge"],
+	});
 
-    return newPr.data.number;
+	return newPr.data.number;
 }

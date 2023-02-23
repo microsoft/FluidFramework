@@ -24,17 +24,17 @@ import { BreakingIncrement, log } from "./validatorUtils";
  * TODO: verify/fix this expectation
  */
 interface PackageGroup {
-    name: string;
-    directory: string;
-    ignoredDirs?: string[];
+	name: string;
+	directory: string;
+	ignoredDirs?: string[];
 }
 
 export interface IValidationOptions {
-    /**
-     * Only check the specified packages/groups rather than everything
-     * Correctness for transitive type breaks is not expected with this option
-     */
-    includeOnly?: Set<string>;
+	/**
+	 * Only check the specified packages/groups rather than everything
+	 * Correctness for transitive type breaks is not expected with this option
+	 */
+	includeOnly?: Set<string>;
 }
 
 /**
@@ -43,56 +43,56 @@ export interface IValidationOptions {
 export type RepoValidationResult = Map<string, { level: BreakingIncrement; group?: string }>;
 
 function buildPackageGroups(repoRoot: string): PackageGroup[] {
-    const manifest = getFluidBuildConfig(repoRoot);
-    const groups: PackageGroup[] = [];
-    const repoPackages = manifest.repoPackages ?? [];
-    const addGroup = (name: string, entry: IFluidRepoPackageEntry) => {
-        if (name === "client") {
-            // special case client for now because its values expect
-            // special handling in the old repo structure
-            groups.push({ name, directory: "packages/**" });
-        } else if (Array.isArray(entry)) {
-            // This can create multiple groups with the same name but these are
-            // tracked by name later and get combined
-            entry.map((subEntry) => addGroup(name, subEntry));
-        } else if (typeof entry === "string") {
-            groups.push({ name, directory: path.join(entry, "**") });
-        } else {
-            groups.push({
-                name,
-                // add "**" for glob matching since we match package paths to these dirs
-                // rather than traversing these dirs for packages
-                directory: path.join(entry.directory, "**"),
-                // ignoredDirs are relative to the directory
-                ignoredDirs: entry.ignoredDirs?.map((relDir) =>
-                    path.join(entry.directory, relDir, "**"),
-                ),
-            });
-        }
-    };
-    for (const name in repoPackages) {
-        addGroup(name, repoPackages[name]);
-    }
-    log(groups);
-    return groups;
+	const manifest = getFluidBuildConfig(repoRoot);
+	const groups: PackageGroup[] = [];
+	const repoPackages = manifest.repoPackages ?? [];
+	const addGroup = (name: string, entry: IFluidRepoPackageEntry) => {
+		if (name === "client") {
+			// special case client for now because its values expect
+			// special handling in the old repo structure
+			groups.push({ name, directory: "packages/**" });
+		} else if (Array.isArray(entry)) {
+			// This can create multiple groups with the same name but these are
+			// tracked by name later and get combined
+			entry.map((subEntry) => addGroup(name, subEntry));
+		} else if (typeof entry === "string") {
+			groups.push({ name, directory: path.join(entry, "**") });
+		} else {
+			groups.push({
+				name,
+				// add "**" for glob matching since we match package paths to these dirs
+				// rather than traversing these dirs for packages
+				directory: path.join(entry.directory, "**"),
+				// ignoredDirs are relative to the directory
+				ignoredDirs: entry.ignoredDirs?.map((relDir) =>
+					path.join(entry.directory, relDir, "**"),
+				),
+			});
+		}
+	};
+	for (const name in repoPackages) {
+		addGroup(name, repoPackages[name]);
+	}
+	log(groups);
+	return groups;
 }
 
 function groupForPackage(groups: PackageGroup[], pkgJsonPath: string): string | undefined {
-    for (const group of groups) {
-        group_block: {
-            // return the first group that matches any include glob and doesn't
-            // match any exclude glob
-            if (minimatch(pkgJsonPath, group.directory)) {
-                for (const exclude of group.ignoredDirs ?? []) {
-                    if (minimatch(pkgJsonPath, exclude)) {
-                        break group_block;
-                    }
-                }
-                return group.name;
-            }
-        }
-    }
-    return undefined;
+	for (const group of groups) {
+		group_block: {
+			// return the first group that matches any include glob and doesn't
+			// match any exclude glob
+			if (minimatch(pkgJsonPath, group.directory)) {
+				for (const exclude of group.ignoredDirs ?? []) {
+					if (minimatch(pkgJsonPath, exclude)) {
+						break group_block;
+					}
+				}
+				return group.name;
+			}
+		}
+	}
+	return undefined;
 }
 
 /**
@@ -105,104 +105,104 @@ function groupForPackage(groups: PackageGroup[], pkgJsonPath: string): string | 
  * @returns - the group name for the package
  */
 function setPackageGroupIncrement(
-    pkgDir: string,
-    pkgIncrement: BreakingIncrement,
-    groups: PackageGroup[] | undefined,
-    groupBreaks: Map<string, BreakingIncrement>,
+	pkgDir: string,
+	pkgIncrement: BreakingIncrement,
+	groups: PackageGroup[] | undefined,
+	groupBreaks: Map<string, BreakingIncrement>,
 ): string | undefined {
-    const pkgGroupName = groups ? groupForPackage(groups, pkgDir) : undefined;
-    if (pkgGroupName !== undefined) {
-        groupBreaks.set(
-            pkgGroupName,
-            pkgIncrement | (groupBreaks.get(pkgGroupName) ?? BreakingIncrement.none),
-        );
-    }
+	const pkgGroupName = groups ? groupForPackage(groups, pkgDir) : undefined;
+	if (pkgGroupName !== undefined) {
+		groupBreaks.set(
+			pkgGroupName,
+			pkgIncrement | (groupBreaks.get(pkgGroupName) ?? BreakingIncrement.none),
+		);
+	}
 
-    return pkgGroupName;
+	return pkgGroupName;
 }
 
 export async function validateRepo(options?: IValidationOptions): Promise<RepoValidationResult> {
-    // Get all the repo packages in topological order
-    const repoRoot = await getResolvedFluidRoot();
-    const repo = new FluidRepoBuild(repoRoot, false);
-    repo.setMatched({ all: true, match: [], dirs: [] } as any);
-    const buildGraph = repo.createBuildGraph({ symlink: true, fullSymlink: false }, ["build"]);
-    const packages = buildGraph.buildPackages;
+	// Get all the repo packages in topological order
+	const repoRoot = await getResolvedFluidRoot();
+	const repo = new FluidRepoBuild(repoRoot, false);
+	repo.setMatched({ all: true, match: [], dirs: [] } as any);
+	const buildGraph = repo.createBuildGraph({ symlink: true, fullSymlink: false }, ["build"]);
+	const packages = buildGraph.buildPackages;
 
-    const packageGroups = buildPackageGroups(repoRoot);
+	const packageGroups = buildPackageGroups(repoRoot);
 
-    const groupBreaks = new Map<string, BreakingIncrement>();
-    const allBrokenTypes: BrokenTypes = new Map();
-    const breakResult: RepoValidationResult = new Map();
+	const groupBreaks = new Map<string, BreakingIncrement>();
+	const allBrokenTypes: BrokenTypes = new Map();
+	const breakResult: RepoValidationResult = new Map();
 
-    // filter to only included packages if specified
-    if (options?.includeOnly !== undefined) {
-        packages.forEach((buildPkg, pkgName) => {
-            const pkgJsonPath = path.join(buildPkg.pkg.directory, "package.json");
-            const pkgJsonRelativePath = path.relative(repoRoot, pkgJsonPath);
-            const group = groupForPackage(packageGroups, pkgJsonRelativePath);
-            if (
-                !(
-                    options.includeOnly?.has(pkgName) ||
-                    (group !== undefined && options.includeOnly?.has(group))
-                )
-            ) {
-                packages.delete(pkgName);
-            }
-        });
-    }
+	// filter to only included packages if specified
+	if (options?.includeOnly !== undefined) {
+		packages.forEach((buildPkg, pkgName) => {
+			const pkgJsonPath = path.join(buildPkg.pkg.directory, "package.json");
+			const pkgJsonRelativePath = path.relative(repoRoot, pkgJsonPath);
+			const group = groupForPackage(packageGroups, pkgJsonRelativePath);
+			if (
+				!(
+					options.includeOnly?.has(pkgName) ||
+					(group !== undefined && options.includeOnly?.has(group))
+				)
+			) {
+				packages.delete(pkgName);
+			}
+		});
+	}
 
-    for (let i = 0; packages.size > 0; i++) {
-        packages.forEach(async (buildPkg, pkgName) => {
-            if (buildPkg.level === i) {
-                const packageData = await getPackageDetails(buildPkg.pkg.directory);
-                const pkgJsonPath = path.join(buildPkg.pkg.directory, "package.json");
-                const pkgJsonRelativePath = path.relative(repoRoot, pkgJsonPath);
-                if (packageData.oldVersions.length > 0) {
-                    log(`${pkgName}, ${buildPkg.level}`);
+	for (let i = 0; packages.size > 0; i++) {
+		packages.forEach(async (buildPkg, pkgName) => {
+			if (buildPkg.level === i) {
+				const packageData = await getPackageDetails(buildPkg.pkg.directory);
+				const pkgJsonPath = path.join(buildPkg.pkg.directory, "package.json");
+				const pkgJsonRelativePath = path.relative(repoRoot, pkgJsonPath);
+				if (packageData.oldVersions.length > 0) {
+					log(`${pkgName}, ${buildPkg.level}`);
 
-                    const { increment, brokenTypes } = await validatePackage(
-                        packageData,
-                        buildPkg.pkg.directory,
-                        allBrokenTypes,
-                    );
+					const { increment, brokenTypes } = await validatePackage(
+						packageData,
+						buildPkg.pkg.directory,
+						allBrokenTypes,
+					);
 
-                    brokenTypes.forEach((v, k) => allBrokenTypes.set(k, v));
+					brokenTypes.forEach((v, k) => allBrokenTypes.set(k, v));
 
-                    // Add to group breaks
-                    const groupName = setPackageGroupIncrement(
-                        pkgJsonRelativePath,
-                        increment,
-                        packageGroups,
-                        groupBreaks,
-                    );
+					// Add to group breaks
+					const groupName = setPackageGroupIncrement(
+						pkgJsonRelativePath,
+						increment,
+						packageGroups,
+						groupBreaks,
+					);
 
-                    if (breakResult.has(packageData.json.name)) {
-                        throw new Error("Encountered duplicated package name");
-                    }
+					if (breakResult.has(packageData.json.name)) {
+						throw new Error("Encountered duplicated package name");
+					}
 
-                    breakResult.set(packageData.json.name, { level: increment, group: groupName });
-                }
+					breakResult.set(packageData.json.name, { level: increment, group: groupName });
+				}
 
-                packages.delete(pkgName);
-            }
-        });
-    }
+				packages.delete(pkgName);
+			}
+		});
+	}
 
-    // Check for inherited group breaks
-    breakResult.forEach((value, key) => {
-        if (value.group !== undefined) {
-            const groupLevel = groupBreaks.get(value.group)!;
-            if (groupLevel > value.level) {
-                value.level = groupLevel;
-                log(`${key} inherited break from its group ${value.group}`);
-            }
-        }
-    });
+	// Check for inherited group breaks
+	breakResult.forEach((value, key) => {
+		if (value.group !== undefined) {
+			const groupLevel = groupBreaks.get(value.group)!;
+			if (groupLevel > value.level) {
+				value.level = groupLevel;
+				log(`${key} inherited break from its group ${value.group}`);
+			}
+		}
+	});
 
-    breakResult.forEach((value, key) => {
-        console.log(`${key}: ${value.level} ${value.group}`);
-    });
+	breakResult.forEach((value, key) => {
+		console.log(`${key}: ${value.level} ${value.group}`);
+	});
 
-    return breakResult;
+	return breakResult;
 }

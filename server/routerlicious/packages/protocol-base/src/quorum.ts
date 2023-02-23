@@ -5,9 +5,6 @@
 
 import { EventEmitter } from "events";
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
-
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
@@ -83,7 +80,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * @returns a snapshot of the clients in the quorum
      */
     public snapshot(): QuorumClientsSnapshot {
-        this.snapshotCache ??= cloneDeep(Array.from(this.members));
+        this.snapshotCache ??= Array.from(this.members);
 
         return this.snapshotCache;
     }
@@ -178,7 +175,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
 
     /**
      * Snapshots the current state of the QuorumProposals
-     * @returns deep cloned arrays of proposals and values
+     * @returns arrays of proposals and values
      */
     public snapshot(): QuorumProposalsSnapshot {
         this.proposalsSnapshotCache ??= Array.from(this.proposals).map(
@@ -188,7 +185,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
                 [], // rejections, which has been removed
             ],
         );
-        this.valuesSnapshotCache ??= cloneDeep(Array.from(this.values));
+        this.valuesSnapshotCache ??= Array.from(this.values);
 
         return {
             proposals: this.proposalsSnapshotCache,
@@ -215,8 +212,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
      * @deprecated Removed in recent protocol-definitions.  Use get() instead.
      */
     public getApprovalData(key: string): ICommittedProposal | undefined {
-        const proposal = this.values.get(key);
-        return proposal ? cloneDeep(proposal) : undefined;
+        return this.values.get(key);
     }
 
     /**

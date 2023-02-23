@@ -13,14 +13,14 @@ import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
 import { CheckPolicy } from "../commands/check/policy";
 import {
-    generateBumpDepsBranchName,
-    generateBumpDepsCommitMessage,
-    generateBumpVersionBranchName,
-    generateBumpVersionCommitMessage,
-    generateReleaseBranchName,
-    getPreReleaseDependencies,
-    getReleaseSourceForReleaseGroup,
-    isReleased,
+	generateBumpDepsBranchName,
+	generateBumpDepsCommitMessage,
+	generateBumpVersionBranchName,
+	generateBumpVersionCommitMessage,
+	generateReleaseBranchName,
+	getPreReleaseDependencies,
+	getReleaseSourceForReleaseGroup,
+	isReleased,
 } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
@@ -40,57 +40,57 @@ import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
  * @returns True if the state was handled; false otherwise.
  */
 export const checkBranchName: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, bumpType, shouldCheckBranch } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context, bumpType, shouldCheckBranch } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    if (shouldCheckBranch === true) {
-        switch (bumpType) {
-            case "patch": {
-                log.verbose(`Checking if ${context.originalBranchName} starts with release/`);
-                if (!context.originalBranchName.startsWith("release/")) {
-                    log.warning(
-                        `Patch release should only be done on 'release/*' branches, but current branch is '${context.originalBranchName}'.\nYou can skip this check with --no-branchCheck.'`,
-                    );
-                    BaseStateHandler.signalFailure(machine, state);
-                }
+	if (shouldCheckBranch === true) {
+		switch (bumpType) {
+			case "patch": {
+				log.verbose(`Checking if ${context.originalBranchName} starts with release/`);
+				if (!context.originalBranchName.startsWith("release/")) {
+					log.warning(
+						`Patch release should only be done on 'release/*' branches, but current branch is '${context.originalBranchName}'.\nYou can skip this check with --no-branchCheck.'`,
+					);
+					BaseStateHandler.signalFailure(machine, state);
+				}
 
-                break;
-            }
+				break;
+			}
 
-            case "major":
-            case "minor": {
-                log.verbose(
-                    `Checking if ${context.originalBranchName} is 'main', 'next', or 'lts'.`,
-                );
-                if (!["main", "next", "lts"].includes(context.originalBranchName)) {
-                    log.warning(
-                        `Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${context.originalBranchName}'.`,
-                    );
-                    BaseStateHandler.signalFailure(machine, state);
-                    return true;
-                }
-            }
+			case "major":
+			case "minor": {
+				log.verbose(
+					`Checking if ${context.originalBranchName} is 'main', 'next', or 'lts'.`,
+				);
+				if (!["main", "next", "lts"].includes(context.originalBranchName)) {
+					log.warning(
+						`Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${context.originalBranchName}'.`,
+					);
+					BaseStateHandler.signalFailure(machine, state);
+					return true;
+				}
+			}
 
-            default: {
-                log.errorLog(`Unexpected bump type: ${bumpType}`);
-            }
-        }
-    } else {
-        log.warning(
-            `Not checking if current branch is a release branch: ${context.originalBranchName}`,
-        );
-    }
+			default: {
+				log.errorLog(`Unexpected bump type: ${bumpType}`);
+			}
+		}
+	} else {
+		log.warning(
+			`Not checking if current branch is a release branch: ${context.originalBranchName}`,
+		);
+	}
 
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -104,38 +104,38 @@ export const checkBranchName: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkBranchUpToDate: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, shouldCheckBranchUpdate } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context, shouldCheckBranchUpdate } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
-    const isBranchUpToDate = await context.gitRepo.isBranchUpToDate(
-        context.originalBranchName,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        remote!,
-    );
-    if (shouldCheckBranchUpdate === true) {
-        if (!isBranchUpToDate) {
-            BaseStateHandler.signalFailure(machine, state);
-            log.errorLog(
-                `Local '${context.originalBranchName}' branch not up to date with remote. Please pull from '${remote}'.`,
-            );
-        }
+	const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
+	const isBranchUpToDate = await context.gitRepo.isBranchUpToDate(
+		context.originalBranchName,
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		remote!,
+	);
+	if (shouldCheckBranchUpdate === true) {
+		if (!isBranchUpToDate) {
+			BaseStateHandler.signalFailure(machine, state);
+			log.errorLog(
+				`Local '${context.originalBranchName}' branch not up to date with remote. Please pull from '${remote}'.`,
+			);
+		}
 
-        BaseStateHandler.signalSuccess(machine, state);
-    } else {
-        log.warning("Not checking if the branch is up-to-date with the remote.");
-        BaseStateHandler.signalSuccess(machine, state);
-    }
+		BaseStateHandler.signalSuccess(machine, state);
+	} else {
+		log.warning("Not checking if the branch is up-to-date with the remote.");
+		BaseStateHandler.signalSuccess(machine, state);
+	}
 
-    return true;
+	return true;
 };
 
 /**
@@ -149,45 +149,45 @@ export const checkBranchUpToDate: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, releaseGroup } = data;
-    assert(context !== undefined, "Context is undefined.");
-    assert(releaseGroup !== undefined, "Release group is undefined.");
+	const { context, releaseGroup } = data;
+	assert(context !== undefined, "Context is undefined.");
+	assert(releaseGroup !== undefined, "Release group is undefined.");
 
-    let releaseSource = getReleaseSourceForReleaseGroup(releaseGroup);
+	let releaseSource = getReleaseSourceForReleaseGroup(releaseGroup);
 
-    if (releaseSource === "interactive") {
-        const branchToReleaseFrom: inquirer.ListQuestion = {
-            type: "list",
-            name: "releaseType",
-            choices: [
-                {
-                    name: "main/lts",
-                    value: "direct",
-                },
-                { name: "release branch", value: "releaseBranches" },
-            ],
-            message: `The ${releaseGroup} release group can be released directly from main, or you can create a release branch. Would you like to release from main or a release branch? If in doubt, select 'release branch'.`,
-        };
+	if (releaseSource === "interactive") {
+		const branchToReleaseFrom: inquirer.ListQuestion = {
+			type: "list",
+			name: "releaseType",
+			choices: [
+				{
+					name: "main/lts",
+					value: "direct",
+				},
+				{ name: "release branch", value: "releaseBranches" },
+			],
+			message: `The ${releaseGroup} release group can be released directly from main, or you can create a release branch. Would you like to release from main or a release branch? If in doubt, select 'release branch'.`,
+		};
 
-        const answers = await inquirer.prompt(branchToReleaseFrom);
-        releaseSource = answers.releaseType;
-    }
+		const answers = await inquirer.prompt(branchToReleaseFrom);
+		releaseSource = answers.releaseType;
+	}
 
-    if (releaseSource === "direct") {
-        BaseStateHandler.signalFailure(machine, state);
-    } else if (releaseSource === "releaseBranches") {
-        BaseStateHandler.signalSuccess(machine, state);
-    }
+	if (releaseSource === "direct") {
+		BaseStateHandler.signalFailure(machine, state);
+	} else if (releaseSource === "releaseBranches") {
+		BaseStateHandler.signalSuccess(machine, state);
+	}
 
-    return true;
+	return true;
 };
 
 /**
@@ -201,25 +201,25 @@ export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkHasRemote: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
-    if (remote === undefined) {
-        BaseStateHandler.signalFailure(machine, state);
-        log.errorLog(`Unable to find remote for '${context.originRemotePartialUrl}'`);
-    }
+	const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
+	if (remote === undefined) {
+		BaseStateHandler.signalFailure(machine, state);
+		log.errorLog(`Unable to find remote for '${context.originRemotePartialUrl}'`);
+	}
 
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -233,39 +233,39 @@ export const checkHasRemote: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkInstallBuildTools: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    const installQuestion: inquirer.ConfirmQuestion = {
-        type: "confirm",
-        name: "install",
-        message: `Do you want to install the Fluid build-tools? You don't need to do this if you installed them globally.`,
-    };
+	const installQuestion: inquirer.ConfirmQuestion = {
+		type: "confirm",
+		name: "install",
+		message: `Do you want to install the Fluid build-tools? You don't need to do this if you installed them globally.`,
+	};
 
-    const answer = await inquirer.prompt(installQuestion);
-    if (answer.install === true) {
-        log.info(`Installing build-tools so we can run build:genver`);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const buildToolsMonoRepo = context.repo.releaseGroups.get(MonoRepoKind.BuildTools)!;
-        const ret = await buildToolsMonoRepo.install();
-        if (ret.error) {
-            log.errorLog("Install failed.");
-            BaseStateHandler.signalFailure(machine, state);
-        }
-    } else {
-        log.warning(`Skipping installation.`);
-    }
+	const answer = await inquirer.prompt(installQuestion);
+	if (answer.install === true) {
+		log.info(`Installing build-tools so we can run build:genver`);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const buildToolsMonoRepo = context.repo.releaseGroups.get(MonoRepoKind.BuildTools)!;
+		const ret = await buildToolsMonoRepo.install();
+		if (ret.error) {
+			log.errorLog("Install failed.");
+			BaseStateHandler.signalFailure(machine, state);
+		}
+	} else {
+		log.warning(`Skipping installation.`);
+	}
 
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -279,34 +279,34 @@ export const checkInstallBuildTools: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkMainNextIntegrated: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { bumpType, context, shouldCheckMainNextIntegrated } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { bumpType, context, shouldCheckMainNextIntegrated } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    if (bumpType === "major") {
-        if (shouldCheckMainNextIntegrated === true) {
-            const [main, next] = await Promise.all([
-                context.gitRepo.getShaForBranch("main"),
-                context.gitRepo.getShaForBranch("next"),
-            ]);
+	if (bumpType === "major") {
+		if (shouldCheckMainNextIntegrated === true) {
+			const [main, next] = await Promise.all([
+				context.gitRepo.getShaForBranch("main"),
+				context.gitRepo.getShaForBranch("next"),
+			]);
 
-            if (main !== next) {
-                BaseStateHandler.signalFailure(machine, state);
-            }
-        } else {
-            log.warning("Skipping main/next integration check.");
-        }
-    }
+			if (main !== next) {
+				BaseStateHandler.signalFailure(machine, state);
+			}
+		} else {
+			log.warning("Skipping main/next integration check.");
+		}
+	}
 
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -320,63 +320,63 @@ export const checkMainNextIntegrated: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkOnReleaseBranch: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, releaseGroup, releaseVersion } = data;
-    assert(context !== undefined, "Context is undefined.");
-    assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
+	const { context, releaseGroup, releaseVersion } = data;
+	assert(context !== undefined, "Context is undefined.");
+	assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
 
-    const currentBranch = await context.gitRepo.getCurrentBranchName();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
+	const currentBranch = await context.gitRepo.getCurrentBranchName();
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
 
-    if (currentBranch === releaseBranch) {
-        BaseStateHandler.signalSuccess(machine, state);
-    } else {
-        BaseStateHandler.signalFailure(machine, state);
-    }
+	if (currentBranch === releaseBranch) {
+		BaseStateHandler.signalSuccess(machine, state);
+	} else {
+		BaseStateHandler.signalFailure(machine, state);
+	}
 
-    return true;
+	return true;
 };
 
 export const checkNoPrereleaseDependencies: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, releaseGroup } = data;
-    assert(context !== undefined, "Context is undefined.");
-    assert(releaseGroup !== undefined, "Release group is undefined.");
+	const { context, releaseGroup } = data;
+	assert(context !== undefined, "Context is undefined.");
+	assert(releaseGroup !== undefined, "Release group is undefined.");
 
-    const { releaseGroups, packages, isEmpty } = await getPreReleaseDependencies(
-        context,
-        releaseGroup,
-    );
+	const { releaseGroups, packages, isEmpty } = await getPreReleaseDependencies(
+		context,
+		releaseGroup,
+	);
 
-    const packagesToBump = new Set(packages.keys());
-    for (const rg of releaseGroups.keys()) {
-        for (const p of context.packagesInReleaseGroup(rg)) {
-            packagesToBump.add(p.name);
-        }
-    }
+	const packagesToBump = new Set(packages.keys());
+	for (const rg of releaseGroups.keys()) {
+		for (const p of context.packagesInReleaseGroup(rg)) {
+			packagesToBump.add(p.name);
+		}
+	}
 
-    if (isEmpty) {
-        BaseStateHandler.signalSuccess(machine, state);
-    } else {
-        BaseStateHandler.signalFailure(machine, state);
-    }
+	if (isEmpty) {
+		BaseStateHandler.signalSuccess(machine, state);
+	} else {
+		BaseStateHandler.signalFailure(machine, state);
+	}
 
-    return true;
+	return true;
 };
 
 /**
@@ -390,60 +390,60 @@ export const checkNoPrereleaseDependencies: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkPolicy: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, shouldCheckPolicy } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context, shouldCheckPolicy } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    if (shouldCheckPolicy === true) {
-        if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
-            log.warning(
-                `Policy check fixes are not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
-            );
-        }
+	if (shouldCheckPolicy === true) {
+		if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
+			log.warning(
+				`Policy check fixes are not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
+			);
+		}
 
-        // oclif docs suggest using proper function calls into underlying APIs rather than calling a command directly
-        // but it's very convenient in this case. check policy is a command where the CLI is the "best" interface; it doesn't
-        // expose a better programmatic API and making one just to make it cleaner to call here seems unnecessary.
-        await CheckPolicy.run([
-            "--fix",
-            "--exclusions",
-            path.join(
-                context.gitRepo.resolvedRoot,
-                "build-tools",
-                "packages",
-                "build-tools",
-                "data",
-                "exclusions.json",
-            ),
-        ]);
+		// oclif docs suggest using proper function calls into underlying APIs rather than calling a command directly
+		// but it's very convenient in this case. check policy is a command where the CLI is the "best" interface; it doesn't
+		// expose a better programmatic API and making one just to make it cleaner to call here seems unnecessary.
+		await CheckPolicy.run([
+			"--fix",
+			"--exclusions",
+			path.join(
+				context.gitRepo.resolvedRoot,
+				"build-tools",
+				"packages",
+				"build-tools",
+				"data",
+				"exclusions.json",
+			),
+		]);
 
-        // check for policy check violation
-        const afterPolicyCheckStatus = await context.gitRepo.getStatus();
-        if (afterPolicyCheckStatus !== "" && afterPolicyCheckStatus !== "") {
-            log.logHr();
-            log.errorLog(
-                `Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`,
-            );
-            BaseStateHandler.signalFailure(machine, state);
-        }
-        // eslint-disable-next-line no-negated-condition
-    } else if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
-        log.verbose(
-            `Skipping policy check because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
-        );
-    } else {
-        log.warning("Skipping policy check.");
-    }
+		// check for policy check violation
+		const afterPolicyCheckStatus = await context.gitRepo.getStatus();
+		if (afterPolicyCheckStatus !== "" && afterPolicyCheckStatus !== "") {
+			log.logHr();
+			log.errorLog(
+				`Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`,
+			);
+			BaseStateHandler.signalFailure(machine, state);
+		}
+		// eslint-disable-next-line no-negated-condition
+	} else if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
+		log.verbose(
+			`Skipping policy check because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
+		);
+	} else {
+		log.warning("Skipping policy check.");
+	}
 
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -457,29 +457,29 @@ export const checkPolicy: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkReleaseBranchExists: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, releaseGroup, releaseVersion } = data;
-    assert(context !== undefined, "Context is undefined.");
-    assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
+	const { context, releaseGroup, releaseVersion } = data;
+	assert(context !== undefined, "Context is undefined.");
+	assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
 
-    const commit = await context.gitRepo.getShaForBranch(releaseBranch);
-    if (commit === undefined) {
-        log.errorLog(`Can't find the '${releaseBranch}' branch.`);
-        BaseStateHandler.signalFailure(machine, state);
-    }
+	const commit = await context.gitRepo.getShaForBranch(releaseBranch);
+	if (commit === undefined) {
+		log.errorLog(`Can't find the '${releaseBranch}' branch.`);
+		BaseStateHandler.signalFailure(machine, state);
+	}
 
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -493,30 +493,30 @@ export const checkReleaseBranchExists: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkReleaseGroupIsBumped: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, releaseGroup, releaseVersion, bumpType } = data;
-    assert(context !== undefined, "Context is undefined.");
-    assert(releaseGroup !== undefined, "Release group is undefined.");
-    assert(bumpType !== undefined, "bumpType is undefined.");
+	const { context, releaseGroup, releaseVersion, bumpType } = data;
+	assert(context !== undefined, "Context is undefined.");
+	assert(releaseGroup !== undefined, "Release group is undefined.");
+	assert(bumpType !== undefined, "bumpType is undefined.");
 
-    context.repo.reload();
-    const repoVersion = context.getVersion(releaseGroup);
-    const targetVersion = bumpVersionScheme(releaseVersion, bumpType).version;
+	context.repo.reload();
+	const repoVersion = context.getVersion(releaseGroup);
+	const targetVersion = bumpVersionScheme(releaseVersion, bumpType).version;
 
-    if (repoVersion !== targetVersion) {
-        BaseStateHandler.signalFailure(machine, state);
-        return true;
-    }
+	if (repoVersion !== targetVersion) {
+		BaseStateHandler.signalFailure(machine, state);
+		return true;
+	}
 
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -531,26 +531,26 @@ export const checkReleaseGroupIsBumped: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkReleaseIsDone: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, releaseGroup, releaseVersion } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context, releaseGroup, releaseVersion } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const wasReleased = await isReleased(context, releaseGroup!, releaseVersion!);
-    if (wasReleased) {
-        BaseStateHandler.signalSuccess(machine, state);
-    } else {
-        BaseStateHandler.signalFailure(machine, state);
-    }
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const wasReleased = await isReleased(context, releaseGroup!, releaseVersion!);
+	if (wasReleased) {
+		BaseStateHandler.signalSuccess(machine, state);
+	} else {
+		BaseStateHandler.signalFailure(machine, state);
+	}
 
-    return true;
+	return true;
 };
 
 /**
@@ -564,33 +564,33 @@ export const checkReleaseIsDone: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkShouldCommit: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { bumpType, context, shouldCommit, releaseGroup, releaseVersion } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { bumpType, context, shouldCommit, releaseGroup, releaseVersion } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    if (shouldCommit !== true) {
-        BaseStateHandler.signalFailure(machine, state);
-        return true;
-    }
+	if (shouldCommit !== true) {
+		BaseStateHandler.signalFailure(machine, state);
+		return true;
+	}
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const branchName = generateBumpVersionBranchName(releaseGroup!, bumpType!, releaseVersion!);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const commitMsg = generateBumpVersionCommitMessage(releaseGroup!, bumpType!, releaseVersion!);
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const branchName = generateBumpVersionBranchName(releaseGroup!, bumpType!, releaseVersion!);
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const commitMsg = generateBumpVersionCommitMessage(releaseGroup!, bumpType!, releaseVersion!);
 
-    await context.createBranch(branchName);
-    log.verbose(`Created bump branch: ${branchName}`);
+	await context.createBranch(branchName);
+	log.verbose(`Created bump branch: ${branchName}`);
 
-    await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -604,32 +604,32 @@ export const checkShouldCommit: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkShouldCommitReleasedDepsBump: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, releaseGroup, shouldCommit } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context, releaseGroup, shouldCommit } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    if (shouldCommit !== true) {
-        BaseStateHandler.signalSuccess(machine, state);
-    }
+	if (shouldCommit !== true) {
+		BaseStateHandler.signalSuccess(machine, state);
+	}
 
-    assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
-    const branchName = generateBumpDepsBranchName(releaseGroup, "latest");
-    await context.gitRepo.createBranch(branchName);
+	assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
+	const branchName = generateBumpDepsBranchName(releaseGroup, "latest");
+	await context.gitRepo.createBranch(branchName);
 
-    log.verbose(`Created bump branch: ${branchName}`);
-    log.info(`${releaseGroup}: Bumped prerelease dependencies to release versions.`);
+	log.verbose(`Created bump branch: ${branchName}`);
+	log.info(`${releaseGroup}: Bumped prerelease dependencies to release versions.`);
 
-    const commitMsg = generateBumpDepsCommitMessage("prerelease", "latest", releaseGroup);
-    await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	const commitMsg = generateBumpDepsCommitMessage("prerelease", "latest", releaseGroup);
+	await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -643,21 +643,21 @@ export const checkShouldCommitReleasedDepsBump: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkShouldRunOptionalChecks: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { shouldSkipChecks } = data;
-    if (shouldSkipChecks === true) {
-        BaseStateHandler.signalFailure(machine, state);
-    }
+	const { shouldSkipChecks } = data;
+	if (shouldSkipChecks === true) {
+		BaseStateHandler.signalFailure(machine, state);
+	}
 
-    BaseStateHandler.signalSuccess(machine, state);
-    return true;
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
 };
 
 /**
@@ -671,31 +671,31 @@ export const checkShouldRunOptionalChecks: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkTypeTestGenerate: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    const genQuestion: inquirer.ConfirmQuestion = {
-        type: "confirm",
-        name: "typetestsGen",
-        message: `Have you run typetests:gen on the ${context.originalBranchName} branch?`,
-    };
+	const genQuestion: inquirer.ConfirmQuestion = {
+		type: "confirm",
+		name: "typetestsGen",
+		message: `Have you run typetests:gen on the ${context.originalBranchName} branch?`,
+	};
 
-    const answer = await inquirer.prompt(genQuestion);
-    if (answer.typetestsGen === false) {
-        BaseStateHandler.signalFailure(machine, state);
-    } else {
-        BaseStateHandler.signalSuccess(machine, state);
-    }
+	const answer = await inquirer.prompt(genQuestion);
+	if (answer.typetestsGen === false) {
+		BaseStateHandler.signalFailure(machine, state);
+	} else {
+		BaseStateHandler.signalSuccess(machine, state);
+	}
 
-    return true;
+	return true;
 };
 
 /**
@@ -709,31 +709,31 @@ export const checkTypeTestGenerate: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkTypeTestPrepare: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    const prepQuestion: inquirer.ConfirmQuestion = {
-        type: "confirm",
-        name: "typetestsPrep",
-        message: `Have you run typetests:prepare on the ${context.originalBranchName} branch?`,
-    };
+	const prepQuestion: inquirer.ConfirmQuestion = {
+		type: "confirm",
+		name: "typetestsPrep",
+		message: `Have you run typetests:prepare on the ${context.originalBranchName} branch?`,
+	};
 
-    const answer = await inquirer.prompt(prepQuestion);
-    if (answer.typetestsPrep === false) {
-        BaseStateHandler.signalFailure(machine, state);
-    } else {
-        BaseStateHandler.signalSuccess(machine, state);
-    }
+	const answer = await inquirer.prompt(prepQuestion);
+	if (answer.typetestsPrep === false) {
+		BaseStateHandler.signalFailure(machine, state);
+	} else {
+		BaseStateHandler.signalSuccess(machine, state);
+	}
 
-    return true;
+	return true;
 };
 
 /**
@@ -747,25 +747,25 @@ export const checkTypeTestPrepare: StateHandlerFunction = async (
  * @returns True if the state was handled; false otherwise.
  */
 export const checkValidReleaseGroup: StateHandlerFunction = async (
-    state: MachineState,
-    machine: Machine<unknown>,
-    testMode: boolean,
-    log: CommandLogger,
-    data: FluidReleaseStateHandlerData,
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
-    if (testMode) return true;
+	if (testMode) return true;
 
-    const { context, releaseGroup } = data;
-    assert(context !== undefined, "Context is undefined.");
+	const { context, releaseGroup } = data;
+	assert(context !== undefined, "Context is undefined.");
 
-    if (isReleaseGroup(releaseGroup)) {
-        BaseStateHandler.signalSuccess(machine, state);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, no-negated-condition
-    } else if (context.fullPackageMap.get(releaseGroup!) !== undefined) {
-        BaseStateHandler.signalSuccess(machine, state);
-    } else {
-        BaseStateHandler.signalFailure(machine, state);
-    }
+	if (isReleaseGroup(releaseGroup)) {
+		BaseStateHandler.signalSuccess(machine, state);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, no-negated-condition
+	} else if (context.fullPackageMap.get(releaseGroup!) !== undefined) {
+		BaseStateHandler.signalSuccess(machine, state);
+	} else {
+		BaseStateHandler.signalFailure(machine, state);
+	}
 
-    return true;
+	return true;
 };

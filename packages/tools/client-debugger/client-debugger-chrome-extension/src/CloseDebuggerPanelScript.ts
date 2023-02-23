@@ -11,6 +11,6 @@ import { closeDebuggerPanel } from "./CloseDebuggerPanel";
  * It requires access to the same global context as the page contents so it can access the debugger registry.
  */
 closeDebuggerPanel().catch((error) => {
-    console.error(error);
-    throw error;
+	console.error(error);
+	throw error;
 });

@@ -7,20 +7,20 @@
 require("jest-webextension-mock");
 
 const getDetails = (_, cb) => {
-    if (cb !== undefined) {
-        return cb();
-    }
-    return Promise.resolve();
+	if (cb !== undefined) {
+		return cb();
+	}
+	return Promise.resolve();
 };
 
 global.chrome.action = {
-    setBadgeText: jest.fn(),
-    getBadgeText: jest.fn(getDetails),
-    setBadgeBackgroundColor: jest.fn(),
-    getBadgeBackgroundColor: jest.fn(getDetails),
-    setTitle: jest.fn(),
-    getTitle: jest.fn(getDetails),
-    onClicked: {
-        addListener: jest.fn(),
-    },
+	setBadgeText: jest.fn(),
+	getBadgeText: jest.fn(getDetails),
+	setBadgeBackgroundColor: jest.fn(),
+	getBadgeBackgroundColor: jest.fn(getDetails),
+	setTitle: jest.fn(),
+	getTitle: jest.fn(getDetails),
+	onClicked: {
+		addListener: jest.fn(),
+	},
 };

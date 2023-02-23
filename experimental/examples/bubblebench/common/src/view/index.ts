@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
- export { AppView } from "./app";
+export { AppView } from "./app";

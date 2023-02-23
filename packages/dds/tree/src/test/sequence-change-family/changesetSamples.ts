@@ -5,68 +5,68 @@
 
 import { jsonArray, jsonNumber, jsonObject, jsonString } from "../../domains";
 import {
-    ChangesetTag,
-    Effects,
-    Transposed as T,
-    // eslint-disable-next-line import/no-internal-modules
+	ChangesetTag,
+	Effects,
+	Transposed as T,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/sequence-change-family";
 
 /**
  * Interface used solely to annotate samples with clarifying information.
  */
 export interface Transaction extends T.PeerChangeset {
-    /**
-     * The tag of the changeset that this changeset was originally issued after.
-     */
-    ref: ChangesetTag;
-    /**
-     * The tag of the latest changeset that this changeset has been transposed over.
-     * Omitted on changesets that have not been transposed.
-     */
-    newRef?: ChangesetTag;
+	/**
+	 * The tag of the changeset that this changeset was originally issued after.
+	 */
+	ref: ChangesetTag;
+	/**
+	 * The tag of the latest changeset that this changeset has been transposed over.
+	 * Omitted on changesets that have not been transposed.
+	 */
+	newRef?: ChangesetTag;
 }
 
 /**
  * Demonstrates how to represent a change that inserts a root tree.
  */
 export namespace InsertRoot {
-    export const e1: T.MarkList = [
-        {
-            type: "Insert",
-            id: 0, // ID of the insert operation
-            content: [
-                // Serialized trees
-                {
-                    type: jsonObject.name,
-                    fields: {
-                        x: [
-                            {
-                                type: jsonNumber.name,
-                                value: 42,
-                            },
-                        ],
-                        y: [
-                            {
-                                type: jsonNumber.name,
-                                value: 42,
-                            },
-                        ],
-                        arrayField: [
-                            {
-                                type: jsonArray.name,
-                                fields: {
-                                    entries: [
-                                        { type: jsonNumber.name, value: 0 },
-                                        { type: jsonNumber.name, value: 1 },
-                                    ],
-                                },
-                            },
-                        ],
-                    },
-                },
-            ],
-        },
-    ];
+	export const e1: T.MarkList = [
+		{
+			type: "Insert",
+			id: 0, // ID of the insert operation
+			content: [
+				// Serialized trees
+				{
+					type: jsonObject.name,
+					fields: {
+						x: [
+							{
+								type: jsonNumber.name,
+								value: 42,
+							},
+						],
+						y: [
+							{
+								type: jsonNumber.name,
+								value: 42,
+							},
+						],
+						arrayField: [
+							{
+								type: jsonArray.name,
+								fields: {
+									entries: [
+										{ type: jsonNumber.name, value: 0 },
+										{ type: jsonNumber.name, value: 1 },
+									],
+								},
+							},
+						],
+					},
+				},
+			],
+		},
+	];
 }
 
 const nodeX = { type: jsonString.name, value: "X" };
@@ -75,27 +75,27 @@ const nodeX = { type: jsonString.name, value: "X" };
  * Demonstrates how to represent a change that swaps a pair of nodes from different traits.
  */
 export namespace SwapCousins {
-    export const e1: T.PeerChangeset = {
-        moves: [
-            { id: 0, src: { 0: { foo: 0 } }, dst: { 0: { bar: 0 } } },
-            { id: 1, src: { 0: { bar: 0 } }, dst: { 0: { foo: 0 } } },
-        ],
-        marks: [
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        { type: "MoveOut", id: 0, count: 1 },
-                        { type: "MoveIn", id: 1, count: 1 },
-                    ],
-                    bar: [
-                        { type: "MoveOut", id: 1, count: 1 },
-                        { type: "MoveIn", id: 0, count: 1 },
-                    ],
-                },
-            },
-        ],
-    };
+	export const e1: T.PeerChangeset = {
+		moves: [
+			{ id: 0, src: { 0: { foo: 0 } }, dst: { 0: { bar: 0 } } },
+			{ id: 1, src: { 0: { bar: 0 } }, dst: { 0: { foo: 0 } } },
+		],
+		marks: [
+			{
+				type: "Modify",
+				fields: {
+					foo: [
+						{ type: "MoveOut", id: 0, count: 1 },
+						{ type: "MoveIn", id: 1, count: 1 },
+					],
+					bar: [
+						{ type: "MoveOut", id: 1, count: 1 },
+						{ type: "MoveIn", id: 0, count: 1 },
+					],
+				},
+			},
+		],
+	};
 }
 
 /**
@@ -105,69 +105,69 @@ export namespace SwapCousins {
  * To:  ` R{ foo: C{ bar: B{ baz: D } } }`
  */
 export namespace SwapParentChild {
-    export const e1: T.PeerChangeset = {
-        moves: [
-            { id: 0, src: { 0: { foo: 0 } }, dst: { 0: { foo: { 0: { bar: 0 } } } } }, // B
-            { id: 1, src: { 0: { foo: { 0: { bar: 0 } } } }, dst: { 0: { foo: 0 } } }, // C
-            {
-                // D
-                id: 2,
-                src: { 0: { foo: { 0: { bar: { 0: { baz: 0 } } } } } },
-                dst: { 0: { foo: { 0: { bar: { 0: { baz: 0 } } } } } },
-            },
-        ],
-        marks: [
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        {
-                            type: "MMoveOut",
-                            id: 0,
-                            fields: {
-                                bar: [
-                                    {
-                                        type: "MMoveOut",
-                                        id: 1,
-                                        fields: {
-                                            baz: [
-                                                {
-                                                    type: "MoveOut",
-                                                    id: 2,
-                                                    count: 1,
-                                                },
-                                            ],
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                        {
-                            type: "MMoveIn",
-                            id: 1,
-                            fields: {
-                                bar: [
-                                    {
-                                        type: "MMoveIn",
-                                        id: 0,
-                                        fields: {
-                                            baz: [
-                                                {
-                                                    type: "MoveIn",
-                                                    id: 2,
-                                                    count: 1,
-                                                },
-                                            ],
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                },
-            },
-        ],
-    };
+	export const e1: T.PeerChangeset = {
+		moves: [
+			{ id: 0, src: { 0: { foo: 0 } }, dst: { 0: { foo: { 0: { bar: 0 } } } } }, // B
+			{ id: 1, src: { 0: { foo: { 0: { bar: 0 } } } }, dst: { 0: { foo: 0 } } }, // C
+			{
+				// D
+				id: 2,
+				src: { 0: { foo: { 0: { bar: { 0: { baz: 0 } } } } } },
+				dst: { 0: { foo: { 0: { bar: { 0: { baz: 0 } } } } } },
+			},
+		],
+		marks: [
+			{
+				type: "Modify",
+				fields: {
+					foo: [
+						{
+							type: "MMoveOut",
+							id: 0,
+							fields: {
+								bar: [
+									{
+										type: "MMoveOut",
+										id: 1,
+										fields: {
+											baz: [
+												{
+													type: "MoveOut",
+													id: 2,
+													count: 1,
+												},
+											],
+										},
+									},
+								],
+							},
+						},
+						{
+							type: "MMoveIn",
+							id: 1,
+							fields: {
+								bar: [
+									{
+										type: "MMoveIn",
+										id: 0,
+										fields: {
+											baz: [
+												{
+													type: "MoveIn",
+													id: 2,
+													count: 1,
+												},
+											],
+										},
+									},
+								],
+							},
+						},
+					],
+				},
+			},
+		],
+	};
 }
 
 /**
@@ -185,157 +185,157 @@ export namespace SwapParentChild {
  * Expected outcome: foo=[A] bar=[X D]
  */
 export namespace ScenarioA {
-    export const e1: Transaction = {
-        ref: 0,
-        marks: [
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        1, // A
-                        {
-                            type: "Delete",
-                            id: 0,
-                            count: 2, // B C
-                        },
-                    ],
-                },
-            },
-        ],
-    };
+	export const e1: Transaction = {
+		ref: 0,
+		marks: [
+			{
+				type: "Modify",
+				fields: {
+					foo: [
+						1, // A
+						{
+							type: "Delete",
+							id: 0,
+							count: 2, // B C
+						},
+					],
+				},
+			},
+		],
+	};
 
-    export const e2: Transaction = {
-        ref: 0,
-        moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
-        marks: [
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        1, // A
-                        {
-                            type: "MoveOut",
-                            id: 0,
-                            count: 3, // B C D
-                            gaps: [{ id: 0, type: "Forward" }],
-                        },
-                    ],
-                    bar: [
-                        {
-                            type: "MoveIn",
-                            id: 0,
-                            count: 3, // B C D
-                        },
-                    ],
-                },
-            },
-        ],
-    };
+	export const e2: Transaction = {
+		ref: 0,
+		moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
+		marks: [
+			{
+				type: "Modify",
+				fields: {
+					foo: [
+						1, // A
+						{
+							type: "MoveOut",
+							id: 0,
+							count: 3, // B C D
+							gaps: [{ id: 0, type: "Forward" }],
+						},
+					],
+					bar: [
+						{
+							type: "MoveIn",
+							id: 0,
+							count: 3, // B C D
+						},
+					],
+				},
+			},
+		],
+	};
 
-    export const e3: Transaction = {
-        ref: 0,
-        marks: [
-            {
-                type: "Modify",
-                fields: {
-                    foo: [2, { type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
-                },
-            },
-        ],
-    };
+	export const e3: Transaction = {
+		ref: 0,
+		marks: [
+			{
+				type: "Modify",
+				fields: {
+					foo: [2, { type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
+				},
+			},
+		],
+	};
 
-    export const e2_r_e1: Transaction = {
-        ref: 0,
-        newRef: 1,
-        moves: [
-            { id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
-            { id: 1, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
-            { id: 2, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
-        ],
-        marks: [
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        1, // A
-                        {
-                            type: "MoveOut",
-                            id: 0,
-                            tomb: 1,
-                            count: 2, // B C
-                            gaps: [{ id: 0, type: "Forward" }],
-                        },
-                        {
-                            type: "Gap",
-                            count: 1,
-                            stack: [{ id: 1, type: "Forward" }],
-                        },
-                        {
-                            type: "MoveOut",
-                            id: 0,
-                            count: 1, // D
-                            gaps: [{ id: 2, type: "Forward" }],
-                        },
-                    ],
-                    bar: [
-                        { type: "MoveIn", id: 0, count: 0 }, // B C
-                        { type: "MoveIn", id: 1, count: 0 }, // C-D
-                        { type: "MoveIn", id: 2, count: 1 }, // D
-                    ],
-                },
-            },
-        ],
-    };
+	export const e2_r_e1: Transaction = {
+		ref: 0,
+		newRef: 1,
+		moves: [
+			{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
+			{ id: 1, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
+			{ id: 2, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
+		],
+		marks: [
+			{
+				type: "Modify",
+				fields: {
+					foo: [
+						1, // A
+						{
+							type: "MoveOut",
+							id: 0,
+							tomb: 1,
+							count: 2, // B C
+							gaps: [{ id: 0, type: "Forward" }],
+						},
+						{
+							type: "Gap",
+							count: 1,
+							stack: [{ id: 1, type: "Forward" }],
+						},
+						{
+							type: "MoveOut",
+							id: 0,
+							count: 1, // D
+							gaps: [{ id: 2, type: "Forward" }],
+						},
+					],
+					bar: [
+						{ type: "MoveIn", id: 0, count: 0 }, // B C
+						{ type: "MoveIn", id: 1, count: 0 }, // C-D
+						{ type: "MoveIn", id: 2, count: 1 }, // D
+					],
+				},
+			},
+		],
+	};
 
-    export const e3_r_e1: Transaction = {
-        ref: 0,
-        newRef: 1,
-        marks: [
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        1,
-                        { type: "Tomb", change: 1, count: 1 }, // B
-                        { type: "Insert", id: 0, content: [nodeX], heed: Effects.All },
-                        { type: "Tomb", change: 1, count: 1 }, // C
-                    ],
-                },
-            },
-        ],
-    };
+	export const e3_r_e1: Transaction = {
+		ref: 0,
+		newRef: 1,
+		marks: [
+			{
+				type: "Modify",
+				fields: {
+					foo: [
+						1,
+						{ type: "Tomb", change: 1, count: 1 }, // B
+						{ type: "Insert", id: 0, content: [nodeX], heed: Effects.All },
+						{ type: "Tomb", change: 1, count: 1 }, // C
+					],
+				},
+			},
+		],
+	};
 
-    export const e3_r_e2: Transaction = {
-        ref: 0,
-        newRef: 2,
-        moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
-        marks: [
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        1,
-                        { type: "Tomb", change: 1, count: 1 }, // B
-                        { type: "Bounce", id: 0, heed: Effects.All },
-                        { type: "Tomb", change: 1, count: 1 }, // C
-                    ],
-                    bar: [
-                        {
-                            type: "Insert",
-                            id: 0,
-                            content: [nodeX],
-                            heed: Effects.All,
-                            src: { change: 2, id: 0 },
-                        },
-                        { type: "Intake", change: 2, id: 1 },
-                        { type: "Intake", change: 2, id: 2 },
-                    ],
-                },
-            },
-        ],
-    };
+	export const e3_r_e2: Transaction = {
+		ref: 0,
+		newRef: 2,
+		moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
+		marks: [
+			{
+				type: "Modify",
+				fields: {
+					foo: [
+						1,
+						{ type: "Tomb", change: 1, count: 1 }, // B
+						{ type: "Bounce", id: 0, heed: Effects.All },
+						{ type: "Tomb", change: 1, count: 1 }, // C
+					],
+					bar: [
+						{
+							type: "Insert",
+							id: 0,
+							content: [nodeX],
+							heed: Effects.All,
+							src: { change: 2, id: 0 },
+						},
+						{ type: "Intake", change: 2, id: 1 },
+						{ type: "Intake", change: 2, id: 2 },
+					],
+				},
+			},
+		],
+	};
 
-    export const originals = [e1, e2, e3];
+	export const originals = [e1, e2, e3];
 }
 
 // /**

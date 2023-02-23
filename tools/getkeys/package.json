@@ -17,6 +17,7 @@
     "eslint": "eslint ./index.js",
     "eslint:fix": "eslint ./index.js --fix",
     "format": "npm run prettier:fix",
+    "preinstall": "node ../../scripts/only-pnpm.cjs",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check . --ignore-path ../../.prettierignore",

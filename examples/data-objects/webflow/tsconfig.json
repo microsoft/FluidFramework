@@ -1,21 +1,13 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "exclude": [
-        "src/test/**/*"
-    ],
-    "compilerOptions": {
-        "composite": true,
-        "jsx": "react",
-        "strictNullChecks": false,
-        "rootDir": "./src",
-        "outDir": "./dist",
-        "types": [
-            "node",
-            "react",
-            "react-dom"
-        ]
-    },
-    "include": [
-        "src/**/*"
-    ]
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"exclude": ["src/test/**/*"],
+	"compilerOptions": {
+		"composite": true,
+		"jsx": "react",
+		"strictNullChecks": false,
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"types": ["node", "react", "react-dom"],
+	},
+	"include": ["src/**/*"],
 }

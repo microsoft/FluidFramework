@@ -5,11 +5,12 @@
 
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
-import { RateLimiter } from "@fluidframework/driver-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, RestWrapper } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
@@ -20,6 +21,7 @@ import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -200,15 +202,28 @@ export class DocumentService implements api.IDocumentService {
 							refreshToken,
 						}),
 					},
-					async () => {
-						const newOrdererToken = await this.tokenProvider.fetchOrdererToken(
-							this.tenantId,
-							this.documentId,
-							refreshToken,
-						);
-						this.ordererRestWrapper.setToken(newOrdererToken);
-						return newOrdererToken;
-					},
+					async () =>
+						this.tokenProvider
+							.fetchOrdererToken(this.tenantId, this.documentId, refreshToken)
+							.then(
+								(newOrdererToken) => {
+									this.ordererRestWrapper.setToken(newOrdererToken);
+									return newOrdererToken;
+								},
+								(error) => {
+									const tokenError = wrapError(
+										error,
+										(errorMessage) =>
+											new NetworkErrorBasic(
+												`The Host-provided token fetcher threw an error`,
+												DriverErrorType.fetchTokenError,
+												canRetryOnError(error),
+												{ errorMessage, driverVersion },
+											),
+									);
+									throw tokenError;
+								},
+							),
 				);
 			}
 
