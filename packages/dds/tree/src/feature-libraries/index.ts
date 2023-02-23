@@ -19,32 +19,40 @@ export {
 	EditableTreeOrPrimitive,
 	getEditableTreeContext,
 	typeSymbol,
-	typeNameSymbol,
 	indexSymbol,
 	isEditableField,
 	isPrimitive,
-	isPrimitiveValue,
-	getPrimaryField,
 	isUnwrappedNode,
-	PrimitiveValue,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	valueSymbol,
 	getField,
 	createField,
 	replaceField,
+	parentField,
+} from "./editable-tree";
+
+export {
+	typeNameSymbol,
+	valueSymbol,
+	isPrimitiveValue,
+	getPrimaryField,
+	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
 	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
-	parentField,
-} from "./editable-tree";
+	getFieldKind,
+	getFieldSchema,
+} from "./contextuallyTyped";
+
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
-export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
+export { SchemaIndex, SchemaEditor } from "./schemaIndex";
+// This is exported because its useful for doing comparisons of schema in tests.
+export { getSchemaString } from "./schemaIndexFormat";
 export {
 	singleStackTreeCursor,
 	CursorAdapter,
@@ -103,7 +111,6 @@ export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUti
 export {
 	EditManagerIndex,
 	CommitEncoder,
-	commitEncoderFromChangeEncoder,
 	parseSummary as loadSummary,
 	stringifySummary as encodeSummary,
 } from "./editManagerIndex";
@@ -114,4 +121,4 @@ export { dummyRepairDataStore } from "./fakeRepairDataStore";
 export { runSynchronousTransaction } from "./defaultTransaction";
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
-export { TreeChunk, chunkTree, buildChunkedForest } from "./chunked-forest";
+export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";

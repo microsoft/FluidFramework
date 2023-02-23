@@ -24,7 +24,7 @@ import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGrap
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 
-const { info, verbose } = defaultLogger;
+const { info, verbose, warning } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
 const traceTaskDep = registerDebug("fluid-build:task:dep");
 interface TaskExecResult extends ExecAsyncResult {
@@ -417,9 +417,9 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 					`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`,
 				);
 			}
-		} catch {
+		} catch (error) {
 			console.warn(
-				`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}`,
+				`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}\n error: ${error}`,
 			);
 		}
 	}

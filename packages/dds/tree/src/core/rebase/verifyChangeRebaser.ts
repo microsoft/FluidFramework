@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeAnonChange } from "./rebaser";
+import { makeAnonChange } from "./changeRebaser";
 import { ChangeRebaser } from ".";
 
 export type Failure<TCase> = Violation<TCase> | Exception<TCase>;

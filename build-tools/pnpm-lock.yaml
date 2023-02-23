@@ -48,10 +48,10 @@ importers:
 
   packages/build-cli:
     specifiers:
-      '@fluid-tools/version-tools': ^0.10.0
+      '@fluid-tools/version-tools': workspace:^
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.10.0
-      '@fluidframework/bundle-size-tools': ^0.10.0
+      '@fluidframework/build-tools': workspace:^
+      '@fluidframework/bundle-size-tools': workspace:^
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.22.2
       '@oclif/core': ^1.9.5
@@ -177,13 +177,14 @@ importers:
 
   packages/build-tools:
     specifiers:
-      '@fluid-tools/version-tools': ^0.10.0
+      '@fluid-tools/version-tools': workspace:^
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/bundle-size-tools': ^0.10.0
+      '@fluidframework/bundle-size-tools': workspace:^
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@octokit/core': ^4.0.5
       '@rushstack/node-core-library': ^3.51.1
       '@types/async': ^3.2.6
+      '@types/cosmiconfig': ^6.0.0
       '@types/fs-extra': ^8.1.0
       '@types/glob': ^7.1.1
       '@types/json5': ^0.0.30
@@ -202,6 +203,7 @@ importers:
       chalk: ^2.4.2
       commander: ^6.2.1
       concurrently: ^6.2.0
+      cosmiconfig: ^8.0.0
       danger: ^10.9.0
       date-fns: ^2.29.1
       debug: ^4.1.1
@@ -237,6 +239,7 @@ importers:
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
+      cosmiconfig: 8.0.0
       danger: 10.9.0_@octokit+core@4.0.5
       date-fns: 2.29.3
       debug: 4.3.4
@@ -260,6 +263,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/async': 3.2.15
+      '@types/cosmiconfig': 6.0.0
       '@types/fs-extra': 8.1.2
       '@types/glob': 7.2.0
       '@types/json5': 0.0.30
@@ -2655,6 +2659,13 @@ packages:
   /@types/chai/4.3.3:
     resolution: {integrity: sha512-hC7OMnszpxhZPduX+m+nrx+uFoLkWOMiR4oa/AZF3MuSETYTZmFfJAHqZEM8MVlvfG7BEUcgvtwoCTxBp6hm3g==}
 
+  /@types/cosmiconfig/6.0.0:
+    resolution: {integrity: sha512-KxKYXK5K1W+SVj1wjBBlwUs43K2D4iteye+r2ObPPQ7+NVASxSPfTb5H8iPW0bLswapMvaA4YMnxdKx7M4k29A==}
+    deprecated: This is a stub types definition. cosmiconfig provides its own type definitions, so you do not need this installed.
+    dependencies:
+      cosmiconfig: 8.0.0
+    dev: true
+
   /@types/eslint-scope/3.7.4:
     resolution: {integrity: sha512-9K4zoImiZc3HlIp6AVUDE4CWYx22a+lhSZMYNpbjW04+YF0KWj4pJXnEMjdnFTiQibFFmElcsasJXDbdI/EPhA==}
     dependencies:
@@ -4655,6 +4666,15 @@ packages:
       parse-json: 5.2.0
       path-type: 4.0.0
       yaml: 1.10.2
+
+  /cosmiconfig/8.0.0:
+    resolution: {integrity: sha512-da1EafcpH6b/TD8vDRaWV7xFINlHlF6zKsGwS1TsuVJTZRkquaS5HTMq7uq6h31619QjbsYl21gVDOm32KM1vQ==}
+    engines: {node: '>=14'}
+    dependencies:
+      import-fresh: 3.3.0
+      js-yaml: 4.1.0
+      parse-json: 5.2.0
+      path-type: 4.0.0
 
   /create-require/1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}

@@ -16,7 +16,7 @@ import {
 } from "../../core";
 import { compareArrays, fail } from "../../util";
 import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, cursorChunk, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -269,6 +269,10 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.positions = this.shape.positions;
 		this.fieldKey = dummyRoot;
 		this.moveToPosition(0);
+	}
+
+	public get [cursorChunk](): UniformChunk | undefined {
+		return this.atChunkRoot() ? this.chunk : undefined;
 	}
 
 	public atChunkRoot(): boolean {

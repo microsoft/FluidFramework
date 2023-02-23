@@ -14,16 +14,16 @@ This is a test [link](docs/simple-suite-test/testinterface-interface) to another
 
 ## Parameters {#testfunction-parameters}
 
-|  Parameter | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  testParameter | 📝 | TTypeParameter | A test parameter |
-|  testOptionalParameter | optional | TTypeParameter | 📝 |
+| Parameter | Modifiers | Type | Description |
+| --- | --- | --- | --- |
+| testParameter |  | TTypeParameter | A test parameter |
+| testOptionalParameter | optional | TTypeParameter |  |
 
 ## Returns {#testfunction-returns}
 
 The provided parameter
 
-<b>Return type:</b> TTypeParameter
+**Return type:** TTypeParameter
 
 ## Throws {#testfunction-throws}
 
