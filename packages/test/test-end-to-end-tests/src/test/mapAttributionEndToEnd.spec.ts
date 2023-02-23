@@ -136,7 +136,7 @@ describeNoCompat("Attributor for SharedMap", (getTestObjectProvider) => {
 		assert(url !== undefined);
 		const loader2 = provider.makeTestLoader(getTestConfig());
 		const container2 = await loader2.resolve({ url });
-		
+
 		const sharedMap2 = await sharedMapFromContainer(container2);
 		sharedMap2.set("key1", 3);
 
