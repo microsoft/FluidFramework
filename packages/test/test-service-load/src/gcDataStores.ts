@@ -19,18 +19,11 @@ import { SharedMap } from "@fluidframework/map";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRunConfig } from "./loadTestDataStore";
 
-/** An object (data store or attachment blob based) that can run / stop activity in the test. */
-export interface IGCActivityObject {
-	readonly handle: IFluidHandle<ArrayBufferLike | DataObject>;
-	run: (config: IRunConfig, id?: string) => Promise<boolean>;
-	stop: () => void;
-}
-
 /**
- * The maximum number of leaf children that can be running at a given time. This is used to limit the number of
+ * The maximum number of leaf data objects that can be running at a given time. This is used to limit the number of
  * ops that can be sent per minute so that ops are not throttled.
  */
-const maxRunningLeafChildren = 3;
+const maxRunningLeafDataObjects = 3;
 
 /**
  * Activities that can be performed in the test.
@@ -45,8 +38,15 @@ const GCActivityType = {
 };
 type GCActivityType = typeof GCActivityType[keyof typeof GCActivityType];
 
+/** An object (data objects or attachment blob based) that can run / stop activity in the test. */
+export interface IGCActivityObject {
+	readonly handle: IFluidHandle<ArrayBufferLike | DataObject>;
+	run: (config: IRunConfig, id?: string) => Promise<boolean>;
+	stop: () => void;
+}
+
 /**
- * The details of an activity object that is tracked by a data store.
+ * The details of an activity object that is tracked by a data object.
  */
 interface IActivityObjectDetails {
 	id: string;
@@ -127,7 +127,7 @@ abstract class BaseDataObject extends DataObject {
 }
 
 /**
- * Data object that should be the leaf in the data object hierarchy. It does not create any data stores but simply
+ * Data object that should be the leaf in the data object hierarchy. It does not create any data objects but simply
  * sends ops at a regular interval by incrementing a counter.
  */
 export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject {
@@ -147,7 +147,7 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 			return true;
 		}
 
-		console.log(`+++++++++ Started leaf child [${id}]`);
+		console.log(`+++++++++ Started leaf data object [${id}]`);
 		this._nodeId = id;
 		this.running = true;
 		const delayBetweenOpsMs = (60 * 1000) / config.testConfig.opRatePerMin;
@@ -155,7 +155,7 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 		while (this.running && !this.runtime.disposed) {
 			if (localSendCount % 10 === 0) {
 				console.log(
-					`+++++++++ Leaf child [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
+					`+++++++++ Leaf data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
 				);
 			}
 
@@ -167,7 +167,7 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 			);
 		}
 		console.log(
-			`+++++++++ Stopped leaf child [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
+			`+++++++++ Stopped leaf data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
 		);
 		return !this.runtime.disposed;
 	}
@@ -217,11 +217,12 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 
 	/** The number of blobs uploaded. */
 	private blobCount = 1;
+
 	/** Unique id that is used to generate unique blob content. */
 	private readonly uniqueBlobContentId: string = uuid();
 
 	/**
-	 * The config with which to run a child data object.
+	 * The config with which to run data objects and blobs.
 	 * Note: This should not be called before "run" is called which initializes it.
 	 */
 	private _childRunConfig: IRunConfig | undefined;
@@ -231,6 +232,8 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 
 	private readonly dataObjectMapKey = "dataObjectMap";
+	private readonly blobMapKey = "blobMap";
+
 	/**
 	 * The map that stores the fluid handles to all child data objects.
 	 * Note: This should not be called before "run" is called which initializes it.
@@ -239,12 +242,11 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	protected get dataObjectMap(): SharedMap {
 		assert(
 			this._dataObjectMap !== undefined,
-			"Child map cannot be retrieving before initialization",
+			"Data object map cannot be retrieving before initialization",
 		);
 		return this._dataObjectMap;
 	}
 
-	private readonly blobMapKey = "blobMap";
 	/**
 	 * The map that stores the fluid handles to all attachment blobs.
 	 * Note: This should not be called before "run" is called which initializes it.
@@ -255,8 +257,8 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		return this._blobMap;
 	}
 
-	private readonly unreferencedChildDataObjects: IActivityObjectDetails[] = [];
-	private readonly referencedChildDataObjects: IActivityObjectDetails[] = [];
+	private readonly unreferencedDataObjects: IActivityObjectDetails[] = [];
+	private readonly referencedDataObjects: IActivityObjectDetails[] = [];
 
 	private readonly unreferencedAttachmentBlobs: IActivityObjectDetails[] = [];
 	private readonly referencedAttachmentBlobs: IActivityObjectDetails[] = [];
@@ -272,7 +274,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		const dataObjectMapHandle = this.root.get<IFluidHandle<SharedMap>>(this.dataObjectMapKey);
 		assert(
 			dataObjectMapHandle !== undefined,
-			"The child map handle should exist on initialization",
+			"The data object map handle should exist on initialization",
 		);
 		this._dataObjectMap = await dataObjectMapHandle.get();
 
@@ -281,71 +283,26 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		this._blobMap = await blobMapHandle.get();
 	}
 
-	/**
-	 * Runs activity on initial set of objects that are referenced, if any. When a container reloads because
-	 * of error or session expiry, it can have referenced objects that should now run.
-	 * @returns A set of promises of each object's run result.
-	 */
-	private async runInitialActivity(): Promise<boolean[]> {
-		const runP: Promise<boolean>[] = [];
-		// Initialize the referenced data object list from the data object map.
-		for (const childDetails of this.dataObjectMap) {
-			const childId = childDetails[0];
-			// Only run child data object created by this node.
-			if (!childId.startsWith(this.nodeId)) {
-				continue;
-			}
-
-			const childHandle = childDetails[1] as IFluidHandle<DataObjectLeaf>;
-			const childObject = await childHandle.get();
-			this.referencedChildDataObjects.push({
-				id: childId,
-				object: childObject,
-			});
-			runP.push(childObject.run(this.childRunConfig, childId));
-		}
-
-		// Initialize the referenced blob list from the blob map.
-		for (const blobDetails of this.blobMap) {
-			const blobId = blobDetails[0];
-			// Only run child blob created by this node.
-			if (!blobId.startsWith(this.nodeId)) {
-				continue;
-			}
-
-			const blobObject = new AttachmentBlobObject(
-				blobDetails[1] as IFluidHandle<ArrayBufferLike>,
-			);
-			this.referencedAttachmentBlobs.push({
-				id: blobId,
-				object: blobObject,
-			});
-			runP.push(blobObject.run(this.childRunConfig, blobId));
-		}
-
-		return Promise.all(runP);
-	}
-
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
 		if (this.running) {
 			return true;
 		}
 
-		console.log(`########## Started child [${id}]`);
+		console.log(`########## Started level 1 data object [${id}]`);
 		this._nodeId = id;
 		this.running = true;
 		/**
-		 * Adjust the totalSendCount and opRatePerMin such that this data store and its child data objects collectively
-		 * send totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafChildren children
-		 * running at the same time. So maxDataStores = maxRunningLeafChildren + 1 (this data store).
-		 * - Ops per minute sent by this data store and its children is 1/maxDataStores times the opRatePerMin.
-		 * - totalSendCount of this data stores is 1/maxDataStores times the totalSendCount as its children are also
+		 * Adjust the totalSendCount and opRatePerMin such that this data object and its child data objects collectively
+		 * send totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafDataObjects
+		 * running at the same time. So maxDataObjects = maxRunningLeafDataObjects + 1 (this data object).
+		 * - Ops per minute sent by this data object and its children is 1/maxDataObjects times the opRatePerMin.
+		 * - totalSendCount of this data objects is 1/maxDataObjects times the totalSendCount as its children are also
 		 *   sending ops at the same. What this boils down to is that totalSendCount is controlling how long the test
 		 *   runs since the total number of ops sent may be less than totalSendCount.
 		 */
-		const maxDataStores = maxRunningLeafChildren + 1;
-		const opRatePerMin = Math.ceil(config.testConfig.opRatePerMin / maxDataStores);
-		const totalSendCount = config.testConfig.totalSendCount / maxDataStores;
+		const maxDataObjects = maxRunningLeafDataObjects + 1;
+		const opRatePerMin = Math.ceil(config.testConfig.opRatePerMin / maxDataObjects);
+		const totalSendCount = config.testConfig.totalSendCount / maxDataObjects;
 		this._childRunConfig = {
 			...config,
 			testConfig: {
@@ -384,11 +341,11 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			// After every activityThresholdOpCount ops, perform activities.
 			if (localSendCount % activityThresholdOpCount === 0) {
 				console.log(
-					`########## child data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value} / ${totalSendCount}`,
+					`########## Level 1 data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value} / ${totalSendCount}`,
 				);
 
-				// We do no await for the activity because we want any child created to run asynchronously.
-				this.performDataStoreActivity(config)
+				// We do not await for the activity because we want any data objects created to run asynchronously.
+				this.performDataObjectActivity(config)
 					.then((done: boolean) => {
 						if (!done) {
 							activityFailed = true;
@@ -422,7 +379,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		}
 
 		console.log(
-			`########## Stopped child [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
+			`########## Stopped level 1 data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
 		);
 		this.stop();
 		const notDone = this.runtime.disposed || activityFailed;
@@ -431,8 +388,8 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 
 	public stop() {
 		this.running = false;
-		this.referencedChildDataObjects.forEach((childDetails: IActivityObjectDetails) => {
-			childDetails.object.stop();
+		this.referencedDataObjects.forEach((dataObjectDetails: IActivityObjectDetails) => {
+			dataObjectDetails.object.stop();
 		});
 		this.referencedAttachmentBlobs.forEach((blobDetails: IActivityObjectDetails) => {
 			blobDetails.object.stop();
@@ -440,40 +397,85 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 
 	/**
-	 * Performs one of the following activity at random:
-	 * 1. CreateAndReference - Create a child data object, reference it and ask it to run.
-	 * 2. Unreference - Unreference the oldest referenced child and asks it to stop running.
-	 * 3. Revive - Re-reference the oldest unreferenced child and ask it to run.
+	 * Runs activity on initial set of objects that are referenced, if any. When a container reloads because
+	 * of error or session expiry, it can have referenced objects that should now run.
+	 * @returns A set of promises of each object's run result.
 	 */
-	private async performDataStoreActivity(config: IRunConfig): Promise<boolean> {
+	private async runInitialActivity(): Promise<boolean[]> {
+		const runP: Promise<boolean>[] = [];
+		// Initialize the referenced data object list from the data object map.
+		for (const dataObjectDetails of this.dataObjectMap) {
+			const dataObjectId = dataObjectDetails[0];
+			// Only run data objects created by this node.
+			if (!dataObjectId.startsWith(this.nodeId)) {
+				continue;
+			}
+
+			const dataObjectHandle = dataObjectDetails[1] as IFluidHandle<DataObjectLeaf>;
+			const dataObject = await dataObjectHandle.get();
+			this.referencedDataObjects.push({
+				id: dataObjectId,
+				object: dataObject,
+			});
+			runP.push(dataObject.run(this.childRunConfig, dataObjectId));
+		}
+
+		// Initialize the referenced blob list from the blob map.
+		for (const blobDetails of this.blobMap) {
+			const blobId = blobDetails[0];
+			// Only run blobs created by this node.
+			if (!blobId.startsWith(this.nodeId)) {
+				continue;
+			}
+
+			const blobObject = new AttachmentBlobObject(
+				blobDetails[1] as IFluidHandle<ArrayBufferLike>,
+			);
+			this.referencedAttachmentBlobs.push({
+				id: blobId,
+				object: blobObject,
+			});
+			runP.push(blobObject.run(this.childRunConfig, blobId));
+		}
+
+		return Promise.all(runP);
+	}
+
+	/**
+	 * Performs one of the following activity at random:
+	 * 1. CreateAndReference - Create a data object, reference it and ask it to run.
+	 * 2. Unreference - Unreference the oldest referenced data object and asks it to stop running.
+	 * 3. Revive - Re-reference the oldest unreferenced data object and ask it to run.
+	 */
+	private async performDataObjectActivity(config: IRunConfig): Promise<boolean> {
 		/**
 		 * Tracks if the random activity completed. Keeps trying to run an activity until one completes.
 		 * For Unreference and Revive activities to complete, there has to be referenced and unreferenced
-		 * children respectively. If there are none, choose another activity to run.
+		 * data objects respectively. If there are none, choose another activity to run.
 		 */
 		let activityCompleted = false;
 		while (!activityCompleted) {
 			activityCompleted = false;
 
-			// Add a new reference or revive only if it's possible to run a child at the moment.
-			const action = this.canRunNewChild()
+			// Add a new reference or revive only if it's possible to run a data object at the moment.
+			const action = this.canRunNewDataObject()
 				? random.integer(0, 2)(config.randEng)
 				: GCActivityType.Unreference;
 			switch (action) {
 				case GCActivityType.CreateAndReference: {
-					return this.createAndReferenceChild();
+					return this.createAndReferenceDataObject();
 				}
 				case GCActivityType.Unreference: {
-					if (this.referencedChildDataObjects.length > 0) {
-						this.unreferenceChild();
+					if (this.referencedDataObjects.length > 0) {
+						this.unreferenceDataObject();
 						activityCompleted = true;
 					}
 					break;
 				}
 				case GCActivityType.Revive: {
-					const nextUnreferencedChildDetails = this.unreferencedChildDataObjects.shift();
-					if (nextUnreferencedChildDetails !== undefined) {
-						return this.reviveChild(nextUnreferencedChildDetails);
+					const nextUnreferencedDataObjectDetails = this.unreferencedDataObjects.shift();
+					if (nextUnreferencedDataObjectDetails !== undefined) {
+						return this.reviveDataObject(nextUnreferencedDataObjectDetails);
 					}
 					break;
 				}
@@ -485,58 +487,58 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 
 	/**
-	 * Returns whether it's possible to run a new child at the moment. For instance, there is a limit on the number
-	 * of child than can be running in parallel to control the number of ops per minute.
+	 * Returns whether it's possible to run a new data object at the moment. For instance, there is a limit on the number
+	 * of child data objects than can be running in parallel to control the number of ops per minute.
 	 */
-	private canRunNewChild() {
-		return this.referencedChildDataObjects.length < maxRunningLeafChildren;
+	private canRunNewDataObject() {
+		return this.referencedDataObjects.length < maxRunningLeafDataObjects;
 	}
 
 	/**
-	 * Creates a new child data object, reference it and ask it to run.
+	 * Creates a new data object, reference it and ask it to run.
 	 */
-	private async createAndReferenceChild(): Promise<boolean> {
-		// Give each child a unique id w.r.t. this data store's id.
-		const childId = `${this.nodeId}/ds-${this.childCount.toString()}`;
-		console.log(`########## Creating child [${childId}]`);
+	private async createAndReferenceDataObject(): Promise<boolean> {
+		// Give each data object a unique id w.r.t. this data object's id.
+		const dataObjectId = `${this.nodeId}/ds-${this.childCount.toString()}`;
+		console.log(`########## Creating data object [${dataObjectId}]`);
 		this.childCount++;
 
-		const child = await dataObjectFactoryLeaf.createChildInstance(this.context);
-		this.dataObjectMap.set(childId, child.handle);
-		this.referencedChildDataObjects.push({
-			id: childId,
-			object: child,
+		const dataObject = await dataObjectFactoryLeaf.createChildInstance(this.context);
+		this.dataObjectMap.set(dataObjectId, dataObject.handle);
+		this.referencedDataObjects.push({
+			id: dataObjectId,
+			object: dataObject,
 		});
-		return child.run(this.childRunConfig, childId);
+		return dataObject.run(this.childRunConfig, dataObjectId);
 	}
 
 	/**
-	 * Retrieves the oldest referenced child, asks it to stop running and unreferences it.
+	 * Retrieves the oldest referenced data object, asks it to stop running and unreferences it.
 	 */
-	private unreferenceChild() {
-		const childDetails = this.referencedChildDataObjects.shift();
-		assert(childDetails !== undefined, "Cannot find child to unreference");
-		console.log(`########## Unreferencing child [${childDetails.id}]`);
+	private unreferenceDataObject() {
+		const dataObjectDetails = this.referencedDataObjects.shift();
+		assert(dataObjectDetails !== undefined, "Cannot find data object to unreference");
+		console.log(`########## Unreferencing data object [${dataObjectDetails.id}]`);
 
-		const childHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(
-			childDetails.id,
+		const dataObjectHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(
+			dataObjectDetails.id,
 		);
-		assert(childHandle !== undefined, "Could not get handle for child");
+		assert(dataObjectHandle !== undefined, "Could not get handle for data object");
 
-		childDetails.object.stop();
+		dataObjectDetails.object.stop();
 
-		this.dataObjectMap.delete(childDetails.id);
-		this.unreferencedChildDataObjects.push(childDetails);
+		this.dataObjectMap.delete(dataObjectDetails.id);
+		this.unreferencedDataObjects.push(dataObjectDetails);
 	}
 
 	/**
-	 * Retrieves the oldest unreferenced child, references it and asks it to run.
+	 * Retrieves the oldest unreferenced data object, references it and asks it to run.
 	 */
-	private async reviveChild(childDetails: IActivityObjectDetails): Promise<boolean> {
-		console.log(`########## Reviving child [${childDetails.id}]`);
-		this.dataObjectMap.set(childDetails.id, childDetails.object.handle);
-		this.referencedChildDataObjects.push(childDetails);
-		return childDetails.object.run(this.childRunConfig, childDetails.id);
+	private async reviveDataObject(dataObjectDetails: IActivityObjectDetails): Promise<boolean> {
+		console.log(`########## Reviving data object [${dataObjectDetails.id}]`);
+		this.dataObjectMap.set(dataObjectDetails.id, dataObjectDetails.object.handle);
+		this.referencedDataObjects.push(dataObjectDetails);
+		return dataObjectDetails.object.run(this.childRunConfig, dataObjectDetails.id);
 	}
 
 	/**
@@ -551,7 +553,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			const blobAction = random.integer(0, 2)(config.randEng);
 			switch (blobAction) {
 				case GCActivityType.CreateAndReference: {
-					// Give each blob a unique id w.r.t. this data store's id.
+					// Give each blob a unique id w.r.t. this data object's id.
 					const blobId = `${this.nodeId}/blob-${this.blobCount.toString()}`;
 					console.log(`########## Creating blob [${blobId}]`);
 					const blobContents = `Content - ${this.uniqueBlobContentId}-${this.blobCount}`;
@@ -648,7 +650,7 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 		const partnerId1 = `client${partnerRunId1}`;
 		const partnerId2 = `client${partnerRunId2}`;
 		console.log(
-			`---------- Collab data store partners [${this.nodeId}]: ${partnerId1} / ${partnerId2}`,
+			`---------- Collab data object partners [${this.nodeId}]: ${partnerId1} / ${partnerId2}`,
 		);
 
 		/**
@@ -669,31 +671,31 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 			}
 
 			/**
-			 * If a new child was referenced, run our corresponding local child.
-			 * If a child was unreferenced, stop running our corresponding local child.
-			 * TODO: Handle scenario where these children fail. Also, when we are asked to stop, we should stop these
-			 * children as well.
+			 * If a new data object was referenced, run our corresponding local data object.
+			 * If a data object was unreferenced, stop running our corresponding local data object.
+			 * TODO: Handle scenario where these data objects fail. Also, when we are asked to stop, we should stop these
+			 * data objects as well.
 			 */
 			if (this.dataObjectMap.has(changed.key)) {
-				const childHandle = this.dataObjectMap.get(
+				const dataObjectHandle = this.dataObjectMap.get(
 					changed.key,
 				) as IFluidHandle<IGCActivityObject>;
-				childHandle
+				dataObjectHandle
 					.get()
-					.then((child: IGCActivityObject) => {
-						console.log(`---------- Running remote child [${changed.key}]`);
-						child
+					.then((dataObject: IGCActivityObject) => {
+						console.log(`---------- Running remote data object [${changed.key}]`);
+						dataObject
 							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
 							.catch((error) => {});
 					})
 					.catch((error) => {});
 			} else {
-				const childHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
-				childHandle
+				const dataObjectHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
+				dataObjectHandle
 					.get()
-					.then((child: IGCActivityObject) => {
-						console.log(`---------- Stopping remote child [${changed.key}]`);
-						child.stop();
+					.then((dataObject: IGCActivityObject) => {
+						console.log(`---------- Stopping remote data object [${changed.key}]`);
+						dataObject.stop();
 					})
 					.catch((error) => {});
 			}
@@ -712,46 +714,48 @@ export const dataObjectFactoryCollab = new DataObjectFactory(
 );
 
 /**
- * Root data object that creates a collab and a non-collab child and runs them.
+ * Root data object that creates a collab and a non-collab data object and runs them.
  */
 export class RootDataObject extends DataObject implements IGCActivityObject {
 	public static get type(): string {
 		return "RootDataObject";
 	}
 
-	private readonly dataObjectNonCollabKey = "nonCollabChild";
-	private readonly dataObjectCollabKey = "collabChild";
+	private readonly dataObjectNonCollabKey = "nonCollabDataObject";
+	private readonly dataObjectCollabKey = "collabDataObject";
 
-	private nonCollabChild: IGCActivityObject | undefined;
-	private collabChild: IGCActivityObject | undefined;
+	private nonCollabDataObject: IGCActivityObject | undefined;
+	private collabDataObject: IGCActivityObject | undefined;
 
 	protected async initializingFirstTime(): Promise<void> {
 		await super.initializingFirstTime();
 
-		const nonCollabChild = await dataObjectFactoryNonCollab.createChildInstance(this.context);
-		this.root.set<IFluidHandle>(this.dataObjectNonCollabKey, nonCollabChild.handle);
+		const nonCollabDataObject = await dataObjectFactoryNonCollab.createChildInstance(
+			this.context,
+		);
+		this.root.set<IFluidHandle>(this.dataObjectNonCollabKey, nonCollabDataObject.handle);
 
-		const collabChild = await dataObjectFactoryCollab.createChildInstance(this.context);
-		this.root.set<IFluidHandle>(this.dataObjectCollabKey, collabChild.handle);
+		const collabDataObject = await dataObjectFactoryCollab.createChildInstance(this.context);
+		this.root.set<IFluidHandle>(this.dataObjectCollabKey, collabDataObject.handle);
 	}
 
 	public async run(config: IRunConfig): Promise<boolean> {
-		const nonCollabChildHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
+		const nonCollabDataObjectHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
 			this.dataObjectNonCollabKey,
 		);
-		assert(nonCollabChildHandle !== undefined, "Non collab data store not present");
-		this.nonCollabChild = await nonCollabChildHandle.get();
+		assert(nonCollabDataObjectHandle !== undefined, "Non collab data object not present");
+		this.nonCollabDataObject = await nonCollabDataObjectHandle.get();
 
-		const collabChildHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
+		const collabDataObjectHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
 			this.dataObjectCollabKey,
 		);
-		assert(collabChildHandle !== undefined, "Collab data store not present");
-		this.collabChild = await collabChildHandle.get();
+		assert(collabDataObjectHandle !== undefined, "Collab data object not present");
+		this.collabDataObject = await collabDataObjectHandle.get();
 
 		/**
-		 * Adjust the op rate and total send count for each child.
-		 * - Each child sends half the number of ops per min.
-		 * - Each child sends half the total number of ops.
+		 * Adjust the op rate and total send count for each data object.
+		 * - Each data object sends half the number of ops per min.
+		 * - Each data object sends half the total number of ops.
 		 */
 		const opRatePerMinPerClient = config.testConfig.opRatePerMin / config.testConfig.numClients;
 		const opRatePerMinPerChild = Math.ceil(opRatePerMinPerClient / 2);
@@ -768,13 +772,16 @@ export class RootDataObject extends DataObject implements IGCActivityObject {
 		// Add a  random jitter of +- 50% of randomDelayMs to stagger the start of child in each client.
 		const approxDelayMs = 1000;
 		await delay(approxDelayMs + approxDelayMs * random.real(0, 0.5, true)(config.randEng));
-		const child1RunP = this.nonCollabChild.run(
+		const child1RunP = this.nonCollabDataObject.run(
 			childConfig,
 			`client${config.runId + 1}NonCollab`,
 		);
 
 		await delay(approxDelayMs + approxDelayMs * random.real(0, 0.5, true)(config.randEng));
-		const child2RunP = this.collabChild.run(childConfig, `client${config.runId + 1}Collab`);
+		const child2RunP = this.collabDataObject.run(
+			childConfig,
+			`client${config.runId + 1}Collab`,
+		);
 
 		return Promise.all([child1RunP, child2RunP]).then(([child1Result, child2Result]) => {
 			return child1Result && child2Result;
@@ -782,8 +789,8 @@ export class RootDataObject extends DataObject implements IGCActivityObject {
 	}
 
 	public stop() {
-		this.nonCollabChild?.stop();
-		this.collabChild?.stop();
+		this.nonCollabDataObject?.stop();
+		this.collabDataObject?.stop();
 	}
 }
 
