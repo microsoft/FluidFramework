@@ -182,12 +182,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.runtime.closeFn,
 		);
 
-		this.configs = generateGCConfigs(
-			createParams.gcOptions,
-			createParams.metadata,
-			createParams.existing,
-			this.mc,
-		);
+		this.configs = generateGCConfigs(this.mc, createParams);
 
 		// If session expiry is enabled, we need to close the container when the session expiry timeout expires.
 		if (this.configs.sessionExpiryTimeoutMs !== undefined) {
@@ -241,7 +236,7 @@ export class GarbageCollector implements IGarbageCollector {
 						"FailedToInitializeGC",
 					);
 					dpe.addTelemetryProperties({
-						details: JSON.stringify({ ...this.configs, ...createParams.gcOptions }),
+						gcConfigs: JSON.stringify(this.configs),
 					});
 					throw dpe;
 				}
@@ -267,7 +262,7 @@ export class GarbageCollector implements IGarbageCollector {
 				// Log an event so we can evaluate how often we run into this scenario.
 				this.mc.logger.sendErrorEvent({
 					eventName: "GarbageCollectorInitializedWithoutTimestamp",
-					details: JSON.stringify({ ...this.configs }),
+					gcConfigs: JSON.stringify(this.configs),
 				});
 				return;
 			}
@@ -309,7 +304,8 @@ export class GarbageCollector implements IGarbageCollector {
 		if (this.isSummarizerClient) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "GarbageCollectorLoaded",
-				details: JSON.stringify({ ...this.configs, ...createParams.gcOptions }),
+				gcConfigs: JSON.stringify(this.configs),
+				gcOptions: JSON.stringify(createParams.gcOptions),
 			});
 		}
 	}
@@ -495,7 +491,7 @@ export class GarbageCollector implements IGarbageCollector {
 			// Log an event so we can evaluate how often we run into this scenario.
 			logger.sendErrorEvent({
 				eventName: "CollectGarbageCalledWithoutTimestamp",
-				details: JSON.stringify({ ...this.configs }),
+				gcConfigs: JSON.stringify(this.configs),
 			});
 			return undefined;
 		}
@@ -669,7 +665,7 @@ export class GarbageCollector implements IGarbageCollector {
 					{
 						proposalHandle,
 						summaryRefSeq: result.summaryRefSeq,
-						details: JSON.stringify(this.configs),
+						gcConfigs: JSON.stringify(this.configs),
 					},
 				);
 			}

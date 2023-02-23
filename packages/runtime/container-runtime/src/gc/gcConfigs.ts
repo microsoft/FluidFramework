@@ -27,17 +27,20 @@ import { getGCVersion } from "./gcHelpers";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
- * @param gcOptions - The garbage collector runtime options.
- * @param metadata - The container runtime's metadata.
- * @param existing - Whether the container is new or an existing one.
  * @param mc - The monitoring context for reading configs from the config provider.
+ * @param createParams - The creation params:
+ * gcOptions - The garbage collector runtime options.
+ * metadata - The container runtime's createParams.metadata.
+ * existing - Whether the container is new or an existing one.
  * @returns The garbage collector configurations.
  */
 export function generateGCConfigs(
-	gcOptions: IGCRuntimeOptions,
-	metadata: IContainerRuntimeMetadata | undefined,
-	existing: boolean,
 	mc: MonitoringContext,
+	createParams: {
+		gcOptions: IGCRuntimeOptions;
+		metadata: IContainerRuntimeMetadata | undefined;
+		existing: boolean;
+	},
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean;
 	let sweepEnabled: boolean;
@@ -51,21 +54,22 @@ export function generateGCConfigs(
 	 * 1. Whether running GC mark phase is allowed or not.
 	 * 2. Whether running GC sweep phase is allowed or not.
 	 * 3. Whether GC session expiry is enabled or not.
-	 * For existing containers, we get this information from the metadata blob of its summary.
+	 * For existing containers, we get this information from the createParams.metadata blob of its summary.
 	 */
-	if (existing) {
-		gcVersionInBaseSnapshot = getGCVersion(metadata);
-		// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
+	if (createParams.existing) {
+		gcVersionInBaseSnapshot = getGCVersion(createParams.metadata);
+		// Existing documents which did not have createParams.metadata blob or had GC disabled have version as 0. For all
 		// other existing documents, GC is enabled.
 		gcEnabled = gcVersionInBaseSnapshot > 0;
-		sweepEnabled = metadata?.sweepEnabled ?? false;
-		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-		sweepTimeoutMs = metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
-		persistedGcFeatureMatrix = metadata?.gcFeatureMatrix;
+		sweepEnabled = createParams.metadata?.sweepEnabled ?? false;
+		sessionExpiryTimeoutMs = createParams.metadata?.sessionExpiryTimeoutMs;
+		sweepTimeoutMs =
+			createParams.metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
+		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 	} else {
 		// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
 		// scenario but explicitly failing makes it clearer and promotes correct usage.
-		if (gcOptions.sweepAllowed && gcOptions.gcAllowed === false) {
+		if (createParams.gcOptions.sweepAllowed && createParams.gcOptions.gcAllowed === false) {
 			throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
 		}
 
@@ -76,20 +80,20 @@ export function generateGCConfigs(
 
 		// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
 		// flag in GC options to false.
-		gcEnabled = gcOptions.gcAllowed !== false;
+		gcEnabled = createParams.gcOptions.gcAllowed !== false;
 		// The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-		sweepEnabled = gcOptions.sweepAllowed === true;
+		sweepEnabled = createParams.gcOptions.sweepAllowed === true;
 
 		// Set the Session Expiry only if the flag is enabled and GC is enabled.
 		if (mc.config.getBoolean(runSessionExpiryKey) && gcEnabled) {
 			sessionExpiryTimeoutMs =
-				gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
+				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
 		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
 
-		if (gcOptions[gcTombstoneGenerationOptionName] !== undefined) {
+		if (createParams.gcOptions[gcTombstoneGenerationOptionName] !== undefined) {
 			persistedGcFeatureMatrix = {
-				tombstoneGeneration: gcOptions[gcTombstoneGenerationOptionName],
+				tombstoneGeneration: createParams.gcOptions[gcTombstoneGenerationOptionName],
 			};
 		}
 	}
@@ -108,7 +112,7 @@ export function generateGCConfigs(
 		// GC must be enabled for the document.
 		(gcEnabled &&
 			// GC must not be disabled via GC options.
-			!gcOptions.disableGC);
+			!createParams.gcOptions.disableGC);
 
 	/**
 	 * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -128,7 +132,7 @@ export function generateGCConfigs(
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =
 		mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
-		gcOptions.inactiveTimeoutMs ??
+		createParams.gcOptions.inactiveTimeoutMs ??
 		defaultInactiveTimeoutMs;
 
 	// Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
@@ -137,18 +141,20 @@ export function generateGCConfigs(
 	}
 
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-	const testMode = mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
+	const testMode =
+		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
 	// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
 	// via feature flags.
 	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
 	const trackGCState = mc.config.getBoolean(trackGCStateKey) === true;
+	const runFullGC = createParams.gcOptions.runFullGC;
 
 	return {
 		gcEnabled,
 		sweepEnabled,
 		shouldRunGC,
 		shouldRunSweep,
-		runFullGC: gcOptions.runFullGC,
+		runFullGC,
 		testMode,
 		tombstoneMode,
 		trackGCState,

@@ -32,7 +32,11 @@ export {
 	throwOnTombstoneUsageKey,
 	UnreferencedState,
 } from "./gcDefinitions";
-export { sendGCUnexpectedUsageEvent, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
+export {
+	getSnapshotDataFromOldSnapshotFormat,
+	sendGCUnexpectedUsageEvent,
+	shouldAllowGcTombstoneEnforcement,
+} from "./gcHelpers";
 export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,
