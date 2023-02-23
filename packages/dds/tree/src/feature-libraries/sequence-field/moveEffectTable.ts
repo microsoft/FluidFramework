@@ -436,8 +436,13 @@ export function splitMarkOnInput<T, TMark extends InputSpanningMark<T>>(
 		}
 		case "Revive":
 			return [
-				{ ...markObj, count: length },
-				{ ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
+				{ ...markObj, content: mark.content.slice(0, length), count: length },
+				{
+					...markObj,
+					content: mark.content.slice(length),
+					count: remainder,
+					detachIndex: mark.detachIndex + length,
+				},
 			] as [TMark, TMark];
 		case "Delete":
 			return [
@@ -556,8 +561,13 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 		}
 		case "Revive":
 			return [
-				{ ...markObj, count: length },
-				{ ...markObj, count: remainder, detachIndex: markObj.detachIndex + length },
+				{ ...markObj, content: markObj.content.slice(0, length), count: length },
+				{
+					...markObj,
+					content: markObj.content.slice(length),
+					count: remainder,
+					detachIndex: markObj.detachIndex + length,
+				},
 			];
 		default:
 			unreachableCase(type);

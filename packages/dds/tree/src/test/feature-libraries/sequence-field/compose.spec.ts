@@ -396,7 +396,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: createFakeRepairData(tag1, 1, 2),
+				content: createFakeRepairData(tag1, 2, 1),
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 2,

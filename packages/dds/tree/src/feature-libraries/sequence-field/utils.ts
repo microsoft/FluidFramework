@@ -459,6 +459,9 @@ export function tryExtendMark<T>(
 				rhs.lastDetachedBy === lhsReattach.lastDetachedBy &&
 				lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
 			) {
+				if ("content" in lhsReattach) {
+					lhsReattach.content.push(...rhs.content);
+				}
 				lhsReattach.count += rhs.count;
 				return true;
 			}
