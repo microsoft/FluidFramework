@@ -16,7 +16,7 @@
     "build:genver": "lerna run build:genver --stream --parallel",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "format": "lerna run format --no-sort --stream",
-    "preinstall": "node ./scripts/only-pnpm.cjs",
+    "preinstall": "node scripts/only-pnpm.cjs",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
     "policy-check": "cd ../.. && npm run policy-check",
@@ -43,8 +43,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.9.0-0",
-    "@fluidframework/build-tools": "^0.9.0-0",
+    "@fluid-tools/build-cli": "^0.10.0",
+    "@fluidframework/build-tools": "^0.10.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.6.1",
     "@types/compression": "0.0.36",
