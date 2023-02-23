@@ -581,18 +581,22 @@ export class ConnectionManager implements IConnectionManager {
 				lastError = origError;
 
 				const retryDelayFromError = getRetryDelayFromError(origError);
-				delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
-
 				if (retryDelayFromError !== undefined) {
+					// If the error told us to wait, then we wait.
 					this.props.reconnectionDelayHandler(retryDelayFromError, origError);
+					await new Promise<void>((resolve) => {
+						setTimeout(resolve, retryDelayFromError);
+					});
+				} else if (globalThis.navigator?.onLine !== false) {
+					// If the error didn't tell us to wait, let's still wait a little bit before retrying.
+					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
+					await new Promise<void>((resolve) => {
+						setTimeout(resolve, delayMs);
+						delayMs = Math.min(delayMs * 2, MaxReconnectDelayInMs);
+					});
 				}
 
-				// First, wait for the amount of time we think is appropriate.
-				await new Promise<void>((resolve) => {
-					setTimeout(resolve, delayMs);
-				});
-
-				// Then, if we believe we're offline, we assume there's no point in trying until we at least think we're online.
+				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
 				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 				// should probably live in the driver.
 				await waitForOnline();
