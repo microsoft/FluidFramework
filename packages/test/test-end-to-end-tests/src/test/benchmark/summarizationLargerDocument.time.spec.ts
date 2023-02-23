@@ -144,9 +144,9 @@ describeNoCompat("Summarization  Larger Document- runtime benchmarks", (getTestO
 		await waitForContainerConnection(mainContainer, true);
 
 		const { summarizer: summarizerClient } = await createSummarizer(provider, mainContainer);
-		await provider.ensureSynchronized();
 		summaryVersion = await waitForSummary(summarizerClient);
 		assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
+		summarizerClient.close();
 	});
 
 	benchmark({
@@ -171,8 +171,16 @@ describeNoCompat("Summarization  Larger Document- runtime benchmarks", (getTestO
 			}
 			await provider.ensureSynchronized();
 
-			const summarizerClient2 = await createSummarizer(provider, container2, summaryVersion);
-			assert(summarizerClient2 !== undefined, "summarizerClient2 needs to be defined.");
+			const { summarizer: summarizerClient } = await createSummarizer(
+				provider,
+				container2,
+				summaryVersion,
+			);
+			assert(summarizerClient !== undefined, "summarizer needs to be defined.");
+
+			summaryVersion = await waitForSummary(summarizerClient);
+			assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
+			summarizerClient.close();
 		},
 	});
 });

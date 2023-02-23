@@ -147,6 +147,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 		await provider.ensureSynchronized();
 		summaryVersion = await waitForSummary(summarizerClient);
 		assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
+		summarizerClient.close();
 	});
 
 	benchmarkMemory(
@@ -155,6 +156,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 			dataObject2map: SharedMap | undefined;
 			container2: IContainer | undefined;
 			summarizerClient2: { container: IContainer; summarizer: ISummarizer } | undefined;
+			key: string[] = ["", ""];
 			async run() {
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
@@ -166,6 +168,12 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 				this.dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 				this.dataObject2map.set("setup", "done");
 				validateMapKeys(this.dataObject2map, messageCount, maxMessageSizeInBytes);
+
+				for (let i = 0; i < messageCount; i++) {
+					this.key[i] = this.dataObject2map.get(`key${i}`) ?? "";
+					assert(this.key[i] !== "");
+					assert(this.key[i].length === maxMessageSizeInBytes);
+				}
 				await provider.ensureSynchronized();
 
 				this.summarizerClient2 = await createSummarizer(
@@ -177,11 +185,19 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 					this.summarizerClient2 !== undefined,
 					"summarizerClient2 needs to be defined.",
 				);
+				const { summarizer: summarizerClient } = await createSummarizer(
+					provider,
+					mainContainer,
+				);
+				summaryVersion = await waitForSummary(summarizerClient);
+				assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
+				summarizerClient.close();
 			}
 			beforeIteration() {
 				this.dataObject2map = undefined;
 				this.container2 = undefined;
 				this.summarizerClient2 = undefined;
+				this.key = ["", ""];
 			}
 		})(),
 	);
