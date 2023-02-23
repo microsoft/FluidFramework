@@ -1918,7 +1918,7 @@ export class MergeTree {
 				insertPos += newSegment.cachedLength;
 
 				if (!this.options?.mergeTreeEnableObliterate) {
-					return;
+					continue;
 				}
 
 				let moveUpperBound = Number.POSITIVE_INFINITY;
