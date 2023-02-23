@@ -7,6 +7,16 @@ import { Node, Project, ts } from "ts-morph";
 
 import { PackageDetails, getPackageDetails } from "./packageJson";
 
+/**
+ * The name of the config file that is used to store type validation config.
+ */
+export const typeValidationConfigFile = "type-validation.config.json";
+
+/**
+ * The name of the property in package.json that holds type validation config.
+ */
+export const typeValidationPropertyName = "typeValidation";
+
 export interface PackageAndTypeData {
 	packageDetails: PackageDetails;
 	typeData: TypeData[];

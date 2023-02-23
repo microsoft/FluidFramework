@@ -8,6 +8,7 @@ import {
 	AnchorSet,
 	Delta,
 	FieldKey,
+	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
@@ -80,7 +81,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	if (data !== undefined) {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
-	let currentRevision = 0;
+	let currentRevision = mintRevisionTag();
 	const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
 		assert(
 			revision === currentRevision,
@@ -93,13 +94,12 @@ function initializeEditableForest(data?: JsonableTree): {
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
-			const revision: RevisionTag = brand(currentRevision);
-			changes.push({ revision, change });
+			changes.push({ revision: currentRevision, change });
 			const delta = defaultChangeFamily.intoDelta(change, repairStore);
-			repairStore.capture(delta, revision);
+			repairStore.capture(delta, currentRevision);
 			deltas.push(delta);
 			forest.applyDelta(delta);
-			currentRevision += 1;
+			currentRevision = mintRevisionTag();
 		},
 		new AnchorSet(),
 	);
