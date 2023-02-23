@@ -248,7 +248,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		summaryOptions: {
 			summaryConfigOverrides: { state: "disabled" },
 		},
-		gcOptions: { gcAllowed: false },
+		gcOptions: { gcAllowed: true },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);

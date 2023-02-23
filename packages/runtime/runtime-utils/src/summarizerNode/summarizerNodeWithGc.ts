@@ -479,6 +479,40 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	}
 
 	/**
+	 * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
+	 * summary tracking state needs to be updated too.
+	 * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
+	 * pending summary as well.
+	 * @param child - The child node whose state is to be updated.
+	 */
+	protected maybeUpdateChildState(child: SummarizerNodeWithGC) {
+		// If a summary is in progress, this child was created after the summary started. So, we need to update the
+		// child's summary state as well.
+		if (this.isSummaryInProgress()) {
+			child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
+		}
+		// In case we have pending summaries on the parent, let's initialize it on the child.
+		if (child.latestSummary !== undefined) {
+			for (const [key, value] of this.pendingSummaries.entries()) {
+				const serializedRoutes = (value as SummaryNodeWithGC).serializedUsedRoutes;
+				const newLatestSummaryNode =
+					serializedRoutes !== undefined
+						? new SummaryNodeWithGC(serializedRoutes, {
+								referenceSequenceNumber: value.referenceSequenceNumber,
+								basePath: child.latestSummary.basePath,
+								localPath: child.latestSummary.localPath,
+						  })
+						: new SummaryNode({
+								referenceSequenceNumber: value.referenceSequenceNumber,
+								basePath: child.latestSummary.basePath,
+								localPath: child.latestSummary.localPath,
+						  });
+				child.addPendingSummary(key, newLatestSummaryNode);
+			}
+		}
+	}
+
+	/**
 	 * Deletes the child node with the given id.
 	 */
 	public deleteChild(id: string): void {
