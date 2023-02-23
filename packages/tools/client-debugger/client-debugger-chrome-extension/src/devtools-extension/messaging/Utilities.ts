@@ -6,6 +6,12 @@
 import { IDebuggerMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
 import { TypedPortConnection } from "../../messaging";
 
+function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOptions): string {
+	const loggingPreamble =
+		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
+	return `${loggingPreamble}${text}`;
+}
+
 /**
  * Relays the provided message to the window (globalThis).
  *
@@ -18,13 +24,12 @@ export function relayMessageToWindow<TMessage extends IDebuggerMessage>(
 	messageSource: string,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	const loggingPreamble =
-		loggingOptions?.context === undefined ? "" : `(${loggingOptions.context}): `;
 	console.log(
-		`${loggingPreamble}Relaying message from "${messageSource}" to the window:`,
+		formatMessageForLogging(
+			`Relaying message from "${messageSource}" to the window:`,
+			loggingOptions,
+		),
 		message,
-
-		chrome,
 	); // TODO: console.debug
 	window.postMessage(message, "*"); // TODO: verify target is okay
 }
@@ -42,10 +47,11 @@ export function relayMessageToPort<TMessage extends IDebuggerMessage>(
 	targetPort: TypedPortConnection<TMessage>,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	const loggingPreamble =
-		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
 	console.log(
-		`${loggingPreamble}Relaying message from "${messageSource}" to port "${targetPort.name}":`,
+		formatMessageForLogging(
+			`Relaying "${message.type}" message from "${messageSource}" to port "${targetPort.name}":`,
+			loggingOptions,
+		),
 		message,
 	); // TODO: console.debug
 	targetPort.postMessage(message);
@@ -63,17 +69,93 @@ export function postMessageToPort<TMessage extends IDebuggerMessage>(
 	targetPort: TypedPortConnection<TMessage>,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	const loggingPreamble =
-		loggingOptions?.context === undefined ? "" : `(${loggingOptions.context}): `;
-	console.log(`${loggingPreamble}Posting message to port "${targetPort}":`, message); // TODO: console.debug
+	console.log(
+		formatMessageForLogging(
+			`Posting "${message.type}" message to port "${targetPort.name}":`,
+			loggingOptions,
+		),
+		message,
+	); // TODO: console.debug
 	targetPort.postMessage(message);
 }
 
 /**
- * Validates some incoming message to ensure it is a valid {@link IDebuggerMessage}.
+ * Relays the provided message to the specified target port.
+ *
+ * @remarks Thin wrapper to provide some message-wise type-safety, and to inject some automated logging.
+ *
+ * @internal
  */
-export function isValidDebuggerMessage(
-	message: Partial<IDebuggerMessage>,
-): message is IDebuggerMessage {
-	return message.source !== undefined && message.type !== undefined;
+export function relayMessageToRuntime<TMessage extends IDebuggerMessage>(
+	message: TMessage,
+	messageSource: string,
+	loggingOptions?: MessageLoggingOptions,
+): void {
+	console.log(
+		formatMessageForLogging(
+			`Relaying "${message.type}" message from "${messageSource}" to Background Script:`,
+			loggingOptions,
+		),
+		message,
+	);
+	chrome.runtime.sendMessage(message).then(
+		(response) => {
+			console.log(
+				formatMessageForLogging(
+					`Acknowledgement received from Background Script for "${message.type}" message:`,
+					loggingOptions,
+				),
+				response,
+			);
+		},
+		(error) => {
+			console.error(
+				formatMessageForLogging(
+					`Encountered an error while relaying "${message.type}" message from "${messageSource}" to Background Script`,
+					loggingOptions,
+				),
+				error,
+			);
+		},
+	);
+}
+
+/**
+ * Posts the provided message to the specified target port.
+ *
+ * @remarks Thin wrapper to provide some message-wise type-safety, and to inject some automated logging.
+ *
+ * @internal
+ */
+export function postMessageToRuntime<TMessage extends IDebuggerMessage>(
+	message: TMessage,
+	loggingOptions?: MessageLoggingOptions,
+): void {
+	console.log(
+		formatMessageForLogging(
+			`Posting "${message.type}" message to Background Script:`,
+			loggingOptions,
+		),
+		message,
+	);
+	chrome.runtime.sendMessage(message).then(
+		(response) => {
+			console.log(
+				formatMessageForLogging(
+					`Acknowledgement received from Background Script for "${message.type}" message:`,
+					loggingOptions,
+				),
+				response,
+			);
+		},
+		(error) => {
+			console.error(
+				formatMessageForLogging(
+					`Encountered an error while posting "${message.type}" message to Background Script:`,
+					loggingOptions,
+				),
+				error,
+			);
+		},
+	);
 }

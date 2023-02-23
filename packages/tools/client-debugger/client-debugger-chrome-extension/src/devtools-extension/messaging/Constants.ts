@@ -6,4 +6,4 @@
 /**
  * The message {@link IDebuggerMessage.source} for all messages posted by the Devtools extension.
  */
-export const devtoolsMessageSource: string = "fluid-client-devtools";
+export const devtoolsMessageSource: string = "fluid-client-debugger-devtools";

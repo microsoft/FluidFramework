@@ -6,4 +6,4 @@
 /**
  * The message {@link IDebuggerMessage.source} for all messages posted by Chrome content scripts.
  */
-export const extensionMessageSource: string = "fluid-client-chrome-extension";
+export const extensionMessageSource: string = "fluid-client-debugger-chrome-extension";

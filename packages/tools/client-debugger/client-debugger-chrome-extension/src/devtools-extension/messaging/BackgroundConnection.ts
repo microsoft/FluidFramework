@@ -10,14 +10,18 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { IMessageReceiverEvents, IMessageRelay, TypedPortConnection } from "../../messaging";
-import { DevToolsInitMessage } from "./Messages";
+import {
+	devToolsInitAcknowledgementType,
+	DevToolsInitMessage,
+	devToolsInitMessageType,
+} from "./Messages";
 import { devtoolsMessageSource } from "./Constants";
-import { relayMessageToPort } from "./Utilities";
+import { postMessageToPort } from "./Utilities";
 
 /**
  * Context string for logging.
  */
-const loggingContext = "EXTENSION(DEVTOOLS SCRIPT)";
+const loggingContext = "EXTENSION(DEVTOOLS_SCRIPT)";
 
 /**
  * Formats the provided log message with the appropriate context information.
@@ -43,25 +47,37 @@ export class BackgroundConnection
 	/**
 	 * Port connection to the Background Script
 	 */
-	private readonly backgroundScriptConnection: TypedPortConnection;
+	private backgroundScriptConnection: TypedPortConnection | undefined;
 
 	/**
 	 * Handler for incoming messages from {@link backgroundScriptConnection}.
 	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
 	 */
-	private readonly messageRelayHandler = (message: Partial<IDebuggerMessage>): boolean => {
-		// Forward incoming message onto subscribers if it is one of ours.
-		// TODO: validate source
-		if (isDebuggerMessage(message)) {
-			console.log(formatForLogging(`Relaying message from Background to Devtools:`), message);
+	private readonly backgroundMessageHandler = (message: Partial<IDebuggerMessage>): boolean => {
+		if (!isDebuggerMessage(message)) {
+			return false;
+		}
+
+		if (message.type === devToolsInitAcknowledgementType) {
+			console.log(formatForLogging("Background initialization acknowledged."));
+			return true;
+		} else {
+			// Forward incoming message onto subscribers.
+			// TODO: validate source
+			console.log(
+				formatForLogging(`Relaying "${message.type}" message from BACKGROUND_SCRIPT:`),
+				message,
+			);
 			return this.emit("message", message);
 		}
-		return false;
 	};
 
 	public constructor() {
 		super();
+		this.initializeBackgroundServiceConnection();
+	}
 
+	private initializeBackgroundServiceConnection(): void {
 		console.log(formatForLogging("Connecting to Background script..."));
 
 		// Create a connection to the background page
@@ -72,29 +88,37 @@ export class BackgroundConnection
 		// Relay the tab ID to the background service worker.
 		const initMessage: DevToolsInitMessage = {
 			source: devtoolsMessageSource,
-			type: "initializeDevtools",
+			type: devToolsInitMessageType,
 			data: {
 				tabId: chrome.devtools.inspectedWindow.tabId,
 			},
 		};
-		this.backgroundScriptConnection.postMessage(initMessage);
+		// postMessageToRuntime(initMessage, messageLoggingOptions);
+		postMessageToPort(initMessage, this.backgroundScriptConnection, messageLoggingOptions);
 
 		// Bind listeners
-		this.backgroundScriptConnection.onMessage.addListener(this.messageRelayHandler);
-		this.backgroundScriptConnection.onDisconnect.addListener((port) => {
-			// TODO: anything we need to do here?
-		});
+		this.backgroundScriptConnection.onMessage.addListener(this.backgroundMessageHandler);
+
+		// If we are disconnected from the service, immediately regenerate connection.
+		// TODO: is this correct? Do we need to re-connect on demand instead?
+		this.backgroundScriptConnection.onDisconnect.addListener(
+			this.initializeBackgroundServiceConnection.bind(this),
+		);
 	}
 
 	/**
-	 * {@inheritDoc IMessageRelay.postMessage}
+	 * Post message to Background Script.
 	 */
 	public postMessage(message: IDebuggerMessage): void {
-		relayMessageToPort(
-			message,
-			"devtools-page",
-			this.backgroundScriptConnection,
-			messageLoggingOptions,
-		);
+		if (this.backgroundScriptConnection === undefined) {
+			throw new Error(
+				formatForLogging(
+					"Background Script connection is undefined. This should not be possible.",
+				),
+			);
+		}
+
+		// postMessageToRuntime(message, messageLoggingOptions);
+		postMessageToPort(message, this.backgroundScriptConnection, messageLoggingOptions);
 	}
 }

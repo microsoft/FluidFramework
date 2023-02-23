@@ -89,7 +89,7 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 	}, [containerId, setContainerState, messageRelay]);
 
 	if (containerState === undefined) {
-		return <Waiting />;
+		return <Waiting label="Waiting for Container Summary data." />;
 	}
 
 	// TODO: connect/disconnect, close handlers

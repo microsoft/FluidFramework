@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Button } from "@fluentui/react";
 import React from "react";
 
 import {
@@ -27,6 +28,15 @@ const loggingContext = "EXTENSION(DebuggerPanel)";
 // 	ContainerData = "Container Data",
 // 	Audience = "Audience",
 // }
+
+/**
+ * Message sent to the webpage to query for the full container list.
+ */
+const getContainerListMessage: IDebuggerMessage = {
+	type: "GET_CONTAINER_LIST",
+	source: extensionMessageSource,
+	data: undefined,
+};
 
 /**
  * Root Debugger view.
@@ -66,11 +76,7 @@ export function DebuggerPanel(): React.ReactElement {
 
 		messageRelay.on("message", messageHandler);
 
-		messageRelay.postMessage({
-			type: "GET_CONTAINER_LIST",
-			source: extensionMessageSource,
-			data: undefined,
-		});
+		messageRelay.postMessage(getContainerListMessage);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -78,7 +84,12 @@ export function DebuggerPanel(): React.ReactElement {
 	}, [setContainers, messageRelay]);
 
 	return containers === undefined ? (
-		<Waiting />
+		<div>
+			<Waiting label="Waiting for Container list." />
+			<Button onClick={(): void => messageRelay.postMessage(getContainerListMessage)}>
+				Search again.
+			</Button>
+		</div>
 	) : (
 		<PopulatedDebuggerPanel containers={containers} />
 	);

@@ -17,8 +17,8 @@ export function postMessageToWindow<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
 ): void {
 	const loggingPreamble =
-		loggingOptions?.context === undefined ? "" : `(${loggingOptions.context}): `;
-	console.log(`${loggingPreamble}Posting message to the window:`, message); // TODO: console.debug
+		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
+	console.log(`${loggingPreamble}Posting "${message.type}" message to the window:`, message); // TODO: console.debug
 	globalThis.postMessage(message, "*"); // TODO: verify target is okay
 }
 
@@ -97,7 +97,7 @@ export function handleIncomingMessage(
 	// Only log if the message was actually handled by the recipient.
 	if (handled) {
 		const loggingPreamble =
-			loggingOptions?.context === undefined ? "" : `(${loggingOptions.context}): `;
+			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
 		console.log(`${loggingPreamble}"${message.type}" message handled:`, message); // TODO: console.debug
 	}
 }
@@ -108,5 +108,9 @@ export function handleIncomingMessage(
  * @internal
  */
 export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage {
-	return typeof value.source === "string" && typeof value.type === "string";
+	return (
+		typeof value.source === "string" &&
+		// value.source.startsWith("fluid-client-debugger") &&
+		value.type !== undefined
+	);
 }
