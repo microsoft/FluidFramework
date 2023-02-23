@@ -29,6 +29,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		driverEndpointName: string | undefined;
 		profile: string | undefined;
 		runId: number | undefined;
+		testName: string | undefined;
 	}) {
 		assert(process.env.FLUID_BUILD_ID !== undefined, "Fluid Build Id not defined");
 		dimensions.runId = parseInt(process.env.FLUID_BUILD_ID, 10);

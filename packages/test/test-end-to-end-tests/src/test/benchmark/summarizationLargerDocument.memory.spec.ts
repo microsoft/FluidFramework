@@ -62,7 +62,8 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	const json = typeof content === "string" ? content : bufferToString(content, "utf8");
 	return JSON.parse(json);
 }
-describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestObjectProvider) => {
+const testName = "Summarization  Larger Document- memory benchmarks";
+describeNoCompat(testName, (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let fileName: string;
@@ -111,6 +112,7 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 						driverType: provider.driver.type,
 						driverEndpointName: provider.driver.endpointName,
 						profile: "",
+						testName,
 				  })
 				: undefined;
 
