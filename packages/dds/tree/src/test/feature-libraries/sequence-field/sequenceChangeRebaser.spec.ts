@@ -209,28 +209,22 @@ describe("SequenceField - Rebaser Axioms", () => {
 
 	describe("A⁻¹ ○ A === ε", () => {
 		for (const [name, makeChange] of testChanges) {
-			if (name === "Insert" || name === "MInsert") {
-				// A⁻¹ ○ A === ε cannot be true for Insert/MInsert:
-				// Re-inserting nodes after deleting them is different from not having deleted them in the first place.
-				// We may reconsider this in the future in order to minimize the deltas produced when rebasing local changes.
-			} else {
-				it(`${name}⁻¹ ○ ${name} === ε`, () => {
-					const tracker = new SF.DetachedNodeTracker();
-					const change = makeChange(0);
-					const taggedChange = tagChange(change, mintRevisionTag());
-					const inv = tagInverse(invert(taggedChange), taggedChange.revision);
-					tracker.apply(taggedChange);
-					tracker.apply(inv);
-					const updatedChange = tracker.update(
-						taggedChange,
-						continuingAllocator([taggedChange]),
-					);
-					const changes = [inv, updatedChange];
-					const actual = compose(changes);
-					const delta = toDelta(actual);
-					assert.deepEqual(delta, {});
-				});
-			}
+			it(`${name}⁻¹ ○ ${name} === ε`, () => {
+				const tracker = new SF.DetachedNodeTracker();
+				const change = makeChange(0);
+				const taggedChange = tagChange(change, mintRevisionTag());
+				const inv = tagInverse(invert(taggedChange), taggedChange.revision);
+				tracker.apply(taggedChange);
+				tracker.apply(inv);
+				const updatedChange = tracker.update(
+					taggedChange,
+					continuingAllocator([taggedChange]),
+				);
+				const changes = [inv, updatedChange];
+				const actual = compose(changes);
+				const delta = toDelta(actual);
+				assert.deepEqual(delta, {});
+			});
 		}
 	});
 });

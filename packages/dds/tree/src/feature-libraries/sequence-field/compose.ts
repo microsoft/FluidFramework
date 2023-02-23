@@ -597,8 +597,41 @@ export class ComposeQueue<T> {
 				newMark: length > 0 ? length : undefined,
 			};
 		} else if (isAttach(newMark)) {
-			if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
-				const newRev = newMark.revision ?? this.newRevision;
+			const newRev = newMark.revision ?? this.newRevision;
+			// The same RevisionTag implies the two changesets are inverses in a rebase sandwich
+			if (
+				isAttach(newMark) &&
+				isDetachMark(baseMark) &&
+				newRev !== undefined &&
+				newRev === (baseMark.revision ?? this.baseMarks.revision)
+			) {
+				const baseMarkLength = getInputLength(baseMark);
+				const newMarkLength = getOutputLength(newMark);
+				// There is some change foo that is being cancelled out as part of a rebase sandwich.
+				// The marks that make up this change (and its inverse) may be broken up differently between the base
+				// changeset and the new changeset because either changeset may have been composed with other changes
+				// whose marks may now be interleaved with the marks that represent foo/its inverse.
+				// This means that the base and new marks may not be of the same length.
+				// We do however know that the all of the marks for foo will appear in the base changeset and all of the
+				// marks for the inverse of foo will appear in the new changeset, so we can be confident that whenever
+				// we encounter such pairs of marks, they do line up such that they describe changes to the same first
+				// cell. This means we can safely treat them as inverses of one another.
+				if (newMarkLength < baseMarkLength) {
+					baseMark = this.baseMarks.dequeueInput(newMarkLength);
+					newMark = this.newMarks.dequeue();
+				} else if (newMarkLength > baseMarkLength) {
+					baseMark = this.baseMarks.dequeue();
+					newMark = this.newMarks.dequeueOutput(baseMarkLength, true);
+				} else {
+					baseMark = this.baseMarks.dequeue();
+					newMark = this.newMarks.dequeue();
+				}
+				return {
+					baseMark,
+					newMark,
+					areInverses: true,
+				};
+			} else if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
 				const baseRev = baseMark.revision ?? this.baseMarks.revision;
 				assert(
 					baseRev !== undefined,
