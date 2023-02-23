@@ -107,8 +107,6 @@ export class SharedCell<T = any>
 	 * Constructs a new `SharedCell`.
 	 * If the object is non-local an id and service interfaces will be provided.
 	 *
-	 * @alpha
-	 *
 	 * @param runtime - The data store runtime to which the `SharedCell` belongs.
 	 * @param id - Unique identifier for the `SharedCell`.
 	 */

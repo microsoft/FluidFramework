@@ -64,6 +64,9 @@ export enum FlushModeExperimental {
 	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
 	 * batch when all micro-tasks are complete.
 	 *
+	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
+	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
+	 *
 	 * @experimental - Not ready for use
 	 */
 	Async = 2,
@@ -224,15 +227,6 @@ export interface IContainerRuntimeBase
 }
 
 /**
- * @deprecated Used only in deprecated API bindToContext
- */
-export enum BindState {
-	NotBound = "NotBound",
-	Binding = "Binding",
-	Bound = "Bound",
-}
-
-/**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
@@ -246,7 +240,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 	 */
 	readonly attachState: AttachState;
 
-	readonly visibilityState?: VisibilityState;
+	readonly visibilityState: VisibilityState;
 
 	/**
 	 * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
