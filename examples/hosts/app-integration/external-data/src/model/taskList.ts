@@ -384,17 +384,39 @@ export class TaskList extends DataObject implements ITaskList {
 	 * DataObject, by registering an event listener for changes to the task list.
 	 */
 	protected async hasInitialized(): Promise<void> {
-		const saved = this.root.get<IFluidHandle<SharedMap>>("savedData");
+		const [saved, draft] = await Promise.all([
+			this.root.get<IFluidHandle<SharedMap>>("savedData"),
+			this.root.get<IFluidHandle<SharedMap>>("draftData"),
+		]);
 		if (saved === undefined) {
 			throw new Error("savedData was not initialized");
 		}
 		this._savedData = await saved.get();
 
-		const draft = this.root.get<IFluidHandle<SharedMap>>("draftData");
 		if (draft === undefined) {
 			throw new Error("draftData was not initialized");
 		}
 		this._draftData = await draft.get();
+
+		// Check for other connected clients each time a new runtime is initialized
+		const connected = this.runtime.getAudience();
+		let clientSize = 0;
+		let loneClient: boolean = true;
+
+		// Increase the count of all non-summarizer clients
+		for (const [_, value] of connected.getMembers()) {
+			if (!value.scopes.includes("summary:write")) {
+				clientSize++;
+				if (clientSize > 1) {
+					loneClient = false;
+					break;
+				}
+			}
+		}
+		// Manually fetch data if client is alone in container.
+		if (loneClient) {
+			await this.importExternalData();
+		}
 
 		this._draftData.on("valueChanged", (changed) => {
 			if (changed.previousValue === undefined) {
