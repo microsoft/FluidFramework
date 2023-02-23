@@ -245,7 +245,7 @@ export class FluidContainer
 							}
 							break;
 						case "disconnected":
-							if (this.connectionState !== ConnectionStateEnum.Disconnected) {
+							if (this.connectionState === ConnectionStateEnum.Disconnected) {
 								listener();
 							}
 							break;
