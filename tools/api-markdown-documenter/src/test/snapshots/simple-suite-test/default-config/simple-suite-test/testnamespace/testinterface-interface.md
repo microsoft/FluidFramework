@@ -7,21 +7,22 @@ Test interface
 ## Signature {#testinterface-signature}
 
 ```typescript
-interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum> 
+interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ```
-<b>Extends:</b> [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;[TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum)
+
+**Extends:** [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;[TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum)
 
 ## Properties
 
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | boolean | Test interface property |
+| Property | Type | Description |
+| --- | --- | --- |
+| [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | boolean | Test interface property |
 
 ## Methods
 
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
+| Method | Return Type | Description |
+| --- | --- | --- |
+| [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
 
 ## Property Details
 

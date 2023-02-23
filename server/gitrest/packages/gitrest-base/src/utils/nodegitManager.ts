@@ -363,7 +363,8 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
             fileSystemManagerFactory,
             externalStorageManager,
             repoPerDocEnabled,
-            enableRepositoryManagerMetrics);
+            enableRepositoryManagerMetrics,
+            true /* enforceSynchronous */);
     }
 
     protected async initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<nodegit.Repository> {

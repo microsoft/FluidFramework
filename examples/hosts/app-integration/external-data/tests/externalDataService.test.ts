@@ -156,7 +156,7 @@ describe("mock-external-data-service: webhook", () => {
 
 		// Bind listener
 		let wasHookNotifiedForChange = false;
-		localServiceApp.post("/task-list-hook", (_, result) => {
+		localServiceApp.post("/broadcast-signal", (_, result) => {
 			wasHookNotifiedForChange = true;
 			result.send();
 		});
@@ -174,7 +174,7 @@ describe("mock-external-data-service: webhook", () => {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						url: `http://localhost:${localServicePort}/task-list-hook`,
+						url: `http://localhost:${localServicePort}/broadcast-signal`,
 					}),
 				},
 			);

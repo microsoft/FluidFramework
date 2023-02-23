@@ -59,6 +59,10 @@
 		"start:docker": "docker-compose -f server/docker-compose.yml up",
 		"stop:docker": "docker-compose -f server/docker-compose.yml down",
 		"stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
+		"syncpack:deps": "syncpack lint-semver-ranges",
+		"syncpack:deps:fix": "syncpack set-semver-ranges",
+		"syncpack:versions": "syncpack list-mismatches",
+		"syncpack:versions:fix": "syncpack fix-mismatches",
 		"test": "npm run test:mocha && npm run test:jest && npm run test:realsvc && npm run test:stress",
 		"test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
 		"test:benchmark:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/benchmarkOutput/**\" benchmarkOutput",
@@ -120,8 +124,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.9.0-127618",
-		"@fluidframework/build-tools": "^0.9.0-127618",
+		"@fluid-tools/build-cli": "^0.10.0",
+		"@fluidframework/build-tools": "^0.10.0",
 		"@fluidframework/test-tools": "^0.2.3074",
 		"@microsoft/api-documenter": "^7.17.9",
 		"@microsoft/api-extractor": "^7.22.2",
@@ -135,6 +139,7 @@
 		"pretty-quick": "^3.1.3",
 		"rimraf": "^2.6.2",
 		"run-script-os": "^1.1.6",
+		"syncpack": "^9.3.2",
 		"typescript": "~4.5.5"
 	},
 	"engines": {
@@ -201,9 +206,21 @@
 			"next": "major"
 		}
 	},
+	"packageManager": "pnpm@7.27.0",
 	"pnpm": {
 		"overrides": {
-			"@types/node": "^14.18.36"
+			"@types/node": "^14.18.36",
+			"node-fetch": "^2.6.9"
+		},
+		"peerDependencyRules": {
+			"allowedVersions": {
+				"react": "17.0.2",
+				"react-dom": "17.0.2",
+				"webpack": "5.75"
+			},
+			"ignoreMissing": [
+				"fluid-framework"
+			]
 		}
 	}
 }
