@@ -136,13 +136,13 @@ class NoDeltaStream
 
 const waitForOnline = async (): Promise<void> => {
 	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
-	if (navigator?.onLine === false && window?.addEventListener !== undefined) {
+	if (globalThis.navigator?.onLine === false && globalThis.addEventListener !== undefined) {
 		return new Promise<void>((resolve) => {
 			const resolveAndRemoveListener = () => {
 				resolve();
-				window.removeEventListener("online", resolveAndRemoveListener);
+				globalThis.removeEventListener("online", resolveAndRemoveListener);
 			};
-			window.addEventListener("online", resolveAndRemoveListener);
+			globalThis.addEventListener("online", resolveAndRemoveListener);
 		});
 	}
 };
