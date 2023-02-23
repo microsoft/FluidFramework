@@ -153,12 +153,6 @@ export interface InboundHandlers {
 // @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
 
-// @public
-export interface InitiateDebuggerMessagingMessage extends IDebuggerMessage<HasContainerId> {
-    // (undocumented)
-    type: "INITIATE_DEBUGGER_MESSAGING";
-}
-
 // @internal
 export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage;
 
@@ -195,12 +189,6 @@ export interface RegistryChangeMessageData {
 // @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
-}
-
-// @public
-export interface TerminateDebuggerMessagingMessage extends IDebuggerMessage<HasContainerId> {
-    // (undocumented)
-    type: "TERMINATE_DEBUGGER_MESSAGING";
 }
 
 ```

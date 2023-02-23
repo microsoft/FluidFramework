@@ -22,26 +22,6 @@ export interface HasContainerId {
 // #region Inbound messages
 
 /**
- * Inbound event requesting the debugger associated with the provided Container ID begin posting
- * change events to the window.
- *
- * @public
- */
-export interface InitiateDebuggerMessagingMessage extends IDebuggerMessage<HasContainerId> {
-	type: "INITIATE_DEBUGGER_MESSAGING";
-}
-
-/**
- * Inbound event requesting the debugger associated with the provided Container ID cease posting
- * change events to the window.
- *
- * @public
- */
-export interface TerminateDebuggerMessagingMessage extends IDebuggerMessage<HasContainerId> {
-	type: "TERMINATE_DEBUGGER_MESSAGING";
-}
-
-/**
  * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
  * Will result in the {@link ContainerStateChangeMessage} message being posted.
  *

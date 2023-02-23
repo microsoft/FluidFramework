@@ -18,10 +18,8 @@ import {
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
 	InboundHandlers,
-	InitiateDebuggerMessagingMessage,
 	MessageLoggingOptions,
 	postMessageToWindow,
-	TerminateDebuggerMessagingMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -132,22 +130,6 @@ export class FluidClientDebugger
 	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		["INITIATE_DEBUGGER_MESSAGING"]: (untypedMessage) => {
-			const message = untypedMessage as InitiateDebuggerMessagingMessage;
-			if (message.data.containerId === this.containerId) {
-				this.postMessages = true;
-				return true;
-			}
-			return false;
-		},
-		["TERMINATE_DEBUGGER_MESSAGING"]: (untypedMessage) => {
-			const message = untypedMessage as TerminateDebuggerMessagingMessage;
-			if (message.data.containerId === this.containerId) {
-				this.postMessages = false;
-				return true;
-			}
-			return false;
-		},
 		["GET_CONTAINER_STATE"]: (untypedMessage) => {
 			const message = untypedMessage as GetContainerStateMessage;
 			if (message.data.containerId === this.containerId) {
@@ -171,27 +153,22 @@ export class FluidClientDebugger
 	 * Posts a {@link ContainerStateChangeMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		this.postMessageIfActive<ContainerStateChangeMessage>({
-			source: debuggerMessageSource,
-			type: "CONTAINER_STATE_CHANGE",
-			data: {
-				containerId: this.containerId,
-				containerState: this.getContainerState(),
+		postMessageToWindow<ContainerStateChangeMessage>(
+			{
+				source: debuggerMessageSource,
+				type: "CONTAINER_STATE_CHANGE",
+				data: {
+					containerId: this.containerId,
+					containerState: this.getContainerState(),
+				},
 			},
-		});
+			this.messageLoggingOptions,
+		);
 	};
 
 	// #endregion
 
 	private readonly debuggerDisposedHandler = (): boolean => this.emit("disposed");
-
-	/**
-	 * Determines whether or not the debugger will post state change messages to the window (globalThis).
-	 *
-	 * @remarks Set via the {@link InitiateDebuggerMessagingMessage} message,
-	 * and unset via {@link TerminateDebuggerMessagingMessage}.
-	 */
-	private postMessages: boolean;
 
 	/**
 	 * Message logging options used by the debugger.
@@ -234,7 +211,6 @@ export class FluidClientDebugger
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener("message", this.windowMessageHandler);
 
-		this.postMessages = false;
 		this._disposed = false;
 	}
 
@@ -293,14 +269,5 @@ export class FluidClientDebugger
 			audienceId:
 				clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
-	}
-
-	/**
-	 * Posts the provided message to the window (globalThis) iff {@link FluidClientDebugger.postMessages}.
-	 */
-	private postMessageIfActive<TMessage extends IDebuggerMessage>(message: TMessage): void {
-		if (this.postMessages) {
-			postMessageToWindow<TMessage>(message, this.messageLoggingOptions);
-		}
 	}
 }
