@@ -13,6 +13,9 @@ import { getLatestVersion } from "../app";
 import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller";
 import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter";
 
+const diceRollerId = "dice-roller";
+const diceCounterId = "dice-counter";
+
 /**
  * The data model for our application.
  *
@@ -45,7 +48,12 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 		public readonly diceRoller: IDiceRoller,
 		public readonly diceCounter: IDiceCounter,
 		public readonly container: IContainer,
-	) {}
+	) {
+		container.on("closed", () => {
+			// Ensure the user can't roll the dice after the container is closed.
+			diceRoller.close();
+		});
+	}
 
 	public getCurrentVersion() {
 		return this.container.getSpecifiedCodeDetails()?.package as string;
@@ -75,9 +83,6 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 			});
 	}
 }
-
-const diceRollerId = "dice-roller";
-const diceCounterId = "dice-counter";
 
 /**
  * The runtime factory for our Fluid container.

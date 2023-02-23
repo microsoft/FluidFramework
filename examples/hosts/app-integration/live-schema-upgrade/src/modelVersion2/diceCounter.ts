@@ -54,10 +54,12 @@ export class DiceCounter extends DataObject implements IDiceCounter {
 	 */
 	protected async hasInitialized() {
 		if (this._counter === undefined) {
+			// Get the existing counter if we didn't initialize it.
 			const sharedCounterHandle =
 				this.root.get<IFluidHandle<ISharedCounter>>(sharedCounterKey);
 			assert(sharedCounterHandle !== undefined, "sharedCounterHandle should be defined");
 			this._counter = await sharedCounterHandle.get();
+			// Ensure the count is up to date when we load.
 			this.count = this._counter.value;
 		}
 

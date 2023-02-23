@@ -10,6 +10,8 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller";
 
+const diceRollerId = "dice-roller";
+
 /**
  * The data model for our application.
  *
@@ -28,12 +30,11 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 		public readonly container: IContainer,
 	) {
 		container.on("closed", () => {
+			// Ensure the user can't roll the dice after the container is closed.
 			diceRoller.close();
 		});
 	}
 }
-
-const diceRollerId = "dice-roller";
 
 /**
  * The runtime factory for our Fluid container.

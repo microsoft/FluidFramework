@@ -25,6 +25,7 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 			throw new TypeError("Unexpected code detail format");
 		}
 		switch (version) {
+			// In this version of the app the code loader only knows about 1.0.
 			case "1.0":
 				return v1ModuleWithDetails;
 			default:

@@ -37,11 +37,13 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
 	// Use the diceRolled event to trigger the rerender whenever the value changes.
 	diceRoller.on("diceRolled", updateDiceChar);
 
-	// Use the diceRolled close event to disable the roll button and add a message.
+	// Use the closed event to stop the user from rolling and display a message.
+	// Note: In real applications there may be other causes for the container to close, but for the purpose of this
+	// example we will assume it was due to a schema upgrade.
 	const onClosed = () => {
 		rollButton.disabled = true;
 		const closedText = document.createElement("div");
-		closedText.textContent = "Container closed";
+		closedText.textContent = "Application upgraded. Please refresh the page.";
 		wrapperDiv.append(closedText);
 	};
 	diceRoller.on("closed", onClosed);

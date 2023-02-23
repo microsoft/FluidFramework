@@ -77,7 +77,7 @@ async function start() {
 		}
 	}
 
-	// update the browser URL and the window title with the actual container ID
+	// Update the browser URL and the window title with the actual container ID
 	location.hash = id;
 	document.title = id;
 
