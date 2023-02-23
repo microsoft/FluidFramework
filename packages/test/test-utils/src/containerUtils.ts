@@ -19,7 +19,7 @@ import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtil
  * Defaults to true.
  * @param timeoutOptions - Options related to the behavior of the timeout.
  * If provided, the returned Promise will reject if the container hasn't emitted relevant events in timeoutOptions.durationMs.
- * If not provided, the Promise will wait indefinitely for the Container to emit its 'connected' (or 'closed, if
+ * If not provided, the Promise will wait indefinitely for the Container to emit its 'connected' (or 'closed', if
  * failOnContainerClose === true) event.
  *
  * @returns A Promise that either:
