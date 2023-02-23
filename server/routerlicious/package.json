@@ -88,7 +88,7 @@
   "packageManager": "pnpm@7.14.2",
     "pnpm": {
     "overrides": {
-      "socket.io-parser": "^4.2.2"
+      "socket.io-parser": "^4.2.1"
     }
   }
 }
