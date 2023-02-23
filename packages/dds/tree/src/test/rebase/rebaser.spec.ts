@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import { assertIsStableId } from "@fluidframework/container-runtime";
 import { ChangeRebaser, RevisionTag } from "../../core";
 
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { GraphCommit, Rebaser } from "../../core/rebase";
 
-import { assertIsStableId } from "../../id-compressor";
 import { fail } from "../../util";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */

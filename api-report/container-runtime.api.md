@@ -54,6 +54,7 @@ import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { SerializedIdCompressorWithNoSession } from '@fluidframework/runtime-definitions';
 import { SerializedIdCompressorWithOngoingSession } from '@fluidframework/runtime-definitions';
+import { StableId } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
@@ -61,6 +62,9 @@ export const agentSchedulerId = "_scheduler";
 
 // @public
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
+
+// @public
+export function assertIsStableId(stableId: string): StableId;
 
 // @public
 export enum CompressionAlgorithms {
@@ -158,7 +162,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
-    readonly idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+    idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
@@ -261,6 +265,9 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     // (undocumented)
     get IFluidDataStoreRegistry(): this;
 }
+
+// @public
+export function generateStableId(): StableId;
 
 // @public
 export interface IAckedSummary {
@@ -483,6 +490,9 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
 
 // @public @deprecated (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
+
+// @public
+export function isStableId(str: string): str is StableId;
 
 // @public
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {

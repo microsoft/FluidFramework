@@ -77,3 +77,4 @@ export {
 	ICancellableSummarizerController,
 } from "./summary";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
+export { generateStableId, isStableId, assertIsStableId } from "./id-compressor";

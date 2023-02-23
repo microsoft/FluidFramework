@@ -476,10 +476,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
 		await provider.ensureSynchronized();
 
-		let id1; 
+		let id1;
 		let id2;
 		let id3;
-		let id4
+		let id4;
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
 			id1 = map.idCompressor?.generateCompressedId();

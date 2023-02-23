@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { generateStableId, isStableId, StableId } from "../../id-compressor";
+import { generateStableId, isStableId } from "@fluidframework/container-runtime";
+import { StableId } from "@fluidframework/runtime-definitions";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
