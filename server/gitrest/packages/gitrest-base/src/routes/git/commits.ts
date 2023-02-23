@@ -38,8 +38,8 @@ export function create(
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
-     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-     router.get("/repos/:owner/:repo/git/commits/:sha", async (request, response, next) => {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    router.get("/repos/:owner/:repo/git/commits/:sha", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => {

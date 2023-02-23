@@ -246,8 +246,8 @@ export function create(
      * Retrieves a summary.
      * If sha is "latest", returns latest summary for owner/repo.
      */
-     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
@@ -322,8 +322,8 @@ export function create(
      * Deletes the latest summary for the given document.
      * If header Soft-Delete="true", only flags summary as deleted.
      */
-     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
