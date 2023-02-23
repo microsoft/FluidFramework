@@ -35,7 +35,8 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) => {
+const testName = "Summarization - runtime benchmarks";
+describeNoCompat(testName, (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let logger: ITelemetryLogger | undefined;
@@ -50,6 +51,7 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 						driverType: provider.driver.type,
 						driverEndpointName: provider.driver.endpointName,
 						profile: "",
+						testName,
 				  })
 				: undefined;
 
