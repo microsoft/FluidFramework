@@ -53,10 +53,18 @@ export class TenantManager implements core.ITenantManager {
 
     public async getTenant(tenantId: string, documentId: string, includeDisabledTenant = false): Promise<core.ITenant> {
         const restWrapper = new BasicRestWrapper();
-        const [details, key] = await Promise.all([
+        const [details, gitManager] = await Promise.all([
             restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`,
             { includeDisabledTenant }),
-            this.getKey(tenantId, includeDisabledTenant)]);
+            this.getTenantGitManager(tenantId, documentId, includeDisabledTenant)]);
+
+        const tenant = new Tenant(details, gitManager);
+
+        return tenant;
+    }
+
+    public async getTenantGitManager(tenantId: string, documentId: string, includeDisabledTenant = false): Promise<GitManager> {
+        const key = await this.getKey(tenantId, includeDisabledTenant);
 
         const defaultQueryString = {
             token: fromUtf8ToBase64(`${tenantId}`),
@@ -88,9 +96,8 @@ export class TenantManager implements core.ITenantManager {
             false,
             tenantRestWrapper);
         const gitManager = new GitManager(historian);
-        const tenant = new Tenant(details, gitManager);
 
-        return tenant;
+        return gitManager;
     }
 
     public async verifyToken(tenantId: string, token: string): Promise<void> {
