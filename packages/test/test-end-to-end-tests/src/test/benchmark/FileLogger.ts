@@ -14,7 +14,7 @@ import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definition
 import { pkgName, pkgVersion } from "../../packageVersion";
 
 const packageName = `${pkgName}@${pkgVersion}`;
-
+let globalTestName: string | undefined;
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
 		assert(process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined, "Fluid Logger not defined");
@@ -33,10 +33,19 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	}) {
 		assert(process.env.FLUID_BUILD_ID !== undefined, "Fluid Build Id not defined");
 		dimensions.runId = parseInt(process.env.FLUID_BUILD_ID, 10);
-
-		return ChildLogger.create(await this.loggerP, undefined, {
+		const logger = ChildLogger.create(await this.loggerP, undefined, {
 			all: dimensions,
 		});
+		globalTestName = dimensions.testName;
+		console.log("globalTestName", globalTestName);
+		logger.send({
+			category: "performance",
+			eventName: "BenchMarkBegin",
+			benchmarkType: "ExecutionTime",
+			message: "Benchmark Begin",
+			...dimensions,
+		});
+		return logger;
 	}
 
 	public static async flushLogger(runInfo?: { url: string; runId?: number }) {
@@ -87,7 +96,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		) {
 			event.category = "generic";
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName });
+		this.baseLogger?.send({ ...event, hostName: pkgName, testName: globalTestName ?? "-" });
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write

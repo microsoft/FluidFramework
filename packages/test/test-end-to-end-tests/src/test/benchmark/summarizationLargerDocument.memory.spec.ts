@@ -28,6 +28,7 @@ import { bufferToString } from "@fluidframework/common-utils";
 import { SharedMap } from "@fluidframework/map";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { createLogger } from "./FileLogger";
 
 const defaultDataStoreId = "default";
@@ -111,7 +112,7 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 						runId: undefined,
 						driverType: provider.driver.type,
 						driverEndpointName: provider.driver.endpointName,
-						profile: "",
+						profile: "test",
 						testName,
 				  })
 				: undefined;
@@ -145,7 +146,14 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 		containerUrl = mainContainer.resolvedUrl;
 		await waitForContainerConnection(mainContainer, true);
 
-		const { summarizer: summarizerClient } = await createSummarizer(provider, mainContainer);
+		const { summarizer: summarizerClient } = await createSummarizer(
+			provider,
+			mainContainer,
+			undefined,
+			undefined,
+			undefined,
+			logger ?? new TelemetryNullLogger(),
+		);
 		await provider.ensureSynchronized();
 		summaryVersion = await waitForSummary(summarizerClient);
 		assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
@@ -182,6 +190,9 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 					provider,
 					this.container2,
 					summaryVersion,
+					undefined,
+					undefined,
+					logger ?? new TelemetryNullLogger(),
 				);
 				summaryVersion = await waitForSummary(this.summarizerClient2.summarizer);
 				assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
