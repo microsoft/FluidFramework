@@ -433,7 +433,8 @@ export interface IContainerRuntimeOptions {
 	readonly maxBatchSizeInBytes?: number;
 	/**
 	 * If the op payload needs to be chunked in order to work around the maximum size of the batch, this value represents
-	 * how large the individual chunks will be. This is only supported when compression is enabled.
+	 * how large the individual chunks will be. This is only supported when compression is enabled. If after compression, the
+	 * batch size exceeds this value, it will be chunked into smaller ops of this size.
 	 *
 	 * If unspecified, if a batch exceeds `maxBatchSizeInBytes` after compression, the container will close with an instance
 	 * of `GenericError` with the `BatchTooLarge` message.

@@ -28,7 +28,7 @@ export class OpSplitter {
 		private readonly submitBatchFn:
 			| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
 			| undefined,
-		private readonly chunkSizeInBytes: number,
+		public readonly chunkSizeInBytes: number,
 		private readonly maxBatchSizeInBytes: number,
 		logger: ITelemetryLogger,
 	) {
