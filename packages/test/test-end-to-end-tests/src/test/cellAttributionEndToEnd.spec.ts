@@ -129,8 +129,11 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 
 		assertAttributionMatches(sharedCell1, attributor, "detached");
 
-		provider.updateDocumentId(container1.resolvedUrl);
-		const container2 = await provider.loadTestContainer(getTestConfig());
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined);
+		const loader2 = provider.makeTestLoader(getTestConfig());
+		const container2 = await loader2.resolve({ url });
+
 		const sharedCell2 = await sharedCellFromContainer(container2);
 		sharedCell2.set(2);
 
