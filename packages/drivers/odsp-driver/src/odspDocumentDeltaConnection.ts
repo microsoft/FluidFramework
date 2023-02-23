@@ -296,7 +296,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		try {
 			await deltaConnection.initialize(connectMessage, timeoutMs);
-			await epochTracker.validateEpochFromPush(deltaConnection.details);
+			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
 		} catch (errorObject: any) {
 			if (errorObject !== null && typeof errorObject === "object") {
 				// We have to special-case error types here in terms of what is re-triable.

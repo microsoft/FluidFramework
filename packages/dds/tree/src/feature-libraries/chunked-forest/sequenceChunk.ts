@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BasicChunk, BasicChunkCursor } from "./basicChunk";
+import { BasicChunkCursor } from "./basicChunk";
 import { ChunkedCursor, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
@@ -40,8 +40,7 @@ export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
 
 	public cursor(): ChunkedCursor {
 		return new BasicChunkCursor(
-			// TODO: remove this cast
-			this.subChunks as BasicChunk[],
+			this.subChunks,
 			[],
 			[],
 			[],

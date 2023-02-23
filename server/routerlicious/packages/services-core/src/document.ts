@@ -87,6 +87,9 @@ export interface IDeliState {
 
     // List of successfully started lambdas at session start
     successfullyStartedLambdas: LambdaName[];
+
+    // Checkpoint timestamp in UTC epoch
+    checkpointTimestamp: number | undefined;
 }
 
 // TODO: We should probably rename this to IScribeState
