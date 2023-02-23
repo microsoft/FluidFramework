@@ -304,9 +304,8 @@ async function writeSummaryTreeObject(
 		case SummaryType.Attachment: {
 			return object.id;
 		}
-
 		default:
-			throw Error(`Unexpected summary object type: "${object.type}".`);
+			throw Error("Unreachable case");
 	}
 }
 
