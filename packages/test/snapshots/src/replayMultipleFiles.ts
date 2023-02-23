@@ -251,16 +251,23 @@ async function processNodeForUpdatingSnapshots(
 	// Get the version of the current snapshots. This becomes the the folder name under the "src_snapshots" folder
 	// where these snapshots will be moved.
 	const versionContent = JSON.parse(fs.readFileSync(`${versionFileName}`, "utf-8"));
-	const version = versionContent.snapshotVersion;
+	const currentSnapshotsVersion = versionContent.snapshotVersion;
 
-	// Create the folder where the current snapshots will be moved. If this folder already exists, we will update
-	// the snapshots in that folder because we only need one set of snapshots for each version.
-	const newSrcDir = `${data.folder}/${srcSnapshots}/${version}`;
-	fs.mkdirSync(newSrcDir, { recursive: true });
+	// If the current snapshots version is the same as the current version of the runtime (pkgVersion), don't move
+	// the current snapshot to become older snapshots since its still the latest snapshot version.
+	if (currentSnapshotsVersion !== pkgVersion) {
+		// Create the folder where the current snapshots will be moved. If this folder already exists, we will update
+		// the snapshots in that folder because we only need one set of snapshots for each version.
+		const newSrcDir = `${data.folder}/${srcSnapshots}/${currentSnapshotsVersion}`;
+		fs.mkdirSync(newSrcDir, { recursive: true });
 
-	for (const subNode of fs.readdirSync(currentSnapshotsDir, { withFileTypes: true })) {
-		assert(!subNode.isDirectory());
-		fs.copyFileSync(`${currentSnapshotsDir}/${subNode.name}`, `${newSrcDir}/${subNode.name}`);
+		for (const subNode of fs.readdirSync(currentSnapshotsDir, { withFileTypes: true })) {
+			assert(!subNode.isDirectory());
+			fs.copyFileSync(
+				`${currentSnapshotsDir}/${subNode.name}`,
+				`${newSrcDir}/${subNode.name}`,
+			);
+		}
 	}
 
 	// Process the current folder which will update the current snapshots as per the changes.
