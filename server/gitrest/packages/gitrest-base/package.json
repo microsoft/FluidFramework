@@ -40,7 +40,7 @@
     "@fluidframework/server-services-telemetry": "^0.1038.3000-117199",
     "@fluidframework/server-services-utils": "^0.1038.3000-117199",
     "async-mutex": "^0.3.2",
-    "axios": "^0.26.0",
+    "axios": "^0.21.2",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
