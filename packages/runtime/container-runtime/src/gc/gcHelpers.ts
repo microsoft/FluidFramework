@@ -100,8 +100,8 @@ export function generateSortedGCState(gcState: IGarbageCollectionState): IGarbag
 }
 
 /**
- * Before GC data was written at the root of the summary tree, individual GC blobs were written at each data store;s
- * snapshot tree. This function consolidates them into the new IGarbageCollectionState format.
+ * This is for back-compat only - Before GC data was written at the root of the summary tree, individual GC blobs were
+ * written at data store's snapshot tree. This function consolidates them into the new IGarbageCollectionState format.
  */
 export async function getSnapshotDataFromOldSnapshotFormat(
 	oldSnapshot: ISnapshotTree,

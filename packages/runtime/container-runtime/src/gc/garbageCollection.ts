@@ -48,17 +48,11 @@ import {
 	IGarbageCollectorCreateParams,
 	IGarbageCollectionRuntime,
 	IGCStats,
-	gcTombstoneGenerationOptionName,
 	UnreferencedState,
-	GCFeatureMatrix,
 	IGCMetadata,
 	IGarbageCollectorConfigs,
 } from "./gcDefinitions";
-import {
-	getGCVersion,
-	getSnapshotDataFromOldSnapshotFormat,
-	sendGCUnexpectedUsageEvent,
-} from "./gcHelpers";
+import { getSnapshotDataFromOldSnapshotFormat, sendGCUnexpectedUsageEvent } from "./gcHelpers";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
@@ -112,9 +106,6 @@ export class GarbageCollector implements IGarbageCollector {
 	public get shouldRunGC(): boolean {
 		return this.configs.shouldRunGC;
 	}
-
-	// Feature Support info persisted to this container's summary
-	private readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
@@ -193,22 +184,9 @@ export class GarbageCollector implements IGarbageCollector {
 			this.runtime.closeFn,
 		);
 
-		let gcVersionInBaseSnapshot: number | undefined;
-		if (createParams.existing) {
-			gcVersionInBaseSnapshot = getGCVersion(createParams.metadata);
-			this.persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
-		} else {
-			if (this.gcOptions[gcTombstoneGenerationOptionName] !== undefined) {
-				this.persistedGcFeatureMatrix = {
-					tombstoneGeneration: this.gcOptions[gcTombstoneGenerationOptionName],
-				};
-			}
-		}
-
 		this.configs = generateGCConfigs(
 			this.gcOptions,
 			createParams.metadata,
-			gcVersionInBaseSnapshot,
 			createParams.existing,
 			this.mc,
 		);
@@ -235,7 +213,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.configs.tombstoneMode,
 			this.mc,
 			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
-			gcVersionInBaseSnapshot,
+			this.configs.gcVersionInBaseSnapshot,
 		);
 
 		// Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
@@ -649,7 +627,7 @@ export class GarbageCollector implements IGarbageCollector {
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
 			gcFeature: this.configs.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
-			gcFeatureMatrix: this.persistedGcFeatureMatrix,
+			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: this.configs.sweepEnabled,
 			sweepTimeoutMs: this.configs.sweepTimeoutMs,

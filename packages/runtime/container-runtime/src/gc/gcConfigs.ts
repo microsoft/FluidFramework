@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/driver-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { IGCRuntimeOptions } from "..";
@@ -12,20 +11,24 @@ import {
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
+	GCFeatureMatrix,
 	gcTestModeKey,
+	gcTombstoneGenerationOptionName,
+	GCVersion,
 	IGarbageCollectorConfigs,
+	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runGCKey,
 	runSessionExpiryKey,
 	runSweepKey,
 	trackGCStateKey,
 } from "./gcDefinitions";
+import { getGCVersion } from "./gcHelpers";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
  * @param gcOptions - The garbage collector runtime options.
  * @param metadata - The container runtime's metadata.
- * @param baseSnapshotGCVersion - The GC version of the base snapshot.
  * @param existing - Whether the container is new or an existing one.
  * @param mc - The monitoring context for reading configs from the config provider.
  * @returns The garbage collector configurations.
@@ -33,38 +36,15 @@ import {
 export function generateGCConfigs(
 	gcOptions: IGCRuntimeOptions,
 	metadata: IContainerRuntimeMetadata | undefined,
-	baseSnapshotGCVersion: number | undefined,
 	existing: boolean,
 	mc: MonitoringContext,
 ): IGarbageCollectorConfigs {
-	const configs: IGarbageCollectorConfigs = {
-		gcEnabled: false,
-		sweepEnabled: false,
-		shouldRunGC: false,
-		shouldRunSweep: false,
-		testMode: false,
-		tombstoneMode: false,
-		trackGCState: false,
-		sessionExpiryTimeoutMs: undefined,
-		sweepTimeoutMs: undefined,
-		inactiveTimeoutMs: 0,
-	};
-
-	/**
-	 * Sweep timeout is the time after which unreferenced content can be swept.
-	 * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
-	 *
-	 * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days.
-	 * The buffer is added to account for any clock skew or other edge cases.
-	 * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
-	 */
-	const computeSweepTimeout = (sessionExpiryTimeoutMs: number | undefined) => {
-		const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
-		const bufferMs = oneDayMs;
-		return (
-			sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs
-		);
-	};
+	let gcEnabled: boolean;
+	let sweepEnabled: boolean;
+	let sessionExpiryTimeoutMs: number | undefined;
+	let sweepTimeoutMs: number | undefined;
+	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
+	let gcVersionInBaseSnapshot: GCVersion | undefined;
 
 	/**
 	 * The following GC state is enabled during container creation and cannot be changed throughout its lifetime:
@@ -74,17 +54,14 @@ export function generateGCConfigs(
 	 * For existing containers, we get this information from the metadata blob of its summary.
 	 */
 	if (existing) {
-		assert(
-			baseSnapshotGCVersion !== undefined,
-			"previous summary must have GC version for existing container",
-		);
+		gcVersionInBaseSnapshot = getGCVersion(metadata);
 		// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
 		// other existing documents, GC is enabled.
-		configs.gcEnabled = baseSnapshotGCVersion > 0;
-		configs.sweepEnabled = metadata?.sweepEnabled ?? false;
-		configs.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-		configs.sweepTimeoutMs =
-			metadata?.sweepTimeoutMs ?? computeSweepTimeout(configs.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
+		gcEnabled = gcVersionInBaseSnapshot > 0;
+		sweepEnabled = metadata?.sweepEnabled ?? false;
+		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
+		sweepTimeoutMs = metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
+		persistedGcFeatureMatrix = metadata?.gcFeatureMatrix;
 	} else {
 		// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
 		// scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -99,17 +76,22 @@ export function generateGCConfigs(
 
 		// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
 		// flag in GC options to false.
-		configs.gcEnabled = gcOptions.gcAllowed !== false;
+		gcEnabled = gcOptions.gcAllowed !== false;
 		// The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-		configs.sweepEnabled = gcOptions.sweepAllowed === true;
+		sweepEnabled = gcOptions.sweepAllowed === true;
 
 		// Set the Session Expiry only if the flag is enabled and GC is enabled.
-		if (mc.config.getBoolean(runSessionExpiryKey) && configs.gcEnabled) {
-			configs.sessionExpiryTimeoutMs =
+		if (mc.config.getBoolean(runSessionExpiryKey) && gcEnabled) {
+			sessionExpiryTimeoutMs =
 				gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
-		configs.sweepTimeoutMs =
-			testOverrideSweepTimeoutMs ?? computeSweepTimeout(configs.sessionExpiryTimeoutMs);
+		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
+
+		if (gcOptions[gcTombstoneGenerationOptionName] !== undefined) {
+			persistedGcFeatureMatrix = {
+				tombstoneGeneration: gcOptions[gcTombstoneGenerationOptionName],
+			};
+		}
 	}
 
 	/**
@@ -121,10 +103,10 @@ export function generateGCConfigs(
 	 *
 	 * These conditions can be overridden via runGCKey feature flag.
 	 */
-	configs.shouldRunGC =
+	const shouldRunGC =
 		mc.config.getBoolean(runGCKey) ??
 		// GC must be enabled for the document.
-		(configs.gcEnabled &&
+		(gcEnabled &&
 			// GC must not be disabled via GC options.
 			!gcOptions.disableGC);
 
@@ -138,33 +120,54 @@ export function generateGCConfigs(
 	 * 4. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
 	 * feature flag.
 	 */
-	configs.shouldRunSweep =
-		configs.shouldRunGC &&
-		configs.sweepTimeoutMs !== undefined &&
-		(mc.config.getBoolean(runSweepKey) ?? configs.sweepEnabled);
-
-	configs.trackGCState = mc.config.getBoolean(trackGCStateKey) === true;
+	const shouldRunSweep =
+		shouldRunGC &&
+		sweepTimeoutMs !== undefined &&
+		(mc.config.getBoolean(runSweepKey) ?? sweepEnabled);
 
 	// Override inactive timeout if test config or gc options to override it is set.
-	configs.inactiveTimeoutMs =
+	const inactiveTimeoutMs =
 		mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
 		gcOptions.inactiveTimeoutMs ??
 		defaultInactiveTimeoutMs;
 
 	// Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
-	if (
-		configs.sweepTimeoutMs !== undefined &&
-		configs.inactiveTimeoutMs > configs.sweepTimeoutMs
-	) {
+	if (sweepTimeoutMs !== undefined && inactiveTimeoutMs > sweepTimeoutMs) {
 		throw new UsageError("inactive timeout should not be greater than the sweep timeout");
 	}
 
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-	configs.testMode = mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
+	const testMode = mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 	// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
 	// via feature flags.
-	configs.tombstoneMode =
-		!configs.shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
+	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
+	const trackGCState = mc.config.getBoolean(trackGCStateKey) === true;
 
-	return configs;
+	return {
+		gcEnabled,
+		sweepEnabled,
+		shouldRunGC,
+		shouldRunSweep,
+		testMode,
+		tombstoneMode,
+		trackGCState,
+		sessionExpiryTimeoutMs,
+		sweepTimeoutMs,
+		inactiveTimeoutMs,
+		persistedGcFeatureMatrix,
+		gcVersionInBaseSnapshot,
+	};
+}
+
+/**
+ * Sweep timeout is the time after which unreferenced content can be swept.
+ * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
+ *
+ * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days.
+ * The buffer is added to account for any clock skew or other edge cases.
+ * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
+ */
+function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined) {
+	const bufferMs = oneDayMs;
+	return sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
 }

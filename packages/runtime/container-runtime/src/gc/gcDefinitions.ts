@@ -56,6 +56,14 @@ export const sweepAttachmentBlobsKey = "Fluid.GarbageCollection.Test.SweepAttach
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
+/**
+ * The maximum snapshot cache expiry in the driver. This is used to calculate the sweep timeout.
+ * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
+ * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days, i.e., any snapshot
+ * in cache will be invalidated before 5 days.
+ */
+export const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
+
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
@@ -240,40 +248,46 @@ export interface IGarbageCollectorConfigs {
 	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
 	 * throughout its lifetime.
 	 */
-	gcEnabled: boolean;
+	readonly gcEnabled: boolean;
 	/**
 	 * Tracks if sweep phase is enabled for this document. This is specified during document creation and doesn't change
 	 * throughout its lifetime.
 	 */
-	sweepEnabled: boolean;
+	readonly sweepEnabled: boolean;
 	/**
 	 * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
 	 * disabled via runtime options or feature flags.
 	 */
-	shouldRunGC: boolean;
+	readonly shouldRunGC: boolean;
 	/**
 	 * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
 	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
 	 */
-	shouldRunSweep: boolean;
+	readonly shouldRunSweep: boolean;
 	/** The time in ms to expire a session for a client for gc. */
-	sessionExpiryTimeoutMs: number | undefined;
+	readonly sessionExpiryTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is ready to be swept. */
-	sweepTimeoutMs: number | undefined;
+	readonly sweepTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is inactive. */
-	inactiveTimeoutMs: number;
+	readonly inactiveTimeoutMs: number;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
-	testMode: boolean;
+	readonly testMode: boolean;
 	/**
 	 * Tracks whether GC should run in tombstone mode. In this mode, sweep ready objects are marked as tombstones.
-	 * Tombstone objects behave as if they are deleted but are present for recovery purposes.
+	 * In interactive (non-summarizer) clients, tombstone objects behave as if they are deleted, i.e., access to them
+	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a staging
+	 * step for sweep where accidental sweep ready objects can be recovered.
 	 */
-	tombstoneMode: boolean;
+	readonly tombstoneMode: boolean;
 	/**
 	 * Tracks whether GC state should be tracked. If true, for unchanged GC data across summaries, a summary
 	 * handle is written to summary instead of a summary tree / blob.
 	 */
-	trackGCState: boolean;
+	readonly trackGCState: boolean;
+	/** @see GCFeatureMatrix. */
+	readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
+	/** The version of GC in the base snapshot. */
+	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 }
 
 /** The state of node that is unreferenced. */
