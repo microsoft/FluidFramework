@@ -45,6 +45,7 @@ import {
 	ContextuallyTypedNodeData,
 	ModularChangeset,
 } from "../feature-libraries";
+import { brand } from "../util";
 
 /**
  * Collaboratively editable tree distributed data-structure,
@@ -120,6 +121,7 @@ class SharedTree
 	 * This allows keeping the `IEditableForest` private.
 	 */
 	private readonly transactionCheckout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>;
+	private nextRevision: number = 0;
 
 	public constructor(
 		id: string,
@@ -155,6 +157,7 @@ class SharedTree
 			forest,
 			changeFamily: this.changeFamily,
 			submitEdit: (edit) => this.submitEdit(edit),
+			mintRevision: () => brand(this.nextRevision++),
 		};
 
 		this.context = getEditableTreeContext(forest, this.transactionCheckout);

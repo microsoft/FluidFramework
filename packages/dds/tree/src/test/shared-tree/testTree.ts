@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import {
 	AnchorSet,
+	Checkout,
 	Commit,
 	EditManager,
 	IEditableForest,
@@ -145,12 +146,13 @@ export class TestTree {
 	public runTransaction(command: SucceedingCommand): TestTreeEdit {
 		const trueCommand = commandWithResult(command);
 		let changeset: DefaultChangeset | undefined;
-		const checkout = {
+		const checkout: Checkout<DefaultEditBuilder, DefaultChangeset> = {
 			forest: this.forest,
 			changeFamily: defaultChangeFamily,
 			submitEdit: (change: DefaultChangeset): void => {
 				changeset = change;
 			},
+			mintRevision: () => brand(),
 		};
 		const result = runSynchronousTransaction(checkout, trueCommand);
 		assert(

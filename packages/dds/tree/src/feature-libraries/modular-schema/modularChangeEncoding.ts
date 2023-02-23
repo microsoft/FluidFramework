@@ -10,6 +10,7 @@ import {
 	isGlobalFieldKey,
 	keyFromSymbol,
 	LocalFieldKey,
+	RevisionTag,
 	symbolFromKey,
 } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
@@ -29,6 +30,7 @@ interface EncodedNodeChangeset {
 interface EncodedModularChangeset {
 	maxId?: ChangesetLocalId;
 	changes: EncodedFieldChangeMap;
+	revisions: readonly RevisionTag[];
 }
 
 /**
@@ -57,6 +59,7 @@ export function encodeForJsonFormat0(
 ): EncodedModularChangeset & JsonCompatibleReadOnly {
 	return {
 		maxId: change.maxId,
+		revisions: change.revisions,
 		changes: encodeFieldChangesForJson(fieldKinds, change.changes),
 	};
 }
@@ -112,6 +115,7 @@ export function decodeJsonFormat0(
 ): ModularChangeset {
 	const encodedChange = change as unknown as EncodedModularChangeset;
 	const decoded: ModularChangeset = {
+		revisions: encodedChange.revisions,
 		changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
 	};
 	if (encodedChange.maxId !== undefined) {

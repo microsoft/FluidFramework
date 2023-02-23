@@ -118,7 +118,12 @@ export class ModularChangeFamily
 	}
 
 	compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
-		let maxId = changes.reduce((max, change) => Math.max(change.change.maxId ?? -1, max), -1);
+		let maxId = -1;
+		const revisions: RevisionTag[] = [];
+		for (const { change } of changes) {
+			maxId = Math.max(change.maxId ?? -1, maxId);
+			revisions.push(...change.revisions);
+		}
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
@@ -144,7 +149,7 @@ export class ModularChangeFamily
 				field.change = brand(amendedChange);
 			}
 		}
-		return makeModularChangeset(composedFields, maxId);
+		return makeModularChangeset(composedFields, maxId, revisions);
 	}
 
 	private composeFieldMaps(
@@ -263,7 +268,11 @@ export class ModularChangeFamily
 				fieldChange.change = brand(amendedChange);
 			}
 		}
-		return makeModularChangeset(invertedFields, maxId);
+		return makeModularChangeset(
+			invertedFields,
+			maxId,
+			Array.from(change.change.revisions).reverse(),
+		);
 	}
 
 	private invertFieldMap(
@@ -364,7 +373,7 @@ export class ModularChangeFamily
 			}
 		}
 
-		return makeModularChangeset(rebasedFields, maxId);
+		return makeModularChangeset(rebasedFields, maxId, change.revisions);
 	}
 
 	private rebaseFieldMap(
@@ -659,8 +668,12 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 	}
 }
 
-function makeModularChangeset(changes: FieldChangeMap, maxId: number): ModularChangeset {
-	const changeset: ModularChangeset = { changes };
+function makeModularChangeset(
+	changes: FieldChangeMap,
+	maxId: number,
+	revisions: readonly RevisionTag[],
+): ModularChangeset {
+	const changeset: ModularChangeset = { changes, revisions };
 	if (maxId >= 0) {
 		changeset.maxId = brand(maxId);
 	}
@@ -717,7 +730,7 @@ export class ModularEditBuilder
 		maxId: ChangesetLocalId = brand(-1),
 	): void {
 		const changeMap = this.buildChangeMap(path, field, fieldKind, change);
-		this.applyChange(makeModularChangeset(changeMap, maxId));
+		this.applyChange(makeModularChangeset(changeMap, maxId, []));
 	}
 
 	submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
@@ -726,6 +739,7 @@ export class ModularEditBuilder
 				makeModularChangeset(
 					this.buildChangeMap(change.path, change.field, change.fieldKind, change.change),
 					-1,
+					[],
 				),
 			),
 		);

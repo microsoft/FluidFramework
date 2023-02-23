@@ -17,7 +17,7 @@ import { brand } from "../util";
 import { ForestRepairDataStore } from "./forestRepairDataStore";
 
 export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange>(
-	{ forest, changeFamily, submitEdit }: Checkout<TEditor, TChange>,
+	{ forest, changeFamily, submitEdit, mintRevision }: Checkout<TEditor, TChange>,
 	command: (forest: IForestSubscription, editor: TEditor) => TransactionResult,
 ): TransactionResult {
 	// This revision number is solely used within the scope of this transaction for the purpose of
@@ -59,7 +59,8 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 
 	if (result === TransactionResult.Apply) {
 		const edit = changeFamily.rebaser.compose(changes.map((c) => makeAnonChange(c)));
-		submitEdit(edit);
+		const singleRevEdit = changeFamily.rebaser.asSingleRevision(edit, mintRevision());
+		submitEdit(singleRevEdit);
 	}
 
 	return result;

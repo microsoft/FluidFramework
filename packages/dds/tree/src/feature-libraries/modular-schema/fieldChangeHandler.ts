@@ -262,6 +262,10 @@ export interface ModularChangeset {
 	 * If undefined then this changeset contains no IDs.
 	 */
 	maxId?: ChangesetLocalId;
+	/**
+	 * The revisions included in this changeset, ordered temporally (oldest to newest).
+	 */
+	readonly revisions: readonly RevisionTag[];
 	changes: FieldChangeMap;
 }
 

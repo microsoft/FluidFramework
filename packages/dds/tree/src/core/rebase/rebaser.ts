@@ -147,6 +147,8 @@ export interface ChangeRebaser<TChangeset> {
 	 */
 	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 
+	asSingleRevision(changes: TChangeset, revision: RevisionTag): TChangeset;
+
 	/**
 	 * @returns the inverse of `changes`.
 	 *
