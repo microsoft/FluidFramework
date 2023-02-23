@@ -176,15 +176,6 @@ describeNoCompat("Summarization Larger Document - runtime benchmarks", (getTestO
 				}
 				await provider.ensureSynchronized();
 
-				this.summarizerClient2 = await createSummarizer(
-					provider,
-					this.container2,
-					summaryVersion,
-				);
-				assert(
-					this.summarizerClient2 !== undefined,
-					"summarizerClient2 needs to be defined.",
-				);
 				const { summarizer: summarizerClient } = await createSummarizer(
 					provider,
 					mainContainer,
