@@ -113,7 +113,7 @@ describe("ChunkedForest", () => {
 			chunk.isShared(),
 			"chunk should be shared after storing as repair data and reinserting",
 		);
-		assert.equal(chunk.referenceCount, 4);
+		assert.equal(chunk.referenceCount, 3);
 
 		const readCursor = forest.allocateCursor();
 		moveToDetachedField(forest, readCursor);
