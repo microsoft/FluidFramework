@@ -212,12 +212,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	protected _nodeId: string | undefined;
 	protected running: boolean = false;
 
-	/** The number of child data objects created. */
-	private childCount = 1;
-
-	/** The number of blobs uploaded. */
-	private blobCount = 1;
-
 	/** Unique id that is used to generate unique blob content. */
 	private readonly uniqueBlobContentId: string = uuid();
 
@@ -318,6 +312,9 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		let localSendCount = 0;
 		let activityFailed = false;
 
+		// Set up the listener that would run / stop activity from previous run of this client.
+		this.setupEventHandlers();
+
 		// Run activity on initial set of referenced objects, if any.
 		this.runInitialActivity()
 			.then((results: boolean[]) => {
@@ -393,6 +390,72 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		});
 		this.referencedAttachmentBlobs.forEach((blobDetails: IActivityObjectDetails) => {
 			blobDetails.object.stop();
+		});
+	}
+
+	/**
+	 * Set up an event listener that would run / stop activity based on the activities of the previous run of this
+	 * client. For example, a client could have referenced / unreferenced data objects, then closed and re-loaded
+	 * before those ops were summarizer. So, it would receive those ops after the load and should start / stop
+	 * activity accordingly.
+	 */
+	private setupEventHandlers() {
+		this.dataObjectMap.on("valueChanged", (changed, local) => {
+			if (local || !changed.key.startsWith(this.nodeId)) {
+				return;
+			}
+
+			if (this.dataObjectMap.has(changed.key)) {
+				const dataObjectHandle = this.dataObjectMap.get(
+					changed.key,
+				) as IFluidHandle<IGCActivityObject>;
+				dataObjectHandle
+					.get()
+					.then((dataObject: IGCActivityObject) => {
+						console.log(`---------- Running trailing op data object [${changed.key}]`);
+						dataObject
+							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
+							.catch((error) => {});
+					})
+					.catch((error) => {});
+			} else {
+				const dataObjectHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
+				dataObjectHandle
+					.get()
+					.then((dataObject: IGCActivityObject) => {
+						console.log(`---------- Stopping trailing op data object [${changed.key}]`);
+						dataObject.stop();
+					})
+					.catch((error) => {});
+			}
+		});
+
+		this.blobMap.on("valueChanged", (changed, local) => {
+			if (local || !changed.key.startsWith(this.nodeId)) {
+				return;
+			}
+
+			if (this.blobMap.has(changed.key)) {
+				const blobHandle = this.blobMap.get(changed.key) as IFluidHandle<IGCActivityObject>;
+				blobHandle
+					.get()
+					.then((blobObject: IGCActivityObject) => {
+						console.log(`---------- Running trailing op blob [${changed.key}]`);
+						blobObject
+							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
+							.catch((error) => {});
+					})
+					.catch((error) => {});
+			} else {
+				const blobHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
+				blobHandle
+					.get()
+					.then((blobObject: IGCActivityObject) => {
+						console.log(`---------- Stopping trailing op blob [${changed.key}]`);
+						blobObject.stop();
+					})
+					.catch((error) => {});
+			}
 		});
 	}
 
@@ -499,9 +562,8 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 */
 	private async createAndReferenceDataObject(): Promise<boolean> {
 		// Give each data object a unique id w.r.t. this data object's id.
-		const dataObjectId = `${this.nodeId}/ds-${this.childCount.toString()}`;
+		const dataObjectId = `${this.nodeId}/ds-${uuid}`;
 		console.log(`########## Creating data object [${dataObjectId}]`);
-		this.childCount++;
 
 		const dataObject = await dataObjectFactoryLeaf.createChildInstance(this.context);
 		this.dataObjectMap.set(dataObjectId, dataObject.handle);
@@ -554,10 +616,9 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			switch (blobAction) {
 				case GCActivityType.CreateAndReference: {
 					// Give each blob a unique id w.r.t. this data object's id.
-					const blobId = `${this.nodeId}/blob-${this.blobCount.toString()}`;
+					const blobId = `${this.nodeId}/blob-${uuid()}`;
 					console.log(`########## Creating blob [${blobId}]`);
-					const blobContents = `Content - ${this.uniqueBlobContentId}-${this.blobCount}`;
-					this.blobCount++;
+					const blobContents = `Content - ${this.uniqueBlobContentId}-${blobId}`;
 					const blobHandle = await this.context.uploadBlob(
 						stringToBuffer(blobContents, "utf-8"),
 					);
