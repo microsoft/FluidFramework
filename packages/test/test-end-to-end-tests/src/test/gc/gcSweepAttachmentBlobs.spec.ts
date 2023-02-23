@@ -19,10 +19,9 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary";
-import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
+import { getUrlFromDetachedBlobStorage, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
@@ -343,7 +342,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		}
 
 		beforeEach(async function () {
-			if (provider.driver.type !== "odsp") {
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
 				this.skip();
 			}
 		});
@@ -406,10 +408,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should no longer have the blob.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -511,10 +510,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should not have the blob.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -632,10 +628,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should not have the blobs.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },

@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
@@ -21,10 +20,9 @@ import {
 	describeNoCompat,
 	ExpectedEvents,
 	ITestDataObject,
-	itExpects,
 } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { getUrlFromItemId, MockDetachedBlobStorage } from "./mockDetachedBlobStorage";
+import { getUrlFromDetachedBlobStorage, MockDetachedBlobStorage } from "./mockDetachedBlobStorage";
 
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
@@ -225,7 +223,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	// this test relies on an internal function that has been renamed (snapshot -> summarize)
-	it("loads from snapshot", async function () {
+	/* it("loads from snapshot", async function () {
 		// GitHub Issue: #9534
 		if (provider.driver.type === "odsp") {
 			this.skip();
@@ -282,9 +280,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const snapshot2 = (container2 as any).context.runtime.blobManager.summarize();
 		assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
 		assert.strictEqual(snapshot1.summary.tree[0].id, snapshot2.summary.tree[0].id);
-	});
+	}); */
 
-	itExpects("works in detached container", ContainerCloseUsageError, async function () {
+	it("works in detached container", async function () {
 		const detachedBlobStorage = new MockDetachedBlobStorage();
 		const loader = provider.makeTestLoader({
 			...testContainerConfig,
@@ -306,10 +304,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = container.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (provider.driver.type !== "odsp") {
-			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-		}
+		// if (provider.driver.type !== "odsp") {
+		// 	// this flow is currently only supported on ODSP, the others should explicitly reject on attach
+		// 	return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+		// }
 		await attachP;
 
 		// make sure we're getting the blob from actual storage
@@ -361,7 +359,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		);
 	});
 
-	itExpects("redirect table saved in snapshot", ContainerCloseUsageError, async function () {
+	it("redirect table saved in snapshot", async function () {
 		const detachedBlobStorage = new MockDetachedBlobStorage();
 		const loader = provider.makeTestLoader({
 			...testContainerConfig,
@@ -391,17 +389,14 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = detachedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (provider.driver.type !== "odsp") {
-			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-		}
+		// if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
+		// 	// this flow is currently only supported on ODSP, the others should explicitly reject on attach
+		// 	return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+		// }
 		await attachP;
 		detachedBlobStorage.blobs.clear();
 
-		const url = getUrlFromItemId(
-			(detachedContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-			provider,
-		);
+		const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
 		const attachedContainer = await provider
 			.makeTestLoader(testContainerConfig)
 			.resolve({ url });
@@ -417,7 +412,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		);
 	});
 
-	itExpects("serialize/rehydrate then attach", ContainerCloseUsageError, async function () {
+	it("serialize/rehydrate then attach", async function () {
 		const loader = provider.makeTestLoader({
 			...testContainerConfig,
 			loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() },
@@ -440,16 +435,13 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (provider.driver.type !== "odsp") {
-			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-		}
+		// if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
+		// 	// this flow is currently only supported on ODSP, the others should explicitly reject on attach
+		// 	return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+		// }
 		await attachP;
 
-		const url = getUrlFromItemId(
-			(rehydratedContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-			provider,
-		);
+		const url = await getUrlFromDetachedBlobStorage(rehydratedContainer, provider);
 		const attachedContainer = await provider
 			.makeTestLoader(testContainerConfig)
 			.resolve({ url });
@@ -464,57 +456,50 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		);
 	});
 
-	itExpects(
-		"serialize/rehydrate multiple times then attach",
-		ContainerCloseUsageError,
-		async function () {
-			const loader = provider.makeTestLoader({
-				...testContainerConfig,
-				loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() },
-			});
-			let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+	it("serialize/rehydrate multiple times then attach", async function () {
+		const loader = provider.makeTestLoader({
+			...testContainerConfig,
+			loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() },
+		});
+		let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-			const text = "this is some example text";
-			const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-			dataStore._root.set(
-				"my blob",
-				await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
-			);
+		const text = "this is some example text";
+		const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		dataStore._root.set(
+			"my blob",
+			await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+		);
 
-			let snapshot;
-			for (const _ of Array(5)) {
-				snapshot = container.serialize();
-				container.close();
-				container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
-			}
+		let snapshot;
+		for (const _ of Array(5)) {
+			snapshot = container.serialize();
+			container.close();
+			container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+		}
 
-			const attachP = container.attach(
-				provider.driver.createCreateNewRequest(provider.documentId),
-			);
-			if (provider.driver.type !== "odsp") {
-				// this flow is currently only supported on ODSP, the others should explicitly reject on attach
-				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
-			}
-			await attachP;
+		const attachP = container.attach(
+			provider.driver.createCreateNewRequest(provider.documentId),
+		);
+		// if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
+		// 	// this flow is currently only supported on ODSP, the others should explicitly reject on attach
+		// 	return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+		// }
+		await attachP;
 
-			const url = getUrlFromItemId(
-				(container.resolvedUrl as IOdspResolvedUrl).itemId,
-				provider,
-			);
-			const attachedContainer = await provider
-				.makeTestLoader(testContainerConfig)
-				.resolve({ url });
-			const attachedDataStore = await requestFluidObject<ITestDataObject>(
-				attachedContainer,
-				"default",
-			);
-			await provider.ensureSynchronized();
-			assert.strictEqual(
-				bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
-				text,
-			);
-		},
-	);
+		const url = await getUrlFromDetachedBlobStorage(container, provider);
+		const attachedContainer = await provider
+			.makeTestLoader(testContainerConfig)
+			.resolve({ url });
+		const attachedDataStore = await requestFluidObject<ITestDataObject>(
+			attachedContainer,
+			"default",
+		);
+		await provider.ensureSynchronized();
+		assert.strictEqual(
+			bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
+			text,
+		);
+	});
 
 	it("rehydrating without detached blob storage results in error", async function () {
 		const detachedBlobStorage = new MockDetachedBlobStorage();

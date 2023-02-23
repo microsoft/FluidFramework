@@ -9,7 +9,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestContainerConfig,
@@ -19,7 +18,7 @@ import {
 import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager";
-import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
+import { getUrlFromDetachedBlobStorage, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 const waitForContainerConnectionWriteMode = async (container: Container) => {
@@ -117,10 +116,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 		 * blobs when createContainerUrl() is called, instead creating a new file.
 		 */
 		async function loadContainer() {
-			const url = getUrlFromItemId(
-				(container.resolvedUrl as IOdspResolvedUrl).itemId,
-				provider,
-			);
+			const url = await getUrlFromDetachedBlobStorage(container, provider);
 			const newContainer = await provider.makeTestLoader(gcContainerConfig).resolve({ url });
 			await waitForContainerConnection(newContainer, true);
 			return newContainer;
@@ -137,7 +133,10 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider();
-			if (provider.driver.type !== "odsp") {
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
 				this.skip();
 			}
 			const detachedBlobStorage = new MockDetachedBlobStorage();

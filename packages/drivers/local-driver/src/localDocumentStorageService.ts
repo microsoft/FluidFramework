@@ -22,6 +22,7 @@ import {
 	ISummaryUploadManager,
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
+import { CreateDocumentInStorage } from "./localDocumentServiceFactory";
 
 export class LocalDocumentStorageService implements IDocumentStorageService {
 	// The values of this cache is useless. We only need the keys. So we are always putting
@@ -82,6 +83,10 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
+		const createDocument = CreateDocumentInStorage.getInstance();
+		if (createDocument) {
+			await createDocument.createDocument(summary);
+		}
 		return this.summaryTreeUploadManager.writeSummaryTree(
 			summary,
 			context.ackHandle ?? "",
