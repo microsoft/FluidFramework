@@ -312,7 +312,7 @@ describe("OpSplitter", () => {
 		assert(
 			mockLogger.matchEvents([
 				{
-					eventName: "OpSplitter:Chunked compressed batch",
+					eventName: "OpSplitter:CompressedChunkedBatch",
 					length: result.content.length,
 					chunks: 100 / 20 + 2,
 					chunkSizeInBytes: 20,
@@ -364,7 +364,7 @@ describe("OpSplitter", () => {
 		assert(
 			mockLogger.matchEvents([
 				{
-					eventName: "OpSplitter:Chunked compressed batch",
+					eventName: "OpSplitter:CompressedChunkedBatch",
 					length: result.content.length,
 					chunks: 100 / 20 + 2,
 					chunkSizeInBytes: 20,
