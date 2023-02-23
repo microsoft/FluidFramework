@@ -25,12 +25,12 @@ export enum ContainerStateChangeKind {
 	Disconnected = "disconnected",
 
 	/**
-	 * Container is disposed, which permanently disables it.
+	 * Container is disposed, which permanently disables it. Resources disposed.
 	 */
 	Disposed = "disposed",
 
 	/**
-	 * Container is closed, which permanently disables it.
+	 * Container is closed. No new activity will occur, but resources might not been disposed yet.
 	 */
 	Closed = "closed",
 }

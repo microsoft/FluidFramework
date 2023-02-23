@@ -13,6 +13,7 @@ import {
 	IContainerEvents,
 	IErrorBase,
 } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 
@@ -75,6 +76,16 @@ class MockContainer
 	implements Partial<Omit<IContainer, "on" | "off" | "once">>
 {
 	public readonly audience: IAudience = new MockAudience();
+
+	private _connectionState: ConnectionState = ConnectionState.Disconnected;
+
+	public get connectionState(): ConnectionState {
+		return this._connectionState;
+	}
+
+	public set connectionState(connectionState: ConnectionState) {
+		this._connectionState = connectionState;
+	}
 
 	public connect(): void {
 		this.emit("connected");
