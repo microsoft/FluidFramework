@@ -38,7 +38,7 @@ import {
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
-import { IGCRuntimeOptions, RuntimeHeaders } from "../containerRuntime";
+import { RuntimeHeaders } from "../containerRuntime";
 import { ICreateContainerMetadata } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
@@ -139,7 +139,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly runtime: IGarbageCollectionRuntime;
 	private readonly createContainerMetadata: ICreateContainerMetadata;
-	private readonly gcOptions: IGCRuntimeOptions;
 	private readonly isSummarizerClient: boolean;
 
 	private readonly summaryStateTracker: GCSummaryStateTracker;
@@ -163,7 +162,6 @@ export class GarbageCollector implements IGarbageCollector {
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
-		this.gcOptions = createParams.gcOptions;
 		this.createContainerMetadata = createParams.createContainerMetadata;
 		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
@@ -185,7 +183,7 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 
 		this.configs = generateGCConfigs(
-			this.gcOptions,
+			createParams.gcOptions,
 			createParams.metadata,
 			createParams.existing,
 			this.mc,
@@ -243,7 +241,7 @@ export class GarbageCollector implements IGarbageCollector {
 						"FailedToInitializeGC",
 					);
 					dpe.addTelemetryProperties({
-						details: JSON.stringify({ ...this.configs, ...this.gcOptions }),
+						details: JSON.stringify({ ...this.configs, ...createParams.gcOptions }),
 					});
 					throw dpe;
 				}
@@ -269,7 +267,7 @@ export class GarbageCollector implements IGarbageCollector {
 				// Log an event so we can evaluate how often we run into this scenario.
 				this.mc.logger.sendErrorEvent({
 					eventName: "GarbageCollectorInitializedWithoutTimestamp",
-					details: JSON.stringify({ ...this.configs, ...this.gcOptions }),
+					details: JSON.stringify({ ...this.configs }),
 				});
 				return;
 			}
@@ -311,7 +309,7 @@ export class GarbageCollector implements IGarbageCollector {
 		if (this.isSummarizerClient) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "GarbageCollectorLoaded",
-				details: JSON.stringify({ ...this.configs, ...this.gcOptions }),
+				details: JSON.stringify({ ...this.configs, ...createParams.gcOptions }),
 			});
 		}
 	}
@@ -476,7 +474,7 @@ export class GarbageCollector implements IGarbageCollector {
 	): Promise<IGCStats | undefined> {
 		const fullGC =
 			options.fullGC ??
-			(this.gcOptions.runFullGC === true ||
+			(this.configs.runFullGC === true ||
 				this.summaryStateTracker.doesSummaryStateNeedReset());
 		const logger = options.logger
 			? ChildLogger.create(options.logger, undefined, {
@@ -497,7 +495,7 @@ export class GarbageCollector implements IGarbageCollector {
 			// Log an event so we can evaluate how often we run into this scenario.
 			logger.sendErrorEvent({
 				eventName: "CollectGarbageCalledWithoutTimestamp",
-				details: JSON.stringify({ ...this.configs, ...this.gcOptions }),
+				details: JSON.stringify({ ...this.configs }),
 			});
 			return undefined;
 		}

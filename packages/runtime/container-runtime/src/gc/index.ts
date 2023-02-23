@@ -19,6 +19,7 @@ export {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCRuntimeOptions,
 	IGCStats,
 	oneDayMs,
 	runGCKey,

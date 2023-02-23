@@ -17,7 +17,6 @@ import {
 	ConfigTypes,
 } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
-import { IGCRuntimeOptions } from "../../containerRuntime";
 import {
 	GarbageCollector,
 	GCNodeType,
@@ -27,6 +26,7 @@ import {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCRuntimeOptions,
 	defaultSessionExpiryDurationMs,
 	runSessionExpiryKey,
 	oneDayMs,

@@ -5,7 +5,6 @@
 
 import { UsageError } from "@fluidframework/driver-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
-import { IGCRuntimeOptions } from "..";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
 	defaultInactiveTimeoutMs,
@@ -16,6 +15,7 @@ import {
 	gcTombstoneGenerationOptionName,
 	GCVersion,
 	IGarbageCollectorConfigs,
+	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runGCKey,
@@ -148,6 +148,7 @@ export function generateGCConfigs(
 		sweepEnabled,
 		shouldRunGC,
 		shouldRunSweep,
+		runFullGC: gcOptions.runFullGC,
 		testMode,
 		tombstoneMode,
 		trackGCState,

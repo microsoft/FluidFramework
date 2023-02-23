@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IGCRuntimeOptions } from "../containerRuntime";
 import { IContainerRuntimeMetadata, ICreateContainerMetadata } from "../summary";
 
 export type GCVersion = number;
@@ -240,6 +239,54 @@ export interface IGarbageCollectorCreateParams {
 	readonly getContainerDiagnosticId: () => string;
 }
 
+export interface IGCRuntimeOptions {
+	/**
+	 * Flag that if true, will enable running garbage collection (GC) for a new container.
+	 *
+	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
+	 * and marked as such in the summary. This option enables the mark phase.
+	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
+	 * Sweep phase can be enabled via the "sweepAllowed" option.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	gcAllowed?: boolean;
+
+	/**
+	 * Flag that if true, enables GC's sweep phase for a new container.
+	 *
+	 * This will allow GC to eventually delete unreferenced objects from the container.
+	 * This flag should only be set to true if "gcAllowed" is true.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	sweepAllowed?: boolean;
+
+	/**
+	 * Flag that if true, will disable garbage collection for the session.
+	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
+	 */
+	disableGC?: boolean;
+
+	/**
+	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
+	 * changed or not.
+	 */
+	runFullGC?: boolean;
+
+	/**
+	 * Maximum session duration for a new container. If not present, a default value will be used.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	sessionExpiryTimeoutMs?: number;
+
+	/**
+	 * Allows additional GC options to be passed.
+	 */
+	[key: string]: any;
+}
+
 /**
  * The configurations for Garbage Collector that determines what runs and how.
  */
@@ -264,6 +311,10 @@ export interface IGarbageCollectorConfigs {
 	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
 	 */
 	readonly shouldRunSweep: boolean;
+	/**
+	 * If true, bypass optimizations and generate GC data for all nodes irrespective of whether a node changed or not.
+	 */
+	readonly runFullGC: boolean | undefined;
 	/** The time in ms to expire a session for a client for gc. */
 	readonly sessionExpiryTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is ready to be swept. */
