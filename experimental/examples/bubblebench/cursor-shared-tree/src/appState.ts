@@ -71,22 +71,10 @@ export class AppState implements IAppState {
 
     makeClientInitialJsonTree(numBubbles: number) {
         const clientId = `${Math.random()}`;
-        const clientInitialJsonTree: JsonableTree = {
-            type: clientSchema.name,
-            fields: {
-                clientId: [
-                    { type: stringSchema.name, value: clientId },
-                ],
-                color: [{ type: stringSchema.name, value: randomColor() }],
-                bubbles: [],
-            },
-        };
-
-        // create and add initial bubbles to initial client json tree
+        const initialBubblesJsonTree: JsonableTree[] = [];
         for (let i = 0; i < numBubbles; i++) {
             const bubble = makeBubble(this.width, this.height);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            clientInitialJsonTree.fields!.bubbles.push({
+            initialBubblesJsonTree.push({
                 type: bubbleSchema.name,
                 fields: {
                     x: [{ type: numberSchema.name, value: bubble.x }],
@@ -97,6 +85,17 @@ export class AppState implements IAppState {
                 },
             });
         }
+
+        const clientInitialJsonTree: JsonableTree = {
+            type: clientSchema.name,
+            fields: {
+                clientId: [
+                    { type: stringSchema.name, value: clientId },
+                ],
+                color: [{ type: stringSchema.name, value: randomColor() }],
+                bubbles: initialBubblesJsonTree,
+            },
+        };
 
         return {
             tree: clientInitialJsonTree,
