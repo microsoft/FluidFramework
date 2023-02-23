@@ -313,11 +313,11 @@ function makeOperationGenerator(
 		[addText, 2, isShorterThanMaxLength],
 		[removeRange, 1, hasNonzeroLength],
 		[obliterateRange, 1, hasNonzeroLength],
-		[addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[deleteInterval, 0, hasAnInterval],
-		[changeInterval, 0, all(hasAnInterval, hasNonzeroLength)],
-		[changeProperties, 0, hasAnInterval],
-		[changeConnectionState, 0],
+		[addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
+		[deleteInterval, 2, hasAnInterval],
+		[changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
+		[changeProperties, 2, hasAnInterval],
+		[changeConnectionState, 1],
 	]);
 
 	const clientOperationGenerator = (state: FuzzTestState) =>
