@@ -18,21 +18,23 @@ import { relayMessageToPort, relayMessageToWindow } from "./messaging";
 
 /**
  * This module is the extension's Content Script.
- * It lives in the tab context alongside the page being communicated with.
+ * It lives in the tab context, alongside the page being communicated with.
  *
- * From an implementation perspective, this script strictly relays messages between the webpage
- * and the Background Script.
+ * The lifetime of the script itself is roughly the same as the lifetime of the tab, but in our case it
+ * doesn't do anything until it is activated by the Background Worker.
  *
- * TODO link to docs on Content script + Devtools extension flow
+ * Once initialized, this script relays messages between the tab and the Background Worker, which in turn communicates
+ * with the Devtools extension.
+ *
+ * For an overview of how the various scripts communicate in the Devtools extension model,
+ * see {@link https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools | here}.
  */
-
-// TODOs:
-// - What is the lifetime of this? Lifetime of the page?
 
 console.log(formatContentScriptMessageForLogging("Initializing Content Script."));
 
+// Only establish messaging when activated by the Background Worker.
 chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
-	console.log(formatContentScriptMessageForLogging("Connection added from Background Script."));
+	console.log(formatContentScriptMessageForLogging("Connection added from Background Worker."));
 
 	/**
 	 * Relay messages if they conform to our expected format.
@@ -51,17 +53,17 @@ chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
 		}
 	}
 
-	// Relay messages to the background worker as appropriate.
+	// Relay messages to the Background Worker as appropriate.
 	globalThis.addEventListener("message", relayMessageFromPageToBackground);
 
-	// Relay messages from the background service worker to the inspected window.
+	// Relay messages from the Background Worker to the inspected window.
 	backgroundPort.onMessage.addListener((message: Partial<IDebuggerMessage>) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
 		if (isDebuggerMessage(message) && message.source === extensionMessageSource) {
 			relayMessageToWindow(
 				message,
-				"background service worker",
+				"Background Worker worker",
 				contentScriptMessageLoggingOptions,
 			);
 		}

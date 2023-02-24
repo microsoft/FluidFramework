@@ -19,30 +19,29 @@ import {
 } from "./messaging";
 
 /**
- * This module is the extension's Background Script.
- * It runs in a background worker, and has no direct access to the page or any of its resources.
- * It runs automatically in the background, and may correspond to any number of running Devtools
- * script instances.
+ * This script runs as the extension's Background Worker.
+ * It has no direct access to the page or any of its resources.
+ * It runs automatically in the background, and only a single instance is run by the browser, regardless of how
+ * many tabs are open / how many Devtools Script instances are running.
  *
- * From an implementation perspective, this script strictly relays messages between the page
- * (via the Content Script) and the Devtools Script.
+ * While the script itself runs as soon as the Browser is launched (post installation), it will not begin relaying
+ * any messages until the Devtools Script sends it a connection request. After connecting, the Devtools Script
+ * is required to provide the `tabID` of the webpage it is inspecting. From that point forward, this script
+ * relays messages between the webpage (via our injected Content Script), and the Devtools Script.
  *
- * TODO link to docs on Background script + Devtools extension flow
+ * For an overview of how the various scripts communicate in the Devtools extension model,
+ * see {@link https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools | here}.
  */
 
-console.log(formatBackgroundScriptMessageForLogging("Initializing Background Script."));
+console.log(formatBackgroundScriptMessageForLogging("Initializing Background Worker."));
 
-/**
- * This listener waits for a connection from DevtoolPanel,
- * connects to the content script which we injected into the inspected tab,
- * and relays messages from the inspected tab back to DevtoolPanel.
- */
+// Only establish messaging when activated by the Devtools Script.
 chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void => {
 	// Note: this is captured by the devtoolsMessageListener lambda below.
 	let tabConnection: chrome.runtime.Port | undefined;
 
 	/**
-	 * Listen for init messages from the Devtools script, and instantiate tab (Content Script)
+	 * Listen for init messages from the Devtools Script, and instantiate tab (Content Script)
 	 * connections as needed.
 	 */
 	const devtoolsMessageListener = (message: Partial<IDebuggerMessage>): void => {

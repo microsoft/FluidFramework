@@ -8,19 +8,15 @@ import { formatDevtoolsScriptMessageForLogging } from "./devtools";
 /**
  * This module is the extension's Devtools Script.
  * It runs in the context of the browser's Devtools panel, and has no direct access to the page or any of its resources.
- * It will be initialized as soon as a user clicks on this extension's tab in the Devtools panel.
+ * It is initialized as soon as a user clicks on this extension's tab in the Devtools panel.
  * It will live for as long at the extension's tab is active.
  *
- * From an implementation perspective, this script renders our debugger visuals and initiates message passing
- * between the visuals and the webpage with registered Fluid Debugger(s).
+ * From an implementation perspective, this script simply initializes our React view.
+ * That view then handles initiating communication between the Devtools extension and the webpage (via the shared
+ * Background Worker).
  *
- * In terms of messaging, this script strictly communicates with the Background Script, which is responsible for
- * relaying messages between this script and the webpage.
- *
- * - Note: Messaging is initiated by the root of our visualizer, rather than in this script directly.
- * See `RootView.ts`.
- *
- * TODO link to docs on Devtools script + Devtools extension flow
+ * For an overview of how the various scripts communicate in the Devtools extension model,
+ * see {@link https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools | here}.
  */
 
 console.log(formatDevtoolsScriptMessageForLogging("Initializing Devtools Script."));
