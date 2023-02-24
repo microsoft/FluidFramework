@@ -9,6 +9,8 @@ import { MergeTree } from "../mergeTree";
 import { insertText, markRangeRemoved } from "./testUtils";
 
 describe("partial lengths perf", () => {
+	const originalIncrementalUpdate: boolean = MergeTree.options.incrementalUpdate;
+
 	for (const incremental of [true, false]) {
 		benchmark({
 			type: BenchmarkType.Measurement,
@@ -61,7 +63,7 @@ describe("partial lengths perf", () => {
 				}
 			},
 			after: () => {
-				MergeTree.options.incrementalUpdate = true;
+				MergeTree.options.incrementalUpdate = originalIncrementalUpdate;
 			},
 		});
 	}
