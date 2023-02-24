@@ -47,6 +47,7 @@ steps:
         npm i -g pnpm
         pnpm config set store-dir $(pnpmStorePath)
         pnpm i
+        pnpm build:compile
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
