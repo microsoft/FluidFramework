@@ -87,7 +87,7 @@ import {
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
 import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
-import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
 import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
@@ -783,7 +783,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             const messageString = `Context is tombstoned! Call site [${callSite}]`;
             const error = new DataCorruptionError(messageString, safeTelemetryProps);
 
-            sendGCTombstoneEvent(
+            sendGCUnexpectedUsageEvent(
                 this.mc,
                 {
                     eventName: "GC_Tombstone_DataStore_Changed",

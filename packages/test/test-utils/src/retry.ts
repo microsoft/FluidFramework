@@ -6,21 +6,21 @@
 import { delay } from "@fluidframework/common-utils";
 
 const retry = async <T>(
-    callback: () => Promise<T>,
-    defaultValue: T,
-    maxTries: number,
-    backOffMs: number,
+	callback: () => Promise<T>,
+	defaultValue: T,
+	maxTries: number,
+	backOffMs: number,
 ): Promise<T> => {
-    for (let currentTry = 1; currentTry <= maxTries; currentTry++) {
-        try {
-            const result = await callback();
-            return result;
-        } catch (error) {
-            await delay(currentTry * backOffMs);
-        }
-    }
+	for (let currentTry = 1; currentTry <= maxTries; currentTry++) {
+		try {
+			const result = await callback();
+			return result;
+		} catch (error) {
+			await delay(currentTry * backOffMs);
+		}
+	}
 
-    return Promise.resolve(defaultValue);
+	return Promise.resolve(defaultValue);
 };
 
 /**
@@ -35,16 +35,22 @@ const retry = async <T>(
  * @returns the actual value from the callback when successful or the default value otherwise
  */
 export const retryWithEventualValue = async <T>(
-    callback: () => Promise<T>,
-    check: (value: T) => boolean,
-    defaultValue: T,
-    maxTries = 20,
-    backOffMs = 50,
-): Promise<T> => retry(async () => {
-    const value = await callback();
-    if (check(value)) {
-        return value;
-    }
+	callback: () => Promise<T>,
+	check: (value: T) => boolean,
+	defaultValue: T,
+	maxTries = 20,
+	backOffMs = 50,
+): Promise<T> =>
+	retry(
+		async () => {
+			const value = await callback();
+			if (check(value)) {
+				return value;
+			}
 
-    throw Error("Not ready");
-}, defaultValue, maxTries, backOffMs);
+			throw Error("Not ready");
+		},
+		defaultValue,
+		maxTries,
+		backOffMs,
+	);

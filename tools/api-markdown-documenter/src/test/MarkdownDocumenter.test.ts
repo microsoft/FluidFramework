@@ -11,8 +11,8 @@ import { compare } from "dir-compare";
 import { Suite } from "mocha";
 
 import {
-    MarkdownDocumenterConfiguration,
-    markdownDocumenterConfigurationWithDefaults,
+	MarkdownDocumenterConfiguration,
+	markdownDocumenterConfigurationWithDefaults,
 } from "../Configuration";
 import { MarkdownDocument } from "../MarkdownDocument";
 import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
@@ -39,65 +39,65 @@ const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "sna
  * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
  */
 async function snapshotTest(
-    relativeSnapshotDirectoryPath: string,
-    config: MarkdownDocumenterConfiguration,
-    generateFrontMatter?: (contextApiItem: ApiItem) => string,
+	relativeSnapshotDirectoryPath: string,
+	config: MarkdownDocumenterConfiguration,
+	generateFrontMatter?: (contextApiItem: ApiItem) => string,
 ): Promise<void> {
-    const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
-    const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
+	const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
+	const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
 
-    // Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
-    await FileSystem.ensureFolderAsync(outputDirPath);
-    await FileSystem.ensureFolderAsync(snapshotDirPath);
+	// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
+	await FileSystem.ensureFolderAsync(outputDirPath);
+	await FileSystem.ensureFolderAsync(snapshotDirPath);
 
-    // Clear any existing test_temp data
-    await FileSystem.ensureEmptyFolderAsync(outputDirPath);
+	// Clear any existing test_temp data
+	await FileSystem.ensureEmptyFolderAsync(outputDirPath);
 
-    await renderFiles(
-        config,
-        outputDirPath,
-        new MarkdownEmitter(config.apiModel, generateFrontMatter),
-    );
+	await renderFiles(
+		config,
+		outputDirPath,
+		new MarkdownEmitter(config.apiModel, generateFrontMatter),
+	);
 
-    // Verify against expected contents
-    const result = await compare(outputDirPath, snapshotDirPath, {
-        compareContent: true,
-    });
+	// Verify against expected contents
+	const result = await compare(outputDirPath, snapshotDirPath, {
+		compareContent: true,
+	});
 
-    if (!result.same) {
-        await FileSystem.ensureEmptyFolderAsync(snapshotDirPath);
-        await FileSystem.copyFilesAsync({
-            sourcePath: outputDirPath,
-            destinationPath: snapshotDirPath,
-        });
-    }
+	if (!result.same) {
+		await FileSystem.ensureEmptyFolderAsync(snapshotDirPath);
+		await FileSystem.copyFilesAsync({
+			sourcePath: outputDirPath,
+			destinationPath: snapshotDirPath,
+		});
+	}
 
-    // If this fails, then the docs build has generated new content.
-    // View the diff in git and determine if the changes are appropriate or not.
+	// If this fails, then the docs build has generated new content.
+	// View the diff in git and determine if the changes are appropriate or not.
 
-    // False positive
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    expect(result.same).to.be.true;
+	// False positive
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+	expect(result.same).to.be.true;
 }
 
 /**
  * Input props for {@link apiTestSuite}.
  */
 interface ConfigTestProps {
-    /**
-     * Name of the config to be used in naming of the test-suite
-     */
-    configName: string;
+	/**
+	 * Name of the config to be used in naming of the test-suite
+	 */
+	configName: string;
 
-    /**
-     * The config to use, except the `apiModel`, which will be instantiated in test set-up.
-     */
-    configLessApiModel: Omit<MarkdownDocumenterConfiguration, "apiModel">;
+	/**
+	 * The config to use, except the `apiModel`, which will be instantiated in test set-up.
+	 */
+	configLessApiModel: Omit<MarkdownDocumenterConfiguration, "apiModel">;
 
-    /**
-     * {@inheritDoc MarkdownEmitter.generateFrontMatter}
-     */
-    generateFrontMatter?: (contextApiItem: ApiItem) => string;
+	/**
+	 * {@inheritDoc MarkdownEmitter.generateFrontMatter}
+	 */
+	generateFrontMatter?: (contextApiItem: ApiItem) => string;
 }
 
 /**
@@ -113,159 +113,159 @@ interface ConfigTestProps {
  * @param configs - Configurations to test against.
  */
 function apiTestSuite(
-    modelName: string,
-    apiReportFilePaths: string[],
-    configs: ConfigTestProps[],
+	modelName: string,
+	apiReportFilePaths: string[],
+	configs: ConfigTestProps[],
 ): Suite {
-    return describe(modelName, () => {
-        for (const configProps of configs) {
-            describe(configProps.configName, () => {
-                /**
-                 * Complete config generated in `before` hook.
-                 */
-                let markdownDocumenterConfig: Required<MarkdownDocumenterConfiguration>;
+	return describe(modelName, () => {
+		for (const configProps of configs) {
+			describe(configProps.configName, () => {
+				/**
+				 * Complete config generated in `before` hook.
+				 */
+				let markdownDocumenterConfig: Required<MarkdownDocumenterConfiguration>;
 
-                before(() => {
-                    const apiModel = new ApiModel();
-                    for (const apiReportFilePath of apiReportFilePaths) {
-                        apiModel.loadPackage(apiReportFilePath);
-                    }
+				before(() => {
+					const apiModel = new ApiModel();
+					for (const apiReportFilePath of apiReportFilePaths) {
+						apiModel.loadPackage(apiReportFilePath);
+					}
 
-                    markdownDocumenterConfig = markdownDocumenterConfigurationWithDefaults({
-                        ...configProps.configLessApiModel,
-                        apiModel,
-                    });
-                });
+					markdownDocumenterConfig = markdownDocumenterConfigurationWithDefaults({
+						...configProps.configLessApiModel,
+						apiModel,
+					});
+				});
 
-                it("Render Model document (smoke test)", () => {
-                    const result = renderModelDocument(
-                        markdownDocumenterConfig.apiModel,
-                        markdownDocumenterConfig,
-                    );
-                    expect(result.path).to.equal("index.md");
-                });
+				it("Render Model document (smoke test)", () => {
+					const result = renderModelDocument(
+						markdownDocumenterConfig.apiModel,
+						markdownDocumenterConfig,
+					);
+					expect(result.path).to.equal("index.md");
+				});
 
-                it("Render Package document (smoke test)", () => {
-                    const packageItem = markdownDocumenterConfig.apiModel.packages[0];
+				it("Render Package document (smoke test)", () => {
+					const packageItem = markdownDocumenterConfig.apiModel.packages[0];
 
-                    const result = renderPackageDocument(packageItem, markdownDocumenterConfig);
-                    expect(result.path).to.equal(`${modelName}.md`);
-                });
+					const result = renderPackageDocument(packageItem, markdownDocumenterConfig);
+					expect(result.path).to.equal(`${modelName}.md`);
+				});
 
-                it("Ensure no duplicate file paths", () => {
-                    const documents = renderDocuments(markdownDocumenterConfig);
+				it("Ensure no duplicate file paths", () => {
+					const documents = renderDocuments(markdownDocumenterConfig);
 
-                    const pathMap = new Map<string, MarkdownDocument>();
-                    for (const document of documents) {
-                        const existingEntry = pathMap.get(document.path);
-                        if (existingEntry !== undefined) {
-                            expect.fail(
-                                `Rendering generated multiple documents to be rendered to the same file path: ` +
-                                    `"${document.path}". Requested by the following items: ` +
-                                    `"${document.apiItem.displayName}" & "${existingEntry.apiItem.displayName}".`,
-                            );
-                        } else {
-                            pathMap.set(document.path, document);
-                        }
-                    }
-                });
+					const pathMap = new Map<string, MarkdownDocument>();
+					for (const document of documents) {
+						const existingEntry = pathMap.get(document.path);
+						if (existingEntry !== undefined) {
+							expect.fail(
+								`Rendering generated multiple documents to be rendered to the same file path: ` +
+									`"${document.path}". Requested by the following items: ` +
+									`"${document.apiItem.displayName}" & "${existingEntry.apiItem.displayName}".`,
+							);
+						} else {
+							pathMap.set(document.path, document);
+						}
+					}
+				});
 
-                it("Snapshot test", async () => {
-                    await snapshotTest(
-                        Path.join(modelName, configProps.configName),
-                        markdownDocumenterConfig,
-                        configProps.generateFrontMatter,
-                    );
-                });
-            });
-        }
-    });
+				it("Snapshot test", async () => {
+					await snapshotTest(
+						Path.join(modelName, configProps.configName),
+						markdownDocumenterConfig,
+						configProps.generateFrontMatter,
+					);
+				});
+			});
+		}
+	});
 }
 
 describe("api-markdown-documenter full-suite tests", () => {
-    /**
-     * Sample "default" configuration.
-     */
-    const defaultConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
-        uriRoot: ".",
-        newlineKind: NewlineKind.Lf,
-    };
+	/**
+	 * Sample "default" configuration.
+	 */
+	const defaultConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
+		uriRoot: ".",
+		newlineKind: NewlineKind.Lf,
+	};
 
-    /**
-     * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
-     */
-    const flatConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
-        uriRoot: "docs",
-        newlineKind: NewlineKind.Lf,
-        includeBreadcrumb: true,
-        includeTopLevelDocumentHeading: false,
-        documentBoundaries: [], // Render everything to package documents
-        hierarchyBoundaries: [], // No additional hierarchy beyond the package level
-        emptyTableCellText: "---",
-    };
+	/**
+	 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
+	 */
+	const flatConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
+		uriRoot: "docs",
+		newlineKind: NewlineKind.Lf,
+		includeBreadcrumb: true,
+		includeTopLevelDocumentHeading: false,
+		documentBoundaries: [], // Render everything to package documents
+		hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+		emptyTableCellText: "---",
+	};
 
-    /**
-     * A sample "sparse" configuration, which renders every item kind to its own document.
-     */
-    const sparseConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
-        uriRoot: "docs",
-        newlineKind: NewlineKind.Lf,
-        includeBreadcrumb: false,
-        includeTopLevelDocumentHeading: true,
-        // Render everything to its own document
-        documentBoundaries: [
-            ApiItemKind.CallSignature,
-            ApiItemKind.Class,
-            ApiItemKind.ConstructSignature,
-            ApiItemKind.Constructor,
-            ApiItemKind.Enum,
-            ApiItemKind.EnumMember,
-            ApiItemKind.Function,
-            ApiItemKind.IndexSignature,
-            ApiItemKind.Interface,
-            ApiItemKind.Method,
-            ApiItemKind.MethodSignature,
-            ApiItemKind.Namespace,
-            ApiItemKind.Property,
-            ApiItemKind.PropertySignature,
-            ApiItemKind.TypeAlias,
-            ApiItemKind.Variable,
-        ],
-        hierarchyBoundaries: [], // No additional hierarchy beyond the package level
-        emptyTableCellText: "📝",
-    };
+	/**
+	 * A sample "sparse" configuration, which renders every item kind to its own document.
+	 */
+	const sparseConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
+		uriRoot: "docs",
+		newlineKind: NewlineKind.Lf,
+		includeBreadcrumb: false,
+		includeTopLevelDocumentHeading: true,
+		// Render everything to its own document
+		documentBoundaries: [
+			ApiItemKind.CallSignature,
+			ApiItemKind.Class,
+			ApiItemKind.ConstructSignature,
+			ApiItemKind.Constructor,
+			ApiItemKind.Enum,
+			ApiItemKind.EnumMember,
+			ApiItemKind.Function,
+			ApiItemKind.IndexSignature,
+			ApiItemKind.Interface,
+			ApiItemKind.Method,
+			ApiItemKind.MethodSignature,
+			ApiItemKind.Namespace,
+			ApiItemKind.Property,
+			ApiItemKind.PropertySignature,
+			ApiItemKind.TypeAlias,
+			ApiItemKind.Variable,
+		],
+		hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+		emptyTableCellText: "📝",
+	};
 
-    const configs: ConfigTestProps[] = [
-        {
-            configName: "default-config",
-            configLessApiModel: defaultConfig,
-        },
-        {
-            configName: "flat-config",
-            configLessApiModel: flatConfig,
-            generateFrontMatter: (apiItem): string =>
-                `<!--- This is sample front-matter for API item "${apiItem.displayName}" -->`,
-        },
-        {
-            configName: "sparse-config",
-            configLessApiModel: sparseConfig,
-        },
-    ];
+	const configs: ConfigTestProps[] = [
+		{
+			configName: "default-config",
+			configLessApiModel: defaultConfig,
+		},
+		{
+			configName: "flat-config",
+			configLessApiModel: flatConfig,
+			generateFrontMatter: (apiItem): string =>
+				`<!--- This is sample front-matter for API item "${apiItem.displayName}" -->`,
+		},
+		{
+			configName: "sparse-config",
+			configLessApiModel: sparseConfig,
+		},
+	];
 
-    before(async () => {
-        // Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
-        await FileSystem.ensureFolderAsync(testTempDirPath);
-        await FileSystem.ensureFolderAsync(snapshotsDirPath);
+	before(async () => {
+		// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
+		await FileSystem.ensureFolderAsync(testTempDirPath);
+		await FileSystem.ensureFolderAsync(snapshotsDirPath);
 
-        // Clear test temp dir before test run to make sure we are running from a clean state.
-        await FileSystem.ensureEmptyFolderAsync(testTempDirPath);
-    });
+		// Clear test temp dir before test run to make sure we are running from a clean state.
+		await FileSystem.ensureEmptyFolderAsync(testTempDirPath);
+	});
 
-    // Run the test suite against a sample report
-    apiTestSuite(
-        "simple-suite-test",
-        // Relative to dist/test
-        [Path.resolve(__dirname, "test-data", "simple-suite-test.json")],
-        configs,
-    );
+	// Run the test suite against a sample report
+	apiTestSuite(
+		"simple-suite-test",
+		// Relative to dist/test
+		[Path.resolve(__dirname, "test-data", "simple-suite-test.json")],
+		configs,
+	);
 });

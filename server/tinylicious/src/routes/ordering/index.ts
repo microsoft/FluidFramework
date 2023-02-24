@@ -15,7 +15,7 @@ import * as documents from "./documents";
 export function create(
     config: Provider,
     storage: IDocumentStorage,
-    mongoManager: MongoManager,
+    mongoManager: MongoManager
 ): Router {
     const router: Router = Router();
     const deltasRoute = deltas.create(config, mongoManager);

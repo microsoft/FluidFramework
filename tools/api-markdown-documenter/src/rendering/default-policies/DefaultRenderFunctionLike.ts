@@ -13,25 +13,25 @@ import { renderParametersSection, renderReturnsSection } from "../helpers";
  * (constructors, functions, methods).
  */
 export function renderFunctionLikeSection(
-    apiFunctionLike: ApiFunctionLike,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiFunctionLike: ApiFunctionLike,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
-    const docSections: DocSection[] = [];
+	const docSections: DocSection[] = [];
 
-    // Render parameter table (if any parameters)
-    const renderedParameterTable = renderParametersSection(apiFunctionLike, config);
-    if (renderedParameterTable !== undefined) {
-        docSections.push(renderedParameterTable);
-    }
+	// Render parameter table (if any parameters)
+	const renderedParameterTable = renderParametersSection(apiFunctionLike, config);
+	if (renderedParameterTable !== undefined) {
+		docSections.push(renderedParameterTable);
+	}
 
-    // Render `@returns` block (if any)
-    const renderedReturnsSection = renderReturnsSection(apiFunctionLike, config);
-    if (renderedReturnsSection !== undefined) {
-        docSections.push(renderedReturnsSection);
-    }
+	// Render `@returns` block (if any)
+	const renderedReturnsSection = renderReturnsSection(apiFunctionLike, config);
+	if (renderedReturnsSection !== undefined) {
+		docSections.push(renderedReturnsSection);
+	}
 
-    // Merge sections to reduce and simplify hierarchy
-    const innerSectionBody = mergeSections(docSections, config.tsdocConfiguration);
+	// Merge sections to reduce and simplify hierarchy
+	const innerSectionBody = mergeSections(docSections, config.tsdocConfiguration);
 
-    return config.renderChildrenSection(apiFunctionLike, innerSectionBody, config);
+	return config.renderChildrenSection(apiFunctionLike, innerSectionBody, config);
 }

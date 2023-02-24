@@ -4,14 +4,18 @@
  */
 
 export {
-    CollaborativeCheckbox,
-    ICollaborativeCheckboxProps,
-    ICollaborativeCheckboxState,
+	CollaborativeCheckbox,
+	ICollaborativeCheckboxProps,
+	ICollaborativeCheckboxState,
 } from "./CollaborativeCheckbox";
-export { ICollaborativeInputProps, ICollaborativeInputState, CollaborativeInput } from "./CollaborativeInput";
+export {
+	ICollaborativeInputProps,
+	ICollaborativeInputState,
+	CollaborativeInput,
+} from "./CollaborativeInput";
 export { CollaborativeTextArea, ICollaborativeTextAreaProps } from "./CollaborativeTextArea";
 export {
-    ISharedStringHelperEvents,
-    ISharedStringHelperTextChangedEventArgs,
-    SharedStringHelper,
+	ISharedStringHelperEvents,
+	ISharedStringHelperTextChangedEventArgs,
+	SharedStringHelper,
 } from "./SharedStringHelper";

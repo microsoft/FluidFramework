@@ -8,7 +8,10 @@ export { DefaultTokenProvider } from "./defaultTokenProvider";
 export { ITokenProvider, ITokenResponse, ITokenService } from "./tokens";
 
 // Factory
-export { DocumentPostCreateError, RouterliciousDocumentServiceFactory } from "./documentServiceFactory";
+export {
+	DocumentPostCreateError,
+	RouterliciousDocumentServiceFactory,
+} from "./documentServiceFactory";
 
 // Configuration
 export { IRouterliciousDriverPolicies } from "./policies";

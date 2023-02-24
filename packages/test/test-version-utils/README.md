@@ -2,9 +2,9 @@
 
 This is a package for writing and setting up Fluid end to end tests using `mocha` that will generate variants with
 a specific driver and different version combinations of Fluid API between layers via `TestObjectProvider` provided
-to the test. The different layers are loader, driver, container runtime and data runtime (includes DDS).  Version
+to the test. The different layers are loader, driver, container runtime and data runtime (includes DDS). Version
 combinations and driver selection can be controlled via the `mocha` command line, assuming your test uses the provided
- `describe*` functions.  For advanced usage, a test can bypass this mechanism and directly call our
+`describe*` functions. For advanced usage, a test can bypass this mechanism and directly call our
 exports to get the versioned Fluid APIs.
 
 ## Versioned combination test generation
@@ -18,14 +18,14 @@ are generated (empty entries are current versions):
 | Compat Kind         | Loader | Driver | Container Runtime | Data Runtime |
 | ------------------- | ------ | ------ | ----------------- | ------------ |
 | None                |        |        |                   |              |
-| Loader              |  old   |        |                   |              |
-| Driver              |        |  old   |                   |              |
+| Loader              | old    |        |                   |              |
+| Driver              |        | old    |                   |              |
 | ContainerRuntime    |        |        | old               |              |
 | DataRuntime         |        |        |                   | old          |
-| NewLoader           |        |  old   | old               | old          |
-| NewDriver           |  old   |        | old               | old          |
-| NewContainerRuntime |  old   |  old   |                   | old          |
-| NewDataRuntime      |  old   |  old   | old               |              |
+| NewLoader           |        | old    | old               | old          |
+| NewDriver           | old    |        | old               | old          |
+| NewContainerRuntime | old    | old    |                   | old          |
+| NewDataRuntime      | old    | old    | old               |              |
 
 ### Mocha test setup with layer version combinations
 
@@ -33,26 +33,26 @@ There are three compat `describe*` to generate different combinations, depending
 
 `describeFullCompat`: generate test variants with compat combinations that varies the version for all layers.
 
-- Used for tests that exercise all layers and will benefits compat combinations of all layers.
+-   Used for tests that exercise all layers and will benefits compat combinations of all layers.
 
 `describeLoaderCompat`: generate test variants with compat combinations that only varies the loader version.
 
-- Use for tests that targets the loader layer, and don't care about compat combinations of other layers.
-- Test combination generated: [CompatKind.None, CompatKind.Loader]
+-   Use for tests that targets the loader layer, and don't care about compat combinations of other layers.
+-   Test combination generated: [CompatKind.None, CompatKind.Loader]
 
 `describeNoCompat` - generate one test variant that doesn't varies version of any layers.
 
-- Use for tests that doesn't benefit or require any compat testing.
-- Test combination generated: [CompatKind.None]
+-   Use for tests that doesn't benefit or require any compat testing.
+-   Test combination generated: [CompatKind.None]
 
 These compat `describe*` functions will also load the APIs with appropriate version and provide the test with a
-`TestObjectProvider` object, where the test can use to access Fluid functionality.  Even when compat testing
+`TestObjectProvider` object, where the test can use to access Fluid functionality. Even when compat testing
 is not necessary, `TestObjectProvider` provide functionalities that help writing Fluid tests, and it allows the test
 to enable compat testing easily in the future just by changing the `describe*`.
 
 ### Legacy version defaults and installation
 
-By default, N-1, N-2, and LTS (hard coded) test variants are generated.  The versions can be specified using command
+By default, N-1, N-2, and LTS (hard coded) test variants are generated. The versions can be specified using command
 line (see below) to run the test against any two versions. This package includes a `mocha` global hook that will
 install legacy packages at the beginning of the package based on the `compatVersion` settings.
 
@@ -79,40 +79,40 @@ driver selection, versions for compat testing, and compat kind combinations.
 
 `baseVersion` is a semver or a semver range.
 
-- If it is a semver range, the latest in that range will be picked.
+-   If it is a semver range, the latest in that range will be picked.
 
 `compatVersion` can be a semver or semver range or an integer apply to the minor version relative to `baseVersion`
 
-- If it is a semver range, the latest in that range will be picked.
-- If it is an integer, the value will be apply to the minor version of the `baseVersion`, and create a `^` range
-including prerelease versions. The latest in that range will be picked.
-  - i.e. if `baseVersion` is `0.2.3`, and `compatVersion` is `-1`, the resulting range
-will be `^0.1.3-0`
+-   If it is a semver range, the latest in that range will be picked.
+-   If it is an integer, the value will be apply to the minor version of the `baseVersion`, and create a `^` range
+    including prerelease versions. The latest in that range will be picked.
+    -   i.e. if `baseVersion` is `0.2.3`, and `compatVersion` is `-1`, the resulting range
+        will be `^0.1.3-0`
 
 We also accept some of the flags via environment variables.
 
 | Environment Variables         | Command line options |
 | ----------------------------- | -------------------- |
-| fluid__test__compatKind       | --compatKind         |
-| fluid__test__compatVersion    | --compatVersion      |
-| fluid__test__driver           | --driver             |
-| fluid__test__r11sEndpointName | --r11sEndpointName   |
-| fluid__test__baseVersion      | --baseVersion        |
+| fluid**test**compatKind       | --compatKind         |
+| fluid**test**compatVersion    | --compatVersion      |
+| fluid**test**driver           | --driver             |
+| fluid**test**r11sEndpointName | --r11sEndpointName   |
+| fluid**test**baseVersion      | --baseVersion        |
 
 ## Advanced usage
 
-This bypasses any configuration of version used by the describe* functions and provides direct access to the versioned APIs.
+This bypasses any configuration of version used by the describe\* functions and provides direct access to the versioned APIs.
 
 First make sure to call `ensurePackageInstalled` before running the tests to make sure the necessary legacy version are
 installed.
 
 The main entry point is `getVersionedTestObjectProvider` to get a `TestObjectProvider` for a specific version combinations
-and driver config.  Additionally, you can get versioned API for specific layers using these API.
+and driver config. Additionally, you can get versioned API for specific layers using these API.
 
-- `getLoaderApi`
-- `getDriverApi`
-- `getContainerRuntimeApi`
-- `getDataRuntimeApi`
+-   `getLoaderApi`
+-   `getDriverApi`
+-   `getContainerRuntimeApi`
+-   `getDataRuntimeApi`
 
 All these API returns the current version by default if no arguments is passed.
 If a number is provided, a relative version will be computed by adding the number to the minor version number
@@ -131,6 +131,6 @@ The legacy version are installed in their own version folder
 Legacy versions of all packages in all categories are installed regardless of what compat combination is requested.
 (See `packageList` in `src/testApi.ts`).
 
-For now, the current version are statically bound to also provide type.  Although it can be switch to
+For now, the current version are statically bound to also provide type. Although it can be switch to
 dynamic loading for consistency (or don't want to force the script to be loaded if they are not needed).
 Currently, we don't have such scenario yet.

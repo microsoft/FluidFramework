@@ -29,8 +29,8 @@
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "npm run test:mocha",
@@ -103,13 +103,27 @@
     "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "baselineVersion": "2.0.0-internal.2.1.1",
     "broken": {
-      "ClassDeclaration_AuthorizationError": {"backCompat": false},
-      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {"backCompat": false},
-      "ClassDeclaration_FluidInvalidSchemaError": {"backCompat": false},
-      "ClassDeclaration_GenericNetworkError": {"backCompat": false},
-      "ClassDeclaration_LocationRedirectionError": {"backCompat": false},
-      "ClassDeclaration_ThrottlingError": {"backCompat": false},
-      "ClassDeclaration_UsageError": {"backCompat": false}
+      "ClassDeclaration_AuthorizationError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_FluidInvalidSchemaError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_GenericNetworkError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_LocationRedirectionError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_ThrottlingError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_UsageError": {
+        "backCompat": false
+      }
     }
   }
 }

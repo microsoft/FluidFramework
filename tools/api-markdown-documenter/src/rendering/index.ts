@@ -17,11 +17,11 @@ export { RenderingHelpers };
 
 export { renderApiItemDocument, renderModelDocument, renderPackageDocument } from "./Rendering";
 export {
-    defaultRenderingPolicies,
-    RenderApiItemWithChildren,
-    RenderApiItemWithoutChildren,
-    RenderingPolicies,
-    RenderSectionWithInnerContent,
+	defaultRenderingPolicies,
+	RenderApiItemWithChildren,
+	RenderApiItemWithoutChildren,
+	RenderingPolicies,
+	RenderSectionWithInnerContent,
 } from "./RenderingPolicy";
 
 /* eslint-enable unicorn/prefer-export-from */

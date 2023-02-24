@@ -6,9 +6,10 @@ It provides `createTableWithInterception` that accepts an ITable object, the dat
 
 ```typescript
 function createTableWithInterception<T extends ITable>(
-    table: T,
-    context: IFluidDataStoreContext,
-    propertyInterceptionCallback: (props?: PropertySet) => PropertySet): T;
+	table: T,
+	context: IFluidDataStoreContext,
+	propertyInterceptionCallback: (props?: PropertySet) => PropertySet,
+): T;
 ```
 
 When a function is called that set a cell value or annotates a cell, it calls propertyInterceptionCallback with the provided properties. The callback funtion can then provide the new set of properties that it wants to set. The operation in the called function and any operations in the callback are batched, i.e., they are guaranteed to be in order and will be applied together.

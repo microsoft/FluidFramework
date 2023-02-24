@@ -31,6 +31,7 @@ import {
     FieldAnchor,
     FieldUpPath,
     ForestEvents,
+    PathRootPrefix,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -314,9 +315,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
             path.parent === undefined ? undefined : this.forest.anchors.track(path.parent);
         return { parent: anchor, fieldKey: path.field };
     }
-    getFieldPath(): FieldUpPath {
+    getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
         assert(this.innerCursor !== undefined, 0x45f /* Cursor must be current to be used */);
-        return this.innerCursor.getFieldPath();
+        return this.innerCursor.getFieldPath(prefix);
     }
     get mode(): CursorLocationType {
         assert(this.innerCursor !== undefined, 0x42e /* Cursor must be current to be used */);
@@ -351,9 +352,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         assert(this.innerCursor !== undefined, 0x435 /* Cursor must be current to be used */);
         return this.innerCursor.enterNode(childIndex);
     }
-    getPath(): UpPath {
+    getPath(prefix?: PathRootPrefix): UpPath {
         assert(this.innerCursor !== undefined, 0x436 /* Cursor must be current to be used */);
-        return this.innerCursor.getPath() ?? fail("no path when at root");
+        return this.innerCursor.getPath(prefix) ?? fail("no path when at root");
     }
     get fieldIndex(): number {
         assert(this.innerCursor !== undefined, 0x437 /* Cursor must be current to be used */);

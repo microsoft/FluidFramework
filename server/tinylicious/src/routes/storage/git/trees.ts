@@ -4,7 +4,11 @@
  */
 
 import fs from "fs";
-import { ICreateTreeParams, ITree, ITreeEntry } from "@fluidframework/gitresources";
+import {
+    ICreateTreeParams,
+    ITree,
+    ITreeEntry,
+} from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import nconf from "nconf";
@@ -14,7 +18,7 @@ export async function createTree(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    params: ICreateTreeParams,
+    params: ICreateTreeParams
 ): Promise<ITree> {
     const entries: git.TreeEntry[] = params.tree.map((tree) => {
         const entry: git.TreeEntry = {
@@ -42,7 +46,7 @@ export async function getTree(
     authorization: string,
     sha: string,
     recursive: boolean,
-    useCache: boolean,
+    useCache: boolean
 ): Promise<ITree> {
     let returnEntries;
 
@@ -67,7 +71,11 @@ export async function getTree(
             trees: [git.TREE({ ref: sha } as any)],
         });
     } else {
-        const treeObject = await git.readTree({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+        const treeObject = await git.readTree({
+            fs,
+            dir: utils.getGitDir(store, tenantId),
+            oid: sha,
+        });
         const description = treeObject.tree;
 
         returnEntries = description.map((tree) => {
@@ -94,21 +102,16 @@ export async function getTree(
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
-    router.post(
-        "/repos/:ignored?/:tenantId/git/trees",
-        (request, response) => {
-            const treeP = createTree(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.body);
+    router.post("/repos/:ignored?/:tenantId/git/trees", (request, response) => {
+        const treeP = createTree(
+            store,
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.body
+        );
 
-            utils.handleResponse(
-                treeP,
-                response,
-                false,
-                201);
-        });
+        utils.handleResponse(treeP, response, false, 201);
+    });
 
     router.get(
         "/repos/:ignored?/:tenantId/git/trees/:sha",
@@ -120,13 +123,12 @@ export function create(store: nconf.Provider): Router {
                 request.get("Authorization"),
                 request.params.sha,
                 request.query.recursive === "1",
-                useCache);
+                useCache
+            );
 
-            utils.handleResponse(
-                treeP,
-                response,
-                useCache);
-        });
+            utils.handleResponse(treeP, response, useCache);
+        }
+    );
 
     return router;
 }

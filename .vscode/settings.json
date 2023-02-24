@@ -4,18 +4,6 @@
             "mode": "auto"
         }
     ],
-    "typescript.format.enable": true,
-    "typescript.format.insertSpaceAfterCommaDelimiter": true,
-    "typescript.format.insertSpaceAfterSemicolonInForStatements": true,
-    "typescript.format.insertSpaceBeforeAndAfterBinaryOperators": true,
-    "typescript.format.insertSpaceAfterKeywordsInControlFlowStatements": true,
-    "typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": false,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": false,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": false,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": false,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces": false,
-    "typescript.format.placeOpenBraceOnNewLineForFunctions": false,
-    "typescript.format.placeOpenBraceOnNewLineForControlBlocks": false,
     "typescript.tsdk": "node_modules/typescript/lib",
 
     // Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
@@ -46,6 +34,8 @@
         "tombstoned",
         "unaugmented"
     ],
-    "editor.detectIndentation": true,
-    "editor.insertSpaces": true, // Use detectIndentation instead
+
+    // Enable prettier as default formatter, and disable rules that disagree with it
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.insertSpaces": false
 }

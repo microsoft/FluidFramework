@@ -14,7 +14,9 @@ export function getParam(params: Params, key: string) {
  * @param value - The value to be converted to number.
  */
 export function queryParamToNumber(value: any): number {
-    if (typeof value !== "string") { return undefined; }
+    if (typeof value !== "string") {
+        return undefined;
+    }
     const parsedValue = parseInt(value, 10);
     return isNaN(parsedValue) ? undefined : parsedValue;
 }
@@ -24,6 +26,8 @@ export function queryParamToNumber(value: any): number {
  * @param value - The value to be converted to number.
  */
 export function queryParamToString(value: any): string {
-    if (typeof value !== "string") { return undefined; }
+    if (typeof value !== "string") {
+        return undefined;
+    }
     return value;
 }

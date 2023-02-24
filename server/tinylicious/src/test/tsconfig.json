@@ -3,16 +3,11 @@
     "compilerOptions": {
         "rootDir": "./",
         "outDir": "../../dist/test",
-        "types": [
-            "node",
-            "mocha"
-        ],
+        "types": ["node", "mocha"],
         "declaration": false,
         "declarationMap": false
     },
-    "include": [
-        "./**/*"
-    ],
+    "include": ["./**/*"],
     "references": [
         {
             "path": "../.."

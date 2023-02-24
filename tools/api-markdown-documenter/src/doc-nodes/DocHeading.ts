@@ -19,33 +19,33 @@ export type IDocHeadingParameters = IDocNodeParameters & Heading;
  * Represents a section header similar to an HTML `<h1>` or `<h2>` element.
  */
 export class DocHeading extends DocNode {
-    /**
-     * {@inheritDoc Heading.title}
-     */
-    public readonly title: string;
+	/**
+	 * {@inheritDoc Heading.title}
+	 */
+	public readonly title: string;
 
-    /**
-     * {@inheritDoc Heading.level}
-     */
-    public readonly level?: number;
+	/**
+	 * {@inheritDoc Heading.level}
+	 */
+	public readonly level?: number;
 
-    /**
-     * {@inheritDoc Heading.id}
-     */
-    public readonly id?: string;
+	/**
+	 * {@inheritDoc Heading.id}
+	 */
+	public readonly id?: string;
 
-    public constructor(parameters: IDocHeadingParameters) {
-        super(parameters);
+	public constructor(parameters: IDocHeadingParameters) {
+		super(parameters);
 
-        this.title = parameters.title;
-        this.level = parameters.level;
-        this.id = parameters.id;
-    }
+		this.title = parameters.title;
+		this.level = parameters.level;
+		this.id = parameters.id;
+	}
 
-    /**
-     * @override
-     */
-    public get kind(): string {
-        return CustomDocNodeKind.Heading;
-    }
+	/**
+	 * @override
+	 */
+	public get kind(): string {
+		return CustomDocNodeKind.Heading;
+	}
 }

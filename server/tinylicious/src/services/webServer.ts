@@ -4,13 +4,21 @@
  */
 
 import { HttpServer } from "@fluidframework/server-services-shared";
-import { IWebServer, IWebSocketServer } from "@fluidframework/server-services-core";
+import {
+    IWebServer,
+    IWebSocketServer,
+} from "@fluidframework/server-services-core";
 
 export class WebServer implements IWebServer {
-    constructor(public httpServer: HttpServer, public webSocketServer: IWebSocketServer) {
-    }
+    constructor(
+        public httpServer: HttpServer,
+        public webSocketServer: IWebSocketServer
+    ) {}
 
     public async close(): Promise<void> {
-        await Promise.all([this.httpServer.close(), this.webSocketServer.close()]);
+        await Promise.all([
+            this.httpServer.close(),
+            this.webSocketServer.close(),
+        ]);
     }
 }

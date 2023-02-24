@@ -7,7 +7,7 @@ After cloning the repository, install dependencies with:
 
 Go back to the root folder and run:
 ```bash
-npm install
+pnpm install
 alias fb='clear && node "$(git rev-parse --show-toplevel)/node_modules/.bin/fluid-build"'
 fb --install --symlink:full
 fb --all @fluid-experimental/partial-checkout  @fluid-experimental/property-query tinylicious

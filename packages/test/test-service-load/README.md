@@ -6,10 +6,10 @@ NodeJs-based test to simulate many clients and a high rate of op generation.
 
 ## Pre-requisites
 
-* Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
-_You do not need to run it more than once, it will persist the keys for future sessions._
-* If you are using a username not already present in `testConfig.json`,
-then you'll need to add the password to the `login__odsp__test__accounts` environment variable. The format is simple:
+-   Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
+    _You do not need to run it more than once, it will persist the keys for future sessions._
+-   If you are using a username not already present in `testConfig.json`,
+    then you'll need to add the password to the `login__odsp__test__accounts` environment variable. The format is simple:
 
 ```json
 {"user@foo.com": "pwd_foo", "user@bar.com": "pwd_bar", ...}
@@ -73,7 +73,7 @@ If present, launch in Test Runner mode with the given runId (to distinguish from
 
 Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)
 
-#### --createTestId	
+#### --createTestId
 
 If the `testId` argument is specified, the `createTestId` flag determines whether to load an exisiting
 document corresponding to the `testId` specified, or create a new one. When `createTestId` is set to true,
@@ -85,8 +85,8 @@ Overrides DEBUG environment variable for telemetry logging to console.
 If DEBUG env variable is unset and this is not provided, only errors will print.
 The value passed here should be a filter string for the logger namespace.
 
->To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
-provide something like: `-l 'fluid:telemetry:Container:*'`.
+> To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
+> provide something like: `-l 'fluid:telemetry:Container:*'`.
 
 ## Trademark
 

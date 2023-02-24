@@ -1,27 +1,27 @@
 {
-	"name": "@fluidframework/build-common",
-	"version": "1.2.0",
-	"description": "Package containing common configs",
-	"homepage": "https://fluidframework.com",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "common/build/build-common"
-	},
-	"license": "MIT",
-	"author": "Microsoft and contributors",
-	"sideEffects": false,
-	"bin": {
-		"gen-version": "bin/gen-version"
-	},
-	"scripts": {
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier",
-		"lint:fix": "npm run prettier:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore"
-	},
-	"devDependencies": {
-		"prettier": "~2.6.2"
-	}
+  "name": "@fluidframework/build-common",
+  "version": "1.2.0",
+  "description": "Package containing common configs",
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "common/build/build-common"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "sideEffects": false,
+  "bin": {
+    "gen-version": "bin/gen-version"
+  },
+  "scripts": {
+    "format": "npm run prettier:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore"
+  },
+  "devDependencies": {
+    "prettier": "~2.6.2"
+  }
 }

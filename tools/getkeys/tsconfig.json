@@ -1,13 +1,10 @@
 /*!
-* Adding this file to kick off exec lint script for js-only package
-*/
+ * Adding this file to kick off exec lint script for js-only package
+ */
 {
-    "compilerOptions": {
-        "strictNullChecks": true,
-
-    },
-    "include": [
-      "**/*.js"
-    ],
-    "exclude": ["node_modules"]
+	"compilerOptions": {
+		"strictNullChecks": true,
+	},
+	"include": ["**/*.js"],
+	"exclude": ["node_modules"],
 }

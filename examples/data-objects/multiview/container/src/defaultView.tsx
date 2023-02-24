@@ -4,7 +4,10 @@
  */
 
 import { ConstellationView } from "@fluid-example/multiview-constellation-view";
-import { ICoordinate, IConstellation } from "@fluid-example/multiview-coordinate-interface";
+import {
+    ICoordinate,
+    IConstellation,
+} from "@fluid-example/multiview-coordinate-interface";
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
@@ -30,19 +33,37 @@ interface IDefaultViewProps {
  * component views together.  We could have alternatively built a "base" component to do this composition if we had
  * preferred - either works fine.
  */
-export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
+export const DefaultView: React.FC<IDefaultViewProps> = (
+    props: IDefaultViewProps
+) => {
     return (
         <div>
             <div>
-                <h2 className="scenario-header">Scenario 1: Linking a single model to multiple views</h2>
-                <SliderCoordinateView model={props.simpleCoordinate} label="Simple Coordinate" />
+                <h2 className="scenario-header">
+                    Scenario 1: Linking a single model to multiple views
+                </h2>
+                <SliderCoordinateView
+                    model={props.simpleCoordinate}
+                    label="Simple Coordinate"
+                />
                 <PlotCoordinateView model={props.simpleCoordinate} />
             </div>
             <div>
-                <h2 className="scenario-header">Scenario 2: Using multiple models in a single view</h2>
-                <SliderCoordinateView model={props.triangleCoordinate1} label="Triangle pt1" />
-                <SliderCoordinateView model={props.triangleCoordinate2} label="Triangle pt2" />
-                <SliderCoordinateView model={props.triangleCoordinate3} label="Triangle pt3" />
+                <h2 className="scenario-header">
+                    Scenario 2: Using multiple models in a single view
+                </h2>
+                <SliderCoordinateView
+                    model={props.triangleCoordinate1}
+                    label="Triangle pt1"
+                />
+                <SliderCoordinateView
+                    model={props.triangleCoordinate2}
+                    label="Triangle pt2"
+                />
+                <SliderCoordinateView
+                    model={props.triangleCoordinate3}
+                    label="Triangle pt3"
+                />
                 <TriangleView
                     coordinate1={props.triangleCoordinate1}
                     coordinate2={props.triangleCoordinate2}
@@ -50,7 +71,9 @@ export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProp
                 />
             </div>
             <div>
-                <h2 className="scenario-header">Scenario 3: Linking a nested view to a nested model</h2>
+                <h2 className="scenario-header">
+                    Scenario 3: Linking a nested view to a nested model
+                </h2>
                 <ConstellationView model={props.constellation} />
             </div>
         </div>

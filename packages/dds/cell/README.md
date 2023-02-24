@@ -1,6 +1,6 @@
 # @fluidframework/cell
 
-The `SharedCell` Distributed Data Structure (DDS)  stores a single, shared value that can be edited or deleted.
+The `SharedCell` Distributed Data Structure (DDS) stores a single, shared value that can be edited or deleted.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE) -->
 

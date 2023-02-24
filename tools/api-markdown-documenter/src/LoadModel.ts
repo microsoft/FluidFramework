@@ -5,11 +5,11 @@
 import * as Path from "node:path";
 
 import {
-    ApiDocumentedItem,
-    ApiItem,
-    ApiItemContainerMixin,
-    ApiModel,
-    IResolveDeclarationReferenceResult,
+	ApiDocumentedItem,
+	ApiItem,
+	ApiItemContainerMixin,
+	ApiModel,
+	IResolveDeclarationReferenceResult,
 } from "@microsoft/api-extractor-model";
 import { DocComment, DocInheritDocTag } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
@@ -27,41 +27,41 @@ import { Logger } from "./Logging";
  * @param logger - Optional logger for reporting system events while loading the model.
  */
 export async function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel> {
-    if (!(await FileSystem.existsAsync(reportsDirectoryPath))) {
-        throw new Error(`Provided directory does not exist: "${reportsDirectoryPath}".`);
-    }
+	if (!(await FileSystem.existsAsync(reportsDirectoryPath))) {
+		throw new Error(`Provided directory does not exist: "${reportsDirectoryPath}".`);
+	}
 
-    logger?.info("Generating API model...");
+	logger?.info("Generating API model...");
 
-    const apiReportFilePaths: string[] = [];
-    for (const filename of FileSystem.readFolderItemNames(reportsDirectoryPath)) {
-        if (/\.api\.json$/i.test(filename)) {
-            console.log(`Reading ${filename}`);
-            const filenamePath: string = Path.join(reportsDirectoryPath, filename);
-            apiReportFilePaths.push(filenamePath);
-        }
-    }
+	const apiReportFilePaths: string[] = [];
+	for (const filename of FileSystem.readFolderItemNames(reportsDirectoryPath)) {
+		if (/\.api\.json$/i.test(filename)) {
+			console.log(`Reading ${filename}`);
+			const filenamePath: string = Path.join(reportsDirectoryPath, filename);
+			apiReportFilePaths.push(filenamePath);
+		}
+	}
 
-    if (apiReportFilePaths.length === 0) {
-        throw new Error(
-            `No ".api.json" files found under provided directory path: "${reportsDirectoryPath}".`,
-        );
-    }
+	if (apiReportFilePaths.length === 0) {
+		throw new Error(
+			`No ".api.json" files found under provided directory path: "${reportsDirectoryPath}".`,
+		);
+	}
 
-    const apiModel = new ApiModel();
-    for (const apiReportFilePath of apiReportFilePaths) {
-        console.log(`Loading package report "${apiReportFilePath}"...`);
-        apiModel.loadPackage(apiReportFilePath);
-    }
+	const apiModel = new ApiModel();
+	for (const apiReportFilePath of apiReportFilePaths) {
+		console.log(`Loading package report "${apiReportFilePath}"...`);
+		apiModel.loadPackage(apiReportFilePath);
+	}
 
-    logger?.success("API model generated!");
-    logger?.info("Resolving `@inheritDoc` comments...");
+	logger?.success("API model generated!");
+	logger?.info("Resolving `@inheritDoc` comments...");
 
-    applyInheritDoc(apiModel, apiModel);
+	applyInheritDoc(apiModel, apiModel);
 
-    logger?.success("`@inheritDoc` comments resolved successfully!");
+	logger?.success("`@inheritDoc` comments resolved successfully!");
 
-    return apiModel;
+	return apiModel;
 }
 
 /**
@@ -78,38 +78,38 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
  * this issue: {@link https://github.com/microsoft/rushstack/issues/2062}.
  */
 function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger): void {
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment) {
-        const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment) {
+		const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
 
-        if (inheritDocTag?.declarationReference !== undefined) {
-            // Attempt to resolve the declaration reference
-            const result: IResolveDeclarationReferenceResult = apiModel.resolveDeclarationReference(
-                inheritDocTag.declarationReference,
-                apiItem,
-            );
+		if (inheritDocTag?.declarationReference !== undefined) {
+			// Attempt to resolve the declaration reference
+			const result: IResolveDeclarationReferenceResult = apiModel.resolveDeclarationReference(
+				inheritDocTag.declarationReference,
+				apiItem,
+			);
 
-            if (result.errorMessage !== undefined) {
-                if (logger !== undefined) {
-                    logger.warning(
-                        `Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
-                    );
-                }
-            } else if (
-                result.resolvedApiItem instanceof ApiDocumentedItem &&
-                result.resolvedApiItem.tsdocComment &&
-                result.resolvedApiItem !== apiItem
-            ) {
-                copyInheritedDocs(apiItem.tsdocComment, result.resolvedApiItem.tsdocComment);
-            }
-        }
-    }
+			if (result.errorMessage !== undefined) {
+				if (logger !== undefined) {
+					logger.warning(
+						`Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
+					);
+				}
+			} else if (
+				result.resolvedApiItem instanceof ApiDocumentedItem &&
+				result.resolvedApiItem.tsdocComment &&
+				result.resolvedApiItem !== apiItem
+			) {
+				copyInheritedDocs(apiItem.tsdocComment, result.resolvedApiItem.tsdocComment);
+			}
+		}
+	}
 
-    // Recurse members
-    if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {
-        for (const member of apiItem.members) {
-            applyInheritDoc(member, apiModel);
-        }
-    }
+	// Recurse members
+	if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {
+		for (const member of apiItem.members) {
+			applyInheritDoc(member, apiModel);
+		}
+	}
 }
 
 /**
@@ -119,17 +119,17 @@ function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger):
  * this issue: {@link https://github.com/microsoft/rushstack/issues/2062}.
  */
 function copyInheritedDocs(targetDocComment: DocComment, sourceDocComment: DocComment): void {
-    targetDocComment.summarySection = sourceDocComment.summarySection;
-    targetDocComment.remarksBlock = sourceDocComment.remarksBlock;
+	targetDocComment.summarySection = sourceDocComment.summarySection;
+	targetDocComment.remarksBlock = sourceDocComment.remarksBlock;
 
-    targetDocComment.params.clear();
-    for (const param of sourceDocComment.params) {
-        targetDocComment.params.add(param);
-    }
-    for (const typeParam of sourceDocComment.typeParams) {
-        targetDocComment.typeParams.add(typeParam);
-    }
-    targetDocComment.returnsBlock = sourceDocComment.returnsBlock;
+	targetDocComment.params.clear();
+	for (const param of sourceDocComment.params) {
+		targetDocComment.params.add(param);
+	}
+	for (const typeParam of sourceDocComment.typeParams) {
+		targetDocComment.typeParams.add(typeParam);
+	}
+	targetDocComment.returnsBlock = sourceDocComment.returnsBlock;
 
-    targetDocComment.inheritDocTag = undefined;
+	targetDocComment.inheritDocTag = undefined;
 }

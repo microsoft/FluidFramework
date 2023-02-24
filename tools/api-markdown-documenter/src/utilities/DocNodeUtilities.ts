@@ -9,14 +9,14 @@ import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
  * flat list under a new section.
  */
 export function mergeSections(
-    sections: DocSection[],
-    tsdocConfiguration: TSDocConfiguration,
+	sections: DocSection[],
+	tsdocConfiguration: TSDocConfiguration,
 ): DocSection {
-    const childNodes: DocNode[] = [];
+	const childNodes: DocNode[] = [];
 
-    for (const section of sections) {
-        childNodes.push(...section.nodes);
-    }
+	for (const section of sections) {
+		childNodes.push(...section.nodes);
+	}
 
-    return new DocSection({ configuration: tsdocConfiguration }, childNodes);
+	return new DocSection({ configuration: tsdocConfiguration }, childNodes);
 }

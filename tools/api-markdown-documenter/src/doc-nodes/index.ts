@@ -20,18 +20,18 @@ export { CustomDocNodeKind, CustomDocNodes } from "./CustomDocNodeKind";
 // #region Convenience re-exports of Doc builder types from api-documenter
 
 export {
-    DocEmphasisSpan,
-    IDocEmphasisSpanParameters,
+	DocEmphasisSpan,
+	IDocEmphasisSpanParameters,
 } from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
 export { DocNoteBox, IDocNoteBoxParameters } from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
 export { DocTable, IDocTableParameters } from "@microsoft/api-documenter/lib/nodes/DocTable";
 export {
-    DocTableCell,
-    IDocTableCellParameters,
+	DocTableCell,
+	IDocTableCellParameters,
 } from "@microsoft/api-documenter/lib/nodes/DocTableCell";
 export {
-    DocTableRow,
-    IDocTableRowParameters,
+	DocTableRow,
+	IDocTableRowParameters,
 } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 
 // #endregion

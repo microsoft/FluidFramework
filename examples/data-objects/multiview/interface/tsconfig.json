@@ -6,7 +6,5 @@
         "jsx": "react",
         "types": ["react", "react-dom", "puppeteer", "expect-puppeteer"]
     },
-    "include": [
-        "src/**/*"
-    ]
+    "include": ["src/**/*"]
 }

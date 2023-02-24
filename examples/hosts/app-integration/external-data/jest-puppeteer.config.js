@@ -4,16 +4,16 @@
  */
 
 module.exports = {
-    server: {
-        command: `start-server-and-test start:mock-service 5237 "webpack serve  --config webpack.test.js --no-live-reload --port ${process.env["PORT"]}"`,
-        port: process.env["PORT"],
-        launchTimeout: 10000,
-        usedPortAction: "error",
-    },
-    launch: {
-        args: ["--no-sandbox", "--disable-setuid-sandbox"], // https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
-        dumpio: process.env.FLUID_TEST_VERBOSE !== undefined, // output browser console to cmd line
-        // slowMo: 500, // slows down process for easier viewing
-        // headless: false, // run in the browser
-    },
+	server: {
+		command: `start-server-and-test start:mock-service 5237 "webpack serve  --config webpack.test.js --no-live-reload --port ${process.env["PORT"]}"`,
+		port: process.env["PORT"],
+		launchTimeout: 10000,
+		usedPortAction: "error",
+	},
+	launch: {
+		args: ["--no-sandbox", "--disable-setuid-sandbox"], // https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
+		dumpio: process.env.FLUID_TEST_VERBOSE !== undefined, // output browser console to cmd line
+		// slowMo: 500, // slows down process for easier viewing
+		// headless: false, // run in the browser
+	},
 };

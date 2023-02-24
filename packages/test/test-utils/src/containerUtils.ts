@@ -16,9 +16,9 @@ import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtil
  * - timeoutOptions.durationMs = 1s
  */
 export async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-    }
+	if (!container.connected) {
+		return timeoutPromise((resolve) => container.once("connected", () => resolve()));
+	}
 }
 
 /**
@@ -42,18 +42,20 @@ export async function ensureContainerConnected(container: Container): Promise<vo
  * timeoutOptions.durationMs (which defaults to 250ms if left undefined).
  */
 export async function waitForContainerConnection(
-    container: IContainer,
-    failOnContainerClose: boolean = false,
-    timeoutOptions?: TimeoutWithError): Promise<void> {
-    if (container.connectionState !== ConnectionState.Connected) {
+	container: IContainer,
+	failOnContainerClose: boolean = false,
+	timeoutOptions?: TimeoutWithError,
+): Promise<void> {
+	if (container.connectionState !== ConnectionState.Connected) {
+		const executor: PromiseExecutor = (resolve, reject) => {
+			container.once("connected", () => resolve());
+			if (failOnContainerClose) {
+				container.once("closed", (error) => reject(error));
+			}
+		};
 
-        const executor: PromiseExecutor = (resolve, reject) => {
-            container.once("connected", () => resolve())
-            if (failOnContainerClose) {
-                container.once("closed", (error) =>  reject(error));
-            }
-        };
-
-        return timeoutOptions === undefined ? new Promise(executor) : timeoutPromise(executor, timeoutOptions);
-    }
+		return timeoutOptions === undefined
+			? new Promise(executor)
+			: timeoutPromise(executor, timeoutOptions);
+	}
 }

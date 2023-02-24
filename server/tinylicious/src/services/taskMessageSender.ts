@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITaskMessage, ITaskMessageSender } from "@fluidframework/server-services-core";
+import {
+    ITaskMessage,
+    ITaskMessageSender,
+} from "@fluidframework/server-services-core";
 
 export class TaskMessageSender implements ITaskMessageSender {
     public initialize(): Promise<void> {

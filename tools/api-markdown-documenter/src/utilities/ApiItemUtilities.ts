@@ -6,22 +6,22 @@ import * as Path from "node:path";
 
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
-    ApiCallSignature,
-    ApiConstructSignature,
-    ApiConstructor,
-    ApiDocumentedItem,
-    ApiFunction,
-    ApiIndexSignature,
-    ApiItem,
-    ApiItemKind,
-    ApiMethod,
-    ApiMethodSignature,
-    ApiNamespace,
-    ApiOptionalMixin,
-    ApiPackage,
-    ApiParameterListMixin,
-    ApiReadonlyMixin,
-    ApiStaticMixin,
+	ApiCallSignature,
+	ApiConstructSignature,
+	ApiConstructor,
+	ApiDocumentedItem,
+	ApiFunction,
+	ApiIndexSignature,
+	ApiItem,
+	ApiItemKind,
+	ApiMethod,
+	ApiMethodSignature,
+	ApiNamespace,
+	ApiOptionalMixin,
+	ApiPackage,
+	ApiParameterListMixin,
+	ApiReadonlyMixin,
+	ApiStaticMixin,
 } from "@microsoft/api-extractor-model";
 import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
@@ -46,19 +46,19 @@ import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
  * - `Package`
  */
 export type ApiMemberKind = Omit<
-    ApiItemKind,
-    ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
+	ApiItemKind,
+	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
 >;
 
 /**
  * `ApiItem` union type representing function-like API kinds.
  */
 export type ApiFunctionLike =
-    | ApiConstructSignature
-    | ApiConstructor
-    | ApiFunction
-    | ApiMethod
-    | ApiMethodSignature;
+	| ApiConstructSignature
+	| ApiConstructor
+	| ApiFunction
+	| ApiMethod
+	| ApiMethodSignature;
 
 /**
  * `ApiItem` union type representing call-signature-like API kinds.
@@ -74,32 +74,32 @@ export type ApiModuleLike = ApiPackage | ApiNamespace;
  * Represents an API item modifier.
  */
 export enum ApiModifier {
-    /**
-     * Indicates an `optional` parameter or property.
-     */
-    Optional = "optional",
+	/**
+	 * Indicates an `optional` parameter or property.
+	 */
+	Optional = "optional",
 
-    /**
-     * Indicates a `readonly` parameter or property.
-     */
-    Readonly = "readonly",
+	/**
+	 * Indicates a `readonly` parameter or property.
+	 */
+	Readonly = "readonly",
 
-    /**
-     * Indicates a `static` member of a `class` or `interface`.
-     */
-    Static = "static",
+	/**
+	 * Indicates a `static` member of a `class` or `interface`.
+	 */
+	Static = "static",
 
-    /**
-     * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/virtual | @virtual}
-     * tag. This item is intended to be overridden by implementing types.
-     */
-    Virtual = "virtual",
+	/**
+	 * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/virtual | @virtual}
+	 * tag. This item is intended to be overridden by implementing types.
+	 */
+	Virtual = "virtual",
 
-    /**
-     * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/sealed | @sealed}
-     * tag. This item may not to be overridden by implementing types.
-     */
-    Sealed = "sealed",
+	/**
+	 * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/sealed | @sealed}
+	 * tag. This item may not to be overridden by implementing types.
+	 */
+	Sealed = "sealed",
 }
 
 /**
@@ -109,13 +109,13 @@ export enum ApiModifier {
  * @param apiItem - The API item for which the qualified name is being queried.
  */
 export function getQualifiedApiItemName(apiItem: ApiItem): string {
-    let qualifiedName: string = Utilities.getSafeFilenameForName(apiItem.displayName);
-    if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
-        // Subtract one for compatibility with earlier releases of API Documenter.
-        // (This will get revamped when we fix GitHub issue #1308)
-        qualifiedName += `_${apiItem.overloadIndex - 1}`;
-    }
-    return qualifiedName;
+	let qualifiedName: string = Utilities.getSafeFilenameForName(apiItem.displayName);
+	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
+		// Subtract one for compatibility with earlier releases of API Documenter.
+		// (This will get revamped when we fix GitHub issue #1308)
+		qualifiedName += `_${apiItem.overloadIndex - 1}`;
+	}
+	return qualifiedName;
 }
 
 /**
@@ -129,23 +129,23 @@ export function getQualifiedApiItemName(apiItem: ApiItem): string {
  * @param documentBoundaries - See {@link DocumentBoundaries}
  */
 export function getFirstAncestorWithOwnDocument(
-    apiItem: ApiItem,
-    documentBoundaries: DocumentBoundaries,
+	apiItem: ApiItem,
+	documentBoundaries: DocumentBoundaries,
 ): ApiItem {
-    // Walk parentage until we reach an item kind that gets rendered to its own document.
-    // That is the document we will target with the generated link.
-    let hierarchyItem: ApiItem = apiItem;
-    while (!doesItemRequireOwnDocument(hierarchyItem, documentBoundaries)) {
-        const parent = getFilteredParent(hierarchyItem);
-        if (parent === undefined) {
-            throw new Error(
-                `Walking hierarchy from "${apiItem.displayName}" does not converge on an item that is rendered ` +
-                    `to its own document.`,
-            );
-        }
-        hierarchyItem = parent;
-    }
-    return hierarchyItem;
+	// Walk parentage until we reach an item kind that gets rendered to its own document.
+	// That is the document we will target with the generated link.
+	let hierarchyItem: ApiItem = apiItem;
+	while (!doesItemRequireOwnDocument(hierarchyItem, documentBoundaries)) {
+		const parent = getFilteredParent(hierarchyItem);
+		if (parent === undefined) {
+			throw new Error(
+				`Walking hierarchy from "${apiItem.displayName}" does not converge on an item that is rendered ` +
+					`to its own document.`,
+			);
+		}
+		hierarchyItem = parent;
+	}
+	return hierarchyItem;
 }
 
 /**
@@ -160,16 +160,16 @@ export function getFirstAncestorWithOwnDocument(
  * @param textOverride - Text to use in the link. If not provided, the default item name/signature will be used.
  */
 export function getLinkForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
-    textOverride?: string,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
+	textOverride?: string,
 ): Link {
-    const text = textOverride ?? config.linkTextPolicy(apiItem);
-    const url = getLinkUrlForApiItem(apiItem, config);
-    return {
-        text,
-        url,
-    };
+	const text = textOverride ?? config.linkTextPolicy(apiItem);
+	const url = getLinkUrlForApiItem(apiItem, config);
+	return {
+		text,
+		url,
+	};
 }
 
 /**
@@ -183,27 +183,27 @@ export function getLinkForApiItem(
  * @param config - See {@link MarkdownDocumenterConfiguration}
  */
 export function getLinkUrlForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): string {
-    const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    let documentPath = getApiItemPath(apiItem, config, /* includeExtension: */ false).join("/");
+	const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
+	let documentPath = getApiItemPath(apiItem, config, /* includeExtension: */ false).join("/");
 
-    // Omit "index" file name from path generated in links.
-    // This can be considered an optimization in most cases, but some documentation systems also special-case
-    // "index" files, so this can also prevent issues in some cases.
-    if (documentPath === "index" || documentPath.endsWith("/index")) {
-        documentPath = documentPath.slice(0, documentPath.length - "index".length);
-    }
+	// Omit "index" file name from path generated in links.
+	// This can be considered an optimization in most cases, but some documentation systems also special-case
+	// "index" files, so this can also prevent issues in some cases.
+	if (documentPath === "index" || documentPath.endsWith("/index")) {
+		documentPath = documentPath.slice(0, documentPath.length - "index".length);
+	}
 
-    // Don't bother with heading ID if we are linking to the root item of a document
-    let headingPostfix = "";
-    if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
-        const headingId = getHeadingIdForApiItem(apiItem, config);
-        headingPostfix = `#${headingId}`;
-    }
+	// Don't bother with heading ID if we are linking to the root item of a document
+	let headingPostfix = "";
+	if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
+		const headingId = getHeadingIdForApiItem(apiItem, config);
+		headingPostfix = `#${headingId}`;
+	}
 
-    return `${uriBase}/${documentPath}${headingPostfix}`;
+	return `${uriBase}/${documentPath}${headingPostfix}`;
 }
 
 /**
@@ -212,7 +212,7 @@ export function getLinkUrlForApiItem(
  * @example For the package `@foo/bar`, this would return `bar`.
  */
 export function getUnscopedPackageName(apiPackage: ApiPackage): string {
-    return PackageName.getUnscopedName(apiPackage.displayName);
+	return PackageName.getUnscopedName(apiPackage.displayName);
 }
 
 /**
@@ -228,11 +228,11 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function getFilePathForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): string {
-    const pathSegments = getApiItemPath(apiItem, config, true);
-    return Path.join(...pathSegments);
+	const pathSegments = getApiItemPath(apiItem, config, true);
+	return Path.join(...pathSegments);
 }
 
 /**
@@ -243,23 +243,23 @@ export function getFilePathForApiItem(
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
  */
 function getApiItemPath(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
-    includeExtension: boolean,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
+	includeExtension: boolean,
 ): string[] {
-    const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
+	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
-    const fileName = getFileNameForApiItem(apiItem, config, includeExtension);
+	const fileName = getFileNameForApiItem(apiItem, config, includeExtension);
 
-    // Filtered ancestry in ascending order
-    const documentAncestry = getAncestralHierarchy(targetDocumentItem, (hierarchyItem) =>
-        doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries),
-    );
+	// Filtered ancestry in ascending order
+	const documentAncestry = getAncestralHierarchy(targetDocumentItem, (hierarchyItem) =>
+		doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries),
+	);
 
-    return [
-        fileName,
-        ...documentAncestry.map((hierarchyItem) => config.fileNamePolicy(hierarchyItem)),
-    ].reverse();
+	return [
+		fileName,
+		...documentAncestry.map((hierarchyItem) => config.fileNamePolicy(hierarchyItem)),
+	].reverse();
 }
 
 /**
@@ -277,57 +277,57 @@ function getApiItemPath(
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the file name.
  */
 export function getFileNameForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
-    includeExtension: boolean,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
+	includeExtension: boolean,
 ): string {
-    const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
+	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
-    let unscopedFileName = config.fileNamePolicy(targetDocumentItem);
+	let unscopedFileName = config.fileNamePolicy(targetDocumentItem);
 
-    // For items of kinds other than `Model` or `Package` (which are handled specially file-system-wise),
-    // append the item kind to disambiguate file names resulting from members whose names may conflict in a
-    // casing-agnostic context (e.g. type "Foo" and function "foo").
-    if (
-        targetDocumentItem.kind !== ApiItemKind.Model &&
-        targetDocumentItem.kind !== ApiItemKind.Package
-    ) {
-        unscopedFileName = `${unscopedFileName}-${targetDocumentItem.kind.toLocaleLowerCase()}`;
-    }
+	// For items of kinds other than `Model` or `Package` (which are handled specially file-system-wise),
+	// append the item kind to disambiguate file names resulting from members whose names may conflict in a
+	// casing-agnostic context (e.g. type "Foo" and function "foo").
+	if (
+		targetDocumentItem.kind !== ApiItemKind.Model &&
+		targetDocumentItem.kind !== ApiItemKind.Package
+	) {
+		unscopedFileName = `${unscopedFileName}-${targetDocumentItem.kind.toLocaleLowerCase()}`;
+	}
 
-    // Append file extension if requested
-    if (includeExtension) {
-        unscopedFileName = `${unscopedFileName}.md`;
-    }
+	// Append file extension if requested
+	if (includeExtension) {
+		unscopedFileName = `${unscopedFileName}.md`;
+	}
 
-    // Walk parentage up until we reach the first ancestor which injects directory hierarchy.
-    // Qualify generated file name to ensure no conflicts within that directory.
-    let hierarchyItem = getFilteredParent(targetDocumentItem);
-    if (hierarchyItem === undefined) {
-        // If there is no parent item, then we can just return the file name unmodified
-        return unscopedFileName;
-    }
+	// Walk parentage up until we reach the first ancestor which injects directory hierarchy.
+	// Qualify generated file name to ensure no conflicts within that directory.
+	let hierarchyItem = getFilteredParent(targetDocumentItem);
+	if (hierarchyItem === undefined) {
+		// If there is no parent item, then we can just return the file name unmodified
+		return unscopedFileName;
+	}
 
-    let scopedFileName = unscopedFileName;
-    while (
-        hierarchyItem.kind !== ApiItemKind.Model &&
-        !doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)
-    ) {
-        const segmentName = config.fileNamePolicy(hierarchyItem);
-        if (segmentName.length === 0) {
-            throw new Error("Segment name must be non-empty.");
-        }
+	let scopedFileName = unscopedFileName;
+	while (
+		hierarchyItem.kind !== ApiItemKind.Model &&
+		!doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)
+	) {
+		const segmentName = config.fileNamePolicy(hierarchyItem);
+		if (segmentName.length === 0) {
+			throw new Error("Segment name must be non-empty.");
+		}
 
-        scopedFileName = `${segmentName}-${scopedFileName}`;
+		scopedFileName = `${segmentName}-${scopedFileName}`;
 
-        const parent = getFilteredParent(hierarchyItem);
-        if (parent === undefined) {
-            break;
-        }
-        hierarchyItem = parent;
-    }
+		const parent = getFilteredParent(hierarchyItem);
+		if (parent === undefined) {
+			break;
+		}
+		hierarchyItem = parent;
+	}
 
-    return scopedFileName;
+	return scopedFileName;
 }
 
 /**
@@ -340,20 +340,20 @@ export function getFileNameForApiItem(
  * document.
  */
 export function getHeadingForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
-    headingLevel?: number,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
+	headingLevel?: number,
 ): Heading {
-    // Don't generate an ID for the root heading
-    const id = doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
-        ? undefined
-        : getHeadingIdForApiItem(apiItem, config);
+	// Don't generate an ID for the root heading
+	const id = doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+		? undefined
+		: getHeadingIdForApiItem(apiItem, config);
 
-    return {
-        title: config.headingTitlePolicy(apiItem),
-        id,
-        level: headingLevel,
-    };
+	return {
+		title: config.headingTitlePolicy(apiItem),
+		id,
+		level: headingLevel,
+	};
 }
 
 /**
@@ -374,31 +374,31 @@ export function getHeadingForApiItem(
  * @returns A unique heading ID for the API item if one is needed. Otherwise, `undefined`.
  */
 export function getHeadingIdForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): string {
-    let baseName: string | undefined;
-    const apiItemKind: ApiItemKind = apiItem.kind;
+	let baseName: string | undefined;
+	const apiItemKind: ApiItemKind = apiItem.kind;
 
-    // Walk parentage up until we reach the ancestor into whose document we're being rendered.
-    // Generate ID information for everything back to that point
-    let hierarchyItem = apiItem;
-    while (!doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries)) {
-        const qualifiedName = getQualifiedApiItemName(hierarchyItem);
+	// Walk parentage up until we reach the ancestor into whose document we're being rendered.
+	// Generate ID information for everything back to that point
+	let hierarchyItem = apiItem;
+	while (!doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries)) {
+		const qualifiedName = getQualifiedApiItemName(hierarchyItem);
 
-        // Since we're walking up the tree, we'll build the string from the end for simplicity
-        baseName = baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;
+		// Since we're walking up the tree, we'll build the string from the end for simplicity
+		baseName = baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;
 
-        const parent = getFilteredParent(hierarchyItem);
-        if (parent === undefined) {
-            throw new Error(
-                "Walking site hierarchy does not converge on an item that is rendered to its own document.",
-            );
-        }
-        hierarchyItem = parent;
-    }
+		const parent = getFilteredParent(hierarchyItem);
+		if (parent === undefined) {
+			throw new Error(
+				"Walking site hierarchy does not converge on an item that is rendered to its own document.",
+			);
+		}
+		hierarchyItem = parent;
+	}
 
-    return `${baseName}-${apiItemKind.toLowerCase()}`;
+	return `${baseName}-${apiItemKind.toLowerCase()}`;
 }
 
 /**
@@ -413,11 +413,11 @@ export function getHeadingIdForApiItem(
  * @param apiItem - The API item whose filtered parent will be returned.
  */
 export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
-    const parent = apiItem.parent;
-    if (parent?.kind === ApiItemKind.EntryPoint) {
-        return parent.parent;
-    }
-    return parent;
+	const parent = apiItem.parent;
+	if (parent?.kind === ApiItemKind.EntryPoint) {
+		return parent.parent;
+	}
+	return parent;
 }
 
 /**
@@ -439,23 +439,23 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
  * @returns The list of matching ancestor items, provided in *ascending* order.
  */
 export function getAncestralHierarchy(
-    apiItem: ApiItem,
-    includePredecate: (apiItem: ApiItem) => boolean,
-    breakPredicate?: (apiItem: ApiItem) => boolean,
+	apiItem: ApiItem,
+	includePredecate: (apiItem: ApiItem) => boolean,
+	breakPredicate?: (apiItem: ApiItem) => boolean,
 ): ApiItem[] {
-    const matches: ApiItem[] = [];
+	const matches: ApiItem[] = [];
 
-    let hierarchyItem: ApiItem | undefined = getFilteredParent(apiItem);
-    while (
-        hierarchyItem !== undefined &&
-        (breakPredicate === undefined || !breakPredicate(hierarchyItem))
-    ) {
-        if (includePredecate(hierarchyItem)) {
-            matches.push(hierarchyItem);
-        }
-        hierarchyItem = getFilteredParent(hierarchyItem);
-    }
-    return matches;
+	let hierarchyItem: ApiItem | undefined = getFilteredParent(apiItem);
+	while (
+		hierarchyItem !== undefined &&
+		(breakPredicate === undefined || !breakPredicate(hierarchyItem))
+	) {
+		if (includePredecate(hierarchyItem)) {
+			matches.push(hierarchyItem);
+		}
+		hierarchyItem = getFilteredParent(hierarchyItem);
+	}
+	return matches;
 }
 
 /**
@@ -477,16 +477,16 @@ export function getAncestralHierarchy(
  * @returns `true` if the item should be rendered to its own document. `false` otherwise.
  */
 export function doesItemKindRequireOwnDocument(
-    kind: ApiItemKind,
-    documentBoundaries: DocumentBoundaries,
+	kind: ApiItemKind,
+	documentBoundaries: DocumentBoundaries,
 ): boolean {
-    if (kind === ApiItemKind.Model || kind === ApiItemKind.Package) {
-        return true;
-    }
-    if (kind === ApiItemKind.EntryPoint) {
-        return false;
-    }
-    return documentBoundaries.includes(kind);
+	if (kind === ApiItemKind.Model || kind === ApiItemKind.Package) {
+		return true;
+	}
+	if (kind === ApiItemKind.EntryPoint) {
+		return false;
+	}
+	return documentBoundaries.includes(kind);
 }
 
 /**
@@ -498,10 +498,10 @@ export function doesItemKindRequireOwnDocument(
  * @param documentBoundaries - See {@link DocumentBoundaries}
  */
 export function doesItemRequireOwnDocument(
-    apiItem: ApiItem,
-    documentBoundaries: DocumentBoundaries,
+	apiItem: ApiItem,
+	documentBoundaries: DocumentBoundaries,
 ): boolean {
-    return doesItemKindRequireOwnDocument(apiItem.kind, documentBoundaries);
+	return doesItemKindRequireOwnDocument(apiItem.kind, documentBoundaries);
 }
 
 /**
@@ -525,16 +525,16 @@ export function doesItemRequireOwnDocument(
  * @returns `true` if the item should contribute to directory-wise hierarchy in the output. `false` otherwise.
  */
 export function doesItemKindGenerateHierarchy(
-    kind: ApiItemKind,
-    hierarchyBoundaries: HierarchyBoundaries,
+	kind: ApiItemKind,
+	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
-    if (kind === ApiItemKind.Package) {
-        return true;
-    }
-    if (kind === ApiItemKind.EntryPoint) {
-        return false;
-    }
-    return hierarchyBoundaries.includes(kind);
+	if (kind === ApiItemKind.Package) {
+		return true;
+	}
+	if (kind === ApiItemKind.EntryPoint) {
+		return false;
+	}
+	return hierarchyBoundaries.includes(kind);
 }
 
 /**
@@ -548,10 +548,10 @@ export function doesItemKindGenerateHierarchy(
  * @param hierarchyBoundaries - See {@link HierarchyBoundaries}
  */
 export function doesItemGenerateHierarchy(
-    apiItem: ApiItem,
-    hierarchyBoundaries: HierarchyBoundaries,
+	apiItem: ApiItem,
+	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
-    return doesItemKindGenerateHierarchy(apiItem.kind, hierarchyBoundaries);
+	return doesItemKindGenerateHierarchy(apiItem.kind, hierarchyBoundaries);
 }
 
 /**
@@ -563,7 +563,7 @@ export function doesItemGenerateHierarchy(
  * @returns - The filtered list of items.
  */
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
-    return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
+	return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
 }
 
 /**
@@ -578,19 +578,19 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
 function getCustomBlockSectionsForMultiInstanceTags(
-    apiItem: ApiItem,
-    tagName: string,
+	apiItem: ApiItem,
+	tagName: string,
 ): DocSection[] | undefined {
-    if (!tagName.startsWith("@")) {
-        throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
-    }
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
-        const defaultValueBlocks = apiItem.tsdocComment.customBlocks.filter(
-            (block) => block.blockTag.tagName === tagName,
-        );
-        return defaultValueBlocks.map((block) => block.content);
-    }
-    return undefined;
+	if (!tagName.startsWith("@")) {
+		throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
+	}
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
+		const defaultValueBlocks = apiItem.tsdocComment.customBlocks.filter(
+			(block) => block.blockTag.tagName === tagName,
+		);
+		return defaultValueBlocks.map((block) => block.content);
+	}
+	return undefined;
 }
 
 /**
@@ -609,22 +609,22 @@ function getCustomBlockSectionsForMultiInstanceTags(
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
 function getCustomBlockSectionForSingleInstanceTag(
-    apiItem: ApiItem,
-    tagName: string,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	tagName: string,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    const blocks = getCustomBlockSectionsForMultiInstanceTags(apiItem, tagName);
-    if (blocks === undefined) {
-        return undefined;
-    }
+	const blocks = getCustomBlockSectionsForMultiInstanceTags(apiItem, tagName);
+	if (blocks === undefined) {
+		return undefined;
+	}
 
-    if (blocks.length > 1) {
-        config.logger.error(
-            `API item ${apiItem.displayName} has multiple "${tagName}" comment blocks. This is not supported.`,
-        );
-    }
+	if (blocks.length > 1) {
+		config.logger.error(
+			`API item ${apiItem.displayName} has multiple "${tagName}" comment blocks. This is not supported.`,
+		);
+	}
 
-    return blocks[0];
+	return blocks[0];
 }
 
 /**
@@ -635,7 +635,7 @@ function getCustomBlockSectionForSingleInstanceTag(
  * @returns The `@example` comment block sections, if the API item has one. Otherwise, `undefined`.
  */
 export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
-    return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.example.tagName);
+	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.example.tagName);
 }
 
 /**
@@ -646,7 +646,7 @@ export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * @returns The `@throws` comment block sections, if the API item has one. Otherwise, `undefined`.
  */
 export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
-    return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.throws.tagName);
+	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.throws.tagName);
 }
 
 /**
@@ -657,11 +657,11 @@ export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * @returns The `@see` comment block section, if the API item has one. Otherwise, `undefined`.
  */
 export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
-        const seeBlocks = apiItem.tsdocComment.seeBlocks.map((block) => block.content);
-        return seeBlocks.length === 0 ? undefined : seeBlocks;
-    }
-    return undefined;
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
+		const seeBlocks = apiItem.tsdocComment.seeBlocks.map((block) => block.content);
+		return seeBlocks.length === 0 ? undefined : seeBlocks;
+	}
+	return undefined;
 }
 
 /**
@@ -674,14 +674,14 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  */
 export function getDefaultValueBlock(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    return getCustomBlockSectionForSingleInstanceTag(
-        apiItem,
-        StandardTags.defaultValue.tagName,
-        config,
-    );
+	return getCustomBlockSectionForSingleInstanceTag(
+		apiItem,
+		StandardTags.defaultValue.tagName,
+		config,
+	);
 }
 
 /**
@@ -692,10 +692,10 @@ export function getDefaultValueBlock(
  * @returns The `@returns` comment block section, if the API item has one. Otherwise, `undefined`.
  */
 export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.returnsBlock !== undefined) {
-        return apiItem.tsdocComment.returnsBlock.content;
-    }
-    return undefined;
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.returnsBlock !== undefined) {
+		return apiItem.tsdocComment.returnsBlock.content;
+	}
+	return undefined;
 }
 
 /**
@@ -707,10 +707,10 @@ export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
  * @returns The `@deprecated` comment block section, if the API item has one. Otherwise, `undefined`.
  */
 export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
-    return apiItem instanceof ApiDocumentedItem &&
-        apiItem.tsdocComment?.deprecatedBlock !== undefined
-        ? apiItem.tsdocComment.deprecatedBlock.content
-        : undefined;
+	return apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment?.deprecatedBlock !== undefined
+		? apiItem.tsdocComment.deprecatedBlock.content
+		: undefined;
 }
 
 /**
@@ -718,9 +718,9 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
  * indeed optional.
  */
 export function isDeprecated(apiItem: ApiItem): boolean {
-    return (
-        apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.deprecatedBlock !== undefined
-    );
+	return (
+		apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.deprecatedBlock !== undefined
+	);
 }
 
 /**
@@ -728,10 +728,10 @@ export function isDeprecated(apiItem: ApiItem): boolean {
  * indeed optional.
  */
 export function isOptional(apiItem: ApiItem): boolean {
-    if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
-        return apiItem.isOptional;
-    }
-    return false;
+	if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
+		return apiItem.isOptional;
+	}
+	return false;
 }
 
 /**
@@ -739,10 +739,10 @@ export function isOptional(apiItem: ApiItem): boolean {
  * indeed readonly.
  */
 export function isReadonly(apiItem: ApiItem): boolean {
-    if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
-        return apiItem.isReadonly;
-    }
-    return false;
+	if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
+		return apiItem.isReadonly;
+	}
+	return false;
 }
 
 /**
@@ -750,10 +750,10 @@ export function isReadonly(apiItem: ApiItem): boolean {
  * indeed static.
  */
 export function isStatic(apiItem: ApiItem): boolean {
-    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
-        return apiItem.isStatic;
-    }
-    return false;
+	if (ApiStaticMixin.isBaseClassOf(apiItem)) {
+		return apiItem.isStatic;
+	}
+	return false;
 }
 
 /**
@@ -763,34 +763,34 @@ export function isStatic(apiItem: ApiItem): boolean {
  * @param modifiersToOmit - An optional list of modifier kinds to omit, even if they apply to the provided item.
  */
 export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[] {
-    const modifiers: ApiModifier[] = [];
+	const modifiers: ApiModifier[] = [];
 
-    if (isOptional(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Optional) ?? false)) {
-        modifiers.push(ApiModifier.Optional);
-    }
+	if (isOptional(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Optional) ?? false)) {
+		modifiers.push(ApiModifier.Optional);
+	}
 
-    if (isReadonly(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Readonly) ?? false)) {
-        modifiers.push(ApiModifier.Readonly);
-    }
+	if (isReadonly(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Readonly) ?? false)) {
+		modifiers.push(ApiModifier.Readonly);
+	}
 
-    if (isStatic(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Static) ?? false)) {
-        modifiers.push(ApiModifier.Static);
-    }
+	if (isStatic(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Static) ?? false)) {
+		modifiers.push(ApiModifier.Static);
+	}
 
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-        if (
-            apiItem.tsdocComment.modifierTagSet.isVirtual() &&
-            !(modifiersToOmit?.includes(ApiModifier.Virtual) ?? false)
-        ) {
-            modifiers.push(ApiModifier.Virtual);
-        }
-        if (
-            apiItem.tsdocComment.modifierTagSet.isSealed() &&
-            !(modifiersToOmit?.includes(ApiModifier.Sealed) ?? false)
-        ) {
-            modifiers.push(ApiModifier.Sealed);
-        }
-    }
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		if (
+			apiItem.tsdocComment.modifierTagSet.isVirtual() &&
+			!(modifiersToOmit?.includes(ApiModifier.Virtual) ?? false)
+		) {
+			modifiers.push(ApiModifier.Virtual);
+		}
+		if (
+			apiItem.tsdocComment.modifierTagSet.isSealed() &&
+			!(modifiersToOmit?.includes(ApiModifier.Sealed) ?? false)
+		) {
+			modifiers.push(ApiModifier.Sealed);
+		}
+	}
 
-    return modifiers;
+	return modifiers;
 }

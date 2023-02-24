@@ -4,29 +4,29 @@
  */
 import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 import {
-    ApiDocumentedItem,
-    ApiItem,
-    ApiItemKind,
-    ApiPackage,
-    ApiPropertyItem,
-    ApiReleaseTagMixin,
-    ApiReturnTypeMixin,
-    Excerpt,
-    Parameter,
-    ReleaseTag,
+	ApiDocumentedItem,
+	ApiItem,
+	ApiItemKind,
+	ApiPackage,
+	ApiPropertyItem,
+	ApiReleaseTagMixin,
+	ApiReturnTypeMixin,
+	Excerpt,
+	Parameter,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import { DocCodeSpan, DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
 import {
-    ApiFunctionLike,
-    ApiModifier,
-    getDefaultValueBlock,
-    getLinkForApiItem,
-    getModifiers,
-    isDeprecated,
-    mergeSections,
+	ApiFunctionLike,
+	ApiModifier,
+	getDefaultValueBlock,
+	getLinkForApiItem,
+	getModifiers,
+	isDeprecated,
+	mergeSections,
 } from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading, renderLink } from "./RenderingHelpers";
 
@@ -34,37 +34,37 @@ import { renderExcerptWithHyperlinks, renderHeading, renderLink } from "./Render
  * Input properties for rendering a table of API members
  */
 export interface MemberTableProperties {
-    /**
-     * Heading text to display above the table contents.
-     */
-    headingTitle: string;
+	/**
+	 * Heading text to display above the table contents.
+	 */
+	headingTitle: string;
 
-    /**
-     * The kind of API item.
-     */
-    itemKind: ApiItemKind;
+	/**
+	 * The kind of API item.
+	 */
+	itemKind: ApiItemKind;
 
-    /**
-     * The items to be rendered as rows in the table.
-     */
-    items: readonly ApiItem[];
+	/**
+	 * The items to be rendered as rows in the table.
+	 */
+	items: readonly ApiItem[];
 
-    /**
-     * Rendering options for the table.
-     */
-    options?: TableRenderingOptions;
+	/**
+	 * Rendering options for the table.
+	 */
+	options?: TableRenderingOptions;
 }
 
 /**
  * Content / formatting options for table rendering.
  */
 export interface TableRenderingOptions {
-    /**
-     * A list of modifiers to omit from table rendering.
-     *
-     * @defaultValue No modifier kinds will be excluded.
-     */
-    modifiersToOmit?: ApiModifier[];
+	/**
+	 * A list of modifiers to omit from table rendering.
+	 *
+	 * @defaultValue No modifier kinds will be excluded.
+	 */
+	modifiersToOmit?: ApiModifier[];
 }
 
 /**
@@ -75,21 +75,21 @@ export interface TableRenderingOptions {
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderMemberTables(
-    memberTableProperties: readonly MemberTableProperties[],
-    config: Required<MarkdownDocumenterConfiguration>,
+	memberTableProperties: readonly MemberTableProperties[],
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    const docSections: DocSection[] = [];
+	const docSections: DocSection[] = [];
 
-    for (const member of memberTableProperties) {
-        const renderedTable = renderTableWithHeading(member, config);
-        if (renderedTable !== undefined) {
-            docSections.push(renderedTable);
-        }
-    }
+	for (const member of memberTableProperties) {
+		const renderedTable = renderTableWithHeading(member, config);
+		if (renderedTable !== undefined) {
+			docSections.push(renderedTable);
+		}
+	}
 
-    return docSections.length === 0
-        ? undefined
-        : mergeSections(docSections, config.tsdocConfiguration);
+	return docSections.length === 0
+		? undefined
+		: mergeSections(docSections, config.tsdocConfiguration);
 }
 
 /**
@@ -99,22 +99,22 @@ export function renderMemberTables(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderTableWithHeading(
-    memberTableProperties: MemberTableProperties,
-    config: Required<MarkdownDocumenterConfiguration>,
+	memberTableProperties: MemberTableProperties,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    const renderedTable = renderSummaryTable(
-        memberTableProperties.items,
-        memberTableProperties.itemKind,
-        config,
-        memberTableProperties.options,
-    );
+	const renderedTable = renderSummaryTable(
+		memberTableProperties.items,
+		memberTableProperties.itemKind,
+		config,
+		memberTableProperties.options,
+	);
 
-    return renderedTable === undefined
-        ? undefined
-        : new DocSection({ configuration: config.tsdocConfiguration }, [
-              renderHeading({ title: memberTableProperties.headingTitle }, config),
-              renderedTable,
-          ]);
+	return renderedTable === undefined
+		? undefined
+		: new DocSection({ configuration: config.tsdocConfiguration }, [
+				renderHeading({ title: memberTableProperties.headingTitle }, config),
+				renderedTable,
+		  ]);
 }
 
 /**
@@ -129,49 +129,49 @@ export function renderTableWithHeading(
  * @param options - Table content / formatting options.
  */
 export function renderSummaryTable(
-    apiItems: readonly ApiItem[],
-    itemKind: ApiItemKind,
-    config: Required<MarkdownDocumenterConfiguration>,
-    options?: TableRenderingOptions,
+	apiItems: readonly ApiItem[],
+	itemKind: ApiItemKind,
+	config: Required<MarkdownDocumenterConfiguration>,
+	options?: TableRenderingOptions,
 ): DocTable | undefined {
-    if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
-        throw new Error(`Table rendering does not support provided API item kind: "${itemKind}".`);
-    }
+	if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
+		throw new Error(`Table rendering does not support provided API item kind: "${itemKind}".`);
+	}
 
-    if (apiItems.length === 0) {
-        return undefined;
-    }
+	if (apiItems.length === 0) {
+		return undefined;
+	}
 
-    switch (itemKind) {
-        case ApiItemKind.ConstructSignature:
-        case ApiItemKind.Constructor:
-        case ApiItemKind.Function:
-        case ApiItemKind.Method:
-        case ApiItemKind.MethodSignature:
-            return renderFunctionLikeSummaryTable(
-                apiItems.map((apiItem) => apiItem as ApiFunctionLike),
-                itemKind,
-                config,
-                options,
-            );
+	switch (itemKind) {
+		case ApiItemKind.ConstructSignature:
+		case ApiItemKind.Constructor:
+		case ApiItemKind.Function:
+		case ApiItemKind.Method:
+		case ApiItemKind.MethodSignature:
+			return renderFunctionLikeSummaryTable(
+				apiItems.map((apiItem) => apiItem as ApiFunctionLike),
+				itemKind,
+				config,
+				options,
+			);
 
-        case ApiItemKind.Property:
-        case ApiItemKind.PropertySignature:
-            return renderPropertiesTable(
-                apiItems.map((apiItem) => apiItem as ApiPropertyItem),
-                config,
-                options,
-            );
+		case ApiItemKind.Property:
+		case ApiItemKind.PropertySignature:
+			return renderPropertiesTable(
+				apiItems.map((apiItem) => apiItem as ApiPropertyItem),
+				config,
+				options,
+			);
 
-        case ApiItemKind.Package:
-            return renderPackagesTable(
-                apiItems.map((apiItem) => apiItem as ApiPackage),
-                config,
-            );
+		case ApiItemKind.Package:
+			return renderPackagesTable(
+				apiItems.map((apiItem) => apiItem as ApiPackage),
+				config,
+			);
 
-        default:
-            return renderDefaultSummaryTable(apiItems, itemKind, config, options);
-    }
+		default:
+			return renderDefaultSummaryTable(apiItems, itemKind, config, options);
+	}
 }
 
 /**
@@ -183,53 +183,53 @@ export function renderSummaryTable(
  * @param options - Table content / formatting options.
  */
 export function renderDefaultSummaryTable(
-    apiItems: readonly ApiItem[],
-    itemKind: ApiItemKind,
-    config: Required<MarkdownDocumenterConfiguration>,
-    options?: TableRenderingOptions,
+	apiItems: readonly ApiItem[],
+	itemKind: ApiItemKind,
+	config: Required<MarkdownDocumenterConfiguration>,
+	options?: TableRenderingOptions,
 ): DocTable | undefined {
-    if (apiItems.length === 0) {
-        return undefined;
-    }
+	if (apiItems.length === 0) {
+		return undefined;
+	}
 
-    // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiItems.some((apiItem) => isDeprecated(apiItem));
+	// Only display "Alerts" column if there are any deprecated items in the list.
+	const hasDeprecated = apiItems.some((apiItem) => isDeprecated(apiItem));
 
-    // Only display "Modifiers" column if there are any modifiers to display.
-    const hasModifiers = apiItems.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-    );
+	// Only display "Modifiers" column if there are any modifiers to display.
+	const hasModifiers = apiItems.some(
+		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
+	);
 
-    const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
-    if (hasDeprecated) {
-        headerTitles.push("Alerts");
-    }
-    if (hasModifiers) {
-        headerTitles.push("Modifiers");
-    }
-    headerTitles.push("Description");
+	const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
+	if (hasDeprecated) {
+		headerTitles.push("Alerts");
+	}
+	if (hasModifiers) {
+		headerTitles.push("Modifiers");
+	}
+	headerTitles.push("Description");
 
-    const tableRows: DocTableRow[] = [];
-    for (const apiItem of apiItems) {
-        const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
-        if (hasDeprecated) {
-            rowCells.push(renderDeprecatedCell(apiItem, config));
-        }
-        if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiItem, config, options?.modifiersToOmit));
-        }
-        rowCells.push(renderApiSummaryCell(apiItem, config));
+	const tableRows: DocTableRow[] = [];
+	for (const apiItem of apiItems) {
+		const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
+		if (hasDeprecated) {
+			rowCells.push(renderDeprecatedCell(apiItem, config));
+		}
+		if (hasModifiers) {
+			rowCells.push(renderModifiersCell(apiItem, config, options?.modifiersToOmit));
+		}
+		rowCells.push(renderApiSummaryCell(apiItem, config));
 
-        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
-    }
+		tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+	}
 
-    return new DocTable(
-        {
-            configuration: config.tsdocConfiguration,
-            headerTitles,
-        },
-        tableRows,
-    );
+	return new DocTable(
+		{
+			configuration: config.tsdocConfiguration,
+			headerTitles,
+		},
+		tableRows,
+	);
 }
 
 /**
@@ -241,45 +241,45 @@ export function renderDefaultSummaryTable(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderParametersSummaryTable(
-    apiParameters: readonly Parameter[],
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiParameters: readonly Parameter[],
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable {
-    // Only display "Modifiers" column if there are any optional parameters present.
-    const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
+	// Only display "Modifiers" column if there are any optional parameters present.
+	const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
 
-    const headerTitles: string[] = ["Parameter"];
-    if (hasOptionalParameters) {
-        headerTitles.push("Modifiers");
-    }
-    headerTitles.push("Type", "Description");
+	const headerTitles: string[] = ["Parameter"];
+	if (hasOptionalParameters) {
+		headerTitles.push("Modifiers");
+	}
+	headerTitles.push("Type", "Description");
 
-    function renderModifierCell(apiParameter: Parameter): DocTableCell {
-        return apiParameter.isOptional
-            ? renderPlainTextCell("optional", config)
-            : renderEmptyTableCell(config);
-    }
+	function renderModifierCell(apiParameter: Parameter): DocTableCell {
+		return apiParameter.isOptional
+			? renderPlainTextCell("optional", config)
+			: renderEmptyTableCell(config);
+	}
 
-    const tableRows: DocTableRow[] = [];
-    for (const apiParameter of apiParameters) {
-        const rowCells: DocTableCell[] = [renderParameterTitleCell(apiParameter, config)];
-        if (hasOptionalParameters) {
-            rowCells.push(renderModifierCell(apiParameter));
-        }
-        rowCells.push(
-            renderParameterTypeCell(apiParameter, config),
-            renderParameterSummaryCell(apiParameter, config),
-        );
+	const tableRows: DocTableRow[] = [];
+	for (const apiParameter of apiParameters) {
+		const rowCells: DocTableCell[] = [renderParameterTitleCell(apiParameter, config)];
+		if (hasOptionalParameters) {
+			rowCells.push(renderModifierCell(apiParameter));
+		}
+		rowCells.push(
+			renderParameterTypeCell(apiParameter, config),
+			renderParameterSummaryCell(apiParameter, config),
+		);
 
-        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
-    }
+		tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+	}
 
-    return new DocTable(
-        {
-            configuration: config.tsdocConfiguration,
-            headerTitles,
-        },
-        tableRows,
-    );
+	return new DocTable(
+		{
+			configuration: config.tsdocConfiguration,
+			headerTitles,
+		},
+		tableRows,
+	);
 }
 
 /**
@@ -292,60 +292,60 @@ export function renderParametersSummaryTable(
  * @param options - Table content / formatting options.
  */
 export function renderFunctionLikeSummaryTable(
-    apiItems: readonly ApiFunctionLike[],
-    itemKind: ApiItemKind,
-    config: Required<MarkdownDocumenterConfiguration>,
-    options?: TableRenderingOptions,
+	apiItems: readonly ApiFunctionLike[],
+	itemKind: ApiItemKind,
+	config: Required<MarkdownDocumenterConfiguration>,
+	options?: TableRenderingOptions,
 ): DocTable | undefined {
-    if (apiItems.length === 0) {
-        return undefined;
-    }
+	if (apiItems.length === 0) {
+		return undefined;
+	}
 
-    // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiItems.some((apiItem) => isDeprecated(apiItem));
+	// Only display "Alerts" column if there are any deprecated items in the list.
+	const hasDeprecated = apiItems.some((apiItem) => isDeprecated(apiItem));
 
-    // Only display "Modifiers" column if there are any modifiers to display.
-    const hasModifiers = apiItems.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-    );
-    const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
+	// Only display "Modifiers" column if there are any modifiers to display.
+	const hasModifiers = apiItems.some(
+		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
+	);
+	const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
-    const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
-    if (hasDeprecated) {
-        headerTitles.push("Alerts");
-    }
-    if (hasModifiers) {
-        headerTitles.push("Modifiers");
-    }
-    if (hasReturnTypes) {
-        headerTitles.push("Return Type");
-    }
-    headerTitles.push("Description");
+	const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
+	if (hasDeprecated) {
+		headerTitles.push("Alerts");
+	}
+	if (hasModifiers) {
+		headerTitles.push("Modifiers");
+	}
+	if (hasReturnTypes) {
+		headerTitles.push("Return Type");
+	}
+	headerTitles.push("Description");
 
-    const tableRows: DocTableRow[] = [];
-    for (const apiItem of apiItems) {
-        const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
-        if (hasDeprecated) {
-            rowCells.push(renderDeprecatedCell(apiItem, config));
-        }
-        if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiItem, config, options?.modifiersToOmit));
-        }
-        if (hasReturnTypes) {
-            rowCells.push(renderReturnTypeCell(apiItem, config));
-        }
-        rowCells.push(renderApiSummaryCell(apiItem, config));
+	const tableRows: DocTableRow[] = [];
+	for (const apiItem of apiItems) {
+		const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
+		if (hasDeprecated) {
+			rowCells.push(renderDeprecatedCell(apiItem, config));
+		}
+		if (hasModifiers) {
+			rowCells.push(renderModifiersCell(apiItem, config, options?.modifiersToOmit));
+		}
+		if (hasReturnTypes) {
+			rowCells.push(renderReturnTypeCell(apiItem, config));
+		}
+		rowCells.push(renderApiSummaryCell(apiItem, config));
 
-        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
-    }
+		tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+	}
 
-    return new DocTable(
-        {
-            configuration: config.tsdocConfiguration,
-            headerTitles,
-        },
-        tableRows,
-    );
+	return new DocTable(
+		{
+			configuration: config.tsdocConfiguration,
+			headerTitles,
+		},
+		tableRows,
+	);
 }
 
 /**
@@ -357,64 +357,64 @@ export function renderFunctionLikeSummaryTable(
  * @param options - Table content / formatting options.
  */
 export function renderPropertiesTable(
-    apiProperties: readonly ApiPropertyItem[],
-    config: Required<MarkdownDocumenterConfiguration>,
-    options?: TableRenderingOptions,
+	apiProperties: readonly ApiPropertyItem[],
+	config: Required<MarkdownDocumenterConfiguration>,
+	options?: TableRenderingOptions,
 ): DocTable | undefined {
-    if (apiProperties.length === 0) {
-        return undefined;
-    }
+	if (apiProperties.length === 0) {
+		return undefined;
+	}
 
-    // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiProperties.some((apiItem) => isDeprecated(apiItem));
+	// Only display "Alerts" column if there are any deprecated items in the list.
+	const hasDeprecated = apiProperties.some((apiItem) => isDeprecated(apiItem));
 
-    // Only display "Modifiers" column if there are any modifiers to display.
-    const hasModifiers = apiProperties.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-    );
-    const hasDefaultValues = apiProperties.some(
-        (apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
-    );
+	// Only display "Modifiers" column if there are any modifiers to display.
+	const hasModifiers = apiProperties.some(
+		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
+	);
+	const hasDefaultValues = apiProperties.some(
+		(apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
+	);
 
-    const headerTitles: string[] = ["Property"];
-    if (hasDeprecated) {
-        headerTitles.push("Alerts");
-    }
-    if (hasModifiers) {
-        headerTitles.push("Modifiers");
-    }
-    if (hasDefaultValues) {
-        headerTitles.push("Default Value");
-    }
-    headerTitles.push("Type", "Description");
+	const headerTitles: string[] = ["Property"];
+	if (hasDeprecated) {
+		headerTitles.push("Alerts");
+	}
+	if (hasModifiers) {
+		headerTitles.push("Modifiers");
+	}
+	if (hasDefaultValues) {
+		headerTitles.push("Default Value");
+	}
+	headerTitles.push("Type", "Description");
 
-    const tableRows: DocTableRow[] = [];
-    for (const apiProperty of apiProperties) {
-        const rowCells: DocTableCell[] = [renderApiTitleCell(apiProperty, config)];
-        if (hasDeprecated) {
-            rowCells.push(renderDeprecatedCell(apiProperty, config));
-        }
-        if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiProperty, config, options?.modifiersToOmit));
-        }
-        if (hasDefaultValues) {
-            rowCells.push(renderDefaultValueCell(apiProperty, config));
-        }
-        rowCells.push(
-            renderPropertyTypeCell(apiProperty, config),
-            renderApiSummaryCell(apiProperty, config),
-        );
+	const tableRows: DocTableRow[] = [];
+	for (const apiProperty of apiProperties) {
+		const rowCells: DocTableCell[] = [renderApiTitleCell(apiProperty, config)];
+		if (hasDeprecated) {
+			rowCells.push(renderDeprecatedCell(apiProperty, config));
+		}
+		if (hasModifiers) {
+			rowCells.push(renderModifiersCell(apiProperty, config, options?.modifiersToOmit));
+		}
+		if (hasDefaultValues) {
+			rowCells.push(renderDefaultValueCell(apiProperty, config));
+		}
+		rowCells.push(
+			renderPropertyTypeCell(apiProperty, config),
+			renderApiSummaryCell(apiProperty, config),
+		);
 
-        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
-    }
+		tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+	}
 
-    return new DocTable(
-        {
-            configuration: config.tsdocConfiguration,
-            headerTitles,
-        },
-        tableRows,
-    );
+	return new DocTable(
+		{
+			configuration: config.tsdocConfiguration,
+			headerTitles,
+		},
+		tableRows,
+	);
 }
 
 /**
@@ -426,40 +426,40 @@ export function renderPropertiesTable(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderPackagesTable(
-    apiPackages: readonly ApiPackage[],
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiPackages: readonly ApiPackage[],
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable | undefined {
-    if (apiPackages.length === 0) {
-        return undefined;
-    }
+	if (apiPackages.length === 0) {
+		return undefined;
+	}
 
-    // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiPackages.some((apiItem) => isDeprecated(apiItem));
+	// Only display "Alerts" column if there are any deprecated items in the list.
+	const hasDeprecated = apiPackages.some((apiItem) => isDeprecated(apiItem));
 
-    const headerTitles: string[] = ["Package"];
-    if (hasDeprecated) {
-        headerTitles.push("Alerts");
-    }
-    headerTitles.push("Description");
+	const headerTitles: string[] = ["Package"];
+	if (hasDeprecated) {
+		headerTitles.push("Alerts");
+	}
+	headerTitles.push("Description");
 
-    const tableRows: DocTableRow[] = [];
-    for (const apiPackage of apiPackages) {
-        const rowCells: DocTableCell[] = [renderApiTitleCell(apiPackage, config)];
-        if (hasDeprecated) {
-            rowCells.push(renderDeprecatedCell(apiPackage, config));
-        }
-        rowCells.push(renderApiSummaryCell(apiPackage, config));
+	const tableRows: DocTableRow[] = [];
+	for (const apiPackage of apiPackages) {
+		const rowCells: DocTableCell[] = [renderApiTitleCell(apiPackage, config)];
+		if (hasDeprecated) {
+			rowCells.push(renderDeprecatedCell(apiPackage, config));
+		}
+		rowCells.push(renderApiSummaryCell(apiPackage, config));
 
-        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
-    }
+		tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+	}
 
-    return new DocTable(
-        {
-            configuration: config.tsdocConfiguration,
-            headerTitles,
-        },
-        tableRows,
-    );
+	return new DocTable(
+		{
+			configuration: config.tsdocConfiguration,
+			headerTitles,
+		},
+		tableRows,
+	);
 }
 
 /**
@@ -470,36 +470,36 @@ export function renderPackagesTable(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderApiSummaryCell(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const docNodes: DocNode[] = [];
+	const docNodes: DocNode[] = [];
 
-    if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-        docNodes.push(
-            new DocEmphasisSpan(
-                {
-                    configuration: config.tsdocConfiguration,
-                    bold: true,
-                    italic: true,
-                },
-                [
-                    new DocPlainText({
-                        configuration: config.tsdocConfiguration,
-                        text: "(BETA) ",
-                    }),
-                ],
-            ),
-        );
-    }
+	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
+		docNodes.push(
+			new DocEmphasisSpan(
+				{
+					configuration: config.tsdocConfiguration,
+					bold: true,
+					italic: true,
+				},
+				[
+					new DocPlainText({
+						configuration: config.tsdocConfiguration,
+						text: "(BETA) ",
+					}),
+				],
+			),
+		);
+	}
 
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-        docNodes.push(apiItem.tsdocComment.summarySection);
-    }
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		docNodes.push(apiItem.tsdocComment.summarySection);
+	}
 
-    return docNodes.length === 0
-        ? renderEmptyTableCell(config)
-        : new DocTableCell({ configuration: config.tsdocConfiguration }, docNodes);
+	return docNodes.length === 0
+		? renderEmptyTableCell(config)
+		: new DocTableCell({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 /**
@@ -513,12 +513,12 @@ export function renderApiSummaryCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderReturnTypeCell(
-    apiItem: ApiFunctionLike,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiFunctionLike,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return ApiReturnTypeMixin.isBaseClassOf(apiItem)
-        ? renderTypeExcerptCell(apiItem.returnTypeExcerpt, config)
-        : renderEmptyTableCell(config);
+	return ApiReturnTypeMixin.isBaseClassOf(apiItem)
+		? renderTypeExcerptCell(apiItem.returnTypeExcerpt, config)
+		: renderEmptyTableCell(config);
 }
 
 /**
@@ -531,15 +531,15 @@ export function renderReturnTypeCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderApiTitleCell(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const itemLink = getLinkForApiItem(apiItem, config);
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            renderLink(itemLink, config),
-        ]),
-    ]);
+	const itemLink = getLinkForApiItem(apiItem, config);
+	return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+		new DocParagraph({ configuration: config.tsdocConfiguration }, [
+			renderLink(itemLink, config),
+		]),
+	]);
 }
 
 /**
@@ -550,40 +550,40 @@ export function renderApiTitleCell(
  * @param modifiersToOmit - List of modifiers to omit from the rendered cell, even if they apply to the item.
  */
 export function renderModifiersCell(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
-    modifiersToOmit?: ApiModifier[],
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
+	modifiersToOmit?: ApiModifier[],
 ): DocTableCell {
-    const modifiers = getModifiers(apiItem, modifiersToOmit);
+	const modifiers = getModifiers(apiItem, modifiersToOmit);
 
-    const docNodes: DocNode[] = [];
-    let needsComma = false;
-    for (const modifier of modifiers) {
-        if (needsComma) {
-            docNodes.push(
-                new DocPlainText({
-                    configuration: config.tsdocConfiguration,
-                    text: ", ",
-                }),
-            );
-        }
-        docNodes.push(
-            new DocCodeSpan({
-                configuration: config.tsdocConfiguration,
-                code: modifier,
-            }),
-        );
-        needsComma = true;
-    }
+	const docNodes: DocNode[] = [];
+	let needsComma = false;
+	for (const modifier of modifiers) {
+		if (needsComma) {
+			docNodes.push(
+				new DocPlainText({
+					configuration: config.tsdocConfiguration,
+					text: ", ",
+				}),
+			);
+		}
+		docNodes.push(
+			new DocCodeSpan({
+				configuration: config.tsdocConfiguration,
+				code: modifier,
+			}),
+		);
+		needsComma = true;
+	}
 
-    return modifiers.length === 0
-        ? renderEmptyTableCell(config)
-        : new DocTableCell(
-              {
-                  configuration: config.tsdocConfiguration,
-              },
-              [new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes)],
-          );
+	return modifiers.length === 0
+		? renderEmptyTableCell(config)
+		: new DocTableCell(
+				{
+					configuration: config.tsdocConfiguration,
+				},
+				[new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes)],
+		  );
 }
 
 /**
@@ -593,16 +593,16 @@ export function renderModifiersCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderDefaultValueCell(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const defaultValueSection = getDefaultValueBlock(apiItem, config);
+	const defaultValueSection = getDefaultValueBlock(apiItem, config);
 
-    if (defaultValueSection === undefined) {
-        return renderEmptyTableCell(config);
-    }
+	if (defaultValueSection === undefined) {
+		return renderEmptyTableCell(config);
+	}
 
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [defaultValueSection]);
+	return new DocTableCell({ configuration: config.tsdocConfiguration }, [defaultValueSection]);
 }
 
 /**
@@ -613,17 +613,17 @@ export function renderDefaultValueCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderDeprecatedCell(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return isDeprecated(apiItem)
-        ? new DocTableCell({ configuration: config.tsdocConfiguration }, [
-              new DocCodeSpan({
-                  configuration: config.tsdocConfiguration,
-                  code: "DEPRECATED",
-              }),
-          ])
-        : renderEmptyTableCell(config);
+	return isDeprecated(apiItem)
+		? new DocTableCell({ configuration: config.tsdocConfiguration }, [
+				new DocCodeSpan({
+					configuration: config.tsdocConfiguration,
+					code: "DEPRECATED",
+				}),
+		  ])
+		: renderEmptyTableCell(config);
 }
 
 /**
@@ -636,10 +636,10 @@ export function renderDeprecatedCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderPropertyTypeCell(
-    apiProperty: ApiPropertyItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiProperty: ApiPropertyItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return renderTypeExcerptCell(apiProperty.propertyTypeExcerpt, config);
+	return renderTypeExcerptCell(apiProperty.propertyTypeExcerpt, config);
 }
 
 /**
@@ -649,10 +649,10 @@ export function renderPropertyTypeCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderParameterTitleCell(
-    apiParameter: Parameter,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiParameter: Parameter,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return renderPlainTextCell(apiParameter.name, config);
+	return renderPlainTextCell(apiParameter.name, config);
 }
 
 /**
@@ -665,10 +665,10 @@ export function renderParameterTitleCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderParameterTypeCell(
-    apiParameter: Parameter,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiParameter: Parameter,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return renderTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
+	return renderTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 }
 
 /**
@@ -680,14 +680,14 @@ export function renderParameterTypeCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderParameterSummaryCell(
-    apiParameter: Parameter,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiParameter: Parameter,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return apiParameter.tsdocParamBlock === undefined
-        ? renderEmptyTableCell(config)
-        : new DocTableCell({ configuration: config.tsdocConfiguration }, [
-              apiParameter.tsdocParamBlock.content,
-          ]);
+	return apiParameter.tsdocParamBlock === undefined
+		? renderEmptyTableCell(config)
+		: new DocTableCell({ configuration: config.tsdocConfiguration }, [
+				apiParameter.tsdocParamBlock.content,
+		  ]);
 }
 
 /**
@@ -699,16 +699,19 @@ export function renderParameterSummaryCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderTypeExcerptCell(
-    typeExcerpt: Excerpt,
-    config: Required<MarkdownDocumenterConfiguration>,
+	typeExcerpt: Excerpt,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const renderedExcerptNodes = renderExcerptWithHyperlinks(typeExcerpt, config);
+	const renderedExcerptNodes = renderExcerptWithHyperlinks(typeExcerpt, config);
 
-    return renderedExcerptNodes === undefined
-        ? renderEmptyTableCell(config)
-        : new DocTableCell({ configuration: config.tsdocConfiguration }, [
-              new DocParagraph({ configuration: config.tsdocConfiguration }, renderedExcerptNodes),
-          ]);
+	return renderedExcerptNodes === undefined
+		? renderEmptyTableCell(config)
+		: new DocTableCell({ configuration: config.tsdocConfiguration }, [
+				new DocParagraph(
+					{ configuration: config.tsdocConfiguration },
+					renderedExcerptNodes,
+				),
+		  ]);
 }
 
 /**
@@ -717,19 +720,19 @@ export function renderTypeExcerptCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderPlainTextCell(
-    text: string,
-    config: Required<MarkdownDocumenterConfiguration>,
+	text: string,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return text.length === 0
-        ? renderEmptyTableCell(config)
-        : new DocTableCell({ configuration: config.tsdocConfiguration }, [
-              new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                  new DocPlainText({
-                      configuration: config.tsdocConfiguration,
-                      text,
-                  }),
-              ]),
-          ]);
+	return text.length === 0
+		? renderEmptyTableCell(config)
+		: new DocTableCell({ configuration: config.tsdocConfiguration }, [
+				new DocParagraph({ configuration: config.tsdocConfiguration }, [
+					new DocPlainText({
+						configuration: config.tsdocConfiguration,
+						text,
+					}),
+				]),
+		  ]);
 }
 
 /**
@@ -738,30 +741,30 @@ export function renderPlainTextCell(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderEmptyTableCell(
-    config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            new DocPlainText({
-                configuration: config.tsdocConfiguration,
-                text: config.emptyTableCellText,
-            }),
-        ]),
-    ]);
+	return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+		new DocParagraph({ configuration: config.tsdocConfiguration }, [
+			new DocPlainText({
+				configuration: config.tsdocConfiguration,
+				text: config.emptyTableCellText,
+			}),
+		]),
+	]);
 }
 
 /**
  * Gets the appropriate heading title for the provided item kind to be used in table entries.
  */
 function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
-    switch (itemKind) {
-        case ApiItemKind.EnumMember:
-            return "Flag";
-        case ApiItemKind.MethodSignature:
-            return ApiItemKind.Method;
-        case ApiItemKind.PropertySignature:
-            return ApiItemKind.Property;
-        default:
-            return itemKind;
-    }
+	switch (itemKind) {
+		case ApiItemKind.EnumMember:
+			return "Flag";
+		case ApiItemKind.MethodSignature:
+			return ApiItemKind.Method;
+		case ApiItemKind.PropertySignature:
+			return ApiItemKind.Property;
+		default:
+			return itemKind;
+	}
 }

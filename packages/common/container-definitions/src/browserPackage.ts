@@ -8,44 +8,43 @@ import { IFluidPackage, isFluidPackage, IFluidPackageEnvironment } from "./fluid
 /**
  * A specific Fluid package environment for browsers
  */
-export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment{
-    /**
-     * The Universal Module Definition (umd) target specifics the scripts necessary for
-     * loading a packages in a browser environment and finding its entry point.
-     */
-    umd: {
-        /**
-         * The bundled js files for loading this package.
-         * These files will be loaded and executed in order.
-         */
-        files: string[];
+export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
+	/**
+	 * The Universal Module Definition (umd) target specifics the scripts necessary for
+	 * loading a packages in a browser environment and finding its entry point.
+	 */
+	umd: {
+		/**
+		 * The bundled js files for loading this package.
+		 * These files will be loaded and executed in order.
+		 */
+		files: string[];
 
-        /**
-         * The global name that the script entry points will be exposed.
-         * This entry point should be an {@link @fluidframework/container-definitions#IFluidModule}.
-         */
-        library: string;
-
-    };
+		/**
+		 * The global name that the script entry points will be exposed.
+		 * This entry point should be an {@link @fluidframework/container-definitions#IFluidModule}.
+		 */
+		library: string;
+	};
 }
 
 /**
  * A Fluid package for specification for browser environments
  */
 export interface IFluidBrowserPackage extends IFluidPackage {
-    /**
-     * {@inheritDoc @fluidframework/core-interfaces#IFluidPackage.fluid}
-     */
-    fluid: {
-        /**
-         * The browser specific package information for this package
-         */
-        browser: IFluidBrowserPackageEnvironment;
-        /**
-         * {@inheritDoc @fluidframework/core-interfaces#IFluidPackage.fluid.environment}
-         */
-        [environment: string]: IFluidPackageEnvironment;
-    };
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IFluidPackage.fluid}
+	 */
+	fluid: {
+		/**
+		 * The browser specific package information for this package
+		 */
+		browser: IFluidBrowserPackageEnvironment;
+		/**
+		 * {@inheritDoc @fluidframework/core-interfaces#IFluidPackage.fluid.environment}
+		 */
+		[environment: string]: IFluidPackageEnvironment;
+	};
 }
 
 /**
@@ -53,6 +52,6 @@ export interface IFluidBrowserPackage extends IFluidPackage {
  * @param maybePkg - The object to check for compatibility with IFluidBrowserPackage
  */
 export const isFluidBrowserPackage = (maybePkg: any): maybePkg is Readonly<IFluidBrowserPackage> =>
-    isFluidPackage(maybePkg)
-    && typeof maybePkg?.fluid?.browser?.umd?.library === "string"
-    && Array.isArray(maybePkg?.fluid?.browser?.umd?.files);
+	isFluidPackage(maybePkg) &&
+	typeof maybePkg?.fluid?.browser?.umd?.library === "string" &&
+	Array.isArray(maybePkg?.fluid?.browser?.umd?.files);

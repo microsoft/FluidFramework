@@ -14,7 +14,7 @@
             "sourceMaps": true,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             "resolveSourceMapLocations": [
                 "${workspaceFolder}/**",
                 "!**/node_modules/**"
@@ -24,13 +24,8 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "runtimeArgs": [
-                "-r",
-                "ts-node/register"
-            ],
-            "args": [
-                "${workspaceFolder}/src/index.ts"
-            ]
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "args": ["${workspaceFolder}/src/index.ts"]
         }
     ]
 }

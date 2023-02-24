@@ -15,49 +15,51 @@ import { SharedCounter } from "@fluidframework/counter";
  */
 const counterKey = "counter";
 export class DataObjectWithCounter extends DataObject {
-    private _counter?: SharedCounter;
-    protected isRunning: boolean = false;
-    protected readonly delayPerOpMs = 100;
-    public static get type(): string {
-        return "DataObjectWithCounter";
-    }
+	private _counter?: SharedCounter;
+	protected isRunning: boolean = false;
+	protected readonly delayPerOpMs = 100;
+	public static get type(): string {
+		return "DataObjectWithCounter";
+	}
 
-    protected get counter(): SharedCounter {
-        assert(this._counter !== undefined, "Need counter to be defined before retreiving!");
-        return this._counter;
-    }
+	protected get counter(): SharedCounter {
+		assert(this._counter !== undefined, "Need counter to be defined before retreiving!");
+		return this._counter;
+	}
 
-    protected async initializingFirstTime(): Promise<void> {
-        this.root.set<IFluidHandle>(counterKey, SharedCounter.create(this.runtime).handle);
-    }
+	protected async initializingFirstTime(): Promise<void> {
+		this.root.set<IFluidHandle>(counterKey, SharedCounter.create(this.runtime).handle);
+	}
 
-    protected async hasInitialized(): Promise<void> {
-        const handle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
-        assert(handle !== undefined, `The counter handle should exist on initialization!`);
-        this._counter = await handle.get();
-    }
+	protected async hasInitialized(): Promise<void> {
+		const handle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
+		assert(handle !== undefined, `The counter handle should exist on initialization!`);
+		this._counter = await handle.get();
+	}
 
-    public stop(): void {
-        this.isRunning = false;
-    }
+	public stop(): void {
+		this.isRunning = false;
+	}
 
-    public start(): void {
-        this.isRunning = true;
-        this.run().catch((error) => { console.log(error); });
-    }
+	public start(): void {
+		this.isRunning = true;
+		this.run().catch((error) => {
+			console.log(error);
+		});
+	}
 
-    protected async run(): Promise<void> {
-        assert(this.isRunning === true, "Should be running to send ops");
-        while (this.isRunning && !this.disposed) {
-            this.counter.increment(1);
-            await delay(this.delayPerOpMs);
-        }
-    }
+	protected async run(): Promise<void> {
+		assert(this.isRunning === true, "Should be running to send ops");
+		while (this.isRunning && !this.disposed) {
+			this.counter.increment(1);
+			await delay(this.delayPerOpMs);
+		}
+	}
 }
 
 export const dataObjectWithCounterFactory = new DataObjectFactory(
-    DataObjectWithCounter.type,
-    DataObjectWithCounter,
-    [SharedCounter.getFactory()],
-    {},
+	DataObjectWithCounter.type,
+	DataObjectWithCounter,
+	[SharedCounter.getFactory()],
+	{},
 );

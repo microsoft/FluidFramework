@@ -1,11 +1,9 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "declarationDir": "./dist",
-        "rootDir": "./src",
-        "outDir": "./dist"
-    },
-    "include": [
-        "src/**/*"
-    ]
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"declarationDir": "./dist",
+		"rootDir": "./src",
+		"outDir": "./dist",
+	},
+	"include": ["src/**/*"],
 }

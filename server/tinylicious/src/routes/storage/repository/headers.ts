@@ -13,7 +13,7 @@ export async function getHeader(
     tenantId: string,
     authorization: string,
     sha: string,
-    useCache: boolean,
+    useCache: boolean
 ): Promise<IHeader> {
     throw new Error("Not implemented");
 }
@@ -23,7 +23,7 @@ export async function getTree(
     tenantId: string,
     authorization: string,
     sha: string,
-    useCache: boolean,
+    useCache: boolean
 ): Promise<any> {
     throw new Error("Not implemented");
 }
@@ -40,24 +40,25 @@ export function create(store: nconf.Provider): Router {
                 request.params.tenantId,
                 request.get("Authorization"),
                 request.params.sha,
-                useCache);
+                useCache
+            );
 
             utils.handleResponse(headerP, response, useCache);
-        });
+        }
+    );
 
-    router.get(
-        "/repos/:ignored?/:tenantId/tree/:sha",
-        (request, response) => {
-            const useCache = !("disableCache" in request.query);
-            const headerP = getTree(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.params.sha,
-                useCache);
+    router.get("/repos/:ignored?/:tenantId/tree/:sha", (request, response) => {
+        const useCache = !("disableCache" in request.query);
+        const headerP = getTree(
+            store,
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.params.sha,
+            useCache
+        );
 
-            utils.handleResponse(headerP, response, useCache);
-        });
+        utils.handleResponse(headerP, response, useCache);
+    });
 
     return router;
 }

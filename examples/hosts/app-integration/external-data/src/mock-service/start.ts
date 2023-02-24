@@ -8,11 +8,11 @@ import { ExternalDataSource } from "./externalData";
 import { initializeCustomerService } from "./service";
 
 initializeCustomerService({
-    externalDataSource: new ExternalDataSource(),
-    port: customerServicePort,
-}).catch(error => {
-    console.error(`There was an error initializing the mock customer service:\n${error}`);
+	externalDataSource: new ExternalDataSource(),
+	port: customerServicePort,
+}).catch((error) => {
+	console.error(`There was an error initializing the mock customer service:\n${error}`);
 
-    // eslint-disable-next-line unicorn/no-process-exit
-    process.exit(1);
+	// eslint-disable-next-line unicorn/no-process-exit
+	process.exit(1);
 });

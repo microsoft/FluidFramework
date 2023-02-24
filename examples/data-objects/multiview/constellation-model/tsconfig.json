@@ -11,7 +11,5 @@
             "expect-puppeteer"
         ]
     },
-    "include": [
-        "src/**/*"
-    ]
+    "include": ["src/**/*"]
 }

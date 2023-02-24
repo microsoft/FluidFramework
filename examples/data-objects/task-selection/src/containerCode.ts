@@ -19,15 +19,15 @@ import { TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoll
  * complex models.
  */
 export interface ITaskSelectionAppModel {
-    readonly taskManagerDiceRoller: IDiceRoller;
-    readonly oldestClientDiceRoller: IDiceRoller;
+	readonly taskManagerDiceRoller: IDiceRoller;
+	readonly oldestClientDiceRoller: IDiceRoller;
 }
 
 class TaskSelectionAppModel implements ITaskSelectionAppModel {
-    public constructor(
-        public readonly taskManagerDiceRoller: IDiceRoller,
-        public readonly oldestClientDiceRoller: IDiceRoller,
-    ) { }
+	public constructor(
+		public readonly taskManagerDiceRoller: IDiceRoller,
+		public readonly oldestClientDiceRoller: IDiceRoller,
+	) {}
 }
 
 const taskManagerDiceId = "taskManagerDice";
@@ -36,39 +36,42 @@ const oldestClientDiceId = "oldestClientDice";
 /**
  * The runtime factory for our Fluid container.
  */
-export class TaskSelectionContainerRuntimeFactory
-    extends ModelContainerRuntimeFactory<ITaskSelectionAppModel> {
-    constructor() {
-        super(
-            new Map([
-                TaskManagerDiceRollerInstantiationFactory.registryEntry,
-                OldestClientDiceRollerInstantiationFactory.registryEntry,
-            ]), // registryEntries
-        );
-    }
+export class TaskSelectionContainerRuntimeFactory extends ModelContainerRuntimeFactory<ITaskSelectionAppModel> {
+	constructor() {
+		super(
+			new Map([
+				TaskManagerDiceRollerInstantiationFactory.registryEntry,
+				OldestClientDiceRollerInstantiationFactory.registryEntry,
+			]), // registryEntries
+		);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-     */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const taskManagerDiceRoller = await runtime.createDataStore(TaskManagerDiceRollerInstantiationFactory.type);
-        await taskManagerDiceRoller.trySetAlias(taskManagerDiceId);
-        const oldestClientDiceRoller = await runtime.createDataStore(OldestClientDiceRollerInstantiationFactory.type);
-        await oldestClientDiceRoller.trySetAlias(oldestClientDiceId);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+	 */
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+		const taskManagerDiceRoller = await runtime.createDataStore(
+			TaskManagerDiceRollerInstantiationFactory.type,
+		);
+		await taskManagerDiceRoller.trySetAlias(taskManagerDiceId);
+		const oldestClientDiceRoller = await runtime.createDataStore(
+			OldestClientDiceRollerInstantiationFactory.type,
+		);
+		await oldestClientDiceRoller.trySetAlias(oldestClientDiceId);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-     */
-    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const taskManagerDiceRoller = await requestFluidObject<IDiceRoller>(
-            await runtime.getRootDataStore(taskManagerDiceId),
-            "",
-        );
-        const oldestClientDiceRoller = await requestFluidObject<IDiceRoller>(
-            await runtime.getRootDataStore(oldestClientDiceId),
-            "",
-        );
-        return new TaskSelectionAppModel(taskManagerDiceRoller, oldestClientDiceRoller);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+	 */
+	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		const taskManagerDiceRoller = await requestFluidObject<IDiceRoller>(
+			await runtime.getRootDataStore(taskManagerDiceId),
+			"",
+		);
+		const oldestClientDiceRoller = await requestFluidObject<IDiceRoller>(
+			await runtime.getRootDataStore(oldestClientDiceId),
+			"",
+		);
+		return new TaskSelectionAppModel(taskManagerDiceRoller, oldestClientDiceRoller);
+	}
 }

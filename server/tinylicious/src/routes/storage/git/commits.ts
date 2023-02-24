@@ -14,7 +14,7 @@ export async function createCommit(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    params: ICreateCommitParams,
+    params: ICreateCommitParams
 ): Promise<ICommit> {
     // TODO should include both author and committer
     const author = {
@@ -42,7 +42,10 @@ export async function createCommit(
         author: params.author,
         committer: params.author,
         message: params.message,
-        parents: params.parents.map((parentSha) => ({ sha: parentSha, url: "" })),
+        parents: params.parents.map((parentSha) => ({
+            sha: parentSha,
+            url: "",
+        })),
         sha,
         tree: { sha: params.tree, url: "" },
         url: "",
@@ -54,9 +57,13 @@ export async function getCommit(
     tenantId: string,
     authorization: string,
     sha: string,
-    useCache: boolean,
+    useCache: boolean
 ): Promise<ICommit> {
-    const commit = await git.readCommit({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+    const commit = await git.readCommit({
+        fs,
+        dir: utils.getGitDir(store, tenantId),
+        oid: sha,
+    });
     const description = commit.commit;
 
     return {
@@ -68,10 +75,15 @@ export async function getCommit(
         committer: {
             email: description.committer.email,
             name: description.committer.name,
-            date: new Date(description.committer.timestamp * 1000).toISOString(),
+            date: new Date(
+                description.committer.timestamp * 1000
+            ).toISOString(),
         },
         message: description.message,
-        parents: description.parent.map((parentSha) => ({ sha: parentSha, url: "" })),
+        parents: description.parent.map((parentSha) => ({
+            sha: parentSha,
+            url: "",
+        })),
         sha,
         tree: { sha: description.tree, url: "" },
         url: "",
@@ -88,14 +100,12 @@ export function create(store: nconf.Provider): Router {
                 store,
                 request.params.tenantId,
                 request.get("Authorization"),
-                request.body);
+                request.body
+            );
 
-            utils.handleResponse(
-                commitP,
-                response,
-                false,
-                201);
-        });
+            utils.handleResponse(commitP, response, false, 201);
+        }
+    );
 
     router.get(
         "/repos/:ignored?/:tenantId/git/commits/:sha",
@@ -106,10 +116,12 @@ export function create(store: nconf.Provider): Router {
                 request.params.tenantId,
                 request.get("Authorization"),
                 request.params.sha,
-                useCache);
+                useCache
+            );
 
             utils.handleResponse(commitP, response, useCache);
-        });
+        }
+    );
 
     return router;
 }

@@ -14,19 +14,19 @@ import { validateSnapshots } from "./validateSnapshots";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {
-    // Correct if executing from working directory of package root
-    const origTestCollateralPath = "content/snapshotTestContent";
-    let testCollateralPath = origTestCollateralPath;
-    let workerPath = "./dist/replayWorker.js";
-    if (fs.existsSync(testCollateralPath)) {
-        assert(fs.existsSync(workerPath), `Cannot find worker js file: ${workerPath}`);
-        return [testCollateralPath, workerPath];
-    }
-    // Relative to this generated js file being executed
-    testCollateralPath = nodePath.join(__dirname, "..", testCollateralPath);
-    workerPath = nodePath.join(__dirname, "..", workerPath);
-    assert(fs.existsSync(workerPath), `Cannot find worker js file: ${workerPath}`);
-    return [testCollateralPath, workerPath];
+	// Correct if executing from working directory of package root
+	const origTestCollateralPath = "content/snapshotTestContent";
+	let testCollateralPath = origTestCollateralPath;
+	let workerPath = "./dist/replayWorker.js";
+	if (fs.existsSync(testCollateralPath)) {
+		assert(fs.existsSync(workerPath), `Cannot find worker js file: ${workerPath}`);
+		return [testCollateralPath, workerPath];
+	}
+	// Relative to this generated js file being executed
+	testCollateralPath = nodePath.join(__dirname, "..", testCollateralPath);
+	workerPath = nodePath.join(__dirname, "..", workerPath);
+	assert(fs.existsSync(workerPath), `Cannot find worker js file: ${workerPath}`);
+	return [testCollateralPath, workerPath];
 }
 const [fileLocation, workerLocation] = getFileLocations();
 
@@ -37,51 +37,51 @@ const baseSnapshot = "base_snapshot";
 const numberOfThreads = 4;
 
 export enum Mode {
-    Compare,            // Compare snapshots generated to files stored on disk.
-    Stress,             // Do stress testing without writing or comparing out files.
-    Validate,           // Validate that we can load documents from old snapshots.
-    BackCompat,         // Validate that we can load documents from old snapshots and write snapshots in current format.
-    NewSnapshots,       // Generate reference files for new snapshots.
-    UpdateSnapshots,    // Update the current snapshot files.
+	Compare, // Compare snapshots generated to files stored on disk.
+	Stress, // Do stress testing without writing or comparing out files.
+	Validate, // Validate that we can load documents from old snapshots.
+	BackCompat, // Validate that we can load documents from old snapshots and write snapshots in current format.
+	NewSnapshots, // Generate reference files for new snapshots.
+	UpdateSnapshots, // Update the current snapshot files.
 }
 
 export interface IWorkerArgs {
-    folder: string;
-    mode: Mode;
-    snapFreq: number;
-    initializeFromSnapshotsDir?: string;
+	folder: string;
+	mode: Mode;
+	snapFreq: number;
+	initializeFromSnapshotsDir?: string;
 }
 
 class ConcurrencyLimiter {
-    private readonly promises: Promise<void>[] = [];
-    private deferred: Deferred<void> | undefined;
+	private readonly promises: Promise<void>[] = [];
+	private deferred: Deferred<void> | undefined;
 
-    constructor(private limit: number) { }
+	constructor(private limit: number) {}
 
-    async addWork(worker: () => Promise<void>) {
-        this.limit--;
-        if (this.limit < 0) {
-            assert(this.deferred === undefined);
-            this.deferred = new Deferred<void>();
-            await this.deferred.promise;
-            assert(this.deferred === undefined);
-            assert(this.limit >= 0);
-        }
+	async addWork(worker: () => Promise<void>) {
+		this.limit--;
+		if (this.limit < 0) {
+			assert(this.deferred === undefined);
+			this.deferred = new Deferred<void>();
+			await this.deferred.promise;
+			assert(this.deferred === undefined);
+			assert(this.limit >= 0);
+		}
 
-        const p = worker().then(() => {
-            this.limit++;
-            if (this.deferred) {
-                assert(this.limit === 0);
-                this.deferred.resolve();
-                this.deferred = undefined;
-            }
-        });
-        this.promises.push(p);
-    }
+		const p = worker().then(() => {
+			this.limit++;
+			if (this.deferred) {
+				assert(this.limit === 0);
+				this.deferred.resolve();
+				this.deferred = undefined;
+			}
+		});
+		this.promises.push(p);
+	}
 
-    async waitAll() {
-        return Promise.all(this.promises);
-    }
+	async waitAll() {
+		return Promise.all(this.promises);
+	}
 }
 
 /**
@@ -100,107 +100,107 @@ class ConcurrencyLimiter {
  * contains the base snapshot to load the container with.
  */
 export async function processOneNode(args: IWorkerArgs) {
-    const replayArgs = new ReplayArgs();
+	const replayArgs = new ReplayArgs();
 
-    replayArgs.verbose = false;
-    replayArgs.inDirName = args.folder;
-    // we should be explicit for all channel types in our snapshot tests
-    replayArgs.strictChannels = true;
-    // The output snapshots to compare against are under "currentSnapshots" sub-directory.
-    replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
-    if (args.mode === Mode.NewSnapshots) {
-        // when generating new snapshots, match those from
-        // the original file based on summarize ops
-        replayArgs.testSummaries = true;
-    } else {
-        replayArgs.snapFreq = args.snapFreq;
-    }
-    replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
-    replayArgs.compare = args.mode === Mode.Compare;
-    // Make it easier to see problems in stress tests
-    replayArgs.expandFiles = args.mode === Mode.Stress;
-    replayArgs.initializeFromSnapshotsDir = args.initializeFromSnapshotsDir;
-    // The base snapshot directory name is the version from which the document is to be loaded.
-    replayArgs.fromVersion = baseSnapshot;
+	replayArgs.verbose = false;
+	replayArgs.inDirName = args.folder;
+	// we should be explicit for all channel types in our snapshot tests
+	replayArgs.strictChannels = true;
+	// The output snapshots to compare against are under "currentSnapshots" sub-directory.
+	replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
+	if (args.mode === Mode.NewSnapshots) {
+		// when generating new snapshots, match those from
+		// the original file based on summarize ops
+		replayArgs.testSummaries = true;
+	} else {
+		replayArgs.snapFreq = args.snapFreq;
+	}
+	replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
+	replayArgs.compare = args.mode === Mode.Compare;
+	// Make it easier to see problems in stress tests
+	replayArgs.expandFiles = args.mode === Mode.Stress;
+	replayArgs.initializeFromSnapshotsDir = args.initializeFromSnapshotsDir;
+	// The base snapshot directory name is the version from which the document is to be loaded.
+	replayArgs.fromVersion = baseSnapshot;
 
-    // Worker threads does not listen to unhandled promise rejections. So set a listener and
-    // throw error so that worker thread could pass the message to parent thread.
-    const listener = (error) => {
-        process.removeListener("unhandledRejection", listener);
-        console.error(`unhandledRejection\n ${JSON.stringify(args)}\n ${error}`);
-        throw error;
-    };
-    process.on("unhandledRejection", listener);
+	// Worker threads does not listen to unhandled promise rejections. So set a listener and
+	// throw error so that worker thread could pass the message to parent thread.
+	const listener = (error) => {
+		process.removeListener("unhandledRejection", listener);
+		console.error(`unhandledRejection\n ${JSON.stringify(args)}\n ${error}`);
+		throw error;
+	};
+	process.on("unhandledRejection", listener);
 
-    // This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
-    // replayArgs.overlappingContainers = 1;
+	// This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
+	// replayArgs.overlappingContainers = 1;
 
-    try {
-        const errors = await new ReplayTool(replayArgs).Go();
-        if (errors.length !== 0) {
-            throw new Error(`Errors\n ${errors.join("\n")}`);
-        }
-    } catch (error) {
-        console.error(`Unhandled Error processing \n ${JSON.stringify(args)}\n ${error}`);
-        throw error;
-    }
+	try {
+		const errors = await new ReplayTool(replayArgs).Go();
+		if (errors.length !== 0) {
+			throw new Error(`Errors\n ${errors.join("\n")}`);
+		}
+	} catch (error) {
+		console.error(`Unhandled Error processing \n ${JSON.stringify(args)}\n ${error}`);
+		throw error;
+	}
 }
 
 export async function processContent(mode: Mode, concurrently = true) {
-    const limiter = new ConcurrencyLimiter(numberOfThreads);
+	const limiter = new ConcurrencyLimiter(numberOfThreads);
 
-    ensureTestCollateralPath();
+	ensureTestCollateralPath();
 
-    for (const node of fs.readdirSync(fileLocation, { withFileTypes: true })) {
-        if (!node.isDirectory()) {
-            continue;
-        }
-        const folder = `${fileLocation}/${node.name}`;
-        const messages = `${folder}/messages.json`;
-        if (!fs.existsSync(messages)) {
-            console.error(`Can't locate ${messages}`);
-            continue;
-        }
-        // Clean up any failed snapshots that might have been written out in previous test run.
-        cleanFailedSnapshots(folder);
+	for (const node of fs.readdirSync(fileLocation, { withFileTypes: true })) {
+		if (!node.isDirectory()) {
+			continue;
+		}
+		const folder = `${fileLocation}/${node.name}`;
+		const messages = `${folder}/messages.json`;
+		if (!fs.existsSync(messages)) {
+			console.error(`Can't locate ${messages}`);
+			continue;
+		}
+		// Clean up any failed snapshots that might have been written out in previous test run.
+		cleanFailedSnapshots(folder);
 
-        // SnapFreq is the most interesting options to tweak
-        // On one hand we want to generate snapshots often, ideally every 50 ops
-        // This allows us to exercise more cases and increases chances of finding bugs.
-        // At the same time that generates more files in repository, and adds to the size of it
-        // Thus using two passes:
-        // 1) Stress test - testing eventual consistency only
-        // 2) Testing backward compat - only testing snapshots at every 1000 ops
-        const snapFreq = mode === Mode.Stress ? 50 : 1000;
-        const data: IWorkerArgs = {
-            folder,
-            mode,
-            snapFreq,
-        };
+		// SnapFreq is the most interesting options to tweak
+		// On one hand we want to generate snapshots often, ideally every 50 ops
+		// This allows us to exercise more cases and increases chances of finding bugs.
+		// At the same time that generates more files in repository, and adds to the size of it
+		// Thus using two passes:
+		// 1) Stress test - testing eventual consistency only
+		// 2) Testing backward compat - only testing snapshots at every 1000 ops
+		const snapFreq = mode === Mode.Stress ? 50 : 1000;
+		const data: IWorkerArgs = {
+			folder,
+			mode,
+			snapFreq,
+		};
 
-        switch (mode) {
-            case Mode.Validate:
-                await processNodeForValidate(data, concurrently, limiter);
-                break;
-            case Mode.UpdateSnapshots:
-                await processNodeForUpdatingSnapshots(data, concurrently, limiter);
-                break;
-            case Mode.BackCompat:
-                await processNodeForBackCompat(data);
-                break;
-            case Mode.NewSnapshots:
-                await processNodeForNewSnapshots(data, concurrently, limiter);
-                break;
-            default:
-                await processNode(data, concurrently, limiter);
-        }
-    }
+		switch (mode) {
+			case Mode.Validate:
+				await processNodeForValidate(data, concurrently, limiter);
+				break;
+			case Mode.UpdateSnapshots:
+				await processNodeForUpdatingSnapshots(data, concurrently, limiter);
+				break;
+			case Mode.BackCompat:
+				await processNodeForBackCompat(data);
+				break;
+			case Mode.NewSnapshots:
+				await processNodeForNewSnapshots(data, concurrently, limiter);
+				break;
+			default:
+				await processNode(data, concurrently, limiter);
+		}
+	}
 
-    return limiter.waitAll();
+	return limiter.waitAll();
 }
 
 export function testCollateralExists() {
-    return fs.existsSync(fileLocation);
+	return fs.existsSync(fileLocation);
 }
 
 /**
@@ -208,26 +208,26 @@ export function testCollateralExists() {
  * from multiple old versions, process snapshot from each of these versions.
  */
 async function processNodeForValidate(
-    data: IWorkerArgs,
-    concurrently: boolean,
-    limiter: ConcurrencyLimiter,
+	data: IWorkerArgs,
+	concurrently: boolean,
+	limiter: ConcurrencyLimiter,
 ) {
-    // The snapshots in older format are in "srcSnapshots" folder.
-    const srcSnapshotsDir = `${data.folder}/${srcSnapshots}`;
-    if (!fs.existsSync(srcSnapshotsDir)) {
-        return;
-    }
+	// The snapshots in older format are in "srcSnapshots" folder.
+	const srcSnapshotsDir = `${data.folder}/${srcSnapshots}`;
+	if (!fs.existsSync(srcSnapshotsDir)) {
+		return;
+	}
 
-    // Each sub-directory under "srcSnapshots" folder contain snapshots from an older version. Process each one
-    // of these folders.
-    for (const node of fs.readdirSync(srcSnapshotsDir, { withFileTypes: true })) {
-        if (!node.isDirectory()) {
-            continue;
-        }
+	// Each sub-directory under "srcSnapshots" folder contain snapshots from an older version. Process each one
+	// of these folders.
+	for (const node of fs.readdirSync(srcSnapshotsDir, { withFileTypes: true })) {
+		if (!node.isDirectory()) {
+			continue;
+		}
 
-        data.initializeFromSnapshotsDir = `${srcSnapshotsDir}/${node.name}`;
-        await processNode(data, concurrently, limiter);
-    }
+		data.initializeFromSnapshotsDir = `${srcSnapshotsDir}/${node.name}`;
+		await processNode(data, concurrently, limiter);
+	}
 }
 
 /**
@@ -238,36 +238,38 @@ async function processNodeForValidate(
  * - Update the package version of the current snapshots.
  */
 async function processNodeForUpdatingSnapshots(
-    data: IWorkerArgs,
-    concurrently: boolean,
-    limiter: ConcurrencyLimiter,
+	data: IWorkerArgs,
+	concurrently: boolean,
+	limiter: ConcurrencyLimiter,
 ) {
-    const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
-    assert(fs.existsSync(currentSnapshotsDir), `Directory ${currentSnapshotsDir} does not exist!`);
+	const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
+	assert(fs.existsSync(currentSnapshotsDir), `Directory ${currentSnapshotsDir} does not exist!`);
 
-    const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
-    assert(fs.existsSync(versionFileName), `Version file ${versionFileName} does not exist`);
+	const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
+	assert(fs.existsSync(versionFileName), `Version file ${versionFileName} does not exist`);
 
-    // Get the version of the current snapshots. This becomes the the folder name under the "src_snapshots" folder
-    // where these snapshots will be moved.
-    const versionContent = JSON.parse(fs.readFileSync(`${versionFileName}`, "utf-8"));
-    const version = versionContent.snapshotVersion;
+	// Get the version of the current snapshots. This becomes the the folder name under the "src_snapshots" folder
+	// where these snapshots will be moved.
+	const versionContent = JSON.parse(fs.readFileSync(`${versionFileName}`, "utf-8"));
+	const version = versionContent.snapshotVersion;
 
-    // Create the folder where the current snapshots will be moved. If this folder already exists, we will update
-    // the snapshots in that folder because we only need one set of snapshots for each version.
-    const newSrcDir = `${data.folder}/${srcSnapshots}/${version}`;
-    fs.mkdirSync(newSrcDir, { recursive: true });
+	// Create the folder where the current snapshots will be moved. If this folder already exists, we will update
+	// the snapshots in that folder because we only need one set of snapshots for each version.
+	const newSrcDir = `${data.folder}/${srcSnapshots}/${version}`;
+	fs.mkdirSync(newSrcDir, { recursive: true });
 
-    for (const subNode of fs.readdirSync(currentSnapshotsDir, { withFileTypes: true })) {
-        assert(!subNode.isDirectory());
-        fs.copyFileSync(`${currentSnapshotsDir}/${subNode.name}`, `${newSrcDir}/${subNode.name}`);
-    }
+	for (const subNode of fs.readdirSync(currentSnapshotsDir, { withFileTypes: true })) {
+		assert(!subNode.isDirectory());
+		fs.copyFileSync(`${currentSnapshotsDir}/${subNode.name}`, `${newSrcDir}/${subNode.name}`);
+	}
 
-    // Process the current folder which will update the current snapshots as per the changes.
-    await processNode(data, concurrently, limiter);
+	// Process the current folder which will update the current snapshots as per the changes.
+	await processNode(data, concurrently, limiter);
 
-    // Update the version of the current snapshots to the latest version.
-    fs.writeFileSync(versionFileName, JSON.stringify({ snapshotVersion: pkgVersion }), { encoding: "utf-8" });
+	// Update the version of the current snapshots to the latest version.
+	fs.writeFileSync(versionFileName, JSON.stringify({ snapshotVersion: pkgVersion }), {
+		encoding: "utf-8",
+	});
 }
 
 /**
@@ -275,25 +277,27 @@ async function processNodeForUpdatingSnapshots(
  * generate snapshot files and write them to the current snapshots dir.
  */
 async function processNodeForNewSnapshots(
-    data: IWorkerArgs,
-    concurrently: boolean,
-    limiter: ConcurrencyLimiter,
+	data: IWorkerArgs,
+	concurrently: boolean,
+	limiter: ConcurrencyLimiter,
 ) {
-    const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
-    // If current snapshots dir already exists, these are existing snapshots. We should skip because we don't want to
-    // update them.
-    if (fs.existsSync(currentSnapshotsDir)) {
-        return;
-    }
+	const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
+	// If current snapshots dir already exists, these are existing snapshots. We should skip because we don't want to
+	// update them.
+	if (fs.existsSync(currentSnapshotsDir)) {
+		return;
+	}
 
-    fs.mkdirSync(currentSnapshotsDir, { recursive: true });
+	fs.mkdirSync(currentSnapshotsDir, { recursive: true });
 
-    // Process the current folder which will write the generated snapshots to current snapshots dir.
-    await processNode(data, concurrently, limiter);
+	// Process the current folder which will write the generated snapshots to current snapshots dir.
+	await processNode(data, concurrently, limiter);
 
-    const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
-    // Write the versions file to the current snapshots dir.
-    fs.writeFileSync(versionFileName, JSON.stringify({ snapshotVersion: pkgVersion }), { encoding: "utf-8" });
+	const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
+	// Write the versions file to the current snapshots dir.
+	fs.writeFileSync(versionFileName, JSON.stringify({ snapshotVersion: pkgVersion }), {
+		encoding: "utf-8",
+	});
 }
 
 /**
@@ -306,38 +310,44 @@ async function processNodeForNewSnapshots(
  * 4. Loads a document with snapshot in current version. Repeats steps 2 and 3.
  */
 async function processNodeForBackCompat(data: IWorkerArgs) {
-    const messagesFile = `${data.folder}/messages.json`;
-    if (!fs.existsSync(messagesFile)) {
-        throw new Error(`messages.json doesn't exist in ${data.folder}`);
-    }
+	const messagesFile = `${data.folder}/messages.json`;
+	if (!fs.existsSync(messagesFile)) {
+		throw new Error(`messages.json doesn't exist in ${data.folder}`);
+	}
 
-    // Build a map of sequence number to message for the messages in this document. This will be used to add the message
-    // to the generated summary for old document snapshots.
-    const messages = JSON.parse(fs.readFileSync(messagesFile).toString("utf-8")) as ISequencedDocumentMessage[];
-    const seqToMessage = new Map(messages.map((message) => [message.sequenceNumber, message]));
+	// Build a map of sequence number to message for the messages in this document. This will be used to add the message
+	// to the generated summary for old document snapshots.
+	const messages = JSON.parse(
+		fs.readFileSync(messagesFile).toString("utf-8"),
+	) as ISequencedDocumentMessage[];
+	const seqToMessage = new Map(messages.map((message) => [message.sequenceNumber, message]));
 
-    // Snapshots in current format is under "currentSnapshots" directory.
-    const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
+	// Snapshots in current format is under "currentSnapshots" directory.
+	const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
 
-    // Validate that we can load snapshot in current format and write it in current snapshot format.
-    await validateSnapshots(currentSnapshotsDir, currentSnapshotsDir, seqToMessage);
+	// Validate that we can load snapshot in current format and write it in current snapshot format.
+	await validateSnapshots(currentSnapshotsDir, currentSnapshotsDir, seqToMessage);
 
-    // Snapshots in old format are under "srcSnapshots" directory. If we don't have any, there is nothing more to do.
-    const srcSnapshotsDir = `${data.folder}/${srcSnapshots}`;
-    if (!fs.existsSync(srcSnapshotsDir)) {
-        return;
-    }
+	// Snapshots in old format are under "srcSnapshots" directory. If we don't have any, there is nothing more to do.
+	const srcSnapshotsDir = `${data.folder}/${srcSnapshots}`;
+	if (!fs.existsSync(srcSnapshotsDir)) {
+		return;
+	}
 
-    // Each sub-directory under "srcSnapshots" folder contain snapshots from an older version. Process each one
-    // of these folders.
-    for (const node of fs.readdirSync(srcSnapshotsDir, { withFileTypes: true })) {
-        if (!node.isDirectory()) {
-            continue;
-        }
+	// Each sub-directory under "srcSnapshots" folder contain snapshots from an older version. Process each one
+	// of these folders.
+	for (const node of fs.readdirSync(srcSnapshotsDir, { withFileTypes: true })) {
+		if (!node.isDirectory()) {
+			continue;
+		}
 
-        // Validate that we can load snapshot from this older version format and write it in current snapshot format.
-        await validateSnapshots(`${srcSnapshotsDir}/${node.name}`, currentSnapshotsDir, seqToMessage);
-    }
+		// Validate that we can load snapshot from this older version format and write it in current snapshot format.
+		await validateSnapshots(
+			`${srcSnapshotsDir}/${node.name}`,
+			currentSnapshotsDir,
+			seqToMessage,
+		);
+	}
 }
 
 /**
@@ -345,53 +355,62 @@ async function processNodeForBackCompat(data: IWorkerArgs) {
  * the threads. If concurrently if false, directly processes the snapshots.
  */
 async function processNode(
-    workerData: IWorkerArgs,
-    concurrently: boolean,
-    limiter: ConcurrencyLimiter,
+	workerData: IWorkerArgs,
+	concurrently: boolean,
+	limiter: ConcurrencyLimiter,
 ) {
-    // "worker_threads" does not resolve without --experimental-worker flag on command line
-    let threads: typeof import("worker_threads");
-    try {
-        threads = await import("worker_threads");
-        threads.Worker.EventEmitter.defaultMaxListeners = 20;
-    } catch (err) {
-    }
+	// "worker_threads" does not resolve without --experimental-worker flag on command line
+	let threads: typeof import("worker_threads");
+	try {
+		threads = await import("worker_threads");
+		threads.Worker.EventEmitter.defaultMaxListeners = 20;
+	} catch (err) {}
 
-    if (!concurrently || !threads) {
-        await processOneNode(workerData);
-        return;
-    }
+	if (!concurrently || !threads) {
+		await processOneNode(workerData);
+		return;
+	}
 
-    return limiter.addWork(async () => new Promise((resolve, reject) => {
-        const worker = new threads.Worker(workerLocation, { workerData });
+	return limiter.addWork(
+		async () =>
+			new Promise((resolve, reject) => {
+				const worker = new threads.Worker(workerLocation, { workerData });
 
-        worker.on("message", (message: string) => {
-            if (message === "true") {
-                resolve();
-            }
-            if (workerData.mode === Mode.Compare) {
-                const extra = `If you are adding new test snapshots, you can run 'npm run test:new' to generate`
-                + ` reference snapshot files.\n`
-                + `If you changed snapshot representation and validated new format is backward`
-                + ` compatible, you can run 'npm run test:update' to update baseline snapshot files.\n`
-                + `Check README.md for more details.`;
-                reject(new Error(`${JSON.stringify(workerData)}\n${message}\n\n${extra}`));
-            } else {
-                reject(new Error(`${JSON.stringify(workerData)}\n${message}`));
-            }
-        });
+				worker.on("message", (message: string) => {
+					if (message === "true") {
+						resolve();
+					}
+					if (workerData.mode === Mode.Compare) {
+						const extra =
+							`If you are adding new test snapshots, you can run 'npm run test:new' to generate` +
+							` reference snapshot files.\n` +
+							`If you changed snapshot representation and validated new format is backward` +
+							` compatible, you can run 'npm run test:update' to update baseline snapshot files.\n` +
+							`Check README.md for more details.`;
+						reject(new Error(`${JSON.stringify(workerData)}\n${message}\n\n${extra}`));
+					} else {
+						reject(new Error(`${JSON.stringify(workerData)}\n${message}`));
+					}
+				});
 
-        worker.on("error", (error) => {
-            error.message = `${JSON.stringify(workerData)}\n${error.message}`;
-            reject(error);
-        });
+				worker.on("error", (error) => {
+					error.message = `${JSON.stringify(workerData)}\n${error.message}`;
+					reject(error);
+				});
 
-        worker.on("exit", (code) => {
-            if (code !== 0) {
-                reject(new Error(`${JSON.stringify(workerData)}\nWorker stopped with exit code ${code}`));
-            }
-        });
-    }));
+				worker.on("exit", (code) => {
+					if (code !== 0) {
+						reject(
+							new Error(
+								`${JSON.stringify(
+									workerData,
+								)}\nWorker stopped with exit code ${code}`,
+							),
+						);
+					}
+				});
+			}),
+	);
 }
 
 /**
@@ -400,24 +419,24 @@ async function processNode(
  * clutter.
  */
 function cleanFailedSnapshots(dir: string) {
-    const currentSnapshotsDir = `${dir}/${currentSnapshots}`;
-    if (!fs.existsSync(currentSnapshotsDir)) {
-        return;
-    }
+	const currentSnapshotsDir = `${dir}/${currentSnapshots}`;
+	if (!fs.existsSync(currentSnapshotsDir)) {
+		return;
+	}
 
-    const failedSnapshotsDir = `${currentSnapshotsDir}/FailedSnapshots`;
-    if (!fs.existsSync(failedSnapshotsDir)) {
-        return;
-    }
+	const failedSnapshotsDir = `${currentSnapshotsDir}/FailedSnapshots`;
+	if (!fs.existsSync(failedSnapshotsDir)) {
+		return;
+	}
 
-    for (const node of fs.readdirSync(failedSnapshotsDir, { withFileTypes: true })) {
-        if (node.isDirectory()) {
-            continue;
-        }
-        fs.unlinkSync(`${failedSnapshotsDir}/${node.name}`);
-    }
+	for (const node of fs.readdirSync(failedSnapshotsDir, { withFileTypes: true })) {
+		if (node.isDirectory()) {
+			continue;
+		}
+		fs.unlinkSync(`${failedSnapshotsDir}/${node.name}`);
+	}
 
-    fs.rmdirSync(failedSnapshotsDir);
+	fs.rmdirSync(failedSnapshotsDir);
 }
 
 let collateralPathValidated: boolean;
@@ -426,8 +445,8 @@ let collateralPathValidated: boolean;
  * Validates that the required external files exist.
  */
 function ensureTestCollateralPath() {
-    if (!collateralPathValidated) {
-        assert(fs.existsSync(fileLocation), `Cannot find test collateral path: ${fileLocation}`);
-        collateralPathValidated = true;
-    }
+	if (!collateralPathValidated) {
+		assert(fs.existsSync(fileLocation), `Cannot find test collateral path: ${fileLocation}`);
+		collateralPathValidated = true;
+	}
 }

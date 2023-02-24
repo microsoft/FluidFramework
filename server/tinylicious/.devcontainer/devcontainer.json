@@ -1,38 +1,38 @@
 // See https://aka.ms/vscode-remote/devcontainer.json for format details.
 {
-	"name": "Node.js 10",
-	"dockerFile": "Dockerfile",
+    "name": "Node.js 10",
+    "dockerFile": "Dockerfile",
 
-	"service": "development",
+    "service": "development",
 
-	// "workspaceFolder": "/workspace",
+    // "workspaceFolder": "/workspace",
 
-	"settings": { 
-		"terminal.integrated.shell.linux": "/usr/bin/zsh"
-	},
-	
-	// Uncomment the next line if you want to publish any ports.
-	"appPort": [3000],
+    "settings": {
+        "terminal.integrated.shell.linux": "/usr/bin/zsh"
+    },
 
-	// Uncomment the next line if you want to add in default container specific settings.json values
-	// "settings":  { "workbench.colorTheme": "Quiet Light" },
+    // Uncomment the next line if you want to publish any ports.
+    "appPort": [3000],
 
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+    // Uncomment the next line if you want to add in default container specific settings.json values
+    // "settings":  { "workbench.colorTheme": "Quiet Light" },
 
-	"runArgs": [
-		"-v",
-		"/var/run/docker.sock:/var/run/docker.sock",
-		"-u",
-		"node"
-	],
+    // Uncomment the next line to run commands after the container is created.
+    // "postCreateCommand": "yarn install",
 
-	"extensions": [
-		"dbaeumer.vscode-eslint",
-		"ms-vscode.vscode-typescript-tslint-plugin"
-	],
+    "runArgs": [
+        "-v",
+        "/var/run/docker.sock:/var/run/docker.sock",
+        "-u",
+        "node"
+    ],
 
-	"remote.extensionKind": {
+    "extensions": [
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-typescript-tslint-plugin"
+    ],
+
+    "remote.extensionKind": {
         "ms-azuretools.vscode-docker": "workspace"
     }
 }

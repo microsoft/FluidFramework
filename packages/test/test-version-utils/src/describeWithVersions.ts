@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getUnexpectedLogErrorException, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
+import {
+	getUnexpectedLogErrorException,
+	ITestObjectProvider,
+	TestObjectProvider,
+} from "@fluidframework/test-utils";
 import { driver, r11sEndpointName, tenantIndex } from "./compatOptions";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ITestObjectProviderOptions } from "./describeCompat";
@@ -16,112 +20,118 @@ import { ensurePackageInstalled, InstalledPackage } from "./testApi";
  * versions deduced from all properties will be installed.
  */
 export interface IRequestedFluidVersions {
-    /**
-     * Delta of versions to be installed with the current
-     * package version as the baseline.
-     */
-    requestRelativeVersions?: number;
-    /**
-     * Array of specific versions to be installed
-     */
-    requestAbsoluteVersions?: string[];
+	/**
+	 * Delta of versions to be installed with the current
+	 * package version as the baseline.
+	 */
+	requestRelativeVersions?: number;
+	/**
+	 * Array of specific versions to be installed
+	 */
+	requestAbsoluteVersions?: string[];
 }
 
 const installRequiredVersions = async (config: IRequestedFluidVersions) => {
-    const installPromises: Promise<InstalledPackage | undefined>[] = [];
-    if (config.requestAbsoluteVersions !== undefined) {
-        installPromises.push(
-            ...config.requestAbsoluteVersions
-                .map(async (version) => ensurePackageInstalled(version, 0, /* force */ false)));
-    }
+	const installPromises: Promise<InstalledPackage | undefined>[] = [];
+	if (config.requestAbsoluteVersions !== undefined) {
+		installPromises.push(
+			...config.requestAbsoluteVersions.map(async (version) =>
+				ensurePackageInstalled(version, 0, /* force */ false),
+			),
+		);
+	}
 
-    if (config.requestRelativeVersions !== undefined) {
-        installPromises.push(ensurePackageInstalled(pkgVersion, config.requestRelativeVersions, /* force */ false));
-    }
+	if (config.requestRelativeVersions !== undefined) {
+		installPromises.push(
+			ensurePackageInstalled(pkgVersion, config.requestRelativeVersions, /* force */ false),
+		);
+	}
 
-    let hadErrors = false;
-    for (const promise of installPromises) {
-        try {
-            await promise;
-        } catch (e) {
-            console.error(e);
-            hadErrors = true;
-        }
-    }
+	let hadErrors = false;
+	for (const promise of installPromises) {
+		try {
+			await promise;
+		} catch (e) {
+			console.error(e);
+			hadErrors = true;
+		}
+	}
 
-    if (hadErrors) {
-        throw new Error("Exceptions while installing package versions. Check STDERR");
-    }
+	if (hadErrors) {
+		throw new Error("Exceptions while installing package versions. Check STDERR");
+	}
 };
 
 const defaultTimeoutMs = 20000;
 const defaultRequestedVersions: IRequestedFluidVersions = { requestRelativeVersions: -2 };
 
 function createTestSuiteWithInstalledVersion(
-    tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
-    requiredVersions: IRequestedFluidVersions = defaultRequestedVersions,
-    timeoutMs: number = defaultTimeoutMs,
+	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
+	requiredVersions: IRequestedFluidVersions = defaultRequestedVersions,
+	timeoutMs: number = defaultTimeoutMs,
 ) {
-    return function(this: Mocha.Suite) {
-        let defaultProvider: TestObjectProvider;
-        let resetAfterEach: boolean;
-        before(async function() {
-            this.timeout(Math.max(defaultTimeoutMs, timeoutMs));
+	return function (this: Mocha.Suite) {
+		let defaultProvider: TestObjectProvider;
+		let resetAfterEach: boolean;
+		before(async function () {
+			this.timeout(Math.max(defaultTimeoutMs, timeoutMs));
 
-            await installRequiredVersions(requiredVersions);
-            defaultProvider = await getVersionedTestObjectProvider(
-                pkgVersion, // baseVersion
-                pkgVersion, // loaderVersion
-                {
-                    type: driver,
-                    version: pkgVersion,
-                    config: {
-                        r11s: { r11sEndpointName },
-                        odsp: { tenantIndex },
-                    },
-                }, // driverConfig
-                pkgVersion, // runtimeVersion
-                pkgVersion, // dataRuntimeVersion
-            );
+			await installRequiredVersions(requiredVersions);
+			defaultProvider = await getVersionedTestObjectProvider(
+				pkgVersion, // baseVersion
+				pkgVersion, // loaderVersion
+				{
+					type: driver,
+					version: pkgVersion,
+					config: {
+						r11s: { r11sEndpointName },
+						odsp: { tenantIndex },
+					},
+				}, // driverConfig
+				pkgVersion, // runtimeVersion
+				pkgVersion, // dataRuntimeVersion
+			);
 
-            Object.defineProperty(this, "__fluidTestProvider", { get: () => defaultProvider });
-        });
+			Object.defineProperty(this, "__fluidTestProvider", { get: () => defaultProvider });
+		});
 
-        tests.bind(this)((options?: ITestObjectProviderOptions) => {
-            resetAfterEach = options?.resetAfterEach ?? true;
-            if (options?.syncSummarizer === true) {
-                defaultProvider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
-            }
+		tests.bind(this)((options?: ITestObjectProviderOptions) => {
+			resetAfterEach = options?.resetAfterEach ?? true;
+			if (options?.syncSummarizer === true) {
+				defaultProvider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+			}
 
-            return defaultProvider;
-        });
+			return defaultProvider;
+		});
 
-        afterEach(function(done: Mocha.Done) {
-            const logErrors = getUnexpectedLogErrorException(defaultProvider.logger);
-            // if the test failed for another reason
-            // then we don't need to check errors
-            // and fail the after each as well
-            if (this.currentTest?.state === "passed") {
-                done(logErrors);
-            } else {
-                done();
-            }
+		afterEach(function (done: Mocha.Done) {
+			const logErrors = getUnexpectedLogErrorException(defaultProvider.logger);
+			// if the test failed for another reason
+			// then we don't need to check errors
+			// and fail the after each as well
+			if (this.currentTest?.state === "passed") {
+				done(logErrors);
+			} else {
+				done();
+			}
 
-            if (resetAfterEach) {
-                defaultProvider.reset();
-            }
-        });
-    };
+			if (resetAfterEach) {
+				defaultProvider.reset();
+			}
+		});
+	};
 }
 
-type DescribeSuiteWithVersions =
-    (name: string,
-        tests: (
-            this: Mocha.Suite,
-            provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider) => void
-    ) => Mocha.Suite | void;
+type DescribeSuiteWithVersions = (
+	name: string,
+	tests: (
+		this: Mocha.Suite,
+		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
+	) => void,
+) => Mocha.Suite | void;
 
-type DescribeWithVersions = DescribeSuiteWithVersions & Record<"skip" | "only", DescribeSuiteWithVersions>;
+type DescribeWithVersions = DescribeSuiteWithVersions &
+	Record<"skip" | "only", DescribeSuiteWithVersions>;
 
 /**
  * Creates a test suite which will priorly install a set of requested Fluid versions for the tests to use.
@@ -138,14 +148,20 @@ type DescribeWithVersions = DescribeSuiteWithVersions & Record<"skip" | "only", 
  * @returns A mocha test suite
  */
 export function describeInstallVersions(
-    requestedVersions?: IRequestedFluidVersions,
-    timeoutMs?: number,
+	requestedVersions?: IRequestedFluidVersions,
+	timeoutMs?: number,
 ): DescribeWithVersions {
-    const d: DescribeWithVersions =
-        (name, tests) => describe(name, createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs));
-    d.skip =
-        (name, tests) => describe.skip(name, createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs));
-    d.only =
-        (name, tests) => describe.only(name, createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs));
-    return d;
+	const d: DescribeWithVersions = (name, tests) =>
+		describe(name, createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs));
+	d.skip = (name, tests) =>
+		describe.skip(
+			name,
+			createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs),
+		);
+	d.only = (name, tests) =>
+		describe.only(
+			name,
+			createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs),
+		);
+	return d;
 }

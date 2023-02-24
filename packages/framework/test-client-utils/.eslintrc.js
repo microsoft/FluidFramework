@@ -4,14 +4,12 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid"), "prettier"
-    ],
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
-    },
-    "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off",
-        "import/no-extraneous-dependencies": "off"
-    }
-}
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
+	rules: {
+		"@typescript-eslint/strict-boolean-expressions": "off",
+		"import/no-extraneous-dependencies": "off",
+	},
+};

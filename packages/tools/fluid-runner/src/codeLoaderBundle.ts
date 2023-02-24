@@ -12,33 +12,33 @@ import { FluidObject } from "@fluidframework/core-interfaces";
  * For an example, see "src/test/sampleCodeLoaders/sampleCodeLoader.ts"
  */
 export interface ICodeLoaderBundle {
-    /**
-     * Fluid export of all the required objects and functions
-     */
-    fluidExport: Promise<IFluidFileConverter>;
+	/**
+	 * Fluid export of all the required objects and functions
+	 */
+	fluidExport: Promise<IFluidFileConverter>;
 }
 
 /**
  * Instance that holds all the details for Fluid file conversion
  */
 export interface IFluidFileConverter {
-    /**
-     * Get code loader details to provide at Loader creation
-     * @param logger - created logger object to pass to code loader
-     */
-    getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
+	/**
+	 * Get code loader details to provide at Loader creation
+	 * @param logger - created logger object to pass to code loader
+	 */
+	getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
 
-    /**
-     * Scope object to provide at Loader creation
-     */
-    scope?: FluidObject;
+	/**
+	 * Scope object to provide at Loader creation
+	 */
+	scope?: FluidObject;
 
-    /**
-     * Executes code on container and returns the result
-     * @param container - container created by this application
-     * @param options - additional options
-     */
-    execute(container: IContainer, options?: string): Promise<string>;
+	/**
+	 * Executes code on container and returns the result
+	 * @param container - container created by this application
+	 * @param options - additional options
+	 */
+	execute(container: IContainer, options?: string): Promise<string>;
 }
 
 /**
@@ -46,12 +46,16 @@ export interface IFluidFileConverter {
  * @param bundle - bundle provided to this application
  */
 export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return bundle?.fluidExport && typeof bundle.fluidExport === "object";
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return bundle?.fluidExport && typeof bundle.fluidExport === "object";
 }
 
 export function isFluidFileConverter(obj: any): obj is IFluidFileConverter {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return obj?.getCodeLoader && typeof obj.getCodeLoader === "function"
-        && obj.execute && typeof obj.execute === "function";
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return (
+		obj?.getCodeLoader &&
+		typeof obj.getCodeLoader === "function" &&
+		obj.execute &&
+		typeof obj.execute === "function"
+	);
 }

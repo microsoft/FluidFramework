@@ -32,7 +32,7 @@ const stream = split().on("data", (message) => {
 export function create(
     config: Provider,
     storage: IDocumentStorage,
-    mongoManager: MongoManager,
+    mongoManager: MongoManager
 ) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
@@ -63,19 +63,20 @@ export function create(
     app.use(urlencoded({ limit: requestSize, extended: false }));
 
     // Bind routes
-    const routes = createRoutes(
-        config,
-        mongoManager,
-        storage);
+    const routes = createRoutes(config, mongoManager, storage);
 
     app.use(cors());
     app.use(routes.storage);
     app.use(routes.ordering);
 
     // Basic Help Message
-    app.use(Router().get("/", (req, res) => {
-        res.status(200).send("This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious");
-    }));
+    app.use(
+        Router().get("/", (req, res) => {
+            res.status(200).send(
+                "This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious"
+            );
+        })
+    );
 
     // Catch 404 and forward to error handler
     app.use((req, res, next) => {

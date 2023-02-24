@@ -4,7 +4,11 @@
  */
 
 import fs from "fs";
-import { ICreateRefParams, IPatchRefParams, IRef } from "@fluidframework/gitresources";
+import {
+    ICreateRefParams,
+    IPatchRefParams,
+    IRef,
+} from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import nconf from "nconf";
@@ -25,21 +29,25 @@ function refToIRef(ref: string, sha: string): IRef {
 export async function getRefs(
     store: nconf.Provider,
     tenantId: string,
-    authorization: string,
+    authorization: string
 ): Promise<IRef[]> {
     const branches = await git.listBranches({
         fs,
         dir: utils.getGitDir(store, tenantId),
     });
 
-    return Promise.all(branches.map(async (branch) => getRef(store, tenantId, authorization, branch)));
+    return Promise.all(
+        branches.map(async (branch) =>
+            getRef(store, tenantId, authorization, branch)
+        )
+    );
 }
 
 export async function getRef(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    ref: string,
+    ref: string
 ): Promise<IRef> {
     const resolved = await git.resolveRef({
         fs,
@@ -54,7 +62,7 @@ export async function createRef(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    params: ICreateRefParams,
+    params: ICreateRefParams
 ): Promise<IRef> {
     await git.writeRef({
         fs,
@@ -71,7 +79,7 @@ export async function updateRef(
     tenantId: string,
     authorization: string,
     ref: string,
-    params: IPatchRefParams,
+    params: IPatchRefParams
 ): Promise<IRef> {
     const dir = utils.getGitDir(store, tenantId);
 
@@ -95,7 +103,7 @@ export async function deleteRef(
     store: nconf.Provider,
     tenantId: string,
     authorization: string,
-    ref: string,
+    ref: string
 ): Promise<void> {
     throw new Error("Not implemented");
 }
@@ -103,50 +111,37 @@ export async function deleteRef(
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
-    router.get(
-        "/repos/:ignored?/:tenantId/git/refs",
-        (request, response) => {
-            const refsP = getRefs(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"));
+    router.get("/repos/:ignored?/:tenantId/git/refs", (request, response) => {
+        const refsP = getRefs(
+            store,
+            request.params.tenantId,
+            request.get("Authorization")
+        );
 
-            utils.handleResponse(
-                refsP,
-                response,
-                false);
-        });
+        utils.handleResponse(refsP, response, false);
+    });
 
-    router.get(
-        "/repos/:ignored?/:tenantId/git/refs/*",
-        (request, response) => {
-            const refP = getRef(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.params[0]);
+    router.get("/repos/:ignored?/:tenantId/git/refs/*", (request, response) => {
+        const refP = getRef(
+            store,
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.params[0]
+        );
 
-            utils.handleResponse(
-                refP,
-                response,
-                false);
-        });
+        utils.handleResponse(refP, response, false);
+    });
 
-    router.post(
-        "/repos/:ignored?/:tenantId/git/refs",
-        (request, response) => {
-            const refP = createRef(
-                store,
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.body);
+    router.post("/repos/:ignored?/:tenantId/git/refs", (request, response) => {
+        const refP = createRef(
+            store,
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.body
+        );
 
-            utils.handleResponse(
-                refP,
-                response,
-                false,
-                201);
-        });
+        utils.handleResponse(refP, response, false, 201);
+    });
 
     router.patch(
         "/repos/:ignored?/:tenantId/git/refs/*",
@@ -156,13 +151,12 @@ export function create(store: nconf.Provider): Router {
                 request.params.tenantId,
                 request.get("Authorization"),
                 request.params[0],
-                request.body);
+                request.body
+            );
 
-            utils.handleResponse(
-                refP,
-                response,
-                false);
-        });
+            utils.handleResponse(refP, response, false);
+        }
+    );
 
     router.delete(
         "/repos/:ignored?/:tenantId/git/refs/*",
@@ -171,14 +165,12 @@ export function create(store: nconf.Provider): Router {
                 store,
                 request.params.tenantId,
                 request.get("Authorization"),
-                request.params[0]);
+                request.params[0]
+            );
 
-            utils.handleResponse(
-                refP,
-                response,
-                false,
-                204);
-        });
+            utils.handleResponse(refP, response, false, 204);
+        }
+    );
 
     return router;
 }

@@ -12,6 +12,7 @@ import {
     ITreeCursorSynchronous,
     Value,
     FieldUpPath,
+    PathRootPrefix,
 } from "../core";
 import { fail } from "../util";
 
@@ -150,27 +151,41 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
         this.siblings = siblings;
     }
 
-    public getPath(): UpPath | undefined {
+    public getPath(prefix?: PathRootPrefix): UpPath | undefined {
         assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
-        return this.getOffsetPath(0);
+        return this.getOffsetPath(0, prefix);
     }
 
-    public getFieldPath(): FieldUpPath {
+    public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
         assert(this.mode === CursorLocationType.Fields, 0x449 /* must be in fields mode */);
         return {
-            field: this.getFieldKey(),
-            parent: this.getOffsetPath(1),
+            field:
+                this.indexStack.length === 1
+                    ? prefix?.rootFieldOverride ?? this.getFieldKey()
+                    : this.getFieldKey(),
+            parent: this.getOffsetPath(1, prefix),
         };
     }
 
-    private getOffsetPath(offset: number): UpPath | undefined {
+    private getOffsetPath(offset: number, prefix: PathRootPrefix | undefined): UpPath | undefined {
+        // It is more efficient to handle prefix directly in here rather than delegating to PrefixedPath.
+
         const length = this.indexStack.length - offset;
         if (length === 0) {
-            return undefined; // At root
+            return prefix?.parent; // At root
         }
 
         assert(length > 0, 0x44a /* invalid offset to above root */);
         assert(length % 2 === 0, 0x44b /* offset path must point to node not field */);
+
+        const getIndex = (height: number): number => {
+            let parentIndex: number =
+                height === this.indexStack.length ? this.index : this.getStackedNodeIndex(height);
+            if (prefix !== undefined && height === 2) {
+                parentIndex += prefix.indexOffset ?? 0;
+            }
+            return parentIndex;
+        };
 
         // Perf Note:
         // This is O(depth) in tree.
@@ -180,22 +195,17 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
         // Could cache this at one depth, and remember the depth.
         // When navigating up, adjust cached anchor if present.
 
-        let path: UpPath | undefined;
+        let path: UpPath | undefined = prefix?.parent;
         // Skip top level, since root node in path is "undefined" and does not have a parent or index.
-        for (let height = 2; height < length; height += 2) {
-            const key = this.getStackedFieldKey(height - 1);
+        for (let height = 2; height <= length; height += 2) {
+            const fieldOverride = height === 2 ? prefix?.rootFieldOverride : undefined;
             path = {
                 parent: path,
-                parentIndex: this.getStackedNodeIndex(height),
-                parentField: key,
+                parentIndex: getIndex(height),
+                parentField: fieldOverride ?? this.getStackedFieldKey(height - 1),
             };
         }
 
-        path = {
-            parent: path,
-            parentIndex: offset === 0 ? this.index : this.getStackedNodeIndex(length),
-            parentField: this.getStackedFieldKey(length - 1),
-        };
         return path;
     }
 
@@ -337,5 +347,98 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
     public get chunkLength(): number {
         return 1;
+    }
+}
+
+/**
+ * Apply `prefix` to `path`.
+ */
+export function prefixPath(
+    prefix: PathRootPrefix | undefined,
+    path: UpPath | undefined,
+): UpPath | undefined {
+    if (prefix === undefined) {
+        return path;
+    }
+    if (
+        prefix.parent === undefined &&
+        prefix.rootFieldOverride === undefined &&
+        (prefix.indexOffset ?? 0) === 0
+    ) {
+        return path;
+    }
+    return applyPrefix(prefix, path);
+}
+
+/**
+ * Apply `prefix` to `path`.
+ */
+export function prefixFieldPath(
+    prefix: PathRootPrefix | undefined,
+    path: FieldUpPath,
+): FieldUpPath {
+    if (prefix === undefined) {
+        return path;
+    }
+    if (
+        prefix.parent === undefined &&
+        prefix.rootFieldOverride === undefined &&
+        (prefix.indexOffset ?? 0) === 0
+    ) {
+        return path;
+    }
+    return {
+        field: path.parent === undefined ? prefix.rootFieldOverride ?? path.field : path.field,
+        parent: prefixPath(prefix, path.parent),
+    };
+}
+
+function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath | undefined {
+    if (path === undefined) {
+        return prefix.parent;
+    } else {
+        // As an optimization, avoid double wrapping paths with multiple prefixes
+        if (path instanceof PrefixedPath) {
+            const inner = path.prefix;
+            if (inner.parent !== undefined) {
+                const composedPrefix: PathRootPrefix = {
+                    parent: new PrefixedPath(prefix, inner.parent),
+                    rootFieldOverride: inner.rootFieldOverride,
+                    indexOffset: inner.indexOffset,
+                };
+                return new PrefixedPath(composedPrefix, path.path);
+            } else {
+                const composedPrefix: PathRootPrefix = {
+                    parent: prefix.parent,
+                    rootFieldOverride: prefix.rootFieldOverride ?? inner.rootFieldOverride,
+                    indexOffset: (inner.indexOffset ?? 0) + (prefix.indexOffset ?? 0),
+                };
+                return new PrefixedPath(composedPrefix, path.path);
+            }
+        } else {
+            return new PrefixedPath(prefix, path);
+        }
+    }
+}
+
+/**
+ * Wrapper around a path that adds a prefix to the root.
+ *
+ * Exported for testing: use `prefixPath` and `prefixFieldPath` to construct.
+ */
+export class PrefixedPath implements UpPath {
+    public readonly parentField: FieldKey;
+    public readonly parentIndex: number;
+    public constructor(public readonly prefix: PathRootPrefix, public readonly path: UpPath) {
+        if (path.parent === undefined) {
+            this.parentField = prefix.rootFieldOverride ?? path.parentField;
+            this.parentIndex = path.parentIndex + (prefix.indexOffset ?? 0);
+        } else {
+            this.parentField = path.parentField;
+            this.parentIndex = path.parentIndex;
+        }
+    }
+    public get parent(): UpPath | undefined {
+        return applyPrefix(this.prefix, this.path.parent);
     }
 }

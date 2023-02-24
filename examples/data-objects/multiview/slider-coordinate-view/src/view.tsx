@@ -15,7 +15,9 @@ interface ISliderCoordinateViewProps {
     model: ICoordinate;
 }
 
-export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props: ISliderCoordinateViewProps) => {
+export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (
+    props: ISliderCoordinateViewProps
+) => {
     const [x, setX] = React.useState(props.model.x);
     const [y, setY] = React.useState(props.model.y);
 
@@ -37,7 +39,12 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
                 X:
                 <input
                     type="range"
-                    onChange={(e): void => { props.model.x = Number.parseInt((e.target as HTMLInputElement).value, 10); }}
+                    onChange={(e): void => {
+                        props.model.x = Number.parseInt(
+                            (e.target as HTMLInputElement).value,
+                            10
+                        );
+                    }}
                     value={x}
                 />
                 {Math.trunc(x)}
@@ -46,7 +53,12 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
                 Y:
                 <input
                     type="range"
-                    onChange={(e): void => { props.model.y = Number.parseInt((e.target as HTMLInputElement).value, 10); }}
+                    onChange={(e): void => {
+                        props.model.y = Number.parseInt(
+                            (e.target as HTMLInputElement).value,
+                            10
+                        );
+                    }}
                     value={y}
                 />
                 {Math.trunc(y)}

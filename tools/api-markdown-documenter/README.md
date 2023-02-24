@@ -47,8 +47,8 @@ const outputDir = "<YOUR-OUTPUT-DIRECTORY-PATH>";
 const apiModel = await readModel(inputDir);
 
 const config = {
-    apiModel,
-    uriRoot: ".",
+	apiModel,
+	uriRoot: ".",
 };
 
 await renderFiles(config, outputDir);

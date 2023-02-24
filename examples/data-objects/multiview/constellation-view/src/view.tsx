@@ -5,7 +5,10 @@
 
 import React from "react";
 
-import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import {
+    IConstellation,
+    ICoordinate,
+} from "@fluid-example/multiview-coordinate-interface";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 
 // eslint-disable-next-line import/no-unassigned-import
@@ -13,9 +16,9 @@ import "./style.css";
 
 interface IStarViewProps {
     model: ICoordinate;
-    onPointerDown: ((event: React.PointerEvent<HTMLDivElement>) => void);
-    onPointerMove: ((event: React.PointerEvent<HTMLDivElement>) => void);
-    onPointerUp: ((event: React.PointerEvent<HTMLDivElement>) => void);
+    onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onPointerUp: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
 /**
@@ -57,8 +60,12 @@ interface IConstellationViewProps {
  * and dropped, plus slider views for more precise editing.  Note that the ConstellationView is the one making the
  * decision to bind the ICoordinate models to these particular views.
  */
-export const ConstellationView: React.FC<IConstellationViewProps> = (props: IConstellationViewProps) => {
-    const [starList, setStarList] = React.useState<ICoordinate[]>(props.model.stars);
+export const ConstellationView: React.FC<IConstellationViewProps> = (
+    props: IConstellationViewProps
+) => {
+    const [starList, setStarList] = React.useState<ICoordinate[]>(
+        props.model.stars
+    );
     React.useEffect(() => {
         const onConstellationChanged = () => {
             setStarList(props.model.stars);
@@ -89,8 +96,14 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (props: ICon
                     x: event.pageX - dragStart.x,
                     y: event.pageY - dragStart.y,
                 };
-                star.x = Math.min(Math.max(starStart.x + totalDragDelta.x, 0), 100);
-                star.y = Math.min(Math.max(starStart.y + totalDragDelta.y, 0), 100);
+                star.x = Math.min(
+                    Math.max(starStart.x + totalDragDelta.x, 0),
+                    100
+                );
+                star.y = Math.min(
+                    Math.max(starStart.y + totalDragDelta.y, 0),
+                    100
+                );
             }
         };
         const pointerUpHandler = (event) => {
@@ -103,19 +116,21 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (props: ICon
                 onPointerDown={pointerDownHandler}
                 onPointerMove={pointerMoveHandler}
                 onPointerUp={pointerUpHandler}
-            />,
+            />
         );
-        sliderViews.push(<SliderCoordinateView key={index} model={star} label={`Star ${index}`} />);
+        sliderViews.push(
+            <SliderCoordinateView
+                key={index}
+                model={star}
+                label={`Star ${index}`}
+            />
+        );
     }
 
     return (
         <div>
-            <div className="constellation-view">
-                {starViews}
-            </div>
-            <div className="slider-views">
-                {sliderViews}
-            </div>
+            <div className="constellation-view">{starViews}</div>
+            <div className="slider-views">{sliderViews}</div>
         </div>
     );
 };

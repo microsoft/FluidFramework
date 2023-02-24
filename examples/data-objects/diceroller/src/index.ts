@@ -10,11 +10,15 @@ import { DiceRoller, DiceRollerInstantiationFactory, DiceRollerView } from "./ma
 
 export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 
-const diceRollerViewCallback = (model: DiceRoller) => React.createElement(DiceRollerView, { model });
+const diceRollerViewCallback = (model: DiceRoller) =>
+	React.createElement(DiceRollerView, { model });
 
 /**
  * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
  * as our model (using the factory we provide), and the view callback we provide will pair that model with an
  * appropriate view.
  */
-export const fluidExport = new ContainerViewRuntimeFactory(DiceRollerInstantiationFactory, diceRollerViewCallback);
+export const fluidExport = new ContainerViewRuntimeFactory(
+	DiceRollerInstantiationFactory,
+	diceRollerViewCallback,
+);

@@ -4,20 +4,20 @@
  */
 
 export interface IRequestHeader {
-    [index: string]: any;
+	[index: string]: any;
 }
 
 export interface IRequest {
-    url: string;
-    headers?: IRequestHeader;
+	url: string;
+	headers?: IRequestHeader;
 }
 
 export interface IResponse {
-    mimeType: string;
-    status: number;
-    value: any;
-    headers?: { [key: string]: any; };
-    stack?: string;
+	mimeType: string;
+	status: number;
+	value: any;
+	headers?: { [key: string]: any };
+	stack?: string;
 }
 
 export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";
@@ -26,8 +26,8 @@ export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";
  * Request routing
  */
 export interface IProvideFluidRouter {
-    readonly IFluidRouter: IFluidRouter;
+	readonly IFluidRouter: IFluidRouter;
 }
 export interface IFluidRouter extends IProvideFluidRouter {
-    request(request: IRequest): Promise<IResponse>;
+	request(request: IRequest): Promise<IResponse>;
 }

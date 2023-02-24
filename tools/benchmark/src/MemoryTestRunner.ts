@@ -38,7 +38,7 @@ export interface MemoryTestData {
  */
 export interface MemoryBenchmarkStats {
     runs: number;
-    samples: { before: MemoryTestData; after: MemoryTestData; };
+    samples: { before: MemoryTestData; after: MemoryTestData };
     stats: Benchmark.Stats;
     aborted: boolean;
     error?: Error;
@@ -225,22 +225,25 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
             // Remove arguments for debugging if they're present; in order to debug child processes we need
             // to specify a new debugger port for each.
             let inspectArgIndex: number = -1;
-            while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
+            while (
+                (inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >=
+                0
+            ) {
                 childArgs.splice(inspectArgIndex, 1);
             }
 
             // Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
             const childProcess = await import("child_process");
-            const result = childProcess.spawnSync(command, childArgs,
-                {
-                    encoding: "utf8",
-                    maxBuffer: 1024 * 1024, /* 1024 * 1024 is the default value, here for ease of adjustment */
-                });
+            const result = childProcess.spawnSync(command, childArgs, {
+                encoding: "utf8",
+                maxBuffer:
+                    1024 * 1024 /* 1024 * 1024 is the default value, here for ease of adjustment */,
+            });
 
             if (result.error) {
                 const failureMessage = result.error.message.includes("ENOBUFS")
                     ? "Child process tried to write too much data to stdout (too many iterations?). " +
-                    "The maxBuffer option might need to be tweaked."
+                      "The maxBuffer option might need to be tweaked."
                     : `Child process reported an error: ${result.error.message}`;
                 assert.fail(failureMessage);
             }
@@ -328,18 +331,24 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 
                 const heapUsedArray: number[] = [];
                 for (let i = 0; i < benchmarkStats.samples.before.memoryUsage.length; i++) {
-                    heapUsedArray.push(benchmarkStats.samples.after.memoryUsage[i].heapUsed
-                        - benchmarkStats.samples.before.memoryUsage[i].heapUsed);
+                    heapUsedArray.push(
+                        benchmarkStats.samples.after.memoryUsage[i].heapUsed -
+                            benchmarkStats.samples.before.memoryUsage[i].heapUsed,
+                    );
                 }
                 heapUsedStats = getArrayStatistics(heapUsedArray, options.samplePercentageToUse);
 
                 // Break if max elapsed time passed, only if we've reached the min sample count
-                if (benchmarkStats.runs >= options.minSampleCount &&
-                    (performance.now() - startTime) / 1000 > options.maxBenchmarkDurationSeconds) {
+                if (
+                    benchmarkStats.runs >= options.minSampleCount &&
+                    (performance.now() - startTime) / 1000 > options.maxBenchmarkDurationSeconds
+                ) {
                     break;
                 }
-            } while (benchmarkStats.runs < options.minSampleCount
-                || heapUsedStats.rme > options.maxRelativeMarginOfError);
+            } while (
+                benchmarkStats.runs < options.minSampleCount ||
+                heapUsedStats.rme > options.maxRelativeMarginOfError
+            );
 
             benchmarkStats.stats = heapUsedStats;
         } catch (error) {

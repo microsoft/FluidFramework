@@ -1,14 +1,10 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "module": "esnext",
-        "outDir": "lib",
-        "jsx": "react",
-        "types": [
-            "puppeteer",
-        ]
-    },
-    "include": [
-        "src/**/*"
-    ]
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"module": "esnext",
+		"outDir": "lib",
+		"jsx": "react",
+		"types": ["puppeteer"],
+	},
+	"include": ["src/**/*"],
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-'use strict';
+"use strict";
 
 const packageDir = `${__dirname}/../..`;
 

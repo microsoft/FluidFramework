@@ -33,67 +33,78 @@ import { TableDocument } from "../document";
  * @returns A new {@link ITable} object that intercepts the methods modifying the properties of cells, rows or columns.
  */
 export function createTableWithInterception<T extends ITable>(
-    table: T,
-    context: IFluidDataStoreContext,
-    propertyInterceptionCallback: (props?: PropertySet) => PropertySet): T {
-    const tableWithInterception = Object.create(table);
+	table: T,
+	context: IFluidDataStoreContext,
+	propertyInterceptionCallback: (props?: PropertySet) => PropertySet,
+): T {
+	const tableWithInterception = Object.create(table);
 
-    // executingCallback keeps track of whether a method on this wrapper object is called recursively
-    // from the propertyInterceptionCallback.
-    let executingCallback: boolean = false;
+	// executingCallback keeps track of whether a method on this wrapper object is called recursively
+	// from the propertyInterceptionCallback.
+	let executingCallback: boolean = false;
 
-    tableWithInterception.setCellValue = (
-        row: number,
-        col: number,
-        value: TableDocumentItem,
-        properties?: PropertySet) => {
-        // Wrapper methods should not be called from the interception callback as this will lead to
-        // infinite recursion.
-        assert(executingCallback === false,
-            "Interception wrapper method called recursively from the interception callback");
+	tableWithInterception.setCellValue = (
+		row: number,
+		col: number,
+		value: TableDocumentItem,
+		properties?: PropertySet,
+	) => {
+		// Wrapper methods should not be called from the interception callback as this will lead to
+		// infinite recursion.
+		assert(
+			executingCallback === false,
+			"Interception wrapper method called recursively from the interception callback",
+		);
 
-        context.containerRuntime.orderSequentially(() => {
-            executingCallback = true;
-            try {
-                table.setCellValue(row, col, value, propertyInterceptionCallback(properties));
-            } finally {
-                executingCallback = false;
-            }
-        });
-    };
+		context.containerRuntime.orderSequentially(() => {
+			executingCallback = true;
+			try {
+				table.setCellValue(row, col, value, propertyInterceptionCallback(properties));
+			} finally {
+				executingCallback = false;
+			}
+		});
+	};
 
-    tableWithInterception.annotateCell = (
-        row: number,
-        col: number,
-        properties: PropertySet) => {
-        // Wrapper methods should not be called from the interception callback as this will lead to
-        // infinite recursion.
-        assert(executingCallback === false,
-            "Interception wrapper method called recursively from the interception callback");
+	tableWithInterception.annotateCell = (row: number, col: number, properties: PropertySet) => {
+		// Wrapper methods should not be called from the interception callback as this will lead to
+		// infinite recursion.
+		assert(
+			executingCallback === false,
+			"Interception wrapper method called recursively from the interception callback",
+		);
 
-        context.containerRuntime.orderSequentially(() => {
-            executingCallback = true;
-            try {
-                table.annotateCell(row, col, propertyInterceptionCallback(properties));
-            } finally {
-                executingCallback = false;
-            }
-        });
-    };
+		context.containerRuntime.orderSequentially(() => {
+			executingCallback = true;
+			try {
+				table.annotateCell(row, col, propertyInterceptionCallback(properties));
+			} finally {
+				executingCallback = false;
+			}
+		});
+	};
 
-    // Override createSlice only for TableDocument because other objects (TableSlice) does not have this method.
-    if (table instanceof TableDocument) {
-        tableWithInterception.createSlice = async (
-            sliceId: string,
-            name: string,
-            minRow: number,
-            minCol: number,
-            maxRow: number,
-            maxCol: number): Promise<ITable> => {
-            const tableSlice = await table.createSlice(sliceId, name, minRow, minCol, maxRow, maxCol);
-            return createTableWithInterception(tableSlice, context, propertyInterceptionCallback);
-        };
-    }
+	// Override createSlice only for TableDocument because other objects (TableSlice) does not have this method.
+	if (table instanceof TableDocument) {
+		tableWithInterception.createSlice = async (
+			sliceId: string,
+			name: string,
+			minRow: number,
+			minCol: number,
+			maxRow: number,
+			maxCol: number,
+		): Promise<ITable> => {
+			const tableSlice = await table.createSlice(
+				sliceId,
+				name,
+				minRow,
+				minCol,
+				maxRow,
+				maxCol,
+			);
+			return createTableWithInterception(tableSlice, context, propertyInterceptionCallback);
+		};
+	}
 
-    return tableWithInterception as T;
+	return tableWithInterception as T;
 }

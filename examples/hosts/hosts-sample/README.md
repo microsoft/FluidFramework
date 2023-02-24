@@ -15,25 +15,29 @@ And does so in a literate programming-like style to provide more detail on each 
 
 You can run this example using the following steps:
 
-1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
+1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-internal/hosts-sample`
 1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
-1. Run `npm run start` from this directory (examples/hosts/hosts-sample) and open <http://localhost:8080> in a web browser to see the app running.
+1. Run `npm start` from this directory (examples/hosts/hosts-sample) and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Using Example
+
 Upon navigating to the example application home URL with no parameters, it will create a new document with an auto-generated ID and load it using the default package name and version. When loaded correctly a placeholder component will be rendered in the content `div` element.
 
 ![Home Page](./images/home-page.png)
 
 The application URL has the following format:
+
 ```
 http://localhost:8080/[#document-id]
 ```
+
 , where `document-id` is an alphanumerical string representing the unique Fluid document ID.
 
 The application also provides the code details panel allowing to load different code versions and propose code upgrades.
@@ -95,9 +99,9 @@ Creating a loader is a simple process
 import { Loader } from "@fluidframework/container-loader";
 
 const loader = new Loader({
-    urlResolver,
-    documentServicesFactory,
-    codeLoader,
+	urlResolver,
+	documentServicesFactory,
+	codeLoader,
 });
 ```
 
@@ -146,7 +150,7 @@ status codes.
 
 ```typescript
 if (response.status !== 200) {
-    return;
+	return;
 }
 ```
 
@@ -159,16 +163,16 @@ and provide it a `div` for it to render.
 
 ```typescript
 switch (response.mimeType) {
-    case "fluid/object":
-        // Check if the object is a view
-        const fluidObject = response.value as IFluidObject;
-        const view = fluidObject.IFluidHTMLView;
-        if (!view) {
-            return;
-        }
+	case "fluid/object":
+		// Check if the object is a view
+		const fluidObject = response.value as IFluidObject;
+		const view = fluidObject.IFluidHTMLView;
+		if (!view) {
+			return;
+		}
 
-        view.render(div, { display: "block" });
-        break;
+		view.render(div, { display: "block" });
+		break;
 }
 ```
 
@@ -222,30 +226,30 @@ Once those are available we can construct the full Fluid URL as
 
 ```typescript
 const documentUrl =
-    `fluid://${new URL(this.ordererUrl).host}` +
-    `/${encodeURIComponent(this.tenantId)}` +
-    parsedUrl.pathname;
+	`fluid://${new URL(this.ordererUrl).host}` +
+	`/${encodeURIComponent(this.tenantId)}` +
+	parsedUrl.pathname;
 ```
 
 We can then construct the final `IFluidResolvedUrl` by generating all the endpoints needed by the driver. As well as
 crafting a JWT token locally (this is the insecure part) which can be used to connect to these endpoints.
 
 ```typescript
-const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(documentId)}`;
+const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodeURIComponent(
+	this.tenantId,
+)}/${encodeURIComponent(documentId)}`;
 
-const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(
-    this.tenantId
-)}`;
+const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(this.tenantId)}`;
 
 const response: IFluidResolvedUrl = {
-    endpoints: {
-        deltaStorageUrl,
-        ordererUrl: this.ordererUrl,
-        storageUrl,
-    },
-    tokens: { jwt: this.auth(this.tenantId, documentId) },
-    type: "fluid",
-    url: documentUrl,
+	endpoints: {
+		deltaStorageUrl,
+		ordererUrl: this.ordererUrl,
+		storageUrl,
+	},
+	tokens: { jwt: this.auth(this.tenantId, documentId) },
+	type: "fluid",
+	url: documentUrl,
 };
 
 return response;
@@ -314,13 +318,15 @@ Interpretation of these details is controlled by the host. Upgrades are also con
 An upgrade could result in non-compatible clients in a collaboration session being rejected and reloaded with new code.
 
 To support code upgrade scenarios, the container instance provides the following API:
-- Query a container to determine current loaded code details, via the `codeDetails` property.
-- Propose code details via the `proposeCodeDetails` method.
-- Observe new code proposals via the `codeDetailsProposed` event.
+
+-   Query a container to determine current loaded code details, via the `codeDetails` property.
+-   Propose code details via the `proposeCodeDetails` method.
+-   Observe new code proposals via the `codeDetailsProposed` event.
 
 In addition to that, the application may opt to supply a customized code loader designed to:
-- Compare code details.
-- Tell the runtime to close the container if the container’s code is outside of the policy.
+
+-   Compare code details.
+-   Tell the runtime to close the container if the container’s code is outside of the policy.
 
 ## Next Steps
 

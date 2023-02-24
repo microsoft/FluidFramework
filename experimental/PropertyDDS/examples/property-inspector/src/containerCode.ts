@@ -17,11 +17,11 @@ import { PropertyTreeInstantiationFactory, IPropertyTree } from "./dataObject";
  * complex models.
  */
 export interface IPropertyTreeAppModel {
-    readonly propertyTree: IPropertyTree;
+	readonly propertyTree: IPropertyTree;
 }
 
 class PropertyTreeAppModel implements IPropertyTreeAppModel {
-    public constructor(public readonly propertyTree: IPropertyTree) { }
+	public constructor(public readonly propertyTree: IPropertyTree) {}
 }
 
 const propertyTreeId = "property-tree";
@@ -29,32 +29,29 @@ const propertyTreeId = "property-tree";
 /**
  * The runtime factory for our Fluid container.
  */
-export class PropertyTreeContainerRuntimeFactory
-    extends ModelContainerRuntimeFactory<IPropertyTreeAppModel> {
-    constructor() {
-        super(
-            new Map([
-                ["property-tree", Promise.resolve(PropertyTreeInstantiationFactory)],
-            ]), // registryEntries
-        );
-    }
+export class PropertyTreeContainerRuntimeFactory extends ModelContainerRuntimeFactory<IPropertyTreeAppModel> {
+	constructor() {
+		super(
+			new Map([["property-tree", Promise.resolve(PropertyTreeInstantiationFactory)]]), // registryEntries
+		);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-     */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const propertyTree = await runtime.createDataStore(PropertyTreeInstantiationFactory.type);
-        await propertyTree.trySetAlias(propertyTreeId);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+	 */
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+		const propertyTree = await runtime.createDataStore(PropertyTreeInstantiationFactory.type);
+		await propertyTree.trySetAlias(propertyTreeId);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-     */
-    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const propertyTree = await requestFluidObject<IPropertyTree>(
-            await runtime.getRootDataStore(propertyTreeId),
-            "",
-        );
-        return new PropertyTreeAppModel(propertyTree);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+	 */
+	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		const propertyTree = await requestFluidObject<IPropertyTree>(
+			await runtime.getRootDataStore(propertyTreeId),
+			"",
+		);
+		return new PropertyTreeAppModel(propertyTree);
+	}
 }

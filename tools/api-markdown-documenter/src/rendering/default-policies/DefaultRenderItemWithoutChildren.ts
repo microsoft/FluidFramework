@@ -11,10 +11,10 @@ import { MarkdownDocumenterConfiguration } from "../../Configuration";
  * Default policy for rendering doc sections for API item kinds that do not have child contents.
  */
 export function renderItemWithoutChildren(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+	apiItem: ApiItem,
+	config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
-    // Items without children don't have much information to provide other than the default
-    // rendered details.
-    return config.renderChildrenSection(apiItem, undefined, config);
+	// Items without children don't have much information to provide other than the default
+	// rendered details.
+	return config.renderChildrenSection(apiItem, undefined, config);
 }

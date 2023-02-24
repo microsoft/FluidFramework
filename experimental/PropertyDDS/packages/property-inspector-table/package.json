@@ -32,8 +32,8 @@
     "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+    "prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
     "storybook": "start-storybook -p 6006",
     "test": "npm run test:jest",
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
@@ -57,6 +57,7 @@
     "react-virtualized-auto-sizer": "^1.0.6"
   },
   "devDependencies": {
+    "@babel/core": "^7.13.0",
     "@fluid-experimental/property-binder": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-experimental/property-changeset": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-experimental/property-dds": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",

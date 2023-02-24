@@ -12,6 +12,7 @@ export {
     forEachNode,
     forEachField,
     ITreeCursorSynchronous,
+    PathRootPrefix,
 } from "./cursor";
 export {
     GlobalFieldKeySymbol,

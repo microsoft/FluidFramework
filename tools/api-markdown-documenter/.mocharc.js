@@ -6,7 +6,7 @@
 "use strict";
 
 const config = {
-    require: ["@fluidframework/mocha-test-setup"],
+	require: ["@fluidframework/mocha-test-setup"],
 };
 
 module.exports = config;
