@@ -624,7 +624,10 @@ export class Container
 			});
 			// The Promise above should only resolve (vs reject) if the 'contextChanged' event was emitted and that
 			// should have set this._context; making sure.
-			assert(this._context !== undefined, "Context still not defined after contextChanged event");
+			assert(
+				this._context !== undefined,
+				"Context still not defined after contextChanged event",
+			);
 		}
 		// Disable lint rule for the sake of more complete stack traces
 		// eslint-disable-next-line no-return-await
