@@ -139,7 +139,7 @@
 		"pretty-quick": "^3.1.3",
 		"rimraf": "^2.6.2",
 		"run-script-os": "^1.1.6",
-		"syncpack": "^9.3.2",
+		"syncpack": "^9.8.4",
 		"typescript": "~4.5.5"
 	},
 	"engines": {
@@ -175,21 +175,6 @@
 			}
 		},
 		"policy": {
-			"dependencies": {
-				"requireTilde": [
-					"@typescript-eslint/eslint-plugin",
-					"@typescript-eslint/parser",
-					"eslint-config-prettier",
-					"eslint-plugin-eslint-comments",
-					"eslint-plugin-import",
-					"eslint-plugin-unicorn",
-					"eslint-plugin-unused-imports",
-					"eslint",
-					"prettier",
-					"typescript",
-					"webpack-dev-server"
-				]
-			},
 			"additionalLockfilePaths": [
 				"common/build/build-common",
 				"common/build/eslint-config-fluid",
