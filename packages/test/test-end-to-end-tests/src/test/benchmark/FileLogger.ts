@@ -28,24 +28,11 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		driverEndpointName: string | undefined;
 		profile: string | undefined;
 		runId: number | undefined;
-		testName: string | undefined;
-		benchmarkType: string | undefined;
 	}) {
 		assert(process.env.FLUID_BUILD_ID !== undefined, "Fluid Build Id not defined");
 		dimensions.runId = parseInt(process.env.FLUID_BUILD_ID, 10);
 		const logger = ChildLogger.create(await this.loggerP, undefined, {
 			all: dimensions,
-		});
-		logger.send({
-			category: "performance",
-			eventName: "BenchmarkBegin",
-			message: "Benchmark Begin",
-			runId: dimensions.runId,
-			testName: dimensions.testName,
-			benchmarkType: dimensions.benchmarkType,
-			profile: dimensions.profile,
-			driverType: dimensions.driverType,
-			driverEndpointName: dimensions.driverEndpointName,
 		});
 		return logger;
 	}

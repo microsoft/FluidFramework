@@ -51,8 +51,6 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 						driverType: provider.driver.type,
 						driverEndpointName: provider.driver.endpointName,
 						profile: "",
-						testName: "Summarization - runtime benchmarks",
-						benchmarkType: "ExecutionTime",
 				  })
 				: undefined;
 
