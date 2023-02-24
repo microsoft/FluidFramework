@@ -49,6 +49,7 @@ import {
 	OutputSpanningMark,
 	SkipLikeDetach,
 	MoveId,
+	Revive,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -459,9 +460,7 @@ export function tryExtendMark<T>(
 				rhs.lastDetachedBy === lhsReattach.lastDetachedBy &&
 				lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
 			) {
-				if ("content" in lhsReattach) {
-					lhsReattach.content.push(...rhs.content);
-				}
+				(lhsReattach as Revive).content.push(...rhs.content);
 				lhsReattach.count += rhs.count;
 				return true;
 			}
