@@ -44,10 +44,10 @@ trigger:
     - packages
     - examples
     - experimental
-    - package.json
-    - package-lock.json
     - lerna.json
-    - lerna-package-lock.json
+    - package.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -69,10 +69,10 @@ pr:
     - packages
     - examples
     - experimental
-    - package.json
-    - package-lock.json
     - lerna.json
-    - lerna-package-lock.json
+    - package.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -85,10 +85,11 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     buildDirectory: .
     tagName: client
     poolBuild: Large
-    cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskTest:
@@ -98,23 +99,3 @@ extends:
     - ci:test:realsvc:tinylicious
     - ci:test:stress:tinylicious
     - test:copyresults
-    preCG:
-    - task: UseNode@1
-      displayName: Use Node 14.x
-      inputs:
-        version: 14.x
-    - task: Npm@1
-      displayName: npm ci
-      inputs:
-        command: 'custom'
-        customCommand: 'ci --ignore-scripts'
-        customRegistry: 'useNpmrc'
-    - task: Bash@3
-      displayName: 'Generate Mono repo package json'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Generate the package/package lock for the lerna project so we would scan it.
-          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-          cp repo-package.json packages/package.json
-          cp repo-package-lock.json packages/package-lock.json

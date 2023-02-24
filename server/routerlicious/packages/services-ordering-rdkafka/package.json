@@ -33,7 +33,7 @@
     "@fluidframework/server-services-client": "^0.1038.3000",
     "@fluidframework/server-services-core": "^0.1038.3000",
     "nconf": "^0.12.0",
-    "node-rdkafka": "^2.14.0",
+    "node-rdkafka": "^2.15.0",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {

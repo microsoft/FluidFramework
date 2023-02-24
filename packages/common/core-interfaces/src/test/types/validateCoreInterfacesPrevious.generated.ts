@@ -333,6 +333,7 @@ use_old_InterfaceDeclaration_IFluidLoadable(
 declare function get_old_InterfaceDeclaration_IFluidObject():
     TypeOnly<old.IFluidObject>;
 declare function use_current_InterfaceDeclaration_IFluidObject(
+    // @ts-expect-error removed interface
     use: TypeOnly<current.IFluidObject>);
 use_current_InterfaceDeclaration_IFluidObject(
     get_old_InterfaceDeclaration_IFluidObject());
@@ -343,6 +344,7 @@ use_current_InterfaceDeclaration_IFluidObject(
 * "InterfaceDeclaration_IFluidObject": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidObject():
+    // @ts-expect-error removed interface
     TypeOnly<current.IFluidObject>;
 declare function use_old_InterfaceDeclaration_IFluidObject(
     use: TypeOnly<old.IFluidObject>);

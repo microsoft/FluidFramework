@@ -148,6 +148,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             siteUrl,
             driveId,
             itemId,
+            dataStorePath: path,
             fileName: "",
             summarizer,
             codeHint: {
@@ -158,16 +159,30 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         };
     }
 
+    /**
+     * Requests a driver + data store storage URL.
+     * @param resolvedUrl - The driver resolved URL.
+     * @param relativeUrl - The relative data store path URL.
+     * For requesting a driver URL, this value should always be '/'. If an empty string is passed, then dataStorePath
+     * will be extracted from the resolved url if present.
+     * @param packageInfoSource - optional, represents container package information to be included in url.
+     */
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
         packageInfoSource?: IContainerPackageInfo,
     ): Promise<string> {
+        const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+
         let dataStorePath = relativeUrl;
+        if (relativeUrl === "" && odspResolvedUrl.dataStorePath !== undefined) {
+            // If the user has passed an empty dataStorePath, then extract it from the resolved url.
+            dataStorePath = odspResolvedUrl.dataStorePath;
+        }
         if (dataStorePath.startsWith("/")) {
             dataStorePath = dataStorePath.substr(1);
-        }
-        const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+        } 
+
         // back-compat: GitHub #9653
         const isFluidPackage = (pkg: any) =>
             typeof pkg === "object"

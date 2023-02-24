@@ -81,7 +81,6 @@ export {
 	MaxNodesInBlock,
 	MergeBlock,
 	MergeNode,
-	MergeTreeStats,
 	MinListener,
 	NodeAction,
 	ordinalToArray,

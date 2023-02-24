@@ -133,6 +133,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
 
     fileVersion: string | undefined;
 
+    dataStorePath?: string;
+
     /**
      * Sharing link data created for the ODSP item.
      * Contains information about either sharing link created while creating a new file or

@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import type { InstructionalPrompt } from "../instructionalPromptWriter";
+import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter";
 import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
@@ -262,6 +262,7 @@ export const promptToRelease: StateHandlerFunction = async (
     assert(context !== undefined, "Context is undefined.");
 
     const flag = isReleaseGroup(releaseGroup) ? "-g" : "-p";
+
     const prompt: InstructionalPrompt = {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         title: `READY TO RELEASE version ${chalk.bold(releaseVersion!)}!`,
@@ -273,7 +274,7 @@ export const promptToRelease: StateHandlerFunction = async (
                 )} build for the following release group in ADO for branch ${chalk.blue(
                     chalk.bold(context.originalBranchName),
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                )}:\n\n    ${chalk.green(chalk.bold(releaseGroup!))}`,
+                )}:\n\n    ${chalk.green(chalk.bold(releaseGroup!))}: ${mapADOLinks(releaseGroup)}`,
             },
             {
                 title: "NEXT",

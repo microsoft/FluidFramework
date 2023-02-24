@@ -70,6 +70,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly entryPoint?: IFluidHandle<FluidObject>;
     // (undocumented)

@@ -261,14 +261,14 @@ export class NodegitRepositoryManager extends RepositoryManagerBase {
     }
 
     protected async createRefCore(
-        createRefParams: resources.ICreateRefParams,
+        createRefParams: resources.ICreateRefParams & { force?: boolean },
         externalWriterConfig?: IExternalWriterConfig,
     ): Promise<resources.IRef> {
         const ref = await nodegit.Reference.create(
             this.repo,
             createRefParams.ref,
             nodegit.Oid.fromString(createRefParams.sha),
-            0,
+            createRefParams.force ? 1 : 0,
             "");
 
         if (externalWriterConfig?.enabled) {
@@ -386,13 +386,13 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
         externalStorageManager: IExternalStorageManager,
         lumberjackBaseProperties: Record<string, any>,
         enableRepositoryManagerMetrics: boolean): IRepositoryManager {
-            return new NodegitRepositoryManager(
-                repoOwner,
-                repoName,
-                repo,
-                gitdir,
-                externalStorageManager,
-                lumberjackBaseProperties,
-                enableRepositoryManagerMetrics);
+        return new NodegitRepositoryManager(
+            repoOwner,
+            repoName,
+            repo,
+            gitdir,
+            externalStorageManager,
+            lumberjackBaseProperties,
+            enableRepositoryManagerMetrics);
     }
 }

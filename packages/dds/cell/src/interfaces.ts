@@ -101,6 +101,12 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
      * Delete the value from the cell.
      */
     delete(): void;
+
+    /**
+     * @alpha
+     * @returns the AttributionKey associated with the cell's most recent change.
+     */
+    getAttribution(): AttributionKey | undefined;
 }
 
 /**
@@ -118,4 +124,49 @@ export interface ICellLocalOpMetadata<T = any> {
      * The value of the {@link ISharedCell} prior to this operation (op).
      */
     previousValue?: Serializable<T> ;
+}
+
+/**
+ * Options related to attribution
+ *
+ * @alpha
+ */
+export interface ICellOptions {
+    attribution?: ICellAttributionOptions;
+}
+
+/**
+ * This enables the cell to store the attribution information which can be accessed with the runtime
+ * (i.e. who creeated the content and when it was created)
+ *
+ * default: false
+ *
+ * @alpha
+ */
+export interface ICellAttributionOptions {
+    track?: boolean;
+}
+
+/**
+ * Can be indexed into the ContainerRuntime in order to retrieve attribution info.
+ *
+ * @alpha
+ */
+export interface AttributionKey {
+    /**
+     * The type of attribution this key corresponds to.
+     *
+     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+     * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
+     *
+     * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
+     * AttributionKey a discriminated union on the 'type' field. This would empower
+     * consumers with the ability to implement different attribution policies.
+    */
+    type: "op";
+
+	/**
+	 * The sequenceNumber of the op this attribution key is for.
+	 */
+    seq: number;
 }

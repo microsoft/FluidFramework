@@ -67,7 +67,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
                     ...this.requestHandlers,
                 ),
                 this.runtimeOptions,
-                undefined, // containerScope
+                context.scope,
                 existing,
             );
 

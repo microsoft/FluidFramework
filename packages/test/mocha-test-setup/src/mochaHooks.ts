@@ -5,7 +5,7 @@
 
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { Context } from "mocha";
+import * as mochaModule from "mocha";
 import { pkgName } from "./packageVersion";
 
 const testVariant = process.env.FLUID_TEST_VARIANT;
@@ -52,7 +52,7 @@ export const mochaHooks = {
             return currentTestLogger ?? originalLogger;
         };
     },
-    beforeEach() {
+    beforeEach(this: Mocha.Context) {
         // Suppress console.log if not verbose mode
         if (process.env.FLUID_TEST_VERBOSE === undefined) {
             console.log = () => { };
@@ -60,8 +60,7 @@ export const mochaHooks = {
             console.warn = () => { };
         }
         // save the test name can and clear the previous logger (if afterEach didn't get ran and it got left behind)
-        const context = this as any as Context;
-        currentTestName = context.currentTest?.fullTitle();
+        currentTestName = this.currentTest?.fullTitle();
         currentTestLogger = undefined;
 
         // send event on test start
@@ -73,16 +72,15 @@ export const mochaHooks = {
             hostName: pkgName,
         });
     },
-    afterEach() {
+    afterEach(this: Mocha.Context) {
         // send event on test end
-        const context = this as any as Context;
         originalLogger.send({
             category: "generic",
             eventName: "fluid:telemetry:Test_end",
             testName: currentTestName,
-            state: context.currentTest?.state,
-            duration: context.currentTest?.duration,
-            timedOut: context.currentTest?.timedOut,
+            state: this.currentTest?.state,
+            duration: this.currentTest?.duration,
+            timedOut: this.currentTest?.timedOut,
             testVariant,
             hostName: pkgName,
         });
@@ -95,4 +93,8 @@ export const mochaHooks = {
         currentTestLogger = undefined;
         currentTestName = undefined;
     },
+};
+
+globalThis.getMochaModule = () => {
+    return mochaModule;
 };

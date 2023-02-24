@@ -40,10 +40,12 @@ export async function resolveWithLocationRedirectionHandling<T>(
             }
             logger?.sendTelemetryEvent({ eventName: "LocationRedirectionError" });
             const resolvedUrl = error.redirectUrl;
-            // Generate the new request with new location details from the resolved url.
+            // Generate the new request with new location details from the resolved url. For datastore/relative path,
+            // we don't need to pass "/" as host could have asked for a specific data store. So driver need to
+            // extract it from the resolved url.
             const absoluteUrl = await urlResolver.getAbsoluteUrl(
                 resolvedUrl,
-                "/",
+                "",
                 undefined,
             );
             req = { url: absoluteUrl, headers: req.headers };

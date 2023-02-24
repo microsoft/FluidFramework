@@ -152,6 +152,7 @@ export class RouterliciousTestDriver implements ITestDriver {
             this.tenantSecret,
             {
                 id: uuid(),
+                name: uuid(),
             },
         );
 

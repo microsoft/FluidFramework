@@ -42,7 +42,6 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
     async function createContainer(): Promise<IContainer> {
         const runtimeOptions: IContainerRuntimeOptions = {
             summaryOptions: {
-                disableSummaries: true,
                 summaryConfigOverrides: {
                     state: "disabled",
                 },

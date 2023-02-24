@@ -45,7 +45,9 @@ export function create(
     async function createSummary(
         tenantId: string,
         authorization: string,
-        params: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        params: IWholeSummaryPayload,
+        initial?: boolean,
+    ): Promise<IWriteSummaryResponse> {
         const service = await utils.createGitService(
             config,
             tenantId,
@@ -53,7 +55,7 @@ export function create(
             tenantService,
             cache,
             asyncLocalStorage);
-        return service.createSummary(params);
+        return service.createSummary(params, initial);
     }
 
     async function deleteSummary(
@@ -92,7 +94,20 @@ export function create(
     router.post("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const summaryP = createSummary(request.params.tenantId, request.get("Authorization"), request.body);
+            // request.query type is { [string]: string } but it's actually { [string]: any }
+            // Account for possibilities of undefined, boolean, or string types. A number will be false.
+            const initial: boolean | undefined = typeof request.query.initial === "undefined"
+                ? undefined
+                : typeof request.query.initial === "boolean"
+                    ? request.query.initial
+                    : request.query.initial === "true";
+
+            const summaryP = createSummary(
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.body,
+                initial,
+            );
 
             utils.handleResponse(
                 summaryP,

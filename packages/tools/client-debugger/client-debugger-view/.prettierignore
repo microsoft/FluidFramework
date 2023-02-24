@@ -14,3 +14,6 @@ api-report/*
 # Test output
 coverage
 nyc
+
+# Generated type-tests
+**/*.generated.ts

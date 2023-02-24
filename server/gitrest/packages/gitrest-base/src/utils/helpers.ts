@@ -221,7 +221,12 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
 export async function getRepoManagerFromWriteAPI(
     repoManagerFactory: IRepositoryManagerFactory,
     repoManagerParams: IRepoManagerParams,
-    repoPerDocEnabled: boolean) {
+    repoPerDocEnabled: boolean,
+    optimizeForInitialSummary?: boolean,
+) {
+    if (optimizeForInitialSummary) {
+        return repoManagerFactory.create({ ...repoManagerParams, optimizeForInitialSummary });
+    }
     try {
         return await repoManagerFactory.open(repoManagerParams);
     } catch (error: any) {

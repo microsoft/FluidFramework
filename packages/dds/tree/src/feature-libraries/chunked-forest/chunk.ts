@@ -8,9 +8,8 @@ import {
     GlobalFieldKeySymbol,
     ITreeCursor,
     ITreeCursorSynchronous,
-    symbolFromKey,
+    rootFieldKeySymbol,
 } from "../../core";
-import { brand } from "../../util";
 
 export interface ReferenceCounted {
     referenceAdded(): void;
@@ -41,7 +40,7 @@ export interface TreeChunk extends ReferenceCounted {
     /**
      * Creates a cursor for navigating the content of this chunk.
      *
-     * Starts in "nodes" mode at the first top level node.
+     * Starts in "fields" mode in a `dummyRoot` field containing the top level nodes.
      *
      * This cursor does not own a reference to the data:
      * it is up to the caller of this function to ensure the cursor is not used after they release their owning ref to this chunk.
@@ -80,9 +79,12 @@ export abstract class ReferenceCountedBase implements ReferenceCounted {
     protected abstract dispose(): void;
 }
 
-export const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
-    brand("a1499167-8421-4639-90a6-4e543b113b06: dummyRoot"),
-);
+/**
+ * The key used for the field that contains the root of chunks when not parented anywhere.
+ *
+ * For now this is using the document root key to ease testing/compatibility, but this may change.
+ */
+export const dummyRoot: GlobalFieldKeySymbol = rootFieldKeySymbol;
 
 /**
  * A symbol for extracting a TreeChunk from {@link ITreeCursor}.

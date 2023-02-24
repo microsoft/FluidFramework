@@ -160,7 +160,6 @@ export function TestPack(verbose = true) {
             return;
         }
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
-        const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         const stats = MergeTree.getStats(client.mergeTree);
         const packTime = stats.packTime;
         const ordTime = stats.ordTime;
@@ -168,9 +167,7 @@ export function TestPack(verbose = true) {
         const avePackTime = ((packTime ?? 0) / (client.accumOps)).toFixed(1);
         const aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         const aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
-        if (client.localOps > 0) {
-            console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
-        }
+
         console.log(`ord time average: ${aveOrdTime}us max ${stats.maxOrdTime}us`);
         console.log(`${client.longClientId} accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - pack ${avePackTime} ave window ${aveWindow}`);
         console.log(`${client.longClientId} accum window time ${client.accumWindowTime} us ave window time not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
@@ -672,7 +669,7 @@ export function TestPack(verbose = true) {
                 reportTiming(clients[2]);
                 let totalTime = testServer.accumTime + testServer.accumWindowTime;
                 for (const client of clients) {
-                    totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
+                    totalTime += (client.accumTime + client.accumWindowTime);
                 }
                 if (verbose) {
                     console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);

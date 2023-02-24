@@ -6,9 +6,22 @@
 /* eslint-disable import/no-internal-modules */
 import { SharedMap } from "fluid-framework";
 
+import {
+    IContainer,
+    IFluidModuleWithDetails,
+    IRuntimeFactory,
+} from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import { DOProviderContainerRuntimeFactory, FluidContainer } from "@fluidframework/fluid-static";
-
-import { getSessionStorageContainer } from "@fluid-experimental/get-container";
+import {
+    LocalDocumentServiceFactory,
+    LocalResolver,
+    LocalSessionStorageDbFactory,
+} from "@fluidframework/local-driver";
+import {
+    ILocalDeltaConnectionServer,
+    LocalDeltaConnectionServer,
+} from "@fluidframework/server-local-server";
 
 import { DiceRollerController } from "../src/controller";
 import { makeAppView } from "../src/view";
@@ -21,6 +34,65 @@ if (window.location.hash.length === 0) {
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
+
+// The local server needs to be shared across the Loader instances for collaboration to happen
+const localServerMap = new Map<string, ILocalDeltaConnectionServer>();
+
+const urlResolver = new LocalResolver();
+
+/**
+ * Connect to the local SessionStorage Fluid service and retrieve a Container with the given ID running the given code.
+ * @param documentId - The document id to retrieve or create
+ * @param containerRuntimeFactory - The container factory to be loaded in the container
+ */
+export async function getSessionStorageContainer(
+    documentId: string,
+    containerRuntimeFactory: IRuntimeFactory,
+    createNew: boolean,
+): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
+    let localServer = localServerMap.get(documentId);
+    if (localServer === undefined) {
+        localServer = LocalDeltaConnectionServer.create(
+            new LocalSessionStorageDbFactory(documentId),
+        );
+        localServerMap.set(documentId, localServer);
+    }
+
+    const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
+    const url = `${window.location.origin}/${documentId}`;
+
+    // To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
+    // The expected format of that response is an IFluidModule with a fluidExport.
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        return {
+            module: { fluidExport: containerRuntimeFactory },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
+
+    const codeLoader = { load };
+
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+    });
+
+    let container: IContainer;
+    let attach: (() => Promise<void>) | undefined;
+
+    if (createNew) {
+        // We're not actually using the code proposal (our code loader always loads the same module regardless of the
+        // proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
+        // proposal.
+        container = await loader.createDetachedContainer({ package: "", config: {} });
+        attach = async () => container.attach({ url });
+    } else {
+        container = await loader.resolve({ url });
+    }
+
+    return { container, attach };
+}
 
 export const containerConfig = {
     name: "dice-roller-container",
@@ -51,7 +123,7 @@ export async function createContainerAndRenderInElement(
 ) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
-    const container = await getSessionStorageContainer(
+    const { container, attach } = await getSessionStorageContainer(
         documentId,
         new DOProviderContainerRuntimeFactory(containerConfig),
         createNewFlag,
@@ -61,6 +133,7 @@ export async function createContainerAndRenderInElement(
     const fluidContainer = (await container.request({ url: "/" })).value;
     if (createNewFlag) {
         await initializeNewContainer(fluidContainer);
+        await attach?.();
     }
 
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
@@ -69,10 +142,6 @@ export async function createContainerAndRenderInElement(
     const diceRollerController2 = new DiceRollerController(sharedMap2);
 
     element.append(makeAppView([diceRollerController, diceRollerController2]));
-
-    // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    window["fluidStarted"] = true;
 }
 
 /**
@@ -90,6 +159,10 @@ async function setup() {
     }
     // The second time we don't need to createNew because we know a Container exists.
     await createContainerAndRenderInElement(rightElement, false);
+
+    // Setting "fluidStarted" is just for our test automation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    window["fluidStarted"] = true;
 }
 
 setup().catch((e) => {

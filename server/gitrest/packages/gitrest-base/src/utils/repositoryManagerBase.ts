@@ -141,7 +141,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
     }
 
     public async createRef(
-        createRefParams: git.ICreateRefParams,
+        createRefParams: git.ICreateRefParams & { force?: boolean },
         externalWriterConfig?: IExternalWriterConfig,
     ): Promise<git.IRef> {
         return this.enableRepositoryManagerMetrics ?

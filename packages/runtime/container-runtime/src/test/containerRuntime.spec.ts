@@ -23,6 +23,7 @@ import {
     MockLogger,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { ContainerMessageType, ContainerRuntime, IContainerRuntimeOptions } from "../containerRuntime";
@@ -31,6 +32,10 @@ import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
+        const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+            getRawConfig: (name: string): ConfigTypes => settings[name],
+        }));
+
         describe("flushMode setting", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
@@ -46,25 +51,25 @@ describe("Runtime", () => {
             });
 
             it("Default flush mode", async () => {
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {}, // runtimeOptions
-                );
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    runtimeOptions: {},
+                });
 
                 assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);
             });
 
             it("Override default flush mode using options", async () => {
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    runtimeOptions: {
                         flushMode: FlushMode.Immediate,
                     },
-                );
+                });
 
                 assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
             });
@@ -108,11 +113,11 @@ describe("Runtime", () => {
 
                     beforeEach(async () => {
                         mockContext = getMockContext();
-                        containerRuntime = await ContainerRuntime.load(
-                            mockContext as IContainerContext,
-                            [],
-                            undefined, // requestHandler
-                            {
+                        containerRuntime = await ContainerRuntime.loadRuntime({
+                            context: mockContext as IContainerContext,
+                            registryEntries: [],
+                            existing: false,
+                            runtimeOptions: {
                                 summaryOptions: {
                                     summaryConfigOverrides: {
                                         state: "disabled",
@@ -120,7 +125,7 @@ describe("Runtime", () => {
                                 },
                                 flushMode,
                             },
-                        );
+                        });
                         containerErrors.length = 0;
                         submittedOpsMetdata.length = 0;
                         opFakeSequenceNumber = 1;
@@ -211,46 +216,149 @@ describe("Runtime", () => {
                 });
             }));
 
+        describe("Op reentry enforcement", () => {
+            let containerRuntime: ContainerRuntime;
+            const getMockContext = (
+                settings: Record<string, ConfigTypes> = {},
+                logger: ITelemetryLogger = new MockLogger(),
+            ): Partial<IContainerContext> => ({
+                attachState: AttachState.Attached,
+                deltaManager: new MockDeltaManager(),
+                quorum: new MockQuorumClients(),
+                taggedLogger:
+                    mixinMonitoringContext(logger, configProvider(settings)) as unknown as MockLogger,
+                clientDetails: { capabilities: { interactive: true } },
+                closeFn: (_error?: ICriticalContainerError): void => { },
+                updateDirtyContainerState: (_dirty: boolean) => { },
+            });
+
+            it("By default, don't enforce the op reentry check", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                assert.ok(containerRuntime.ensureNoDataModelChanges(() => {
+                    containerRuntime.submitDataStoreOp("id", "test");
+                    return true;
+                }));
+
+                assert.ok(containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() => {
+                            containerRuntime.submitDataStoreOp("id", "test");
+                            return true;
+                        }),
+                    )));
+            });
+
+            it("If option enabled, enforce the op reentry check", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        enableOpReentryCheck: true,
+                    }, // runtimeOptions
+                );
+
+                assert.throws(() => containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.submitDataStoreOp("id", "test"),
+                ));
+
+                assert.throws(() => containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() =>
+                            containerRuntime.submitDataStoreOp("id", "test"),
+                        ),
+                    ),
+                ));
+            });
+
+            it("If option enabled but disabled via feature gate, don't enforce the op reentry check", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({
+                        "Fluid.ContainerRuntime.DisableOpReentryCheck": true,
+                    }) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        enableOpReentryCheck: true,
+                    }, // runtimeOptions
+                );
+
+                containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.submitDataStoreOp("id", "test"),
+                );
+
+                containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() =>
+                            containerRuntime.submitDataStoreOp("id", "test"),
+                        ),
+                    ));
+            });
+
+            it("Report at most 5 reentrant ops", async () => {
+                const mockLogger = new MockLogger();
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({}, mockLogger) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                mockLogger.clear();
+                containerRuntime.ensureNoDataModelChanges(() => {
+                    for (let i = 0; i < 10; i++) {
+                        containerRuntime.submitDataStoreOp("id", "test");
+                    }
+                });
+
+                // We expect only 5 events
+                mockLogger.assertMatchStrict(Array.from(Array(5).keys()).map(() => ({
+                    eventName: "ContainerRuntime:OpReentry",
+                    error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
+                })));
+            });
+        });
+
         describe("orderSequentially with rollback", () =>
             [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
                     const containerErrors: ICriticalContainerError[] = [];
 
-                    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-                        getRawConfig: (name: string): ConfigTypes => settings[name],
+                    const getMockContext = ((): Partial<IContainerContext> => ({
+                        attachState: AttachState.Attached,
+                        deltaManager: new MockDeltaManager(),
+                        quorum: new MockQuorumClients(),
+                        taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
+                            "Fluid.ContainerRuntime.EnableRollback": true,
+                        })) as unknown as MockLogger,
+                        clientDetails: { capabilities: { interactive: true } },
+                        closeFn: (error?: ICriticalContainerError): void => {
+                            if (error !== undefined) {
+                                containerErrors.push(error);
+                            }
+                        },
+                        updateDirtyContainerState: (dirty: boolean) => { },
                     }));
 
-                    const getMockContext = ((): Partial<IContainerContext> => {
-                        return {
-                            attachState: AttachState.Attached,
-                            deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorumClients(),
-                            taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
-                                "Fluid.ContainerRuntime.EnableRollback": true,
-                            })) as unknown as MockLogger,
-                            clientDetails: { capabilities: { interactive: true } },
-                            closeFn: (error?: ICriticalContainerError): void => {
-                                if (error !== undefined) {
-                                    containerErrors.push(error);
-                                }
-                            },
-                            updateDirtyContainerState: (dirty: boolean) => { },
-                        };
-                    });
-
                     beforeEach(async () => {
-                        containerRuntime = await ContainerRuntime.load(
-                            getMockContext() as IContainerContext,
-                            [],
-                            undefined, // requestHandler
-                            {
+                        containerRuntime = await ContainerRuntime.loadRuntime({
+                            context: getMockContext() as IContainerContext,
+                            registryEntries: [],
+                            existing: false,
+                            runtimeOptions: {
                                 summaryOptions: {
-                                    disableSummaries: true,
+                                    summaryConfigOverrides: { state: "disabled" },
                                 },
                                 flushMode,
                             },
-                        );
+                        });
                         containerErrors.length = 0;
                     });
 
@@ -301,12 +409,13 @@ describe("Runtime", () => {
             it("should NOT be set to dirty if context is attached with no pending ops", async () => {
                 const mockContext = createMockContext(AttachState.Attached, false);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    runtimeOptions: undefined,
+                    containerScope: {},
+            });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
             });
@@ -314,12 +423,13 @@ describe("Runtime", () => {
             it("should be set to dirty if context is attached with pending ops", async () => {
                 const mockContext = createMockContext(AttachState.Attached, true);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+            });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
@@ -327,12 +437,13 @@ describe("Runtime", () => {
             it("should be set to dirty if context is attaching", async () => {
                 const mockContext = createMockContext(AttachState.Attaching, false);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+                });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
@@ -340,12 +451,13 @@ describe("Runtime", () => {
             it("should be set to dirty if context is detached", async () => {
                 const mockContext = createMockContext(AttachState.Detached, false);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+                });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
@@ -415,18 +527,20 @@ describe("Runtime", () => {
 
             beforeEach(async () => {
                 containerErrors.length = 0;
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {
+
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {
                         summaryOptions: {
                             summaryConfigOverrides: {
                                 state: "disabled",
                             },
                         },
                     },
-                );
+                });
             });
 
             function patchRuntime(
@@ -581,12 +695,13 @@ describe("Runtime", () => {
             });
 
             before(async () => {
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {}, // runtimeOptions
-                );
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+                });
             });
 
             it("cannot create detached root data store with slashes in id", async () => {

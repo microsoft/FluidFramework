@@ -836,12 +836,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _disposed = false;
     private disposeCore(error?: ICriticalContainerError) {
-        assert(!this._disposed, "Container already disposed");
+        assert(!this._disposed, 0x54c /* Container already disposed */);
         this._disposed = true;
 
         try {
             // Ensure that we raise all key events even if one of these throws
             try {
+                // Raise event first, to ensure we capture _lifecycleState before transition.
+                // This gives us a chance to know what errors happened on open vs. on fully loaded container.
+                this.mc.logger.sendTelemetryEvent(
+                    {
+                        eventName: "ContainerDispose",
+                        category: error === undefined ? "generic" : "error",
+                    },
+                    error,
+                );
+
                 // ! Progressing from "closed" to "disposing" is not allowed
                 if (this._lifecycleState !== "closed") {
                     this._lifecycleState = "disposing";

@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Logger } from "@fluidframework/build-tools";
 import {
     ADOSizeComparator,
     BundleComparisonResult,
@@ -24,21 +23,17 @@ const adoConstants = {
 };
 
 const localReportPath = "./artifacts/bundleAnalysis";
-let logger: Logger;
 
 export async function dangerfile() {
     if (process.env.ADO_API_TOKEN === undefined) {
-        logger.errorLog("no env ado api token provided");
+        throw new Error("no env ado api token provided");
     }
 
     if (process.env.DANGER_GITHUB_API_TOKEN === undefined) {
-        logger.errorLog("no env github api token provided");
+        throw new Error("no env github api token provided");
     }
 
-    const adoConnection = getAzureDevopsApi(
-        process.env.ADO_API_TOKEN as string,
-        adoConstants.orgUrl,
-    );
+    const adoConnection = getAzureDevopsApi(process.env.ADO_API_TOKEN, adoConstants.orgUrl);
     const sizeComparator = new ADOSizeComparator(
         adoConstants,
         adoConnection,
@@ -54,8 +49,8 @@ export async function dangerfile() {
     if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
         markdown(result.message);
     } else {
-        logger.info("No size changes detected, skipping posting PR comment");
+        console.log("No size changes detected, skipping posting PR comment");
     }
 }
 
-dangerfile().catch((error: string) => logger.errorLog(error));
+dangerfile().catch((error: string) => console.error(error));

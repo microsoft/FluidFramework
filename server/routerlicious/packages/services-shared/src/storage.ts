@@ -140,7 +140,13 @@ export class DocumentStorage implements IDocumentStorage {
         const initialSummaryUploadMetric =
             Lumberjack.newLumberMetric(LumberEventName.CreateDocInitialSummaryWrite, lumberjackProperties);
         try {
-            const handle = await uploadManager.writeSummaryTree(fullTree, "", "container", 0);
+            const handle = await uploadManager.writeSummaryTree(
+                fullTree, /* summaryTree */
+                "", /* parentHandle */
+                "container", /* summaryType */
+                0, /* sequenceNumber */
+                true, /* initial */
+            );
             let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
 
             if (!this.enableWholeSummaryUpload) {
@@ -211,19 +217,19 @@ export class DocumentStorage implements IDocumentStorage {
         try {
             const collection = await this.databaseManager.getDocumentCollection();
             const result = await collection.findOrCreate(
-            {
-                documentId,
-                tenantId,
-            },
-            {
-                createTime: Date.now(),
-                deli: JSON.stringify(deli),
-                documentId,
-                session,
-                scribe: JSON.stringify(scribe),
-                tenantId,
-                version: "0.1",
-            });
+                {
+                    documentId,
+                    tenantId,
+                },
+                {
+                    createTime: Date.now(),
+                    deli: JSON.stringify(deli),
+                    documentId,
+                    session,
+                    scribe: JSON.stringify(scribe),
+                    tenantId,
+                    version: "0.1",
+                });
             updateDocumentCollectionMetric.success("Successfully updated document collection");
             return result;
         } catch (error: any) {

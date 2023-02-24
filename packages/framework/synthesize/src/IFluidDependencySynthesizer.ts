@@ -16,7 +16,7 @@ export interface IProvideFluidDependencySynthesizer {
 }
 
 /**
- * IFluidDependencySynthesizer can generate IFluidObjects based on the IProvideFluidObject pattern.
+ * IFluidDependencySynthesizer can generate FluidObjects based on the IProvideFluidObject pattern.
  * It allow for registering providers and uses synthesize to generate a new object with the optional
  * and required types.
  */

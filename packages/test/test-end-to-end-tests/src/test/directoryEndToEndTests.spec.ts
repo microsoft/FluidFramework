@@ -247,7 +247,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 
                 expectAllBeforeValues("testKey3", "/", "value3.1", "value3.2", undefined);
 
-                await provider.ensureSynchronized(this.timeout() / 3);
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey3", "/", undefined);
             });
@@ -511,7 +511,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", "value3.2", undefined);
 
-                await provider.ensureSynchronized(this.timeout() / 3);
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey3", "/testSubDir", undefined);
             });
@@ -576,7 +576,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
             const root2SubDir = sharedDirectory2.createSubDirectory("testSubDir");
             root2SubDir.set("testKey2", "testValue2");
 
-            await provider.ensureSynchronized(this.timeout() / 2);
+            await provider.ensureSynchronized();
 
             assert.strictEqual(sharedDirectory1.getSubDirectory("testSubDir"), root1SubDir,
                 "Created two separate subdirectories in root1");

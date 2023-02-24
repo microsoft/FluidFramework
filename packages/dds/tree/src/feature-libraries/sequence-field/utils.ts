@@ -457,7 +457,7 @@ function tryMergeMoves(
     const leftEffect = getOrAddEffect(moveEffects, end, rev, left.id);
     if (leftEffect.mergeRight === right.id) {
         const rightEffect = getMoveEffect(moveEffects, end, rev, right.id);
-        assert(rightEffect.mergeLeft === left.id, "Inconsistent merge info");
+        assert(rightEffect.mergeLeft === left.id, 0x54b /* Inconsistent merge info */);
         const nextId = rightEffect.mergeRight;
         if (nextId !== undefined) {
             makeMergeable(moveEffects, end, rev, left.id, nextId);

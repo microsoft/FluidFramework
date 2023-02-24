@@ -333,17 +333,17 @@ describe("EditManager", () => {
         for (const scenario of buildScenario([], meta)) {
             // Uncomment the code below to log the titles of generated scenarios.
             // This is helpful for creating a unit test out of a generated scenario that fails.
-            const title = scenario
-                .map((s) => {
-                    if (s.type === "Pull") {
-                        return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
-                    } else if (s.type === "Ack") {
-                        return `Ack(${s.seq})`;
-                    }
-                    return `Push(${s.seq})`;
-                })
-                .join("|");
-            console.debug(title);
+            // const title = scenario
+            //     .map((s) => {
+            //         if (s.type === "Pull") {
+            //             return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+            //         } else if (s.type === "Ack") {
+            //             return `Ack(${s.seq})`;
+            //         }
+            //         return `Push(${s.seq})`;
+            //     })
+            //     .join("|");
+            // console.debug(title);
             runUnitTestScenario(undefined, scenario);
         }
     });

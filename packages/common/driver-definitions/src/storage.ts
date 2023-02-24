@@ -92,10 +92,20 @@ export interface IDocumentDeltaStorageService {
     ): IStream<ISequencedDocumentMessage[]>;
 }
 
-// DO NOT INCREASE THIS TYPE'S VALUE - If a driver started using a larger value, GC would likely start closing sessions
+// DO NOT INCREASE THIS TYPE'S VALUE
+// If a driver started using a larger value,
+// internal assumptions of the Runtime's GC feature will be violated
+// DO NOT INCREASE THIS TYPE'S VALUE
 export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
+/**
+ * Policies describing attributes or characteristics of the driver's storage service,
+ * to direct how other components interact with the driver
+ */
 export interface IDocumentStorageServicePolicies {
+    /**
+     * Should the Loader implement any sort of pre-fetching or caching mechanism?
+     */
     readonly caching?: LoaderCachingPolicy;
 
     /**
@@ -105,10 +115,12 @@ export interface IDocumentStorageServicePolicies {
     readonly minBlobSize?: number;
 
     /**
+     * IMPORTANT: This policy MUST be set to 5 days and PROPERLY ENFORCED for drivers that are used
+     * in applications where Garbage Collection is enabled. Otherwise data loss may occur.
+     *
+     * This policy pertains to requests for the latest snapshot from the service.
+     * If set, it means that the driver guarantees not to use a cached value that was fetched more than 5 days ago.
      * If undefined, the driver makes no guarantees about the age of snapshots used for loading.
-     * Otherwise, the driver will not use snapshots that were added to the cache more than 5 days ago (per client clock)
-     * The value MUST be 5 days if defined. This fixed upper bound is necessary for the Garbage Collection feature
-     * in the Runtime layer to reliably compute when an object will never be referenced again and can be deleted.
      */
     readonly maximumCacheDurationMs?: FiveDaysMs;
 }

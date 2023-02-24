@@ -137,6 +137,11 @@ redisForThrottling:
   port: 6379
   tls: false
 
+redisForTenantCache:
+  url: redis_url
+  port: 6379
+  tls: false
+
 kafka:
   topics:
     rawdeltas: rawdeltas

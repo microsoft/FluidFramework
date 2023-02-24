@@ -48,10 +48,14 @@ const testContainerConfig: ITestContainerConfig = {
 
 const usageErrorMessage = "Empty file summary creation isn't supported in this driver.";
 
+const containerCloseAndDisposeUsageErrors = [
+    { eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
+    { eventName: "fluid:telemetry:Container:ContainerDispose", error: usageErrorMessage },
+];
 const ContainerCloseUsageError: ExpectedEvents = {
-    local: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
-    routerlicious: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
-    tinylicious: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
+    local: containerCloseAndDisposeUsageErrors,
+    routerlicious: containerCloseAndDisposeUsageErrors,
+    tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
 describeFullCompat("blobs", (getTestObjectProvider) => {
@@ -96,7 +100,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
-        await provider.ensureSynchronized(this.timeout() / 3);
+        await provider.ensureSynchronized();
 
         const blobHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>(testKey);
         assert(blobHandle);
@@ -147,7 +151,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         // validate on remote container, local container, and container loaded from summary
         for (const container of [container1, container2, await provider.loadTestContainer(testContainerConfig)]) {
             const dataStore2 = await requestFluidObject<ITestDataObject>(container, "default");
-            await provider.ensureSynchronized(this.timeout() / 3);
+            await provider.ensureSynchronized();
             const handle = dataStore2._root.get<IFluidHandle<SharedString>>("sharedString");
             assert(handle);
             const sharedString2 = await handle.get();

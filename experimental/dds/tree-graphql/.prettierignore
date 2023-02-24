@@ -16,3 +16,6 @@ _api-extractor-temp/**
 # Since in practice this is likely only a tabs vs spaces issue, this file has just been converted to match the rest of the
 # repository.
 package.json
+
+# Generated type-tests
+**/*.generated.ts

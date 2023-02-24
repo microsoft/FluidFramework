@@ -40,30 +40,6 @@ use_old_VariableDeclaration_agentSchedulerId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_CompressionAlgorithms": {"forwardCompat": false}
-*/
-declare function get_old_EnumDeclaration_CompressionAlgorithms():
-    TypeOnly<old.CompressionAlgorithms>;
-declare function use_current_EnumDeclaration_CompressionAlgorithms(
-    use: TypeOnly<current.CompressionAlgorithms>);
-use_current_EnumDeclaration_CompressionAlgorithms(
-    get_old_EnumDeclaration_CompressionAlgorithms());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_CompressionAlgorithms": {"backCompat": false}
-*/
-declare function get_current_EnumDeclaration_CompressionAlgorithms():
-    TypeOnly<current.CompressionAlgorithms>;
-declare function use_old_EnumDeclaration_CompressionAlgorithms(
-    use: TypeOnly<old.CompressionAlgorithms>);
-use_old_EnumDeclaration_CompressionAlgorithms(
-    get_current_EnumDeclaration_CompressionAlgorithms());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ContainerMessageType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ContainerMessageType():
@@ -156,6 +132,7 @@ declare function get_current_VariableDeclaration_DefaultSummaryConfiguration():
 declare function use_old_VariableDeclaration_DefaultSummaryConfiguration(
     use: TypeOnly<typeof old.DefaultSummaryConfiguration>);
 use_old_VariableDeclaration_DefaultSummaryConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_current_VariableDeclaration_DefaultSummaryConfiguration());
 
 /*
@@ -1080,6 +1057,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -1176,6 +1154,7 @@ declare function get_current_InterfaceDeclaration_ISummaryBaseConfiguration():
 declare function use_old_InterfaceDeclaration_ISummaryBaseConfiguration(
     use: TypeOnly<old.ISummaryBaseConfiguration>);
 use_old_InterfaceDeclaration_ISummaryBaseConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryBaseConfiguration());
 
 /*
@@ -1248,6 +1227,7 @@ declare function get_current_TypeAliasDeclaration_ISummaryConfiguration():
 declare function use_old_TypeAliasDeclaration_ISummaryConfiguration(
     use: TypeOnly<old.ISummaryConfiguration>);
 use_old_TypeAliasDeclaration_ISummaryConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_ISummaryConfiguration());
 
 /*
@@ -1272,6 +1252,7 @@ declare function get_current_InterfaceDeclaration_ISummaryConfigurationDisableHe
 declare function use_old_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics(
     use: TypeOnly<old.ISummaryConfigurationDisableHeuristics>);
 use_old_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics());
 
 /*
@@ -1320,6 +1301,7 @@ declare function get_current_InterfaceDeclaration_ISummaryConfigurationHeuristic
 declare function use_old_InterfaceDeclaration_ISummaryConfigurationHeuristics(
     use: TypeOnly<old.ISummaryConfigurationHeuristics>);
 use_old_InterfaceDeclaration_ISummaryConfigurationHeuristics(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryConfigurationHeuristics());
 
 /*

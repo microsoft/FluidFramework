@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import random from "random-js";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes";
 import {
     appendToMergeTreeDeltaRevertibles,
@@ -42,15 +42,12 @@ describe("MergeTree.Client", () => {
     doOverRanges(defaultOptions, ({ minLength: minLen, revertOps: opsWithRevert, revertOps }) => {
         for (const ackBeforeRevert of defaultOptions.ackBeforeRevert) {
             it(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${opsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
-                const mt = random.engines.mt19937();
-                mt.seedWithArray([
-                    0xDEADBEEF,
-                    0xFEEDBED,
+                const random = makeRandom(
                     minLen,
                     revertOps,
                     [...ackBeforeRevert].reduce<number>((pv, cv) => pv + cv.charCodeAt(0), 0),
                     opsWithRevert,
-                ]);
+                );
 
                 const clients = createClientsAtInitialState(
                     {
@@ -66,7 +63,7 @@ describe("MergeTree.Client", () => {
                     {
                         // init with random values
                         const initialMsgs = generateOperationMessagesForClients(
-                            mt,
+                            random,
                             seq,
                             clients.all,
                             logger,
@@ -82,7 +79,12 @@ describe("MergeTree.Client", () => {
 
                     const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
                     const clientBDriver = createRevertDriver(clients.B);
-                    const oldCallback = clients.B.mergeTreeDeltaCallback;
+                    const deltaCallback = (op, delta) => {
+                        if (op.sequencedMessage === undefined) {
+                            appendToMergeTreeDeltaRevertibles(
+                                clientBDriver, delta, clientB_Revertibles);
+                        }
+                    };
 
                     const msgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
                     {
@@ -92,15 +94,9 @@ describe("MergeTree.Client", () => {
                                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                 clients.B.peekPendingSegmentGroups()!,
                             ]);
-                        clients.B.mergeTreeDeltaCallback = (op, delta) => {
-                            oldCallback?.(op, delta);
-                            if (op.sequencedMessage === undefined) {
-                                appendToMergeTreeDeltaRevertibles(
-                                    clientBDriver, delta, clientB_Revertibles);
-                            }
-                        };
+                        clients.B.on("delta", deltaCallback);
                         msgs.push(...generateOperationMessagesForClients(
-                            mt,
+                            random,
                             seq,
                             [clients.A, clients.B],
                             logger,
@@ -112,7 +108,7 @@ describe("MergeTree.Client", () => {
                     if (opsWithRevert > 0) {
                         // add modifications from another client
                         msgs.push(...generateOperationMessagesForClients(
-                            mt,
+                            random,
                             seq,
                             [clients.A, clients.C],
                             logger,
@@ -130,7 +126,7 @@ describe("MergeTree.Client", () => {
                                 0,
                                 ackAll
                                     ? msgs.length
-                                    : random.integer(0, Math.floor(msgs.length / 2))(mt)),
+                                    : random.integer(0, Math.floor(msgs.length / 2))),
                             clients.all,
                             logger);
                         if (ackAll) {
@@ -153,7 +149,7 @@ describe("MergeTree.Client", () => {
                     try {
                         // reset the callback before the final revert
                         // to avoid accruing any new detached references
-                        clients.B.mergeTreeDeltaCallback = oldCallback;
+                        clients.B.off("delta", deltaCallback);
                         revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
                         seq = applyMessages(seq, msgs.splice(0), clients.all, logger);
 

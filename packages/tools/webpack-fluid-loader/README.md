@@ -4,7 +4,9 @@ This folder contains the webpack-fluid-loader. This package is meant to be used 
 
 This loader is intended for development purposes only and should not be used in production.
 
-The following environment variables can be defined when running `webpack --serve` to change the behavior of webpack-fluid-loader:
+The following environment variables can be defined when running `webpack --serve` to change the behavior of webpack-fluid-loader.
+
+See the [Azure Fluid Relay](#azure-fluid-relay) and [SharePoint](#sharepoint) sections below for information on connecting to these services.
 
 | variable | description |
 | ---------| ----------- |
@@ -15,7 +17,7 @@ The following environment variables can be defined when running `webpack --serve
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
 | `tenantSecret` | Secret for your tenant |
 | `bearerSecret` | Secret for your bearer |
-| `enableWholeSummaryUpload` | Enables whole summary upload functionality when using routerlicious or docker mode |
+| `enableWholeSummaryUpload` | Enables whole summary upload functionality (required for Azure Fluid Relay) |
 
 
 | modes | description |
@@ -75,9 +77,34 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 
 ```
 
+## Azure Fluid Relay
+To use Azure Fluid Relay, [provision a Fluid Relay instance](https://learn.microsoft.com/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal) in the Azure Portal.
+To select the deployment region, consult [the availability table](https://azure.microsoft.com/explore/global-infrastructure/products-by-region/?products=fluid-relay) for the Azure Fluid Relay product<sup id="a1">[1](#f1)</sup>.
+
+After provisioning, the connection arguments are available in the Azure Portal under the 'Access Key' tab<sup id="a2">[2](#f2)</sup>.
+
+When connecting to the Azure Fluid Relay service, you must specify 'enableWholeSummaryUpload=true'.
+
+
+```sh
+# Substitute the 'Tenant Id', 'Primary Key' and 'Service Endpoint' found under 'Access Key' in Azure Portal
+npm run start:r11s --env mode=r11s \
+                   --env enableWholeSummaryUpload=true \
+                   --env tenantId=$TenantId \
+                   --env tenantSecret=$PrimaryKey \
+                   --env discoveryEndpoint=$ServiceEndpoint
+```
+
 ## SharePoint
 To use a SharePoint server, the Microsoft login clientId and secret environment variables must be set.  This can be done by running the getkeys tool.
 
 Sometimes the cached tokens are out of date or incorrect, and it will not automatically refresh them.  They can be manually refreshed by going navigating to http://localhost:8080/odspLogin (port may vary).  To force reauth on start, the env variable `odspForceReauth` can be set.  This can also be done by adding `--env forceReauth` to the end of the command.  For example: `npm run start:spo-df -- --env forceReauth`.
 
 Use `spo-df` if your OneDrive is on the DogFood server, and `spo` if it is not.
+
+---
+<b id="f1">1</b>: Note that The deployment region specified during provisioning only determines where the Fluid container's durable data will be stored.
+For active Fluid sessions, Azure dynamically choses the lowest-latency region/cluster to host the relay service. [↩](#a1)
+
+<b id="f2">2</b>: You may use either the 'primary key' or 'secondary key' for the tenantSecret.
+Two keys are provided to enable a production system to to regenerate a key without downtime by first migrating to the alternate key.[↩](#a2)

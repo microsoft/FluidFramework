@@ -10,6 +10,7 @@ import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
+import { createOdspUrl } from "../createOdspUrl";
 
 describe("Odsp Driver Resolver", () => {
     const siteUrl = "https://localhost";
@@ -115,6 +116,21 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
         assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
         assert.strictEqual(url, `${siteUrl}`, "Url should match");
+    });
+
+    it("should resolve and then getAbsoluteUrl should pick dataStorePath from resolvedUrl", async () => {
+        const resolvedUrl1 = await resolver.resolve({ url: createOdspUrl({
+            driveId, itemId: "itemId", siteUrl, dataStorePath: "datastore",
+            fileVersion: "0.1", appName: "app", containerPackageName: packageName,
+        })});
+        const response = await resolver.getAbsoluteUrl(resolvedUrl1, "");
+
+        const resolvedUrl2 = await resolver.resolve({ url: response });
+        assert.strictEqual(resolvedUrl2.driveId, driveId, "Drive id should be equal");
+        assert.strictEqual(resolvedUrl2.dataStorePath, "datastore", "DataStorePath should be equal");
+        assert.strictEqual(resolvedUrl2.codeHint?.containerPackageName, packageName, "DataStorePath should be equal");
+        assert.strictEqual(resolvedUrl2.siteUrl, siteUrl, "SiteUrl should be equal");
+        assert.strictEqual(resolvedUrl2.itemId, "itemId", "Item id should be absent");
     });
 
     it("Should resolve url given container package info", async () => {

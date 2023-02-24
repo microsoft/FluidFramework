@@ -5,8 +5,11 @@
 import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "chalk";
 
+import { MonoRepoKind } from "@fluidframework/build-tools";
+
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
+import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
 
 /**
  * An instructional prompt to display to a user in a terminal. A prompt can have any number of sections, and each
@@ -43,6 +46,62 @@ interface Section {
      */
     cmd?: string;
 }
+
+/**
+ * Map release groups to ADO pipeline
+ */
+export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefined, string>([
+    [MonoRepoKind.Client, "https://dev.azure.com/fluidframework/internal/_build?definitionId=12"],
+    [MonoRepoKind.Server, "https://dev.azure.com/fluidframework/internal/_build?definitionId=30"],
+    [MonoRepoKind.Azure, "https://dev.azure.com/fluidframework/internal/_build?definitionId=85"],
+    [
+        MonoRepoKind.BuildTools,
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=14",
+    ],
+    [
+        "@fluid-tools/api-markdown-documenter",
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=97",
+    ],
+    [
+        "@fluid-tools/benchmark",
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=96",
+    ],
+    [
+        "@fluidframework/test-tools",
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=13",
+    ],
+    ["tinylicious", "https://dev.azure.com/fluidframework/internal/_build?definitionId=22"],
+    [
+        "@fluidframework/build-common",
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=3",
+    ],
+    [
+        "@fluidframework/eslint-config-fluid",
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=7",
+    ],
+    [
+        "@fluidframework/common-definitions",
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=8",
+    ],
+    [
+        "@fluidframework/common-utils",
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=10",
+    ],
+    [
+        "@fluidframework/protocol-definitions",
+        "https://dev.azure.com/fluidframework/internal/_build?definitionId=67",
+    ],
+]);
+
+/**
+ *
+ * Returns ADO pipeline link for the releaseGroup
+ */
+export const mapADOLinks = (
+    releaseGroup: ReleaseGroup | ReleasePackage | undefined,
+): string | undefined => {
+    return ADOPipelineLinks.get(releaseGroup);
+};
 
 /**
  * An abstract base class for classes that write {@link InstructionalPrompt}s to the terminal.

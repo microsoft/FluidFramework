@@ -54,7 +54,6 @@ describe("Runtime", () => {
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
                 initialSummarizerDelayMs: 0,
-                summarizerClientElection: false,
             };
             const summaryConfig: ISummaryConfiguration = {
                 state: "enabled",

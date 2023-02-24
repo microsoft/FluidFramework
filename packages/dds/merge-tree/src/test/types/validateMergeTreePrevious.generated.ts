@@ -144,6 +144,7 @@ declare function get_old_ClassDeclaration_Client():
 declare function use_current_ClassDeclaration_Client(
     use: TypeOnly<current.Client>);
 use_current_ClassDeclaration_Client(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Client());
 
 /*
@@ -156,6 +157,7 @@ declare function get_current_ClassDeclaration_Client():
 declare function use_old_ClassDeclaration_Client(
     use: TypeOnly<old.Client>);
 use_old_ClassDeclaration_Client(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Client());
 
 /*
@@ -2145,6 +2147,7 @@ use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
 declare function get_old_InterfaceDeclaration_MergeTreeStats():
     TypeOnly<old.MergeTreeStats>;
 declare function use_current_InterfaceDeclaration_MergeTreeStats(
+    // @ts-expect-error removed
     use: TypeOnly<current.MergeTreeStats>);
 use_current_InterfaceDeclaration_MergeTreeStats(
     get_old_InterfaceDeclaration_MergeTreeStats());
@@ -2155,6 +2158,7 @@ use_current_InterfaceDeclaration_MergeTreeStats(
 * "InterfaceDeclaration_MergeTreeStats": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_MergeTreeStats():
+    // @ts-expect-error removed
     TypeOnly<current.MergeTreeStats>;
 declare function use_old_InterfaceDeclaration_MergeTreeStats(
     use: TypeOnly<old.MergeTreeStats>);
@@ -2988,6 +2992,7 @@ declare function get_old_InterfaceDeclaration_SegmentGroup():
 declare function use_current_InterfaceDeclaration_SegmentGroup(
     use: TypeOnly<current.SegmentGroup>);
 use_current_InterfaceDeclaration_SegmentGroup(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SegmentGroup());
 
 /*

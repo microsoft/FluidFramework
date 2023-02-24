@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/odspsnapshotfetch-perftestapp",
-  "version": "2.0.0-internal.2.4.0",
+  "version": "2.0.0-internal.3.0.0",
   "private": true,
   "description": "Simple markdown editor",
   "homepage": "https://fluidframework.com",
@@ -33,21 +33,21 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-tools/fluidapp-odsp-urlresolver": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
+    "@fluid-tools/fluidapp-odsp-urlresolver": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/odsp-driver": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/tool-utils": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/odsp-driver": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/tool-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "express": "^4.16.3",
     "nconf": "^0.12.0",
     "webpack-dev-server": "~4.6.0"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.8.0-121856",
+    "@fluid-tools/build-cli": "^0.8.0",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "^0.8.0-121856",
+    "@fluidframework/build-tools": "^0.8.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/express": "^4.11.0",

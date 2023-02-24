@@ -8,9 +8,9 @@ This document discusses options for providing a Fluid DDS with efficient, large-
 
 ## Virtualization and Incrementality
 
-Existing Fluid DDSs generally assume that their documents will fit entirely in a client's memory. This document does not make this assumption and introduces additional techniques for reading and writing data to storage, namely, the ability to page in [virtualized](#glossary) portions of the document and upload portions of the document [incrementally](#glossary). In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out necessarily as it pages in new data. Likewise, a client can update the document one piece at a time by uploading to storage only the part of the document that it has in memory.
+Existing Fluid DDSes generally assume that their documents will fit entirely in a client's memory. This document does not make this assumption and introduces additional techniques for reading and writing data to storage, namely, the ability to page in [virtualized](#glossary) portions of the document and upload portions of the document [incrementally](#glossary). In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out as it pages in new data. Likewise, a client can update the document one piece at a time by uploading to storage only the part of the document that it has in memory.
 
-> As presented above, the amount of the document that a client can view at once is limited by a client machine's memory. An optimization might expand that size to the amount of _disk_ space available to a client by using an on-disk cache (e.g. indexDB). But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ its disk, either because the document is impressively huge or the disk is already close to full.
+> As presented above, the amount of the document that a client can view at once is limited by a client machine's memory. An optimization might expand that size to the amount of _disk_ space available to a client by using an on-disk cache (e.g. indexDB). But even this doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ its disk, either because the document is impressively huge or the disk is already close to full.
 
 Allowing for partial downloads of the tree has implications on the layout and structure of the stored data, which this document will explore.
 
@@ -18,9 +18,9 @@ Allowing for partial downloads of the tree has implications on the layout and st
 
 ## Blobs and Chunks
 
-In order to allow virtualization and incremental writes, the DDS splits the tree into contiguous regions of nodes called [chunks](#glossary). Chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in [blobs](#glossary) which are uploaded to the storage service. The Fluid runtime provides two kinds of blobs: summary blobs and attachment blobs. This document doesn't prefer one or the other, so long as a blob can be downloaded lazily and on demand.
+In order to allow virtualization and incremental writes, the DDS splits the tree into contiguous regions of nodes called [chunks](#glossary). Chunks are stored in [blobs](#glossary) which are uploaded to the storage service. The Fluid runtime provides two kinds of blobs: summary blobs and attachment blobs. This document doesn't prefer one or the other, so long as a blob can be downloaded lazily and on demand.
 
-> The size of each chunk is not _necessarily_ related to the size of a blob; multiple chunks could go into a blob, for example. But in practice, having the chunk size mimic the blob size and storing each chunk in its own blob simplifies the architecture.
+> The size of each chunk is not _necessarily_ related to the size of a blob; multiple chunks could go into a blob. Different parts of the application may use different sizes of chunks for performance reasons: typically in memory data-structures will want smaller chunk sizes than persisted ones. For the storage layer, the entire contents of each blob can be thought of as a chunk to simplify the reasoning even if the actual encoding is a collection of chunks that are adjacent in the tree.
 
 The responsibility of dividing the tree into chunks is given to a [chunking algorithm](#glossary). A chunking algorithm might split a tree into something like the following:
 
@@ -50,7 +50,7 @@ graph TD;
     B-->D
 ```
 
-> For most practical applications, chunks will contain many more nodes than in the illustration above
+> For most practical applications, chunks will contain many more nodes than in the illustration above.
 
 The implementation details of a chunking algorithm are outside the scope of this document. Many implementations are possible, and different applications might wish to choose one or another. All chunking algorithms have the constraints that:
 
@@ -82,7 +82,7 @@ graph TD;
 
 Node _b_ has two children, _c_ and _d_, but _c_ is inlined and part of the same chunk as _b_ (Chunk A) whereas _d_ is in a different chunk (Chunk B) and is stored by reference. Walking from _b_ to _c_ is a synchronous operation because _c_ is already in memory; walking from _b_ to _d_ is an asynchronous operation that may require downloading Chunk B first. This is the pattern of virtualization for walking down the tree; chunks are loaded lazily on demand.
 
-The chunks themselves implicitly form a sort of data structure. In fact, it's another tree:
+The chunks themselves implicitly form another tree:
 
 ```mermaid
 graph TD;
@@ -93,7 +93,7 @@ The following sections will examine some of the general properties of this "chun
 
 ### Immutability
 
-Except where stated otherwise, this document assumes that blobs are immutable and [content-addressable](#glossary). This means that once a blob has been created it can never be updated/changed, but must instead be completely replaced, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any references to that blob must also be updated with the new key.
+Except where stated otherwise, this document assumes that blobs are immutable and [content-addressable](#glossary). This means that once a blob has been created it can never be updated/changed. Instead a new blob must be created, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any content that needs to reference the new blob instead of the old one must also be updated with the new key.
 
 Suppose, in the diagram above, that Chunk A, B and C are each stored in Blob A, B and C, respectively. A client changes the value of _h_ which changes a value in Blob C. This means that Blob C must be replaced by a new blob, Blob C', which is identical to Blob C but contains a different value for _h_. Blob C' also has a different key than Blob C, and that means that the reference to Blob C in Blob B is now incorrect. Blob B must be updated to point to Blob C', a.k.a. the "new Blob C". Therefore, Blob B must also be replaced with a Blob B'. Finally, Blob A, which has a reference to Blob B, must change for the same reason. This chain reaction ends at Blob A because Blob A is at the top of the tree (the "root blob") and has no parent. Even though only Chunk C changed, all three chunks had to be replaced. In general, the entire [spine](#glossary) of the tree above any edited node must be replaced for each edit.
 
@@ -169,13 +169,15 @@ This forms a [copy-on-write](#glossary) data structure. Each revision of the tre
 
 ### Server-side Blob Retention
 
-It is a requirement that blobs be sufficiently long-lived on the server so that a client can download them when required. If a document is retaining its history then all blobs containing all chunks for all revisions must be available indefinitely. For documents that do not retain their history, blobs should live at least long enough for a client to be able to fully reconstruct the current state of the revision it is viewing; i.e. all blobs containing all chunks for oldest revision known by a participating client.
+It is a requirement that blobs be sufficiently long-lived on the server so that a client can download them when required. If a document is retaining its history (using the above approach) then all blobs containing all chunks for all revisions must be available indefinitely. For documents that do not retain their history, blobs should live at least long enough for all clients to be able to fully reconstruct the current state of any revision it might need access to; i.e. all blobs transitively referenced by summaries back to the the newest one from before the session timeout threshold (30 days ago).
 
-> A client that goes offline for an extended period of time is a good example of when it's useful to keep old blobs available even when they are from revisions that are well-behind the most up-to-date revision. If, for example, blobs are retained for 30 days, then a client that disconnects from the server can keep working while offline, so long as it reconnects within 30 days. This is because at the time it reconnects, it (or other clients) may need access to the revision from before the client's disconnection in order to rebase the ops that were created while offline.
+> A client that goes offline for an extended period of time is a good example of when it's useful to keep old blobs available even when they are from revisions that are well-behind the most up-to-date revision. If, for example, blobs are retained for 30 days after they are no longer referenced by the current summary, then a client that disconnects from the server can keep working while offline, so long as it reconnects within 30 days. This is because at the time it reconnects, it (or other clients) may need access to the revision from before the client's disconnection in order to rebase the ops that were created while offline.
 
 Both summary blobs and attachment blobs have lifetimes determined by their presence in the summary tree. If a summary ceases to include either a (summary) "blob" or an "attachment" then the blob will eventually be forgotten. This API may be at odds with the storage techniques described in this document. For documents retaining history, the list of blobs to retain grows unboundedly, increasing the summary size indefinitely. And even for documents that don't retain history, it may be awkward to maintain a list of all "live" blobs; for large documents the number of blobs could scale so large that even the list of references to those blobs needs to be incrementally updated and submitted.
 
 One possible alternative would be to provide a mode in which the server assumes each blob should be retained indefinitely until the DDS explicitly requests that it be deleted. This gives the DDS complete control over the lifetime of blobs; the DDS tells the server to create blobs and it tells the server when to delete blobs. This degree of freedom allows a DDS to manage its blobs in the most efficient way possible, providing clear lifetime guarantees for blobs that the DDS needs to retain and reducing the amount of storage space that might be otherwise wasted on blobs that the DDS no longer needs.
+
+A similar approach that balances lifetime management between the DDS and the runtime would be for the DDS to inform the runtime when a new summary no longer uses a particular blob. The runtime would wait for the preceding summary to be old enough (the summary containing the delete reaches the session timeout threshold, currently 30 days), then it would perform the delete if no future summaries recreated/reused that blob.
 
 ### Write Amplification
 
@@ -260,10 +262,12 @@ In the table above, a flush happens every five edits. A client that joins a sess
 
 > This is quite similar to the existing summarization model in the Fluid Framework. A DDS has a log of operations which represent edits to its data, and every so often a client using that DDS uploads a summary which represents the cumulative state after applying all operations up to that point. A client only needs to know the latest summary and the list of operations that happened after that summary in order to know the current state of the DDS. Ideally the DDS would leverage summarization directly, writing its chunk data structure as the contents of the summary. There are a few limitations that currently prevent this from being possible:
 >
-> -   Summary trees do not support virtualization. A client cannot have a partial checkout of the tree; it must download all chunks when it connects. However, summary virtualization is a feature in development and once completed could allow a DDS to download only the chunks that it wants, provided it is able to conform its chunk data structure to the shape of the summary tree.
+> -   Summary trees currently do not support virtualization. A client cannot have a partial checkout of the tree; it must download all chunks when it connects. However, summary virtualization is a feature in development and once completed could allow a DDS to download only the chunks that it wants, provided it is able to conform its chunk data structure to the shape of the summary tree.
 > -   Summary trees allow incrementality, but the API to do so is not yet exposed. Summary trees can contain references to blobs in a previous summary, called blob handles. This allows handles to represent data that has not been changed and does not need to be reuploaded. However, handles cannot currently be constructed by a DDS without sniffing implementation details of the runtime. There is also an ongoing development effort to automatically divide summaries into blobs and upload them in pieces, however, this doesn't give the DDS fine-grained control over how/where the summary is divided into chunks.
-> -   The frequency of summaries cannot be controlled by a DDS. Ideally, a DDS has control over how often it flushes its chunks in order to optimize for best performance. Summaries currently happen across an entire Fluid container all at once, so even if an API were exposed to allow a DDS to provide hints for summary frequency, a DDS would still risk fighting over policy with other DDSs in the container.
+> -   The frequency of summaries cannot be controlled by a DDS. Ideally, a DDS has control over how often it flushes its chunks in order to optimize for best performance. Summaries currently happen across an entire Fluid container all at once, so even if an API were exposed to allow a DDS to provide hints for summary frequency, a DDS would still risk fighting over policy with other DDSes in the container.
 > -   There is only ever one summary client at a time that is responsible for uploading summaries. However, with a document that is too large to fit in a single client's memory all at once, the flush might exceed the summarization timeout as that client pages parts of the tree in and out in order to generate the summary.
+
+> It is interesting to compare this to filesystem implementations. Modern copy on write file systems (for example [ZFS](https://en.wikipedia.org/wiki/ZFS)) often use this same approach: updates are accumulated in memory ("transaction groups" for ZFS), and periodically flushed to disk if they grow too large or too old, just like Fluid summaries. Also edits (ops) are recorded as they come in into a write ahead log ("Intent Log" in ZFS) with lower latency to minimize data loss from crashes/disconnects/power-loss.
 
 There are many different options for how the log might be stored. Here are two:
 
@@ -288,9 +292,17 @@ After a flush completes, all clients are notified of the flush and the new chunk
 
 ## Random Reads
 
-The performance of cold reads is analogous to that of flushes. Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine).
+Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine).
 
 However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the [path](#glossary) from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a [random read](#glossary): a read that has no necessary relationship to any read before it. For a practical example of a random read, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Or, note that the first read of a partial checkout can be a random read if it doesn't care about its ancestry. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. However, such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. A client could easily implement a "random" read function itself that simply walks down the tree. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations detailed in [Appendix A](#appendix-a-chunk-data-structure-implementations) which reduce the cost of a random read, especially in deep trees.
+
+## Non-Random Access
+
+An application might read all the data in a given subtree, or it might read some small data out of each subtree in a sequence (like the names of files in a directory).
+It is also likely to edit in non-random ways, for example do many consecutive edits in one area of the tree.
+Optimizing these cases is important, and mostly comes down to putting data that is accessed together close together in the tree (i.e. in the same blob or in nearby blobs)
+This allows for more effective amortizing of writes, reduced memory use and bandwidth, and faster read times.
+See [Appendix A](#appendix-a-chunk-data-structure-implementations) for more information.
 
 ## Tree Shapes
 
@@ -384,16 +396,16 @@ So the worst case performance of both reads and writes, in terms of blob downloa
 
 ## Generalization
 
-One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid Framework as a container-level service available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a service would provide:
+One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid Framework as a container-level service available to all DDSes. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a service would provide:
 
 -   A tree-like storage service that is accessible at any time and provides virtualized download of nodes in the tree. It would also expose a user-friendly mutation interface that handles incremental updates of the store as the client modifies the tree.
--   A way to configure the chunking strategy for the stored tree. Different DDSs might want regions of data to be downloaded together or separately depending on their data model and access patterns. Note that this requires using either a Simple Chunk Tree or a SPICE Tree (as described [Appendix A](#appendix-a-chunk-data-structure-implementations)) in order to give the necessary flexibility for custom chunking.
+-   A way to configure the chunking strategy for the stored tree. Different DDSes might want regions of data to be downloaded together or separately depending on their data model and access patterns. Note that this requires using either a Simple Chunk Tree or a SPICE Tree (as described [Appendix A](#appendix-a-chunk-data-structure-implementations)) in order to give the necessary flexibility for custom chunking.
 -   A canonical (but optional) way to store and query the history of a DDS as a series of revisions. This would be virtualized for efficient access.
 
-This could be implemented by sharing a single storage tree among all DDSs where each DDS owns a specific subtree. If all Fluid DDSs were to adopt this service as their primary means of storing data, then this would provide some powerful benefits at the container level:
+This could be implemented by sharing a single storage tree among all DDSes where each DDS owns a specific subtree. If all Fluid DDSes were to adopt this service as their primary means of storing data, then this would provide some powerful benefits at the container level:
 
--   All DDSs would scale with large data sets, and therefore the entire container would scale with large data sets
--   The service could track the revisions of the container itself, rather than just the revisions of each DDS individually. This could provide snapshot isolation at the container level, meaning that any transaction could view a consistent tree of state for its lifetime regardless of the activity of the other DDSs in the container.
+-   All DDSes would scale with large data sets, and therefore the entire container would scale with large data sets
+-   The service could track the revisions of the container itself, rather than just the revisions of each DDS individually. This could provide snapshot isolation at the container level, meaning that any transaction could view a consistent tree of state for its lifetime regardless of the activity of the other DDSes in the container.
 -   This would be a big step towards offering container-level history
 
 Such a service would reshape the summarization API as well. Rather than producing a summary tree every so often, a DDS would be asked to flush any sequenced data that has not yet been committed to storage every so often. Or, perhaps the DDS could use the storage writing APIs at any point in time; each mutation would contribute to a buffer of storage instructions that would be flushed intermittently behind the scenes.
@@ -783,21 +795,22 @@ Drawbacks:
 
 -   Blob: binary data that is uploaded to and downloaded from a storage service. Blobs are content-addressable and therefore immutable.
 -   Chunk: a contiguous region of the tree. Every node in the tree belongs to a chunk.
--   Chunking Algorithm: an algorithm which divides a tree into chunks
+-   Chunking Algorithm: an algorithm which divides a tree into chunks.
 -   Content-addressable: data which can be referred to by a key derived from the data itself. For example, data in a store which hashes each value to produce its key.
 -   [Copy-on-write](https://en.wikipedia.org/wiki/Copy-on-write): a data structure which is immutable and therefore must be copied to produce modifications, but which does so efficiently by sharing unmodified state with previous versions.
--   Deepest Tree: a tree with N nodes and depth O(N), i.e. a tree with a branching factor of 1, essentially a linked list
+-   Deepest Tree: a tree with N nodes and depth O(N), i.e. a tree with a branching factor of 1, essentially a linked list.
 -   Edit: an atomic change or collection of changes applied to a tree. An edit always produces a new revision of the tree.
+-   Flush: writing a batch of changes out to storage. Fluid Framework's summarization can be though of as one example of flushing: where all the changes from the ops are flushed into the summary storage.
 -   Handle: a serializable reference to a blob. In the case of Fluid handles, currently cannot be created until a blob is uploaded.
 -   History: the sequence of changes that have been made to a tree over time. A given document may or may not care about its tree's history. If it does desire the history, then the history must be recorded as part of its summary, since the Fluid service will only deliver ops that occur after the most recent summary.
 -   Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.
 -   Logical Tree: refers to the actual tree of nodes/data that make up the stored content of a DDS. This term is used to disambiguate when multiple kinds of trees are being discussed in the same context.
--   Partial Checkout: a region of a tree that a client is restricted to by the server
--   Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
--   Random Read: a query which retrieves a node from the tree without necessarily having read the nodes (e.g. parents/siblings) around it
--   Reference sequence number: the sequence number of the latest known Fluid op when an op is first sent by a client
+-   Partial Checkout: a region of a tree that a client is restricted to by the server.
+-   Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node.
+-   Random Read: a query which retrieves a node from the tree without necessarily having read the nodes (e.g. parents/siblings) around it.
+-   Reference sequence number: the sequence number of the latest known Fluid op when an op is first sent by a client.
 -   Revision: a specific moment in the history of the tree. Every permanent change to the tree creates a new revision with a new tree state.
--   Sequence number: the position of a Fluid op in the total ordering of all ops
+-   Sequence number: the position of a Fluid op in the total ordering of all ops.
 -   Snapshot Isolation: [A guarantee](https://en.wikipedia.org/wiki/Snapshot_isolation) that the view of some data won't change until the client is finished with its current edit.
--   Spine: a set of nodes in a tree that make up the shortest path from some node in the tree to the root node of the tree
+-   Spine: a set of nodes in a tree that make up the shortest path from some node in the tree to the root node of the tree.
 -   Virtualization: the process of downloading or paging in specific data in a larger collection without receiving the entire collection.

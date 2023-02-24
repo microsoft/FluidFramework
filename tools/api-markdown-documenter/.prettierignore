@@ -16,3 +16,6 @@ api-report/*
 
 # Generated documentation
 generated-api-docs/*
+
+# Generated type-tests
+**/*.generated.ts

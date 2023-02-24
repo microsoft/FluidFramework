@@ -83,13 +83,16 @@ export enum FlushMode {
     TurnBased = 1
 }
 
-// @public (undocumented)
+// @public
 export const gcBlobPrefix = "__gc";
 
-// @public (undocumented)
+// @public
+export const gcDeletedBlobKey = "__deletedNodes";
+
+// @public
 export const gcTombstoneBlobKey = "__tombstones";
 
-// @public (undocumented)
+// @public
 export const gcTreeKey = "gc";
 
 // @public
@@ -187,6 +190,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly createProps?: any;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
@@ -264,6 +268,8 @@ export interface IGarbageCollectionNodeData {
 
 // @public
 export interface IGarbageCollectionSnapshotData {
+    // (undocumented)
+    deletedNodes: string[] | undefined;
     // (undocumented)
     gcState: IGarbageCollectionState;
     // (undocumented)
@@ -368,7 +374,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
-    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
+    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+    getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;

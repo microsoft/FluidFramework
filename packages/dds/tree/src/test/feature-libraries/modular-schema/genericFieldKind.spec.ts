@@ -360,27 +360,41 @@ describe("Generic FieldKind", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("Json encoding", () => {
-        const input: GenericChangeset = [
-            {
-                index: 0,
-                nodeChange: nodeChange0To1,
-            },
-            {
-                index: 2,
-                nodeChange: nodeChange1To2,
-            },
-        ];
+    const encodingTestData: [string, GenericChangeset][] = [
+        [
+            "Misc",
+            [
+                {
+                    index: 0,
+                    nodeChange: nodeChange0To1,
+                },
+                {
+                    index: 2,
+                    nodeChange: nodeChange1To2,
+                },
+            ],
+        ],
+    ];
+
+    describe("Encoding", () => {
+        const encoder = genericFieldKind.changeHandler.encoder;
         const version = 0;
-        const encoded = JSON.stringify(
-            genericFieldKind.changeHandler.encoder.encodeForJson(version, input, childEncoder),
-        );
-        const decoded = genericFieldKind.changeHandler.encoder.decodeJson(
-            version,
-            JSON.parse(encoded),
-            childDecoder,
-        );
-        assert.deepEqual(decoded, input);
+        for (const [name, data] of encodingTestData) {
+            describe(name, () => {
+                it("roundtrip", () => {
+                    const encoded = encoder.encodeForJson(version, data, childEncoder);
+                    const decoded = encoder.decodeJson(version, encoded, childDecoder);
+                    assert.deepEqual(decoded, data);
+                });
+                it("Json roundtrip", () => {
+                    const encoded = JSON.stringify(
+                        encoder.encodeForJson(version, data, childEncoder),
+                    );
+                    const decoded = encoder.decodeJson(version, JSON.parse(encoded), childDecoder);
+                    assert.deepEqual(decoded, data);
+                });
+            });
+        }
     });
 
     it("build child change", () => {

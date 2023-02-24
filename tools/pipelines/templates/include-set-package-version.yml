@@ -40,6 +40,7 @@ steps:
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
         npm i -g pnpm
+        pnpm config set store-dir $(pnpmStorePath)
         pnpm i
         npm run build:compile
         popd
@@ -63,6 +64,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       # Output the help and full command list for debugging purposes
+      which flub
       flub --help
       flub commands
 

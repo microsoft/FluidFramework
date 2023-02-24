@@ -131,7 +131,7 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await provider.ensureSynchronized(this.timeout() / 3);
+                await provider.ensureSynchronized();
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);
@@ -183,6 +183,11 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
     [
         {
             eventName: "fluid:telemetry:Container:ContainerClose",
+            error: "RollbackError: rollback not supported",
+            errorType: ContainerErrorType.dataProcessingError,
+        },
+        {
+            eventName: "fluid:telemetry:Container:ContainerDispose",
             error: "RollbackError: rollback not supported",
             errorType: ContainerErrorType.dataProcessingError,
         },

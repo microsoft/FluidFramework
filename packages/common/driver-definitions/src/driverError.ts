@@ -90,11 +90,17 @@ export enum DriverErrorType {
      * "fluidInvalidSchema"
      */
     fluidInvalidSchema = "fluidInvalidSchema",
+
     /**
      * Error indicating an API is being used improperly resulting in an invalid operation.
      * ! Should match the value of ContainerErrorType.usageError
     */
     usageError = "usageError",
+
+    /**
+     * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
+     */
+    fileIsLocked = "fileIsLocked",
 }
 
 /**
@@ -172,7 +178,8 @@ export interface IDriverBasicError extends IDriverErrorBase {
     | DriverErrorType.incorrectServerResponse
     | DriverErrorType.fileOverwrittenInStorage
     | DriverErrorType.fluidInvalidSchema
-    | DriverErrorType.usageError;
+    | DriverErrorType.usageError
+    | DriverErrorType.fileIsLocked;
     readonly statusCode?: number;
 }
 

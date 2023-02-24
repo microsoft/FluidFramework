@@ -26,9 +26,10 @@ export {
 	NamedFluidDataStoreRegistryEntry,
 } from "./dataStoreRegistry";
 export {
-    gcTreeKey,
     gcBlobPrefix,
+    gcDeletedBlobKey,
     gcTombstoneBlobKey,
+    gcTreeKey,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
 } from "./garbageCollection";

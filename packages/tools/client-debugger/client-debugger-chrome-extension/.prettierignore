@@ -10,3 +10,6 @@ node_modules/*
 # Test output
 coverage
 nyc
+
+# Generated type-tests
+**/*.generated.ts
