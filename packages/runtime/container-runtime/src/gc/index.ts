@@ -4,32 +4,40 @@
  */
 
 export { GarbageCollector } from "./garbageCollection";
-export { sendGCUnexpectedUsageEvent, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
 export {
+	currentGCVersion,
+	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
+	disableSweepLogKey,
+	GCNodeType,
+	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
+	GCVersion,
+	gcVersionUpgradeToV2Key,
+	IGarbageCollectionRuntime,
+	IGarbageCollector,
+	IGarbageCollectorConfigs,
+	IGarbageCollectorCreateParams,
+	IGCMetadata,
+	IGCRuntimeOptions,
+	IGCStats,
+	oneDayMs,
+	runGCKey,
+	runSessionExpiryKey,
+	runSweepKey,
+	stableGCVersion,
+	sweepAttachmentBlobsKey,
 	sweepDatastoresKey,
 	throwOnTombstoneLoadKey,
 	throwOnTombstoneUsageKey,
-	runSessionExpiryKey,
-	oneDayMs,
-	runGCKey,
-	runSweepKey,
-	defaultInactiveTimeoutMs,
-	gcTestModeKey,
-	disableSweepLogKey,
-	gcVersionUpgradeToV2Key,
-	currentGCVersion,
-	stableGCVersion,
-	GCNodeType,
-	GCVersion,
-	IGarbageCollectionRuntime,
-	IGarbageCollector,
-	IGarbageCollectorCreateParams,
-	IGCStats,
-	IGCMetadata,
 	UnreferencedState,
 } from "./gcDefinitions";
+export {
+	getSnapshotDataFromOldSnapshotFormat,
+	sendGCUnexpectedUsageEvent,
+	shouldAllowGcTombstoneEnforcement,
+} from "./gcHelpers";
+export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,
 	closuresMapLocalStorageKey,

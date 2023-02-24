@@ -27,6 +27,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
 -   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
 -   [IFluidTokenProvider deprecated](#IFluidTokenProvider-deprecated)
+-   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -57,6 +58,7 @@ These packages are currently published under the `@fluidframework` scope:
 -   `@fluidframework/test-drivers`
 -   `@fluidframework/test-pairwise-generator`
 -   `@fluidframework/test-version-utils`
+-   `@fluidframework/test-loader-utils`
 
 These will be moved to the `@fluid-internal` scope and will no longer be published.
 
@@ -89,6 +91,10 @@ The following functions, interfaces, and types currently available in `@fluidfra
 The IFluidTokenProvider interface has been deprecated and will be removed in an upcoming release. Fluid Framework does not prescribe a particular approach to token providers.
 
 `ContainerRuntime.IFluidTokenProvider` has also been deprecated and will be removed in an upcoming release. Token providers, like any dependency, should be accessed using normal provider patterns.
+
+### web-code-loader and ICodeAllowList deprecated
+
+The `@fluidframework/web-code-loader` and the `ICodeAllowList` interface from the `@fluidframework/container-definitions` package have been deprecated and will be removed in an upcoming release. Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

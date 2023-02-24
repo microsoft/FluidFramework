@@ -10,6 +10,6 @@ constructor(testClassProperty: string);
 
 ## Parameters {#_constructor_-parameters}
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  testClassProperty | string | See [TestClass.testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) |
+| Parameter | Type | Description |
+| --- | --- | --- |
+| testClassProperty | string | See [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) |

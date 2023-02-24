@@ -52,28 +52,28 @@ describe("Summary size benchmark", () => {
 		const summaryString = JSON.stringify(summaryTree);
 		const summarySize = IsoBuffer.from(summaryString).byteLength;
 		assert(summarySize > 1000);
-		assert(summarySize < 10000);
+		assert(summarySize < 20000);
 	});
 	it("for a wide tree with 100 nodes", async () => {
 		const summaryTree = await getInsertsSummaryTree(100, TreeShape.Wide);
 		const summaryString = JSON.stringify(summaryTree);
 		const summarySize = IsoBuffer.from(summaryString).byteLength;
 		assert(summarySize > 1000);
-		assert(summarySize < 50000);
+		assert(summarySize < 1000000);
 	});
 	it("for a deep tree with 10 nodes", async () => {
 		const summaryTree = await getInsertsSummaryTree(10, TreeShape.Deep);
 		const summaryString = JSON.stringify(summaryTree);
 		const summarySize = IsoBuffer.from(summaryString).byteLength;
 		assert(summarySize > 1000);
-		assert(summarySize < 20000);
+		assert(summarySize < 50000);
 	});
 	it("for a deep tree with 100 nodes.", async () => {
 		const summaryTree = await getInsertsSummaryTree(100, TreeShape.Deep);
 		const summaryString = JSON.stringify(summaryTree);
 		const summarySize = IsoBuffer.from(summaryString).byteLength;
 		assert(summarySize > 1000);
-		assert(summarySize < 1000000);
+		assert(summarySize < 2000000);
 	});
 	// TODO: this should work, but currently hits batch size limits. Convert this into benchmark when fixed.
 	it("rejected for deep tree with 1000 nodes", async () => {

@@ -149,6 +149,7 @@ import {
 	gcTombstoneGenerationOptionName,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
+	IGCRuntimeOptions,
 	IGCStats,
 	shouldAllowGcTombstoneEnforcement,
 } from "./gc";
@@ -311,54 +312,6 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
 	nonRuntimeHeuristicThreshold: 20,
 };
-
-export interface IGCRuntimeOptions {
-	/**
-	 * Flag that if true, will enable running garbage collection (GC) for a new container.
-	 *
-	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
-	 * and marked as such in the summary. This option enables the mark phase.
-	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled via the "sweepAllowed" option.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	gcAllowed?: boolean;
-
-	/**
-	 * Flag that if true, enables GC's sweep phase for a new container.
-	 *
-	 * This will allow GC to eventually delete unreferenced objects from the container.
-	 * This flag should only be set to true if "gcAllowed" is true.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	sweepAllowed?: boolean;
-
-	/**
-	 * Flag that if true, will disable garbage collection for the session.
-	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-	 */
-	disableGC?: boolean;
-
-	/**
-	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
-	 * changed or not.
-	 */
-	runFullGC?: boolean;
-
-	/**
-	 * Maximum session duration for a new container. If not present, a default value will be used.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	sessionExpiryTimeoutMs?: number;
-
-	/**
-	 * Allows additional GC options to be passed.
-	 */
-	[key: string]: any;
-}
 
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
@@ -1138,7 +1091,16 @@ export class ContainerRuntime
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
 			this.defaultMaxConsecutiveReconnects;
 
-		this._flushMode = runtimeOptions.flushMode;
+		if (
+			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
+			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
+		) {
+			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
+			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
+			this._flushMode = FlushMode.TurnBased;
+		} else {
+			this._flushMode = runtimeOptions.flushMode;
+		}
 
 		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
 		const baseSnapshot: ISnapshotTree | undefined =
@@ -1277,6 +1239,9 @@ export class ContainerRuntime
 				  }
 				: runtimeOptions.compressionOptions;
 
+		const disablePartialFlush = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisablePartialFlush",
+		);
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -1286,7 +1251,7 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				enableOpReentryCheck: this.enableOpReentryCheck,
+				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
 		});
@@ -1429,6 +1394,7 @@ export class ContainerRuntime
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
+				disablePartialFlush,
 			}),
 		});
 
@@ -2381,18 +2347,23 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This is called to delete objects from the runtime
-	 * @param unusedRoutes - object routes and sub routes that can be deleted
-	 * @returns - routes of objects deleted from the runtime
+	 * @deprecated - Replaced by deleteSweepReadyNodes.
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
-		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		const deletedRoutes: string[] = [];
+		throw new Error("deleteUnusedRoutes should not be called");
+	}
 
-		const deletedDataStoreRoutes = this.dataStores.deleteUnusedNodes(dataStoreRoutes);
-		deletedRoutes.push(...deletedDataStoreRoutes);
+	/**
+	 * After GC has run and identified nodes that are sweep ready, this is called to delete the sweep ready nodes.
+	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
+	 * @returns - The routes of nodes that were deleted.
+	 */
+	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
+		const { dataStoreRoutes, blobManagerRoutes } =
+			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
-		return deletedRoutes;
+		const deletedRoutes = this.dataStores.deleteSweepReadyNodes(dataStoreRoutes);
+		return deletedRoutes.concat(this.blobManager.deleteSweepReadyNodes(blobManagerRoutes));
 	}
 
 	/**
@@ -2721,7 +2692,7 @@ export class ContainerRuntime
 
 			let clientSequenceNumber: number;
 			try {
-				clientSequenceNumber = this.submitSummaryMessage(summaryMessage);
+				clientSequenceNumber = this.submitSummaryMessage(summaryMessage, summaryRefSeqNum);
 			} catch (error) {
 				return { stage: "upload", ...uploadData, error };
 			}
@@ -2911,13 +2882,13 @@ export class ContainerRuntime
 			default:
 				assert(
 					this._orderSequentiallyCalls > 0,
-					"Unreachable unless running under orderSequentially",
+					0x587 /* Unreachable unless running under orderSequentially */,
 				);
 				break;
 		}
 	}
 
-	private submitSummaryMessage(contents: ISummaryContent) {
+	private submitSummaryMessage(contents: ISummaryContent, referenceSequenceNumber: number) {
 		this.verifyNotClosed();
 		assert(
 			this.connected,
@@ -2929,7 +2900,7 @@ export class ContainerRuntime
 
 		// back-compat: ADO #1385: Make this call unconditional in the future
 		return this.context.submitSummaryFn !== undefined
-			? this.context.submitSummaryFn(contents)
+			? this.context.submitSummaryFn(contents, referenceSequenceNumber)
 			: this.context.submitFn(MessageType.Summarize, contents, false);
 	}
 
