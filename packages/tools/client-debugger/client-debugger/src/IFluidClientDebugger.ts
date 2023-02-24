@@ -10,8 +10,7 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)
-// - Document message posting details:
-//   - Requires activation before it will begin posting. Must be deactivated to stop.
+// - Allow consumers to opt out of posting messages to the window?
 // - Pass diffs instead of all data in change events (probably requires defining separate full-dump messages from delta messages)
 
 /**
@@ -32,8 +31,6 @@ export interface IFluidClientDebuggerEvents extends IEvent {
  * Fluid debug session associated with a Fluid Client via its
  * {@link @fluidframework/container-definitions#IContainer} and
  * {@link @fluidframework/container-definitions#IAudience}.
- *
- * TODO: document window messaging API
  *
  * @internal
  */
