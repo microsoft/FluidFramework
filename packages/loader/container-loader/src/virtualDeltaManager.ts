@@ -206,13 +206,17 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
     ) {
         this._virtualSequenceNumber = sequenceNumber;
 
-        return super.attachOpHandler(minSequenceNumber, sequenceNumber, term, handler, prefetchType);
+        return super.attachOpHandler(this.getRealSequenceNumber(minSequenceNumber), this.getRealSequenceNumber(sequenceNumber), term, handler, prefetchType);
     }
 
     protected connectHandler(connection: IConnectionDetails) {
         // TODO: what else do we need to track here?
         this._clientSequenceNumber = 0;
-        super.connectHandler(connection);
+        super.connectHandler({
+            ...connection,
+            // ! Needs to be set to undefined as places might ask for mapping from this to virtual (we may not have answer yet if based on trailing ops)
+            checkpointSequenceNumber: undefined,
+        });
     }
 
     private _canIncrementClientSequenceNumber = true;
@@ -270,6 +274,7 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
                     // eslint-disable-next-line no-case-declarations
                     const summarySequenceNumber = subMessage.contents.summaryProposal.summarySequenceNumber as number;
                     subMessage.contents.summaryProposal.summarySequenceNumber = this.virtualizeSequenceNumber(summarySequenceNumber);
+                    subMessage.data = JSON.stringify(subMessage.contents);
                 default:
                     super.processMessage(subMessage, startTime);
             }
@@ -284,7 +289,11 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
             return sequenceNumber;
         }
         const virtualizedSequenceNumber = this._sequenceNumberMap.get(sequenceNumber);
-        assert(virtualizedSequenceNumber !== undefined, "sequenceNumber not found");
+
+        // TODO: remove "if" (for debugging)
+        if (virtualizedSequenceNumber === undefined) {
+            assert(virtualizedSequenceNumber !== undefined, "sequenceNumber not found");
+        }
 
         return virtualizedSequenceNumber;
     }
@@ -359,6 +368,9 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
      * Given virtual sequence number, return the corresponding real sequence number
      */
     public getRealSequenceNumber(virtualSequenceNumber: number): number {
+        if (virtualSequenceNumber <= 0) {
+            return virtualSequenceNumber;
+        }
         for (const [key, value] of this._sequenceNumberMap.entries()) {
             if (value === virtualSequenceNumber) {
                 return key;
@@ -407,6 +419,11 @@ export class VirtualDeltaManager<TConnectionManager extends IConnectionManager>
     /** TODO: remove this (for debugging) */
     private addNoOpToBatch(messages: Readonly<IDocumentMessage[]>): IDocumentMessage[] {
         const newMessages = [...messages];
+
+        if (newMessages.length === 1 && newMessages[0].type === MessageType.Summarize) {
+            return newMessages;
+        }
+
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: undefined,
             metadata: undefined,
