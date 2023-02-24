@@ -11,7 +11,7 @@ import {
 	IRuntimeAttributor,
 } from "@fluidframework/attributor";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedCell } from "@fluidframework/cell";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -22,44 +22,28 @@ import {
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
 
-const stringId = "sharedStringKey";
-const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+const cellId = "sharedCellKey";
+const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
 };
 
 function assertAttributionMatches(
-	sharedString: SharedString,
-	position: number,
+	sharedCell: SharedCell,
 	attributor: IRuntimeAttributor,
 	expected: Partial<AttributionInfo> | "detached",
 ): void {
-	const { segment, offset } = sharedString.getContainingSegment(position);
-	assert(
-		segment !== undefined && offset !== undefined,
-		`Position ${position} had no associated segment.`,
-	);
-	assert(
-		segment.attribution !== undefined,
-		`Position ${position}'s segment had no attribution information.`,
-	);
-	const key = segment.attribution.getAtOffset(offset);
+	const key = sharedCell.getAttribution();
 
 	if (expected === "detached") {
-		assert.deepEqual(
-			key,
-			{ type: "detached", id: 0 },
-			"expected attribution key to be detached",
-		);
-		assert.equal(
-			attributor.has(key),
-			false,
-			"Expected RuntimeAttributor to not attribute detached key.",
+		assert(
+			key === undefined,
+			`The attribuiton should not be recorded in detached state currently`,
 		);
 	} else {
+		assert(key !== undefined, `The cell had no attribution information`);
 		const { timestamp, user } = attributor.get(key) ?? {};
 		if (expected.timestamp !== undefined) {
 			assert.equal(timestamp, expected.timestamp);
@@ -70,9 +54,7 @@ function assertAttributionMatches(
 	}
 }
 
-// TODO: Expand the e2e tests in this suite to cover interesting combinations of configuration and versioning that aren't covered by mixinAttributor
-// unit tests.
-describeNoCompat("Attributor", (getTestObjectProvider) => {
+describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -82,9 +64,9 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
-	const sharedStringFromContainer = async (container: IContainer) => {
+	const sharedCellFromContainer = async (container: IContainer) => {
 		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-		return dataObject.getSharedObject<SharedString>(stringId);
+		return dataObject.getSharedObject<SharedCell>(cellId);
 	};
 
 	const getTestConfig = (runtimeAttributor?: IRuntimeAttributor): ITestContainerConfig => ({
@@ -98,7 +80,6 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
-					policyFactory: createInsertOnlyAttributionPolicy,
 				},
 			},
 		},
@@ -107,26 +88,28 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 	it("Can attribute content from multiple collaborators", async () => {
 		const attributor = createRuntimeAttributor();
 		const container1 = await provider.makeTestContainer(getTestConfig(attributor));
-		const sharedString1 = await sharedStringFromContainer(container1);
+		const sharedCell1 = await sharedCellFromContainer(container1);
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const sharedString2 = await sharedStringFromContainer(container2);
+		const sharedCell2 = await sharedCellFromContainer(container2);
 
-		const text = "client 1";
-		sharedString1.insertText(0, text);
+		sharedCell1.set(1);
 		await provider.ensureSynchronized();
-		sharedString2.insertText(0, "client 2, ");
+		sharedCell2.set(2);
 		await provider.ensureSynchronized();
-		assert.equal(sharedString1.getText(), "client 2, client 1");
 
 		assert(
 			container1.clientId !== undefined && container2.clientId !== undefined,
 			"Both containers should have client ids.",
 		);
-		assertAttributionMatches(sharedString1, 3, attributor, {
+		assertAttributionMatches(sharedCell1, attributor, {
 			user: container1.audience.getMember(container2.clientId)?.user,
 		});
-		assertAttributionMatches(sharedString1, 13, attributor, {
-			user: container1.audience.getMember(container1.clientId)?.user,
+
+		sharedCell1.set(3);
+		await provider.ensureSynchronized();
+
+		assertAttributionMatches(sharedCell1, attributor, {
+			user: container2.audience.getMember(container1.clientId)?.user,
 		});
 	});
 
@@ -138,31 +121,31 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 			config: {},
 		};
 		const container1 = await loader.createDetachedContainer(defaultCodeDetails);
-		const sharedString1 = await sharedStringFromContainer(container1);
+		const sharedCell1 = await sharedCellFromContainer(container1);
 
-		const text = "client 1";
-		sharedString1.insertText(0, text);
+		sharedCell1.set(1);
 		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
 		await provider.ensureSynchronized();
+
+		assertAttributionMatches(sharedCell1, attributor, "detached");
 
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined);
 		const loader2 = provider.makeTestLoader(getTestConfig());
 		const container2 = await loader2.resolve({ url });
 
-		const sharedString2 = await sharedStringFromContainer(container2);
-		sharedString2.insertText(0, "client 2, ");
+		const sharedCell2 = await sharedCellFromContainer(container2);
+		sharedCell2.set(2);
 
 		await provider.ensureSynchronized();
-		assert.equal(sharedString1.getText(), "client 2, client 1");
 
 		assert(
 			container1.clientId !== undefined && container2.clientId !== undefined,
 			"Both containers should have client ids.",
 		);
-		assertAttributionMatches(sharedString1, 3, attributor, {
+
+		assertAttributionMatches(sharedCell1, attributor, {
 			user: container1.audience.getMember(container2.clientId)?.user,
 		});
-		assertAttributionMatches(sharedString1, 13, attributor, "detached");
 	});
 });

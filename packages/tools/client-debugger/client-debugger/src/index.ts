@@ -45,6 +45,8 @@
 
 export { MemberChangeKind } from "./Audience";
 
+export { ContainerStateChangeKind } from "./Container";
+
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 
 export {
