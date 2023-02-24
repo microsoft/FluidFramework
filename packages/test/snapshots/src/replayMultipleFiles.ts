@@ -254,7 +254,7 @@ async function processNodeForUpdatingSnapshots(
 	const currentSnapshotsVersion = versionContent.snapshotVersion;
 
 	// If the current snapshots version is the same as the current version of the runtime (pkgVersion), don't move
-	// the current snapshot to become older snapshots since its still the latest snapshot version.
+	// the current snapshots to become older snapshots since it's still the latest snapshot version.
 	if (currentSnapshotsVersion !== pkgVersion) {
 		// Create the folder where the current snapshots will be moved. If this folder already exists, we will update
 		// the snapshots in that folder because we only need one set of snapshots for each version.
