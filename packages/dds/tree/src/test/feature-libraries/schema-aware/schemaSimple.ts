@@ -1,8 +1,8 @@
-/* eslint-disable no-inner-declarations */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable no-inner-declarations */
 
 import {
 	FieldKinds,
