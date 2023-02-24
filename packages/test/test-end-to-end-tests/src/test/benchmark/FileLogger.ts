@@ -30,6 +30,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		profile: string | undefined;
 		runId: number | undefined;
 		testName: string | undefined;
+		benchmarkType: string | undefined;
 	}) {
 		assert(process.env.FLUID_BUILD_ID !== undefined, "Fluid Build Id not defined");
 		dimensions.runId = parseInt(process.env.FLUID_BUILD_ID, 10);
@@ -41,9 +42,11 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		logger.send({
 			category: "performance",
 			eventName: "BenchMarkBegin",
-			benchmarkType: "ExecutionTime",
 			message: "Benchmark Begin",
 			...dimensions,
+			testName: globalTestName,
+			benchmarkType: dimensions.benchmarkType,
+			profile: dimensions.profile,
 		});
 		return logger;
 	}
@@ -99,6 +102,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		this.baseLogger?.send({ ...event, hostName: pkgName, testName: globalTestName ?? "-" });
 
 		event.Event_Time = Date.now();
+		event.testName = globalTestName ?? "-";
 		// keep track of the frequency of every log event, as we'll sort by most common on write
 		Object.keys(event).forEach((k) => this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
 		if (event.category === "error") {

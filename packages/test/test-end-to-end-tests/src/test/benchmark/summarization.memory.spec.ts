@@ -50,6 +50,7 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 						driverEndpointName: provider.driver.endpointName,
 						profile: "",
 						testName,
+						benchmarkType: "MemoryUsage",
 				  })
 				: undefined;
 
