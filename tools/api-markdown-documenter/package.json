@@ -94,8 +94,6 @@
 		"typescript": "~4.5.5"
 	},
 	"overrides": {
-		"awesome-typescript-loader": {
-			"socket.io-parser": "^4.2.1"
-		}
+		"socket.io-parser": "^4.2.1"
 	}
 }

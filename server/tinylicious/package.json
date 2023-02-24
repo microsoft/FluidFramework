@@ -104,8 +104,6 @@
 		"node": ">=14.0.0"
 	},
 	"overrides": {
-		"awesome-typescript-loader": {
-			"socket.io-parser": "^4.2.1"
-		}
+		"socket.io-parser": "^4.2.1"
 	}
 }
