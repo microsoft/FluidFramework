@@ -218,7 +218,7 @@ export class Outbox {
 		}
 
 		const socketSize = estimateSocketSize(batch);
-		if (batch.content.length > 2000 || socketSize >= this.params.config.maxBatchSizeInBytes) {
+		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
 			this.mc.logger.sendPerformanceEvent({
 				eventName: "LargeBatch",
 				length: batch.content.length,
