@@ -108,9 +108,5 @@ export function handleIncomingMessage(
  * @internal
  */
 export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage {
-	return (
-		typeof value.source === "string" &&
-		// value.source.startsWith("fluid-client-debugger") &&
-		value.type !== undefined
-	);
+	return typeof value.source === "string" && value.type !== undefined;
 }
