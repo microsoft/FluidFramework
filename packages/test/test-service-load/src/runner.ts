@@ -148,7 +148,7 @@ async function main() {
 	} catch (e) {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
 	} finally {
-		if (testFailed || runId === 3) {
+		if (testFailed) {
 			result = -1;
 		}
 		await safeExit(result, url, runId);
