@@ -3,10 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { MessageLoggingOptions } from "@fluid-tools/client-debugger";
+
 /**
  * Devtools Script context label for console logging.
  */
 export const devtoolsScriptLoggingContext = "DEVTOOLS";
+
+/**
+ * Content Script configuration for console logging.
+ */
+export const devtoolsScriptMessageLoggingOptions: MessageLoggingOptions = {
+	context: devtoolsScriptLoggingContext,
+};
 
 /**
  * Formats the provided log message with the appropriate context information.

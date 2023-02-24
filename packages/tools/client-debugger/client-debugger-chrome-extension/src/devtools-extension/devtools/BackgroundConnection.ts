@@ -4,11 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import {
-	IDebuggerMessage,
-	isDebuggerMessage,
-	MessageLoggingOptions,
-} from "@fluid-tools/client-debugger";
+import { IDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
 
 import { IMessageRelayEvents, IMessageRelay, TypedPortConnection } from "../../messaging";
 import {
@@ -18,31 +14,18 @@ import {
 	devtoolsMessageSource,
 	postMessageToPort,
 } from "../messaging";
-
-/**
- * Context string for logging.
- */
-const loggingContext = "EXTENSION(DEVTOOLS_SCRIPT)";
-
-/**
- * Formats the provided log message with the appropriate context information.
- */
-function formatForLogging(text: string): string {
-	return `${loggingContext}: ${text}`;
-}
-
-/**
- * Configuration for console logging.
- */
-const messageLoggingOptions: MessageLoggingOptions = {
-	context: loggingContext,
-};
+import {
+	devtoolsScriptMessageLoggingOptions,
+	formatDevtoolsScriptMessageForLogging,
+} from "./Logging";
 
 /**
  * Error logged when consumer attempts to access {@link BackgroundConnection} members after it
  * has been disposed.
  */
-const accessDisposedError = formatForLogging("The message relay was previously disposed.");
+const accessDisposedError = formatDevtoolsScriptMessageForLogging(
+	"The message relay was previously disposed.",
+);
 
 /**
  * Message relay for communicating with the Background Script.
@@ -66,7 +49,9 @@ export class BackgroundConnection
 		}
 
 		if (message.type === devToolsInitAcknowledgementType) {
-			console.log(formatForLogging("Background initialization acknowledged."));
+			console.log(
+				formatDevtoolsScriptMessageForLogging("Background initialization acknowledged."),
+			);
 
 			this._connected = true;
 			return this.emit("connected");
@@ -74,7 +59,9 @@ export class BackgroundConnection
 			// Forward incoming message onto subscribers.
 			// TODO: validate source
 			console.log(
-				formatForLogging(`Relaying "${message.type}" message from BACKGROUND_SCRIPT:`),
+				formatDevtoolsScriptMessageForLogging(
+					`Relaying "${message.type}" message from BACKGROUND_SCRIPT:`,
+				),
 				message,
 			);
 			return this.emit("message", message);
@@ -126,10 +113,12 @@ export class BackgroundConnection
 		}
 
 		if (this._connected) {
-			throw new Error(formatForLogging("The message relay is already connected."));
+			throw new Error(
+				formatDevtoolsScriptMessageForLogging("The message relay is already connected."),
+			);
 		}
 
-		console.log(formatForLogging("Connecting to Background script..."));
+		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
 
 		// Create a connection to the background page
 		this.backgroundServiceConnection = chrome.runtime.connect({
@@ -144,7 +133,11 @@ export class BackgroundConnection
 				tabId: chrome.devtools.inspectedWindow.tabId,
 			},
 		};
-		postMessageToPort(initMessage, this.backgroundServiceConnection, messageLoggingOptions);
+		postMessageToPort(
+			initMessage,
+			this.backgroundServiceConnection,
+			devtoolsScriptMessageLoggingOptions,
+		);
 
 		// Bind listeners
 		this.backgroundServiceConnection.onMessage.addListener(this.backgroundMessageHandler);
@@ -161,19 +154,25 @@ export class BackgroundConnection
 
 		if (!this._connected) {
 			throw new Error(
-				formatForLogging("The message relay is not connected. Cannot post message."),
+				formatDevtoolsScriptMessageForLogging(
+					"The message relay is not connected. Cannot post message.",
+				),
 			);
 		}
 
 		if (this.backgroundServiceConnection === undefined) {
 			throw new Error(
-				formatForLogging(
+				formatDevtoolsScriptMessageForLogging(
 					"The message relay is marked as `connected`, but the background service port is not defined. This should not be possible.",
 				),
 			);
 		}
 
-		postMessageToPort(message, this.backgroundServiceConnection, messageLoggingOptions);
+		postMessageToPort(
+			message,
+			this.backgroundServiceConnection,
+			devtoolsScriptMessageLoggingOptions,
+		);
 	}
 
 	/**
