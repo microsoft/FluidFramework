@@ -98,7 +98,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 						);
 					}
 
-					tabConnection = chrome.tabs.connect(tabId);
+					tabConnection = chrome.tabs.connect(tabId, { name: "Content Script" });
 
 					console.log(formatForLogging(`Connected to tab: ${tabId}.`));
 
