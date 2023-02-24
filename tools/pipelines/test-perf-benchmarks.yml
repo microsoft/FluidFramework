@@ -490,7 +490,7 @@ stages:
                 exit 1;
               fi
           env:
-            FLUID_TEST_LOGGER_PERF_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             FLUID_BUILD_ID: $(Build.BuildId)
 
         - task: Bash@3
@@ -566,7 +566,7 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
-              echo "FLUID_TEST_LOGGER_PERF_PKG_PATH= ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger"
+              echo "FLUID_TEST_LOGGER_PKG_PATH= ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger"
               echo "FLUID_BUILD_ID $(Build.BuildId)"
 
               # Run execution time tests
@@ -594,7 +594,7 @@ stages:
             login__microsoft__clientId: $(login-microsoft-clientId)
             login__microsoft__secret: $(login-microsoft-secret)
             login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-            FLUID_TEST_LOGGER_PERF_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             FLUID_BUILD_ID: $(Build.BuildId)
             FLUID_ENDPOINTNAME: odsp
 
