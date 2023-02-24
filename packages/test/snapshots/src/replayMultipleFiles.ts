@@ -11,7 +11,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "./packageVersion";
 import { validateSnapshots } from "./validateSnapshots";
-import { getManifest, writeManifestFile } from "./manifest";
+import { getMetadata, writeMetadataFile } from "./metadata";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {
@@ -171,12 +171,12 @@ export async function processContent(mode: Mode, concurrently = true) {
 		//    2.1) For older snapshots added before `testSummaries` was introduced, the snapshot frequency is 1000.
 		//    2.2) For snapshots added after `testSummaries` was introduced, the snapshot frequency is the same as when
 		//         summaries happened in the original file. This is determined by the summary ops.
-		const manifest = getManifest(folder);
+		const metadata = getMetadata(folder);
 		let snapFreq: number | undefined;
 		let testSummaries: boolean | undefined;
 		if (mode === Mode.Stress) {
 			snapFreq = 50;
-		} else if (manifest.testSummaries === undefined) {
+		} else if (metadata.testSummaries === undefined) {
 			snapFreq = 1000;
 		} else {
 			testSummaries = true;
@@ -313,8 +313,8 @@ async function processNodeForNewSnapshots(
 		encoding: "utf-8",
 	});
 
-	// Write the manifest file.
-	writeManifestFile(data.folder);
+	// Write the metadata file.
+	writeMetadataFile(data.folder);
 }
 
 /**
