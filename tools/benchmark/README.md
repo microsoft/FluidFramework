@@ -80,6 +80,9 @@ Look at the documentation for `BenchmarkArguments` for more details on what the 
 When run, tests for runtime profiling will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type`
 when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
 
+> **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
+> See documentation on `HookArguments` for more detail.
+
 ## Profiling memory usage
 
 To profile memory usage, define tests using the `benchmarkMemory()` function.
