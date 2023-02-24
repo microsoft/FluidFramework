@@ -326,11 +326,12 @@ describe("OpSplitter", () => {
 
 				assert.equal(batchesSubmitted.length, 5 + (extraOp ? 1 : 0));
 				for (const batch of batchesSubmitted) {
-					assert.equal(batch.length, 1);
+					assert.equal(batch.messages.length, 1);
 					assert.equal(
-						(batch[0] as BatchMessage).deserializedContent.type,
+						(batch.messages[0] as BatchMessage).deserializedContent.type,
 						ContainerMessageType.ChunkedOp,
 					);
+					assert.equal(batch.referenceSequenceNumber, 0);
 				}
 
 				assert.equal(result.content.length, 4);
@@ -345,7 +346,7 @@ describe("OpSplitter", () => {
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
-						((x[0] as BatchMessage).deserializedContent.contents as IChunkedOp)
+						((x.messages[0] as BatchMessage).deserializedContent.contents as IChunkedOp)
 							.contents,
 				);
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
@@ -386,11 +387,12 @@ describe("OpSplitter", () => {
 
 				assert.equal(batchesSubmitted.length, 5 + (extraOp ? 1 : 0));
 				for (const batch of batchesSubmitted) {
-					assert.equal(batch.length, 1);
+					assert.equal(batch.messages.length, 1);
 					assert.equal(
-						(batch[0] as BatchMessage).deserializedContent.type,
+						(batch.messages[0] as BatchMessage).deserializedContent.type,
 						ContainerMessageType.ChunkedOp,
 					);
+					assert.equal(batch.referenceSequenceNumber, 0);
 				}
 
 				assert.equal(result.content.length, 1);
@@ -405,7 +407,7 @@ describe("OpSplitter", () => {
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
-						((x[0] as BatchMessage).deserializedContent.contents as IChunkedOp)
+						((x.messages[0] as BatchMessage).deserializedContent.contents as IChunkedOp)
 							.contents,
 				);
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
