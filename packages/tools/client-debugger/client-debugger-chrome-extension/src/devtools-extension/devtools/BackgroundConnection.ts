@@ -22,6 +22,12 @@ import {
 /**
  * Message relay for communicating with the Background Script.
  *
+ * @remarks
+ *
+ * We use this class to manage our connection from the Devtools Script to the Background Script, such that we can
+ * provide it to our internal library of shared React components and allow them to communicate with external services
+ * without needing to be aware of what endpoint they're communicating with.
+ *
  * @privateRemarks
  *
  * TODO: This implementation is brittle in a number of ways, which should be addressed before we publish the extension:
