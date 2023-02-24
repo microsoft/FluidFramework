@@ -9,18 +9,10 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { AttributionCollection, IAttributionCollection } from "./attributionCollection";
-import {
-    LocalClientId,
-    UnassignedSequenceNumber,
-    UniversalSequenceNumber,
-} from "./constants";
-import {
-     LocalReferenceCollection,
-} from "./localReference";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
+import { LocalReferenceCollection } from "./localReference";
 import { AttributionChangeEntry } from "./mergeTree";
-import {
-    IMergeTreeDeltaOpArgs,
-} from "./mergeTreeDeltaCallback";
+import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
@@ -177,70 +169,70 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 */
 	attribution?: IAttributionCollection<AttributionKey>;
 
-    /**
-     * Manages pending local state for properties on this segment.
-     */
-    propertyManager?: PropertiesManager;
-    /**
-     * Local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
-     * Once the segment is acked, this field is cleared.
-     */
-    localSeq?: number;
-    /**
-     * Local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
-     * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
-     * will be updated to the seq at which that client removed this segment.
-     *
-     * Like `localSeq`, this field is cleared once the local removal of the segment is acked.
-     */
-    localRemovedSeq?: number;
-    /**
-     * Seq at which this segment was inserted.
-     * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
-     */
-    seq?: number;
-    /**
-     * Short clientId for the client that inserted this segment.
-     */
-    clientId: number;
-    /**
-     * Local references added to this segment.
-     */
-    localRefs?: LocalReferenceCollection;
-    /**
-     * Properties that have been added to this segment via annotation.
-     */
-    properties?: PropertySet;
-    addProperties(
-        newProps: PropertySet,
-        op?: ICombiningOp,
-        seq?: number,
-        collabWindow?: CollaborationWindow,
-        rollback?: PropertiesRollback,
-    ): PropertySet | undefined;
-    clone(): ISegment;
-    canAppend(segment: ISegment): boolean;
-    append(segment: ISegment): void;
-    splitAt(pos: number): ISegment | undefined;
-    toJSONObject(): any;
-    /**
-     * Acks the current segment against the segment group, op, and merge tree.
-     *
-     * @param segmentGroup - Pending segment group associated with this op.
-     * @param opArgs - Information about the op that was acked
-     * @returns - true if the op modifies the segment, otherwise false.
-     * The only current false case is overlapping remove, where a segment is removed
-     * by a previously sequenced operation before the current operation is acked.
-     * @throws - error if the segment state doesn't match segment group or op.
-     * E.g. if the segment group is not first in the pending queue, or
-     * an inserted segment does not have unassigned sequence number.
-     */
-    ack(
-        segmentGroup: SegmentGroup,
-        opArgs: IMergeTreeDeltaOpArgs,
-        // TODO: doc
-        attributionDeltas: AttributionChangeEntry[] | undefined,
-    ): boolean;
+	/**
+	 * Manages pending local state for properties on this segment.
+	 */
+	propertyManager?: PropertiesManager;
+	/**
+	 * Local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
+	 * Once the segment is acked, this field is cleared.
+	 */
+	localSeq?: number;
+	/**
+	 * Local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
+	 * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
+	 * will be updated to the seq at which that client removed this segment.
+	 *
+	 * Like `localSeq`, this field is cleared once the local removal of the segment is acked.
+	 */
+	localRemovedSeq?: number;
+	/**
+	 * Seq at which this segment was inserted.
+	 * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
+	 */
+	seq?: number;
+	/**
+	 * Short clientId for the client that inserted this segment.
+	 */
+	clientId: number;
+	/**
+	 * Local references added to this segment.
+	 */
+	localRefs?: LocalReferenceCollection;
+	/**
+	 * Properties that have been added to this segment via annotation.
+	 */
+	properties?: PropertySet;
+	addProperties(
+		newProps: PropertySet,
+		op?: ICombiningOp,
+		seq?: number,
+		collabWindow?: CollaborationWindow,
+		rollback?: PropertiesRollback,
+	): PropertySet | undefined;
+	clone(): ISegment;
+	canAppend(segment: ISegment): boolean;
+	append(segment: ISegment): void;
+	splitAt(pos: number): ISegment | undefined;
+	toJSONObject(): any;
+	/**
+	 * Acks the current segment against the segment group, op, and merge tree.
+	 *
+	 * @param segmentGroup - Pending segment group associated with this op.
+	 * @param opArgs - Information about the op that was acked
+	 * @returns - true if the op modifies the segment, otherwise false.
+	 * The only current false case is overlapping remove, where a segment is removed
+	 * by a previously sequenced operation before the current operation is acked.
+	 * @throws - error if the segment state doesn't match segment group or op.
+	 * E.g. if the segment group is not first in the pending queue, or
+	 * an inserted segment does not have unassigned sequence number.
+	 */
+	ack(
+		segmentGroup: SegmentGroup,
+		opArgs: IMergeTreeDeltaOpArgs,
+		// TODO: doc
+		attributionDeltas: AttributionChangeEntry[] | undefined,
+	): boolean;
 }
 
 export interface IMarkerModifiedAction {
@@ -471,42 +463,58 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public abstract toJSONObject(): any;
 
-    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attributionDeltas: AttributionChangeEntry[] | undefined): boolean {
-        const currentSegmentGroup = this.segmentGroups.dequeue();
-        assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
-        switch (opArgs.op.type) {
-            case MergeTreeDeltaType.ANNOTATE:
-                assert(!!this.propertyManager, 0x044 /* "On annotate ack, missing segment property manager!" */);
-                this.propertyManager.ackPendingProperties(opArgs.op);
-                break;
+	public ack(
+		segmentGroup: SegmentGroup,
+		opArgs: IMergeTreeDeltaOpArgs,
+		attributionDeltas: AttributionChangeEntry[] | undefined,
+	): boolean {
+		const currentSegmentGroup = this.segmentGroups.dequeue();
+		assert(
+			currentSegmentGroup === segmentGroup,
+			0x043 /* "On ack, unexpected segmentGroup!" */,
+		);
+		switch (opArgs.op.type) {
+			case MergeTreeDeltaType.ANNOTATE:
+				assert(
+					!!this.propertyManager,
+					0x044 /* "On annotate ack, missing segment property manager!" */,
+				);
+				this.propertyManager.ackPendingProperties(opArgs.op);
+				break;
 
-            case MergeTreeDeltaType.INSERT:
-                assert(this.seq === UnassignedSequenceNumber, 0x045 /* "On insert, seq number already assigned!" */);
-                this.seq = opArgs.sequencedMessage!.sequenceNumber;
-                this.localSeq = undefined;
-                break;
-                
-            case MergeTreeDeltaType.REMOVE:
-                const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
-                assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
-                this.localRemovedSeq = undefined;
-                if (removalInfo.removedSeq === UnassignedSequenceNumber) {
-                    removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
-                    return true;
-                }
-                return false;
+			case MergeTreeDeltaType.INSERT:
+				assert(
+					this.seq === UnassignedSequenceNumber,
+					0x045 /* "On insert, seq number already assigned!" */,
+				);
+				this.seq = opArgs.sequencedMessage!.sequenceNumber;
+				this.localSeq = undefined;
+				break;
 
-            default:
-                throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
-        }
+			case MergeTreeDeltaType.REMOVE:
+				const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
+				assert(
+					removalInfo !== undefined,
+					0x046 /* "On remove ack, missing removal info!" */,
+				);
+				this.localRemovedSeq = undefined;
+				if (removalInfo.removedSeq === UnassignedSequenceNumber) {
+					removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
+					return true;
+				}
+				return false;
 
-        if (attributionDeltas !== undefined) {
-            // prop exclusion of those with pending writes could be excluded in this function perhaps
-            this.attribution ??= new AttributionCollection(this.cachedLength);
-            this.attribution.ackDeltas(attributionDeltas, this.propertyManager);
-        }
-        return true;
-    }
+			default:
+				throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
+		}
+
+		if (attributionDeltas !== undefined) {
+			// prop exclusion of those with pending writes could be excluded in this function perhaps
+			this.attribution ??= new AttributionCollection(this.cachedLength);
+			this.attribution.ackDeltas(attributionDeltas, this.propertyManager);
+		}
+		return true;
+	}
 
 	public splitAt(pos: number): ISegment | undefined {
 		if (pos > 0) {

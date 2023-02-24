@@ -250,33 +250,31 @@ export class TestClient extends Client {
 		);
 	}
 
-    public annotateRangeRemote(
-        start: number,
-        end: number,
-        props: PropertySet,
-        seq: number,
-        refSeq: number,
-        longClientId: string,
-    ) {
-        this.applyMsg(this.makeOpMessage(
-            createAnnotateRangeOp(start, end, props, undefined),
-            seq,
-            refSeq,
-            longClientId,
-        ));
-    }
+	public annotateRangeRemote(
+		start: number,
+		end: number,
+		props: PropertySet,
+		seq: number,
+		refSeq: number,
+		longClientId: string,
+	) {
+		this.applyMsg(
+			this.makeOpMessage(
+				createAnnotateRangeOp(start, end, props, undefined),
+				seq,
+				refSeq,
+				longClientId,
+			),
+		);
+	}
 
-    public insertMarkerLocal(
-        pos: number,
-        behaviors: ReferenceType,
-        props?: PropertySet,
-    ) {
-        const segment = new Marker(behaviors);
-        if (props) {
-            segment.addProperties(props);
-        }
-        return this.insertSegmentLocal(pos, segment);
-    }
+	public insertMarkerLocal(pos: number, behaviors: ReferenceType, props?: PropertySet) {
+		const segment = new Marker(behaviors);
+		if (props) {
+			segment.addProperties(props);
+		}
+		return this.insertSegmentLocal(pos, segment);
+	}
 
 	public insertMarkerRemote(
 		pos: number,
@@ -461,32 +459,32 @@ export class TestClient extends Client {
 		return segmentPosition;
 	}
 
-    /**
-     * TODO: update this doc
-     * @returns an array of all attribution seq#s from the current perspective.
-     * The `i`th entry of the array is the attribution key for the character at position `i`.
-     * Validates segments either all have attribution information or none of them.
-     * If no segment has attribution information, returns undefined.
-     */
-    public getAllAttributionSeqs(channel?: string): (number | undefined)[] {
-        const seqs: (number | undefined)[] | undefined = [];
-        let segmentsWithAttribution = 0;
-        let segmentsWithoutAttribution = 0;
-        this.walkAllSegments((segment) => {
-            if (segment.attribution) {
-                segmentsWithAttribution++;
-            } else {
-                segmentsWithoutAttribution++;
-            }
-            for (let i = 0; i < segment.cachedLength; i++) {
-                seqs.push(segment.attribution?.getAtOffset(i, channel)?.seq);
-            }
-            return true;
-        });
+	/**
+	 * TODO: update this doc
+	 * @returns an array of all attribution seq#s from the current perspective.
+	 * The `i`th entry of the array is the attribution key for the character at position `i`.
+	 * Validates segments either all have attribution information or none of them.
+	 * If no segment has attribution information, returns undefined.
+	 */
+	public getAllAttributionSeqs(channel?: string): (number | undefined)[] {
+		const seqs: (number | undefined)[] | undefined = [];
+		let segmentsWithAttribution = 0;
+		let segmentsWithoutAttribution = 0;
+		this.walkAllSegments((segment) => {
+			if (segment.attribution) {
+				segmentsWithAttribution++;
+			} else {
+				segmentsWithoutAttribution++;
+			}
+			for (let i = 0; i < segment.cachedLength; i++) {
+				seqs.push(segment.attribution?.getAtOffset(i, channel)?.seq);
+			}
+			return true;
+		});
 
-        assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
-        return seqs;
-    }
+		assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
+		return seqs;
+	}
 
 	/**
 	 * Override and add some test only metrics

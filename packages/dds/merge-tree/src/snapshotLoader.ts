@@ -256,16 +256,16 @@ export class SnapshotLoader {
 		flushBatch();
 	}
 
-    private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
-        this.mergeTree.options ??= {};
-        this.mergeTree.options.attribution ??= {};
-        if (chunk.attribution) {
-            this.mergeTree.options.attribution.track = true;
-            AttributionCollection.populateAttributionCollections(segments, chunk.attribution);
-        } else {
-            this.mergeTree.options.attribution.track = false;
-        }
-    }
+	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
+		this.mergeTree.options ??= {};
+		this.mergeTree.options.attribution ??= {};
+		if (chunk.attribution) {
+			this.mergeTree.options.attribution.track = true;
+			AttributionCollection.populateAttributionCollections(segments, chunk.attribution);
+		} else {
+			this.mergeTree.options.attribution.track = false;
+		}
+	}
 
 	/**
 	 * If loading from a snapshot, get the catchup messages.

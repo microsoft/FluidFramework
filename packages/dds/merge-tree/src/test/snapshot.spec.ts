@@ -41,10 +41,10 @@ class TestString {
 	private seq = 0;
 	private minSeq = 0;
 
-    constructor(id: string, private readonly options?: IMergeTreeOptions) {
-        this.client = new TestClient(this.options);
-        this.client.startOrUpdateCollaboration(id);
-    }
+	constructor(id: string, private readonly options?: IMergeTreeOptions) {
+		this.client = new TestClient(this.options);
+		this.client.startOrUpdateCollaboration(id);
+	}
 
 	public insert(pos: number, text: string, increaseMsn: boolean) {
 		this.queue(
@@ -53,13 +53,13 @@ class TestString {
 		);
 	}
 
-    public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
-        this.queue(this.client.annotateRangeLocal(start, end, props, undefined)!, increaseMsn);
-    }
+	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
+		this.queue(this.client.annotateRangeLocal(start, end, props, undefined)!, increaseMsn);
+	}
 
-    public append(text: string, increaseMsn: boolean) {
-        this.insert(this.client.getLength(), text, increaseMsn);
-    }
+	public append(text: string, increaseMsn: boolean) {
+		this.insert(this.client.getLength(), text, increaseMsn);
+	}
 
 	public removeRange(start: number, end: number, increaseMsn: boolean) {
 		this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
@@ -75,8 +75,8 @@ class TestString {
 			"MergeTree must contain the expected text prior to applying ops.",
 		);
 
-        await this.checkSnapshot(this.options);
-    }
+		await this.checkSnapshot(this.options);
+	}
 
 	// Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
 	public async checkSnapshot(options?: IMergeTreeOptions) {
@@ -243,15 +243,15 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 			str.append(`${i % 10}`, /* increaseMsn: */ false);
 		}
 
-        await str.checkSnapshot();
-    });
+		await str.checkSnapshot();
+	});
 
-    it("recovers annotated segments", async () => {
-        str.append("123", false);
-        str.annotate(1, 2, { foo: 1 }, false);
+	it("recovers annotated segments", async () => {
+		str.append("123", false);
+		str.annotate(1, 2, { foo: 1 }, false);
 
-        await str.checkSnapshot();
-    });
+		await str.checkSnapshot();
+	});
 }
 
 describe("snapshot", () => {
@@ -259,18 +259,18 @@ describe("snapshot", () => {
 		makeSnapshotSuite({ attribution: { track: true } });
 	});
 
-    describe("with attribution and custom channels", () => {
-        makeSnapshotSuite({ 
-            attribution: {
-                track: true,
-                interpreter: trackProperties("foo"),
-            }
-        });
-    });
+	describe("with attribution and custom channels", () => {
+		makeSnapshotSuite({
+			attribution: {
+				track: true,
+				interpreter: trackProperties("foo"),
+			},
+		});
+	});
 
-    describe("without attribution", () => {
-        makeSnapshotSuite({ attribution: { track: false } });
-    });
+	describe("without attribution", () => {
+		makeSnapshotSuite({ attribution: { track: false } });
+	});
 
 	it("presence of attribution overrides merge-tree initialization value", async () => {
 		const str = new TestString("id", { attribution: { track: true } });
