@@ -79,5 +79,10 @@
     "awesome-typescript-loader": {
       "socket.io-parser": "^4.2.1"
     }
+  },
+  "pnpm": {
+    "overrides": {
+      "socket.io-parser": "^4.2.1"
+    }
   }
 }

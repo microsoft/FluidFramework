@@ -86,7 +86,7 @@
     "node": ">=14.13.0"
   },
   "packageManager": "pnpm@7.14.2",
-    "pnpm": {
+  "pnpm": {
     "overrides": {
       "socket.io-parser": "^4.2.1"
     }
