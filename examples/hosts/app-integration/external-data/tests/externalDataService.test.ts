@@ -56,7 +56,8 @@ describe("mock-external-data-service", () => {
 	});
 
 	async function getCurrentExternalData(): Promise<TaskData> {
-		const fetchResponse = await externalDataSource!.fetchData();
+		const taskListId = 1;
+		const fetchResponse = await externalDataSource!.fetchData(taskListId);
 		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
 			string | number | symbol,
 			unknown
@@ -71,8 +72,9 @@ describe("mock-external-data-service", () => {
 
 	it("fetch-tasks: Ensure server yields the data we expect", async () => {
 		const expectedData = await getCurrentExternalData();
+		const taskListId = 1;
 		await request(externalDataService!)
-			.get("/fetch-tasks")
+			.get(`/fetch-tasks/${taskListId}`)
 			.expect(200, { taskList: expectedData });
 	});
 

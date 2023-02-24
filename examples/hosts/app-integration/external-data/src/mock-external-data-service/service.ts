@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskData, TaskData } from "../model-interface";
+import { assertValidTaskData, TaskData, TaskListData } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -130,8 +130,12 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * }
 	 * ```
 	 */
-	expressApp.get("/fetch-tasks", (_, result) => {
-		externalDataSource.fetchData().then(
+	expressApp.get("/fetch-tasks/:taskListId", (request, result) => {
+		const taskListId = request.params?.taskListId;
+		if (taskListId === undefined) {
+			result.status(400).json({ message: "Missing parameter taskListId in request url" });
+		}
+		externalDataSource.fetchData(Number.parseInt(taskListId, 10)).then(
 			(response) => {
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
@@ -178,16 +182,16 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskData;
+			let taskListData: TaskListData;
 			try {
-				taskData = assertValidTaskData(messageData);
+				taskListData = { "1": assertValidTaskData(messageData) };
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
-			externalDataSource.writeData(taskData).then(
+			externalDataSource.writeData(taskListData).then(
 				() => {
 					console.log(formatLogMessage("Data set request completed!"));
 					result.send();

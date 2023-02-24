@@ -17,19 +17,23 @@ async function pollForServiceUpdates(
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
 	try {
-		const response = await fetch(`http://localhost:${externalDataServicePort}/fetch-tasks`, {
-			method: "GET",
-			headers: {
-				"Access-Control-Allow-Origin": "*",
-				"Content-Type": "application/json",
+		const taskListId = 1;
+		const response = await fetch(
+			`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}}`,
+			{
+				method: "GET",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
 			},
-		});
+		);
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
 		const newData = responseBody.taskList as TaskData;
-		if (newData !== undefined && !isEqual(newData, externalData)) {
+		if (newData !== undefined && !isEqual(newData[taskListId], externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
-			setExternalData(newData);
+			setExternalData(newData[taskListId]);
 		}
 	} catch (error) {
 		console.error("APP: An error was encountered while polling external data:", error);

@@ -10,7 +10,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
+import type { ITask, ITaskEvents, ITaskList, TaskListData } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
@@ -244,16 +244,11 @@ export class TaskList extends DataObject implements ITaskList {
 	public async importExternalData(): Promise<void> {
 		console.log("TASK-LIST: Fetching external data from service...");
 
-		let updatedExternalData: [
-			string,
-			{
-				name: string;
-				priority: number;
-			},
-		][];
+		const taskListId = "1";
+		let updatedExternalData: [string, { name: string; priority: number }][];
 		try {
 			const response = await fetch(
-				`http://localhost:${externalDataServicePort}/fetch-tasks`,
+				`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}`,
 				{
 					method: "GET",
 					headers: {
@@ -267,8 +262,13 @@ export class TaskList extends DataObject implements ITaskList {
 			if (responseBody.taskList === undefined) {
 				throw new Error("Task list fetch returned no data.");
 			}
-			const data = responseBody.taskList as TaskData;
-			updatedExternalData = Object.entries(data);
+			const data = responseBody.taskList as TaskListData;
+			if (data?.taskListId !== data.taskListId) {
+				console.error(
+					`Task list fetch failed due to an error:\nTask List Id ${taskListId} does not mactch the taskListId returned.`,
+				);
+			}
+			updatedExternalData = Object.entries(data[taskListId]);
 			console.log("TASK-LIST: Data imported from service.", updatedExternalData);
 		} catch (error) {
 			console.error(`Task list fetch failed due to an error:\n${error}`);

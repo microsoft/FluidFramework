@@ -6,9 +6,9 @@
 import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Response } from "node-fetch";
-import { TaskData } from "../model-interface";
+import { TaskListData, TaskData } from "../model-interface";
 
-const startingExternalData: TaskData = {
+const taskList1: TaskData = {
 	12: {
 		name: "Alpha",
 		priority: 1,
@@ -25,6 +25,18 @@ const startingExternalData: TaskData = {
 		name: "Delta",
 		priority: 4,
 	},
+};
+
+const taskList2: TaskData = {
+	17: {
+		name: "Alpha",
+		priority: 1,
+	},
+};
+
+const startingExternalData: TaskListData = {
+	1: taskList1,
+	2: taskList2,
 };
 
 /**
@@ -54,7 +66,7 @@ export interface IExternalDataSourceEvents extends IEvent {
  * TODO: Consider adding a fake delay to the async calls to give us a better approximation of expected experience.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
-	private data: TaskData;
+	private data: TaskListData;
 
 	public constructor() {
 		super();
@@ -69,8 +81,8 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 *
 	 * @remarks This is async to simulate the more-realistic scenario of a network request.
 	 */
-	public async fetchData(): Promise<Response> {
-		const jsonData = { taskList: this.data };
+	public async fetchData(taskListId: number): Promise<Response> {
+		const jsonData = { taskList: { [taskListId]: this.data[taskListId] } };
 		return new Response(JSON.stringify(jsonData), {
 			status: 200,
 			statusText: "OK",
@@ -83,7 +95,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @param data - The string data to write.
 	 * @returns A promise that resolves when the write completes.
 	 */
-	public async writeData(data: TaskData): Promise<Response> {
+	public async writeData(data: TaskListData): Promise<Response> {
 		this.data = data;
 
 		// Emit for debug views to update
