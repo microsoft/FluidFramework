@@ -81,6 +81,8 @@ When run, tests for runtime profiling will be tagged with `@Benchmark` (or whate
 when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
 
 > **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
+> Benchmark.js's test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
+> The problem can be alleviated but not fully fixed using the `onCycle` hook argument.
 > See documentation on `HookArguments` for more detail.
 
 ## Profiling memory usage
