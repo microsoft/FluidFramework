@@ -603,8 +603,11 @@ export class Container
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
 	public async getEntryPoint?(): Promise<FluidObject | undefined> {
-		if (this._lifecycleState === "disposed") {
-			throw new UsageError("The container is already disposed");
+		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
+		// allow it since they mean a kind of read-only state for the Container.
+		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
+		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
+			throw new UsageError("The container is disposing or disposed");
 		}
 		while (this._context === undefined) {
 			await new Promise<void>((resolve, reject) => {
@@ -613,12 +616,15 @@ export class Container
 					this.off("disposed", disposedHandler);
 				};
 				const disposedHandler = (error) => {
-					reject(error);
+					reject(error ?? "The Container is disposed");
 					this.off("contextChanged", contextChangedHandler);
 				};
 				this.once("contextChanged", contextChangedHandler);
 				this.once("disposed", disposedHandler);
 			});
+			// The Promise above should only resolve (vs reject) if the 'contextChanged' event was emitted and that
+			// should have set this._context; making sure.
+			assert(this._context !== undefined, "Context still not defined after contextChanged event");
 		}
 		// Disable lint rule for the sake of more complete stack traces
 		// eslint-disable-next-line no-return-await
