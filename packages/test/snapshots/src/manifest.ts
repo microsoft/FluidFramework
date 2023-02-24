@@ -5,39 +5,24 @@
 
 import fs from "fs";
 
-/**
- * The current version of the snapshot tests. This should be updated if there is a change in how the tests validates
- * snapshot. For example, there was a change to generate snapshots not at fixed points (after 1000 ops) but at the same
- * points (sequence numbers) as what happened in the original file. The version was upgraded because snapshots added
- * before and after that point ran different validations.
- */
-export const currentTestVersion: number = 2;
-/**
- * The version of the test after which "testSummaries" replay args is set, indicating that snapshots need to be
- * generated at the same points as the original file did.
- */
-export const testSummariesVersion: number = 2;
-
 interface ITestManifest {
-	/** The version of the snapshot tests when a particular test folder was added. */
-	testVersion: number;
+	/** Tells whether testSummaries functionality is true. If so, the testSummaries ReplayArg is true. */
+	testSummaries?: true;
 }
 
-/**
- * The manifest to use for older snapshots before manifest was added.
- */
-const legacyManifest: ITestManifest = {
-	testVersion: 1,
+/** The current content of the manifest. */
+const currentManifest: ITestManifest = {
+	testSummaries: true,
 };
 
 /**
  * Reads the content of the manifest folder in a given test folder and returns it. For older test folders before
- * manifest was added, returns a legacy manifest.
+ * manifest was added, returns an empty manifest.
  */
 export function getManifest(folder: string): ITestManifest {
 	const manifestFile = `${folder}/manifest.json`;
 	if (!fs.existsSync(manifestFile)) {
-		return legacyManifest;
+		return {};
 	}
 
 	const manifestContent = JSON.parse(
@@ -50,9 +35,8 @@ export function getManifest(folder: string): ITestManifest {
  * Writes the manifest file in the given test folder.
  */
 export function writeManifestFile(folder: string) {
-	const manifestContent: ITestManifest = { testVersion: currentTestVersion };
 	const manifestFileName = `${folder}/manifest.json`;
-	fs.writeFileSync(manifestFileName, JSON.stringify(manifestContent), {
+	fs.writeFileSync(manifestFileName, JSON.stringify(currentManifest), {
 		encoding: "utf-8",
 	});
 }

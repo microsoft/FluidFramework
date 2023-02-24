@@ -11,7 +11,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "./packageVersion";
 import { validateSnapshots } from "./validateSnapshots";
-import { getManifest, testSummariesVersion, writeManifestFile } from "./manifest";
+import { getManifest, writeManifestFile } from "./manifest";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {
@@ -169,14 +169,14 @@ export async function processContent(mode: Mode, concurrently = true) {
 		//    storing these snapshots.
 		// 2) Other test - Generate and validate snapshots at a lower frequency. This has 2 categories:
 		//    2.1) For older snapshots added before `testSummaries` was introduced, the snapshot frequency is 1000.
-		//    2.2) For snapshots added after `testSummaries` was introduces, the snapshot frequency is the same as when
+		//    2.2) For snapshots added after `testSummaries` was introduced, the snapshot frequency is the same as when
 		//         summaries happened in the original file. This is determined by the summary ops.
 		const manifest = getManifest(folder);
 		let snapFreq: number | undefined;
 		let testSummaries: boolean | undefined;
 		if (mode === Mode.Stress) {
 			snapFreq = 50;
-		} else if (manifest.testVersion < testSummariesVersion) {
+		} else if (manifest.testSummaries === undefined) {
 			snapFreq = 1000;
 		} else {
 			testSummaries = true;
