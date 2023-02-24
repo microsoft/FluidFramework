@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GitManager, IGitManager } from "@fluidframework/server-services-client";
+import { IGitManager } from "@fluidframework/server-services-client";
 
 export interface ITenantConfig {
     id: string;
@@ -89,7 +89,7 @@ export interface ITenantManager {
     /**
      * Retrieves GitManager instance for the given tenant
      */
-    getTenantGitManager(tenantId: string, documentId: string): Promise<GitManager>;
+    getTenantGitManager(tenantId: string, documentId: string): Promise<IGitManager>;
 
     /**
      * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.

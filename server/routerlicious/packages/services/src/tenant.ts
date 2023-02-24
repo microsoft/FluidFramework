@@ -9,6 +9,7 @@ import {
     ICredentials,
     BasicRestWrapper,
     getAuthorizationTokenFromCredentials,
+    IGitManager,
 } from "@fluidframework/server-services-client";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
@@ -19,7 +20,7 @@ export class Tenant implements core.ITenant {
         return this.config.id;
     }
 
-    public get gitManager(): GitManager {
+    public get gitManager(): IGitManager {
         return this.manager;
     }
 
@@ -31,7 +32,7 @@ export class Tenant implements core.ITenant {
         return this.config.orderer;
     }
 
-    constructor(private readonly config: core.ITenantConfig, private readonly manager: GitManager) {
+    constructor(private readonly config: core.ITenantConfig, private readonly manager: IGitManager) {
     }
 }
 
@@ -63,7 +64,7 @@ export class TenantManager implements core.ITenantManager {
         return tenant;
     }
 
-    public async getTenantGitManager(tenantId: string, documentId: string, includeDisabledTenant = false): Promise<GitManager> {
+    public async getTenantGitManager(tenantId: string, documentId: string, includeDisabledTenant = false): Promise<IGitManager> {
         const key = await this.getKey(tenantId, includeDisabledTenant);
 
         const defaultQueryString = {
