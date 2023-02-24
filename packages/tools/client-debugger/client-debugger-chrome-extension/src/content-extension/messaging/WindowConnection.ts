@@ -4,6 +4,7 @@
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	debuggerMessageSource,
 	IDebuggerMessage,
 	isDebuggerMessage,
 	MessageLoggingOptions,
@@ -32,97 +33,41 @@ const messageLoggingOptions: MessageLoggingOptions = {
 };
 
 /**
- * Error logged when consumer attempts to access {@link WindowConnection} members after it
- * has been disposed.
- */
-const accessDisposedError = formatForLogging("The message relay was previously disposed.");
-
-/**
  * Message relay for communicating with the Window from the Content Script.
  */
 export class WindowConnection
 	extends TypedEventEmitter<IMessageRelayEvents>
 	implements IMessageRelay
 {
-	/**
-	 * Handler for incoming messages from {@link backgroundScriptConnection}.
-	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
-	 */
-	private readonly messageRelayHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
-	): boolean => {
-		const message = event.data;
-
-		// Forward incoming message onto subscribers if it is one of ours.
-		// TODO: validate source
-		if (isDebuggerMessage(message)) {
-			console.log(
-				formatForLogging(`Relaying "${message.type}" message from Window to Extension:`),
-				message,
-			);
-			return this.emit("message", message);
-		}
-		return false;
-	};
-
-	/**
-	 * {@inheritDoc IMessageRelay.connected}
-	 *
-	 * @privateRemarks Always true after construction.
-	 */
-	public get connected(): boolean {
-		return true;
-	}
-
-	/**
-	 * Private backing data for {@link BackgroundConnection.disposed}.
-	 */
-	private _disposed: boolean = false;
-
-	/**
-	 * {@inheritDoc IMessageRelay.disposed}
-	 */
-	public get disposed(): boolean {
-		return this._disposed;
-	}
-
 	public constructor() {
 		super();
 
 		// Bind listeners
-		globalThis.addEventListener("message", this.messageRelayHandler);
+		globalThis.addEventListener("message", this.onWindowMessageEvent);
 	}
 
 	/**
-	 * {@inheritDoc IMessageRelay.connect}
-	 *
-	 * @privateRemarks Unconditionally throws, since connection is established upon construction.
+	 * Handler for incoming messages from {@link backgroundScriptConnection}.
+	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
 	 */
-	public connect(): void {
-		if (this._disposed) {
-			throw new Error(accessDisposedError);
-		}
+	private onWindowMessageEvent(event: MessageEvent<Partial<IDebuggerMessage>>): void {
+		const message = event.data;
 
-		throw new Error("Window Connection is already connected.");
+		// Only relay message if it is one of ours, and if the source is the window's debugger
+		// (and not a message originating from the extension).
+		if (isDebuggerMessage(message) && message.source === debuggerMessageSource) {
+			console.log(
+				formatForLogging(`Relaying "${message.type}" message from Window to Extension:`),
+				message,
+			);
+			this.emit("message", message);
+		}
 	}
 
 	/**
 	 * {@inheritDoc IMessageRelay.postMessage}
 	 */
 	public postMessage(message: IDebuggerMessage): void {
-		if (this._disposed) {
-			throw new Error(accessDisposedError);
-		}
-
 		postMessageToWindow(message, messageLoggingOptions);
-	}
-
-	public dispose(): void {
-		if (this._disposed) {
-			throw new Error(accessDisposedError);
-		}
-
-		globalThis.removeEventListener("message", this.messageRelayHandler);
-		this._disposed = true;
 	}
 }

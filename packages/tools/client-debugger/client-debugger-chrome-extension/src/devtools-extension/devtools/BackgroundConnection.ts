@@ -20,15 +20,22 @@ import {
 } from "./Logging";
 
 /**
- * Error logged when consumer attempts to access {@link BackgroundConnection} members after it
- * has been disposed.
- */
-const accessDisposedError = formatDevtoolsScriptMessageForLogging(
-	"The message relay was previously disposed.",
-);
-
-/**
  * Message relay for communicating with the Background Script.
+ *
+ * @privateRemarks
+ *
+ * TODO: This implementation is brittle in a number of ways, which should be addressed before we publish the extension:
+ *
+ * 1. After establishing the connection with the background service, we send the initialization message that informs
+ * the background script of the devtools extension / tab relationship. If that message fails to be processed for any
+ * reason, subsequent messages sent from the devtools script will not be correctly forwarded. We should utilize a proper
+ * handshake mechanism for the initialization process, and any other critical messages.
+ *
+ * 2. We don't currently recover if the background service is disconnected for any reason. Generally speaking, the
+ * background script's lifetime should outlive the devtools script, but there may be cases where the connection is
+ * broken and we could theoretically recover from it. We'll want to see how problematic this really is before attempting
+ * to solve it, but it may require something like a message queue so we can queue up messages while we attempt to
+ * reconnect, and send them (*in order*, as ordering may be important in some cases) once we have reconnected.
  */
 export class BackgroundConnection
 	extends TypedEventEmitter<IMessageRelayEvents>
@@ -39,85 +46,19 @@ export class BackgroundConnection
 	 */
 	private backgroundServiceConnection: TypedPortConnection | undefined;
 
-	/**
-	 * Handler for incoming messages from {@link backgroundServiceConnection}.
-	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
-	 */
-	private readonly backgroundMessageHandler = (message: Partial<IDebuggerMessage>): boolean => {
-		if (!isDebuggerMessage(message)) {
-			return false;
-		}
-
-		if (message.type === devToolsInitAcknowledgementType) {
-			console.log(
-				formatDevtoolsScriptMessageForLogging("Background initialization acknowledged."),
-			);
-
-			this._connected = true;
-			return this.emit("connected");
-		} else {
-			// Forward incoming message onto subscribers.
-			// TODO: validate source
-			console.log(
-				formatDevtoolsScriptMessageForLogging(
-					`Relaying "${message.type}" message from BACKGROUND_SCRIPT:`,
-				),
-				message,
-			);
-			return this.emit("message", message);
-		}
-	};
-
-	/**
-	 * Private backing data for {@link BackgroundConnection.connected}.
-	 *
-	 * @remarks
-	 *
-	 * Note: this is not set to `true` upon initiating the connection with the background service.
-	 * Instead, we wait until the service sends us an acknowledgement message following tab initialization.
-	 */
-	private _connected: boolean = false;
-
-	/**
-	 * Private backing data for {@link BackgroundConnection.disposed}.
-	 */
-	private _disposed: boolean = false;
-
-	/**
-	 * {@inheritDoc IMessageRelay.connected}
-	 */
-	public get connected(): boolean {
-		return this.backgroundServiceConnection !== undefined;
-	}
-
-	/**
-	 * {@inheritDoc IMessageRelay.disposed}
-	 */
-	public get disposed(): boolean {
-		return this._disposed;
-	}
-
 	public constructor() {
 		super();
 
+		this.backgroundServiceConnection = undefined;
+
 		// Immediately attempt to connect to the background service connection.
-		this.connect();
+		this.initializeBackgroundServiceConnection();
 	}
 
 	/**
-	 * {@inheritDoc IMessageRelay.connect}
+	 * Initializes the connection with the background script.
 	 */
-	public connect(): void {
-		if (this._disposed) {
-			throw new Error(accessDisposedError);
-		}
-
-		if (this._connected) {
-			throw new Error(
-				formatDevtoolsScriptMessageForLogging("The message relay is already connected."),
-			);
-		}
-
+	private initializeBackgroundServiceConnection(): void {
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
 
 		// Create a connection to the background page
@@ -140,30 +81,60 @@ export class BackgroundConnection
 		);
 
 		// Bind listeners
-		this.backgroundServiceConnection.onMessage.addListener(this.backgroundMessageHandler);
-		this.backgroundServiceConnection.onDisconnect.addListener(this.disconnect);
+		this.backgroundServiceConnection.onMessage.addListener(this.onBackgroundServiceMessage);
+		this.backgroundServiceConnection.onDisconnect.addListener(
+			this.onBackgroundServiceDisconnect,
+		);
+	}
+
+	/**
+	 * Handler for incoming messages from {@link backgroundServiceConnection}.
+	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
+	 */
+	private readonly onBackgroundServiceMessage = (message: Partial<IDebuggerMessage>): boolean => {
+		if (!isDebuggerMessage(message)) {
+			return false;
+		}
+
+		if (message.type === devToolsInitAcknowledgementType) {
+			console.log(
+				formatDevtoolsScriptMessageForLogging("Background initialization acknowledged."),
+			);
+			return true;
+		} else {
+			// Forward incoming message onto subscribers.
+			// TODO: validate source
+			console.log(
+				formatDevtoolsScriptMessageForLogging(
+					`Relaying "${message.type}" message from BACKGROUND_SCRIPT:`,
+				),
+				message,
+			);
+			return this.emit("message", message);
+		}
+	};
+
+	/**
+	 * Handler for a disconnect event coming from the background service.
+	 * Puts the message relay into an unusable state (fail-fast).
+	 */
+	private onBackgroundServiceDisconnect(): void {
+		this.backgroundServiceConnection = undefined;
+		console.log(
+			formatDevtoolsScriptMessageForLogging(
+				"The Background Script disconnected. Further use of the message relay is not allowed.",
+			),
+		);
 	}
 
 	/**
 	 * Post message to Background Script.
 	 */
 	public postMessage(message: IDebuggerMessage): void {
-		if (this._disposed) {
-			throw new Error(accessDisposedError);
-		}
-
-		if (!this._connected) {
-			throw new Error(
-				formatDevtoolsScriptMessageForLogging(
-					"The message relay is not connected. Cannot post message.",
-				),
-			);
-		}
-
 		if (this.backgroundServiceConnection === undefined) {
 			throw new Error(
 				formatDevtoolsScriptMessageForLogging(
-					"The message relay is marked as `connected`, but the background service port is not defined. This should not be possible.",
+					`Background service connection was closed. Cannot post message.`,
 				),
 			);
 		}
@@ -173,28 +144,5 @@ export class BackgroundConnection
 			this.backgroundServiceConnection,
 			devtoolsScriptMessageLoggingOptions,
 		);
-	}
-
-	/**
-	 * Disconnects from the background service.
-	 */
-	private disconnect(): void {
-		if (this._disposed) {
-			throw new Error(accessDisposedError);
-		}
-
-		this.backgroundServiceConnection?.onMessage.removeListener(this.backgroundMessageHandler);
-		this.backgroundServiceConnection = undefined;
-		this._connected = false;
-		this.emit("disconnected");
-	}
-
-	public dispose(): void {
-		if (this._disposed) {
-			throw new Error(accessDisposedError);
-		}
-
-		this.disconnect();
-		this._disposed = true;
 	}
 }

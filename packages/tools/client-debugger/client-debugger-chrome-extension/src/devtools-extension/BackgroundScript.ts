@@ -38,6 +38,7 @@ console.log(formatBackgroundScriptMessageForLogging("Initializing Background Scr
  * and relays messages from the inspected tab back to DevtoolPanel.
  */
 chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void => {
+	// Note: this is captured by the devtoolsMessageListener lambda below.
 	let tabConnection: chrome.runtime.Port | undefined;
 
 	/**
@@ -156,6 +157,5 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 		}
 	};
 
-	// Bind listener
 	devtoolsPort.onMessage.addListener(devtoolsMessageListener);
 });
