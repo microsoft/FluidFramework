@@ -71,7 +71,7 @@ export function postMessageToPort<TMessage extends IDebuggerMessage>(
 ): void {
 	console.log(
 		formatMessageForLogging(
-			`Posting "${message.type}" message to port "${targetPort.name}":`,
+			`Posting "${message.type}" message to port "${targetPort.name ?? "(unnamed)"}":`,
 			loggingOptions,
 		),
 		message,

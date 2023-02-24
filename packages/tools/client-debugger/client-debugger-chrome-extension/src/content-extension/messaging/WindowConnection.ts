@@ -10,7 +10,7 @@ import {
 	postMessageToWindow,
 } from "@fluid-tools/client-debugger";
 
-import { IMessageReceiverEvents, IMessageRelay } from "../../messaging";
+import { IMessageRelayEvents, IMessageRelay } from "../../messaging";
 
 /**
  * Context string for logging.
@@ -32,10 +32,16 @@ const messageLoggingOptions: MessageLoggingOptions = {
 };
 
 /**
+ * Error logged when consumer attempts to access {@link WindowConnection} members after it
+ * has been disposed.
+ */
+const accessDisposedError = formatForLogging("The message relay was previously disposed.");
+
+/**
  * Message relay for communicating with the Window from the Content Script.
  */
 export class WindowConnection
-	extends TypedEventEmitter<IMessageReceiverEvents>
+	extends TypedEventEmitter<IMessageRelayEvents>
 	implements IMessageRelay
 {
 	/**
@@ -59,6 +65,27 @@ export class WindowConnection
 		return false;
 	};
 
+	/**
+	 * {@inheritDoc IMessageRelay.connected}
+	 *
+	 * @privateRemarks Always true after construction.
+	 */
+	public get connected(): boolean {
+		return true;
+	}
+
+	/**
+	 * Private backing data for {@link BackgroundConnection.disposed}.
+	 */
+	private _disposed: boolean = false;
+
+	/**
+	 * {@inheritDoc IMessageRelay.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
 	public constructor() {
 		super();
 
@@ -67,9 +94,35 @@ export class WindowConnection
 	}
 
 	/**
+	 * {@inheritDoc IMessageRelay.connect}
+	 *
+	 * @privateRemarks Unconditionally throws, since connection is established upon construction.
+	 */
+	public connect(): void {
+		if (this._disposed) {
+			throw new Error(accessDisposedError);
+		}
+
+		throw new Error("Window Connection is already connected.");
+	}
+
+	/**
 	 * {@inheritDoc IMessageRelay.postMessage}
 	 */
 	public postMessage(message: IDebuggerMessage): void {
+		if (this._disposed) {
+			throw new Error(accessDisposedError);
+		}
+
 		postMessageToWindow(message, messageLoggingOptions);
+	}
+
+	public dispose(): void {
+		if (this._disposed) {
+			throw new Error(accessDisposedError);
+		}
+
+		globalThis.removeEventListener("message", this.messageRelayHandler);
+		this._disposed = true;
 	}
 }
