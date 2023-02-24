@@ -30,7 +30,6 @@ import {
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	wrapDocumentServiceFactory,
-	mockConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
@@ -218,13 +217,8 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 	const isTreeHandle = true;
 	const isTree = false;
 
-	const settings = {
-		"Fluid.GarbageCollection.TrackGCState": "true",
-	};
-	const configProvider = mockConfigProvider(settings);
-
 	const createContainer = async (): Promise<IContainer> => {
-		return provider.createContainer(runtimeFactory, { configProvider });
+		return provider.createContainer(runtimeFactory);
 	};
 
 	const getNewSummarizer = async (summaryVersion?: string) => {
@@ -233,7 +227,6 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 			runtimeFactory,
 			mainContainer.deltaManager.lastSequenceNumber,
 			summaryVersion,
-			{ configProvider },
 		);
 	};
 

@@ -19,9 +19,7 @@ import {
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runGCKey,
-	runSessionExpiryKey,
 	runSweepKey,
-	trackGCStateKey,
 } from "./gcDefinitions";
 import { getGCVersion } from "./gcHelpers";
 
@@ -84,8 +82,8 @@ export function generateGCConfigs(
 		// The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
 		sweepEnabled = createParams.gcOptions.sweepAllowed === true;
 
-		// Set the Session Expiry only if the flag is enabled and GC is enabled.
-		if (mc.config.getBoolean(runSessionExpiryKey) && gcEnabled) {
+		// Set the Session Expiry only if GC is enabled.
+		if (gcEnabled) {
 			sessionExpiryTimeoutMs =
 				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
@@ -146,7 +144,6 @@ export function generateGCConfigs(
 	// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
 	// via feature flags.
 	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
-	const trackGCState = mc.config.getBoolean(trackGCStateKey) === true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
 	return {
@@ -157,7 +154,6 @@ export function generateGCConfigs(
 		runFullGC,
 		testMode,
 		tombstoneMode,
-		trackGCState,
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
 		inactiveTimeoutMs,
@@ -174,7 +170,7 @@ export function generateGCConfigs(
  * The buffer is added to account for any clock skew or other edge cases.
  * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
  */
-function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined) {
+function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
 	const bufferMs = oneDayMs;
 	return sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
 }

@@ -23,7 +23,6 @@ export {
 	IGCStats,
 	oneDayMs,
 	runGCKey,
-	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
 	sweepAttachmentBlobsKey,
