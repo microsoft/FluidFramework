@@ -73,7 +73,7 @@ async function start() {
 		);
 		// If the model version is not the latest version, upgrade the container.
 		if (model.getCurrentVersion() !== modelVersion) {
-			await model.upgrade();
+			await model.upgrade(modelVersion);
 		}
 	}
 

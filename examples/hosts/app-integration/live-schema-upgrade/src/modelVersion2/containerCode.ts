@@ -9,7 +9,6 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { getLatestVersion } from "../app";
 import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller";
 import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter";
 
@@ -40,7 +39,7 @@ export interface IDiceRollerAppModel {
 	/**
 	 * Perform the code proposal to upgrade the container to the latest version.
 	 */
-	readonly upgrade: () => Promise<void>;
+	readonly upgrade: (targetVersion: string) => Promise<void>;
 }
 
 class DiceRollerAppModel implements IDiceRollerAppModel {
@@ -59,20 +58,19 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 		return this.container.getSpecifiedCodeDetails()?.package as string;
 	}
 
-	public async upgrade() {
+	public async upgrade(targetVersion: string) {
 		const currentVersion = this.getCurrentVersion();
-		const latestVersion = await getLatestVersion();
-		if (currentVersion === latestVersion) {
+		if (currentVersion === targetVersion) {
 			// We shouldn't try to upgrade if we are already on the latest version.
 			return;
 		}
-		console.log(`Upgrading to ${latestVersion}`);
+		console.log(`Upgrading to ${targetVersion}`);
 		if (this.container.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => {
 				this.container.once("connected", resolve);
 			});
 		}
-		const proposal: IFluidCodeDetails = { package: latestVersion };
+		const proposal: IFluidCodeDetails = { package: targetVersion };
 		this.container
 			.proposeCodeDetails(proposal)
 			.then((accepted: boolean) => {
