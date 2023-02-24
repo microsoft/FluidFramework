@@ -453,15 +453,9 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 // @alpha (undocumented)
 export const FieldKinds: {
-    readonly value: FieldKind<FieldEditor<any>, Multiplicity> & {
-        multiplicity: Multiplicity.Value;
-    };
-    readonly optional: FieldKind<FieldEditor<any>, Multiplicity> & {
-        multiplicity: Multiplicity.Optional;
-    };
-    readonly sequence: FieldKind<FieldEditor<any>, Multiplicity> & {
-        multiplicity: Multiplicity.Sequence;
-    };
+    readonly value: FieldKind<FieldEditor<any>, Multiplicity.Value>;
+    readonly optional: FieldKind<FieldEditor<any>, Multiplicity.Optional>;
+    readonly sequence: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
 };
 
 // @alpha

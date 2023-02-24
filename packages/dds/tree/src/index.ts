@@ -198,23 +198,20 @@ export {
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:
-import { FieldKind, FieldKinds as FieldKindsOriginal, Multiplicity } from "./feature-libraries";
-/**
- * @alpha
- */
-// interface FieldKinds {
-// 	value: FieldKind & { multiplicity: Multiplicity.Value };
-// 	optional: FieldKind & { multiplicity: Multiplicity.Optional };
-// 	sequence: FieldKind & { multiplicity: Multiplicity.Sequence };
-// }
+import {
+	FieldEditor,
+	FieldKind,
+	FieldKinds as FieldKindsOriginal,
+	Multiplicity,
+} from "./feature-libraries";
 
 /**
  * @alpha
  */
 export const FieldKinds = {
-	value: FieldKindsOriginal.value as FieldKind & { multiplicity: Multiplicity.Value },
-	optional: FieldKindsOriginal.optional as FieldKind & { multiplicity: Multiplicity.Optional },
-	sequence: FieldKindsOriginal.sequence as FieldKind & { multiplicity: Multiplicity.Sequence },
+	value: FieldKindsOriginal.value as FieldKind<FieldEditor<any>, Multiplicity.Value>,
+	optional: FieldKindsOriginal.optional as FieldKind<FieldEditor<any>, Multiplicity.Optional>,
+	sequence: FieldKindsOriginal.sequence as FieldKind<FieldEditor<any>, Multiplicity.Sequence>,
 } as const;
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";
