@@ -121,8 +121,7 @@ module.exports = {
 		{
 			// Rules only for TypeScript files
 			files: ["**/*.{ts,tsx}"],
-			rules: {
-			},
+			rules: {},
 		},
 		{
 			// Rules only for type validation files

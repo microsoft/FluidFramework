@@ -372,6 +372,10 @@ module.exports = {
 					version: "detect",
 				},
 			},
+			rules: {
+				// Conflicts with best practices for various React hooks.
+				"unicorn/consistent-function-scoping": "off",
+			},
 		},
 		{
 			// Rules only for test files
