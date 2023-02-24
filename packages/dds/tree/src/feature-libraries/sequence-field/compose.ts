@@ -600,7 +600,6 @@ export class ComposeQueue<T> {
 			const newRev = newMark.revision ?? this.newRevision;
 			// The same RevisionTag implies the two changesets are inverses in a rebase sandwich
 			if (
-				isAttach(newMark) &&
 				isDetachMark(baseMark) &&
 				newRev !== undefined &&
 				newRev === (baseMark.revision ?? this.baseMarks.revision)
