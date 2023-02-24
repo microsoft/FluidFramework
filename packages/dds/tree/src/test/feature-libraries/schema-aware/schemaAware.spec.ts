@@ -11,7 +11,7 @@ import {
 	typedSchemaData,
 	TypedNode,
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../feature-libraries/schema-aware/schemaAware";
+} from "../../../feature-libraries/schema-aware/schemaAware";
 
 import {
 	FieldSchema,
@@ -19,8 +19,8 @@ import {
 	TreeSchema,
 	TreeSchemaIdentifier,
 	ValueSchema,
-} from "../../core";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
+} from "../../../core";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
 	FieldKinds,
@@ -28,11 +28,11 @@ import {
 	typeNameSymbol,
 	TypedSchema,
 	ContextuallyTypedNodeDataObject,
-} from "../../feature-libraries";
+} from "../../../feature-libraries";
 import {
 	FlattenKeys,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/modular-schema/typedSchema/typeUtils";
+} from "../../../feature-libraries/modular-schema/typedSchema/typeUtils";
 
 // Aliases for conciseness
 const { optional, value, sequence } = FieldKinds;

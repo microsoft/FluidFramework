@@ -104,4 +104,5 @@ import {
 // Test Unbrand
 {
 	type c = Unbrand<"x" & TreeSchemaIdentifier, TreeSchemaIdentifier>;
+	type check1_ = requireAssignableTo<"x", c>;
 }
