@@ -42,17 +42,10 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	}
 	public set externalDataSnapshot(newValue: ExternalSnapshotTask) {
 		const changesAvailable = newValue.changeType !== undefined;
-		this._externalDataSnapshot.changeType = newValue.changeType;
-		this._externalDataSnapshot.id = newValue.id;
-		if (this._externalDataSnapshot.name !== newValue.name) {
-			this._externalDataSnapshot.name = newValue.name;
-		}
-		if (this._externalDataSnapshot.priority !== newValue.priority) {
-			this._externalDataSnapshot.priority = newValue.priority;
-		}
+		this._externalDataSnapshot = { ... newValue}
 		this.emit("changesAvailable", changesAvailable);
 	}
-	private readonly _externalDataSnapshot: ExternalSnapshotTask = {
+	private _externalDataSnapshot: ExternalSnapshotTask = {
 		id: this._id,
 		name: undefined,
 		priority: undefined,
@@ -106,8 +99,8 @@ export class TaskList extends DataObject implements ITaskList {
 	 */
 	private readonly tasks = new Map<string, Task>();
 	/*
-	 * externalDataSnapshot stores data retrieved from the external external.
-	 */
+	 * externalDataSnapshot stores data retrieved from the external service.
+	*/
 	private _externalDataSnapshot: SharedMap | undefined;
 	/*
 	 * draftData is used for storage of the draft Fluid data. It's used with externalDataSnapshot
@@ -137,7 +130,7 @@ export class TaskList extends DataObject implements ITaskList {
 		const draftNameString = SharedString.create(this.runtime);
 
 		// TODO: addDraftTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
-		// savedMap will get updated when the data syncs back
+		// externalDataSnapshot map will get updated when the data syncs back
 		draftNameString.insertText(0, name);
 
 		const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
@@ -196,7 +189,7 @@ export class TaskList extends DataObject implements ITaskList {
 	};
 
 	/**
-	 * Fetch any updated data from the external data external and sync local state to it.
+	 * Fetch any updated data from the external data source and sync local state to it.
 	 * Upon receipt of new external data, the external data is written immediately into
 	 * the "externalDataSnapshot" map, and a check occurs comparing the externalDataSnapshot to the DraftData.
 	 * If there are differences between the two, this function kicks off Task functions
@@ -206,7 +199,8 @@ export class TaskList extends DataObject implements ITaskList {
 	 *
 	 * @privateRemarks
 	 *
-	 * TODO: Make this method private - should only be triggered when incoming signal/op indicates that the data	 * was updated.
+	 * TODO: Make this method private - should only be triggered when incoming signal/op indicates that the data
+	 * was updated.
 	 *
 	 * TODO: Is it useful to block further changes during the sync'ing process?
 	 * Consider implementing a state to put the data object in while import is occurring (e.g. to disable input, etc.).
@@ -255,8 +249,8 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		// TODO: Delete any items that are in the root but missing from the external data
-		const updateTaskPs = incomingExternalData.map(
-			async ([id, { name: incomingName, priority: incomingPriority }]) => {
+		incomingExternalData.map(
+			([id, { name: incomingName, priority: incomingPriority }]) => {
 				// Write external data into externalDataSnapshot map.
 				const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
 				// Create a new task because it doesn't exist already
@@ -294,7 +288,6 @@ export class TaskList extends DataObject implements ITaskList {
 				}
 			},
 		);
-		await Promise.all(updateTaskPs);
 	}
 	/**
 	 * Save the current data in the container back to the external data source.
@@ -350,11 +343,11 @@ export class TaskList extends DataObject implements ITaskList {
 	 * DataObject, by registering an event listener for changes to the task list.
 	 */
 	protected async hasInitialized(): Promise<void> {
-		const saved = this.root.get<IFluidHandle<SharedMap>>("externalDataSnapshot");
-		if (saved === undefined) {
+		const externalDataSnapshot = this.root.get<IFluidHandle<SharedMap>>("externalDataSnapshot");
+		if (externalDataSnapshot === undefined) {
 			throw new Error("externalDataSnapshot was not initialized");
 		}
-		this._externalDataSnapshot = await saved.get();
+		this._externalDataSnapshot = await externalDataSnapshot.get();
 
 		const draft = this.root.get<IFluidHandle<SharedMap>>("draftData");
 		if (draft === undefined) {
