@@ -13,17 +13,17 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import {
-	ICheckout,
 	TransactionResult,
 	IForestSubscription,
 	StoredSchemaRepository,
 	InMemoryStoredSchemaRepository,
-	Checkout as TransactionCheckout,
+	TransactionCheckout,
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
 	UpPath,
 	EditManager,
+	ICheckout,
 } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
@@ -34,7 +34,6 @@ import {
 	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultEditBuilder,
-	IDefaultEditBuilder,
 	UnwrappedEditableField,
 	getEditableTreeContext,
 	SchemaEditor,
@@ -44,6 +43,7 @@ import {
 	buildForest,
 	ContextuallyTypedNodeData,
 	ModularChangeset,
+	IDefaultEditBuilder,
 } from "../feature-libraries";
 
 /**
@@ -53,7 +53,7 @@ import {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
+export interface ISharedTree extends ISharedObject, AnchorLocator, ICheckout<DefaultChangeset> {
 	/**
 	 * Gets or sets the root field of the tree.
 	 *
@@ -95,6 +95,26 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
 	 * Something should ensure the document contents are always in schema.
 	 */
 	readonly storedSchema: StoredSchemaRepository;
+	/**
+	 * Current contents.
+	 * Updated by edits (local and remote).
+	 * Use `runTransaction` to create a local edit.
+	 */
+	readonly forest: IForestSubscription;
+
+	/**
+	 * Run `transaction` to edit this forest.
+	 * While `transaction` is running, its intermediate states will be visible on the IForestSubscription.
+	 *
+	 * TODO: support nesting (perhaps via "commands"),
+	 * and do this in a way where there is control over which ones intermediate versions are displayed.
+	 */
+	runTransaction(
+		transaction: (
+			forest: IForestSubscription,
+			editor: IDefaultEditBuilder,
+		) => TransactionResult,
+	): TransactionResult;
 }
 
 /**
@@ -102,7 +122,6 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
  * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
- * TODO: expose or implement Checkout.
  */
 class SharedTree
 	extends SharedTreeCore<
@@ -139,6 +158,11 @@ class SharedTree
 				new SchemaIndex(runtime, events, schema),
 				new ForestIndex(runtime, events, forest),
 				new EditManagerIndex(runtime, editManager),
+			],
+			(indexes, events) => [
+				new SchemaIndex(runtime, events, schema), // TODO: More efficient clone schema?
+				new ForestIndex(runtime, events, forest.clone(schema, new AnchorSet())), // TODO: Proper way to clone forest?
+				indexes[2], // TODO: No need for the EditManagerIndex here.
 			],
 			defaultChangeFamily,
 			editManager,

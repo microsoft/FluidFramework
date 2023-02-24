@@ -128,6 +128,9 @@ export {
 
 export {
 	ChangeRebaser,
+	findAncestor,
+	findCommonAncestor,
+	GraphCommit,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
@@ -140,9 +143,9 @@ export {
 	mintRevisionTag,
 } from "./rebase";
 
-export { ICheckout, TransactionResult } from "./checkout";
+export { ForkedCheckout, ICheckout, IForkedCheckout, TransactionResult } from "./checkout";
 
-export { Checkout } from "./transaction";
+export { Checkout as TransactionCheckout } from "./transaction";
 
 export {
 	Adapters,

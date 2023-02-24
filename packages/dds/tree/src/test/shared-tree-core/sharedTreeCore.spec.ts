@@ -161,6 +161,7 @@ describe("SharedTreeCore", () => {
 
 		return new SharedTreeCore(
 			indexes,
+			(ind) => ind,
 			defaultChangeFamily,
 			editManager,
 			anchors,

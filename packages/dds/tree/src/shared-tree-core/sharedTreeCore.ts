@@ -36,6 +36,9 @@ import {
 	RevisionTag,
 	mintRevisionTag,
 	minimumPossibleSequenceNumber,
+	ICheckout,
+	IForkedCheckout,
+	ForkedCheckout,
 } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
@@ -81,10 +84,13 @@ export interface IndexEvents<TChangeset> {
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
 export class SharedTreeCore<
-	TChange,
-	TChangeFamily extends ChangeFamily<any, TChange>,
-	TIndexes extends readonly Index[],
-> extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
+		TChange,
+		TChangeFamily extends ChangeFamily<any, TChange>,
+		TIndexes extends readonly Index[],
+	>
+	extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>>
+	implements ICheckout<TChange>
+{
 	/**
 	 * A random ID that uniquely identifies this client in the collab session.
 	 * This is sent alongside every op to identify which client the op originated from.
@@ -128,6 +134,10 @@ export class SharedTreeCore<
 	 */
 	public constructor(
 		indexes: TIndexes | ((events: ISubscribable<IndexEvents<TChange>>) => TIndexes),
+		private readonly cloneIndexes: (
+			indexes: TIndexes,
+			events: ISubscribable<IndexEvents<TChange>>,
+		) => TIndexes,
 		public readonly changeFamily: TChangeFamily,
 		public readonly editManager: EditManager<TChange, TChangeFamily>,
 		anchors: AnchorSet,
@@ -202,7 +212,33 @@ export class SharedTreeCore<
 		await Promise.all(loadIndexes);
 	}
 
-	public submitEdit(edit: TChange): void {
+	public applyChange(change: TChange): void {
+		this.submitEdit(change);
+	}
+
+	public fork(): IForkedCheckout<TChange> {
+		return new ForkedCheckout(
+			() => this.editManager.getLocalBranch(),
+			this.stableId,
+			this.changeFamily,
+			this.indexes,
+			this.cloneIndexes,
+		);
+	}
+
+	private readonly forks = new Set<IForkedCheckout<TChange>>();
+
+	public merge(fork: IForkedCheckout<TChange>): void {
+		assert(this.forks.delete(fork), "Invalid checkout merge");
+		fork.pull();
+		const change = this.editManager.fastForwardLocalBranch(fork.getBranch());
+		fork.dispose();
+		this.indexEventEmitter.emit("newLocalChange", change);
+		const delta = this.changeFamily.intoDelta(change);
+		this.indexEventEmitter.emit("newLocalState", delta);
+	}
+
+	protected submitEdit(edit: TChange): void {
 		const revision = mintRevisionTag();
 		const delta = this.editManager.addLocalChange(revision, edit);
 		// Edits performed before the first attach are treated as sequenced because they will be included

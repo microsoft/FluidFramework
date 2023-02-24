@@ -15,7 +15,7 @@ import {
 	ITreeCursor,
 	IForestSubscription,
 	TransactionResult,
-	Checkout as TransactionCheckout,
+	TransactionCheckout,
 	UpPath,
 	FieldKey,
 	SchemaDataAndPolicy,

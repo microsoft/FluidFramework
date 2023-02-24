@@ -28,6 +28,7 @@ import {
 	Rebaser,
 	assertIsRevisionTag,
 } from "../rebase";
+import { ICheckout, IForkedCheckout } from "../checkout";
 
 export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
@@ -40,10 +41,10 @@ const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-00000000000
  * which were based on a given session's branch, to the document history
  */
 // TODO: Try to reduce this to a single type parameter
-export class EditManager<
-	TChangeset,
-	TChangeFamily extends ChangeFamily<any, TChangeset>,
-> extends SimpleDependee {
+export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>>
+	extends SimpleDependee
+	implements ICheckout<TChangeset>
+{
 	/**
 	 * The head commit of the "trunk" branch. The trunk represents the list of received sequenced changes.
 	 */
@@ -94,6 +95,18 @@ export class EditManager<
 		};
 		this.trunk = this.trunkBase;
 		this.localBranch = this.trunk;
+	}
+
+	applyChange(change: TChangeset): void {
+		throw new Error("Method not implemented.");
+	}
+
+	fork(): IForkedCheckout<TChangeset> {
+		throw new Error("Method not implemented.");
+	}
+
+	merge(fork: IForkedCheckout<TChangeset>): void {
+		throw new Error("Method not implemented.");
 	}
 
 	/**
@@ -234,6 +247,13 @@ export class EditManager<
 		return this.trunk;
 	}
 
+	/**
+	 * @returns the head commit of the local branch
+	 */
+	public getLocalBranch(): GraphCommit<TChangeset> {
+		return this.localBranch;
+	}
+
 	public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
 		return getPathFromBase(this.localBranch, this.trunk).map((c) => c.change);
 	}
@@ -307,6 +327,26 @@ export class EditManager<
 		}
 
 		return this.changeFamily.intoDelta(change);
+	}
+
+	/**
+	 * Fast-forwards the local branch.
+	 * @param newHead - the new head of the local branch. This must be a descendant of the current local branch head.
+	 * @returns the composition of changes from the previous head to the new head of the local branch
+	 */
+	public fastForwardLocalBranch(newHead: GraphCommit<TChangeset>): TChangeset {
+		const changes: GraphCommit<TChangeset>[] = [];
+		assert(
+			findAncestor([newHead, changes], (c) => c === this.localBranch) !== undefined,
+			"Expected new head to be descendant of local branch",
+		);
+		const change = this.changeFamily.rebaser.compose(changes);
+
+		if (this.anchors !== undefined) {
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+		}
+
+		return change;
 	}
 
 	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {
