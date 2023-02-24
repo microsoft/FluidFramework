@@ -32,8 +32,8 @@
 		"gc_ci": {
 			"opRatePerMin": 800,
 			"progressIntervalMs": 5000,
-			"numClients": 5,
-			"totalSendCount": 1600,
+			"numClients": 10,
+			"totalSendCount": 36000,
 			"optionOverrides": {
 				"tinylicious": {
 					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
