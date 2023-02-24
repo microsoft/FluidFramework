@@ -42,7 +42,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	}
 	public set externalDataSnapshot(newValue: ExternalSnapshotTask) {
 		const changesAvailable = newValue.changeType !== undefined;
-		this._externalDataSnapshot = { ... newValue}
+		this._externalDataSnapshot = { ...newValue };
 		this.emit("changesAvailable", changesAvailable);
 	}
 	private _externalDataSnapshot: ExternalSnapshotTask = {
@@ -100,7 +100,7 @@ export class TaskList extends DataObject implements ITaskList {
 	private readonly tasks = new Map<string, Task>();
 	/*
 	 * externalDataSnapshot stores data retrieved from the external service.
-	*/
+	 */
 	private _externalDataSnapshot: SharedMap | undefined;
 	/*
 	 * draftData is used for storage of the draft Fluid data. It's used with externalDataSnapshot
@@ -249,45 +249,43 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		// TODO: Delete any items that are in the root but missing from the external data
-		incomingExternalData.map(
-			([id, { name: incomingName, priority: incomingPriority }]) => {
-				// Write external data into externalDataSnapshot map.
-				const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
-				// Create a new task because it doesn't exist already
-				if (currentTask === undefined) {
-					const externalDataSnapshotTask: ExternalSnapshotTask = {
-						id,
-						name: incomingName,
-						priority: incomingPriority,
-						changeType: "add",
-					};
-					this.externalDataSnapshot.set(id, externalDataSnapshotTask);
-				} else {
-					currentTask.name = incomingName;
-					currentTask.priority = incomingPriority;
-					currentTask.changeType = "change";
-				}
-				// Now look for differences between draftData and externalDataSnapshot
-				const task = this.tasks.get(id);
-				if (task === undefined) {
-					// A new task was added from external source, add it to the Fluid data.
-					this.addDraftTask(id, incomingName, incomingPriority);
-					return;
-				}
-				if (
-					task.draftName.getText() !== incomingName ||
-					task.draftPriority !== incomingPriority
-				) {
-					const externalDataSnapshotTask: ExternalSnapshotTask = {
-						id,
-						name: incomingName,
-						priority: incomingPriority,
-						changeType: "change",
-					};
-					task.externalDataSnapshot = externalDataSnapshotTask;
-				}
-			},
-		);
+		incomingExternalData.map(([id, { name: incomingName, priority: incomingPriority }]) => {
+			// Write external data into externalDataSnapshot map.
+			const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
+			// Create a new task because it doesn't exist already
+			if (currentTask === undefined) {
+				const externalDataSnapshotTask: ExternalSnapshotTask = {
+					id,
+					name: incomingName,
+					priority: incomingPriority,
+					changeType: "add",
+				};
+				this.externalDataSnapshot.set(id, externalDataSnapshotTask);
+			} else {
+				currentTask.name = incomingName;
+				currentTask.priority = incomingPriority;
+				currentTask.changeType = "change";
+			}
+			// Now look for differences between draftData and externalDataSnapshot
+			const task = this.tasks.get(id);
+			if (task === undefined) {
+				// A new task was added from external source, add it to the Fluid data.
+				this.addDraftTask(id, incomingName, incomingPriority);
+				return;
+			}
+			if (
+				task.draftName.getText() !== incomingName ||
+				task.draftPriority !== incomingPriority
+			) {
+				const externalDataSnapshotTask: ExternalSnapshotTask = {
+					id,
+					name: incomingName,
+					priority: incomingPriority,
+					changeType: "change",
+				};
+				task.externalDataSnapshot = externalDataSnapshotTask;
+			}
+		});
 	}
 	/**
 	 * Save the current data in the container back to the external data source.
