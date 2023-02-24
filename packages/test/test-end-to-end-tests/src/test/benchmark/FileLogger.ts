@@ -98,10 +98,9 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		) {
 			event.category = "generic";
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName, testName: globalTestName ?? "-" });
+		this.baseLogger?.send({ ...event, hostName: pkgName });
 
 		event.Event_Time = Date.now();
-		event.testName = globalTestName ?? "-";
 		// keep track of the frequency of every log event, as we'll sort by most common on write
 		Object.keys(event).forEach((k) => this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
 		if (event.category === "error") {
