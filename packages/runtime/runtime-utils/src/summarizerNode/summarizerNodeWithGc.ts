@@ -24,6 +24,7 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
@@ -297,9 +298,28 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	): void {
 		// If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
 		if (!this.gcDisabled) {
-			const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
-			if (summaryNode?.serializedUsedRoutes !== undefined) {
-				this.referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
+			const summaryNode = this.pendingSummaries.get(proposalHandle);
+			if (summaryNode !== undefined) {
+				// If a pending summary exists, it must have used routes since GC is enabled.
+				const summaryNodeWithGC = summaryNode as SummaryNodeWithGC;
+				if (summaryNodeWithGC.serializedUsedRoutes === undefined) {
+					const error = new LoggingError("MissingGCStateInPendingSummary", {
+						proposalHandle,
+						referenceSequenceNumber,
+						id: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: this.telemetryNodeId,
+						},
+					});
+					this.logger.sendErrorEvent(
+						{
+							eventName: error.message,
+						},
+						error,
+					);
+					throw error;
+				}
+				this.referenceUsedRoutes = JSON.parse(summaryNodeWithGC.serializedUsedRoutes);
 			}
 		}
 

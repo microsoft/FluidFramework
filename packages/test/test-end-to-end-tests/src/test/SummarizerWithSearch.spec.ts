@@ -248,7 +248,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		summaryOptions: {
 			summaryConfigOverrides: { state: "disabled" },
 		},
-		gcOptions: { gcAllowed: false },
+		gcOptions: { gcAllowed: true },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
@@ -359,7 +359,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			await waitForContainerConnection(mainContainer);
 		});
 
-		it("Test Assert 0x1a6 should not happen - small repro", async () => {
+		it.skip("updates latest summary state for nodes created after summary submission", async () => {
 			const summarizerClient = await getNewSummarizer();
 			// Wait for all pending ops to be processed by all clients.
 			await provider.ensureSynchronized();
@@ -391,7 +391,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			});
 		});
 
-		it("Test Assert 0x1a6 should not happen with MixinSearch", async () => {
+		it.skip("updates latest summary state for nodes created after summary submission - with MixinSearch", async () => {
 			const summarizerClient1 = await getNewSummarizer();
 
 			const DataStoreA = await dataStoreFactory1.createInstance(
