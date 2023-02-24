@@ -206,8 +206,7 @@ export class TaskList extends DataObject implements ITaskList {
 	 *
 	 * @privateRemarks
 	 *
-	 * TODO: Make this method private - should only be triggered when source signal/op indicates that the data
-	 * was updated.
+	 * TODO: Make this method private - should only be triggered when incoming signal/op indicates that the data	 * was updated.
 	 *
 	 * TODO: Is it useful to block further changes during the sync'ing process?
 	 * Consider implementing a state to put the data object in while import is occurring (e.g. to disable input, etc.).

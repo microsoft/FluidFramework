@@ -10,7 +10,7 @@ import { SharedString } from "@fluidframework/sequence";
  * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.
  */
 export interface ExternalSnapshotTask {
-	id: string | undefined;
+	id: string;
 	name: string | undefined;
 	priority: number | undefined;
 	changeType: string | undefined;
@@ -59,7 +59,7 @@ export interface ITaskEvents extends IEvent {
 	 */
 	(event: "externalPriorityChanged", listener: () => void);
 	/**
-	 * Emitted when changeType is updated and the conflict UI needs to be displayed.
+	 * Emitted when there are differences between the draft data and external snapshot data.
 	 */
 	(event: "changesAvailable", listener: (value: boolean) => boolean);
 }
@@ -82,7 +82,7 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	 */
 	draftPriority: number;
 	/**
-	 * Save the proposed changes to SavedData.
+	 * Overwrite the draft data with the external data that's coming in.
 	 */
 	readonly overwriteWithExternalData: () => void;
 	/**

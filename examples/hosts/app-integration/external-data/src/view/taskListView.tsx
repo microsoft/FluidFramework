@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -30,9 +29,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 				priorityRef.current.value = task.draftPriority.toString();
 			}
 		};
-		const updateExternalSnapshotData = (value: boolean): void => {
+		const updateExternalSnapshotData = (conflictUIVisible: boolean): void => {
 			setExternalDataSnapshot(task.externalDataSnapshot);
-			setShowConflictUI(value);
+			setShowConflictUI(conflictUIVisible);
 		};
 		task.on("draftPriorityChanged", updateFromRemotePriority);
 		task.on("changesAvailable", updateExternalSnapshotData);
