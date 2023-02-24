@@ -13,10 +13,13 @@ import { BatchMessage, IChunkedOp, OpSplitter, splitOp } from "../../opLifecycle
 import { CompressionAlgorithms } from "../../containerRuntime";
 
 describe("OpSplitter", () => {
-	const batchesSubmitted: IBatchMessage[][] = [];
+	const batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[] = [];
 
-	const mockSubmitBatchFn = (batch: IBatchMessage[]): number => {
-		batchesSubmitted.push(batch);
+	const mockSubmitBatchFn = (
+		batch: IBatchMessage[],
+		referenceSequenceNumber?: number,
+	): number => {
+		batchesSubmitted.push({ messages: batch, referenceSequenceNumber });
 		return batchesSubmitted.length;
 	};
 
@@ -333,11 +336,12 @@ describe("OpSplitter", () => {
 				assert.equal(result.content.length, 4);
 				const lastChunk = result.content[0].deserializedContent.contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
-				assert.deepStrictEqual(
-					result.content.slice(1),
-					new Array(3).fill(emptyMessage),
+				assert.deepStrictEqual(result.content.slice(1), new Array(3).fill(emptyMessage));
+				assert.equal(
+					!extraOp ||
+						result.content[0].deserializedContent.contents?.contents?.length === 0,
+					true,
 				);
-				assert.equal(!extraOp || result.content[0].deserializedContent.contents?.contents?.length === 0, true);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
@@ -393,7 +397,11 @@ describe("OpSplitter", () => {
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const lastChunk = result.content[0].deserializedContent.contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
-				assert.equal(!extraOp || result.content[0].deserializedContent.contents?.contents?.length === 0, true);
+				assert.equal(
+					!extraOp ||
+						result.content[0].deserializedContent.contents?.contents?.length === 0,
+					true,
+				);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
