@@ -35,7 +35,8 @@ import {
  * background script's lifetime should outlive the devtools script, but there may be cases where the connection is
  * broken and we could theoretically recover from it. We'll want to see how problematic this really is before attempting
  * to solve it, but it may require something like a message queue so we can queue up messages while we attempt to
- * reconnect, and send them (*in order*, as ordering may be important in some cases) once we have reconnected.
+ * reconnect, and send them (*in order*, as ordering may be important in some cases) once we have reconnected. For now,
+ * we simply throw if the background service disconnects (fail-fast).
  */
 export class BackgroundConnection
 	extends TypedEventEmitter<IMessageRelayEvents>
@@ -44,21 +45,11 @@ export class BackgroundConnection
 	/**
 	 * Port connection to the Background Script
 	 */
-	private backgroundServiceConnection: TypedPortConnection | undefined;
+	private readonly backgroundServiceConnection: TypedPortConnection;
 
 	public constructor() {
 		super();
 
-		this.backgroundServiceConnection = undefined;
-
-		// Immediately attempt to connect to the background service connection.
-		this.initializeBackgroundServiceConnection();
-	}
-
-	/**
-	 * Initializes the connection with the background script.
-	 */
-	private initializeBackgroundServiceConnection(): void {
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
 
 		// Create a connection to the background page
@@ -84,6 +75,17 @@ export class BackgroundConnection
 		this.backgroundServiceConnection.onMessage.addListener(this.onBackgroundServiceMessage);
 		this.backgroundServiceConnection.onDisconnect.addListener(
 			this.onBackgroundServiceDisconnect,
+		);
+	}
+
+	/**
+	 * Post message to Background Script.
+	 */
+	public postMessage(message: IDebuggerMessage): void {
+		postMessageToPort(
+			message,
+			this.backgroundServiceConnection,
+			devtoolsScriptMessageLoggingOptions,
 		);
 	}
 
@@ -116,33 +118,13 @@ export class BackgroundConnection
 
 	/**
 	 * Handler for a disconnect event coming from the background service.
-	 * Puts the message relay into an unusable state (fail-fast).
+	 * Immediately throws, since this type is currently not capable of recovering from this state.
 	 */
 	private onBackgroundServiceDisconnect(): void {
-		this.backgroundServiceConnection = undefined;
-		console.log(
+		throw new Error(
 			formatDevtoolsScriptMessageForLogging(
 				"The Background Script disconnected. Further use of the message relay is not allowed.",
 			),
-		);
-	}
-
-	/**
-	 * Post message to Background Script.
-	 */
-	public postMessage(message: IDebuggerMessage): void {
-		if (this.backgroundServiceConnection === undefined) {
-			throw new Error(
-				formatDevtoolsScriptMessageForLogging(
-					`Background service connection was closed. Cannot post message.`,
-				),
-			);
-		}
-
-		postMessageToPort(
-			message,
-			this.backgroundServiceConnection,
-			devtoolsScriptMessageLoggingOptions,
 		);
 	}
 }
