@@ -40,7 +40,7 @@ export class BaseContainerRuntimeFactory
 
 	/**
 	 * @param registryEntries - The data store registry for containers produced
-	 * @param serviceRegistry - The service registry for containers produced
+	 * @param dependencyContainer -
 	 * @param requestHandlers - Request handlers for containers produced
 	 * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
 	 * @param initializeEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
