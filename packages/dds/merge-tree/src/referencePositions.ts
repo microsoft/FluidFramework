@@ -11,59 +11,65 @@ import { PropertySet, MapLike } from "./properties";
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean {
-    const refType = typeof refPosOrType === "number" ? refPosOrType : refPosOrType.refType;
-    // eslint-disable-next-line no-bitwise
-    return (refType & flags) !== 0;
+export function refTypeIncludesFlag(
+	refPosOrType: ReferencePosition | ReferenceType,
+	flags: ReferenceType,
+): boolean {
+	const refType = typeof refPosOrType === "number" ? refPosOrType : refPosOrType.refType;
+	// eslint-disable-next-line no-bitwise
+	return (refType & flags) !== 0;
 }
 
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
-    refTypeIncludesFlag(refPos, ReferenceType.Tile)
-        && refPos.properties ? refPos.properties[reservedTileLabelsKey] as string[] : undefined;
+	refTypeIncludesFlag(refPos, ReferenceType.Tile) && refPos.properties
+		? (refPos.properties[reservedTileLabelsKey] as string[])
+		: undefined;
 
 export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
-    // eslint-disable-next-line no-bitwise
-    (refTypeIncludesFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd))
-        && refPos.properties ? refPos.properties[reservedRangeLabelsKey] as string[] : undefined;
+	// eslint-disable-next-line no-bitwise
+	refTypeIncludesFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd) &&
+	refPos.properties
+		? (refPos.properties[reservedRangeLabelsKey] as string[])
+		: undefined;
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
-    const tileLabels = refGetTileLabels(refPos);
-    if (tileLabels) {
-        for (const refLabel of tileLabels) {
-            if (label === refLabel) {
-                return true;
-            }
-        }
-    }
-    return false;
+	const tileLabels = refGetTileLabels(refPos);
+	if (tileLabels) {
+		for (const refLabel of tileLabels) {
+			if (label === refLabel) {
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
-    const rangeLabels = refGetRangeLabels(refPos);
-    if (rangeLabels) {
-        for (const refLabel of rangeLabels) {
-            if (label === refLabel) {
-                return true;
-            }
-        }
-    }
-    return false;
+	const rangeLabels = refGetRangeLabels(refPos);
+	if (rangeLabels) {
+		for (const refLabel of rangeLabels) {
+			if (label === refLabel) {
+				return true;
+			}
+		}
+	}
+	return false;
 }
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
-    return refGetTileLabels(refPos) !== undefined;
+	return refGetTileLabels(refPos) !== undefined;
 }
 export function refHasRangeLabels(refPos: ReferencePosition): boolean {
-    return refGetRangeLabels(refPos) !== undefined;
+	return refGetRangeLabels(refPos) !== undefined;
 }
 
 export interface ReferencePosition {
-    properties?: PropertySet;
-    refType: ReferenceType;
+	properties?: PropertySet;
+	refType: ReferenceType;
 
-    getSegment(): ISegment | undefined;
-    getOffset(): number;
-    addProperties(newProps: PropertySet, op?: ICombiningOp): void;
-    isLeaf(): this is ISegment;
+	getSegment(): ISegment | undefined;
+	getOffset(): number;
+	addProperties(newProps: PropertySet, op?: ICombiningOp): void;
+	isLeaf(): this is ISegment;
 }
 
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
@@ -71,19 +77,19 @@ export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 export const DetachedReferencePosition = -1;
 
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
-    return compareReferencePositions(a, b) < 0 ? a : b;
+	return compareReferencePositions(a, b) < 0 ? a : b;
 }
 
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
-    return compareReferencePositions(a, b) > 0 ? a : b;
+	return compareReferencePositions(a, b) > 0 ? a : b;
 }
 
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number {
-    const aSeg = a.getSegment();
-    const bSeg = b.getSegment();
-    if (aSeg === bSeg) {
-        return a.getOffset() - b.getOffset();
-    } else {
-        return aSeg === undefined || (bSeg !== undefined && aSeg.ordinal < bSeg.ordinal) ? -1 : 1;
-    }
+	const aSeg = a.getSegment();
+	const bSeg = b.getSegment();
+	if (aSeg === bSeg) {
+		return a.getOffset() - b.getOffset();
+	} else {
+		return aSeg === undefined || (bSeg !== undefined && aSeg.ordinal < bSeg.ordinal) ? -1 : 1;
+	}
 }
