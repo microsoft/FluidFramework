@@ -21,7 +21,7 @@ const { tree, field } = TypedSchema;
  *
  * For now this just supports local fields:
  */
-export type TypedTree<TMap, TSchema extends TypedSchema.LabeledTreeSchema<any>> = TypedFields<
+export type TypedTree<TMap, TSchema extends TypedSchema.LabeledTreeSchema> = TypedFields<
 	TMap,
 	TSchema["typeInfo"]["local"]
 >;
@@ -57,7 +57,7 @@ interface AnyTree {}
  * and returns a TypedTree union.
  */
 export type NameToTreeType<TMap, T extends string> = TMap extends {
-	[key in T]: TypedSchema.LabeledTreeSchema<any>;
+	[key in T]: TypedSchema.LabeledTreeSchema;
 }
 	? TypedTree<TMap, TMap[T]>
 	: never;

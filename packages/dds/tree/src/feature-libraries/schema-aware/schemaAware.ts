@@ -26,7 +26,7 @@ import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./s
 export type TypedTree<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
-	TSchema extends TypedSchema.LabeledTreeSchema<any>,
+	TSchema extends TypedSchema.LabeledTreeSchema,
 > = CollectOptions<
 	Mode,
 	TypedFields<TMap, Mode, TSchema["typeInfo"]["local"]>,
@@ -168,7 +168,7 @@ export type TypeSetToTypedTrees<
  */
 export interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
 	// TODO: can we use a more specific type here?
-	treeSchemaObject: Record<string, any>; // LabeledTreeSchema<any>
+	treeSchemaObject: Record<string, any>; // LabeledTreeSchema
 	allTypes: readonly string[];
 }
 
@@ -184,7 +184,7 @@ export interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
  *
  * @alpha
  */
-export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(
+export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(
 	globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>,
 	...t: T
 ): SchemaDataAndPolicy<FullSchemaPolicy> & {
@@ -208,7 +208,7 @@ export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(
 	const schemaData = {
 		policy: defaultSchemaPolicy,
 		globalFieldSchema,
-		treeSchema: new Map<TreeSchemaIdentifier, TypedSchema.LabeledTreeSchema<any>>(
+		treeSchema: new Map<TreeSchemaIdentifier, TypedSchema.LabeledTreeSchema>(
 			t.map((schema) => [schema.name, schema]),
 		),
 		treeSchemaObject: treeSchemaObject as {
@@ -247,5 +247,5 @@ export type TypedNode<
 export type NodeDataFor<
 	TMap extends TypedSchemaData,
 	Mode extends ApiMode,
-	TSchema extends TypedSchema.LabeledTreeSchema<any>,
+	TSchema extends TypedSchema.LabeledTreeSchema,
 > = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;

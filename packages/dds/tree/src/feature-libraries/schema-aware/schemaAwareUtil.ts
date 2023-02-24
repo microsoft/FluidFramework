@@ -44,13 +44,13 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
  * This uses the inner name from `typeInfo` to avoid the unneeded branding that `T["name"]` has.
  * @alpha
  */
-export type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema<any>[]> = T extends [
+export type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema[]> = T extends [
 	infer Head,
 	...infer Tail,
 ]
 	? [
-			TypedSchema.Assume<Head, TypedSchema.LabeledTreeSchema<any>>["typeInfo"]["name"],
-			...NamesFromSchema<TypedSchema.Assume<Tail, TypedSchema.LabeledTreeSchema<any>[]>>,
+			TypedSchema.Assume<Head, TypedSchema.LabeledTreeSchema>["typeInfo"]["name"],
+			...NamesFromSchema<TypedSchema.Assume<Tail, TypedSchema.LabeledTreeSchema[]>>,
 	  ]
 	: [];
 

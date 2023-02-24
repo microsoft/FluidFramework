@@ -60,7 +60,8 @@ export interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeS
  * TreeSchema extended with extra type information for use at compile time.
  * @alpha
  */
-export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTreeSchema {
+export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo = TreeSchemaTypeInfo>
+	extends NamedTreeSchema {
 	/**
 	 * Extra type information.
 	 *

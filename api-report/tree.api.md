@@ -633,7 +633,6 @@ declare namespace InternalTypes {
     export {
         TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
         TypedSchemaData,
-        TypedNode,
         TypedTree,
         CollectOptions,
         TypedFields,
@@ -801,7 +800,7 @@ export const jsonString: NamedTreeSchema;
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
 // @alpha
-interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTreeSchema {
+interface LabeledTreeSchema<T extends TreeSchemaTypeInfo = TreeSchemaTypeInfo> extends NamedTreeSchema {
     // (undocumented)
     readonly localFields: ObjectToMap<T["local"], LocalFieldKey, FieldSchema>;
     // (undocumented)
@@ -944,12 +943,12 @@ interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeSchemaId
 }
 
 // @alpha
-type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema<any>[]> = T extends [
+type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema[]> = T extends [
 infer Head,
 ...infer Tail
 ] ? [
-TypedSchema.Assume<Head, TypedSchema.LabeledTreeSchema<any>>["typeInfo"]["name"],
-...NamesFromSchema<TypedSchema.Assume<Tail, TypedSchema.LabeledTreeSchema<any>[]>>
+TypedSchema.Assume<Head, TypedSchema.LabeledTreeSchema>["typeInfo"]["name"],
+...NamesFromSchema<TypedSchema.Assume<Tail, TypedSchema.LabeledTreeSchema[]>>
 ] : [];
 
 // @alpha (undocumented)
@@ -999,7 +998,7 @@ export interface NodeData {
 }
 
 // @alpha
-type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema<any>> = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;
+type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema> = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;
 
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
@@ -1130,6 +1129,7 @@ declare namespace SchemaAware {
         ApiMode,
         NodeDataFor,
         typedSchemaData,
+        TypedNode,
         InternalTypes
     }
 }
@@ -1389,7 +1389,7 @@ interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
 }
 
 // @alpha
-function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & {
+function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & {
     treeSchemaObject: {
         [schema in T[number] as schema["typeInfo"]["name"]]: schema;
     };
@@ -1397,7 +1397,7 @@ function typedSchemaData<T extends TypedSchema.LabeledTreeSchema<any>[]>(globalF
 };
 
 // @alpha
-type TypedTree<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema<any>> = CollectOptions<Mode, TypedFields<TMap, Mode, TSchema["typeInfo"]["local"]>, TSchema["typeInfo"]["value"], TSchema["typeInfo"]["name"]>;
+type TypedTree<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema> = CollectOptions<Mode, TypedFields<TMap, Mode, TSchema["typeInfo"]["local"]>, TSchema["typeInfo"]["value"], TSchema["typeInfo"]["name"]>;
 
 // @alpha
 function typedTreeSchema<T extends TypedTreeSchemaBuilder, TName extends string>(name: TName, t: T): LabeledTreeSchema<TreeInfoFromBuilder<T, TName>>;

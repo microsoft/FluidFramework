@@ -7,7 +7,6 @@
 export {
 	TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
 	TypedSchemaData,
-	TypedNode,
 	TypedTree,
 	CollectOptions,
 	TypedFields,

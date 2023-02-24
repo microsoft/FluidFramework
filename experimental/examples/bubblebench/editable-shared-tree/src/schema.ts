@@ -38,13 +38,23 @@ export const clientSchema = tree("BubbleBenchAppStateClient-1.0.0", {
 	},
 });
 
-// TODO: Generate this from schema automatically instead of hand coding it.
-export type Bubble = EditableTree & NormalizedBubble;
+export const rootAppStateSchema = field(sequence, clientSchema);
+
+export const appSchemaData = SchemaAware.typedSchemaData(
+	new Map([[rootFieldKey, rootAppStateSchema]]),
+	stringSchema,
+	numberSchema,
+	bubbleSchema,
+	clientSchema,
+);
 
 type Typed<
-	TSchema extends TypedSchema.LabeledTreeSchema<any>,
+	TSchema extends TypedSchema.LabeledTreeSchema,
 	TMode extends SchemaAware.ApiMode = SchemaAware.ApiMode.Normalized,
 > = SchemaAware.NodeDataFor<typeof appSchemaData, TMode, TSchema>;
+
+// TODO: Generate this from schema automatically instead of hand coding it.
+export type Bubble = EditableTree & NormalizedBubble;
 
 export type NormalizedBubble = Typed<typeof bubbleSchema>;
 export type NormalizedClient = Typed<typeof clientSchema>;
@@ -61,13 +71,3 @@ export type Client = EditableTree & {
 
 // TODO: Generate this from schema automatically instead of hand coding it.
 export type ClientsField = EditableField & Client[];
-
-export const rootAppStateSchema = field(sequence, clientSchema);
-
-export const appSchemaData = SchemaAware.typedSchemaData(
-	new Map([[rootFieldKey, rootAppStateSchema]]),
-	stringSchema,
-	numberSchema,
-	bubbleSchema,
-	clientSchema,
-);

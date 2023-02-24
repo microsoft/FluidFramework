@@ -165,7 +165,7 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;
 }
 
-interface TypeBuilder<TSchema extends TypedSchema.LabeledTreeSchema<any>> {
+interface TypeBuilder<TSchema extends TypedSchema.LabeledTreeSchema> {
 	a: NodeDataFor<typeof schemaData, ApiMode.Flexible, TSchema>;
 	b: NodeDataFor<typeof schemaData, ApiMode.Normalized, TSchema>;
 	c: NodeDataFor<typeof schemaData, ApiMode.Wrapped, TSchema>;
