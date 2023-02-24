@@ -15,9 +15,9 @@ import {
 	devToolsInitAcknowledgementType,
 	DevToolsInitMessage,
 	devToolsInitMessageType,
-} from "./Messages";
-import { devtoolsMessageSource } from "./Constants";
-import { postMessageToPort } from "./Utilities";
+	devtoolsMessageSource,
+	postMessageToPort,
+} from "../messaging";
 
 /**
  * Context string for logging.

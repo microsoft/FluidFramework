@@ -3,14 +3,5 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Devtools Script context label for console logging.
- */
-export const devtoolsScriptLoggingContext = "DEVTOOLS";
-
-/**
- * Formats the provided log message with the appropriate context information.
- */
-export function formatDevtoolsScriptMessageForLogging(text: string): string {
-	return `${devtoolsScriptLoggingContext}: ${text}`;
-}
+export { BackgroundConnection } from "./BackgroundConnection";
+export { devtoolsScriptLoggingContext, formatDevtoolsScriptMessageForLogging } from "./Logging";

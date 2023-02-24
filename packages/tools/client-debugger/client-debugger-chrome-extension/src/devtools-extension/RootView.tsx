@@ -7,8 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { DebuggerPanel, MessageRelayContext } from "../shared-components";
-import { formatDevtoolsScriptMessageForLogging } from "./devtools";
-import { BackgroundConnection } from "./messaging";
+import { BackgroundConnection, formatDevtoolsScriptMessageForLogging } from "./devtools";
 
 const panelElement = document.createElement("div");
 panelElement.id = "fluid-client-debugger-root";

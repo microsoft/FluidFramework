@@ -6,7 +6,6 @@
 // TODO: Remove and fix violations
 /* eslint-disable no-restricted-syntax */
 
-export { BackgroundConnection } from "./BackgroundConnection";
 export { devtoolsMessageSource } from "./Constants";
 export * from "./Messages";
 export * from "./Utilities";
