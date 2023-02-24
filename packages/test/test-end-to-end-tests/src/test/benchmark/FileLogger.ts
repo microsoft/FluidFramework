@@ -16,8 +16,8 @@ import { pkgName, pkgVersion } from "../../packageVersion";
 const packageName = `${pkgName}@${pkgVersion}`;
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
-		assert(process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined, "Fluid Logger not defined");
-		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+		assert(process.env.FLUID_TEST_LOGGER_PERF_PKG_PATH !== undefined, "Fluid Logger not defined");
+		await import(process.env.FLUID_TEST_LOGGER_PERF_PKG_PATH);
 		const logger = getTestLogger?.();
 		assert(logger !== undefined, "Expected getTestLogger to return something");
 		return new FileLogger(logger);
