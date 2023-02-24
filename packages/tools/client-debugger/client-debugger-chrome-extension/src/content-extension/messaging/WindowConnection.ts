@@ -34,6 +34,12 @@ const messageLoggingOptions: MessageLoggingOptions = {
 
 /**
  * Message relay for communicating with the Window from the Content Script.
+ *
+ * @remarks
+ *
+ * We use this class to manage our connection from the Devtools Script to the Window (globalThis), such that we can
+ * provide it to our internal library of shared React components and allow them to communicate with external services
+ * without needing to be aware of what endpoint they're communicating with.
  */
 export class WindowConnection
 	extends TypedEventEmitter<IMessageRelayEvents>
@@ -44,6 +50,13 @@ export class WindowConnection
 
 		// Bind listeners
 		globalThis.addEventListener("message", this.onWindowMessageEvent);
+	}
+
+	/**
+	 * {@inheritDoc IMessageRelay.postMessage}
+	 */
+	public postMessage(message: IDebuggerMessage): void {
+		postMessageToWindow(message, messageLoggingOptions);
 	}
 
 	/**
@@ -62,12 +75,5 @@ export class WindowConnection
 			);
 			this.emit("message", message);
 		}
-	}
-
-	/**
-	 * {@inheritDoc IMessageRelay.postMessage}
-	 */
-	public postMessage(message: IDebuggerMessage): void {
-		postMessageToWindow(message, messageLoggingOptions);
 	}
 }
