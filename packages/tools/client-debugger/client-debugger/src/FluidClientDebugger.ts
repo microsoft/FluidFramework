@@ -24,7 +24,22 @@ import {
 import { FluidClientDebuggerProps } from "./Registry";
 
 /**
- * {@inheritDoc IFluidClientDebugger}
+ * {@link IFluidClientDebugger} implementation.
+ *
+ * @remarks
+ *
+ * This class listens to incoming messages from the window (globalThis), and posts messages to it upon relevant
+ * state changes and when requested.
+ *
+ * **Messages it listens for:**
+ *
+ * - TODO
+ *
+ * **Messages it posts:**
+ *
+ * - TODO
+ *
+ * @sealed
  * @internal
  */
 export class FluidClientDebugger

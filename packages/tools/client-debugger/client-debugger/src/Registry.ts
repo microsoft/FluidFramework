@@ -90,6 +90,20 @@ export interface DebuggerRegistryEvents extends IEvent {
 
 /**
  * Contract for maintaining a global client debugger registry to store all registered client debugger.
+ *
+ * @remarks
+ *
+ * This class listens to incoming messages from the window (globalThis), and posts messages to it upon relevant
+ * state changes and when requested.
+ *
+ * **Messages it listens for:**
+ *
+ * - TODO
+ *
+ * **Messages it posts:**
+ *
+ * - TODO
+ *
  * @internal
  */
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
