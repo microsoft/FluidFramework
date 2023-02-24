@@ -27,8 +27,8 @@ import { bufferToString } from "@fluidframework/common-utils";
 import { SharedMap } from "@fluidframework/map";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { createLogger } from "./FileLogger";
+import { ChildLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+// import { createLogger } from "./FileLogger";
 
 const defaultDataStoreId = "default";
 const mapId = "mapId";
@@ -105,15 +105,22 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 	before(async () => {
 		provider = getTestObjectProvider();
 		// runId will be populated on the logger.
-		logger =
-			process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined
-				? await createLogger({
-						runId: undefined,
-						driverType: provider.driver.type,
-						driverEndpointName: provider.driver.endpointName,
-						profile: "",
-				  })
-				: undefined;
+		logger = ChildLogger.create(getTestLogger?.(), testName, {
+			all: {
+				runId: undefined,
+				driverType: provider.driver.type,
+				driverEndpointName: provider.driver.endpointName,
+				profile: "",
+			},
+		});
+		// process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined
+		// 	? await createLogger({
+		// 			runId: undefined,
+		// 			driverType: provider.driver.type,
+		// 			driverEndpointName: provider.driver.endpointName,
+		// 			profile: "",
+		// 	  })
+		// 	: undefined;
 
 		testConfig = {
 			...chunkingBatchesConfig,
