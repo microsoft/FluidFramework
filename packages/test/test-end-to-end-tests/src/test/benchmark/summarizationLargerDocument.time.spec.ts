@@ -111,8 +111,8 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 						runId: undefined,
 						driverType: provider.driver.type,
 						driverEndpointName: provider.driver.endpointName,
-						profile: "test",
-						testName,
+						profile: "",
+						testName: "Summarization  Larger Document- runtime benchmarks",
 						benchmarkType: "ExecutionTime",
 				  })
 				: undefined;

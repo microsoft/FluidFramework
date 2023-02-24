@@ -14,7 +14,6 @@ import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definition
 import { pkgName, pkgVersion } from "../../packageVersion";
 
 const packageName = `${pkgName}@${pkgVersion}`;
-let globalTestName: string | undefined;
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
 		assert(process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined, "Fluid Logger not defined");
@@ -37,16 +36,16 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		const logger = ChildLogger.create(await this.loggerP, undefined, {
 			all: dimensions,
 		});
-		globalTestName = dimensions.testName;
-		console.log("globalTestName", globalTestName);
 		logger.send({
 			category: "performance",
-			eventName: "BenchMarkBegin",
+			eventName: "BenchmarkBegin",
 			message: "Benchmark Begin",
-			...dimensions,
-			testName: globalTestName,
+			runId: dimensions.runId,
+			testName: dimensions.testName,
 			benchmarkType: dimensions.benchmarkType,
 			profile: dimensions.profile,
+			driverType: dimensions.driverType,
+			driverEndpointName: dimensions.driverEndpointName,
 		});
 		return logger;
 	}
