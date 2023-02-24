@@ -67,6 +67,7 @@ importers:
       '@types/chai-arrays': ^2.0.0
       '@types/fs-extra': ^8.1.0
       '@types/inquirer': ^8.2.1
+      '@types/minimatch': ^3.0.5
       '@types/mocha': ^9.0.0
       '@types/node': ^14.18.0
       '@types/semver': ^7.3.10
@@ -94,6 +95,7 @@ importers:
       inquirer-table-prompt: ^0.2.1
       jssm: ^5.79.18
       jssm-viz-cli: ^5.83.0
+      minimatch: ^3.0.4
       mocha: ^10.0.0
       npm-check-updates: ^16.0.0
       nyc: ^15.0.0
@@ -130,6 +132,7 @@ importers:
       inquirer-table-prompt: 0.2.1
       jssm: 5.85.11
       jssm-viz-cli: 5.85.11
+      minimatch: 3.1.2
       npm-check-updates: 16.3.8
       oclif: 3.2.13
       semver: 7.3.7
@@ -147,6 +150,7 @@ importers:
       '@types/chai-arrays': 2.0.0
       '@types/fs-extra': 8.1.2
       '@types/inquirer': 8.2.4
+      '@types/minimatch': 3.0.5
       '@types/mocha': 9.1.1
       '@types/node': 14.18.31
       '@types/semver': 7.3.12
@@ -4358,7 +4362,7 @@ packages:
     dev: true
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/2.0.0:
     resolution: {integrity: sha512-MWufYdFw53ccGjCA+Ol7XJYpAlW6/prSMzuPOTRnJGcGzuhLn4Scrz7qf6o8bROZ514ltazcIFJZevcfbo0x7A==}

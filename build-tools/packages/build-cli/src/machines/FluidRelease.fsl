@@ -81,11 +81,14 @@ CheckShouldRunOptionalChecks 'failure'
 [
 Init
 CheckValidReleaseGroup
-CheckPolicy
-CheckAssertTagging
 CheckHasRemote
 CheckBranchUpToDate
 ] 'failure' -> Failed;
+
+[
+CheckPolicy
+CheckAssertTagging
+] 'failure' -> PromptToCommitPolicy;
 // END Init and optional checks
 
 
