@@ -44,13 +44,12 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 			const bVersion = Number(b.package as string);
 			return aVersion - bVersion;
 		},
-		// For this example, we will accept any minor version upgrade. For example, if the latest version is 2.1, then
-		// the following will return true, but 3.0 will return false.
+		// For this example, we reject any code proposals that are not equal to our current version.
 		satisfies: async (a, b) => {
 			const aVersion = Math.trunc(Number(a.package as string));
 			const bVersion = Math.trunc(Number(b.package as string));
-			const latestVersion = Math.trunc(Number(await getLatestVersion()));
-			return aVersion === bVersion && aVersion === Number(latestVersion);
+			const latestVersion = Number(await getLatestVersion());
+			return aVersion === bVersion && aVersion === latestVersion;
 		},
 	};
 }
