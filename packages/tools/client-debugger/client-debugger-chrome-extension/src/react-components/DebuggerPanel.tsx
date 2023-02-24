@@ -41,7 +41,7 @@ const getContainerListMessage: IDebuggerMessage = {
 /**
  * Root Debugger view.
  *
- * @remarks Must be run under a {@link messageRelayContext}.
+ * @remarks Must be run under a {@link MessageRelayContext}.
  */
 export function DebuggerPanel(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();

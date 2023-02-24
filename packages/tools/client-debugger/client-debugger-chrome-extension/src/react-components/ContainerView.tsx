@@ -4,6 +4,8 @@
  */
 import React from "react";
 
+import { Stack, StackItem } from "@fluentui/react";
+
 import { HasContainerId } from "@fluid-tools/client-debugger-view";
 
 import { ContainerSummaryView } from "./ContainerSummaryView";
@@ -19,6 +21,23 @@ export type ContainerViewProps = HasContainerId;
 export function ContainerView(props: ContainerViewProps): React.ReactElement {
 	const { containerId } = props;
 
-	// TODO: render tab nav and inner tab views
-	return <ContainerSummaryView containerId={containerId} />;
+	// TODO: tab selection management
+
+	return (
+		<Stack>
+			<StackItem>
+				<TabMenu />
+			</StackItem>
+			<StackItem>
+				<ContainerSummaryView containerId={containerId} />
+			</StackItem>
+		</Stack>
+	);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface TabMenuProps {}
+
+function TabMenu(props: TabMenuProps): React.ReactElement {
+	return <div>TODO</div>;
 }
