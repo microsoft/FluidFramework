@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { formatDevtoolsMessageForLogging } from "./devtools";
+import { formatDevtoolsScriptMessageForLogging } from "./devtools";
 
 /**
  * This module is the extension's Devtools Script.
@@ -23,7 +23,7 @@ import { formatDevtoolsMessageForLogging } from "./devtools";
  * TODO link to docs on Devtools script + Devtools extension flow
  */
 
-console.log(formatDevtoolsMessageForLogging("Initializing Devtools Script."));
+console.log(formatDevtoolsScriptMessageForLogging("Initializing Devtools Script."));
 
 // When our extension view is launched, open the root visualization view.
 chrome.devtools.panels.create(
@@ -32,10 +32,10 @@ chrome.devtools.panels.create(
 	"rootView.html",
 	(panel) => {
 		panel.onShown.addListener((window) => {
-			console.log(formatDevtoolsMessageForLogging("Debugger view shown."));
+			console.log(formatDevtoolsScriptMessageForLogging("Debugger view shown."));
 		});
 		panel.onHidden.addListener(() => {
-			console.log(formatDevtoolsMessageForLogging("Debugger view hidden."));
+			console.log(formatDevtoolsScriptMessageForLogging("Debugger view hidden."));
 		});
 	},
 );

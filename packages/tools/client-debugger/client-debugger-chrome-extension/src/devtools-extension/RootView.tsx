@@ -7,7 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { DebuggerPanel, MessageRelayContext } from "../shared-components";
-import { formatDevtoolsMessageForLogging } from "./devtools";
+import { formatDevtoolsScriptMessageForLogging } from "./devtools";
 import { BackgroundConnection } from "./messaging";
 
 const panelElement = document.createElement("div");
@@ -26,5 +26,5 @@ function RootView(): React.ReactElement {
 
 ReactDOM.render(<RootView />, panelElement, () => {
 	document.body.append(panelElement);
-	console.log(formatDevtoolsMessageForLogging("Rendered debug view in devtools window!"));
+	console.log(formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"));
 });

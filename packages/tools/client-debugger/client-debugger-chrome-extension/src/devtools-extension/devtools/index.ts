@@ -6,11 +6,11 @@
 /**
  * Devtools Script context label for console logging.
  */
-export const devtoolsLoggingContext = "DEVTOOLS";
+export const devtoolsScriptLoggingContext = "DEVTOOLS";
 
 /**
  * Formats the provided log message with the appropriate context information.
  */
-export function formatDevtoolsMessageForLogging(text: string): string {
-	return `${devtoolsLoggingContext}: ${text}`;
+export function formatDevtoolsScriptMessageForLogging(text: string): string {
+	return `${devtoolsScriptLoggingContext}: ${text}`;
 }
