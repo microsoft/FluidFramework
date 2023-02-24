@@ -4,7 +4,13 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { RevisionTag, Delta, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
+import {
+	RevisionTag,
+	Delta,
+	ITreeCursorSynchronous,
+	TreeSchemaIdentifier,
+	mintRevisionTag,
+} from "../../../core";
 import {
 	ChangesetLocalId,
 	NodeChangeset,
@@ -21,9 +27,9 @@ const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
 const moveId = brand<ChangesetLocalId>(4242);
-const tag: RevisionTag = brand(41);
-const tag2: RevisionTag = brand(42);
-const tag3: RevisionTag = brand(43);
+const tag: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
 const deltaMoveId = brandOpaque<Delta.MoveId>(moveId);
 
 function toDelta(change: TestChangeset): Delta.FieldChanges {

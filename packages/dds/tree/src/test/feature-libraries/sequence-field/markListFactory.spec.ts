@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
+import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { NodeChangeset, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { fakeRepair } from "../../utils";
 
 const dummyMark: SF.Detach = { type: "Delete", count: 1 };
 const type: TreeSchemaIdentifier = brand("Node");
-const detachedBy: RevisionTag = brand(42);
+const detachedBy: RevisionTag = mintRevisionTag();
 const fakeRepairData = fakeRepair(detachedBy, 0, 0);
 
 describe("SequenceField - MarkListFactory", () => {
