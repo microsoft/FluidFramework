@@ -41,8 +41,17 @@ import {
     UpPath,
     jsonableTreeFromCursor,
     BrandedType,
+    ModularChangeset,
 } from "@fluid-internal/tree";
-import { DeltaVisitor, visitDelta, isLocalKey, ITreeCursorSynchronous, isGlobalFieldKey } from "@fluid-internal/tree/dist/core";
+import {
+    DeltaVisitor,
+    visitDelta,
+    isLocalKey,
+    ITreeCursorSynchronous,
+    isGlobalFieldKey,
+} from "@fluid-internal/tree/dist/core";
+import { DefaultChangeFamily, DefaultChangeset, EditManagerIndex, ForestIndex, SchemaIndex } from "@fluid-internal/tree/dist/feature-libraries";
+import { SharedTreeCore } from "@fluid-internal/tree/dist/shared-tree-core";
 
 import React, { useState, useEffect } from "react";
 import "./App.css";
@@ -172,7 +181,7 @@ export class PathVisitor implements DeltaVisitor {
             this.schemaIdentifiers : this.path.last().fieldSchemaIdentifiers;
     }
     onDelete(index: number, count: number): void { console.log('onDelete', index, count); }
-    onInsert(index: number, content: readonly Delta.ProtoNode[]): void { console.log('onInsert abstract'); }
+    onInsert(index: number, content: readonly Delta.ProtoNode[]): void { console.log('onInsert'); }
     onMoveOut(index: number, count: number, id: Delta.MoveId): void { console.log('onMoveOut', index, count); }
     onMoveIn(index: number, count: number, id: Delta.MoveId): void { console.log('onMoveIn', index, count); }
     onSetValue(value: Value): void { console.log('onSetValue', value); }
@@ -283,7 +292,7 @@ export default function App() {
                 console.log("Tree error received!");
             });
             const listenPath = buildSchemaPath([drawKeys, valueKeys], appSchema);
-            registerPath(myWorkspace, listenPath, diceListener);
+            registerPathOnIndex(myWorkspace, listenPath, diceListener);
             if (first) {
                 insertDrawValues(myWorkspace);
             }
@@ -325,15 +334,35 @@ export default function App() {
         setRollToggle(!rollToggle);
     };
 
-    const registerPath =
+    const registerPathOnIndex =
         (
             wrksp: Workspace,
             filter: Path,
             listener: DomainListener,
         ) => {
+            (wrksp.tree as unknown as SharedTreeCore<DefaultChangeset,
+                DefaultChangeFamily,
+                [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+            >).indexEventEmitter.on("newLocalState", (delta: Delta.Root) => {
+                console.log('Delta');
+                // console.log(JSON.stringify(delta, replacer, 2));
+                visitDelta(delta, new DomainAdapter(
+                    appSchema,
+                    filter,
+                    new Set([drawSchema.name]),
+                    listener));
+            });
+        };
 
+    const registerPathOnEditableTreeContext =
+        (
+            wrksp: Workspace,
+            filter: Path,
+            listener: DomainListener,
+        ) => {
             wrksp.tree.context.on("afterDelta", (delta: Delta.Root) => {
-                console.log(JSON.stringify(delta, replacer, 2));
+                console.log('Delta');
+                // console.log(JSON.stringify(delta, replacer, 2));
                 visitDelta(delta, new DomainAdapter(
                     appSchema,
                     filter,
@@ -483,7 +512,7 @@ function updateSingleValue(workspace: Workspace) {
         if (valueIndex > -1) {
             draw.drawKeys[dicesIndex].valueKeys[valueIndex] = {
                 [valueSymbol]: rnd(100, 999),
-                [typeNameSymbol]: int32Schema.name,
+                // [typeNameSymbol]: int32Schema.name,
             } as unknown as Int32;
         }
     } else insertDrawValues(workspace);
@@ -545,8 +574,7 @@ function readDrawValues(
 function replacer(key, value) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value instanceof Map ? {
-        dataType: 'Map',
-        value: [...value.entries()], // or with spread: value: [...value]
+        mapped: [...value.entries()],
     } : value;
 }
 

@@ -104,7 +104,7 @@ export class SharedTreeCore<
 	/**
 	 * Provides events that indexes can subscribe to
 	 */
-	private readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
+	public readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
 
 	/**
 	 * @param indexes - A list of indexes, either as an array or as a factory function
