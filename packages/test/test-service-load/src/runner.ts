@@ -187,11 +187,11 @@ async function runnerProcess(
 				driverEndpointName: testDriver.endpointName,
 			},
 		});
-		process.on("unhandledRejection", (reason, promise) => {
+		process.on("uncaughtExceptionMonitor", (error, origin) => {
 			try {
-				logger.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
+				logger.sendErrorEvent({ eventName: "uncaughtExceptionMonitor", origin }, error);
 			} catch (e) {
-				console.error("Error during logging unhandled promise rejection: ", e);
+				console.error("Error during logging unhandled exception: ", e);
 			}
 		});
 
