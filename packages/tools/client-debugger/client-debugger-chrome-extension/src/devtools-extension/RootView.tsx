@@ -7,11 +7,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { DebuggerPanel, MessageRelayContext } from "../shared-components";
+import { formatDevtoolsMessageForLogging } from "./devtools";
 import { BackgroundConnection } from "./messaging";
-
-// TODOs:
-// - Dedupe logging infra
-// - Move types into devtools folder
 
 const panelElement = document.createElement("div");
 panelElement.id = "fluid-client-debugger-root";
@@ -29,5 +26,5 @@ function RootView(): React.ReactElement {
 
 ReactDOM.render(<RootView />, panelElement, () => {
 	document.body.append(panelElement);
-	console.log("DEVTOOLS PANEL: Rendered debug view!");
+	console.log(formatDevtoolsMessageForLogging("Rendered debug view in devtools window!"));
 });

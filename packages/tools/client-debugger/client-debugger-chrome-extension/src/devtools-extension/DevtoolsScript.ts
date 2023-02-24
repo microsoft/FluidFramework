@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { formatDevtoolsMessageForLogging } from "./devtools";
+
 /**
  * This module is the extension's Devtools Script.
  * It runs in the context of the browser's Devtools panel, and has no direct access to the page or any of its resources.
@@ -21,23 +23,7 @@
  * TODO link to docs on Devtools script + Devtools extension flow
  */
 
-// TODOs:
-// - Document messaging relationships
-// - Dedupe logging infra
-
-/**
- * Context string for logging.
- */
-const loggingContext = "EXTENSION(DEVTOOLS_SCRIPT)";
-
-/**
- * Formats the provided log message with the appropriate context information.
- */
-function formatForLogging(text: string): string {
-	return `${loggingContext}: ${text}`;
-}
-
-console.log(formatForLogging("Initializing Devtools Script."));
+console.log(formatDevtoolsMessageForLogging("Initializing Devtools Script."));
 
 // When our extension view is launched, open the root visualization view.
 chrome.devtools.panels.create(
@@ -46,10 +32,10 @@ chrome.devtools.panels.create(
 	"rootView.html",
 	(panel) => {
 		panel.onShown.addListener((window) => {
-			console.log(formatForLogging("Debugger view shown."));
+			console.log(formatDevtoolsMessageForLogging("Debugger view shown."));
 		});
 		panel.onHidden.addListener(() => {
-			console.log(formatForLogging("Debugger view hidden."));
+			console.log(formatDevtoolsMessageForLogging("Debugger view hidden."));
 		});
 	},
 );
