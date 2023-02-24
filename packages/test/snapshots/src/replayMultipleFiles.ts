@@ -11,6 +11,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "./packageVersion";
 import { validateSnapshots } from "./validateSnapshots";
+import { getManifest, testSummariesVersion, writeManifestFile } from "./manifest";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {
@@ -48,7 +49,8 @@ export enum Mode {
 export interface IWorkerArgs {
 	folder: string;
 	mode: Mode;
-	snapFreq: number;
+	snapFreq?: number;
+	testSummaries?: boolean;
 	initializeFromSnapshotsDir?: string;
 }
 
@@ -108,13 +110,8 @@ export async function processOneNode(args: IWorkerArgs) {
 	replayArgs.strictChannels = true;
 	// The output snapshots to compare against are under "currentSnapshots" sub-directory.
 	replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
-	if (args.mode === Mode.NewSnapshots) {
-		// when generating new snapshots, match those from
-		// the original file based on summarize ops
-		replayArgs.testSummaries = true;
-	} else {
-		replayArgs.snapFreq = args.snapFreq;
-	}
+	replayArgs.snapFreq = args.snapFreq;
+	replayArgs.testSummaries = args.testSummaries;
 	replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
 	replayArgs.compare = args.mode === Mode.Compare;
 	// Make it easier to see problems in stress tests
@@ -164,18 +161,32 @@ export async function processContent(mode: Mode, concurrently = true) {
 		// Clean up any failed snapshots that might have been written out in previous test run.
 		cleanFailedSnapshots(folder);
 
-		// SnapFreq is the most interesting options to tweak
-		// On one hand we want to generate snapshots often, ideally every 50 ops
-		// This allows us to exercise more cases and increases chances of finding bugs.
-		// At the same time that generates more files in repository, and adds to the size of it
-		// Thus using two passes:
-		// 1) Stress test - testing eventual consistency only
-		// 2) Testing backward compat - only testing snapshots at every 1000 ops
-		const snapFreq = mode === Mode.Stress ? 50 : 1000;
+		// SnapFreq is the most interesting options to tweak. On one hand we want to generate snapshots often, ideally
+		// every 50 ops. This allows us to exercise more cases and increases chances of finding bugs. At the same time
+		// that generates more files in repository, and adds to the size of it.
+		// Thus, the tests are run in 2 primary modes:
+		// 1) Stress test - Generates and validates snapshots every 50 ops. It tests eventual consistency only without
+		//    storing these snapshots.
+		// 2) Other test - Generate and validate snapshots at a lower frequency. This has 2 categories:
+		//    2.1) For older snapshots added before `testSummaries` was introduced, the snapshot frequency is 1000.
+		//    2.2) For snapshots added after `testSummaries` was introduces, the snapshot frequency is the same as when
+		//         summaries happened in the original file. This is determined by the summary ops.
+		const manifest = getManifest(folder);
+		let snapFreq: number | undefined;
+		let testSummaries: boolean | undefined;
+		if (mode === Mode.Stress) {
+			snapFreq = 50;
+		} else if (manifest.testVersion < testSummariesVersion) {
+			snapFreq = 1000;
+		} else {
+			testSummaries = true;
+		}
+
 		const data: IWorkerArgs = {
 			folder,
 			mode,
 			snapFreq,
+			testSummaries,
 		};
 
 		switch (mode) {
@@ -290,6 +301,9 @@ async function processNodeForNewSnapshots(
 
 	fs.mkdirSync(currentSnapshotsDir, { recursive: true });
 
+	// For new snapshots, testSummaries should be set because summaries should be generated as per the original file.
+	data.testSummaries = true;
+
 	// Process the current folder which will write the generated snapshots to current snapshots dir.
 	await processNode(data, concurrently, limiter);
 
@@ -298,6 +312,9 @@ async function processNodeForNewSnapshots(
 	fs.writeFileSync(versionFileName, JSON.stringify({ snapshotVersion: pkgVersion }), {
 		encoding: "utf-8",
 	});
+
+	// Write the manifest file.
+	writeManifestFile(data.folder);
 }
 
 /**
