@@ -143,7 +143,7 @@ export class OpSplitter {
 		);
 		assert(
 			batch.referenceSequenceNumber !== undefined,
-			"Batch must have a reference sequence number if non-empty",
+			0x58a /* Batch must have a reference sequence number if non-empty */,
 		);
 		assert(this.chunkSizeInBytes !== 0, 0x515 /* Chunk size needs to be non-zero */);
 		assert(
@@ -237,10 +237,13 @@ export const splitOp = (op: BatchMessage, chunkSizeInBytes: number): IChunkedOp[
 
 		chunks.push(chunk);
 		offset += chunkSizeInBytes;
-		assert(i === chunkCount - 1 || offset <= contentLength, "Content offset within bounds");
+		assert(
+			i === chunkCount - 1 || offset <= contentLength,
+			0x58b /* Content offset within bounds */,
+		);
 	}
 
-	assert(offset >= contentLength, "Content offset equal or larger than content length");
+	assert(offset >= contentLength, 0x58c /* Content offset equal or larger than content length */);
 	// The last chunk has empty contents, to minimize the risk of the
 	// resulting payload exceeding 1MB due to the overhead from the empty ops
 	// which will be bundled with this op.

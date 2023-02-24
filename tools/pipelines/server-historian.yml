@@ -84,7 +84,8 @@ extends:
     containerName: fluidframework/routerlicious/historian
     # We need to install only the root dependencies; historian has native deps that don't install in CI since we use
     # Docker to do the actual build in CI. We need the root dependencies so setting package versions works.
-    packageManagerInstallCommand: 'npm ci --ignore-scripts'
+    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
+    packageManager: pnpm
     test: test
     tagName: historian
     pack: true
