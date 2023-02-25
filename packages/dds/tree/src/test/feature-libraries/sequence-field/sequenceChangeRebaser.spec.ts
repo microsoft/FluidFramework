@@ -230,13 +230,23 @@ describe("SequenceField - Rebaser Axioms", () => {
 });
 
 describe("SequenceField - Sandwich Rebasing", () => {
-	it("Nested inserts", () => {
+	it("Nested inserts rebasing", () => {
 		const insertA = tagChange(Change.insert(0, 2), mintRevisionTag());
 		const insertB = tagChange(Change.insert(1, 1), mintRevisionTag());
-		const inverseA = invert(insertA);
-		const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
+		const inverseA = tagInverse(invert(insertA), insertA.revision);
+		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertA);
 		assert.deepEqual(insertB3.change, insertB.change);
+	});
+
+	it("Nested inserts composition", () => {
+		const insertA = tagChange(Change.insert(0, 2), mintRevisionTag());
+		const insertB = tagChange(Change.insert(1, 1), mintRevisionTag());
+		const inverseA = tagInverse(invert(insertA), insertA.revision);
+		const inverseB = tagInverse(invert(insertB), insertB.revision);
+
+		const composed = compose([inverseB, inverseA, insertA, insertB]);
+		assert.deepEqual(composed, []);
 	});
 
 	it("Nested inserts ↷ adjacent insert", () => {

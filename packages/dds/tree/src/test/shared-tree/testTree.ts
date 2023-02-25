@@ -117,6 +117,7 @@ export class TestTree {
 		this.forest = forest;
 		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 			defaultChangeFamily,
+			forest.anchors,
 		);
 		this.editManager.initSessionId(this.sessionId);
 	}

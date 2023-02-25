@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
 import { JsonCompatible } from "../../util";
-import { rootFieldKeySymbol } from "../../core";
+import { moveToDetachedField, rootFieldKeySymbol, UpPath } from "../../core";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
@@ -43,12 +43,29 @@ describe("Editing", () => {
 
 			const ac = insert(tree2, 1, "a", "c");
 			const b = insert(tree2, 2, "b");
+			expectJsonTree(tree2, ["y", "a", "b", "c"]);
+
+			// Get an anchor to node b
+			const cursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, cursor);
+			cursor.enterNode(2);
+			assert.equal(cursor.value, "b");
+			const anchor = cursor.buildAnchor();
+			cursor.free();
 
 			const sequenced = sequencer.sequence([x, ac, b]);
 			tree1.receive(sequenced);
 			tree2.receive(sequenced);
 
 			expectJsonTree([tree1, tree2], ["x", "y", "a", "b", "c"]);
+
+			const path = tree2.forest.anchors.locate(anchor);
+			const expectedPath: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 3,
+			};
+			assert.deepEqual({ ...path }, expectedPath);
 		});
 
 		it("can rebase a local delete", () => {
