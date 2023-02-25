@@ -127,7 +127,7 @@ export class FluidCache implements IPersistedCache {
     public async removeEntries(file: IFileEntry): Promise<void> {
         let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
         try {
-        	db = await getFluidCacheIndexedDbInstance(this.logger);
+            db = await getFluidCacheIndexedDbInstance(this.logger);
 
             const transaction = db.transaction(
                 FluidDriverObjectStoreName,
