@@ -5,6 +5,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
+import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { defaultInterpreter } from "../mergeTree";
 import {
 	IMergeTreeOperationRunnerConfig,
 	removeRange,
@@ -17,10 +21,6 @@ import {
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 import { combineInterpreters, trackProperties } from "./testUtils";
-import { defaultInterpreter } from "../mergeTree";
-import { AttributionKey } from "../mergeTreeNodes";
-import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
-import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
 
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
 	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
@@ -64,8 +64,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 						return undefined;
 					}
 					const { attribution } = segment;
-					let channels: { [name: string]: AttributionKey | undefined } | undefined =
-						undefined;
+					let channels: { [name: string]: AttributionKey | undefined } | undefined;
 					const result: {
 						root: AttributionKey | undefined;
 						channels?: { [name: string]: AttributionKey | undefined };

@@ -299,16 +299,21 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {
+    // Warning: (ae-forgotten-export) The symbol "AttributionChangeEntry" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    ackDeltas(deltas: AttributionChangeEntry[], propertyManager: PropertiesManager | undefined): void;
     // @internal (undocumented)
     append(other: IAttributionCollection<T>): void;
+    // (undocumented)
+    readonly channelNames: Iterable<string>;
     // @internal (undocumented)
     clone(): IAttributionCollection<T>;
+    // Warning: (ae-forgotten-export) The symbol "IAttributionCollectionSpec" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    getAll(): Iterable<{
-        offset: number;
-        key: T;
-    }>;
-    getAtOffset(offset: number): T;
+    getAll(): IAttributionCollectionSpec<T>;
+    getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
     readonly length: number;
     // @internal (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;
@@ -953,6 +958,8 @@ export class PropertiesManager {
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
     hasPendingProperties(): boolean;
+    // (undocumented)
+    hasPendingProperty(key: string): boolean;
 }
 
 // @public (undocumented)
@@ -1194,13 +1201,16 @@ export class SegmentGroupCollection {
     get size(): number;
 }
 
+// Warning: (ae-forgotten-export) The symbol "SequenceOffsets" needs to be exported by the entry point index.d.ts
+//
 // @internal (undocumented)
-export interface SerializedAttributionCollection {
+export interface SerializedAttributionCollection extends SequenceOffsets {
+    // (undocumented)
+    channels?: {
+        [name: string]: SequenceOffsets;
+    };
     // (undocumented)
     length: number;
-    // (undocumented)
-    posBreakpoints: number[];
-    seqs: (number | AttributionKey)[];
 }
 
 // @internal (undocumented)
