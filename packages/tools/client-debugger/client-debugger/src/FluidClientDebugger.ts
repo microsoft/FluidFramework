@@ -33,11 +33,16 @@ import { FluidClientDebuggerProps } from "./Registry";
  *
  * **Messages it listens for:**
  *
- * - TODO
+ * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast {@link ContainerStateChangeMessage}.
+ *
+ * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
- * - TODO
+ * - {@link ContainerStateChangeMessage}: This is posted any time relevant Container state changes,
+ * or when requested (via {@link GetContainerStateMessage}).
+ *
+ * TODO: Document others as they are added.
  *
  * @sealed
  * @internal

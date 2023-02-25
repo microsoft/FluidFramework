@@ -98,11 +98,16 @@ export interface DebuggerRegistryEvents extends IEvent {
  *
  * **Messages it listens for:**
  *
- * - TODO
+ * - {@link GetContainerListMessage}: When received, the registry will post {@link RegistryChangeMessage}.
+ *
+ * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
- * - TODO
+ * - {@link RegistryChangeMessage}: The registry will post this whenever the list of registered
+ * debuggers changes, or when requested (via {@link GetContainerListMessage}).
+ *
+ * TODO: Document others as they are added.
  *
  * @internal
  */
