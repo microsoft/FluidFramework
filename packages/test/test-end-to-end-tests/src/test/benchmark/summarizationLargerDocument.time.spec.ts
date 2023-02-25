@@ -22,13 +22,10 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { bufferToString } from "@fluidframework/common-utils";
 import { SharedMap } from "@fluidframework/map";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ChildLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-// import { createLogger } from "./FileLogger";
 
 const defaultDataStoreId = "default";
 const mapId = "mapId";
@@ -58,10 +55,6 @@ const chunkingBatchesConfig: ITestContainerConfig = {
 	},
 };
 
-function readBlobContent(content: ISummaryBlob["content"]): unknown {
-	const json = typeof content === "string" ? content : bufferToString(content, "utf8");
-	return JSON.parse(json);
-}
 const testName = "Summarization  Larger Document- runtime benchmarks";
 describeNoCompat(testName, (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -82,7 +75,7 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 		return summaryResult.summaryVersion;
 	}
 
-	const maxMessageSizeInBytes = 5 * 1024 * 1024; // 1MB
+	const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
 	const messageCount = 2; // Will result in a 10 MB payload
 
 	const generateRandomStringOfSize = (sizeInBytes: number): string =>
@@ -111,7 +104,6 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 				driverType: provider.driver.type,
 				driverEndpointName: provider.driver.endpointName,
 				profile: "",
-				testName,
 				benchmarkType: "E2ETime",
 			},
 		});

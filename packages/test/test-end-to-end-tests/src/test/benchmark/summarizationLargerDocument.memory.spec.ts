@@ -113,7 +113,6 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 				driverType: provider.driver.type,
 				driverEndpointName: provider.driver.endpointName,
 				profile: "",
-				testName,
 				benchmarkType: "E2EMemory",
 			},
 		});

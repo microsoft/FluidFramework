@@ -1,0 +1,170 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+// eslint-disable-next-line import/no-nodejs-modules
+import * as crypto from "crypto";
+import { strict as assert } from "assert";
+import { v4 as uuid } from "uuid";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { SharedMap } from "@fluidframework/map";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
+
+export interface DocumentProps {
+	testName: string;
+	provider: ITestObjectProvider;
+	driverType: TestDriverTypes;
+	driverEndpointName: string | undefined;
+	documentSize: number; // Multiple of 5 MB (1=5Mb, 2=10Mb, 3=15Mb, etc.)
+}
+
+const defaultDataStoreId = "default";
+const mapId = "mapId";
+const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+const generateRandomStringOfSize = (sizeInBytes: number): string =>
+	crypto.randomBytes(sizeInBytes / 2).toString("hex");
+
+const setMapKeys = (map: SharedMap, count: number, item: string): void => {
+	for (let i = 0; i < count; i++) {
+		map.set(`key${i}`, item);
+	}
+};
+
+const validateMapKeys = (map: SharedMap, count: number, expectedSize: number): void => {
+	for (let i = 0; i < count; i++) {
+		const key = map.get(`key${i}`);
+		assert(key !== undefined);
+		assert(key.length === expectedSize);
+	}
+};
+
+export class DocumentCreator {
+	private _logger: ITelemetryLogger | undefined;
+	private testContainerConfig: ITestContainerConfig | undefined;
+	private loader: IHostLoader | undefined;
+	private _mainContainer: IContainer | undefined;
+	private dataObject1: ITestFluidObject | undefined;
+	private dataObject1map: SharedMap | undefined;
+	private _fileName: string = "";
+	private _containerUrl: IResolvedUrl | undefined;
+
+	// create getter for mainContainer
+	public get mainContainer() {
+		return this._mainContainer;
+	}
+	// create getter for logger
+	public get logger() {
+		return this._logger;
+	}
+	// create a getter for _fileName and _containerUrl
+	public get fileName() {
+		return this._fileName;
+	}
+	public set fileName(fileName: string) {
+		this._fileName = fileName;
+	}
+	public get containerUrl() {
+		return this._containerUrl;
+	}
+	public set containerUrl(containerUrl: IResolvedUrl | undefined) {
+		this._containerUrl = containerUrl;
+	}
+
+	/**
+	 * Creates a new DocumentCreator using configuration parameters.
+	 * @param props - Properties for initializing the Document Creator.
+	 */
+	public constructor(private readonly props: DocumentProps) {}
+	public async initializeDocument() {
+		// runId will be populated on the logger.
+		this._logger = ChildLogger.create(getTestLogger?.(), this.props.testName, {
+			all: {
+				runId: undefined,
+				driverType: this.props.driverType,
+				driverEndpointName: this.props.driverEndpointName,
+				profile: "",
+				benchmarkType: "E2ETime",
+			},
+		});
+
+		this.testContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+			runtimeOptions: {
+				summaryOptions: {
+					initialSummarizerDelayMs: 0,
+					summaryConfigOverrides: {
+						state: "disabled",
+					},
+				},
+				compressionOptions: {
+					minimumBatchSizeInBytes: 1024 * 1024,
+					compressionAlgorithm: "lz4" as any,
+				},
+				chunkSizeInBytes: 600 * 1024,
+			},
+		};
+		this.testContainerConfig.loaderProps = { logger: this.logger };
+
+		this.loader = this.props.provider.makeTestLoader(this.testContainerConfig);
+		this._mainContainer = await this.loader.createDetachedContainer(
+			this.props.provider.defaultCodeDetails,
+		);
+
+		this.dataObject1 = await requestFluidObject<ITestFluidObject>(
+			this._mainContainer,
+			"default",
+		);
+		this.dataObject1map = await this.dataObject1.getSharedObject<SharedMap>(mapId);
+		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+		setMapKeys(this.dataObject1map, this.props.documentSize, largeString);
+		this.fileName = uuid();
+
+		await this._mainContainer.attach(
+			this.props.provider.driver.createCreateNewRequest(this.fileName),
+		);
+		assert(this._mainContainer.resolvedUrl, "Container URL should be resolved");
+		this.containerUrl = this._mainContainer.resolvedUrl;
+		await waitForContainerConnection(this._mainContainer, true);
+	}
+
+	public async loadDocument(): Promise<IContainer> {
+		const key: string[] = ["", ""];
+		const requestUrl = await this.props.provider.driver.createContainerUrl(
+			this.fileName,
+			this.containerUrl,
+		);
+		const testRequest: IRequest = { url: requestUrl };
+		assert(this.loader !== undefined, "loader should be initialized");
+		const container2 = await this.loader.resolve(testRequest);
+		const dataObject2 = await requestFluidObject<ITestFluidObject>(
+			container2,
+			defaultDataStoreId,
+		);
+		const dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
+		dataObject2map.set("setup", "done");
+		validateMapKeys(dataObject2map, this.props.documentSize, maxMessageSizeInBytes);
+
+		for (let i = 0; i < this.props.documentSize; i++) {
+			key[i] = dataObject2map.get(`key${i}`) ?? "";
+			assert(key[i] !== "");
+			assert(key[i].length === maxMessageSizeInBytes);
+		}
+		return container2;
+	}
+}
