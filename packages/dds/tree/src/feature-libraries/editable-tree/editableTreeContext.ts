@@ -25,8 +25,8 @@ import { ISubscribable } from "../../events";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
+import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "../contextuallyTyped";
 import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
-import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
