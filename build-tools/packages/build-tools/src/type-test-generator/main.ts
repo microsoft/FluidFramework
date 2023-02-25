@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { Project } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
@@ -17,6 +17,24 @@ import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typ
 const packageFile = readFileSync("package.json");
 
 const packageObject: PackageJson = JSON.parse(packageFile.toString());
+
+const testPath = `./src/test/types`;
+// remove scope if it exists
+const unscopedName = path.basename(packageObject.name);
+
+const fileBaseName = unscopedName
+	.split("-")
+	.map((p) => p[0].toUpperCase() + p.substring(1))
+	.join("");
+const filePath = `${testPath}/validate${fileBaseName}Previous.generated.ts`;
+
+if (packageObject.typeValidation?.disabled) {
+	console.log("skipping type test generation because they are disabled in package.json");
+	// force means to ignore the error if the file does not exist.
+	rmSync(filePath, { force: true });
+	process.exit(0);
+}
+
 const previousPackageName = `${packageObject.name}-previous`;
 
 {
@@ -140,18 +158,7 @@ for (const oldTypeData of previousData) {
 	testString.push("");
 }
 
-const testPath = `./src/test/types`;
 mkdirSync("./src/test/types", { recursive: true });
 
-// remove scope if it exists
-const oldVersionNameForFile = path.basename(previousPackageName);
-
-const oldVersionFileName = oldVersionNameForFile
-	.split("-")
-	.map((p) => p[0].toUpperCase() + p.substring(1))
-	.join("");
-const filePath = `${testPath}/validate${oldVersionFileName}.generated.ts`;
-
-console.log(`generated ${path.resolve(filePath)}`);
-
 writeFileSync(filePath, testString.join("\n"));
+console.log(`generated ${path.resolve(filePath)}`);
