@@ -76,19 +76,26 @@ if (existsSync(previousTsConfigPath)) {
 	previousFile = project.getSourceFileOrThrow("index.d.ts");
 }
 
-function typeDataFromFile(file: SourceFile): TypeData[] {
-	const typeData: TypeData[] = [];
-	const exports = file.getExportedDeclarations();
-	for (const declarations of exports.values()) {
+function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
+	const typeData = new Map<string, TypeData>();
+	const exportedDeclarations = file.getExportedDeclarations();
+	for (const declarations of exportedDeclarations.values()) {
 		for (const dec of declarations) {
-			typeData.push(...getNodeTypeData(dec));
+			getNodeTypeData(dec).forEach((td) => {
+				const fullName = getFullTypeName(td);
+				if (typeData.has(fullName)) {
+					// This system does not properly handle overloads: instead it only keeps the last signature.
+					console.warn(`skipping overload for ${fullName}`);
+				}
+				typeData.set(fullName, td);
+			});
 		}
 	}
 	return typeData;
 }
 
-const currentProjectData = typeDataFromFile(currentFile);
-const previousData = typeDataFromFile(previousFile);
+const currentTypeMap = typeDataFromFile(currentFile);
+const previousData = [...typeDataFromFile(previousFile).values()];
 
 function compareString(a: string, b: string): number {
 	return a > b ? 1 : a < b ? -1 : 0;
@@ -114,9 +121,6 @@ type TypeOnly<T> = {
 `,
 ];
 
-const currentTypeMap = new Map<string, TypeData>(
-	currentProjectData.map((v) => [getFullTypeName(v), v]),
-);
 for (const oldTypeData of previousData) {
 	const oldType: TestCaseTypeData = {
 		prefix: "old",
