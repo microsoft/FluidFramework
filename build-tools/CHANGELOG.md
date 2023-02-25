@@ -1,3 +1,75 @@
+## [0.10.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.10.0...build-tools_v0.10.0) (2023-02-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **generate:typetests:** We now prefer external files for the typetest config, so when running, it will always output to the external config file, and will remove the package.json typeValidation node.
+
+### Features
+
+* **build-cli:** Allow ssh git remotes ([#14145](https://github.com/microsoft/FluidFramework/issues/14145)) ([175a51b](https://github.com/microsoft/FluidFramework/commit/175a51baeaf65775b40d3dc2320fa8b3f03ee6b9))
+* **build:** Accepting monorepo path for build scope on fluid-build command line ([#14071](https://github.com/microsoft/FluidFramework/issues/14071)) ([29ab33c](https://github.com/microsoft/FluidFramework/commit/29ab33c04f55ab40eca45e1d702a157548769549))
+* **bump:** Support interdependency bump types ([#14161](https://github.com/microsoft/FluidFramework/issues/14161)) ([8cc5b1e](https://github.com/microsoft/FluidFramework/commit/8cc5b1e55820896bdb84825f9874ea55bc8a81f3))
+* **fluid-build:** Support external config ([#14215](https://github.com/microsoft/FluidFramework/issues/14215)) ([1fc3cbc](https://github.com/microsoft/FluidFramework/commit/1fc3cbc3e7cf1df5abf49da8665354c03236c929))
+* **generate:typetests:** Move typetest config to external file ([#14222](https://github.com/microsoft/FluidFramework/issues/14222)) ([15f0080](https://github.com/microsoft/FluidFramework/commit/15f0080afc7573380dacb368a36c1eb82c300ca3))
+
+
+### Bug Fixes
+
+* **fluid-build:** Fix copyfile command line parsing blocking incremental build ([#14083](https://github.com/microsoft/FluidFramework/issues/14083)) ([72c30a7](https://github.com/microsoft/FluidFramework/commit/72c30a7e901e91e7d5d48560dad5d1a83bdd3f6e))
+* **generate:typetests:** Fix null refs and clean up logging ([#14228](https://github.com/microsoft/FluidFramework/issues/14228)) ([94f39a6](https://github.com/microsoft/FluidFramework/commit/94f39a66ce1c440705b08866818e45485e6be53f)), closes [#14222](https://github.com/microsoft/FluidFramework/issues/14222)
+
+## [0.9.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.9.0...build-tools_v0.9.0) (2023-02-08)
+
+
+### Features
+
+* **check:policy:** Add pnpm repo policies ([#14025](https://github.com/microsoft/FluidFramework/issues/14025)) ([4a76a06](https://github.com/microsoft/FluidFramework/commit/4a76a0688bc4f651a8b6d2a3b8dbe94481f4cc12))
+* **fluid-build:** Enforce formatting in lint scripts ([#13735](https://github.com/microsoft/FluidFramework/issues/13735)) ([5b11ee4](https://github.com/microsoft/FluidFramework/commit/5b11ee402b6a5200eb99605b6e81e9b71c029f51))
+* **release:** Include links to ADO pipelines in release tools ([#13764](https://github.com/microsoft/FluidFramework/issues/13764)) ([b65220d](https://github.com/microsoft/FluidFramework/commit/b65220dcb7f7386d03cfb47e601d884a3d09cf04)), closes [AB#2176](https://github.com/microsoft/AB/issues/2176)
+
+
+### Bug Fixes
+
+* **bump:deps:** Include peer dependencies when bumping deps ([#13761](https://github.com/microsoft/FluidFramework/issues/13761)) ([d1e86ad](https://github.com/microsoft/FluidFramework/commit/d1e86ad9643d94765b93cfe5005478e225f3269a))
+* **generate:typetests:** Skip tests when previousVersion is invalid ([#13999](https://github.com/microsoft/FluidFramework/issues/13999)) ([ad34e58](https://github.com/microsoft/FluidFramework/commit/ad34e58181b180857e6a3dead1aebc5a5dd4e87c))
+* **release:report:** Display dates in full release report ([#13763](https://github.com/microsoft/FluidFramework/issues/13763)) ([330e6b7](https://github.com/microsoft/FluidFramework/commit/330e6b7b786edb59e5a5a43fb2a3862af8863fb6)), closes [AB#2198](https://github.com/microsoft/AB/issues/2198)
+
+
+### Performance Improvements
+
+* **fluid-build:** Reduce package check noise by scoping to only packages to be built ([#14067](https://github.com/microsoft/FluidFramework/issues/14067)) ([7505327](https://github.com/microsoft/FluidFramework/commit/750532753bf9f2fbcd2e94cab7506fbb7122e698))
+
+## [0.8.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.8.0...build-tools_v0.8.0) (2023-01-24)
+
+
+### Bug Fixes
+
+* **check:policy:** Ignore packages that don't have pre-requisite scripts ([#13699](https://github.com/microsoft/FluidFramework/issues/13699)) ([9a2668c](https://github.com/microsoft/FluidFramework/commit/9a2668c4ddb15d0d3d8481b742fa63f25c28a8f1))
+* **generate:typetests:** Generate using prepped data when branch has no config ([#13674](https://github.com/microsoft/FluidFramework/issues/13674)) ([5c8a2fa](https://github.com/microsoft/FluidFramework/commit/5c8a2fa27f5d65284d606a060a2d25bf9d0537a2))
+* **run:bundleStats:** Remove logging deps ([#13769](https://github.com/microsoft/FluidFramework/issues/13769)) ([112be91](https://github.com/microsoft/FluidFramework/commit/112be919ca76c2e4acf4a0226a7e9a950b87f63b))
+
+## [0.7.1](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.7.1...build-tools_v0.7.1) (2023-01-17)
+
+
+### Bug Fixes
+
+* **check:policy:** fix handling of assert short codes in policy ([#13317](https://github.com/microsoft/FluidFramework/issues/13317)) ([9bfd9e3](https://github.com/microsoft/FluidFramework/commit/9bfd9e39035920e3c144fedac9af92fdd24bdd50))
+
+## [0.7.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.7.0...build-tools_v0.7.0) (2022-12-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **run:bundleStats:** The `--dirname` argument has been removed. There is now
+a `--dangerfile` argument that defaults to the built-in dangerfile but
+can be customized if needed.
+
+### Bug Fixes
+
+* **build-tools:** Use local policy-check in build-tools ([#13145](https://github.com/microsoft/FluidFramework/issues/13145)) ([e9b8590](https://github.com/microsoft/FluidFramework/commit/e9b8590647d21645dcfd31122e3d3af5763fb0e3))
+* **run:bundleStats:** Take path to dangerfile instead of directory ([#13154](https://github.com/microsoft/FluidFramework/issues/13154)) ([0372fe0](https://github.com/microsoft/FluidFramework/commit/0372fe000991e324907d3e6342d6f72a49dfcb50))
+
 ## [0.6.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.5.0...build-tools_v0.6.0) (2022-11-28)
 
 
