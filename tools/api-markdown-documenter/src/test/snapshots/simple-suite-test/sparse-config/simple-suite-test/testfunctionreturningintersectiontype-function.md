@@ -1,9 +1,8 @@
 # testFunctionReturningIntersectionType
 
-> <b>\[Warning\]: Deprecated</b>
+> **\[Warning\]: Deprecated**
 > 
 > This is a test deprecation notice. Here is a [link](docs/simple-suite-test/testfunctionreturninguniontype-function) to something else!
-> 
 > 
 
 Test function that returns an inline type
@@ -18,4 +17,4 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-<b>Return type:</b> [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
+**Return type:** [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt;

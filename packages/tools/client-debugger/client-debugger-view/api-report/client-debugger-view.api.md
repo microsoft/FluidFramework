@@ -29,7 +29,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactEleme
 export const clientDebugViewClassName = "fluid-client-debugger-view";
 
 // @internal
-export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
+export interface ClientDebugViewProps extends HasClientDebugger {
     renderOptions?: RenderOptions;
 }
 
@@ -40,12 +40,12 @@ export const defaultRenderOptions: Required<RenderOptions>;
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 
 // @public
-export function FluidClientDebugger(props: FluidClientDebuggerProps): React_2.ReactElement;
-
-// @public
 export interface FluidClientDebuggerProps {
     renderOptions?: RenderOptions;
 }
+
+// @public
+export function FluidClientDebuggers(props: FluidClientDebuggerProps): React_2.ReactElement;
 
 // @internal
 export interface HasClientDebugger {

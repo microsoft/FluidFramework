@@ -4,7 +4,7 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ConnectionState, Container } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtils";
 
 /**
@@ -15,8 +15,8 @@ import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtil
  * - failOnContainerClose = true
  * - timeoutOptions.durationMs = 1s
  */
-export async function ensureContainerConnected(container: Container): Promise<void> {
-	if (!container.connected) {
+export async function ensureContainerConnected(container: IContainer): Promise<void> {
+	if (container.connectionState !== ConnectionState.Connected) {
 		return timeoutPromise((resolve) => container.once("connected", () => resolve()));
 	}
 }

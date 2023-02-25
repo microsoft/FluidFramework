@@ -1,5 +1,5 @@
 {
-  "tags": ["chunked-forest"],
-  "exports": ["index"],
-  "imports": ["util", "core", "events", "feature-libraries"]
+	"tags": ["chunked-forest"],
+	"exports": ["index"],
+	"imports": ["util", "core", "events", "feature-libraries"]
 }

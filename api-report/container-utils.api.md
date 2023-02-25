@@ -72,7 +72,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 
 // @public
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
-    constructor(message: string);
+    constructor(message: string, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType = ContainerErrorType.usageError;
 }

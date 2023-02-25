@@ -203,12 +203,14 @@ container.dispose();
 
 const disposed = container.disposed;
 
-container.on("disposed", () => {
+container.on("disposed", (error?: ICriticalContainerError) => {
     // handle event cleanup to prevent memory leaks
 });
 ```
 
 As mentioned above, you probably want to make sure all pending changes are saved prior to calling `dispose`.
+
+To learn more about the possible errors that can be emitted from the `disposed` event, see [ICriticalContainerError](/docs/apis/azure-client/#icriticalcontainererror-typealias).
 
 ### Deleting a container
 

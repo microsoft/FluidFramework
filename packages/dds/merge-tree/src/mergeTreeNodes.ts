@@ -8,10 +8,10 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
-import { AttributionCollection, IAttributionCollection } from "./attributionCollection";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { IAttributionCollection } from "./attributionCollection";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
-import { AttributionChangeEntry } from "./mergeTree";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
@@ -27,28 +27,6 @@ import {
 } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
-
-// TODO: this should reference a shared interface in @fluidframework/runtime-definitions so it's usable from
-// here and @fluidframework/attributor
-/**
- * @alpha
- * @remarks - This will eventually be exported by a different package. Its export will be removed.
- */
-export interface AttributionKey {
-	/**
-	 * The type of attribution this key corresponds to.
-	 *
-	 * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
-	 * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
-	 *
-	 * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
-	 * AttributionKey a discriminated union on the 'type' field. This would empower
-	 * consumers with the ability to implement different attribution policies.
-	 */
-	type: "op";
-
-	seq: number;
-}
 
 /**
  * Common properties for a node in a merge tree.
@@ -231,7 +209,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 		segmentGroup: SegmentGroup,
 		opArgs: IMergeTreeDeltaOpArgs,
 		// TODO: doc
-		attributionDeltas: AttributionChangeEntry[] | undefined,
+		// attributionDeltas: AttributionChangeEntry[] | undefined,
 	): boolean;
 }
 
@@ -463,11 +441,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public abstract toJSONObject(): any;
 
-	public ack(
-		segmentGroup: SegmentGroup,
-		opArgs: IMergeTreeDeltaOpArgs,
-		attributionDeltas: AttributionChangeEntry[] | undefined,
-	): boolean {
+	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
 		const currentSegmentGroup = this.segmentGroups.dequeue();
 		assert(
 			currentSegmentGroup === segmentGroup,
@@ -508,11 +482,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 				throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
 		}
 
-		if (attributionDeltas !== undefined) {
-			// prop exclusion of those with pending writes could be excluded in this function perhaps
-			this.attribution ??= new AttributionCollection(this.cachedLength);
-			this.attribution.ackDeltas(attributionDeltas, this.propertyManager);
-		}
 		return true;
 	}
 

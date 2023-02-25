@@ -16,16 +16,16 @@
  */
 
 export {
-    BenchmarkType,
-    BenchmarkArguments,
-    BenchmarkSyncArguments,
-    BenchmarkAsyncArguments,
-    BenchmarkOptions,
-    MochaExclusiveOptions,
-    HookFunction,
-    HookArguments,
-    isInPerformanceTestingMode,
-    validateBenchmarkArguments,
+	BenchmarkType,
+	BenchmarkArguments,
+	BenchmarkSyncArguments,
+	BenchmarkAsyncArguments,
+	BenchmarkOptions,
+	MochaExclusiveOptions,
+	HookFunction,
+	HookArguments,
+	isInPerformanceTestingMode,
+	validateBenchmarkArguments,
 } from "./Configuration";
 export { benchmark } from "./Runner";
 export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./MemoryTestRunner";

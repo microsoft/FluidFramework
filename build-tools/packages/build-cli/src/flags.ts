@@ -8,9 +8,9 @@ import * as semver from "semver";
 import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 
 import {
-    isVersionBumpType,
-    isVersionBumpTypeExtended,
-    isVersionScheme,
+	isVersionBumpType,
+	isVersionBumpTypeExtended,
+	isVersionScheme,
 } from "@fluid-tools/version-tools";
 
 import { DependencyUpdateType } from "./lib";
@@ -20,100 +20,100 @@ import { isReleaseGroup } from "./releaseGroups";
  * A re-usable CLI flag to parse the root directory of the Fluid repo.
  */
 export const rootPathFlag = Flags.build({
-    description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
-    env: "_FLUID_ROOT_",
-    hidden: true,
+	description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
+	env: "_FLUID_ROOT_",
+	hidden: true,
 });
 
 /**
  * A re-usable CLI flag to parse release groups.
  */
 export const releaseGroupFlag = Flags.build({
-    char: "g",
-    description: "Name of the release group",
-    options: [...supportedMonoRepoValues()],
-    parse: async (str: string) => {
-        const group = str.toLowerCase();
-        if (!isReleaseGroup(group)) {
-            throw new TypeError(`Not a release group: ${str}`);
-        }
+	char: "g",
+	description: "Name of the release group",
+	options: [...supportedMonoRepoValues()],
+	parse: async (str: string) => {
+		const group = str.toLowerCase();
+		if (!isReleaseGroup(group)) {
+			throw new TypeError(`Not a release group: ${str}`);
+		}
 
-        return group;
-    },
+		return group;
+	},
 });
 
 /**
  * A re-usable CLI flag to parse package names.
  */
 export const packageSelectorFlag = Flags.build({
-    char: "p",
-    description: "Name of package.",
-    multiple: false,
+	char: "p",
+	description: "Name of package.",
+	multiple: false,
 });
 
 /**
  * A re-usable CLI flag to parse semver ranges.
  */
 export const semverRangeFlag = Flags.build<string | undefined>({
-    description: "A semver version range string.",
-    multiple: false,
-    parse: async (input) => {
-        const range = semver.validRange(input);
-        return range === null ? undefined : input;
-    },
+	description: "A semver version range string.",
+	multiple: false,
+	parse: async (input) => {
+		const range = semver.validRange(input);
+		return range === null ? undefined : input;
+	},
 });
 
 /**
  * A re-usable CLI flag to parse bump types.
  */
 export const bumpTypeExtendedFlag = Flags.build({
-    char: "t",
-    description: "Version bump type.",
-    options: ["major", "minor", "patch", "current"],
-    parse: async (input) => {
-        if (isVersionBumpTypeExtended(input)) {
-            return input;
-        }
-    },
+	char: "t",
+	description: "Version bump type.",
+	options: ["major", "minor", "patch", "current"],
+	parse: async (input) => {
+		if (isVersionBumpTypeExtended(input)) {
+			return input;
+		}
+	},
 });
 
 /**
  * A re-usable CLI flag to parse bump types.
  */
 export const bumpTypeFlag = Flags.build({
-    char: "t",
-    description: "Version bump type.",
-    options: ["major", "minor", "patch"],
-    parse: async (input) => {
-        if (isVersionBumpType(input)) {
-            return input;
-        }
-    },
+	char: "t",
+	description: "Version bump type.",
+	options: ["major", "minor", "patch"],
+	parse: async (input) => {
+		if (isVersionBumpType(input)) {
+			return input;
+		}
+	},
 });
 
 /**
  * A re-usable CLI flag to parse dependency update types.
  */
 export const dependencyUpdateTypeFlag = Flags.build({
-    char: "t",
-    description: "Version bump type.",
-    options: ["latest", "newest", "greatest", "minor", "patch", "@next", "@canary"],
-    parse: async (input) => {
-        return input as DependencyUpdateType;
-    },
+	char: "t",
+	description: "Version bump type.",
+	options: ["latest", "newest", "greatest", "minor", "patch", "@next", "@canary"],
+	parse: async (input) => {
+		return input as DependencyUpdateType;
+	},
 });
 
 /**
  * A re-usable CLI flag to parse version schemes used to adjust versions.
  */
 export const versionSchemeFlag = Flags.build({
-    description: "Version scheme to use.",
-    options: ["semver", "internal", "virtualPatch"],
-    parse: async (input) => {
-        if (isVersionScheme(input)) {
-            return input;
-        }
-    },
+	description: "Version scheme to use.",
+	options: ["semver", "internal", "virtualPatch"],
+	parse: async (input) => {
+		if (isVersionScheme(input)) {
+			return input;
+		}
+	},
 });
 
 /**
@@ -144,31 +144,31 @@ export const versionSchemeFlag = Flags.build({
  * ```
  */
 export const checkFlags = {
-    commit: Flags.boolean({
-        allowNo: true,
-        default: true,
-        description: "Commit changes to a new branch.",
-    }),
-    install: Flags.boolean({
-        allowNo: true,
-        default: true,
-        description: "Update lockfiles by running 'npm install' automatically.",
-    }),
-    branchCheck: Flags.boolean({
-        allowNo: true,
-        default: true,
-        description: "Check that the current branch is correct.",
-    }),
-    updateCheck: Flags.boolean({
-        allowNo: true,
-        default: true,
-        description: "Check that the local repo is up to date with the remote.",
-    }),
-    policyCheck: Flags.boolean({
-        allowNo: true,
-        default: true, // This value isn't used directly; the default is based on the branch. See comment in run method.
-        description: "Check that the local repo complies with all policy.",
-    }),
+	commit: Flags.boolean({
+		allowNo: true,
+		default: true,
+		description: "Commit changes to a new branch.",
+	}),
+	install: Flags.boolean({
+		allowNo: true,
+		default: true,
+		description: "Update lockfiles by running 'npm install' automatically.",
+	}),
+	branchCheck: Flags.boolean({
+		allowNo: true,
+		default: true,
+		description: "Check that the current branch is correct.",
+	}),
+	updateCheck: Flags.boolean({
+		allowNo: true,
+		default: true,
+		description: "Check that the local repo is up to date with the remote.",
+	}),
+	policyCheck: Flags.boolean({
+		allowNo: true,
+		default: true, // This value isn't used directly; the default is based on the branch. See comment in run method.
+		description: "Check that the local repo complies with all policy.",
+	}),
 };
 
 /**
@@ -181,8 +181,8 @@ export const checkFlags = {
  * effect.
  */
 export const skipCheckFlag = Flags.boolean({
-    char: "x",
-    default: false,
-    description: "Skip all checks.",
-    exclusive: ["install", "commit", "branchCheck", "updateCheck", "policyCheck"],
+	char: "x",
+	default: false,
+	description: "Skip all checks.",
+	exclusive: ["install", "commit", "branchCheck", "updateCheck", "policyCheck"],
 });

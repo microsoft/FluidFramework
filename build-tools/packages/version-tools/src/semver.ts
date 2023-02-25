@@ -6,11 +6,11 @@ import * as semver from "semver";
 
 import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
-    bumpInternalVersion,
-    fromInternalScheme,
-    getVersionRange,
-    isInternalVersionScheme,
-    toInternalScheme,
+	bumpInternalVersion,
+	fromInternalScheme,
+	getVersionRange,
+	isInternalVersionScheme,
+	toInternalScheme,
 } from "./internalVersionScheme";
 import { bumpVersionScheme, detectVersionScheme } from "./schemes";
 import { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";
@@ -28,49 +28,49 @@ import { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchSche
  * @returns a bumped range string.
  */
 export function bumpRange(
-    range: string,
-    bumpType: VersionBumpTypeExtended,
-    prerelease = false,
+	range: string,
+	bumpType: VersionBumpTypeExtended,
+	prerelease = false,
 ): string {
-    if (semver.validRange(range) === null) {
-        throw new Error(`${range} is not a valid semver range.`);
-    }
+	if (semver.validRange(range) === null) {
+		throw new Error(`${range} is not a valid semver range.`);
+	}
 
-    const scheme = detectVersionScheme(range);
-    switch (scheme) {
-        case "virtualPatch":
-        case "semver": {
-            const operator = range.slice(0, 1);
-            const isPreciseVersion = operator !== "^" && operator !== "~";
-            const original = isPreciseVersion ? range : range.slice(1);
-            const parsedVersion = semver.parse(original);
-            const originalNoPrerelease = `${parsedVersion?.major}.${parsedVersion?.minor}.${parsedVersion?.patch}`;
-            const newVersion =
-                bumpType === "current"
-                    ? originalNoPrerelease
-                    : scheme === "virtualPatch"
-                    ? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
-                    : semver.inc(originalNoPrerelease, bumpType);
-            if (newVersion === null) {
-                throw new Error(`Failed to increment ${original}.`);
-            }
-            return `${isPreciseVersion ? "" : operator}${newVersion}${prerelease ? "-0" : ""}`;
-        }
+	const scheme = detectVersionScheme(range);
+	switch (scheme) {
+		case "virtualPatch":
+		case "semver": {
+			const operator = range.slice(0, 1);
+			const isPreciseVersion = operator !== "^" && operator !== "~";
+			const original = isPreciseVersion ? range : range.slice(1);
+			const parsedVersion = semver.parse(original);
+			const originalNoPrerelease = `${parsedVersion?.major}.${parsedVersion?.minor}.${parsedVersion?.patch}`;
+			const newVersion =
+				bumpType === "current"
+					? originalNoPrerelease
+					: scheme === "virtualPatch"
+					? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
+					: semver.inc(originalNoPrerelease, bumpType);
+			if (newVersion === null) {
+				throw new Error(`Failed to increment ${original}.`);
+			}
+			return `${isPreciseVersion ? "" : operator}${newVersion}${prerelease ? "-0" : ""}`;
+		}
 
-        case "internal": {
-            const constraintType = detectConstraintType(range);
-            const original = semver.minVersion(range);
-            if (original === null) {
-                throw new Error(`Couldn't determine minVersion from ${range}.`);
-            }
-            const newVersion = bumpInternalVersion(original, bumpType);
-            return getVersionRange(newVersion, constraintType);
-        }
+		case "internal": {
+			const constraintType = detectConstraintType(range);
+			const original = semver.minVersion(range);
+			if (original === null) {
+				throw new Error(`Couldn't determine minVersion from ${range}.`);
+			}
+			const newVersion = bumpInternalVersion(original, bumpType);
+			return getVersionRange(newVersion, constraintType);
+		}
 
-        default: {
-            throw new Error(`${scheme} wasn't handled. Was a new version scheme added?`);
-        }
-    }
+		default: {
+			throw new Error(`${scheme} wasn't handled. Was a new version scheme added?`);
+		}
+	}
 }
 
 /**
@@ -85,16 +85,16 @@ export function bumpRange(
  * Throws an Error if the range is not valid.
  */
 export function detectConstraintType(range: string): "minor" | "patch" {
-    const minVer = semver.minVersion(range);
-    if (minVer === null) {
-        throw new Error(`Couldn't determine minVersion from ${range}.`);
-    }
+	const minVer = semver.minVersion(range);
+	if (minVer === null) {
+		throw new Error(`Couldn't determine minVersion from ${range}.`);
+	}
 
-    const patch = bumpInternalVersion(minVer, "patch");
-    const minor = bumpInternalVersion(minVer, "minor");
+	const patch = bumpInternalVersion(minVer, "patch");
+	const minor = bumpInternalVersion(minVer, "minor");
 
-    const maxSatisfying = semver.maxSatisfying([patch, minor], range);
-    return maxSatisfying === patch ? "patch" : "minor";
+	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
+	return maxSatisfying === patch ? "patch" : "minor";
 }
 
 /**
@@ -105,60 +105,60 @@ export function detectConstraintType(range: string): "minor" | "patch" {
  * @returns The bump type, or undefined if it can't be determined.
  */
 export function detectBumpType(
-    // eslint-disable-next-line @rushstack/no-new-null
-    v1: semver.SemVer | string | null,
-    // eslint-disable-next-line @rushstack/no-new-null
-    v2: semver.SemVer | string | null,
+	// eslint-disable-next-line @rushstack/no-new-null
+	v1: semver.SemVer | string | null,
+	// eslint-disable-next-line @rushstack/no-new-null
+	v2: semver.SemVer | string | null,
 ): VersionBumpType | undefined {
-    let v1Parsed = semver.parse(v1);
-    if (v1Parsed === null || v1 === null) {
-        throw new Error(`Invalid version: ${v1}`);
-    }
+	let v1Parsed = semver.parse(v1);
+	if (v1Parsed === null || v1 === null) {
+		throw new Error(`Invalid version: ${v1}`);
+	}
 
-    let v2Parsed = semver.parse(v2);
-    if (v2Parsed === null || v2 === null) {
-        throw new Error(`Invalid version: ${v2}`);
-    }
+	let v2Parsed = semver.parse(v2);
+	if (v2Parsed === null || v2 === null) {
+		throw new Error(`Invalid version: ${v2}`);
+	}
 
-    const v1IsInternal = isInternalVersionScheme(v1, true, true);
-    const v2IsInternal = isInternalVersionScheme(v2, true, true);
+	const v1IsInternal = isInternalVersionScheme(v1, true, true);
+	const v2IsInternal = isInternalVersionScheme(v2, true, true);
 
-    if (v1IsInternal) {
-        const [, internalVer] = fromInternalScheme(v1, true);
-        v1Parsed = internalVer;
-    }
+	if (v1IsInternal) {
+		const [, internalVer] = fromInternalScheme(v1, true);
+		v1Parsed = internalVer;
+	}
 
-    // Only convert if the versions are the same scheme.
-    if (v2IsInternal && v1IsInternal) {
-        const [, internalVer] = fromInternalScheme(v2, true);
-        v2Parsed = internalVer;
-    }
+	// Only convert if the versions are the same scheme.
+	if (v2IsInternal && v1IsInternal) {
+		const [, internalVer] = fromInternalScheme(v2, true);
+		v2Parsed = internalVer;
+	}
 
-    if (semver.compareBuild(v1Parsed, v2Parsed) >= 0) {
-        throw new Error(`v1: ${v1} is greater than v2: ${v2}`);
-    }
+	if (semver.compareBuild(v1Parsed, v2Parsed) >= 0) {
+		throw new Error(`v1: ${v1} is greater than v2: ${v2}`);
+	}
 
-    const bumpType = semver.diff(v1Parsed, v2Parsed);
-    switch (bumpType) {
-        case "major":
-        case "premajor": {
-            return "major";
-        }
+	const bumpType = semver.diff(v1Parsed, v2Parsed);
+	switch (bumpType) {
+		case "major":
+		case "premajor": {
+			return "major";
+		}
 
-        case "minor":
-        case "preminor": {
-            return "minor";
-        }
+		case "minor":
+		case "preminor": {
+			return "minor";
+		}
 
-        case "patch":
-        case "prepatch": {
-            return "patch";
-        }
+		case "patch":
+		case "prepatch": {
+			return "patch";
+		}
 
-        default: {
-            return undefined;
-        }
-    }
+		default: {
+			return undefined;
+		}
+	}
 }
 
 /**
@@ -168,26 +168,26 @@ export function detectBumpType(
  * @returns True if the version is a prerelease version, false otherwise.
  */
 export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean {
-    if (version === undefined) {
-        return false;
-    }
+	if (version === undefined) {
+		return false;
+	}
 
-    const scheme = detectVersionScheme(version);
+	const scheme = detectVersionScheme(version);
 
-    // Fluid internal versions need special handling
-    if (scheme === "internalPrerelease") {
-        return true;
-    } else if (scheme === "internal") {
-        return false;
-    }
+	// Fluid internal versions need special handling
+	if (scheme === "internalPrerelease") {
+		return true;
+	} else if (scheme === "internal") {
+		return false;
+	}
 
-    // All other schemes can use the semver library
-    const prerelease = semver.prerelease(version);
-    if (semver.parse(version) === null) {
-        throw new Error(`Cannot parse version: ${version}`);
-    }
+	// All other schemes can use the semver library
+	const prerelease = semver.prerelease(version);
+	if (semver.parse(version) === null) {
+		throw new Error(`Cannot parse version: ${version}`);
+	}
 
-    return prerelease !== null && prerelease.length > 0;
+	return prerelease !== null && prerelease.length > 0;
 }
 
 /**
@@ -215,61 +215,61 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
  * - For semver versions, the version fails to parse.
  */
 export function getPreviousVersions(
-    version: ReleaseVersion,
+	version: ReleaseVersion,
 ): [ReleaseVersion | undefined, ReleaseVersion | undefined, ReleaseVersion | undefined] {
-    const scheme = detectVersionScheme(version);
-    let previousMajorVersion: ReleaseVersion | undefined;
-    let previousMinorVersion: ReleaseVersion | undefined;
-    let previousPatchVersion: ReleaseVersion | undefined;
+	const scheme = detectVersionScheme(version);
+	let previousMajorVersion: ReleaseVersion | undefined;
+	let previousMinorVersion: ReleaseVersion | undefined;
+	let previousPatchVersion: ReleaseVersion | undefined;
 
-    if (scheme === "internal") {
-        const [pubVer, intVer] = fromInternalScheme(version);
-        if (intVer.major === 0) {
-            throw new Error(`Internal major unexpectedly 0.`);
-        }
+	if (scheme === "internal") {
+		const [pubVer, intVer] = fromInternalScheme(version);
+		if (intVer.major === 0) {
+			throw new Error(`Internal major unexpectedly 0.`);
+		}
 
-        previousMajorVersion =
-            intVer.major === 1
-                ? "1.0.0"
-                : toInternalScheme(pubVer, `${intVer.major - 1}.0.0`).version;
+		previousMajorVersion =
+			intVer.major === 1
+				? "1.0.0"
+				: toInternalScheme(pubVer, `${intVer.major - 1}.0.0`).version;
 
-        previousMinorVersion = toInternalScheme(
-            pubVer,
-            `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`,
-        ).version;
+		previousMinorVersion = toInternalScheme(
+			pubVer,
+			`${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`,
+		).version;
 
-        previousPatchVersion = toInternalScheme(
-            pubVer,
-            `${intVer.major}.${intVer.minor}.${Math.max(0, intVer.patch - 1)}`,
-        ).version;
-    } else if (scheme === "virtualPatch") {
-        const ver = fromVirtualPatchScheme(version);
-        if (ver.major <= 1) {
-            throw new Error(`Virtual patch major unexpectedly <= 1.`);
-        }
-        previousMajorVersion = toVirtualPatchScheme(`${ver.major - 1}.0.0`).version;
-        previousMinorVersion = toVirtualPatchScheme(
-            `${ver.major}.${Math.max(0, ver.minor - 1)}.0`,
-        ).version;
-        previousPatchVersion = toVirtualPatchScheme(
-            `${ver.major}.${ver.minor}.${Math.max(0, ver.patch - 1)}`,
-        ).version;
-    } else {
-        const ver = semver.parse(version);
-        if (ver === null) {
-            throw new Error(`Couldn't parse version string: ${version}`);
-        }
+		previousPatchVersion = toInternalScheme(
+			pubVer,
+			`${intVer.major}.${intVer.minor}.${Math.max(0, intVer.patch - 1)}`,
+		).version;
+	} else if (scheme === "virtualPatch") {
+		const ver = fromVirtualPatchScheme(version);
+		if (ver.major <= 1) {
+			throw new Error(`Virtual patch major unexpectedly <= 1.`);
+		}
+		previousMajorVersion = toVirtualPatchScheme(`${ver.major - 1}.0.0`).version;
+		previousMinorVersion = toVirtualPatchScheme(
+			`${ver.major}.${Math.max(0, ver.minor - 1)}.0`,
+		).version;
+		previousPatchVersion = toVirtualPatchScheme(
+			`${ver.major}.${ver.minor}.${Math.max(0, ver.patch - 1)}`,
+		).version;
+	} else {
+		const ver = semver.parse(version);
+		if (ver === null) {
+			throw new Error(`Couldn't parse version string: ${version}`);
+		}
 
-        previousMajorVersion = ver.major <= 1 ? "1.0.0" : `${ver.major - 1}.0.0`;
-        previousMinorVersion =
-            ver.minor === 0 && ver.major === 0
-                ? undefined
-                : `${ver.major}.${Math.max(0, ver.minor - 1)}.0`;
-        previousPatchVersion =
-            ver.minor === 0 && ver.major === 0 && ver.patch === 0
-                ? undefined
-                : `${ver.major}.${ver.minor}.${Math.max(0, ver.patch - 1)}`;
-    }
+		previousMajorVersion = ver.major <= 1 ? "1.0.0" : `${ver.major - 1}.0.0`;
+		previousMinorVersion =
+			ver.minor === 0 && ver.major === 0
+				? undefined
+				: `${ver.major}.${Math.max(0, ver.minor - 1)}.0`;
+		previousPatchVersion =
+			ver.minor === 0 && ver.major === 0 && ver.patch === 0
+				? undefined
+				: `${ver.major}.${ver.minor}.${Math.max(0, ver.patch - 1)}`;
+	}
 
-    return [previousMajorVersion, previousMinorVersion, previousPatchVersion];
+	return [previousMajorVersion, previousMinorVersion, previousPatchVersion];
 }

@@ -105,7 +105,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger?: ITelemetryLogger;
         runSweep?: boolean;
         fullGC?: boolean;
-    }): Promise<IGCStats | undefined>;
+    }, telemetryContext?: ITelemetryContext): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -117,6 +117,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
+    deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
+    // @deprecated (undocumented)
+    deleteUnusedNodes(unusedRoutes: string[]): string[];
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -130,6 +133,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
+    readonly gcTombstoneEnforcementAllowed: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
@@ -153,7 +157,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
     // @deprecated (undocumented)
@@ -423,12 +427,12 @@ export interface IPendingFlush {
     type: "flush";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPendingLocalState {
     pendingStates: IPendingState[];
 }
 
-// @public
+// @public @deprecated
 export interface IPendingMessage {
     // (undocumented)
     clientSequenceNumber: number;
@@ -446,7 +450,7 @@ export interface IPendingMessage {
     type: "message";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type IPendingState = IPendingMessage | IPendingFlush;
 
 // @public @deprecated (undocumented)
@@ -650,7 +654,6 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @public
 export enum RuntimeHeaders {
-    externalRequest = "externalRequest",
     viaHandle = "viaHandle",
     wait = "wait"
 }

@@ -4,14 +4,14 @@
  */
 
 module.exports = {
-    preset: "ts-jest",
-    roots: ["<rootDir>/src"],
-    transform: {
-        "^.+\\.tsx?$": "ts-jest",
-    },
-    testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.(ts|tsx)?$",
-    testPathIgnorePatterns: ["/node_modules/", "dist"],
-    moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
-    setupFiles: ["./testSetup.js"],
-    coveragePathIgnorePatterns: ["/node_modules/", "/src/test/"],
+	preset: "ts-jest",
+	roots: ["<rootDir>/src"],
+	transform: {
+		"^.+\\.tsx?$": "ts-jest",
+	},
+	testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.(ts|tsx)?$",
+	testPathIgnorePatterns: ["/node_modules/", "dist"],
+	moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+	setupFiles: ["./testSetup.js"],
+	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/"],
 };

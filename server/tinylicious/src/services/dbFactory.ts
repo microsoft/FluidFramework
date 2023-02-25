@@ -9,7 +9,7 @@ import { LevelDbFactory } from "./levelDb";
 import { InMemoryDbFactory } from "./inMemorydb";
 
 export async function getDbFactory(config: Provider): Promise<IDbFactory> {
-    return config.get("db:inMemory")
-        ? new InMemoryDbFactory()
-        : new LevelDbFactory(config.get("db:path"));
+	return config.get("db:inMemory")
+		? new InMemoryDbFactory()
+		: new LevelDbFactory(config.get("db:path"));
 }

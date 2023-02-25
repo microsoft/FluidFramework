@@ -10,13 +10,13 @@
 import { expect } from "chai";
 import { FlaggedError } from "../..";
 
-describe("property-common.FlaggedError", function() {
-    describe("Flags", function() {
-        it("can be extended", function(done) {
-            Object.keys(FlaggedError.FLAGS).forEach(function(key, index) {
-                expect(FlaggedError.FLAGS[key]).to.equal(Math.pow(2, index));
-            });
-            done();
-        });
-    });
+describe("property-common.FlaggedError", function () {
+	describe("Flags", function () {
+		it("can be extended", function (done) {
+			Object.keys(FlaggedError.FLAGS).forEach(function (key, index) {
+				expect(FlaggedError.FLAGS[key]).to.equal(Math.pow(2, index));
+			});
+			done();
+		});
+	});
 });

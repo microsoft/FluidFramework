@@ -32,6 +32,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 	private calledGetVersions = false;
 
 	public async getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null
 		blobid: string | null,
 		count: number,
 		_scenarioName?: string,

@@ -8,6 +8,6 @@ import { debuggerPanelId } from "./Constants";
  * Determines whether or not the debugger view panel element exists on the page.
  */
 export function isDebuggerPanelOpen(): boolean {
-    const debuggerPanelElement = document.querySelector(`#${debuggerPanelId}`);
-    return debuggerPanelElement !== null;
+	const debuggerPanelElement = document.querySelector(`#${debuggerPanelId}`);
+	return debuggerPanelElement !== null;
 }

@@ -21,7 +21,9 @@ You can run this example using the following steps:
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Benchmarking
+
 Remember to produce a production bundle when taking measurements:
+
 ```bash
 npm run start -- --env.production
 ```

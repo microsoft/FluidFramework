@@ -10,8 +10,8 @@
 import { expect } from "chai";
 import { joinPaths } from "../../index";
 
-describe("property-common.joinPaths", function() {
-    it("should exist", function() {
-        expect(joinPaths).to.exist;
-    });
+describe("property-common.joinPaths", function () {
+	it("should exist", function () {
+		expect(joinPaths).to.exist;
+	});
 });

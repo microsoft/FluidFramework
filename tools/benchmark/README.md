@@ -80,6 +80,11 @@ Look at the documentation for `BenchmarkArguments` for more details on what the 
 When run, tests for runtime profiling will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type`
 when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
 
+> **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
+> Benchmark.js's test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
+> The problem can be alleviated but not fully fixed using the `onCycle` hook argument.
+> See documentation on `HookArguments` for more detail.
+
 ## Profiling memory usage
 
 To profile memory usage, define tests using the `benchmarkMemory()` function.
@@ -121,22 +126,22 @@ to immediately instantiate it):
 
 ```typescript
 benchmarkMemory(
-    new (class implements IMemoryTestObject {
-        title = `My test title`;
-        private someLocalVariable: MyType | undefined;
+	new (class implements IMemoryTestObject {
+		title = `My test title`;
+		private someLocalVariable: MyType | undefined;
 
-        beforeIteration() {
-            // Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
-            // For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
-        }
+		beforeIteration() {
+			// Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
+			// For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
+		}
 
-        async run() {
-            // The actual code that you want to measure.
-            // For example, creating a new object and assigning it to someLocalVariable.
-            // Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
-            // the memory allocated into the variable will be "seen" by the "after" memory measurement.
-        }
-    })(),
+		async run() {
+			// The actual code that you want to measure.
+			// For example, creating a new object and assigning it to someLocalVariable.
+			// Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
+			// the memory allocated into the variable will be "seen" by the "after" memory measurement.
+		}
+	})(),
 );
 ```
 

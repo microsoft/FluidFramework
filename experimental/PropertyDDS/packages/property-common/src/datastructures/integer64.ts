@@ -26,43 +26,46 @@ const { MSG } = constants;
  * @param high - Higher 32 bit
  */
 export class Integer64 {
-    constructor(protected low = 0, protected high = 0) { }
+	constructor(protected low = 0, protected high = 0) {}
 
-    /**
-     * @returns The higher 32 bit integer part
-     */
-    getValueHigh() {
-        return this.high;
-    }
+	/**
+	 * @returns The higher 32 bit integer part
+	 */
+	getValueHigh() {
+		return this.high;
+	}
 
-    /**
-     * @returns The lower 32 bit integer part
-     */
-    getValueLow() {
-        return this.low;
-    }
+	/**
+	 * @returns The lower 32 bit integer part
+	 */
+	getValueLow() {
+		return this.low;
+	}
 
-    protected _int64toString(isSigned: boolean, in_radix = 10): string {
-        ConsoleUtils.assert(_.isNumber(in_radix), `${MSG.IN_RADIX_MUST_BE_NUMBER} ${in_radix}`);
-        ConsoleUtils.assert(in_radix >= 2 && 36 >= in_radix, `${MSG.BASE_OUT_OF_RANGE} ${in_radix}`);
+	protected _int64toString(isSigned: boolean, in_radix = 10): string {
+		ConsoleUtils.assert(_.isNumber(in_radix), `${MSG.IN_RADIX_MUST_BE_NUMBER} ${in_radix}`);
+		ConsoleUtils.assert(
+			in_radix >= 2 && 36 >= in_radix,
+			`${MSG.BASE_OUT_OF_RANGE} ${in_radix}`,
+		);
 
-        let high = this.getValueHigh();
-        let low = this.getValueLow();
-        let result = "";
-        const sign = !!(isSigned && (high & 0x80000000)); // eslint-disable-line no-bitwise
-        if (sign) {
-            high = ~high; // eslint-disable-line no-bitwise
-            low = BIT32 - low;
-        }
-        do {
-            const mod = (high % in_radix) * BIT32 + low;
-            high = Math.floor(high / in_radix);
-            low = Math.floor(mod / in_radix);
-            result = (mod % in_radix).toString(in_radix) + result;
-        } while (high || low);
+		let high = this.getValueHigh();
+		let low = this.getValueLow();
+		let result = "";
+		const sign = !!(isSigned && high & 0x80000000); // eslint-disable-line no-bitwise
+		if (sign) {
+			high = ~high; // eslint-disable-line no-bitwise
+			low = BIT32 - low;
+		}
+		do {
+			const mod = (high % in_radix) * BIT32 + low;
+			high = Math.floor(high / in_radix);
+			low = Math.floor(mod / in_radix);
+			result = (mod % in_radix).toString(in_radix) + result;
+		} while (high || low);
 
-        return sign ? `-${result}` : result;
-    }
+		return sign ? `-${result}` : result;
+	}
 }
 
 /**
@@ -81,78 +84,78 @@ export class Integer64 {
  * @returns Low and high bits of `Int64`.
  */
 function _stringToInt64(in_signed: boolean, in_string: string, in_radix = 10): number[] {
-    ConsoleUtils.assert(_.isString(in_string), MSG.IN_STRING_MUST_BE_STRING + in_string);
-    const string = in_string.trim();
+	ConsoleUtils.assert(_.isString(in_string), MSG.IN_STRING_MUST_BE_STRING + in_string);
+	const string = in_string.trim();
 
-    ConsoleUtils.assert(_.isNumber(in_radix), `${MSG.IN_RADIX_BETWEEN_2_36}  ${in_radix}`);
-    ConsoleUtils.assert(in_radix >= 2 && 36 >= in_radix, `${MSG.BASE_OUT_OF_RANGE} ${in_radix}`);
+	ConsoleUtils.assert(_.isNumber(in_radix), `${MSG.IN_RADIX_BETWEEN_2_36}  ${in_radix}`);
+	ConsoleUtils.assert(in_radix >= 2 && 36 >= in_radix, `${MSG.BASE_OUT_OF_RANGE} ${in_radix}`);
 
-    let position = 0;
-    let negative = false;
-    let high = 0;
-    let low = 0;
-    if (string[0] === "-") {
-        negative = true;
-        position += 1;
-    }
+	let position = 0;
+	let negative = false;
+	let high = 0;
+	let low = 0;
+	if (string[0] === "-") {
+		negative = true;
+		position += 1;
+	}
 
-    ConsoleUtils.assert(!negative || in_signed, MSG.CANNOT_UPDATE_TO_NEGATIVE + string);
+	ConsoleUtils.assert(!negative || in_signed, MSG.CANNOT_UPDATE_TO_NEGATIVE + string);
 
-    while (position < string.length) {
-        const digit = parseInt(string[position++], in_radix);
-        if (isNaN(digit)) {
-            throw new TypeError(MSG.CANNOT_PARSE_INVALID_CHARACTERS + string);
-        }
-        low = low * in_radix + digit;
-        high = high * in_radix + Math.floor(low / BIT32);
-        low %= BIT32;
-    }
+	while (position < string.length) {
+		const digit = parseInt(string[position++], in_radix);
+		if (isNaN(digit)) {
+			throw new TypeError(MSG.CANNOT_PARSE_INVALID_CHARACTERS + string);
+		}
+		low = low * in_radix + digit;
+		high = high * in_radix + Math.floor(low / BIT32);
+		low %= BIT32;
+	}
 
-    if (negative) {
-        // eslint-disable-next-line no-bitwise
-        high = ~high;
-        if (low) {
-            low = BIT32 - low;
-        } else {
-            high += 1;
-        }
-    }
+	if (negative) {
+		// eslint-disable-next-line no-bitwise
+		high = ~high;
+		if (low) {
+			low = BIT32 - low;
+		} else {
+			high += 1;
+		}
+	}
 
-    return [low, high];
+	return [low, high];
 }
 
 /**
  * A data representation class for the signed 64 bit integer type
  */
 export class Int64 extends Integer64 {
-    static fromString = function(in_string: string, radix = 10) {
-        const [low, high] = _stringToInt64(true, in_string, radix);
-        return new Int64(low, high);
-    };
+	static fromString = function (in_string: string, radix = 10) {
+		const [low, high] = _stringToInt64(true, in_string, radix);
+		return new Int64(low, high);
+	};
 
-    clone() {
-        return new Int64(this.low, this.high);
-    }
+	clone() {
+		return new Int64(this.low, this.high);
+	}
 
-    toString(radix = 10) {
-        return this._int64toString(true, radix);
-    }
+	toString(radix = 10) {
+		return this._int64toString(true, radix);
+	}
 }
 
 /**
  * A data representation class for the unsigned 64 bit integer type
  */
 export class Uint64 extends Integer64 {
-    static fromString(in_string: string, in_radix = 10) {
-        const [low, high] = _stringToInt64.call(this, false, in_string, in_radix);
-        return new Uint64(low, high);
-    }
+	static fromString(in_string: string, in_radix = 10) {
+		const [low, high] = _stringToInt64.call(this, false, in_string, in_radix);
+		return new Uint64(low, high);
+	}
 
-    clone() {
-        return new Uint64(this.low, this.high);
-    }
+	clone() {
+		return new Uint64(this.low, this.high);
+	}
 
-    toString(radix) {
-        return this._int64toString(false, radix);
-    }
+	toString(radix) {
+		return this._int64toString(false, radix);
+	}
 }

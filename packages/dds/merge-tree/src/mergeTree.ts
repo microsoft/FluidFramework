@@ -10,7 +10,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { AttributionCollection } from "./attributionCollection";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
 	LocalClientId,
@@ -21,7 +22,6 @@ import {
 } from "./constants";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import {
-	AttributionKey,
 	BaseSegment,
 	BlockAction,
 	BlockUpdateActions,
@@ -83,6 +83,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
+import { Client } from ".";
 
 const minListenerComparer: Comparer<MinListener> = {
 	min: {
@@ -447,10 +448,49 @@ export interface IMergeTreeAttributionOptions {
 	 * are tracked is determined by the presence of existing attribution keys in the snapshot.
 	 *
 	 * default: false
+	 * @alpha
 	 */
 	track?: boolean;
 
-	interpreter?: IAttributionInterpreter;
+	/**
+	 * Provides a policy for how to track attribution data on segments.
+	 * This option must be provided if either:
+	 * - `track` is set to true
+	 * - a document containing existing attribution information is loaded
+	 * @alpha
+	 */
+	policyFactory?: () => AttributionPolicy;
+}
+
+/**
+ * Implements policy dictating which kinds of operations should be attributed and how.
+ * @alpha
+ * @sealed
+ */
+export interface AttributionPolicy {
+	/**
+	 * Enables tracking attribution information for operations on this merge-tree.
+	 * This function is expected to subscribe to appropriate change events in order
+	 * to manage any attribution data it stores on segments.
+	 *
+	 * This must be done in an eventually consistent fashion.
+	 * @internal
+	 */
+	attach: (client: Client) => void;
+	/**
+	 * Disables tracking attribution information on segments.
+	 * @internal
+	 */
+	detach: () => void;
+	/**
+	 * @internal
+	 */
+	isAttached: boolean;
+	/**
+	 * Serializer capable of serializing any attribution data this policy stores on segments.
+	 * @internal
+	 */
+	serializer: IAttributionCollectionSerializer;
 }
 
 /**
@@ -485,8 +525,6 @@ export class MergeTree {
 		zamboniSegments: true,
 	};
 
-	private readonly interpreter: IAttributionInterpreter;
-
 	private static readonly initBlockUpdateActions: BlockUpdateActions;
 	private static readonly theUnfinishedNode = <IMergeBlock>{ childCount: -1 };
 
@@ -498,6 +536,8 @@ export class MergeTree {
 	public get getSegmentsToScour(): Heap<LRUSegment> | undefined {
 		return this.segmentsToScour;
 	}
+
+	public readonly attributionPolicy: AttributionPolicy | undefined;
 
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -516,7 +556,7 @@ export class MergeTree {
 	public constructor(public options?: IMergeTreeOptions) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
-		this.interpreter = options?.attribution?.interpreter ?? defaultInterpreter;
+		this.attributionPolicy = options?.attribution?.policyFactory?.();
 	}
 
 	private _root: IRootMergeBlock;
@@ -1250,15 +1290,7 @@ export class MergeTree {
 		if (pendingSegmentGroup !== undefined) {
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
 			pendingSegmentGroup.segments.map((pendingSegment) => {
-				const attributionDeltas = this.options?.attribution?.track
-					? this.interpreter.getAttributionChanges(pendingSegment, opArgs.op, seq)
-					: undefined;
-				const overlappingRemove = !pendingSegment.ack(
-					pendingSegmentGroup,
-					opArgs,
-					attributionDeltas,
-				);
-
+				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
 				overwrite = overlappingRemove || overwrite;
 
 				if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
@@ -1378,21 +1410,21 @@ export class MergeTree {
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 
 		this.blockInsert(pos, refSeq, clientId, seq, localSeq, segments);
-		for (const newSegment of segments) {
-			if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
-				if (!newSegment.attribution && opArgs !== undefined) {
-					newSegment.attribution = new AttributionCollection(newSegment.cachedLength);
-					const deltas = this.interpreter.getAttributionChanges(
-						newSegment,
-						opArgs.op,
-						seq,
-					);
-					if (deltas) {
-						newSegment.attribution.ackDeltas(deltas, newSegment.propertyManager);
-					}
-				}
-			}
-		}
+		// for (const newSegment of segments) {
+		// 	if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
+		// 		if (!newSegment.attribution && opArgs !== undefined) {
+		// 			newSegment.attribution = new AttributionCollection(newSegment.cachedLength);
+		// 			const deltas = this.interpreter.getAttributionChanges(
+		// 				newSegment,
+		// 				opArgs.op,
+		// 				seq,
+		// 			);
+		// 			if (deltas) {
+		// 				newSegment.attribution.ackDeltas(deltas, newSegment.propertyManager);
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		// opArgs == undefined => loading snapshot or test code
 		if (opArgs !== undefined) {
@@ -1654,13 +1686,11 @@ export class MergeTree {
 				});
 
 				if (newSegment.parent === undefined) {
-					throw new Error(
-						`MergeTree insert failed: ${JSON.stringify({
-							currentSeq: this.collabWindow.currentSeq,
-							minSeq: this.collabWindow.minSeq,
-							segSeq: newSegment.seq,
-						})}`,
-					);
+					throw new UsageError("MergeTree insert failed", {
+						currentSeq: this.collabWindow.currentSeq,
+						minSeq: this.collabWindow.minSeq,
+						segSeq: newSegment.seq,
+					});
 				}
 
 				this.updateRoot(splitNode);
@@ -1918,18 +1948,18 @@ export class MergeTree {
 					if (MergeTree.options.zamboniSegments) {
 						this.addToLRUSet(segment, seq);
 					}
-					if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
-						if (segment.attribution && opArgs !== undefined) {
-							const deltas = this.interpreter.getAttributionChanges(
-								segment,
-								opArgs.op,
-								seq,
-							);
-							if (deltas) {
-								segment.attribution.ackDeltas(deltas, segment.propertyManager);
-							}
-						}
-					}
+					// if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
+					// 	if (segment.attribution && opArgs !== undefined) {
+					// 		const deltas = this.interpreter.getAttributionChanges(
+					// 			segment,
+					// 			opArgs.op,
+					// 			seq,
+					// 		);
+					// 		if (deltas) {
+					// 			segment.attribution.ackDeltas(deltas, segment.propertyManager);
+					// 		}
+					// 	}
+					// }
 				}
 			}
 			return true;

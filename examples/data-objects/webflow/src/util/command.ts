@@ -4,7 +4,7 @@
  */
 
 export interface ICommand {
-    name: string;
-    enabled: () => boolean;
-    exec: () => void;
+	name: string;
+	enabled: () => boolean;
+	exec: () => void;
 }

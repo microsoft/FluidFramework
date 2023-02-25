@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
@@ -23,7 +24,6 @@ import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV1 } from "./sna
 import { SnapshotV1 } from "./snapshotV1";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
-import { AttributionCollection } from "./attributionCollection";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLogger;
@@ -260,10 +260,23 @@ export class SnapshotLoader {
 		this.mergeTree.options ??= {};
 		this.mergeTree.options.attribution ??= {};
 		if (chunk.attribution) {
-			this.mergeTree.options.attribution.track = true;
-			AttributionCollection.populateAttributionCollections(segments, chunk.attribution);
+			const { attributionPolicy } = this.mergeTree;
+			if (attributionPolicy === undefined) {
+				throw new UsageError(
+					"Attribution policy must be provided when loading a document with attribution information.",
+				);
+			}
+
+			const { isAttached, attach, serializer } = attributionPolicy;
+			if (!isAttached) {
+				attach(this.client);
+			}
+			serializer.populateAttributionCollections(segments, chunk.attribution);
 		} else {
-			this.mergeTree.options.attribution.track = false;
+			const { attributionPolicy } = this.mergeTree;
+			if (attributionPolicy?.isAttached) {
+				attributionPolicy?.detach();
+			}
 		}
 	}
 

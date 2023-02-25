@@ -3,53 +3,53 @@
  * Licensed under the MIT License.
  */
 
-import {
-    Definition,
-    ChangeNode,
-    NodeIdContext,
-} from "@fluid-experimental/tree";
+import { Definition, ChangeNode, NodeIdContext } from "@fluid-experimental/tree";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
 export const enum NodeKind {
-    scalar = "s",
-    object = "o",
-    array = "a",
+	scalar = "s",
+	object = "o",
+	array = "a",
 }
 
 // Helper for creating Scalar nodes in SharedTree
 export const makeScalar = <T>(idContext: NodeIdContext, value: Serializable<T>): ChangeNode => ({
-    identifier: idContext.generateNodeId(),
-    definition: NodeKind.scalar as Definition,
-    traits: {},
-    payload: value,
+	identifier: idContext.generateNodeId(),
+	definition: NodeKind.scalar as Definition,
+	traits: {},
+	payload: value,
 });
 
 export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): ChangeNode {
-    if (typeof value === "object") {
-        if (Array.isArray(value)) {
-            return {
-                identifier: idContext.generateNodeId(),
-                definition: NodeKind.array as Definition,
-                traits: { items: value.map((property: Serializable<T>): ChangeNode => fromJson(idContext, property)) },
-            };
-        } else if (value === null) {
-            return makeScalar(idContext, null);
-        } else {
-            const traits: PropertyDescriptorMap = {};
+	if (typeof value === "object") {
+		if (Array.isArray(value)) {
+			return {
+				identifier: idContext.generateNodeId(),
+				definition: NodeKind.array as Definition,
+				traits: {
+					items: value.map(
+						(property: Serializable<T>): ChangeNode => fromJson(idContext, property),
+					),
+				},
+			};
+		} else if (value === null) {
+			return makeScalar(idContext, null);
+		} else {
+			const traits: PropertyDescriptorMap = {};
 
-            for (const [label, json] of Object.entries(value)) {
-                traits[label] = { value: [fromJson(idContext, json)], enumerable: true };
-            }
+			for (const [label, json] of Object.entries(value)) {
+				traits[label] = { value: [fromJson(idContext, json)], enumerable: true };
+			}
 
-            const node: ChangeNode = {
-                identifier: idContext.generateNodeId(),
-                definition: NodeKind.object as Definition,
-                traits: Object.defineProperties({}, traits),
-            };
+			const node: ChangeNode = {
+				identifier: idContext.generateNodeId(),
+				definition: NodeKind.object as Definition,
+				traits: Object.defineProperties({}, traits),
+			};
 
-            return node;
-        }
-    } else {
-        return makeScalar(idContext, value);
-    }
+			return node;
+		}
+	} else {
+		return makeScalar(idContext, value);
+	}
 }

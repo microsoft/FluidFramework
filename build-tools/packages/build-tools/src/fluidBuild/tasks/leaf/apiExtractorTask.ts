@@ -5,7 +5,7 @@
 import { TscDependentTask } from "./tscTask";
 
 export class ApiExtractorTask extends TscDependentTask {
-    protected get configFileFullPath() {
-        return this.getPackageFileFullPath("api-extractor.json");
-    }
+	protected get configFileFullPath() {
+		return this.getPackageFileFullPath("api-extractor.json");
+	}
 }

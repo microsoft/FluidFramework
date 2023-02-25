@@ -11,17 +11,17 @@ import { openDebuggerScriptId } from "./Constants";
  * @remarks This module is run as a {@link https://developer.chrome.com/docs/extensions/mv3/content_scripts | Content Script}.
  */
 async function injectDebuggerCloseScript(): Promise<void> {
-    // Append script that closes the debugger panel
-    const enableDebugViewScript = document.createElement("script");
-    enableDebugViewScript.src = chrome.runtime.getURL("CloseDebuggerPanelScript.js");
-    enableDebugViewScript.id = openDebuggerScriptId;
-    (document.head ?? document.documentElement).append(enableDebugViewScript);
+	// Append script that closes the debugger panel
+	const enableDebugViewScript = document.createElement("script");
+	enableDebugViewScript.src = chrome.runtime.getURL("CloseDebuggerPanelScript.js");
+	enableDebugViewScript.id = openDebuggerScriptId;
+	(document.head ?? document.documentElement).append(enableDebugViewScript);
 
-    // Remove script; it only needs to perform cleanup once.
-    enableDebugViewScript.remove();
+	// Remove script; it only needs to perform cleanup once.
+	enableDebugViewScript.remove();
 }
 
 injectDebuggerCloseScript().catch((error) => {
-    console.error(error);
-    throw error;
+	console.error(error);
+	throw error;
 });

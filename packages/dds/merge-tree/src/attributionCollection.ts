@@ -4,9 +4,22 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { AttributionChangeEntry, AttributionChannelChange } from "./mergeTree";
-import { AttributionKey, ISegment } from "./mergeTreeNodes";
+import {
+	AttributionKey,
+	OpAttributionKey,
+	DetachedAttributionKey,
+} from "@fluidframework/runtime-definitions";
 import { PropertiesManager } from "./segmentPropertiesManager";
+import { AttributionPolicy, AttributionChangeEntry, AttributionChannelChange } from "./mergeTree";
+import { Client } from "./client";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
+import {
+	MergeTreeDeltaCallback,
+	MergeTreeMaintenanceCallback,
+	MergeTreeMaintenanceType,
+} from "./mergeTreeDeltaCallback";
+import { ISegment } from "./mergeTreeNodes";
+import { MergeTreeDeltaType } from "./ops";
 
 /**
  * @internal
@@ -21,7 +34,7 @@ export interface SequenceOffsets {
 	 * @remarks - We use null here rather than undefined as round-tripping through JSON converts
 	 * undefineds to null anyway
 	 */
-	seqs: (number | null)[];
+	seqs: (number | AttributionKey | null)[];
 	posBreakpoints: number[];
 }
 
@@ -37,6 +50,31 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 export interface IAttributionCollectionSpec<T> {
 	root: Iterable<{ offset: number; key: T | undefined }>;
 	channels?: { [name: string]: Iterable<{ offset: number; key: T | undefined }> };
+}
+
+/**
+ * @internal
+ * @sealed
+ */
+export interface IAttributionCollectionSerializer {
+	/**
+	 * @internal
+	 */
+	serializeAttributionCollections(
+		segments: Iterable<{
+			attribution?: IAttributionCollection<AttributionKey>;
+			cachedLength: number;
+		}>,
+	): SerializedAttributionCollection;
+
+	/**
+	 * Populates attribution information on segments using the provided summary.
+	 * @internal
+	 */
+	populateAttributionCollections(
+		segments: Iterable<ISegment>,
+		summary: SerializedAttributionCollection,
+	): void;
 }
 
 /**
@@ -81,7 +119,7 @@ export interface IAttributionCollection<T> {
 }
 
 // note: treats null and undefined as equivalent
-function areEqualAttributionKeys(
+export function areEqualAttributionKeys(
 	a: AttributionKey | null | undefined,
 	b: AttributionKey | null | undefined,
 ): boolean {
@@ -97,11 +135,14 @@ function areEqualAttributionKeys(
 		return false;
 	}
 
+	// Note: TS can't narrow the type of b inside this switch statement, hence the need for casting.
 	switch (a.type) {
 		case "op":
-			return a.seq === b.seq;
+			return a.seq === (b as OpAttributionKey).seq;
+		case "detached":
+			return a.id === (b as DetachedAttributionKey).id;
 		default:
-			unreachableCase(a.type, "Unhandled AttributionKey type");
+			unreachableCase(a, "Unhandled AttributionKey type");
 	}
 }
 
@@ -283,6 +324,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 					}
 					break;
 				}
+				default:
+					break;
 			}
 		}
 	}
@@ -294,9 +337,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		segments: ISegment[],
 		summary: SerializedAttributionCollection,
 	): void {
-		const { seqs, posBreakpoints, channels } = summary;
+		const { channels } = summary;
 		assert(
-			seqs.length === posBreakpoints.length,
+			summary.seqs.length === summary.posBreakpoints.length,
 			0x445 /* Invalid attribution summary blob provided */,
 		);
 
@@ -309,9 +352,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 			for (const segment of segments) {
 				const attribution = new AttributionCollection(segment.cachedLength);
-				const pushEntry = (offset: number, seq: number | null) => {
+				const pushEntry = (offset: number, seq: AttributionKey | number | null) => {
 					attribution.offsets.push(offset);
-					attribution.keys.push(seq === null ? null : { type: "op", seq });
+					attribution.keys.push(
+						seq === null ? null : typeof seq === "object" ? seq : { type: "op", seq },
+					);
 				};
 				if (posBreakpoints[curIndex] > cumulativeSegPos) {
 					curIndex--;
@@ -392,7 +437,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			) => Iterable<{ offset: number; key: AttributionKey | undefined }>,
 		): SerializedAttributionCollection => {
 			const posBreakpoints: number[] = [];
-			const seqs: (number | null)[] = [];
+			const seqs: (number | AttributionKey | null)[] = [];
 			let mostRecentAttributionKey: AttributionKey | undefined;
 			let cumulativePos = 0;
 
@@ -403,7 +448,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
-						seqs.push(key?.seq ?? null);
+						seqs.push(!key ? null : key.type === "op" ? key.seq : key);
 					}
 					mostRecentAttributionKey = key;
 				}
@@ -428,4 +473,82 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 		return blobContents;
 	}
+}
+
+/**
+ * @alpha
+ * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ * Content is only attributed at ack time, unless the container is in a detached state.
+ * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
+ */
+export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
+	let unsubscribe: undefined | (() => void);
+	return {
+		attach: (client: Client) => {
+			assert(
+				unsubscribe === undefined,
+				0x557 /* cannot attach to multiple clients at once */,
+			);
+			const deltaCallback: MergeTreeDeltaCallback = (
+				opArgs,
+				{ deltaSegments, operation },
+			) => {
+				if (operation !== MergeTreeDeltaType.INSERT) {
+					return;
+				}
+
+				for (const { segment } of deltaSegments) {
+					if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
+						const key: AttributionKey =
+							segment.seq === UniversalSequenceNumber
+								? { type: "detached", id: 0 }
+								: { type: "op", seq: segment.seq };
+						segment.attribution ??= new AttributionCollection(
+							segment.cachedLength,
+							key,
+						);
+					}
+				}
+			};
+
+			const maintenanceCallback: MergeTreeMaintenanceCallback = (
+				{ deltaSegments, operation },
+				opArgs,
+			) => {
+				if (
+					operation !== MergeTreeMaintenanceType.ACKNOWLEDGED ||
+					opArgs === undefined ||
+					opArgs.op.type !== MergeTreeDeltaType.INSERT
+				) {
+					return;
+				}
+				for (const { segment } of deltaSegments) {
+					assert(
+						segment.seq !== undefined,
+						0x558 /* segment.seq should be set after ack. */,
+					);
+					segment.attribution = new AttributionCollection(segment.cachedLength, {
+						type: "op",
+						seq: segment.seq,
+					});
+				}
+			};
+
+			client.on("delta", deltaCallback);
+			client.on("maintenance", maintenanceCallback);
+
+			unsubscribe = () => {
+				client.off("delta", deltaCallback);
+				client.off("maintenance", maintenanceCallback);
+			};
+		},
+		detach: () => {
+			unsubscribe?.();
+			unsubscribe = undefined;
+		},
+		get isAttached() {
+			return unsubscribe !== undefined;
+		},
+		serializer: AttributionCollection,
+	};
 }

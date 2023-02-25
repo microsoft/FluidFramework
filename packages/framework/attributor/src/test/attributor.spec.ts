@@ -4,7 +4,8 @@
  */
 import { strict as assert } from "assert";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { AttributionInfo, Attributor } from "../attributor";
+import { AttributionInfo } from "@fluidframework/runtime-definitions";
+import { Attributor } from "../attributor";
 
 describe("Attributor", () => {
 	it("can retrieve user information from its initial entries", () => {
