@@ -23,7 +23,7 @@ import type { Socket } from 'socket.io-client';
 
 // @public
 export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
-    protected constructor(socket: Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
+    protected constructor(socket: Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean, connectionId?: string | undefined);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
@@ -31,6 +31,8 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     get clientId(): string;
     // (undocumented)
     protected closeSocketCore(error: IAnyDriverError): void;
+    // (undocumented)
+    protected readonly connectionId?: string | undefined;
     protected createErrorObject(handler: string, error?: any, canRetry?: boolean): IAnyDriverError;
     // (undocumented)
     get details(): IConnected;
