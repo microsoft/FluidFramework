@@ -130,7 +130,7 @@ const isCompressed = (message: ISequencedDocumentMessage): boolean => {
 	// version client_v2.0.0-internal.1.2.0 to client_v2.0.0-internal.2.2.0 do not
 	// support adding the proper compression metadata to compressed messages submitted
 	// by the runtime.
-	if (message.contents?.packedContents !== undefined) {
+	if (typeof message.contents === "object" && message.contents?.packedContents !== undefined) {
 		return (
 			Object.keys(message.contents).length === 1 &&
 			typeof message.contents?.packedContents === "string" &&
