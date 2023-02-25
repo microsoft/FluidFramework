@@ -111,6 +111,8 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 				driverType: provider.driver.type,
 				driverEndpointName: provider.driver.endpointName,
 				profile: "",
+				testName,
+				benchmarkType: "E2ETime",
 			},
 		});
 		// process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined
@@ -157,7 +159,7 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 			undefined,
 			undefined,
 			undefined,
-			logger ?? new TelemetryNullLogger(),
+			logger,
 		);
 		summaryVersion = await waitForSummary(summarizerClient);
 		assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");

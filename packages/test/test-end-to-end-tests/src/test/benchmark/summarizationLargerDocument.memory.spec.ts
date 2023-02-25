@@ -63,6 +63,7 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	const json = typeof content === "string" ? content : bufferToString(content, "utf8");
 	return JSON.parse(json);
 }
+
 const testName = "Summarization  Larger Document- memory benchmarks";
 describeNoCompat(testName, (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -106,12 +107,14 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 	before(async () => {
 		provider = getTestObjectProvider();
 		// runId will be populated on the logger.
-		logger = ChildLogger.create(getTestLogger?.(), testName, {
+		logger = ChildLogger.create(getTestLogger?.(), undefined, {
 			all: {
 				runId: undefined,
 				driverType: provider.driver.type,
 				driverEndpointName: provider.driver.endpointName,
 				profile: "",
+				testName,
+				benchmarkType: "E2EMemory",
 			},
 		});
 		// logger =
@@ -159,7 +162,7 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 			undefined,
 			undefined,
 			undefined,
-			logger ?? new TelemetryNullLogger(),
+			logger,
 		);
 		await provider.ensureSynchronized();
 		summaryVersion = await waitForSummary(summarizerClient);
