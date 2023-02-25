@@ -127,12 +127,12 @@ export async function generateTests(
 	return stats;
 }
 
-interface TestCaseTypeData extends TypeData {
+export interface TestCaseTypeData extends TypeData {
 	prefix: "old" | "current";
 	removed: boolean;
 }
 
-function buildTestCase(
+export function buildTestCase(
 	getAsType: TestCaseTypeData,
 	useType: TestCaseTypeData,
 	isCompatible: boolean,
