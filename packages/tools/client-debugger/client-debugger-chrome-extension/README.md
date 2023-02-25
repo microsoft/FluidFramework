@@ -31,52 +31,54 @@ To install this extension in the browser, use the generated bundle under `dist/i
 
 #### Pros
 
--   Minimal extension code (simply leverages our visualizer library)
+-   Minimal extension code (simply leverages our visualizer library, no message passing required).
 
 #### Cons
 
 -   There isn't an obvious way for the extension to know _where_ to embed the visual debugger element on the page, nor when it is required to re-render when a context changes.
--   Violates extension best practices.
+-   Violates extension best practices (injecting script logic directly into the page).
 
 ### Content Extension
 
 The Content Extension model prototypes a more standard extension approach.
 Data must be communicated to and from the window via message passing.
 
-NOTE: This has not been implemented yet.
-
 To install this extension in the browser, use the generated bundle under `dist/content-extension`.
 
 #### Pros
 
-TODO
+-   The Content Extension option requires significantly less message-passing infrastructure than the [Devtools Extension](#devtools-extension)
 
 #### Cons
 
-TODO
+-   Requires that we communicate with the inspected webpage via message-passing, which will require non-trivial infrastructure for communicating Container state and data changes.
+-   Requires that we render the view into the webpage, which requires making some assumptions about how the page is formatted (e.g. assuming there is a `body` element to append to, being able to render over other content, etc.).
 
-### Developer Tools Extension
+### Devtools Extension
 
-The Dev-Tools Extension model prototypes how our extension can fit into the Chrome developer tools panel.
-Aside from where the visuals appear, this model is very similar to the [Content Extension model](#content-extension).
+The Devtools Extension model prototypes how our extension can fit into the Chrome developer tools panel.
+Aside from where the visuals appear, this model is similar to the [Content Extension model](#content-extension) in how data is communicated to/from the webpage.
 
-TODO: differences?
+The primary differences are:
 
-NOTE: This has not been implemented yet.
+-   The content is rendered into a dedicated panel in the devtools UI
+-   There are additional requirements around communicating with the webpage.
 
 To install this extension in the browser, use the generated bundle under `dist/dev-tools-extension`.
 
+For an overview on how Devtools extensions work, see [here](https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools).
+
+For a helpful how-to guide, see [here](https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/developer-guide/devtools-extension).
+
 #### Pros
 
-TODO
+-   Dedicated place to render our content, without having to make assumptions about the webpage being inspected.
+-   Industry-accepted pattern for debugger tools like this.
 
 #### Cons
 
-TODO
-
-## Package TODOs
-
--   Inject the debugger view as a sibling next to the page contents, rather than as an overlay on top of it (to ensure all customer content is not obscured by the panel).
+-   Requires that we communicate with the inspected webpage via message-passing, which will require non-trivial infrastructure for communicating Container state and data changes.
+-   Requires additional message-relaying infrastructure to communicate between the webpage and the extension (as compared to the Content Script model).
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
