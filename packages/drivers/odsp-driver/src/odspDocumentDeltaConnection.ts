@@ -292,7 +292,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			socketReference,
 			telemetryLogger,
 			enableMultiplexing,
-			uuid(),
 		);
 
 		try {
@@ -387,9 +386,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		socketReference: SocketReference,
 		logger: ITelemetryLogger,
 		private readonly enableMultiplexing?: boolean,
-		connectionId?: string,
 	) {
-		super(socket, documentId, logger, false, connectionId);
+		super(socket, documentId, logger, false, uuid());
 		this.socketReference = socketReference;
 		this.requestOpsNoncePrefix = `${uuid()}-`;
 	}
