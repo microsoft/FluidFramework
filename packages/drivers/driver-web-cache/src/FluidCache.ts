@@ -2,22 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import {
-    IPersistedCache,
-    ICacheEntry,
-    IFileEntry,
-} from "@fluidframework/odsp-driver-definitions";
-import {
-    ITelemetryBaseLogger,
-    ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { IDBPDatabase } from "idb";
+import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { scheduleIdleTask } from "./scheduleIdleTask";
 import {
-    getFluidCacheIndexedDbInstance,
-    FluidDriverObjectStoreName,
-    getKeyForCacheEntry,
+	getFluidCacheIndexedDbInstance,
+	FluidCacheDBSchema,
+	FluidDriverObjectStoreName,
+	getKeyForCacheEntry,
 } from "./FluidCacheIndexedDb";
 import {
     FluidCacheErrorEvent,
@@ -96,10 +90,12 @@ export class FluidCache implements IPersistedCache {
             }
         });
 
-        scheduleIdleTask(async () => {
-            // Delete entries that have not been accessed recently to clean up space
-            try {
-                const db = await getFluidCacheIndexedDbInstance(this.logger);
+		scheduleIdleTask(async () => {
+			let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+
+			// Delete entries that have not been accessed recently to clean up space
+			try {
+				db = await getFluidCacheIndexedDbInstance(this.logger);
 
                 const transaction = db.transaction(
                     FluidDriverObjectStoreName,
@@ -113,25 +109,25 @@ export class FluidCache implements IPersistedCache {
                     ),
                 );
 
-                await Promise.all(
-                    keysToDelete.map((key) => transaction.store.delete(key)),
-                );
+                await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
                 await transaction.done;
             } catch (error: any) {
                 this.logger.sendErrorEvent(
                     {
-                        eventName:
-                            FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+                        eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
                     },
                     error,
                 );
+            } finally {
+                db?.close();
             }
         });
     }
 
     public async removeEntries(file: IFileEntry): Promise<void> {
+        let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
         try {
-            const db = await getFluidCacheIndexedDbInstance(this.logger);
+            db = await getFluidCacheIndexedDbInstance(this.logger);
 
             const transaction = db.transaction(
                 FluidDriverObjectStoreName,
@@ -141,20 +137,19 @@ export class FluidCache implements IPersistedCache {
 
             const keysToDelete = await index.getAllKeys(file.docId);
 
-            await Promise.all(
-                keysToDelete.map((key) => transaction.store.delete(key)),
-            );
-            await transaction.done;
-        } catch (error: any) {
-            this.logger.sendErrorEvent(
-                {
-                    eventName:
-                        FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
-                },
-                error,
-            );
-        }
-    }
+			await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+			await transaction.done;
+		} catch (error: any) {
+			this.logger.sendErrorEvent(
+				{
+					eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+				},
+				error,
+			);
+		} finally {
+			db?.close();
+		}
+	}
 
     public async get(cacheEntry: ICacheEntry): Promise<any> {
         const startTime = performance.now();
@@ -173,17 +168,19 @@ export class FluidCache implements IPersistedCache {
         return cachedItem?.cachedObject;
     }
 
-    private async getItemFromCache(cacheEntry: ICacheEntry) {
-        try {
-            const key = getKeyForCacheEntry(cacheEntry);
+	private async getItemFromCache(cacheEntry: ICacheEntry) {
+		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		try {
+			const key = getKeyForCacheEntry(cacheEntry);
 
-            const db = await getFluidCacheIndexedDbInstance(this.logger);
+            db = await getFluidCacheIndexedDbInstance(this.logger);
 
             const value = await db.get(FluidDriverObjectStoreName, key);
 
-            if (!value) {
-                return undefined;
-            }
+			if (!value) {
+				db.close();
+				return undefined;
+			}
 
             // If the data does not come from the same partition, don't return it
             if (value.partitionKey !== this.partitionKey) {
@@ -193,15 +190,17 @@ export class FluidCache implements IPersistedCache {
                     subCategory: FluidCacheEventSubCategories.FluidCache,
                 });
 
-                return undefined;
-            }
+				db.close();
+				return undefined;
+			}
 
             const currentTime = new Date().getTime();
 
-            // If too much time has passed since this cache entry was used, we will also return undefined
-            if (currentTime - value.createdTimeMs > this.maxCacheItemAge) {
-                return undefined;
-            }
+			// If too much time has passed since this cache entry was used, we will also return undefined
+			if (currentTime - value.createdTimeMs > this.maxCacheItemAge) {
+				db.close();
+				return undefined;
+			}
 
             const transaction = db.transaction(
                 FluidDriverObjectStoreName,
@@ -228,24 +227,29 @@ export class FluidCache implements IPersistedCache {
                     }
                     await transaction.done;
 
-                    db.close();
-                })
-                .catch(() => { });
-            return value;
-        } catch (error: any) {
-            // We can fail to open the db for a variety of reasons,
-            // such as the database version having upgraded underneath us. Return undefined in this case
-            this.logger.sendErrorEvent(
-                { eventName: FluidCacheErrorEvent.FluidCacheGetError },
-                error,
-            );
-            return undefined;
-        }
-    }
+					db?.close();
+				})
+				.catch(() => {
+					db?.close();
+				});
+			return value;
+		} catch (error: any) {
+			// We can fail to open the db for a variety of reasons,
+			// such as the database version having upgraded underneath us. Return undefined in this case
+			this.logger.sendErrorEvent(
+				{ eventName: FluidCacheErrorEvent.FluidCacheGetError },
+				error,
+			);
+			return undefined;
+		} finally {
+			db?.close();
+		}
+	}
 
-    public async put(entry: ICacheEntry, value: any): Promise<void> {
-        try {
-            const db = await getFluidCacheIndexedDbInstance(this.logger);
+	public async put(entry: ICacheEntry, value: any): Promise<void> {
+		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		try {
+			db = await getFluidCacheIndexedDbInstance(this.logger);
 
             const currentTime = new Date().getTime();
 
@@ -263,14 +267,16 @@ export class FluidCache implements IPersistedCache {
                 getKeyForCacheEntry(entry),
             );
 
-            db.close();
-        } catch (error: any) {
-            // We can fail to open the db for a variety of reasons,
-            // such as the database version having upgraded underneath us
-            this.logger.sendErrorEvent(
-                { eventName: FluidCacheErrorEvent.FluidCachePutError },
-                error,
-            );
-        }
-    }
+			db.close();
+		} catch (error: any) {
+			// We can fail to open the db for a variety of reasons,
+			// such as the database version having upgraded underneath us
+			this.logger.sendErrorEvent(
+				{ eventName: FluidCacheErrorEvent.FluidCachePutError },
+				error,
+			);
+		} finally {
+			db?.close();
+		}
+	}
 }
