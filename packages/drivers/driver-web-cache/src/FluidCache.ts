@@ -109,25 +109,25 @@ export class FluidCache implements IPersistedCache {
                     ),
                 );
 
-				await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
-				await transaction.done;
-			} catch (error: any) {
-				this.logger.sendErrorEvent(
-					{
-						eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
-					},
-					error,
-				);
-			} finally {
-				db?.close();
-			}
-		});
-	}
+                await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+                await transaction.done;
+            } catch (error: any) {
+                this.logger.sendErrorEvent(
+                    {
+                        eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+                    },
+                    error,
+                );
+            } finally {
+                db?.close();
+            }
+        });
+    }
 
-	public async removeEntries(file: IFileEntry): Promise<void> {
-		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
-		try {
-			db = await getFluidCacheIndexedDbInstance(this.logger);
+    public async removeEntries(file: IFileEntry): Promise<void> {
+        let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+        try {
+        	db = await getFluidCacheIndexedDbInstance(this.logger);
 
             const transaction = db.transaction(
                 FluidDriverObjectStoreName,
@@ -173,7 +173,7 @@ export class FluidCache implements IPersistedCache {
 		try {
 			const key = getKeyForCacheEntry(cacheEntry);
 
-			db = await getFluidCacheIndexedDbInstance(this.logger);
+            db = await getFluidCacheIndexedDbInstance(this.logger);
 
             const value = await db.get(FluidDriverObjectStoreName, key);
 
