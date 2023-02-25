@@ -86,17 +86,15 @@ export class DocumentDeltaConnection
 			// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
 			const originalStackTraceLimit = (Error as any).stackTraceLimit;
 			(Error as any).stackTraceLimit = 50;
-			if (this.disposed) {
-				this.logger.sendErrorEvent({
-					eventName: "ConnectionDisposedAnomaly",
-					details: JSON.stringify({
-						disposed: this._disposed,
-						socketConnected: this.socket?.connected,
-						clientId: this._details?.clientId,
-						conenctionId: this.connectionId,
-					}),
-				});
-			}
+			this.logger.sendErrorEvent({
+				eventName: "ConnectionDisposedAnomaly",
+				details: JSON.stringify({
+					disposed: this._disposed,
+					socketConnected: this.socket?.connected,
+					clientId: this._details?.clientId,
+					conenctionId: this.connectionId,
+				}),
+			});
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
 		return this._disposed;
