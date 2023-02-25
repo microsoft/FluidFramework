@@ -5,7 +5,7 @@
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { Project } from "ts-morph";
+import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
 import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
@@ -49,27 +49,36 @@ const previousPackageName = `${packageObject.name}-previous`;
 const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
 
 const previousBasePath = `./node_modules/${previousPackageName}`;
-
-const previousTsConfigPath = `${previousBasePath}/tsconfig.json`;
 if (!existsSync(`${previousBasePath}/package.json`)) {
 	throw new Error(
-		`${previousTsConfigPath} not found. You may need to install the package via pnpm install.`,
+		`${previousBasePath} not found. You may need to install the package via pnpm install.`,
 	);
 }
 
-const currentProject = new Project({
+const currentFile = new Project({
 	skipFileDependencyResolution: true,
 	tsConfigFilePath: "tsconfig.json",
-});
+}).getSourceFileOrThrow("index.ts");
 
-const previousProject = new Project({
-	skipFileDependencyResolution: true,
-	tsConfigFilePath: previousTsConfigPath,
-});
+const previousTsConfigPath = `${previousBasePath}/tsconfig.json`;
+let previousFile: SourceFile;
+if (existsSync(previousTsConfigPath)) {
+	const project = new Project({
+		skipFileDependencyResolution: true,
+		tsConfigFilePath: previousTsConfigPath,
+	});
+	previousFile = project.getSourceFileOrThrow("index.ts");
+} else {
+	const project = new Project({
+		skipFileDependencyResolution: true,
+	});
+	project.addSourceFilesAtPaths(`${previousBasePath}/dist/**/*.d.ts`);
+	previousFile = project.getSourceFileOrThrow("index.d.ts");
+}
 
-function typeDataFromPackage(project: Project): TypeData[] {
+function typeDataFromFile(file: SourceFile): TypeData[] {
 	const typeData: TypeData[] = [];
-	const exports = project.getSourceFileOrThrow("index.ts").getExportedDeclarations();
+	const exports = file.getExportedDeclarations();
 	for (const declarations of exports.values()) {
 		for (const dec of declarations) {
 			typeData.push(...getNodeTypeData(dec));
@@ -78,8 +87,8 @@ function typeDataFromPackage(project: Project): TypeData[] {
 	return typeData;
 }
 
-const currentProjectData = typeDataFromPackage(currentProject);
-const previousData = typeDataFromPackage(previousProject);
+const currentProjectData = typeDataFromFile(currentFile);
+const previousData = typeDataFromFile(previousFile);
 
 function compareString(a: string, b: string): number {
 	return a > b ? 1 : a < b ? -1 : 0;
