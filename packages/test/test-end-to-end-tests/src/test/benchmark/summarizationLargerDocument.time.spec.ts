@@ -115,14 +115,6 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 				benchmarkType: "E2ETime",
 			},
 		});
-		// process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined
-		// 	? await createLogger({
-		// 			runId: undefined,
-		// 			driverType: provider.driver.type,
-		// 			driverEndpointName: provider.driver.endpointName,
-		// 			profile: "",
-		// 	  })
-		// 	: undefined;
 
 		testConfig = {
 			...chunkingBatchesConfig,
@@ -132,13 +124,8 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 					compressionAlgorithm: "lz4" as any,
 				},
 			},
+			loaderProps: { logger },
 		};
-		if (logger !== undefined) {
-			testConfig = {
-				...testConfig,
-				loaderProps: { logger },
-			};
-		}
 
 		loader = provider.makeTestLoader(testConfig);
 		mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
