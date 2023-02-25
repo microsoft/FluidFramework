@@ -199,6 +199,8 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
     // (undocumented)
+    readonly supportedFeatures?: ReadonlyMap<string, unknown>;
+    // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;

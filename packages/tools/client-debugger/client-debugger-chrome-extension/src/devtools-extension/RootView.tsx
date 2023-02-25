@@ -6,7 +6,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DebuggerPanel, MessageRelayContext } from "../shared-components";
+import { DebuggerPanel, MessageRelayContext } from "../react-components";
 import { BackgroundConnection, formatDevtoolsScriptMessageForLogging } from "./devtools";
 
 /**
@@ -23,6 +23,8 @@ panelElement.style.width = "100%";
 
 /**
  * Root component of our React tree.
+ *
+ * @remarks Sets up message-passing context and renders the debugger.
  */
 function RootView(): React.ReactElement {
 	const messageRelay = React.useMemo<BackgroundConnection>(() => new BackgroundConnection(), []);

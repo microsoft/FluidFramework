@@ -29,7 +29,7 @@ export function clearDebuggerRegistry(): void;
 export function closeFluidClientDebugger(containerId: string): void;
 
 // @internal
-export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
+export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
 }
 
@@ -37,6 +37,15 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 export interface ContainerMetadata {
     id: string;
     nickname?: string;
+}
+
+// @internal
+export enum ContainerStateChangeKind {
+    Attached = "attached",
+    Closed = "closed",
+    Connected = "connected",
+    Disconnected = "disconnected",
+    Disposed = "disposed"
 }
 
 // @public

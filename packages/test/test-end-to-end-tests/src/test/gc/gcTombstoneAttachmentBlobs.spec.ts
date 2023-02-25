@@ -988,7 +988,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				);
 
 				// Add the new local handle and then remove all the local handles to unreference the blob.
-				mainDataStore._root.set("local3", localHandle2);
+				mainDataStore._root.set("local3", localHandle3);
 				mainDataStore._root.delete("local1");
 				mainDataStore._root.delete("local2");
 				mainDataStore._root.delete("local3");

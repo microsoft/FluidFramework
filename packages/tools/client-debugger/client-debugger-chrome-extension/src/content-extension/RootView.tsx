@@ -4,14 +4,14 @@
  */
 
 import React from "react";
-import { DebuggerPanel, MessageRelayContext } from "../shared-components";
+import { DebuggerPanel, MessageRelayContext } from "../react-components";
 
 import { WindowConnection } from "./messaging";
 
 /**
  * Root debugger view component.
  *
- * @remarks Sets up message-passing context, and renders the debugger.
+ * @remarks Sets up message-passing context and renders the debugger.
  */
 export function RootView(): React.ReactElement {
 	const messageRelay = React.useMemo<WindowConnection>(() => new WindowConnection(), []);

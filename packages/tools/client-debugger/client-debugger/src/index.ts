@@ -47,6 +47,8 @@
 /* eslint-disable no-restricted-syntax */
 
 export * from "./AudienceMetadata";
+export { ContainerStateChangeKind } from "./Container";
+
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 export {
 	AudienceChangeLogEntry,
