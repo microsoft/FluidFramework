@@ -84,6 +84,18 @@ describe("OpDecompressor", () => {
 		assert.strictEqual(result.message.compression, undefined);
 	});
 
+	// Back-compat self healing mechanism for ADO:
+	it("Processes single compressed op without compression markers", () => {
+		const result = decompressor.processMessage({
+			...generateCompressedBatchMessage(1),
+			compression: undefined,
+		});
+		assert.equal(result.state, "Processed");
+		assert.strictEqual(result.message.contents.contents, "value0");
+		assert.strictEqual(result.message.metadata?.compressed, undefined);
+		assert.strictEqual(result.message.compression, undefined);
+	});
+
 	it("Expecting only lz4 compression", () => {
 		assert.throws(() =>
 			decompressor.processMessage({
@@ -160,9 +172,16 @@ describe("OpDecompressor", () => {
 
 	it("Ignores ops without compression", () => {
 		const rootMessage = {
-			...generateCompressedBatchMessage(5),
-			metadata: undefined,
-			compression: undefined,
+			contents: { some: "contents" },
+			metadata: { meta: "data" },
+			clientId: "clientId",
+			sequenceNumber: 1,
+			term: 1,
+			minimumSequenceNumber: 1,
+			clientSequenceNumber: 1,
+			referenceSequenceNumber: 1,
+			type: "type",
+			timestamp: 1,
 		};
 		const firstMessageResult = decompressor.processMessage(rootMessage);
 

@@ -28,7 +28,7 @@ export class OpDecompressor {
 			0x511 /* Only lz4 compression is supported */,
 		);
 
-		if (message.metadata?.batch === true && message.compression === CompressionAlgorithms.lz4) {
+		if (message.metadata?.batch === true && isCompressed(message)) {
 			// Beginning of a compressed batch
 			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
 			if (message.compression) {
@@ -84,10 +84,7 @@ export class OpDecompressor {
 			};
 		}
 
-		if (
-			message.metadata?.batch === undefined &&
-			message.compression === CompressionAlgorithms.lz4
-		) {
+		if (message.metadata?.batch === undefined && isCompressed(message)) {
 			// Single compressed message
 			assert(
 				this.activeBatch === false,
@@ -122,3 +119,33 @@ const newMessage = (
 	compression: undefined,
 	metadata: { ...originalMessage.metadata },
 });
+
+const isCompressed = (message: ISequencedDocumentMessage): boolean => {
+	if (message.compression === CompressionAlgorithms.lz4) {
+		return true;
+	}
+
+	// This condition holds true for compressed messages, regardless of metadata.
+	// Back-compat self healing mechanism for ADO:, as loaders from
+	// version client_v2.0.0-internal.1.2.0 to client_v2.0.0-internal.2.2.0 do not
+	// support adding the proper compression metadata to compressed messages submitted
+	// by the runtime.
+	if (message.contents?.packedContents !== undefined) {
+		return (
+			Object.keys(message.contents).length === 1 &&
+			typeof message.contents?.packedContents === "string" &&
+			message.contents.packedContents.length > 0 &&
+			isBase64(message.contents.packedContents)
+		);
+	}
+
+	return false;
+};
+
+const isBase64 = (content: string): boolean => {
+	try {
+		return btoa(atob(content)) === content;
+	} catch (err) {
+		return false;
+	}
+};
