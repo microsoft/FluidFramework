@@ -23,6 +23,7 @@ import {
 } from "@fluidframework/test-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 
 export type DocumentType =
 	/** Document with a SharedMap with a 5Mb value */
@@ -117,7 +118,7 @@ export class DocumentCreator {
 				},
 				compressionOptions: {
 					minimumBatchSizeInBytes: 1024 * 1024,
-					compressionAlgorithm: "lz4" as any,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 				chunkSizeInBytes: 600 * 1024,
 			},
@@ -158,7 +159,6 @@ export class DocumentCreator {
 	}
 
 	public async loadDocument(): Promise<IContainer> {
-		const key: string[] = ["", "", "", "", ""];
 		const requestUrl = await this.props.provider.driver.createContainerUrl(
 			this.fileName,
 			this.containerUrl,
@@ -174,11 +174,6 @@ export class DocumentCreator {
 		dataObject2map.set("setup", "done");
 		validateMapKeys(dataObject2map, this.documentSize, maxMessageSizeInBytes);
 
-		for (let i = 0; i < this.documentSize; i++) {
-			key[i] = dataObject2map.get(`key${i}`) ?? "";
-			assert(key[i] !== "");
-			assert(key[i].length === maxMessageSizeInBytes);
-		}
 		return container2;
 	}
 }
