@@ -92,13 +92,14 @@ export class DocumentCreator {
 	public constructor(private readonly props: DocumentProps) {}
 	public async initializeDocument() {
 		// runId will be populated on the logger.
-		this._logger = ChildLogger.create(getTestLogger?.(), this.props.testName, {
+		this._logger = ChildLogger.create(getTestLogger?.(), undefined, {
 			all: {
 				runId: undefined,
 				driverType: this.props.driverType,
 				driverEndpointName: this.props.driverEndpointName,
 				profile: "",
 				benchmarkType: "E2ETime",
+				name: this.props.testName,
 			},
 		});
 
@@ -144,7 +145,7 @@ export class DocumentCreator {
 	}
 
 	public async loadDocument(): Promise<IContainer> {
-		const key: string[] = ["", ""];
+		const key: string[] = ["", "", "", "", ""];
 		const requestUrl = await this.props.provider.driver.createContainerUrl(
 			this.fileName,
 			this.containerUrl,
