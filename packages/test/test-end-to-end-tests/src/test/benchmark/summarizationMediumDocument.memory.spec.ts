@@ -12,8 +12,8 @@ import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { SharedMap } from "@fluidframework/map";
 import { DocumentCreator } from "./DocumentCreator";
 
-const testName = "Summarization  Medium Document- memory benchmarks";
-describeNoCompat(testName, (getTestObjectProvider) => {
+const testName = "Generate summary tree 5Mb document";
+describeNoCompat("Summarization  Medium Document- memory benchmarks", (getTestObjectProvider) => {
 	let documentCreator: DocumentCreator;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
@@ -30,7 +30,7 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 		documentCreator = new DocumentCreator({
 			testName,
 			provider,
-			documentSize: 1, // 1*5 = 5 MB
+			documentType: "MediumDocumentMap",
 			driverEndpointName: provider.driver.endpointName,
 			driverType: provider.driver.type,
 		});
@@ -52,32 +52,31 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
-			title = "Generate summary tree 5Mb document";
+			title = testName;
 			dataObject2map: SharedMap | undefined;
-			container2: IContainer | undefined;
-			summarizerClient2: { container: IContainer; summarizer: ISummarizer } | undefined;
-			key: string[] = [""];
+			container: IContainer | undefined;
+			summarizerClient: { container: IContainer; summarizer: ISummarizer } | undefined;
 			async run() {
-				this.container2 = await documentCreator.loadDocument();
+				this.container = await documentCreator.loadDocument();
+				assert(this.container !== undefined, "container needs to be defined.");
 				await provider.ensureSynchronized();
 
-				this.summarizerClient2 = await createSummarizer(
+				this.summarizerClient = await createSummarizer(
 					provider,
-					this.container2,
+					this.container,
 					summaryVersion,
 					undefined,
 					undefined,
 					documentCreator.logger,
 				);
-				summaryVersion = await waitForSummary(this.summarizerClient2.summarizer);
+				summaryVersion = await waitForSummary(this.summarizerClient.summarizer);
 				assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
-				this.summarizerClient2.summarizer.close();
+				this.summarizerClient.summarizer.close();
 			}
 			beforeIteration() {
 				this.dataObject2map = undefined;
-				this.container2 = undefined;
-				this.summarizerClient2 = undefined;
-				this.key = [""];
+				this.container = undefined;
+				this.summarizerClient = undefined;
 			}
 		})(),
 	);

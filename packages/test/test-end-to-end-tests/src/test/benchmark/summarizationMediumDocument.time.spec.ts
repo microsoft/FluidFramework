@@ -9,8 +9,8 @@ import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 import { DocumentCreator } from "./DocumentCreator";
 
-const testName = "Summarization  Medium Document- runtime benchmarks";
-describeNoCompat(testName, (getTestObjectProvider) => {
+const testName = "Generate summary tree 5Mb document";
+describeNoCompat("Summarization  Medium Document- runtime benchmarks", (getTestObjectProvider) => {
 	let documentCreator: DocumentCreator;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
@@ -28,7 +28,7 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 		documentCreator = new DocumentCreator({
 			testName,
 			provider,
-			documentSize: 1, // 1*5 = 5 MB
+			documentType: "MediumDocumentMap",
 			driverEndpointName: provider.driver.endpointName,
 			driverType: provider.driver.type,
 		});
@@ -48,14 +48,14 @@ describeNoCompat(testName, (getTestObjectProvider) => {
 	});
 
 	benchmark({
-		title: "Generate summary tree 5Mb document",
+		title: testName,
 		benchmarkFnAsync: async () => {
-			const container2 = await documentCreator.loadDocument();
+			const container = await documentCreator.loadDocument();
 			await provider.ensureSynchronized();
 
 			const { summarizer: summarizerClient } = await createSummarizer(
 				provider,
-				container2,
+				container,
 				summaryVersion,
 				undefined,
 				undefined,

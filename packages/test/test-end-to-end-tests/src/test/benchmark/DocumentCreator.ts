@@ -24,12 +24,18 @@ import {
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 
+export type DocumentType =
+	/** Document with a SharedMap with a 5Mb value */
+	| "MediumDocumentMap"
+	/** Document with a SharedMap with a 10Mb value  */
+	| "LargeDocumentMap";
+
 export interface DocumentProps {
 	testName: string;
 	provider: ITestObjectProvider;
 	driverType: TestDriverTypes;
 	driverEndpointName: string | undefined;
-	documentSize: number; // Multiple of 5 MB (1=5Mb, 2=10Mb, 3=15Mb, etc.)
+	documentType: DocumentType;
 }
 
 const defaultDataStoreId = "default";
@@ -62,16 +68,13 @@ export class DocumentCreator {
 	private dataObject1map: SharedMap | undefined;
 	private _fileName: string = "";
 	private _containerUrl: IResolvedUrl | undefined;
-
-	// create getter for mainContainer
+	private documentSize: number = 0; // 1 = 5Mb, 2 = 10Mb
 	public get mainContainer() {
 		return this._mainContainer;
 	}
-	// create getter for logger
 	public get logger() {
 		return this._logger;
 	}
-	// create a getter for _fileName and _containerUrl
 	public get fileName() {
 		return this._fileName;
 	}
@@ -91,7 +94,6 @@ export class DocumentCreator {
 	 */
 	public constructor(private readonly props: DocumentProps) {}
 	public async initializeDocument() {
-		// runId will be populated on the logger.
 		this._logger = ChildLogger.create(getTestLogger?.(), undefined, {
 			all: {
 				runId: undefined,
@@ -133,7 +135,18 @@ export class DocumentCreator {
 		);
 		this.dataObject1map = await this.dataObject1.getSharedObject<SharedMap>(mapId);
 		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-		setMapKeys(this.dataObject1map, this.props.documentSize, largeString);
+
+		switch (this.props.documentType) {
+			case "MediumDocumentMap":
+				this.documentSize = 1;
+				break;
+			case "LargeDocumentMap":
+				this.documentSize = 2;
+				break;
+			default:
+				throw new Error("Invalid document type");
+		}
+		setMapKeys(this.dataObject1map, this.documentSize, largeString);
 		this.fileName = uuid();
 
 		await this._mainContainer.attach(
@@ -159,9 +172,9 @@ export class DocumentCreator {
 		);
 		const dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 		dataObject2map.set("setup", "done");
-		validateMapKeys(dataObject2map, this.props.documentSize, maxMessageSizeInBytes);
+		validateMapKeys(dataObject2map, this.documentSize, maxMessageSizeInBytes);
 
-		for (let i = 0; i < this.props.documentSize; i++) {
+		for (let i = 0; i < this.documentSize; i++) {
 			key[i] = dataObject2map.get(`key${i}`) ?? "";
 			assert(key[i] !== "");
 			assert(key[i].length === maxMessageSizeInBytes);
