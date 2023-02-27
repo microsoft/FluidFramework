@@ -4,10 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IAudience,
+	IContainer,
+	IDeltaManager,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
 	Summarizer,
@@ -17,21 +22,51 @@ import {
 	DefaultSummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	IClientDetails,
+	IDocumentMessage,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	ISummaryBlob,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+import {
+	channelsTreeName,
+	CreateChildSummarizerNodeFn,
+	CreateChildSummarizerNodeParam,
+	IContainerRuntimeBase,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IGarbageCollectionDetailsBase,
+} from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { DebugLogger, MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
 	waitForContainerConnection,
 	ITestContainerConfig,
 	ITestObjectProvider,
+	EventAndErrorTrackingLogger,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
+	getContainerRuntimeApi,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluidframework/test-version-utils";
+import { FluidDataStoreRuntime, mixinRequestHandler } from "@fluidframework/datastore";
+import {
+	FluidObject,
+	IFluidHandle,
+	IFluidHandleContext,
+	IProvideFluidRouter,
+	IRequest,
+} from "@fluidframework/core-interfaces";
+// import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { pkgVersion } from "../packageVersion";
 
 const defaultDataStoreId = "default";
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
@@ -118,6 +153,140 @@ async function waitForSummarizerConnection(summarizer: ISummarizer): Promise<voi
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	const json = typeof content === "string" ? content : bufferToString(content, "utf8");
 	return JSON.parse(json);
+}
+
+export class TestFluidObjectFactory implements IFluidDataStoreFactory {
+	public static readonly type = "@fluid-example/test-example";
+	public readonly type = TestFluidObjectFactory.type;
+
+	public get IFluidDataStoreFactory() {
+		return this;
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
+		const runtimeClass = mixinRequestHandler(
+			async (request: IRequest, rt: FluidDataStoreRuntime) => {
+				const maybeRouter: FluidObject<IProvideFluidRouter> | undefined =
+					await rt.entryPoint?.get();
+				assert(
+					maybeRouter?.IFluidRouter !== undefined,
+					"entryPoint should have been initialized by now",
+				);
+				return maybeRouter.IFluidRouter.request(request);
+			},
+		);
+
+		return new runtimeClass(context, new Map(), existing, async () => {
+			throw new Error("EntryPoint not implemented");
+		});
+	}
+}
+
+export class TestDataObjectContext implements IFluidDataStoreContext {
+	public isLocalDataStore: boolean = true;
+	public packagePath: readonly string[] = undefined as any;
+	public options: ILoaderOptions = undefined as any;
+	public clientId: string | undefined = "testClientId";
+	public clientDetails: IClientDetails = undefined as any;
+	public connected: boolean = true;
+	public baseSnapshot: ISnapshotTree | undefined;
+	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
+		undefined as any;
+	public containerRuntime: IContainerRuntimeBase = undefined as any;
+	public storage: IDocumentStorageService = undefined as any;
+	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
+	public IFluidHandleContext: IFluidHandleContext = undefined as any;
+
+	/**
+	 * Indicates the attachment state of the data store to a host service.
+	 */
+	public attachState: AttachState = undefined as any;
+
+	/**
+	 * @deprecated 0.16 Issue #1635, #3631
+	 */
+	public createProps?: any;
+	public scope: FluidObject = undefined as any;
+
+	constructor(
+		public readonly id: string = "default",
+		public readonly existing: boolean = false,
+		public readonly logger: ITelemetryLogger = DebugLogger.create(
+			"fluid:MockFluidDataStoreContext",
+		),
+	) {}
+
+	on(event: string | symbol, listener: (...args: any[]) => void): this {
+		switch (event) {
+			case "attaching":
+			case "attached":
+				return this;
+			default:
+				throw new Error("Method not implemented.");
+		}
+	}
+
+	once(event: string | symbol, listener: (...args: any[]) => void): this {
+		return this;
+	}
+
+	off(event: string | symbol, listener: (...args: any[]) => void): this {
+		throw new Error("Method not implemented.");
+	}
+
+	public ensureNoDataModelChanges<T>(callback: () => T): T {
+		return callback();
+	}
+
+	public getQuorum(): IQuorumClients {
+		return undefined as any as IQuorumClients;
+	}
+
+	public getAudience(): IAudience {
+		return undefined as any as IAudience;
+	}
+
+	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
+		throw new Error("Method not implemented.");
+	}
+
+	public submitSignal(type: string, content: any): void {
+		throw new Error("Method not implemented.");
+	}
+
+	public makeLocallyVisible(): void {
+		throw new Error("Method not implemented.");
+	}
+
+	public bindToContext(): void {
+		throw new Error("Method not implemented.");
+	}
+
+	public setChannelDirty(address: string): void {
+		throw new Error("Method not implemented.");
+	}
+
+	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+		throw new Error("Method not implemented.");
+	}
+
+	public getCreateChildSummarizerNodeFn(
+		id: string,
+		createParam: CreateChildSummarizerNodeParam,
+	): CreateChildSummarizerNodeFn {
+		throw new Error("Method not implemented.");
+	}
+
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+		throw new Error("Method not implemented.");
+	}
+
+	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
+		throw new Error("Method not implemented.");
+	}
 }
 
 describeNoCompat("Summaries", (getTestObjectProvider) => {
@@ -305,6 +474,45 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
 			"Expected .attributes blob in default root DDS summary tree.",
 		);
+	});
+
+	it("should not call entry point before data store is requested", async () => {
+		const dataStoreFactory = new TestFluidObjectFactory();
+		const dataStoreContext = new TestDataObjectContext();
+
+		assert.doesNotThrow(
+			async () => dataStoreFactory.instantiateDataStore(dataStoreContext, false),
+			"entry point should not be called during initizalization.",
+		);
+
+		// Only call entry point when container is requested, verify error thrown if not.
+		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+			runtime.IFluidHandleContext.resolveHandle(request);
+		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
+			[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
+		]);
+		const containerRuntimeFactoryWithDefaultDataStore =
+			getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
+		const runtimeFactory = new containerRuntimeFactoryWithDefaultDataStore(
+			dataStoreFactory,
+			registryStoreEntries,
+			undefined,
+			[innerRequestHandler],
+			{},
+		);
+		const _createContainer = async (): Promise<IContainer> => {
+			return provider.createContainer(runtimeFactory);
+		};
+		const container = await _createContainer();
+		await assert.rejects(
+			async () => {
+				await container.request({ url: "/" });
+			},
+			(e) => e.message === "EntryPoint not implemented",
+			"entry point function is called.",
+		);
+		// clean up the error message in provider's logger
+		provider.logger = new EventAndErrorTrackingLogger(new MockLogger());
 	});
 
 	/**
