@@ -22,6 +22,7 @@ export function create(
     repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.post("/repos/:owner/:repo/git/blobs", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
@@ -37,6 +38,7 @@ export function create(
     /**
      * Retrieves the given blob from the repository
      */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.get("/repos/:owner/:repo/git/blobs/:sha", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
