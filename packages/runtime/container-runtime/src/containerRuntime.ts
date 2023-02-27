@@ -87,7 +87,6 @@ import {
 	IAttachMessage,
 	IDataStore,
 	ITelemetryContext,
-	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 	IIdCompressor,
 	IIdCompressorCore,
@@ -175,7 +174,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
-import { createSessionId, hasOngoingSession, IdCompressor } from "./id-compressor";
+import { createSessionId, IdCompressor } from "./id-compressor";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -707,7 +706,7 @@ export class ContainerRuntime
 			tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
 			tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
 			tryFetchBlob<[string, string][]>(aliasBlobName),
-			tryFetchBlob<any>(idCompressorBlobName),
+			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
 		]);
 
 		const loadExisting = existing === true || context.existing === true;
@@ -1028,9 +1027,7 @@ export class ContainerRuntime
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		idCompressorSnapshot:
-			| SerializedIdCompressorWithNoSession
-			| SerializedIdCompressorWithOngoingSession,
+		idCompressorSnapshot: SerializedIdCompressorWithNoSession | undefined,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1118,17 +1115,14 @@ export class ContainerRuntime
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 		if (this.runtimeOptions.enableRuntimeIdCompressor) {
-			if (idCompressorSnapshot !== undefined) {
-				this.idCompressor = hasOngoingSession(idCompressorSnapshot)
-					? IdCompressor.deserialize(idCompressorSnapshot)
-					: IdCompressor.deserialize(idCompressorSnapshot, createSessionId());
-			} else {
-				this.idCompressor = new IdCompressor(
-					createSessionId(),
-					defaultIdCompressorReservedIdCount,
-					this.logger,
-				);
-			}
+			this.idCompressor =
+				idCompressorSnapshot !== undefined
+					? IdCompressor.deserialize(idCompressorSnapshot, createSessionId())
+					: new IdCompressor(
+							createSessionId(),
+							defaultIdCompressorReservedIdCount,
+							this.logger,
+					  );
 		}
 
 		this.maxConsecutiveReconnects =
