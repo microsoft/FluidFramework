@@ -10,14 +10,15 @@ import type {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 
-import { getLatestVersion } from "../app";
-import { DiceRollerContainerRuntimeFactory } from ".";
+import { getLatestVersion } from "./app";
+import { DiceRollerContainerRuntimeFactory } from "./modelVersion1";
 
 const v1ModuleWithDetails: IFluidModuleWithDetails = {
 	module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
 	details: { package: "1.0" },
 };
 
+// This code loader is used in version 2.0 of the app. In a production app, there will likely only be one code loader.
 export class DemoCodeLoader implements ICodeDetailsLoader {
 	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const version = source.package;

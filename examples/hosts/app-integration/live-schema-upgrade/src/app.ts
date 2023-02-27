@@ -12,14 +12,10 @@ import {
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { assert } from "@fluidframework/common-utils";
 
-import {
-	renderDiceRoller as renderDiceRoller1,
-	DemoCodeLoader as DemoCodeLoader1,
-} from "./modelVersion1";
-import {
-	renderDiceRoller as renderDiceRoller2,
-	DemoCodeLoader as DemoCodeLoader2,
-} from "./modelVersion2";
+import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1";
+import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2";
+import { renderDiceRoller as renderDiceRoller1 } from "./modelVersion1";
+import { renderDiceRoller as renderDiceRoller2 } from "./modelVersion2";
 import { IDiceRollerAppModel } from "./interfaces";
 
 /**
