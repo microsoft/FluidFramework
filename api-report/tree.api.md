@@ -925,19 +925,19 @@ type ProtoNode = ITreeCursorSynchronous;
 export const proxyTargetSymbol: unique symbol;
 
 // @alpha
-export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
+export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
     // (undocumented)
-    getNodes(revision: RevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
+    getNodes(revision: TRevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
     // (undocumented)
-    getValue(revision: RevisionTag, path: UpPath): Value;
+    getValue(revision: TRevisionTag, path: UpPath): Value;
 }
 
 // @alpha
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha
-export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
-    capture(change: Delta.Root, revision: RevisionTag): void;
+export interface RepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
+    capture(change: Delta.Root, revision: TRevisionTag): void;
 }
 
 // @alpha
