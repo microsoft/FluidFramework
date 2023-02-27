@@ -166,9 +166,11 @@ interface SchemaOp {
  *
  * TODO: this should be more integrated with both SchemaIndex and transactions.
  */
-export class SchemaEditor implements StoredSchemaRepository {
+export class SchemaEditor<TRepository extends StoredSchemaRepository>
+	implements StoredSchemaRepository
+{
 	public constructor(
-		public readonly inner: StoredSchemaRepository,
+		public readonly inner: TRepository,
 		private readonly submit: (op: SchemaOp) => void,
 	) {}
 

@@ -164,7 +164,7 @@ export class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
-		public readonly storedSchema: StoredSchemaRepository,
+		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 	) {
 		this.context = getEditableTreeContext(forest, this);
@@ -184,11 +184,11 @@ export class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	}
 
 	public fork(): ISharedTreeCheckoutFork {
-		const storedSchema = this.storedSchema; // TODO: Clone
+		const storedSchema = this.storedSchema.clone();
 		return new SharedTreeCheckout(
 			this.branch.fork(),
 			this.changeFamily,
-			this.storedSchema,
+			storedSchema,
 			this.forest.clone(storedSchema, new AnchorSet()), // TODO: Anchorset
 		);
 	}
@@ -235,7 +235,7 @@ class SharedTree
 {
 	public readonly context: EditableTreeContext;
 	public readonly forest: IForestSubscription;
-	public readonly storedSchema: SchemaEditor;
+	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 	/**
 	 * Rather than implementing TransactionCheckout, have a member that implements it.
 	 * This allows keeping the `IEditableForest` private.
@@ -304,7 +304,7 @@ class SharedTree
 		return new SharedTreeCheckout(
 			this.createBranch(),
 			this.changeFamily,
-			this.storedSchema, // TODO: Clone
+			this.storedSchema.inner.clone(),
 			this.forest.clone(this.storedSchema, new AnchorSet()), // TODO: anchorset
 		);
 	}
