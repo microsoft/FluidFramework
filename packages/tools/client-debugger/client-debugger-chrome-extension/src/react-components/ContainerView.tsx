@@ -46,5 +46,5 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 interface TabMenuProps {}
 
 function TabMenu(props: TabMenuProps): React.ReactElement {
-	return <div>TODO</div>;
+	return <div>TODO: View selection menu</div>;
 }
