@@ -59,6 +59,7 @@ describe("Routerlicious", () => {
                 const testData = [{ documentId: testDocumentId, tenantId: testTenantId, sequenceNumber: 0, logOffset: undefined }];
                 const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
                 testMongoManager = new MongoManager(dbFactory);
+                testLocalMongoManager = new MongoManager(dbFactory);
                 const database = await testMongoManager.getDatabase();
                 const localDatabase = await testLocalMongoManager.getDatabase();
                 testDocumentCollection = database.collection("documents");
