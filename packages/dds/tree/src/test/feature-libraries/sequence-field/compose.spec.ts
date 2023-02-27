@@ -386,7 +386,6 @@ describe("SequenceField - Compose", () => {
 			{ type: "Delete", count: 3 },
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(deletion)]);
-		// TODO
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",
