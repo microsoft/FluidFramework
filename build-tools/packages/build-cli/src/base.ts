@@ -13,14 +13,21 @@ import { rootPathFlag } from "./flags";
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
 
+/**
+ * A type representing all the flags of the base commands and subclasses.
+ */
 export type Flags<T extends typeof Command> = Interfaces.InferredFlags<
 	typeof BaseCommand["baseFlags"] & T["flags"]
 >;
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
 
 /**
- * A base command that sets up common flags that all commands should have. All commands should have this class in their
+ * A base command that sets up common flags that all commands should have. Most commands should have this class in their
  * inheritance chain.
+ *
+ * @remarks
+ *
+ * This implementation is based on the documentation at https://oclif.io/docs/base_class
  */
 export abstract class BaseCommand<T extends typeof Command>
 	extends Command
