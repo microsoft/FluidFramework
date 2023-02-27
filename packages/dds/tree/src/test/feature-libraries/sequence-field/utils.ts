@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertFieldChangesEqual, deepFreeze, fakeRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -109,10 +109,10 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
-	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
+	assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset): Delta.FieldChanges {
+export function toDelta(change: TestChangeset): Delta.MarkList {
 	return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
 }
 

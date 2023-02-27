@@ -14,10 +14,8 @@ import type { IAppModel, ITaskList, TaskData } from "../model-interface";
 async function pollForServiceUpdates(
 	externalData: Record<string, unknown>,
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
-	setFetchingExternalData: React.Dispatch<React.SetStateAction<boolean>>,
 ): Promise<void> {
 	try {
-		setFetchingExternalData(true);
 		const response = await fetch(`http://localhost:${externalDataServicePort}/fetch-tasks`, {
 			method: "GET",
 			headers: {
@@ -32,7 +30,6 @@ async function pollForServiceUpdates(
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
 			setExternalData(newData);
 		}
-		setFetchingExternalData(false);
 	} catch (error) {
 		console.error("APP: An error was encountered while polling external data:", error);
 	}
@@ -64,31 +61,29 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 	const [fetchingExternalData, setFetchingExternalData] = useState(false);
 	return (
 		<div>
-			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
-			<ExternalAppForm model={model} setFetchingExternalData={setFetchingExternalData} />
-			<ExternalDataView setFetchingExternalData={setFetchingExternalData} />
-			<SyncStatusView fetchingData={fetchingExternalData} taskList={model.taskList} />
 			<ControlsView model={model} />
+			<ExternalDataDebugView />
+			<SyncStatusView fetchingData={fetchingExternalData} taskList={model.taskList} />
 		</div>
 	);
 };
 
-interface IExternalDataViewProps {
-	setFetchingExternalData: React.Dispatch<React.SetStateAction<boolean>>;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface IExternalDataDebugViewProps {}
 
-const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
-	const { setFetchingExternalData } = props;
+const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
+	props: IExternalDataDebugViewProps,
+) => {
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// Run once immediately to run without waiting.
-		pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
+		pollForServiceUpdates(externalData, setExternalData).catch(
 			console.error,
 		);
 
 		// HACK: Poll every 6 seconds
 		const timer = setInterval(() => {
-			pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
+			pollForServiceUpdates(externalData, setExternalData).catch(
 				console.error,
 			);
 		}, 6000);
@@ -96,7 +91,7 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 		return (): void => {
 			clearInterval(timer);
 		};
-	}, [externalData, setExternalData, setFetchingExternalData]);
+	}, [externalData, setExternalData]);
 	const parsedExternalData = isEqual(externalData, {})
 		? []
 		: Object.entries(externalData as TaskData);
@@ -173,6 +168,8 @@ function debugResetExternalData(): void {
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
 	return (
 		<div>
+			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
+			<ExternalServerTaskListView model={props.model} />
 			<h3>Debug controls</h3>
 			<div style={{ margin: "10px 0" }}>
 				<button onClick={debugResetExternalData}>Reset external data</button>
@@ -182,14 +179,16 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 	);
 };
 
-interface ITaskRowProps {
-	task: ExternalDataTask;
+interface IExternalServerTaskRowProps {
+	task: ExternalServerDataTask;
 }
 
 /**
- * The view for a single task in the TaskListView, as a table row.
+ * The view for a single task in the ExternalServerTaskListView, as a table row.
  */
-const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
+const ExternalServerTaskRow: React.FC<IExternalServerTaskRowProps> = (
+	props: IExternalServerTaskRowProps,
+) => {
 	const { task } = props;
 
 	const idChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
@@ -230,15 +229,14 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	);
 };
 
-interface IExternalAppFormProps {
+interface ExternalServerTaskListViewProps {
 	model: IAppModel;
-	setFetchingExternalData: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
  * Model for external task data
  */
-export interface ExternalDataTask {
+export interface ExternalServerDataTask {
 	id: string;
 	name: string;
 	priority: number;
@@ -248,20 +246,22 @@ export interface ExternalDataTask {
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  * TODO: Audit the state management. Currently, if changes aren't saved before the poll reruns, the diffs aren't saved.
  */
-export const ExternalAppForm: React.FC<IExternalAppFormProps> = (props: IExternalAppFormProps) => {
-	const { model, setFetchingExternalData } = props;
+export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProps> = (
+	props: ExternalServerTaskListViewProps,
+) => {
+	const { model } = props;
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// HACK: Populate the external view form with the data in the external server to start off with
-		pollForServiceUpdates(externalData, setExternalData, setFetchingExternalData).catch(
+		pollForServiceUpdates(externalData, setExternalData).catch(
 			console.error,
 		);
 		return (): void => {};
-	}, [externalData, setExternalData, setFetchingExternalData]);
+	}, [externalData, setExternalData]);
 	const parsedExternalData = Object.entries(externalData as TaskData);
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
-	const taskRows = tasks.map((task) => <TaskRow key={task.id} task={task} />);
-	const saveChanges = async (): Promise<void> => {
+	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
+	const writeToExternalServer = async (): Promise<void> => {
 		const formattedTasks = {};
 		for (const task of tasks) {
 			formattedTasks[task.id] = {
@@ -302,7 +302,7 @@ export const ExternalAppForm: React.FC<IExternalAppFormProps> = (props: IExterna
 				</thead>
 				<tbody>{taskRows}</tbody>
 			</table>
-			<button onClick={saveChanges}>Save changes</button>
+			<button onClick={writeToExternalServer}>Save Changes</button>
 		</div>
 	);
 };
