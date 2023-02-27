@@ -15,6 +15,9 @@ import {
 } from "@fluidframework/container-definitions";
 import { ScriptManager } from "./scriptManager";
 
+/**
+ * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+ */
 export class WebCodeLoader implements ICodeDetailsLoader {
 	private readonly loadedModules = new Map<
 		string,
@@ -22,11 +25,17 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 	>();
 	private readonly scriptManager = new ScriptManager();
 
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+	 */
 	constructor(
 		private readonly codeResolver: IFluidCodeResolver,
 		private readonly allowList?: ICodeAllowList,
 	) {}
 
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+	 */
 	public async seedModule(
 		source: IFluidCodeDetails,
 		maybeFluidModule?: Promise<IFluidModuleWithDetails> | IFluidModuleWithDetails,
@@ -44,6 +53,9 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 		}
 	}
 
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
+	 */
 	public async preCache(source: IFluidCodeDetails) {
 		const resolved = await this.codeResolver.resolveCodeDetails(source);
 		if (isFluidBrowserPackage(resolved.resolvedPackage)) {
@@ -53,6 +65,8 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 
 	/**
 	 * @param source - Details of where to find chaincode
+	 *
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.  Will be removed in an upcoming release.
 	 */
 	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const resolved = await this.codeResolver.resolveCodeDetails(source);

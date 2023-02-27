@@ -12,11 +12,11 @@ import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
-	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import {
 	describeInstallVersions,
 	getContainerRuntimeApi,
+	getDataRuntimeApi,
 } from "@fluidframework/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -42,18 +42,26 @@ describeInstallVersions(
 		runtime.IFluidHandleContext.resolveHandle(request);
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-	const factory: TestFluidObjectFactory = new TestFluidObjectFactory(registry, "default");
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 	};
 
+	/**
+	 * Create a container with old version of container runtime and data store runtime.
+	 */
 	const createOldContainer = async (): Promise<IContainer> => {
-		const oldContainerRuntimeFactoryWithDefaultDataStore =
+		const oldDataRuntimeApi = getDataRuntimeApi(versionWithChunking);
+		const oldDataObjectFactory = new oldDataRuntimeApi.TestFluidObjectFactory(
+			[[mapId, oldDataRuntimeApi.dds.SharedMap.getFactory()]],
+			"default",
+		);
+
+		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
 			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
-		const oldRuntimeFactory = new oldContainerRuntimeFactoryWithDefaultDataStore(
-			factory,
-			[[factory.type, Promise.resolve(factory)]],
+		const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore_Old(
+			oldDataObjectFactory,
+			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
 			undefined,
 			[innerRequestHandler],
 			{

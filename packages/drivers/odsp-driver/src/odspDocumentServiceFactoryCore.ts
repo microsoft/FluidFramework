@@ -29,7 +29,7 @@ import {
 	ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { LocalPersistentCache, NonPersistentCache } from "./odspCache";
+import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
 import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
 import {
@@ -51,8 +51,12 @@ import {
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	public readonly protocolName = "fluid-odsp:";
 
-	private readonly nonPersistentCache = new NonPersistentCache();
+	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
+
+	public get snapshotPrefetchResultCache() {
+		return this.nonPersistentCache.snapshotPrefetchResultCache;
+	}
 
 	public async createContainer(
 		createNewSummary: ISummaryTree | undefined,
@@ -206,9 +210,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	 * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
 	 * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
 	 * response payload.
-	 * @param storageFetchWrapper - if not provided FetchWrapper will be used
-	 * @param deltasFetchWrapper - if not provided FetchWrapper will be used
 	 * @param persistedCache - PersistedCache provided by host for use in this session.
+	 * @param hostPolicy - Policy for storage provided by host.
 	 */
 	constructor(
 		private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,

@@ -30,6 +30,7 @@ import {
 	Delta,
 	FieldKey,
 	UpPath,
+	mintRevisionTag,
 } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { assertDeltaEqual, deepFreeze } from "../../utils";
@@ -41,8 +42,8 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: (change, deltaFromChild): Delta.FieldChanges =>
-		change === 0 ? {} : { beforeShallow: [{ index: 0, setValue: change.new }] },
+	intoDelta: (change, deltaFromChild) =>
+		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
 };
 
 const valueField = new FieldKind(
@@ -78,10 +79,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	encoder: singleNodeEncoder,
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): Delta.FieldChanges => {
-		const childDelta = deltaFromChild(change, 0);
-		return childDelta !== undefined ? { beforeShallow: [{ index: 0, ...childDelta }] } : {};
-	},
+	intoDelta: (change, deltaFromChild) => [deltaFromChild(change, 0)],
 };
 
 const singleNodeField = new FieldKind(
@@ -107,7 +105,7 @@ const idFieldHandler: FieldChangeHandler<IdChangeset> = {
 	rebaser: idFieldRebaser,
 	encoder: new FieldKinds.ValueEncoder<IdChangeset & JsonCompatibleReadOnly>(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change, deltaFromChild) => ({}),
+	intoDelta: (change, deltaFromChild) => [],
 };
 
 /**
@@ -133,8 +131,8 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 
 const family = new ModularChangeFamily(fieldKinds);
 
-const tag1: RevisionTag = brand(1);
-const tag2: RevisionTag = brand(2);
+const tag1: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
@@ -296,7 +294,7 @@ const nodeValueOverwrite: ModularChangeset = {
 	]),
 };
 
-const detachedBy: RevisionTag = brand(42);
+const detachedBy = mintRevisionTag();
 const nodeValueRevert: ModularChangeset = {
 	changes: new Map([
 		[
@@ -492,7 +490,7 @@ describe("ModularChangeFamily", () => {
 				{
 					changes: new Map([[fieldB, change2B]]),
 				},
-				brand(2),
+				tag2,
 			);
 
 			deepFreeze(change1);
@@ -701,36 +699,54 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const innerFieldADelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, setValue: 1 }],
-			};
-			const outerFieldADelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, fields: new Map([[fieldA, innerFieldADelta]]) }],
-			};
-			const fieldBDelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, setValue: 2 }],
-			};
+			const valueDelta1: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					setValue: 1,
+				},
+			];
+
+			const valueDelta2: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					setValue: 2,
+				},
+			];
+
+			const nodeDelta: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					fields: new Map([[fieldA, valueDelta1]]),
+				},
+			];
+
 			const expectedDelta: Delta.Root = new Map([
-				[fieldA, outerFieldADelta],
-				[fieldB, fieldBDelta],
+				[fieldA, nodeDelta],
+				[fieldB, valueDelta2],
 			]);
 
 			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
 		});
 
 		it("value overwrite", () => {
-			const fieldADelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, setValue: testValue }],
-			};
-			const expectedDelta: Delta.Root = new Map([[fieldA, fieldADelta]]);
+			const nodeDelta: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					setValue: testValue,
+				},
+			];
+			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
 			assertDeltaEqual(family.intoDelta(nodeValueOverwrite), expectedDelta);
 		});
 
 		it("value revert", () => {
-			const fieldADelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, setValue: testValue }],
-			};
-			const expectedDelta: Delta.Root = new Map([[fieldA, fieldADelta]]);
+			const nodeDelta: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					setValue: testValue,
+				},
+			];
+			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
 			const repair: RepairDataStore = {
 				capture: (TreeDestruction) => assert.fail(),
 				getNodes: () => assert.fail(),
