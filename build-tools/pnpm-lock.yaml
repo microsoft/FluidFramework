@@ -54,13 +54,13 @@ importers:
       '@fluidframework/bundle-size-tools': workspace:^
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.22.2
-      '@oclif/core': ^2.1.4
+      '@oclif/core': ^2.3.1
       '@oclif/plugin-autocomplete': ^1.4.6
-      '@oclif/plugin-commands': ^2.2.9
-      '@oclif/plugin-help': ^5.2.4
-      '@oclif/plugin-not-found': ^2.3.20
+      '@oclif/plugin-commands': ^2.2.10
+      '@oclif/plugin-help': ^5.2.6
+      '@oclif/plugin-not-found': ^2.3.21
       '@oclif/plugin-plugins': ^2.3.2
-      '@oclif/test': ^2.3.6
+      '@oclif/test': ^2.3.8
       '@octokit/core': ^4.0.5
       '@rushstack/node-core-library': ^3.51.1
       '@types/chai': ^4
@@ -115,13 +115,13 @@ importers:
       '@fluid-tools/version-tools': link:../version-tools
       '@fluidframework/build-tools': link:../build-tools
       '@fluidframework/bundle-size-tools': link:../bundle-size-tools
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
       '@oclif/plugin-autocomplete': 1.4.6
-      '@oclif/plugin-commands': 2.2.9
-      '@oclif/plugin-help': 5.2.4
-      '@oclif/plugin-not-found': 2.3.20
+      '@oclif/plugin-commands': 2.2.10
+      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-not-found': 2.3.21
       '@oclif/plugin-plugins': 2.3.2
-      '@oclif/test': 2.3.6
+      '@oclif/test': 2.3.8
       '@octokit/core': 4.0.5
       '@rushstack/node-core-library': 3.53.0
       chalk: 2.4.2
@@ -186,7 +186,6 @@ importers:
       '@octokit/core': ^4.0.5
       '@rushstack/node-core-library': ^3.51.1
       '@types/async': ^3.2.6
-      '@types/cosmiconfig': ^6.0.0
       '@types/fs-extra': ^8.1.0
       '@types/glob': ^7.1.1
       '@types/json5': ^0.0.30
@@ -265,7 +264,6 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/async': 3.2.15
-      '@types/cosmiconfig': 6.0.0
       '@types/fs-extra': 8.1.2
       '@types/glob': 7.2.0
       '@types/json5': 0.0.30
@@ -342,13 +340,13 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.22.2
-      '@oclif/core': ^2.1.4
+      '@oclif/core': ^2.3.1
       '@oclif/plugin-autocomplete': ^1.4.6
-      '@oclif/plugin-commands': ^2.2.9
-      '@oclif/plugin-help': ^5.2.4
-      '@oclif/plugin-not-found': ^2.3.20
+      '@oclif/plugin-commands': ^2.2.10
+      '@oclif/plugin-help': ^5.2.6
+      '@oclif/plugin-not-found': ^2.3.21
       '@oclif/plugin-plugins': ^2.3.2
-      '@oclif/test': ^2.3.6
+      '@oclif/test': ^2.3.8
       '@types/chai': ^4
       '@types/mocha': ^9.0.0
       '@types/node': ^14.18.0
@@ -373,11 +371,11 @@ importers:
       tslib: ^2.3.1
       typescript: ~4.5.5
     dependencies:
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
       '@oclif/plugin-autocomplete': 1.4.6
-      '@oclif/plugin-commands': 2.2.9
-      '@oclif/plugin-help': 5.2.4
-      '@oclif/plugin-not-found': 2.3.20
+      '@oclif/plugin-commands': 2.2.10
+      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-not-found': 2.3.21
       '@oclif/plugin-plugins': 2.3.2
       chalk: 2.4.2
       semver: 7.3.7
@@ -386,7 +384,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.27.1
-      '@oclif/test': 2.3.6
+      '@oclif/test': 2.3.8
       '@types/chai': 4.3.3
       '@types/mocha': 9.1.1
       '@types/node': 14.18.31
@@ -669,11 +667,11 @@ packages:
       ajv: 8.11.0
     dev: true
 
-  /@commitlint/config-validator/17.4.0:
-    resolution: {integrity: sha512-Sa/+8KNpDXz4zT4bVbz2fpFjvgkPO6u2V2fP4TKgt6FjmOw2z3eEX859vtfeaTav/ukBw0/0jr+5ZTZp9zCBhA==}
+  /@commitlint/config-validator/17.4.4:
+    resolution: {integrity: sha512-bi0+TstqMiqoBAQDvdEP4AFh0GaKyLFlPPEObgI29utoKEYoPQTvF0EYqIwYYLEoJYhj5GfMIhPHJkTJhagfeg==}
     engines: {node: '>=v14'}
     dependencies:
-      '@commitlint/types': 17.4.0
+      '@commitlint/types': 17.4.4
       ajv: 8.12.0
     dev: true
     optional: true
@@ -764,15 +762,15 @@ packages:
       - '@swc/wasm'
     dev: true
 
-  /@commitlint/load/17.4.2:
-    resolution: {integrity: sha512-Si++F85rJ9t4hw6JcOw1i2h0fdpdFQt0YKwjuK4bk9KhFjyFkRxvR3SB2dPaMs+EwWlDrDBGL+ygip1QD6gmPw==}
+  /@commitlint/load/17.4.4:
+    resolution: {integrity: sha512-z6uFIQ7wfKX5FGBe1AkOF4l/ShOQsaa1ml/nLMkbW7R/xF8galGS7Zh0yHvzVp/srtfS0brC+0bUfQfmpMPFVQ==}
     engines: {node: '>=v14'}
     requiresBuild: true
     dependencies:
-      '@commitlint/config-validator': 17.4.0
+      '@commitlint/config-validator': 17.4.4
       '@commitlint/execute-rule': 17.4.0
-      '@commitlint/resolve-extends': 17.4.0
-      '@commitlint/types': 17.4.0
+      '@commitlint/resolve-extends': 17.4.4
+      '@commitlint/types': 17.4.4
       '@types/node': 14.18.31
       chalk: 4.1.2
       cosmiconfig: 8.0.0
@@ -826,12 +824,12 @@ packages:
       resolve-global: 1.0.0
     dev: true
 
-  /@commitlint/resolve-extends/17.4.0:
-    resolution: {integrity: sha512-3JsmwkrCzoK8sO22AzLBvNEvC1Pmdn/65RKXzEtQMy6oYMl0Snrq97a5bQQEFETF0VsvbtUuKttLqqgn99OXRQ==}
+  /@commitlint/resolve-extends/17.4.4:
+    resolution: {integrity: sha512-znXr1S0Rr8adInptHw0JeLgumS11lWbk5xAWFVno+HUFVN45875kUtqjrI6AppmD3JI+4s0uZlqqlkepjJd99A==}
     engines: {node: '>=v14'}
     dependencies:
-      '@commitlint/config-validator': 17.4.0
-      '@commitlint/types': 17.4.0
+      '@commitlint/config-validator': 17.4.4
+      '@commitlint/types': 17.4.4
       import-fresh: 3.3.0
       lodash.mergewith: 4.6.2
       resolve-from: 5.0.0
@@ -869,8 +867,8 @@ packages:
       chalk: 4.1.2
     dev: true
 
-  /@commitlint/types/17.4.0:
-    resolution: {integrity: sha512-2NjAnq5IcxY9kXtUeO2Ac0aPpvkuOmwbH/BxIm36XXK5LtWFObWJWjXOA+kcaABMrthjWu6la+FUpyYFMHRvbA==}
+  /@commitlint/types/17.4.4:
+    resolution: {integrity: sha512-amRN8tRLYOsxRr6mTnGGGvB5EmW/4DDjLMgiwK3CCVEmN6Sr/6xePGEpWaspKkckILuUORCwe6VfDBw6uj4axQ==}
     engines: {node: '>=v14'}
     dependencies:
       chalk: 4.1.2
@@ -2147,8 +2145,8 @@ packages:
       supports-color: 8.1.1
       tslib: 2.4.0
 
-  /@oclif/core/2.1.4:
-    resolution: {integrity: sha512-8rPS/gsjLgWp//nraRs5/yf7EkueFHBLRTMUli3yTu88XrQ2czbXIP2HsF2rxmtCqUUfXUTllHfr8OzqBs0Dcw==}
+  /@oclif/core/2.3.1:
+    resolution: {integrity: sha512-18CkjjF16hwhBd/42z+0CHAwvZlBfpyCmdZxpasN/od8c/hdm0oDEJvVB33/xD0LDYg8glKoQ5zVNVvPM/uJ/Q==}
     engines: {node: '>=14.0.0'}
     dependencies:
       '@types/cli-progress': 3.11.0
@@ -2157,7 +2155,7 @@ packages:
       cardinal: 2.1.1
       chalk: 4.1.2
       clean-stack: 3.0.1
-      cli-progress: 3.11.2
+      cli-progress: 3.12.0
       debug: 4.3.4_supports-color@8.1.1
       ejs: 3.1.8
       fs-extra: 9.1.0
@@ -2184,7 +2182,7 @@ packages:
     resolution: {integrity: sha512-dawJk8Eb5dxsHTEttKZIOJkJ9PPKB59hL8BrqdCkr+WB4Xerm3G6rNeGWErOVYcOLe8y+nWAeYUE8OHNPn2E9g==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -2192,26 +2190,26 @@ packages:
       - supports-color
     dev: false
 
-  /@oclif/plugin-commands/2.2.9:
-    resolution: {integrity: sha512-sLhn4wiT/e6j4E9LWvfAidxydQVJZcisgscMguWc38BQF8rTjgVis+ESZqDjoDJlgKVzKjqoAFUtBjgY7VpT8g==}
+  /@oclif/plugin-commands/2.2.10:
+    resolution: {integrity: sha512-fUOegX6RrJLC+euU/gPbBH6VX6aqh5vRpsg4r1NUlKvCSIJjCI78TSHUKECU+GQmvNA+3ql6tlD7hZ4rBTjKbg==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
       lodash: 4.17.21
     dev: false
 
-  /@oclif/plugin-help/5.2.4:
-    resolution: {integrity: sha512-7fVB/M1cslwHJTmyNGGDYBizi54NHcKCxHAbDSD16EbjosKxFwncRylVC/nsMgKZEufMDKZaVYI2lYRY3GHlSQ==}
+  /@oclif/plugin-help/5.2.6:
+    resolution: {integrity: sha512-nvpSbIOGtPIct3+OqXca3OIu5liyIynascncAXZy4JDD7z8rIGZ3NYJH2M4JhMVyGxCDZxQuLVsdALyIt67G5g==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
 
-  /@oclif/plugin-not-found/2.3.20:
-    resolution: {integrity: sha512-U93rjsL5Z2AWUtURx6R83tNottH6jAsUIGFBu+ZdM4p3bPOPCg9Kmofca6xudiV7ppWxbG5EejZOUGYcdKa/SA==}
+  /@oclif/plugin-not-found/2.3.21:
+    resolution: {integrity: sha512-6N0gTWQhl5nuE5bXipv5+8vH5cHyGgEd3MKJHQYxFnHIFwwb9jJnFl0BZ0fo7Jrjd9HZYCLT7rjnouS7p1Dl1w==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/color': 1.0.4
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
       fast-levenshtein: 3.0.0
       lodash: 4.17.21
 
@@ -2220,7 +2218,7 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/color': 1.0.4
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -2238,7 +2236,7 @@ packages:
     resolution: {integrity: sha512-be6dnM3bhf7r6Jy1rzPjOt5qV5MZtqda4p1krbH9a5Ww6jAsYh6CIeKbIP2zPUFthoejG9wt7UFQt3J110DdMQ==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -2248,11 +2246,11 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@oclif/test/2.3.6:
-    resolution: {integrity: sha512-n1DGbLzGrrfn/Nm2f8829RcQ2iOd9EXDZxx0U9WswpJS75P4N9Py4tYBhfX+wGU7CaJDfYxnqQHB0YuRYDBwrw==}
+  /@oclif/test/2.3.8:
+    resolution: {integrity: sha512-usE2GeE2S+feOgf8uFLUUVDKt0N3orH+pc1bKkKQtCNAFDvdyAdAMcBS+1PnmCn+cSxaez0bCQ6xOpxA9s7x3A==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.1.4
+      '@oclif/core': 2.3.1
       fancy-test: 2.0.12
     transitivePeerDependencies:
       - supports-color
@@ -2709,13 +2707,6 @@ packages:
     resolution: {integrity: sha512-XhXhBv1R/q2ahF3BM7qT5HLzJNlIL0wbcGyZVjqOTqAybAnsLisd7gy1UCyIqpL+5Iv6XhlSyzjLCnI2sIdbCg==}
     dependencies:
       '@types/node': 14.18.31
-
-  /@types/cosmiconfig/6.0.0:
-    resolution: {integrity: sha512-KxKYXK5K1W+SVj1wjBBlwUs43K2D4iteye+r2ObPPQ7+NVASxSPfTb5H8iPW0bLswapMvaA4YMnxdKx7M4k29A==}
-    deprecated: This is a stub types definition. cosmiconfig provides its own type definitions, so you do not need this installed.
-    dependencies:
-      cosmiconfig: 8.0.0
-    dev: true
 
   /@types/eslint-scope/3.7.4:
     resolution: {integrity: sha512-9K4zoImiZc3HlIp6AVUDE4CWYx22a+lhSZMYNpbjW04+YF0KWj4pJXnEMjdnFTiQibFFmElcsasJXDbdI/EPhA==}
@@ -4214,8 +4205,8 @@ packages:
     dependencies:
       restore-cursor: 3.1.0
 
-  /cli-progress/3.11.2:
-    resolution: {integrity: sha512-lCPoS6ncgX4+rJu5bS3F/iCz17kZ9MPZ6dpuTtI0KXKABkhyXIdYB3Inby1OpaGti3YlI3EeEkM9AuWpelJrVA==}
+  /cli-progress/3.12.0:
+    resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==}
     engines: {node: '>=4'}
     dependencies:
       string-width: 4.2.3
@@ -4853,7 +4844,7 @@ packages:
       longest: 2.0.1
       word-wrap: 1.2.3
     optionalDependencies:
-      '@commitlint/load': 17.4.2
+      '@commitlint/load': 17.4.4
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -9146,9 +9137,9 @@ packages:
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 2.1.4
-      '@oclif/plugin-help': 5.2.4
-      '@oclif/plugin-not-found': 2.3.20
+      '@oclif/core': 2.3.1
+      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-not-found': 2.3.21
       '@oclif/plugin-warn-if-update-available': 2.0.27
       aws-sdk: 2.1313.0
       concurrently: 7.6.0

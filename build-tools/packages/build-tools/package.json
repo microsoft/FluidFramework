@@ -84,7 +84,6 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/async": "^3.2.6",
-		"@types/cosmiconfig": "^6.0.0",
 		"@types/fs-extra": "^8.1.0",
 		"@types/glob": "^7.1.1",
 		"@types/json5": "^0.0.30",

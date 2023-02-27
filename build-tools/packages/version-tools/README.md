@@ -143,7 +143,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.4/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.6/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
