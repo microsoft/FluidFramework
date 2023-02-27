@@ -73,8 +73,15 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 		const proposal: IFluidCodeDetails = { package: targetVersion };
 		this.container
 			.proposeCodeDetails(proposal)
-			.then((accepted: boolean) => {
+			.then(async (accepted: boolean) => {
 				console.log(`Upgrade accepted: ${accepted}`);
+				if (!accepted && this.container.connectionState !== ConnectionState.Connected) {
+					// If the upgrade was rejected and we are disconnected, we should try again once we reconnect.
+					await new Promise((resolve) => {
+						this.container.once("connected", resolve);
+					});
+					await this.upgrade(targetVersion);
+				}
 			})
 			.catch((error) => {
 				console.error("Failed to upgrade:", error);
