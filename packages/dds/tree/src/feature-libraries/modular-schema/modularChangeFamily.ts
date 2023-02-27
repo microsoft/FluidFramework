@@ -357,10 +357,10 @@ export class ModularChangeFamily
 			);
 			assert(
 				path !== undefined,
-				0x4aa /* Only existing nodes can have their value restored */,
+				"Only existing nodes can have their value restored",
 			);
 			const revision = change.change.valueChange.revision ?? change.revision;
-			assert(revision !== undefined, 0x477 /* Unable to revert to undefined revision */);
+			assert(revision !== undefined, "Unable to revert to undefined revision");
 			inverse.valueChange = { value: repairStore.getValue(revision, path) };
 		}
 
