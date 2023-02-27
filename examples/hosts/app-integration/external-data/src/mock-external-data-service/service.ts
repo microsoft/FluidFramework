@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskData, TaskData, TaskListData } from "../model-interface";
+import { assertValidTaskListData, TaskData, TaskListData } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -142,10 +142,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					unknown
 				>;
 
-				let taskList: TaskData;
+				let taskListData: TaskListData;
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					taskList = assertValidTaskData((responseBody as any).taskList);
+					taskListData = assertValidTaskListData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
@@ -153,9 +153,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					return;
 				}
 
-				console.log(formatLogMessage("Returning current task list:"), taskList);
+				console.log(formatLogMessage("Returning current task list:"), taskListData);
 
-				result.send({ taskList });
+				result.send({ taskList: taskListData });
 			},
 			(error) => {
 				console.error(
@@ -172,7 +172,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Updates external data store with new tasks list (complete override).
 	 *
-	 * Expected input data format: {@link TaskData}.
+	 * Expected input data format: {@link TaskListData}.
 	 */
 	expressApp.post("/set-tasks", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
@@ -184,7 +184,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		} else {
 			let taskListData: TaskListData;
 			try {
-				taskListData = { "1": assertValidTaskData(messageData) };
+				taskListData = assertValidTaskListData(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);

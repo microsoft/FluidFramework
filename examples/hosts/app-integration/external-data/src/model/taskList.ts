@@ -239,11 +239,9 @@ export class TaskList extends DataObject implements ITaskList {
 				throw new Error("Task list fetch returned no data.");
 			}
 			const data = responseBody.taskList as TaskListData;
-			if (data?.taskListId !== data.taskListId) {
-				console.error(
-					`Task list fetch failed due to an error:\nTask List Id ${taskListId} does not mactch the taskListId returned.`,
-				);
-			}
+			// TODO: do some check to ensure that the requested taskListId matches the
+			// returned taskList id.
+
 			incomingExternalData = Object.entries(data[taskListId]);
 			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {

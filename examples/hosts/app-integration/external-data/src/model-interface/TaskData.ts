@@ -23,7 +23,7 @@ export interface TaskListData {
 /**
  * Asserts that the input data is a valid {@link TaskData}.
  */
-export function assertValidTaskData(input: unknown): TaskData {
+export function assertValidTaskListData(input: unknown): TaskListData {
 	if (input === null || input === undefined) {
 		throw new Error("Task data was not defined.");
 	}
@@ -34,10 +34,12 @@ export function assertValidTaskData(input: unknown): TaskData {
 			throw new TypeError(`Input task data contained malformed key: "${outerKey}".`);
 		}
 		const jsonOuterValue = outerValue as Record<string | number | symbol, unknown>;
-		for (const [key, jsonValue] of Object.entries(jsonOuterValue)) {
+		for (const [key, jsonInnerValue] of Object.entries(jsonOuterValue)) {
 			if (typeof key !== "string") {
 				throw new TypeError(`Input task data contained malformed key: "${key}".`);
 			}
+
+			const jsonValue = jsonInnerValue as Record<string | number | symbol, unknown>;
 			if (typeof jsonValue !== "object" && jsonValue !== null) {
 				throw new TypeError(`Input task data contained malformed value: "${jsonValue}".`);
 			}
@@ -46,20 +48,20 @@ export function assertValidTaskData(input: unknown): TaskData {
 					`Input task entry under ID "${key}" does not contain required "name" property. Received: "${jsonValue}".`,
 				);
 			}
-			// if (typeof jsonValue.name !== "string") {
-			// 	throw new TypeError(`Invalid TaskData "name" value received: "${jsonValue.name}".`);
-			// }
+			if (typeof jsonValue.name !== "string") {
+				throw new TypeError(`Invalid TaskData "name" value received: "${jsonValue.name}".`);
+			}
 			if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
 				throw new Error(
 					`Input task entry under ID "${key}" does not contain required "priority" property. Received: "${jsonValue}".`,
 				);
 			}
-			// if (typeof jsonValue.priority !== "number") {
-			// 	throw new TypeError(
-			// 		`Invalid TaskData "priority" value received: "${jsonValue.priority}".`,
-			// 	);
-			// }
+			if (typeof jsonValue.priority !== "number") {
+				throw new TypeError(
+					`Invalid TaskData "priority" value received: "${jsonValue.priority}".`,
+				);
+			}
 		}
 	}
-	return input as TaskData;
+	return input as TaskListData;
 }

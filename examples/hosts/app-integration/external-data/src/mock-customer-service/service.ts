@@ -9,12 +9,12 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { assertValidTaskData, TaskData } from "../model-interface";
+import { assertValidTaskListData, TaskListData } from "../model-interface";
 
 /**
  * Submits notifications of changes to Fluid Service.
  */
-function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string): void {
+function echoExternalDataWebhookToFluid(data: TaskListData, fluidServiceUrl: string): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
@@ -143,9 +143,9 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskData;
+			let taskListData: TaskListData;
 			try {
-				taskData = assertValidTaskData(messageData);
+				taskListData = assertValidTaskListData(messageData);
 			} catch (error) {
 				const errorMessage = "Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);
@@ -158,7 +158,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl);
+			echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl);
 			result.send();
 		}
 	});
