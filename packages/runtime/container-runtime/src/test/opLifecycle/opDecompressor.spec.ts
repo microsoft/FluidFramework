@@ -88,7 +88,7 @@ describe("OpDecompressor", () => {
 	});
 
 	// Back-compat self healing mechanism for ADO:3538
-	it.skip("Processes single compressed op without compression markers", () => {
+	it("Processes single compressed op without compression markers", () => {
 		const result = decompressor.processMessage({
 			...generateCompressedBatchMessage(1),
 			compression: undefined,
@@ -181,23 +181,67 @@ describe("OpDecompressor", () => {
 	});
 
 	it("Ignores ops without compression", () => {
-		const rootMessage = {
-			// Back-compat self healing mechanism for ADO:3538,
-			// the message should have a `packedContents` property.
-			contents: { some: "contents" },
-			metadata: { meta: "data" },
-			clientId: "clientId",
-			sequenceNumber: 1,
-			term: 1,
-			minimumSequenceNumber: 1,
-			clientSequenceNumber: 1,
-			referenceSequenceNumber: 1,
-			type: "type",
-			timestamp: 1,
-		};
-		const firstMessageResult = decompressor.processMessage(rootMessage);
+		const rootMessages = [
+			{
+				// Back-compat self healing mechanism for ADO:3538,
+				// the message should have a `packedContents` property.
+				contents: { some: "contents" },
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+			{
+				// Back-compat self healing mechanism for ADO:3538,
+				contents: { packedContents: "packedContents is not base64 encoded" },
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+			{
+				// Back-compat self healing mechanism for ADO:3538,
+				contents: { packedContents: "YmFzZTY0IGNvbnRlbnQ=", some: "contents" },
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+			{
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+		];
 
-		assert.equal(firstMessageResult.state, "Skipped");
-		assert.deepStrictEqual(firstMessageResult.message, rootMessage);
+		for (const rootMessage of rootMessages) {
+			const firstMessageResult = decompressor.processMessage(
+				rootMessage as ISequencedDocumentMessage,
+			);
+
+			assert.equal(firstMessageResult.state, "Skipped");
+			assert.deepStrictEqual(firstMessageResult.message, rootMessage);
+		}
 	});
 });

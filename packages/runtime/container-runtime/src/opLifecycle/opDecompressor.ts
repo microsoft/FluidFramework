@@ -120,12 +120,17 @@ export class OpDecompressor {
 			return true;
 		}
 
-		// This condition holds true for compressed messages, regardless of metadata.
-		// Back-compat self healing mechanism for ADO:3538, as loaders from
-		// version client_v2.0.0-internal.1.2.0 to client_v2.0.0-internal.2.2.0 do not
-		// support adding the proper compression metadata to compressed messages submitted
-		// by the runtime. Should be removed after the loader reaches sufficient saturation
-		// for a version greater or equal than client_v2.0.0-internal.2.2.0.
+		/**
+		 * Back-compat self healing mechanism for ADO:3538, as loaders from
+		 * version client_v2.0.0-internal.1.2.0 to client_v2.0.0-internal.2.2.0 do not
+		 * support adding the proper compression metadata to compressed messages submitted
+		 * by the runtime. Should be removed after the loader reaches sufficient saturation
+		 * for a version greater or equal than client_v2.0.0-internal.2.2.0.
+		 *
+		 * The condition holds true for compressed messages, regardless of metadata. We are ultimately
+		 * looking for a message with a single property `packedContents` inside `contents`, of type 'string'
+		 * with a base64 encoded value.
+		 */
 		try {
 			if (
 				typeof message.contents === "object" &&
@@ -133,7 +138,8 @@ export class OpDecompressor {
 				message.contents?.packedContents !== undefined &&
 				typeof message.contents?.packedContents === "string" &&
 				message.contents.packedContents.length > 0 &&
-				btoa(atob(message.contents.packedContents)) === message.contents.packedContents
+				IsoBuffer.from(message.contents.packedContents, "base64").toString("base64") ===
+					message.contents.packedContents
 			) {
 				this.logger.sendTelemetryEvent({
 					eventName: "LegacyCompression",
