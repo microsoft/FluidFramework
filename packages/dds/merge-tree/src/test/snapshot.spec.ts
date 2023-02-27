@@ -6,8 +6,10 @@
 import { strict as assert } from "assert";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
-import { createInsertOnlyAttributionPolicy } from "../attributionPolicy";
-// import { trackProperties } from "./testUtils";
+import {
+	createInsertOnlyAttributionPolicy,
+	createPropertyTrackingAttributionPolicyFactory,
+} from "../attributionPolicy";
 import { loadSnapshot, TestString } from "./snapshot.utils";
 
 function makeSnapshotSuite(options?: IMergeTreeOptions): void {
@@ -130,14 +132,14 @@ describe("snapshot", () => {
 		});
 	});
 
-	// describe("with attribution and custom channels", () => {
-	// 	makeSnapshotSuite({
-	// 		attribution: {
-	// 			track: true,
-	// 			interpreter: trackProperties("foo"),
-	// 		},
-	// 	});
-	// });
+	describe("with attribution and custom channels", () => {
+		makeSnapshotSuite({
+			attribution: {
+				track: true,
+				policyFactory: createPropertyTrackingAttributionPolicyFactory("foo"),
+			},
+		});
+	});
 
 	describe("without attribution", () => {
 		makeSnapshotSuite({ attribution: { track: false } });

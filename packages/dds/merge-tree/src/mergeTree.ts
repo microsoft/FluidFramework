@@ -1408,21 +1408,6 @@ export class MergeTree {
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 
 		this.blockInsert(pos, refSeq, clientId, seq, localSeq, segments);
-		// for (const newSegment of segments) {
-		// 	if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
-		// 		if (!newSegment.attribution && opArgs !== undefined) {
-		// 			newSegment.attribution = new AttributionCollection(newSegment.cachedLength);
-		// 			const deltas = this.interpreter.getAttributionChanges(
-		// 				newSegment,
-		// 				opArgs.op,
-		// 				seq,
-		// 			);
-		// 			if (deltas) {
-		// 				newSegment.attribution.ackDeltas(deltas, newSegment.propertyManager);
-		// 			}
-		// 		}
-		// 	}
-		// }
 
 		// opArgs == undefined => loading snapshot or test code
 		if (opArgs !== undefined) {
@@ -1946,18 +1931,6 @@ export class MergeTree {
 					if (MergeTree.options.zamboniSegments) {
 						this.addToLRUSet(segment, seq);
 					}
-					// if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
-					// 	if (segment.attribution && opArgs !== undefined) {
-					// 		const deltas = this.interpreter.getAttributionChanges(
-					// 			segment,
-					// 			opArgs.op,
-					// 			seq,
-					// 		);
-					// 		if (deltas) {
-					// 			segment.attribution.ackDeltas(deltas, segment.propertyManager);
-					// 		}
-					// 	}
-					// }
 				}
 			}
 			return true;

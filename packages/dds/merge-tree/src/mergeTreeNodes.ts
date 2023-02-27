@@ -205,12 +205,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 * E.g. if the segment group is not first in the pending queue, or
 	 * an inserted segment does not have unassigned sequence number.
 	 */
-	ack(
-		segmentGroup: SegmentGroup,
-		opArgs: IMergeTreeDeltaOpArgs,
-		// TODO: doc
-		// attributionDeltas: AttributionChangeEntry[] | undefined,
-	): boolean;
+	ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
 }
 
 export interface IMarkerModifiedAction {
