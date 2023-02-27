@@ -266,7 +266,7 @@ function applyMoveEffectsToSource<T>(
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
-	const effect = getOrAddEffect(
+	const effect = getMoveEffect(
 		effects,
 		CrossFieldTarget.Source,
 		mark.revision ?? revision,
