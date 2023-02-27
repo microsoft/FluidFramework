@@ -122,7 +122,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		if (this.nestedCursor !== undefined) {
 			return this.nestedCursor[cursorChunk];
 		}
-		assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
+		assert(this.mode === CursorLocationType.Nodes, 0x57a /* must be in nodes mode */);
 		return (this.siblings as TreeChunk[])[this.indexOfChunk];
 	}
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { openDB, DBSchema, IDBPDatabase, deleteDB } from "idb";
+import { openDB, DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB } from "idb";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -73,8 +73,10 @@ export function getFluidCacheIndexedDbInstance(
 
 // Deletes the indexed DB instance.
 // Warning this can throw an error in Firefox incognito, where accessing storage is prohibited.
-export function deleteFluidCacheIndexDbInstance(): Promise<void> {
-	return deleteDB(FluidDriverCacheDBName);
+export function deleteFluidCacheIndexDbInstance(
+	deleteDBCallbacks?: DeleteDBCallbacks,
+): Promise<void> {
+	return deleteDB(FluidDriverCacheDBName, deleteDBCallbacks);
 }
 
 /**
