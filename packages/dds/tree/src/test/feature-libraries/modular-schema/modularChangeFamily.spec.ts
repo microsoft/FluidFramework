@@ -20,7 +20,6 @@ import {
 	ChangesetLocalId,
 } from "../../../feature-libraries";
 import {
-	RepairDataStore,
 	makeAnonChange,
 	RevisionTag,
 	tagChange,
@@ -121,12 +120,6 @@ const idField = new FieldKind(
 	(a, b) => false,
 	new Set(),
 );
-
-const noRepair: RepairDataStore = {
-	capture: () => {},
-	getNodes: () => assert.fail(),
-	getValue: () => assert.fail(),
-};
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[singleNodeField, valueField, idField].map((field) => [field.identifier, field]),
