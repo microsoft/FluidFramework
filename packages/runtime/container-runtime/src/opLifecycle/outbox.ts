@@ -114,8 +114,9 @@ export class Outbox {
     private compressBatch(batch: IBatch): IBatch {
         if (batch.content.length === 0
             || this.params.config.compressionOptions === undefined
-            || this.params.config.compressionOptions.minimumBatchSizeInBytes > batch.contentSizeInBytes) {
-            // Nothing to do if the batch is empty or if compression is disabled or if we don't need to compress
+            || this.params.config.compressionOptions.minimumBatchSizeInBytes > batch.contentSizeInBytes
+            || this.params.containerContext.submitBatchFn === undefined) {
+            // Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
             return batch;
         }
 
