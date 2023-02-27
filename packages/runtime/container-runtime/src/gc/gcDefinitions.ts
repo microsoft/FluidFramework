@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IGCRuntimeOptions } from "../containerRuntime";
 import { IContainerRuntimeMetadata, ICreateContainerMetadata } from "../summary";
 
 export type GCVersion = number;
@@ -55,6 +54,14 @@ export const sweepAttachmentBlobsKey = "Fluid.GarbageCollection.Test.SweepAttach
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
+
+/**
+ * The maximum snapshot cache expiry in the driver. This is used to calculate the sweep timeout.
+ * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
+ * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days, i.e., any snapshot
+ * in cache will be invalidated before 5 days.
+ */
+export const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
 
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
@@ -230,6 +237,108 @@ export interface IGarbageCollectorCreateParams {
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly activeConnection: () => boolean;
 	readonly getContainerDiagnosticId: () => string;
+}
+
+export interface IGCRuntimeOptions {
+	/**
+	 * Flag that if true, will enable running garbage collection (GC) for a new container.
+	 *
+	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
+	 * and marked as such in the summary. This option enables the mark phase.
+	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
+	 * Sweep phase can be enabled via the "sweepAllowed" option.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	gcAllowed?: boolean;
+
+	/**
+	 * Flag that if true, enables GC's sweep phase for a new container.
+	 *
+	 * This will allow GC to eventually delete unreferenced objects from the container.
+	 * This flag should only be set to true if "gcAllowed" is true.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	sweepAllowed?: boolean;
+
+	/**
+	 * Flag that if true, will disable garbage collection for the session.
+	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
+	 */
+	disableGC?: boolean;
+
+	/**
+	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
+	 * changed or not.
+	 */
+	runFullGC?: boolean;
+
+	/**
+	 * Maximum session duration for a new container. If not present, a default value will be used.
+	 *
+	 * Note: This setting is persisted in the container's summary and cannot be changed.
+	 */
+	sessionExpiryTimeoutMs?: number;
+
+	/**
+	 * Allows additional GC options to be passed.
+	 */
+	[key: string]: any;
+}
+
+/**
+ * The configurations for Garbage Collector that determines what runs and how.
+ */
+export interface IGarbageCollectorConfigs {
+	/**
+	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
+	 * throughout its lifetime.
+	 */
+	readonly gcEnabled: boolean;
+	/**
+	 * Tracks if sweep phase is enabled for this document. This is specified during document creation and doesn't change
+	 * throughout its lifetime.
+	 */
+	readonly sweepEnabled: boolean;
+	/**
+	 * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
+	 * disabled via runtime options or feature flags.
+	 */
+	readonly shouldRunGC: boolean;
+	/**
+	 * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
+	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
+	 */
+	readonly shouldRunSweep: boolean;
+	/**
+	 * If true, bypass optimizations and generate GC data for all nodes irrespective of whether a node changed or not.
+	 */
+	readonly runFullGC: boolean | undefined;
+	/** The time in ms to expire a session for a client for gc. */
+	readonly sessionExpiryTimeoutMs: number | undefined;
+	/** The time after which an unreferenced node is ready to be swept. */
+	readonly sweepTimeoutMs: number | undefined;
+	/** The time after which an unreferenced node is inactive. */
+	readonly inactiveTimeoutMs: number;
+	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
+	readonly testMode: boolean;
+	/**
+	 * Tracks whether GC should run in tombstone mode. In this mode, sweep ready objects are marked as tombstones.
+	 * In interactive (non-summarizer) clients, tombstone objects behave as if they are deleted, i.e., access to them
+	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a staging
+	 * step for sweep where accidental sweep ready objects can be recovered.
+	 */
+	readonly tombstoneMode: boolean;
+	/**
+	 * Tracks whether GC state should be tracked. If true, for unchanged GC data across summaries, a summary
+	 * handle is written to summary instead of a summary tree / blob.
+	 */
+	readonly trackGCState: boolean;
+	/** @see GCFeatureMatrix. */
+	readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
+	/** The version of GC in the base snapshot. */
+	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 }
 
 /** The state of node that is unreferenced. */

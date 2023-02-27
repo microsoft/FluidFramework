@@ -6,7 +6,6 @@
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
-	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,
@@ -27,7 +26,7 @@ export {
 	CompressionAlgorithms,
 } from "./containerRuntime";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { IGCStats } from "./gc";
+export { IGCRuntimeOptions, IGCStats } from "./gc";
 export {
 	IPendingFlush,
 	IPendingLocalState,

@@ -24,7 +24,7 @@ export type RevisionTag = StableId;
  * @returns a `RevisionTag` from the given string, or fails if the string is not a valid `RevisionTag`
  */
 export function assertIsRevisionTag(revision: string): RevisionTag {
-	assert(isRevisionTag(revision), "Expected revision to be valid RevisionTag");
+	assert(isRevisionTag(revision), 0x577 /* Expected revision to be valid RevisionTag */);
 	return revision;
 }
 

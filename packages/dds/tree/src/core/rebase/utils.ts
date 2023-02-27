@@ -83,13 +83,13 @@ export function findCommonAncestor<T extends { parent?: T }>(
 	let pathB: T[] | undefined;
 	if (Array.isArray(descendantA)) {
 		[a, pathA] = descendantA;
-		assert(pathA === undefined || pathA.length === 0, "Path A must be empty");
+		assert(pathA === undefined || pathA.length === 0, 0x578 /* Path A must be empty */);
 	} else {
 		a = descendantA;
 	}
 	if (Array.isArray(descendantB)) {
 		[b, pathB] = descendantB;
-		assert(pathB === undefined || pathB.length === 0, "Path B must be empty");
+		assert(pathB === undefined || pathB.length === 0, 0x579 /* Path B must be empty */);
 	} else {
 		b = descendantB;
 	}

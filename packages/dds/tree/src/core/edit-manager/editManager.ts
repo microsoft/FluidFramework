@@ -173,7 +173,7 @@ export class EditManager<
 		const trunkPath = getPathFromBase(this.trunk, this.trunkBase);
 		assert(
 			this.sequenceMap.size === trunkPath.length,
-			"Expected sequence map to be the same size as the trunk",
+			0x572 /* Expected sequence map to be the same size as the trunk */,
 		);
 		const trunk = Array.from(
 			mapIterable(
@@ -373,7 +373,7 @@ function getPathFromBase<TChange>(
 	const path: GraphCommit<TChange>[] = [];
 	assert(
 		findCommonAncestor([branchHead, path], baseBranchHead) !== undefined,
-		"Expected branches to be related",
+		0x573 /* Expected branches to be related */,
 	);
 	return path;
 }
