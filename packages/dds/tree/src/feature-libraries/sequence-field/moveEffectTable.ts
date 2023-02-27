@@ -210,23 +210,20 @@ function applyMoveEffectsToDest<T>(
 	const result: Mark<T>[] = [];
 
 	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
-	if (effect.mark !== undefined) {
-		result.push(effect.mark);
-	} else {
-		if (!effect.shouldRemove) {
-			const newMark: MoveIn | ReturnTo = {
-				...mark,
-				count: effect.count ?? mark.count,
-			};
-			if (effect.pairedMarkStatus !== undefined) {
-				if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
-					newMark.isSrcConflicted = true;
-				} else {
-					delete newMark.isSrcConflicted;
-				}
+
+	if (!effect.shouldRemove) {
+		const newMark: MoveIn | ReturnTo = {
+			...mark,
+			count: effect.count ?? mark.count,
+		};
+		if (effect.pairedMarkStatus !== undefined) {
+			if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+				newMark.isSrcConflicted = true;
+			} else {
+				delete newMark.isSrcConflicted;
 			}
-			result.push(newMark);
 		}
+		result.push(newMark);
 	}
 
 	if (effect.child !== undefined) {
@@ -256,7 +253,6 @@ function applyMoveEffectsToDest<T>(
 	}
 
 	if (consumeEffect) {
-		delete effect.mark;
 		delete effect.count;
 		delete effect.child;
 	}
@@ -277,9 +273,7 @@ function applyMoveEffectsToSource<T>(
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (effect.mark !== undefined) {
-		result.push(effect.mark);
-	} else if (!effect.shouldRemove) {
+	if (!effect.shouldRemove) {
 		const newMark = clone(mark);
 		newMark.count = effect.count ?? newMark.count;
 		if (effect.modifyAfter !== undefined) {
@@ -334,7 +328,6 @@ function applyMoveEffectsToSource<T>(
 	}
 
 	if (consumeEffect) {
-		delete effect.mark;
 		delete effect.count;
 		delete effect.child;
 		delete effect.modifyAfter;
