@@ -126,10 +126,11 @@ const isCompressed = (message: ISequencedDocumentMessage): boolean => {
 	}
 
 	// This condition holds true for compressed messages, regardless of metadata.
-	// Back-compat self healing mechanism for ADO:, as loaders from
+	// Back-compat self healing mechanism for ADO:3538, as loaders from
 	// version client_v2.0.0-internal.1.2.0 to client_v2.0.0-internal.2.2.0 do not
 	// support adding the proper compression metadata to compressed messages submitted
-	// by the runtime.
+	// by the runtime. Should be removed after the loader reaches sufficient saturation
+	// for a version greater or equal than client_v2.0.0-internal.2.2.0.
 	if (typeof message.contents === "object" && message.contents?.packedContents !== undefined) {
 		return (
 			Object.keys(message.contents).length === 1 &&

@@ -84,7 +84,7 @@ describe("OpDecompressor", () => {
 		assert.strictEqual(result.message.compression, undefined);
 	});
 
-	// Back-compat self healing mechanism for ADO:
+	// Back-compat self healing mechanism for ADO:3538
 	it("Processes single compressed op without compression markers", () => {
 		const result = decompressor.processMessage({
 			...generateCompressedBatchMessage(1),
@@ -172,6 +172,8 @@ describe("OpDecompressor", () => {
 
 	it("Ignores ops without compression", () => {
 		const rootMessage = {
+			// Back-compat self healing mechanism for ADO:3538,
+			// the message should have a `packedContents` property.
 			contents: { some: "contents" },
 			metadata: { meta: "data" },
 			clientId: "clientId",
