@@ -59,13 +59,14 @@ describe("Editing", () => {
 
 			expectJsonTree([tree1, tree2], ["x", "y", "a", "b", "c"]);
 
-			const path = tree2.forest.anchors.locate(anchor);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const { parent, parentField, parentIndex } = tree2.forest.anchors.locate(anchor)!;
 			const expectedPath: UpPath = {
 				parent: undefined,
 				parentField: rootFieldKeySymbol,
 				parentIndex: 3,
 			};
-			assert.deepEqual({ ...path }, expectedPath);
+			assert.deepEqual({ parent, parentField, parentIndex }, expectedPath);
 		});
 
 		it("can rebase a local delete", () => {
