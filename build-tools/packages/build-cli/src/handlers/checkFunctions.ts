@@ -7,7 +7,7 @@ import inquirer from "inquirer";
 import { Machine } from "jssm";
 import path from "path";
 
-import { MonoRepoKind } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepoKind } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
@@ -223,7 +223,7 @@ export const checkHasRemote: StateHandlerFunction = async (
 };
 
 /**
- * Checks that the Fluid build tools are installed.
+ * Checks that the dependencies of a release group or package are installed.
  *
  * @param state - The current state machine state.
  * @param machine - The state machine.
@@ -232,7 +232,7 @@ export const checkHasRemote: StateHandlerFunction = async (
  * @param data - An object with handler-specific contextual data.
  * @returns True if the state was handled; false otherwise.
  */
-export const checkInstallBuildTools: StateHandlerFunction = async (
+export const checkDependenciesInstalled: StateHandlerFunction = async (
 	state: MachineState,
 	machine: Machine<unknown>,
 	testMode: boolean,
@@ -241,30 +241,24 @@ export const checkInstallBuildTools: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context } = data;
+	const { context, releaseGroup } = data;
 	assert(context !== undefined, "Context is undefined.");
+	assert(releaseGroup !== undefined, "Release group is undefined.");
 
-	const installQuestion: inquirer.ConfirmQuestion = {
-		type: "confirm",
-		name: "install",
-		message: `Do you want to install the Fluid build-tools? You don't need to do this if you installed them globally.`,
-	};
+	const packagesToCheck = isReleaseGroup(releaseGroup)
+		? context.packagesInReleaseGroup(releaseGroup)
+		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		  [context.fullPackageMap.get(releaseGroup)!];
 
-	const answer = await inquirer.prompt(installQuestion);
-	if (answer.install === true) {
-		log.info(`Installing build-tools so we can run build:genver`);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const buildToolsMonoRepo = context.repo.releaseGroups.get(MonoRepoKind.BuildTools)!;
-		const ret = await buildToolsMonoRepo.install();
-		if (ret.error) {
-			log.errorLog("Install failed.");
-			BaseStateHandler.signalFailure(machine, state);
-		}
+	const installed = await FluidRepo.ensureInstalled(packagesToCheck, true);
+
+	if (installed) {
+		BaseStateHandler.signalSuccess(machine, state);
 	} else {
-		log.warning(`Skipping installation.`);
+		log.errorLog(`Error installing dependencies for: ${releaseGroup}`);
+		BaseStateHandler.signalFailure(machine, state);
 	}
 
-	BaseStateHandler.signalSuccess(machine, state);
 	return true;
 };
 

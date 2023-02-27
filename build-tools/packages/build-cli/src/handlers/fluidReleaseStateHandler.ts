@@ -19,9 +19,9 @@ import { askForReleaseType } from "./askFunctions";
 import {
 	checkBranchName,
 	checkBranchUpToDate,
+	checkDependenciesInstalled,
 	checkDoesReleaseFromReleaseBranch,
 	checkHasRemote,
-	checkInstallBuildTools,
 	checkMainNextIntegrated,
 	checkNoPrereleaseDependencies,
 	checkOnReleaseBranch,
@@ -226,8 +226,8 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 				break;
 			}
 
-			case "CheckInstallBuildTools": {
-				result = await checkInstallBuildTools(state, machine, testMode, log, data);
+			case "CheckDependenciesInstalled": {
+				result = await checkDependenciesInstalled(state, machine, testMode, log, data);
 				break;
 			}
 
