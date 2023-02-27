@@ -238,7 +238,7 @@ export class ModularChangeFamily
 	}
 
 	/**
-	 * @param change - TODO
+	 * @param change - The change to invert.
 	 * @param repairStore - The store to query for repair data.
 	 */
 	invert(
