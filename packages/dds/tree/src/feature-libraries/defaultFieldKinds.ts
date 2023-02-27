@@ -495,7 +495,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		if (fieldChange !== undefined) {
 			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
 			if (!fieldChange.wasEmpty) {
-				assert(revision !== undefined, 0x478 /* Unable to revert to undefined revision */);
+				assert(revision !== undefined, "Unable to revert to undefined revision");
 				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0] };
 			}
 		}
