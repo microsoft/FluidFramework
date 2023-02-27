@@ -16,8 +16,10 @@ export {
 	gcVersionUpgradeToV2Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
+	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCRuntimeOptions,
 	IGCStats,
 	oneDayMs,
 	runGCKey,
@@ -30,7 +32,11 @@ export {
 	throwOnTombstoneUsageKey,
 	UnreferencedState,
 } from "./gcDefinitions";
-export { sendGCUnexpectedUsageEvent, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
+export {
+	getSnapshotDataFromOldSnapshotFormat,
+	sendGCUnexpectedUsageEvent,
+	shouldAllowGcTombstoneEnforcement,
+} from "./gcHelpers";
 export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,

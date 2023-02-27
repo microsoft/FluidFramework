@@ -340,7 +340,7 @@ export class RunningSummarizer implements IDisposable {
 
 			refSequenceNumber = await this.handleSummaryAck();
 			// A valid Summary Ack must have been processed.
-			assert(refSequenceNumber >= 0, "Invalid ref sequence number");
+			assert(refSequenceNumber >= 0, 0x58f /* Invalid ref sequence number */);
 		}
 	}
 
