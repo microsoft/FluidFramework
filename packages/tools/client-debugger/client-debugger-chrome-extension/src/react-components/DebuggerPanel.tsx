@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Button } from "@fluentui/react";
+import { IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
+import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
 import {
@@ -22,7 +23,7 @@ import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel)";
 
-// TODO
+// TODO: View tabs
 // enum PanelOptions {
 // 	ContainerSummary = "Container Summary",
 // 	ContainerData = "Container Data",
@@ -52,6 +53,8 @@ export function DebuggerPanel(): React.ReactElement {
 			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
 		);
 	}
+
+	const refreshButtonTooltipId = useId("refresh-button-tooltip");
 
 	React.useEffect(() => {
 		/**
@@ -84,12 +87,20 @@ export function DebuggerPanel(): React.ReactElement {
 	}, [setContainers, messageRelay]);
 
 	return containers === undefined ? (
-		<div>
-			<Waiting label="Waiting for Container list." />
-			<Button onClick={(): void => messageRelay.postMessage(getContainerListMessage)}>
-				Search again.
-			</Button>
-		</div>
+		<Stack>
+			<StackItem>
+				<Waiting label="Waiting for Container list." />
+			</StackItem>
+			<StackItem align="center">
+				<TooltipHost content="Connect Container" id={refreshButtonTooltipId}>
+					<IconButton
+						onClick={(): void => messageRelay.postMessage(getContainerListMessage)}
+					>
+						Search again.
+					</IconButton>
+				</TooltipHost>
+			</StackItem>
+		</Stack>
 	) : (
 		<PopulatedDebuggerPanel containers={containers} />
 	);
