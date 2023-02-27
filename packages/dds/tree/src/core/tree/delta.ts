@@ -166,6 +166,7 @@ export type Skip = number;
 export interface NodeChanges<TTree = ProtoNode> {
 	readonly setValue?: Value;
 	readonly fields?: FieldChangeMap<TTree>;
+	readonly valueConstraint?: Value;
 }
 
 /**

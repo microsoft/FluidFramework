@@ -11,6 +11,7 @@ import {
 	keyFromSymbol,
 	LocalFieldKey,
 	symbolFromKey,
+	Value,
 } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import { ChangesetLocalId } from "./crossFieldQueries";
@@ -24,6 +25,7 @@ import { getChangeHandler } from "./modularChangeFamily";
 interface EncodedNodeChangeset {
 	valueChange?: ValueChange;
 	fieldChanges?: EncodedFieldChangeMap;
+	valueConstraint?: Value;
 }
 
 interface EncodedModularChangeset {
@@ -103,6 +105,10 @@ function encodeNodeChangesForJson(
 		encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
 	}
 
+	if (change.valueConstraint !== undefined) {
+		encodedChange.valueConstraint = change.valueConstraint;
+	}
+
 	return encodedChange;
 }
 
@@ -160,6 +166,10 @@ function decodeNodeChangesetFromJson(
 			fieldKinds,
 			encodedChange.fieldChanges,
 		);
+	}
+
+	if (encodedChange.valueConstraint !== undefined) {
+		decodedChange.valueConstraint = encodedChange.valueConstraint;
 	}
 
 	return decodedChange;

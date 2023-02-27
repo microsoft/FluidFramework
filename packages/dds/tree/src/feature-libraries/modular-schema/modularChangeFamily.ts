@@ -214,6 +214,7 @@ export class ModularChangeFamily
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
 		let valueChange: ValueChange | undefined;
+		let valueConstraint: Value | undefined;
 		for (const change of changes) {
 			if (change.change.valueChange !== undefined) {
 				valueChange = clone(change.change.valueChange);
@@ -221,6 +222,9 @@ export class ModularChangeFamily
 			}
 			if (change.change.fieldChanges !== undefined) {
 				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
+			}
+			if (change.change.valueConstraint !== undefined) {
+				valueConstraint = clone(change.change.valueConstraint);
 			}
 		}
 
@@ -232,6 +236,10 @@ export class ModularChangeFamily
 
 		if (composedFieldChanges.size > 0) {
 			composedNodeChange.fieldChanges = composedFieldChanges;
+		}
+
+		if (valueConstraint !== undefined) {
+			composedNodeChange.valueConstraint = valueConstraint;
 		}
 
 		return composedNodeChange;
@@ -449,6 +457,7 @@ export class ModularChangeFamily
 	}
 
 	intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+		// Return empty delta if constraint violated
 		return this.intoDeltaImpl(change.changes, repairStore ?? dummyRepairDataStore, undefined);
 	}
 
@@ -488,11 +497,15 @@ export class ModularChangeFamily
 	}
 
 	private deltaFromNodeChange(
-		{ valueChange, fieldChanges }: NodeChangeset,
+		{ valueChange, fieldChanges, valueConstraint }: NodeChangeset,
 		repairStore: ReadonlyRepairDataStore,
 		path?: UpPath,
 	): Delta.NodeChanges | undefined {
-		if (valueChange === undefined && fieldChanges === undefined) {
+		if (
+			valueChange === undefined &&
+			fieldChanges === undefined &&
+			valueConstraint === undefined
+		) {
 			return undefined;
 		}
 
@@ -516,6 +529,10 @@ export class ModularChangeFamily
 
 		if (fieldChanges !== undefined) {
 			modify.fields = this.intoDeltaImpl(fieldChanges, repairStore, path);
+		}
+
+		if (valueConstraint !== undefined) {
+			modify.valueConstraint = valueConstraint;
 		}
 
 		return modify;
@@ -766,6 +783,20 @@ export class ModularEditBuilder
 	setValue(path: UpPath, value: Value): void {
 		const valueChange: ValueChange = value === undefined ? {} : { value };
 		const nodeChange: NodeChangeset = { valueChange };
+		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+			path.parentIndex,
+			nodeChange,
+		);
+		this.submitChange(
+			path.parent,
+			path.parentField,
+			genericFieldKind.identifier,
+			brand(fieldChange),
+		);
+	}
+
+	addValueConstraint(path: UpPath, currentValue: Value): void {
+		const nodeChange: NodeChangeset = { valueConstraint: currentValue };
 		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
 			path.parentIndex,
 			nodeChange,

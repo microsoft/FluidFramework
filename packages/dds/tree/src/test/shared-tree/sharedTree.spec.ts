@@ -603,6 +603,35 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Constraints", () => {
+		it.only("value changed constraint", async () => {
+			const provider = await TestTreeProvider.create(2);
+			insert(provider.trees[0], 0, "a");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			provider.trees[1].runTransaction((forest, editor) => {
+				editor.setValue(rootPath, "c");
+				return TransactionResult.Apply;
+			});
+
+			provider.trees[0].runTransaction((forest, editor) => {
+				editor.addValueConstraint(rootPath, "a");
+				editor.setValue(rootPath, "b");
+				return TransactionResult.Apply;
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(provider.trees[0], ["c"]);
+			validateRootField(provider.trees[1], ["c"]);
+		});
+	});
+
 	describe("Anchors", () => {
 		it("Anchors can be created and dereferenced", async () => {
 			const provider = await TestTreeProvider.create(1);

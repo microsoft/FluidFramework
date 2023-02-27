@@ -111,6 +111,8 @@ export interface IDefaultEditBuilder {
 		destField: FieldKey,
 		destIndex: number,
 	): void;
+
+	addValueConstraint(path: UpPath, value: Value): void;
 }
 
 /**
@@ -136,6 +138,10 @@ export class DefaultEditBuilder
 
 	public setValue(path: UpPath, value: Value): void {
 		this.modularBuilder.setValue(path, value);
+	}
+
+	public addValueConstraint(path: UpPath, value: Value): void {
+		this.modularBuilder.addValueConstraint(path, value);
 	}
 
 	public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {

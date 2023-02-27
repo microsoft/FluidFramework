@@ -219,6 +219,7 @@ export type IdAllocator = () => ChangesetLocalId;
 export interface NodeChangeset {
 	fieldChanges?: FieldChangeMap;
 	valueChange?: ValueChange;
+	valueConstraint?: Value;
 }
 
 /**
@@ -263,6 +264,7 @@ export interface ModularChangeset {
 	 */
 	maxId?: ChangesetLocalId;
 	changes: FieldChangeMap;
+	constraintViolationCount?: number;
 }
 
 /**
