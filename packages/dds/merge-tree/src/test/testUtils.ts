@@ -8,9 +8,9 @@ import fs from "fs";
 import { IMergeBlock, ISegment, Marker } from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { TextSegment } from "../textSegment";
-import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
+import { ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
-import { AttributionChangeEntry, IAttributionInterpreter, MergeTree } from "../mergeTree";
+import { MergeTree } from "../mergeTree";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { loadText } from "./text";
 
@@ -245,58 +245,4 @@ export function validatePartialLengths(
 		assert.equal(partialLen, len);
 		assert.equal(actualLen, len);
 	}
-}
-
-export function combineInterpreters(
-	...interpreters: IAttributionInterpreter[]
-): IAttributionInterpreter {
-	return {
-		getAttributionChanges: (seg, op, seq) => {
-			const results: AttributionChangeEntry[] = [];
-			for (const interpreter of interpreters) {
-				const deltas = interpreter.getAttributionChanges(seg, op, seq);
-				if (deltas) {
-					results.push(...deltas);
-				}
-			}
-			return results;
-		},
-	};
-}
-
-export function trackProperties(
-	...propertiesToTrack: (string | { propName: string; channelName: string })[]
-): IAttributionInterpreter {
-	const toTrack = propertiesToTrack.map((entry) =>
-		typeof entry === "string" ? { propName: entry, channelName: entry } : entry,
-	);
-	return {
-		getAttributionChanges: (seg: ISegment, op: IMergeTreeOp, seq: number) => {
-			const results: AttributionChangeEntry[] = [];
-			if (op.type === MergeTreeDeltaType.ANNOTATE) {
-				for (const { propName, channelName } of toTrack) {
-					if (op.props[propName] !== undefined) {
-						results.push({
-							type: "prop",
-							dependentPropName: propName,
-							channel: channelName,
-							changes: [{ key: { type: "op", seq } }],
-						});
-					}
-				}
-			} else if (op.type === MergeTreeDeltaType.INSERT) {
-				for (const { propName, channelName } of toTrack) {
-					if (seg.properties?.[propName] !== undefined) {
-						results.push({
-							type: "prop",
-							dependentPropName: propName,
-							channel: channelName,
-							changes: [{ key: { type: "op", seq } }],
-						});
-					}
-				}
-			}
-			return results;
-		},
-	};
 }

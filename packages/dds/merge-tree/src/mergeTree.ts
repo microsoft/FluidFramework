@@ -10,7 +10,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
@@ -56,7 +55,6 @@ import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } fro
 import {
 	ICombiningOp,
 	IMergeTreeDeltaOp,
-	IMergeTreeOp,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
@@ -2605,47 +2603,3 @@ export class MergeTree {
 		);
 	}
 }
-
-// TODO: fast-paths for simple changes, simpler format which also doesn't limit expression
-export interface AttributionChannelChange {
-	key: AttributionKey;
-	start?: number;
-}
-
-export interface AttributionInsertionEntry {
-	type: "insert";
-	changes: AttributionChannelChange[];
-}
-
-export interface AttributionPropEntry {
-	type: "prop";
-	// prop-based attribution needs to be vetted based on pending writes to the property it's derived from. If there's a pending
-	// write to that prop, that overrules this.
-	dependentPropName: string;
-	channel: string;
-	changes: AttributionChannelChange[];
-}
-
-export type AttributionChangeEntry = AttributionInsertionEntry | AttributionPropEntry;
-
-export interface IAttributionInterpreter {
-	getAttributionChanges(
-		segment: ISegment,
-		op: IMergeTreeOp,
-		seq: number,
-	): AttributionChangeEntry[] | undefined;
-}
-
-export const defaultInterpreter: IAttributionInterpreter = {
-	getAttributionChanges: (seg: ISegment, op: IMergeTreeOp, seq: number) => {
-		const results: AttributionChangeEntry[] = [];
-		if (op.type === MergeTreeDeltaType.INSERT) {
-			// TODO: some kind of validation or API contract that seg.seq is set in time here.
-			results.push({
-				type: "insert",
-				changes: [{ key: { type: "op", seq } }],
-			});
-		}
-		return results;
-	},
-};

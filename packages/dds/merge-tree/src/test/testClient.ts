@@ -469,14 +469,7 @@ export class TestClient extends Client {
 	 */
 	public getAllAttributionSeqs(channel?: string): (number | AttributionKey | undefined)[] {
 		const seqs: (number | AttributionKey | undefined)[] = [];
-		let segmentsWithAttribution = 0;
-		let segmentsWithoutAttribution = 0;
 		this.walkAllSegments((segment) => {
-			if (segment.attribution) {
-				segmentsWithAttribution++;
-			} else {
-				segmentsWithoutAttribution++;
-			}
 			for (let i = 0; i < segment.cachedLength; i++) {
 				const key = segment.attribution?.getAtOffset(i, channel);
 				seqs.push(key?.type === "op" ? key.seq : key);
@@ -484,7 +477,6 @@ export class TestClient extends Client {
 			return true;
 		});
 
-		assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
 		return seqs;
 	}
 

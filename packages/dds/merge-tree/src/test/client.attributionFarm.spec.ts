@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
 import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { defaultInterpreter } from "../mergeTree";
 import {
 	IMergeTreeOperationRunnerConfig,
 	removeRange,
@@ -20,7 +19,7 @@ import {
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
-import { combineInterpreters, trackProperties } from "./testUtils";
+import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy";
 
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
 	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
@@ -49,10 +48,10 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 						new TestClient({
 							attribution: {
 								track: true,
-								interpreter: combineInterpreters(
-									trackProperties("trackedProp1"),
-									defaultInterpreter,
-								),
+								policyFactory:
+									createPropertyTrackingAndInsertionAttributionPolicyFactory(
+										"trackedProp1",
+									),
 							},
 						}),
 				);

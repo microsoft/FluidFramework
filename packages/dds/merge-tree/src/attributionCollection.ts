@@ -9,17 +9,7 @@ import {
 	OpAttributionKey,
 	DetachedAttributionKey,
 } from "@fluidframework/runtime-definitions";
-import { PropertiesManager } from "./segmentPropertiesManager";
-import { AttributionPolicy, AttributionChangeEntry, AttributionChannelChange } from "./mergeTree";
-import { Client } from "./client";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import {
-	MergeTreeDeltaCallback,
-	MergeTreeMaintenanceCallback,
-	MergeTreeMaintenanceType,
-} from "./mergeTreeDeltaCallback";
 import { ISegment } from "./mergeTreeNodes";
-import { MergeTreeDeltaType } from "./ops";
 
 /**
  * @internal
@@ -112,10 +102,7 @@ export interface IAttributionCollection<T> {
 	clone(): IAttributionCollection<T>;
 
 	/** @internal */
-	ackDeltas(
-		deltas: AttributionChangeEntry[],
-		propertyManager: PropertiesManager | undefined,
-	): void;
+	addOrUpdateChannel(name: string | undefined, channel: IAttributionCollection<T>);
 }
 
 // note: treats null and undefined as equivalent
@@ -289,43 +276,20 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return copy;
 	}
 
-	public ackDeltas(
-		deltas: AttributionChangeEntry[],
-		propertyManager: PropertiesManager | undefined,
-	): void {
-		const addKeysToCollection = (
-			collection: AttributionCollection,
-			changes: AttributionChannelChange[],
-		): void => {
-			collection.offsets = [0];
-			collection.keys = [];
-			for (const change of changes) {
-				assert(change.key.type === "op", "non-op based attribution keys unsupported.");
-				collection.keys.push(change.key);
-				if (change.start !== undefined && change.start > 0) {
-					collection.offsets.push(change.start);
-				}
-			}
-		};
-		for (const delta of deltas) {
-			switch (delta.type) {
-				case "insert": {
-					// TODO: With current representation, consider sorting here.
-					// Note: lots of implicit assumptions here
-					addKeysToCollection(this, delta.changes);
-					break;
-				}
-				case "prop": {
-					if (!propertyManager?.hasPendingProperty(delta.dependentPropName)) {
-						this.channels ??= {};
-						const collection = new AttributionCollection(this.length);
-						addKeysToCollection(collection, delta.changes);
-						this.channels[delta.channel] = collection;
-					}
-					break;
-				}
-				default:
-					break;
+	public addOrUpdateChannel(name: string | undefined, channel: AttributionCollection) {
+		if (name === undefined) {
+			assert(
+				channel.length === this.length,
+				"AttributionCollection channel update should have consistent segment length",
+			);
+			this.offsets = [...channel.offsets];
+			this.keys = [...channel.keys];
+		} else {
+			this.channels ??= {};
+			if (this.channels[name] !== undefined) {
+				this.channels[name].addOrUpdateChannel(undefined, channel);
+			} else {
+				this.channels[name] = channel;
 			}
 		}
 	}
@@ -473,82 +437,4 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 		return blobContents;
 	}
-}
-
-/**
- * @alpha
- * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
- * Content is only attributed at ack time, unless the container is in a detached state.
- * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
- */
-export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
-	let unsubscribe: undefined | (() => void);
-	return {
-		attach: (client: Client) => {
-			assert(
-				unsubscribe === undefined,
-				0x557 /* cannot attach to multiple clients at once */,
-			);
-			const deltaCallback: MergeTreeDeltaCallback = (
-				opArgs,
-				{ deltaSegments, operation },
-			) => {
-				if (operation !== MergeTreeDeltaType.INSERT) {
-					return;
-				}
-
-				for (const { segment } of deltaSegments) {
-					if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
-						const key: AttributionKey =
-							segment.seq === UniversalSequenceNumber
-								? { type: "detached", id: 0 }
-								: { type: "op", seq: segment.seq };
-						segment.attribution ??= new AttributionCollection(
-							segment.cachedLength,
-							key,
-						);
-					}
-				}
-			};
-
-			const maintenanceCallback: MergeTreeMaintenanceCallback = (
-				{ deltaSegments, operation },
-				opArgs,
-			) => {
-				if (
-					operation !== MergeTreeMaintenanceType.ACKNOWLEDGED ||
-					opArgs === undefined ||
-					opArgs.op.type !== MergeTreeDeltaType.INSERT
-				) {
-					return;
-				}
-				for (const { segment } of deltaSegments) {
-					assert(
-						segment.seq !== undefined,
-						0x558 /* segment.seq should be set after ack. */,
-					);
-					segment.attribution = new AttributionCollection(segment.cachedLength, {
-						type: "op",
-						seq: segment.seq,
-					});
-				}
-			};
-
-			client.on("delta", deltaCallback);
-			client.on("maintenance", maintenanceCallback);
-
-			unsubscribe = () => {
-				client.off("delta", deltaCallback);
-				client.off("maintenance", maintenanceCallback);
-			};
-		},
-		detach: () => {
-			unsubscribe?.();
-			unsubscribe = undefined;
-		},
-		get isAttached() {
-			return unsubscribe !== undefined;
-		},
-		serializer: AttributionCollection,
-	};
 }

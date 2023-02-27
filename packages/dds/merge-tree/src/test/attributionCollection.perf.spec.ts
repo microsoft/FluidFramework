@@ -16,7 +16,6 @@ import {
 import { TextSegmentGranularity } from "../textSegment";
 import { compareNumbers, ISegment } from "../mergeTreeNodes";
 import { RedBlackTree } from "../collections";
-import { AttributionChangeEntry } from "../mergeTree";
 
 interface IAttributionCollectionCtor {
 	new (length: number, key?: AttributionKey): IAttributionCollection<AttributionKey>;
@@ -256,24 +255,8 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 		}
 	}
 
-	public ackDeltas(deltas: AttributionChangeEntry[]): void {
+	public addOrUpdateChannel(): void {
 		throw new Error("unimplmeented");
-		// for (const delta of deltas) {
-		//     // TODO: handle, test
-		//     assert(delta.type === "insert", "unhandled type");
-		//     // TODO: With current representation, consider sorting here.
-		//     // Note: lots of implicit assumptions here
-		//     this.
-		//     this.offsets = [0];
-		//     this.seqs = [];
-		//     for (const change of delta.changes) {
-		//         assert(change.key.type === "op", "non-op based attribution keys unsupported.");
-		//         this.seqs.push(change.key.seq);
-		//         if (change.start !== undefined && change.start > 0) {
-		//             this.offsets.push(change.start)
-		//         }
-		//     }
-		// }
 	}
 
 	/**

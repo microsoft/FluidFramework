@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
-import { createInsertOnlyAttributionPolicy } from "../attributionCollection";
+import { createInsertOnlyAttributionPolicy } from "../attributionPolicy";
 // import { trackProperties } from "./testUtils";
 import { loadSnapshot, TestString } from "./snapshot.utils";
 

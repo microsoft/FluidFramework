@@ -5,8 +5,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+import {
+	createInsertOnlyAttributionPolicy,
+	createPropertyTrackingAttributionPolicyFactory,
+} from "../attributionPolicy";
 import { TestClient } from "./testClient";
-import { trackProperties } from "./testUtils";
 
 // Note: most of the attribution functionality isn't implemented directly on client. These tests are behavioral verifications
 // for the attribution data stored on a single client's view over the course of a collaborative session. This is somewhat
@@ -23,9 +26,14 @@ describe("Client attribution", () => {
 		seq = 0;
 	});
 
-	describe("using the default interpreter", () => {
+	describe("using insert-only attribution", () => {
 		beforeEach(() => {
-			client = new TestClient({ attribution: { track: true } });
+			client = new TestClient({
+				attribution: {
+					track: true,
+					policyFactory: createInsertOnlyAttributionPolicy,
+				},
+			});
 			client.startOrUpdateCollaboration(localUserLongId);
 		});
 
@@ -59,13 +67,16 @@ describe("Client attribution", () => {
 		});
 	});
 
-	describe("using an interpreter which annotates only a specific property", () => {
+	describe("using foo-property-only annotation", () => {
 		const channelName = "fooProp";
 		beforeEach(() => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					interpreter: trackProperties({ channelName, propName: "foo" }),
+					policyFactory: createPropertyTrackingAttributionPolicyFactory({
+						channelName,
+						propName: "foo",
+					}),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
@@ -145,8 +156,11 @@ describe("Client attribution", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					interpreter: trackProperties(
-						{ channelName: channelName1, propName: "foo" },
+					policyFactory: createPropertyTrackingAttributionPolicyFactory(
+						{
+							channelName: channelName1,
+							propName: "foo",
+						},
 						{ channelName: channelName2, propName: "bar" },
 					),
 				},
