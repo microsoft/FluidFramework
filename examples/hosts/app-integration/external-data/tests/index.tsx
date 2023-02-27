@@ -9,27 +9,9 @@ import ReactDOM from "react-dom";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import { TaskListContainerRuntimeFactory } from "../src/model";
-import type { IAppModel, ITaskList } from "../src/model-interface";
+import type { IAppModel } from "../src/model-interface";
 import { TaskListView } from "../src/view";
 
-/**
- * The prop for the TestView FC wrapper. Used to pass tasklist to TaskListView.
- */
-export interface ITestViewProps {
-	/**
-	 * The Task List app model to be visualized.
-	 */
-	taskList: ITaskList;
-}
-/**
- * This is a functional component wrapper for TaskList view, which is needed to use and pass in state.
- * @param props -the taskList prop used by the TaskListView component.
- * @returns TaskListComponent with React hooks passed in.
- */
-export const TestView: React.FC<ITestViewProps> = (props: ITestViewProps) => {
-	const { taskList } = props;
-	return <TaskListView taskList={taskList} />;
-};
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -65,7 +47,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	document.title = id;
 
 	// Render it
-	ReactDOM.render(<TestView taskList={model.taskList} />, element);
+	ReactDOM.render(<TaskListView taskList={model.taskList} />, element);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation
