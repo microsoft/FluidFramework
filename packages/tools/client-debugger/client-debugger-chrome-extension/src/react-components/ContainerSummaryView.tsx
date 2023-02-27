@@ -92,7 +92,24 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 		return <Waiting label="Waiting for Container Summary data." />;
 	}
 
-	// TODO: connect/disconnect, close handlers
+	function tryConnect(): void {
+		// TODO: post message requesting container connect
+	}
 
-	return <_ContainerSummaryView {...containerState} />;
+	function forceDisconnect(): void {
+		// TODO: post message requesting container disconnect
+	}
+
+	function closeContainer(): void {
+		// TODO: post message requesting container close
+	}
+
+	return (
+		<_ContainerSummaryView
+			{...containerState}
+			tryConnect={tryConnect}
+			forceDisconnect={forceDisconnect}
+			closeContainer={closeContainer}
+		/>
+	);
 }

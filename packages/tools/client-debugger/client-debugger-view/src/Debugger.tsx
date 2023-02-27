@@ -4,6 +4,7 @@
  */
 import { IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
+import { Resizable } from "re-resizable";
 import React from "react";
 
 import {
@@ -114,10 +115,21 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 	);
 
 	return (
-		<>
+		<Resizable
+			style={{
+				position: "absolute",
+				top: "0px",
+				right: "0px",
+				bottom: "0px",
+				zIndex: "2",
+				backgroundColor: "lightgray", // TODO: remove
+			}}
+			defaultSize={{ width: 400, height: "100%" }}
+			className={"debugger-panel"}
+		>
 			{selectionView}
 			{view}
-		</>
+		</Resizable>
 	);
 }
 

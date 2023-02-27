@@ -57,7 +57,14 @@ export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_
 export type ContainerSummaryViewProps = HasClientDebugger;
 
 // @public
-export type _ContainerSummaryViewProps = ContainerStateMetadata;
+export interface _ContainerSummaryViewProps extends ContainerStateMetadata {
+    // (undocumented)
+    closeContainer(): void;
+    // (undocumented)
+    forceDisconnect(): void;
+    // (undocumented)
+    tryConnect(): void;
+}
 
 // @public
 export const defaultRenderOptions: Required<RenderOptions>;

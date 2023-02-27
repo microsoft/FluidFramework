@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Stack, StackItem } from "@fluentui/react";
+import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
+import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
 import { ContainerStateMetadata } from "@fluid-tools/client-debugger";
@@ -84,6 +85,13 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			closed={isContainerClosed}
 			clientId={myClientId}
 			audienceId={myClientConnection?.user.id}
+			tryConnect={(): void => container.connect()}
+			forceDisconnect={(): void =>
+				container.disconnect(/* TODO: Specify debugger reason here once it is supported */)
+			}
+			closeContainer={(): void =>
+				container.close(/* TODO: Specify debugger reason here once it is supported */)
+			}
 		/>
 	);
 }
@@ -91,7 +99,11 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 /**
  * {@link _ContainerSummaryView} input props.
  */
-export type _ContainerSummaryViewProps = ContainerStateMetadata;
+export interface _ContainerSummaryViewProps extends ContainerStateMetadata {
+	tryConnect(): void;
+	forceDisconnect(): void;
+	closeContainer(): void;
+}
 
 /**
  * Debugger view displaying basic Container stats.
@@ -102,7 +114,17 @@ export type _ContainerSummaryViewProps = ContainerStateMetadata;
  * @internal
  */
 export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React.ReactElement {
-	const { id, attachState, connectionState, closed, clientId, audienceId } = props;
+	const {
+		id,
+		attachState,
+		connectionState,
+		closed,
+		clientId,
+		audienceId,
+		tryConnect,
+		forceDisconnect,
+		closeContainer,
+	} = props;
 
 	// Build up status string
 	const statusComponents: string[] = [];
@@ -146,6 +168,70 @@ export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React.
 					</span>
 				)}
 			</StackItem>
+			<StackItem align="end">
+				<ActionsBar
+					isContainerConnected={connectionState === ConnectionState.Connected}
+					tryConnect={tryConnect}
+					forceDisconnect={forceDisconnect}
+					closeContainer={closeContainer}
+				/>
+			</StackItem>
+		</Stack>
+	);
+}
+
+interface ActionsBarProps {
+	isContainerConnected: boolean;
+	tryConnect(): void;
+	forceDisconnect(): void;
+	closeContainer(): void;
+}
+
+function ActionsBar(props: ActionsBarProps): React.ReactElement {
+	const { isContainerConnected, tryConnect, forceDisconnect, closeContainer } = props;
+
+	const connectButtonTooltipId = useId("connect-button-tooltip");
+	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
+	const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
+
+	const changeConnectionStateButton = isContainerConnected ? (
+		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
+			<IconButton
+				onClick={forceDisconnect}
+				menuIconProps={{ iconName: "PlugDisconnected" }}
+				aria-describedby={disconnectButtonTooltipId}
+			/>
+		</TooltipHost>
+	) : (
+		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
+			<IconButton
+				onClick={tryConnect}
+				menuIconProps={{ iconName: "PlugConnected" }}
+				aria-describedby={connectButtonTooltipId}
+			/>
+		</TooltipHost>
+	);
+
+	const disposeContainerButton = (
+		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
+			<IconButton
+				onClick={closeContainer}
+				menuIconProps={{ iconName: "Delete" }}
+				aria-describedby={disposeContainerButtonTooltipId}
+			/>
+		</TooltipHost>
+	);
+
+	const itemStyles: IStackItemStyles = {
+		root: {
+			padding: "5px",
+		},
+	};
+
+	return (
+		<Stack horizontal>
+			<StackItem styles={itemStyles}>{changeConnectionStateButton}</StackItem>
+			<StackItem styles={itemStyles}>{disposeContainerButton}</StackItem>
 		</Stack>
 	);
 }

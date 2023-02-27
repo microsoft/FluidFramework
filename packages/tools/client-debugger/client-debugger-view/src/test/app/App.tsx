@@ -10,7 +10,6 @@ import {
 	createTheme,
 	mergeStyles,
 } from "@fluentui/react";
-import { Resizable } from "re-resizable";
 import React from "react";
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -30,7 +29,6 @@ import {
 } from "../ClientUtilities";
 import { CounterWidget } from "../widgets";
 import { initializeFluentUiIcons } from "../../InitializeIcons";
-import { FluidClientDebuggers } from "../../Debugger";
 
 // Ensure FluentUI icons are initialized.
 initializeFluentUiIcons();
@@ -215,9 +213,6 @@ export function App(): React.ReactElement {
 	const view = (
 		<Stack horizontal style={{ height: "100%" }}>
 			<StackItem style={{ height: "100%" }}>
-				<DebuggerPanel />
-			</StackItem>
-			<StackItem style={{ height: "100%" }}>
 				{sharedContainer === undefined ? (
 					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 						<Spinner />
@@ -341,26 +336,4 @@ function CounterView(props: CounterViewProps): React.ReactElement {
 	}, [sharedCounterHandle, setSharedCounter]);
 
 	return sharedCounter === undefined ? <Spinner /> : <CounterWidget counter={sharedCounter} />;
-}
-
-/**
- * Renders drop down to show more than 2 containers and manage the selected container in the debug view for an active
- * debugger session registered using {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
- *
- * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
- */
-function DebuggerPanel(): React.ReactElement {
-	return (
-		<Resizable
-			style={{
-				backgroundColor: "rgba(180, 180, 180, 0.85)",
-			}}
-			defaultSize={{ width: 400, height: "100%" }}
-			minHeight="100%"
-			enable={{ right: true }}
-			className={"debugger-panel"}
-		>
-			<FluidClientDebuggers />
-		</Resizable>
-	);
 }
