@@ -18,7 +18,7 @@ import { DataObjectsView } from "./DataObjectsView";
 // - Move Container action bar (connection / disposal buttons) to summary header, rather than in
 //   the Container data view.
 
-// Ensure FluentUI icons are initialized.
+// Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
 
 /**

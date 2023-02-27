@@ -12,8 +12,12 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
 import { HasClientDebugger } from "../CommonProps";
+import { initializeFluentUiIcons } from "../InitializeIcons";
 import { useMyClientConnection, useMyClientId } from "../ReactHooks";
 import { connectionStateToString } from "../Utilities";
+
+// Ensure FluentUI icons are initialized for use below.
+initializeFluentUiIcons();
 
 // TODOs:
 // - Add info tooltips (with question mark icons?) for each piece of Container status info to
