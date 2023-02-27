@@ -226,12 +226,6 @@ describe("Value field changesets", () => {
 			],
 		};
 
-		const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
-			assert.equal(revision, detachedBy);
-			assert.equal(index, 0);
-			assert.equal(count, 1);
-			return [singleTextCursor(tree1)];
-		};
 		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1);
 		assertFieldChangesEqual(actual, expected);
 	});
@@ -411,12 +405,6 @@ describe("Optional field changesets", () => {
 			],
 		};
 
-		const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
-			assert.equal(revision, detachedBy);
-			assert.equal(index, 0);
-			assert.equal(count, 1);
-			return [singleTextCursor(tree1)];
-		};
 		const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1);
 		assertFieldChangesEqual(actual, expected);
 	});

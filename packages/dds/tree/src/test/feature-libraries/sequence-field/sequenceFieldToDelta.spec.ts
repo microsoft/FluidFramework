@@ -141,12 +141,6 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, dummyNodeChange);
 			return dummyNodeDelta;
 		};
-		function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
-			assert.equal(revision, tag);
-			assert.equal(index, 0);
-			assert.equal(count, 1);
-			return contentCursor;
-		}
 		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
 		const expected: Delta.FieldChanges = {
 			shallow: [
