@@ -15,7 +15,7 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskList,
-	TaskData,
+	TaskListData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 
