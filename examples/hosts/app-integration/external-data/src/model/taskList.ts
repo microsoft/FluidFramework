@@ -249,7 +249,10 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		// TODO: Delete any items that are in the root but missing from the external data
-		for (const [id, { name: incomingName, priority: incomingPriority }] of incomingExternalData) {
+		for (const [
+			id,
+			{ name: incomingName, priority: incomingPriority },
+		] of incomingExternalData) {
 			// Write external data into externalDataSnapshot map.
 			const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
 			// Create a new task because it doesn't exist already
@@ -285,7 +288,7 @@ export class TaskList extends DataObject implements ITaskList {
 				};
 				task.externalDataSnapshot = externalDataSnapshotTask;
 			}
-		};
+		}
 	}
 	/**
 	 * Save the current data in the container back to the external data source.
