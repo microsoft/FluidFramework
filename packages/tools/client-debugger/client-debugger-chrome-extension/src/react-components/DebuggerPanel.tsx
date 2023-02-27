@@ -23,13 +23,6 @@ import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel)";
 
-// TODO: View tabs
-// enum PanelOptions {
-// 	ContainerSummary = "Container Summary",
-// 	ContainerData = "Container Data",
-// 	Audience = "Audience",
-// }
-
 /**
  * Message sent to the webpage to query for the full container list.
  */

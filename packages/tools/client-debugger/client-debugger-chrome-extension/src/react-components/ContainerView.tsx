@@ -10,6 +10,13 @@ import { HasContainerId } from "@fluid-tools/client-debugger-view";
 
 import { ContainerSummaryView } from "./ContainerSummaryView";
 
+// TODO: View tabs
+// enum PanelOptions {
+// 	ContainerSummary = "Container Summary",
+// 	ContainerData = "Container Data",
+// 	Audience = "Audience",
+// }
+
 /**
  * {@link ContainerView} input props.
  */
