@@ -732,19 +732,6 @@ describe("ModularChangeFamily", () => {
 				beforeShallow: [{ index: 0, setValue: testValue }],
 			};
 			const expectedDelta: Delta.Root = new Map([[fieldA, fieldADelta]]);
-			const repair: RepairDataStore = {
-				capture: (TreeDestruction) => assert.fail(),
-				getNodes: () => assert.fail(),
-				getValue: (revision, path) => {
-					assert.equal(revision, detachedBy);
-					assert.deepEqual(path, {
-						parent: undefined,
-						parentField: fieldA,
-						parentIndex: 0,
-					});
-					return testValue;
-				},
-			};
 			const actual = family.intoDelta(nodeValueRevert);
 			assertDeltaEqual(actual, expectedDelta);
 		});
