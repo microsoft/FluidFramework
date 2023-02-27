@@ -99,16 +99,20 @@ describeInstallVersions(
 		requestAbsoluteVersions: [loaderWithoutCompressionField],
 	},
 	/* timeoutMs */ 50000,
-)("Op Compression self-healing with old loader", () =>
-	compressionSuite(async () =>
-		getVersionedTestObjectProvider(
+)("Op Compression self-healing with old loader", (getProvider) =>
+	compressionSuite(async () => {
+		const provider = getProvider();
+		return getVersionedTestObjectProvider(
 			pkgVersion, // base version
 			loaderWithoutCompressionField, // loader version
-			undefined, // driver
+			{
+				type: provider.driver.type,
+				version: pkgVersion,
+			}, // driver version
 			pkgVersion, // runtime version
 			pkgVersion, // datastore runtime version
-		),
-	),
+		);
+	}),
 );
 
 const generateRandomStringOfSize = (sizeInBytes: number): string =>
