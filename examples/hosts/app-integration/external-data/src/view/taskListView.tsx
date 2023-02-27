@@ -24,7 +24,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	);
 	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
-		const updateFromRemotePriority = (): void => {
+		const updatePriorityFromFluid = (): void => {
 			if (priorityRef.current !== null) {
 				priorityRef.current.value = task.draftPriority.toString();
 			}
@@ -33,11 +33,11 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			setExternalDataSnapshot(task.externalDataSnapshot);
 			setShowConflictUI(conflictUIVisible);
 		};
-		task.on("draftPriorityChanged", updateFromRemotePriority);
+		task.on("draftPriorityChanged", updatePriorityFromFluid);
 		task.on("changesAvailable", updateExternalSnapshotData);
-		updateFromRemotePriority();
+		updatePriorityFromFluid();
 		return (): void => {
-			task.off("draftPriorityChanged", updateFromRemotePriority);
+			task.off("draftPriorityChanged", updatePriorityFromFluid);
 			task.off("changesAvailable", updateExternalSnapshotData);
 		};
 	}, [task, priorityRef]);

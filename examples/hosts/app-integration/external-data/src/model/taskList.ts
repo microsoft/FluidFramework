@@ -249,7 +249,7 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		// TODO: Delete any items that are in the root but missing from the external data
-		incomingExternalData.map(([id, { name: incomingName, priority: incomingPriority }]) => {
+		for (const [id, { name: incomingName, priority: incomingPriority }] of incomingExternalData) {
 			// Write external data into externalDataSnapshot map.
 			const currentTask = this.externalDataSnapshot.get<ExternalSnapshotTask>(id);
 			// Create a new task because it doesn't exist already
@@ -271,7 +271,7 @@ export class TaskList extends DataObject implements ITaskList {
 			if (task === undefined) {
 				// A new task was added from external source, add it to the Fluid data.
 				this.addDraftTask(id, incomingName, incomingPriority);
-				return;
+				continue;
 			}
 			if (
 				task.draftName.getText() !== incomingName ||
@@ -285,7 +285,7 @@ export class TaskList extends DataObject implements ITaskList {
 				};
 				task.externalDataSnapshot = externalDataSnapshotTask;
 			}
-		});
+		};
 	}
 	/**
 	 * Save the current data in the container back to the external data source.
