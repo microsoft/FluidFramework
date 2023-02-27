@@ -53,7 +53,7 @@ import {
 import { DefaultChangeFamily, DefaultChangeset, EditManagerIndex, ForestIndex, SchemaIndex } from "@fluid-internal/tree/dist/feature-libraries";
 import { SharedTreeCore } from "@fluid-internal/tree/dist/shared-tree-core";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import { initializeWorkspace, Workspace } from "./workspace";
 
@@ -110,6 +110,7 @@ const appSchema: SchemaData = {
 
 export class PathElem {
     constructor(
+        public readonly parentIndex: number,
         public readonly fieldKey: LocalFieldKey,
         public readonly fieldKind: FieldKindIdentifier | undefined,
         public readonly fieldSchemaIdentifiers: ReadonlySet<TreeSchemaIdentifier>
@@ -156,8 +157,8 @@ export class Path {
     }
     toExpr(): string {
         return this.content.length > 0 ? this.content.map(pathElem => {
-            const typeExpr = `[${pathElem.typeArray.join(',')}]`;
-            return `${pathElem.fieldKey}:${typeExpr}`;
+            const typeExpr = `(${pathElem.typeArray.join(',')})`;
+            return `[${pathElem.parentIndex}].${pathElem.fieldKey}:${typeExpr}`;
         }).join('.') : 'root';
     }
 }
@@ -168,6 +169,7 @@ enum Mode {
 }
 
 export class PathVisitor implements DeltaVisitor {
+    protected readonly parentIndexVector: number[] = [];
     protected readonly path: Path = new Path();
     protected mode: Mode | undefined;
     constructor(
@@ -185,8 +187,15 @@ export class PathVisitor implements DeltaVisitor {
     onMoveOut(index: number, count: number, id: Delta.MoveId): void { console.log('onMoveOut', index, count); }
     onMoveIn(index: number, count: number, id: Delta.MoveId): void { console.log('onMoveIn', index, count); }
     onSetValue(value: Value): void { console.log('onSetValue', value); }
-    enterNode(index: number): void { this.mode = Mode.Node; }
-    exitNode(index: number): void { this.mode = undefined; }
+    enterNode(index: number): void {
+        this.mode = Mode.Node;
+        this.parentIndexVector.push(index);
+    }
+    exitNode(index: number): void {
+        this.mode = undefined;
+        const foundIndex = this.parentIndexVector.pop();
+        if (foundIndex !== index) throw new Error(`inconsistent parent index state; expected ${index} found ${foundIndex}`);
+    }
     enterField(fieldKey: FieldKey): void {
         this.mode = Mode.Field;
         if (isLocalKey(fieldKey)) {
@@ -206,7 +215,8 @@ export class PathVisitor implements DeltaVisitor {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             const fieldKindIdentifier = localFieldSchema.kind;
-            this.path.push(new PathElem(fieldKey, fieldKindIdentifier, fieldSchemaIdentifiers));
+            const parentIndex = this.parentIndexVector[this.parentIndexVector.length - 1];
+            this.path.push(new PathElem(parentIndex, fieldKey, fieldKindIdentifier, fieldSchemaIdentifiers));
         } else if (isGlobalFieldKey(fieldKey) && fieldKey === rootFieldKeySymbol) {
             //
         }
@@ -238,23 +248,26 @@ export class DomainAdapter extends PathVisitor {
                 jsonArray.push(jsonableTreeFromCursor(node));
             }
             const values: Int32[] = jsonArray.map(json => typedInt32(json));
-            this.listener.onInsert(this.path, index, values);
+            const parentIndex = this.path.last().parentIndex;
+            this.listener.onInsert(parentIndex, index, values);
         }
     }
     onDelete(index: number, count: number): void {
         if (this.filter.equals(this.path)) {
-            this.listener.onDelete(this.path, index, count);
+            const parentIndex = this.path.last().parentIndex;
+            this.listener.onDelete(parentIndex, index, count);
         }
     }
 }
 
 export interface DomainListener {
-    onDelete: (path: Path, index: number, count: number) => void;
-    onInsert: (path: Path, index: number, values: Int32[]) => void;
+    onDelete: (row: number, col: number, count: number) => void;
+    onInsert: (row: number, col: number, values: Int32[]) => void;
 }
 
+export type Display = (fn: (drawValues: number[][]) => number[][]) => void;
+
 export default function App() {
-    const [rollToggle, setRollToggle] = useState<boolean>(false);
     const [workspace, setWorkspace] = useState<Workspace>();
     const [drawValues, setDrawValues] = useState<number[][]>([
         [-1, -1, -1, -1, -1],
@@ -262,17 +275,42 @@ export default function App() {
         [-1, -1, -1, -1, -1]
     ]);
     const containerId = window.location.hash.substring(1) || undefined;
-    const diceListener: DomainListener = {
-        onDelete(path: Path, index: number, count: number): void {
-            console.log(`Callback on DELETE  at index ${index} ${count} domain  values ${path.toExpr()}`);
-        },
-        onInsert(path: Path, index: number, values: Int32[]): void {
-            console.log(`Callback on INSERT at index ${index} ${values.length} domain values`);
-            for (const value of values) {
-                if (value !== undefined) {
-                    console.log(`  - Callback details on INSERT domain value ${value[valueSymbol]} type ${value[typeNameSymbol]} ${path.toExpr()}`);
+
+    /**
+     * The domain listener updates now the UI
+     */
+    const drawListener: DomainListener = {
+        onDelete(row: number, col: number, count: number): void {
+            console.log(`DELETE at row:${row} col:${col} ${count} domain  values`);
+            setDrawValues(
+                rows => {
+                    const newRows = rows.map(
+                        (drawRow, drawRowIndex) => {
+                            if (drawRowIndex === row)
+                                drawRow.splice(col, count);
+                            return drawRow;
+                        });
+                    for (const [drawRowIndex, drawRow] of newRows.entries()) {
+                        if (drawRow !== undefined && drawRow.length === 0) {
+                            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                            delete newRows[drawRowIndex];
+                        }
+                    }
+                    return newRows;
                 }
-            }
+            );
+        },
+        onInsert(row: number, col: number, values: Int32[]): void {
+            console.log(`INSERT at row:${row}, col:${col} ${values.length} domain values`);
+            const numbers: number[] = values.map(value => value[valueSymbol] as number);
+            setDrawValues(
+                rows => rows.map(
+                    (drawRow, drawRowIndex) => {
+                        if (drawRowIndex === row)
+                            drawRow.splice(col, numbers.length, ...numbers);
+                        return drawRow;
+                    })
+            );
         }
     };
 
@@ -285,26 +323,18 @@ export default function App() {
             }
             setWorkspace(myWorkspace);
             myWorkspace.tree.storedSchema.update(appSchema);
-            myWorkspace.tree.on("op", (event) => {
-                setDrawValues(readDrawValues(myWorkspace));
-            });
             myWorkspace.tree.on("error", (event) => {
                 console.log("Tree error received!");
             });
             const listenPath = buildSchemaPath([drawKeys, valueKeys], appSchema);
-            registerPathOnIndex(myWorkspace, listenPath, diceListener);
+            registerPathOnIndex(myWorkspace, listenPath, drawListener);
             if (first) {
                 insertDrawValues(myWorkspace);
             }
+            return myWorkspace;
         }
-        initWorkspace();
+        initWorkspace().then((w) => setDrawValues(readDrawValues(w)));
     }, []);
-
-    useEffect(() => {
-        if (rollToggle) {
-            many();
-        }
-    }, [drawValues, rollToggle]);
 
     const all = () => {
         updateAllValues(workspace!);
@@ -330,10 +360,6 @@ export default function App() {
         deleteAllValues(workspace!);
     };
 
-    const toggleRolling = () => {
-        setRollToggle(!rollToggle);
-    };
-
     const registerPathOnIndex =
         (
             wrksp: Workspace,
@@ -344,7 +370,7 @@ export default function App() {
                 DefaultChangeFamily,
                 [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
             >).indexEventEmitter.on("newLocalState", (delta: Delta.Root) => {
-                console.log('Delta');
+                // console.log('Delta');
                 // console.log(JSON.stringify(delta, replacer, 2));
                 visitDelta(delta, new DomainAdapter(
                     appSchema,
@@ -381,21 +407,21 @@ export default function App() {
                 }
             </div>
             <div className="commit">
-                <span onClick={() => all()}>
+                {/* <span onClick={() => all()}>
                     U** &nbsp;
                 </span>
                 <span onClick={() => many()}>
                     U* &nbsp;
-                </span>
+                </span> */}
                 <span onClick={() => single()}>
                     U1 &nbsp;
                 </span>
-                <span onClick={() => deleteAll()}>
+                {/* <span onClick={() => deleteAll()}>
                     D** &nbsp;
                 </span>
                 <span onClick={() => deleteMany()}>
                     D* &nbsp;
-                </span>
+                </span> */}
                 <span onClick={() => deleteSingle()}>
                     D1 &nbsp;
                 </span>
@@ -417,7 +443,7 @@ function buildSchemaPath(fields: LocalFieldKey[], schema: SchemaData): Path {
                 if (treeSchema !== undefined) {
                     const localFieldSchema: FieldSchema | undefined = treeSchema.localFields.get(field);
                     if (localFieldSchema !== undefined) {
-                        out.push(new PathElem(field, undefined, nextSchemaIdentifiersExist));
+                        out.push(new PathElem(0, field, undefined, nextSchemaIdentifiersExist));
                         nextSchemaIdentifiers = localFieldSchema?.types;
                         found = true;
                         continue label;
