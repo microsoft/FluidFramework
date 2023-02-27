@@ -25,7 +25,7 @@ export class OpDecompressor {
 	private processedCount = 0;
 	private readonly logger;
 
-	constructor(logger: ITelemetryLogger, private readonly disabled = false) {
+	constructor(logger: ITelemetryLogger) {
 		this.logger = ChildLogger.create(logger, "OpDecompressor");
 	}
 
@@ -53,9 +53,6 @@ export class OpDecompressor {
 			const intoString = Uint8ArrayToString(decompressedMessage);
 			const asObj = JSON.parse(intoString);
 			this.rootMessageContents = asObj;
-			if (this.disabled) {
-				throw new Error("Canary");
-			}
 
 			return {
 				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
@@ -88,10 +85,6 @@ export class OpDecompressor {
 			this.rootMessageContents = undefined;
 			this.processedCount = 0;
 
-			if (this.disabled) {
-				throw new Error("Canary");
-			}
-
 			return {
 				message: returnMessage,
 				state: "Processed",
@@ -109,10 +102,6 @@ export class OpDecompressor {
 			const decompressedMessage = decompress(contents);
 			const intoString = new TextDecoder().decode(decompressedMessage);
 			const asObj = JSON.parse(intoString);
-
-			if (this.disabled) {
-				throw new Error("Canary");
-			}
 
 			return {
 				message: newMessage(message, asObj[0]),
@@ -140,8 +129,8 @@ export class OpDecompressor {
 		try {
 			if (
 				typeof message.contents === "object" &&
-				message.contents?.packedContents !== undefined &&
 				Object.keys(message.contents).length === 1 &&
+				message.contents?.packedContents !== undefined &&
 				typeof message.contents?.packedContents === "string" &&
 				message.contents.packedContents.length > 0 &&
 				btoa(atob(message.contents.packedContents)) === message.contents.packedContents
