@@ -57,13 +57,7 @@ export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_
 export type ContainerSummaryViewProps = HasClientDebugger;
 
 // @public
-export interface _ContainerSummaryViewProps extends ContainerStateMetadata {
-    // (undocumented)
-    closeContainer(): void;
-    // (undocumented)
-    forceDisconnect(): void;
-    // (undocumented)
-    tryConnect(): void;
+export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {
 }
 
 // @public
@@ -88,6 +82,13 @@ export interface HasClientDebugger {
 // @internal
 export interface HasContainerId {
     containerId: string;
+}
+
+// @public
+export interface IContainerActions {
+    closeContainer?: () => void;
+    forceDisconnect?: () => void;
+    tryConnect?: () => void;
 }
 
 // @public

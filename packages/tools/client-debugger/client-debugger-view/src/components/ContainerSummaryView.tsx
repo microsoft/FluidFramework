@@ -97,13 +97,35 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 }
 
 /**
+ * Container actions supported by the debugger view.
+ */
+export interface IContainerActions {
+	/**
+	 * Attempt to connect a disconnected Container.
+	 *
+	 * @remarks Button controls will be disabled if this is not provided.
+	 */
+	tryConnect?: () => void;
+
+	/**
+	 * Disconnect a connected Container.
+	 *
+	 * @remarks Button controls will be disabled if this is not provided.
+	 */
+	forceDisconnect?: () => void;
+
+	/**
+	 * Close the container.
+	 *
+	 * @remarks Button controls will be disabled if this is not provided.
+	 */
+	closeContainer?: () => void;
+}
+
+/**
  * {@link _ContainerSummaryView} input props.
  */
-export interface _ContainerSummaryViewProps extends ContainerStateMetadata {
-	tryConnect(): void;
-	forceDisconnect(): void;
-	closeContainer(): void;
-}
+export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {}
 
 /**
  * Debugger view displaying basic Container stats.
@@ -180,11 +202,8 @@ export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React.
 	);
 }
 
-interface ActionsBarProps {
+interface ActionsBarProps extends IContainerActions {
 	isContainerConnected: boolean;
-	tryConnect(): void;
-	forceDisconnect(): void;
-	closeContainer(): void;
 }
 
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
@@ -198,6 +217,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
 			<IconButton
 				onClick={forceDisconnect}
+				disabled={forceDisconnect === undefined}
 				menuIconProps={{ iconName: "PlugDisconnected" }}
 				aria-describedby={disconnectButtonTooltipId}
 			/>
@@ -206,6 +226,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
 			<IconButton
 				onClick={tryConnect}
+				disabled={tryConnect === undefined}
 				menuIconProps={{ iconName: "PlugConnected" }}
 				aria-describedby={connectButtonTooltipId}
 			/>
@@ -216,6 +237,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
 			<IconButton
 				onClick={closeContainer}
+				disabled={closeContainer === undefined}
 				menuIconProps={{ iconName: "Delete" }}
 				aria-describedby={disposeContainerButtonTooltipId}
 			/>

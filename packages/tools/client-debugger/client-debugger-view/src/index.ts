@@ -31,6 +31,7 @@ export {
 	ContainerSelectionDropdown,
 	ContainerSummaryView,
 	ContainerSummaryViewProps,
+	IContainerActions,
 } from "./components";
 
 export { AudienceMember } from "./Audience";
