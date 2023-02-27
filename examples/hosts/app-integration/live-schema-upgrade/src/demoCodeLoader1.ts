@@ -11,14 +11,14 @@ import type {
 } from "@fluidframework/container-definitions";
 
 import { getLatestVersion } from "./app";
-import { DiceRollerContainerRuntimeFactory as DiceRollerContainerRuntimeFactory2 } from "./modelVersion2";
+import { DiceRollerContainerRuntimeFactory } from "./modelVersion1";
 
-const v2ModuleWithDetails: IFluidModuleWithDetails = {
-	module: { fluidExport: new DiceRollerContainerRuntimeFactory2() },
-	details: { package: "2.0" },
+const v1ModuleWithDetails: IFluidModuleWithDetails = {
+	module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
+	details: { package: "1.0" },
 };
 
-// This code loader is used in version 2.0 of the app. In a production app, there will likely only be one code loader.
+// This code loader is used in version 1.0 of the app. In a production app, there will likely only be one code loader.
 export class DemoCodeLoader implements ICodeDetailsLoader {
 	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const version = source.package;
@@ -26,16 +26,17 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 			throw new TypeError("Unexpected code detail format");
 		}
 		switch (version) {
+			// In this version of the app the code loader only knows about 1.0.
 			case "1.0":
-			case "2.0":
-				// In this example we will load both 1.0 and 2.0 versions with the latest code since we will be
-				// upgrading shortly after.
-				return v2ModuleWithDetails;
+				return v1ModuleWithDetails;
 			default:
 				throw new Error("Unknown version");
 		}
 	}
 
+	// Note: If IFluidCodeDetailsComparer was not implemented in the first version of the app, it will simply reject
+	// any new code proposals. This is because the compare/satisfies functions will default to returning false if not
+	// implemented.
 	public IFluidCodeDetailsComparer: IFluidCodeDetailsComparer = {
 		get IFluidCodeDetailsComparer() {
 			return this;

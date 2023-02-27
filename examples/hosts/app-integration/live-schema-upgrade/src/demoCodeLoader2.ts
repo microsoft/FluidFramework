@@ -11,11 +11,11 @@ import type {
 } from "@fluidframework/container-definitions";
 
 import { getLatestVersion } from "./app";
-import { DiceRollerContainerRuntimeFactory } from "./modelVersion1";
+import { DiceRollerContainerRuntimeFactory } from "./modelVersion2";
 
-const v1ModuleWithDetails: IFluidModuleWithDetails = {
+const v2ModuleWithDetails: IFluidModuleWithDetails = {
 	module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
-	details: { package: "1.0" },
+	details: { package: "2.0" },
 };
 
 // This code loader is used in version 2.0 of the app. In a production app, there will likely only be one code loader.
@@ -26,17 +26,16 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 			throw new TypeError("Unexpected code detail format");
 		}
 		switch (version) {
-			// In this version of the app the code loader only knows about 1.0.
 			case "1.0":
-				return v1ModuleWithDetails;
+			case "2.0":
+				// In this example we will load both 1.0 and 2.0 versions with the latest code since we will be
+				// upgrading shortly after.
+				return v2ModuleWithDetails;
 			default:
 				throw new Error("Unknown version");
 		}
 	}
 
-	// Note: If IFluidCodeDetailsComparer was not implemented in the first version of the app, it will simply reject
-	// any new code proposals. This is because the compare/satisfies functions will default to returning false if not
-	// implemented.
 	public IFluidCodeDetailsComparer: IFluidCodeDetailsComparer = {
 		get IFluidCodeDetailsComparer() {
 			return this;
@@ -46,7 +45,7 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 			const bVersion = Number(b.package as string);
 			return aVersion - bVersion;
 		},
-		// For this demo, we reject any code proposals that are not equal to our current version.
+		// For this example, we reject any code proposals that are not equal to our current version.
 		satisfies: async (a, b) => {
 			const aVersion = Math.trunc(Number(a.package as string));
 			const bVersion = Math.trunc(Number(b.package as string));
