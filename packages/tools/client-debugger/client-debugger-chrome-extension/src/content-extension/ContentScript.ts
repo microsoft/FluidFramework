@@ -40,7 +40,6 @@ function hide(): void {
 
 // #region Background <- -> Content script messaging
 
-// TODO: differentiate senders (registry / debugger or background script)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	// TODO: validate sender
 
