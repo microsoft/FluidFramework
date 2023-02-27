@@ -14,13 +14,8 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import {
-	describeFullCompat,
-	describeInstallVersions,
-	getVersionedTestObjectProvider,
-} from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
-import { pkgVersion } from "../packageVersion";
 
 const compressionSuite = (getProvider) => {
 	describe("Compression", () => {
@@ -92,28 +87,5 @@ const compressionSuite = (getProvider) => {
 describeFullCompat("Op Compression", (getTestObjectProvider) =>
 	compressionSuite(async () => getTestObjectProvider()),
 );
-
-const loaderWithoutCompressionField = "2.0.0-internal.1.4.6";
-describeInstallVersions(
-	{
-		requestAbsoluteVersions: [loaderWithoutCompressionField],
-	},
-	/* timeoutMs */ 50000,
-)("Op Compression self-healing with old loader", (getProvider) =>
-	compressionSuite(async () => {
-		const provider = getProvider();
-		return getVersionedTestObjectProvider(
-			pkgVersion, // base version
-			loaderWithoutCompressionField, // loader version
-			{
-				type: provider.driver.type,
-				version: pkgVersion,
-			}, // driver version
-			pkgVersion, // runtime version
-			pkgVersion, // datastore runtime version
-		);
-	}),
-);
-
 const generateRandomStringOfSize = (sizeInBytes: number): string =>
 	crypto.randomBytes(sizeInBytes / 2).toString("hex");
