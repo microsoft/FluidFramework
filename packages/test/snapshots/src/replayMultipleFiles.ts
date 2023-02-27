@@ -161,9 +161,10 @@ export async function processContent(mode: Mode, concurrently = true) {
 		// Clean up any failed snapshots that might have been written out in previous test run.
 		cleanFailedSnapshots(folder);
 
-		// SnapFreq is the most interesting options to tweak. On one hand we want to generate snapshots often, ideally
-		// every 50 ops. This allows us to exercise more cases and increases chances of finding bugs. At the same time
-		// that generates more files in repository, and adds to the size of it.
+		// SnapFreq is the most interesting options to tweak.
+		// On one hand we want to generate snapshots often, ideally every 50 ops.
+		// This allows us to exercise more cases and increases chances of finding bugs.
+		// At the same time that generates more files in repository, and adds to the size of it.
 		// Thus, the tests are run in 2 primary modes:
 		// 1) Stress test - Generates and validates snapshots every 50 ops. It tests eventual consistency only without
 		//    storing these snapshots.
