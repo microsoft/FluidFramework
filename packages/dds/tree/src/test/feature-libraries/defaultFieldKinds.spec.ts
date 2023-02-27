@@ -21,7 +21,7 @@ import {
 	mintRevisionTag,
 } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
-import { assertFieldChangesEqual, noRepair } from "../utils";
+import { assertFieldChangesEqual, fakeRepair } from "../utils";
 
 const nodeType: TreeSchemaIdentifier = brand("Node");
 const tree1 = { type: nodeType, value: "value1" };
@@ -157,9 +157,9 @@ describe("Value field changesets", () => {
 		};
 
 		const inverted = fieldHandler.rebaser.invert(
-			makeAnonChange(change1WithChildChange),
+			{ revision: mintRevisionTag(), change: change1WithChildChange },
 			childInverter,
-			noRepair,
+			fakeRepair,
 			idAllocator,
 			crossFieldManager,
 		);
