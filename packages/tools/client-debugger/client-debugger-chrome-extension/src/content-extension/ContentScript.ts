@@ -41,7 +41,7 @@ function hide(): void {
 // #region Background <- -> Content script messaging
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	// TODO: validate sender
+	// TODO: validate sender?
 
 	switch (message) {
 		case "hide":
