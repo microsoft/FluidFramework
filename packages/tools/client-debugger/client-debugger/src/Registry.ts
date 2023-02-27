@@ -20,9 +20,7 @@ import {
 } from "./messaging";
 
 // TODOs:
-// - Document message posting details:
-//   - Always active (no activation required)
-//   - Will post notifications anytime the registry changes, or when explicitly asked.
+// - Clear registry on `window.beforeunload`, to ensure we do not hold onto stale resources.
 
 /**
  * Message logging options used by the registry.
