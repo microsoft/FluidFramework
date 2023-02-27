@@ -22,7 +22,7 @@ export interface HasClientDebuggers {
 /**
  * Base interface for component props that observe data and updates coming from the Client debugger.
  *
- * @internal
+ * @public
  */
 export interface HasClientDebugger {
 	/**
@@ -34,7 +34,7 @@ export interface HasClientDebugger {
 /**
  * Base interface for component props that include the ID of a Fluid Container.
  *
- * @internal
+ * @public
  */
 export interface HasContainerId {
 	/**

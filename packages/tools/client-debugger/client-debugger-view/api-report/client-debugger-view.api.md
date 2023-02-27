@@ -51,8 +51,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React_2.
 // @internal
 export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_2.ReactElement;
 
-// Warning: (ae-incompatible-release-tags) The symbol "ContainerSummaryViewProps" is marked as @public, but its signature references "HasClientDebugger" which is marked as @internal
-//
 // @public
 export type ContainerSummaryViewProps = HasClientDebugger;
 
@@ -74,12 +72,12 @@ export interface FluidClientDebuggersProps {
     renderOptions?: RenderOptions;
 }
 
-// @internal
+// @public
 export interface HasClientDebugger {
     clientDebugger: IFluidClientDebugger;
 }
 
-// @internal
+// @public
 export interface HasContainerId {
     containerId: string;
 }
