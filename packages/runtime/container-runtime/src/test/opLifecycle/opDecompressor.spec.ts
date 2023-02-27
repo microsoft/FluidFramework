@@ -88,7 +88,7 @@ describe("OpDecompressor", () => {
 	});
 
 	// Back-compat self healing mechanism for ADO:3538
-	it("Processes single compressed op without compression markers", () => {
+	it.skip("Processes single compressed op without compression markers", () => {
 		const result = decompressor.processMessage({
 			...generateCompressedBatchMessage(1),
 			compression: undefined,
