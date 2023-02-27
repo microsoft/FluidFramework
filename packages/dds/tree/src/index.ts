@@ -190,6 +190,7 @@ export {
 	singleStackTreeCursor,
 	CursorAdapter,
 	CursorWithNode,
+	parentField,
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:
@@ -212,3 +213,5 @@ const FieldKinds: FieldKinds = FieldKindsOriginal;
 export { FieldKinds };
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";
+
+export { StableId, UuidString } from "./id-compressor";

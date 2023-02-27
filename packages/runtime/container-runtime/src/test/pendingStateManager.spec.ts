@@ -7,7 +7,6 @@ import assert from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
 
@@ -35,7 +34,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ hardLimit: 950 * 1024 }, new MockLogger());
+			batchManager = new BatchManager({ hardLimit: 950 * 1024 });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
@@ -102,6 +101,7 @@ describe("Pending State Manager", () => {
 		const clientId = "clientId";
 
 		beforeEach(async () => {
+			closeError = undefined;
 			pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: () => {
@@ -124,7 +124,6 @@ describe("Pending State Manager", () => {
 			messages.forEach((message) => {
 				pendingStateManager.onSubmitMessage(
 					message.type,
-					message.clientSequenceNumber,
 					message.referenceSequenceNumber,
 					message.contents,
 					undefined,
@@ -191,13 +190,82 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
 		});
 
-		it("processing out of sync messages will call close", () => {
+		describe("processing out of sync messages will call close", () => {
+			it("messageTypes do not match", () => {
+				const messages: Partial<ISequencedDocumentMessage>[] = [
+					{
+						clientId,
+						type: MessageType.Operation,
+						clientSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+					},
+				];
+
+				submitBatch(messages);
+				process(
+					messages.map((message) => ({
+						...message,
+						type: "otherType",
+					})),
+				);
+				assert(closeError instanceof DataProcessingError);
+				assert.strictEqual(
+					closeError.getTelemetryProperties().expectedMessageType,
+					MessageType.Operation,
+				);
+			});
+
+			it("only one message has undefined content", () => {
+				const messages: Partial<ISequencedDocumentMessage>[] = [
+					{
+						clientId,
+						type: MessageType.Operation,
+						clientSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+						contents: {},
+					},
+				];
+
+				submitBatch(messages);
+				process(
+					messages.map((message) => ({
+						...message,
+						contents: undefined,
+					})),
+				);
+				assert(closeError instanceof DataProcessingError);
+			});
+
+			it("stringified message content does not match", () => {
+				const messages: Partial<ISequencedDocumentMessage>[] = [
+					{
+						clientId,
+						type: MessageType.Operation,
+						clientSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+						contents: {},
+					},
+				];
+
+				submitBatch(messages);
+				process(
+					messages.map((message) => ({
+						...message,
+						contents: { prop1: true },
+					})),
+				);
+				assert(closeError instanceof DataProcessingError);
+			});
+		});
+
+		it("processing in sync messages will not call close", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
 				{
 					clientId,
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					referenceSequenceNumber: 0,
+					contents: { prop1: true },
 				},
 			];
 
@@ -205,11 +273,10 @@ describe("Pending State Manager", () => {
 			process(
 				messages.map((message) => ({
 					...message,
-					clientSequenceNumber: (message.clientSequenceNumber ?? 0) + 1,
+					contents: { prop1: true },
 				})),
 			);
-			assert(closeError instanceof DataProcessingError);
-			assert.strictEqual(closeError.getTelemetryProperties().expectedClientSequenceNumber, 0);
+			assert.strictEqual(closeError, undefined, "unexpected close");
 		});
 	});
 

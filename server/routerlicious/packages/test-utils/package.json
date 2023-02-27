@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-test-utils",
-  "version": "0.1038.3000",
+  "version": "0.1038.4000",
   "description": "Fluid server test utilities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -51,13 +51,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/gitresources": "^0.1038.3000",
-    "@fluidframework/protocol-base": "^0.1038.3000",
+    "@fluidframework/common-utils": "^1.1.1",
+    "@fluidframework/gitresources": "^0.1038.4000",
+    "@fluidframework/protocol-base": "^0.1038.4000",
     "@fluidframework/protocol-definitions": "^1.1.0",
-    "@fluidframework/server-services-client": "^0.1038.3000",
-    "@fluidframework/server-services-core": "^0.1038.3000",
-    "@fluidframework/server-services-telemetry": "^0.1038.3000",
+    "@fluidframework/server-services-client": "^0.1038.4000",
+    "@fluidframework/server-services-core": "^0.1038.4000",
+    "@fluidframework/server-services-telemetry": "^0.1038.4000",
     "assert": "^2.0.0",
     "debug": "^4.1.1",
     "events": "^3.1.0",

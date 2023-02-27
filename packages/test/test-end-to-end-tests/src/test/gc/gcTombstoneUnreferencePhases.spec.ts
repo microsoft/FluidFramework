@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-	createSummarizerWithContainer,
+	createSummarizer,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	mockConfigProvider,
@@ -46,17 +46,6 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 	};
 
 	let provider: ITestObjectProvider;
-	let documentAbsoluteUrl: string | undefined;
-
-	const loadSummarizerAndContainer = async (summaryVersion?: string) => {
-		return createSummarizerWithContainer(
-			provider,
-			documentAbsoluteUrl,
-			summaryVersion,
-			gcOptions,
-			mockConfigProvider(settings),
-		);
-	};
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
@@ -72,11 +61,16 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 
 	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to tombstone", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
-		documentAbsoluteUrl = await mainContainer.getAbsoluteUrl("");
 		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
 		await waitForContainerConnection(mainContainer);
 
-		const { summarizer } = await loadSummarizerAndContainer();
+		const { summarizer } = await createSummarizer(
+			provider,
+			mainContainer,
+			undefined /* summaryVersion */,
+			gcOptions,
+			mockConfigProvider(settings),
+		);
 
 		// create datastore and blob
 		const dataStore = await mainDataStore._context.containerRuntime.createDataStore(

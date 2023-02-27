@@ -16,6 +16,10 @@ import {
 
 import { RenderOptions } from "./RendererOptions";
 import { ClientDebugView, ContainerSelectionDropdown } from "./components";
+import { initializeFluentUiIcons } from "./InitializeIcons";
+
+// Ensure FluentUI icons are initialized.
+initializeFluentUiIcons();
 
 /**
  * {@link FluidClientDebuggers} input props.

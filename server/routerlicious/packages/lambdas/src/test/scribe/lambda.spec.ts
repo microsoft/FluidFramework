@@ -63,8 +63,7 @@ describe("Routerlicious", () => {
                 testKafka = new TestKafka();
                 testProducer = testKafka.createProducer();
                 testTenantManager = new TestTenantManager();
-                const tenant = await testTenantManager.getTenant(testTenantId, testDocumentId);
-                testGitManager = tenant.gitManager as GitManager;
+                testGitManager = (await testTenantManager.getTenantGitManager(testTenantId, testDocumentId)) as GitManager;
                 const createTreeEntry: ICreateTreeEntry[] = [];
                 const requestBody: ICreateTreeParams = {
                     tree: createTreeEntry,
@@ -81,6 +80,7 @@ describe("Routerlicious", () => {
                     testDeltaManager,
                     testTenantManager,
                     DefaultServiceConfiguration,
+                    false,
                     false);
 
                 testContext = new TestContext();
