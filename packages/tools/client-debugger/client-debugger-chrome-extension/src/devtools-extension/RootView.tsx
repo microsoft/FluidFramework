@@ -16,6 +16,10 @@ import { BackgroundConnection, formatDevtoolsScriptMessageForLogging } from "./d
  * by our internal React components.
  */
 
+// TODOs:
+// - Wait for Background Script connection before rendering, to ensure messages are able to flow before we first
+//  request data from the registry / debuggers.
+
 const panelElement = document.createElement("div");
 panelElement.id = "fluid-client-debugger-root";
 panelElement.style.height = "100%";
