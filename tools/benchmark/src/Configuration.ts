@@ -217,7 +217,7 @@ export type HookFunction = () => void | Promise<unknown>;
  * ```
  *
  * If each cycle has 10k iterations, the first cycle will time how long it takes to repeatedly insert elements 0 through 10k
- * into the start `myList`.
+ * into the start of `myList`.
  * The second cycle will time how long it takes to repeatedly insert elements 10k through 20k at the start, and so on.
  * As inserting an element at the start of the list is O(list size), it's clear that cycles will take longer and longer.
  * We can use the `onCycle` hook to alleviate this problem:
