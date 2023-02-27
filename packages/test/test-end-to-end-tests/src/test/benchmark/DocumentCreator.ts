@@ -8,7 +8,7 @@ import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -163,7 +163,14 @@ export class DocumentCreator {
 			this.fileName,
 			this.containerUrl,
 		);
-		const testRequest: IRequest = { url: requestUrl };
+		const testRequest: IRequest = {
+			headers: {
+				[LoaderHeader.cache]: false,
+			},
+			url: requestUrl,
+		};
+
+		// const testRequest: IRequest = { url: requestUrl };
 		assert(this.loader !== undefined, "loader should be initialized");
 		const container2 = await this.loader.resolve(testRequest);
 		const dataObject2 = await requestFluidObject<ITestFluidObject>(
