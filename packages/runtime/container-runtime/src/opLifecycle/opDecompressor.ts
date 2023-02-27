@@ -25,7 +25,7 @@ export class OpDecompressor {
 	private processedCount = 0;
 	private readonly logger;
 
-	constructor(logger: ITelemetryLogger) {
+	constructor(logger: ITelemetryLogger, private readonly disabled = false) {
 		this.logger = ChildLogger.create(logger, "OpDecompressor");
 	}
 
@@ -53,7 +53,14 @@ export class OpDecompressor {
 			const intoString = Uint8ArrayToString(decompressedMessage);
 			const asObj = JSON.parse(intoString);
 			this.rootMessageContents = asObj;
-			throw new Error("Canary");
+			if (this.disabled) {
+				throw new Error("Canary");
+			}
+
+			return {
+				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
+				state: "Accepted",
+			};
 		}
 
 		if (
@@ -81,12 +88,14 @@ export class OpDecompressor {
 			this.rootMessageContents = undefined;
 			this.processedCount = 0;
 
-			const result = {
+			if (this.disabled) {
+				throw new Error("Canary");
+			}
+
+			return {
 				message: returnMessage,
 				state: "Processed",
 			};
-
-			assert(result === undefined, "canary");
 		}
 
 		if (message.metadata?.batch === undefined && this.isCompressed(message)) {
@@ -101,12 +110,14 @@ export class OpDecompressor {
 			const intoString = new TextDecoder().decode(decompressedMessage);
 			const asObj = JSON.parse(intoString);
 
-			const result = {
+			if (this.disabled) {
+				throw new Error("Canary");
+			}
+
+			return {
 				message: newMessage(message, asObj[0]),
 				state: "Processed",
 			};
-
-			assert(result === undefined, "canary");
 		}
 
 		return {

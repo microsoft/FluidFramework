@@ -76,7 +76,7 @@ describe("OpDecompressor", () => {
 	let decompressor: OpDecompressor;
 	beforeEach(() => {
 		mockLogger.clear();
-		decompressor = new OpDecompressor(mockLogger);
+		decompressor = new OpDecompressor(mockLogger, true);
 	});
 
 	it("Processes single compressed op", () => {
