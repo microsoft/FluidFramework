@@ -133,7 +133,7 @@ export class OpDecompressor {
 				message.contents?.packedContents !== undefined &&
 				typeof message.contents?.packedContents === "string" &&
 				message.contents.packedContents.length > 0 &&
-				btoa(atob(message.contents.packedContents)) === message.contents.packedContents
+				IsoBuffer.from(message.contents.packedContents, "base64") !== undefined
 			) {
 				this.logger.sendTelemetryEvent({
 					eventName: "LegacyCompression",

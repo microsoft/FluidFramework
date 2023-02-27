@@ -200,4 +200,24 @@ describe("OpDecompressor", () => {
 		assert.equal(firstMessageResult.state, "Skipped");
 		assert.deepStrictEqual(firstMessageResult.message, rootMessage);
 	});
+
+	it("Ignores ops without compression with similar shape", () => {
+		const rootMessage = {
+			// Back-compat self healing mechanism for ADO:3538,
+			contents: { packedContents: "not base64 content" },
+			metadata: { meta: "data" },
+			clientId: "clientId",
+			sequenceNumber: 1,
+			term: 1,
+			minimumSequenceNumber: 1,
+			clientSequenceNumber: 1,
+			referenceSequenceNumber: 1,
+			type: "type",
+			timestamp: 1,
+		};
+		const firstMessageResult = decompressor.processMessage(rootMessage);
+
+		assert.equal(firstMessageResult.state, "Skipped");
+		assert.deepStrictEqual(firstMessageResult.message, rootMessage);
+	});
 });
