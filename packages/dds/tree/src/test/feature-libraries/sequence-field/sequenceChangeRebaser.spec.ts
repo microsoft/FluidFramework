@@ -202,7 +202,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				const changes = [taggedChange, tagInverse(inv, taggedChange.revision)];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(delta, {});
+				assert.deepEqual(delta, []);
 			});
 		}
 	});
@@ -223,7 +223,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				const changes = [inv, updatedChange];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(delta, {});
+				assert.deepEqual(delta, []);
 			});
 		}
 	});
@@ -273,7 +273,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revABC4 = rebaseTagged(revABC3, delABC2);
 		const actual = compose([delABC2, revABC4]);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, {});
+		assert.deepEqual(delta, []);
 	});
 
 	it.skip("[Move ABC, Return ABC] ↷ Delete B", () => {
@@ -297,7 +297,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const retABC4 = rebaseTagged(retABC3, movABC2);
 		const actual = compose([movABC2, retABC4]);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, {});
+		assert.deepEqual(delta, []);
 	});
 
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
@@ -312,6 +312,6 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revAC4 = rebaseTagged(revAC3, delAC2);
 		const actual = compose([delAC2, revAC4]);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, {});
+		assert.deepEqual(delta, []);
 	});
 });
