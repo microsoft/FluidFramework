@@ -990,6 +990,7 @@ describe("Runtime", () => {
 				},
 				maxBatchSizeInBytes: 950 * 1024,
 				chunkSizeInBytes: Number.POSITIVE_INFINITY,
+				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };

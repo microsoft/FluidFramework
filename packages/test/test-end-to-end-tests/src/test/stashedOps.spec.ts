@@ -472,7 +472,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(map2.get(testKey2), testValue);
 	});
 
-	it.only("pending map clear resend", async function () {
+	it("pending map clear resend", async function () {
 		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
 		await provider.ensureSynchronized();
 
