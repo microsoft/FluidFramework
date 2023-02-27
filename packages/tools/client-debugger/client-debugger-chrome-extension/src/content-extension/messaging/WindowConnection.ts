@@ -16,7 +16,7 @@ import { IMessageRelayEvents, IMessageRelay } from "../../messaging";
 /**
  * Context string for logging.
  */
-const loggingContext = "EXTENSION(CONTENT_SCRIPT)";
+const loggingContext = "CONTENT";
 
 /**
  * Formats the provided log message with the appropriate context information.
