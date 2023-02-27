@@ -53,11 +53,7 @@ export class OpDecompressor {
 			const intoString = Uint8ArrayToString(decompressedMessage);
 			const asObj = JSON.parse(intoString);
 			this.rootMessageContents = asObj;
-
-			return {
-				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
-				state: "Accepted",
-			};
+			throw new Error("Canary");
 		}
 
 		if (
@@ -85,10 +81,12 @@ export class OpDecompressor {
 			this.rootMessageContents = undefined;
 			this.processedCount = 0;
 
-			return {
+			const result = {
 				message: returnMessage,
 				state: "Processed",
 			};
+
+			assert(result === undefined, "canary");
 		}
 
 		if (message.metadata?.batch === undefined && this.isCompressed(message)) {
@@ -103,10 +101,12 @@ export class OpDecompressor {
 			const intoString = new TextDecoder().decode(decompressedMessage);
 			const asObj = JSON.parse(intoString);
 
-			return {
+			const result = {
 				message: newMessage(message, asObj[0]),
 				state: "Processed",
 			};
+
+			assert(result === undefined, "canary");
 		}
 
 		return {
