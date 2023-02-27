@@ -18,7 +18,7 @@ const currentMetadata: ITestMetadata = {
 
 const metadataFileName = "metadata.json";
 function getFullMetadataFileName(folder: string): string {
-	return path.join(folder, "/", metadataFileName);
+	return path.join(folder, metadataFileName);
 }
 
 /**
