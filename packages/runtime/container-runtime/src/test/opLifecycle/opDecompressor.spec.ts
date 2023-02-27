@@ -210,6 +210,19 @@ describe("OpDecompressor", () => {
 				timestamp: 1,
 			},
 			{
+				// Back-compat self healing mechanism for ADO:3538,
+				contents: { packedContents: "YmFzZTY0IGNvbnRlbnQ=", some: "contents" },
+				metadata: { meta: "data" },
+				clientId: "clientId",
+				sequenceNumber: 1,
+				term: 1,
+				minimumSequenceNumber: 1,
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				type: "type",
+				timestamp: 1,
+			},
+			{
 				metadata: { meta: "data" },
 				clientId: "clientId",
 				sequenceNumber: 1,
@@ -223,7 +236,9 @@ describe("OpDecompressor", () => {
 		];
 
 		for (const rootMessage of rootMessages) {
-			const firstMessageResult = decompressor.processMessage(rootMessage as ISequencedDocumentMessage);
+			const firstMessageResult = decompressor.processMessage(
+				rootMessage as ISequencedDocumentMessage,
+			);
 
 			assert.equal(firstMessageResult.state, "Skipped");
 			assert.deepStrictEqual(firstMessageResult.message, rootMessage);
