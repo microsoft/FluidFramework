@@ -113,9 +113,7 @@ export class BackgroundConnection
 			// Forward incoming message onto subscribers.
 			// TODO: validate source
 			console.log(
-				formatDevtoolsScriptMessageForLogging(
-					`Relaying "${message.type}" message from BACKGROUND_SCRIPT:`,
-				),
+				formatDevtoolsScriptMessageForLogging(`Relaying message from Background Service:`),
 				message,
 			);
 			return this.emit("message", message);

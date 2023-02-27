@@ -141,7 +141,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 			if (tabConnection === undefined) {
 				console.warn(
 					formatBackgroundScriptMessageForLogging(
-						`Tab connection has not been initialized. Cannot relay "${message.type}" message:`,
+						`Tab connection has not been initialized. Cannot relay message:`,
 					),
 					message,
 				);

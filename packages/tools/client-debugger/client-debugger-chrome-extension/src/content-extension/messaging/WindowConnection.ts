@@ -69,10 +69,7 @@ export class WindowConnection
 		// Only relay message if it is one of ours, and if the source is the window's debugger
 		// (and not a message originating from the extension).
 		if (isDebuggerMessage(message) && message.source === debuggerMessageSource) {
-			console.log(
-				formatForLogging(`Relaying "${message.type}" message from Window to Extension:`),
-				message,
-			);
+			console.log(formatForLogging(`Relaying message from Window to Extension:`), message);
 			this.emit("message", message);
 		}
 	}

@@ -49,7 +49,7 @@ export function relayMessageToPort<TMessage extends IDebuggerMessage>(
 ): void {
 	console.log(
 		formatMessageForLogging(
-			`Relaying "${message.type}" message from "${messageSource}" to port "${targetPort.name}":`,
+			`Relaying message from "${messageSource}" to port "${targetPort.name}":`,
 			loggingOptions,
 		),
 		message,
@@ -71,7 +71,7 @@ export function postMessageToPort<TMessage extends IDebuggerMessage>(
 ): void {
 	console.log(
 		formatMessageForLogging(
-			`Posting "${message.type}" message to port "${targetPort.name ?? "(unnamed)"}":`,
+			`Posting message to port "${targetPort.name ?? "(unnamed)"}":`,
 			loggingOptions,
 		),
 		message,
@@ -93,7 +93,7 @@ export function relayMessageToRuntime<TMessage extends IDebuggerMessage>(
 ): void {
 	console.log(
 		formatMessageForLogging(
-			`Relaying "${message.type}" message from "${messageSource}" to Background Script:`,
+			`Relaying message from "${messageSource}" to Background Script:`,
 			loggingOptions,
 		),
 		message,
@@ -102,7 +102,7 @@ export function relayMessageToRuntime<TMessage extends IDebuggerMessage>(
 		(response) => {
 			console.log(
 				formatMessageForLogging(
-					`Acknowledgement received from Background Script for "${message.type}" message:`,
+					`Acknowledgement received from Background Script for message:`,
 					loggingOptions,
 				),
 				response,
@@ -111,7 +111,7 @@ export function relayMessageToRuntime<TMessage extends IDebuggerMessage>(
 		(error) => {
 			console.error(
 				formatMessageForLogging(
-					`Encountered an error while relaying "${message.type}" message from "${messageSource}" to Background Script`,
+					`Encountered an error while relaying message from "${messageSource}" to Background Script`,
 					loggingOptions,
 				),
 				error,
@@ -132,17 +132,14 @@ export function postMessageToRuntime<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
 ): void {
 	console.log(
-		formatMessageForLogging(
-			`Posting "${message.type}" message to Background Script:`,
-			loggingOptions,
-		),
+		formatMessageForLogging(`Posting message to Background Script:`, loggingOptions),
 		message,
 	);
 	chrome.runtime.sendMessage(message).then(
 		(response) => {
 			console.log(
 				formatMessageForLogging(
-					`Acknowledgement received from Background Script for "${message.type}" message:`,
+					`Acknowledgement received from Background Script for message:`,
 					loggingOptions,
 				),
 				response,
@@ -151,7 +148,7 @@ export function postMessageToRuntime<TMessage extends IDebuggerMessage>(
 		(error) => {
 			console.error(
 				formatMessageForLogging(
-					`Encountered an error while posting "${message.type}" message to Background Script:`,
+					`Encountered an error while posting message to Background Script:`,
 					loggingOptions,
 				),
 				error,

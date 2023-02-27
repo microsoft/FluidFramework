@@ -18,7 +18,7 @@ export function postMessageToWindow<TMessage extends IDebuggerMessage>(
 ): void {
 	const loggingPreamble =
 		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-	console.log(`${loggingPreamble}Posting "${message.type}" message to the window:`, message); // TODO: console.debug
+	console.log(`${loggingPreamble}Posting message to the window:`, message); // TODO: console.debug
 	globalThis.postMessage(message, "*"); // TODO: verify target is okay
 }
 
@@ -98,7 +98,7 @@ export function handleIncomingMessage(
 	if (handled) {
 		const loggingPreamble =
 			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-		console.log(`${loggingPreamble}"${message.type}" message handled:`, message); // TODO: console.debug
+		console.log(`${loggingPreamble} message handled:`, message); // TODO: console.debug
 	}
 }
 
