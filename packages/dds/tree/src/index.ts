@@ -72,7 +72,6 @@ export {
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
-	ICheckout,
 	TransactionResult,
 	FieldAnchor,
 	RevisionTag,

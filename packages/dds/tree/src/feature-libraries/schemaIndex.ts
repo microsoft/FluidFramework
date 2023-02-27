@@ -80,6 +80,7 @@ export class SchemaIndex implements Index, SummaryElement {
 		events.on("newLocalState", (changeDelta) => {
 			// TODO: apply schema changes.
 			// Extend delta to include them, or maybe have some higher level edit type that includes them and deltas?
+			// Implement same behavior in `SharedTreeCheckout`.
 		});
 	}
 

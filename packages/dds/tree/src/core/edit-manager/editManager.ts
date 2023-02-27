@@ -28,7 +28,6 @@ import {
 	Rebaser,
 	assertIsRevisionTag,
 } from "../rebase";
-import { ICheckout, IForkedCheckout } from "../checkout";
 
 export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
@@ -41,10 +40,10 @@ const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-00000000000
  * which were based on a given session's branch, to the document history
  */
 // TODO: Try to reduce this to a single type parameter
-export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>>
-	extends SimpleDependee
-	implements ICheckout<TChangeset>
-{
+export class EditManager<
+	TChangeset,
+	TChangeFamily extends ChangeFamily<any, TChangeset>,
+> extends SimpleDependee {
 	/**
 	 * The head commit of the "trunk" branch. The trunk represents the list of received sequenced changes.
 	 */
@@ -95,18 +94,6 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 		};
 		this.trunk = this.trunkBase;
 		this.localBranch = this.trunk;
-	}
-
-	applyChange(change: TChangeset): void {
-		throw new Error("Method not implemented.");
-	}
-
-	fork(): IForkedCheckout<TChangeset> {
-		throw new Error("Method not implemented.");
-	}
-
-	merge(fork: IForkedCheckout<TChangeset>): void {
-		throw new Error("Method not implemented.");
 	}
 
 	/**

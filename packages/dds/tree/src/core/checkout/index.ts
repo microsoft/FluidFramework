@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { ForkedCheckout, ICheckout, IForkedCheckout, TransactionResult } from "./checkout";
+export { SharedTreeBranch, SharedTreeBranchEvents, TransactionResult } from "./checkout";
