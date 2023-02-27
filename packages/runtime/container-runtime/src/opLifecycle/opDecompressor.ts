@@ -129,8 +129,8 @@ export class OpDecompressor {
 		try {
 			if (
 				typeof message.contents === "object" &&
-				message.contents?.packedContents !== undefined &&
 				Object.keys(message.contents).length === 1 &&
+				message.contents?.packedContents !== undefined &&
 				typeof message.contents?.packedContents === "string" &&
 				message.contents.packedContents.length > 0 &&
 				btoa(atob(message.contents.packedContents)) === message.contents.packedContents
