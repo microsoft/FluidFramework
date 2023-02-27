@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerRuntimeMessage, ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";
 
@@ -71,9 +72,11 @@ const endBatchEmptyMessage: ISequencedDocumentMessage = {
 };
 
 describe("OpDecompressor", () => {
+	const mockLogger = new MockLogger();
 	let decompressor: OpDecompressor;
 	beforeEach(() => {
-		decompressor = new OpDecompressor();
+		mockLogger.clear();
+		decompressor = new OpDecompressor(mockLogger);
 	});
 
 	it("Processes single compressed op", () => {
@@ -94,6 +97,13 @@ describe("OpDecompressor", () => {
 		assert.strictEqual(result.message.contents.contents, "value0");
 		assert.strictEqual(result.message.metadata?.compressed, undefined);
 		assert.strictEqual(result.message.compression, undefined);
+
+		mockLogger.assertMatch([
+			{
+				eventName: "OpDecompressor:LegacyCompression",
+				category: "generic",
+			},
+		]);
 	});
 
 	it("Expecting only lz4 compression", () => {

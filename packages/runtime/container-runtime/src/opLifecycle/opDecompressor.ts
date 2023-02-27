@@ -6,6 +6,8 @@
 import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { CompressionAlgorithms } from "../containerRuntime";
 import { IMessageProcessingResult } from "./definitions";
 
@@ -21,6 +23,11 @@ export class OpDecompressor {
 	private activeBatch = false;
 	private rootMessageContents: any | undefined;
 	private processedCount = 0;
+	private readonly logger;
+
+	constructor(logger: ITelemetryLogger) {
+		this.logger = ChildLogger.create(logger, "OpDecompressor");
+	}
 
 	public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
 		assert(
@@ -28,7 +35,7 @@ export class OpDecompressor {
 			0x511 /* Only lz4 compression is supported */,
 		);
 
-		if (message.metadata?.batch === true && isCompressed(message)) {
+		if (message.metadata?.batch === true && this.isCompressed(message)) {
 			// Beginning of a compressed batch
 			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
 			if (message.compression) {
@@ -84,7 +91,7 @@ export class OpDecompressor {
 			};
 		}
 
-		if (message.metadata?.batch === undefined && isCompressed(message)) {
+		if (message.metadata?.batch === undefined && this.isCompressed(message)) {
 			// Single compressed message
 			assert(
 				this.activeBatch === false,
@@ -107,6 +114,40 @@ export class OpDecompressor {
 			state: "Skipped",
 		};
 	}
+
+	private isCompressed(message: ISequencedDocumentMessage) {
+		if (message.compression === CompressionAlgorithms.lz4) {
+			return true;
+		}
+
+		// This condition holds true for compressed messages, regardless of metadata.
+		// Back-compat self healing mechanism for ADO:3538, as loaders from
+		// version client_v2.0.0-internal.1.2.0 to client_v2.0.0-internal.2.2.0 do not
+		// support adding the proper compression metadata to compressed messages submitted
+		// by the runtime. Should be removed after the loader reaches sufficient saturation
+		// for a version greater or equal than client_v2.0.0-internal.2.2.0.
+		try {
+			if (
+				typeof message.contents === "object" &&
+				message.contents?.packedContents !== undefined &&
+				Object.keys(message.contents).length === 1 &&
+				typeof message.contents?.packedContents === "string" &&
+				message.contents.packedContents.length > 0 &&
+				btoa(atob(message.contents.packedContents)) === message.contents.packedContents
+			) {
+				this.logger.sendTelemetryEvent({
+					eventName: "LegacyCompression",
+					type: message.type,
+					batch: message.metadata?.batch,
+				});
+				return true;
+			}
+		} catch (err) {
+			return false;
+		}
+
+		return false;
+	}
 }
 
 // We should not be mutating the input message nor its metadata
@@ -119,34 +160,3 @@ const newMessage = (
 	compression: undefined,
 	metadata: { ...originalMessage.metadata },
 });
-
-const isCompressed = (message: ISequencedDocumentMessage): boolean => {
-	if (message.compression === CompressionAlgorithms.lz4) {
-		return true;
-	}
-
-	// This condition holds true for compressed messages, regardless of metadata.
-	// Back-compat self healing mechanism for ADO:3538, as loaders from
-	// version client_v2.0.0-internal.1.2.0 to client_v2.0.0-internal.2.2.0 do not
-	// support adding the proper compression metadata to compressed messages submitted
-	// by the runtime. Should be removed after the loader reaches sufficient saturation
-	// for a version greater or equal than client_v2.0.0-internal.2.2.0.
-	if (typeof message.contents === "object" && message.contents?.packedContents !== undefined) {
-		return (
-			Object.keys(message.contents).length === 1 &&
-			typeof message.contents?.packedContents === "string" &&
-			message.contents.packedContents.length > 0 &&
-			isBase64(message.contents.packedContents)
-		);
-	}
-
-	return false;
-};
-
-const isBase64 = (content: string): boolean => {
-	try {
-		return btoa(atob(content)) === content;
-	} catch (err) {
-		return false;
-	}
-};
