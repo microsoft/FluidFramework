@@ -355,10 +355,7 @@ export class ModularChangeFamily
 				!("revert" in change.change.valueChange),
 				0x4a9 /* Inverting inverse changes is currently not supported */,
 			);
-			assert(
-				path !== undefined,
-				"Only existing nodes can have their value restored",
-			);
+			assert(path !== undefined, "Only existing nodes can have their value restored");
 			const revision = change.change.valueChange.revision ?? change.revision;
 			assert(revision !== undefined, "Unable to revert to undefined revision");
 			inverse.valueChange = { value: repairStore.getValue(revision, path) };
@@ -505,16 +502,7 @@ export class ModularChangeFamily
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
 				(childChange): Delta.NodeChanges | undefined =>
-					this.deltaFromNodeChange(
-						childChange,
-						// index === undefined
-						// 	? undefined
-						// 	: {
-						// 			parent: path,
-						// 			parentField: field,
-						// 			parentIndex: index,
-						// 	  },
-					),
+					this.deltaFromNodeChange(childChange),
 			);
 			delta.set(field, deltaField);
 		}
@@ -524,9 +512,7 @@ export class ModularChangeFamily
 	private deltaFromNodeChange({
 		valueChange,
 		fieldChanges,
-	}: NodeChangeset): // repairStore: ReadonlyRepairDataStore,
-	// path?: UpPath,
-	Delta.NodeChanges | undefined {
+	}: NodeChangeset): Delta.NodeChanges | undefined {
 		if (valueChange === undefined && fieldChanges === undefined) {
 			return undefined;
 		}
