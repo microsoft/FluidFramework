@@ -60,7 +60,7 @@ export class WindowConnection
 	}
 
 	/**
-	 * Handler for incoming messages from {@link backgroundScriptConnection}.
+	 * Handler for incoming messages from the Window (globalThis).
 	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
 	 */
 	private onWindowMessageEvent(event: MessageEvent<Partial<IDebuggerMessage>>): void {
