@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -16,7 +17,6 @@ import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
