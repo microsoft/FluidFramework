@@ -261,7 +261,9 @@ export class PendingStateManager implements IDisposable {
 			return;
 		}
 
-		const pendingMessageContent = JSON.stringify(pendingMessage.content);
+		const clonedMessageContent = JSON.parse(JSON.stringify(pendingMessage.content));
+		delete clonedMessageContent.stashedState;
+		const pendingMessageContent = JSON.stringify(clonedMessageContent);
 		const messageContent = JSON.stringify(message.contents);
 
 		// Stringified content does not match
