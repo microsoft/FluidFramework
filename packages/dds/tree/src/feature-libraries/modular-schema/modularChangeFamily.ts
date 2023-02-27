@@ -248,14 +248,12 @@ export class ModularChangeFamily
 		let maxId = change.change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
-
-		// const reviver = (revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
-		// 	repairStore.getNodes(revision, path, field, index, count);
+		const resolvedRepairStore = repairStore ?? dummyRepairDataStore;
 
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.changes, change.revision),
 			genId,
-			repairStore ?? dummyRepairDataStore,
+			resolvedRepairStore,
 			undefined,
 			crossFieldTable,
 		);
@@ -263,15 +261,16 @@ export class ModularChangeFamily
 		while (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
-			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
+			for (const { fieldKey, fieldChange, path, originalRevision } of fieldsToUpdate) {
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
 					fieldChange.fieldKind,
 				).rebaser.amendInvert(
 					fieldChange.change,
 					originalRevision,
+					(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
+						resolvedRepairStore.getNodes(revision, path, fieldKey, index, count),
 					genId,
-					// reviver,
 					newCrossFieldManager(crossFieldTable),
 				);
 				fieldChange.change = brand(amendedChange);
@@ -330,7 +329,9 @@ export class ModularChangeFamily
 			invertedFields.set(field, invertedFieldChange);
 
 			const invertData: InvertData = {
+				fieldKey: field,
 				fieldChange: invertedFieldChange,
+				path,
 				originalRevision: changes.revision,
 			};
 
@@ -590,7 +591,9 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 
 interface InvertData {
 	originalRevision: RevisionTag | undefined;
+	fieldKey: FieldKey;
 	fieldChange: FieldChange;
+	path: UpPath | undefined;
 }
 
 type ComposeData = FieldChange;

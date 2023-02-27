@@ -100,6 +100,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.amendInvert(
 			inverted,
 			change.revision,
+			fakeRepair,
 			() => fail("Sequence fields should not generate IDs during invert"),
 			table,
 		);

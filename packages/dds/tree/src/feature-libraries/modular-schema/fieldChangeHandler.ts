@@ -70,8 +70,8 @@ export interface FieldChangeRebaser<TChangeset> {
 	amendInvert(
 		invertedChange: TChangeset,
 		originalRevision: RevisionTag | undefined,
+		reviver: NodeReviver,
 		genId: IdAllocator,
-		// reviver: NodeReviver,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
 
