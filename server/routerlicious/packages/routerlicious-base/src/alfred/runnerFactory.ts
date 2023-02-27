@@ -339,6 +339,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             address,
             storage,
             databaseManager,
+            databaseManager,
             60000,
             () => new NodeWebSocketServer(4000),
             taskMessageSender,

@@ -55,6 +55,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
     constructor(
         private readonly mongoManager: MongoManager,
         private readonly documentCollection: ICollection<IDocument>,
+        private readonly localDocumentCollection: ICollection<IDocument>,
         private readonly messageCollection: ICollection<ISequencedOperationMessage>,
         private readonly producer: IProducer,
         private readonly deltaManager: IDeltaService,
@@ -218,6 +219,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             tenantId,
             documentId,
             this.documentCollection,
+            this.localDocumentCollection,
             this.messageCollection,
             this.deltaManager,
             this.getDeltasViaAlfred);

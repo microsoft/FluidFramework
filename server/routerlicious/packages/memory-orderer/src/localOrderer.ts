@@ -96,6 +96,7 @@ export class LocalOrderer implements IOrderer {
     public static async load(
         storage: IDocumentStorage,
         databaseManager: IDatabaseManager,
+        localDatabaseManager: IDatabaseManager,
         tenantId: string,
         documentId: string,
         taskMessageSender: ITaskMessageSender,
@@ -109,6 +110,7 @@ export class LocalOrderer implements IOrderer {
             documentId,
             storage,
             databaseManager,
+            localDatabaseManager,
             gitManager),
         pubSub: IPubSub = new PubSub(),
         broadcasterContext: IContext = new LocalContext(logger),
@@ -313,11 +315,13 @@ export class LocalOrderer implements IOrderer {
         // Scribe lambda
         const [
             documentCollection,
+            localDocumentCollection,
             scribeMessagesCollection,
             protocolHead,
             scribeMessages,
         ] = await Promise.all([
             setup.documentCollectionP(),
+            setup.localDocumentCollectionP(),
             setup.scribeDeltaCollectionP(),
             setup.protocolHeadP(),
             setup.scribeMessagesP(),
@@ -354,6 +358,7 @@ export class LocalOrderer implements IOrderer {
             this.tenantId,
             this.documentId,
             documentCollection,
+            localDocumentCollection,
             scribeMessagesCollection,
             null /* deltaService */,
             false /* getDeltasViaAlfred */);

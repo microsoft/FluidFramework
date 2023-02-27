@@ -23,6 +23,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
         private readonly documentId: string,
         private readonly storage: IDocumentStorage,
         private readonly databaseManager: IDatabaseManager,
+        private readonly localDatabaseManager: IDatabaseManager,
         private readonly gitManager?: IGitManager) {
     }
 
@@ -34,6 +35,10 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public documentCollectionP(): Promise<ICollection<IDocument>> {
         return this.databaseManager.getDocumentCollection();
+    }
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public localDocumentCollectionP(): Promise<ICollection<IDocument>> {
+        return this.localDatabaseManager.getDocumentCollection();
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

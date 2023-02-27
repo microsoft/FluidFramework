@@ -67,6 +67,7 @@ export interface INodeMessage {
 export interface ILocalOrdererSetup {
     documentP(): Promise<IDocumentDetails>;
     documentCollectionP(): Promise<ICollection<IDocument>>;
+    localDocumentCollectionP(): Promise<ICollection<IDocument>>;
     deltaCollectionP(): Promise<ICollection<any>>;
     scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>>;
     protocolHeadP(): Promise<number>;

@@ -27,6 +27,7 @@ export class CheckpointManager implements ICheckpointManager {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly documentCollection: ICollection<IDocument>,
+        private readonly localDocumentCollection: ICollection<IDocument>,
         private readonly opCollection: ICollection<ISequencedOperationMessage>,
         private readonly deltaService: IDeltaService,
         private readonly getDeltasViaAlfred: boolean
@@ -47,7 +48,7 @@ export class CheckpointManager implements ICheckpointManager {
                 // If it is, we can checkpoint
                 const expectedSequenceNumber = pending[pending.length - 1].operation.sequenceNumber;
                 const lastDelta = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber-1, expectedSequenceNumber + 1);
-                
+
                 // If we don't get the expected delta, retry after a delay
                 if (lastDelta.length === 0 || lastDelta[0].sequenceNumber < expectedSequenceNumber) {
                     const lumberjackProperties = {
@@ -98,7 +99,7 @@ export class CheckpointManager implements ICheckpointManager {
                 );
             }
 
-            // Write out the full state first that we require
+            // Write out the full state first that we require to global & local DB
             await this.writeScribeCheckpointState(checkpoint);
 
             // And then delete messagses that were already summarized.
@@ -111,7 +112,18 @@ export class CheckpointManager implements ICheckpointManager {
     }
 
     private async writeScribeCheckpointState(checkpoint: IScribe) {
-        await this.documentCollection.update(
+        const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
+        Lumberjack.info(`Writing checkpoint to global database.`, lumberProperties);
+        await this.writeScribeCheckpointToCollection(this.localDocumentCollection, checkpoint);
+        // Check if we are using local & global collections
+        if(this.localDocumentCollection){
+            Lumberjack.info(`Writing checkpoint to local database.`, lumberProperties);
+            await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
+        }
+    }
+
+    private async writeScribeCheckpointToCollection(collection: ICollection<IDocument>, checkpoint: IScribe) {
+        await collection.update(
             {
                 documentId: this.documentId,
                 tenantId: this.tenantId,

@@ -65,9 +65,10 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
     const documentsCollectionDb: IDb = globalDbEnabled ? globalDb : operationsDb;
 
-    const [collection, scribeDeltas] = await Promise.all([
+    const [collection, scribeDeltas, localCollection] = await Promise.all([
         documentsCollectionDb.collection<IDocument>(documentsCollectionName),
         operationsDb.collection<ISequencedOperationMessage>(messagesCollectionName),
+        operationsDb.collection<IDocument>(documentsCollectionName),
     ]);
 
     if (createCosmosDBIndexes) {
@@ -113,6 +114,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     return new ScribeLambdaFactory(
         operationsDbManager,
         collection,
+        localCollection,
         scribeDeltas,
         producer,
         deltaManager,

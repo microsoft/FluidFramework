@@ -89,6 +89,15 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             deltasCollectionName,
             scribeDeltasCollectionName);
 
+        const localDatabaseManager = new MongoDatabaseManager(
+            false,
+            mongoManager,
+            mongoManager,
+            nodesCollectionName,
+            documentsCollectionName,
+            deltasCollectionName,
+            scribeDeltasCollectionName);
+
         const testStorage = new TestDocumentStorage(
             databaseManager,
             testTenantManager);
@@ -98,6 +107,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const ordererManager = new LocalOrdererManager(
             testStorage,
             databaseManager,
+            localDatabaseManager,
             testTenantManager,
             new EmptyTaskMessageSender(),
             {},
