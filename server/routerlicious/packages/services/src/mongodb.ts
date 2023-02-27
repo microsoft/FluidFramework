@@ -5,7 +5,7 @@
 
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
-import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
+import { AggregationCursor, Collection, MongoClient, MongoClientOptions, OptionalUnlessRequiredId } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { requestWithRetry } from "@fluidframework/server-services-core";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
@@ -31,7 +31,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
     public async find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
         const req: () => Promise<T[]> = async () => {
             let queryCursor = this.collection
-                .find(query)
+                .find<T>(query)
                 .sort(sort)
                 .limit(limit);
 
@@ -44,7 +44,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
     }
 
     public async findOne(query: object): Promise<T> {
-        const req: () => Promise<T> = async () => this.collection.findOne(query);
+        const req: () => Promise<T> = async () => this.collection.findOne<T>(query);
         return this.requestWithRetry(
             req, // request
             "MongoCollection.findOne", // callerName
@@ -53,7 +53,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
     }
 
     public async findAll(): Promise<T[]> {
-        const req: () => Promise<T[]> = async () => this.collection.find({}).toArray();
+        const req: () => Promise<T[]> = async () => this.collection.find<T>({}).toArray();
         return this.requestWithRetry(
             req, // request
             "MongoCollection.findAll", // callerName
@@ -116,7 +116,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
     public async insertOne(value: T): Promise<any> {
         const req = async () => {
-            const result = await this.collection.insertOne(value);
+            const result = await this.collection.insertOne(value as OptionalUnlessRequiredId<T>);
             return result.insertedId;
         };
         return this.requestWithRetry(
@@ -127,7 +127,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
     }
 
     public async insertMany(values: T[], ordered: boolean): Promise<void> {
-        const req = async () => this.collection.insertMany(values, { ordered: false });
+        const req = async () => this.collection.insertMany(values as OptionalUnlessRequiredId<T>[], { ordered: false });
         await this.requestWithRetry(
             req, // request
             "MongoCollection.insertMany", // callerName
@@ -366,22 +366,27 @@ export class MongoDbFactory implements core.IDbFactory {
         assert(!global || !!this.globalDbEndpoint, `No global endpoint provided
                  when trying to connect to global db.`);
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
-        const options: MongoClientOptions = {
-            autoReconnect: true,
-            bufferMaxEntries: this.bufferMaxEntries ?? 50,
+        interface MongoClientOptionsExtend {
+            useNewUrlParser: boolean,
+            useUnifiedTopolify: boolean
+        }
+
+        const options: MongoClientOptions & MongoClientOptionsExtend= {
             keepAlive: true,
             keepAliveInitialDelay: 180000,
-            reconnectInterval: 1000,
-            reconnectTries: 100,
+            connectTimeoutMS: 1000,
+            maxConnecting: 100,
             socketTimeoutMS: 120000,
             useNewUrlParser: true,
+            useUnifiedTopolify: true
         };
+
         if (this.connectionPoolMinSize) {
-            options.minSize = this.connectionPoolMinSize;
+            options.minPoolSize = this.connectionPoolMinSize;
         }
 
         if (this.connectionPoolMaxSize) {
-            options.poolSize = this.connectionPoolMaxSize;
+            options.maxPoolSize = this.connectionPoolMaxSize;
         }
 
         const connection = await MongoClient.connect(
