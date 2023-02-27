@@ -20,11 +20,9 @@ export async function renderClientDebuggerView(targetElement: HTMLElement): Prom
 
 	return new Promise<void>((resolve, reject) => {
 		try {
-			ReactDOM.render(React.createElement(FluidClientDebuggers), debuggerElement, () => {
-				resolve();
-			});
+			ReactDOM.render(React.createElement(FluidClientDebuggers), debuggerElement, resolve);
 		} catch (error) {
-			console.error("Could not open the client debugger view due to an error", error);
+			console.error("Could not open the client debugger view due to an error:", error);
 			reject(error);
 		}
 	});
