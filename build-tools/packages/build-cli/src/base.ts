@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Command, Flags, Interfaces } from "@oclif/core";
+// eslint-disable-next-line import/no-internal-modules
 import { type PrettyPrintableError } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 
