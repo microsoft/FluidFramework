@@ -12,7 +12,7 @@ import { FluidClientDebuggers } from "./Debugger";
  *
  * @param targetElement - The HTML element takes the client debugger view.
  *
- * @returns `true` if the debug view was successfully rendered, otherwise `false`.
+ * @returns A promise that resolves once the debugger view has been rendered for the first time.
  */
 export async function renderClientDebuggerView(targetElement: HTMLElement): Promise<void> {
 	const debuggerElement = document.createElement("debugger");
