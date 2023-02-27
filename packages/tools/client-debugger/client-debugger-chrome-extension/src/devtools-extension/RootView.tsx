@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import ReactDOM from "react-dom";
-
-import { DebuggerPanel, MessageRelayContext } from "../react-components";
-import { BackgroundConnection, formatDevtoolsScriptMessageForLogging } from "./devtools";
-
 /**
  * This script represents the root view for the Devtools extension.
  * It establishes communication with the Background Service as a relay for communication with the webpage (tab),
  * and passes that communication context (see {@link BackgroundConnection}) as the {@link MessageRelayContext} used
  * by our internal React components.
  */
+
+import React from "react";
+import ReactDOM from "react-dom";
+
+import { DebuggerPanel, MessageRelayContext } from "../react-components";
+import { BackgroundConnection, formatDevtoolsScriptMessageForLogging } from "./devtools";
 
 // TODOs:
 // - Wait for Background Script connection before rendering, to ensure messages are able to flow before we first
