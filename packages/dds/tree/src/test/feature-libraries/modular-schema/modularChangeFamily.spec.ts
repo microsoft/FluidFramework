@@ -306,7 +306,7 @@ const nodeValueRevert: ModularChangeset = {
 				fieldKind: genericFieldKind.identifier,
 				change: brand(
 					genericFieldKind.changeHandler.editor.buildChildChange(0, {
-						valueChange: { revert: testValue },
+						valueChange: { value: testValue },
 					}),
 				),
 			},

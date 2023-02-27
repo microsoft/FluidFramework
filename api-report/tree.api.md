@@ -1154,13 +1154,10 @@ export type UuidString = string & {
 export type Value = undefined | TreeValue;
 
 // @alpha (undocumented)
-export type ValueChange = {
+export interface ValueChange {
     revision?: RevisionTag;
     value?: Value;
-} | {
-    revision?: RevisionTag;
-    revert: Value;
-};
+}
 
 // @alpha (undocumented)
 export interface ValueFieldEditBuilder {

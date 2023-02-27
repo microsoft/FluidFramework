@@ -222,31 +222,18 @@ export interface NodeChangeset {
 /**
  * @alpha
  */
-export type ValueChange =
-	| {
-			/**
-			 * The revision in which this change occurred.
-			 * Undefined when it can be inferred from context.
-			 */
-			revision?: RevisionTag;
+export interface ValueChange {
+	/**
+	 * The revision in which this change occurred.
+	 * Undefined when it can be inferred from context.
+	 */
+	revision?: RevisionTag;
 
-			/**
-			 * Can be left unset to represent the value being cleared.
-			 */
-			value?: Value;
-	  }
-	| {
-			/**
-			 * The revision in which this change occurred.
-			 * Undefined when it can be inferred from context.
-			 */
-			revision?: RevisionTag;
-
-			/**
-			 * The value being restored.
-			 */
-			revert: Value;
-	  };
+	/**
+	 * Can be left unset to represent the value being cleared.
+	 */
+	value?: Value;
+}
 
 /**
  * @alpha

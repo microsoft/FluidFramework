@@ -361,7 +361,7 @@ export class ModularChangeFamily
 			);
 			const revision = change.change.valueChange.revision ?? change.revision;
 			assert(revision !== undefined, 0x477 /* Unable to revert to undefined revision */);
-			inverse.valueChange = { revert: repairStore.getValue(revision, path) };
+			inverse.valueChange = { value: repairStore.getValue(revision, path) };
 		}
 
 		if (change.change.fieldChanges !== undefined) {
@@ -534,7 +534,7 @@ export class ModularChangeFamily
 		const modify: Mutable<Delta.NodeChanges> = {};
 
 		if (valueChange !== undefined) {
-			modify.setValue = "revert" in valueChange ? valueChange.revert : valueChange.value;
+			modify.setValue = valueChange.value;
 		}
 
 		if (fieldChanges !== undefined) {
