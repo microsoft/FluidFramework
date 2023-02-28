@@ -28,6 +28,8 @@ export function create(
     // author
     // since
     // until
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.get("/repos/:owner/:repo/commits", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)

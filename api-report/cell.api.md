@@ -47,7 +47,6 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 
 // @public
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
-    // @alpha
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
