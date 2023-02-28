@@ -24,7 +24,7 @@ console.log(formatDevtoolsScriptMessageForLogging("Initializing Devtools Script.
 // When our extension view is launched, open the root visualization view.
 chrome.devtools.panels.create(
 	"Fluid Client Debugger",
-	"images/icon.png",
+	"images/Icon.png",
 	"rootView.html",
 	(panel) => {
 		panel.onShown.addListener((window) => {
