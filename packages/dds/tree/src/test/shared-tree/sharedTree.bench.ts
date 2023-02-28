@@ -726,6 +726,7 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	assert(readCursor.firstNode());
+	let nodesRead = 0;
 	switch (shape) {
 		case TreeShape.Deep:
 			for (let i = 0; i < numberOfNodes; i++) {
@@ -735,10 +736,10 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
 			break;
 		case TreeShape.Wide:
 			assert(readCursor.firstField());
-			assert(readCursor.firstNode());
-			for (let j = 0; j < numberOfNodes; j++) {
-				readCursor.nextNode();
+			for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
+				nodesRead += 1
 			}
+			assert(nodesRead === numberOfNodes)
 			break;
 		default:
 			unreachableCase(shape);
