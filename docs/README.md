@@ -350,11 +350,8 @@ The following npm scripts are supported in this directory:
 | `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
 | `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
 | `linkcheck:reflinks` | Checks the `public` folder for HTML files with broken MarkDown reference links. |
-| `linkcheck:reflinks:default` | --- |
-| `linkcheck:reflinks:win32` | --- |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
-| `rg` | `rg` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 
 <!-- prettier-ignore-end -->

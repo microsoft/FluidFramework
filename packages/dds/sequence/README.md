@@ -14,7 +14,7 @@ For that reason, all of the examples in this README use `SharedString`. However,
 
 For the remainder of this document, the term _sequence_ will refer to this base class.
 
-*Item*s are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
+_Items_ are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
 but regardless of the type of data stored in the sequence, every item in a sequence is at a specific _position_ starting
 at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
 editors make modifications to the sequence.
