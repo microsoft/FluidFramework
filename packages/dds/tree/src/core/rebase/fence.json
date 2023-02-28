@@ -1,5 +1,5 @@
 {
 	"tags": ["rebase"],
 	"exports": ["index"],
-	"imports": ["id-compressor", "tree", "util"]
+	"imports": ["tree", "util"]
 }
