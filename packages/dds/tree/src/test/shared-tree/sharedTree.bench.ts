@@ -130,15 +130,6 @@ const testSchema: SchemaData = {
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
-	it("can move nodes across fields", async () => {
-		const [provider, trees] = await createSharedTrees(
-			getTestSchema(FieldKinds.sequence),
-			[{ type: rootSchemaName }],
-			1,
-		);
-		const tree = trees[0];
-		insertNodesToEditableTree(tree, 4, TreeShape.Wide, TestPrimitives.Float);
-	});
 	describe("Direct JS Object", () => {
 		for (let dataType = 0 as TestPrimitives; dataType <= 4; dataType++) {
 			for (const [i, benchmarkType] of nodesCountDeep) {
