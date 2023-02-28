@@ -56,7 +56,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     readonly tenantId: string | undefined;
 }
 
-// @public (undocumented)
+// @public @deprecated
 export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
     protected constructor(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking: boolean, packingLevel: number, blobCutOffSize?: number | undefined);
     // (undocumented)
@@ -70,7 +70,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     // (undocumented)
     protected isRealStorageId(id: string): boolean;
     // (undocumented)
@@ -430,7 +430,7 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 // @public (undocumented)
 export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
 
-// @public (undocumented)
+// @public @deprecated
 export abstract class SnapshotExtractor {
     // (undocumented)
     protected readonly aggregatedBlobName = "__big";

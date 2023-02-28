@@ -26,13 +26,29 @@ import {
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 import {
-	mapFieldChanges,
+	FieldKinds,
+	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
+	namedTreeSchema,
 	singleTextCursor,
 } from "../feature-libraries";
-import { RevisionTag, Delta, InvalidationToken, SimpleObservingDependent } from "../core";
+import {
+	RevisionTag,
+	Delta,
+	InvalidationToken,
+	SimpleObservingDependent,
+	moveToDetachedField,
+	mapCursorField,
+	JsonableTree,
+	SchemaData,
+	fieldSchema,
+	GlobalFieldKey,
+	rootFieldKey,
+	rootFieldKeySymbol,
+	TransactionResult,
+} from "../core";
 import { brand, makeArray } from "../util";
 
 // Testing utilities
@@ -182,7 +198,7 @@ export class TestTreeProvider {
 			const firstTree = await dataObject.getSharedObject<ISharedTree>(
 				TestTreeProvider.treeId,
 			);
-			const summarizer = await createSummarizer(objProvider, container);
+			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
 				firstTree,
@@ -292,15 +308,6 @@ export function spyOnMethod(
 }
 
 /**
- * Assert two FieldChanges are equal, handling cursors.
- */
-export function assertFieldChangesEqual(a: Delta.FieldChanges, b: Delta.FieldChanges): void {
-	const aTree = mapFieldChanges(a, mapTreeFromCursor);
-	const bTree = mapFieldChanges(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
-}
-
-/**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
@@ -312,7 +319,7 @@ export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void 
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.FieldChangeMap, b: Delta.FieldChangeMap): void {
+export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void {
 	const aTree = mapFieldMarks(a, mapTreeFromCursor);
 	const bTree = mapFieldMarks(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
@@ -361,4 +368,51 @@ export function fakeRepair(
 	count: number,
 ): Delta.ProtoNode[] {
 	return makeArray(count, () => singleTextCursor({ type: brand("FakeRepairedNode") }));
+}
+
+export function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
+	const readCursor = tree.forest.allocateCursor();
+	moveToDetachedField(tree.forest, readCursor);
+	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+	readCursor.free();
+	assert.deepEqual(actual, expected);
+}
+
+const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
+const rootFieldSchema = fieldSchema(FieldKinds.value);
+const globalFieldSchema = fieldSchema(FieldKinds.value);
+const rootNodeSchema = namedTreeSchema({
+	name: brand("TestValue"),
+	localFields: {
+		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
+	},
+	extraLocalFields: fieldSchema(FieldKinds.sequence),
+	globalFields: [globalFieldKey],
+});
+const testSchema: SchemaData = {
+	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+	globalFieldSchema: new Map([
+		[rootFieldKey, rootFieldSchema],
+		[globalFieldKey, globalFieldSchema],
+	]),
+};
+
+/**
+ * Updates the given `tree` to the given `schema` and inserts `state` as its root.
+ */
+export function initializeTestTree(
+	tree: ISharedTree,
+	state: JsonableTree,
+	schema: SchemaData = testSchema,
+): void {
+	tree.storedSchema.update(schema);
+
+	// Apply an edit to the tree which inserts a node with a value
+	tree.runTransaction((forest, editor) => {
+		const writeCursor = singleTextCursor(state);
+		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+		field.insert(0, writeCursor);
+
+		return TransactionResult.Apply;
+	});
 }

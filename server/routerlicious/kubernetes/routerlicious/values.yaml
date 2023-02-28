@@ -18,8 +18,9 @@ alfred:
   maxNumberOfClientsPerDocument: 1000000
   numberOfMessagesPerTrace: 100
   sessionStickinessDurationMs: 3600000
+  enableConnectionCountLogging: false
   throttling:
-    restCalls:
+    restCallsPerTenant:
         maxPerMs: 1000000
         maxBurst: 1000000
         minCooldownIntervalInMs: 1000000
@@ -27,7 +28,32 @@ alfred:
         maxInMemoryCacheSize: 1000
         maxInMemoryCacheAgeInMs: 60000
         enableEnhancedTelemetry: false
-    socketConnections:
+    restCallsPerCluster:
+        createDoc:
+            maxPerMs: 1000000
+            maxBurst: 1000000
+            minCooldownIntervalInMs: 1000000
+            minThrottleIntervalInMs: 1000000
+            maxInMemoryCacheSize: 1000
+            maxInMemoryCacheAgeInMs: 60000
+            enableEnhancedTelemetry: false
+        getDeltas:
+            maxPerMs: 1000000
+            maxBurst: 1000000
+            minCooldownIntervalInMs: 1000000
+            minThrottleIntervalInMs: 1000000
+            maxInMemoryCacheSize: 1000
+            maxInMemoryCacheAgeInMs: 60000
+            enableEnhancedTelemetry: false
+    socketConnectionsPerTenant:
+        maxPerMs: 1000000
+        maxBurst: 1000000
+        minCooldownIntervalInMs: 1000000
+        minThrottleIntervalInMs: 1000000
+        maxInMemoryCacheSize: 1000
+        maxInMemoryCacheAgeInMs: 60000
+        enableEnhancedTelemetry: false
+    socketConnectionsPerCluster:
         maxPerMs: 1000000
         maxBurst: 1000000
         minCooldownIntervalInMs: 1000000
@@ -75,6 +101,7 @@ scriptorium:
 scribe:
   name: scribe
   replicas: 8
+  getDeltasViaAlfred: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000

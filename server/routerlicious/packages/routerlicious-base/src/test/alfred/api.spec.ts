@@ -18,6 +18,7 @@ import { TestCache } from "@fluidframework/server-test-utils";
 import { DeltaService } from "../../alfred/services";
 import * as SessionHelper from "../../utils/sessionHelper"
 import Sinon from "sinon";
+import { Constants } from "../../utils";
 
 
 const nodeCollectionName = "testNodes";
@@ -99,13 +100,21 @@ describe("Routerlicious", () => {
             let app: express.Application;
             let supertest: request.SuperTest<request.Test>;
             describe("throttling", () => {
-                const limit = 10;
+                const limitTenant = 10;
+                const limitCreateDoc = 5;
+                const limitGetDeltas = 5;
                 beforeEach(() => {
-                    const throttler = new TestThrottler(limit);
+                    const tenantThrottler = new TestThrottler(limitTenant);
+                    const restCreateDocThrottler = new TestThrottler(limitCreateDoc);
+                    const restGetDeltasThrottler = new TestThrottler(limitGetDeltas);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        restClusterThrottlers,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -115,7 +124,7 @@ describe("Routerlicious", () => {
                     supertest = request(app);
                 });
 
-                const assertThrottle = async (url: string, token: string | (() => string), body: any, method: "get" | "post" | "patch" = "get"): Promise<void> => {
+                const assertThrottle = async (url: string, token: string | (() => string), body: any, method: "get" | "post" | "patch" = "get", limit: number = limitTenant): Promise<void> => {
                     const tokenProvider = typeof token === "function" ? token : () => token;
                     for (let i = 0; i < limit; i++) {
                         // we're not interested in making the requests succeed with 200s, so just assert that not 429
@@ -137,10 +146,10 @@ describe("Routerlicious", () => {
                         await assertThrottle("/api/v1/ping", null, null);
                     });
                     it("/:tenantId/:id/root", async () => {
-                        await assertThrottle(`/api/v1/${appTenant1.id}/${document1._id}/root`, null, null, "patch");
+                        await assertThrottle(`/api/v1/${appTenant1.id}/${document1._id}/root`, null, null,"patch");
                     });
                     it("/:tenantId/:id/blobs", async () => {
-                        await assertThrottle(`/api/v1/${appTenant1.id}/${document1._id}/blobs`, null, null, "post");
+                        await assertThrottle(`/api/v1/${appTenant1.id}/${document1._id}/blobs`, null, null,"post");
                     });
                 });
 
@@ -154,7 +163,7 @@ describe("Routerlicious", () => {
                     });
                     it("/:tenantId", async () => {
                         const token = () => `Basic ${generateToken(appTenant1.id, "", appTenant1.key, scopes)}`;
-                        await assertThrottle(`/documents/${appTenant1.id}`, token, { id: "" }, "post");
+                        await assertThrottle(`/documents/${appTenant1.id}`, token, { id: "" }, "post", limitCreateDoc);
                     });
                 });
 
@@ -167,8 +176,7 @@ describe("Routerlicious", () => {
                             .expect(429);
                     });
                     it("/:tenantId/:id", async () => {
-                        await assertThrottle(`/deltas/${appTenant2.id}/${document1._id}`, tenantToken2, null);
-                        await assertThrottle(`/deltas/${appTenant1.id}/${document1._id}`, tenantToken1, null);
+                        await assertThrottle(`/deltas/${appTenant1.id}/${document1._id}`, tenantToken1, null, "get", limitGetDeltas);
                         await supertest.get(`/deltas/${appTenant1.id}/${document1._id}`)
                             .set('Authorization', tenantToken1)
                             .expect(429);
@@ -193,11 +201,17 @@ describe("Routerlicious", () => {
             describe("authorization", () => {
                 const maxThrottlerLimit = 10;
                 beforeEach(() => {
-                    const throttler = new TestThrottler(maxThrottlerLimit);
+                    const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        restClusterThrottlers,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -259,11 +273,17 @@ describe("Routerlicious", () => {
 
                 const maxThrottlerLimit = 1000000;
                 beforeEach(() => {
-                    const throttler = new TestThrottler(maxThrottlerLimit);
+                    const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        restClusterThrottlers,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
@@ -321,11 +341,17 @@ describe("Routerlicious", () => {
             describe("single-use JWTs", () => {
                 const limit = 1000000;
                 beforeEach(() => {
-                    const throttler = new TestThrottler(limit);
+                    const tenantThrottler = new TestThrottler(limit);
+                    const restCreateDocThrottler = new TestThrottler(limit);
+                    const restGetDeltasThrottler = new TestThrottler(limit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        restClusterThrottlers,
                         new TestCache(),
                         defaultStorage,
                         defaultAppTenants,
@@ -359,14 +385,20 @@ describe("Routerlicious", () => {
 
                 beforeEach(() => {
                     const maxThrottlerLimit = 1000000;
-                    const throttler = new TestThrottler(maxThrottlerLimit);
+                    const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterThrottlers = new Map<string, TestThrottler>();
+                    restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+                    restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
 
                     spyGetSession = Sinon.spy(SessionHelper, "getSession")
 
                     app = alfredApp.create(
                         defaultProvider,
                         defaultTenantManager,
-                        throttler,
+                        tenantThrottler,
+                        restClusterThrottlers,
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,

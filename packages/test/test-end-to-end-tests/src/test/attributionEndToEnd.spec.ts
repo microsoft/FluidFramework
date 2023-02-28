@@ -145,8 +145,11 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
 		await provider.ensureSynchronized();
 
-		provider.updateDocumentId(container1.resolvedUrl);
-		const container2 = await provider.loadTestContainer(getTestConfig());
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined);
+		const loader2 = provider.makeTestLoader(getTestConfig());
+		const container2 = await loader2.resolve({ url });
+
 		const sharedString2 = await sharedStringFromContainer(container2);
 		sharedString2.insertText(0, "client 2, ");
 
