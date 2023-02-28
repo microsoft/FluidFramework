@@ -647,7 +647,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Checkouts", () => {
+	describe("checkouts", () => {
 		it("are isolated from the root checkout", async () => {
 			const provider = await TestTreeProvider.create(1);
 			const [tree] = provider.trees;
