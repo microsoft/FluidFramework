@@ -356,7 +356,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         logger: ITelemetryLogger,
         private readonly enableMultiplexing?: boolean,
     ) {
-        super(socket, documentId, logger);
+        super(socket, documentId, logger, false, uuid());
         this.socketReference = socketReference;
         this.requestOpsNoncePrefix = `${uuid()}-`;
     }
