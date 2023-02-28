@@ -37,6 +37,7 @@ export function create(
 
     // https://developer.github.com/v3/git/refs/
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.get("/repos/:owner/:repo/git/refs", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
@@ -48,6 +49,7 @@ export function create(
         handleResponse(resultP, response);
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.get("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
@@ -61,6 +63,7 @@ export function create(
         handleResponse(resultP, response);
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.post("/repos/:owner/:repo/git/refs", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const createRefParams = request.body as ICreateRefParamsExternal;
@@ -75,6 +78,7 @@ export function create(
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.patch("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const patchRefParams = request.body as IPatchRefParamsExternal;
@@ -90,6 +94,7 @@ export function create(
         handleResponse(resultP, response);
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.delete("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)

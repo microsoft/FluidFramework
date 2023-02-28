@@ -149,6 +149,7 @@ import {
 	gcTombstoneGenerationOptionName,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
+	IGCRuntimeOptions,
 	IGCStats,
 	shouldAllowGcTombstoneEnforcement,
 } from "./gc";
@@ -311,54 +312,6 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
 	nonRuntimeHeuristicThreshold: 20,
 };
-
-export interface IGCRuntimeOptions {
-	/**
-	 * Flag that if true, will enable running garbage collection (GC) for a new container.
-	 *
-	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
-	 * and marked as such in the summary. This option enables the mark phase.
-	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled via the "sweepAllowed" option.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	gcAllowed?: boolean;
-
-	/**
-	 * Flag that if true, enables GC's sweep phase for a new container.
-	 *
-	 * This will allow GC to eventually delete unreferenced objects from the container.
-	 * This flag should only be set to true if "gcAllowed" is true.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	sweepAllowed?: boolean;
-
-	/**
-	 * Flag that if true, will disable garbage collection for the session.
-	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-	 */
-	disableGC?: boolean;
-
-	/**
-	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
-	 * changed or not.
-	 */
-	runFullGC?: boolean;
-
-	/**
-	 * Maximum session duration for a new container. If not present, a default value will be used.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	sessionExpiryTimeoutMs?: number;
-
-	/**
-	 * Allows additional GC options to be passed.
-	 */
-	[key: string]: any;
-}
 
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
@@ -1114,7 +1067,10 @@ export class ContainerRuntime
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
-		this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
+		this.remoteMessageProcessor = new RemoteMessageProcessor(
+			opSplitter,
+			new OpDecompressor(this.mc.logger),
+		);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1891,7 +1847,23 @@ export class ContainerRuntime
 				case ContainerMessageType.Rejoin:
 					break;
 				default:
-					assert(!runtimeMessage, 0x3ce /* Runtime message of unknown type */);
+					if (runtimeMessage) {
+						const error = DataProcessingError.create(
+							// Former assert 0x3ce
+							"Runtime message of unknown type",
+							"OpProcessing",
+							message,
+							{
+								local,
+								type: message.type,
+								contentType: typeof message.contents,
+								batch: message.metadata?.batch,
+								compression: message.compression,
+							},
+						);
+						this.closeFn(error);
+						throw error;
+					}
 			}
 
 			// For back-compat, notify only about runtime messages for now.
