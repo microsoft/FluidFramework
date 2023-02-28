@@ -800,8 +800,7 @@ function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeS
 	let currNode;
 	switch (shape) {
 		case TreeShape.Deep:
-			currField = tree.root[getField](localFieldKey);
-			currNode = currField.getNode(0);
+			currNode = tree.root;
 			for (let j = 0; j < numberOfNodes - 1; j++) {
 				currField = currNode[getField](localFieldKey);
 				currNode = currField.getNode(0);
