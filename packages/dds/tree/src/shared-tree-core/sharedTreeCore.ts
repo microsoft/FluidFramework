@@ -204,25 +204,6 @@ export class SharedTreeCore<
 		await Promise.all(loadIndexes);
 	}
 
-	/**
-	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
-	 * This can be used to support asynchronous checkouts of the tree.
-	 */
-	protected createBranch(): SharedTreeBranch<TChange> {
-		const branch = new SharedTreeBranch(
-			() => this.editManager.getLocalBranch(),
-			(b) => {
-				const change = this.editManager.fastForwardLocalBranch(b.getHead());
-				this.indexEventEmitter.emit("newLocalChange", change);
-				this.indexEventEmitter.emit("newLocalState", this.changeFamily.intoDelta(change));
-				return change;
-			},
-			this.stableId,
-			new Rebaser(this.changeFamily.rebaser),
-		);
-		return branch;
-	}
-
 	protected submitEdit(edit: TChange): void {
 		const revision = mintRevisionTag();
 		const delta = this.editManager.addLocalChange(revision, edit);
@@ -271,6 +252,24 @@ export class SharedTreeCore<
 		this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
 		this.indexEventEmitter.emit("newLocalState", delta);
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
+	}
+
+	/**
+	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
+	 * This can be used to support asynchronous checkouts of the tree.
+	 */
+	protected createBranch(): SharedTreeBranch<TChange> {
+		const branch = new SharedTreeBranch(
+			() => this.editManager.getLocalBranch(),
+			(b) => {
+				const change = this.editManager.fastForwardLocalBranch(b.getHead());
+				this.submitEdit(change);
+				return change;
+			},
+			this.stableId,
+			new Rebaser(this.changeFamily.rebaser),
+		);
+		return branch;
 	}
 
 	protected onDisconnect() {}

@@ -51,7 +51,7 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	/**
 	 * Apply the given change to this branch.
 	 * Emits an `onChange` event.
-	 * @returns the change to this branch (i.e. `change`)
+	 * @returns the net change to this branch (i.e. `change`)
 	 */
 	public applyChange(change: TChange): TChange {
 		this.assertNotDisposed();
@@ -60,6 +60,25 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 			sessionId: this.sessionId,
 			change,
 		});
+		this.emit("onChange", change);
+		return change;
+	}
+
+	/**
+	 * Rebase the changes that have been applied to this branch over all the changes in the base branch that have
+	 * occurred since this branch last pulled (or was forked).
+	 * @returns the net change to this branch
+	 */
+	public pull(): TChange {
+		this.assertNotDisposed();
+		const baseBranch = this.getBaseBranch();
+		if (this.head === baseBranch) {
+			// Not necessary for correctness, but skips needless rebase and event firing below
+			return this.rebaser.changeRebaser.compose([]);
+		}
+
+		const [newBranch, change] = this.rebaser.rebaseBranch(this.head, baseBranch);
+		this.head = newBranch;
 		this.emit("onChange", change);
 		return change;
 	}
@@ -94,27 +113,10 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	}
 
 	/**
-	 * Rebase the changes that have been applied to this branch over all the changes in the base branch that have
-	 * occurred since this branch last pulled (or was forked).
-	 */
-	public pull(): TChange {
-		this.assertNotDisposed();
-		const baseBranch = this.getBaseBranch();
-		if (this.head === baseBranch) {
-			// Not necessary for correctness, but skips needless rebase and event firing below
-			return this.rebaser.changeRebaser.compose([]);
-		}
-
-		const [newBranch, change] = this.rebaser.rebaseBranch(this.head, baseBranch);
-		this.head = newBranch;
-		this.emit("onChange", change);
-		return change;
-	}
-
-	/**
 	 * Apply all the changes on this branch to the base branch from which it was forked. If the base branch has new
 	 * changes since this branch last pulled (or was forked), then this branch's changes will be rebased over those first.
 	 * After the merge completes, this branch may no longer be forked or mutated.
+	 * @returns the net change to this branch
 	 */
 	public merge(): TChange {
 		this.assertNotDisposed();

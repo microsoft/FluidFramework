@@ -647,7 +647,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("checkouts", () => {
+	describe("Checkouts", () => {
 		it("are isolated from the root checkout", async () => {
 			const provider = await TestTreeProvider.create(1);
 			const [tree] = provider.trees;
@@ -792,6 +792,23 @@ describe("SharedTree", () => {
 			assert.equal(peekTestValue(checkout), undefined);
 			checkout.pull();
 			assert.equal(peekTestValue(checkout), "base");
+		});
+
+		it("submits edits to fluid when merging into the root checkout", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			const baseCheckout = tree1.fork();
+			const checkout = baseCheckout.fork();
+			// Modify the checkout, but tree2 should remain unchanged until the edit merges all the way up
+			pushTestValue(checkout, "42");
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree2), undefined);
+			checkout.merge();
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree2), undefined);
+			baseCheckout.merge();
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree2), "42");
 		});
 
 		it("are disposed after merging", async () => {
