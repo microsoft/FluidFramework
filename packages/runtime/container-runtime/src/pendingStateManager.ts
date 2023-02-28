@@ -262,6 +262,8 @@ export class PendingStateManager implements IDisposable {
 		}
 
 		if (pendingMessage.messageType === ContainerMessageType.IdAllocation) {
+			// The stashedState isn't sent over the wire so comparison of message
+			// contents will fail if we don't delete it here
 			delete pendingMessage.content.stashedState;
 		}
 

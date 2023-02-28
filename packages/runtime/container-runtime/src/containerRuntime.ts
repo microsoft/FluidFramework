@@ -1891,7 +1891,6 @@ export class ContainerRuntime
 					this.blobManager.processBlobAttachOp(message, local);
 					break;
 				case ContainerMessageType.IdAllocation:
-					console.log(message.contents);
 					this.idCompressor?.finalizeCreationRange(message.contents as IdCreationRange);
 					break;
 				case ContainerMessageType.ChunkedOp:
@@ -2909,8 +2908,8 @@ export class ContainerRuntime
 			) {
 				this.outbox.submitAttach(message);
 			} else {
+				// Generate an Id allocation op if compressed Ids have been generated
 				if (idAllocationBatchMessage !== undefined) {
-					console.log("submitting message to outbox", idAllocationBatchMessage);
 					this.outbox.submit(idAllocationBatchMessage);
 				}
 
