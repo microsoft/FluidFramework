@@ -15,6 +15,13 @@ module.exports = {
 
 		// Disabled because it conflicts with Prettier.
 		"unicorn/no-nested-ternary": "off",
+
+		"import/no-extraneous-dependencies": [
+			"error",
+			{
+				devDependencies: ["src/**/test/**"],
+			},
+		],
 	},
 	overrides: [
 		{
