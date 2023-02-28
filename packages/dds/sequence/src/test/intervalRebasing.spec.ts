@@ -20,6 +20,8 @@ function constructClients(
 ): [Client, Client, Client] {
 	return Array.from({ length: numClients }, (_, index) => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		dataStoreRuntime.options.mergeTreeUseNewLengthCalculations = true;
+		dataStoreRuntime.options.mergeTreeEnableObliterate = true;
 		const sharedString = new SharedString(
 			dataStoreRuntime,
 			String.fromCharCode(index + 65),
@@ -139,7 +141,7 @@ describe("interval rebasing", () => {
 		assertConsistent(clients);
 	});
 
-	it("basic interval sliding for obliterate", () => {
+	it("handles basic interval sliding for obliterate", () => {
 		// A-(BC)
 
 		clients[0].sharedString.insertText(0, "ABC");
