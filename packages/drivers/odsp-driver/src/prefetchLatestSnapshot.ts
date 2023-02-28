@@ -130,7 +130,10 @@ export async function prefetchLatestSnapshot(
 				enableRedeemFallback,
 			)
 				.then(async (value) => {
-					assert(!!snapshotEpoch, "prefetched snapshot should have a valid epoch");
+					assert(
+						!!snapshotEpoch,
+						0x585 /* prefetched snapshot should have a valid epoch */,
+					);
 					snapshotContentsWithEpochP.resolve({
 						...value,
 						fluidEpoch: snapshotEpoch,

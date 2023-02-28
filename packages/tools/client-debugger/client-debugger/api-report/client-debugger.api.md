@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ConnectionState } from '@fluidframework/container-loader';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -28,8 +27,17 @@ export function clearDebuggerRegistry(): void;
 export function closeFluidClientDebugger(containerId: string): void;
 
 // @internal
-export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
+export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
+}
+
+// @internal
+export enum ContainerStateChangeKind {
+    Attached = "attached",
+    Closed = "closed",
+    Connected = "connected",
+    Disconnected = "disconnected",
+    Disposed = "disposed"
 }
 
 // @internal
