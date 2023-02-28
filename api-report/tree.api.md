@@ -126,6 +126,32 @@ export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitte
 // @alpha
 export const createField: unique symbol;
 
+// @alpha
+export interface CrossFieldManager<T = unknown> {
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId): T | undefined;
+    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T): T;
+}
+
+// @alpha (undocumented)
+export enum CrossFieldTarget {
+    // (undocumented)
+    Destination = 1,
+    // (undocumented)
+    Source = 0
+}
+
+// @alpha
+export interface CursorAdapter<TNode> {
+    // (undocumented)
+    getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
+    // (undocumented)
+    keysFromNode(node: TNode): readonly FieldKey[];
+    // (undocumented)
+    type(node: TNode): TreeType;
+    // (undocumented)
+    value(node: TNode): Value;
+}
+
 // @alpha (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -134,6 +160,12 @@ export const enum CursorLocationType {
 
 // @alpha
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
+
+// @alpha
+export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
+    fork(): CursorWithNode<TNode>;
+    getNode(): TNode;
+}
 
 // @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
@@ -193,7 +225,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
     readonly fieldSchema: FieldSchema;
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
-    readonly primaryType?: TreeSchemaIdentifier;
+    readonly parent?: EditableTree;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
 
@@ -202,6 +234,10 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
     readonly [indexSymbol]: number;
+    readonly [parentField]: {
+        readonly parent: EditableField;
+        readonly index: number;
+    };
     readonly [proxyTargetSymbol]: object;
     [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [Symbol.iterator](): IterableIterator<EditableField>;
@@ -226,6 +262,18 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 // @alpha
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
+// @alpha (undocumented)
+export interface EditDescription {
+    // (undocumented)
+    change: FieldChangeset;
+    // (undocumented)
+    field: FieldKey;
+    // (undocumented)
+    fieldKind: FieldKindIdentifier;
+    // (undocumented)
+    path: UpPath | undefined;
+}
+
 // @alpha
 export const emptyField: FieldSchema;
 
@@ -242,6 +290,9 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaqu
 
 // @alpha
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
+
+// @alpha (undocumented)
+export function fail(message: string): never;
 
 // @alpha
 export interface FieldAnchor {
@@ -284,10 +335,13 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @alpha (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
-    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator): TChangeset;
+    amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     // (undocumented)
-    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator): TChangeset;
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
 }
 
 // @alpha (undocumented)
@@ -319,6 +373,19 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
 // @alpha
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
+// @alpha (undocumented)
+export interface FieldKinds {
+    // (undocumented)
+    optional: FieldKind;
+    // (undocumented)
+    sequence: FieldKind;
+    // (undocumented)
+    value: FieldKind;
+}
+
+// @alpha (undocumented)
+export const FieldKinds: FieldKinds;
+
 // @alpha
 export interface FieldLocation {
     // (undocumented)
@@ -345,6 +412,11 @@ export interface FieldSchema {
     readonly kind: FieldKindIdentifier;
     readonly types?: TreeTypeSet;
 }
+
+// @alpha
+export function fieldSchema(kind: {
+    identifier: FieldKindIdentifier;
+}, types?: Iterable<TreeSchemaIdentifier>): FieldSchema;
 
 // @alpha
 export const enum FieldScope {
@@ -412,6 +484,8 @@ export type IdAllocator = () => ChangesetLocalId;
 
 // @alpha
 export interface IDefaultEditBuilder {
+    // (undocumented)
+    move(sourcePath: UpPath | undefined, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath | undefined, destField: FieldKey, destIndex: number): void;
     // (undocumented)
     optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
     // (undocumented)
@@ -721,6 +795,8 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
+    // (undocumented)
+    submitChanges(changes: EditDescription[], maxId?: ChangesetLocalId): void;
 }
 
 // @alpha
@@ -779,6 +855,9 @@ export interface NamedComputation {
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 
 // @alpha
+export function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<TreeSchemaIdentifier>): NamedTreeSchema;
+
+// @alpha
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
 // @alpha
@@ -835,6 +914,9 @@ export interface OptionalFieldEditBuilder {
 }
 
 // @alpha
+export const parentField: unique symbol;
+
+// @alpha
 export interface PathRootPrefix {
     indexOffset?: number;
     parent?: UpPath | undefined;
@@ -861,6 +943,8 @@ export abstract class ProgressiveEditBuilderBase<TChange> implements Progressive
     constructor(changeFamily: ChangeFamily<unknown, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
     // @sealed
     protected applyChange(change: TChange): void;
+    // (undocumented)
+    protected readonly changeFamily: ChangeFamily<unknown, TChange>;
     // @sealed (undocumented)
     getChanges(): TChange[];
 }
@@ -890,8 +974,10 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 // @alpha
 export const replaceField: unique symbol;
 
+// Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @alpha, but its signature references "StableId" which is marked as @internal
+//
 // @alpha
-export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
+export type RevisionTag = StableId;
 
 // @alpha
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
@@ -902,8 +988,14 @@ export interface RootField {
     readonly key: DetachedField;
 }
 
+// @alpha (undocumented)
+export const rootField: DetachedField;
+
 // @alpha
 export const rootFieldKey: GlobalFieldKey;
+
+// @alpha (undocumented)
+export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
 export interface SchemaData {
@@ -968,7 +1060,18 @@ export class SimpleDependee implements Dependee {
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
 
 // @alpha
+export function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
+
+// @alpha
+export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
+
+// @alpha
 type Skip = number;
+
+// @internal
+export type StableId = UuidString & {
+    readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
+};
 
 // @alpha
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
@@ -1026,6 +1129,22 @@ export interface TreeSchema {
 }
 
 // @alpha
+export interface TreeSchemaBuilder {
+    // (undocumented)
+    readonly extraGlobalFields?: boolean;
+    // (undocumented)
+    readonly extraLocalFields: FieldSchema;
+    // (undocumented)
+    readonly globalFields?: Iterable<GlobalFieldKey>;
+    // (undocumented)
+    readonly localFields?: {
+        [key: string]: FieldSchema;
+    };
+    // (undocumented)
+    readonly value?: ValueSchema;
+}
+
+// @alpha
 export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 
 // @alpha (undocumented)
@@ -1056,6 +1175,11 @@ export interface UpPath {
     readonly parentField: FieldKey;
     readonly parentIndex: number;
 }
+
+// @alpha
+export type UuidString = string & {
+    readonly UuidString: "9d40d0ae-90d9-44b1-9482-9f55d59d5465";
+};
 
 // @alpha
 export type Value = undefined | TreeValue;

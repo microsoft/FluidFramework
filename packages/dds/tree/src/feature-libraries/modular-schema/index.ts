@@ -11,10 +11,16 @@ export {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
 } from "./comparison";
-export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
 	ChangesetLocalId,
+	CrossFieldManager,
+	CrossFieldQuerySet,
+	CrossFieldTarget,
+} from "./crossFieldQueries";
+export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
+export {
 	IdAllocator,
+	isolatedFieldChangeRebaser,
 	FieldChange,
 	FieldChangeEncoder,
 	FieldChangeHandler,
@@ -43,6 +49,6 @@ export {
 	GenericChangeset,
 	genericFieldKind,
 } from "./genericFieldKind";
-export { ModularChangeFamily, ModularEditBuilder } from "./modularChangeFamily";
+export { ModularChangeFamily, ModularEditBuilder, EditDescription } from "./modularChangeFamily";
 export { typedTreeSchema, typedFieldSchema } from "./typedSchema";
 export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";

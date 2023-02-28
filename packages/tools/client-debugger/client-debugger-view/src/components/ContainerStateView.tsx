@@ -56,10 +56,10 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 			container.off("disconnected", onContainerConnectionChange);
 			container.off("closed", onContainerDisposed);
 		};
-	}, [container]);
+	}, [container, setContainerAttachState, setContainerConnectionState, setIsContainerDisposed]);
 
 	const children: React.ReactElement[] = [
-		<span>
+		<span key="status-span">
 			<b>Status: </b>
 		</span>,
 	];

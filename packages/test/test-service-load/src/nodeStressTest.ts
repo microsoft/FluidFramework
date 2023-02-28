@@ -10,7 +10,7 @@ import commander from "commander";
 import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
-import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
+import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
 interface ITestUserConfig {
 	/* Credentials' key/value description:
@@ -71,7 +71,7 @@ async function main() {
 
 	const driver: TestDriverTypes = commander.driver;
 	const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
-	const profileArg: string = commander.profile;
+	const profileName: string = commander.profile;
 	const testId: string | undefined = commander.testId;
 	const debug: true | undefined = commander.debug;
 	const log: string | undefined = commander.log;
@@ -82,7 +82,7 @@ async function main() {
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
 
-	const profile = getProfile(profileArg);
+	const profile = getProfile(profileName);
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
@@ -90,12 +90,17 @@ async function main() {
 
 	const testUsers = await getTestUsers(credFile);
 
-	await orchestratorProcess(
-		driver,
-		endpoint,
-		{ ...profile, name: profileArg, testUsers },
-		{ testId, debug, verbose, seed, browserAuth, enableMetrics, createTestId },
-	);
+	await orchestratorProcess(driver, endpoint, profile, {
+		testId,
+		debug,
+		verbose,
+		seed,
+		browserAuth,
+		enableMetrics,
+		createTestId,
+		testUsers,
+		profileName,
+	});
 }
 
 /**
@@ -104,7 +109,7 @@ async function main() {
 async function orchestratorProcess(
 	driver: TestDriverTypes,
 	endpoint: DriverEndpoint | undefined,
-	profile: ILoadTestConfig & { name: string; testUsers?: ITestUserConfig },
+	profile: ILoadTestConfig,
 	args: {
 		testId?: string;
 		debug?: true;
@@ -113,11 +118,18 @@ async function orchestratorProcess(
 		browserAuth?: true;
 		enableMetrics?: boolean;
 		createTestId?: boolean;
+		testUsers?: ITestUserConfig;
+		profileName: string;
 	},
 ) {
 	const seed = args.seed ?? Date.now();
 	const seedArg = `0x${seed.toString(16)}`;
-	const logger = await loggerP;
+	const logger = await createLogger({
+		driverType: driver,
+		driverEndpointName: endpoint,
+		profile: args.profileName,
+		runId: undefined,
+	});
 
 	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, args.browserAuth);
 
@@ -133,7 +145,7 @@ async function orchestratorProcess(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
 	);
 	console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
-	console.log(`Selected test profile: ${profile.name}`);
+	console.log(`Selected test profile: ${args.profileName}`);
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
 	const runnerArgs: string[][] = [];
@@ -143,7 +155,7 @@ async function orchestratorProcess(
 			"--driver",
 			driver,
 			"--profile",
-			profile.name,
+			args.profileName,
 			"--runId",
 			i.toString(),
 			"--url",
@@ -193,15 +205,13 @@ async function orchestratorProcess(
 
 	try {
 		const usernames =
-			profile.testUsers !== undefined
-				? Object.keys(profile.testUsers.credentials)
-				: undefined;
+			args.testUsers !== undefined ? Object.keys(args.testUsers.credentials) : undefined;
 		await Promise.all(
 			runnerArgs.map(async (childArgs, index) => {
 				const username =
 					usernames !== undefined ? usernames[index % usernames.length] : undefined;
 				const password =
-					username !== undefined ? profile.testUsers?.credentials[username] : undefined;
+					username !== undefined ? args.testUsers?.credentials[username] : undefined;
 				const envVar = { ...process.env };
 				if (username !== undefined && password !== undefined) {
 					if (endpoint === "odsp") {
@@ -223,9 +233,6 @@ async function orchestratorProcess(
 			}),
 		);
 	} finally {
-		if (logger !== undefined) {
-			await logger.flush();
-		}
 		await safeExit(0, url);
 	}
 }

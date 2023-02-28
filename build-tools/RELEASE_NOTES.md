@@ -5,17 +5,16 @@ cover the major changes in this release.
 
 This is a **major release** that includes some breaking changes in addition to useful new features and bug fixes:
 
-* [Type compatibility tests are configurable per-branch](#type-compatibility-tests-are-configurable-per-branch)
-* [Release groups can use yarn or pnpm](#release-groups-can-use-yarn-or-pnpm)
+-   [Type compatibility tests are configurable per-branch](#type-compatibility-tests-are-configurable-per-branch)
+-   [Release groups can use yarn or pnpm](#release-groups-can-use-yarn-or-pnpm)
 
 ## 💥 Breaking changes
 
 This release contains some breaking changes to the `generate typetests` and `release report` commands:
 
-* **generate:typetests:** `fluid-type-validator` is deprecated. Use `flub generate typetests` instead.
-* **release:report:** The `--all` and `--limit` flags have been removed from `flub release report`. Use [`flub release
-history`](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/release.md#flub-release-history)
-instead.
+-   **generate:typetests:** `fluid-type-validator` is deprecated. Use `flub generate typetests` instead.
+-   **release:report:** The `--all` and `--limit` flags have been removed from `flub release report`. Use [`flub release history`](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/release.md#flub-release-history)
+    instead.
 
 ## ✨ Features
 
@@ -59,15 +58,14 @@ in this release.
 
 [PR #12988](https://github.com/microsoft/FluidFramework/issues/12988)
 
-fluid-build now parses build commands with subcommands properly. Prior to this release, build commands like `flub
-generate typetests` were not parsed correctly into fluid-build's build graph.
+fluid-build now parses build commands with subcommands properly. Prior to this release, build commands like `flub generate typetests` were not parsed correctly into fluid-build's build graph.
 
 ## List of packages released
 
-- @fluid-tools/build-cli
-- @fluidframework/build-tools
-- @fluidframework/bundle-size-tools
-- @fluid-tools/version-tools
+-   @fluid-tools/build-cli
+-   @fluidframework/build-tools
+-   @fluidframework/bundle-size-tools
+-   @fluid-tools/version-tools
 
 # Fluid Framework build-tools v0.5
 
@@ -76,14 +74,14 @@ tools. These release notes cover the major changes in this release.
 
 This is a **major release** that includes some breaking changes in addition to useful new features and bug fixes:
 
-- [Autocomplete support for bash and zsh](#autocomplete-support-for-bash-and-zsh)
-- [`flub merge info` shows main/next branch integration status](#flub-merge-info-shows-mainnext-branch-integration-status)
-- [`release report` command has a new `--all` flag](#release-report-command-has-a-new---all-flag)
-- [`generate typetests` is a more configurable type test generator](#generate-typetests-is-a-more-configurable-type-test-generator)
-- [`bump` command has a new `--exact` flag](#bump-command-has-a-new---exact-flag)
-- [`check policy` can list and exclude handlers by name](#check-policy-can-list-and-exclude-handlers-by-name)
-- [`check policy` checks for extraneous lockfiles and tilde dependencies](#check-policy-checks-for-extraneous-lockfiles-and-tilde-dependencies)
-- [Conventional commits enabled in build-tools release group](#conventional-commits-enabled-in-build-tools-release-group)
+-   [Autocomplete support for bash and zsh](#autocomplete-support-for-bash-and-zsh)
+-   [`flub merge info` shows main/next branch integration status](#flub-merge-info-shows-mainnext-branch-integration-status)
+-   [`release report` command has a new `--all` flag](#release-report-command-has-a-new---all-flag)
+-   [`generate typetests` is a more configurable type test generator](#generate-typetests-is-a-more-configurable-type-test-generator)
+-   [`bump` command has a new `--exact` flag](#bump-command-has-a-new---exact-flag)
+-   [`check policy` can list and exclude handlers by name](#check-policy-can-list-and-exclude-handlers-by-name)
+-   [`check policy` checks for extraneous lockfiles and tilde dependencies](#check-policy-checks-for-extraneous-lockfiles-and-tilde-dependencies)
+-   [Conventional commits enabled in build-tools release group](#conventional-commits-enabled-in-build-tools-release-group)
 
 For a full list of changes in this release, see the [changelog](./CHANGELOG.md#050-2022-11-04).
 
@@ -91,10 +89,10 @@ For a full list of changes in this release, see the [changelog](./CHANGELOG.md#0
 
 This release contains some breaking changes to the `bump deps` and `check layers` commands:
 
-* **bump:deps:** The `-p` flag has been changed to specify a package
-name, which is consistent with
-other commands. Use `--prerelease` to replace former uses of `-p`.
-* **check:layers:** The `--info` flag is now required.
+-   **bump:deps:** The `-p` flag has been changed to specify a package
+    name, which is consistent with
+    other commands. Use `--prerelease` to replace former uses of `-p`.
+-   **check:layers:** The `--info` flag is now required.
 
 ## ✨ Features
 
@@ -136,17 +134,17 @@ minor or major pinned version, or caret/tilde-equivalent ranges of the previous 
 
 Fluid internal versions are also now supported correctly. Given the version `2.0.0-internal.2.3.5`:
 
-- baseMajor: `2.0.0-internal.2.0.0`
-- baseMinor: `2.0.0-internal.2.3.0`
-- previousMajor: `2.0.0-internal.1.0.0`
-- previousMinor: `2.0.0-internal.2.2.0`
+-   baseMajor: `2.0.0-internal.2.0.0`
+-   baseMinor: `2.0.0-internal.2.3.0`
+-   previousMajor: `2.0.0-internal.1.0.0`
+-   previousMinor: `2.0.0-internal.2.2.0`
 
 Given the version `2.0.0-internal.2.0.0`:
 
-- baseMajor: `2.0.0-internal.2.0.0`
-- baseMinor: `2.0.0-internal.2.0.0`
-- previousMajor: `2.0.0-internal.1.0.0`
-- previousMinor: `2.0.0-internal.2.0.0` (the previous minor doesn't "roll back" to the previous version series)
+-   baseMajor: `2.0.0-internal.2.0.0`
+-   baseMinor: `2.0.0-internal.2.0.0`
+-   previousMajor: `2.0.0-internal.1.0.0`
+-   previousMinor: `2.0.0-internal.2.0.0` (the previous minor doesn't "roll back" to the previous version series)
 
 ### `bump` command has a new `--exact` flag
 
@@ -182,8 +180,7 @@ and walks through the process step by step.
 [Commitlint](https://commitlint.js.org/), on the other hand, checks the resulting commit message before it's committed.
 These configurations are important as groundwork for CI enforcement, too.
 
-There is now a script to the root build-tools project that invokes commitizen. **Now you can OPTIONALLY use `npm run
-commit` to commit a build-tools change with a compliant commit message.**
+There is now a script to the root build-tools project that invokes commitizen. **Now you can OPTIONALLY use `npm run commit` to commit a build-tools change with a compliant commit message.**
 
 IMPORTANT: conventional commits are not yet enforced. This change is only helpful if people choose to use it. A future
 PR will add enforcement in CI.
@@ -202,7 +199,7 @@ that behavior so that only the release group specified will be updated.
 
 ## List of packages released
 
-- @fluid-tools/build-cli
-- @fluidframework/build-tools
-- @fluidframework/bundle-size-tools
-- @fluid-tools/version-tools
+-   @fluid-tools/build-cli
+-   @fluidframework/build-tools
+-   @fluidframework/bundle-size-tools
+-   @fluid-tools/version-tools

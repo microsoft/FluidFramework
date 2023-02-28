@@ -767,20 +767,113 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 		});
 
-		testGeneralPurposeTreeCursor(
-			"forest cursor",
-			(data): ITreeCursor => {
-				const forest = factory(
-					new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-				);
-				initializeForest(forest, [singleTextCursor(data)]);
-				const cursor = forest.allocateCursor();
-				moveToDetachedField(forest, cursor);
-				assert(cursor.firstNode());
-				return cursor;
-			},
-			jsonableTreeFromCursor,
-			true,
-		);
+		describe("Does not leave an empty field", () => {
+			it("when deleting the last node in the field", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+				const delta: Delta.Root = new Map([
+					[
+						rootFieldKeySymbol,
+						[
+							{
+								type: Delta.MarkType.Modify,
+								fields: new Map([
+									[
+										xField,
+										[
+											{
+												type: Delta.MarkType.Delete,
+												count: 1,
+											},
+										],
+									],
+								]),
+							},
+						],
+					],
+				]);
+				const expected: JsonableTree[] = [
+					{
+						type: jsonObject.name,
+						fields: {
+							y: [
+								{
+									type: jsonNumber.name,
+									value: 1,
+								},
+							],
+						},
+					},
+				];
+				initializeForest(forest, nestedContent.map(singleTextCursor));
+				forest.applyDelta(delta);
+				const readCursor = forest.allocateCursor();
+				moveToDetachedField(forest, readCursor);
+				const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+				readCursor.free();
+				assert.deepEqual(actual, expected);
+			});
+			it("when moving the last node in the field", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+				initializeForest(forest, nestedContent.map(singleTextCursor));
+				const moveId = brandOpaque<Delta.MoveId>(0);
+				const moveOut: Delta.MoveOut = {
+					type: Delta.MarkType.MoveOut,
+					count: 1,
+					moveId,
+				};
+				const moveIn: Delta.MoveIn = {
+					type: Delta.MarkType.MoveIn,
+					count: 1,
+					moveId,
+				};
+				const modify: Delta.Modify = {
+					type: Delta.MarkType.Modify,
+					fields: new Map([
+						[xField, [moveOut]],
+						[yField, [1, moveIn]],
+					]),
+				};
+				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [modify]]]);
+				forest.applyDelta(delta);
+				const expected: JsonableTree[] = [
+					{
+						type: jsonObject.name,
+						fields: {
+							y: [
+								{
+									type: jsonNumber.name,
+									value: 1,
+								},
+								{
+									type: jsonNumber.name,
+									value: 0,
+								},
+							],
+						},
+					},
+				];
+				const readCursor = forest.allocateCursor();
+				moveToDetachedField(forest, readCursor);
+				const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+				readCursor.free();
+				assert.deepEqual(actual, expected);
+			});
+		});
 	});
+
+	testGeneralPurposeTreeCursor(
+		"forest cursor",
+		(data): ITreeCursor => {
+			const forest = factory(
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
+			);
+			initializeForest(forest, [singleTextCursor(data)]);
+			const cursor = forest.allocateCursor();
+			moveToDetachedField(forest, cursor);
+			assert(cursor.firstNode());
+			return cursor;
+		},
+		jsonableTreeFromCursor,
+		true,
+	);
 }

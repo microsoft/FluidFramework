@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
 	Delta,
 	FieldKey,
+	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
 	RevisionTag,
@@ -23,8 +24,8 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 
-const revision1: RevisionTag = brand(1);
-const revision2: RevisionTag = brand(2);
+const revision1: RevisionTag = mintRevisionTag();
+const revision2: RevisionTag = mintRevisionTag();
 const fooKey: FieldKey = brand("foo");
 
 const root: UpPath = {

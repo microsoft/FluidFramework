@@ -12,7 +12,14 @@ import {
 	NodeReviver,
 	singleTextCursor,
 } from "../../feature-libraries";
-import { makeAnonChange, RevisionTag, TaggedChange, TreeSchemaIdentifier, Delta } from "../../core";
+import {
+	makeAnonChange,
+	RevisionTag,
+	TaggedChange,
+	TreeSchemaIdentifier,
+	Delta,
+	mintRevisionTag,
+} from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import { assertMarkListEqual, noRepair } from "../utils";
 
@@ -24,7 +31,14 @@ const nodeChange1: NodeChangeset = { valueChange: { value: "value3" } };
 const nodeChange2: NodeChangeset = { valueChange: { value: "value4" } };
 const nodeChange3: NodeChangeset = { valueChange: { value: "value5" } };
 
-const idAllocator: IdAllocator = () => assert.fail("Should not be called");
+const unexpectedDelegate = () => assert.fail("Should not be called");
+const idAllocator: IdAllocator = unexpectedDelegate;
+
+const crossFieldManager = {
+	get: unexpectedDelegate,
+	getOrCreate: unexpectedDelegate,
+	consume: unexpectedDelegate,
+};
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
 	assert.deepEqual(child, nodeChange1);
@@ -72,7 +86,7 @@ describe("Value field changesets", () => {
 	const change1 = fieldHandler.editor.set(singleTextCursor(tree1));
 	const change2 = fieldHandler.editor.set(singleTextCursor(tree2));
 
-	const detachedBy: RevisionTag = brand(42);
+	const detachedBy: RevisionTag = mintRevisionTag();
 	const revertChange2: FieldKinds.ValueChangeset = {
 		value: { revert: detachedBy },
 	};
@@ -92,6 +106,7 @@ describe("Value field changesets", () => {
 			[makeAnonChange(change1), makeAnonChange(change2)],
 			simpleChildComposer,
 			idAllocator,
+			crossFieldManager,
 		);
 
 		assert.deepEqual(composed, change2);
@@ -103,6 +118,7 @@ describe("Value field changesets", () => {
 				[makeAnonChange(change1), makeAnonChange(childChange1)],
 				simpleChildComposer,
 				idAllocator,
+				crossFieldManager,
 			),
 			change1WithChildChange,
 		);
@@ -118,6 +134,7 @@ describe("Value field changesets", () => {
 				[makeAnonChange(childChange1), makeAnonChange(change1)],
 				simpleChildComposer,
 				idAllocator,
+				crossFieldManager,
 			),
 			change1,
 		);
@@ -127,6 +144,7 @@ describe("Value field changesets", () => {
 				[makeAnonChange(childChange1), makeAnonChange(childChange2)],
 				childComposer1_2,
 				idAllocator,
+				crossFieldManager,
 			),
 			childChange3,
 		);
@@ -142,6 +160,7 @@ describe("Value field changesets", () => {
 			makeAnonChange(change1WithChildChange),
 			childInverter,
 			idAllocator,
+			crossFieldManager,
 		);
 
 		assert.deepEqual(inverted.changes, nodeChange2);
@@ -157,6 +176,7 @@ describe("Value field changesets", () => {
 				makeAnonChange(change1WithChildChange),
 				childRebaser,
 				idAllocator,
+				crossFieldManager,
 			),
 			change2,
 		);
@@ -178,6 +198,7 @@ describe("Value field changesets", () => {
 				makeAnonChange(baseChange),
 				childRebaser,
 				idAllocator,
+				crossFieldManager,
 			),
 			childChange3,
 		);
@@ -240,7 +261,7 @@ describe("Optional field changesets", () => {
 		childChange: nodeChange1,
 	};
 
-	const detachedBy: RevisionTag = brand(42);
+	const detachedBy: RevisionTag = mintRevisionTag();
 	const revertChange2: FieldKinds.OptionalChangeset = {
 		fieldChange: { newContent: { revert: detachedBy }, wasEmpty: false },
 	};
@@ -264,6 +285,7 @@ describe("Optional field changesets", () => {
 			[makeAnonChange(change1), makeAnonChange(change2)],
 			childComposer,
 			idAllocator,
+			crossFieldManager,
 		);
 		assert.deepEqual(composed, change3);
 	});
@@ -279,6 +301,7 @@ describe("Optional field changesets", () => {
 				[makeAnonChange(change1), makeAnonChange(change4)],
 				childComposer1_2,
 				idAllocator,
+				crossFieldManager,
 			),
 			expected,
 		);
@@ -296,7 +319,12 @@ describe("Optional field changesets", () => {
 		};
 
 		assert.deepEqual(
-			fieldHandler.rebaser.invert(makeAnonChange(change1), childInverter, idAllocator),
+			fieldHandler.rebaser.invert(
+				makeAnonChange(change1),
+				childInverter,
+				idAllocator,
+				crossFieldManager,
+			),
 			expected,
 		);
 	});
@@ -310,6 +338,7 @@ describe("Optional field changesets", () => {
 				makeAnonChange(change1),
 				childRebaser,
 				idAllocator,
+				crossFieldManager,
 			),
 			change2,
 		);
@@ -333,6 +362,7 @@ describe("Optional field changesets", () => {
 				makeAnonChange(baseChange),
 				childRebaser,
 				idAllocator,
+				crossFieldManager,
 			),
 			expected,
 		);

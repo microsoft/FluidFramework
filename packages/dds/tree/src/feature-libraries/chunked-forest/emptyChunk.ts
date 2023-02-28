@@ -97,4 +97,10 @@ export const emptyCursor: ChunkedCursor = {
 	get value(): never {
 		return fail("empty cursor has no nodes");
 	},
+	atChunkRoot(): boolean {
+		return true;
+	},
+	fork(): ChunkedCursor {
+		return emptyCursor;
+	},
 };

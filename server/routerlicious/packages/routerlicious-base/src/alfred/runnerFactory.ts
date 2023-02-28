@@ -21,6 +21,7 @@ import Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
 import { DeltaService } from "./services";
 
@@ -85,8 +86,10 @@ export class AlfredResources implements core.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public restThrottler: core.IThrottler,
-        public socketConnectThrottler: core.IThrottler,
+        public restTenantThrottler: core.IThrottler,
+        public restClusterThrottlers: Map<string, core.IThrottler>,
+        public socketConnectTenantThrottler: core.IThrottler,
+        public socketConnectClusterThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
         public socketSubmitSignalThrottler: core.IThrottler,
         public singleUseTokenCache: core.ICache,
@@ -100,6 +103,7 @@ export class AlfredResources implements core.IResources {
         public documentsCollection: core.ICollection<core.IDocument>,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
         public verifyMaxMessageSize?: boolean,
+        public redisCache?: core.ICache,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -260,14 +264,30 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         };
 
         // Rest API Throttler
-        const restApiThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:restCalls") ?? {};
-        const restThrottler = configureThrottler(restApiThrottleConfig);
+        const restApiTenantThrottleConfig: Partial<IThrottleConfig> =
+            config.get("alfred:throttling:restCallsPerTenant") ?? {};
+        const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
+
+        const restApiCreateDocThrottleConfig: Partial<IThrottleConfig> =
+        config.get("alfred:throttling:restCallsPerCluster:createDoc") ?? {};
+        const restCreateDocThrottler = configureThrottler(restApiCreateDocThrottleConfig);
+
+        const restApiGetDeltasThrottleConfig: Partial<IThrottleConfig> =
+        config.get("alfred:throttling:restCallsPerCluster:getDeltas") ?? {};
+        const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
+
+        const restClusterThrottlers = new Map<string, core.IThrottler>();
+        restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
+        restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
 
         // Socket Connection Throttler
-        const socketConnectionThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:socketConnections") ?? {};
-        const socketConnectThrottler = configureThrottler(socketConnectionThrottleConfig);
+        const socketConnectionThrottleConfigPerTenant: Partial<IThrottleConfig> =
+            config.get("alfred:throttling:socketConnectionsPerTenant") ?? {};
+        const socketConnectTenantThrottler = configureThrottler(socketConnectionThrottleConfigPerTenant);
+
+        const socketConnectionThrottleConfigPerCluster: Partial<IThrottleConfig> =
+        config.get("alfred:throttling:socketConnectionsPerCluster") ?? {};
+        const socketConnectClusterThrottler = configureThrottler(socketConnectionThrottleConfigPerCluster);
 
         // Socket SubmitOp Throttler
         const submitOpThrottleConfig: Partial<IThrottleConfig> =
@@ -296,6 +316,23 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         // Therefore, default clients will ignore server's 16kb message size limit.
         const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
         const address = `${await utils.getHostIp()}:4000`;
+
+        // This cache will be used to store connection counts for logging connectionCount metrics.
+        let redisCache: core.ICache;
+        if (config.get("alfred:enableConnectionCountLogging")) {
+            const redisOptions: Redis.RedisOptions = {
+                host: redisConfig.host,
+                port: redisConfig.port,
+                password: redisConfig.pass,
+            };
+            if (redisConfig.tls) {
+                redisOptions.tls = {
+                    servername: redisConfig.host,
+                };
+            }
+            const redisClientForLogging = new Redis(redisOptions);
+            redisCache = new services.RedisCache(redisClientForLogging);
+        }
 
         const nodeFactory = new LocalNodeFactory(
             os.hostname(),
@@ -340,8 +377,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             webSocketLibrary,
             orderManager,
             tenantManager,
-            restThrottler,
-            socketConnectThrottler,
+            restTenantThrottler,
+            restClusterThrottlers,
+            socketConnectTenantThrottler,
+            socketConnectClusterThrottler,
             socketSubmitOpThrottler,
             socketSubmitSignalThrottler,
             redisJwtCache,
@@ -354,7 +393,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             metricClientConfig,
             documentsCollection,
             redisThrottleAndUsageStorageManager,
-            verifyMaxMessageSize);
+            verifyMaxMessageSize,
+            redisCache);
     }
 }
 
@@ -366,8 +406,10 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.port,
             resources.orderManager,
             resources.tenantManager,
-            resources.restThrottler,
-            resources.socketConnectThrottler,
+            resources.restTenantThrottler,
+            resources.restClusterThrottlers,
+            resources.socketConnectTenantThrottler,
+            resources.socketConnectClusterThrottler,
             resources.socketSubmitOpThrottler,
             resources.socketSubmitSignalThrottler,
             resources.singleUseTokenCache,
@@ -379,6 +421,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.metricClientConfig,
             resources.documentsCollection,
             resources.throttleAndUsageStorageManager,
-            resources.verifyMaxMessageSize);
+            resources.verifyMaxMessageSize,
+            resources.redisCache);
     }
 }

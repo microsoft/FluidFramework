@@ -14,7 +14,8 @@ export class NodeFsManagerFactory implements IFileSystemManagerFactory {
 }
 
 export class MemFsManagerFactory implements IFileSystemManagerFactory {
+    public readonly volume = new Volume();
     public create(params?: IFileSystemManagerParams): IFileSystemManager {
-        return (new Volume() as unknown) as IFileSystemManager;
+        return (this.volume as unknown) as IFileSystemManager;
     }
 }

@@ -41,20 +41,7 @@ export interface AttributionInfo {
 }
 
 // @alpha
-export interface AttributionKey {
-    seq: number;
-    type: "op";
-}
-
-// @public @deprecated (undocumented)
-export enum BindState {
-    // (undocumented)
-    Binding = "Binding",
-    // (undocumented)
-    Bound = "Bound",
-    // (undocumented)
-    NotBound = "NotBound"
-}
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey;
 
 // @public (undocumented)
 export const blobCountPropertyName = "BlobCount";
@@ -87,6 +74,13 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
+// @alpha
+export interface DetachedAttributionKey {
+    id: 0;
+    // (undocumented)
+    type: "detached";
+}
+
 // @public
 export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
 
@@ -94,6 +88,11 @@ export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStor
 export enum FlushMode {
     Immediate = 0,
     TurnBased = 1
+}
+
+// @public (undocumented)
+export enum FlushModeExperimental {
+    Async = 2
 }
 
 // @public
@@ -180,7 +179,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
-    readonly visibilityState?: VisibilityState_2;
+    readonly visibilityState: VisibilityState_2;
 }
 
 // @public
@@ -206,6 +205,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     ensureNoDataModelChanges<T>(callback: () => T): T;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
+    // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
@@ -363,6 +363,7 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
+    isSummaryInProgress?(): boolean;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
@@ -422,6 +423,7 @@ export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public
@@ -429,6 +431,12 @@ export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreReg
 
 // @public
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+// @alpha
+export interface OpAttributionKey {
+    seq: number;
+    type: "op";
+}
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;

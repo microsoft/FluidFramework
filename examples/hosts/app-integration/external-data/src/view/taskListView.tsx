@@ -2,66 +2,63 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import type { ITask, ITaskList } from "../model-interface";
+import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
 
 interface ITaskRowProps {
 	readonly task: ITask;
-	readonly deleteTask: () => void;
+	readonly deleteDraftTask: () => void;
 }
 
 /**
  * The view for a single task in the TaskListView, as a table row.
  */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-	const { task, deleteTask } = props;
+	const { task, deleteDraftTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
-	const [incomingName, setIncomingName] = useState<string | undefined>(task.incomingName);
-	const [incomingPriority, setIncomingPriority] = useState<number | undefined>(
-		task.incomingPriority,
+	const [externalDataSnapshot, setExternalDataSnapshot] = useState<ExternalSnapshotTask>(
+		task.externalDataSnapshot,
 	);
-	const [incomingType, setIncomingType] = useState<string | undefined>(task.incomingType);
+	const [showConflictUI, setShowConflictUI] = useState<boolean>(false);
 	useEffect(() => {
-		const updateFromRemotePriority = (): void => {
+		const updatePriorityFromFluid = (): void => {
 			if (priorityRef.current !== null) {
-				priorityRef.current.value = task.priority.toString();
+				priorityRef.current.value = task.draftPriority.toString();
 			}
 		};
-		const showIncomingPriority = (): void => {
-			setIncomingPriority(task.incomingPriority);
-			setIncomingType(task.incomingType);
+		const updateExternalSnapshotData = (conflictUIVisible: boolean): void => {
+			setExternalDataSnapshot(task.externalDataSnapshot);
+			setShowConflictUI(conflictUIVisible);
 		};
-		const showIncomingName = (): void => {
-			setIncomingName(task.incomingName);
-			setIncomingType(task.incomingType);
-		};
-		task.on("priorityChanged", updateFromRemotePriority);
-		task.on("incomingPriorityChanged", showIncomingPriority);
-		task.on("incomingNameChanged", showIncomingName);
-		updateFromRemotePriority();
+		task.on("draftPriorityChanged", updatePriorityFromFluid);
+		task.on("changesAvailable", updateExternalSnapshotData);
+		updatePriorityFromFluid();
 		return (): void => {
-			task.off("priorityChanged", updateFromRemotePriority);
-			task.off("incomingPriorityChanged", showIncomingPriority);
-			task.off("incomingNameChanged", showIncomingName);
+			task.off("draftPriorityChanged", updatePriorityFromFluid);
+			task.off("changesAvailable", updateExternalSnapshotData);
 		};
-	}, [task, incomingName, incomingPriority, incomingType]);
+	}, [task, priorityRef]);
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
-		task.priority = newValue;
+		task.draftPriority = newValue;
 	};
 
-	const diffVisible = incomingType === undefined;
-	const showPriority = !diffVisible && incomingPriority !== undefined ? "visible" : "hidden";
-	const showName = !diffVisible && incomingName !== undefined ? "visible" : "hidden";
-	const showAcceptButton = diffVisible ? "hidden" : "visible";
+	const showPriorityDiff =
+		showConflictUI &&
+		externalDataSnapshot.priority !== undefined &&
+		externalDataSnapshot.priority !== task.draftPriority;
+	const showNameDiff =
+		showConflictUI &&
+		externalDataSnapshot.name !== undefined &&
+		externalDataSnapshot.name !== task.draftName.getText();
+	const showAcceptButton = showConflictUI ? "visible" : "hidden";
 
 	let diffColor: string = "white";
-	switch (incomingType) {
+	switch (externalDataSnapshot.changeType) {
 		case "add": {
 			diffColor = "green";
 			break;
@@ -81,7 +78,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			<td>{task.id}</td>
 			<td>
 				<CollaborativeInput
-					sharedString={task.name}
+					sharedString={task.draftName}
 					style={{ width: "200px" }}
 				></CollaborativeInput>
 			</td>
@@ -94,17 +91,21 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 				></input>
 			</td>
 			<td>
-				<button onClick={deleteTask} style={{ background: "none", border: "none" }}>
+				<button onClick={deleteDraftTask} style={{ background: "none", border: "none" }}>
 					❌
 				</button>
 			</td>
-			<td style={{ visibility: showName, backgroundColor: diffColor }}>{incomingName}</td>
-			<td style={{ visibility: showPriority, backgroundColor: diffColor }}>
-				{incomingPriority}
-			</td>
+			{showNameDiff && (
+				<td style={{ backgroundColor: diffColor }}>{externalDataSnapshot.name}</td>
+			)}
+			{showPriorityDiff && (
+				<td style={{ backgroundColor: diffColor, width: "30px" }}>
+					{externalDataSnapshot.priority}
+				</td>
+			)}
 			<td>
 				<button
-					onClick={task.overwriteWithIncomingData}
+					onClick={task.overwriteWithExternalData}
 					style={{ visibility: showAcceptButton }}
 				>
 					Accept change
@@ -127,22 +128,26 @@ export interface ITaskListViewProps {
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
 	const { taskList } = props;
 
-	const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
+	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
 	useEffect(() => {
 		const updateTasks = (): void => {
-			setTasks(taskList.getTasks());
+			setTasks(taskList.getDraftTasks());
 		};
-		taskList.on("taskAdded", updateTasks);
-		taskList.on("taskDeleted", updateTasks);
+		taskList.on("draftTaskAdded", updateTasks);
+		taskList.on("draftTaskDeleted", updateTasks);
 
 		return (): void => {
-			taskList.off("taskAdded", updateTasks);
-			taskList.off("taskDeleted", updateTasks);
+			taskList.off("draftTaskAdded", updateTasks);
+			taskList.off("draftTaskDeleted", updateTasks);
 		};
 	}, [taskList]);
 
 	const taskRows = tasks.map((task: ITask) => (
-		<TaskRow key={task.id} task={task} deleteTask={(): void => taskList.deleteTask(task.id)} />
+		<TaskRow
+			key={task.id}
+			task={task}
+			deleteDraftTask={(): void => taskList.deleteDraftTask(task.id)}
+		/>
 	));
 
 	return (
@@ -160,7 +165,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				</thead>
 				<tbody>{taskRows}</tbody>
 			</table>
-			<button onClick={taskList.saveChanges}>Save changes</button>
+			<button onClick={taskList.writeToExternalServer}>Write to External Source</button>
 		</div>
 	);
 };

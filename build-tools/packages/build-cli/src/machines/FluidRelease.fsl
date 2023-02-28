@@ -66,6 +66,7 @@ Init 'success'
 => CheckShouldRunOptionalChecks 'success'
 => CheckValidReleaseGroup 'success'
 => CheckPolicy 'success'
+=> CheckAssertTagging 'success'
 => CheckHasRemote 'success'
 => CheckBranchUpToDate 'success'
 => CheckNoPrereleaseDependencies 'success'
@@ -80,10 +81,14 @@ CheckShouldRunOptionalChecks 'failure'
 [
 Init
 CheckValidReleaseGroup
-CheckPolicy
 CheckHasRemote
 CheckBranchUpToDate
 ] 'failure' -> Failed;
+
+[
+CheckPolicy
+CheckAssertTagging
+] 'failure' -> PromptToCommitPolicy;
 // END Init and optional checks
 
 

@@ -13,9 +13,6 @@ import { getInputLength, isSkipMark } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
 
-const ERR_NO_REVISION_ON_REVIVE =
-	"Unable to get convert revive mark to delta due to missing revision tag";
-
 export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	deltaFromChild: ToDelta<TNodeChange>,
@@ -83,7 +80,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 							content: reviver(
 								mark.detachedBy ??
 									mark.lastDetachedBy ??
-									fail(ERR_NO_REVISION_ON_REVIVE),
+									fail(
+										"Unable to get convert revive mark to delta due to missing revision tag",
+									),
 								mark.detachIndex,
 								mark.count,
 							),

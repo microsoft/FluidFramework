@@ -381,6 +381,83 @@ describe("Quorum", () => {
                 await Promise.all([proposal1P, proposal2P, proposal3P]);
             });
         });
+
+        describe("Snapshot", async () => {
+            it("Produces the expected stable snapshot", async () => {
+                const proposal1 = {
+                    key: "one",
+                    value: "uno",
+                    sequenceNumber: 53,
+                    resolved: false,
+                    rejected: false,
+                };
+                const proposal2 = {
+                    key: "two",
+                    value: "dos",
+                    sequenceNumber: 68,
+                    resolved: false,
+                    rejected: false,
+                };
+                const proposal3 = {
+                    key: "three",
+                    value: "tres",
+                    sequenceNumber: 92,
+                    resolved: false,
+                    rejected: false,
+                };
+
+                const messageApproving1 = {
+                    minimumSequenceNumber: 61,
+                    sequenceNumber: 64,
+                } as ISequencedDocumentMessage;
+                const messageApproving2 = {
+                    minimumSequenceNumber: 77,
+                    sequenceNumber: 82,
+                } as ISequencedDocumentMessage;
+                const messageApproving3 = {
+                    minimumSequenceNumber: 98,
+                    sequenceNumber: 107,
+                } as ISequencedDocumentMessage;
+
+                // In this test, we'll take the snapshot after proposal 1 has been accepted but not proposal 2
+                const proposal1P = quorum.propose(proposal1.key, proposal1.value)
+                    .then(() => { proposal1.resolved = true; })
+                    .catch(() => { proposal1.rejected = true; });
+                const proposal2P = quorum.propose(proposal2.key, proposal2.value)
+                    .then(() => { proposal2.resolved = true; })
+                    .catch(() => { proposal2.rejected = true; });
+                const proposal3P = quorum.propose(proposal3.key, proposal3.value)
+                    .then(() => { proposal3.resolved = true; })
+                    .catch(() => { proposal3.rejected = true; });
+
+                quorum.addProposal(proposal1.key, proposal1.value, proposal1.sequenceNumber, true, 1);
+                quorum.addProposal(proposal2.key, proposal2.value, proposal2.sequenceNumber, true, 2);
+                quorum.updateMinimumSequenceNumber(messageApproving1);
+
+                const snapshot = quorum.snapshot();
+
+                const verifyExpectedSnapshot = () => {
+                    assert.strictEqual(snapshot.proposals.length, 1, "Should be exactly one proposal in the snapshot");
+                    assert.strictEqual(snapshot.values.length, 1, "Should be exactly one value in the snapshot");
+                    assert.strictEqual(snapshot.proposals[0][1].value, "dos", "Proposed value should be 'dos'");
+                    assert.strictEqual(snapshot.values[0][1].value, "uno", "Accepted value should be 'uno'");
+                };
+
+                // Verify initial state of snapshot
+                verifyExpectedSnapshot();
+
+                // The snapshot we took should never change after we take it
+                quorum.updateMinimumSequenceNumber(messageApproving2);
+                verifyExpectedSnapshot();
+                quorum.addProposal(proposal3.key, proposal3.value, proposal3.sequenceNumber, true, 3);
+                verifyExpectedSnapshot();
+                quorum.updateMinimumSequenceNumber(messageApproving3);
+                verifyExpectedSnapshot();
+
+                // Backstop to ensure the promises are settled.
+                await Promise.all([proposal1P, proposal2P, proposal3P]);
+            });
+        });
     });
 
     describe("Members", () => {
@@ -435,6 +512,38 @@ describe("Quorum", () => {
             assert.strictEqual(quorum.getMembers().size, 1, "Should have 1 member after remove");
             assert.strictEqual(quorum.getMember(client1Info.clientId), undefined, "Not expecting client 1");
             assert.strictEqual(quorum.getMember(client2Info.clientId), client2Info.details, "Expecting client 2");
+        });
+    });
+
+    describe("Snapshot", async () => {
+        it("Produces the expected stable snapshot", () => {
+            // Casting details because the contents don't really matter for this test.
+            const client1Info = {
+                clientId: "client1",
+                details: "details1" as any as ISequencedClient,
+            };
+            const client2Info = {
+                clientId: "client2",
+                details: "details2" as any as ISequencedClient,
+            }
+
+            quorum.addMember(client1Info.clientId, client1Info.details);
+
+            const snapshot = quorum.snapshot();
+
+            const verifyExpectedSnapshot = () => {
+                assert.strictEqual(snapshot.members.length, 1, "Should be exactly 1 member in the snapshot");
+                assert.strictEqual(snapshot.members[0][0], client1Info.clientId, "Expecting client 1");
+            }
+
+            // Verify initial state of snapshot
+            verifyExpectedSnapshot();
+
+            // The snapshot we took should never change after we take it
+            quorum.addMember(client2Info.clientId, client2Info.details);
+            verifyExpectedSnapshot();
+            quorum.removeMember(client1Info.clientId);
+            verifyExpectedSnapshot();
         });
     });
 });

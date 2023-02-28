@@ -6,7 +6,8 @@
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import { Changeset, Mark, MarkList, MoveId } from "./format";
+import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
+import { Changeset, Mark, MarkList, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
 
@@ -23,26 +24,46 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
 export function invert<TNodeChange>(
 	change: TaggedChange<Changeset<TNodeChange>>,
 	invertChild: NodeChangeInverter<TNodeChange>,
+	genId: IdAllocator,
+	crossFieldManager: CrossFieldManager,
 ): Changeset<TNodeChange> {
-	return invertMarkList(change.change, change.revision, invertChild);
+	return invertMarkList(
+		change.change,
+		change.revision,
+		invertChild,
+		crossFieldManager as CrossFieldManager<TNodeChange>,
+	);
+}
+
+export function amendInvert<TNodeChange>(
+	invertedChange: Changeset<TNodeChange>,
+	originalRevision: RevisionTag | undefined,
+	genId: IdAllocator,
+	crossFieldManager: CrossFieldManager,
+): Changeset<TNodeChange> {
+	transferMovedChanges(
+		invertedChange,
+		originalRevision,
+		crossFieldManager as CrossFieldManager<TNodeChange>,
+	);
+	return invertedChange;
 }
 
 function invertMarkList<TNodeChange>(
 	markList: MarkList<TNodeChange>,
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
+	crossFieldManager: CrossFieldManager<TNodeChange>,
 ): MarkList<TNodeChange> {
 	const inverseMarkList = new MarkListFactory<TNodeChange>();
 	let inputIndex = 0;
-	const movedChanges = new Map<MoveId, TNodeChange>();
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, inputIndex, revision, invertChild, movedChanges);
+		const inverseMarks = invertMark(mark, inputIndex, revision, invertChild, crossFieldManager);
 		inverseMarkList.push(...inverseMarks);
 		inputIndex += getInputLength(mark);
 	}
 
-	transferMovedChanges(inverseMarkList.list, movedChanges, invertChild);
 	return inverseMarkList.list;
 }
 
@@ -51,7 +72,7 @@ function invertMark<TNodeChange>(
 	inputIndex: number,
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
-	movedChanges: Map<MoveId, TNodeChange>,
+	crossFieldManager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {
 	if (isSkipMark(mark)) {
 		return [mark];
@@ -128,7 +149,12 @@ function invertMark<TNodeChange>(
 						  ];
 				}
 				if (mark.changes !== undefined) {
-					movedChanges.set(mark.id, mark.changes);
+					crossFieldManager.getOrCreate(
+						CrossFieldTarget.Destination,
+						mark.revision ?? revision,
+						mark.id,
+						invertChild(mark.changes),
+					);
 				}
 				return [
 					{
@@ -147,14 +173,22 @@ function invertMark<TNodeChange>(
 						// The nodes could have been attached but were not because of the source.
 						return [];
 					}
-					return [
-						{
-							type: "ReturnFrom",
-							id: mark.id,
-							count: mark.count,
-							detachedBy: mark.revision ?? revision,
-						},
-					];
+					const invertedMark: ReturnFrom<TNodeChange> = {
+						type: "ReturnFrom",
+						id: mark.id,
+						count: mark.count,
+						detachedBy: mark.revision ?? revision,
+					};
+
+					const movedChanges = crossFieldManager.get(
+						CrossFieldTarget.Destination,
+						mark.revision ?? revision,
+						mark.id,
+					);
+					if (movedChanges !== undefined) {
+						invertedMark.changes = movedChanges;
+					}
+					return [invertedMark];
 				}
 				if (mark.type === "ReturnTo" && mark.lastDetachedBy === undefined) {
 					// The nodes were already attached, so the mark did not affect them.
@@ -171,14 +205,18 @@ function invertMark<TNodeChange>(
 
 function transferMovedChanges<TNodeChange>(
 	marks: MarkList<TNodeChange>,
-	movedChanges: Map<MoveId, TNodeChange>,
-	invertChild: NodeChangeInverter<TNodeChange>,
+	revision: RevisionTag | undefined,
+	crossFieldManager: CrossFieldManager<TNodeChange>,
 ): void {
 	for (const mark of marks) {
 		if (isObjMark(mark) && (mark.type === "MoveOut" || mark.type === "ReturnFrom")) {
-			const change = movedChanges.get(mark.id);
+			const change = crossFieldManager.get(
+				CrossFieldTarget.Destination,
+				mark.revision ?? revision,
+				mark.id,
+			);
 			if (change !== undefined) {
-				mark.changes = invertChild(change);
+				mark.changes = change;
 			}
 		}
 	}

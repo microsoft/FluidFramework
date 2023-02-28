@@ -75,6 +75,7 @@ pr:
     - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
 
@@ -100,3 +101,8 @@ extends:
     - ci:test:stress:tinylicious
     - webpack
     - test:copyresults
+    checks:
+    - policy-check
+    - layer-check
+    - syncpack:deps
+    - syncpack:versions

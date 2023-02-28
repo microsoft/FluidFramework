@@ -15,6 +15,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import random from "random-js";
 import { Trace } from "@fluidframework/common-utils";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
 import { List } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
@@ -447,15 +448,16 @@ export class TestClient extends Client {
 	 * Validates segments either all have attribution information or none of them.
 	 * If no segment has attribution information, returns undefined.
 	 */
-	public getAllAttributionSeqs(): number[] | undefined {
-		const seqs: number[] | undefined = [];
+	public getAllAttributionSeqs(): (number | AttributionKey)[] | undefined {
+		const seqs: (number | AttributionKey)[] | undefined = [];
 		let segmentsWithAttribution = 0;
 		let segmentsWithoutAttribution = 0;
 		this.walkAllSegments((segment) => {
 			if (segment.attribution) {
 				segmentsWithAttribution++;
 				for (let i = 0; i < segment.cachedLength; i++) {
-					seqs.push(segment.attribution.getAtOffset(i).seq);
+					const key = segment.attribution.getAtOffset(i);
+					seqs.push(key.type === "op" ? key.seq : key);
 				}
 			} else {
 				segmentsWithoutAttribution++;
