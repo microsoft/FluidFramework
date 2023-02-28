@@ -12,6 +12,7 @@ export {
 	MapSubset,
 	AnchorNode,
 	anchorSlot,
+	AnchorEvents,
 } from "./anchorSet";
 export {
 	ITreeCursor,

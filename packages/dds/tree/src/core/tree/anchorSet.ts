@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { createEmitter, ISubscribable } from "../../events";
 import { brand, Brand, Covariant, fail, Opaque, ReferenceCountedBase } from "../../util";
 import { FieldKey, EmptyKey, Delta, visitDelta } from "../tree";
 import { UpPath } from "./pathTree";
@@ -56,13 +57,35 @@ export interface MapSubset<K, V> {
 	get(key: K): V | undefined;
 	has(key: K): boolean;
 	set(key: K, value: V): this;
+	delete(key: K): boolean;
+}
+
+/**
+ * Events for {@link AnchorNode}.
+ *
+ * TODO:
+ * - Design how events should be ordered.
+ * - Determine if events should be deferred until update of forest is done, and/or AnchorSet and forest should be updated together with events as it goes.
+ * - Add more events.
+ * - Work out how slots should interact with event related lifetime extension.
+ *
+ * @alpha
+ */
+export interface AnchorEvents {
+	/**
+	 * When the anchor node will never get reused by its AnchorSet.
+	 * This means that the content it corresponds to has been deleted, and that if its undeleted it will be treated as a recreation.
+	 *
+	 * This may happen after a delay after the content was removed from the tree, immediately, or never: it depends on how the AnchorSet is being used.
+	 */
+	afterDelete(anchor: AnchorNode): void;
 }
 
 /**
  * Node in an tree of anchors.
  * @alpha
  */
-export interface AnchorNode extends UpPath<AnchorNode> {
+export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
 	/**
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
@@ -235,6 +258,7 @@ export class AnchorSet {
 			const node = stack.pop()!;
 			assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
 			node.status = Status.Dangling;
+			node.events.emit("afterDelete", node);
 			for (const children of node.children.values()) {
 				stack.push(...children);
 			}
@@ -483,10 +507,17 @@ enum Status {
  * plus the parent paths for them.
  *
  * ReferenceCountedBase tracks the number of references to this from external sources (`Anchors` via `AnchorSet`.).
- * Kept alive as long there are children, OR their refcount is non-zero.
+ * Kept alive as if any of the follow are true:
+ * 1. there are children.
+ * 2. refcount is non-zero.
+ * 3. events are registered.
  */
 class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorNode {
 	public status: Status = Status.Alive;
+	/**
+	 * Event emitter for this anchor.
+	 */
+	public readonly events = createEmitter<AnchorEvents>(() => this.considerDispose());
 
 	/**
 	 * PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
@@ -525,6 +556,10 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		public parentPath: PathNode | undefined,
 	) {
 		super(1);
+	}
+
+	public on<K extends keyof AnchorEvents>(eventName: K, listener: AnchorEvents[K]): () => void {
+		return this.events.on(eventName, listener);
 	}
 
 	child(key: FieldKey, index: number): UpPath<AnchorNode> {
@@ -585,11 +620,9 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	}
 
 	// Called when refcount is set to 0.
-	// Node may be kept alive by children after this point.
+	// Node may be kept alive by children or events after this point.
 	protected dispose(): void {
-		if (this.children.size === 0) {
-			this.disposeThis();
-		}
+		this.considerDispose();
 	}
 
 	/**
@@ -657,23 +690,23 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	public afterEmptyField(key: FieldKey): void {
 		assert(this.status === Status.Alive, 0x40f /* PathNode must be alive */);
 		this.children.delete(key);
-		if (this.isUnreferenced() && this.children.size === 0) {
-			this.disposeThis();
-		}
+		this.considerDispose();
 	}
 
 	/**
-	 * Removes this from parent if alive, and sets this to disposed.
-	 * Must only be called when this node is no longer needed (has no references and no children).
+	 * If node is no longer needed (has no references, no children and no events):
+	 * removes this from parent if alive, and sets this to disposed.
+	 * Must only be called when .
 	 *
 	 * Allowed when dangling (but not when disposed).
 	 */
-	private disposeThis(): void {
+	private considerDispose(): void {
 		assert(this.status !== Status.Disposed, 0x41d /* PathNode must not be disposed */);
-		if (this.status === Status.Alive) {
-			this.parentPath?.removeChild(this);
+		if (this.isUnreferenced() && this.children.size === 0 && !this.events.hasListeners()) {
+			if (this.status === Status.Alive) {
+				this.parentPath?.removeChild(this);
+			}
+			this.status = Status.Disposed;
 		}
-
-		this.status = Status.Disposed;
 	}
 }

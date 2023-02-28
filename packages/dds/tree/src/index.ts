@@ -88,6 +88,7 @@ export {
 	AnchorNode,
 	anchorSlot,
 	UpPath2,
+	AnchorEvents,
 } from "./core";
 
 export {
@@ -112,7 +113,15 @@ export {
 	fail,
 } from "./util";
 
-export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
+export {
+	Events,
+	IsEvent,
+	ISubscribable,
+	createEmitter,
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
+} from "./events";
 
 export {
 	cursorToJsonObject,

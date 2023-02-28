@@ -83,6 +83,7 @@ export {
 	UpPath2,
 	inCursorField,
 	inCursorNode,
+	AnchorEvents,
 } from "./tree";
 
 export {

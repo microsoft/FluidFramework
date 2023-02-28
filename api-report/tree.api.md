@@ -15,6 +15,11 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 // @alpha
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
+// @alpha
+export interface AnchorEvents {
+    afterDelete(anchor: AnchorNode): void;
+}
+
 // @alpha (undocumented)
 export type AnchorKey<TContent> = Opaque<AnchorKeyBrand> & Covariant<TContent>;
 
@@ -27,7 +32,7 @@ export interface AnchorLocator {
 }
 
 // @alpha
-export interface AnchorNode extends UpPath<AnchorNode> {
+export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
     child(key: FieldKey, index: number): UpPath<AnchorNode>;
     getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
     slotMap<T extends AnchorKey<unknown>>(slot: T): T extends AnchorKey<infer TContent> ? MapSubset<T, TContent> : Map<AnchorKey<unknown>, unknown>;
@@ -137,7 +142,7 @@ export interface Covariant<T> {
 }
 
 // @alpha
-export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitter<E>;
+export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
 
 // @alpha
 export const createField: unique symbol;
@@ -490,6 +495,11 @@ export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
 export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
 
 // @alpha (undocumented)
+export interface HasListeners<E extends Events<E>> {
+    hasListeners(eventName?: keyof Events<E>): boolean;
+}
+
+// @alpha (undocumented)
 export interface ICheckout<TEditBuilder> {
     readonly forest: IForestSubscription;
     runTransaction(transaction: (forest: IForestSubscription, editor: TEditBuilder) => TransactionResult): TransactionResult;
@@ -719,6 +729,8 @@ export interface MakeNominal {
 // @alpha
 export interface MapSubset<K, V> {
     // (undocumented)
+    delete(key: K): boolean;
+    // (undocumented)
     get(key: K): V | undefined;
     // (undocumented)
     has(key: K): boolean;
@@ -923,6 +935,9 @@ export interface NodeData {
 
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
+
+// @alpha
+export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
 
 // @alpha
 export interface ObservingDependent extends Dependent {

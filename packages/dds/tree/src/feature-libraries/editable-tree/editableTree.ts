@@ -28,7 +28,7 @@ import {
 	inCursorField,
 	inCursorNode,
 } from "../../core";
-import { brand, fail, getOrAddEmptyToMap } from "../../util";
+import { brand, fail } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import {
@@ -342,10 +342,6 @@ export interface EditableField
 
 const editableTreeSlot = anchorSlot<EditableTree>();
 
-// TODO: hook this up to get called when the node the anchor it is for gets deleted from the tree.
-// Note: this should be when it will not get restored (anchor object can't get resurrected) in its AnchorSet.
-const onDelete = anchorSlot<((anchor: AnchorNode) => void)[]>();
-
 function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): EditableTree {
 	const anchor = cursor.buildAnchor() ?? fail("invalid");
 	const anchorNode = context.forest.anchors.locate(anchor) ?? fail("invalid");
@@ -358,7 +354,7 @@ function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): Edita
 	const newTarget = new NodeProxyTarget(context, cursor, anchorNode, anchor);
 	const output = adaptWithProxy(newTarget, nodeProxyHandler);
 	map.set(editableTreeSlot, output);
-	getOrAddEmptyToMap(anchorNode.slotMap(onDelete), onDelete).push(cleanupTree);
+	anchorNode.on("afterDelete", cleanupTree);
 	map.get(editableTreeSlot);
 	return output;
 }
@@ -445,6 +441,9 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
 
+	/**
+	 * Call when disposing of this target, iff it has an anchor.
+	 */
 	protected abstract forgetAnchor(anchor: T): void;
 }
 
@@ -502,6 +501,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	}
 
 	protected forgetAnchor(anchor: Anchor): void {
+		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
+		// After this point this node will not be usable,
+		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
+		this.anchorNode.slotMap(editableTreeSlot).delete(editableTreeSlot);
 		this.context.forest.anchors.forget(anchor);
 	}
 
