@@ -1,5 +1,12 @@
 {
-	"tags": ["checkout"],
-	"exports": ["index"],
-	"imports": ["forest"]
+	"tags": [
+		"checkout"
+	],
+	"exports": [
+		"index"
+	],
+	"imports": [
+		"events",
+		"rebase"
+	]
 }
