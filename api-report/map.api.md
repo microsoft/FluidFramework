@@ -306,7 +306,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     set(key: string, value: unknown): this;
     get size(): number;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 
