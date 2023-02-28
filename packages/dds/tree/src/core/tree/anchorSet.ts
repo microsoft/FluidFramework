@@ -524,7 +524,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		 */
 		public parentPath: PathNode | undefined,
 	) {
-		super(0);
+		super(1);
 	}
 
 	child(key: FieldKey, index: number): UpPath<AnchorNode> {

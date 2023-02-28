@@ -15,9 +15,22 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 // @alpha
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
+// @alpha (undocumented)
+export type AnchorKey<TContent> = Opaque<AnchorKeyBrand> & Covariant<TContent>;
+
+// @alpha (undocumented)
+export type AnchorKeyBrand = Brand<number, "AnchorKey">;
+
 // @alpha
 export interface AnchorLocator {
-    locate(anchor: Anchor): UpPath | undefined;
+    locate(anchor: Anchor): AnchorNode | undefined;
+}
+
+// @alpha
+export interface AnchorNode extends UpPath<AnchorNode> {
+    child(key: FieldKey, index: number): UpPath<AnchorNode>;
+    getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
+    slotMap<T extends AnchorKey<unknown>>(slot: T): T extends AnchorKey<infer TContent> ? MapSubset<T, TContent> : Map<AnchorKey<unknown>, unknown>;
 }
 
 // @alpha @sealed
@@ -27,10 +40,13 @@ export class AnchorSet {
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
     // (undocumented)
-    locate(anchor: Anchor): UpPath | undefined;
+    locate(anchor: Anchor): AnchorNode | undefined;
     moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
     track(path: UpPath | null): Anchor;
 }
+
+// @alpha
+export function anchorSlot<TContent>(): AnchorKey<TContent>;
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -701,6 +717,16 @@ export interface MakeNominal {
 }
 
 // @alpha
+export interface MapSubset<K, V> {
+    // (undocumented)
+    get(key: K): V | undefined;
+    // (undocumented)
+    has(key: K): boolean;
+    // (undocumented)
+    set(key: K, value: V): this;
+}
+
+// @alpha
 type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | MoveInAndModify<TTree> | InsertAndModify<TTree>;
 
 // @alpha
@@ -1170,11 +1196,14 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
 export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
 // @alpha
-export interface UpPath {
-    readonly parent: UpPath | undefined;
+export interface UpPath<TParent = UpPath2> {
+    readonly parent: TParent | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;
 }
+
+// @alpha
+export type UpPath2 = UpPath;
 
 // @alpha
 export type UuidString = string & {

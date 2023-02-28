@@ -24,8 +24,9 @@ import {
 	FieldAnchor,
 	ITreeCursor,
 	anchorSlot,
+	AnchorNode,
 } from "../../core";
-import { brand, fail } from "../../util";
+import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import {
@@ -337,9 +338,35 @@ export interface EditableField
 	replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
 
+const editableTreeSlot = anchorSlot<EditableTree>();
+
+// TODO: hook this up to get called when the node the anchor is for gets deleted from the tree.
+// Note: this should be when it will not get restored (anchor object can't get resurrected) in its AnchorSet.
+const onDelete = anchorSlot<((anchor: AnchorNode) => void)[]>();
+
 function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): EditableTree {
-	const newTarget = new NodeProxyTarget(context, cursor);
-	return adaptWithProxy(newTarget, nodeProxyHandler);
+	const anchor = cursor.buildAnchor() ?? fail("invalid");
+	const anchorNode = context.forest.anchors.locate(anchor) ?? fail("invalid");
+	const map = anchorNode.slotMap(editableTreeSlot);
+	const cached = map.get(editableTreeSlot);
+	if (cached !== undefined) {
+		context.forest.anchors.forget(anchor);
+		return cached;
+	}
+	const newTarget = new NodeProxyTarget(context, cursor, anchorNode, anchor);
+	const output = adaptWithProxy(newTarget, nodeProxyHandler);
+	map.set(editableTreeSlot, output);
+	getOrAddEmptyToMap(anchorNode.slotMap(onDelete), onDelete).push(cleanupTree);
+	map.get(editableTreeSlot);
+	return output;
+}
+
+function cleanupTree(anchor: AnchorNode): void {
+	const map = anchor.slotMap(editableTreeSlot);
+	const cached = map.get(editableTreeSlot);
+	if (cached !== undefined) {
+		(cached[proxyTargetSymbol] as NodeProxyTarget).free();
+	}
 }
 
 export function makeField(
@@ -356,11 +383,17 @@ export function makeField(
  */
 export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 	private readonly lazyCursor: ITreeSubscriptionCursor;
-	private anchor?: T;
 
-	constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
+	constructor(
+		public readonly context: ProxyContext,
+		cursor: ITreeSubscriptionCursor,
+		private anchor?: T,
+	) {
 		this.lazyCursor = cursor.fork();
 		context.withCursors.add(this);
+		if (anchor !== undefined) {
+			this.context.withAnchors.add(this);
+		}
 	}
 
 	public free(): void {
@@ -375,7 +408,7 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 
 	public getAnchor(): T {
 		if (this.anchor === undefined) {
-			this.anchor = this.buildAnchorFromCursor(this.lazyCursor);
+			this.anchor = this.buildAnchor();
 			this.context.withAnchors.add(this);
 		}
 		return this.anchor;
@@ -403,14 +436,14 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 		return this.lazyCursor;
 	}
 
-	abstract buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): T;
+	protected abstract buildAnchor(): T;
 
-	abstract tryMoveCursorToAnchor(
+	protected abstract tryMoveCursorToAnchor(
 		anchor: T,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
 
-	abstract forgetAnchor(anchor: T): void;
+	protected abstract forgetAnchor(anchor: T): void;
 }
 
 function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target is FieldProxyTarget {
@@ -445,20 +478,28 @@ function getPrimaryArrayKey(
  * the fields of {@link EditableTree} by means of the cursors.
  */
 export class NodeProxyTarget extends ProxyTarget<Anchor> {
-	constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
+	constructor(
+		context: ProxyContext,
+		cursor: ITreeSubscriptionCursor,
+		public readonly anchorNode: AnchorNode,
+		anchor: Anchor,
+	) {
+		super(context, cursor, anchor);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x44c /* must be in nodes mode */);
-		super(context, cursor);
 	}
 
-	buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): Anchor {
-		return cursor.buildAnchor();
+	protected buildAnchor(): Anchor {
+		return this.context.forest.anchors.track(this.anchorNode);
 	}
 
-	tryMoveCursorToAnchor(anchor: Anchor, cursor: ITreeSubscriptionCursor): TreeNavigationResult {
+	protected tryMoveCursorToAnchor(
+		anchor: Anchor,
+		cursor: ITreeSubscriptionCursor,
+	): TreeNavigationResult {
 		return this.context.forest.tryMoveCursorToNode(anchor, cursor);
 	}
 
-	forgetAnchor(anchor: Anchor): void {
+	protected forgetAnchor(anchor: Anchor): void {
 		this.context.forest.anchors.forget(anchor);
 	}
 
@@ -877,18 +918,18 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return output;
 	}
 
-	buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): FieldAnchor {
-		return cursor.buildFieldAnchor();
+	protected buildAnchor(): FieldAnchor {
+		return this.cursor.buildFieldAnchor();
 	}
 
-	tryMoveCursorToAnchor(
+	protected tryMoveCursorToAnchor(
 		anchor: FieldAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
 		return this.context.forest.tryMoveCursorToField(anchor, cursor);
 	}
 
-	forgetAnchor(anchor: FieldAnchor): void {
+	protected forgetAnchor(anchor: FieldAnchor): void {
 		if (anchor.parent === undefined) return;
 		this.context.forest.anchors.forget(anchor.parent);
 	}
