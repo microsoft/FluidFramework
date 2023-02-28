@@ -92,7 +92,7 @@ export class DocumentDeltaConnection
 				0x244 /* "Socket is closed, but connection is not!" */,
 			);
 		} catch (error) {
-			normalizeError(error, {
+			const normalizedError = normalizeError(error, {
 				props: {
 					details: JSON.stringify({
 						disposed: this._disposed,
@@ -102,7 +102,7 @@ export class DocumentDeltaConnection
 					}),
 				},
 			});
-			throw error;
+			throw normalizedError;
 		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
@@ -252,7 +252,7 @@ export class DocumentDeltaConnection
 			(Error as any).stackTraceLimit = 50;
 			assert(!this.disposed, 0x20c /* "connection disposed" */);
 		} catch (error) {
-			normalizeError(error, {
+			const normalizedError = normalizeError(error, {
 				props: {
 					details: JSON.stringify({
 						disposed: this._disposed,
@@ -262,7 +262,7 @@ export class DocumentDeltaConnection
 					}),
 				},
 			});
-			throw error;
+			throw normalizedError;
 		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
