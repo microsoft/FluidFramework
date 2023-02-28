@@ -67,7 +67,6 @@ importers:
       '@types/chai-arrays': ^2.0.0
       '@types/fs-extra': ^8.1.0
       '@types/inquirer': ^8.2.1
-      '@types/minimatch': ^3.0.5
       '@types/mocha': ^9.0.0
       '@types/node': ^14.18.0
       '@types/semver': ^7.3.10
@@ -95,7 +94,7 @@ importers:
       inquirer-table-prompt: ^0.2.1
       jssm: ^5.79.18
       jssm-viz-cli: ^5.83.0
-      minimatch: ^3.0.4
+      minimatch: ^7.3.0
       mocha: ^10.0.0
       npm-check-updates: ^16.0.0
       nyc: ^15.0.0
@@ -132,7 +131,7 @@ importers:
       inquirer-table-prompt: 0.2.1
       jssm: 5.85.11
       jssm-viz-cli: 5.85.11
-      minimatch: 3.1.2
+      minimatch: 7.3.0
       npm-check-updates: 16.3.8
       oclif: 3.2.13
       semver: 7.3.7
@@ -150,7 +149,6 @@ importers:
       '@types/chai-arrays': 2.0.0
       '@types/fs-extra': 8.1.2
       '@types/inquirer': 8.2.4
-      '@types/minimatch': 3.0.5
       '@types/mocha': 9.1.1
       '@types/node': 14.18.31
       '@types/semver': 7.3.12
@@ -195,7 +193,6 @@ importers:
       '@types/lodash': ^4.14.186
       '@types/lodash.isequal': ^4.5.5
       '@types/lodash.merge': ^4.6.6
-      '@types/minimatch': ^3.0.5
       '@types/mocha': ^9.0.0
       '@types/node': ^14.18.0
       '@types/rimraf': ^2.0.3
@@ -223,7 +220,7 @@ importers:
       lodash: ^4.17.21
       lodash.isequal: ^4.5.0
       lodash.merge: ^4.6.2
-      minimatch: ^3.0.4
+      minimatch: ^7.3.0
       mocha: ^10.0.0
       npm-package-json-lint: ^6.0.0
       prettier: ~2.6.2
@@ -254,7 +251,7 @@ importers:
       lodash: 4.17.21
       lodash.isequal: 4.5.0
       lodash.merge: 4.6.2
-      minimatch: 3.1.2
+      minimatch: 7.3.0
       npm-package-json-lint: 6.3.0
       replace-in-file: 6.3.5
       rimraf: 2.7.1
@@ -274,7 +271,6 @@ importers:
       '@types/lodash': 4.14.186
       '@types/lodash.isequal': 4.5.6
       '@types/lodash.merge': 4.6.7
-      '@types/minimatch': 3.0.5
       '@types/mocha': 9.1.1
       '@types/node': 14.18.31
       '@types/rimraf': 2.0.5
@@ -1958,7 +1954,7 @@ packages:
     dependencies:
       '@npmcli/name-from-folder': 1.0.1
       glob: 8.0.3
-      minimatch: 5.1.0
+      minimatch: 5.1.6
       read-package-json-fast: 2.0.3
 
   /@npmcli/metavuln-calculator/2.0.0:
@@ -6041,7 +6037,7 @@ packages:
   /filelist/1.0.4:
     resolution: {integrity: sha512-w1cEuf3S+DrLCQL7ET6kz+gmlJdbq9J7yXCSjK/OZCPA+qEN1WyF4ZAf0YYJa4/shHJra2t/d/r8SV4Ji+x+8Q==}
     dependencies:
-      minimatch: 5.1.0
+      minimatch: 5.1.6
 
   /fill-range/7.0.1:
     resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
@@ -6529,7 +6525,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 5.1.0
+      minimatch: 5.1.6
       once: 1.4.0
 
   /global-dirs/0.1.1:
@@ -6879,7 +6875,7 @@ packages:
     resolution: {integrity: sha512-yemi4pMf51WKT7khInJqAvsIGzoqYXblnsz0ql8tM+yi1EKYTY1evX4NAbJrLL/Aanr2HyZeluqU+Oi7MGHokw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
-      minimatch: 5.1.0
+      minimatch: 5.1.6
 
   /ignore/4.0.6:
     resolution: {integrity: sha512-cyFDKrqc/YdcWFniJhzI42+AzS+gNwmUzOSFcRCQYwySuBBBy/KjuxWLZ/FHEH6Moq1NizMOBWyTcv8O4OZIMg==}
@@ -8219,11 +8215,18 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
-  /minimatch/5.1.0:
-    resolution: {integrity: sha512-9TPBGGak4nHfGZsPBohm9AWg6NoT7QTCehS3BIJABslyZbzxfV78QM2Y6+i741OPZIafFAaiiEMh5OyIrJPgtg==}
+  /minimatch/5.1.6:
+    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
+
+  /minimatch/7.3.0:
+    resolution: {integrity: sha512-WaMDuhKa7a6zKiwplR1AOz+zGvJba24k5VU1Cy6NhEguavT2YRlHxuINUgTas4wiS6fwBpYq4TcA1XIECSntyw==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: false
 
   /minimist-options/4.1.0:
     resolution: {integrity: sha512-Q4r8ghd80yhO/0j1O3B2BjweX3fiHg9cdOwjJd2J76Q135c+NDxGCqdYKQ1SKBuFfgWbAUzBfvYjPUEeNgqN1A==}
@@ -8613,7 +8616,7 @@ packages:
       json-parse-helpfulerror: 1.0.3
       jsonlines: 0.1.1
       lodash: 4.17.21
-      minimatch: 5.1.0
+      minimatch: 5.1.6
       p-map: 4.0.0
       pacote: 13.6.2
       parse-github-url: 1.0.2
