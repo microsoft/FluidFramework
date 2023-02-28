@@ -249,7 +249,7 @@ export class FluidClientDebugger
 		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
 
 		// Register listener for inbound messages from the window (globalThis)
-		globalThis.addEventListener("message", this.windowMessageHandler);
+		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
 		this._disposed = false;
 	}
@@ -286,7 +286,7 @@ export class FluidClientDebugger
 		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
 
 		// Unbind window event listener
-		globalThis.removeEventListener("message", this.windowMessageHandler);
+		globalThis.removeEventListener?.("message", this.windowMessageHandler);
 
 		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 

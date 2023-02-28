@@ -162,7 +162,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 		super();
 
 		// Register listener for inbound messages from the window (globalThis)
-		globalThis.addEventListener("message", this.windowMessageHandler);
+		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
 		// Initiate message posting of registry updates.
 		// TODO: Only do this after some external request?

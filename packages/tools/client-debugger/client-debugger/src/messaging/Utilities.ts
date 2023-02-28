@@ -19,7 +19,7 @@ export function postMessageToWindow<TMessage extends IDebuggerMessage>(
 	const loggingPreamble =
 		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
 	console.log(`${loggingPreamble}Posting message to the window:`, message); // TODO: console.debug
-	globalThis.postMessage(message, "*"); // TODO: verify target is okay
+	globalThis.postMessage?.(message, "*"); // TODO: verify target is okay
 }
 
 /**
