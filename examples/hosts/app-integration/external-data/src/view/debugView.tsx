@@ -7,7 +7,7 @@ import isEqual from "lodash.isequal";
 import React, { useEffect, useState } from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import type { IAppModel, TaskData } from "../model-interface";
+import type { IAppModel, TaskData, TaskListData } from "../model-interface";
 
 /**
  * Helper function used in several of the views to fetch data form the external app
@@ -17,7 +17,7 @@ async function pollForServiceUpdates(
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
 	try {
-		const taskListId = 1;
+		const taskListId = "1";
 		const response = await fetch(
 			`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}}`,
 			{
@@ -30,7 +30,7 @@ async function pollForServiceUpdates(
 		);
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
-		const newData = responseBody.taskList as TaskData;
+		const newData = responseBody.taskList as TaskListData;
 		if (newData !== undefined && !isEqual(newData[taskListId], externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
 			setExternalData(newData[taskListId]);
