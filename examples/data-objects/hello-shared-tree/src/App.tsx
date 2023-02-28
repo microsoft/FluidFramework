@@ -231,13 +231,13 @@ export class PathVisitor implements DeltaVisitor {
     }
 }
 
-export class DomainAdapter extends PathVisitor {
+export class DomainVisitor extends PathVisitor {
 
     constructor(
         protected readonly schemaData: SchemaData,
         protected readonly filter: Path,
         protected readonly schemaIdentifiers: ReadonlySet<TreeSchemaIdentifier>,
-        protected readonly listener: DomainListener
+        protected readonly adapter: OperationAdapter,
     ) {
         super(schemaData, schemaIdentifiers);
     }
@@ -249,23 +249,83 @@ export class DomainAdapter extends PathVisitor {
             }
             const values: Int32[] = jsonArray.map(json => typedInt32(json));
             const parentIndex = this.path.last().parentIndex;
-            this.listener.onInsert(parentIndex, index, values);
+            this.adapter.onInsert(parentIndex, index, values);
         }
     }
     onDelete(index: number, count: number): void {
         if (this.filter.equals(this.path)) {
             const parentIndex = this.path.last().parentIndex;
-            this.listener.onDelete(parentIndex, index, count);
+            this.adapter.onDelete(parentIndex, index, count);
         }
     }
 }
 
-export interface DomainListener {
+/**
+ * Describes transitions from one state of the system to a new one, for instance updating the react state
+ */
+export type DeriveState<T> = (deriveStateFn: (prevState: T) => /* nextState */ T) => void;
+
+/**
+ * Transforms SharedTree operations into application state changes
+ */
+export interface OperationAdapter {
+    deriveState: DeriveState<number[][]>;
     onDelete: (row: number, col: number, count: number) => void;
     onInsert: (row: number, col: number, values: Int32[]) => void;
 }
 
-export type Display = (fn: (drawValues: number[][]) => number[][]) => void;
+/**
+ * Selective adapter, typically more efficient
+ */
+export class OperationAdapterSelective implements OperationAdapter {
+    constructor(public readonly deriveState: DeriveState<number[][]>) { }
+    onDelete(row: number, col: number, count: number): void {
+        // console.log(`DELETE at row:${row} col:${col} ${count} domain  values`);
+        this.deriveState(
+            prevRows => {
+                const nextRows = prevRows.map(
+                    (drawRow, drawRowIndex) => {
+                        if (drawRowIndex === row)
+                            drawRow.splice(col, count);
+                        return drawRow;
+                    });
+                for (const [drawRowIndex, drawRow] of nextRows.entries()) {
+                    if (drawRow !== undefined && drawRow.length === 0) {
+                        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                        delete nextRows[drawRowIndex];
+                    }
+                }
+                return nextRows;
+            }
+        );
+    }
+    onInsert(row: number, col: number, values: Int32[]): void {
+        // console.log(`INSERT at row:${row}, col:${col} ${values.length} domain values`);
+        const numbers: number[] = values.map(value => value[valueSymbol] as number);
+        this.deriveState(
+            prevRows => prevRows.map(
+                (drawRow, drawRowIndex) => {
+                    if (drawRowIndex === row)
+                        drawRow.splice(col, numbers.length, ...numbers);
+                    return drawRow;
+                })
+        );
+    }
+}
+
+/**
+ * Brute force adapter, simple but has additional overhead
+ */
+export class OperationAdapterBruteForce implements OperationAdapter {
+    constructor(public readonly deriveState: DeriveState<number[][]>, protected readonly workspace: Workspace) { }
+    onDelete(row: number, col: number, count: number): void {
+        this.deriveState(prevRows => readDrawValues(this.workspace));
+    }
+    onInsert(row: number, col: number, values: Int32[]): void {
+        this.deriveState(prevRows => readDrawValues(this.workspace));
+    }
+}
+
 
 export default function App() {
     const [workspace, setWorkspace] = useState<Workspace>();
@@ -275,44 +335,6 @@ export default function App() {
         [-1, -1, -1, -1, -1]
     ]);
     const containerId = window.location.hash.substring(1) || undefined;
-
-    /**
-     * The domain listener updates now the UI
-     */
-    const drawListener: DomainListener = {
-        onDelete(row: number, col: number, count: number): void {
-            console.log(`DELETE at row:${row} col:${col} ${count} domain  values`);
-            setDrawValues(
-                rows => {
-                    const newRows = rows.map(
-                        (drawRow, drawRowIndex) => {
-                            if (drawRowIndex === row)
-                                drawRow.splice(col, count);
-                            return drawRow;
-                        });
-                    for (const [drawRowIndex, drawRow] of newRows.entries()) {
-                        if (drawRow !== undefined && drawRow.length === 0) {
-                            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                            delete newRows[drawRowIndex];
-                        }
-                    }
-                    return newRows;
-                }
-            );
-        },
-        onInsert(row: number, col: number, values: Int32[]): void {
-            console.log(`INSERT at row:${row}, col:${col} ${values.length} domain values`);
-            const numbers: number[] = values.map(value => value[valueSymbol] as number);
-            setDrawValues(
-                rows => rows.map(
-                    (drawRow, drawRowIndex) => {
-                        if (drawRowIndex === row)
-                            drawRow.splice(col, numbers.length, ...numbers);
-                        return drawRow;
-                    })
-            );
-        }
-    };
 
     useEffect(() => {
         async function initWorkspace() {
@@ -327,7 +349,13 @@ export default function App() {
                 console.log("Tree error received!");
             });
             const listenPath = buildSchemaPath([drawKeys, valueKeys], appSchema);
-            registerPathOnIndex(myWorkspace, listenPath, drawListener);
+            const operationAdapter: OperationAdapter = new OperationAdapterBruteForce(setDrawValues, myWorkspace);
+            // const operationAdapter: OperationAdapter = new OperationAdapterSelective(setDrawValues);
+            registerPathOnIndex(
+                myWorkspace,
+                listenPath,
+                operationAdapter,
+            );
             if (first) {
                 insertDrawValues(myWorkspace);
             }
@@ -364,7 +392,7 @@ export default function App() {
         (
             wrksp: Workspace,
             filter: Path,
-            listener: DomainListener,
+            adapter: OperationAdapter,
         ) => {
             (wrksp.tree as unknown as SharedTreeCore<DefaultChangeset,
                 DefaultChangeFamily,
@@ -372,11 +400,12 @@ export default function App() {
             >).indexEventEmitter.on("newLocalState", (delta: Delta.Root) => {
                 // console.log('Delta');
                 // console.log(JSON.stringify(delta, replacer, 2));
-                visitDelta(delta, new DomainAdapter(
+                visitDelta(delta, new DomainVisitor(
                     appSchema,
                     filter,
                     new Set([drawSchema.name]),
-                    listener));
+                    adapter,
+                ));
             });
         };
 
@@ -384,16 +413,17 @@ export default function App() {
         (
             wrksp: Workspace,
             filter: Path,
-            listener: DomainListener,
+            adapter: OperationAdapter,
         ) => {
             wrksp.tree.context.on("afterDelta", (delta: Delta.Root) => {
                 console.log('Delta');
                 // console.log(JSON.stringify(delta, replacer, 2));
-                visitDelta(delta, new DomainAdapter(
+                visitDelta(delta, new DomainVisitor(
                     appSchema,
                     filter,
                     new Set([drawSchema.name]),
-                    listener));
+                    adapter,
+                ));
             });
         };
 
