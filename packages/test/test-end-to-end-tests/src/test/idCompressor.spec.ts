@@ -53,60 +53,41 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 	});
 
-	function expectAllValues(msg, key, value1, value2, value3) {
-		const user1Value = sharedMap1.get(key);
-		assert.equal(user1Value, value1, `Incorrect value for ${key} in container 1 ${msg}`);
-		const user2Value = sharedMap2.get(key);
-		assert.equal(user2Value, value2, `Incorrect value for ${key} in container 2 ${msg}`);
-		const user3Value = sharedMap3.get(key);
-		assert.equal(user3Value, value3, `Incorrect value for ${key} in container 3 ${msg}`);
-	}
+	it.only("produces Id spaces correctly", async () => {
+		assert(sharedMap1.idCompressor !== undefined);
+		assert(sharedMap2.idCompressor !== undefined);
+		assert(sharedMap3.idCompressor !== undefined);
 
-	function expectAllBeforeValues(key, value1, value2, value3) {
-		expectAllValues("before process", key, value1, value2, value3);
-	}
+		const firstId = sharedMap1.idCompressor.generateCompressedId();
+		const secondId = sharedMap2.idCompressor.generateCompressedId();
+		const thirdId = sharedMap2.idCompressor.generateCompressedId();
+		const decompressedIds: string[] = [];
 
-	function expectAllAfterValues(key, value) {
-		expectAllValues("after process", key, value, value, value);
-	}
+		const firstDecompressedId = sharedMap1.idCompressor.decompress(firstId);
+		decompressedIds.push(firstDecompressedId);
+		sharedMap1.set(firstDecompressedId, "value1");
 
-	function expectAllSize(size) {
-		const keys1 = Array.from(sharedMap1.keys());
-		assert.equal(keys1.length, size, "Incorrect number of Keys in container 1");
-		const keys2 = Array.from(sharedMap2.keys());
-		assert.equal(keys2.length, size, "Incorrect number of Keys in container 2");
-		const keys3 = Array.from(sharedMap3.keys());
-		assert.equal(keys3.length, size, "Incorrect number of Keys in container 3");
+		[secondId, thirdId].forEach((id, index) => {
+			assert(sharedMap2.idCompressor !== undefined);
+			const decompressedId = sharedMap2.idCompressor.decompress(id);
+			decompressedIds.push(decompressedId);
+			sharedMap2.set(decompressedId, `value${index + 2}`);
+		});
 
-		assert.equal(sharedMap1.size, size, "Incorrect map size in container 1");
-		assert.equal(sharedMap2.size, size, "Incorrect map size in container 2");
-		assert.equal(sharedMap3.size, size, "Incorrect map size in container 3");
-	}
+		// should be negative
+		assert(sharedMap1.idCompressor.normalizeToOpSpace(firstId) < 0);
+		assert(sharedMap2.idCompressor.normalizeToOpSpace(secondId) < 0);
+		assert(sharedMap2.idCompressor.normalizeToOpSpace(thirdId) < 0);
 
-	it("should set key value in three containers correctly", async () => {
-		expectAllAfterValues("testKey1", "testValue");
-
-		console.log(sharedMap1.idCompressor?.generateCompressedId());
-		sharedMap1.set("testKey1", undefined);
 		await provider.ensureSynchronized();
 
-		expectAllAfterValues("testKey1", undefined);
+		assert(sharedMap1.idCompressor.normalizeToOpSpace(firstId) > 0);
+		assert(sharedMap2.idCompressor.normalizeToOpSpace(secondId) > 0);
+		assert(sharedMap2.idCompressor.normalizeToOpSpace(thirdId) > 0);
 
-		console.log(sharedMap2.idCompressor?.generateCompressedId());
-		sharedMap2.set("testKey2", undefined);
-		await provider.ensureSynchronized();
-
-		expectAllAfterValues("testKey1", undefined);
-		expectAllAfterValues("testKey2", undefined);
-
-		console.log(sharedMap1.idCompressor?.generateCompressedId());
-		sharedMap1.set("testKey1", "testValue");
-		await provider.ensureSynchronized();
-		expectAllAfterValues("testKey1", "testValue");
-
-		console.log(sharedMap2.idCompressor?.generateCompressedId());
-		sharedMap2.set("testKey2", "testValue");
-		await provider.ensureSynchronized();
-		expectAllAfterValues("testKey2", "testValue");
+		decompressedIds.forEach((id, index) => {
+			assert.equal(sharedMap1.get(id), `value${index + 1}`);
+			assert.equal(sharedMap2.get(id), `value${index + 1}`);
+		});
 	});
 });
