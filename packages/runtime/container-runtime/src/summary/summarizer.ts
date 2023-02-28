@@ -6,9 +6,10 @@
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { IDeltaManager, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { DriverHeader } from "@fluidframework/driver-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
@@ -92,6 +93,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		 * i.e. runtime with clientType === "summarizer"
 		 */
 		private readonly runtime: ISummarizerRuntime,
+		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly configurationGetter: () => ISummaryConfiguration,
 		/** Represents an object that can generate summary.
 		 * In practical terms, it's same runtime (this.runtime) with clientType === "summarizer".
@@ -101,6 +103,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		public readonly summaryCollection: SummaryCollection,
 		private readonly runCoordinatorCreateFn: (
 			runtime: IConnectableRuntime,
+			deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
@@ -171,6 +174,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
 		const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(
 			this.runtime,
+			this.deltaManager,
 		);
 
 		// Wait for either external signal to cancel, or loss of connectivity.
@@ -256,7 +260,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		this.logger.sendTelemetryEvent({
 			eventName: "RunningSummarizer",
 			onBehalfOf,
-			initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
+			initSummarySeqNumber: this.deltaManager.initialSequenceNumber,
 			config: JSON.stringify(this.configurationGetter()),
 		});
 
@@ -272,9 +276,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
 			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryCallback
-			new SummarizeHeuristicData(this.runtime.deltaManager.lastSequenceNumber, {
+			new SummarizeHeuristicData(this.deltaManager.lastSequenceNumber, {
 				/** summary attempt baseline for heuristics */
-				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
+				refSequenceNumber: this.deltaManager.initialSequenceNumber,
 				summaryTime: Date.now(),
 			} as const),
 			(errorMessage: string) => {
@@ -288,7 +292,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,
-			this.runtime,
+			this.deltaManager,
 		);
 		this.runningSummarizer = runningSummarizer;
 		this.starting = false;
@@ -339,7 +343,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			// Manage the promise related to creating the cancellation token here.
 			// The promises related to starting, summarizing,
 			// and submitting are communicated to the caller through the results builder.
-			const coordinatorCreateP = this.runCoordinatorCreateFn(this.runtime);
+			const coordinatorCreateP = this.runCoordinatorCreateFn(this.runtime, this.deltaManager);
 
 			coordinatorCreateP
 				.then((runCoordinator) => {

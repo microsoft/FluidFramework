@@ -5,10 +5,15 @@
 
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	MessageType,
+} from "@fluidframework/protocol-definitions";
 import {
 	ChildLogger,
 	isFluidError,
@@ -31,7 +36,6 @@ import {
 	ISummaryCancellationToken,
 	ISummarizeResults,
 	ISummarizeTelemetryProperties,
-	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
 	IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
@@ -65,7 +69,7 @@ export class RunningSummarizer implements IDisposable {
 		summaryCollection: SummaryCollection,
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
-		runtime: ISummarizerRuntime,
+		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -78,7 +82,7 @@ export class RunningSummarizer implements IDisposable {
 			summaryCollection,
 			cancellationToken,
 			stopSummarizerCallback,
-			runtime,
+			deltaManager,
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
@@ -100,7 +104,7 @@ export class RunningSummarizer implements IDisposable {
 		//    listen for the op events (will get missed by the handlers in the current workflow)
 		// 2. Op was sequenced after the last time we summarized (op sequence number > summarize ref sequence number)
 		const diff =
-			runtime.deltaManager.lastSequenceNumber -
+			deltaManager.lastSequenceNumber -
 			(heuristicData.lastSuccessfulSummary.refSequenceNumber +
 				heuristicData.numNonRuntimeOps +
 				heuristicData.numRuntimeOps);
@@ -113,7 +117,7 @@ export class RunningSummarizer implements IDisposable {
 		}
 
 		// Update last seq number (in case the handlers haven't processed anything yet)
-		heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
+		heuristicData.lastOpSequenceNumber = deltaManager.lastSequenceNumber;
 
 		// Start heuristics
 		summarizer.heuristicRunner?.start();
@@ -161,7 +165,7 @@ export class RunningSummarizer implements IDisposable {
 		private readonly summaryCollection: SummaryCollection,
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
-		private readonly runtime: ISummarizerRuntime,
+		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	) {
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
@@ -236,7 +240,7 @@ export class RunningSummarizer implements IDisposable {
 		);
 
 		// Listen for ops
-		this.runtime.deltaManager.on("op", (op) => {
+		this.deltaManager.on("op", (op) => {
 			this.handleOp(op);
 		});
 	}
@@ -324,7 +328,7 @@ export class RunningSummarizer implements IDisposable {
 	 */
 	private async processIncomingSummaryAcks(lastAckRefSeq: number) {
 		let refSequenceNumber =
-			lastAckRefSeq > 0 ? lastAckRefSeq : this.runtime.deltaManager.initialSequenceNumber;
+			lastAckRefSeq > 0 ? lastAckRefSeq : this.deltaManager.initialSequenceNumber;
 		while (!this.disposed) {
 			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
 
@@ -345,7 +349,7 @@ export class RunningSummarizer implements IDisposable {
 	}
 
 	public dispose(): void {
-		this.runtime.deltaManager.off("op", (op) => {
+		this.deltaManager.off("op", (op) => {
 			this.handleOp(op);
 		});
 		this.summaryWatcher.dispose();

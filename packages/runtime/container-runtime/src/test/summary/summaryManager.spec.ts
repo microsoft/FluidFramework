@@ -7,14 +7,9 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+import { MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
 import { DefaultSummaryConfiguration } from "../../containerRuntime";
 import {
 	IConnectedEvents,
@@ -33,14 +28,7 @@ import {
 	SummaryCollection,
 	ISummaryOpMessage,
 	neverCancelledSummaryToken,
-	ISummarizerRuntime,
 } from "../../summary";
-
-class MockRuntime {
-	constructor(
-		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-	) {}
-}
 
 describe("Summary Manager", () => {
 	let clock: sinon.SinonFakeTimers;
@@ -52,7 +40,6 @@ describe("Summary Manager", () => {
 	const thisClientId = "this";
 	const mockLogger = new MockLogger();
 	const mockDeltaManager = new MockDeltaManager();
-	const mockRuntime = new MockRuntime(mockDeltaManager);
 	let summaryManager: SummaryManager;
 	let runningSummarizer: RunningSummarizer;
 	// let runCount: number;
@@ -158,7 +145,7 @@ describe("Summary Manager", () => {
 				neverCancelledSummaryToken,
 				// stopSummarizerCallback
 				(reason) => {},
-				mockRuntime as any as ISummarizerRuntime,
+				mockDeltaManager,
 			);
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);

@@ -5,20 +5,16 @@
 
 import {
 	IDeltaManager,
-	IDeltaManagerEvents,
 	IDeltaQueue,
-	IDeltaSender,
 	IDeltaQueueEvents,
-	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { EventForwarder } from "@fluidframework/common-utils";
 import {
-	IClientConfiguration,
-	IClientDetails,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import { DeltaManagerProxyBase } from "@fluidframework/container-utils";
 
 /**
  * Proxy to the real IDeltaQueue - used to restrict access
@@ -78,73 +74,30 @@ export class DeltaQueueProxy<T>
  * Proxy to the real IDeltaManager - used to restrict access
  */
 export class DeltaManagerProxy
-	extends EventForwarder<IDeltaManagerEvents>
+	extends DeltaManagerProxyBase
 	implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>
 {
-	public readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;
-	public readonly outbound: IDeltaQueue<IDocumentMessage[]>;
-	public readonly inboundSignal: IDeltaQueue<ISignalMessage>;
-
-	public get IDeltaSender(): IDeltaSender {
-		return this;
+	public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
+		return this._inbound;
 	}
+	private readonly _inbound: IDeltaQueue<ISequencedDocumentMessage>;
 
-	public get minimumSequenceNumber(): number {
-		return this.deltaManager.minimumSequenceNumber;
+	public get outbound(): IDeltaQueue<IDocumentMessage[]> {
+		return this._outbound;
 	}
+	private readonly _outbound: IDeltaQueue<IDocumentMessage[]>;
 
-	public get lastSequenceNumber(): number {
-		return this.deltaManager.lastSequenceNumber;
+	public get inboundSignal(): IDeltaQueue<ISignalMessage> {
+		return this._inboundSignal;
 	}
+	private readonly _inboundSignal: IDeltaQueue<ISignalMessage>;
 
-	public get lastMessage() {
-		return this.deltaManager.lastMessage;
-	}
-
-	public get lastKnownSeqNumber() {
-		return this.deltaManager.lastKnownSeqNumber;
-	}
-
-	public get initialSequenceNumber(): number {
-		return this.deltaManager.initialSequenceNumber;
-	}
-
-	public get hasCheckpointSequenceNumber() {
-		return this.deltaManager.hasCheckpointSequenceNumber;
-	}
-
-	public get clientDetails(): IClientDetails {
-		return this.deltaManager.clientDetails;
-	}
-
-	public get version(): string {
-		return this.deltaManager.version;
-	}
-
-	public get maxMessageSize(): number {
-		return this.deltaManager.maxMessageSize;
-	}
-
-	public get serviceConfiguration(): IClientConfiguration | undefined {
-		return this.deltaManager.serviceConfiguration;
-	}
-
-	public get active(): boolean {
-		return this.deltaManager.active;
-	}
-
-	public get readOnlyInfo(): ReadOnlyInfo {
-		return this.deltaManager.readOnlyInfo;
-	}
-
-	constructor(
-		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-	) {
+	constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
 		super(deltaManager);
 
-		this.inbound = new DeltaQueueProxy(deltaManager.inbound);
-		this.outbound = new DeltaQueueProxy(deltaManager.outbound);
-		this.inboundSignal = new DeltaQueueProxy(deltaManager.inboundSignal);
+		this._inbound = new DeltaQueueProxy(deltaManager.inbound);
+		this._outbound = new DeltaQueueProxy(deltaManager.outbound);
+		this._inboundSignal = new DeltaQueueProxy(deltaManager.inboundSignal);
 	}
 
 	public dispose(): void {
@@ -152,13 +105,5 @@ export class DeltaManagerProxy
 		this.outbound.dispose();
 		this.inboundSignal.dispose();
 		super.dispose();
-	}
-
-	public submitSignal(content: any): void {
-		return this.deltaManager.submitSignal(content);
-	}
-
-	public flush(): void {
-		return this.deltaManager.flush();
 	}
 }

@@ -11,12 +11,8 @@ import {
 } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
-	IDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+import { ContainerWarning } from "@fluidframework/container-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
@@ -84,7 +80,6 @@ export interface IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
 	readonly clientId: string | undefined;
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 

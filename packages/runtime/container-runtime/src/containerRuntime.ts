@@ -169,7 +169,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
-import { DeltaManagerRuntimeProxy } from "./deltaManagerRuntimeProxy";
+import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -782,7 +782,8 @@ export class ContainerRuntime
 	}
 
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this.context.deltaManager;
+		// The delta manager proxy is exposed outside of container runtime.
+		return this.deltaManagerProxy;
 	}
 
 	public get storage(): IDocumentStorageService {
@@ -932,6 +933,14 @@ export class ContainerRuntime
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly outbox: Outbox;
 
+	/** The real delta manager provided by the container context. This is used within the container runtime. */
+	private readonly _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	/**
+	 * Proxy to the real delta manager with restricted access. This is what is exposed to all usages outside
+	 * container runtime.
+	 */
+	private readonly deltaManagerProxy: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+
 	private readonly garbageCollector: IGarbageCollector;
 
 	private readonly dataStores: DataStores;
@@ -1014,6 +1023,9 @@ export class ContainerRuntime
 		},
 	) {
 		super();
+
+		this._deltaManager = context.deltaManager;
+		this.deltaManagerProxy = new DeltaManagerSummarizerProxy(context.deltaManager);
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1135,10 +1147,10 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			getContainerDiagnosticId: () => this.context.id,
-			activeConnection: () => this.deltaManager.active,
+			activeConnection: () => this._deltaManager.active,
 		});
 
-		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
+		const loadedFromSequenceNumber = this._deltaManager.initialSequenceNumber;
 		this.summarizerNode = createRootSummarizerNodeWithGC(
 			ChildLogger.create(this.logger, "SummarizerNode"),
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
@@ -1171,7 +1183,6 @@ export class ContainerRuntime
 		this.dataStores = new DataStores(
 			getSummaryForDatastores(baseSnapshot, metadata),
 			this,
-			new DeltaManagerRuntimeProxy(this.deltaManager),
 			(attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
 			(id: string, createParam: CreateChildSummarizerNodeParam) =>
 				(
@@ -1266,7 +1277,7 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
-		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+		this.summaryCollection = new SummaryCollection(this._deltaManager, this.logger);
 
 		this.dirtyContainer =
 			this.context.attachState !== AttachState.Attached ||
@@ -1300,12 +1311,15 @@ export class ContainerRuntime
 				this._summarizer = new Summarizer(
 					"/_summarizer",
 					this /* ISummarizerRuntime */,
+					this._deltaManager,
 					() => this.summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
 					this.handleContext,
 					this.summaryCollection,
-					async (runtime: IConnectableRuntime) =>
-						RunWhileConnectedCoordinator.create(runtime),
+					async (
+						runtime: IConnectableRuntime,
+						deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+					) => RunWhileConnectedCoordinator.create(runtime, deltaManager),
 				);
 			} else if (
 				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
@@ -1352,11 +1366,11 @@ export class ContainerRuntime
 			}
 		}
 
-		this.deltaManager.on("readonly", (readonly: boolean) => {
+		this._deltaManager.on("readonly", (readonly: boolean) => {
 			// we accumulate ops while being in read-only state.
 			// once user gets write permissions and we have active connection, flush all pending ops.
 			assert(
-				readonly === this.deltaManager.readOnlyInfo.readonly,
+				readonly === this._deltaManager.readOnlyInfo.readonly,
 				0x124 /* "inconsistent readonly property/event state" */,
 			);
 
@@ -1404,7 +1418,7 @@ export class ContainerRuntime
 			}),
 		});
 
-		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+		ReportOpPerfTelemetry(this.context.clientId, this._deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 	}
 
@@ -1426,7 +1440,7 @@ export class ContainerRuntime
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
-				lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+				lastSequenceNumber: this._deltaManager.lastSequenceNumber,
 				attachState: this.attachState,
 			},
 			error,
@@ -1570,7 +1584,7 @@ export class ContainerRuntime
 			// The last message processed at the time of summary. If there are no new messages, use the message from the
 			// last summary.
 			message:
-				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
+				extractSummaryMetadataMessage(this._deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
@@ -1717,7 +1731,7 @@ export class ContainerRuntime
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
 		const connecting =
-			connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
+			connected && !this._connected && !this._deltaManager.readOnlyInfo.readonly;
 		if (connecting && this.blobManager.hasPendingOfflineUploads) {
 			assert(
 				!this.delayConnectClientId,
@@ -2082,7 +2096,7 @@ export class ContainerRuntime
 	}
 
 	private canSendOps() {
-		return this.connected && !this.deltaManager.readOnlyInfo.readonly;
+		return this.connected && !this._deltaManager.readOnlyInfo.readonly;
 	}
 
 	/**
@@ -2405,7 +2419,7 @@ export class ContainerRuntime
 	public getCurrentReferenceTimestampMs(): number | undefined {
 		// Use the timestamp of the last message seen by this client as that is server generated. If no messages have
 		// been processed, use the timestamp of the message from the last summary.
-		return this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp;
+		return this._deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp;
 	}
 
 	/**
@@ -2532,14 +2546,14 @@ export class ContainerRuntime
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
 		try {
-			await this.deltaManager.inbound.pause();
+			await this._deltaManager.inbound.pause();
 			if (shouldPauseInboundSignal) {
-				await this.deltaManager.inboundSignal.pause();
+				await this._deltaManager.inboundSignal.pause();
 			}
 
-			const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
-			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
-			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
+			const summaryRefSeqNum = this._deltaManager.lastSequenceNumber;
+			const minimumSequenceNumber = this._deltaManager.minimumSequenceNumber;
+			const message = `Summary @${summaryRefSeqNum}:${this._deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
 
 			this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
@@ -2563,14 +2577,14 @@ export class ContainerRuntime
 				// Ensure that lastSequenceNumber has not changed after pausing.
 				// We need the summary op's reference sequence number to match our summary sequence number,
 				// otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes.
-				if (this.deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
+				if (this._deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
 					return {
 						continue: false,
-						error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+						error: `lastSequenceNumber changed before uploading to storage. ${this._deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
 					};
 				}
 				assert(
-					summaryRefSeqNum === this.deltaManager.lastMessage?.sequenceNumber,
+					summaryRefSeqNum === this._deltaManager.lastMessage?.sequenceNumber,
 					0x395 /* it's one and the same thing */,
 				);
 
@@ -2616,7 +2630,7 @@ export class ContainerRuntime
 			const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
 			// Now that we have generated the summary, update the message at last summary to the last message processed.
-			this.messageAtLastSummary = this.deltaManager.lastMessage;
+			this.messageAtLastSummary = this._deltaManager.lastMessage;
 
 			// Counting dataStores and handles
 			// Because handles are unchanged dataStores in the current logic,
@@ -2733,9 +2747,9 @@ export class ContainerRuntime
 			this.summarizerNode.clearSummary();
 
 			// Restart the delta manager
-			this.deltaManager.inbound.resume();
+			this._deltaManager.inbound.resume();
 			if (shouldPauseInboundSignal) {
-				this.deltaManager.inboundSignal.resume();
+				this._deltaManager.inboundSignal.resume();
 			}
 		}
 	}
@@ -2809,7 +2823,7 @@ export class ContainerRuntime
 
 		const serializedContent = JSON.stringify({ type, contents });
 
-		if (this.deltaManager.readOnlyInfo.readonly) {
+		if (this._deltaManager.readOnlyInfo.readonly) {
 			this.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
@@ -2821,7 +2835,7 @@ export class ContainerRuntime
 			deserializedContent: JSON.parse(serializedContent), // Deep copy in case caller changes reference object
 			metadata,
 			localOpMetadata,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			referenceSequenceNumber: this._deltaManager.lastSequenceNumber,
 		};
 
 		try {
@@ -3018,17 +3032,17 @@ export class ContainerRuntime
 		latestSnapshotRefSeq: number,
 		summaryLogger: ITelemetryLogger,
 	): Promise<void> {
-		if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
+		if (latestSnapshotRefSeq > this._deltaManager.lastSequenceNumber) {
 			// We need to catch up to the latest summary's reference sequence number before proceeding.
 			await PerformanceEvent.timedExecAsync(
 				summaryLogger,
 				{
 					eventName: "WaitingForSeq",
-					lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+					lastSequenceNumber: this._deltaManager.lastSequenceNumber,
 					targetSequenceNumber: latestSnapshotRefSeq,
-					lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
+					lastKnownSeqNumber: this._deltaManager.lastKnownSeqNumber,
 				},
-				async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
+				async () => waitForSeq(this._deltaManager, latestSnapshotRefSeq),
 				{ start: true, end: true, cancel: "error" }, // definitely want start event
 			);
 		}
