@@ -29,9 +29,7 @@
     "linkcheck": "start-server-and-test start 1313 linkcheck:full",
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "linkcheck:full": "npm run linkcheck:fast -- --external",
-    "linkcheck:reflinks": "run-script-os",
-    "linkcheck:reflinks:default": "./node_modules/@vscode/ripgrep/bin/rg '\\[[\\w\\s]+\\]\\[.*?\\]' public --type=html",
-    "linkcheck:reflinks:win32": "./node_modules/@vscode/ripgrep/bin/rg.exe '\\[[\\w\\s]+\\]\\[.*?\\]' public --type=html",
+    "linkcheck:reflinks": "cross-env RG_PATH='./node_modules/@vscode/ripgrep/bin/rg' bash find-broken-reflinks.sh",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
     "start": "hugo server"
@@ -48,6 +46,7 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "cpy": "^8.1.2",
+    "cross-env": "^7.0.3",
     "deepdash": "^5.3.9",
     "fs-extra": "^10.0.1",
     "glob": "^7.2.0",

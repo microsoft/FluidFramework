@@ -354,6 +354,7 @@ The following npm scripts are supported in this directory:
 | `linkcheck:reflinks:win32` | --- |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
+| `rg` | `rg` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 
 <!-- prettier-ignore-end -->
