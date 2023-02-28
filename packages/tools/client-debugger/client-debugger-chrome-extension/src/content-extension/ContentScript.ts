@@ -16,6 +16,8 @@ function show(): void {
 		return;
 	}
 
+	console.log("CONTENT: Hiding debugger panel.");
+
 	const panelElement = document.createElement("div");
 	panelElement.id = debuggerPanelId;
 	panelElement.style.height = "100%";
@@ -28,13 +30,13 @@ function show(): void {
 
 	ReactDOM.render(React.createElement(RootView), panelElement, () => {
 		document.body.append(panelElement);
-		console.log("EXTENSION(CONTENT_SCRIPT): Rendered debug view!");
+		console.log("CONTENT: Rendered debug view!");
 	});
 }
 
 function hide(): void {
 	// TODO: suspend message subscription for the debugger itself
-
+	console.log("CONTENT: Hiding debugger panel.");
 	document.querySelector(`#${debuggerPanelId}`)?.remove();
 }
 
@@ -55,7 +57,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			break;
 	}
 
-	sendResponse({
+	sendResponse?.({
 		received: true,
 	});
 });

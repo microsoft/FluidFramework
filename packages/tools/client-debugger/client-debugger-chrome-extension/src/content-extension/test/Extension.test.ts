@@ -6,6 +6,10 @@
 import { debuggerPanelId } from "../Constants";
 import { isDebuggerPanelOpen } from "../Utilities";
 
+// Ensure Content Script is running
+// eslint-disable-next-line import/no-unassigned-import
+import "../ContentScript";
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("Debugger Browser Extension tests", () => {
@@ -18,7 +22,7 @@ describe("Debugger Browser Extension tests", () => {
 		expect(isDebuggerPanelOpen()).toBe(false);
 
 		// Simulate click of extension button
-		// TODO
+		await chrome.runtime.sendMessage("show");
 
 		// Verify debugger is visible
 		expect(isDebuggerPanelOpen()).toBe(true);
@@ -29,7 +33,7 @@ describe("Debugger Browser Extension tests", () => {
 		expect(debuggerPanel!.childElementCount).toEqual(1); // Should strictly contain debug view
 
 		// Simulate click of extension button
-		// TODO
+		await chrome.runtime.sendMessage("hide");
 
 		// Verify debugger is not visible
 		expect(isDebuggerPanelOpen()).toBe(false);
