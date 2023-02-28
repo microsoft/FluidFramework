@@ -114,6 +114,7 @@ interface FluidDataStoreMessage {
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
 	readonly runtime: ContainerRuntime;
+	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
@@ -163,10 +164,6 @@ export abstract class FluidDataStoreContext
 
 	public get logger(): ITelemetryLogger {
 		return this._containerRuntime.logger;
-	}
-
-	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this._containerRuntime.deltaManager;
 	}
 
 	public get connected(): boolean {
@@ -270,6 +267,7 @@ export abstract class FluidDataStoreContext
 	public readonly id: string;
 	private readonly _containerRuntime: ContainerRuntime;
 	public readonly storage: IDocumentStorageService;
+	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	public readonly scope: FluidObject;
 	protected pkg?: readonly string[];
 
@@ -282,6 +280,7 @@ export abstract class FluidDataStoreContext
 		super();
 
 		this._containerRuntime = props.runtime;
+		this.deltaManager = props.deltaManager;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;

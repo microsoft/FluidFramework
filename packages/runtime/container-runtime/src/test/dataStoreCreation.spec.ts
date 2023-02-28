@@ -4,6 +4,8 @@
  */
 import { strict as assert } from "assert";
 
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -49,6 +51,10 @@ describe("Data Store Creation Tests", () => {
 		const dataStoreBName = "dataStoreB";
 		const dataStoreCName = "dataStoreC";
 		let getCreateSummarizerNodeFn: (id: string) => CreateChildSummarizerNodeFn;
+		const deltaManager = {} as unknown as IDeltaManager<
+			ISequencedDocumentMessage,
+			IDocumentMessage
+		>;
 
 		// Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
 		// provided to it.
@@ -131,6 +137,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreId,
 				pkg: [defaultName],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -156,6 +163,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreId,
 				pkg: [dataStoreAName],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -181,6 +189,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -206,6 +215,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreBName],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -231,6 +241,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreBId,
 				pkg: [defaultName, dataStoreAName, dataStoreBName],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
@@ -253,6 +264,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreCId,
 				pkg: [defaultName, dataStoreAName, dataStoreCName],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
@@ -278,6 +290,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, "fake"],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -303,6 +316,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, "fake"],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -328,6 +342,7 @@ describe("Data Store Creation Tests", () => {
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
 				runtime: containerRuntime,
+				deltaManager,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),

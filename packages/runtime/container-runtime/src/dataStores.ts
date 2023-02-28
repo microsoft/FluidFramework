@@ -10,7 +10,11 @@ import {
 } from "@fluidframework/container-utils";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+} from "@fluidframework/protocol-definitions";
 import {
 	AliasResult,
 	channelsTreeName,
@@ -115,6 +119,7 @@ export class DataStores implements IDisposable {
 	constructor(
 		private readonly baseSnapshot: ISnapshotTree | undefined,
 		private readonly runtime: ContainerRuntime,
+		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly submitAttachFn: (attachContent: any) => void,
 		private readonly getCreateChildSummarizerNodeFn: (
 			id: string,
@@ -168,6 +173,7 @@ export class DataStores implements IDisposable {
 					snapshotTree: value,
 					runtime: this.runtime,
 					storage: this.runtime.storage,
+					deltaManager: this.deltaManager,
 					scope: this.runtime.scope,
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
@@ -182,6 +188,7 @@ export class DataStores implements IDisposable {
 					id: key,
 					pkg: undefined,
 					runtime: this.runtime,
+					deltaManager: this.deltaManager,
 					storage: this.runtime.storage,
 					scope: this.runtime.scope,
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
@@ -360,6 +367,7 @@ export class DataStores implements IDisposable {
 			id,
 			pkg,
 			runtime: this.runtime,
+			deltaManager: this.deltaManager,
 			storage: this.runtime.storage,
 			scope: this.runtime.scope,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(id, {
@@ -379,6 +387,7 @@ export class DataStores implements IDisposable {
 			id,
 			pkg,
 			runtime: this.runtime,
+			deltaManager: this.deltaManager,
 			storage: this.runtime.storage,
 			scope: this.runtime.scope,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(id, {

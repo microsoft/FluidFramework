@@ -169,6 +169,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
+import { DeltaManagerRuntimeProxy } from "./deltaManagerRuntimeProxy";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -1170,6 +1171,7 @@ export class ContainerRuntime
 		this.dataStores = new DataStores(
 			getSummaryForDatastores(baseSnapshot, metadata),
 			this,
+			new DeltaManagerRuntimeProxy(this.deltaManager),
 			(attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
 			(id: string, createParam: CreateChildSummarizerNodeParam) =>
 				(
