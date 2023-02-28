@@ -115,6 +115,44 @@ describe("AnchorSet", () => {
 		);
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
 	});
+
+	// TODO: fix the code so this test passes.
+	it.skip("can rebase over multiple moves", () => {
+		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+		const moveOut1: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId: brand(1),
+		};
+		const moveOut2: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId: brand(2),
+		};
+
+		const moveIn1: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: brand(1),
+		};
+
+		const moveIn2: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: brand(2),
+		};
+
+		const delta = new Map([[fieldFoo, [3, moveIn2, moveOut1, 1, moveOut2, moveIn1]]]);
+		anchors.applyDelta(delta);
+		const expectedPath1 = makePath([fieldFoo, 3], [fieldBar, 4]);
+		const expectedPath2 = makePath([fieldFoo, 5], [fieldBaz, 2]);
+		const expectedPath3 = makePath([fieldFoo, 4]);
+		const expectedPath4 = makePath([fieldFoo, 3]);
+		checkEquality(anchors.locate(anchor1), expectedPath1);
+		checkEquality(anchors.locate(anchor2), expectedPath2);
+		checkEquality(anchors.locate(anchor3), expectedPath3);
+		checkEquality(anchors.locate(anchor4), expectedPath4);
+	});
 });
 
 function setup(): [AnchorSet, Anchor, Anchor, Anchor, Anchor] {
