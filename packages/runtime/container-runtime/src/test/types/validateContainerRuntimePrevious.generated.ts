@@ -1488,6 +1488,7 @@ declare function get_old_EnumDeclaration_RuntimeHeaders():
 declare function use_current_EnumDeclaration_RuntimeHeaders(
     use: TypeOnly<current.RuntimeHeaders>);
 use_current_EnumDeclaration_RuntimeHeaders(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_RuntimeHeaders());
 
 /*

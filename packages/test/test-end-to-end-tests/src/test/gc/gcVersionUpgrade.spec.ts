@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -20,20 +21,28 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
+import {
+	GCSummaryStateTracker,
+	IGarbageCollector,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/dist/gc";
+
+// Type that is used to increment the GC version of garbage collector which is private property.
+type IContainerRuntimeWithPrivates = IContainerRuntime & {
+	readonly garbageCollector: IGarbageCollector & {
+		summaryStateTracker: Omit<GCSummaryStateTracker, "currentGCVersion"> & {
+			currentGCVersion: number;
+		};
+	};
+};
 
 /**
  * Runtime dataObjectFactory that increments the current GC version of the container runtime it creates. This is used
  * to simulate scenario where the GC version upgrades and we have to regenerate the GC data and summary.
  */
 class ContainerRuntimeFactoryWithGC extends ContainerRuntimeFactoryWithDefaultDataStore {
-	public async instantiateRuntime(
-		context: IContainerContext,
-		existing: boolean,
-	): Promise<IRuntime> {
-		const runtime = await super.instantiateRuntime(context, existing);
-		// A hack to update the currentGCVersion.
-		(runtime as any).garbageCollector.currentGCVersion += 1;
-		return runtime;
+	protected async containerHasInitialized(runtime: IContainerRuntimeWithPrivates) {
+		runtime.garbageCollector.summaryStateTracker.currentGCVersion += 1;
 	}
 }
 
@@ -128,7 +137,7 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
 		let dataStoresAsHandles: string[] = [];
 
 		// Create a summarizer client.
-		const summarizer1 = await createSummarizerFromFactory(
+		const { summarizer: summarizer1 } = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
 			dataObjectFactory,
@@ -146,7 +155,7 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
 
 		// Create a new summarizer with a new GC version and the latest summary that has been generated.
 		summarizer1.close();
-		const summarizer2 = await createSummarizerFromFactory(
+		const { summarizer: summarizer2 } = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
 			dataObjectFactory,

@@ -57,7 +57,9 @@ export {
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
 	makeArray,
+	mapIterable,
 	Mutable,
 	RecursiveReadonly,
-	unreachableCase,
+	zipIterables,
 } from "./utils";
+export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
