@@ -201,7 +201,7 @@ export class Outbox {
 			limit: this.params.config.maxBatchSizeInBytes,
 			chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
 			compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-			networkSize: estimateSocketSize(batch),
+			socketSize: estimateSocketSize(batch),
 		});
 	}
 

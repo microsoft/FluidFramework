@@ -162,13 +162,14 @@ export class OpSplitter {
 		);
 
 		const restOfMessages = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
+		const socketSize = estimateSocketSize(batch);
 		const chunks = splitOp(
 			firstMessage,
 			this.chunkSizeInBytes,
 			// If we estimate that the socket batch size will exceed the batch limit
 			// we will inject an empty op to minimize the risk of the payload failing due to
 			// the overhead from the trailing empty ops in the batch.
-			estimateSocketSize(batch) >= this.maxBatchSizeInBytes,
+			socketSize >= this.maxBatchSizeInBytes,
 		);
 
 		assert(this.submitBatchFn !== undefined, 0x519 /* We don't support old loaders */);
@@ -195,7 +196,7 @@ export class OpSplitter {
 			sizeInBytes: batch.contentSizeInBytes,
 			chunks: chunks.length,
 			chunkSizeInBytes: this.chunkSizeInBytes,
-			networkSize: estimateSocketSize(batch),
+			socketSize,
 		});
 
 		return {

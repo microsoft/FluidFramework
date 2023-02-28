@@ -61,7 +61,7 @@ export class OpCompressor {
 				sizeBeforeCompression: batch.contentSizeInBytes,
 				sizeAfterCompression: compressedBatch.contentSizeInBytes,
 				opCount: compressedBatch.content.length,
-				networkSize: estimateSocketSize(compressedBatch),
+				socketSize: estimateSocketSize(compressedBatch),
 			});
 		}
 
