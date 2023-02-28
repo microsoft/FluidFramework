@@ -342,7 +342,7 @@ export interface EditableField
 
 const editableTreeSlot = anchorSlot<EditableTree>();
 
-// TODO: hook this up to get called when the node the anchor is for gets deleted from the tree.
+// TODO: hook this up to get called when the node the anchor it is for gets deleted from the tree.
 // Note: this should be when it will not get restored (anchor object can't get resurrected) in its AnchorSet.
 const onDelete = anchorSlot<((anchor: AnchorNode) => void)[]>();
 
