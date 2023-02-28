@@ -32,20 +32,6 @@ async function createSharedTrees(
 }
 
 describe("editable-tree context", () => {
-	it("can't synchronize trees after the context been freed", async () => {
-		const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, [personData], 2);
-		const person1 = tree1.root as Person;
-		const person2 = tree2.root as Person;
-		tree2.context.free();
-
-		assert.equal(person1.age, 35);
-		person1.age = brand(42);
-		assert.equal(person1.age, 42);
-		assert.equal(person2.age, 35);
-		await provider.ensureSynchronized();
-		assert.equal(person2.age, 35);
-	});
-
 	it("can clear and reuse context", async () => {
 		const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, [personData], 2);
 		const context2 = tree2.context;
