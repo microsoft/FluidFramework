@@ -8,10 +8,11 @@ import { createSummarizer, ITestObjectProvider, summarizeNow } from "@fluidframe
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 import { DocumentCreator } from "./DocumentCreator";
+import { DocumentMap } from "./DocumentMap";
 
 const testName = "Generate summary tree 5Mb document";
 describeNoCompat("Summarization  Medium Document- runtime benchmarks", (getTestObjectProvider) => {
-	let documentCreator: DocumentCreator;
+	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
 
@@ -25,22 +26,22 @@ describeNoCompat("Summarization  Medium Document- runtime benchmarks", (getTestO
 	before(async () => {
 		provider = getTestObjectProvider();
 
-		documentCreator = new DocumentCreator({
+		documentMap = DocumentCreator.create({
 			testName,
 			provider,
 			documentType: "MediumDocumentMap",
 			driverEndpointName: provider.driver.endpointName,
 			driverType: provider.driver.type,
 		});
-		await documentCreator.initializeDocument();
-		assert(documentCreator.mainContainer !== undefined, "mainContainer needs to be defined.");
+		await documentMap.initializeDocument();
+		assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
 		const { summarizer: summarizerClient } = await createSummarizer(
 			provider,
-			documentCreator.mainContainer,
+			documentMap.mainContainer,
 			undefined,
 			undefined,
 			undefined,
-			documentCreator.logger,
+			documentMap.logger,
 		);
 		summaryVersion = await waitForSummary(summarizerClient);
 		assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
@@ -50,7 +51,7 @@ describeNoCompat("Summarization  Medium Document- runtime benchmarks", (getTestO
 	benchmark({
 		title: testName,
 		benchmarkFnAsync: async () => {
-			const container = await documentCreator.loadDocument();
+			const container = await documentMap.loadDocument();
 			await provider.ensureSynchronized();
 
 			const { summarizer: summarizerClient } = await createSummarizer(
@@ -59,7 +60,7 @@ describeNoCompat("Summarization  Medium Document- runtime benchmarks", (getTestO
 				summaryVersion,
 				undefined,
 				undefined,
-				documentCreator.logger,
+				documentMap.logger,
 			);
 			assert(summarizerClient !== undefined, "summarizer needs to be defined.");
 

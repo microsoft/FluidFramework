@@ -11,10 +11,11 @@ import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { SharedMap } from "@fluidframework/map";
 import { DocumentCreator } from "./DocumentCreator";
+import { DocumentMap } from "./DocumentMap";
 
 const testName = "Generate summary tree 5Mb document";
 describeNoCompat("Summarization  Medium Document- memory benchmarks", (getTestObjectProvider) => {
-	let documentCreator: DocumentCreator;
+	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
 
@@ -27,22 +28,22 @@ describeNoCompat("Summarization  Medium Document- memory benchmarks", (getTestOb
 
 	before(async () => {
 		provider = getTestObjectProvider();
-		documentCreator = new DocumentCreator({
+		documentMap = DocumentCreator.create({
 			testName,
 			provider,
 			documentType: "MediumDocumentMap",
 			driverEndpointName: provider.driver.endpointName,
 			driverType: provider.driver.type,
 		});
-		await documentCreator.initializeDocument();
-		assert(documentCreator.mainContainer !== undefined, "mainContainer needs to be defined.");
+		await documentMap.initializeDocument();
+		assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
 		const { summarizer: summarizerClient } = await createSummarizer(
 			provider,
-			documentCreator.mainContainer,
+			documentMap.mainContainer,
 			undefined,
 			undefined,
 			undefined,
-			documentCreator.logger,
+			documentMap.logger,
 		);
 		await provider.ensureSynchronized();
 		summaryVersion = await waitForSummary(summarizerClient);
@@ -57,7 +58,7 @@ describeNoCompat("Summarization  Medium Document- memory benchmarks", (getTestOb
 			container: IContainer | undefined;
 			summarizerClient: { container: IContainer; summarizer: ISummarizer } | undefined;
 			async run() {
-				this.container = await documentCreator.loadDocument();
+				this.container = await documentMap.loadDocument();
 				assert(this.container !== undefined, "container needs to be defined.");
 				await provider.ensureSynchronized();
 
@@ -67,7 +68,7 @@ describeNoCompat("Summarization  Medium Document- memory benchmarks", (getTestOb
 					summaryVersion,
 					undefined,
 					undefined,
-					documentCreator.logger,
+					documentMap.logger,
 				);
 				summaryVersion = await waitForSummary(this.summarizerClient.summarizer);
 				assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
