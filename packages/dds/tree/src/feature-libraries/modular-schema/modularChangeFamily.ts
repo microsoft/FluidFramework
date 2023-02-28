@@ -463,11 +463,11 @@ export class ModularChangeFamily
 		repairStore: ReadonlyRepairDataStore,
 		path: UpPath | undefined,
 	): Delta.Root {
-		const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
+		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
-				(childChange, index): Delta.NodeChanges | undefined =>
+				(childChange, index): Delta.Modify =>
 					this.deltaFromNodeChange(
 						childChange,
 						repairStore,
@@ -488,16 +488,15 @@ export class ModularChangeFamily
 	}
 
 	private deltaFromNodeChange(
-		{ valueChange, fieldChanges }: NodeChangeset,
+		change: NodeChangeset,
 		repairStore: ReadonlyRepairDataStore,
 		path?: UpPath,
-	): Delta.NodeChanges | undefined {
-		if (valueChange === undefined && fieldChanges === undefined) {
-			return undefined;
-		}
+	): Delta.Modify {
+		const modify: Mutable<Delta.Modify> = {
+			type: Delta.MarkType.Modify,
+		};
 
-		const modify: Mutable<Delta.NodeChanges> = {};
-
+		const valueChange = change.valueChange;
 		if (valueChange !== undefined) {
 			if ("revert" in valueChange) {
 				assert(
@@ -514,8 +513,8 @@ export class ModularChangeFamily
 			}
 		}
 
-		if (fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(fieldChanges, repairStore, path);
+		if (change.fieldChanges !== undefined) {
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairStore, path);
 		}
 
 		return modify;
@@ -638,7 +637,7 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 		for (const id of ids.keys()) {
 			assert(
 				tryGetFromNestedMap(manager.table.srcDependents, revision, id) === undefined,
-				"TODO: Support multiple dependents per key",
+				0x564 /* TODO: Support multiple dependents per key */,
 			);
 			setInNestedMap(manager.table.srcDependents, revision, id, fieldData);
 		}
@@ -648,7 +647,7 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 		for (const id of ids.keys()) {
 			assert(
 				tryGetFromNestedMap(manager.table.dstDependents, revision, id) === undefined,
-				"TODO: Support multiple dependents per key",
+				0x565 /* TODO: Support multiple dependents per key */,
 			);
 			setInNestedMap(manager.table.dstDependents, revision, id, fieldData);
 		}

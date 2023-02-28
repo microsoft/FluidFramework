@@ -13,50 +13,51 @@ import { IFluidPackage } from '@fluidframework/container-definitions';
 import { IFluidPackageEnvironment } from '@fluidframework/container-definitions';
 import { IResolvedFluidCodeDetails } from '@fluidframework/container-definitions';
 
-// @public
+// @public @deprecated
 export class AllowList implements ICodeAllowList {
+    // @deprecated
     constructor(testHandler?: ((source: IResolvedFluidCodeDetails) => Promise<boolean>) | undefined);
-    // (undocumented)
+    // @deprecated (undocumented)
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPackageIdentifierDetails {
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly fullId: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly name: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly nameAndVersion: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly scope: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly version: string | undefined;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function resolveFluidPackageEnvironment(environment: IFluidPackageEnvironment, baseUrl: string): Readonly<IFluidPackageEnvironment>;
 
-// @public
+// @public @deprecated
 export class SemVerCdnCodeResolver implements IFluidCodeResolver {
-    // (undocumented)
+    // @deprecated (undocumented)
     resolveCodeDetails(codeDetails: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class WebCodeLoader implements ICodeDetailsLoader {
+    // @deprecated
     constructor(codeResolver: IFluidCodeResolver, allowList?: ICodeAllowList | undefined);
-    // (undocumented)
+    // @deprecated (undocumented)
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
-    // (undocumented)
+    // @deprecated (undocumented)
     preCache(source: IFluidCodeDetails): Promise<void>;
-    // (undocumented)
+    // @deprecated (undocumented)
     seedModule(source: IFluidCodeDetails, maybeFluidModule?: Promise<IFluidModuleWithDetails> | IFluidModuleWithDetails): Promise<void>;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

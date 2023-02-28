@@ -209,24 +209,21 @@ function applyMoveEffectsToDest<T>(
 	);
 	const result: Mark<T>[] = [];
 
-	assert(effect.modifyAfter === undefined, "Cannot modify move destination");
-	if (effect.mark !== undefined) {
-		result.push(effect.mark);
-	} else {
-		if (!effect.shouldRemove) {
-			const newMark: MoveIn | ReturnTo = {
-				...mark,
-				count: effect.count ?? mark.count,
-			};
-			if (effect.pairedMarkStatus !== undefined) {
-				if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
-					newMark.isSrcConflicted = true;
-				} else {
-					delete newMark.isSrcConflicted;
-				}
+	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
+
+	if (!effect.shouldRemove) {
+		const newMark: MoveIn | ReturnTo = {
+			...mark,
+			count: effect.count ?? mark.count,
+		};
+		if (effect.pairedMarkStatus !== undefined) {
+			if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+				newMark.isSrcConflicted = true;
+			} else {
+				delete newMark.isSrcConflicted;
 			}
-			result.push(newMark);
 		}
+		result.push(newMark);
 	}
 
 	if (effect.child !== undefined) {
@@ -236,7 +233,7 @@ function applyMoveEffectsToDest<T>(
 			mark.revision ?? revision,
 			effect.child,
 		);
-		assert(childEffect.count !== undefined, "Child effects should have size");
+		assert(childEffect.count !== undefined, 0x567 /* Child effects should have size */);
 
 		const newMark: Mark<T> = {
 			...mark,
@@ -245,7 +242,10 @@ function applyMoveEffectsToDest<T>(
 		};
 
 		if (mark.type === "ReturnTo" && mark.detachIndex !== undefined) {
-			assert(effect.count !== undefined, "Should define count when splitting a mark");
+			assert(
+				effect.count !== undefined,
+				0x568 /* Should define count when splitting a mark */,
+			);
 			(newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
 		}
 
@@ -253,7 +253,6 @@ function applyMoveEffectsToDest<T>(
 	}
 
 	if (consumeEffect) {
-		delete effect.mark;
 		delete effect.count;
 		delete effect.child;
 	}
@@ -267,22 +266,20 @@ function applyMoveEffectsToSource<T>(
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
-	const effect = getOrAddEffect(
+	const effect = getMoveEffect(
 		effects,
 		CrossFieldTarget.Source,
 		mark.revision ?? revision,
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (effect.mark !== undefined) {
-		result.push(effect.mark);
-	} else if (!effect.shouldRemove) {
+	if (!effect.shouldRemove) {
 		const newMark = clone(mark);
 		newMark.count = effect.count ?? newMark.count;
 		if (effect.modifyAfter !== undefined) {
 			assert(
 				composeChildren !== undefined,
-				"Must provide a change composer if modifying moves",
+				0x569 /* Must provide a change composer if modifying moves */,
 			);
 			const changes = composeChildren(newMark.changes, effect.modifyAfter);
 			if (changes !== undefined) {
@@ -292,7 +289,10 @@ function applyMoveEffectsToSource<T>(
 			}
 		}
 		if (effect.pairedMarkStatus !== undefined) {
-			assert(newMark.type === "ReturnFrom", "TODO: support updating MoveOut.isSrcConflicted");
+			assert(
+				newMark.type === "ReturnFrom",
+				0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
+			);
 			if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
 				newMark.isDstConflicted = true;
 			} else {
@@ -309,14 +309,17 @@ function applyMoveEffectsToSource<T>(
 			mark.revision ?? revision,
 			effect.child,
 		);
-		assert(childEffect.count !== undefined, "Child effects should have size");
+		assert(childEffect.count !== undefined, 0x56b /* Child effects should have size */);
 		const newMark: MoveOut<T> | ReturnFrom<T> = {
 			...mark,
 			id: effect.child,
 			count: childEffect.count,
 		};
 		if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
-			assert(effect.count !== undefined, "Should define count when splitting a mark");
+			assert(
+				effect.count !== undefined,
+				0x56c /* Should define count when splitting a mark */,
+			);
 			(newMark as ReturnFrom).detachIndex = mark.detachIndex + effect.count;
 		}
 		result.push(
@@ -325,7 +328,6 @@ function applyMoveEffectsToSource<T>(
 	}
 
 	if (consumeEffect) {
-		delete effect.mark;
 		delete effect.count;
 		delete effect.child;
 		delete effect.modifyAfter;
@@ -388,9 +390,7 @@ export function splitMarkOnInput<T, TMark extends InputSpanningMark<T>>(
 	const markLength = getInputLength(mark);
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
-		fail(
-			`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
-		);
+		fail("Unable to split mark due to lengths");
 	}
 	if (isSkipMark(mark)) {
 		return [length, remainder] as [TMark, TMark];
@@ -399,7 +399,7 @@ export function splitMarkOnInput<T, TMark extends InputSpanningMark<T>>(
 	const type = mark.type;
 	switch (type) {
 		case "Modify":
-			fail(`Unable to split ${type} mark of length 1`);
+			fail("Unable to split Modify mark of length 1");
 		case "ReturnTo": {
 			const newId = genId();
 			splitMove(
@@ -497,9 +497,7 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 	const markLength = getOutputLength(mark, ignorePairing);
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
-		fail(
-			`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
-		);
+		fail("Unable to split mark due to lengths");
 	}
 	if (isSkipMark(mark)) {
 		return [length, remainder] as [TMark, TMark];

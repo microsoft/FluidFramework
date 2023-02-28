@@ -40,11 +40,10 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { TombstoneResponseHeaderKey } from "./containerRuntime";
+import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
+import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
-import { summarizerClientType } from "./summarizerClientElection";
-import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
-import { sendGCUnexpectedUsageEvent } from "./garbageCollectionHelpers";
+import { summarizerClientType } from "./summary";
 
 /**
  * This class represents blob (long string)
@@ -114,6 +113,7 @@ export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
 	"attachState" | "connected" | "logger" | "clientDetails"
 > &
+	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed"> &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
@@ -225,6 +225,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Read the feature flag that tells whether to throw when a tombstone blob is requested.
 		this.throwOnTombstoneLoad =
 			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
+			this.runtime.gcTombstoneEnforcementAllowed &&
 			this.runtime.clientDetails.type !== summarizerClientType;
 
 		this.runtime.on("disconnected", () => this.onDisconnected());
@@ -712,6 +713,37 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
+	 * Delete attachment blobs that are sweep ready.
+	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted.
+	 * @returns - The routes of blobs that were deleted.
+	 */
+	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
+		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
+		if (this.mc.config.getBoolean(sweepAttachmentBlobsKey) !== true) {
+			return [];
+		}
+
+		// The routes or blob node paths are in the same format as returned in getGCData -
+		// `/<BlobManager.basePath>/<blobId>`.
+		for (const route of sweepReadyBlobRoutes) {
+			const pathParts = route.split("/");
+			assert(
+				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+				0x586 /* Invalid blob node id in deleted routes. */,
+			);
+			const blobId = pathParts[2];
+			if (!this.redirectTable.has(blobId)) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "DeletedAttachmentBlobNotFound",
+					blobId,
+				});
+			}
+			this.redirectTable.delete(blobId);
+		}
+		return Array.from(sweepReadyBlobRoutes);
+	}
+
+	/**
 	 * This is called to update blobs whose routes are tombstones. Tombstoned blobs enable testing scenarios with
 	 * accessing deleted content without actually deleting content from summaries.
 	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
@@ -785,7 +817,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						? "GC_Tombstone_Blob_Requested"
 						: "GC_Deleted_Blob_Requested",
 				category: shouldFail ? "error" : "generic",
-				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 			},
 			[BlobManager.basePath],
 			error,

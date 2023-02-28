@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { AttributionPolicy } from "./mergeTree";
 import { Client } from "./client";
-import { UnassignedSequenceNumber } from "./constants";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import {
 	MergeTreeDeltaCallback,
 	MergeTreeMaintenanceCallback,
@@ -281,12 +281,17 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 /**
  * @alpha
  * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ * Content is only attributed at ack time, unless the container is in a detached state.
+ * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
 	return {
 		attach: (client: Client) => {
-			assert(unsubscribe === undefined, "cannot attach to multiple clients at once");
+			assert(
+				unsubscribe === undefined,
+				0x557 /* cannot attach to multiple clients at once */,
+			);
 			const deltaCallback: MergeTreeDeltaCallback = (
 				opArgs,
 				{ deltaSegments, operation },
@@ -297,8 +302,12 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 
 				for (const { segment } of deltaSegments) {
 					if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
+						const key: AttributionKey =
+							segment.seq === UniversalSequenceNumber
+								? { type: "detached", id: 0 }
+								: { type: "op", seq: segment.seq };
 						segment.attribution ??= new AttributionCollection(
-							{ type: "op", seq: segment.seq },
+							key,
 							segment.cachedLength,
 						);
 					}
@@ -317,7 +326,10 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 					return;
 				}
 				for (const { segment } of deltaSegments) {
-					assert(segment.seq !== undefined, "segment.seq should be set after ack.");
+					assert(
+						segment.seq !== undefined,
+						0x558 /* segment.seq should be set after ack. */,
+					);
 					segment.attribution = new AttributionCollection(
 						{ type: "op", seq: segment.seq },
 						segment.cachedLength,
