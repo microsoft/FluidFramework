@@ -312,7 +312,7 @@ function makeOperationGenerator(
 	const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
 		[addText, 2, isShorterThanMaxLength],
 		[removeRange, 1, hasNonzeroLength],
-		[obliterateRange, 1, hasNonzeroLength],
+		[obliterateRange, 0, hasNonzeroLength],
 		[addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, 2, hasAnInterval],
 		[changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
