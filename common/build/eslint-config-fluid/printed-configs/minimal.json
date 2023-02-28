@@ -1196,9 +1196,6 @@
         "unicorn/no-unsafe-regex": [
             "error"
         ],
-        "unicorn/no-useless-undefined": [
-            "off"
-        ],
         "unicorn/number-literal-case": [
             "off"
         ],

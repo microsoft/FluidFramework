@@ -37,19 +37,32 @@ module.exports = {
 				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
 			},
 		],
+
 		"unicorn/empty-brace-spaces": "off",
 
 		// Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
 		//            significant performance regression [node 14 x64].
 		"unicorn/no-for-loop": "off",
 
-		"unicorn/prevent-abbreviations": "off",
+		/**
+		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
+		 * @remarks This rule also directly conflicts with prettier's formatting of nested ternary expressions.
+		 */
+		"unicorn/no-nested-ternary": "off",
+
+		/**
+		 * Disabled due to the sheer number of false positives it detects, and because it is sometimes valuable to
+		 * explicitly denote `undefined`.
+		 */
+		"unicorn/no-useless-undefined": "off",
 
 		/**
 		 * "node:" imports are not supported prior to Node.js v16.
 		 * TODO: re-enable this (remove override) once the repo has been updated to v16.
 		 */
 		"unicorn/prefer-node-protocol": "off",
+
+		"unicorn/prevent-abbreviations": "off",
 
 		/**
 		 * Disallows the `any` type.
@@ -119,9 +132,12 @@ module.exports = {
 	},
 	overrides: [
 		{
-			// Rules only for TypeScript files
-			files: ["**/*.{ts,tsx}"],
-			rules: {},
+			// Rules only for React files
+			files: ["*.jsx", "*.tsx"],
+			rules: {
+				// Conflicts with best practices for various React hooks.
+				"unicorn/consistent-function-scoping": "off",
+			},
 		},
 		{
 			// Rules only for type validation files
