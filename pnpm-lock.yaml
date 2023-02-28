@@ -9573,11 +9573,16 @@ importers:
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.22.2
+      '@testing-library/dom': ^8.2.0
+      '@testing-library/jest-dom': ^5.16.5
+      '@testing-library/react': ^12.0.0
+      '@testing-library/user-event': ^14.4.3
       '@types/chrome': 0.0.200
       '@types/jest': 22.2.3
       '@types/node': ^14.18.36
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
+      '@types/testing-library__jest-dom': ^5.14.5
       concurrently: ^6.2.0
       copy-webpack-plugin: ^11.0.0
       copyfiles: ^2.4.1
@@ -9616,11 +9621,16 @@ importers:
       '@fluidframework/build-tools': 0.10.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.22.2
+      '@testing-library/dom': 8.19.1
+      '@testing-library/jest-dom': 5.16.5
+      '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
+      '@testing-library/user-event': 14.4.3_ua4wuun3fnehcjqtqj2e2ldgpe
       '@types/chrome': 0.0.200
       '@types/jest': 22.2.3
       '@types/node': 14.18.36
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
+      '@types/testing-library__jest-dom': 5.14.5
       concurrently: 6.3.0
       copy-webpack-plugin: 11.0.0_webpack@5.75.0
       copyfiles: 2.4.1
@@ -29078,7 +29088,7 @@ packages:
     engines: {node: '>= 4.5.0'}
     dependencies:
       agent-base: 4.3.0
-      debug: 3.1.0
+      debug: 3.2.7
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -39104,7 +39114,7 @@ packages:
       schema-utils: 3.1.1
       serialize-javascript: 6.0.0
       terser: 5.15.1
-      webpack: 5.75.0
+      webpack: 5.75.0_webpack-cli@4.10.0
 
   /terser/4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -41193,6 +41203,7 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
+    dev: true
 
   /webpack/5.75.0_webpack-cli@4.10.0:
     resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}
