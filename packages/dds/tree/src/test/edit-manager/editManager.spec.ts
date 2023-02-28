@@ -41,7 +41,7 @@ type TestEditManager = EditManager<TestChange, TestChangeFamily>;
  * `ChangeFamily.intoDelta` with the expected change.
  */
 function asDelta(intentions: number[]): Delta.Root {
-	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, { shallow: intentions }]]);
+	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, intentions]]);
 }
 
 function changeFamilyFactory(
@@ -304,7 +304,7 @@ describe("EditManager", () => {
 				brand(1),
 			);
 			// TODO: This is probably not the best way to assert that the change was rebased properly
-			assert.equal(delta.get("root" as FieldKey)?.shallow?.length, 1);
+			assert.equal(delta.get("root" as FieldKey)?.length, 1);
 		});
 	});
 
