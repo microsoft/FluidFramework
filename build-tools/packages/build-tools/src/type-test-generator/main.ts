@@ -39,7 +39,7 @@ const previousPackageName = `${packageObject.name}-previous`;
 
 {
 	// Information about the previous package from the package.json is not needed,
-	// but error if its missing since its nice to septate errors for the dep missing here vs not installed.
+	// but error if its missing since it's nice to separate errors for the dep missing here vs not installed.
 	const previousDep = packageObject?.devDependencies?.[previousPackageName];
 	if (typeof previousDep !== "string") {
 		throw new Error(`Did not find devDependency ${previousPackageName} in package.json`);
