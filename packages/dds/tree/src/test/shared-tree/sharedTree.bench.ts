@@ -5,6 +5,7 @@
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
+import {  unreachableCase } from "@fluidframework/common-utils";
 import {
 	createField,
 	EditableField,
@@ -14,7 +15,7 @@ import {
 	namedTreeSchema,
 	singleTextCursor,
 } from "../../feature-libraries";
-import { brand, unreachableCase } from "../../util";
+import { brand } from "../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import {
