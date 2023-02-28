@@ -71,7 +71,7 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 			(forked) => {
 				const changes: GraphCommit<TChange>[] = [];
 				assert(
-					findAncestor([forked.branch, changes], (c) => c === this.getBaseBranch()) !==
+					findAncestor([forked.branch, changes], (c) => c === forked.getBaseBranch()) !==
 						undefined,
 					"Expected merging checkout branches to be related",
 				);

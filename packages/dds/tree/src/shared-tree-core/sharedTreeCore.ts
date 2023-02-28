@@ -204,10 +204,6 @@ export class SharedTreeCore<
 		await Promise.all(loadIndexes);
 	}
 
-	public applyChange(change: TChange): void {
-		this.submitEdit(change);
-	}
-
 	/**
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.

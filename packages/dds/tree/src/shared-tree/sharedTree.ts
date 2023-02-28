@@ -154,71 +154,6 @@ export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
  */
 export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {}
 
-export class SharedTreeCheckout implements ISharedTreeCheckoutFork {
-	public readonly context: EditableTreeContext;
-	public readonly submitEdit: TransactionCheckout<
-		IDefaultEditBuilder,
-		DefaultChangeset
-	>["submitEdit"];
-
-	public constructor(
-		private readonly branch: SharedTreeBranch<DefaultChangeset>,
-		public readonly changeFamily: DefaultChangeFamily,
-		public readonly storedSchema: InMemoryStoredSchemaRepository,
-		public readonly forest: IEditableForest,
-	) {
-		this.context = getEditableTreeContext(forest, this);
-		branch.on("onChange", (change) => {
-			const delta = this.changeFamily.intoDelta(change);
-			this.forest.applyDelta(delta);
-		});
-		this.submitEdit = (edit) => this.branch.applyChange(edit);
-	}
-
-	locate(anchor: Anchor): UpPath | undefined {
-		return this.forest.anchors.locate(anchor);
-	}
-
-	public pull(): void {
-		this.branch.pull();
-	}
-
-	public fork(): ISharedTreeCheckoutFork {
-		const storedSchema = this.storedSchema.clone();
-		return new SharedTreeCheckout(
-			this.branch.fork(),
-			this.changeFamily,
-			storedSchema,
-			this.forest.clone(storedSchema, new AnchorSet()), // TODO: Anchorset
-		);
-	}
-
-	public merge(): void {
-		this.branch.merge();
-	}
-
-	public isMerged(): boolean {
-		return this.branch.isMerged();
-	}
-
-	public get root(): UnwrappedEditableField {
-		return this.context.unwrappedRoot;
-	}
-
-	public set root(data: ContextuallyTypedNodeData | undefined) {
-		this.context.unwrappedRoot = data;
-	}
-
-	public runTransaction(
-		transaction: (
-			forest: IForestSubscription,
-			editor: IDefaultEditBuilder,
-		) => TransactionResult,
-	): TransactionResult {
-		return runSynchronousTransaction(this, transaction);
-	}
-}
-
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  * TODO: node identifier index.
@@ -305,7 +240,7 @@ class SharedTree
 			this.createBranch(),
 			this.changeFamily,
 			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, new AnchorSet()), // TODO: anchorset
+			this.forest.clone(this.storedSchema, new AnchorSet()),
 		);
 	}
 
@@ -357,5 +292,70 @@ export class SharedTreeFactory implements IChannelFactory {
 		const tree = new SharedTree(id, runtime, this.attributes, "SharedTree");
 		tree.initializeLocal();
 		return tree;
+	}
+}
+
+class SharedTreeCheckout implements ISharedTreeCheckoutFork {
+	public readonly context: EditableTreeContext;
+	public readonly submitEdit: TransactionCheckout<
+		IDefaultEditBuilder,
+		DefaultChangeset
+	>["submitEdit"];
+
+	public constructor(
+		private readonly branch: SharedTreeBranch<DefaultChangeset>,
+		public readonly changeFamily: DefaultChangeFamily,
+		public readonly storedSchema: InMemoryStoredSchemaRepository,
+		public readonly forest: IEditableForest,
+	) {
+		this.context = getEditableTreeContext(forest, this);
+		branch.on("onChange", (change) => {
+			const delta = this.changeFamily.intoDelta(change);
+			this.forest.applyDelta(delta);
+		});
+		this.submitEdit = (edit) => this.branch.applyChange(edit);
+	}
+
+	locate(anchor: Anchor): UpPath | undefined {
+		return this.forest.anchors.locate(anchor);
+	}
+
+	public pull(): void {
+		this.branch.pull();
+	}
+
+	public fork(): ISharedTreeCheckoutFork {
+		const storedSchema = this.storedSchema.clone();
+		return new SharedTreeCheckout(
+			this.branch.fork(),
+			this.changeFamily,
+			storedSchema,
+			this.forest.clone(storedSchema, new AnchorSet()),
+		);
+	}
+
+	public merge(): void {
+		this.branch.merge();
+	}
+
+	public isMerged(): boolean {
+		return this.branch.isMerged();
+	}
+
+	public get root(): UnwrappedEditableField {
+		return this.context.unwrappedRoot;
+	}
+
+	public set root(data: ContextuallyTypedNodeData | undefined) {
+		this.context.unwrappedRoot = data;
+	}
+
+	public runTransaction(
+		transaction: (
+			forest: IForestSubscription,
+			editor: IDefaultEditBuilder,
+		) => TransactionResult,
+	): TransactionResult {
+		return runSynchronousTransaction(this, transaction);
 	}
 }
