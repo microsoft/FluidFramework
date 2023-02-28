@@ -34,8 +34,6 @@ export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to expire a session after a set period of time.
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-// Feature gate key to write the gc blob as a handle if the data is the same.
-export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 // Feature gate key to disable the tombstone feature, i.e., tombstone information is not read / written into summary.
@@ -330,11 +328,6 @@ export interface IGarbageCollectorConfigs {
 	 * step for sweep where accidental sweep ready objects can be recovered.
 	 */
 	readonly tombstoneMode: boolean;
-	/**
-	 * Tracks whether GC state should be tracked. If true, for unchanged GC data across summaries, a summary
-	 * handle is written to summary instead of a summary tree / blob.
-	 */
-	readonly trackGCState: boolean;
 	/** @see GCFeatureMatrix. */
 	readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 	/** The version of GC in the base snapshot. */
