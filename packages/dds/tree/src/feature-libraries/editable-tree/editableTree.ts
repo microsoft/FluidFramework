@@ -23,6 +23,7 @@ import {
 	CursorLocationType,
 	FieldAnchor,
 	ITreeCursor,
+	anchorSlot,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
@@ -341,6 +342,21 @@ export interface EditableField
 	 * all the insertions will be preserved.
 	 */
 	replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+}
+
+const editableTreeSlot = anchorSlot<EditableTree>();
+
+function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): EditableTree {
+	const anchor = cursor.buildAnchor() ?? fail("invalid");
+	const anchorNode = context.forest.anchors.locate(anchor);
+	const map = anchorNode?.slotMap(editableTreeSlot);
+	const cached = map?.get(editableTreeSlot);
+	if (cached !== undefined) {
+		context.forest.anchors.forget(anchor);
+		return cached;
+	}
+	const newTarget = new NodeProxyTarget(context, cursor);
+	return adaptWithProxy(newTarget, nodeProxyHandler);
 }
 
 /**
@@ -868,9 +884,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 
 		const cursor = this.cursor;
 		cursor.exitField();
-		const target = new NodeProxyTarget(this.context, cursor);
+		const output = makeTree(this.context, cursor);
 		cursor.enterField(this.fieldKey);
-		return adaptWithProxy(target, nodeProxyHandler);
+		return output;
 	}
 
 	buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): FieldAnchor {
@@ -904,7 +920,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		this.cursor.enterNode(index);
 		const target = new NodeProxyTarget(this.context, this.cursor);
 		this.cursor.exitNode();
-		return inProxyOrUnwrap(target, unwrap);
+		return treeInProxyOrUnwrap(target, unwrap);
 	}
 
 	/**
@@ -923,7 +939,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	 */
 	private asArray(): UnwrappedEditableTree[] {
 		return mapCursorField(this.cursor, (c) =>
-			inProxyOrUnwrap(new NodeProxyTarget(this.context, c), true),
+			treeInProxyOrUnwrap(new NodeProxyTarget(this.context, c), true),
 		);
 	}
 
@@ -1138,12 +1154,18 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 /**
  * See {@link UnwrappedEditableTree} for documentation on what unwrapping this performs.
  */
-function inProxyOrUnwrap(
-	target: NodeProxyTarget | FieldProxyTarget,
-	unwrap: boolean,
-): UnwrappedEditableTree {
+function inProxyOrUnwrap(target: FieldProxyTarget): UnwrappedEditableTree {
+	return isFieldProxyTarget(target)
+		? adaptWithProxy(target, fieldProxyHandler)
+		: adaptWithProxy(target, nodeProxyHandler);
+}
+
+/**
+ * See {@link UnwrappedEditableTree} for documentation on what unwrapping this performs.
+ */
+function treeInProxyOrUnwrap(target: NodeProxyTarget, tryUnwrap: boolean): UnwrappedEditableTree {
 	// Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
-	if (unwrap && !isFieldProxyTarget(target)) {
+	if (tryUnwrap) {
 		const { type: nodeType, typeName: nodeTypeName } = target;
 		if (isPrimitive(nodeType)) {
 			const nodeValue = target.cursor.value;
@@ -1171,9 +1193,7 @@ function inProxyOrUnwrap(
 			return adaptWithProxy(primarySequence, fieldProxyHandler);
 		}
 	}
-	return isFieldProxyTarget(target)
-		? adaptWithProxy(target, fieldProxyHandler)
-		: adaptWithProxy(target, nodeProxyHandler);
+	return adaptWithProxy(target, nodeProxyHandler);
 }
 
 /**
@@ -1210,19 +1230,19 @@ export function proxifyField(
 ): UnwrappedEditableField | EditableField {
 	if (!unwrap) {
 		const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
-		return inProxyOrUnwrap(targetSequence, unwrap);
+		return inProxyOrUnwrap(targetSequence);
 	}
 	const fieldKind = getFieldKind(fieldSchema);
 	if (fieldKind.multiplicity === Multiplicity.Sequence) {
 		const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
-		return inProxyOrUnwrap(targetSequence, unwrap);
+		return inProxyOrUnwrap(targetSequence);
 	}
 	const length = cursor.getFieldLength();
 	assert(length <= 1, 0x3c8 /* invalid non sequence */);
 	if (length === 1) {
 		cursor.enterNode(0);
 		const target = new NodeProxyTarget(context, cursor);
-		const proxifiedNode = inProxyOrUnwrap(target, unwrap);
+		const proxifiedNode = treeInProxyOrUnwrap(target, unwrap);
 		cursor.exitNode();
 		return proxifiedNode;
 	}

@@ -82,6 +82,12 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
+	AnchorKeyBrand,
+	AnchorKey,
+	MapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPath2,
 } from "./core";
 
 export {

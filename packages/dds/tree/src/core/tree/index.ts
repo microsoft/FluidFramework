@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-export { Anchor, AnchorLocator, AnchorSet } from "./anchorSet";
+export {
+	Anchor,
+	AnchorLocator,
+	AnchorSet,
+	AnchorKeyBrand,
+	AnchorKey,
+	MapSubset,
+	AnchorNode,
+	anchorSlot,
+} from "./anchorSet";
 export {
 	ITreeCursor,
 	CursorLocationType,
@@ -29,6 +38,7 @@ export {
 	FieldUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
+	UpPath2,
 } from "./pathTree";
 export {
 	FieldMapObject,

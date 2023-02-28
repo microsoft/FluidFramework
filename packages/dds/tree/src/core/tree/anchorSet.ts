@@ -4,13 +4,14 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { brand, Brand, fail } from "../../util";
+import { brand, Brand, Covariant, fail, Opaque, ReferenceCountedBase } from "../../util";
 import { FieldKey, EmptyKey, Delta, visitDelta } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
+ * Associated with a ref count on the underlying {@link AnchorNode}.
  * @alpha
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
@@ -33,7 +34,84 @@ export interface AnchorLocator {
 	 * for now caller must rely on data in anchor + returned node location
 	 * (not ideal for anchors for places or ranges instead of nodes).
 	 */
-	locate(anchor: Anchor): UpPath | undefined;
+	locate(anchor: Anchor): AnchorNode | undefined;
+}
+
+/**
+ * @alpha
+ */
+export type AnchorKeyBrand = Brand<number, "AnchorKey">;
+
+/**
+ * @alpha
+ */
+export type AnchorKey<TContent> = Opaque<AnchorKeyBrand> & Covariant<TContent>;
+let slotCounter = 0;
+
+/**
+ * Data stashed on an anchor.
+ * @alpha
+ */
+export interface MapSubset<K, V> {
+	get(key: K): V | undefined;
+	has(key: K): boolean;
+	set(key: K, value: V): this;
+}
+
+/**
+ * Node in an tree of anchors.
+ * @alpha
+ */
+export interface AnchorNode extends UpPath<AnchorNode> {
+	/**
+	 * Allows access to data stored on the Anchor in "slots".
+	 * Use {@link anchorSlot} to create slots.
+	 *
+	 * @remarks
+	 * This is not fully type safe.
+	 */
+	slotMap<T extends AnchorKey<unknown>>(
+		slot: T,
+	): T extends AnchorKey<infer TContent>
+		? MapSubset<T, TContent>
+		: Map<AnchorKey<unknown>, unknown>;
+
+	/**
+	 * Gets a child of this node.
+	 *
+	 * @remarks
+	 * This does not return an AnchorNode since there might not be one, and lazily creating one here would have messy lifetime management.
+	 * If an AnchorNode is requires, use the AnchorSet to track then locate the returned path.
+	 * TODO:
+	 * Revisit this API.
+	 * Perhaps if we use weak down pointers and remove ref counting, we can make this return a AnchorNode.
+	 *
+	 */
+	child(key: FieldKey, index: number): UpPath<AnchorNode>;
+
+	/**
+	 * Gets a child, adding a ref.
+	 */
+	getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
+}
+
+/**
+ * Define a slot on anchors in which data can be stored.
+ *
+ * @remarks
+ * Example usage:
+ * ```typescript
+ * const counterSlot = anchorSlot<number>();
+ *
+ * function useSlot(anchor: AnchorNode): void {
+ * 	const map = anchor.slotMap(counterSlot);
+ * 	map.set(counterSlot, map.get(counterSlot) ?? 0);
+ * }
+ * ```
+ * @alpha
+ */
+export function anchorSlot<TContent>(): AnchorKey<TContent> {
+	return brand(slotCounter++);
 }
 
 /**
@@ -76,7 +154,7 @@ export class AnchorSet {
 		return this.root.children.size === 0;
 	}
 
-	public locate(anchor: Anchor): UpPath | undefined {
+	public locate(anchor: Anchor): AnchorNode | undefined {
 		if (anchor === NeverAnchor) {
 			return undefined;
 		}
@@ -399,19 +477,15 @@ enum Status {
  * - Anchors are need even when not using forests, and for nodes that are outside the currently loaded part of the
  * forest.
  *
- * - Forest in general do not need to sport up pointers, but they are needed for anchors.
+ * - Forest in general do not need to support up pointers, but they are needed for anchors.
  *
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors,
  * plus the parent paths for them.
+ *
+ * ReferenceCountedBase tracks the number of references to this from external sources (`Anchors` via `AnchorSet`.).
+ * Kept alive as long there are children, OR their refcount is non-zero.
  */
-class PathNode implements UpPath {
-	/**
-	 * Number of references to this from external sources (ex: `Anchors` via `AnchorSet`.).
-	 *
-	 * PathNodes are kept as long as they have children, OR their refcount is non-zero.
-	 */
-	private refCount = 1;
-
+class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorNode {
 	public status: Status = Status.Alive;
 
 	/**
@@ -425,6 +499,8 @@ class PathNode implements UpPath {
 	 * but is possible to do.
 	 */
 	public readonly children: Map<FieldKey, PathNode[]> = new Map();
+
+	private readonly slots: Map<AnchorKey<unknown>, unknown> = new Map();
 
 	/**
 	 * Construct a PathNode with refcount 1.
@@ -447,7 +523,33 @@ class PathNode implements UpPath {
 		 * This consistency guarantee only applies to nodes that are `Alive`.
 		 */
 		public parentPath: PathNode | undefined,
-	) {}
+	) {
+		super(0);
+	}
+
+	child(key: FieldKey, index: number): UpPath<AnchorNode> {
+		// Fast path: if child exists, return it.
+		return (
+			this.tryGetChild(key, index) ?? { parent: this, parentField: key, parentIndex: index }
+		);
+	}
+
+	getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
+		const anchor = this.anchorSet.track(this.child(key, index));
+		const node =
+			this.anchorSet.locate(anchor) ?? fail("cannot reference child that does not exist");
+		return [anchor, node];
+	}
+
+	slotMap<T extends AnchorKey<unknown>>(
+		slot: T,
+	): T extends AnchorKey<infer TContent>
+		? MapSubset<T, TContent>
+		: Map<AnchorKey<unknown>, unknown> {
+		return this.slots as T extends AnchorKey<infer TContent>
+			? MapSubset<T, TContent>
+			: Map<AnchorKey<unknown>, unknown>;
+	}
 
 	/**
 	 * @returns true iff this PathNode is the special root node that sits above all the detached fields.
@@ -459,7 +561,7 @@ class PathNode implements UpPath {
 		return this.parentPath === undefined;
 	}
 
-	public get parent(): UpPath | undefined {
+	public get parent(): PathNode | undefined {
 		assert(this.status !== Status.Disposed, 0x409 /* PathNode must not be disposed */);
 		assert(
 			this.parentPath !== undefined,
@@ -474,18 +576,19 @@ class PathNode implements UpPath {
 
 	public addRef(count = 1): void {
 		assert(this.status === Status.Alive, 0x40a /* PathNode must be alive */);
-		this.refCount += count;
+		this.referenceAdded(count);
 	}
 
 	public removeRef(count = 1): void {
 		assert(this.status !== Status.Disposed, 0x40b /* PathNode must not be disposed */);
-		this.refCount -= count;
-		if (this.refCount < 1) {
-			assert(this.refCount === 0, 0x358 /* PathNode Refcount should not be negative. */);
+		this.referenceRemoved(count);
+	}
 
-			if (this.children.size === 0) {
-				this.disposeThis();
-			}
+	// Called when refcount is set to 0.
+	// Node may be kept alive by children after this point.
+	protected dispose(): void {
+		if (this.children.size === 0) {
+			this.disposeThis();
 		}
 	}
 
@@ -554,7 +657,7 @@ class PathNode implements UpPath {
 	public afterEmptyField(key: FieldKey): void {
 		assert(this.status === Status.Alive, 0x40f /* PathNode must be alive */);
 		this.children.delete(key);
-		if (this.refCount === 0 && this.children.size === 0) {
+		if (this.isUnreferenced() && this.children.size === 0) {
 			this.disposeThis();
 		}
 	}

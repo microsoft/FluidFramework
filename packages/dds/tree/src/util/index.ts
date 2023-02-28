@@ -62,3 +62,4 @@ export {
 	RecursiveReadonly,
 	zipIterables,
 } from "./utils";
+export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";

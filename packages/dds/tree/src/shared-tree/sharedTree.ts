@@ -22,8 +22,8 @@ import {
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
-	UpPath,
 	EditManager,
+	AnchorNode,
 } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
@@ -160,7 +160,7 @@ class SharedTree
 		this.context = getEditableTreeContext(forest, this.transactionCheckout);
 	}
 
-	public locate(anchor: Anchor): UpPath | undefined {
+	public locate(anchor: Anchor): AnchorNode | undefined {
 		assert(this.editManager.anchors !== undefined, 0x407 /* editManager must have anchors */);
 		return this.editManager.anchors?.locate(anchor);
 	}
