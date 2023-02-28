@@ -23,7 +23,7 @@
     "build:website": "npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo",
     "ci:build": "npm run download && npm run build",
     "clean": "rimraf public content/docs/apis _api-extractor-temp",
-    "download": "npm run download:api && npm run build:api-documentation",
+    "download": "npm run download:api && npm run build:api",
     "download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
     "hugo": "hugo",
     "linkcheck": "npm run linkcheck:fast -- --external",
