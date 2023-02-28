@@ -5,7 +5,7 @@
 	"version": "1.0",
 	"permissions": ["activeTab", "scripting", "storage"],
 	"action": {
-		"default_icon": "images/icon.png"
+		"default_icon": "images/Icon.png"
 	},
 	"background": {
 		"service_worker": "BackgroundScript.js"

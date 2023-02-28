@@ -4,7 +4,7 @@
 	"description": "DevTools extension providing live Fluid Client debug data.",
 	"version": "0.1",
 	"action": {
-		"default_icon": "images/icon.png",
+		"default_icon": "images/Icon.png",
 		"default_popup": "popup.html"
 	},
 	"permissions": ["activeTab", "scripting", "storage"],
