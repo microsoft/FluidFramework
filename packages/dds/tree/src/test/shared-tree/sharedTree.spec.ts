@@ -70,6 +70,7 @@ describe("SharedTree", () => {
 		const expectedSchema = getSchemaString(testSchema);
 
 		// Apply an edit to the first tree which inserts a node with a value
+		initializeTestTree(provider.trees[0]);
 		pushTestValue(provider.trees[0], value);
 
 		// Ensure that the first tree has the state we expect
@@ -91,6 +92,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 		const value = 42;
+		initializeTestTree(summarizingTree);
 		pushTestValue(summarizingTree, value);
 		await provider.summarize();
 		await provider.ensureSynchronized();
@@ -1369,19 +1371,21 @@ const testSchema: SchemaData = {
  */
 function initializeTestTree(
 	tree: ISharedTreeCheckout,
-	state: JsonableTree,
+	state?: JsonableTree,
 	schema: SchemaData = testSchema,
 ): void {
 	tree.storedSchema.update(schema);
 
-	// Apply an edit to the tree which inserts a node with a value
-	tree.runTransaction((forest, editor) => {
-		const writeCursor = singleTextCursor(state);
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
+	if (state !== undefined) {
+		// Apply an edit to the tree which inserts a node with a value
+		tree.runTransaction((forest, editor) => {
+			const writeCursor = singleTextCursor(state);
+			const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+			field.insert(0, writeCursor);
 
-		return TransactionResult.Apply;
-	});
+			return TransactionResult.Apply;
+		});
+	}
 }
 
 /**
