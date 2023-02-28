@@ -81,20 +81,30 @@ export class DocumentDeltaConnection
 	}
 
 	public get disposed() {
-		if (!(this._disposed || this.socket.connected)) {
-			// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
-			// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
-			const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		try {
 			(Error as any).stackTraceLimit = 50;
-			this.logger.sendErrorEvent({
-				eventName: "ConnectionDisposedAnomaly",
-				details: JSON.stringify({
-					disposed: this._disposed,
-					socketConnected: this.socket?.connected,
-					clientId: this._details?.clientId,
-					conenctionId: this.connectionId,
-				}),
-			});
+			assert(
+				this._disposed || this.socket.connected,
+				0x244 /* "Socket is closed, but connection is not!" */,
+			);
+		} catch (error) {
+			this.logger.sendErrorEvent(
+				{
+					eventName: "ConnectionDisposedAnomaly",
+					details: JSON.stringify({
+						disposed: this._disposed,
+						socketConnected: this.socket?.connected,
+						clientId: this._details?.clientId,
+						conenctionId: this.connectionId,
+					}),
+				},
+				error,
+			);
+			throw error;
+		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
 		return this._disposed;
@@ -239,20 +249,26 @@ export class DocumentDeltaConnection
 		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
 		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
 		const originalStackTraceLimit = (Error as any).stackTraceLimit;
-		(Error as any).stackTraceLimit = 50;
-		if (this.disposed) {
-			this.logger.sendErrorEvent({
-				eventName: "ConnectionDisposed",
-				details: JSON.stringify({
-					disposed: this._disposed,
-					socketConnected: this.socket?.connected,
-					clientId: this._details?.clientId,
-					conenctionId: this.connectionId,
-				}),
-			});
+		try {
+			(Error as any).stackTraceLimit = 50;
+			assert(!this.disposed, 0x20c /* "connection disposed" */);
+		} catch (error) {
+			this.logger.sendErrorEvent(
+				{
+					eventName: "ConnectionDisposed",
+					details: JSON.stringify({
+						disposed: this._disposed,
+						socketConnected: this.socket?.connected,
+						clientId: this._details?.clientId,
+						conenctionId: this.connectionId,
+					}),
+				},
+				error,
+			);
+			throw error;
+		} finally {
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
-		(Error as any).stackTraceLimit = originalStackTraceLimit;
-		return;
 	}
 
 	/**
