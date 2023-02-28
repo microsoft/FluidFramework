@@ -1066,7 +1066,10 @@ export class ContainerRuntime
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
-		this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
+		this.remoteMessageProcessor = new RemoteMessageProcessor(
+			opSplitter,
+			new OpDecompressor(this.mc.logger),
+		);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1843,7 +1846,23 @@ export class ContainerRuntime
 				case ContainerMessageType.Rejoin:
 					break;
 				default:
-					assert(!runtimeMessage, 0x3ce /* Runtime message of unknown type */);
+					if (runtimeMessage) {
+						const error = DataProcessingError.create(
+							// Former assert 0x3ce
+							"Runtime message of unknown type",
+							"OpProcessing",
+							message,
+							{
+								local,
+								type: message.type,
+								contentType: typeof message.contents,
+								batch: message.metadata?.batch,
+								compression: message.compression,
+							},
+						);
+						this.closeFn(error);
+						throw error;
+					}
 			}
 
 			// For back-compat, notify only about runtime messages for now.
