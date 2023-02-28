@@ -15,7 +15,7 @@ This section covers how to consume and use Fluid handles.
 
 ## Why use Fluid handles?
 
-- Shared objects, such as Data Objects or DDSes, cannot be stored directly in another DDS. There are two primary
+-   Shared objects, such as Data Objects or DDSes, cannot be stored directly in another DDS. There are two primary
   reasons for this:
 
   1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
@@ -24,11 +24,11 @@ This section covers how to consume and use Fluid handles.
      way to make this possible is to store *references* (which is what a handle is) to the collaborative objects in
      the DDSes.
 
-- Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it.
+-   Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it.
   This reduces the complexity from the caller by abstracting away the need to know how to make a `request` to the
   Fluid runtime to retrieve the object.
 
-- Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage
+-   Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage
   collection to the runtime in a future version.
 
 ## Basic Scenario
@@ -84,6 +84,7 @@ console.log(text === text2) // true
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 

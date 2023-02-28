@@ -127,6 +127,7 @@ As the Fluid Framework expands, we intend to make further use of these responses
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 

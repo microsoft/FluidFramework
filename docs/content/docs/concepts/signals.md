@@ -54,9 +54,10 @@ For more information on using `ContainerSchema` to create objects please see [Da
 ### API
 
 `SignalManager` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
-- `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
-- `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specified signal. Similar behavior as EventEmitter's `on` method.
-- `offSignal(signalName: string, listener: SignalListener)` - Removes a listener for the specified signal. Similar behavior as EventEmitter's `off` method.
+
+-   `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
+-   `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specified signal. Similar behavior as EventEmitter's `on` method.
+-   `offSignal(signalName: string, listener: SignalListener)` - Removes a listener for the specified signal. Similar behavior as EventEmitter's `off` method.
 
 ### Common patterns
 
@@ -95,6 +96,7 @@ container.on("connected", () => {
     this.signalManager.submitSignal("currentlySelectedObjectRequest");
 });
 ```
+
 ```typescript
 this.signalManager.onSignal("colorRequest", (clientId, local, payload) => {
     /*...*/
@@ -107,13 +109,15 @@ this.signalManager.onSignal("currentlySelectedObject", (clientId, local, payload
 });
 ```
 
-Each of the _N_ connected clients would then respond with 3 signals as well (3*N* signals total).  To bring this down to _N_ signals total, we can group these requests into a single request that captures all the required information:
+Each of the _N_ connected clients would then respond with 3 signals as well (3 _N_signals total).  To bring this down to
+_N_ signals total, we can group these requests into a single request that captures all the required information:
 
 ```typescript
 container.on("connected", () => {
     this.signalManager.submitSignal("connectRequest");
 });
 ```
+
 ```typescript
 this.signalManager.onSignal("connectRequest", (clientId, local, payload) => {
     /*...*/
@@ -132,6 +136,7 @@ The payload sent back in response to the `connectRequest` should include all the
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 

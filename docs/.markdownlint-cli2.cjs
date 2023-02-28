@@ -99,11 +99,10 @@ module.exports = {
             "style": "atx",
         },
         "line-length": false, // MD013
-        // "line-length": { // MD013
-        //     "code_blocks": true,
-        //     "line_length": 120,
-        //     "tables": false,
-        // },
+        "list-marker-space": { // MD030
+          "ul_multi": 3,
+          "ul_single": 3
+        },
         "no-empty-links": true, // MD042
         "no-hard-tabs": { // MD010
           code_blocks: false,
@@ -132,7 +131,10 @@ module.exports = {
                 "tinylicious.md",
                 "tinylicious-client",
             ]
-        }
+        },
+        "ul-indent": { // MD007
+          "indent": 4
+        },
     },
     "globs": [
         "content/**/*.md",

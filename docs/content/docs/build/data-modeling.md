@@ -25,8 +25,8 @@ The example below creates a new container with a `SharedMap` and a `SharedCell` 
 
 About this code note:
 
-- `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
+-   `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
+-   It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript
 const schema = {
@@ -139,8 +139,8 @@ For more information about handles see [Handles]({{< relref "handles.md" >}}).
 
 Dynamic objects are more difficult to work with than initial objects, but are especially valuable in two scenarios:
 
-- When the app has a very large data set. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded.
-- When the data needed by the app will vary depending on choices made by the user. Dynamic objects are also not strictly defined in the container schema. This enables your app to create containers with flexible, user-generated schemas.
+-   When the app has a very large data set. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded.
+-   When the data needed by the app will vary depending on choices made by the user. Dynamic objects are also not strictly defined in the container schema. This enables your app to create containers with flexible, user-generated schemas.
 
 An example where this is useful is building a collaborative storyboarding application. In this scenario, you can have a large number of individual boards that make up the storyboard. By using a dynamic shared object for each board your code can load the boards on demand as the user accesses them, instead of having to load them all in memory at once.
 
@@ -154,6 +154,7 @@ An example where this is useful is building a collaborative storyboarding applic
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 

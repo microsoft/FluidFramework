@@ -118,8 +118,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 Now that we've defined how to get our Fluid data, we need to tell React to call `getFluidData` when the application starts up and then store the result in state. So add the following code at the top of the `App()` function (above the `return` statement). Note about this this code:
 
-- By setting an empty dependency array at the end of the useEffect, we ensure that this function only gets called once.
-- Since `setFluidSharedObjects` is a state-changing method, it will cause the React `App` component to immediately rerender.
+-   By setting an empty dependency array at the end of the useEffect, we ensure that this function only gets called once.
+-   Since `setFluidSharedObjects` is a state-changing method, it will cause the React `App` component to immediately rerender.
 
 ```js
 const [fluidSharedObjects, setFluidSharedObjects] = React.useState();
@@ -138,8 +138,8 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
 1. Below the preceding `useEffect` add the following code. Note about this code:
 
-    - The `fluidSharedObjects` state is undefined only when the `App` component is rendering for the first time.
-    - Passing `fluidSharedObjects` in the second parameter of the `useEffect` hook ensures that the hook will not pointlessly run if `fluidSharedObjects` has not changed since the last time the `App` component rendered.
+    -   The `fluidSharedObjects` state is undefined only when the `App` component is rendering for the first time.
+    -   Passing `fluidSharedObjects` in the second parameter of the `useEffect` hook ensures that the hook will not pointlessly run if `fluidSharedObjects` has not changed since the last time the `App` component rendered.
 
     ```js
     const [localTimestamp, setLocalTimestamp] = React.useState();
@@ -159,8 +159,8 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
 1. Replace `TODO 4` with the following code. Note about this code:
 
-    - The Fluid `SharedObject.get` method returns the data of the `SharedObject` (in this case the `SharedMap` object), which is roughly the `SharedObject` without any of its methods. So the `setLocalTimestamp` function is setting the `localTimestamp` state to a copy of the data of the `SharedMap` object. (The key "time" that is passed to `SharedObject.get` is created in a later step. It will have been set by the time this code runs the first time.)
-    - `updateLocalTimestamp` is called immediately to ensure that `localTimestamp` is initialized with the current shared timestamp value.
+    -   The Fluid `SharedObject.get` method returns the data of the `SharedObject` (in this case the `SharedMap` object), which is roughly the `SharedObject` without any of its methods. So the `setLocalTimestamp` function is setting the `localTimestamp` state to a copy of the data of the `SharedMap` object. (The key "time" that is passed to `SharedObject.get` is created in a later step. It will have been set by the time this code runs the first time.)
+    -   `updateLocalTimestamp` is called immediately to ensure that `localTimestamp` is initialized with the current shared timestamp value.
 
     ```js
     const { sharedTimestamp } = fluidSharedObjects;
@@ -185,9 +185,9 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
 Below the `useEffect` hook, replace the `return ();` line with the following code. Note about this code:
 
-- If the `localTimestamp` state has not been initialized, a blank screen is rendered.
-- The `sharedTimestamp.set` method sets the *key* of the `sharedTimestamp` object to "time" and the *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`. The `App` component rerenders and the `<span>` is updated with the latest timestamp.
-- All other clients update too because the Fluid server propagates the change to the `sharedTimestamp` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
+-   If the `localTimestamp` state has not been initialized, a blank screen is rendered.
+-   The `sharedTimestamp.set` method sets the *key* of the `sharedTimestamp` object to "time" and the *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`. The `App` component rerenders and the `<span>` is updated with the latest timestamp.
+-   All other clients update too because the Fluid server propagates the change to the `sharedTimestamp` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
 
 ```js
 if (localTimestamp) {
@@ -223,10 +223,10 @@ Paste the URL of the application into the address bar of another tab or even ano
 
 ## Next steps
 
-- Try extending the demo with more key/value pairs and a more complex UI.
-- Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
-- Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
-- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-starter-template).
+-   Try extending the demo with more key/value pairs and a more complex UI.
+-   Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
+-   Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
+-   For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-starter-template).
 
 {{< callout tip >}}
 
@@ -244,6 +244,7 @@ When you make changes to the code the project will automatically rebuild and the
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 

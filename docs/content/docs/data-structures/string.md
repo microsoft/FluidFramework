@@ -94,6 +94,7 @@ efficient spatial querying of the nearest Marker to a given position. -->
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 

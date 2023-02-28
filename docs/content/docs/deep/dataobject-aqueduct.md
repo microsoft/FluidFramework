@@ -183,7 +183,7 @@ developer to:
 
 -   Define the registry of data objects that can be created
 -   Declare the default data object
--   Use [provider entries](#provider-entries-development)
+-   Use provider entries
 -   Declare Container level [Request Handlers](#container-level-request-handlers)
 
 ## Container object example
@@ -213,7 +213,6 @@ makes a request to the Container for `{url:"color"}` will intercept and return a
 
 We use custom handlers to build the Container Services pattern.
 
-<!-- Links -->
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -228,6 +227,7 @@ We use custom handlers to build the Container Services pattern.
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 

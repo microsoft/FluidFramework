@@ -28,7 +28,7 @@ For that reason, all of the examples in this README use `SharedString`. However,
 
 For the remainder of this document, the term _sequence_ will refer to this base class.
 
-*Item*s are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
+_Items_ are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
 but regardless of the type of data stored in the sequence, every item in a sequence is at a specific _position_ starting
 at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
 editors make modifications to the sequence.
@@ -378,17 +378,6 @@ comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
 comments.removeIntervalById(comment.getIntervalId());
 ```
 
-## SharedString
-
-SharedString is a specialized data structure for handling collaborative text. It is based on a more general
-Sequence data structure but has additional features that make working with text easier.
-
-In addition to text, a SharedString can also contain markers.
-Markers can be used to store metadata at positions within the text, like a reference to an image or Fluid object that should be rendered with the text.
-
-Both markers and text are stored as segments in the SharedString.
-Text segments will be split and merged when modifications are made to the SharedString and will therefore have variable length
-matching the length of the text content they contain.
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

@@ -120,6 +120,7 @@ In some cases, the user data could be generated locally or fetched from an exter
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 

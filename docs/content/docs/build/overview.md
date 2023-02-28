@@ -13,9 +13,9 @@ This article assumes that you are familiar with the concept of *operation* in th
 
 There are three primary concepts to understand when building an application with Fluid.
 
-- Service
-- Container
-- Shared objects
+-   Service
+-   Container
+-   Shared objects
 
 ### Service
 
@@ -23,8 +23,8 @@ Fluid clients require a centralized service that all connected clients use to se
 
 Each service-specific library adheres to a common API structure and has the primary goal of creating and retrieving container objects. The common structure enables you to switch from one service to another with minimal code changes. There are two services currently available:
 
-- The [Tinylicious service]({{< relref "Tinylicious" >}}) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
-- [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) runs in Azure and enables high-scale production scenarios.
+-   The [Tinylicious service]({{< relref "Tinylicious" >}}) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
+-   [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) runs in Azure and enables high-scale production scenarios.
 
 See [Service-specific client libraries](#service-specific-client-libraries) for more details.
 
@@ -36,13 +36,13 @@ For more about containers see [Containers](./containers.md).
 
 ### Shared objects
 
-A *shared object* is any object type that supports collaboration (simultaneous editing). 
+A *shared object* is any object type that supports collaboration (simultaneous editing).
 The fundamental type of shared object that is provided by Fluid Framework is called a **Distributed Data Structure (DDS)**. A DDS holds shared data that the collaborators are working with.
 
-Fluid Framework supports a second type of shared object called **Data Object**. 
-*This type of object is in beta and should not be used in a production application.* 
-A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case. 
-DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects. 
+Fluid Framework supports a second type of shared object called **Data Object**.
+*This type of object is in beta and should not be used in a production application.*
+A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case.
+DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects.
 Data Objects are used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data.
 
 For more information about these types and the differences between them, see [Data modeling]({{< relref "data-modeling.md" >}}) and [Introducing distributed data structures]({{< relref "dds.md" >}}).
@@ -63,8 +63,8 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 For specifics about each service-specific client implementation see their corresponding documentation.
 
-- The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
-- The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
+-   The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
+-   The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
 
 For more information see [Packages]({{< relref "packages.md" >}}).
 
@@ -78,6 +78,7 @@ For more information see [Packages]({{< relref "packages.md" >}}).
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 
