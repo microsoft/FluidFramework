@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
-import { BatchManager } from "./batchManager";
+import { BatchManager, estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
 import { OpSplitter } from "./opSplitter";
@@ -201,6 +201,7 @@ export class Outbox {
 			limit: this.params.config.maxBatchSizeInBytes,
 			chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
 			compressionOptions: JSON.stringify(this.params.config.compressionOptions),
+			socketSize: estimateSocketSize(batch),
 		});
 	}
 
@@ -216,6 +217,16 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		if (length === 0 || !this.params.shouldSend()) {
 			return;
+		}
+
+		const socketSize = estimateSocketSize(batch);
+		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
+			this.mc.logger.sendPerformanceEvent({
+				eventName: "LargeBatch",
+				length: batch.content.length,
+				sizeInBytes: batch.contentSizeInBytes,
+				socketSize,
+			});
 		}
 
 		if (this.params.containerContext.submitBatchFn === undefined) {
