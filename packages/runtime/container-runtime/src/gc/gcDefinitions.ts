@@ -32,6 +32,8 @@ export const runGCKey = "Fluid.GarbageCollection.RunGC";
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
+// Feature gate key to expire a session after a set period of time.
+export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 // Feature gate key to disable the tombstone feature, i.e., tombstone information is not read / written into summary.

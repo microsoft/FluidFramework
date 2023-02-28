@@ -19,6 +19,7 @@ import {
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runGCKey,
+	runSessionExpiryKey,
 	runSweepKey,
 } from "./gcDefinitions";
 import { getGCVersion } from "./gcHelpers";
@@ -82,8 +83,8 @@ export function generateGCConfigs(
 		// The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
 		sweepEnabled = createParams.gcOptions.sweepAllowed === true;
 
-		// Set the Session Expiry only if GC is enabled.
-		if (gcEnabled) {
+		// Set the Session Expiry if GC is enabled and session expiry flag isn't explicitly set to false.
+		if (gcEnabled && mc.config.getBoolean(runSessionExpiryKey) !== false) {
 			sessionExpiryTimeoutMs =
 				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
