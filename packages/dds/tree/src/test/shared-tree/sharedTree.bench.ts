@@ -137,7 +137,7 @@ describe("SharedTree benchmarks", () => {
 				benchmark({
 					type: benchmarkType,
 					title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): reads with ${numberOfNodes} nodes`,
-					before: async () => {
+					before: () => {
 						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Deep, dataType);
 					},
 					benchmarkFn: () => {
@@ -150,7 +150,7 @@ describe("SharedTree benchmarks", () => {
 				benchmark({
 					type: benchmarkType,
 					title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): reads with ${numberOfNodes} nodes`,
-					before: async () => {
+					before: () => {
 						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Wide, dataType);
 					},
 					benchmarkFn: () => {
@@ -185,7 +185,7 @@ describe("SharedTree benchmarks", () => {
 					benchmark({
 						type: benchmarkType,
 						title: `Update value at leaf of ${numberOfNodes} deep tree`,
-						before: async () => {
+						before: () => {
 							tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Deep, dataType);
 							leafNode = getLeafNodeFromJSObject(tree);
 						},
@@ -199,7 +199,7 @@ describe("SharedTree benchmarks", () => {
 					benchmark({
 						type: benchmarkType,
 						title: `Update value at leaf of ${numberOfNodes} Wide tree`,
-						before: async () => {
+						before: () => {
 							tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Wide, dataType);
 						},
 						benchmarkFn: () => {
