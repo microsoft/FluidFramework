@@ -19,7 +19,7 @@ export interface ReferenceCounted {
 }
 
 /**
- * Base class to assist with implementing ReferenceCounted
+ * Base class to assist with implementing ReferenceCounted.
  */
 export abstract class ReferenceCountedBase implements ReferenceCounted {
 	protected constructor(private refCount: number = 1) {}
