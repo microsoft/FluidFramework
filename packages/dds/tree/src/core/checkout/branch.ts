@@ -11,6 +11,9 @@ import { findAncestor, GraphCommit, mintCommit, mintRevisionTag, Rebaser } from 
  * The events emitted by a `SharedTreeBranch`
  */
 export interface SharedTreeBranchEvents<TChange> {
+	/**
+	 * Fired any time the branch has a new change applied to it
+	 */
 	onChange(change: TChange): void;
 }
 
@@ -18,7 +21,7 @@ export interface SharedTreeBranchEvents<TChange> {
  * A branch of changes that can be applied to a SharedTree.
  */
 export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEvents<TChange>> {
-	private branch: GraphCommit<TChange>;
+	private head: GraphCommit<TChange>;
 	private readonly forks = new Set<SharedTreeBranch<TChange>>();
 	private disposed = false;
 
@@ -35,23 +38,24 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 		private readonly rebaser: Rebaser<TChange>,
 	) {
 		super();
-		this.branch = getBaseBranch();
+		this.head = getBaseBranch();
 	}
 
 	/**
 	 * @returns the commit at the head of this branch.
 	 */
 	public getHead(): GraphCommit<TChange> {
-		return this.branch;
+		return this.head;
 	}
 
 	/**
 	 * Apply the given change to this branch.
 	 * Emits an `onChange` event.
+	 * @returns the change to this branch (i.e. `change`)
 	 */
 	public applyChange(change: TChange): TChange {
 		this.assertNotDisposed();
-		this.branch = mintCommit(this.branch, {
+		this.head = mintCommit(this.head, {
 			revision: mintRevisionTag(),
 			sessionId: this.sessionId,
 			change,
@@ -67,15 +71,16 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	public fork(): SharedTreeBranch<TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
-			() => this.branch,
+			() => this.head,
 			(forked) => {
+				// In this function, `this` is the base and `forked` is the fork being merged in
 				const changes: GraphCommit<TChange>[] = [];
+				const baseBranch = forked.getBaseBranch();
 				assert(
-					findAncestor([forked.branch, changes], (c) => c === forked.getBaseBranch()) !==
-						undefined,
+					findAncestor([forked.head, changes], (c) => c === baseBranch) !== undefined,
 					"Expected merging checkout branches to be related",
 				);
-				this.branch = forked.branch;
+				this.head = forked.head;
 				assert(this.forks.delete(forked), "Invalid checkout merge");
 				const change = this.rebaser.changeRebaser.compose(changes);
 				this.emit("onChange", change);
@@ -94,15 +99,14 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	 */
 	public pull(): TChange {
 		this.assertNotDisposed();
-
 		const baseBranch = this.getBaseBranch();
-		if (this.branch === baseBranch) {
-			// Not necessary for correctness, but skips needless event firing below
+		if (this.head === baseBranch) {
+			// Not necessary for correctness, but skips needless rebase and event firing below
 			return this.rebaser.changeRebaser.compose([]);
 		}
 
-		const [newBranch, change] = this.rebaser.rebaseBranch(this.branch, baseBranch);
-		this.branch = newBranch;
+		const [newBranch, change] = this.rebaser.rebaseBranch(this.head, baseBranch);
+		this.head = newBranch;
 		this.emit("onChange", change);
 		return change;
 	}

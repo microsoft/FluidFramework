@@ -211,6 +211,11 @@ const FieldKinds: FieldKinds = FieldKindsOriginal;
  */
 export { FieldKinds };
 
-export { ISharedTree, SharedTreeFactory } from "./shared-tree";
+export {
+	ISharedTree,
+	ISharedTreeCheckout,
+	ISharedTreeCheckoutFork,
+	SharedTreeFactory,
+} from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";

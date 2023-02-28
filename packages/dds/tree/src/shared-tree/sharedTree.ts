@@ -50,6 +50,7 @@ import {
 /**
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
+ * @alpha
  */
 export interface ISharedTreeCheckout extends AnchorLocator {
 	/**
@@ -70,7 +71,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	set root(data: ContextuallyTypedNodeData | undefined);
 
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTree.root}.
+	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeCheckout.root}.
 	 *
 	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
 	 */
@@ -123,6 +124,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 
 /**
  * An `ISharedTreeCheckout` which has been forked from a pre-existing checkout.
+ * @alpha
  */
 export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
 	/**
@@ -316,7 +318,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		this.submitEdit = (edit) => this.branch.applyChange(edit);
 	}
 
-	locate(anchor: Anchor): UpPath | undefined {
+	public locate(anchor: Anchor): UpPath | undefined {
 		return this.forest.anchors.locate(anchor);
 	}
 
