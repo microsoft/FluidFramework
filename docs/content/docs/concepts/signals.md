@@ -1,5 +1,5 @@
 ---
-title: Signals and Signaler
+title: Signals and SignalManager
 menuPosition: 6
 aliases:
   - "/docs/advanced/signals/"
@@ -11,6 +11,7 @@ When using DDSes, data is sequenced and stored within the Fluid container to ach
 Signals provide an appropriate channel for transmitting transient data, since the information that is communicated via signals is not retained in the container. Signals are not guaranteed to be ordered on delivery relative to other signals and ops, but they still provide a useful communication channel for impermanent and short-lived data.
 
 ## Why are signals useful?
+
 Signals provide a communication channel for sharing short-lived information that does not need to be persisted in the Fluid container.
 
 By sending signals, you avoid the storage and sequencing of data that will not be relevant or useful in the long-term.
@@ -18,37 +19,49 @@ By sending signals, you avoid the storage and sequencing of data that will not b
 Signals are the most appropriate data channel in many user presence scenarios, where each user has the responsibility of sharing their current presence state to other connected users. In these scenarios, current presence data is short-lived, past presence state is irrelevant, and the shared data is not persisted on disconnect.
 
 ## How can I use signals in Fluid?
-The [Signaler](https://github.com/microsoft/FluidFramework/tree/main/experimental/framework/data-objects/src/signaler) DataObject can be used to send communications via signals in a Fluid application. `Signaler` allows clients to send signals to other connected clients and add/remove listeners for specified signal types.
+
+The [SignalManager](https://github.com/microsoft/FluidFramework/tree/lts/experimental/framework/data-objects/src/signalManager) DataObject can be used to send communications via signals in a Fluid application. `SignalManager` allows clients to send signals to other connected clients and add/remove listeners for specified signal types.
+
+{{< callout important >}}
+
+The `SignalManager` will be renamed to `Signaler` in an upcoming release.
+
+{{< /callout >}}
+
 
 ### Creation
-Just like with DDSes, you can include `Signaler` as a shared object you would like to load in your [FluidContainer](https://fluidframework.com/docs/build/containers/) schema.
 
-Here is a look at how you would go about loading `Signaler` as part of the initial objects of the container:
+Just like with DDSes, you can include `SignalManager` as a shared object you would like to load in your [FluidContainer][] schema.
+
+Here is a look at how you would go about loading `SignalManager` as part of the initial objects of the container:
 
 ```typescript
 const containerSchema: ContainerSchema = {
     initialObjects: {
-        signaler: Signaler,
+        signalManager: SignalManager,
     },
 };
 
 const { container, services } = await client.createContainer(containerSchema);
 
-const signaler = container.initialObjects.signaler as Signaler;
+const signalManager = container.initialObjects.signalManager as SignalManager;
 ```
 
-`signaler` can then be directly used in your Fluid application!
+`signalManager` can then be directly used in your Fluid application!
 
 For more information on using `ContainerSchema` to create objects please see [Data modeling](https://fluidframework.com/docs/build/data-modeling/).
 
 ### API
-`Signaler` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
+
+`SignalManager` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
 - `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
 - `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specified signal. Similar behavior as EventEmitter's `on` method.
 - `offSignal(signalName: string, listener: SignalListener)` - Removes a listener for the specified signal. Similar behavior as EventEmitter's `off` method.
 
-### Common Patterns
-#### Signal Request
+### Common patterns
+
+#### Signal request
+
 When a client joins a collaboration session, they may need to receive information about the current state immediately after connecting the container.  To support this, they can request a specific signal be sent to them from other connected clients. For example, in the [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) example we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
 
 ```typescript
@@ -57,37 +70,39 @@ private static readonly focusRequestType = "focusRequest";
 
 ```typescript
 container.on("connected", () => {
-    this.signaler.submitSignal(FocusTracker.focusRequestType);
+    this.signalManager.submitSignal(FocusTracker.focusRequestType);
 });
 ```
 
 The connected clients are listening to this focus request signal, and they respond with their current focus state:
 
 ```typescript
-this.signaler.onSignal(FocusTracker.focusRequestType, () => {
+this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
     this.sendFocusSignal(document.hasFocus());
 });
 ```
+
 This pattern adds cost however, as it forces every connected client to generate a signal.  Consider whether your scenario can be satisfied by receiving the signals naturally over time instead of requesting the information up-front. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) is an example where a newly connecting client does not request current state. Since mouse movements are frequent, the newly connecting client can instead simply wait to receive other users' mouse positions on their next mousemove event.
-#### Grouping Signal Types
+
+#### Grouping signal types
 
 Rather than submitting multiple signals in response to an event, it is more cost-effective to submit one combined signal for that event and listen to that single signal instead. For example, imagine an application using the `Signal Request` pattern where a newly connected client requests the color, focus state, and currently selected object of every other connected client on the page. If you submit a signal for each type of data requested, it would look something like this:
 
 ```typescript
 container.on("connected", () => {
-    this.signaler.submitSignal("colorRequest");
-    this.signaler.submitSignal("focusRequest");
-    this.signaler.submitSignal("currentlySelectedObjectRequest");
+    this.signalManager.submitSignal("colorRequest");
+    this.signalManager.submitSignal("focusRequest");
+    this.signalManager.submitSignal("currentlySelectedObjectRequest");
 });
 ```
 ```typescript
-this.signaler.onSignal("colorRequest", (clientId, local, payload) => {
+this.signalManager.onSignal("colorRequest", (clientId, local, payload) => {
     /*...*/
 });
-this.signaler.onSignal("focusRequest", (clientId, local, payload) => {
+this.signalManager.onSignal("focusRequest", (clientId, local, payload) => {
     /*...*/
 });
-this.signaler.onSignal("currentlySelectedObject", (clientId, local, payload) => {
+this.signalManager.onSignal("currentlySelectedObject", (clientId, local, payload) => {
     /*...*/
 });
 ```
@@ -96,13 +111,47 @@ Each of the _N_ connected clients would then respond with 3 signals as well (3*N
 
 ```typescript
 container.on("connected", () => {
-    this.signaler.submitSignal("connectRequest");
+    this.signalManager.submitSignal("connectRequest");
 });
 ```
 ```typescript
-this.signaler.onSignal("connectRequest", (clientId, local, payload) => {
+this.signalManager.onSignal("connectRequest", (clientId, local, payload) => {
     /*...*/
 });
 ```
 
 The payload sent back in response to the `connectRequest` should include all the relevant information the newly connected user needs.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Distributed Data Structures -->
+
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
+
+<!-- API links -->
+
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+
+[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
