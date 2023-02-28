@@ -18,17 +18,25 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
+	defaultHash,
 	GitManager,
 	ISummaryUploadManager,
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
-import { CreateDocumentInStorage } from "./localDocumentServiceFactory";
+import {
+	ensureFluidResolvedUrl,
+	getDocAttributesFromProtocolSummary,
+	getQuorumValuesFromProtocolSummary,
+} from "@fluidframework/driver-utils";
+// import { CreateDocumentInStorage } from "./localDocumentServiceFactory";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 export class LocalDocumentStorageService implements IDocumentStorageService {
 	// The values of this cache is useless. We only need the keys. So we are always putting
 	// empty strings as values.
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
+	private readonly tenantId: string;
 
 	public get repositoryUrl(): string {
 		return "";
@@ -38,7 +46,16 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		private readonly id: string,
 		private readonly manager: GitManager,
 		public readonly policies: IDocumentStorageServicePolicies,
+		private readonly localDeltaConnectionServer,
+		private readonly resolvedUrl,
+		private readonly delayedDocumentCreation: boolean,
 	) {
+		ensureFluidResolvedUrl(resolvedUrl);
+		const pathName = new URL(resolvedUrl.url).pathname;
+		const pathArr = pathName.split("/");
+		this.tenantId = pathArr[pathArr.length - 2];
+		console.log(this.tenantId);
+		// const id = pathArr[pathArr.length - 1];
 		this.summaryTreeUploadManager = new SummaryTreeUploadManager(
 			manager,
 			this.blobsShaCache,
@@ -83,14 +100,48 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		const createDocument = CreateDocumentInStorage.getInstance();
-		if (createDocument) {
-			await createDocument.createDocument(summary);
+		// const createDocument = CreateDocumentInStorage.getInstance();
+		// if (createDocument) {
+		// 	await createDocument.createDocument(summary);
+		// }
+		if (this.delayedDocumentCreation) {
+			await this.createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 		}
 		return this.summaryTreeUploadManager.writeSummaryTree(
 			summary,
 			context.ackHandle ?? "",
 			"channel",
+		);
+	}
+
+	private async createDocument(localDeltaConnectionServer, resolvedUrl, summary: ISummaryTree) {
+		ensureFluidResolvedUrl(resolvedUrl);
+		const pathName = new URL(resolvedUrl.url).pathname;
+		const pathArr = pathName.split("/");
+		const tenantId = pathArr[pathArr.length - 2];
+		const id = pathArr[pathArr.length - 1];
+		const documentStorage = (localDeltaConnectionServer as LocalDeltaConnectionServer)
+			.documentStorage;
+		const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
+		const appSummary = summary.tree[".app"] as ISummaryTree;
+		if (!(protocolSummary && appSummary)) {
+			throw new Error("Protocol and App Summary required in the full summary");
+		}
+		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
+		const sequenceNumber = documentAttributes.sequenceNumber;
+		await documentStorage.createDocument(
+			tenantId,
+			id,
+			appSummary,
+			sequenceNumber,
+			documentAttributes.term ?? 1,
+			defaultHash,
+			resolvedUrl.endpoints.ordererUrl ?? "",
+			resolvedUrl.endpoints.storageUrl ?? "",
+			resolvedUrl.endpoints.deltaStorageUrl ?? "",
+			quorumValues,
+			false /* enableDiscovery */,
 		);
 	}
 
