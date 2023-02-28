@@ -625,8 +625,6 @@ export class PartialSequenceLengths {
 			"overlapping local obliterate and remove",
 		);
 
-		// checks whether a remove happened, and if it did occur whether it occurred
-		// before any moves
 		const removeHappenedFirst =
 			removalInfo &&
 			(!moveInfo ||
@@ -642,7 +640,6 @@ export class PartialSequenceLengths {
 			clientId = removalInfo.removedClientIds[0];
 			const hasOverlap = removalInfo.removedClientIds.length > 1;
 			removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
-			// move happened first (or remove not at all)
 		} else if (moveInfo) {
 			// The client who performed the move is always stored
 			// in the first position of moveInfo.
@@ -664,11 +661,9 @@ export class PartialSequenceLengths {
 			const hasOverlap = moveInfo.movedClientIds.length > 1;
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
 		} else if (segment.wasObliteratedOnInsert) {
-			// if segment was obliterated before it was inserted, the len will
-			// always be 0
+			// if this segment was obliterated on insert, its length is only
+			// visible to the client that inserted it
 			segmentLen = 0;
-			// reusing an existing value, this is actually just helping to
-			// differentiate the clientseqnumbers from the flat view
 			remoteObliteratedLen = segment.cachedLength;
 		}
 
@@ -737,7 +732,7 @@ export class PartialSequenceLengths {
 			moveClientOverlap,
 		);
 
-		// todo: hmmm
+		// todo: obliterate doesn't have great support for reconnect at the moment
 		const { unsequencedRecords } = combinedPartialLengths;
 		if (unsequencedRecords && removeClientOverlap && segment.localRemovedSeq !== undefined) {
 			const localSeq = segment.localRemovedSeq;
@@ -910,7 +905,6 @@ export class PartialSequenceLengths {
 						moveIsLocal ||
 						(!removalIsLocal && moveInfo.movedSeq > removalInfo.removedSeq));
 
-				// todo: simplify cases(?)
 				// eslint-disable-next-line unicorn/prefer-switch
 				if (seq === segment.seq) {
 					if (
@@ -1208,7 +1202,7 @@ function verifyPartialLengths(
 				0x058 /* "Both overlapRemoveClients and clientPartials are set!" */,
 			);
 
-			// Each overlap client count as one, but the first remove to sequence was already counted.
+			// Each overlap client counts as one, but the first remove to sequence was already counted.
 			// (this aligns with the logic to omit the removing client in `addClientSeqNumberFromPartial`)
 			count += partialLength.overlapRemoveClients.size() - 1;
 		}
@@ -1217,7 +1211,7 @@ function verifyPartialLengths(
 			// Only the flat partialLengths can have overlapObliterateClients, the per client view shouldn't
 			assert(!clientPartials, "Both overlapObliterateClients and clientPartials are set!");
 
-			// Each overlap client count as one, but the first move to sequence was already counted.
+			// Each overlap client counts as one, but the first move to sequence was already counted.
 			// (this aligns with the logic to omit the moving client in `addClientSeqNumberFromPartial`)
 			count += partialLength.overlapObliterateClients.size() - 1;
 		}

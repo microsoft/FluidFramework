@@ -641,6 +641,12 @@ export class MergeTree {
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
 	public constructor(public options?: IMergeTreeOptions) {
+		if (options?.mergeTreeEnableObliterate && !options.mergeTreeUseNewLengthCalculations) {
+			throw new Error(
+				"`mergeTreeUseNewLengthCalculations` must be enabled to make use of obliterate",
+			);
+		}
+
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
 		this.attributionPolicy = options?.attribution?.policyFactory?.();
@@ -705,7 +711,6 @@ export class MergeTree {
 		if (localSeq === undefined) {
 			if (
 				(removalInfo || moveInfo) &&
-				// todo: we require this to be true for obliterate
 				this.options?.mergeTreeUseNewLengthCalculations === true
 			) {
 				return 0;
