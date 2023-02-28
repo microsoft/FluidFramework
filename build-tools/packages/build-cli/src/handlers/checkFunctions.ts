@@ -395,6 +395,7 @@ export const checkPolicy: StateHandlerFunction = async (
 	const { context, shouldCheckPolicy } = data;
 	assert(context !== undefined, "Context is undefined.");
 
+	log.info(`Checking policy`);
 	if (shouldCheckPolicy === true) {
 		if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
 			log.warning(
