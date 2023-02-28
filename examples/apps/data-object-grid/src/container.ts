@@ -17,11 +17,11 @@ import { DataObjectGrid, IDataObjectGrid } from "./dataObjectGrid";
  * complex models.
  */
 export interface IDataObjectGridAppModel {
-    readonly dataObjectGrid: IDataObjectGrid;
+	readonly dataObjectGrid: IDataObjectGrid;
 }
 
 class DataObjectGridAppModel implements IDataObjectGridAppModel {
-    public constructor(public readonly dataObjectGrid: IDataObjectGrid) { }
+	public constructor(public readonly dataObjectGrid: IDataObjectGrid) {}
 }
 
 const dataObjectGridId = "data-object-grid";
@@ -29,32 +29,29 @@ const dataObjectGridId = "data-object-grid";
 /**
  * The runtime factory for our Fluid container.
  */
-export class DataObjectGridContainerRuntimeFactory
-    extends ModelContainerRuntimeFactory<IDataObjectGridAppModel> {
-    constructor() {
-        super(
-            new Map([
-                DataObjectGrid.getFactory().registryEntry,
-            ]), // registryEntries
-        );
-    }
+export class DataObjectGridContainerRuntimeFactory extends ModelContainerRuntimeFactory<IDataObjectGridAppModel> {
+	constructor() {
+		super(
+			new Map([DataObjectGrid.getFactory().registryEntry]), // registryEntries
+		);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-     */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const dataObjectGrid = await runtime.createDataStore(DataObjectGrid.getFactory().type);
-        await dataObjectGrid.trySetAlias(dataObjectGridId);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+	 */
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+		const dataObjectGrid = await runtime.createDataStore(DataObjectGrid.getFactory().type);
+		await dataObjectGrid.trySetAlias(dataObjectGridId);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-     */
-    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const dataObjectGrid = await requestFluidObject<IDataObjectGrid>(
-            await runtime.getRootDataStore(dataObjectGridId),
-            "",
-        );
-        return new DataObjectGridAppModel(dataObjectGrid);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+	 */
+	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		const dataObjectGrid = await requestFluidObject<IDataObjectGrid>(
+			await runtime.getRootDataStore(dataObjectGridId),
+			"",
+		);
+		return new DataObjectGridAppModel(dataObjectGrid);
+	}
 }

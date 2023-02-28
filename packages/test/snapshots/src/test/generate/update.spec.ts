@@ -5,10 +5,10 @@
 
 import { Mode, processContent } from "../../replayMultipleFiles";
 
-describe("Update snapshots", function() {
-    this.timeout(300000);
+describe("Update snapshots", function () {
+	this.timeout(300000);
 
-    it("Update snapshots", async () => {
-        await processContent(Mode.UpdateSnapshots);
-    });
+	it("Update snapshots", async () => {
+		await processContent(Mode.UpdateSnapshots);
+	});
 });

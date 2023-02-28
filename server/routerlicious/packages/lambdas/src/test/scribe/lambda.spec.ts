@@ -7,7 +7,7 @@
 import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
 import { GitManager } from "@fluidframework/server-services-client";
 import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
-import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
+import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestDeltaManager, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
 import { ScribeLambda } from "../../scribe/lambda";
@@ -63,22 +63,24 @@ describe("Routerlicious", () => {
                 testKafka = new TestKafka();
                 testProducer = testKafka.createProducer();
                 testTenantManager = new TestTenantManager();
-                const tenant = await testTenantManager.getTenant(testTenantId, testDocumentId);
-                testGitManager = tenant.gitManager as GitManager;
+                testGitManager = (await testTenantManager.getTenantGitManager(testTenantId, testDocumentId)) as GitManager;
                 const createTreeEntry: ICreateTreeEntry[] = [];
                 const requestBody: ICreateTreeParams = {
                     tree: createTreeEntry,
                 };
                 tree = await testGitManager.createGitTree(requestBody);
                 testGitManager.addTree(tree);
+                const testDeltaManager = new TestDeltaManager();
 
                 let factory = new ScribeLambdaFactory(
                     testMongoManager,
                     testDocumentCollection,
                     testMessageCollection,
                     testProducer,
+                    testDeltaManager,
                     testTenantManager,
                     DefaultServiceConfiguration,
+                    false,
                     false);
 
                 testContext = new TestContext();

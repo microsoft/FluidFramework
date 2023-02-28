@@ -11,9 +11,9 @@ export type IExpiryAction = "expire" | "destroy";
  * The expiry information retrieved by the `getExpiry` method.
  */
 export interface IExpiryInfo {
-  state: IExpiryState;
-  action?: IExpiryAction;
-  when?: number;
+	state: IExpiryState;
+	action?: IExpiryAction;
+	when?: number;
 }
 
 export type IRepoExpiryGetter = (repoUrn: string) => Promise<IExpiryInfo>;

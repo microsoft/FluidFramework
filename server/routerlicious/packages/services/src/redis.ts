@@ -31,6 +31,15 @@ export class RedisCache implements ICache {
             Lumberjack.error("Error with Redis", undefined, err);
         });
     }
+    public async delete(key: string): Promise<boolean> {
+        try {
+            await this.client.del(this.getKey(key));
+            return true;
+        } catch (error) {
+            Lumberjack.error(`Error deleting from cache.`, undefined, error);
+            return false;
+        }
+    }
 
     public async get(key: string): Promise<string> {
         return this.client.get(this.getKey(key));
@@ -44,6 +53,24 @@ export class RedisCache implements ICache {
             expireAfterSeconds ?? this.expireAfterSeconds);
         if (result !== "OK") {
             return Promise.reject(result);
+        }
+    }
+
+    public async incr(key: string): Promise<number> {
+        try {
+            return this.client.incr(key);
+        } catch(error) {
+            Lumberjack.error(`Error while incrementing counter for ${key} in redis.`, undefined, error);
+            return Promise.reject(error);
+        }
+    }
+
+    public async decr(key: string): Promise<number> {
+        try {
+            return this.client.decr(key);
+        } catch(error) {
+            Lumberjack.error(`Error while decrementing counter for ${key} in redis.`, undefined, error);
+            return Promise.reject(error);
         }
     }
 

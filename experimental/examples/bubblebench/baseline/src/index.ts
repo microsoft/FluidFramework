@@ -10,11 +10,15 @@ import React from "react";
 import { Bubblebench, BubblebenchInstantiationFactory } from "./main";
 export { Bubblebench, BubblebenchInstantiationFactory } from "./main";
 
-const bubblebenchViewCallback = (model: Bubblebench): React.ReactElement => React.createElement(AppView, { app: model.clientManager });
+const bubblebenchViewCallback = (model: Bubblebench): React.ReactElement =>
+	React.createElement(AppView, { app: model.clientManager });
 
 /**
  * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
  * as our model (using the factory we provide), and the view callback we provide will pair that model with an
  * appropriate view.
  */
-export const fluidExport = new ContainerViewRuntimeFactory(BubblebenchInstantiationFactory, bubblebenchViewCallback);
+export const fluidExport = new ContainerViewRuntimeFactory(
+	BubblebenchInstantiationFactory,
+	bubblebenchViewCallback,
+);

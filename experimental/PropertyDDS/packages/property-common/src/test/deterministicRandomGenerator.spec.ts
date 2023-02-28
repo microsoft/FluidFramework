@@ -10,9 +10,9 @@
 import { expect } from "chai";
 import { DeterministicRandomGenerator } from "../deterministicRandomGenerator";
 
-describe("property-common.DeterministicRandomGenerator", function() {
-    it("should exist", function() {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        expect(DeterministicRandomGenerator).to.exist;
-    });
+describe("property-common.DeterministicRandomGenerator", function () {
+	it("should exist", function () {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(DeterministicRandomGenerator).to.exist;
+	});
 });

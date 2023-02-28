@@ -1,17 +1,17 @@
 {
-  "extends": "@fluidframework/build-common/ts-common-config.json",
-  "compilerOptions": {
-    "lib": ["ES2019", "ES2018.Promise", "DOM", "DOM.Iterable"],
-    "noImplicitAny": true,
-    "noUnusedLocals": false,
-    "rootDir": "./",
-    "outDir": "../../dist/test",
-    "types": ["node", "mocha"],
-  },
-  "include": ["./**/*"],
-  "references": [
-    {
-      "path": "../..",
-    },
-  ],
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"lib": ["ES2019", "ES2018.Promise", "DOM", "DOM.Iterable"],
+		"noImplicitAny": true,
+		"noUnusedLocals": false,
+		"rootDir": "./",
+		"outDir": "../../dist/test",
+		"types": ["node", "mocha"],
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
 }

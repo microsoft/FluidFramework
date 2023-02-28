@@ -33,7 +33,7 @@ export interface IRepositoryManager {
     createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit>;
     getRefs(): Promise<git.IRef[]>;
     getRef(ref: string, externalWriterConfig?: IExternalWriterConfig): Promise<git.IRef>;
-    createRef(createRefParams: git.ICreateRefParams, externalWriterConfig?: IExternalWriterConfig): Promise<git.IRef>;
+    createRef(createRefParams: git.ICreateRefParams & { force?: boolean }, externalWriterConfig?: IExternalWriterConfig): Promise<git.IRef>;
     patchRef(refId: string, patchRefParams: git.IPatchRefParams, externalWriterConfig?: IExternalWriterConfig): Promise<git.IRef>;
     deleteRef(refId: string): Promise<void>;
     getTag(tagId: string): Promise<git.ITag>;
@@ -83,6 +83,7 @@ export interface IRepoManagerParams {
     repoName: string;
     storageRoutingId?: IStorageRoutingId;
     fileSystemManagerParams?: IFileSystemManagerParams;
+    optimizeForInitialSummary?: boolean;
 }
 
 export interface IRepositoryManagerFactory {

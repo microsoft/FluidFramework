@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { BatchManager } from "./batchManager";
+export { BatchManager, estimateSocketSize } from "./batchManager";
 export {
-    BatchMessage,
-    IBatch,
-    IBatchCheckpoint,
-    IChunkedOp,
-    IMessageProcessingResult,
+	BatchMessage,
+	IBatch,
+	IBatchCheckpoint,
+	IChunkedOp,
+	IMessageProcessingResult,
 } from "./definitions";
 export { Outbox } from "./outbox";
 export { OpCompressor } from "./opCompressor";

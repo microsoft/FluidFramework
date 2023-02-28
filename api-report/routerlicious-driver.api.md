@@ -58,7 +58,6 @@ export interface ITokenResponse {
 
 // @public
 export interface ITokenService {
-    // (undocumented)
     extractClaims(token: string): ITokenClaims;
 }
 
@@ -71,6 +70,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid:";
+}
+
+// @public
+export enum RouterliciousErrorType {
+    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
+    // (undocumented)
+    sslCertError = "sslCertError"
 }
 
 // (No @packageDocumentation comment for this package)

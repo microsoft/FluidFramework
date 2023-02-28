@@ -4,11 +4,9 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"
-    ],
-    "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off",
-        "@typescript-eslint/unbound-method": "off"
-    }
-}
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	rules: {
+		"@typescript-eslint/strict-boolean-expressions": "off",
+		"@typescript-eslint/unbound-method": "off",
+	},
+};

@@ -3,69 +3,74 @@
  * Licensed under the MIT License.
  */
 
-import {
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IArrayish, IClient } from "@fluid-example/bubblebench-common";
 import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
 import { TreeObjectProxy } from "./proxy";
 import { AppState } from "./state";
 
-interface IApp { clients: IArrayish<IClient>; }
+interface IApp {
+	clients: IArrayish<IClient>;
+}
 
 export class Bubblebench extends DataObject {
-    public static get Name() { return "@fluid-example/bubblebench-sharedtree"; }
-    private maybeTree?: SharedTree = undefined;
-    private maybeAppState?: AppState = undefined;
+	public static get Name() {
+		return "@fluid-example/bubblebench-sharedtree";
+	}
+	private maybeTree?: SharedTree = undefined;
+	private maybeAppState?: AppState = undefined;
 
-    protected async initializingFirstTime() {
-        const tree = this.maybeTree = SharedTree.create(this.runtime);
+	protected async initializingFirstTime() {
+		const tree = (this.maybeTree = SharedTree.create(this.runtime));
 
-        const p = TreeObjectProxy<IApp>(tree, tree.currentView.root, tree.applyEdit.bind(tree));
-        p.clients = [] as any;
+		const p = TreeObjectProxy<IApp>(tree, tree.currentView.root, tree.applyEdit.bind(tree));
+		p.clients = [] as any;
 
-        this.root.set("tree", this.maybeTree.handle);
-    }
+		this.root.set("tree", this.maybeTree.handle);
+	}
 
-    protected async initializingFromExisting() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>("tree")!.get();
-    }
+	protected async initializingFromExisting() {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>("tree")!.get();
+	}
 
-    protected async hasInitialized() {
-        this.maybeAppState = new AppState(
-            this.tree,
-            /* stageWidth: */ 640,
-            /* stageHeight: */ 480,
-            /* numBubbles: */ 1,
-        );
+	protected async hasInitialized() {
+		this.maybeAppState = new AppState(
+			this.tree,
+			/* stageWidth: */ 640,
+			/* stageHeight: */ 480,
+			/* numBubbles: */ 1,
+		);
 
-        const onConnected = () => {
-            // Out of paranoia, we periodically check to see if your client Id has changed and
-            // update the tree if it has.
-            setInterval(() => {
-                const clientId = this.runtime.clientId;
-                if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
-                    this.appState.localClient.clientId = clientId;
-                }
-            }, 1000);
-        };
+		const onConnected = () => {
+			// Out of paranoia, we periodically check to see if your client Id has changed and
+			// update the tree if it has.
+			setInterval(() => {
+				const clientId = this.runtime.clientId;
+				if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
+					this.appState.localClient.clientId = clientId;
+				}
+			}, 1000);
+		};
 
-        // Wait for connection to begin checking client Id.
-        if (this.runtime.connected) {
-            onConnected();
-        } else {
-            this.runtime.once("connected", onConnected);
-        }
-    }
+		// Wait for connection to begin checking client Id.
+		if (this.runtime.connected) {
+			onConnected();
+		} else {
+			this.runtime.once("connected", onConnected);
+		}
+	}
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    private get tree() { return this.maybeTree!; }
+	private get tree() {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.maybeTree!;
+	}
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    public get appState() { return this.maybeAppState!; }
+	public get appState() {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.maybeAppState!;
+	}
 }
 
 /**
@@ -73,8 +78,8 @@ export class Bubblebench extends DataObject {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
-    Bubblebench.Name,
-    Bubblebench,
-    [SharedTree.getFactory(WriteFormat.v0_1_1)],
-    {},
+	Bubblebench.Name,
+	Bubblebench,
+	[SharedTree.getFactory(WriteFormat.v0_1_1)],
+	{},
 );

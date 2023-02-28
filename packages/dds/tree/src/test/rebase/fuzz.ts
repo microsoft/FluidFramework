@@ -8,9 +8,9 @@ import { unreachableCase } from "@fluidframework/common-utils";
 import { ChangeRebaser, makeAnonChange } from "../../core";
 
 enum Operation {
-    Rebase = 0,
-    Compose = 1,
-    Invert = 2,
+	Rebase = 0,
+	Compose = 1,
+	Invert = 2,
 }
 
 /**
@@ -23,42 +23,42 @@ enum Operation {
  * @returns A random change resulting from the combination of several random changes.
  */
 export function generateFuzzyCombinedChange<TChange>(
-    rebaser: ChangeRebaser<TChange>,
-    changeGenerator: (seed: number) => TChange,
-    seed: number,
-    maxCombinations: number,
+	rebaser: ChangeRebaser<TChange>,
+	changeGenerator: (seed: number) => TChange,
+	seed: number,
+	maxCombinations: number,
 ): TChange {
-    const random = makeRandom(seed);
-    const rebase = rebaser.rebase.bind(rebaser);
-    const compose = rebaser.compose.bind(rebaser);
-    const invert = rebaser.invert.bind(rebaser);
+	const random = makeRandom(seed);
+	const rebase = rebaser.rebase.bind(rebaser);
+	const compose = rebaser.compose.bind(rebaser);
+	const invert = rebaser.invert.bind(rebaser);
 
-    let change = changeGenerator(seed);
+	let change = changeGenerator(seed);
 
-    // Rules for combining changes:
-    // - We must not combine a change with itself
-    // - We must not rebase a change over itself
-    // - We must not rebase a change over its inverse
-    // - We can only combine a change with its inverse if the inverse comes after the original
-    // - We can only combine a change with its inverse if it hasn't already been combined with its inverse
-    for (let i = random.integer(0, maxCombinations); i > 0; --i) {
-        const operation = random.integer(Operation.Rebase, Operation.Invert) as Operation;
-        switch (operation) {
-            case Operation.Rebase:
-                change = rebase(change, makeAnonChange(changeGenerator(random.real())));
-                break;
-            case Operation.Compose:
-                change = compose([
-                    makeAnonChange(change),
-                    makeAnonChange(changeGenerator(random.real())),
-                ]);
-                break;
-            case Operation.Invert:
-                change = invert(makeAnonChange(change));
-                break;
-            default:
-                unreachableCase(operation);
-        }
-    }
-    return change;
+	// Rules for combining changes:
+	// - We must not combine a change with itself
+	// - We must not rebase a change over itself
+	// - We must not rebase a change over its inverse
+	// - We can only combine a change with its inverse if the inverse comes after the original
+	// - We can only combine a change with its inverse if it hasn't already been combined with its inverse
+	for (let i = random.integer(0, maxCombinations); i > 0; --i) {
+		const operation = random.integer(Operation.Rebase, Operation.Invert) as Operation;
+		switch (operation) {
+			case Operation.Rebase:
+				change = rebase(change, makeAnonChange(changeGenerator(random.real())));
+				break;
+			case Operation.Compose:
+				change = compose([
+					makeAnonChange(change),
+					makeAnonChange(changeGenerator(random.real())),
+				]);
+				break;
+			case Operation.Invert:
+				change = invert(makeAnonChange(change));
+				break;
+			default:
+				unreachableCase(operation);
+		}
+	}
+	return change;
 }

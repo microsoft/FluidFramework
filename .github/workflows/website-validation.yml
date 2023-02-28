@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Build site
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
           submodules: false
-      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
         with:
           node-version: "14"
           cache: "npm"
@@ -28,7 +28,7 @@ jobs:
           npm ci
           npm run ci:build
       - name: Upload site artifact
-        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # pin@v2
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
         with:
           name: fluidframework-site
           path: docs/public
@@ -39,10 +39,10 @@ jobs:
     name: 🔗 Broken Link Check
     needs: build_site
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
           submodules: false
-      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
         with:
           node-version: "14"
           cache: "npm"
@@ -51,7 +51,7 @@ jobs:
         run: mkdir -p ./results
 
       - name: Download site artifact
-        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # pin@v2
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # ratchet:actions/download-artifact@v3
         with:
           name: fluidframework-site
           path: docs/public
@@ -77,7 +77,7 @@ jobs:
           cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
           echo -e "\n\`\`\`" | tee -a ./results/linkcheck
       - name: Upload results artifact
-        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # pin@v2
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
         with:
           name: website-validation-results
           path: ./docs/results

@@ -59,7 +59,7 @@ The creation section of the application starts with calling `createContainer` an
 
 The `attach` call publishes the container to the Tinylicious service and returns the `id` of the container, which the app can use to load this container on other clients (or this client in a future session). Once attached, any further changes to the shared objects, made by the rendered app, will be communicated to all collaborators.
 
-The `renderDiceRoller` function is created in a later step. It renders the UI of the app on the local client. 
+The `renderDiceRoller` function is created in a later step. It renders the UI of the app on the local client.
 
 ```js
 const createNewDice = async () => {
@@ -90,7 +90,7 @@ const loadExistingDice = async (id) => {
 
 The app supports both creating a new container and loading an existing container using its `id`.
 But, the app needs to know whether the container already exists. There are many ways of
-determining this. 
+determining this.
 This sample app stores the container ID in the URL hash.
 If the URL has a hash, the app will load that existing container.
 Otherwise, the app creates a new container, attaches it, and sets the returned `id` as the hash.
@@ -114,7 +114,7 @@ start().catch((error) => console.error(error));
 
 The Fluid Framework is agnostic about view frameworks and it works well with React, Vue, Angular and web components. This example uses standard HTML/DOM methods to render a view. You can see examples of the previously mentioned frameworks in the [FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/multi-framework-diceroller).
 
-The `renderDiceRoller` function runs only when the container is created or loaded. It appends the `diceTemplate` to the passed in HTML element, and creates a working dice roller with a random dice value each time the "Roll" button is clicked on a client. 
+The `renderDiceRoller` function runs only when the container is created or loaded. It appends the `diceTemplate` to the passed in HTML element, and creates a working dice roller with a random dice value each time the "Roll" button is clicked on a client.
 
 
 ```js
@@ -160,7 +160,7 @@ This pattern is common in Fluid because it enables the view to behave the same w
 The next line creates the function that will rerender the local view with the lastest dice value. This function will be called:
 
 - When the container is created or loaded.
-- When the dice value changes on any client. 
+- When the dice value changes on any client.
 
 Note that the current value is retrieved from the `SharedMap` each time `updateDice` is called. It is *not* read from the `textContent` of the local `dice` HTML element.
 
@@ -182,7 +182,7 @@ The next line ensures that the dice gets an initial value as soon as `renderDice
 
 ### Handling remote changes
 
-To keep the data up to date as it changes an event handler must be set on the `diceMap` to call `updateDice` each time that the `valueChanged` event is sent. Note that the `valueChanged` event fires whenever the `diceMap` value changes on *any* client; that is, when the "Roll" button is clicked on any client. 
+To keep the data up to date as it changes an event handler must be set on the `diceMap` to call `updateDice` each time that the `valueChanged` event is sent. Note that the `valueChanged` event fires whenever the `diceMap` value changes on *any* client; that is, when the "Roll" button is clicked on any client.
 
 See the [documentation for SharedMap][SharedMap] to get a list of events fired and the values passed to those events.
 
@@ -195,6 +195,10 @@ See the [documentation for SharedMap][SharedMap] to get a list of events fired a
 The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out. Try opening it in multiple browser windows to see the changes reflected between clients.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
 
 <!-- Concepts -->
@@ -219,5 +223,7 @@ The [full code for this application is available](https://github.com/microsoft/F
 
 [FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
 [IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

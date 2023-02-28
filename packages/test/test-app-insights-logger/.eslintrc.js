@@ -4,10 +4,8 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"
-    ],
-    "parserOptions": {
-        "project": ["./tsconfig.json"]
-    },
-}
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json"],
+	},
+};

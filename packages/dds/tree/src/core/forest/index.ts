@@ -4,19 +4,19 @@
  */
 
 export {
-    IEditableForest,
-    FieldLocation,
-    TreeLocation,
-    isFieldLocation,
-    ForestLocation,
-    initializeForest,
-    afterChangeToken,
+	IEditableForest,
+	FieldLocation,
+	TreeLocation,
+	isFieldLocation,
+	ForestLocation,
+	initializeForest,
 } from "./editableForest";
 export {
-    IForestSubscription,
-    ITreeSubscriptionCursor,
-    ITreeSubscriptionCursorState,
-    TreeNavigationResult,
-    FieldAnchor,
-    moveToDetachedField,
+	IForestSubscription,
+	ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
+	TreeNavigationResult,
+	FieldAnchor,
+	moveToDetachedField,
+	ForestEvents,
 } from "./forest";

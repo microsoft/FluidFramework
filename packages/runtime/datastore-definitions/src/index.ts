@@ -4,11 +4,11 @@
  */
 
 /**
-* This library defines the interfaces required to implement and/or communicate
-* with a data store.
-*
-* @packageDocumentation
-*/
+ * This library defines the interfaces required to implement and/or communicate
+ * with a data store.
+ *
+ * @packageDocumentation
+ */
 
 export {
 	IChannel,

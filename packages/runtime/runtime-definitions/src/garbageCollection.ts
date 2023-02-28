@@ -3,34 +3,36 @@
  * Licensed under the MIT License.
  */
 
-// The key for the GC tree in summary.
+/** The key for the GC tree in summary. */
 export const gcTreeKey = "gc";
-// They prefix for GC blobs in the GC tree in summary.
+/** They prefix for GC blobs in the GC tree in summary. */
 export const gcBlobPrefix = "__gc";
-// The key for tombstone blob in the GC tree in summary.
+/** The key for tombstone blob in the GC tree in summary. */
 export const gcTombstoneBlobKey = "__tombstones";
+/** The key for deleted nodes blob in the GC tree in summary. */
+export const gcDeletedBlobKey = "__deletedNodes";
 
 /**
  * Garbage collection data returned by nodes in a Container.
  * Used for running GC in the Container.
  */
 export interface IGarbageCollectionData {
-    /**
-     * The GC nodes of a Fluid object in the Container. Each node has an id and a set of routes to other GC nodes.
-     */
-    gcNodes: { [ id: string ]: string[]; };
+	/**
+	 * The GC nodes of a Fluid object in the Container. Each node has an id and a set of routes to other GC nodes.
+	 */
+	gcNodes: { [id: string]: string[] };
 }
 
 /**
  * GC details provided to each node during creation.
  */
 export interface IGarbageCollectionDetailsBase {
-    /**
-     * A list of routes to Fluid objects that are used in this node.
-     */
-    usedRoutes?: string[];
-    /**
-     * The GC data of this node.
-     */
-    gcData?: IGarbageCollectionData;
+	/**
+	 * A list of routes to Fluid objects that are used in this node.
+	 */
+	usedRoutes?: string[];
+	/**
+	 * The GC data of this node.
+	 */
+	gcData?: IGarbageCollectionData;
 }

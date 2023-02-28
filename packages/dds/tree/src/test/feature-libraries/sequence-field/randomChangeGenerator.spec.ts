@@ -12,21 +12,21 @@ const maxIndex = 3;
 const childGen = (seed: number): NodeChangeset => ({ valueChange: { value: seed } });
 
 describe("SequenceField - generateRandomChange", () => {
-    it("generates the same change given the same seed", () => {
-        const change1 = generateRandomChange(testSeed, maxIndex, childGen);
-        const change2 = generateRandomChange(testSeed, maxIndex, childGen);
-        assert.deepStrictEqual(change1, change2);
-    });
+	it("generates the same change given the same seed", () => {
+		const change1 = generateRandomChange(testSeed, maxIndex, childGen);
+		const change2 = generateRandomChange(testSeed, maxIndex, childGen);
+		assert.deepStrictEqual(change1, change2);
+	});
 
-    it("generates different changes given the different seeds", () => {
-        const change1 = generateRandomChange(testSeed, maxIndex, childGen);
-        const change2 = generateRandomChange(testSeed + 1, maxIndex, childGen);
-        assert.notDeepStrictEqual(change1, change2);
-    });
+	it("generates different changes given the different seeds", () => {
+		const change1 = generateRandomChange(testSeed, maxIndex, childGen);
+		const change2 = generateRandomChange(testSeed + 1, maxIndex, childGen);
+		assert.notDeepStrictEqual(change1, change2);
+	});
 
-    it("Generates a change", () => {
-        const change = generateRandomChange(testSeed, maxIndex, childGen);
-        const expected = [2, { type: "Delete", count: 5 }];
-        assert.deepStrictEqual(change, expected);
-    });
+	it("Generates a change", () => {
+		const change = generateRandomChange(testSeed, maxIndex, childGen);
+		const expected = [2, { type: "Delete", count: 5 }];
+		assert.deepStrictEqual(change, expected);
+	});
 });

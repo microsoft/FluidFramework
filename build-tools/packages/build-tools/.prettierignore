@@ -1,3 +1,5 @@
 /api-report
 /dist
 /lib
+# Generated type-tests
+**/*.generated.ts

@@ -1,17 +1,12 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "declaration": false,
-        "declarationMap": false,
-        "rootDir": "../",
-        "outDir": "../../dist",
-        "types": [
-            "mocha",
-            "@fluidframework/test-driver-definitions",
-        ],
-        "noUnusedLocals": false, // Needed for memory tests to be able to declare local variables just for the purpose of keeping stuff in memory
-    },
-    "include": [
-        "./**/*"
-    ]
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"declaration": false,
+		"declarationMap": false,
+		"rootDir": "../",
+		"outDir": "../../dist",
+		"types": ["mocha", "@fluidframework/test-driver-definitions"],
+		"noUnusedLocals": false, // Needed for memory tests to be able to declare local variables just for the purpose of keeping stuff in memory
+	},
+	"include": ["./**/*"],
 }

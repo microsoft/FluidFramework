@@ -5,13 +5,20 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { strict as assert } from "assert";
-import { IDocumentDeltaConnectionEvents, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import {
+	IDocumentDeltaConnectionEvents,
+	IDocumentServiceFactory,
+} from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	ISequencedDocumentSystemMessage,
+} from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 
 /**
@@ -32,326 +39,400 @@ type UnPromise<T> = T extends Promise<infer U> ? U : T;
 type OverrideFunction<T, P extends keyof T> = (T: T) => T[P];
 
 type ProxyOverrides<T> = {
-    [P in keyof T]?:
-        T[P] extends ((...args: any) => any)
-            ? ProxyOverrides<UnPromise<ReturnType<T[P]>>> | OverrideFunction<T, P>
-            : OverrideFunction<T, P>;
+	[P in keyof T]?: T[P] extends (...args: any) => any
+		? ProxyOverrides<UnPromise<ReturnType<T[P]>>> | OverrideFunction<T, P>
+		: OverrideFunction<T, P>;
 };
 
-function createFunctionOverrideProxy<T extends object>(
-    obj: T,
-    overrides: ProxyOverrides<T>): T {
-    return new Proxy(obj, {
-        get: (target: T, property: string) => {
-            const override = overrides[property as keyof T];
-            if (override) {
-                if (typeof override === "function") {
-                    return override(target);
-                }
-                const real = target[property as keyof T];
-                if (typeof real === "function") {
-                    return (...args: any) => {
-                        const res = real.bind(target)(...args);
-                        if (res.then !== undefined) {
-                            return res.then((v) => createFunctionOverrideProxy(v, override));
-                        }
+function createFunctionOverrideProxy<T extends object>(obj: T, overrides: ProxyOverrides<T>): T {
+	return new Proxy(obj, {
+		get: (target: T, property: string) => {
+			const override = overrides[property as keyof T];
+			if (override) {
+				if (typeof override === "function") {
+					return override(target);
+				}
+				const real = target[property as keyof T];
+				if (typeof real === "function") {
+					return (...args: any) => {
+						const res = real.bind(target)(...args);
+						if (res.then !== undefined) {
+							return res.then((v) => createFunctionOverrideProxy(v, override));
+						}
 
-                        return createFunctionOverrideProxy(res, override);
-                    };
-                }
+						return createFunctionOverrideProxy(res, override);
+					};
+				}
 
-                return createFunctionOverrideProxy(real as any, override);
-            }
+				return createFunctionOverrideProxy(real as any, override);
+			}
 
-            return target[property];
-        },
-    });
+			return target[property];
+		},
+	});
 }
 
 async function runAndValidateBatch(
-    provider: ITestObjectProvider,
-    proxyDsf: IDocumentServiceFactory,
-    timeout: number,
-    ) {
-    let containerUrl: string | undefined;
-    {
-        const loader = provider.createLoader(
-            [[
-                provider.defaultCodeDetails,
-                provider.createFluidEntryPoint(),
-            ]]);
+	provider: ITestObjectProvider,
+	proxyDsf: IDocumentServiceFactory,
+	timeout: number,
+) {
+	let containerUrl: string | undefined;
+	{
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, provider.createFluidEntryPoint()],
+		]);
 
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        await container.attach(provider.driver.createCreateNewRequest(Date.now().toString()));
-        containerUrl = await container.getAbsoluteUrl("");
-        container.close();
-    }
-    assert(containerUrl);
-    {
-        const loader = provider.createLoader(
-            [[
-                provider.defaultCodeDetails,
-                provider.createFluidEntryPoint({ runtimeOptions: { summaryOptions: { disableSummaries: true } } }),
-            ]],
-            {
-                documentServiceFactory: proxyDsf,
-            });
-        const container = await loader.resolve({ url: containerUrl });
-        const testObject = await requestFluidObject<TestFluidObject>(container, "default");
-        // send batch
-        testObject.context.containerRuntime.orderSequentially(() => {
-            for (let i = 0; i < 10; i++) {
-                testObject.root.set(i.toString(), i);
-            }
-        });
-        // send non-batch
-        testObject.root.set("foo", "bar");
-        while (container.isDirty && !container.closed) {
-            await timeoutPromise((resolve, reject) => {
-                container.once("saved", () => resolve());
-                container.once("closed", (e) => reject(e));
-            },
-            {
-                durationMs: timeout, // 60 * 60 * 1000,
-            });
-        }
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		await container.attach(provider.driver.createCreateNewRequest(Date.now().toString()));
+		containerUrl = await container.getAbsoluteUrl("");
+		container.close();
+	}
+	assert(containerUrl);
+	{
+		const loader = provider.createLoader(
+			[
+				[
+					provider.defaultCodeDetails,
+					provider.createFluidEntryPoint({
+						runtimeOptions: {
+							summaryOptions: {
+								summaryConfigOverrides: { state: "disabled" },
+							},
+						},
+					}),
+				],
+			],
+			{
+				documentServiceFactory: proxyDsf,
+			},
+		);
+		const container = await loader.resolve({ url: containerUrl });
+		const testObject = await requestFluidObject<TestFluidObject>(container, "default");
+		// send batch
+		testObject.context.containerRuntime.orderSequentially(() => {
+			for (let i = 0; i < 10; i++) {
+				testObject.root.set(i.toString(), i);
+			}
+		});
+		// send non-batch
+		testObject.root.set("foo", "bar");
+		while (container.isDirty && !container.closed) {
+			await timeoutPromise(
+				(resolve, reject) => {
+					container.once("saved", () => resolve());
+					container.once("closed", (e) => reject(e));
+				},
+				{
+					durationMs: timeout, // 60 * 60 * 1000,
+				},
+			);
+		}
 
-        for (let i = 0; i < 10; i++) {
-            assert.equal(testObject.root.get(i.toString()), i, i.toString());
-        }
-        assert.equal(testObject.root.get("foo"), "bar", "validate after batch op");
-    }
+		for (let i = 0; i < 10; i++) {
+			assert.equal(testObject.root.get(i.toString()), i, i.toString());
+		}
+		assert.equal(testObject.root.get("foo"), "bar", "validate after batch op");
+	}
 }
 
-describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
-    it("working proxy",
-    async function() {
-        const provider = getTestObjectProvider({ resetAfterEach: true });
+describeNoCompat("Batching failures", (getTestObjectProvider) => {
+	it("working proxy", async function () {
+		const provider = getTestObjectProvider({ resetAfterEach: true });
 
-        const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-            provider.documentServiceFactory,
-            {
-                createDocumentService: {
-                    connectToDeltaStream: {
-                        submit: (ds) => (messages) => {
-                            // validate a no-op proxy works
-                            ds.submit(messages);
-                        },
-                    },
-                },
-            });
-        await runAndValidateBatch(provider, proxyDsf, this.timeout());
-    });
-    it("working batch",
-    async function() {
-        const provider = getTestObjectProvider({ resetAfterEach: true });
-        await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
-    });
-    describe("client sends invalid batches ", () => {
-        itExpects.skip("Batch end without start",
-        [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
-        ],
-        async function() {
-            const provider = getTestObjectProvider({ resetAfterEach: true });
+		const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: {
+						submit: (ds) => (messages) => {
+							// validate a no-op proxy works
+							ds.submit(messages);
+						},
+					},
+				},
+			},
+		);
+		await runAndValidateBatch(provider, proxyDsf, this.timeout());
+	});
 
-            const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-                provider.documentServiceFactory,
-                {
-                    createDocumentService: {
-                        connectToDeltaStream: {
-                            submit: (ds) => (messages) => {
-                                const newMessages = [...messages];
-                                const batchStartIndex = newMessages.findIndex((m) => m.metadata?.batch === true);
-                                if (batchStartIndex >= 0) {
-                                    newMessages[batchStartIndex] = {
-                                        ... newMessages[batchStartIndex],
-                                        metadata: {
-                                            ... newMessages[batchStartIndex].metadata,
-                                            batch: undefined,
-                                        },
-                                    };
-                                }
-                                ds.submit(newMessages);
-                            },
-                        },
-                    },
-                });
+	it("working batch", async function () {
+		const provider = getTestObjectProvider({ resetAfterEach: true });
+		await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
+	});
 
-            try {
-                await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "OpBatchIncomplete", e);
-            }
-        });
+	it("contains batch metadata", async function () {
+		const provider = getTestObjectProvider({ resetAfterEach: true });
+		let batchesSent = 0;
+		const sentMessages: IDocumentMessage[][] = [];
 
-        // bug bug: container runtime never unpauses if there is no batch end
-        itExpects.skip("Batch start without end",
-        [
-        ],
-        async function() {
-            const provider = getTestObjectProvider({ resetAfterEach: true });
+		const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: {
+						submit: (ds) => (messages) => {
+							sentMessages.push([...messages]);
+							batchesSent++;
+							ds.submit(messages);
+						},
+					},
+				},
+			},
+		);
 
-            const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-                provider.documentServiceFactory,
-                {
-                    createDocumentService: {
-                        connectToDeltaStream: {
-                            submit: (ds) => (messages) => {
-                                const newMessages = [...messages];
-                                const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 0) {
-                                    newMessages[batchEndIndex] = {
-                                        ... newMessages[batchEndIndex],
-                                        metadata: {
-                                            ... newMessages[batchEndIndex].metadata,
-                                            batch: undefined,
-                                        },
-                                    };
-                                }
-                                ds.submit(newMessages);
-                            },
-                        },
-                    },
-                });
-            try {
-                await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "OpBatchIncomplete", e);
-            }
-        });
+		await runAndValidateBatch(provider, proxyDsf, this.timeout());
+		assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
 
-        itExpects("Split batch",
-        [
-        ],
-        async function() {
-            const provider = getTestObjectProvider({ resetAfterEach: true });
+		{
+			const batch = sentMessages[0];
+			assert.strictEqual(batch.length, 11, "expected 11 messages");
+			assert.strictEqual(
+				batch[0].metadata?.batch,
+				true,
+				"first message should contain batch metadata",
+			);
+			assert.strictEqual(
+				batch[10].metadata?.batch,
+				false,
+				"last message should contain batch metadata",
+			);
+		}
+	});
 
-            const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-                provider.documentServiceFactory,
-                {
-                    createDocumentService: {
-                        connectToDeltaStream: {
-                            submit: (ds) => (messages) => {
-                                const newMessages = [...messages];
-                                const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 1) {
-                                    ds.submit(newMessages.slice(0, batchEndIndex - 1));
-                                    ds.submit(newMessages.slice(batchEndIndex - 1));
-                                } else {
-                                    ds.submit(newMessages);
-                                }
-                            },
-                        },
-                    },
-                });
-            // it's odd this doesn't fail.
-            await runAndValidateBatch(provider, proxyDsf, this.timeout());
-        });
+	describe("client sends invalid batches ", () => {
+		itExpects.skip(
+			"Batch end without start",
+			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" }],
+			async function () {
+				const provider = getTestObjectProvider({ resetAfterEach: true });
 
-        itExpects.skip("force nack",
-        [
-            {
-                eventName: "fluid:telemetry:Container:ContainerClose",
-                error: "Received a system message during batch processing",
-            },
-        ],
-        async function() {
-            const provider = getTestObjectProvider({ resetAfterEach: true });
+				const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+					provider.documentServiceFactory,
+					{
+						createDocumentService: {
+							connectToDeltaStream: {
+								submit: (ds) => (messages) => {
+									const newMessages = [...messages];
+									const batchStartIndex = newMessages.findIndex(
+										(m) => m.metadata?.batch === true,
+									);
+									if (batchStartIndex >= 0) {
+										newMessages[batchStartIndex] = {
+											...newMessages[batchStartIndex],
+											metadata: {
+												...newMessages[batchStartIndex].metadata,
+												batch: undefined,
+											},
+										};
+									}
+									ds.submit(newMessages);
+								},
+							},
+						},
+					},
+				);
 
-            const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-                provider.documentServiceFactory,
-                {
-                    createDocumentService: {
-                        connectToDeltaStream: {
-                            submit: (ds) => (messages) => {
-                                const newMessages = [...messages];
-                                const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 1) {
-                                    // set reference seq number to below min seq so the server nacks the batch
-                                    newMessages[batchEndIndex] =
-                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: -1 };
-                                    ds.submit(newMessages);
-                                } else {
-                                    ds.submit(newMessages);
-                                }
-                            },
-                        },
-                    },
-                });
-            try {
-                await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert(e instanceof DataProcessingError);
-            }
-        });
-    });
-    describe("server sends invalid batch", () => {
-        itExpects("interleave system message",
-        [
-            {
-                eventName: "fluid:telemetry:Container:ContainerClose",
-                error: "Received a system message during batch processing",
-            },
-        ],
-        async function() {
-            const provider = getTestObjectProvider({ resetAfterEach: true });
+				try {
+					await runAndValidateBatch(provider, proxyDsf, this.timeout());
+					assert.fail("expected error");
+				} catch (e) {
+					assert(isILoggingError(e), `${e}`);
+					assert.equal(e.message, "OpBatchIncomplete", e);
+				}
+			},
+		);
 
-            const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-                provider.documentServiceFactory,
-                {
-                    createDocumentService: {
-                        connectToDeltaStream: (docService) => async (client) => {
-                            const real = await docService.connectToDeltaStream(client);
-                            const emitter = real as any as TypedEventEmitter<IDocumentDeltaConnectionEvents>;
-                            const originalEmit = emitter.emit.bind(emitter);
-                            emitter.emit = (event, ... args) => {
-                                if (event === "op"
-                                    && Array.isArray(args)
-                                    && args.length >= 2
-                                    && Array.isArray(args[1])) {
-                                        // this code adds a join message in the middle of a batch
-                                        const newMessages: (ISequencedDocumentMessage | ISequencedDocumentSystemMessage)[]
-                                            = [...args[1]];
-                                        const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                        if (batchEndIndex >= 0) {
-                                            args[1] = newMessages
-                                                .slice(0, batchEndIndex)
-                                                .concat({
-                                                    ... newMessages[batchEndIndex],
-                                                    metadata: undefined,
-                                                    clientId: null as any as string,
-                                                    clientSequenceNumber: -1,
-                                                    contents: null,
-                                                    referenceSequenceNumber: -1,
-                                                    type: "join",
-                                                    data: "{\"clientId\":\"fake_client\",\"detail\":{\"user\":{\"id\":\"fake_user\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true}},\"mode\":\"write\"}}",
+		// bug bug: container runtime never unpauses if there is no batch end
+		itExpects.skip("Batch start without end", [], async function () {
+			const provider = getTestObjectProvider({ resetAfterEach: true });
 
-                                                })
-                                                .concat(... newMessages
-                                                    .slice(batchEndIndex)
-                                                    .map((m) => ({ ...m, sequenceNumber: m.sequenceNumber + 1 })));
-                                                }
-                                }
-                                return originalEmit(event, ... args);
-                            };
-                            return real;
-                        },
-                    },
-                });
-            try {
-                await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert(e instanceof DataProcessingError);
-            }
-        });
-    });
+			const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+				provider.documentServiceFactory,
+				{
+					createDocumentService: {
+						connectToDeltaStream: {
+							submit: (ds) => (messages) => {
+								const newMessages = [...messages];
+								const batchEndIndex = newMessages.findIndex(
+									(m) => m.metadata?.batch === false,
+								);
+								if (batchEndIndex >= 0) {
+									newMessages[batchEndIndex] = {
+										...newMessages[batchEndIndex],
+										metadata: {
+											...newMessages[batchEndIndex].metadata,
+											batch: undefined,
+										},
+									};
+								}
+								ds.submit(newMessages);
+							},
+						},
+					},
+				},
+			);
+			try {
+				await runAndValidateBatch(provider, proxyDsf, this.timeout());
+				assert.fail("expected error");
+			} catch (e) {
+				assert(isILoggingError(e), `${e}`);
+				assert.equal(e.message, "OpBatchIncomplete", e);
+			}
+		});
+
+		itExpects("Split batch", [], async function () {
+			const provider = getTestObjectProvider({ resetAfterEach: true });
+
+			const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+				provider.documentServiceFactory,
+				{
+					createDocumentService: {
+						connectToDeltaStream: {
+							submit: (ds) => (messages) => {
+								const newMessages = [...messages];
+								const batchEndIndex = newMessages.findIndex(
+									(m) => m.metadata?.batch === false,
+								);
+								if (batchEndIndex >= 1) {
+									ds.submit(newMessages.slice(0, batchEndIndex - 1));
+									ds.submit(newMessages.slice(batchEndIndex - 1));
+								} else {
+									ds.submit(newMessages);
+								}
+							},
+						},
+					},
+				},
+			);
+			// it's odd this doesn't fail.
+			await runAndValidateBatch(provider, proxyDsf, this.timeout());
+		});
+
+		itExpects.skip(
+			"force nack",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Received a system message during batch processing",
+				},
+			],
+			async function () {
+				const provider = getTestObjectProvider({ resetAfterEach: true });
+
+				const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+					provider.documentServiceFactory,
+					{
+						createDocumentService: {
+							connectToDeltaStream: {
+								submit: (ds) => (messages) => {
+									const newMessages = [...messages];
+									const batchEndIndex = newMessages.findIndex(
+										(m) => m.metadata?.batch === false,
+									);
+									if (batchEndIndex >= 1) {
+										// set reference seq number to below min seq so the server nacks the batch
+										newMessages[batchEndIndex] = {
+											...newMessages[batchEndIndex],
+											referenceSequenceNumber: -1,
+										};
+										ds.submit(newMessages);
+									} else {
+										ds.submit(newMessages);
+									}
+								},
+							},
+						},
+					},
+				);
+				try {
+					await runAndValidateBatch(provider, proxyDsf, this.timeout());
+					assert.fail("expected error");
+				} catch (e) {
+					assert(isILoggingError(e), `${e}`);
+					assert(e instanceof DataProcessingError);
+				}
+			},
+		);
+	});
+	describe("server sends invalid batch", () => {
+		itExpects(
+			"interleave system message",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Received a system message during batch processing",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerDispose",
+					error: "Received a system message during batch processing",
+				},
+			],
+			async function () {
+				const provider = getTestObjectProvider({ resetAfterEach: true });
+
+				const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+					provider.documentServiceFactory,
+					{
+						createDocumentService: {
+							connectToDeltaStream: (docService) => async (client) => {
+								const real = await docService.connectToDeltaStream(client);
+								const emitter =
+									real as any as TypedEventEmitter<IDocumentDeltaConnectionEvents>;
+								const originalEmit = emitter.emit.bind(emitter);
+								emitter.emit = (event, ...args) => {
+									if (
+										event === "op" &&
+										Array.isArray(args) &&
+										args.length >= 2 &&
+										Array.isArray(args[1])
+									) {
+										// this code adds a join message in the middle of a batch
+										const newMessages: (
+											| ISequencedDocumentMessage
+											| ISequencedDocumentSystemMessage
+										)[] = [...args[1]];
+										const batchEndIndex = newMessages.findIndex(
+											(m) => m.metadata?.batch === false,
+										);
+										if (batchEndIndex >= 0) {
+											args[1] = newMessages
+												.slice(0, batchEndIndex)
+												.concat({
+													...newMessages[batchEndIndex],
+													metadata: undefined,
+													clientId: null as any as string,
+													clientSequenceNumber: -1,
+													contents: null,
+													referenceSequenceNumber: -1,
+													type: "join",
+													data: '{"clientId":"fake_client","detail":{"user":{"id":"fake_user"},"scopes":["doc:read","doc:write"],"permission":[],"details":{"capabilities":{"interactive":true}},"mode":"write"}}',
+												})
+												.concat(
+													...newMessages
+														.slice(batchEndIndex)
+														.map((m) => ({
+															...m,
+															sequenceNumber: m.sequenceNumber + 1,
+														})),
+												);
+										}
+									}
+									return originalEmit(event, ...args);
+								};
+								return real;
+							},
+						},
+					},
+				);
+				try {
+					await runAndValidateBatch(provider, proxyDsf, this.timeout());
+					assert.fail("expected error");
+				} catch (e) {
+					assert(isILoggingError(e), `${e}`);
+					assert(e instanceof DataProcessingError);
+				}
+			},
+		);
+	});
 });

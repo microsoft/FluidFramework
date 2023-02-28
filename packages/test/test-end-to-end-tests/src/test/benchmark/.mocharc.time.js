@@ -6,16 +6,20 @@
 /**
  * Mocha configuration file for runtime profiling tests
  */
+const getFluidTestMochaConfig = require("@fluidframework/test-version-utils/mocharc-common.js");
+const packageDir = `${__dirname}/../../..`;
 
-module.exports = {
-    extends: "../.mocharc.js",
-    exit: true,
-    fgrep: ["@Benchmark", "@ExecutionTime"],
-    "node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict" ], // without leading "--"
-    recursive: true,
-    reporter: "@fluid-tools/benchmark/dist/MochaReporter.js",
-    reporterOptions: ["reportDir=.timeTestsOutput/"],
-    require: ["node_modules/@fluidframework/mocha-test-setup"],
-    spec: ["dist/test/benchmark/**/*.time.spec.js", "--perfMode"],
-    timeout: "60000"
-}
+const config = getFluidTestMochaConfig(packageDir);
+const newConfig = {
+	"extends": "../.mocharc.js",
+	"exit": true,
+	"fgrep": ["@Benchmark", "@ExecutionTime"],
+	"node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
+	"recursive": true,
+	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
+	"reporterOptions": ["reportDir=.timeTestsOutput/"],
+	"require": [...config.require, "node_modules/@fluidframework/mocha-test-setup"],
+	"spec": ["dist/test/benchmark/**/*.time.spec.js", "--perfMode"],
+	"timeout": "60000",
+};
+module.exports = newConfig;

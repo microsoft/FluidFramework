@@ -48,7 +48,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
-    set<T = any>(key: string, value: T): this;
+    set<T = unknown>(key: string, value: T): this;
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
 
@@ -95,6 +95,7 @@ export interface IDirectoryEvents extends IEvent {
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
+    (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
@@ -166,7 +167,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 // @public
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
-    set<T = any>(key: string, value: T): this;
+    set<T = unknown>(key: string, value: T): this;
 }
 
 // @public
@@ -184,7 +185,7 @@ export interface IValueChanged {
 // @public
 export class LocalValueMaker {
     constructor(serializer: IFluidSerializer);
-    fromInMemory(value: any): ILocalValue;
+    fromInMemory(value: unknown): ILocalValue;
     fromSerializable(serializable: ISerializableValue): ILocalValue;
 }
 
@@ -211,7 +212,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
     // @internal (undocumented)
-    protected applyStashedOp(op: any): unknown;
+    protected applyStashedOp(op: unknown): unknown;
     clear(): void;
     countSubDirectory(): number;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
@@ -242,10 +243,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected rollback(content: any, localOpMetadata: unknown): void;
-    set<T = any>(key: string, value: T): this;
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
+    set<T = unknown>(key: string, value: T): this;
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;
     // @internal
@@ -261,7 +262,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
-    protected applyStashedOp(content: any): unknown;
+    protected applyStashedOp(content: unknown): unknown;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
     delete(key: string): boolean;
@@ -278,10 +279,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected rollback(content: any, localOpMetadata: unknown): void;
-    set(key: string, value: any): this;
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
+    set(key: string, value: unknown): this;
     get size(): number;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;

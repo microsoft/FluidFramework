@@ -1,13 +1,10 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "composite": true,
-        "rootDir": "./src",
-        "outDir": "./dist",
-        "baseUrl": ".",
-    },
-    "include": [
-        "src/**/*"
-    ]
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"composite": true,
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"baseUrl": ".",
+	},
+	"include": ["src/**/*"],
 }
-

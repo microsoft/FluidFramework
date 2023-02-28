@@ -111,6 +111,10 @@ You can address this scenario using DDSes in the same way as with the persisted 
 In some cases, the user data could be generated locally or fetched from an external service. For example, consider a scenario where you want to display the connected users with a profile picture and a color border. If your app retrieves a user's profile picture from a user metadata service and assigns each user a color based on a hash of their user ID, then the app will have the desired data on other users without needing to communicate with them.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
 
 <!-- Concepts -->
@@ -135,5 +139,7 @@ In some cases, the user data could be generated locally or fetched from an exter
 
 [FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
 [IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

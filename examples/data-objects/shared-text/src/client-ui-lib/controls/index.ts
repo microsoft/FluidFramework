@@ -6,7 +6,13 @@
 export { DockPanel } from "./dockPanel";
 export { FlowContainer } from "./flowContainer";
 export { FlowView, IDocumentContext } from "./flowView";
-export { CursorDirection, IProvideViewCursor, IProvideViewLayout, IViewCursor, IViewLayout } from "./layout";
+export {
+	CursorDirection,
+	IProvideViewCursor,
+	IProvideViewLayout,
+	IViewCursor,
+	IViewLayout,
+} from "./layout";
 // eslint-disable-next-line import/no-internal-modules
 export { CharacterCodes } from "../text/characterCodes";
 export { KeyCode } from "./keycode";

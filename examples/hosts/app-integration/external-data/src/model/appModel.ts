@@ -14,17 +14,18 @@ import type { IAppModel, IAppModelEvents, ITaskList } from "../model-interface";
  * responsibilities and functionality.
  */
 export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
-    public constructor(
-        public readonly taskList: ITaskList,
-        container: IContainer,
-        private readonly runtime: IContainerRuntime ) {
-        super();
-    }
+	public constructor(
+		public readonly taskList: ITaskList,
+		container: IContainer,
+		private readonly runtime: IContainerRuntime,
+	) {
+		super();
+	}
 
-    /**
-     * {@inheritDoc IAppModel.debugSendCustomSignal}
-     */
-    public readonly debugSendCustomSignal = (): void => {
-        this.runtime.submitSignal("debugSignal", {message: "externalDataChanged"});
-    }
+	/**
+	 * {@inheritDoc IAppModel.sendCustomDebugSignal}
+	 */
+	public readonly sendCustomDebugSignal = (): void => {
+		this.runtime.submitSignal("debugSignal", { type: "ExternalDataChange" });
+	};
 }

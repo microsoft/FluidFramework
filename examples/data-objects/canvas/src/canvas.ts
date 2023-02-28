@@ -8,25 +8,25 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IInk, Ink } from "@fluidframework/ink";
 
 export class Canvas extends DataObject {
-    private _ink: IInk | undefined;
+	private _ink: IInk | undefined;
 
-    public get ink(): IInk {
-        if (this._ink === undefined) {
-            throw new Error("Ink should be defined before access");
-        }
-        return this._ink;
-    }
+	public get ink(): IInk {
+		if (this._ink === undefined) {
+			throw new Error("Ink should be defined before access");
+		}
+		return this._ink;
+	}
 
-    protected async initializingFirstTime(): Promise<void> {
-        this.root.set("ink", Ink.create(this.runtime).handle);
-    }
+	protected async initializingFirstTime(): Promise<void> {
+		this.root.set("ink", Ink.create(this.runtime).handle);
+	}
 
-    protected async hasInitialized(): Promise<void> {
-        // Wait here for the ink
-        const handle = this.root.get<IFluidHandle<IInk>>("ink");
-        if (handle === undefined) {
-            throw new Error("Canvas improperly initialized");
-        }
-        this._ink = await handle.get();
-    }
+	protected async hasInitialized(): Promise<void> {
+		// Wait here for the ink
+		const handle = this.root.get<IFluidHandle<IInk>>("ink");
+		if (handle === undefined) {
+			throw new Error("Canvas improperly initialized");
+		}
+		this._ink = await handle.get();
+	}
 }

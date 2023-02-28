@@ -5,3 +5,5 @@ _api-extractor-temp/
 nyc/
 oclif.manifest.json
 README.md
+# Generated type-tests
+**/*.generated.ts

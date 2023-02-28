@@ -8,4 +8,4 @@
  * of the intersecting properties of node and browser performance as required.
  */
 export type IsomorphicPerformance = Partial<Performance> &
-    Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
+	Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;

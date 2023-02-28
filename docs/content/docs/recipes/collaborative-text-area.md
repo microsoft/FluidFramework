@@ -65,11 +65,11 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     export default App;
     ```
 
-1. Add the following `import` statements. About this code, note: 
+1. Add the following `import` statements. About this code, note:
 
     - `TinyliciousClient` is a Fluid service that runs on the local development computer.
     - `SharedString` is the DDS that holds the text the collaborators will be writing.
-    - `SharStringHelper` is a class that provides APIs to interact with the SharedString object. 
+    - `SharStringHelper` is a class that provides APIs to interact with the SharedString object.
     - `CollaborativeTextArea` is a React component that you will create in a later step.
 
     ```ts
@@ -336,11 +336,6 @@ if (sharedString) {
     npm run start
     ```
 
-    {{< callout note >}}
-
-    If you receive a compilation error related to a "buffer" package, then you need to install an additional dependency to make this demo compatible with Webpack 5. Run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
-
-    {{< /callout >}}
 
 1. Paste the URL of the application into the address bar of another tab or even another browser to have more than one client open at a time. Edit the text on any client and see the text change and synchronize on all the clients.
 

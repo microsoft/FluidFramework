@@ -53,6 +53,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         lastSentMSN: 0,
         nackMessages: undefined,
         successfullyStartedLambdas: [],
+        checkpointTimestamp: Date.now(),
     };
 };
 
@@ -85,8 +86,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         let document: IDocument;
 
         try {
-            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-            gitManager = tenant.gitManager;
+            gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
             // Lookup the last sequence number stored
             // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
@@ -165,6 +165,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             } else {
                 lastCheckpoint = JSON.parse(document.deli);
             }
+        }
+
+        // Add checkpointTimestamp as UTC now if checkpoint doesn't have a timestamp yet.
+        if (lastCheckpoint.checkpointTimestamp === undefined || lastCheckpoint.checkpointTimestamp === null)
+        {
+            lastCheckpoint.checkpointTimestamp = Date.now();
         }
 
         // For cases such as detached container where the document was generated outside the scope of deli

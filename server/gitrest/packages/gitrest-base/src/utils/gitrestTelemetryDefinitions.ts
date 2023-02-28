@@ -28,6 +28,13 @@ export enum GitRestLumberEventName {
     GetTag = "GetTag",
     GetTree = "GetTree",
     PatchRef = "PatchRef",
+
+    // RepoManagerFactory
+    OpenRepo = "OpenRepo",
+    CreateRepo = "CreateRepo",
+
+    // Misc
+    CheckSoftDeleted = "CheckSoftDeleted",
 }
 
 // List of properties used in telemetry throughout GitRest

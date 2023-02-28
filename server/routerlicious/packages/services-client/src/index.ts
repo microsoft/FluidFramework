@@ -4,6 +4,7 @@
  */
 
 export { generateToken, generateUser, validateTokenClaims, validateTokenClaimsExpiration } from "./auth";
+export { convertSortedNumberArrayToRanges } from "./array";
 export { CorrelationIdHeaderName, DriverVersionHeaderName, LatestSummaryId } from "./constants";
 export {
 	createFluidServiceNetworkError,

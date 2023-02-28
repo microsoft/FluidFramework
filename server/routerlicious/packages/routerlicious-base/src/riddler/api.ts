@@ -10,6 +10,7 @@ import {
     ITenantStorage,
     ITenantOrderer,
     ITenantCustomData,
+    ICache,
 } from "@fluidframework/server-services-core";
 import { handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -23,6 +24,7 @@ export function create(
     defaultHistorianUrl: string,
     defaultInternalHistorianUrl: string,
     secretManager: ISecretManager,
+    cache?: ICache
 ): Router {
     const router: Router = Router();
     const manager = new TenantManager(
@@ -31,7 +33,8 @@ export function create(
         baseOrderUrl,
         defaultHistorianUrl,
         defaultInternalHistorianUrl,
-        secretManager);
+        secretManager,
+        cache);
 
     /**
      * Validates a tenant token. This only confirms that the token was correctly signed by the given tenant.

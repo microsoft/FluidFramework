@@ -325,6 +325,11 @@ The site theme/template lives in `themes/thxvscode`.
 The following npm scripts are supported in this directory:
 
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS:includeHeading=FALSE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
@@ -346,4 +351,7 @@ The following npm scripts are supported in this directory:
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
+
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->

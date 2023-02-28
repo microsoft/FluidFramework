@@ -12,19 +12,13 @@ import { jsRenderDiceRoller, reactRenderDiceRoller, vueRenderDiceRoller } from "
  * @param div - The div to render into
  */
 export function renderSampler(diceRoller: IDiceRoller, div: HTMLDivElement) {
-    const jsDiv = document.createElement("div");
-    const reactDiv = document.createElement("div");
-    const vueDiv = document.createElement("div");
+	const jsDiv = document.createElement("div");
+	const reactDiv = document.createElement("div");
+	const vueDiv = document.createElement("div");
 
-    div.append(
-        jsDiv,
-        document.createElement("hr"),
-        reactDiv,
-        document.createElement("hr"),
-        vueDiv,
-    );
+	div.append(jsDiv, document.createElement("hr"), reactDiv, document.createElement("hr"), vueDiv);
 
-    jsRenderDiceRoller(diceRoller, jsDiv);
-    reactRenderDiceRoller(diceRoller, reactDiv);
-    vueRenderDiceRoller(diceRoller, vueDiv);
+	jsRenderDiceRoller(diceRoller, jsDiv);
+	reactRenderDiceRoller(diceRoller, reactDiv);
+	vueRenderDiceRoller(diceRoller, vueDiv);
 }

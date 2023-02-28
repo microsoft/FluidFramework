@@ -69,10 +69,10 @@ the BSP sets in general to be fairly simple.
 
 Now the memory footprint of the BSP set is thus:
 
-- Some general overhead for the whole BSP set, i.e. object cost
-- Linear in the number of keys used for the exact representation.
-  Usually tiny, because they replace whole subtrees and occur infrequently.
-- About 2.5 bits per node. I.e. **tiny**.
+-   Some general overhead for the whole BSP set, i.e. object cost
+-   Linear in the number of keys used for the exact representation.
+    Usually tiny, because they replace whole subtrees and occur infrequently.
+-   About 2.5 bits per node. I.e. **tiny**.
 
 All the algorithms recurse over the structure of the tree, so they should be able to run over this
 bit encoding as well. Chances are it would be a lot faster, but definitely consuming a lot less

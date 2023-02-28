@@ -18,8 +18,8 @@ object defines the logic of your Fluid object, whereas the data object factory d
 
 The [DataObject][] class extends [PureDataObject](#puredataobject) and provides the following additional functionality:
 
-- A `root` SharedDirectory that makes creating and storing distributed data structures and objects easy.
-- Blob storage implementation that makes it easier to store and retrieve blobs.
+-   A `root` SharedDirectory that makes creating and storing distributed data structures and objects easy.
+-   Blob storage implementation that makes it easier to store and retrieve blobs.
 
 **Note:** Most developers will want to use the `DataObject` as their base class to extend.
 
@@ -27,14 +27,14 @@ The [DataObject][] class extends [PureDataObject](#puredataobject) and provides 
 
 [PureDataObject][] provides the following functionality:
 
-- Basic set of interface implementations to be loadable in a Fluid container.
-- Functions for managing the Fluid object lifecycle.
-  - `initializingFirstTime(props: S)` - called only the first time a Fluid object is initialized and only on the first
-    client on which it loads.
-  - `initializingFromExisting()` - called every time except the first time a Fluid object is initialized; that is, every
-    time an instance is loaded from a previously created instance.
-  - `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
-- Helper functions for creating and getting other data objects in the same container.
+-   Basic set of interface implementations to be loadable in a Fluid container.
+-   Functions for managing the Fluid object lifecycle.
+    -   `initializingFirstTime(props: S)` - called only the first time a Fluid object is initialized and only on the first
+        client on which it loads.
+    -   `initializingFromExisting()` - called every time except the first time a Fluid object is initialized; that is, every
+        time an instance is loaded from a previously created instance.
+    -   `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
+-   Helper functions for creating and getting other data objects in the same container.
 
 **Note:** You probably don't want to inherit from this data object directly unless you are creating another base data
 object class. If you have a data object that doesn't use distributed data structures you should use Container Services
@@ -42,7 +42,7 @@ to manage your object.
 
 ### DataObject example
 
-In the below example we have a simple data object, *Clicker*, that will render a value alongside a button the the page.
+In the below example we have a simple data object, _Clicker_, that will render a value alongside a button the the page.
 Every time the button is pressed the value will increment. Because this data object renders to the DOM it also extends
 `IFluidHTMLView`.
 
@@ -91,8 +91,8 @@ The Aqueduct offers a factory for each of the data objects provided.
 
 ### More details
 
-- [DataObjectFactory][]
-- [PureDataObjectFactory][]
+-   [DataObjectFactory][]
+-   [PureDataObjectFactory][]
 
 ### DataObjectFactory example
 
@@ -104,10 +104,10 @@ In the below example we build a `DataObjectFactory` for the [Clicker](#dataobjec
 
 ```typescript
 export const ClickerInstantiationFactory = new DataObjectFactory(
-    Clicker.Name,
-    Clicker,
-    [SharedCounter.getFactory()], // distributed data structures
-    {}, // Provider Symbols see below
+	Clicker.Name,
+	Clicker,
+	[SharedCounter.getFactory()], // distributed data structures
+	{}, // Provider Symbols see below
 );
 ```
 
@@ -129,7 +129,7 @@ In the below example we have an `IFluidUserInfo` interface that looks like this:
 
 ```typescript
 interface IFluidUserInfo {
-    readonly userCount: number;
+	readonly userCount: number;
 }
 ```
 
@@ -164,10 +164,10 @@ objects cannot be consumed except for when they are within a Container.
 The Aqueduct library provides the [ContainerRuntimeFactoryWithDefaultDataStore][] that enables you as a container
 developer to:
 
-- Define the registry of data objects that can be created
-- Declare the default data object
-- Use [provider entries](#provider-entries-development)
-- Declare Container level [Request Handlers](#container-level-request-handlers)
+-   Define the registry of data objects that can be created
+-   Declare the default data object
+-   Use [provider entries](#provider-entries-development)
+-   Declare Container level [Request Handlers](#container-level-request-handlers)
 
 ## Container object example
 
@@ -192,14 +192,14 @@ before the `DataObject` get function. Request handlers allow you to intercept re
 custom responses.
 
 Consider a scenario where you want to create a random color generator. I could create a RequestHandler that when someone
-makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200,
-type:"text/plain", value:"blue"}`.
+makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
 
 We use custom handlers to build the Container Services pattern.
 
 <!-- Links -->
-[ContainerRuntimeFactoryWithDefaultDataStore]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts
-[DataObject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-objects/dataObject.ts
-[DataObjectFactory]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/dataObjectFactory.ts
-[PureDataObject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObject.ts
-[PureDataObjectFactory]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts
+
+[containerruntimefactorywithdefaultdatastore]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts
+[dataobject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-objects/dataObject.ts
+[dataobjectfactory]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/dataObjectFactory.ts
+[puredataobject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObject.ts
+[puredataobjectfactory]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts

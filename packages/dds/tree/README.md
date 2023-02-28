@@ -1,6 +1,6 @@
 # @fluid-internal/tree
 
-This DDS is not yet ready for public consumption. See [roadmap.md](docs/roadmap.md).
+This DDS is not yet ready for public consumption. For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
 
 ## Motivation
 
@@ -315,9 +315,8 @@ flowchart
             dependency-tracking
             forest-->tree
         end
-        core-->events
-        core-->util
-        id-compressor-->util
+        core-->events-->util
+        core-->id-compressor-->util
         feature-->shared-tree-core
         shared-tree-core-->core
         shared-tree-->feature
@@ -328,7 +327,8 @@ flowchart
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
             modular-schema
-            object-forest-->treeTextCursor
+            object-forest-->mapTreeCursor-->treeCursorUtils
+            chunked-forest-->treeCursorUtils
             schemaIndex
             sequence-change-family-->treeTextCursor
         end
