@@ -81,6 +81,8 @@ export {
 	AnchorNode,
 	anchorSlot,
 	UpPath2,
+	inCursorField,
+	inCursorNode,
 } from "./tree";
 
 export {

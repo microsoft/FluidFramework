@@ -25,6 +25,8 @@ import {
 	ITreeCursor,
 	anchorSlot,
 	AnchorNode,
+	inCursorField,
+	inCursorNode,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
@@ -541,24 +543,21 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 	public has(field: FieldKey): boolean {
 		// Make fields present only if non-empty.
-		return this.inField(field, (cursor) => cursor.getFieldLength() !== 0);
+		return this.fieldLength(field) !== 0;
 	}
 
 	public unwrappedField(field: FieldKey): UnwrappedEditableField {
 		const schema = this.getFieldSchema(field);
-		return this.inField(field, (cursor) => unwrappedField(this.context, schema, cursor));
-	}
-
-	private inField<T>(field: FieldKey, f: (cursor: ITreeSubscriptionCursor) => T): T {
-		this.cursor.enterField(field);
-		const result = f(this.cursor);
-		this.cursor.exitField();
-		return result;
+		return inCursorField(this.cursor, field, (cursor) =>
+			unwrappedField(this.context, schema, cursor),
+		);
 	}
 
 	public getField(fieldKey: FieldKey): EditableField {
 		const schema = this.getFieldSchema(fieldKey);
-		return this.inField(fieldKey, (cursor) => makeField(this.context, schema, cursor));
+		return inCursorField(this.cursor, fieldKey, (cursor) =>
+			makeField(this.context, schema, cursor),
+		);
 	}
 
 	[Symbol.iterator](): IterableIterator<EditableField> {
@@ -596,6 +595,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		}
 	}
 
+	private fieldLength(field: FieldKey): number {
+		return inCursorField(this.cursor, field, (cursor) => cursor.getFieldLength());
+	}
+
 	public deleteField(fieldKey: FieldKey): void {
 		const fieldKind = this.lookupFieldKind(fieldKey);
 		const path = this.cursor.getPath();
@@ -605,7 +608,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				break;
 			}
 			case Multiplicity.Sequence: {
-				const length = this.inField(fieldKey, (cursor) => cursor.getFieldLength());
+				const length = this.fieldLength(fieldKey);
 				this.context.deleteNodes(path, fieldKey, 0, length);
 				break;
 			}
@@ -629,7 +632,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				break;
 			}
 			case Multiplicity.Sequence: {
-				const length = this.inField(fieldKey, (cursor) => cursor.getFieldLength());
+				const length = this.fieldLength(fieldKey);
 				/**
 				 * `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
 				 * `replaceNodes` should not overwrite concurrently inserted content while `replaceField` should.
@@ -944,10 +947,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	 * Returns a node (unwrapped by default, see {@link UnwrappedEditableTree}) by its index.
 	 */
 	public unwrappedTree(index: number): UnwrappedEditableTree {
-		this.cursor.enterNode(index);
-		const tree = unwrappedTree(this.context, this.cursor);
-		this.cursor.exitNode();
-		return tree;
+		return inCursorNode(this.cursor, index, (cursor) => unwrappedTree(this.context, cursor));
 	}
 
 	/**
@@ -958,10 +958,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			keyIsValidIndex(index, this.length),
 			0x454 /* A child node must exist at index to get it without unwrapping. */,
 		);
-		this.cursor.enterNode(index);
-		const tree = makeTree(this.context, this.cursor);
-		this.cursor.exitNode();
-		return tree;
+		return inCursorNode(this.cursor, index, (cursor) => makeTree(this.context, cursor));
 	}
 
 	/**
@@ -1227,10 +1224,7 @@ export function unwrappedField(
 	const length = cursor.getFieldLength();
 	assert(length <= 1, 0x3c8 /* invalid non sequence */);
 	if (length === 1) {
-		cursor.enterNode(0);
-		const proxifiedNode = unwrappedTree(context, cursor);
-		cursor.exitNode();
-		return proxifiedNode;
+		return inCursorNode(cursor, 0, (innerCursor) => unwrappedTree(context, innerCursor));
 	}
 	assert(
 		fieldKind.multiplicity === Multiplicity.Optional ||
