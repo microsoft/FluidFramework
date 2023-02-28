@@ -85,7 +85,7 @@ export class Outbox {
 				mainBatchReference === undefined ||
 				attachFlowBatchReference === undefined ||
 				mainBatchReference === attachFlowBatchReference,
-			"Reference sequence numbers from both batches must be in sync",
+			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
 		if (
@@ -175,9 +175,11 @@ export class Outbox {
 		if (
 			batch.content.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
-			this.params.config.compressionOptions.minimumBatchSizeInBytes > batch.contentSizeInBytes
+			this.params.config.compressionOptions.minimumBatchSizeInBytes >
+				batch.contentSizeInBytes ||
+			this.params.containerContext.submitBatchFn === undefined
 		) {
-			// Nothing to do if the batch is empty or if compression is disabled or if we don't need to compress
+			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
 			return batch;
 		}
 
@@ -235,7 +237,10 @@ export class Outbox {
 
 			this.params.containerContext.deltaManager.flush();
 		} else {
-			assert(batch.referenceSequenceNumber !== undefined, "Batch must not be empty");
+			assert(
+				batch.referenceSequenceNumber !== undefined,
+				0x58e /* Batch must not be empty */,
+			);
 			this.params.containerContext.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,

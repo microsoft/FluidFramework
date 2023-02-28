@@ -944,7 +944,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				);
 
 				// Add the new handle and then remove all the handles to unreference the blob.
-				mainDataStore._root.set("blob3", blobHandle2);
+				mainDataStore._root.set("blob3", blobHandle3);
 				mainDataStore._root.delete("blob1");
 				mainDataStore._root.delete("blob2");
 				mainDataStore._root.delete("blob3");
@@ -1004,7 +1004,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		function validateBlobStateInSummary(summaryTree: ISummaryTree, blobNodePath: string) {
 			// Validate that the blob tree should not be in the summary since there should be no attachment blobs.
 			const blobsTree = summaryTree.tree[blobsTreeName] as ISummaryTree;
-			assert(blobsTree === undefined, "Blobs tree should be present in the summary");
+			assert(blobsTree === undefined, "Blobs tree should not be present in the summary");
 
 			// Validate that the GC state does not contain an entry for the deleted blob.
 			const gcState = getGCStateFromSummary(summaryTree);

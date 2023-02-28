@@ -88,26 +88,14 @@ use_old_TypeAliasDeclaration_AttributionKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_BindState": {"forwardCompat": false}
+* "RemovedEnumDeclaration_BindState": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_BindState():
-    TypeOnly<old.BindState>;
-declare function use_current_EnumDeclaration_BindState(
-    use: TypeOnly<current.BindState>);
-use_current_EnumDeclaration_BindState(
-    get_old_EnumDeclaration_BindState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_BindState": {"backCompat": false}
+* "RemovedEnumDeclaration_BindState": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_BindState():
-    TypeOnly<current.BindState>;
-declare function use_old_EnumDeclaration_BindState(
-    use: TypeOnly<old.BindState>);
-use_old_EnumDeclaration_BindState(
-    get_current_EnumDeclaration_BindState());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -527,6 +515,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>);
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*

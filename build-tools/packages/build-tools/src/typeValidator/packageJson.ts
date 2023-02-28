@@ -389,6 +389,7 @@ export async function getAndUpdatePackageDetails(
 
 	const version = packageDetails.json.version;
 	const cachedPreviousVersionStyle = packageDetails.typeValidation?.previousVersionStyle;
+	const cachedBaselineRange = packageDetails.typeValidation?.baselineRange;
 	const fluidConfig = pkg.monoRepo?.fluidBuildConfig ?? pkg.fluidBuildConfig;
 	const branch = branchName ?? context.originalBranchName;
 	let releaseType: VersionBumpType | undefined;
@@ -448,6 +449,18 @@ export async function getAndUpdatePackageDetails(
 		return {
 			skipReason: `Skipping package: couldn't calculate a previous version from version '${version}'`,
 		};
+	}
+
+	// Find the minimum baseline version; if it's the same as the current version, it means we're on a new version
+	// series (e.g. 2.1.0, 3.0.0, 4.2.0, etc.) and should use the cached version
+	const baselineMinVer = semver.minVersion(baseline);
+	if (baselineMinVer?.version === version) {
+		if (cachedBaselineRange === undefined) {
+			return {
+				skipReason: `Skipping package: no cachedBaselineRange is defined as a fallback.`,
+			};
+		}
+		baseline = cachedBaselineRange;
 	}
 
 	if (
