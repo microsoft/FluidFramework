@@ -14,7 +14,7 @@ import {
 import { FluidReleaseStateHandler, FluidReleaseStateHandlerData, StateHandler } from "../handlers";
 import { PromptWriter } from "../instructionalPromptWriter";
 import { FluidReleaseMachine } from "../machines";
-import { getPolicyRunDefault } from "../repoConfig";
+import { getRunPolicyCheckDefault } from "../repoConfig";
 import { StateMachineCommand } from "../stateMachineCommand";
 
 /**
@@ -69,7 +69,7 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
 			? false
 			: undefined;
 
-		const branchPolicyCheckDefault = getPolicyRunDefault(
+		const branchPolicyCheckDefault = getRunPolicyCheckDefault(
 			this.data.releaseGroup,
 			context.originalBranchName,
 		);

@@ -25,7 +25,7 @@ import {
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
-import { getPolicyRunDefault } from "../repoConfig";
+import { getRunPolicyCheckDefault } from "../repoConfig";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
@@ -403,7 +403,7 @@ export const checkPolicy: StateHandlerFunction = async (
 	assert(releaseGroup !== undefined, "Release group is undefined.");
 
 	if (shouldCheckPolicy === true) {
-		if (getPolicyRunDefault(releaseGroup, context.originalBranchName)) {
+		if (!getRunPolicyCheckDefault(releaseGroup, context.originalBranchName)) {
 			log.warning(
 				`Policy check fixes for ${releaseGroup} are not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
 			);
@@ -425,7 +425,7 @@ export const checkPolicy: StateHandlerFunction = async (
 			BaseStateHandler.signalFailure(machine, state);
 			return false;
 		}
-	} else if (getPolicyRunDefault(releaseGroup, context.originalBranchName) === false) {
+	} else if (getRunPolicyCheckDefault(releaseGroup, context.originalBranchName) === false) {
 		log.verbose(
 			`Skipping policy check for ${releaseGroup} because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
 		);
@@ -461,7 +461,7 @@ export const checkAssertTagging: StateHandlerFunction = async (
 	assert(releaseGroup !== undefined, "Release group is undefined.");
 
 	if (shouldCheckPolicy === true) {
-		if (getPolicyRunDefault(releaseGroup, context.originalBranchName)) {
+		if (!getRunPolicyCheckDefault(releaseGroup, context.originalBranchName)) {
 			log.warning(
 				`Assert tagging for ${releaseGroup} is not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
 			);
@@ -483,7 +483,7 @@ export const checkAssertTagging: StateHandlerFunction = async (
 			BaseStateHandler.signalFailure(machine, state);
 			return false;
 		}
-	} else if (getPolicyRunDefault(releaseGroup, context.originalBranchName) === false) {
+	} else if (getRunPolicyCheckDefault(releaseGroup, context.originalBranchName) === false) {
 		log.verbose(
 			`Skipping assert tagging for ${releaseGroup} because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
 		);
