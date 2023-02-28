@@ -63,7 +63,9 @@ export class WindowConnection
 	 * Handler for incoming messages from the Window (globalThis).
 	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
 	 */
-	private onWindowMessageEvent(event: MessageEvent<Partial<IDebuggerMessage>>): void {
+	private readonly onWindowMessageEvent = (
+		event: MessageEvent<Partial<IDebuggerMessage>>,
+	): void => {
 		const message = event.data;
 
 		// Only relay message if it is one of ours, and if the source is the window's debugger
@@ -72,5 +74,5 @@ export class WindowConnection
 			console.log(formatForLogging(`Relaying message from Window to Extension:`), message);
 			this.emit("message", message);
 		}
-	}
+	};
 }

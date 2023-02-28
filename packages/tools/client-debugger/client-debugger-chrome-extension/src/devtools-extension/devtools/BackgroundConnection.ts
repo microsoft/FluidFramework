@@ -124,11 +124,11 @@ export class BackgroundConnection
 	 * Handler for a disconnect event coming from the background service.
 	 * Immediately throws, since this type is currently not capable of recovering from this state.
 	 */
-	private onBackgroundServiceDisconnect(): void {
+	private readonly onBackgroundServiceDisconnect = (): void => {
 		throw new Error(
 			formatDevtoolsScriptMessageForLogging(
 				"The Background Script disconnected. Further use of the message relay is not allowed.",
 			),
 		);
-	}
+	};
 }
