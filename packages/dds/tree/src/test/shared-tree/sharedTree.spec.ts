@@ -794,7 +794,7 @@ describe("SharedTree", () => {
 			assert.equal(peekTestValue(checkout), "base");
 		});
 
-		it("submits edits to fluid when merging into the root checkout", async () => {
+		it("submits edits to Fluid when merging into the root checkout", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 			const baseCheckout = tree1.fork();

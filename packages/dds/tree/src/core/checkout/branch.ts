@@ -93,15 +93,15 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 			() => this.head,
 			(forked) => {
 				// In this function, `this` is the base and `forked` is the fork being merged in
-				const changes: GraphCommit<TChange>[] = [];
+				const commits: GraphCommit<TChange>[] = [];
 				const baseBranch = forked.getBaseBranch();
 				assert(
-					findAncestor([forked.head, changes], (c) => c === baseBranch) !== undefined,
+					findAncestor([forked.head, commits], (c) => c === baseBranch) !== undefined,
 					"Expected merging checkout branches to be related",
 				);
 				this.head = forked.head;
 				assert(this.forks.delete(forked), "Invalid checkout merge");
-				const change = this.rebaser.changeRebaser.compose(changes);
+				const change = this.rebaser.changeRebaser.compose(commits);
 				this.emit("onChange", change);
 				return change;
 			},
