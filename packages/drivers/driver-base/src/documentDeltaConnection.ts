@@ -30,6 +30,7 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 	EventEmitterWithErrorHandling,
+	normalizeError,
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
@@ -91,9 +92,8 @@ export class DocumentDeltaConnection
 				0x244 /* "Socket is closed, but connection is not!" */,
 			);
 		} catch (error) {
-			this.logger.sendErrorEvent(
-				{
-					eventName: "ConnectionDisposedAnomaly",
+			normalizeError(error, {
+				props: {
 					details: JSON.stringify({
 						disposed: this._disposed,
 						socketConnected: this.socket?.connected,
@@ -101,8 +101,7 @@ export class DocumentDeltaConnection
 						conenctionId: this.connectionId,
 					}),
 				},
-				error,
-			);
+			});
 			throw error;
 		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
@@ -253,9 +252,8 @@ export class DocumentDeltaConnection
 			(Error as any).stackTraceLimit = 50;
 			assert(!this.disposed, 0x20c /* "connection disposed" */);
 		} catch (error) {
-			this.logger.sendErrorEvent(
-				{
-					eventName: "ConnectionDisposed",
+			normalizeError(error, {
+				props: {
 					details: JSON.stringify({
 						disposed: this._disposed,
 						socketConnected: this.socket?.connected,
@@ -263,8 +261,7 @@ export class DocumentDeltaConnection
 						conenctionId: this.connectionId,
 					}),
 				},
-				error,
-			);
+			});
 			throw error;
 		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
