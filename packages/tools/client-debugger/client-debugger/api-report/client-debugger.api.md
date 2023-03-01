@@ -31,6 +31,12 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
     clientId: string | undefined;
 }
 
+// @public
+export interface ContainerMetadata {
+    id: string;
+    nickname?: string;
+}
+
 // @internal
 export enum ContainerStateChangeKind {
     Attached = "attached",
