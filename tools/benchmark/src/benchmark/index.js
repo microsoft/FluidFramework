@@ -11,7 +11,6 @@
 /* eslint-disable unicorn/better-regex */
 /* eslint-disable no-func-assign */
 /* eslint-disable prefer-arrow-callback */
-/* eslint-disable no-var */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable object-shorthand */
 /* eslint-disable @typescript-eslint/no-this-alias */
@@ -38,47 +37,18 @@
 
 import _ from "lodash";
 
-/** Used as a safe reference for `undefined` in pre ES5 environments. */
-let undefined;
-
 /** Used to determine if values are of the language type Object. */
 const objectTypes = {
 	function: true,
 	object: true,
 };
 
-/** Used as a reference to the global object. */
-let root = (objectTypes[typeof window] && window) || this;
-
 /** Detect free variable `define`. */
 const freeDefine =
 	typeof define == "function" && typeof define.amd == "object" && define.amd && define;
 
-/** Detect free variable `exports`. */
-const freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-const freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
-
-/** Detect free variable `global` from Node.js or Browserified code and use it as `root`. */
-const freeGlobal = freeExports && freeModule && typeof global == "object" && global;
-if (
-	freeGlobal &&
-	(freeGlobal.global === freeGlobal ||
-		freeGlobal.window === freeGlobal ||
-		freeGlobal.self === freeGlobal)
-) {
-	root = freeGlobal;
-}
-
-/** Detect free variable `require`. */
-const freeRequire = typeof require == "function" && require;
-
 /** Used to assign each benchmark an incremented id. */
 let counter = 0;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-const moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
 
 /** Used to detect primitive types. */
 const rePrimitive = /^(?:boolean|number|string|undefined)$/;
@@ -221,49 +191,30 @@ const uTable = {
  * @returns {Function} Returns a new `Benchmark` function.
  */
 function runInContext(context) {
-	// Avoid issues with some ES3 environments that attempt to use values, named
-	// after built-in constructors like `Object`, for the creation of literals.
-	// ES5 clears this up by stating that literals must use built-in constructors.
-	// See http://es5.github.io/#x11.1.5.
-	context = context ? _.defaults(root.Object(), context, _.pick(root, contextProps)) : root;
-
-	/** Native constructor references. */
-	const Array = context.Array;
-	const Date = context.Date;
-	const Function = context.Function;
-	const Math = context.Math;
-	const Object = context.Object;
-	const RegExp = context.RegExp;
-	const String = context.String;
-
 	/** Used for `Array` and `Object` method references. */
 	const arrayRef = [];
 	const objectProto = Object.prototype;
 
 	/** Native method shortcuts. */
 	const abs = Math.abs;
-	const clearTimeout = context.clearTimeout;
 	const floor = Math.floor;
 	const log = Math.log;
 	const max = Math.max;
 	const min = Math.min;
 	const pow = Math.pow;
 	const push = arrayRef.push;
-	const setTimeout = context.setTimeout;
 	const shift = arrayRef.shift;
 	const slice = arrayRef.slice;
 	const sqrt = Math.sqrt;
 	const toString = objectProto.toString;
 	const unshift = arrayRef.unshift;
 
-	/** Used to avoid inclusion in Browserified bundles. */
-	const req = require;
-
 	/** Detect DOM document object. */
 	const doc = isHostType(context, "document") && context.document;
 
 	/** Used to access Wade Simmons' Node.js `microtime` module. */
-	const microtimeObject = req("microtime");
+	// TODO: maybe restore this functionality
+	const microtimeObject = undefined; // req("microtime");
 
 	/** Used to access Node.js's high resolution timer. */
 	const processObject = isHostType(context, "process") && context.process;
@@ -317,6 +268,7 @@ function runInContext(context) {
 			// Firefox 3.6 and Opera 9.25 strip grouping parentheses from `Function#toString` results.
 			// See http://bugzil.la/559438 for more details.
 			support.decompilation =
+				// eslint-disable-next-line no-new-func
 				Function(
 					(
 						"return (" +
@@ -524,7 +476,7 @@ function runInContext(context) {
 	 * @param {*} value - The value to clone.
 	 * @returns {*} The cloned value.
 	 */
-	var cloneDeep = _.partial(_.cloneDeepWith, _, function (value) {
+	const cloneDeep = _.partial(_.cloneDeepWith, _, function (value) {
 		// Only clone primitives, arrays, and plain objects.
 		if (!_.isArray(value) && !_.isPlainObject(value)) {
 			return value;
@@ -683,20 +635,6 @@ function runInContext(context) {
 	 */
 	function isStringable(value) {
 		return _.isString(value) || (_.has(value, "toString") && _.isFunction(value.toString));
-	}
-
-	/**
-	 * A wrapper around `require` to suppress `module missing` errors.
-	 *
-	 * @private
-	 * @param {string} id - The module id.
-	 * @returns {*} The exported module or `null`.
-	 */
-	function require(id) {
-		try {
-			var result = freeExports && freeRequire(id);
-		} catch (e) {}
-		return result || null;
 	}
 
 	/**
@@ -2486,7 +2424,7 @@ function runInContext(context) {
 	return Benchmark;
 }
 
-const Benchmark = runInContext();
+const Benchmark = runInContext(globalThis);
 
 // eslint-disable-next-line import/no-default-export
 export { Benchmark as default, Benchmark };
