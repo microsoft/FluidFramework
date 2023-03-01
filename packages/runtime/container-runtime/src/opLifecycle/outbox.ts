@@ -233,8 +233,11 @@ export class Outbox {
 		if (this.params.containerContext.submitBatchFn === undefined) {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
-			assert(batch.content[0].compression === undefined, "Compression should not have happened if the loader does not support it");
-			
+			assert(
+				batch.content[0].compression === undefined,
+				"Compression should not have happened if the loader does not support it",
+			);
+
 			for (const message of batch.content) {
 				this.params.containerContext.submitFn(
 					MessageType.Operation,
