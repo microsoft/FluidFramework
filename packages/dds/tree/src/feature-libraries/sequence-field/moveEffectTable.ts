@@ -55,7 +55,7 @@ export interface MoveEffect<T> {
 	/**
 	 * The ID of a mark which can be merged into this mark from the right.
 	 */
-	mergeRight?: MoveId; // Do we need this?
+	mergeRight?: MoveId;
 
 	/**
 	 * Node changes which should be applied to this mark.
