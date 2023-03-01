@@ -114,26 +114,32 @@ export class CheckpointManager implements ICheckpointManager {
     private async writeScribeCheckpointState(checkpoint: IScribe) {
         const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
         Lumberjack.info(`Writing checkpoint to global database.`, lumberProperties);
-        await this.writeScribeCheckpointToCollection(this.localDocumentCollection, checkpoint);
-        // Check if we are using local & global collections
-        if(this.localDocumentCollection){
-            Lumberjack.info(`Writing checkpoint to local database.`, lumberProperties);
-            await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
+        const checkpointFilter =  {
+            documentId: this.documentId,
+            tenantId: this.tenantId,
         }
-    }
 
-    private async writeScribeCheckpointToCollection(collection: ICollection<IDocument>, checkpoint: IScribe) {
-        await collection.update(
-            {
-                documentId: this.documentId,
-                tenantId: this.tenantId,
-            },
-            {
-                // MongoDB is particular about the format of stored JSON data. For this reason we store stringified
-                // given some data is user generated.
-                scribe: JSON.stringify(checkpoint),
-            },
-            null);
+        const checkpointData = {
+            // MongoDB is particular about the format of stored JSON data. For this reason we store stringified
+            // given some data is user generated.
+            scribe: JSON.stringify(checkpoint),
+        }
+
+        // Write to global document collection
+        await this.documentCollection.update(checkpointFilter, checkpointData, null)
+            .catch((error) => {
+                Lumberjack.error(`Error writing checkpoint to global database`, lumberProperties, error);
+            });
+
+        // Write to local document collection
+        if (this.localDocumentCollection) {
+            Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
+            // Use upsert in case document does not exist in local DB
+            await this.localDocumentCollection.upsert(checkpointFilter, checkpointData, null)
+                .catch((error) => {
+                    Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
+                });
+        }
     }
 
     /**
