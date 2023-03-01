@@ -110,8 +110,8 @@ acceptable for real-time interactivity, but can be useful for scenarios with mor
    degrade load time over the lifetime of the DDS.
 1. The requirement of "eventual consistency" has some flexibility to it.  Discrepancies between clients are allowed as
    long as they don't result in disagreements between clients on the observable state of the data. For example:
-   - SharedString can be represented differently across clients in internal in-memory representation depending on op
+   -   SharedString can be represented differently across clients in internal in-memory representation depending on op
      order, but this discrepancy is invisible to the user of the SharedString DDS.
-   - SharedMap will raise a different number of valueChanged events across clients when simultaneous sets occur. the
+   -   SharedMap will raise a different number of valueChanged events across clients when simultaneous sets occur. the
      client that set last will get a single valueChanged event, while earlier setters will get an additional event for
      each set after their own.

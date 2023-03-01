@@ -12,21 +12,21 @@ import {
 	TransactionResult,
 	tagChange,
 	makeAnonChange,
+	mintRevisionTag,
 } from "../core";
-import { brand } from "../util";
 import { ForestRepairDataStore } from "./forestRepairDataStore";
 
 export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange>(
 	{ forest, changeFamily, submitEdit }: Checkout<TEditor, TChange>,
 	command: (forest: IForestSubscription, editor: TEditor) => TransactionResult,
 ): TransactionResult {
-	// This revision number is solely used within the scope of this transaction for the purpose of
+	// These revision numbers are solely used within the scope of this transaction for the purpose of
 	// populating and querying the repair data store. Both the revision numbers and the repair data
 	// are scoped to this transaction.
-	let currentRevision = 0;
+	const revisions: RevisionTag[] = [];
 	const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
 		assert(
-			revision === currentRevision,
+			revision === revisions[revisions.length - 1],
 			0x479 /* The repair data store should only ask for the current forest state */,
 		);
 		return forest;
@@ -34,15 +34,16 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 
 	const editor = changeFamily.buildEditor((edit) => {
 		const delta = changeFamily.intoDelta(edit);
-		repairStore.capture(delta, brand(currentRevision));
+		const revision = mintRevisionTag();
+		revisions.push(revision);
+		repairStore.capture(delta, revision);
 		forest.applyDelta(delta);
-		currentRevision += 1;
 	}, forest.anchors);
 
 	const result = command(forest, editor);
 	const changes = editor.getChanges();
 	const inverses = changes
-		.map((change, index) => changeFamily.rebaser.invert(tagChange(change, brand(index))))
+		.map((change, index) => changeFamily.rebaser.invert(tagChange(change, revisions[index])))
 		.reverse();
 
 	// TODO: in the non-abort case, optimize this to not rollback the edit,

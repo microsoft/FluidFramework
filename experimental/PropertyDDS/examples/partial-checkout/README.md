@@ -1,4 +1,4 @@
-# @fluid-experimental/partial-checkout
+# @fluid-example/partial-checkout
 
 Creates a simple colored squares board. After installing and starting (directions below) you can create start creating and moving squares going to localhost:8080. Your path variable is the unique identifier for that collaborative session.
 

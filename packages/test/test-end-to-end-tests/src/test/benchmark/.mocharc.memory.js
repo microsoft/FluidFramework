@@ -6,8 +6,11 @@
 /**
  * Mocha configuration file for memory profiling tests
  */
+const getFluidTestMochaConfig = require("@fluidframework/test-version-utils/mocharc-common.js");
+const packageDir = `${__dirname}/../../..`;
 
-module.exports = {
+const config = getFluidTestMochaConfig(packageDir);
+const newConfig = {
 	"extends": "../.mocharc.js",
 	"exit": true,
 	"fgrep": ["@Benchmark", "@MemoryUsage"],
@@ -15,7 +18,8 @@ module.exports = {
 	"recursive": true,
 	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
-	"require": ["node_modules/@fluidframework/mocha-test-setup"],
+	"require": [...config.require, "node_modules/@fluidframework/mocha-test-setup"],
 	"spec": ["dist/test/benchmark/**/*.memory.spec.js", "--perfMode"],
 	"timeout": "60000",
 };
+module.exports = newConfig;

@@ -373,7 +373,8 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
             fileSystemManagerFactory,
             externalStorageManager,
             repoPerDocEnabled,
-            enableRepositoryManagerMetrics);
+            enableRepositoryManagerMetrics,
+            false /* enforceSynchronous */);
     }
 
     protected async initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<void> {
@@ -411,9 +412,9 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
     /**
      * A trimmed down version of iso-git's init function
      * https://github.com/isomorphic-git/isomorphic-git/blob/c09dfa20ffe0ab9e6602e0fa172d72ba8994e443/src/commands/init.js#L15
-     * 
+     *
      * Removes checking existence, writing a config file, writing a hooks and info folders, and /HEAD file.
-     * 
+     *
      * This brings file reads from 1 to 0, and writes from 10 to 3.
      */
     private async slimInit(fs: IFileSystemManager, gitdir: string): Promise<void> {

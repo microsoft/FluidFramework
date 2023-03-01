@@ -29,27 +29,6 @@ export function fail(message: string): never {
 }
 
 /**
- * Use as a default branch in switch statements to enforce (at compile time) that all possible branches are accounted
- * for, according to the TypeScript type system.
- * As an additional protection, it errors if called.
- *
- * Example:
- * ```typescript
- * const bool: true | false = ...;
- * switch(bool) {
- *   case true: {...}
- *   case false: {...}
- *   default: unreachableCase(bool);
- * }
- * ```
- *
- * @param never - The switch value
- */
-export function unreachableCase(never: never): never {
-	fail("unreachableCase was called");
-}
-
-/**
  * Checks whether or not the given object is a `readonly` array.
  */
 export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
@@ -170,6 +149,40 @@ export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
 		map.set(key, collection);
 	}
 	return collection;
+}
+
+/**
+ * Map one iterable to another by transforming each element one at a time
+ * @param iterable - the iterable to transform
+ * @param map - the transformation function to run on each element of the iterable
+ * @returns a new iterable of elements which have been transformed by the `map` function
+ */
+export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Iterable<U> {
+	for (const t of iterable) {
+		yield map(t);
+	}
+}
+
+/**
+ * Returns an iterable of tuples containing pairs of elements from the given iterables
+ * @param iterableA - an iterable to zip together with `iterableB`
+ * @param iterableB - an iterable to zip together with `iterableA`
+ * @returns in iterable of tuples of elements zipped together from `iterableA` and `iterableB`.
+ * If the input iterables are of different lengths, then the extra elements in the longer will be ignored.
+ */
+export function* zipIterables<T, U>(
+	iterableA: Iterable<T>,
+	iterableB: Iterable<U>,
+): Iterable<[T, U]> {
+	const iteratorA = iterableA[Symbol.iterator]();
+	const iteratorB = iterableB[Symbol.iterator]();
+	for (
+		let nextA = iteratorA.next(), nextB = iteratorB.next();
+		!nextA.done && !nextB.done;
+		nextA = iteratorA.next(), nextB = iteratorB.next()
+	) {
+		yield [nextA.value, nextB.value];
+	}
 }
 
 /**

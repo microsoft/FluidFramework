@@ -25,7 +25,15 @@ import {
 	TypedEventEmitter,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import { ChildLogger, LoggingError, raiseConnectedEvent } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	generateStack,
+	LoggingError,
+	loggerToMonitoringContext,
+	MonitoringContext,
+	raiseConnectedEvent,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -37,14 +45,12 @@ import {
 	IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
-	BindState,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
 	IFluidDataStoreContext,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	VisibilityState,
@@ -60,6 +66,7 @@ import {
 	createResponseError,
 	exceptionToResponse,
 	requestFluidObject,
+	packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -67,12 +74,7 @@ import {
 	IFluidDataStoreRuntimeEvents,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import {
-	GCDataBuilder,
-	removeRouteFromAllNodes,
-	unpackChildNodesGCDetails,
-	unpackChildNodesUsedRoutes,
-} from "@fluidframework/garbage-collector";
+import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import {
@@ -183,7 +185,6 @@ export class FluidDataStoreRuntime
 	private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
 
-	private bindState: BindState;
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
 	private readonly notBoundedChannelContextSet = new Set<string>();
@@ -198,11 +199,17 @@ export class FluidDataStoreRuntime
 	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
-	public readonly logger: ITelemetryLogger;
+	private readonly mc: MonitoringContext;
+	public get logger(): ITelemetryLogger {
+		return this.mc.logger;
+	}
 
-	// A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
-	// channel contexts.
-	private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
+	/**
+	 * If the summarizer makes local changes, a telemetry event is logged. This has the potential to be very noisy.
+	 * So, adding a count of how many telemetry events are logged per data store context. This can be
+	 * controlled via feature flags.
+	 */
+	private localChangesTelemetryCount: number;
 
 	/**
 	 * Invokes the given callback and expects that no ops are submitted
@@ -243,9 +250,11 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.logger = ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
-			all: { dataStoreId: uuid() },
-		});
+		this.mc = loggerToMonitoringContext(
+			ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
+				all: { dataStoreId: uuid() },
+			}),
+		);
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
@@ -254,11 +263,6 @@ export class FluidDataStoreRuntime
 		this.audience = dataStoreContext.getAudience();
 
 		const tree = dataStoreContext.baseSnapshot;
-
-		this.channelsBaseGCDetails = new LazyPromise(async () => {
-			const baseGCDetails = await this.dataStoreContext.getBaseGCDetails();
-			return unpackChildNodesGCDetails(baseGCDetails);
-		});
 
 		// Must always receive the data store type inside of the attributes
 		if (tree?.trees !== undefined) {
@@ -316,7 +320,6 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext.getCreateChildSummarizerNodeFn(path, {
 							type: CreateSummarizerNodeSource.FromSummary,
 						}),
-						async () => this.getChannelBaseGCDetails(path),
 					);
 				}
 				const deferred = new Deferred<IChannelContext>();
@@ -337,8 +340,6 @@ export class FluidDataStoreRuntime
 		}
 
 		this.attachListener();
-		// If exists on storage or loaded from a snapshot, it should already be bound.
-		this.bindState = existing ? BindState.Bound : BindState.NotBound;
 		this._attachState = dataStoreContext.attachState;
 
 		/**
@@ -364,6 +365,10 @@ export class FluidDataStoreRuntime
 		if (existing) {
 			this.deferredAttached.resolve();
 		}
+
+		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
+		this.localChangesTelemetryCount =
+			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 	}
 
 	public dispose(): void {
@@ -398,7 +403,10 @@ export class FluidDataStoreRuntime
 
 					return { mimeType: "fluid/object", status: 200, value: channel };
 				} catch (error) {
-					this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+					this.mc.logger.sendErrorEvent(
+						{ eventName: "GetChannelFailedInRequest" },
+						error,
+					);
 
 					return createResponseError(500, `Failed to get Channel: ${error}`, request);
 				}
@@ -461,6 +469,9 @@ export class FluidDataStoreRuntime
 			this.contextsDeferred.set(id, deferred);
 		}
 
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+
 		assert(!!context.channel, 0x17a /* "Channel should be loaded when created!!" */);
 		return context.channel;
 	}
@@ -522,7 +533,7 @@ export class FluidDataStoreRuntime
 			handle.attachGraph();
 		});
 		this.pendingHandlesToMakeVisible.clear();
-		this.bindToContext();
+		this.dataStoreContext.makeLocallyVisible();
 	}
 
 	/**
@@ -540,12 +551,7 @@ export class FluidDataStoreRuntime
 	 * 2. Attaching the graph if the data store becomes attached.
 	 */
 	public bindToContext() {
-		if (this.bindState !== BindState.NotBound) {
-			return;
-		}
-		this.bindState = BindState.Binding;
-		this.dataStoreContext.bindToContext();
-		this.bindState = BindState.Bound;
+		this.makeVisibleAndAttachGraph();
 	}
 
 	public bind(handle: IFluidHandle): void {
@@ -600,12 +606,7 @@ export class FluidDataStoreRuntime
 						);
 						this.pendingAttach.delete(id);
 					} else {
-						assert(
-							!this.contexts.has(id),
-							0x17d /* `Unexpected attach channel OP,
-                            is in pendingAttach set: ${this.pendingAttach.has(id)},
-                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContextBase}` */,
-						);
+						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
 
 						const flatBlobs = new Map<string, ArrayBufferLike>();
 						const snapshotTree = buildSnapshotTree(
@@ -631,7 +632,6 @@ export class FluidDataStoreRuntime
 								sequenceNumber: message.sequenceNumber,
 								snapshot: attachMessage.snapshot,
 							}),
-							async () => this.getChannelBaseGCDetails(id),
 							attachMessage.type,
 						);
 
@@ -778,34 +778,6 @@ export class FluidDataStoreRuntime
 	 */
 	private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
 		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
-	}
-
-	/**
-	 * Returns the base GC details for the channel with the given id. This is used to initialize its GC state.
-	 * @param channelId - The id of the channel context that is asked for the initial GC details.
-	 * @returns the requested channel's base GC details.
-	 */
-	private async getChannelBaseGCDetails(
-		channelId: string,
-	): Promise<IGarbageCollectionDetailsBase> {
-		let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
-		if (channelBaseGCDetails === undefined) {
-			channelBaseGCDetails = {};
-		} else if (channelBaseGCDetails.gcData?.gcNodes !== undefined) {
-			// Note: if the child channel has an explicit handle route to its parent, it will be removed here and
-			// expected to be added back by the parent when getGCData is called.
-			removeRouteFromAllNodes(channelBaseGCDetails.gcData.gcNodes, this.absolutePath);
-		}
-
-		// Currently, channel context's are always considered used. So, it there are no used routes for it, we still
-		// need to mark it as used. Add self-route (empty string) to the channel context's used routes.
-		if (
-			channelBaseGCDetails.usedRoutes === undefined ||
-			channelBaseGCDetails.usedRoutes.length === 0
-		) {
-			channelBaseGCDetails.usedRoutes = [""];
-		}
-		return channelBaseGCDetails;
 	}
 
 	/**
@@ -1108,6 +1080,42 @@ export class FluidDataStoreRuntime
 		if (this._disposed) {
 			throw new LoggingError("Runtime is closed");
 		}
+	}
+
+	/**
+	 * Summarizer client should not have local changes. These changes can become part of the summary and can break
+	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
+	 * other clients that are up-to-date till seq# 100 may not have them yet.
+	 */
+	private identifyLocalChangeInSummarizer(
+		eventName: string,
+		channelId: string,
+		channelType: string,
+	) {
+		if (this.clientDetails.type !== "summarizer" || this.localChangesTelemetryCount <= 0) {
+			return;
+		}
+
+		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+		// this is happening and which data stores do this. The eventual goal is to disallow local changes
+		// in the summarizer and the data will help us plan this.
+		this.mc.logger.sendTelemetryEvent({
+			eventName,
+			channelType,
+			channelId: {
+				value: channelId,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			fluidDataStoreId: {
+				value: this.id,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			fluidDataStorePackagePath: packagePathToTelemetryProperty(
+				this.dataStoreContext.packagePath,
+			),
+			stack: generateStack(),
+		});
+		this.localChangesTelemetryCount--;
 	}
 }
 

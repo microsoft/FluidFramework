@@ -240,6 +240,7 @@ export class SummaryReader implements ISummaryReader {
             lastSentMSN: undefined,
             nackMessages: undefined,
             successfullyStartedLambdas: [],
+            checkpointTimestamp: undefined,
         };
     }
 

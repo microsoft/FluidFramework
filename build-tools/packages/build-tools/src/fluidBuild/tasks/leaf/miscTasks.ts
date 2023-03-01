@@ -9,6 +9,7 @@ import * as path from "path";
 import { defaultLogger } from "../../../common/logging";
 import { ScriptDependencies } from "../../../common/npmPackage";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
+import { getPackageDetails } from "../../../typeValidator/packageJson";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -64,21 +65,24 @@ export class CopyfilesTask extends LeafWithDoneFileTask {
 		// TODO: something better
 		const args = this.command.split(" ");
 
-		// Only handle -u arg
-		let srcArgIndex = 1;
-		if (args[1] === "-u" || args[1] === "--up") {
-			if (3 >= args.length) {
+		for (let i = 1; i < args.length; i++) {
+			// Only handle -u arg
+			if (args[i] === "-u" || args[i] === "--up") {
+				if (i + 1 >= args.length) {
+					return;
+				}
+				this.upLevel = parseInt(args[i + 1]);
+				i++;
+				continue;
+			}
+			if (this.copySrcArg === "") {
+				this.copySrcArg = unquote(args[i]);
+			} else if (this.copyDstArg === "") {
+				this.copyDstArg = unquote(args[i]);
+			} else {
 				return;
 			}
-			this.upLevel = parseInt(args[2]);
-			srcArgIndex = 3;
 		}
-		if (srcArgIndex !== args.length - 2) {
-			return;
-		}
-
-		this.copySrcArg = unquote(args[srcArgIndex]);
-		this.copyDstArg = unquote(args[srcArgIndex + 1]);
 
 		this.parsed = true;
 	}
@@ -135,6 +139,7 @@ export class CopyfilesTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		if (!this.parsed) {
 			// If we can't parse the argument, we don't know what we are doing.
+			this.logVerboseTask(`error parsing command line`);
 			return undefined;
 		}
 
@@ -191,12 +196,13 @@ export class GenVerTask extends LeafTask {
 	}
 }
 
-export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
+export class TypeValidationTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
-		return JSON.stringify(this.package.packageJson);
+		const details = await getPackageDetails(this.package.directory);
+		const content =
+			JSON.stringify(this.package.packageJson) + JSON.stringify(details.typeValidation);
+		return content;
 	}
-}
 
-export class TypeValidationTask extends PackageJsonChangedTask {
 	protected addDependentTasks(dependentTasks: LeafTask[]): void {}
 }

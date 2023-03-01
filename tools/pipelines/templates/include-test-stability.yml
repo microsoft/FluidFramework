@@ -81,8 +81,12 @@ jobs:
     - task: Cache@2
       displayName: Cache pnpm store
       inputs:
-        key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+        # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+        # in the cache key
+        key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
         path: ${{ variables.pnpmStorePath }}
+        restoreKeys: |
+          pnpm-store | "$(Agent.OS)"
 
     - task: Bash@3
       displayName: Install and configure pnpm
@@ -185,3 +189,12 @@ jobs:
           searchFolder: ${{ parameters.buildDirectory }}/nyc
           mergeTestResults: false
         condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+    # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+    - task: Bash@3
+      displayName: Prune pnpm store
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          pnpm store prune
