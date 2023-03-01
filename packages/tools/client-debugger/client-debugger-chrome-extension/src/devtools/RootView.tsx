@@ -14,14 +14,15 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { DebuggerPanel, MessageRelayContext } from "../react-components";
-import { BackgroundConnection, formatDevtoolsScriptMessageForLogging } from "./devtools";
+import { BackgroundConnection } from "./BackgroundConnection";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 // TODOs:
 // - Wait for Background Script connection before rendering, to ensure messages are able to flow before we first
 //  request data from the registry / debuggers.
 
 const panelElement = document.createElement("div");
-panelElement.id = "fluid-client-debugger-root";
+panelElement.id = "fluid-devtools-root";
 panelElement.style.height = "100%";
 panelElement.style.width = "100%";
 

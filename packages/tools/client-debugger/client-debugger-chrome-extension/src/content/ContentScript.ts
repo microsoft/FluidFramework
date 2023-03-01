@@ -8,13 +8,12 @@ import {
 	IDebuggerMessage,
 	isDebuggerMessage,
 } from "@fluid-tools/client-debugger";
-import { extensionMessageSource } from "../messaging";
+
+import { extensionMessageSource, relayMessageToPort, relayMessageToWindow } from "../messaging";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
-} from "./content";
-
-import { relayMessageToPort, relayMessageToWindow } from "./messaging";
+} from "./Logging";
 
 /**
  * This module is the extension's Content Script.

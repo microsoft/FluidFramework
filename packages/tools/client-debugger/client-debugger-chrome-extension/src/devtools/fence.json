@@ -1,4 +1,4 @@
 {
-	"tags": ["content-extension"],
+	"tags": ["devtools"],
 	"imports": ["messaging", "react-components"]
 }

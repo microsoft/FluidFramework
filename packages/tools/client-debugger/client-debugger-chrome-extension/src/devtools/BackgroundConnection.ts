@@ -6,13 +6,15 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
 
-import { IMessageRelayEvents, IMessageRelay, TypedPortConnection } from "../../messaging";
 import {
 	devToolsInitAcknowledgementType,
 	DevToolsInitMessage,
 	devToolsInitMessageType,
-	devtoolsMessageSource,
+	extensionMessageSource,
+	IMessageRelayEvents,
+	IMessageRelay,
 	postMessageToPort,
+	TypedPortConnection,
 } from "../messaging";
 import {
 	devtoolsScriptMessageLoggingOptions,
@@ -65,7 +67,7 @@ export class BackgroundConnection
 
 		// Relay the tab ID to the background service worker.
 		const initMessage: DevToolsInitMessage = {
-			source: devtoolsMessageSource,
+			source: extensionMessageSource,
 			type: devToolsInitMessageType,
 			data: {
 				tabId: chrome.devtools.inspectedWindow.tabId,

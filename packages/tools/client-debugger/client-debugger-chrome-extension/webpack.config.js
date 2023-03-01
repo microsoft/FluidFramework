@@ -7,24 +7,32 @@ const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
 
-const packageSourcePath = path.resolve(__dirname, "..", "src");
-const packageBuildPath = path.resolve(__dirname, "..", "dist");
-
-const contentExtensionSourcePath = path.resolve(packageSourcePath, "content-extension");
-const contentExtensionBuildPath = path.resolve(packageBuildPath, "content-extension");
+const packageSourcePath = path.resolve(__dirname, "src");
+const packageBuildPath = path.resolve(__dirname, "dist");
 
 module.exports = {
 	mode: "development", // TODO: production
 	devtool: "inline-source-map", // TODO: remove this
 	entry: {
+		// The Devtools script and view
+		"devtools/DevtoolsScript": path.join(packageSourcePath, "devtools", "DevtoolsScript.ts"),
+		"devtools/RootView": path.join(packageSourcePath, "devtools", "RootView.tsx"),
+
 		// The Background script
-		BackgroundScript: path.join(contentExtensionSourcePath, "BackgroundScript.ts"),
+		"background/BackgroundScript": path.join(
+			packageSourcePath,
+			"background",
+			"BackgroundScript.ts",
+		),
 
 		// The Content script
-		ContentScript: path.join(contentExtensionSourcePath, "ContentScript.ts"),
+		"content/ContentScript": path.join(packageSourcePath, "content", "ContentScript.ts"),
+
+		// The action button pop-up script
+		"popup/PopupScript": path.join(packageSourcePath, "popup", "PopupScript.ts"),
 	},
 	output: {
-		path: contentExtensionBuildPath,
+		path: packageBuildPath,
 		filename: "[name].js",
 		publicPath: "",
 	},

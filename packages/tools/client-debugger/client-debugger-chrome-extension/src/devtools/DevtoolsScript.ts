@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { formatDevtoolsScriptMessageForLogging } from "./devtools";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 /**
  * This module is the extension's Devtools Script.
@@ -23,15 +23,15 @@ console.log(formatDevtoolsScriptMessageForLogging("Initializing Devtools Script.
 
 // When our extension view is launched, open the root visualization view.
 chrome.devtools.panels.create(
-	"Fluid Client Debugger",
+	"Fluid Framework Devtools",
 	"images/Icon.png",
-	"rootView.html",
+	"devtools/rootView.html",
 	(panel) => {
 		panel.onShown.addListener((window) => {
-			console.log(formatDevtoolsScriptMessageForLogging("Debugger view shown."));
+			console.log(formatDevtoolsScriptMessageForLogging("Devtools view shown."));
 		});
 		panel.onHidden.addListener(() => {
-			console.log(formatDevtoolsScriptMessageForLogging("Debugger view hidden."));
+			console.log(formatDevtoolsScriptMessageForLogging("Devtools view hidden."));
 		});
 	},
 );

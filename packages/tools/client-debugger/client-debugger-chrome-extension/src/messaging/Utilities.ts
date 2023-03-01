@@ -4,7 +4,8 @@
  */
 
 import { IDebuggerMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
-import { TypedPortConnection } from "../../messaging";
+
+import { TypedPortConnection } from "./TypedPortConnection";
 
 function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOptions): string {
 	const loggingPreamble =

@@ -4,19 +4,20 @@
  */
 
 import { IDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
-import {
-	backgroundScriptMessageLoggingOptions,
-	formatBackgroundScriptMessageForLogging,
-} from "./background";
+
 import {
 	DevToolsInitAcknowledgement,
 	devToolsInitAcknowledgementType,
 	DevToolsInitMessage,
 	devToolsInitMessageType,
-	devtoolsMessageSource,
+	extensionMessageSource,
 	postMessageToPort,
 	relayMessageToPort,
-} from "./messaging";
+} from "../messaging";
+import {
+	backgroundScriptMessageLoggingOptions,
+	formatBackgroundScriptMessageForLogging,
+} from "./Logging";
 
 /**
  * This script runs as the extension's Background Worker.
@@ -131,7 +132,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 
 			// Send acknowledgement to Devtools Script
 			const ackMessage: DevToolsInitAcknowledgement = {
-				source: devtoolsMessageSource,
+				source: extensionMessageSource,
 				type: devToolsInitAcknowledgementType,
 				data: undefined,
 			};

@@ -38,10 +38,7 @@
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:coverage": "jest  --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junit",
 		"tsc": "tsc",
-		"webpack": "concurrently npm:webpack:*",
-		"webpack:content": "webpack --config webpack/content.config.js",
-		"webpack:devtools": "webpack --config webpack/devtools.config.js",
-		"webpack:injected": "webpack --config webpack/injected.config.js"
+		"webpack": "webpack"
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.96.1",

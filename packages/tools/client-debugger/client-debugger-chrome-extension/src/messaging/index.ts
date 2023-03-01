@@ -8,6 +8,8 @@
 
 export { extensionMessageSource } from "./Constants";
 export * from "./MessageRelay";
+export * from "./Messages";
 export { TypedPortConnection } from "./TypedPortConnection";
+export * from "./Utilities";
 
 /* eslint-enable no-restricted-syntax */

@@ -1,4 +1,0 @@
-{
-	"tags": ["devtools-extension"],
-	"imports": ["messaging", "react-components"]
-}
