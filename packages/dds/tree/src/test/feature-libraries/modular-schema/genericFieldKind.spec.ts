@@ -131,7 +131,8 @@ const childDecoder = (nodeChange: JsonCompatibleReadOnly): NodeChangeset => {
 const crossFieldManager = {
 	get: unexpectedDelegate,
 	getOrCreate: unexpectedDelegate,
-	consume: unexpectedDelegate,
+	addDependency: unexpectedDelegate,
+	invalidate: unexpectedDelegate,
 };
 
 describe("Generic FieldKind", () => {

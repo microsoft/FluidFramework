@@ -214,4 +214,6 @@ const invalidFunc = () => fail("Should not be called when converting generic cha
 const invalidCrossFieldManager: CrossFieldManager = {
 	getOrCreate: invalidFunc,
 	get: invalidFunc,
+	addDependency: invalidFunc,
+	invalidate: invalidFunc,
 };

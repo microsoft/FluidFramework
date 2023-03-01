@@ -55,7 +55,7 @@ export interface MoveEffect<T> {
 	/**
 	 * The ID of a mark which can be merged into this mark from the right.
 	 */
-	mergeRight?: MoveId;
+	mergeRight?: MoveId; // Do we need this?
 
 	/**
 	 * Node changes which should be applied to this mark.
@@ -134,7 +134,11 @@ export function getOrAddEffect<T>(
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	resetMerges: boolean = false,
+	invalidate: boolean = true,
 ): MoveEffect<T> {
+	if (invalidate) {
+		moveEffects.invalidate(target, revision, id);
+	}
 	if (resetMerges) {
 		clearMergeability(moveEffects, target, revision, id);
 	}
@@ -146,7 +150,11 @@ export function getMoveEffect<T>(
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
+	addDependency: boolean = true,
 ): MoveEffect<T> {
+	if (addDependency) {
+		moveEffects.addDependency(target, revision, id);
+	}
 	return moveEffects.get(target, revision, id) ?? {};
 }
 
@@ -174,8 +182,8 @@ export function makeMergeable<T>(
 	leftId: MoveId,
 	rightId: MoveId,
 ): void {
-	getOrAddEffect(moveEffects, target, revision, leftId).mergeRight = rightId;
-	getOrAddEffect(moveEffects, target, revision, rightId).mergeLeft = leftId;
+	getOrAddEffect(moveEffects, target, revision, leftId, false, false).mergeRight = rightId;
+	getOrAddEffect(moveEffects, target, revision, rightId, false, false).mergeLeft = leftId;
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;

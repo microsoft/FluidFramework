@@ -45,6 +45,18 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		newValue: T,
 	): T;
+
+	addDependency(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+	): void;
+
+	invalidate(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+	): void;
 }
 
 /**

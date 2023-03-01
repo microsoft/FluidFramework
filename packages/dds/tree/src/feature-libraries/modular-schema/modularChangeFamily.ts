@@ -605,6 +605,29 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 			id: ChangesetLocalId,
 			newValue: unknown,
 		) => {
+			return getOrAddInNestedMap(getMap(target), revision, id, newValue);
+		},
+		get: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: ChangesetLocalId,
+		) => {
+			return tryGetFromNestedMap(getMap(target), revision, id);
+		},
+
+		addDependency: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: ChangesetLocalId,
+		) => {
+			addToNestedSet(getQueries(target), revision, id);
+		},
+
+		invalidate: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: ChangesetLocalId,
+		) => {
 			const dependents =
 				target === CrossFieldTarget.Source
 					? crossFieldTable.srcDependents
@@ -617,16 +640,6 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 			if (nestedSetContains(getQueries(target), revision, id)) {
 				manager.fieldInvalidated = true;
 			}
-
-			return getOrAddInNestedMap(getMap(target), revision, id, newValue);
-		},
-		get: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: ChangesetLocalId,
-		) => {
-			addToNestedSet(getQueries(target), revision, id);
-			return tryGetFromNestedMap(getMap(target), revision, id);
 		},
 	};
 

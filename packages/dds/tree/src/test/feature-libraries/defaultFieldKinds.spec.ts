@@ -37,7 +37,8 @@ const idAllocator: IdAllocator = unexpectedDelegate;
 const crossFieldManager = {
 	get: unexpectedDelegate,
 	getOrCreate: unexpectedDelegate,
-	consume: unexpectedDelegate,
+	addDependency: unexpectedDelegate,
+	invalidate: unexpectedDelegate,
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.NodeChanges => {
