@@ -89,6 +89,7 @@
 		"inquirer-table-prompt": "^0.2.1",
 		"jssm": "^5.79.18",
 		"jssm-viz-cli": "^5.83.0",
+		"minimatch": "^7.3.0",
 		"npm-check-updates": "^16.0.0",
 		"oclif": "^3.6.3",
 		"semver": "^7.3.7",

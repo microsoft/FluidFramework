@@ -95,6 +95,7 @@ importers:
       inquirer-table-prompt: ^0.2.1
       jssm: ^5.79.18
       jssm-viz-cli: ^5.83.0
+      minimatch: ^7.3.0
       mocha: ^10.0.0
       npm-check-updates: ^16.0.0
       nyc: ^15.0.0
@@ -131,6 +132,7 @@ importers:
       inquirer-table-prompt: 0.2.1
       jssm: 5.85.11
       jssm-viz-cli: 5.85.11
+      minimatch: 7.4.2
       npm-check-updates: 16.3.8
       oclif: 3.6.3
       semver: 7.3.7
@@ -192,7 +194,6 @@ importers:
       '@types/lodash': ^4.14.186
       '@types/lodash.isequal': ^4.5.5
       '@types/lodash.merge': ^4.6.6
-      '@types/minimatch': ^3.0.5
       '@types/mocha': ^9.0.0
       '@types/node': ^14.18.0
       '@types/rimraf': ^2.0.3
@@ -220,7 +221,7 @@ importers:
       lodash: ^4.17.21
       lodash.isequal: ^4.5.0
       lodash.merge: ^4.6.2
-      minimatch: ^3.0.4
+      minimatch: ^7.3.0
       mocha: ^10.0.0
       npm-package-json-lint: ^6.0.0
       prettier: ~2.6.2
@@ -251,7 +252,7 @@ importers:
       lodash: 4.17.21
       lodash.isequal: 4.5.0
       lodash.merge: 4.6.2
-      minimatch: 3.1.2
+      minimatch: 7.4.2
       npm-package-json-lint: 6.3.0
       replace-in-file: 6.3.5
       rimraf: 2.7.1
@@ -270,7 +271,6 @@ importers:
       '@types/lodash': 4.14.186
       '@types/lodash.isequal': 4.5.6
       '@types/lodash.merge': 4.6.7
-      '@types/minimatch': 3.0.5
       '@types/mocha': 9.1.1
       '@types/node': 14.18.31
       '@types/rimraf': 2.0.5
@@ -6992,7 +6992,7 @@ packages:
     resolution: {integrity: sha512-yemi4pMf51WKT7khInJqAvsIGzoqYXblnsz0ql8tM+yi1EKYTY1evX4NAbJrLL/Aanr2HyZeluqU+Oi7MGHokw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
-      minimatch: 5.1.0
+      minimatch: 5.1.6
 
   /ignore/4.0.6:
     resolution: {integrity: sha512-cyFDKrqc/YdcWFniJhzI42+AzS+gNwmUzOSFcRCQYwySuBBBy/KjuxWLZ/FHEH6Moq1NizMOBWyTcv8O4OZIMg==}
@@ -8360,17 +8360,18 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
-  /minimatch/5.1.0:
-    resolution: {integrity: sha512-9TPBGGak4nHfGZsPBohm9AWg6NoT7QTCehS3BIJABslyZbzxfV78QM2Y6+i741OPZIafFAaiiEMh5OyIrJPgtg==}
-    engines: {node: '>=10'}
-    dependencies:
-      brace-expansion: 2.0.1
-
   /minimatch/5.1.6:
     resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
+
+  /minimatch/7.4.2:
+    resolution: {integrity: sha512-xy4q7wou3vUoC9k1xGTXc+awNdGaGVHtFUaey8tiX4H1QRc04DZ/rmDFwNm2EBsuYEhAZ6SgMmYf3InGY6OauA==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: false
 
   /minimist-options/4.1.0:
     resolution: {integrity: sha512-Q4r8ghd80yhO/0j1O3B2BjweX3fiHg9cdOwjJd2J76Q135c+NDxGCqdYKQ1SKBuFfgWbAUzBfvYjPUEeNgqN1A==}
@@ -8795,7 +8796,7 @@ packages:
       json-parse-helpfulerror: 1.0.3
       jsonlines: 0.1.1
       lodash: 4.17.21
-      minimatch: 5.1.0
+      minimatch: 5.1.6
       p-map: 4.0.0
       pacote: 13.6.2
       parse-github-url: 1.0.2

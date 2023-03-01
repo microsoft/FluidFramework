@@ -30,7 +30,7 @@ const extractContext = (line, column) => {
 
 module.exports = {
     "customRules": [
-        "markdownlint-rule-emphasis-style",
+        // "markdownlint-rule-emphasis-style",
         "markdownlint-rule-github-internal-links",
         {
             "names": ["ban-words"],
@@ -86,8 +86,8 @@ module.exports = {
         "code-fence-style": { // MD048
             "style": "",
         },
-        "emphasis-style": { // custom
-            "style": "*",
+        "emphasis-style": { // MD049
+            "style": "consistent",
         },
         "first-line-heading": { // MD041
             "level": 2,
@@ -99,12 +99,15 @@ module.exports = {
             "style": "atx",
         },
         "line-length": false, // MD013
-        // "line-length": { // MD013
-        //     "code_blocks": true,
-        //     "line_length": 120,
-        //     "tables": false,
-        // },
+        "list-marker-space": { // MD030
+          "ul_multi": 3,
+          "ul_single": 3
+        },
         "no-empty-links": true, // MD042
+        "no-hard-tabs": { // MD010
+          code_blocks: false,
+          spaces_per_tab: 2
+        },
         "no-inline-html": false, //MD033
         "no-multiple-blanks": { // MD012
             "maximum": 2,
@@ -128,7 +131,10 @@ module.exports = {
                 "tinylicious.md",
                 "tinylicious-client",
             ]
-        }
+        },
+        "ul-indent": { // MD007
+          "indent": 4
+        },
     },
     "globs": [
         "content/**/*.md",
