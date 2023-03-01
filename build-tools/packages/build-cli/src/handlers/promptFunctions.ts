@@ -33,7 +33,7 @@ export const promptToCommitChanges: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, promptWriter } = data;
+	const { command, context, promptWriter } = data;
 	assert(context !== undefined, "Context is undefined.");
 
 	const prompt: InstructionalPrompt = {
@@ -42,6 +42,11 @@ export const promptToCommitChanges: StateHandlerFunction = async (
 			{
 				title: "FIRST",
 				message: `Commit the local changes and create a PR targeting the ${context.originalBranchName} branch.`,
+			},
+			{
+				title: "NEXT",
+				message: `After changes are merged, run the following command to continue the release:`,
+				cmd: `${command?.config.bin} ${command?.id} ${command?.argv?.join(" ")}`,
 			},
 		],
 	};
