@@ -172,13 +172,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         const req = async () => {
             const result = await this.collection.findOneAndUpdate(
                 query,
-                {
-                    $setOnInsert: value,
-                },
-                {
-                    returnOriginal: true,
-                    upsert: true,
-                });
+                {setOnInsert: value},
+                {upsert: true}
+            );
 
             return result.value
                 ? { value: result.value, existing: true }
@@ -195,12 +191,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         const req = async () => {
             const result = await this.collection.findOneAndUpdate(
                 query,
-                {
-                    $set: value,
-                },
-                {
-                    returnOriginal: true,
-                });
+                {set: value},
+                {});
 
             return result.value
                 ? { value: result.value, existing: true }
@@ -319,7 +311,6 @@ export class MongoDb implements core.IDb {
 
 interface IMongoDBConfig {
     operationsDbEndpoint: string;
-    bufferMaxEntries: number | undefined;
     globalDbEndpoint?: string;
     globalDbEnabled?: boolean;
     connectionPoolMinSize?: number;
@@ -331,7 +322,6 @@ interface IMongoDBConfig {
 
 export class MongoDbFactory implements core.IDbFactory {
     private readonly operationsDbEndpoint: string;
-    private readonly bufferMaxEntries?: number;
     private readonly globalDbEndpoint?: string;
     private readonly connectionPoolMinSize?: number;
     private readonly connectionPoolMaxSize?: number;
@@ -341,7 +331,6 @@ export class MongoDbFactory implements core.IDbFactory {
     constructor(config: IMongoDBConfig) {
         const {
             operationsDbEndpoint,
-            bufferMaxEntries,
             globalDbEnabled,
             globalDbEndpoint,
             connectionPoolMinSize,
@@ -352,7 +341,6 @@ export class MongoDbFactory implements core.IDbFactory {
         }
         assert(!!operationsDbEndpoint, `No endpoint provided`);
         this.operationsDbEndpoint = operationsDbEndpoint;
-        this.bufferMaxEntries = bufferMaxEntries;
         this.connectionPoolMinSize = connectionPoolMinSize;
         this.connectionPoolMaxSize = connectionPoolMaxSize;
         this.retryEnabled = config.facadeLevelRetry || false;
