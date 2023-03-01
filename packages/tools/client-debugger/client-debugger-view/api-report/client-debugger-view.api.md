@@ -89,6 +89,21 @@ export interface IContainerActions {
     tryConnect?: () => void;
 }
 
+// @internal
+export enum PanelView {
+    Audience = "Audience",
+    ContainerData = "Data"
+}
+
+// @internal
+export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React_2.ReactElement;
+
+// @internal
+export interface PanelViewSelectionMenuProps {
+    currentSelection: PanelView;
+    updateSelection(newSelection: PanelView): void;
+}
+
 // @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 

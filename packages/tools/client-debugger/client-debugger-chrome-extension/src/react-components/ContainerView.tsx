@@ -6,16 +6,15 @@ import React from "react";
 
 import { Stack, StackItem } from "@fluentui/react";
 
-import { HasContainerId } from "@fluid-tools/client-debugger-view";
+import {
+	HasContainerId,
+	PanelView,
+	PanelViewSelectionMenu,
+} from "@fluid-tools/client-debugger-view";
 
 import { ContainerSummaryView } from "./ContainerSummaryView";
-
-// TODO: View tabs
-// enum PanelOptions {
-// 	ContainerSummary = "Container Summary",
-// 	ContainerData = "Container Data",
-// 	Audience = "Audience",
-// }
+import { ContainerDataView } from "./ContainerDataView";
+import { AudienceView } from "./AudienceView";
 
 /**
  * {@link ContainerView} input props.
@@ -28,23 +27,46 @@ export type ContainerViewProps = HasContainerId;
 export function ContainerView(props: ContainerViewProps): React.ReactElement {
 	const { containerId } = props;
 
-	// TODO: tab selection management
+	// TODO: Listen for Container close / dispose notifications and replace inner views with notice
+	// when received.
+	const [isContainerClosed /* , setIsContainerClosed */] = React.useState<boolean>(false);
+
+	// Inner view selection
+	const [viewSelection, setViewSelection] = React.useState<PanelView>(PanelView.ContainerData);
+
+	let view: React.ReactElement;
+	if (isContainerClosed) {
+		view = <div>The Container has been closed.</div>;
+	} else {
+		let innerView: React.ReactElement;
+		switch (viewSelection) {
+			case PanelView.ContainerData:
+				innerView = <ContainerDataView containerId={containerId} />;
+				break;
+			case PanelView.Audience:
+				innerView = <AudienceView containerId={containerId} />;
+				break;
+			default:
+				throw new Error(`Unrecognized RootView selection value: "${viewSelection}".`);
+		}
+
+		view = (
+			<Stack tokens={{ childrenGap: 10 }}>
+				<PanelViewSelectionMenu
+					currentSelection={viewSelection}
+					updateSelection={setViewSelection}
+				/>
+				{innerView}
+			</Stack>
+		);
+	}
 
 	return (
 		<Stack>
 			<StackItem>
-				<TabMenu />
-			</StackItem>
-			<StackItem>
 				<ContainerSummaryView containerId={containerId} />
 			</StackItem>
+			<StackItem>{view}</StackItem>
 		</Stack>
 	);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface TabMenuProps {}
-
-function TabMenu(props: TabMenuProps): React.ReactElement {
-	return <div>TODO: View selection menu</div>;
 }

@@ -32,6 +32,9 @@ export {
 	ContainerSummaryView,
 	ContainerSummaryViewProps,
 	IContainerActions,
+	PanelView,
+	PanelViewSelectionMenu,
+	PanelViewSelectionMenuProps,
 } from "./components";
 
 export { AudienceMember } from "./Audience";
