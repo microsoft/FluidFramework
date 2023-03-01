@@ -32,18 +32,6 @@ export interface HasClientDebugger {
 }
 
 /**
- * Base interface for component props that include the ID of a Fluid Container.
- *
- * @public
- */
-export interface HasContainerId {
-	/**
-	 * The unique ID of the Fliud Container with which the debugger is associated.
-	 */
-	containerId: string;
-}
-
-/**
  * Base interface for component props that include a session client ID.
  */
 export interface HasClientId {

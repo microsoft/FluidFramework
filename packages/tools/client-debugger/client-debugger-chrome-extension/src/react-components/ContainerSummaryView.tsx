@@ -10,8 +10,9 @@ import {
 	IDebuggerMessage,
 	InboundHandlers,
 	handleIncomingMessage,
+	HasContainerId,
 } from "@fluid-tools/client-debugger";
-import { HasContainerId, _ContainerSummaryView } from "@fluid-tools/client-debugger-view";
+import { _ContainerSummaryView } from "@fluid-tools/client-debugger-view";
 
 import { extensionMessageSource } from "../messaging";
 import { Waiting } from "./Waiting";

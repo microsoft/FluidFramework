@@ -6,11 +6,8 @@ import React from "react";
 
 import { Stack, StackItem } from "@fluentui/react";
 
-import {
-	HasContainerId,
-	PanelView,
-	PanelViewSelectionMenu,
-} from "@fluid-tools/client-debugger-view";
+import { HasContainerId } from "@fluid-tools/client-debugger";
+import { PanelView, PanelViewSelectionMenu } from "@fluid-tools/client-debugger-view";
 
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { ContainerDataView } from "./ContainerDataView";

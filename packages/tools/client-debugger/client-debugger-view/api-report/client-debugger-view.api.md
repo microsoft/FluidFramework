@@ -78,11 +78,6 @@ export interface HasClientDebugger {
 }
 
 // @public
-export interface HasContainerId {
-    containerId: string;
-}
-
-// @public
 export interface IContainerActions {
     closeContainer?: () => void;
     forceDisconnect?: () => void;
