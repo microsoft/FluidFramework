@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -177,8 +178,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
             );
 
             return result.value
-                ? { value: result.value, existing: true }
-                : { value, existing: false };
+                ? { value: result.value, existing: true } as { value: T; existing: boolean; }
+                : { value, existing: false } as { value: T; existing: boolean; };
         };
         return this.requestWithRetry(
             req, // request
@@ -195,8 +196,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
                 {});
 
             return result.value
-                ? { value: result.value, existing: true }
-                : { value, existing: false };
+                ? { value: result.value, existing: true } as { value: T; existing: boolean; }
+                : { value, existing: false } as { value: T; existing: boolean; };
         };
         return this.requestWithRetry(
             req, // request
