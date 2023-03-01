@@ -24,7 +24,7 @@ export enum CrossFieldTarget {
 export interface CrossFieldManager<T = unknown> {
 	/**
 	 * Returns the data associated with triplet key of `target`, `revision`, and `id`.
-	 * Calling this records a dependency for the current field on this key if `addDepdency` is true.
+	 * Calling this records a dependency for the current field on this key if `addDependency` is true.
 	 */
 	get(
 		target: CrossFieldTarget,
