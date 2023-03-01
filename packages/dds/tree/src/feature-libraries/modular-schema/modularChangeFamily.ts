@@ -237,7 +237,7 @@ export class ModularChangeFamily
 		return composedNodeChange;
 	}
 
-	invert(change: TaggedChange<ModularChangeset>): ModularChangeset {
+	invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		let maxId = change.change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
@@ -245,6 +245,7 @@ export class ModularChangeFamily
 			tagChange(change.change.changes, change.revision),
 			genId,
 			crossFieldTable,
+			isRollback,
 		);
 
 		while (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -270,6 +271,7 @@ export class ModularChangeFamily
 		changes: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<InvertData>,
+		isRollback: boolean,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
 
@@ -287,9 +289,11 @@ export class ModularChangeFamily
 						{ revision, change: childChanges },
 						genId,
 						crossFieldTable,
+						isRollback,
 					),
 				genId,
 				manager,
+				isRollback,
 			);
 
 			const invertedFieldChange: FieldChange = {
@@ -313,6 +317,7 @@ export class ModularChangeFamily
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<InvertData>,
+		isRollback: boolean,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -330,6 +335,7 @@ export class ModularChangeFamily
 				{ ...change, change: change.change.fieldChanges },
 				genId,
 				crossFieldTable,
+				isRollback,
 			);
 		}
 

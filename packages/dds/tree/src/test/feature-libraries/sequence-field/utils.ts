@@ -83,13 +83,17 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 	table.dstQueries.clear();
 }
 
-export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
+export function invert(
+	change: TaggedChange<TestChangeset>,
+	isRollback: boolean = false,
+): TestChangeset {
 	const table = SF.newCrossFieldTable();
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
 		() => fail("Sequence fields should not generate IDs during invert"),
 		table,
+		isRollback,
 	);
 
 	if (table.isInvalidated) {

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
-import { Changeset, Mark, MarkList, ReturnFrom } from "./format";
+import { Changeset, Delete, Mark, MarkList, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
 
@@ -26,12 +26,14 @@ export function invert<TNodeChange>(
 	invertChild: NodeChangeInverter<TNodeChange>,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
+	isRollback: boolean,
 ): Changeset<TNodeChange> {
 	return invertMarkList(
 		change.change,
 		change.revision,
 		invertChild,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
+		isRollback,
 	);
 }
 
@@ -54,12 +56,20 @@ function invertMarkList<TNodeChange>(
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
+	isRollback: boolean,
 ): MarkList<TNodeChange> {
 	const inverseMarkList = new MarkListFactory<TNodeChange>();
 	let inputIndex = 0;
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, inputIndex, revision, invertChild, crossFieldManager);
+		const inverseMarks = invertMark(
+			mark,
+			inputIndex,
+			revision,
+			invertChild,
+			crossFieldManager,
+			isRollback,
+		);
 		inverseMarkList.push(...inverseMarks);
 		inputIndex += getInputLength(mark);
 	}
@@ -73,18 +83,21 @@ function invertMark<TNodeChange>(
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
+	isRollback: boolean,
 ): Mark<TNodeChange>[] {
 	if (isSkipMark(mark)) {
 		return [mark];
 	} else {
 		switch (mark.type) {
 			case "Insert": {
-				return [
-					{
-						type: "Delete",
-						count: mark.type === "Insert" ? mark.content.length : 1,
-					},
-				];
+				const del: Delete<never> = {
+					type: "Delete",
+					count: mark.content.length,
+				};
+				if (isRollback) {
+					del.isRollback = true;
+				}
+				return [del];
 			}
 			case "Delete": {
 				return [

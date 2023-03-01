@@ -161,6 +161,7 @@ describe("Value field changesets", () => {
 			childInverter,
 			idAllocator,
 			crossFieldManager,
+			false,
 		);
 
 		assert.deepEqual(inverted.changes, nodeChange2);
@@ -324,6 +325,7 @@ describe("Optional field changesets", () => {
 				childInverter,
 				idAllocator,
 				crossFieldManager,
+				false,
 			),
 			expected,
 		);

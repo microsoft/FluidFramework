@@ -50,12 +50,15 @@ export interface ChangeRebaser<TChangeset> {
 	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 
 	/**
+	 * @param changes - The changes to invert.
+	 * @param isRollback - Whether the inverted change is meant rollback a change on a branch as is the case when
+	 * performing a sandwich rebase.
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
 	 * See {@link ChangeRebaser} for details.
 	 */
-	invert(changes: TaggedChange<TChangeset>): TChangeset;
+	invert(changes: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
 
 	/**
 	 * Rebase `change` over `over`.

@@ -43,7 +43,9 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 	const result = command(forest, editor);
 	const changes = editor.getChanges();
 	const inverses = changes
-		.map((change, index) => changeFamily.rebaser.invert(tagChange(change, revisions[index])))
+		.map((change, index) =>
+			changeFamily.rebaser.invert(tagChange(change, revisions[index]), false),
+		)
 		.reverse();
 
 	// TODO: in the non-abort case, optimize this to not rollback the edit,

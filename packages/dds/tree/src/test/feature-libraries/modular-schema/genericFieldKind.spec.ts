@@ -93,6 +93,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 		unexpectedDelegate,
 		idAllocator,
 		crossFieldManager,
+		false,
 	);
 	return nodeChangeFromValueChange(inverse);
 };
@@ -347,6 +348,7 @@ describe("Generic FieldKind", () => {
 			childInverter,
 			idAllocator,
 			crossFieldManager,
+			false,
 		);
 		assert.deepEqual(actual, expected);
 	});

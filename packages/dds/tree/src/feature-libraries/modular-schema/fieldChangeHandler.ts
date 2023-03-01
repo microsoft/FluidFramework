@@ -61,6 +61,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		invertChild: NodeChangeInverter,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		isRollback: boolean,
 	): TChangeset;
 
 	/**

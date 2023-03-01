@@ -592,7 +592,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			assert.deepEqual(family.invert(makeAnonChange(rootChange1a)), expectedInverse);
+			assert.deepEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
 		});
 
 		it("generic", () => {
@@ -610,7 +610,10 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			assert.deepEqual(family.invert(makeAnonChange(rootChange1aGeneric)), expectedInverse);
+			assert.deepEqual(
+				family.invert(makeAnonChange(rootChange1aGeneric), false),
+				expectedInverse,
+			);
 		});
 
 		it("generate IDs", () => {
@@ -634,7 +637,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			assert.deepEqual(family.invert(makeAnonChange(change)), expected);
+			assert.deepEqual(family.invert(makeAnonChange(change), false), expected);
 		});
 	});
 
