@@ -618,6 +618,7 @@ export class ChangeSet {
 
 			// Check, whether we have a collision in a path update
 			for (let j = 0; j < paths.length; j++) {
+				io_rebasePropertyChangeSet[typeid] = io_rebasePropertyChangeSet[typeid] ?? {};
 				if (io_rebasePropertyChangeSet[typeid][paths[j]] !== undefined) {
 					in_ownPropertyChangeSet[typeid] = in_ownPropertyChangeSet[typeid] || {};
 

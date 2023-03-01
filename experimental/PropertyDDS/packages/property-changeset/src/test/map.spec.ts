@@ -1,3 +1,9 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { expect } from "chai";
 import { ChangeSet } from "../changeset";
 
 describe("Map rebase ChangeSets", function () {
@@ -6,6 +12,9 @@ describe("Map rebase ChangeSets", function () {
 		const toRebaseCS = JSON.parse('{"modify":{"NodeProperty":{"a":{"NodeProperty":{"b":{"map<Bool>":{"c":{"remove":{"1":true},"modify":{"2":{"value":true,"oldValue":true}}},"d":{"remove":{"1":true}}}}}}}}}');
 
 		const cs = new ChangeSet(toRebaseCS);
-		cs._rebaseChangeSet(originalCS, [], {});
+		const changes = cs._rebaseChangeSet(originalCS, [], {});
+		cs.applyChangeSet(changes);
+		// Applying the changes from rebase should have the same effect as applying empty changeset.
+		expect(cs.getSerializedChangeSet()).to.equal(toRebaseCS);
 	});
 });
