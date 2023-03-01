@@ -7,7 +7,7 @@ import * as v8 from "v8";
 import { performance } from "perf_hooks";
 import { assert } from "chai";
 import { Test } from "mocha";
-import Benchmark from "benchmark";
+import Benchmark from "./benchmark";
 import {
 	isParentProcess,
 	isInPerformanceTestingMode,

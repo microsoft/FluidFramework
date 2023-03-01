@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import Benchmark from "benchmark";
 import { assert } from "chai";
 import { Suite } from "mocha";
+import Benchmark from "./benchmark";
 import {
 	benchmarkTypes,
 	performanceTestSuiteTag,

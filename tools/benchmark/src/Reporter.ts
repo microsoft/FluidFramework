@@ -30,8 +30,8 @@ SOFTWARE.
 /* eslint no-console: ["error", { allow: ["log"] }] */
 import * as path from "path";
 import * as fs from "fs";
-import Benchmark from "benchmark";
 import Table from "easy-table";
+import Benchmark from "./benchmark";
 import {
 	bold,
 	geometricMean,
