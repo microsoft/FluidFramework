@@ -24,18 +24,19 @@ export enum CrossFieldTarget {
 export interface CrossFieldManager<T = unknown> {
 	/**
 	 * Returns the data associated with triplet key of `target`, `revision`, and `id`.
-	 * Calling this records a dependency for the current field on this key.
+	 * Calling this records a dependency for the current field on this key if `addDepdency` is true.
 	 */
 	get(
 		target: CrossFieldTarget,
 		revision: RevisionTag | undefined,
 		id: ChangesetLocalId,
+		addDependency: boolean,
 	): T | undefined;
 
 	/**
 	 * If there is no data for this key, sets the value to `newValue`.
 	 * Then returns the data for this key.
-	 * All fields which took a dependency on this key will be considered invalidated
+	 * If `invalidateDependents` is true, all fields which took a dependency on this key will be considered invalidated
 	 * and will be given a chance to address the new data in `amendRebase`, `amendInvert`, or `amendCompose`,
 	 * as appropriate.
 	 */
@@ -44,19 +45,8 @@ export interface CrossFieldManager<T = unknown> {
 		revision: RevisionTag | undefined,
 		id: ChangesetLocalId,
 		newValue: T,
+		invalidateDependents: boolean,
 	): T;
-
-	addDependency(
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
-	): void;
-
-	invalidate(
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
-	): void;
 }
 
 /**

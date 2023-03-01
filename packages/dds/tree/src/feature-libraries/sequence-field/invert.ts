@@ -154,12 +154,7 @@ function invertMark<TNodeChange>(
 						mark.revision ?? revision,
 						mark.id,
 						invertChild(mark.changes),
-					);
-
-					crossFieldManager.invalidate(
-						CrossFieldTarget.Destination,
-						mark.revision ?? revision,
-						mark.id,
+						true,
 					);
 				}
 				return [
@@ -190,12 +185,7 @@ function invertMark<TNodeChange>(
 						CrossFieldTarget.Destination,
 						mark.revision ?? revision,
 						mark.id,
-					);
-
-					crossFieldManager.addDependency(
-						CrossFieldTarget.Destination,
-						mark.revision ?? revision,
-						mark.id,
+						true,
 					);
 
 					if (movedChanges !== undefined) {
@@ -227,12 +217,7 @@ function transferMovedChanges<TNodeChange>(
 				CrossFieldTarget.Destination,
 				mark.revision ?? revision,
 				mark.id,
-			);
-
-			crossFieldManager.addDependency(
-				CrossFieldTarget.Destination,
-				mark.revision ?? revision,
-				mark.id,
+				true,
 			);
 
 			if (change !== undefined) {

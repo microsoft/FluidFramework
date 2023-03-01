@@ -604,42 +604,34 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 			revision: RevisionTag | undefined,
 			id: ChangesetLocalId,
 			newValue: unknown,
+			invalidateDependents: boolean,
 		) => {
+			if (invalidateDependents) {
+				const dependents =
+					target === CrossFieldTarget.Source
+						? crossFieldTable.srcDependents
+						: crossFieldTable.dstDependents;
+				const dependent = tryGetFromNestedMap(dependents, revision, id);
+				if (dependent !== undefined) {
+					crossFieldTable.fieldsToUpdate.add(dependent);
+				}
+
+				if (nestedSetContains(getQueries(target), revision, id)) {
+					manager.fieldInvalidated = true;
+				}
+			}
 			return getOrAddInNestedMap(getMap(target), revision, id, newValue);
 		},
 		get: (
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: ChangesetLocalId,
+			addDependency: boolean,
 		) => {
+			if (addDependency) {
+				addToNestedSet(getQueries(target), revision, id);
+			}
 			return tryGetFromNestedMap(getMap(target), revision, id);
-		},
-
-		addDependency: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: ChangesetLocalId,
-		) => {
-			addToNestedSet(getQueries(target), revision, id);
-		},
-
-		invalidate: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: ChangesetLocalId,
-		) => {
-			const dependents =
-				target === CrossFieldTarget.Source
-					? crossFieldTable.srcDependents
-					: crossFieldTable.dstDependents;
-			const dependent = tryGetFromNestedMap(dependents, revision, id);
-			if (dependent !== undefined) {
-				crossFieldTable.fieldsToUpdate.add(dependent);
-			}
-
-			if (nestedSetContains(getQueries(target), revision, id)) {
-				manager.fieldInvalidated = true;
-			}
 		},
 	};
 

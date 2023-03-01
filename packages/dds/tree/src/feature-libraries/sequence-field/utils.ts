@@ -854,7 +854,15 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 		mapSrc,
 		mapDst,
 
-		get: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: MoveId) => {
+		get: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: MoveId,
+			addDependency: boolean,
+		) => {
+			if (addDependency) {
+				addToNestedSet(getQueries(target), revision, id);
+			}
 			return tryGetFromNestedMap(getMap(target), revision, id);
 		},
 		getOrCreate: (
@@ -862,27 +870,17 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			revision: RevisionTag | undefined,
 			id: MoveId,
 			defaultValue: T,
+			invalidateDependents: boolean,
 		) => {
+			if (invalidateDependents && nestedSetContains(getQueries(target), revision, id)) {
+				table.isInvalidated = true;
+			}
 			return getOrAddInNestedMap<RevisionTag | undefined, MoveId, T>(
 				getMap(target),
 				revision,
 				id,
 				defaultValue,
 			);
-		},
-
-		addDependency: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
-		) => {
-			addToNestedSet(getQueries(target), revision, id);
-		},
-
-		invalidate: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: MoveId) => {
-			if (nestedSetContains(getQueries(target), revision, id)) {
-				table.isInvalidated = true;
-			}
 		},
 
 		reset: () => {
