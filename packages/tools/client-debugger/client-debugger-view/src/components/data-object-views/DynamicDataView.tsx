@@ -10,7 +10,6 @@ import {
 	IProvideFluidHandle,
 	IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
-// import { IconButton } from "@fluentui/react";
 
 import { SharedObjectRenderOptions } from "../../RendererOptions";
 import { FluidObjectView } from "./FluidObjectView";
