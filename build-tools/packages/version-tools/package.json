@@ -26,7 +26,7 @@
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs",
 		"build:docs": "api-extractor run --local",
-		"build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
+		"build:full": "npm run build && npm run build:manifest && npm run build:readme",
 		"build:full:compile": "npm run build:full",
 		"build:genver": "gen-version",
 		"build:manifest": "cross-env NODE_OPTIONS='--experimental-abortcontroller' oclif manifest",
