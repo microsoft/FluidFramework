@@ -39,9 +39,9 @@
 			},
 			"content": {
 				"useRandomContent": true,
-				"opSizeinBytes": 1172864,
+				"opSizeinBytes": 214800,
 				"largeOpRate": 2000,
-				"numClients": 2
+				"numClients": 12
 			}
 		},
 		"ci_frs": {
@@ -56,9 +56,9 @@
 			},
 			"content": {
 				"useRandomContent": true,
-				"opSizeinBytes": 1172864,
+				"opSizeinBytes": 214800,
 				"largeOpRate": 2000,
-				"numClients": 2
+				"numClients": 12
 			}
 		},
 		"full": {
