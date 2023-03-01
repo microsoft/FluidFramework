@@ -12,7 +12,6 @@ import { TaskListContainerRuntimeFactory } from "../src/model";
 import type { IAppModel } from "../src/model-interface";
 import { TaskListView } from "../src/view";
 
-
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.

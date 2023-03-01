@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+
 import type { IAppModel } from "../model-interface";
 import { TaskListView } from "./taskListView";
 
@@ -22,9 +23,6 @@ export interface IAppViewProps {
  */
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 	const { model } = props;
-	return (
-		<div>
-			<TaskListView taskList={model.taskList} />
-		</div>
-	);
+
+	return <TaskListView taskList={model.taskList} />;
 };

@@ -11,10 +11,8 @@ import type { IAppModel, ITaskList, TaskData } from "../model-interface";
 /**
  * Helper function used in several of the views to fetch data form the external app
  */
-async function pollForServiceUpdates(
-	externalData: Record<string, unknown>,
-	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
-): Promise<void> {
+async function pollForServiceUpdates(): Promise<TaskData> {
+	let newData: TaskData = {};
 	try {
 		const response = await fetch(`http://localhost:${externalDataServicePort}/fetch-tasks`, {
 			method: "GET",
@@ -25,14 +23,12 @@ async function pollForServiceUpdates(
 		});
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
-		const newData = responseBody.taskList as TaskData;
-		if (newData !== undefined && !isEqual(newData, externalData)) {
-			console.log("APP: External data has changed. Updating local state with:\n", newData);
-			setExternalData(newData);
-		}
+		newData = responseBody.taskList as TaskData;
 	} catch (error) {
 		console.error("APP: An error was encountered while polling external data:", error);
+		throw error;
 	}
+	return newData;
 }
 
 /**
@@ -58,40 +54,62 @@ export interface IDebugViewProps {
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
 	const { model } = props;
 	// Flag that represents the state in which clients are actively fetching external data.
-	const [fetchingExternalData, setFetchingExternalData] = useState(false);
+	const [refresh, setRefresh] = useState(false);
 	return (
 		<div>
 			<ControlsView model={model} />
-			<ExternalDataDebugView />
-			<SyncStatusView fetchingData={fetchingExternalData} taskList={model.taskList} />
+			<ExternalDataDebugView refresh={refresh} setRefresh={setRefresh} />
+			<SyncStatusView refresh={refresh} taskList={model.taskList} />
 		</div>
 	);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IExternalDataDebugViewProps {}
+interface IExternalDataDebugViewProps {
+	refresh: boolean;
+	setRefresh: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 	props: IExternalDataDebugViewProps,
 ) => {
 	const [externalData, setExternalData] = useState({});
+	const { refresh, setRefresh } = props;
 	useEffect(() => {
 		// Run once immediately to run without waiting.
-		pollForServiceUpdates(externalData, setExternalData).catch(
-			console.error,
-		);
+		let newData = {};
+		pollForServiceUpdates()
+			.then((data) => {
+				newData = data;
+				if (newData !== undefined && !isEqual(newData, externalData)) {
+					console.log(
+						"APP: External data has changed. Updating local state with:\n",
+						newData,
+					);
+					setExternalData(newData);
+				}
+			})
+			.catch(console.error);
 
-		// HACK: Poll every 6 seconds
+		// HACK: Poll every 3 seconds
 		const timer = setInterval(() => {
-			pollForServiceUpdates(externalData, setExternalData).catch(
-				console.error,
-			);
-		}, 6000);
+			setRefresh(!refresh);
+			pollForServiceUpdates()
+				.then((data) => {
+					if (newData !== undefined && !isEqual(data, externalData)) {
+						console.log(
+							"APP: External data has changed. Updating local state with:\n",
+							data,
+						);
+						setExternalData(data);
+					}
+				})
+				.catch(console.error);
+		}, 3000);
 
 		return (): void => {
 			clearInterval(timer);
 		};
-	}, [externalData, setExternalData]);
+	}, [externalData, setExternalData, refresh, setRefresh]);
 	const parsedExternalData = isEqual(externalData, {})
 		? []
 		: Object.entries(externalData as TaskData);
@@ -123,19 +141,23 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 };
 
 interface ISyncStatusViewProps {
-	fetchingData: boolean;
+	refresh: boolean;
 	taskList: ITaskList;
 }
 
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = React.memo((props: ISyncStatusViewProps) => {
-	const { fetchingData, taskList } = props;
+	const { taskList } = props;
 	return (
 		<div>
 			<h3>Sync status</h3>
 			<div style={{ margin: "10px 0" }}>
 				Current sync activity:{" "}
-				{fetchingData ? "fetching" : taskList.unresolved ? "resolving conflicts" : "idle"}
+				{taskList.fetching
+					? "fetching"
+					: taskList.unresolved
+					? "resolving conflicts"
+					: "idle"}
 				<br />
 			</div>
 		</div>
@@ -253,9 +275,18 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// HACK: Populate the external view form with the data in the external server to start off with
-		pollForServiceUpdates(externalData, setExternalData).catch(
-			console.error,
-		);
+		pollForServiceUpdates()
+			.then((data) => {
+				if (data !== undefined && !isEqual(data, externalData)) {
+					console.log(
+						"APP: External data has changed. Updating local state with:\n",
+						data,
+					);
+					setExternalData(data);
+				}
+			})
+			.catch(console.error);
+
 		return (): void => {};
 	}, [externalData, setExternalData]);
 	const parsedExternalData = Object.entries(externalData as TaskData);

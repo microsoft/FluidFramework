@@ -142,6 +142,10 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	 * A flag representing whether there are unresolved changes in Fluid data.
 	 */
 	unresolved: boolean;
+	/**
+	 * A flag representing the user actively fetching external data.
+	 */
+	fetching: boolean;
 
 	/**
 	 * A setter that updates the `unresolved` property based on the current state of the task list.

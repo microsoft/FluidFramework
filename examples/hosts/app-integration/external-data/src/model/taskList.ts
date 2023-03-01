@@ -100,6 +100,9 @@ export class TaskList extends DataObject implements ITaskList {
 	private readonly tasks = new Map<string, Task>();
 
 	public unresolved: boolean = false;
+
+	public fetching: boolean = false;
+
 	/*
 	 * externalDataSnapshot stores data retrieved from the external service.
 	 */
@@ -219,7 +222,7 @@ export class TaskList extends DataObject implements ITaskList {
 	 */
 	public async importExternalData(): Promise<void> {
 		console.log("TASK-LIST: Fetching external data from service...");
-
+		this.fetching = true;
 		let incomingExternalData: [
 			string,
 			{
@@ -253,6 +256,7 @@ export class TaskList extends DataObject implements ITaskList {
 
 			return;
 		}
+		this.fetching = false;
 
 		// TODO: Delete any items that are in the root but missing from the external data
 		for (const [

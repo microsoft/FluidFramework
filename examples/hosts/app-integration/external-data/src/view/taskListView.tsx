@@ -15,13 +15,14 @@ import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface"
 interface ITaskRowProps {
 	readonly task: ITask;
 	readonly deleteDraftTask: () => void;
+	readonly trackChanges: () => void;
 }
 
 /**
  * The view for a single task in the TaskListView, as a table row.
  */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-	const { task, deleteDraftTask } = props;
+	const { task, deleteDraftTask, trackChanges } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
 	const [externalDataSnapshot, setExternalDataSnapshot] = useState<ExternalSnapshotTask>(
 		task.externalDataSnapshot,
@@ -32,10 +33,12 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			if (priorityRef.current !== null) {
 				priorityRef.current.value = task.draftPriority.toString();
 			}
+			trackChanges();
 		};
 		const updateExternalSnapshotData = (conflictUIVisible: boolean): void => {
 			setExternalDataSnapshot(task.externalDataSnapshot);
 			setShowConflictUI(conflictUIVisible);
+			trackChanges();
 		};
 		task.on("draftPriorityChanged", updatePriorityFromFluid);
 		task.on("changesAvailable", updateExternalSnapshotData);
@@ -44,7 +47,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			task.off("draftPriorityChanged", updatePriorityFromFluid);
 			task.off("changesAvailable", updateExternalSnapshotData);
 		};
-	}, [task, priorityRef]);
+	}, [task, priorityRef, trackChanges]);
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
@@ -133,6 +136,16 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	const { taskList } = props;
 
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
+
+	const trackChanges = (): void => {
+		let unresolved = false;
+		for (const task of taskList.getDraftTasks()) {
+			if (task.externalDataSnapshot.changeType !== undefined) {
+				unresolved = true;
+			}
+		}
+		taskList.setUnresolvedChanges(unresolved);
+	};
 	useEffect(() => {
 		const updateTasks = (): void => {
 			setTasks(taskList.getDraftTasks());
@@ -151,6 +164,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			key={task.id}
 			task={task}
 			deleteDraftTask={(): void => taskList.deleteDraftTask(task.id)}
+			trackChanges={trackChanges}
 		/>
 	));
 
