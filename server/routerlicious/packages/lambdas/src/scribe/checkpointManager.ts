@@ -41,7 +41,8 @@ export class CheckpointManager implements ICheckpointManager {
     public async write(
         checkpoint: IScribe,
         protocolHead: number,
-        pending: ISequencedOperationMessage[]) {
+        pending: ISequencedOperationMessage[],
+        noActiveClients: boolean) {
         if (this.getDeltasViaAlfred) {
             if (pending.length > 0) {
                 // Verify that the last pending op has been persisted to op storage
@@ -70,7 +71,7 @@ export class CheckpointManager implements ICheckpointManager {
                 }
             }
 
-            await this.writeScribeCheckpointState(checkpoint);
+            await this.writeScribeCheckpointState(checkpoint, noActiveClients);
         } else {
             // The order of the three operations below is important.
             // We start by writing out all pending messages to the database. This may be more messages that we would
@@ -100,7 +101,7 @@ export class CheckpointManager implements ICheckpointManager {
             }
 
             // Write out the full state first that we require to global & local DB
-            await this.writeScribeCheckpointState(checkpoint);
+            await this.writeScribeCheckpointState(checkpoint, noActiveClients);
 
             // And then delete messagses that were already summarized.
             await this.opCollection.deleteMany({
@@ -111,7 +112,7 @@ export class CheckpointManager implements ICheckpointManager {
         }
     }
 
-    private async writeScribeCheckpointState(checkpoint: IScribe) {
+    private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
         const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
         Lumberjack.info(`Writing checkpoint to global database.`, lumberProperties);
         const checkpointFilter =  {
@@ -124,22 +125,33 @@ export class CheckpointManager implements ICheckpointManager {
             // given some data is user generated.
             scribe: JSON.stringify(checkpoint),
         }
-
-        // Write to global document collection
-        await this.documentCollection.update(checkpointFilter, checkpointData, null)
-            .catch((error) => {
-                Lumberjack.error(`Error writing checkpoint to global database`, lumberProperties, error);
-            });
-
-        // Write to local document collection
+        // Write to local document collection if active clients, else clear the data
         if (this.localDocumentCollection) {
-            Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
-            // Use upsert in case document does not exist in local DB
-            await this.localDocumentCollection.upsert(checkpointFilter, checkpointData, null)
-                .catch((error) => {
-                    Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
+            if(!noActiveClients) {
+                Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
+                // Use upsert in case document does not exist in local DB
+                await this.localDocumentCollection.upsert(checkpointFilter, checkpointData, null)
+                    .catch((error) => {
+                        Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
                 });
+            } else {
+                // No active clients, delete from local collection, write to global collection
+                await this.writeToGlobalDB(checkpointFilter, checkpointData, lumberProperties);
+                Lumberjack.info(`Removing checkpoint data from the local database. No active clients.`, lumberProperties);
+                await this.localDocumentCollection.deleteOne(checkpointFilter).catch((error) => {
+                    Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
+                });
+            }
+        } else {
+            await this.writeToGlobalDB(checkpointFilter, checkpointData, lumberProperties);
         }
+    }
+
+    private async writeToGlobalDB(filter: any, set: any, lumberProperties: { tenantId: string, documentId: string }) {
+        await this.documentCollection.update(filter, set, null)
+        .catch((error) => {
+            Lumberjack.error(`Error writing checkpoint to global database`, lumberProperties, error);
+        })
     }
 
     /**

@@ -69,7 +69,8 @@ export interface ICheckpointManager {
     write(
         checkpoint: IScribe,
         protocolHead: number,
-        pendingCheckpointMessages: ISequencedOperationMessage[]): Promise<void>;
+        pendingCheckpointMessages: ISequencedOperationMessage[],
+        noActiveClients: boolean): Promise<void>,
 
     delete(sequenceNumber: number, lte: boolean): Promise<void>;
 }
