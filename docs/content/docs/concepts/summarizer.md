@@ -33,13 +33,13 @@ The lifecycle of a summary starts when the [Summary Manager](#summary-manager) s
 
 1. The selected client spawns a non-user runtime (including a quorum, clientId, and container) that will generate the summary.
 2. The runtime generates summary tree (more details [below](#shape-of-a-summary)).
-    - The timing of the summaries is determined by a few heuristics discussed below
+    -   The timing of the summaries is determined by a few heuristics discussed below
 3. The runtime uploads summary tree to the Fluid Service storage (Historian), which returns a handle to the data.
 4. The runtime submits a "summarize" op to the server containing that uploaded summary handle.
 5. The ordering service on server stamps and broadcasts the "summarize" op.
 6. Another service on server responds to "summarize" op.
-    - The server can reject the summary by sending a "summaryNack" (summary negative acknowledgement) op referencing the sequence number of the "summarize" op.
-    - The server can accept the summary, but first it must serialize the protocol state and add it to the posted summary.
+    -   The server can reject the summary by sending a "summaryNack" (summary negative acknowledgement) op referencing the sequence number of the "summarize" op.
+    -   The server can accept the summary, but first it must serialize the protocol state and add it to the posted summary.
       Then it will need to send a "summaryAck" (summary acknowledgement) op with the new handle to the augmented summary.
 7. The runtime watches for "summaryAck"/"summaryNack" ops, using them as input to its heuristics determining when to generate summaries
 
@@ -74,10 +74,10 @@ been seen so far, as well as how many ops/how much time has passed since the las
 
 The configuration for heuristics are provided by the server. They consist of several points:
 
-- `maxOps` -- the maximum number of ops since the last successful summary before trying to summarize again
-- `maxTime` -- the maximum amount of time since the last successful summary before trying to summarize again
-- `idleTime` -- the amount of time to wait while idle before summarizing
-- `maxAckWaitTimeout` -- the maximum amount of time to wait for an ack or nack from the server in response to a summary op
+-   `maxOps` -- the maximum number of ops since the last successful summary before trying to summarize again
+-   `maxTime` -- the maximum amount of time since the last successful summary before trying to summarize again
+-   `idleTime` -- the amount of time to wait while idle before summarizing
+-   `maxAckWaitTimeout` -- the maximum amount of time to wait for an ack or nack from the server in response to a summary op
 
 In general, the summarizer will wait for a break from ops before trying to summarize. This is the `idleTime`
 configuration. If the client receives no ops for `idleTime` (15 sec currently), then it will make a summary attempt. If

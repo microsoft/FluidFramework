@@ -26,7 +26,13 @@ import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "../contextuallyTyped";
-import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
+import {
+	ProxyTarget,
+	EditableField,
+	unwrappedField,
+	UnwrappedEditableField,
+	makeField,
+} from "./editableTree";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -202,7 +208,9 @@ export class ProxyContext implements EditableTreeContext {
 		const rootSchema = lookupGlobalFieldSchema(this.schema, rootFieldKey);
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
-		const proxifiedField = proxifyField(this, rootSchema, cursor, unwrap);
+		const proxifiedField = unwrap
+			? unwrappedField(this, rootSchema, cursor)
+			: makeField(this, rootSchema, cursor);
 		cursor.free();
 		return proxifiedField;
 	}
