@@ -155,7 +155,7 @@ export class TestTree {
 			submitEdit: (change: DefaultChangeset): void => {
 				changeset = change;
 			},
-			mintRevision: () => brand(),
+			mintRevision: mintRevisionTag,
 		};
 		const result = runSynchronousTransaction(checkout, trueCommand);
 		assert(

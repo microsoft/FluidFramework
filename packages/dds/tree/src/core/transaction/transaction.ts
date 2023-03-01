@@ -14,5 +14,5 @@ export interface Checkout<TEditor, TChange> {
 	readonly forest: IEditableForest;
 	readonly changeFamily: ChangeFamily<TEditor, TChange>;
 	mintRevision: () => RevisionTag;
-	submitEdit(edit: TChange): void;
+	submitEdit(edit: TChange, revision: RevisionTag): void;
 }

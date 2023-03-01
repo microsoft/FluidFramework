@@ -211,6 +211,10 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		return compose(changes);
 	}
 
+	public squash(changes: TaggedChange<TestChange>[]): TestChange {
+		return compose(changes);
+	}
+
 	public invert(change: TaggedChange<TestChange>): TestChange {
 		return invert(change.change);
 	}

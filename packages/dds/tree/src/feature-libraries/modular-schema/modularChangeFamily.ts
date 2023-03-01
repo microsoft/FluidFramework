@@ -51,6 +51,7 @@ import {
 	ValueChange,
 	ModularChangeset,
 	IdAllocator,
+	RevisionInfo,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
@@ -117,12 +118,24 @@ export class ModularChangeFamily
 		return { fieldKind, changesets: normalizedChanges };
 	}
 
+	squash(changes: TaggedChange<ModularChangeset>[], revision: RevisionTag): ModularChangeset {
+		// The implementation after this assert is only valid so long as we use anonymous changesets.
+		assert(
+			changes.find((change) => change.revision !== undefined) === undefined,
+			"Squash unsupported for tagged changesets",
+		);
+		const composed = this.compose(changes);
+		return makeModularChangeset(composed.changes, composed.maxId ?? -1, [{ tag: revision }]);
+	}
+
 	compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		let maxId = -1;
-		const revisions: RevisionTag[] = [];
+		const revInfo: RevisionInfo[] = [];
 		for (const { change } of changes) {
 			maxId = Math.max(change.maxId ?? -1, maxId);
-			revisions.push(...change.revisions);
+			if (change.revisions !== undefined) {
+				revInfo.push(...change.revisions);
+			}
 		}
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
@@ -149,7 +162,7 @@ export class ModularChangeFamily
 				field.change = brand(amendedChange);
 			}
 		}
-		return makeModularChangeset(composedFields, maxId, revisions);
+		return makeModularChangeset(composedFields, maxId, revInfo);
 	}
 
 	private composeFieldMaps(
@@ -268,10 +281,12 @@ export class ModularChangeFamily
 				fieldChange.change = brand(amendedChange);
 			}
 		}
+
+		const revInfo = change.change.revisions;
 		return makeModularChangeset(
 			invertedFields,
 			maxId,
-			Array.from(change.change.revisions).reverse(),
+			revInfo !== undefined ? Array.from(revInfo).reverse() : undefined,
 		);
 	}
 
@@ -670,10 +685,13 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 
 function makeModularChangeset(
 	changes: FieldChangeMap,
-	maxId: number,
-	revisions: readonly RevisionTag[],
+	maxId: number = -1,
+	revisions: readonly RevisionInfo[] | undefined = undefined,
 ): ModularChangeset {
-	const changeset: ModularChangeset = { changes, revisions };
+	const changeset: Mutable<ModularChangeset> = { changes };
+	if (revisions !== undefined && revisions.length > 0) {
+		changeset.revisions = revisions;
+	}
 	if (maxId >= 0) {
 		changeset.maxId = brand(maxId);
 	}
@@ -730,7 +748,7 @@ export class ModularEditBuilder
 		maxId: ChangesetLocalId = brand(-1),
 	): void {
 		const changeMap = this.buildChangeMap(path, field, fieldKind, change);
-		this.applyChange(makeModularChangeset(changeMap, maxId, []));
+		this.applyChange(makeModularChangeset(changeMap, maxId));
 	}
 
 	submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
@@ -738,8 +756,6 @@ export class ModularEditBuilder
 			makeAnonChange(
 				makeModularChangeset(
 					this.buildChangeMap(change.path, change.field, change.fieldKind, change.change),
-					-1,
-					[],
 				),
 			),
 		);

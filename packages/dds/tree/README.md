@@ -312,6 +312,7 @@ flowchart
             schema-view-->schema-stored
             transaction-->change-family
             transaction-->checkout
+			transaction-->rebase
             dependency-tracking
             forest-->tree
         end

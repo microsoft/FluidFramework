@@ -264,9 +264,18 @@ export interface ModularChangeset {
 	maxId?: ChangesetLocalId;
 	/**
 	 * The revisions included in this changeset, ordered temporally (oldest to newest).
+	 * Undefined for anonymous changesets.
+	 * Should never be empty.
 	 */
-	readonly revisions: readonly RevisionTag[];
+	readonly revisions?: readonly RevisionInfo[];
 	changes: FieldChangeMap;
+}
+
+/**
+ * @alpha
+ */
+export interface RevisionInfo {
+	readonly tag: RevisionTag;
 }
 
 /**
