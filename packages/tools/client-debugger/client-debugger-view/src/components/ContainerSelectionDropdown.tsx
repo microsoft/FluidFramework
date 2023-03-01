@@ -56,7 +56,7 @@ export function ContainerSelectionDropdown(
 	return (
 		<Stack tokens={stackTokens}>
 			<Dropdown
-				placeholder="Select an Fluid Container"
+				placeholder="Select a Fluid Container"
 				selectedKey={initialSelection}
 				options={dropdownOptions}
 				styles={dropdownStyles}
