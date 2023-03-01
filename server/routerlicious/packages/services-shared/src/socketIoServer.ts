@@ -59,8 +59,8 @@ class SocketIoServer implements core.IWebSocketServer {
 
                 // server side listening for pong events.
                 socket.on("pong", (cb) => {
-                if (typeof cb === "function") {
-                    cb();
+                    if (typeof cb === "function") {
+                        cb();
                     }
                 });
             });

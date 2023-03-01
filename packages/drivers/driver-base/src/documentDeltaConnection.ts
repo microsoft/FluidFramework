@@ -158,7 +158,7 @@ export class DocumentDeltaConnection
 				0x20b /* "mismatch" */,
 			);
 			if (!this.trackedListeners.has(event)) {
-				if (event === "pong") {
+				if (event === "pong" && this.trackLatencyTimer === undefined) {
 					// log latency every minute
 					this.trackLatencyTimer = setInterval(() => {
 						const start = Date.now();

@@ -481,13 +481,6 @@ export function configureWebSocketServices(
             };
         }
 
-        // server side listening for pong events.
-        socket.on("pong", (cb: any) => {
-            if (typeof cb === "function") {
-                cb();
-            }
-        });
-
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         socket.on("connect_document", async (connectionMessage: IConnect) => {
             const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);

@@ -57,7 +57,7 @@ class SocketIoServer extends EventEmitter implements IWebSocketServer {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
 			this.emit("connection", webSocket);
-			
+
 			// server side listening for pong events.
 			socket.on("pong", (cb) => {
 				if (typeof cb === "function") {

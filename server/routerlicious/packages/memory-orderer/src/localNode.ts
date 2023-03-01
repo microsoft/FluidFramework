@@ -173,13 +173,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             const socket = new Socket<INodeMessage>(wsSocket);
             const subscriber = new RemoteSubscriber(socket);
 
-            // server side listening for pong events.
-            socket.on("pong", (cb: any) => {
-                if (typeof cb === "function") {
-                    cb();
-                }
-            });
-
             // Messages will be inbound from the remote server
             socket.on("message", (message) => {
                 switch (message.type) {

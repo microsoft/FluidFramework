@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { useFakeTimers, SinonFakeTimers } from "sinon";
 import {
 	IPendingLocalState,
 	ContainerErrorType,
@@ -56,7 +55,6 @@ const timeoutMs = 500;
 // REVIEW: enable compat testing?
 describeNoCompat("Container", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let clock: SinonFakeTimers;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {
 		provider = getTestObjectProvider();
@@ -68,7 +66,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		}
 	});
 	before(async () => {
-		clock = useFakeTimers();
 		const loader = new Loader({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,
@@ -81,10 +78,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 	afterEach(() => {
 		loaderContainerTracker.reset();
-	});
-
-	after(() => {
-		clock.restore();
 	});
 
 	async function loadContainer(props?: Partial<ILoaderProps>) {
@@ -144,23 +137,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			true,
 			"Client details should be set with interactive as true",
 		);
-	});
-	it("Delta manager receives pong event", async function () {
-		if (
-			provider.driver.type !== "local" &&
-			provider.driver.type !== "odsp" &&
-			provider.driver.endpointName !== "frs"
-		) {
-			this.skip();
-		}
-		const container = await createConnectedContainer();
-		
-		// real pong events will take at least a minute to fire in real time, so exit test when we receive the real one.
-		await new Promise((resolve) => {
-			// let initial registration of pong event happen
-			clock.tick(60000);
-			container.deltaManager.on("pong", resolve);
-		});
 	});
 
 	itExpects(
