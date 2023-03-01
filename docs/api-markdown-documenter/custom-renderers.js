@@ -19,13 +19,13 @@ function renderAlertNode(
 ) {
 	writer.ensureNewLine();
 
-    writer.writeLine(`{{% callout ${alertNode.alertKind?.toLocaleLowerCase() ?? 'note'} ${alertNode.title ?? ''} %}}`);
+	writer.writeLine(`{{% callout ${alertNode.alertKind?.toLocaleLowerCase() ?? 'note'} ${alertNode.title ?? ''} %}}`);
 
-    renderNodesAsMarkdown(alertNode.children, writer, context);
-    writer.ensureNewLine();
+	renderNodesAsMarkdown(alertNode.children, writer, context);
+	writer.ensureNewLine();
 
-    writer.writeLine('{{% /callout %}}');
-    writer.writeLine();
+	writer.writeLine('{{% /callout %}}');
+	writer.writeLine();
 }
 
 /**
@@ -40,15 +40,15 @@ function renderBlockQuoteNode(
 	writer,
 	context,
 ) {
-    writer.ensureNewLine();
+	writer.ensureNewLine();
 
-    writer.writeLine('{{% callout note %}}');
+	writer.writeLine('{{% callout note %}}');
 
-    renderNodesAsMarkdown(blockQuoteNode.children, writer, context);
-    writer.ensureNewLine();
+	renderNodesAsMarkdown(blockQuoteNode.children, writer, context);
+	writer.ensureNewLine();
 
-    writer.writeLine('{{% /callout %}}');
-    writer.writeLine();
+	writer.writeLine('{{% /callout %}}');
+	writer.writeLine();
 }
 
 /**
@@ -59,7 +59,7 @@ function renderBlockQuoteNode(
  * @param {MarkdownRenderContext} context - See {@link @fluid-tools/api-markdown-documenter#MarkdownRenderContext}.
  */
 function renderTableNode(tableNode, writer, context) {
-    const childContext = {
+	const childContext = {
 		...context,
 		insideTable: true,
 		insideHtml: true,
@@ -91,7 +91,7 @@ function renderTableNode(tableNode, writer, context) {
 }
 
 module.exports = {
-    renderAlertNode,
-    renderBlockQuoteNode,
-    renderTableNode
+	renderAlertNode,
+	renderBlockQuoteNode,
+	renderTableNode
 };
