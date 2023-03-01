@@ -102,7 +102,6 @@ const contextProps = [
 	"document",
 	"navigator",
 	"phantom",
-	"platform",
 	"process",
 	"runtime",
 	"setTimeout",
@@ -373,13 +372,6 @@ function runInContext(context) {
 
 	/**
 	 * The Benchmark constructor.
-	 *
-	 * Note: The Benchmark constructor exposes a handful of lodash methods to
-	 * make working with arrays, collections, and objects easier. The lodash
-	 * methods are:
-	 * [`each/forEach`](https://lodash.com/docs#forEach), [`forOwn`](https://lodash.com/docs#forOwn),
-	 * [`has`](https://lodash.com/docs#has), [`indexOf`](https://lodash.com/docs#indexOf),
-	 * [`map`](https://lodash.com/docs#map), and [`reduce`](https://lodash.com/docs#reduce)
 	 *
 	 * @constructor
 	 * @param {string} name - A name to identify the benchmark.
@@ -2108,29 +2100,6 @@ function runInContext(context) {
 			 */
 			onStart: undefined,
 		},
-
-		/**
-		 * Platform object with properties describing things like browser name,
-		 * version, and operating system. See [`platform.js`](https://mths.be/platform).
-		 *
-		 * @static
-		 * @memberOf Benchmark
-		 * @type Object
-		 */
-		platform: context.platform ||
-			require("platform") || {
-				description: (context.navigator && context.navigator.userAgent) || null,
-				layout: null,
-				product: null,
-				name: null,
-				manufacturer: null,
-				os: null,
-				prerelease: null,
-				version: null,
-				toString: function () {
-					return this.description || "";
-				},
-			},
 
 		/**
 		 * The semantic version number.

@@ -13,7 +13,6 @@ declare class Benchmark {
 	static runInContext(context: Object): Function;
 
 	static options: Benchmark.Options;
-	static platform: Benchmark.Platform;
 	static support: Benchmark.Support;
 	static version: string;
 
@@ -73,18 +72,6 @@ declare namespace Benchmark {
 		teardown?: Function | string | undefined;
 		fn?: Function | string | undefined;
 		queued?: boolean | undefined;
-	}
-
-	export interface Platform {
-		description: string;
-		layout: string;
-		product: string;
-		name: string;
-		manufacturer: string;
-		os: string;
-		prerelease: string;
-		version: string;
-		toString(): string;
 	}
 
 	export interface Support {
