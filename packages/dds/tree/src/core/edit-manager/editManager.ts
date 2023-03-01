@@ -237,7 +237,7 @@ export class EditManager<
 	/**
 	 * @returns the head commit of the local branch
 	 */
-	public getLocalBranch(): GraphCommit<TChangeset> {
+	public getLocalBranchHead(): GraphCommit<TChangeset> {
 		return this.localBranch;
 	}
 
@@ -317,7 +317,7 @@ export class EditManager<
 	}
 
 	/**
-	 * Fast-forwards the local branch.
+	 * Fast-forwards the local branch to a new head commit that is ahead of the current local branch head.
 	 * @param newHead - the new head of the local branch. This must be a descendant of the current local branch head.
 	 * @returns the composition of changes from the previous head to the new head of the local branch
 	 */

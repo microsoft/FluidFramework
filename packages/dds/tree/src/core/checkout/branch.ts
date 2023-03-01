@@ -93,17 +93,22 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 			() => this.head,
 			(forked) => {
 				// In this function, `this` is the base and `forked` is the fork being merged in
+				const forkedChange = forked.pull();
 				const commits: GraphCommit<TChange>[] = [];
 				const baseBranch = forked.getBaseBranch();
+				const foundBaseBranch = findAncestor(
+					[forked.head, commits],
+					(c) => c === baseBranch,
+				);
 				assert(
-					findAncestor([forked.head, commits], (c) => c === baseBranch) !== undefined,
+					foundBaseBranch !== undefined,
 					"Expected merging checkout branches to be related",
 				);
 				this.head = forked.head;
 				assert(this.forks.delete(forked), "Invalid checkout merge");
 				const change = this.rebaser.changeRebaser.compose(commits);
 				this.emit("onChange", change);
-				return change;
+				return forkedChange;
 			},
 			this.sessionId,
 			this.rebaser,
@@ -120,8 +125,7 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	 */
 	public merge(): TChange {
 		this.assertNotDisposed();
-		const change = this.pull();
-		this.mergeIntoBase(this);
+		const change = this.mergeIntoBase(this);
 		this.dispose();
 		return change;
 	}
@@ -138,6 +142,7 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	 * Dispose this branch and all branches that descend from it (i.e. have been transitively forked).
 	 */
 	private dispose(): void {
+		this.assertNotDisposed();
 		this.disposed = true;
 		for (const fork of this.forks) {
 			fork.dispose();

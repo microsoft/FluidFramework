@@ -260,10 +260,10 @@ export class SharedTreeCore<
 	 */
 	protected createBranch(): SharedTreeBranch<TChange> {
 		const branch = new SharedTreeBranch(
-			() => this.editManager.getLocalBranch(),
-			(b) => {
-				const change = this.editManager.fastForwardLocalBranch(b.getHead());
-				this.submitEdit(change);
+			() => this.editManager.getLocalBranchHead(),
+			(forked) => {
+				const change = forked.pull();
+				this.submitEdit(this.editManager.fastForwardLocalBranch(forked.getHead()));
 				return change;
 			},
 			this.stableId,
