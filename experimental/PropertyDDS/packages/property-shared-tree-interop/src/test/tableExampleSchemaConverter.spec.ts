@@ -147,11 +147,10 @@ function checkMissingRefs(schemaData) {
 
 function checkInheritanceTranslation(schemaData) {
 	const row = lookupTreeSchema(schemaData, brand("array<Test:Row-1.0.0>"));
-	expect(row).not.toBeUndefined();
-	expect(row.localFields).not.toBeUndefined();
-	const field = row?.localFields.get(EmptyKey);
+	assert(row !== undefined);
+	assert(row.localFields !== undefined);
+	const field = row.localFields.get(EmptyKey);
 	assert(field !== undefined);
-	expect(field).not.toBeUndefined();
 	assert(field.types !== undefined);
 	const types = field.types;
 	expect(types.has(brand("Test:Row-1.0.0"))).toBeTruthy();
