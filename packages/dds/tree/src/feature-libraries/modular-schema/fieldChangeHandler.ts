@@ -30,6 +30,11 @@ export interface FieldChangeHandler<
 /**
  * @alpha
  */
+export type RevisionIndexer = (tag: RevisionTag) => number;
+
+/**
+ * @alpha
+ */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
@@ -44,6 +49,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**
@@ -54,6 +60,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**

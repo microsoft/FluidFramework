@@ -17,6 +17,7 @@ import {
 	NodeChangeRebaser,
 	IdAllocator,
 	isolatedFieldChangeRebaser,
+	RevisionIndexer,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -202,12 +203,19 @@ export function convertGenericChange<TChange>(
 	target: FieldChangeHandler<TChange>,
 	composeChild: NodeChangeComposer,
 	genId: IdAllocator,
+	revisionIndexer: RevisionIndexer,
 ): TChange {
 	const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
 		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
 	);
 
-	return target.rebaser.compose(perIndex, composeChild, genId, invalidCrossFieldManager);
+	return target.rebaser.compose(
+		perIndex,
+		composeChild,
+		genId,
+		invalidCrossFieldManager,
+		revisionIndexer,
+	);
 }
 
 const invalidFunc = () => fail("Should not be called when converting generic changes");

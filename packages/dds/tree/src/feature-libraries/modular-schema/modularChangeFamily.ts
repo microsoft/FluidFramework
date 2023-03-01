@@ -52,6 +52,7 @@ import {
 	ModularChangeset,
 	IdAllocator,
 	RevisionInfo,
+	RevisionIndexer,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
@@ -87,6 +88,7 @@ export class ModularChangeFamily
 	private normalizeFieldChanges(
 		changes: readonly FieldChange[],
 		genId: IdAllocator,
+		revisionIndexer: RevisionIndexer,
 	): {
 		fieldKind: FieldKind;
 		changesets: FieldChangeset[];
@@ -109,8 +111,15 @@ export class ModularChangeFamily
 				return convertGenericChange(
 					genericChange,
 					handler,
-					(children) => this.composeNodeChanges(children, genId, newCrossFieldTable()),
+					(children) =>
+						this.composeNodeChanges(
+							children,
+							genId,
+							newCrossFieldTable(),
+							revisionIndexer,
+						),
 					genId,
+					revisionIndexer,
 				) as FieldChangeset;
 			}
 			return change.change;
@@ -130,13 +139,19 @@ export class ModularChangeFamily
 
 	compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		let maxId = -1;
-		const revInfo: RevisionInfo[] = [];
+		const revInfos: RevisionInfo[] = [];
 		for (const { change } of changes) {
 			maxId = Math.max(change.maxId ?? -1, maxId);
 			if (change.revisions !== undefined) {
-				revInfo.push(...change.revisions);
+				revInfos.push(...change.revisions);
 			}
 		}
+		const revisionIndexer: RevisionIndexer = (tag: RevisionTag): number => {
+			const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
+			assert(index !== -1, "Unable to index unknown revision");
+			return index;
+		};
+
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
@@ -144,6 +159,7 @@ export class ModularChangeFamily
 			changes.map((change) => tagChange(change.change.changes, change.revision)),
 			genId,
 			crossFieldTable,
+			revisionIndexer,
 		);
 
 		while (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -155,20 +171,23 @@ export class ModularChangeFamily
 					field.fieldKind,
 				).rebaser.amendCompose(
 					field.change,
-					(children) => this.composeNodeChanges(children, genId, crossFieldTable),
+					(children) =>
+						this.composeNodeChanges(children, genId, crossFieldTable, revisionIndexer),
 					genId,
 					newCrossFieldManager(crossFieldTable),
+					revisionIndexer,
 				);
 				field.change = brand(amendedChange);
 			}
 		}
-		return makeModularChangeset(composedFields, maxId, revInfo);
+		return makeModularChangeset(composedFields, maxId, revInfos);
 	}
 
 	private composeFieldMaps(
 		changes: TaggedChange<FieldChangeMap>[],
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<ComposeData>,
+		revisionIndexer: RevisionIndexer,
 	): FieldChangeMap {
 		const fieldChanges = new Map<FieldKey, FieldChange[]>();
 		for (const change of changes) {
@@ -194,6 +213,7 @@ export class ModularChangeFamily
 				const { fieldKind, changesets } = this.normalizeFieldChanges(
 					changesForField,
 					genId,
+					revisionIndexer,
 				);
 				assert(
 					changesets.length === changesForField.length,
@@ -206,9 +226,11 @@ export class ModularChangeFamily
 				);
 				const composedChange = fieldKind.changeHandler.rebaser.compose(
 					taggedChangesets,
-					(children) => this.composeNodeChanges(children, genId, crossFieldTable),
+					(children) =>
+						this.composeNodeChanges(children, genId, crossFieldTable, revisionIndexer),
 					genId,
 					manager,
+					revisionIndexer,
 				);
 
 				composedField = {
@@ -229,6 +251,7 @@ export class ModularChangeFamily
 		changes: TaggedChange<NodeChangeset>[],
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<ComposeData>,
+		revisionIndexer: RevisionIndexer,
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
 		let valueChange: ValueChange | undefined;
@@ -242,7 +265,12 @@ export class ModularChangeFamily
 			}
 		}
 
-		const composedFieldChanges = this.composeFieldMaps(fieldChanges, genId, crossFieldTable);
+		const composedFieldChanges = this.composeFieldMaps(
+			fieldChanges,
+			genId,
+			crossFieldTable,
+			revisionIndexer,
+		);
 		const composedNodeChange: NodeChangeset = {};
 		if (valueChange !== undefined) {
 			composedNodeChange.valueChange = valueChange;
@@ -364,11 +392,24 @@ export class ModularChangeFamily
 		let maxId = change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<RebaseData>();
+		const revInfos: RevisionInfo[] = [];
+		if (change.revisions !== undefined) {
+			revInfos.push(...change.revisions);
+		}
+		if (over.change.revisions !== undefined) {
+			revInfos.push(...over.change.revisions);
+		}
+		const revisionIndexer: RevisionIndexer = (tag: RevisionTag): number => {
+			const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
+			assert(index !== -1, "Unable to index unknown revision");
+			return index;
+		};
 		const rebasedFields = this.rebaseFieldMap(
 			change.changes,
 			tagChange(over.change.changes, over.revision),
 			genId,
 			crossFieldTable,
+			revisionIndexer,
 		);
 
 		while (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -396,6 +437,7 @@ export class ModularChangeFamily
 		over: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
+		revisionIndexer: RevisionIndexer,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -407,7 +449,7 @@ export class ModularChangeFamily
 				const {
 					fieldKind,
 					changesets: [fieldChangeset, baseChangeset],
-				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId);
+				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionIndexer);
 
 				const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
 				const taggedBaseChange = { revision, change: baseChangeset };
@@ -421,6 +463,7 @@ export class ModularChangeFamily
 							{ revision, change: baseChild },
 							genId,
 							crossFieldTable,
+							revisionIndexer,
 						),
 					genId,
 					manager,
@@ -449,6 +492,7 @@ export class ModularChangeFamily
 		over: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
+		revisionIndexer: RevisionIndexer,
 	): NodeChangeset {
 		if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
 			return change;
@@ -464,6 +508,7 @@ export class ModularChangeFamily
 				},
 				genId,
 				crossFieldTable,
+				revisionIndexer,
 			),
 		};
 	}
