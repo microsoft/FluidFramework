@@ -174,7 +174,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
             const result = await this.collection.findOneAndUpdate(
                 query,
                 {setOnInsert: value},
-                {upsert: true}
+                {upsert: true,
+                returnDocument: "before"}
             );
 
             return result.value
@@ -193,7 +194,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
             const result = await this.collection.findOneAndUpdate(
                 query,
                 {set: value},
-                {});
+                {returnDocument: "before"});
 
             return result.value
                 ? { value: result.value, existing: true } as { value: T; existing: boolean; }
