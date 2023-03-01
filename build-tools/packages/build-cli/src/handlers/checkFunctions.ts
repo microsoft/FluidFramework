@@ -7,7 +7,7 @@ import inquirer from "inquirer";
 import { Machine } from "jssm";
 import path from "path";
 
-import { MonoRepoKind } from "@fluidframework/build-tools";
+import { execAsync, MonoRepoKind } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
@@ -25,7 +25,7 @@ import {
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
-import { branchesRunDefaultPolicy } from "../repoConfig";
+import { getRunPolicyCheckDefault } from "../repoConfig";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
@@ -398,48 +398,101 @@ export const checkPolicy: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, shouldCheckPolicy } = data;
+	const { context, releaseGroup, shouldCheckPolicy } = data;
 	assert(context !== undefined, "Context is undefined.");
+	assert(releaseGroup !== undefined, "Release group is undefined.");
 
 	if (shouldCheckPolicy === true) {
-		if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
+		if (!getRunPolicyCheckDefault(releaseGroup, context.originalBranchName)) {
 			log.warning(
-				`Policy check fixes are not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
+				`Policy check fixes for ${releaseGroup} are not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
 			);
 		}
 
-		// oclif docs suggest using proper function calls into underlying APIs rather than calling a command directly
-		// but it's very convenient in this case. check policy is a command where the CLI is the "best" interface; it doesn't
-		// expose a better programmatic API and making one just to make it cleaner to call here seems unnecessary.
-		await CheckPolicy.run([
-			"--fix",
-			"--exclusions",
-			path.join(
-				context.gitRepo.resolvedRoot,
-				"build-tools",
-				"packages",
-				"build-tools",
-				"data",
-				"exclusions.json",
-			),
-		]);
+		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
+		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
+		// like we do in CI.
+		const result = await execAsync(`npm run policy-check`, {
+			cwd: context.gitRepo.resolvedRoot,
+		});
+		log.verbose(result.stdout);
 
 		// check for policy check violation
 		const afterPolicyCheckStatus = await context.gitRepo.getStatus();
 		if (afterPolicyCheckStatus !== "" && afterPolicyCheckStatus !== "") {
 			log.logHr();
 			log.errorLog(
-				`Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`,
+				`Policy check needed to make modifications. Please create a PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`,
 			);
 			BaseStateHandler.signalFailure(machine, state);
+			return false;
 		}
-		// eslint-disable-next-line no-negated-condition
-	} else if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
+	} else if (getRunPolicyCheckDefault(releaseGroup, context.originalBranchName) === false) {
 		log.verbose(
-			`Skipping policy check because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
+			`Skipping policy check for ${releaseGroup} because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
 		);
 	} else {
 		log.warning("Skipping policy check.");
+	}
+
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
+};
+
+/**
+ * Checks that a release branch exists.
+ *
+ * @param state - The current state machine state.
+ * @param machine - The state machine.
+ * @param testMode - Set to true to run function in test mode.
+ * @param log - A logger that the function can use for logging.
+ * @param data - An object with handler-specific contextual data.
+ * @returns True if the state was handled; false otherwise.
+ */
+export const checkAssertTagging: StateHandlerFunction = async (
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
+): Promise<boolean> => {
+	if (testMode) return true;
+
+	const { context, releaseGroup, shouldCheckPolicy } = data;
+	assert(context !== undefined, "Context is undefined.");
+	assert(releaseGroup !== undefined, "Release group is undefined.");
+
+	if (shouldCheckPolicy === true) {
+		if (!getRunPolicyCheckDefault(releaseGroup, context.originalBranchName)) {
+			log.warning(
+				`Assert tagging for ${releaseGroup} is not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
+			);
+		}
+
+		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
+		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
+		// like we do in CI.
+		const result = await execAsync(`npm run policy-check:asserts`, {
+			cwd: context.gitRepo.resolvedRoot,
+		});
+		log.verbose(result.stdout);
+
+		// check for policy check violation
+		const afterPolicyCheckStatus = await context.gitRepo.getStatus();
+		if (afterPolicyCheckStatus !== "" && afterPolicyCheckStatus !== "") {
+			log.logHr();
+			log.errorLog(
+				`Asserts were tagged. Please create a PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`,
+			);
+			BaseStateHandler.signalFailure(machine, state);
+			return false;
+		}
+	} else if (getRunPolicyCheckDefault(releaseGroup, context.originalBranchName) === false) {
+		log.verbose(
+			`Skipping assert tagging for ${releaseGroup} because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
+		);
+	} else {
+		log.warning("Skipping assert tagging.");
 	}
 
 	BaseStateHandler.signalSuccess(machine, state);

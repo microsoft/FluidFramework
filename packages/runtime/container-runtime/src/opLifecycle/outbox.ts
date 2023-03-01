@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
-import { BatchManager } from "./batchManager";
+import { BatchManager, estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
 import { OpSplitter } from "./opSplitter";
@@ -184,24 +184,26 @@ export class Outbox {
 		}
 
 		const compressedBatch = this.params.compressor.compressBatch(batch);
-		if (compressedBatch.contentSizeInBytes <= this.params.config.maxBatchSizeInBytes) {
-			// If we don't reach the maximum supported size of a batch, it can safely be sent as is
-			return compressedBatch;
-		}
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
-			return this.params.splitter.splitCompressedBatch(compressedBatch);
+			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
+				? compressedBatch
+				: this.params.splitter.splitCompressedBatch(compressedBatch);
 		}
 
-		// If we've reached this point, the runtime would attempt to send a batch larger than the allowed size
-		throw new GenericError("BatchTooLarge", /* error */ undefined, {
-			batchSize: batch.contentSizeInBytes,
-			compressedBatchSize: compressedBatch.contentSizeInBytes,
-			count: compressedBatch.content.length,
-			limit: this.params.config.maxBatchSizeInBytes,
-			chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
-			compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-		});
+		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
+			throw new GenericError("BatchTooLarge", /* error */ undefined, {
+				batchSize: batch.contentSizeInBytes,
+				compressedBatchSize: compressedBatch.contentSizeInBytes,
+				count: compressedBatch.content.length,
+				limit: this.params.config.maxBatchSizeInBytes,
+				chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
+				compressionOptions: JSON.stringify(this.params.config.compressionOptions),
+				socketSize: estimateSocketSize(batch),
+			});
+		}
+
+		return compressedBatch;
 	}
 
 	/**
@@ -216,6 +218,16 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		if (length === 0 || !this.params.shouldSend()) {
 			return;
+		}
+
+		const socketSize = estimateSocketSize(batch);
+		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
+			this.mc.logger.sendPerformanceEvent({
+				eventName: "LargeBatch",
+				length: batch.content.length,
+				sizeInBytes: batch.contentSizeInBytes,
+				socketSize,
+			});
 		}
 
 		if (this.params.containerContext.submitBatchFn === undefined) {
