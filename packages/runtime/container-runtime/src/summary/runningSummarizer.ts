@@ -31,9 +31,9 @@ import {
 	ISummaryCancellationToken,
 	ISummarizeResults,
 	ISummarizeTelemetryProperties,
+	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
 	IRefreshSummaryAckOptions,
-	ISummarizerRuntime,
 } from "./summarizerTypes";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {

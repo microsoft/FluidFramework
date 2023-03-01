@@ -168,7 +168,6 @@ export class DataStores implements IDisposable {
 					snapshotTree: value,
 					runtime: this.runtime,
 					storage: this.runtime.storage,
-					deltaManager: this.runtime.deltaManager,
 					scope: this.runtime.scope,
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
@@ -183,7 +182,6 @@ export class DataStores implements IDisposable {
 					id: key,
 					pkg: undefined,
 					runtime: this.runtime,
-					deltaManager: this.runtime.deltaManager,
 					storage: this.runtime.storage,
 					scope: this.runtime.scope,
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
@@ -362,7 +360,6 @@ export class DataStores implements IDisposable {
 			id,
 			pkg,
 			runtime: this.runtime,
-			deltaManager: this.runtime.deltaManager,
 			storage: this.runtime.storage,
 			scope: this.runtime.scope,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(id, {
@@ -382,7 +379,6 @@ export class DataStores implements IDisposable {
 			id,
 			pkg,
 			runtime: this.runtime,
-			deltaManager: this.runtime.deltaManager,
 			storage: this.runtime.storage,
 			scope: this.runtime.scope,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(id, {

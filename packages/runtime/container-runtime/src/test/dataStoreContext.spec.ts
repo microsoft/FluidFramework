@@ -7,18 +7,12 @@ import { strict as assert } from "assert";
 
 import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import { LazyPromise, stringToBuffer } from "@fluidframework/common-utils";
-import {
-	AttachState,
-	ContainerErrorType,
-	IDeltaManager,
-} from "@fluidframework/container-definitions";
+import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import {
 	IBlob,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	ISummaryBlob,
 	SummaryType,
@@ -69,10 +63,6 @@ describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
 	const emptyGCData: IGarbageCollectionData = { gcNodes: {} };
 	let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-	const deltaManager = {} as unknown as IDeltaManager<
-		ISequencedDocumentMessage,
-		IDocumentMessage
-	>;
 
 	describe("LocalFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalFluidDataStoreContext;
@@ -143,7 +133,6 @@ describe("Data Store Context Tests", () => {
 						id: invalidId,
 						pkg: ["TestDataStore1"],
 						runtime: containerRuntime,
-						deltaManager,
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -163,7 +152,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: fullPackageName, // This will cause an error when calling `realizeCore`
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -206,7 +194,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -263,7 +250,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -298,7 +284,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -353,7 +338,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -371,7 +355,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -405,7 +388,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: packageName,
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -435,7 +417,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: packageName,
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -473,7 +454,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: packageName,
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -510,7 +490,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -532,7 +511,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -571,7 +549,6 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
 					runtime: containerRuntime,
-					deltaManager,
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -728,7 +705,6 @@ describe("Data Store Context Tests", () => {
 						id: invalidId,
 						pkg: ["TestDataStore1"],
 						runtime: containerRuntime,
-						deltaManager,
 						storage: storage as IDocumentStorageService,
 						scope,
 						createSummarizerNodeFn,
@@ -1132,7 +1108,6 @@ describe("Data Store Context Tests", () => {
 						id: invalidId,
 						pkg: [factory.type],
 						runtime: containerRuntime,
-						deltaManager,
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1156,7 +1131,6 @@ describe("Data Store Context Tests", () => {
 						id: dataStoreId,
 						pkg: ["some-datastore-type-not-present-in-registry"],
 						runtime: containerRuntime,
-						deltaManager,
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1193,7 +1167,6 @@ describe("Data Store Context Tests", () => {
 						id: dataStoreId,
 						pkg: [factory.type],
 						runtime: containerRuntime,
-						deltaManager,
 						storage,
 						scope,
 						createSummarizerNodeFn,
