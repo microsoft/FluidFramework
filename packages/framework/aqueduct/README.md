@@ -166,7 +166,7 @@ developer to:
 
 -   Define the registry of data objects that can be created
 -   Declare the default data object
--   Use [provider entries](#provider-entries-development)
+-   Use provider entries
 -   Declare Container level [Request Handlers](#container-level-request-handlers)
 
 ## Container object example

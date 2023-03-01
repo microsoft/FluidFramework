@@ -151,7 +151,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    loadCli(container.initialObjects.sharedRandomNumber);
    ```
 
-2. Replace `TODO 6` with the following code. Note that, this code will first take the container id as the input. To create a new Fluid container, press Enter or type `undefined`. A new container will be initialized and the container id will be printed in the terminal. You can copy the container id, launch a new terminal window, and type/paste the initial container id to have multiple collaborative NodeJS clients.
+1. Replace `TODO 6` with the following code. Note that, this code will first take the container id as the input. To create a new Fluid container, press Enter or type `undefined`. A new container will be initialized and the container id will be printed in the terminal. You can copy the container id, launch a new terminal window, and type/paste the initial container id to have multiple collaborative NodeJS clients.
 
    ```js
    const containerId = readlineSync.question("Type a Container ID or press Enter to continue: ");
@@ -181,9 +181,9 @@ To create a new Fluid container press Enter. The container id will be printed in
 
 ## Next steps
 
-- You can find the completed code for this example in our Fluid Examples GitHub repository [here](https://github.com/microsoft/FluidExamples/tree/main/node-demo).
-- Try extending the demo with more key/value pairs and a more complex framework such as Express.
-- Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
+-   You can find the completed code for this example in our Fluid Examples GitHub repository [here](https://github.com/microsoft/FluidExamples/tree/main/node-demo).
+-   Try extending the demo with more key/value pairs and a more complex framework such as Express.
+-   Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
 
 {{< callout tip >}}
 
@@ -201,13 +201,14 @@ When you make changes to the code the project will automatically rebuild and the
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 

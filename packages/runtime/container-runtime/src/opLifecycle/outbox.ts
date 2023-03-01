@@ -184,25 +184,26 @@ export class Outbox {
 		}
 
 		const compressedBatch = this.params.compressor.compressBatch(batch);
-		if (compressedBatch.contentSizeInBytes <= this.params.config.maxBatchSizeInBytes) {
-			// If we don't reach the maximum supported size of a batch, it can safely be sent as is
-			return compressedBatch;
-		}
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
-			return this.params.splitter.splitCompressedBatch(compressedBatch);
+			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
+				? compressedBatch
+				: this.params.splitter.splitCompressedBatch(compressedBatch);
 		}
 
-		// If we've reached this point, the runtime would attempt to send a batch larger than the allowed size
-		throw new GenericError("BatchTooLarge", /* error */ undefined, {
-			batchSize: batch.contentSizeInBytes,
-			compressedBatchSize: compressedBatch.contentSizeInBytes,
-			count: compressedBatch.content.length,
-			limit: this.params.config.maxBatchSizeInBytes,
-			chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
-			compressionOptions: JSON.stringify(this.params.config.compressionOptions),
-			socketSize: estimateSocketSize(batch),
-		});
+		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {
+			throw new GenericError("BatchTooLarge", /* error */ undefined, {
+				batchSize: batch.contentSizeInBytes,
+				compressedBatchSize: compressedBatch.contentSizeInBytes,
+				count: compressedBatch.content.length,
+				limit: this.params.config.maxBatchSizeInBytes,
+				chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
+				compressionOptions: JSON.stringify(this.params.config.compressionOptions),
+				socketSize: estimateSocketSize(batch),
+			});
+		}
+
+		return compressedBatch;
 	}
 
 	/**
@@ -232,12 +233,12 @@ export class Outbox {
 		if (this.params.containerContext.submitBatchFn === undefined) {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
-			for (const message of batch.content) {
-				// Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
-				if (message.metadata?.compressed) {
-					delete message.metadata.compressed;
-				}
+			assert(
+				batch.content[0].compression === undefined,
+				"Compression should not have happened if the loader does not support it",
+			);
 
+			for (const message of batch.content) {
 				this.params.containerContext.submitFn(
 					MessageType.Operation,
 					message.deserializedContent,
