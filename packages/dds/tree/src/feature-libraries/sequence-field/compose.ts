@@ -35,8 +35,8 @@ import {
 	dequeueRelatedReattaches,
 	isBlockedReattach,
 	getOffsetAtRevision,
-	isNewAttach,
 	isObjMark,
+	isUninsert,
 } from "./utils";
 
 /**
@@ -568,7 +568,7 @@ export class ComposeQueue<T> {
 	private readonly newMarks: MarkQueue<T>;
 	private readonly baseIndex: IndexTracker;
 	private readonly baseGap: GapTracker;
-	private readonly cancelledAttaches: Set<RevisionTag> = new Set();
+	private readonly cancelledInserts: Set<RevisionTag> = new Set();
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,
@@ -598,20 +598,18 @@ export class ComposeQueue<T> {
 			composeChanges,
 		);
 
-		// Detect all attaches in the new marks that will be cancelled by detaches in the base marks
-		const attaches = new Set<RevisionTag>();
-		for (const mark of newMarks) {
-			if (isNewAttach(mark)) {
-				const newRev = mark.revision ?? this.newRevision;
-				if (newRev !== undefined) {
-					attaches.add(newRev);
-				}
+		// Detect all inserts in the new marks that will be cancelled by uninserts in the base marks
+		const uninserts = new Set<RevisionTag>();
+		for (const mark of baseMarks) {
+			if (isUninsert(mark) && mark.revision !== undefined) {
+				uninserts.add(mark.revision);
 			}
 		}
-		for (const mark of baseMarks) {
-			if (isDetachMark(mark) && mark.revision !== undefined) {
-				if (attaches.has(mark.revision)) {
-					this.cancelledAttaches.add(mark.revision);
+		for (const mark of newMarks) {
+			if (isObjMark(mark) && mark.type === "Insert") {
+				const newRev = mark.revision ?? this.newRevision;
+				if (newRev !== undefined && uninserts.has(newRev)) {
+					this.cancelledInserts.add(newRev);
 				}
 			}
 		}
@@ -768,9 +766,21 @@ export class ComposeQueue<T> {
 				areRelatedReattaches(baseMark, newMark)
 			) {
 				return dequeueRelatedReattaches(this.newMarks, this.baseMarks);
-			} else if (newRev !== undefined && this.cancelledAttaches.has(newRev)) {
-				// If we know the new attach is getting cancelled out then we need to delay returning it.
-				// The base mark that cancels the attach must appear later in the base marks.
+			} else if (
+				newMark.type === "Insert" &&
+				newRev !== undefined &&
+				this.cancelledInserts.has(newRev)
+			) {
+				// We know the new insert is getting cancelled out so we need to delay returning it.
+				// The base mark that cancels the insert must appear later in the base marks.
+				return { baseMark: this.baseMarks.dequeue() };
+			} else if (isUninsert(baseMark)) {
+				// The base mark represents an insert being rolled back.
+				// That insert was concurrent to and sequenced after the attach performed by newNark so
+				// the uninsert should be ordered as the later insert would have been had the changes applied in
+				// sequencing order. This means the uninsert should come first since right now we only support
+				// the merge-left tiebreak policy.
+				// TODO: support merge-right tiebreak policy.
 				return { baseMark: this.baseMarks.dequeue() };
 			}
 			return this.dequeueNew();

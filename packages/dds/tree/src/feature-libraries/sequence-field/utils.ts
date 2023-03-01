@@ -324,6 +324,16 @@ export function isDetachMark<TNodeChange>(
 	return false;
 }
 
+export function isUninsert<TNodeChange>(
+	mark: Mark<TNodeChange> | undefined,
+): mark is Detach<TNodeChange> {
+	if (isObjMark(mark)) {
+		const type = mark.type;
+		return type === "Delete" && mark.isRollback === true;
+	}
+	return false;
+}
+
 export function isObjMark<TNodeChange>(
 	mark: Mark<TNodeChange> | undefined,
 ): mark is ObjectMark<TNodeChange> {
