@@ -46,6 +46,7 @@ These have been moved to the `@fluid-internal` scope and are no longer published
 `IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
 
 ### Container and IContainer no longer raise events when a new listener is registered
+
 `Container` and `IContainer` had previously raised the `connected`, `disconnected`, `dirty`, and `saved` events when a new listener was registered and the corresponding state was true. This behavior has been removed. To avoid issues, add checks to the state of the container before registering listeners.
 
 # 2.0.0-internal.3.0.0
