@@ -32,7 +32,6 @@ import { StateHandler } from "./handlers";
  */
 export abstract class StateMachineCommand<T extends typeof Command> extends BaseCommand<T> {
 	static flags = {
-		// ...BaseCommand.flags,
 		// Test mode flags
 		testMode: Flags.boolean({
 			default: false,
@@ -46,9 +45,6 @@ export abstract class StateMachineCommand<T extends typeof Command> extends Base
 			hidden: true,
 		}),
 	};
-
-	// protected flags!: Flags<T>;
-	// protected args!: Args<T>;
 
 	/**
 	 * The state machine used by the command.
