@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.9.0
+      '@fluidframework/build-tools': 0.11.0-134585
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.17.9
       '@microsoft/api-extractor': ^7.22.2
@@ -19,7 +19,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.9.0
+      '@fluidframework/build-tools': 0.11.0-134585
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.19.24
       '@microsoft/api-extractor': 7.33.6
@@ -34,12 +34,12 @@ importers:
 
   packages/azure-client:
     specifiers:
-      '@fluid-tools/build-cli': ^0.9.0
+      '@fluid-tools/build-cli': 0.11.0-134585
       '@fluidframework/aqueduct': ^1.4.0-121020
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@1.1.1
       '@fluidframework/azure-local-service': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.9.0
+      '@fluidframework/build-tools': 0.11.0-134585
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': ^1.4.0-121020
@@ -91,12 +91,12 @@ importers:
       axios: 0.21.4
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.9.0
+      '@fluid-tools/build-cli': 0.11.0-134585
       '@fluidframework/aqueduct': 1.4.0-121020
       '@fluidframework/azure-client-previous': /@fluidframework/azure-client/1.1.1
       '@fluidframework/azure-local-service': link:../azure-local-service
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.9.0
+      '@fluidframework/build-tools': 0.11.0-134585
       '@fluidframework/counter': 1.4.0-121020
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-client-utils': 1.4.0-121020
@@ -152,10 +152,10 @@ importers:
 
   packages/azure-service-utils:
     specifiers:
-      '@fluid-tools/build-cli': ^0.9.0
+      '@fluid-tools/build-cli': 0.11.0-134585
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@1.1.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.9.0
+      '@fluidframework/build-tools': 0.11.0-134585
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
@@ -176,10 +176,10 @@ importers:
       jsrsasign: 10.6.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.9.0
+      '@fluid-tools/build-cli': 0.11.0-134585
       '@fluidframework/azure-service-utils-previous': /@fluidframework/azure-service-utils/1.1.1
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.9.0
+      '@fluidframework/build-tools': 0.11.0-134585
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -365,7 +365,7 @@ importers:
 
   packages/test/scenario-runner:
     specifiers:
-      '@fluid-tools/build-cli': ^0.9.0
+      '@fluid-tools/build-cli': 0.11.0-134585
       '@fluidframework/aqueduct': ^1.4.0-121020
       '@fluidframework/azure-client': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
@@ -437,7 +437,7 @@ importers:
       tinylicious: 0.6.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.9.0
+      '@fluid-tools/build-cli': 0.11.0-134585
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -842,14 +842,14 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/build-cli/0.9.0:
-    resolution: {integrity: sha512-EGinq4t+Xw0Sv2KjPMMPXlSed4UVSyD6U0UxNwRczN8iLPvqgO91VkmYe19cBA5slr2y/2mcQuBWdh8LXrlKZw==}
+  /@fluid-tools/build-cli/0.11.0-134585:
+    resolution: {integrity: sha512-CLiWQ1TApZeRqWFQ1b7L//s9ak6hevspodSWKgBGrjkw+I/rWyD5a72+leNkOIoN4PrIO7vv3MFtMYL/N7QA7Q==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.9.0
-      '@fluidframework/build-tools': 0.9.0
-      '@fluidframework/bundle-size-tools': 0.9.0
+      '@fluid-tools/version-tools': 0.11.0-134585
+      '@fluidframework/build-tools': 0.11.0-134585
+      '@fluidframework/bundle-size-tools': 0.11.0-134585
       '@oclif/core': 1.20.4
       '@oclif/plugin-autocomplete': 1.3.6
       '@oclif/plugin-commands': 2.2.1
@@ -866,6 +866,7 @@ packages:
       inquirer-table-prompt: 0.2.1
       jssm: 5.88.4
       jssm-viz-cli: 5.88.4
+      minimatch: 7.4.2
       npm-check-updates: 16.6.5
       oclif: 3.6.3
       semver: 7.3.8
@@ -885,8 +886,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.9.0:
-    resolution: {integrity: sha512-D8EbWXup7Hoh651neSW/Kirg4u+UoaLC9udY9saCvnhDUwK4Z8FmrN7W5FMKEUHgJlV/BaSelYLkGf0AdUmKIQ==}
+  /@fluid-tools/version-tools/0.11.0-134585:
+    resolution: {integrity: sha512-1y+0/Pspurc2Y8GSOHiLlwWiO+YEd6LQ6tW/NPGkqo7VVNogXs2p2KcowBEV/4nV5NqQxzhlhXDLgK/AEA8cuw==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
@@ -1018,18 +1019,19 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.9.0:
-    resolution: {integrity: sha512-0R9MoBsc8KfxoNadbeCYxF3q82Dze8PhJAhFn4eqp0Z0frjAA+Ni+Rvb/01EAFgsukGdD0fQhdekmeGAOG8k8g==}
+  /@fluidframework/build-tools/0.11.0-134585:
+    resolution: {integrity: sha512-1+K87yHGfD8G/FEMYeaAYEoZ1CM2IGA9inERyQq/I1X9hPTYk1P3SmgssxNLxw9gT7ynQkEwtFt9j3ryXi7/HA==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.9.0
-      '@fluidframework/bundle-size-tools': 0.9.0
+      '@fluid-tools/version-tools': 0.11.0-134585
+      '@fluidframework/bundle-size-tools': 0.11.0-134585
       '@octokit/core': 4.1.0
       '@rushstack/node-core-library': 3.53.2
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
+      cosmiconfig: 8.1.0
       danger: 10.9.0_@octokit+core@4.1.0
       date-fns: 2.29.3
       debug: 4.3.4
@@ -1040,7 +1042,7 @@ packages:
       lodash: 4.17.21
       lodash.isequal: 4.5.0
       lodash.merge: 4.6.2
-      minimatch: 3.1.2
+      minimatch: 7.4.2
       npm-package-json-lint: 6.3.0
       replace-in-file: 6.3.5
       rimraf: 2.7.1
@@ -1058,8 +1060,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.9.0:
-    resolution: {integrity: sha512-epsdKKkJQVyRocKI2kcfHWiX3xWhcVLsUg/nERDMHEYBYAbY7I8m9B6EnV5NgSRvE0KryrK4RSZFSpai7J00Jw==}
+  /@fluidframework/bundle-size-tools/0.11.0-134585:
+    resolution: {integrity: sha512-NCu5C/y8BbhzkYOJwN/ha/Phrq4AzzQT0A7Hjir3D8Eeu2oH36HF6rWNa+Y0hIy2EaqhoY50zRXdCyqqiFC7rQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -2728,7 +2730,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 26.6.2
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       jest-mock: 26.6.2
     dev: true
 
@@ -2738,7 +2740,7 @@ packages:
     dependencies:
       '@jest/types': 26.6.2
       '@sinonjs/fake-timers': 6.0.1
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       jest-message-util: 26.6.2
       jest-mock: 26.6.2
       jest-util: 26.6.2
@@ -4505,7 +4507,7 @@ packages:
   /@octokit/types/2.16.2:
     resolution: {integrity: sha512-O75k56TYvJ8WpAakWwYRN8Bgu60KrmX0z1KqFp1kNiFNkgW+JW+9EBKZ+S33PU6SLvbihqd+3drvPxKK68Ee8Q==}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /@octokit/types/6.41.0:
@@ -4824,7 +4826,7 @@ packages:
     dependencies:
       '@types/http-cache-semantics': 4.0.1
       '@types/keyv': 3.1.4
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       '@types/responselike': 1.0.0
     dev: true
 
@@ -4835,7 +4837,7 @@ packages:
   /@types/cli-progress/3.11.0:
     resolution: {integrity: sha512-XhXhBv1R/q2ahF3BM7qT5HLzJNlIL0wbcGyZVjqOTqAybAnsLisd7gy1UCyIqpL+5Iv6XhlSyzjLCnI2sIdbCg==}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /@types/cookie/0.4.1:
@@ -4894,7 +4896,7 @@ packages:
   /@types/graceful-fs/4.1.5:
     resolution: {integrity: sha512-anKkLmZZ+xm4p8JWBf4hElkM4XR+EZeA2M9BAkkTldmcyDY4mbdIJnRghDJH3Ov5ooY7/UAoENtmdMSkaAd7Cw==}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /@types/html-minifier-terser/6.1.0:
@@ -4908,7 +4910,7 @@ packages:
   /@types/http-proxy/1.17.9:
     resolution: {integrity: sha512-QsbSjA/fSk7xB+UXlCT3wHBy5ai9wOcNDWwZAtud+jXhwOM3l+EYZh8Lng4+/6n8uar0J7xILzqftJdJ/Wdfkw==}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /@types/istanbul-lib-coverage/2.0.4:
@@ -4963,7 +4965,7 @@ packages:
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /@types/lodash/4.14.188:
@@ -5006,7 +5008,6 @@ packages:
 
   /@types/node/15.14.9:
     resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
-    dev: true
 
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
@@ -5030,7 +5031,7 @@ packages:
   /@types/responselike/1.0.0:
     resolution: {integrity: sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /@types/retry/0.12.0:
@@ -5062,7 +5063,7 @@ packages:
     resolution: {integrity: sha512-4UqPv+2567NhMQuMLdKAyK4yzrfCqwaTt6bLhHEs8PFcxbHILsrxaY63n4wgE/BRLDWDQeI+WcTmkXKExh9hQg==}
     dependencies:
       '@types/expect': 1.20.4
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /@types/ws/6.0.4:
@@ -7657,6 +7658,16 @@ packages:
       yaml: 1.10.2
     dev: true
 
+  /cosmiconfig/8.1.0:
+    resolution: {integrity: sha512-0tLZ9URlPGU7JsKq0DQOQ3FoRsYX8xDZ7xMiATQfaiGMz7EHowNkbU9u1coAOmnh9p/1ySpm0RB3JNWRXM5GCg==}
+    engines: {node: '>=14'}
+    dependencies:
+      import-fresh: 3.3.0
+      js-yaml: 4.1.0
+      parse-json: 5.2.0
+      path-type: 4.0.0
+    dev: true
+
   /crc-32/1.2.0:
     resolution: {integrity: sha512-1uBwHxF+Y/4yF5G48fwnKq6QsIXheor3ZLPT80yGBV1oEUwpPojlEhQbWKVw1VwcTQyMGHK1/XMmTjmlsmTTGA==}
     engines: {node: '>=0.8'}
@@ -8404,7 +8415,7 @@ packages:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.12
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.4.2
@@ -9301,7 +9312,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.4
       '@types/lodash': 4.14.188
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       '@types/sinon': 10.0.13
       lodash: 4.17.21
       mock-stdin: 1.0.0
@@ -11663,7 +11674,7 @@ packages:
       '@jest/environment': 26.6.2
       '@jest/fake-timers': 26.6.2
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       jest-mock: 26.6.2
       jest-util: 26.6.2
       jsdom: 16.7.0
@@ -11681,7 +11692,7 @@ packages:
       '@jest/environment': 26.6.2
       '@jest/fake-timers': 26.6.2
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       jest-mock: 26.6.2
       jest-util: 26.6.2
     dev: true
@@ -11739,7 +11750,7 @@ packages:
       '@jest/source-map': 26.6.2
       '@jest/test-result': 26.6.2
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       chalk: 4.1.2
       co: 4.6.0
       expect: 26.6.2
@@ -11809,7 +11820,7 @@ packages:
     engines: {node: '>= 10.14.2'}
     dependencies:
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /jest-pnp-resolver/1.2.2_jest-resolve@26.6.2:
@@ -11942,7 +11953,7 @@ packages:
     resolution: {integrity: sha512-S5wqyz0DXnNJPd/xfIzZ5Xnp1HrJWBczg8mMfMpN78OJ5eDxXyf+Ygld9wX1DnUWbIbhM1YDY95NjR4CBXkb2g==}
     engines: {node: '>= 10.14.2'}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       graceful-fs: 4.2.10
     dev: true
 
@@ -12023,7 +12034,7 @@ packages:
     resolution: {integrity: sha512-KWYVV1c4i+jbMpaBC+U++4Va0cp8OisU185o73T1vo99hqi7w8tSJfUXYswwqqrjzwxa6KpRK54WhPvwf5w6PQ==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       merge-stream: 2.0.0
       supports-color: 7.2.0
     dev: true
@@ -12032,7 +12043,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: true
@@ -13235,6 +13246,13 @@ packages:
 
   /minimatch/6.1.6:
     resolution: {integrity: sha512-6bR3UIeh/DF8+p6A9Spyuy67ShOq42rOkHWi7eUe3Ua99Zo5lZfGC6lJJWkeoK4k9jQFT3Pl7czhTXimG2XheA==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: true
+
+  /minimatch/7.4.2:
+    resolution: {integrity: sha512-xy4q7wou3vUoC9k1xGTXc+awNdGaGVHtFUaey8tiX4H1QRc04DZ/rmDFwNm2EBsuYEhAZ6SgMmYf3InGY6OauA==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
