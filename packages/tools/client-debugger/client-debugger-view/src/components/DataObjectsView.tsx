@@ -36,7 +36,9 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 			{containerData === undefined ? (
 				<div>No Container data provided at debugger initialization.</div>
 			) : (
-				<DynamicDataView data={containerData} renderOptions={renderOptions} />
+				<>
+					<DynamicDataView data={containerData} renderOptions={renderOptions} />{" "}
+				</>
 			)}
 		</div>
 	);

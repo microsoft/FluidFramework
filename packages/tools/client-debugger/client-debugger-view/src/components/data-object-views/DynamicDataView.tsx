@@ -10,6 +10,7 @@ import {
 	IProvideFluidHandle,
 	IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
+// import { IconButton } from "@fluentui/react";
 
 import { SharedObjectRenderOptions } from "../../RendererOptions";
 import { FluidObjectView } from "./FluidObjectView";
@@ -46,9 +47,16 @@ export interface DynamicDataViewProps {
 export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement {
 	const { data, renderOptions } = props;
 
+	// const braceStyle = {
+	// 	fontWeight: '500',
+	// 	fontSize: '24px',
+	// 	cursor: "pointer",
+	// 	color: rgb2hex(249, 248, 245),
+	// };
+
 	// Render primitives and falsy types via their string representation
 	if (typeof data !== "object") {
-		return <>{data}</>;
+		return <> {data} </>;
 	}
 
 	if ((data as IProvideFluidLoadable)?.IFluidLoadable !== undefined) {
