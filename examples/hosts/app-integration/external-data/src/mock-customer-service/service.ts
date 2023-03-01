@@ -10,6 +10,7 @@ import express from "express";
 import fetch from "node-fetch";
 
 import { assertValidTaskListData, TaskListData } from "../model-interface";
+import { ClientManager } from "../utilities";
 
 /**
  * Submits notifications of changes to Fluid Service.
@@ -34,6 +35,28 @@ function echoExternalDataWebhookToFluid(data: TaskListData, fluidServiceUrl: str
 			"CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:",
 			error,
 		);
+	});
+}
+
+/**
+ * Registers for webhook on receiving a specific resource to register for.
+ */
+async function registerForWehbook(
+	port: string,
+	externalDataServiceWebhookRegistrationUrl: string,
+	taskListId: string,
+): Promise<void> {
+	// Register with external data service for webhook notifications.
+	await fetch(externalDataServiceWebhookRegistrationUrl, {
+		method: "POST",
+		headers: {
+			"Access-Control-Allow-Origin": "*",
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			// External data service will call our webhook echoer to notify our subscribers of the data changes.
+			url: `http://localhost:${port}/external-data-webhook?taskListId=${taskListId}`,
+		}),
 	});
 }
 
@@ -82,28 +105,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		return `CUSTOMER SERVICE (${port}): ${message}`;
 	}
 
-	// Register with external data service for webhook notifications.
-	try {
-		await fetch(externalDataServiceWebhookRegistrationUrl, {
-			method: "POST",
-			headers: {
-				"Access-Control-Allow-Origin": "*",
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				// External data service will call our webhook echoer to notify our subscribers of the data changes.
-				url: `http://localhost:${port}/external-data-webhook`,
-			}),
-		});
-	} catch (error) {
-		console.error(
-			formatLogMessage(
-				`Registering for data update notifications webhook with the external data service failed due to an error.`,
-			),
-			error,
-		);
-		throw error;
-	}
+	/**
+	 * Client manager for managing clients session to resourse on external data service.
+	 */
+	const clientManager = new ClientManager<TaskListData>();
 
 	const expressApp = express();
 	expressApp.use(express.json());
@@ -123,12 +128,14 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *
 	 * ```json
 	 * {
-	 *  taskList: {
-	 *      [id: string]: {
-	 *          name: string,
-	 *          priority: number
-	 *      }
-	 *  }
+	 *		taskList: {
+	 * 			[ taskListId: string]: {
+	 *      		[id: string]: {
+	 *      	    	name: string,
+	 *      	    	priority: number
+	 *      		}
+	 * 			}
+	 *  	}
 	 * }
 	 * ```
 	 *
@@ -159,6 +166,61 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				),
 			);
 			echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl);
+			result.send();
+		}
+	});
+
+	/**
+	 * "Echoes" the external data services data update notifications to our own webhook subscribers.
+	 *
+	 * Expected input data format:
+	 *
+	 * ```json
+	 * {
+	 *		taskList: {
+	 * 			[ taskListId: string]: {
+	 *      		[id: string]: {
+	 *      	    	name: string,
+	 *      	    	priority: number
+	 *      		}
+	 * 			}
+	 *  	}
+	 * }
+	 * ```
+	 *
+	 * This data will be forwarded to our own subscribers.
+	 */
+	expressApp.post("/register-session-url", (request, result) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const sessionUrl = request.body?.sessionUrl as string;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const taskListId = request.body?.taskListId as string;
+		if (sessionUrl === undefined) {
+			const errorMessage =
+				'No session data provided by client. Expected under "sessionUrl" property.';
+			console.error(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+		} else {
+			registerForWehbook(
+				port.toString(),
+				externalDataServiceWebhookRegistrationUrl,
+				taskListId,
+			).catch((error) => {
+				console.error(
+					formatLogMessage(
+						`Registering for data update notifications webhook with the external data service failed due to an error.`,
+					),
+					error,
+				);
+				throw error;
+			});
+
+			clientManager.registerClient(sessionUrl, taskListId);
+			console.log(
+				formatLogMessage(
+					`Registered sessionUrl ${sessionUrl} with external query: ${taskListId}".`,
+				),
+			);
 			result.send();
 		}
 	});

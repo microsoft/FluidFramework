@@ -83,12 +83,14 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 *
 	 * ```json
 	 * {
-	 *  taskList: {
-	 *      [id: string]: {
-	 *          name: string,
-	 *          priority: number
-	 *      }
-	 *  }
+	 *		taskList: {
+	 * 			[ taskListId: string]: {
+	 *      		[id: string]: {
+	 *      	    	name: string,
+	 *      	    	priority: number
+	 *      		}
+	 * 			}
+	 *  	}
 	 * }
 	 * ```
 	 */
