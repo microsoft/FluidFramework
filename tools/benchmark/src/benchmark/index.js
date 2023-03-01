@@ -12,11 +12,9 @@
 /* eslint-disable no-func-assign */
 /* eslint-disable prefer-arrow-callback */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable object-shorthand */
 /* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-implied-eval */
-/* eslint-disable prefer-template */
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 /* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -55,27 +53,6 @@ const rePrimitive = /^(?:boolean|number|string|undefined)$/;
 
 /** Used to make every compiled test unique. */
 let uidCounter = 0;
-
-/** Used to assign default `context` object properties. */
-const contextProps = [
-	"Array",
-	"Date",
-	"Function",
-	"Math",
-	"Object",
-	"RegExp",
-	"String",
-	"_",
-	"clearTimeout",
-	"chrome",
-	"chromium",
-	"document",
-	"navigator",
-	"phantom",
-	"process",
-	"runtime",
-	"setTimeout",
-];
 
 /** Used to avoid hz of Infinity. */
 const divisors = {
@@ -212,10 +189,6 @@ function runInContext(context) {
 	/** Detect DOM document object. */
 	const doc = isHostType(context, "document") && context.document;
 
-	/** Used to access Wade Simmons' Node.js `microtime` module. */
-	// TODO: maybe restore this functionality
-	const microtimeObject = undefined; // req("microtime");
-
 	/** Used to access Node.js's high resolution timer. */
 	const processObject = isHostType(context, "process") && context.process;
 
@@ -223,7 +196,7 @@ function runInContext(context) {
 	const trash = doc && doc.createElement("div");
 
 	/** Used to integrity check compiled tests. */
-	const uid = "uid" + +_.now();
+	const uid = `uid${+_.now()}`;
 
 	/** Used to avoid infinite recursion when methods call each other. */
 	const calledBy = {};
@@ -270,13 +243,9 @@ function runInContext(context) {
 			support.decompilation =
 				// eslint-disable-next-line no-new-func
 				Function(
-					(
-						"return (" +
-						function (x) {
-							return { x: "" + (1 + x) + "", y: 0 };
-						} +
-						")"
-					)
+					`return (${function (x) {
+						return { x: "" + (1 + x) + "", y: 0 };
+					}})`
 						// Avoid issues with code added by Istanbul.
 						.replace(/__cov__[^;]+;/g, ""),
 				)()(0).x === "1";
@@ -458,10 +427,10 @@ function runInContext(context) {
 			return type;
 		}
 		return event instanceof Event
-			? _.assign(
+			? Object.assign(
 					event,
 					{ timeStamp: +_.now() },
-					typeof type == "string" ? { type: type } : type,
+					typeof type == "string" ? { type } : type,
 			  )
 			: new Event(type);
 	}
@@ -495,18 +464,10 @@ function runInContext(context) {
 		// Lazy define.
 		createFunction = function (args, body) {
 			let result;
-			const anchor = freeDefine ? freeDefine.amd : Benchmark;
-			const prop = uid + "createFunction";
+			const anchor = Benchmark;
+			const prop = `${uid}createFunction`;
 
-			runScript(
-				(freeDefine ? "define.amd." : "Benchmark.") +
-					prop +
-					"=function(" +
-					args +
-					"){" +
-					body +
-					"}",
-			);
+			runScript(`Benchmark.${prop}=function(${args}){${body}}`);
 			result = anchor[prop];
 			delete anchor[prop];
 			return result;
@@ -514,7 +475,7 @@ function runInContext(context) {
 		// Fix JaegerMonkey bug.
 		// For more information see http://bugzil.la/639720.
 		createFunction =
-			support.browser && (createFunction("", 'return"' + uid + '"') || _.noop)() == uid
+			support.browser && (createFunction("", `return"${uid}"`) || _.noop)() == uid
 				? createFunction
 				: Function;
 		return createFunction.apply(null, arguments);
@@ -605,7 +566,7 @@ function runInContext(context) {
 	 * @returns {boolean} Returns `true` if the value is of the specified class, else `false`.
 	 */
 	function isClassOf(value, name) {
-		return value != null && toString.call(value) == "[object " + name + "]";
+		return value != null && toString.call(value) == `[object ${name}]`;
 	}
 
 	/**
@@ -648,9 +609,8 @@ function runInContext(context) {
 		const script = doc.createElement("script");
 		let sibling = doc.getElementsByTagName("script")[0];
 		let parent = sibling.parentNode;
-		const prop = uid + "runScript";
-		const prefix =
-			"(" + (freeDefine ? "define.amd." : "Benchmark.") + prop + "||function(){})();";
+		const prop = `${uid}runScript`;
+		const prefix = `(${freeDefine ? "define.amd." : "Benchmark."}${prop}||function(){})();`;
 
 		// Firefox 2.0.0.2 cannot use script injection as intended because it executes
 		// asynchronously, but that's OK because script injection is only used to avoid
@@ -679,11 +639,10 @@ function runInContext(context) {
 	 * @param {Object} [options={}] - Options object.
 	 */
 	function setOptions(object, options) {
-		options = object.options = _.assign(
-			{},
-			cloneDeep(object.constructor.options),
-			cloneDeep(options),
-		);
+		options = object.options = {
+			...cloneDeep(object.constructor.options),
+			...cloneDeep(options),
+		};
 
 		_.forOwn(options, function (value, key) {
 			if (value != null) {
@@ -740,7 +699,7 @@ function runInContext(context) {
 	function formatNumber(number) {
 		number = String(number).split(".");
 		return (
-			number[0].replace(/(?=(?:\d{3})+$)(?!\b)/g, ",") + (number[1] ? "." + number[1] : "")
+			number[0].replace(/(?=(?:\d{3})+$)(?!\b)/g, ",") + (number[1] ? `.${number[1]}` : "")
 		);
 	}
 
@@ -1245,13 +1204,13 @@ function runInContext(context) {
 					}
 					// Register a changed object.
 					if (changed) {
-						changes.push({ destination: destination, key: key, value: currValue });
+						changes.push({ destination, key, value: currValue });
 					}
 					queue.push({ destination: currValue, source: value });
 				}
 				// Register a changed primitive.
 				else if (!_.eq(currValue, value) && value !== undefined) {
-					changes.push({ destination: destination, key: key, value: value });
+					changes.push({ destination, key, value });
 				}
 			});
 		} while ((data = queue[index++]));
@@ -1280,7 +1239,7 @@ function runInContext(context) {
 		const stats = bench.stats;
 		const size = stats.sample.length;
 		const pm = "\xb1";
-		let result = bench.name || (_.isNaN(id) ? id : "<Test #" + id + ">");
+		let result = bench.name || (_.isNaN(id) ? id : `<Test #${id}>`);
 
 		if (error) {
 			let errorStr;
@@ -1292,19 +1251,11 @@ function runInContext(context) {
 				// Error#name and Error#message properties are non-enumerable.
 				errorStr = join(_.assign({ name: error.name, message: error.message }, error));
 			}
-			result += ": " + errorStr;
+			result += `: ${errorStr}`;
 		} else {
-			result +=
-				" x " +
-				formatNumber(hz.toFixed(hz < 100 ? 2 : 0)) +
-				" ops/sec " +
-				pm +
-				stats.rme.toFixed(2) +
-				"% (" +
-				size +
-				" run" +
-				(size == 1 ? "" : "s") +
-				" sampled)";
+			result += ` x ${formatNumber(
+				hz.toFixed(hz < 100 ? 2 : 0),
+			)} ops/sec ${pm}${stats.rme.toFixed(2)}% (${size} run${size == 1 ? "" : "s"} sampled)`;
 		}
 		return result;
 	}
@@ -1338,7 +1289,7 @@ function runInContext(context) {
 				stringable ||
 				(support.decompilation && (clone.setup !== _.noop || clone.teardown !== _.noop));
 			const id = bench.id;
-			const name = bench.name || (typeof id == "number" ? "<Test #" + id + ">" : id);
+			const name = bench.name || (typeof id == "number" ? `<Test #${id}>` : id);
 			let result = 0;
 
 			// Init `minTime` if needed.
@@ -1376,9 +1327,7 @@ function runInContext(context) {
 					// Firefox may remove dead code from `Function#toString` results.
 					// For more information see http://bugzil.la/536085.
 					throw new Error(
-						'The test "' +
-							name +
-							'" is empty. This may be the result of dead code removal.',
+						`The test "${name}" is empty. This may be the result of dead code removal.`,
 					);
 				} else if (!deferred) {
 					// Pretest to determine if compiled code exits early, usually by a
@@ -1398,11 +1347,12 @@ function runInContext(context) {
 			// Fallback when a test exits early or errors during pretest.
 			if (!compiled && !deferred && !isEmpty) {
 				funcBody =
-					(stringable || (decompilable && !clone.error)
-						? "function f#(){${fn}\n}var r#,s#,m#=this,i#=m#.count"
-						: "var r#,s#,m#=this,f#=m#.fn,i#=m#.count") +
-					",n#=t#.ns;${setup}\n${begin};m#.f#=f#;while(i#--){m#.f#()}${end};" +
-					"delete m#.f#;${teardown}\nreturn{elapsed:r#}";
+					`${
+						stringable || (decompilable && !clone.error)
+							? "function f#(){${fn}\n}var r#,s#,m#=this,i#=m#.count"
+							: "var r#,s#,m#=this,f#=m#.fn,i#=m#.count"
+					},n#=t#.ns;\${setup}\n\${begin};m#.f#=f#;while(i#--){m#.f#()}\${end};` +
+					`delete m#.f#;\${teardown}\nreturn{elapsed:r#}`;
 
 				compiled = createCompiled(bench, decompilable, deferred, funcBody);
 
@@ -1443,8 +1393,8 @@ function runInContext(context) {
 
 			_.assign(templateData, {
 				setup: decompilable ? getSource(bench.setup) : interpolate("m#.setup()"),
-				fn: decompilable ? getSource(fn) : interpolate("m#.fn(" + fnArg + ")"),
-				fnArg: fnArg,
+				fn: decompilable ? getSource(fn) : interpolate(`m#.fn(${fnArg})`),
+				fnArg,
 				teardown: decompilable ? getSource(bench.teardown) : interpolate("m#.teardown()"),
 			});
 
@@ -1491,8 +1441,9 @@ function runInContext(context) {
 			// Create compiled test.
 			return createFunction(
 				interpolate("window,t#"),
-				"var global = window, clearTimeout = global.clearTimeout, setTimeout = global.setTimeout;\n" +
-					interpolate(body),
+				`var global = window, clearTimeout = global.clearTimeout, setTimeout = global.setTimeout;\n${interpolate(
+					body,
+				)}`,
 			);
 		}
 
@@ -1564,10 +1515,6 @@ function runInContext(context) {
 		// Detect Node.js's nanosecond resolution timer available in Node.js >= 0.8.
 		if (processObject && typeof (timer.ns = processObject.hrtime) == "function") {
 			timers.push({ ns: timer.ns, res: getRes("ns"), unit: "ns" });
-		}
-		// Detect Wade Simmons' Node.js `microtime` module.
-		if (microtimeObject && typeof (timer.ns = microtimeObject.now) == "function") {
-			timers.push({ ns: timer.ns, res: getRes("us"), unit: "us" });
 		}
 		// Pick timer with highest resolution.
 		timer = _.minBy(timers, "res");
@@ -1697,11 +1644,11 @@ function runInContext(context) {
 
 				_.assign(bench.stats, {
 					deviation: sd,
-					mean: mean,
-					moe: moe,
-					rme: rme,
-					sem: sem,
-					variance: variance,
+					mean,
+					moe,
+					rme,
+					sem,
+					variance,
 				});
 
 				// Abort the cycle loop when the minimum sample size has been collected
@@ -1734,10 +1681,10 @@ function runInContext(context) {
 		enqueue();
 		invoke(queue, {
 			name: "run",
-			args: { async: async },
+			args: { async },
 			queued: true,
 			onCycle: evaluate,
-			onComplete: function () {
+			onComplete() {
 				bench.emit("complete");
 			},
 		});
@@ -1839,7 +1786,7 @@ function runInContext(context) {
 			// Fix TraceMonkey bug associated with clock fallbacks.
 			// For more information see http://bugzil.la/509069.
 			if (support.browser) {
-				runScript(uid + "=1;delete " + uid);
+				runScript(`${uid}=1;delete ${uid}`);
 			}
 			// We're done.
 			clone.emit("complete");
@@ -1900,166 +1847,149 @@ function runInContext(context) {
 
 	/* ------------------------------------------------------------------------ */
 
-	// Firefox 1 erroneously defines variable and argument names of functions on
-	// the function itself as non-configurable properties with `undefined` values.
-	// The bugginess continues as the `Benchmark` constructor has an argument
-	// named `options` and Firefox 1 will not assign a value to `Benchmark.options`,
-	// making it non-writable in the process, unless it is the first property
-	// assigned by for-in loop of `_.assign()`.
-	_.assign(Benchmark, {
+	/**
+	 * The default options copied by benchmark instances.
+	 *
+	 * @static
+	 * @memberOf Benchmark
+	 * @type Object
+	 */
+	Benchmark.options = {
 		/**
-		 * The default options copied by benchmark instances.
+		 * A flag to indicate that benchmark cycles will execute asynchronously
+		 * by default.
 		 *
-		 * @static
-		 * @memberOf Benchmark
-		 * @type Object
+		 * @memberOf Benchmark.options
+		 * @type boolean
 		 */
-		options: {
-			/**
-			 * A flag to indicate that benchmark cycles will execute asynchronously
-			 * by default.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type boolean
-			 */
-			async: false,
-
-			/**
-			 * A flag to indicate that the benchmark clock is deferred.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type boolean
-			 */
-			defer: false,
-
-			/**
-			 * The delay between test cycles (secs).
-			 * @memberOf Benchmark.options
-			 * @type number
-			 */
-			delay: 0.005,
-
-			/**
-			 * Displayed by `Benchmark#toString` when a `name` is not available
-			 * (auto-generated if absent).
-			 *
-			 * @memberOf Benchmark.options
-			 * @type string
-			 */
-			id: undefined,
-
-			/**
-			 * The default number of times to execute a test on a benchmark's first cycle.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type number
-			 */
-			initCount: 1,
-
-			/**
-			 * The maximum time a benchmark is allowed to run before finishing (secs).
-			 *
-			 * Note: Cycle delays aren't counted toward the maximum time.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type number
-			 */
-			maxTime: 5,
-
-			/**
-			 * The minimum sample size required to perform statistical analysis.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type number
-			 */
-			minSamples: 5,
-
-			/**
-			 * The time needed to reduce the percent uncertainty of measurement to 1% (secs).
-			 *
-			 * @memberOf Benchmark.options
-			 * @type number
-			 */
-			minTime: 0,
-
-			/**
-			 * The name of the benchmark.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type string
-			 */
-			name: undefined,
-
-			/**
-			 * An event listener called when the benchmark is aborted.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type Function
-			 */
-			onAbort: undefined,
-
-			/**
-			 * An event listener called when the benchmark completes running.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type Function
-			 */
-			onComplete: undefined,
-
-			/**
-			 * An event listener called after each run cycle.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type Function
-			 */
-			onCycle: undefined,
-
-			/**
-			 * An event listener called when a test errors.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type Function
-			 */
-			onError: undefined,
-
-			/**
-			 * An event listener called when the benchmark is reset.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type Function
-			 */
-			onReset: undefined,
-
-			/**
-			 * An event listener called when the benchmark starts running.
-			 *
-			 * @memberOf Benchmark.options
-			 * @type Function
-			 */
-			onStart: undefined,
-		},
+		async: false,
 
 		/**
-		 * The semantic version number.
+		 * A flag to indicate that the benchmark clock is deferred.
 		 *
-		 * @static
-		 * @memberOf Benchmark
+		 * @memberOf Benchmark.options
+		 * @type boolean
+		 */
+		defer: false,
+
+		/**
+		 * The delay between test cycles (secs).
+		 * @memberOf Benchmark.options
+		 * @type number
+		 */
+		delay: 0.005,
+
+		/**
+		 * Displayed by `Benchmark#toString` when a `name` is not available
+		 * (auto-generated if absent).
+		 *
+		 * @memberOf Benchmark.options
 		 * @type string
 		 */
-		version: "2.1.4",
-	});
+		id: undefined,
+
+		/**
+		 * The default number of times to execute a test on a benchmark's first cycle.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type number
+		 */
+		initCount: 1,
+
+		/**
+		 * The maximum time a benchmark is allowed to run before finishing (secs).
+		 *
+		 * Note: Cycle delays aren't counted toward the maximum time.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type number
+		 */
+		maxTime: 5,
+
+		/**
+		 * The minimum sample size required to perform statistical analysis.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type number
+		 */
+		minSamples: 5,
+
+		/**
+		 * The time needed to reduce the percent uncertainty of measurement to 1% (secs).
+		 *
+		 * @memberOf Benchmark.options
+		 * @type number
+		 */
+		minTime: 0,
+
+		/**
+		 * The name of the benchmark.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type string
+		 */
+		name: undefined,
+
+		/**
+		 * An event listener called when the benchmark is aborted.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type Function
+		 */
+		onAbort: undefined,
+
+		/**
+		 * An event listener called when the benchmark completes running.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type Function
+		 */
+		onComplete: undefined,
+
+		/**
+		 * An event listener called after each run cycle.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type Function
+		 */
+		onCycle: undefined,
+
+		/**
+		 * An event listener called when a test errors.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type Function
+		 */
+		onError: undefined,
+
+		/**
+		 * An event listener called when the benchmark is reset.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type Function
+		 */
+		onReset: undefined,
+
+		/**
+		 * An event listener called when the benchmark starts running.
+		 *
+		 * @memberOf Benchmark.options
+		 * @type Function
+		 */
+		onStart: undefined,
+	};
 
 	_.assign(Benchmark, {
-		formatNumber: formatNumber,
-		invoke: invoke,
-		join: join,
-		runInContext: runInContext,
-		support: support,
+		formatNumber,
+		invoke,
+		join,
+		runInContext,
+		support,
 	});
 
 	/* ------------------------------------------------------------------------ */
 
-	_.assign(Benchmark.prototype, {
+	Object.assign(Benchmark.prototype, {
 		/**
 		 * The number of times a test was executed.
 		 *
@@ -2300,22 +2230,22 @@ function runInContext(context) {
 		},
 	});
 
-	_.assign(Benchmark.prototype, {
-		abort: abort,
-		clone: clone,
-		compare: compare,
-		emit: emit,
-		listeners: listeners,
-		off: off,
-		on: on,
-		reset: reset,
-		run: run,
+	Object.assign(Benchmark.prototype, {
+		abort,
+		clone,
+		compare,
+		emit,
+		listeners,
+		off,
+		on,
+		reset,
+		run,
 		toString: toStringBench,
 	});
 
 	/* ------------------------------------------------------------------------ */
 
-	_.assign(Deferred.prototype, {
+	Object.assign(Deferred.prototype, {
 		/**
 		 * The deferred benchmark instance.
 		 *
@@ -2349,13 +2279,13 @@ function runInContext(context) {
 		timeStamp: 0,
 	});
 
-	_.assign(Deferred.prototype, {
-		resolve: resolve,
+	Object.assign(Deferred.prototype, {
+		resolve,
 	});
 
 	/* ------------------------------------------------------------------------ */
 
-	_.assign(Event.prototype, {
+	Object.assign(Event.prototype, {
 		/**
 		 * A flag to indicate if the emitters listener iteration is aborted.
 		 *
@@ -2416,9 +2346,9 @@ function runInContext(context) {
 	/* ------------------------------------------------------------------------ */
 
 	// Expose Deferred, Event
-	_.assign(Benchmark, {
-		Deferred: Deferred,
-		Event: Event,
+	Object.assign(Benchmark, {
+		Deferred,
+		Event,
 	});
 
 	return Benchmark;
