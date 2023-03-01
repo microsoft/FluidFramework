@@ -183,11 +183,7 @@ export function create(
         validateRequestParams("tenantId", "id"),
         getTokenFromRequest(),
         validateTokenRevocationClaims(),
-        verifyStorageToken(tenantManager, config, {
-            requireDocumentId: false,
-            ensureSingleUseToken: true,
-            singleUseTokenCache,
-        }),
+        verifyStorageToken(tenantManager, config),
         throttle(tenantThrottler, winston, tenantThrottleOptions),
         async (request, response, next) => {
             const documentId = getParam(request.params, "id");
