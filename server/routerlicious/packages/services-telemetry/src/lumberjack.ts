@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path-browserify";
 import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
 import {
@@ -23,7 +22,7 @@ export class Lumberjack {
     private _schemaValidators: ILumberjackSchemaValidator[] | undefined;
     private _isSetupCompleted: boolean = false;
     protected static _instance: Lumberjack | undefined;
-
+    private static readonly LogMessageEventName = "LogMessage";
     protected constructor() {}
 
     protected static get instance() {
@@ -136,7 +135,7 @@ export class Lumberjack {
         exception?: any) {
         this.errorOnIncompleteSetup();
         const lumber = new Lumber<string>(
-            this.getLogCallerInfo(),
+            Lumberjack.LogMessageEventName,
             LumberType.Log,
             this._engineList,
             this._schemaValidators,
@@ -180,44 +179,6 @@ export class Lumberjack {
         exception?: any) {
         this.log(message, LogLevel.Error, properties, exception);
     }
-
-    /**
-    * For logs, we can use the caller information as a form of event name
-    * until we have a better solution. In order to do that, we use NodeJS's
-    * CallSite to extract information such as file name and function name.
-    * Caveat: function names do not work properly when using callbacks.
-    * For more info, see:
-    * https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-    * @returns filename and function separated by a colon
-    */
-    private getLogCallerInfo(): string {
-        const defaultPrefix = "LogMessage";
-        const defaultStackTracePreparer = Error.prepareStackTrace;
-        try {
-            Error.prepareStackTrace = (_, structuredStackTrace) => {
-                // Since we have a static log() and an instance log(), as well as convenience
-                // methods such as info(), error(), etc, we should discard the first entry
-                // in the call stack while it points to this Lumberjack file.
-                while (structuredStackTrace[0].getFileName() === __filename) {
-                    structuredStackTrace.shift();
-                }
-                const caller = structuredStackTrace[0];
-                const fileName = caller.getFileName() ?? "FilenameNotAvailable";
-                const functionName = caller.getFunctionName() ?? caller.getMethodName() ?? "FunctionNameNotAvailable";
-                return `${defaultPrefix}:${path.basename(fileName)}:${functionName}`;
-            };
-            const err = new Error();
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            Error.captureStackTrace(err, this.log);
-
-            const response = err.stack ?? defaultPrefix;
-            return response;
-        } catch (err) {
-            return defaultPrefix;
-        } finally {
-            Error.prepareStackTrace = defaultStackTracePreparer;
-        }
-   }
 
     private errorOnIncompleteSetup() {
         if (!this._isSetupCompleted) {
