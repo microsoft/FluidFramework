@@ -65,6 +65,8 @@ export {
 	GetContainerStateMessageData,
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
+	TelemetryEventMessage,
+	TelemetryEventMessageData,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
@@ -83,3 +85,4 @@ export {
 	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";
+export { DevToolsExtensionLogger } from "./devToolsExtensionLogger";
