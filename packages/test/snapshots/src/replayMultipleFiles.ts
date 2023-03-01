@@ -11,6 +11,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "./packageVersion";
 import { validateSnapshots } from "./validateSnapshots";
+import { getMetadata, writeMetadataFile } from "./metadata";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {
@@ -48,7 +49,8 @@ export enum Mode {
 export interface IWorkerArgs {
 	folder: string;
 	mode: Mode;
-	snapFreq: number;
+	snapFreq?: number;
+	testSummaries?: boolean;
 	initializeFromSnapshotsDir?: string;
 }
 
@@ -108,13 +110,8 @@ export async function processOneNode(args: IWorkerArgs) {
 	replayArgs.strictChannels = true;
 	// The output snapshots to compare against are under "currentSnapshots" sub-directory.
 	replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
-	if (args.mode === Mode.NewSnapshots) {
-		// when generating new snapshots, match those from
-		// the original file based on summarize ops
-		replayArgs.testSummaries = true;
-	} else {
-		replayArgs.snapFreq = args.snapFreq;
-	}
+	replayArgs.snapFreq = args.snapFreq;
+	replayArgs.testSummaries = args.testSummaries;
 	replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
 	replayArgs.compare = args.mode === Mode.Compare;
 	// Make it easier to see problems in stress tests
@@ -164,18 +161,33 @@ export async function processContent(mode: Mode, concurrently = true) {
 		// Clean up any failed snapshots that might have been written out in previous test run.
 		cleanFailedSnapshots(folder);
 
-		// SnapFreq is the most interesting options to tweak
-		// On one hand we want to generate snapshots often, ideally every 50 ops
+		// SnapFreq is the most interesting options to tweak.
+		// On one hand we want to generate snapshots often, ideally every 50 ops.
 		// This allows us to exercise more cases and increases chances of finding bugs.
-		// At the same time that generates more files in repository, and adds to the size of it
-		// Thus using two passes:
-		// 1) Stress test - testing eventual consistency only
-		// 2) Testing backward compat - only testing snapshots at every 1000 ops
-		const snapFreq = mode === Mode.Stress ? 50 : 1000;
+		// At the same time that generates more files in repository, and adds to the size of it.
+		// Thus, the tests are run in 2 primary modes:
+		// 1) Stress test - Generates and validates snapshots every 50 ops. It tests eventual consistency only without
+		//    storing these snapshots.
+		// 2) Other test - Generate and validate snapshots at a lower frequency. This has 2 categories:
+		//    2.1) For older snapshots added before `testSummaries` was introduced, the snapshot frequency is 1000.
+		//    2.2) For snapshots added after `testSummaries` was introduced, the snapshot frequency is the same as when
+		//         summaries happened in the original file. This is determined by the summary ops.
+		const metadata = getMetadata(folder);
+		let snapFreq: number | undefined;
+		let testSummaries: boolean | undefined;
+		if (mode === Mode.Stress) {
+			snapFreq = 50;
+		} else if (metadata.testSummaries === undefined) {
+			snapFreq = 1000;
+		} else {
+			testSummaries = true;
+		}
+
 		const data: IWorkerArgs = {
 			folder,
 			mode,
 			snapFreq,
+			testSummaries,
 		};
 
 		switch (mode) {
@@ -251,16 +263,23 @@ async function processNodeForUpdatingSnapshots(
 	// Get the version of the current snapshots. This becomes the the folder name under the "src_snapshots" folder
 	// where these snapshots will be moved.
 	const versionContent = JSON.parse(fs.readFileSync(`${versionFileName}`, "utf-8"));
-	const version = versionContent.snapshotVersion;
+	const currentSnapshotsVersion = versionContent.snapshotVersion;
 
-	// Create the folder where the current snapshots will be moved. If this folder already exists, we will update
-	// the snapshots in that folder because we only need one set of snapshots for each version.
-	const newSrcDir = `${data.folder}/${srcSnapshots}/${version}`;
-	fs.mkdirSync(newSrcDir, { recursive: true });
+	// If the current snapshots version is the same as the current version of the runtime (pkgVersion), don't move
+	// the current snapshots to become older snapshots since it's still the latest snapshot version.
+	if (currentSnapshotsVersion !== pkgVersion) {
+		// Create the folder where the current snapshots will be moved. If this folder already exists, we will update
+		// the snapshots in that folder because we only need one set of snapshots for each version.
+		const newSrcDir = `${data.folder}/${srcSnapshots}/${currentSnapshotsVersion}`;
+		fs.mkdirSync(newSrcDir, { recursive: true });
 
-	for (const subNode of fs.readdirSync(currentSnapshotsDir, { withFileTypes: true })) {
-		assert(!subNode.isDirectory());
-		fs.copyFileSync(`${currentSnapshotsDir}/${subNode.name}`, `${newSrcDir}/${subNode.name}`);
+		for (const subNode of fs.readdirSync(currentSnapshotsDir, { withFileTypes: true })) {
+			assert(!subNode.isDirectory());
+			fs.copyFileSync(
+				`${currentSnapshotsDir}/${subNode.name}`,
+				`${newSrcDir}/${subNode.name}`,
+			);
+		}
 	}
 
 	// Process the current folder which will update the current snapshots as per the changes.
@@ -290,6 +309,9 @@ async function processNodeForNewSnapshots(
 
 	fs.mkdirSync(currentSnapshotsDir, { recursive: true });
 
+	// For new snapshots, testSummaries should be set because summaries should be generated as per the original file.
+	data.testSummaries = true;
+
 	// Process the current folder which will write the generated snapshots to current snapshots dir.
 	await processNode(data, concurrently, limiter);
 
@@ -298,6 +320,9 @@ async function processNodeForNewSnapshots(
 	fs.writeFileSync(versionFileName, JSON.stringify({ snapshotVersion: pkgVersion }), {
 		encoding: "utf-8",
 	});
+
+	// Write the metadata file.
+	writeMetadataFile(data.folder);
 }
 
 /**
