@@ -425,7 +425,9 @@ async function getSingleOpBatch(
 
 		try {
 			// Issue async request for deltas
-			const { messages, partialResult } = await get({ ...props, retry } /* telemetry props */);;
+			const { messages, partialResult } = await get(
+				{ ...props, retry } /* telemetry props */,
+			);
 
 			// If we got messages back, return them.  Return regardless of whether we got messages back if we didn't
 			// specify a "to", since we don't have an expectation of how many to receive.
