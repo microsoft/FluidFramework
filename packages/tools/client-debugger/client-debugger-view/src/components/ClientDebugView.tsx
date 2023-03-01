@@ -172,7 +172,7 @@ export interface PanelViewSelectionMenuProps {
 }
 
 /**
- * Menu for selecting the inner app view to be displayed for the debug panel.
+ * Menu for selecting the inner app view to be displayed in the debug panel.
  *
  * @internal
  */
