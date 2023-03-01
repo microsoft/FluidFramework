@@ -9,8 +9,9 @@ The site is generated using [Hugo](https://gohugo.io/).
 To quickly get started previewing the website's contents locally, open the docs folder in a terminal and install the dependencies using npm.
 
 ```bash
+npm i -g pnpm
 cd docs
-npm install
+pnpm install
 ```
 
 Then, start the server.

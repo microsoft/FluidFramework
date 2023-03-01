@@ -27,6 +27,7 @@
     "download": "npm run download:api && npm run build:api",
     "download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
     "hugo": "hugo",
+    "preinstall": "node ../scripts/only-pnpm.cjs",
     "linkcheck": "start-server-and-test start 1313 linkcheck:full",
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "linkcheck:full": "npm run linkcheck:fast -- --external",
@@ -70,10 +71,10 @@
     "start-server-and-test": "^1.15.4"
   },
   "pnpm": {
-		"peerDependencyRules": {
-			"ignoreMissing": [
-				"markdown-magic"
-			]
-		}
-	}
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "markdown-magic"
+      ]
+    }
+  }
 }
