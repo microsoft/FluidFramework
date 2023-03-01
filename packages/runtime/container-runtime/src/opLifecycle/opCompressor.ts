@@ -45,16 +45,7 @@ export class OpCompressor {
 		});
 
 		for (const message of batch.content.slice(1)) {
-			// Add an empty placeholder message to reserve the sequence numbers
-			messages.push({
-				deserializedContent: {
-					contents: undefined,
-					type: message.deserializedContent.type,
-				},
-				localOpMetadata: undefined,
-				metadata: undefined,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-			});
+			messages.push({ ...message, contents: undefined });
 		}
 
 		const compressedBatch: IBatch = {
