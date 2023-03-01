@@ -5,6 +5,7 @@
 
 import { expect } from "chai";
 import { ChangeSet } from "../changeset";
+import { isEmptyChangeSet } from "../changeset_operations/isEmptyChangeset";
 
 describe("Map rebase ChangeSets", function () {
 	it("Case 1", () => {
@@ -17,8 +18,6 @@ describe("Map rebase ChangeSets", function () {
 
 		const cs = new ChangeSet(toRebaseCS);
 		const changes = cs._rebaseChangeSet(originalCS, [], {});
-		cs.applyChangeSet(changes);
-		// Applying the changes from rebase should have the same effect as applying empty changeset.
-		expect(cs.getSerializedChangeSet()).to.equal(toRebaseCS);
+		expect(isEmptyChangeSet(changes)).to.equal(true);
 	});
 });
