@@ -800,53 +800,6 @@ function runInContext(context) {
 	/* ------------------------------------------------------------------------ */
 
 	/**
-	 * A generic `Array#filter` like method.
-	 *
-	 * @static
-	 * @memberOf Benchmark
-	 * @param {Array} array - The array to iterate over.
-	 * @param {Function|string} callback - The function/alias called per iteration.
-	 * @returns {Array} A new array of values that passed callback filter.
-	 * @example
-	 *
-	 * // get odd numbers
-	 * Benchmark.filter([1, 2, 3, 4, 5], function(n) {
-	 *   return n % 2;
-	 * }); // -> [1, 3, 5];
-	 *
-	 * // get fastest benchmarks
-	 * Benchmark.filter(benches, 'fastest');
-	 *
-	 * // get slowest benchmarks
-	 * Benchmark.filter(benches, 'slowest');
-	 *
-	 * // get benchmarks that completed without erroring
-	 * Benchmark.filter(benches, 'successful');
-	 */
-	function filter(array, callback) {
-		if (callback === "successful") {
-			// Callback to exclude those that are errored, unrun, or have hz of Infinity.
-			callback = function (bench) {
-				return bench.cycles && _.isFinite(bench.hz) && !bench.error;
-			};
-		} else if (callback === "fastest" || callback === "slowest") {
-			// Get successful, sort by period + margin of error, and filter fastest/slowest.
-			const result = filter(array, "successful").sort(function (a, b) {
-				a = a.stats;
-				b = b.stats;
-				return (
-					(a.mean + a.moe > b.mean + b.moe ? 1 : -1) * (callback === "fastest" ? 1 : -1)
-				);
-			});
-
-			return _.filter(result, function (bench) {
-				return result[0].compare(bench) == 0;
-			});
-		}
-		return _.filter(array, callback);
-	}
-
-	/**
 	 * Converts a number to a more readable comma-separated string representation.
 	 *
 	 * @static
@@ -2190,17 +2143,11 @@ function runInContext(context) {
 	});
 
 	_.assign(Benchmark, {
-		filter: filter,
 		formatNumber: formatNumber,
 		invoke: invoke,
 		join: join,
 		runInContext: runInContext,
 		support: support,
-	});
-
-	// Add lodash methods to Benchmark.
-	_.each(["each", "forEach", "forOwn", "has", "indexOf", "map", "reduce"], function (methodName) {
-		Benchmark[methodName] = _[methodName];
 	});
 
 	/* ------------------------------------------------------------------------ */

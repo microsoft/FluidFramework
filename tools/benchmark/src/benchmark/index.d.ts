@@ -7,20 +7,10 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
 declare class Benchmark {
-	static filter<T>(arr: T[], callback: (value: T) => any, thisArg?: any): T[];
-	static filter<T>(arr: T[], filter: string, thisArg?: any): T[];
 	static formatNumber(num: number): string;
 	static join(obj: Object, separator1?: string, separator2?: string): string;
 	static invoke(benches: Benchmark[], name: string | Object, ...args: any[]): any[];
 	static runInContext(context: Object): Function;
-
-	static each(obj: Object | any[], callback: Function, thisArg?: any): void;
-	static forEach<T>(arr: T[], callback: (value: T) => any, thisArg?: any): void;
-	static forOwn(obj: Object, callback: Function, thisArg?: any): void;
-	static has(obj: Object, path: any[] | string): boolean;
-	static indexOf<T>(arr: T[], value: T, fromIndex?: number): number;
-	static map<T, K>(arr: T[], callback: (value: T) => K, thisArg?: any): K[];
-	static reduce<T, K>(arr: T[], callback: (accumulator: K, value: T) => K, thisArg?: any): K;
 
 	static options: Benchmark.Options;
 	static platform: Benchmark.Platform;

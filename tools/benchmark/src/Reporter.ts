@@ -305,13 +305,14 @@ export class BenchmarkReporter {
 		benchmarks: Map<string, BenchmarkData>,
 	): string {
 		const outputFriendlyBenchmarks: unknown[] = [];
-		// Filter successful benchmarks and ready them for output to file
-		const successful = Benchmark.filter(Array.from(benchmarks.values()), "successful");
-		benchmarks.forEach((value: BenchmarkData, key: string) => {
-			if (successful.includes(value)) {
-				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, value));
+
+		for (const [key, bench] of benchmarks.entries()) {
+			if (bench.cycles && Number.isFinite(bench.hz) && bench.error === undefined) {
+				// successful benchmarks: ready them for output to file
+				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, bench));
 			}
-		});
+		}
+
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
 		const outputContentString: string = JSON.stringify(
