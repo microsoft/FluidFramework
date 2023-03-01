@@ -58,6 +58,14 @@ export default {
 			{ id: "phones", typeid: "Test:Phone-1.0.0", optional: true, context: "array" },
 		],
 	},
+	optional: {
+		inherits: ["NodeProperty"],
+		typeid: "Test:Optional-1.0.0",
+	},
+	erroneousType: {
+		// does not inherit from "NodeProperty" and has no properties
+		typeid: "Test:ErroneousType-1.0.0",
+	},
 	person: {
 		typeid: "Test:Person-1.0.0",
 		inherits: ["NodeProperty"],
@@ -69,6 +77,7 @@ export default {
 			{ id: "salary", typeid: "Int32", optional: true },
 			{ id: "address", typeid: "Test:Address-1.0.0", optional: true },
 			{ id: "friends", typeid: "String", context: "map", optional: true },
+			{ id: "misc", typeid: "NodeProperty", optional: true },
 		],
 	},
 };

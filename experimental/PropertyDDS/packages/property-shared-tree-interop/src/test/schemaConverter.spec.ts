@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	brand,
 	FieldKinds,
@@ -22,22 +24,46 @@ describe("schema converter", () => {
 		PropertyFactory.register(Object.values(personSchema));
 	});
 
+	it(`inherits from "NodeProperty"`, () => {
+		const schemaRepository = createSchemaRepository();
+		assert.throws(
+			() =>
+				convertPSetSchemaToSharedTreeLls(
+					schemaRepository,
+					fieldSchema(FieldKinds.optional, [brand("Test:ErroneousType-1.0.0")]),
+				),
+			(e) =>
+				validateAssertionError(
+					e,
+					`"Test:ErroneousType-1.0.0" contains no properties and does not inherit from "NodeProperty".`,
+				),
+			"Expected exception was not thrown",
+		);
+		const rootFieldSchema = fieldSchema(FieldKinds.optional, [brand("Test:Optional-1.0.0")]);
+		convertPSetSchemaToSharedTreeLls(schemaRepository, rootFieldSchema);
+		expect(lookupGlobalFieldSchema(schemaRepository, rootFieldKey)).toEqual(rootFieldSchema);
+	});
+
 	it(`can use "NodeProperty" as root`, () => {
-		const rootFieldSchema = fieldSchema(FieldKinds.optional, [
+		const rootFieldSchema = fieldSchema(FieldKinds.optional, [brand("NodeProperty")]);
+		const schemaRepository = createSchemaRepository();
+		convertPSetSchemaToSharedTreeLls(schemaRepository, rootFieldSchema);
+
+		expect(schemaRepository.globalFieldSchema.size).toEqual(1);
+		const expectedRootFieldSchema = fieldSchema(FieldKinds.optional, [
 			brand("NodeProperty"),
 			brand("NamedNodeProperty"),
 			brand("RelationshipProperty"),
 			brand("Test:Address-1.0.0"),
+			brand("Test:Optional-1.0.0"),
 			brand("Test:Person-1.0.0"),
 		]);
-		const schemaRepository = createSchemaRepository();
-		convertPSetSchemaToSharedTreeLls(schemaRepository, rootFieldSchema);
+		expect(lookupGlobalFieldSchema(schemaRepository, rootFieldKey)).toEqual(
+			expectedRootFieldSchema,
+		);
 
-		// 12 basic types + NodeProperty
-		expect(schemaRepository.globalFieldSchema.size).toEqual(1);
-		expect(lookupGlobalFieldSchema(schemaRepository, rootFieldKey)).toEqual(rootFieldSchema);
-
-		expect(schemaRepository.treeSchema.size).toEqual(31);
+		// 12 basic types + NodeProperty + inheritances
+		expect(schemaRepository.treeSchema.size).toEqual(32);
 		const nodePropertySchema = lookupTreeSchema(schemaRepository, brand("NodeProperty"));
 		expect(nodePropertySchema).toEqual({
 			name: "NodeProperty",

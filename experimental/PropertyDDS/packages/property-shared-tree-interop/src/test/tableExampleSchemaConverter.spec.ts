@@ -3,24 +3,22 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable prefer-template */
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable import/no-internal-modules */
-
+import { strict as assert } from "assert";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	createSchemaRepository,
 	defaultSchemaPolicy,
 	FieldSchema,
 	ValueSchema,
+	brand,
+	EmptyKey,
+	lookupTreeSchema,
 } from "@fluid-internal/tree";
-import { brand } from "@fluid-internal/tree/dist/util/brand";
 import { convertPSetSchemaToSharedTreeLls } from "../schemaConverter";
 
 describe("LlsSchemaConverter", () => {
 	let schemaRepository;
-	it("Conversion", () => {
+	beforeAll(() => {
 		register();
 		const tableSdc: any = brand("Test:Table-1.0.0");
 		const [, OptionalFieldKind] = defaultSchemaPolicy.fieldKinds.keys();
@@ -148,28 +146,28 @@ function checkMissingRefs(schemaData) {
 }
 
 function checkInheritanceTranslation(schemaData) {
-	const schemaMap = schemaData.treeSchema;
-	const row = schemaMap.get("array<Test:Row-1.0.0>");
-	expect(row).not.toBeUndefined;
-	expect(row?.localFields).not.toBeUndefined;
-	const field = row?.localFields.get("");
-	expect(field).not.toBeUndefined;
-	expect(field?.types).not.toBeUndefined;
-	const types = field?.types;
-	expect(types?.has("Test:Row-1.0.0")).toBeTruthy;
-	expect(types?.has("Test:ExtendedRow-1.0.0")).toBeTruthy;
-	expect(types?.has("Test:OtherExtendedRow-1.0.0")).toBeTruthy;
+	const row = lookupTreeSchema(schemaData, brand("array<Test:Row-1.0.0>"));
+	expect(row).not.toBeUndefined();
+	expect(row.localFields).not.toBeUndefined();
+	const field = row?.localFields.get(EmptyKey);
+	assert(field !== undefined);
+	expect(field).not.toBeUndefined();
+	assert(field.types !== undefined);
+	const types = field.types;
+	expect(types.has(brand("Test:Row-1.0.0"))).toBeTruthy();
+	expect(types.has(brand("Test:ExtendedRow-1.0.0"))).toBeTruthy();
+	expect(types.has(brand("Test:OtherExtendedRow-1.0.0"))).toBeTruthy();
 }
 
 function checkEnum(schemaData) {
 	const schemaMap = schemaData.treeSchema;
 	const table = schemaMap.get("Test:Table-1.0.0");
-	expect(table).not.toBeUndefined;
-	expect(table?.localFields).not.toBeUndefined;
+	expect(table).not.toBeUndefined();
+	expect(table?.localFields).not.toBeUndefined();
 	const encoding = table?.localFields.get("encoding");
-	expect(encoding).not.toBeUndefined;
-	expect(encoding?.types).not.toBeUndefined;
-	expect(encoding?.types?.has("Enum")).toBeTruthy;
+	expect(encoding).not.toBeUndefined();
+	expect(encoding?.types).not.toBeUndefined();
+	expect(encoding?.types?.has("Enum")).toBeTruthy();
 }
 
 function checkStructure(schemaData) {
@@ -179,33 +177,33 @@ function checkStructure(schemaData) {
 }
 
 function checkTable(schemaData, table) {
-	expect(table).not.toBeUndefined;
-	expect(table?.localFields).not.toBeUndefined;
+	expect(table).not.toBeUndefined();
+	expect(table?.localFields).not.toBeUndefined();
 	const extendedRows = table?.localFields.get("extendedRows");
 	checkExtendedRows(schemaData, extendedRows);
 }
 
 function checkExtendedRows(schemaData, extendedRows) {
-	expect(extendedRows).not.toBeUndefined;
-	expect(extendedRows?.types).not.toBeUndefined;
-	expect(extendedRows?.types?.has("array<Test:ExtendedRow-1.0.0>")).toBeTruthy;
+	expect(extendedRows).not.toBeUndefined();
+	expect(extendedRows?.types).not.toBeUndefined();
+	expect(extendedRows?.types?.has("array<Test:ExtendedRow-1.0.0>")).toBeTruthy();
 	const info = schemaData.treeSchema.get("Test:ExtendedRow-1.0.0")?.localFields.get("info");
 	checkInfo(schemaData, info);
 }
 
 function checkInfo(schemaData, info) {
-	expect(info).not.toBeUndefined;
-	expect(info?.types).not.toBeUndefined;
-	expect(info?.types?.has("map<Test:RowInfo-1.0.0>")).toBeTruthy;
+	expect(info).not.toBeUndefined();
+	expect(info?.types).not.toBeUndefined();
+	expect(info?.types?.has("map<Test:RowInfo-1.0.0>")).toBeTruthy();
 	const infoType = schemaData.treeSchema.get("Test:RowInfo-1.0.0");
-	expect(infoType).not.toBeUndefined;
-	expect(infoType?.localFields).not.toBeUndefined;
+	expect(infoType).not.toBeUndefined();
+	expect(infoType?.localFields).not.toBeUndefined();
 	const uint64 = schemaData.treeSchema.get("Test:RowInfo-1.0.0");
 	checkUint64(schemaData, uint64);
 }
 
 function checkUint64(schemaData, uint64) {
-	expect(uint64).not.toBeUndefined;
+	expect(uint64).not.toBeUndefined();
 	const uint64Type = schemaData.treeSchema.get("Uint64");
-	expect(uint64Type.value === ValueSchema.Number).toBeTruthy;
+	expect(uint64Type.value === ValueSchema.Number).toBeTruthy();
 }
