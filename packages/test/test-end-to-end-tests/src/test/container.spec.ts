@@ -201,21 +201,20 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 		// Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
 		// Only closing container will break that cycle.
-		deltaConnection.dispose();
 		try {
-			assert.strictEqual(
-				container.connectionState,
-				ConnectionState.Disconnected,
-				"Container should be in Disconnected state",
-			);
-
-			// 'disconnected' event listener should be invoked right after registration
-			let disconnectedEventArgs;
-			container.on("disconnected", (...args) => {
-				disconnectedEventArgs = args;
+			let disconnectEventRaised = false;
+			container.once("disconnected", () => {
+				disconnectEventRaised = true;
+				assert.strictEqual(
+					container.connectionState,
+					ConnectionState.Disconnected,
+					"Container should be in Disconnected state",
+				);
 			});
+			deltaConnection.dispose();
+			// Disconnected event should be raised on next JS turn
 			await Promise.resolve();
-			assert.deepEqual(disconnectedEventArgs, []);
+			assert(disconnectEventRaised, "Disconnected event should be raised");
 		} finally {
 			deltaConnection.removeAllListeners();
 			container.close();
