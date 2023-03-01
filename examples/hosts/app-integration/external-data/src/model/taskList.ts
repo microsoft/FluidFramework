@@ -356,6 +356,32 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 		this._draftData = await draft.get();
 
+		// Check for other connected clients each time a new runtime is initialized
+		const audience = this.runtime.getAudience();
+		let clientSize = 0;
+		let loneClient = true;
+		const client = this.runtime.clientId;
+		// Ensure that the current client is interactive, not a summarizer.
+		if (
+			client !== undefined &&
+			(audience.getMember(client)?.details.capabilities.interactive ?? false)
+		) {
+			// Increase the count of all non-summarizer clients
+			for (const [_, value] of audience.getMembers()) {
+				if (value.details.capabilities.interactive) {
+					clientSize++;
+					if (clientSize > 1) {
+						loneClient = false;
+						break;
+					}
+				}
+			}
+			// Manually fetch data if client is alone in container.
+			if (loneClient) {
+				await this.importExternalData();
+			}
+		}
+
 		this._draftData.on("valueChanged", (changed) => {
 			if (changed.previousValue === undefined) {
 				// Must be from adding a new task

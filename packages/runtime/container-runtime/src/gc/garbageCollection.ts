@@ -202,7 +202,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 		this.summaryStateTracker = new GCSummaryStateTracker(
 			this.shouldRunGC,
-			this.configs.trackGCState,
 			this.configs.tombstoneMode,
 			this.mc,
 			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
