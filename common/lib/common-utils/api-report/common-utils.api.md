@@ -254,6 +254,9 @@ export class RateLimiter {
 export function safelyParseJSON(json: string): any | undefined;
 
 // @public
+export function scheduleIdleTask<T>(callback: (deadline: IdleDeadline) => T, timeout: number): Promise<T>;
+
+// @public
 export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void): ReturnType<typeof setTimeout>;
 
 // @public

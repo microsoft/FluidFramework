@@ -45,3 +45,4 @@ export {
 export { ITraceEvent, Trace } from "./trace";
 export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter";
 export { unreachableCase } from "./unreachable";
+export { scheduleIdleTask } from "./idleTaskScheduler";

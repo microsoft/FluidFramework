@@ -10,11 +10,14 @@
  * support requestIdleCallback.
  * @returns A promise pertaining to the callback that was passed in.
  */
-export async function scheduleIdleTask<T>(callback: () => T, timeout: number): Promise<T> {
+export async function scheduleIdleTask<T>(
+	callback: (deadline: IdleDeadline) => T,
+	timeout: number,
+): Promise<T> {
 	return new Promise((resolve, reject) => {
-		const doLowPriorityTask = (): any => {
+		const doLowPriorityTask = (deadline: IdleDeadline): void => {
 			try {
-				resolve(callback());
+				resolve(callback(deadline));
 			} catch (err: any) {
 				reject(err);
 			}
@@ -23,7 +26,14 @@ export async function scheduleIdleTask<T>(callback: () => T, timeout: number): P
 		if (typeof requestIdleCallback === "function") {
 			requestIdleCallback(doLowPriorityTask, { timeout });
 		} else {
-			setTimeout(doLowPriorityTask, timeout);
+			// we do not have good way to detect idle, so will run task on 0-second timer, yeilding a bit.
+			const result: IdleDeadline = {
+				didTimeout: false,
+				timeRemaining() {
+					return timeout;
+				},
+			};
+			setTimeout(() => doLowPriorityTask(result), 0);
 		}
 	});
 }

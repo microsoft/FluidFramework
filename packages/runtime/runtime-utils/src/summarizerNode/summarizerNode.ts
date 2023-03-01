@@ -47,6 +47,37 @@ import {
  */
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
+//
+// TODO: Needs to be replaced with version from common-utils
+//
+export async function scheduleIdleTask<T>(
+	callback: (deadline: IdleDeadline) => T,
+	timeout: number,
+): Promise<T> {
+	return new Promise((resolve, reject) => {
+		const doLowPriorityTask = (deadline: IdleDeadline): void => {
+			try {
+				resolve(callback(deadline));
+			} catch (err: any) {
+				reject(err);
+			}
+		};
+
+		if (typeof requestIdleCallback === "function") {
+			requestIdleCallback(doLowPriorityTask, { timeout });
+		} else {
+			// we do not have good way to detect idle, so will run task on 0-second timer, yeilding a bit.
+			const result: IdleDeadline = {
+				didTimeout: false,
+				timeRemaining() {
+					return timeout;
+				},
+			};
+			setTimeout(() => doLowPriorityTask(result), 0);
+		}
+	});
+}
+
 /**
  * Encapsulates the summarizing work and state of an individual tree node in the
  * summary tree. It tracks changes and allows for optimizations when unchanged, or
@@ -128,14 +159,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		assert(
-			this.isSummaryInProgress(),
-			0x1a1 /* "summarize should not be called when not tracking the summary" */,
-		);
-		assert(
-			this.wipSummaryLogger !== undefined,
-			0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */,
-		);
+		assert(trackState, "is it true?");
+		if (trackState) {
+			assert(
+				this.isSummaryInProgress(),
+				0x1a1 /* "summarize should not be called when not tracking the summary" */,
+			);
+			assert(
+				this.wipSummaryLogger !== undefined,
+				0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */,
+			);
+		}
 
 		// Try to reuse the tree if unchanged
 		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
@@ -159,12 +193,21 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		const result = await this.summarizeInternalFn(fullTree, true, telemetryContext);
-		this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
-		if (result.pathPartsForChildren !== undefined) {
-			this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(
-				result.pathPartsForChildren,
-			);
+		const result = await scheduleIdleTask(async (deadline: IdleDeadline) => {
+			if (deadline.didTimeout) {
+				// report how often it happens, to possibly adjust abount of itme we allow to wait for idle
+				this.logger.sendErrorEvent({ eventName: "SummarizeHitIdleTimeout" });
+			}
+			return this.summarizeInternalFn(fullTree, trackState, telemetryContext);
+		}, 5000); // 5 seconds max timeout - if CPU is not idle that long, we screwed up responsivness anyway, time to continue with summary
+
+		if (trackState) {
+			this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
+			if (result.pathPartsForChildren !== undefined) {
+				this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(
+					result.pathPartsForChildren,
+				);
+			}
 		}
 		return { summary: result.summary, stats: result.stats };
 	}

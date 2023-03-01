@@ -118,8 +118,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	) {
 		super(
 			logger,
-			async (fullTree: boolean, _trackState: boolean, telemetryContext?: ITelemetryContext) =>
-				summarizeFn(fullTree, true /* trackState */, telemetryContext),
+			summarizeFn,
 			config,
 			changeSequenceNumber,
 			latestSummary,
@@ -180,10 +179,11 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			);
 		}
 
+		// TODO (vladsud): remove and make always go through base class
 		// If trackState is true, get summary from base summarizer node which tracks summary state.
 		// If trackState is false, get summary from summarizeInternal.
 		return trackState
-			? super.summarize(fullTree, true /* trackState */, telemetryContext)
+			? super.summarize(fullTree, trackState, telemetryContext)
 			: this.summarizeFn(fullTree, trackState, telemetryContext);
 	}
 
