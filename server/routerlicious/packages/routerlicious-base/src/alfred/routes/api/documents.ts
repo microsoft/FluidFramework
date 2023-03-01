@@ -190,14 +190,13 @@ export function create(
         }),
         throttle(tenantThrottler, winston, tenantThrottleOptions),
         async (request, response, next) => {
-            console.log(`Received token revocation request: ${JSON.stringify(request.body)}`);
             const documentId = getParam(request.params, "id");
             const tenantId = getParam(request.params, "tenantId");
             const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
             Lumberjack.info(
-                `Received and start processing request: ${JSON.stringify(request.body)}`,
+                `Received token revocation request.`,
                 lumberjackProperties);
-            response.status(200).json("Request received!");
+            response.status(503).json("Token revocation is not supported for now");
         });
     return router;
 }
