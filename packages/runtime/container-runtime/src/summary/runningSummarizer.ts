@@ -5,15 +5,10 @@
 
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ChildLogger,
 	isFluidError,
@@ -38,6 +33,7 @@ import {
 	ISummarizeTelemetryProperties,
 	ISummarizeRunnerTelemetry,
 	IRefreshSummaryAckOptions,
+	ISummarizerRuntime,
 } from "./summarizerTypes";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -69,7 +65,7 @@ export class RunningSummarizer implements IDisposable {
 		summaryCollection: SummaryCollection,
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
-		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		runtime: ISummarizerRuntime,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -82,7 +78,7 @@ export class RunningSummarizer implements IDisposable {
 			summaryCollection,
 			cancellationToken,
 			stopSummarizerCallback,
-			deltaManager,
+			runtime,
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
@@ -104,7 +100,7 @@ export class RunningSummarizer implements IDisposable {
 		//    listen for the op events (will get missed by the handlers in the current workflow)
 		// 2. Op was sequenced after the last time we summarized (op sequence number > summarize ref sequence number)
 		const diff =
-			deltaManager.lastSequenceNumber -
+			runtime.deltaManager.lastSequenceNumber -
 			(heuristicData.lastSuccessfulSummary.refSequenceNumber +
 				heuristicData.numNonRuntimeOps +
 				heuristicData.numRuntimeOps);
@@ -117,7 +113,7 @@ export class RunningSummarizer implements IDisposable {
 		}
 
 		// Update last seq number (in case the handlers haven't processed anything yet)
-		heuristicData.lastOpSequenceNumber = deltaManager.lastSequenceNumber;
+		heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
 
 		// Start heuristics
 		summarizer.heuristicRunner?.start();
@@ -165,7 +161,7 @@ export class RunningSummarizer implements IDisposable {
 		private readonly summaryCollection: SummaryCollection,
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
-		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly runtime: ISummarizerRuntime,
 	) {
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
@@ -240,7 +236,7 @@ export class RunningSummarizer implements IDisposable {
 		);
 
 		// Listen for ops
-		this.deltaManager.on("op", (op) => {
+		this.runtime.deltaManager.on("op", (op) => {
 			this.handleOp(op);
 		});
 	}
@@ -328,7 +324,7 @@ export class RunningSummarizer implements IDisposable {
 	 */
 	private async processIncomingSummaryAcks(lastAckRefSeq: number) {
 		let refSequenceNumber =
-			lastAckRefSeq > 0 ? lastAckRefSeq : this.deltaManager.initialSequenceNumber;
+			lastAckRefSeq > 0 ? lastAckRefSeq : this.runtime.deltaManager.initialSequenceNumber;
 		while (!this.disposed) {
 			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
 
@@ -349,7 +345,7 @@ export class RunningSummarizer implements IDisposable {
 	}
 
 	public dispose(): void {
-		this.deltaManager.off("op", (op) => {
+		this.runtime.deltaManager.off("op", (op) => {
 			this.handleOp(op);
 		});
 		this.summaryWatcher.dispose();

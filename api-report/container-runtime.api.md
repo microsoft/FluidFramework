@@ -531,6 +531,8 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
     // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // (undocumented)
     disposeFn?(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
@@ -680,13 +682,11 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 // @public
 export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
-    runtime: ISummarizerRuntime, deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, configurationGetter: () => ISummaryConfiguration,
-    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime, deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) => Promise<ICancellableSummarizerController>);
+    runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
+    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
     close(): void;
     static create(loader: ILoader, url: string): Promise<ISummarizer>;
-    // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];

@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { Deferred } from "@fluidframework/common-utils";
 import {
+	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISummaryAck,
 	ISummaryNack,
@@ -16,14 +17,22 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "../../containerRuntime";
 import {
 	neverCancelledSummaryToken,
 	RunningSummarizer,
 	SummaryCollection,
 	SummarizeHeuristicData,
+	ISummarizerRuntime,
 	ISummarizeHeuristicData,
 } from "../../summary";
+
+class MockRuntime {
+	constructor(
+		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+	) {}
+}
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
@@ -41,6 +50,7 @@ describe("Runtime", () => {
 			let lastRefSeq = 0;
 			let lastClientSeq: number;
 			let lastSummarySeq: number;
+			let mockRuntime: MockRuntime;
 			let heuristicData: ISummarizeHeuristicData;
 			const maxIterationsForSummarizer = 2; // Currently we are restricting the number of iterations to 2.
 			const summaryCommon = {
@@ -237,7 +247,7 @@ describe("Runtime", () => {
 					(reason) => {
 						stopCall++;
 					},
-					mockDeltaManager,
+					mockRuntime as any as ISummarizerRuntime,
 				);
 			};
 
@@ -263,6 +273,7 @@ describe("Runtime", () => {
 				lastSummarySeq = 0; // negative/decrement for test
 				mockLogger = new MockLogger();
 				mockDeltaManager = new MockDeltaManager();
+				mockRuntime = new MockRuntime(mockDeltaManager);
 				summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
 			});
 

@@ -4,8 +4,6 @@
  */
 
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	SummarizerStopReason,
 	IConnectableRuntime,
@@ -37,7 +35,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 
 	public get cancelled() {
 		if (!this._cancelled) {
-			assert(this.deltaManager.active, 0x25d /* "We should never connect as 'read'" */);
+			assert(this.active(), 0x25d /* "We should never connect as 'read'" */);
 
 			// This check can't be enabled in current design due to lastSummary flow, where
 			// summarizer for closed container stays around and can produce one more summary.
@@ -62,18 +60,15 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 		return this.stopDeferred.promise;
 	}
 
-	public static async create(
-		runtime: IConnectableRuntime,
-		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-	) {
-		const obj = new RunWhileConnectedCoordinator(runtime, deltaManager);
+	public static async create(runtime: IConnectableRuntime, active: () => boolean) {
+		const obj = new RunWhileConnectedCoordinator(runtime, active);
 		await obj.waitStart();
 		return obj;
 	}
 
 	protected constructor(
 		private readonly runtime: IConnectableRuntime,
-		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly active: () => boolean,
 	) {}
 
 	/**

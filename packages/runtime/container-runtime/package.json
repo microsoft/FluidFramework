@@ -113,7 +113,7 @@
 		"broken": {
 			"InterfaceDeclaration_IConnectableRuntime": {
 				"backCompat": false
-			},
+			}
 		}
 	}
 }

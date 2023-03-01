@@ -101,9 +101,9 @@ export class DeltaManagerProxy
 	}
 
 	public dispose(): void {
-		this.inbound.dispose();
-		this.outbound.dispose();
-		this.inboundSignal.dispose();
+		this._inbound.dispose();
+		this._outbound.dispose();
+		this._inboundSignal.dispose();
 		super.dispose();
 	}
 }

@@ -11,8 +11,12 @@ import {
 } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ContainerWarning } from "@fluidframework/container-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISummaryTree,
+	IDocumentMessage,
+} from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
@@ -87,6 +91,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly logger: ITelemetryLogger;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
+	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	disposeFn?(): void;
 	closeFn(): void;
 }
