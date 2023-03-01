@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import {  unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/common-utils";
 import {
 	createField,
 	EditableField,
@@ -126,15 +126,18 @@ const testSubtrees: Map<string, JsonableTree> = new Map<string, JsonableTree>([
 	["Float", { value: 0.0, type: dataSchema.name }],
 	["String", { value: "testString", type: dataSchema.name }],
 	["Boolean", { value: true, type: dataSchema.name }],
-	["Map", {
-		value: {
-			mapField2: {
-				mapField3: [{ type: dataSchema.name, value: "testString" }],
+	[
+		"Map",
+		{
+			value: {
+				mapField2: {
+					mapField3: [{ type: dataSchema.name, value: "testString" }],
+				},
 			},
+			type: dataSchema.name,
 		},
-		type: dataSchema.name,
-	}],
-])
+	],
+]);
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
@@ -230,7 +233,13 @@ describe("SharedTree benchmarks", () => {
 						provider = await TestTreeProvider.create(1);
 						tree = provider.trees[0];
 						tree.storedSchema.update(testSchema);
-						await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Deep, dataType);
+						await insertNodesToTestTree(
+							provider,
+							tree,
+							numberOfNodes,
+							TreeShape.Deep,
+							dataType,
+						);
 					},
 					benchmarkFn: () => {
 						readCursorTree(tree.forest, numberOfNodes, TreeShape.Deep);
@@ -247,7 +256,13 @@ describe("SharedTree benchmarks", () => {
 						provider = await TestTreeProvider.create(1);
 						tree = provider.trees[0];
 						tree.storedSchema.update(testSchema);
-						await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Wide, dataType);
+						await insertNodesToTestTree(
+							provider,
+							tree,
+							numberOfNodes,
+							TreeShape.Wide,
+							dataType,
+						);
 					},
 					benchmarkFn: () => {
 						readCursorTree(tree.forest, numberOfNodes, TreeShape.Wide);
@@ -266,7 +281,13 @@ describe("SharedTree benchmarks", () => {
 						tree.storedSchema.update(testSchema);
 					},
 					benchmarkFn: async () => {
-						await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Deep, dataType);
+						await insertNodesToTestTree(
+							provider,
+							tree,
+							numberOfNodes,
+							TreeShape.Deep,
+							dataType,
+						);
 					},
 				});
 			}
@@ -282,7 +303,13 @@ describe("SharedTree benchmarks", () => {
 						tree.storedSchema.update(testSchema);
 					},
 					benchmarkFn: async () => {
-						await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Wide, dataType);
+						await insertNodesToTestTree(
+							provider,
+							tree,
+							numberOfNodes,
+							TreeShape.Wide,
+							dataType,
+						);
 					},
 				});
 			}
@@ -440,8 +467,17 @@ describe("SharedTree benchmarks", () => {
 								1,
 							);
 							tree = trees[0];
-							insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Deep, dataType);
-							editableField = getEditableLeafNode(tree, numberOfNodes, TreeShape.Deep);
+							insertNodesToEditableTree(
+								tree,
+								numberOfNodes,
+								TreeShape.Deep,
+								dataType,
+							);
+							editableField = getEditableLeafNode(
+								tree,
+								numberOfNodes,
+								TreeShape.Deep,
+							);
 						},
 						benchmarkFn: () => {
 							manipulateEditableTree(
@@ -469,8 +505,17 @@ describe("SharedTree benchmarks", () => {
 								1,
 							);
 							tree = trees[0];
-							insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Wide, dataType);
-							editableField = getEditableLeafNode(tree, numberOfNodes, TreeShape.Wide);
+							insertNodesToEditableTree(
+								tree,
+								numberOfNodes,
+								TreeShape.Wide,
+								dataType,
+							);
+							editableField = getEditableLeafNode(
+								tree,
+								numberOfNodes,
+								TreeShape.Wide,
+							);
 						},
 						benchmarkFn: () => {
 							manipulateEditableTree(
@@ -523,8 +568,8 @@ async function setNodesNarrow(
 		parentField: rootFieldKeySymbol,
 		parentIndex: 0,
 	};
-	const node = testSubtrees.get(dataType)
-	assert(node !== undefined)
+	const node = testSubtrees.get(dataType);
+	assert(node !== undefined);
 	for (let i = 0; i < numberOfNodes; i++) {
 		tree.runTransaction((forest, editor) => {
 			const field = editor.sequenceField(currPath, localFieldKey);
@@ -552,7 +597,7 @@ async function setNodesWide(
 		parentIndex: 0,
 	};
 	const node = testSubtrees.get(dataType);
-	assert(node !== undefined)
+	assert(node !== undefined);
 	for (let j = 0; j < numberOfNodes; j++) {
 		tree.runTransaction((forest, editor) => {
 			const writeCursor = singleTextCursor(node);
@@ -574,13 +619,11 @@ function insertNodesToEditableTree(
 	assert(isUnwrappedNode(treeRoot));
 	let field_0;
 	let currentNode;
-	const node = testSubtrees.get(dataType)
-	assert(node !== undefined)
+	const node = testSubtrees.get(dataType);
+	assert(node !== undefined);
 	switch (shape) {
 		case TreeShape.Deep:
-			treeRoot[createField](localFieldKey, [
-				singleTextCursor(node),
-			]);
+			treeRoot[createField](localFieldKey, [singleTextCursor(node)]);
 			assert(isUnwrappedNode(treeRoot));
 			field_0 = treeRoot[getField](localFieldKey);
 			assert(field_0 !== undefined);
@@ -593,10 +636,7 @@ function insertNodesToEditableTree(
 		case TreeShape.Wide:
 			assert(isUnwrappedNode(treeRoot));
 			for (let i = 0; i < numberOfNodes - 1; i++) {
-				treeRoot[getField](localFieldKey).insertNodes(
-					i,
-					singleTextCursor(node),
-				);
+				treeRoot[getField](localFieldKey).insertNodes(i, singleTextCursor(node));
 			}
 			break;
 		default:
@@ -641,7 +681,7 @@ function getJSTestTreeWide(numberOfNodes: number, dataType: string): Jsonable {
 
 function getJSTestTreeDeep(numberOfNodes: number, dataType: string): Jsonable {
 	const node = testSubtrees.get(dataType);
-	assert(node !== undefined)
+	assert(node !== undefined);
 	if (numberOfNodes === 1) {
 		return {
 			type: dataSchema.name,
@@ -717,9 +757,9 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
 		case TreeShape.Wide:
 			assert(readCursor.firstField());
 			for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
-				nodesRead += 1
+				nodesRead += 1;
 			}
-			assert(nodesRead === numberOfNodes)
+			assert(nodesRead === numberOfNodes);
 			break;
 		default:
 			unreachableCase(shape);
@@ -757,7 +797,7 @@ function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
 					parentIndex: 0,
 				};
 			}
-			assert(path !== undefined)
+			assert(path !== undefined);
 			return path;
 		case TreeShape.Wide:
 			path = {
@@ -769,7 +809,7 @@ function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
 				parentField: localFieldKey,
 				parentIndex: numberOfNodes - 1,
 			};
-			assert(path !== undefined)
+			assert(path !== undefined);
 			return path;
 		default:
 			unreachableCase(shape);
@@ -808,7 +848,7 @@ function manipulateEditableTree(
 	assert(isUnwrappedNode(tree.root));
 	let nodeIndex: number;
 	const node = testSubtrees.get(dataType);
-	assert(node !== undefined)
+	assert(node !== undefined);
 	switch (shape) {
 		case TreeShape.Deep:
 			editableField.replaceNodes(0, singleTextCursor(node), 1);
@@ -838,11 +878,11 @@ function getEditableLeafNode(
 				currField = currNode[getField](localFieldKey);
 				currNode = currField.getNode(0);
 			}
-			assert(currField !== undefined)
+			assert(currField !== undefined);
 			return currField;
 		case TreeShape.Wide:
 			currField = tree.root[getField](localFieldKey);
-			assert(currField !== undefined)
+			assert(currField !== undefined);
 			return currField;
 		default:
 			unreachableCase(shape);
