@@ -8,15 +8,14 @@ import { debuggerPanelId } from "./Constants";
 import { isDebuggerPanelOpen } from "./Utilities";
 
 /**
- * Appends the debugger view panel to the document (as a child under `body`).
- *
- * @returns Whether or not a new debugger view was appended to the document.
+ * Appends the debugger view panel to the document (as a child under `body`) if the debugger panel is not already open.
  *
  * @internal
  */
-export async function openDebuggerPanel(): Promise<boolean> {
+export async function openDebuggerPanel(): Promise<void> {
 	if (isDebuggerPanelOpen()) {
-		return false;
+		console.warn("Debugger panel is already open.");
+		return;
 	}
 
 	const debugPanel = document.createElement("div");

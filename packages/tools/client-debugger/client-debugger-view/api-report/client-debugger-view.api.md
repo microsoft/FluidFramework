@@ -87,7 +87,7 @@ export interface PanelViewSelectionMenuProps {
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 
 // @public
-export function renderClientDebuggerView(targetElement: HTMLElement | null): Promise<boolean>;
+export function renderClientDebuggerView(targetElement: HTMLElement): Promise<void>;
 
 // @public
 export interface RenderOptions {
