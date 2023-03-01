@@ -128,7 +128,7 @@ export class ModularChangeFamily
 			crossFieldTable,
 		);
 
-		while (crossFieldTable.fieldsToUpdate.size > 0) {
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
 			for (const field of fieldsToUpdate) {
@@ -144,6 +144,11 @@ export class ModularChangeFamily
 				field.change = brand(amendedChange);
 			}
 		}
+
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			"Should not need more than one amend pass.",
+		);
 		return makeModularChangeset(composedFields, maxId);
 	}
 
@@ -247,7 +252,7 @@ export class ModularChangeFamily
 			crossFieldTable,
 		);
 
-		while (crossFieldTable.fieldsToUpdate.size > 0) {
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
 			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
@@ -263,6 +268,12 @@ export class ModularChangeFamily
 				fieldChange.change = brand(amendedChange);
 			}
 		}
+
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			"Should not need more than one amend pass.",
+		);
+
 		return makeModularChangeset(invertedFields, maxId);
 	}
 
@@ -347,7 +358,7 @@ export class ModularChangeFamily
 			crossFieldTable,
 		);
 
-		while (crossFieldTable.fieldsToUpdate.size > 0) {
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
 			for (const { fieldChange, baseChange } of fieldsToUpdate) {
@@ -363,6 +374,11 @@ export class ModularChangeFamily
 				fieldChange.change = brand(amendedChange);
 			}
 		}
+
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			"Should not need more than one amend pass.",
+		);
 
 		return makeModularChangeset(rebasedFields, maxId);
 	}
