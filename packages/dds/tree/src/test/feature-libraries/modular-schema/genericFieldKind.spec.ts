@@ -118,6 +118,7 @@ const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): N
 		unexpectedDelegate,
 		idAllocator,
 		crossFieldManager,
+		failingRevisionIndexer,
 	);
 	return nodeChangeFromValueChange(rebased);
 };
@@ -288,6 +289,7 @@ describe("Generic FieldKind", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				failingRevisionIndexer,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -329,6 +331,7 @@ describe("Generic FieldKind", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				failingRevisionIndexer,
 			);
 			assert.deepEqual(actual, expected);
 		});

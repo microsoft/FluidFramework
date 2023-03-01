@@ -4,8 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import {
+	ChangesetLocalId,
+	IdAllocator,
+	RevisionIndexer,
+	SequenceField as SF,
+} from "../../../feature-libraries";
+import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertFieldChangesEqual, deepFreeze, fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
@@ -27,20 +32,38 @@ export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Cha
 	return shallowCompose(changes.map(makeAnonChange));
 }
 
-export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.Changeset<T> {
-	return composeI(changes, (children) => {
-		assert(children.length === 1, "Should only have one child to compose");
-		return children[0].change;
-	});
+export function shallowCompose<T>(
+	changes: TaggedChange<SF.Changeset<T>>[],
+	revisionIndexer?: RevisionIndexer,
+): SF.Changeset<T> {
+	return composeI(
+		changes,
+		(children) => {
+			assert(children.length === 1, "Should only have one child to compose");
+			return children[0].change;
+		},
+		revisionIndexer,
+	);
 }
+
+const failingRevisionIndexer = (tag: RevisionTag) => {
+	fail("Unexpected revision index query");
+};
 
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
+	revisionIndexer?: RevisionIndexer,
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
-	const composed = SF.compose(changes, composer, idAllocator, moveEffects);
+	const composed = SF.compose(
+		changes,
+		composer,
+		idAllocator,
+		moveEffects,
+		revisionIndexer ?? failingRevisionIndexer,
+	);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
@@ -50,7 +73,11 @@ function composeI<T>(
 	return composed;
 }
 
-export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
+export function rebase(
+	change: TestChangeset,
+	base: TaggedChange<TestChangeset>,
+	revisionIndexer?: RevisionIndexer,
+): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
@@ -59,7 +86,13 @@ export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>)
 	let rebasedChange = SF.rebase(change, base, TestChange.rebase, idAllocator, moveEffects);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.amendRebase(rebasedChange, base, idAllocator, moveEffects);
+		rebasedChange = SF.amendRebase(
+			rebasedChange,
+			base,
+			idAllocator,
+			moveEffects,
+			revisionIndexer ?? failingRevisionIndexer,
+		);
 		// assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;

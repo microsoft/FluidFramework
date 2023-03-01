@@ -424,6 +424,7 @@ export class ModularChangeFamily
 					baseChange,
 					genId,
 					newCrossFieldManager(crossFieldTable),
+					revisionIndexer,
 				);
 				fieldChange.change = brand(amendedChange);
 			}
@@ -467,6 +468,7 @@ export class ModularChangeFamily
 						),
 					genId,
 					manager,
+					revisionIndexer,
 				);
 
 				const rebasedFieldChange: FieldChange = {

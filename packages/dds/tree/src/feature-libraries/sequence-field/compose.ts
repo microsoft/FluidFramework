@@ -6,7 +6,12 @@
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
+import {
+	CrossFieldManager,
+	CrossFieldTarget,
+	IdAllocator,
+	RevisionIndexer,
+} from "../modular-schema";
 import {
 	Changeset,
 	HasChanges,
@@ -59,6 +64,7 @@ export function compose<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
+	revisionIndexer: RevisionIndexer,
 ): Changeset<TNodeChange> {
 	let composed: Changeset<TNodeChange> = [];
 	for (const change of changes) {
@@ -69,6 +75,7 @@ export function compose<TNodeChange>(
 			composeChild,
 			genId,
 			manager as MoveEffectTable<TNodeChange>,
+			revisionIndexer,
 		);
 	}
 	return composed;
@@ -81,6 +88,7 @@ function composeMarkLists<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
+	revisionIndexer: RevisionIndexer,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 	const queue = new ComposeQueue(
@@ -90,6 +98,7 @@ function composeMarkLists<TNodeChange>(
 		newMarkList,
 		genId,
 		moveEffects,
+		revisionIndexer,
 		(a, b) => composeChildChanges(a, b, newRev, composeChild),
 	);
 	while (!queue.isEmpty()) {
@@ -543,10 +552,11 @@ export class ComposeQueue<T> {
 		newMarks: Changeset<T>,
 		genId: IdAllocator,
 		moveEffects: MoveEffectTable<T>,
+		revisionIndexer: RevisionIndexer,
 		composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
 	) {
-		this.baseIndex = new IndexTracker();
-		this.baseGap = new GapTracker();
+		this.baseIndex = new IndexTracker(revisionIndexer);
+		this.baseGap = new GapTracker(revisionIndexer);
 		this.baseMarks = new MarkQueue(
 			baseMarks,
 			baseRevision,

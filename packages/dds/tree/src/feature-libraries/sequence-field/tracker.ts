@@ -5,6 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
+import { RevisionIndexer } from "../modular-schema";
 import { Mark } from "./format";
 import {
 	getInputLength,
@@ -17,6 +18,8 @@ import {
 export class IndexTracker {
 	private inputIndex: number = 0;
 	private readonly contributions: { rev: RevisionTag; netLength: number }[] = [];
+
+	public constructor(private readonly revisionIndexer: RevisionIndexer) {}
 
 	public advance(mark: Mark<unknown>): void {
 		const inLength = getInputLength(mark);
@@ -35,7 +38,10 @@ export class IndexTracker {
 			return;
 		}
 		assert(revision !== undefined, 0x502 /* Compose base mark should carry revision info */);
-		const index = this.contributions.findIndex(({ rev }) => rev >= revision);
+		const revisionIndex = this.revisionIndexer(revision);
+		const index = this.contributions.findIndex(
+			({ rev }) => this.revisionIndexer(rev) >= revisionIndex,
+		);
 		if (index === -1) {
 			this.contributions.push({ rev: revision, netLength });
 		} else {
@@ -52,9 +58,10 @@ export class IndexTracker {
 	 * @returns The index of the next base mark in the input context of `revision`.
 	 */
 	public getIndex(revision: RevisionTag): number {
+		const revisionIndex = this.revisionIndexer(revision);
 		let total = this.inputIndex;
 		for (const { rev, netLength: count } of this.contributions) {
-			if (rev >= revision) {
+			if (this.revisionIndexer(rev) >= revisionIndex) {
 				break;
 			}
 			total += count;
@@ -65,6 +72,8 @@ export class IndexTracker {
 
 export class GapTracker {
 	private readonly map: Map<RevisionTag, number> = new Map();
+
+	public constructor(private readonly revisionIndexer: RevisionIndexer) {}
 
 	public advance(mark: Mark<unknown>): void {
 		if (isNetZeroNodeCountChange(mark)) {
@@ -84,8 +93,9 @@ export class GapTracker {
 				// Reset the offset for the revisions chronologically after the attach to zero.
 				// This is because for those revisions, the nodes were present in the input context.
 				// In other words, one revision's attach is later revisions' skip.
+				const revisionIndex = this.revisionIndexer(revision);
 				for (const rev of this.map.keys()) {
-					if (rev > revision) {
+					if (this.revisionIndexer(rev) > revisionIndex) {
 						this.map.delete(rev);
 					}
 				}

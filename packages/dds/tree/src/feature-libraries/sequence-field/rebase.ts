@@ -6,7 +6,12 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { clone, fail } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
-import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
+import {
+	CrossFieldManager,
+	CrossFieldTarget,
+	IdAllocator,
+	RevisionIndexer,
+} from "../modular-schema";
 import {
 	getInputLength,
 	getOutputLength,
@@ -609,12 +614,14 @@ export function amendRebase<TNodeChange>(
 	baseMarks: TaggedChange<MarkList<TNodeChange>>,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
+	revisionIndexer: RevisionIndexer,
 ): Changeset<TNodeChange> {
 	return amendRebaseI(
 		baseMarks.revision,
 		baseMarks.change,
 		rebasedMarks,
 		crossFieldManager as MoveEffectTable<TNodeChange>,
+		revisionIndexer,
 	);
 }
 
@@ -623,6 +630,7 @@ function amendRebaseI<TNodeChange>(
 	baseMarks: MarkList<TNodeChange>,
 	rebasedMarks: MarkList<TNodeChange>,
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
+	revisionIndexer: RevisionIndexer,
 ): Changeset<TNodeChange> {
 	// Is it correct to use ComposeQueue here?
 	// If we used a special AmendRebaseQueue, we could ignore any base marks which don't have associated move-ins
@@ -633,6 +641,7 @@ function amendRebaseI<TNodeChange>(
 		rebasedMarks,
 		() => fail("Should not generate new IDs when applying move effects"),
 		moveEffects,
+		revisionIndexer,
 	);
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 

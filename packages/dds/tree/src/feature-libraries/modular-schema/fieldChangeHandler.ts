@@ -94,6 +94,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**
@@ -104,6 +105,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TaggedChange<TChangeset>,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 }
 

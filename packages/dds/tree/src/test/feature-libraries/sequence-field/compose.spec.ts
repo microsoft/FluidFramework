@@ -24,6 +24,13 @@ const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 const tag4: RevisionTag = mintRevisionTag();
 
+const orderedRevisions = [tag1, tag2, tag3, tag4];
+const revisionIndexer = (tag: RevisionTag) => {
+	const index = orderedRevisions.findIndex((rev) => rev === tag);
+	assert(index !== -1);
+	return index;
+};
+
 describe("SequenceField - Compose", () => {
 	describe("associativity of triplets", () => {
 		const entries = Object.entries(cases);
@@ -537,8 +544,7 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	// TODO: This test's success depends on the sort order of the revision tags. Find a way to make it stable.
-	it.skip("delete1 ○ delete2 ○ revive (delete1)", () => {
+	it("delete1 ○ delete2 ○ revive (delete1)", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
 		// The revive needs lineage to describe the precise gap in which it is reviving the nodes.
@@ -551,25 +557,22 @@ describe("SequenceField - Compose", () => {
 			{ type: "Delete", count: 1, revision: tag1 },
 			{ type: "Delete", count: 1, revision: tag2 },
 		];
-		const actual = shallowCompose([
-			tagChange(delete1, tag1),
-			tagChange(delete2, tag2),
-			makeAnonChange(revive),
-		]);
+		const actual = shallowCompose(
+			[tagChange(delete1, tag1), tagChange(delete2, tag2), tagChange(revive, tag3)],
+			revisionIndexer,
+		);
 		assert.deepEqual(actual, expected);
 	});
 
-	// TODO: This test's success depends on the sort order of the revision tags. Find a way to make it stable.
-	it.skip("delete1 ○ delete2 ○ revive (delete2)", () => {
+	it("delete1 ○ delete2 ○ revive (delete2)", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
 		const revive = Change.revive(0, 2, tag2, 0);
 		const expected: SF.Changeset = [1, { type: "Delete", count: 3, revision: tag1 }];
-		const actual = shallowCompose([
-			tagChange(delete1, tag1),
-			tagChange(delete2, tag2),
-			makeAnonChange(revive),
-		]);
+		const actual = shallowCompose(
+			[tagChange(delete1, tag1), tagChange(delete2, tag2), tagChange(revive, tag3)],
+			revisionIndexer,
+		);
 		assert.deepEqual(actual, expected);
 	});
 

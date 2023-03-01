@@ -185,6 +185,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			change2,
 		);
@@ -207,6 +208,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			childChange3,
 		);
@@ -350,6 +352,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			change2,
 		);
@@ -374,6 +377,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			expected,
 		);
