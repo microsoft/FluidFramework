@@ -316,26 +316,6 @@ export class EditManager<
 		return this.changeFamily.intoDelta(change);
 	}
 
-	/**
-	 * Fast-forwards the local branch to a new head commit that is ahead of the current local branch head.
-	 * @param newHead - the new head of the local branch. This must be a descendant of the current local branch head.
-	 * @returns the composition of changes from the previous head to the new head of the local branch
-	 */
-	public fastForwardLocalBranch(newHead: GraphCommit<TChangeset>): TChangeset {
-		const changes: GraphCommit<TChangeset>[] = [];
-		assert(
-			findAncestor([newHead, changes], (c) => c === this.localBranch) !== undefined,
-			"Expected new head to be descendant of local branch",
-		);
-		const change = this.changeFamily.rebaser.compose(changes);
-
-		if (this.anchors !== undefined) {
-			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-		}
-
-		return change;
-	}
-
 	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {
 		this.trunk = mintCommit(this.trunk, commit);
 		this.sequenceMap.set(sequenceNumber, this.trunk);

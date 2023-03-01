@@ -27,7 +27,9 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 
 	/**
 	 * @param getBaseBranch - a function which retrieves the head of the base branch
-	 * @param mergeIntoBase - a function which describes how to merge this branch into its base branch
+	 * @param mergeIntoBase - a function which describes how to merge this branch into the base branch which created it.
+	 * It is responsible for rebasing the changes properly across branches and updating the head of the base branch.
+	 * It returns the net change to the child branch.
 	 * @param sessionId - the session ID used to author commits made by to this branch
 	 * @param rebaser - a rebaser to rebase this branch's changes when it pulls or merges
 	 */
@@ -93,22 +95,19 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 			() => this.head,
 			(forked) => {
 				// In this function, `this` is the base and `forked` is the fork being merged in
-				const forkedChange = forked.pull();
-				const commits: GraphCommit<TChange>[] = [];
-				const baseBranch = forked.getBaseBranch();
-				const foundBaseBranch = findAncestor(
-					[forked.head, commits],
-					(c) => c === baseBranch,
-				);
+				const changeToForked = forked.pull();
 				assert(
-					foundBaseBranch !== undefined,
+					forked.getBaseBranch() === this.head,
 					"Expected merging checkout branches to be related",
 				);
+				const commits: GraphCommit<TChange>[] = [];
+				const ancestor = findAncestor([forked.head, commits], (c) => c === this.head);
+				assert(ancestor === this.head, "Expected merging checkout branches to be related");
 				this.head = forked.head;
 				assert(this.forks.delete(forked), "Invalid checkout merge");
 				const change = this.rebaser.changeRebaser.compose(commits);
 				this.emit("onChange", change);
-				return forkedChange;
+				return changeToForked;
 			},
 			this.sessionId,
 			this.rebaser,

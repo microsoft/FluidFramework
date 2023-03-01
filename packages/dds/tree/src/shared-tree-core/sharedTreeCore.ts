@@ -38,6 +38,8 @@ import {
 	minimumPossibleSequenceNumber,
 	SharedTreeBranch,
 	Rebaser,
+	findAncestor,
+	GraphCommit,
 } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
@@ -262,9 +264,21 @@ export class SharedTreeCore<
 		const branch = new SharedTreeBranch(
 			() => this.editManager.getLocalBranchHead(),
 			(forked) => {
-				const change = forked.pull();
-				this.submitEdit(this.editManager.fastForwardLocalBranch(forked.getHead()));
-				return change;
+				const changeToForked = forked.pull();
+				const changes: GraphCommit<TChange>[] = [];
+				const localBranchHead = this.editManager.getLocalBranchHead();
+				const ancestor = findAncestor(
+					[forked.getHead(), changes],
+					(c) => c === localBranchHead,
+				);
+				assert(
+					ancestor === localBranchHead,
+					"Expected merging checkout branches to be related",
+				);
+				for (const { change } of changes) {
+					this.submitEdit(change);
+				}
+				return changeToForked;
 			},
 			this.stableId,
 			new Rebaser(this.changeFamily.rebaser),

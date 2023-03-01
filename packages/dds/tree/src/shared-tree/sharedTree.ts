@@ -106,7 +106,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 * While `transaction` is running, its intermediate states will be visible on the IForestSubscription.
 	 *
 	 * TODO: support nesting (perhaps via "commands"),
-	 * and do this in a way where there is control over which ones intermediate versions are displayed.
+	 * and do this in a way where there is control over which transaction's intermediate versions are displayed.
 	 */
 	runTransaction(
 		transaction: (

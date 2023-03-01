@@ -794,7 +794,7 @@ describe("SharedTree", () => {
 			assert.equal(peekTestValue(checkout), "base");
 		});
 
-		it("submits edits to Fluid when merging into the root checkout", async () => {
+		it("submit edits to Fluid when merging into the root checkout", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 			const baseCheckout = tree1.fork();
@@ -809,6 +809,21 @@ describe("SharedTree", () => {
 			baseCheckout.merge();
 			await provider.ensureSynchronized();
 			assert.equal(peekTestValue(tree2), "42");
+		});
+
+		it("do not squash commits", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			let opsReceived = 0;
+			tree2.on("op", () => (opsReceived += 1));
+			const baseCheckout = tree1.fork();
+			const checkout = baseCheckout.fork();
+			pushTestValue(checkout, "A");
+			pushTestValue(checkout, "B");
+			checkout.merge();
+			baseCheckout.merge();
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 2);
 		});
 
 		it("are disposed after merging", async () => {
