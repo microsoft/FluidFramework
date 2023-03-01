@@ -196,6 +196,7 @@ export function create(
             Lumberjack.info(
                 `Received token revocation request.`,
                 lumberjackProperties);
+            // TODO: add implementation here.
             response.status(503).json("Token revocation is not supported for now");
         });
     return router;

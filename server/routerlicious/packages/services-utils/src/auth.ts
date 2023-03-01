@@ -143,14 +143,6 @@ export function verifyStorageToken(
             return respondWithNetworkError(res, new NetworkError(403, "Missing access token."));
         }
         const token = tokenMatch[1];
-
-       /*
-        const token = res.locals.token;
-        if (!token) {
-            return respondWithNetworkError(res, new NetworkError(403, "Missing access token."));
-        }
-        */
-
         const tenantId = getParam(request.params, "tenantId");
         if (!tenantId) {
             return respondWithNetworkError(res, new NetworkError(403, "Missing tenantId in request."));
