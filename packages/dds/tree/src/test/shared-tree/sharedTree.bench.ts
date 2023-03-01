@@ -757,6 +757,7 @@ function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
 					parentIndex: 0,
 				};
 			}
+			assert(path !== undefined)
 			return path;
 		case TreeShape.Wide:
 			path = {
@@ -768,6 +769,7 @@ function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
 				parentField: localFieldKey,
 				parentIndex: numberOfNodes - 1,
 			};
+			assert(path !== undefined)
 			return path;
 		default:
 			unreachableCase(shape);
@@ -836,9 +838,12 @@ function getEditableLeafNode(
 				currField = currNode[getField](localFieldKey);
 				currNode = currField.getNode(0);
 			}
+			assert(currField !== undefined)
 			return currField;
 		case TreeShape.Wide:
-			return tree.root[getField](localFieldKey);
+			currField = tree.root[getField](localFieldKey);
+			assert(currField !== undefined)
+			return currField;
 		default:
 			unreachableCase(shape);
 	}
