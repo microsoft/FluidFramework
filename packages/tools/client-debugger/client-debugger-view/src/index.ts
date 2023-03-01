@@ -25,6 +25,9 @@ export {
 	ClientDebugView,
 	clientDebugViewClassName,
 	ClientDebugViewProps,
+	PanelView,
+	PanelViewSelectionMenu,
+	PanelViewSelectionMenuProps,
 } from "./components";
 
 export { AudienceMember } from "./Audience";
