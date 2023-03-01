@@ -4,6 +4,7 @@
 
 ```ts
 
+import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -31,6 +32,16 @@ export const clientDebugViewClassName = "fluid-client-debugger-view";
 // @internal
 export interface ClientDebugViewProps extends HasClientDebugger {
     renderOptions?: RenderOptions;
+}
+
+// @internal
+export function ContainerSelectionDropdown(props: ContainerSelectionDropdownProps): React_2.ReactElement;
+
+// @internal
+export interface ContainerSelectionDropdownProps {
+    initialSelection?: string;
+    onChangeSelection(containerId: string | undefined): void;
+    options: ContainerMetadata[];
 }
 
 // @public
