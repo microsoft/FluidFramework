@@ -522,66 +522,6 @@ function runInContext(context) {
 			: new Event(type);
 	}
 
-	/**
-	 * The Suite constructor.
-	 *
-	 * Note: Each Suite instance has a handful of wrapped lodash methods to
-	 * make working with Suites easier. The wrapped lodash methods are:
-	 * [`each/forEach`](https://lodash.com/docs#forEach), [`indexOf`](https://lodash.com/docs#indexOf),
-	 * [`map`](https://lodash.com/docs#map), and [`reduce`](https://lodash.com/docs#reduce)
-	 *
-	 * @constructor
-	 * @memberOf Benchmark
-	 * @param {string} name - A name to identify the suite.
-	 * @param {Object} [options={}] - Options object.
-	 * @example
-	 *
-	 * // basic usage (the `new` operator is optional)
-	 * var suite = new Benchmark.Suite;
-	 *
-	 * // or using a name first
-	 * var suite = new Benchmark.Suite('foo');
-	 *
-	 * // or with options
-	 * var suite = new Benchmark.Suite('foo', {
-	 *
-	 *   // called when the suite starts running
-	 *   'onStart': onStart,
-	 *
-	 *   // called between running benchmarks
-	 *   'onCycle': onCycle,
-	 *
-	 *   // called when aborted
-	 *   'onAbort': onAbort,
-	 *
-	 *   // called when a test errors
-	 *   'onError': onError,
-	 *
-	 *   // called when reset
-	 *   'onReset': onReset,
-	 *
-	 *   // called when the suite completes running
-	 *   'onComplete': onComplete
-	 * });
-	 */
-	function Suite(name, options) {
-		const suite = this;
-
-		// Allow instance creation without the `new` operator.
-		if (!(suite instanceof Suite)) {
-			return new Suite(name, options);
-		}
-		// Juggle arguments.
-		if (_.isPlainObject(name)) {
-			// 1 argument (options).
-			options = name;
-		} else {
-			// 2 arguments (name [, options]).
-			suite.name = name;
-		}
-		setOptions(suite, options);
-	}
-
 	/* ------------------------------------------------------------------------ */
 
 	/**
@@ -1081,22 +1021,11 @@ function runInContext(context) {
 			eventProps.target = bench;
 			options.onStart.call(benches, Event(eventProps));
 
-			// End early if the suite was aborted in an "onStart" listener.
-			if (name == "run" && benches instanceof Suite && benches.aborted) {
-				// Emit "cycle" event.
-				eventProps.type = "cycle";
-				options.onCycle.call(benches, Event(eventProps));
-				// Emit "complete" event.
-				eventProps.type = "complete";
-				options.onComplete.call(benches, Event(eventProps));
-			}
 			// Start method execution.
-			else {
-				if (isAsync(bench)) {
-					delay(bench, execute);
-				} else {
-					while (execute()) {}
-				}
+			if (isAsync(bench)) {
+				delay(bench, execute);
+			} else {
+				while (execute()) {}
 			}
 		}
 		return result;
@@ -2827,117 +2756,11 @@ function runInContext(context) {
 
 	/* ------------------------------------------------------------------------ */
 
-	/**
-	 * The default options copied by suite instances.
-	 *
-	 * @static
-	 * @memberOf Benchmark.Suite
-	 * @type Object
-	 */
-	Suite.options = {
-		/**
-		 * The name of the suite.
-		 *
-		 * @memberOf Benchmark.Suite.options
-		 * @type string
-		 */
-		name: undefined,
-	};
-
-	/* ------------------------------------------------------------------------ */
-
-	_.assign(Suite.prototype, {
-		/**
-		 * The number of benchmarks in the suite.
-		 *
-		 * @memberOf Benchmark.Suite
-		 * @type number
-		 */
-		length: 0,
-
-		/**
-		 * A flag to indicate if the suite is aborted.
-		 *
-		 * @memberOf Benchmark.Suite
-		 * @type boolean
-		 */
-		aborted: false,
-
-		/**
-		 * A flag to indicate if the suite is running.
-		 *
-		 * @memberOf Benchmark.Suite
-		 * @type boolean
-		 */
-		running: false,
-	});
-
-	_.assign(Suite.prototype, {
-		abort: abortSuite,
-		add: add,
-		clone: cloneSuite,
-		emit: emit,
-		filter: filterSuite,
-		join: arrayRef.join,
-		listeners: listeners,
-		off: off,
-		on: on,
-		pop: arrayRef.pop,
-		push: push,
-		reset: resetSuite,
-		run: runSuite,
-		reverse: arrayRef.reverse,
-		shift: shift,
-		slice: slice,
-		sort: arrayRef.sort,
-		splice: arrayRef.splice,
-		unshift: unshift,
-	});
-
-	/* ------------------------------------------------------------------------ */
-
-	// Expose Deferred, Event, and Suite.
+	// Expose Deferred, Event
 	_.assign(Benchmark, {
 		Deferred: Deferred,
 		Event: Event,
-		Suite: Suite,
 	});
-
-	/* ------------------------------------------------------------------------ */
-
-	// Add lodash methods as Suite methods.
-	_.each(["each", "forEach", "indexOf", "map", "reduce"], function (methodName) {
-		const func = _[methodName];
-		Suite.prototype[methodName] = function () {
-			const args = [this];
-			push.apply(args, arguments);
-			return func.apply(_, args);
-		};
-	});
-
-	// Avoid array-like object bugs with `Array#shift` and `Array#splice`
-	// in Firefox < 10 and IE < 9.
-	_.each(["pop", "shift", "splice"], function (methodName) {
-		const func = arrayRef[methodName];
-
-		Suite.prototype[methodName] = function () {
-			const value = this;
-			const result = func.apply(value, arguments);
-
-			if (value.length === 0) {
-				delete value[0];
-			}
-			return result;
-		};
-	});
-
-	// Avoid buggy `Array#unshift` in IE < 8 which doesn't return the new
-	// length of the array.
-	Suite.prototype.unshift = function () {
-		const value = this;
-		unshift.apply(value, arguments);
-		return value.length;
-	};
 
 	return Benchmark;
 }

@@ -163,51 +163,6 @@ declare namespace Benchmark {
 		timeStamp: number;
 		type: string;
 	}
-
-	export class Suite {
-		static options: { name: string };
-
-		constructor(name?: string, options?: Options);
-		constructor(options?: Options);
-
-		length: number;
-		aborted: boolean;
-		running: boolean;
-		name?: string;
-
-		abort(): Suite;
-		add(name: string, fn: Function | string, options?: Options): Suite;
-		add(fn: Function | string, options?: Options): Suite;
-		add(name: string, options?: Options): Suite;
-		add(options: Options): Suite;
-		clone(options: Options): Suite;
-		emit(type: string | Object): any;
-		filter(callback: Function | string): Suite;
-		join(separator?: string): string;
-		listeners(type: string): Function[];
-		off(type?: string, callback?: Function): Suite;
-		off(types: string[]): Suite;
-		on(type?: string, callback?: Function): Suite;
-		on(types: string[]): Suite;
-		push(benchmark: Benchmark): number;
-		reset(): Suite;
-		run(options?: Options): Suite;
-		reverse(): any[];
-		sort(compareFn: (a: any, b: any) => number): any[];
-		splice(start: number, deleteCount?: number): any[];
-		unshift(benchmark: Benchmark): number;
-
-		each(callback: Function): Suite;
-		forEach(callback: Function): Suite;
-		indexOf(value: any): number;
-		map(callback: Function | string): any[];
-		reduce<T>(callback: Function, accumulator: T): T;
-
-		pop(): Function;
-		shift(): Benchmark;
-		slice(start: number, end: number): any[];
-		slice(start: number, deleteCount: number, ...values: any[]): any[];
-	}
 }
 
 export = Benchmark;
