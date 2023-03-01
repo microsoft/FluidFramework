@@ -75,6 +75,8 @@ export {
 	PathRootPrefix,
 	isSkipMark,
 	emptyDelta,
+	inCursorField,
+	inCursorNode,
 } from "./tree";
 
 export {

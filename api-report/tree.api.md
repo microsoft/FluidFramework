@@ -226,7 +226,6 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
     readonly parent?: EditableTree;
-    readonly primaryType?: TreeSchemaIdentifier;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
 
