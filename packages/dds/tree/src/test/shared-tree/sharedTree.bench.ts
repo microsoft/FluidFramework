@@ -37,11 +37,18 @@ import {
 } from "../../core";
 
 /**
- * Wide - Each node is inserted directly 1 layer below the root node, making a wide tree.
- * Deep - Each node is inserted one layer below the previous node, making a stick-like tree.
+ * Shapes of trees to test with.
  */
 enum TreeShape {
+	/**
+	 * Each node is inserted directly 1 layer below the root node, making a wide tree.
+	 * Used to measure the performance of editing long sequences.
+	 */
 	Wide = 0,
+	/**
+	 * Each node is inserted one layer below the previous node, making a stick-like tree.
+	 * Used to measure the performance costs related to the length of paths.
+	 */
 	Deep = 1,
 }
 
