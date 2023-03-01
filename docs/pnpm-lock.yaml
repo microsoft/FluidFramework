@@ -1,76 +1,72 @@
 lockfileVersion: 5.4
 
-importers:
+specifiers:
+  '@fluid-tools/api-markdown-documenter': ^0.6.0
+  '@microsoft/api-extractor-model': ^7.23.0
+  '@tylerbu/dl-cli': 1.1.2-tylerbu-0
+  '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
+  '@vscode/codicons': 0.0.28
+  '@vscode/ripgrep': ^1.14.2
+  broken-link-checker: ^0.7.8
+  chalk: ^2.4.2
+  concurrently: ^6.5.1
+  copyfiles: ^2.4.1
+  cpy: ^8.1.2
+  cross-env: ^7.0.3
+  deepdash: ^5.3.9
+  fs-extra: ^10.1.0
+  glob: ^7.2.3
+  hugo-extended: ^0.93.3
+  linkcheck-bin: 3.0.0-0
+  markdown-magic-package-json: ^2.0.2
+  markdown-magic-package-scripts: ^1.2.2
+  markdown-magic-template: ^1.0.1
+  markdownlint-cli2: ^0.4.0
+  markdownlint-rule-emphasis-style: ^1.0.1
+  markdownlint-rule-github-internal-links: ^0.0.2
+  markdownlint-rule-helpers: ^0.15.0
+  node-fetch: ^2.6.9
+  pm2: ^5.2.2
+  replace-in-file: ^6.3.5
+  rimraf: ^2.7.1
+  run-script-os: ^1.1.6
+  serve: ^14.2.0
+  shelljs: ^0.8.5
+  start-server-and-test: ^1.15.4
 
-  .:
-    specifiers:
-      '@fluid-tools/api-markdown-documenter': ^0.5.0
-      '@microsoft/api-extractor-model': ^7.26.4
-      '@microsoft/tsdoc': ^0.14.2
-      '@tylerbu/dl-cli': 1.1.2-tylerbu-0
-      '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
-      '@vscode/codicons': 0.0.28
-      '@vscode/ripgrep': ^1.14.2
-      broken-link-checker: ^0.7.8
-      chalk: ^2.4.2
-      concurrently: ^6.5.1
-      copyfiles: ^2.4.1
-      cpy: ^8.1.2
-      cross-env: ^7.0.3
-      deepdash: ^5.3.9
-      fs-extra: ^10.1.0
-      glob: ^7.2.3
-      hugo-extended: ^0.93.3
-      linkcheck-bin: 3.0.0-0
-      markdown-magic-package-json: ^2.0.2
-      markdown-magic-package-scripts: ^1.2.2
-      markdown-magic-template: ^1.0.1
-      markdownlint-cli2: ^0.4.0
-      markdownlint-rule-emphasis-style: ^1.0.1
-      markdownlint-rule-github-internal-links: ^0.0.2
-      markdownlint-rule-helpers: ^0.15.0
-      node-fetch: ^2.6.9
-      pm2: ^5.2.2
-      replace-in-file: ^6.3.5
-      rimraf: ^2.7.1
-      run-script-os: ^1.1.6
-      serve: ^14.2.0
-      shelljs: ^0.8.5
-      start-server-and-test: ^1.15.4
-    dependencies:
-      '@fluid-tools/api-markdown-documenter': 0.5.0
-      '@microsoft/api-extractor-model': 7.26.4
-      '@microsoft/tsdoc': 0.14.2
-      '@tylerbu/dl-cli': 1.1.2-tylerbu-0
-      '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
-      '@vscode/codicons': 0.0.28
-      '@vscode/ripgrep': 1.14.2
-      broken-link-checker: 0.7.8
-      chalk: 2.4.2
-      concurrently: 6.5.1
-      copyfiles: 2.4.1
-      cpy: 8.1.2
-      cross-env: 7.0.3
-      deepdash: 5.3.9
-      fs-extra: 10.1.0
-      glob: 7.2.3
-      hugo-extended: 0.93.3
-      linkcheck-bin: 3.0.0-0
-      markdown-magic-package-json: 2.0.2
-      markdown-magic-package-scripts: 1.2.2
-      markdown-magic-template: 1.0.1
-      markdownlint-cli2: 0.4.0
-      markdownlint-rule-emphasis-style: 1.0.1
-      markdownlint-rule-github-internal-links: 0.0.2
-      markdownlint-rule-helpers: 0.15.0
-      node-fetch: 2.6.9
-      pm2: 5.2.2
-      replace-in-file: 6.3.5
-      rimraf: 2.7.1
-      run-script-os: 1.1.6
-      serve: 14.2.0
-      shelljs: 0.8.5
-      start-server-and-test: 1.15.4
+dependencies:
+  '@fluid-tools/api-markdown-documenter': 0.6.0
+  '@microsoft/api-extractor-model': 7.26.4
+  '@tylerbu/dl-cli': 1.1.2-tylerbu-0
+  '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
+  '@vscode/codicons': 0.0.28
+  '@vscode/ripgrep': 1.14.2
+  broken-link-checker: 0.7.8
+  chalk: 2.4.2
+  concurrently: 6.5.1
+  copyfiles: 2.4.1
+  cpy: 8.1.2
+  cross-env: 7.0.3
+  deepdash: 5.3.9
+  fs-extra: 10.1.0
+  glob: 7.2.3
+  hugo-extended: 0.93.3
+  linkcheck-bin: 3.0.0-0
+  markdown-magic-package-json: 2.0.2
+  markdown-magic-package-scripts: 1.2.2
+  markdown-magic-template: 1.0.1
+  markdownlint-cli2: 0.4.0
+  markdownlint-rule-emphasis-style: 1.0.1
+  markdownlint-rule-github-internal-links: 0.0.2
+  markdownlint-rule-helpers: 0.15.0
+  node-fetch: 2.6.9
+  pm2: 5.2.2
+  replace-in-file: 6.3.5
+  rimraf: 2.7.1
+  run-script-os: 1.1.6
+  serve: 14.2.0
+  shelljs: 0.8.5
+  start-server-and-test: 1.15.4
 
 packages:
 
@@ -95,8 +91,8 @@ packages:
       js-tokens: 4.0.0
     dev: false
 
-  /@fluid-tools/api-markdown-documenter/0.5.0:
-    resolution: {integrity: sha512-CJBAZpZ2N9M8MVHwlCGt+VvaokuvJObkphj5a0cLng81ZDf83zjZglbmjUzbj8aGeBHUz3ipujzdv8s2VKRVUA==}
+  /@fluid-tools/api-markdown-documenter/0.6.0:
+    resolution: {integrity: sha512-yJzbkX9puglhMZ6rPZdIJYuuky6agqOWmWQWGq2nvFjkSBURa7ZFSmJBfy2kQFgzV3xIlbEoNsASG+2Uqff/4g==}
     dependencies:
       '@microsoft/api-documenter': 7.19.2
       '@microsoft/api-extractor-model': 7.26.4
