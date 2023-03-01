@@ -15,9 +15,9 @@ import {
 	TreeType,
 	PathRootPrefix,
 } from "../../core";
-import { fail } from "../../util";
+import { fail, ReferenceCountedBase } from "../../util";
 import { prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, cursorChunk, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
 
 /**
  * General purpose one node chunk.
@@ -122,7 +122,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		if (this.nestedCursor !== undefined) {
 			return this.nestedCursor[cursorChunk];
 		}
-		assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
+		assert(this.mode === CursorLocationType.Nodes, 0x57a /* must be in nodes mode */);
 		return (this.siblings as TreeChunk[])[this.indexOfChunk];
 	}
 

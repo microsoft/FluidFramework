@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.10.0",
+	"version": "0.11.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,8 +52,8 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluid-tools/version-tools": "^0.10.0",
-		"@fluidframework/bundle-size-tools": "^0.10.0",
+		"@fluid-tools/version-tools": "workspace:^",
+		"@fluidframework/bundle-size-tools": "workspace:^",
 		"@octokit/core": "^4.0.5",
 		"@rushstack/node-core-library": "^3.51.1",
 		"async": "^3.2.2",
@@ -70,7 +70,7 @@
 		"lodash": "^4.17.21",
 		"lodash.isequal": "^4.5.0",
 		"lodash.merge": "^4.6.2",
-		"minimatch": "^3.0.4",
+		"minimatch": "^7.3.0",
 		"npm-package-json-lint": "^6.0.0",
 		"replace-in-file": "^6.0.0",
 		"rimraf": "^2.6.2",
@@ -91,7 +91,6 @@
 		"@types/lodash": "^4.14.186",
 		"@types/lodash.isequal": "^4.5.5",
 		"@types/lodash.merge": "^4.6.6",
-		"@types/minimatch": "^3.0.5",
 		"@types/mocha": "^9.0.0",
 		"@types/node": "^14.18.0",
 		"@types/rimraf": "^2.0.3",
