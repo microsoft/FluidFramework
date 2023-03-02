@@ -574,7 +574,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
 		const largeOpRate = Math.max(
-			(config.testConfig.content?.largeOpRate ?? 1) / clientSendCount,
+			(config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients,
 			1,
 		);
 		// To avoid having all clients send their large payloads at roughly the same time
@@ -599,6 +599,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				config.logger.sendTelemetryEvent({
 					eventName: "LargeTestPayload",
 					runId: config.runId,
+					clientCount: dataModel.sharedmap.size,
+					largeOpJitter,
 					opSize,
 				});
 			} else {
