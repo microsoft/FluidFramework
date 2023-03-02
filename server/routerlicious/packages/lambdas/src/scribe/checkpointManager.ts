@@ -148,10 +148,10 @@ export class CheckpointManager implements ICheckpointManager {
     }
 
     private async writeToGlobalDB(filter: any, set: any, lumberProperties: { tenantId: string, documentId: string }) {
-        await this.documentCollection.update(filter, set, null)
-        .catch((error) => {
+        Lumberjack.info(`Writing to global db`, lumberProperties);
+        await this.documentCollection.upsert(filter, set, null).catch((error) => {
             Lumberjack.error(`Error writing checkpoint to global database`, lumberProperties, error);
-        })
+        });
     }
 
     /**
