@@ -395,7 +395,8 @@ export interface IContainerRuntimeOptions {
 	readonly maxBatchSizeInBytes?: number;
 	/**
 	 * If the op payload needs to be chunked in order to work around the maximum size of the batch, this value represents
-	 * how large the individual chunks will be. This is only supported when compression is enabled.
+	 * how large the individual chunks will be. This is only supported when compression is enabled. If after compression, the
+	 * batch size exceeds this value, it will be chunked into smaller ops of this size.
 	 *
 	 * If unspecified, if a batch exceeds `maxBatchSizeInBytes` after compression, the container will close with an instance
 	 * of `GenericError` with the `BatchTooLarge` message.
@@ -1094,7 +1095,10 @@ export class ContainerRuntime
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
-		this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
+		this.remoteMessageProcessor = new RemoteMessageProcessor(
+			opSplitter,
+			new OpDecompressor(this.mc.logger),
+		);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1897,7 +1901,23 @@ export class ContainerRuntime
 				case ContainerMessageType.Rejoin:
 					break;
 				default:
-					assert(!runtimeMessage, 0x3ce /* Runtime message of unknown type */);
+					if (runtimeMessage) {
+						const error = DataProcessingError.create(
+							// Former assert 0x3ce
+							"Runtime message of unknown type",
+							"OpProcessing",
+							message,
+							{
+								local,
+								type: message.type,
+								contentType: typeof message.contents,
+								batch: message.metadata?.batch,
+								compression: message.compression,
+							},
+						);
+						this.closeFn(error);
+						throw error;
+					}
 			}
 
 			// For back-compat, notify only about runtime messages for now.

@@ -346,11 +346,14 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
 
 // @public
 export interface IIdCompressor {
+    // Warning: (ae-incompatible-release-tags) The symbol "decompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "decompress" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
+    decompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string;
+    // Warning: (ae-incompatible-release-tags) The symbol "generateCompressedId" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    generateCompressedId(): SessionSpaceCompressedId;
     // (undocumented)
-    generateCompressedId(): number;
+    localSessionId: SessionId;
     // Warning: (ae-incompatible-release-tags) The symbol "normalizeToOpSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
-    //
-    // (undocumented)
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
     // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
@@ -361,6 +364,8 @@ export interface IIdCompressor {
     //
     // (undocumented)
     normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId;
+    // Warning: (ae-incompatible-release-tags) The symbol "recompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
+    recompress(uncompressed: string): SessionSpaceCompressedId;
     // Warning: (ae-incompatible-release-tags) The symbol "tryDecompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     // Warning: (ae-incompatible-release-tags) The symbol "tryDecompress" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
     tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
