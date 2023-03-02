@@ -9,7 +9,6 @@ export {
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableSweepLogKey,
-	GarbageCollectionRuntime,
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,

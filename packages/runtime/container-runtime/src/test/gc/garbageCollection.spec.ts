@@ -32,7 +32,7 @@ import {
 	GarbageCollector,
 	GCNodeType,
 	GCSummaryStateTracker,
-	GarbageCollectionRuntime,
+	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
@@ -105,7 +105,7 @@ describe("Garbage Collection Tests", () => {
 		};
 
 		// The runtime to be passed to the garbage collector.
-		const gcRuntime: GarbageCollectionRuntime = {
+		const gcRuntime: IGarbageCollectionRuntime = {
 			updateStateBeforeGC: async () => {},
 			getGCData: async (fullGC?: boolean) => defaultGCData,
 			updateUsedRoutes: (usedRoutes: string[]) => {
