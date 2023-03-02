@@ -292,21 +292,14 @@ export function convertPSetSchemaToSharedTreeLls(
 		} else {
 			const fieldKind =
 				splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
-			const localFieldTypes = new Set<TreeSchemaIdentifier>([brand(splitTypeId.typeid)]);
+			let localFieldTypes: Set<TreeSchemaIdentifier> | undefined;
 			if (splitTypeId.typeid !== "" && splitTypeId.typeid !== "BaseProperty") {
-				for (const childType of getChildrenForType(
-					inheritingChildrenByType,
-					splitTypeId.typeid,
-				)) {
-					localFieldTypes.add(childType);
-				}
+				localFieldTypes = new Set<TreeSchemaIdentifier>([brand(splitTypeId.typeid)]);
+				getChildrenForType(inheritingChildrenByType, splitTypeId.typeid).forEach(
+					(childType) => localFieldTypes?.add(childType),
+				);
 			}
-			const fieldType = fieldSchema(
-				fieldKind,
-				splitTypeId.typeid !== "" && splitTypeId.typeid !== "BaseProperty"
-					? localFieldTypes
-					: undefined,
-			);
+			const fieldType = fieldSchema(fieldKind, localFieldTypes);
 			switch (splitTypeId.context) {
 				case "map":
 				case "set":
