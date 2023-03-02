@@ -149,7 +149,6 @@ In the code above, whenever a user presses either the Increment or Decrement but
 This causes the `incremented` event to be sent to all of the clients who have this container open.
 
 Since `updateCounterValueLabel` is listening for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
-
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

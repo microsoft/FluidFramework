@@ -354,6 +354,7 @@ The following npm scripts are supported in this directory:
 | `linkcheck:reflinks` | Checks the `public` folder for HTML files with broken MarkDown reference links. |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
+| `preinstall` | `node ../scripts/only-pnpm.cjs` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 
 <!-- prettier-ignore-end -->

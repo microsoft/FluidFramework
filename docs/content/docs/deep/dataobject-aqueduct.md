@@ -213,7 +213,6 @@ makes a request to the Container for `{url:"color"}` will intercept and return a
 
 We use custom handlers to build the Container Services pattern.
 
-<!-- Links -->
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

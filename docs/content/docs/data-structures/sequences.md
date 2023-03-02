@@ -378,17 +378,6 @@ comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
 comments.removeIntervalById(comment.getIntervalId());
 ```
 
-## SharedString
-
-SharedString is a specialized data structure for handling collaborative text. It is based on a more general
-Sequence data structure but has additional features that make working with text easier.
-
-In addition to text, a SharedString can also contain markers.
-Markers can be used to store metadata at positions within the text, like a reference to an image or Fluid object that should be rendered with the text.
-
-Both markers and text are stored as segments in the SharedString.
-Text segments will be split and merged when modifications are made to the SharedString and will therefore have variable length
-matching the length of the text content they contain.
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
