@@ -16,6 +16,10 @@ module.exports = {
 		// Disabled because it conflicts with Prettier.
 		"unicorn/no-nested-ternary": "off",
 
+		// Prevent imports from undeclared dependencies / dev dependencies, but allow imports from
+		// dev dependencies in test code.
+		// TODO: Remove this override once the base config is more flexible around where test code
+		// lives in a package.
 		"import/no-extraneous-dependencies": [
 			"error",
 			{
