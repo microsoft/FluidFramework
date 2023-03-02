@@ -110,6 +110,9 @@ export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerI
     type: "GET_CONTAINER_STATE";
 }
 
+// @public
+export type GetContainerStateMessageData = HasContainerId;
+
 // @internal
 export function getDebuggerRegistry(): DebuggerRegistry;
 

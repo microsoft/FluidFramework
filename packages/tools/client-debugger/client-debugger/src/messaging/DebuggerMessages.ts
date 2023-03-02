@@ -22,6 +22,13 @@ export interface HasContainerId {
 // #region Inbound messages
 
 /**
+ * Message data format used by {@link GetContainerStateMessage}.
+ *
+ * @public
+ */
+export type GetContainerStateMessageData = HasContainerId;
+
+/**
  * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
  * Will result in the {@link ContainerStateChangeMessage} message being posted.
  *
