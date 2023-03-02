@@ -22,7 +22,7 @@ FLAGS
   -d, --dir=<value>            Run on the package in this directory. Cannot be used with --releaseGroup or --packages.
   -g, --releaseGroup=<option>  Run on all packages within this release group. Cannot be used with --dir or --packages.
                                <options: client|server|azure|build-tools>
-  -g, --skipScope=<option>...  Comma separated list of package scopes to filter out.
+  -g, --skipScope=<option>...  Package scopes to filter out.
                                <options: client|server|azure|build-tools>
   -n, --normalize              Removes any unrecognized data from "typeValidation" in the package.json
   -p, --previous               Use the version immediately before the current version.
@@ -36,7 +36,7 @@ FLAGS
                                flag for independent packages.
   --[no-]private               Only include private packages (or non-private packages for --no-private)
   --reset                      Resets the broken type test settings in package.json.
-  --scope=<value>...           Package scope to filter to.
+  --scope=<value>...           Package scopes to filter to.
 
 DESCRIPTION
   Updates configuration for type tests in package.json files. If the previous version changes after running preparation,
