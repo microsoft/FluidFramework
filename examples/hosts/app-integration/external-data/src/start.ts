@@ -50,6 +50,7 @@ async function start(): Promise<void> {
 		const createResponse = await tinyliciousModelLoader.createDetached("one");
 		model = createResponse.model;
 
+		model.registerWithCustomerService();
 		id = await createResponse.attach();
 	} else {
 		id = location.hash.slice(1);

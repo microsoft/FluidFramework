@@ -16,7 +16,7 @@ import type { IAppModel, IAppModelEvents, ITaskList } from "../model-interface";
 export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
 	public constructor(
 		public readonly taskList: ITaskList,
-		container: IContainer,
+		private readonly container: IContainer,
 		private readonly runtime: IContainerRuntime,
 	) {
 		super();
@@ -27,5 +27,12 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	 */
 	public readonly sendCustomDebugSignal = (): void => {
 		this.runtime.submitSignal("debugSignal", { type: "ExternalDataChange" });
+	};
+
+	/**
+	 * {@inheritDoc IAppModel.registerWithCustomerService}
+	 */
+	public readonly registerWithCustomerService = (): void => {
+		this.taskList.registerWithCustomerService(this.container).catch(console.error);
 	};
 }

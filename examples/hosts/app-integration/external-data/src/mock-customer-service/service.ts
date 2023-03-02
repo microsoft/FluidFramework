@@ -41,7 +41,7 @@ function echoExternalDataWebhookToFluid(data: TaskListData, fluidServiceUrl: str
 /**
  * Registers for webhook on receiving a specific resource to register for.
  */
-async function registerForWehbook(
+async function registerForWebhook(
 	port: string,
 	externalDataServiceWebhookRegistrationUrl: string,
 	taskListId: string,
@@ -191,17 +191,18 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * This data will be forwarded to our own subscribers.
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
+		const sessionUrl = "";
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const sessionUrl = request.body?.sessionUrl as string;
+		const sessionData = request.body?.sessionData as unknown;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const taskListId = request.body?.taskListId as string;
-		if (sessionUrl === undefined) {
+		if (sessionData === undefined) {
 			const errorMessage =
 				'No session data provided by client. Expected under "sessionUrl" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			registerForWehbook(
+			registerForWebhook(
 				port.toString(),
 				externalDataServiceWebhookRegistrationUrl,
 				taskListId,

@@ -5,6 +5,7 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
+import { IContainer } from "@fluidframework/container-definitions";
 
 /**
  * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.
@@ -36,6 +37,12 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	 * from alfred while that signal is in prototype state on the dev branch.
 	 */
 	readonly sendCustomDebugSignal: () => void;
+
+	/**
+	 * Send custom signal to simulate being the RuntimeMessage signal
+	 * from alfred while that signal is in prototype state on the dev branch.
+	 */
+	readonly registerWithCustomerService: () => void;
 }
 
 /**
@@ -143,6 +150,8 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	 * Triggered on receipt of ExternalDataChanged signal from container.
 	 */
 	readonly importExternalData: () => Promise<void>;
+
+	readonly registerWithCustomerService: (container: IContainer) => Promise<void>;
 
 	// TODO: Should there be an imperative API to trigger importing changes from the external source?
 	// Even if we don't want this to be how the signal gets routed, we might want a "fetch latest changes" button
