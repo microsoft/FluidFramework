@@ -211,8 +211,8 @@ export function App(): React.ReactElement {
 	const { privateContainer, sharedContainer } = useContainerInfo();
 
 	const view = (
-		<Stack horizontal style={{ height: "100%" }}>
-			<StackItem style={{ height: "100%" }}>
+		<Stack horizontal>
+			<StackItem>
 				{sharedContainer === undefined ? (
 					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 						<Spinner />
