@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
+
 /**
  * Metadata describing a {@link @fluidframework/container-definitions#IContainer} registered with a debugger.
  *
@@ -26,4 +29,38 @@ export interface ContainerMetadata {
 	 * container instances.
 	 */
 	nickname?: string;
+}
+
+/**
+ * Metadata describing a {@link @fluidframework/container-definitions#IContainer}'s core state.
+ *
+ * @public
+ */
+export interface ContainerStateMetadata extends ContainerMetadata {
+	/**
+	 * Whether or not the Container has been closed (disposed).
+	 */
+	closed: boolean;
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.attachState}
+	 */
+	attachState: AttachState;
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.connectionState}
+	 */
+	connectionState: ConnectionState;
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.clientId}
+	 */
+	clientId?: string;
+
+	/**
+	 * The active audience identifier when the Container is connected.
+	 *
+	 * @remarks Will be undefined when the Container is not connected.
+	 */
+	audienceId?: string;
 }
