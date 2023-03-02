@@ -120,7 +120,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
     // @deprecated (undocumented)
     deleteUnusedNodes(unusedRoutes: string[]): string[];
-    // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
