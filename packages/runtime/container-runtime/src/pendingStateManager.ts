@@ -15,6 +15,7 @@ import { pkgVersion } from "./packageVersion";
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
+ * @deprecated - This interface will no longer be exported in a future version
  */
 export interface IPendingMessage {
 	type: "message";
@@ -35,8 +36,14 @@ export interface IPendingFlush {
 	type: "flush";
 }
 
+/**
+ * @deprecated - This interface will no longer be exported in a future version
+ */
 export type IPendingState = IPendingMessage | IPendingFlush;
 
+/**
+ * @deprecated - This interface will no longer be exported in a future version
+ */
 export interface IPendingLocalState {
 	/**
 	 * list of pending states, including ops and batch information
@@ -168,13 +175,11 @@ export class PendingStateManager implements IDisposable {
 	 * Called when a message is submitted locally. Adds the message and the associated details to the pending state
 	 * queue.
 	 * @param type - The container message type.
-	 * @param clientSequenceNumber - The clientSequenceNumber associated with the message.
 	 * @param content - The message content.
 	 * @param localOpMetadata - The local metadata associated with the message.
 	 */
 	public onSubmitMessage(
 		type: ContainerMessageType,
-		clientSequenceNumber: number,
 		referenceSequenceNumber: number,
 		content: any,
 		localOpMetadata: unknown,
@@ -183,7 +188,7 @@ export class PendingStateManager implements IDisposable {
 		const pendingMessage: IPendingMessage = {
 			type: "message",
 			messageType: type,
-			clientSequenceNumber,
+			clientSequenceNumber: -1, // dummy value (not to be used anywhere)
 			referenceSequenceNumber,
 			content,
 			localOpMetadata,
@@ -241,18 +246,34 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.pendingMessages.shift();
 
-		// Processing part - Verify that there has been no data corruption.
-		// The clientSequenceNumber of the incoming message must match that of the pending message.
-		if (pendingMessage.clientSequenceNumber !== message.clientSequenceNumber) {
+		if (pendingMessage.messageType !== message.type) {
 			// Close the container because this could indicate data corruption.
-			const error = DataProcessingError.create(
-				"pending local message clientSequenceNumber mismatch",
-				"unexpectedAckReceived",
-				message,
-				{ expectedClientSequenceNumber: pendingMessage.clientSequenceNumber },
+			this.stateHandler.close(
+				DataProcessingError.create(
+					"pending local message type mismatch",
+					"unexpectedAckReceived",
+					message,
+					{
+						expectedMessageType: pendingMessage.messageType,
+					},
+				),
 			);
+			return;
+		}
 
-			this.stateHandler.close(error);
+		const pendingMessageContent = JSON.stringify(pendingMessage.content);
+		const messageContent = JSON.stringify(message.contents);
+
+		// Stringified content does not match
+		if (pendingMessageContent !== messageContent) {
+			// Close the container because this could indicate data corruption.
+			this.stateHandler.close(
+				DataProcessingError.create(
+					"pending local message content mismatch",
+					"unexpectedAckReceived",
+					message,
+				),
+			);
 			return;
 		}
 
@@ -322,8 +343,6 @@ export class PendingStateManager implements IDisposable {
 								hasBatchStart: batchBeginMetadata === true,
 								hasBatchEnd: batchEndMetadata === false,
 								messageType: message.type,
-								batchStartSequenceNumber:
-									this.pendingBatchBeginMessage.clientSequenceNumber,
 								pendingMessagesCount: this.pendingMessagesCount,
 							},
 						),

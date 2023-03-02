@@ -4,27 +4,33 @@ flub is a build and release tool for the Fluid Framework GitHub repositories. fl
 fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
 maintainable CLI using [oclif](https://oclif.io).
 
+<!-- prettier-ignore-start -->
 <!-- toc -->
 * [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
 * [Usage](#usage)
 * [Command Topics](#command-topics)
 <!-- tocstop -->
+<!-- prettier-ignore-stop -->
 
 # Usage
+
+<!-- prettier-ignore-start -->
 <!-- usage -->
 ```sh-session
 $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.8.0
+@fluid-tools/build-cli/0.11.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
 ...
 ```
 <!-- usagestop -->
+<!-- prettier-ignore-stop -->
 
+<!-- prettier-ignore-start -->
 <!-- commands -->
 # Command Topics
 
@@ -40,12 +46,18 @@ USAGE
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 
 <!-- commandsstop -->
+<!-- prettier-ignore-stop -->
 
 ## Developer notes
 
 This package outputs its build files to `lib/` instead of `dist/` like most of our other packages. The reason is that
 oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
 PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
+
+---
+
+Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
+removed once we have upgraded to Node 16 in the repo.
 
 ### Testing
 

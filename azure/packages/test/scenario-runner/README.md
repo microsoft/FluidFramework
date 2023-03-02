@@ -32,7 +32,8 @@ This scenario loads a set of previously created docs multiple times and measures
 2. Set the `azure__fluid__relay__service__tenantKey` environment variable to equal your FRS Tenant's Primary Key
 3. Set the `azure__fluid__relay__service__function__url` environment variable to equal your FRS Service Function URL
 4. Set the `azure__fluid__relay__service__endpoint` environment variable to equal the Alfred endpoint of your FRS tenant
-5. Run the test with `npm run start`
+5. (Optional) Set the `azure__fluid__relay__service__region` environment variable to equal the region of your FRS tenant (eg. `westus2`, `westus3`, `eastus`, `westeurope`)
+6. Run the test with `npm run start`
 
 ## Configuring the test configuration
 

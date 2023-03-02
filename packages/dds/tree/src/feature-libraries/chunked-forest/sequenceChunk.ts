@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { BasicChunk, BasicChunkCursor } from "./basicChunk";
-import { ChunkedCursor, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ReferenceCountedBase } from "../../util";
+import { BasicChunkCursor } from "./basicChunk";
+import { ChunkedCursor, dummyRoot, TreeChunk } from "./chunk";
 
 /**
  * General purpose multi-node sequence chunk.
@@ -40,8 +41,7 @@ export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
 
 	public cursor(): ChunkedCursor {
 		return new BasicChunkCursor(
-			// TODO: remove this cast
-			this.subChunks as BasicChunk[],
+			this.subChunks,
 			[],
 			[],
 			[],
@@ -50,6 +50,7 @@ export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
 			0,
 			0,
 			0,
+			undefined,
 		);
 	}
 

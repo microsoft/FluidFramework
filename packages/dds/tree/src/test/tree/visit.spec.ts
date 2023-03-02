@@ -288,6 +288,55 @@ describe("visit", () => {
 		testVisit(delta, expected);
 	});
 
+	it("modify and move children", () => {
+		const moveId: Delta.MoveId = brand(1);
+		const moveOut: Delta.ModifyAndMoveOut = {
+			type: Delta.MarkType.ModifyAndMoveOut,
+			setValue: 42,
+			moveId,
+		};
+
+		const moveIn: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId,
+		};
+
+		const delta: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([[fooKey, [2, moveIn, 4, moveOut]]]),
+					},
+				],
+			],
+		]);
+
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["enterNode", 6],
+			["onSetValue", 42],
+			["exitNode", 6],
+			["onMoveOut", 6, 1, moveId],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onMoveIn", 2, 1, moveId],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		];
+
+		testVisit(delta, expected);
+	});
+
 	it("move cousins", () => {
 		const moveId: Delta.MoveId = brand(1);
 		const moveOut: Delta.MoveOut = {

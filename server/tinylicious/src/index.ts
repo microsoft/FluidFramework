@@ -27,9 +27,9 @@ const configPath = path.join(__dirname, "../config.json");
 configureLogging(configPath);
 
 runService(
-    new TinyliciousResourcesFactory(),
-    new TinyliciousRunnerFactory(),
-    winston,
-    "tinylicious",
-    configPath
+	new TinyliciousResourcesFactory(),
+	new TinyliciousRunnerFactory(),
+	winston,
+	"tinylicious",
+	configPath,
 );

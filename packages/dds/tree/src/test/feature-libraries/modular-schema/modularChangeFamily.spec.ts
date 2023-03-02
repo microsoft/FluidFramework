@@ -30,6 +30,7 @@ import {
 	Delta,
 	FieldKey,
 	UpPath,
+	mintRevisionTag,
 } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { assertDeltaEqual, deepFreeze } from "../../utils";
@@ -62,6 +63,9 @@ const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
 	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
+	amendCompose: () => fail("Not supported"),
+	amendInvert: () => fail("Not supported"),
+	amendRebase: () => fail("Not supported"),
 };
 
 const singleNodeEditor: FieldEditor<NodeChangeset> = {
@@ -92,6 +96,9 @@ const idFieldRebaser: FieldChangeRebaser<IdChangeset> = {
 	compose: (changes, composeChild, genId): IdChangeset => genId(),
 	invert: (change, invertChild, genId): IdChangeset => genId(),
 	rebase: (change, over, rebaseChild, genId): IdChangeset => genId(),
+	amendCompose: () => fail("Not supported"),
+	amendInvert: () => fail("Not supported"),
+	amendRebase: () => fail("Not supported"),
 };
 
 const idFieldHandler: FieldChangeHandler<IdChangeset> = {
@@ -124,8 +131,8 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 
 const family = new ModularChangeFamily(fieldKinds);
 
-const tag1: RevisionTag = brand(1);
-const tag2: RevisionTag = brand(2);
+const tag1: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
@@ -287,7 +294,7 @@ const nodeValueOverwrite: ModularChangeset = {
 	]),
 };
 
-const detachedBy: RevisionTag = brand(42);
+const detachedBy = mintRevisionTag();
 const nodeValueRevert: ModularChangeset = {
 	changes: new Map([
 		[
@@ -483,7 +490,7 @@ describe("ModularChangeFamily", () => {
 				{
 					changes: new Map([[fieldB, change2B]]),
 				},
-				brand(2),
+				tag2,
 			);
 
 			deepFreeze(change1);

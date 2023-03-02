@@ -36,6 +36,7 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
+	isolatedFieldChangeRebaser,
 } from "./modular-schema";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
@@ -261,7 +262,7 @@ export interface ValueChangeset {
 	changes?: NodeChangeset;
 }
 
-const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
+const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeRebaser({
 	compose: (
 		changes: TaggedChange<ValueChangeset>[],
 		composeChildren: NodeChangeComposer,
@@ -321,7 +322,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
 		}
 		return { ...change, changes: rebaseChild(change.changes, over.change.changes) };
 	},
-};
+});
 
 interface EncodedValueChangeset {
 	value?: NodeUpdate;
@@ -460,7 +461,7 @@ export interface OptionalChangeset {
 	childChange?: NodeChangeset;
 }
 
-const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
+const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFieldChangeRebaser({
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
@@ -555,7 +556,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		return change;
 	},
-};
+});
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**

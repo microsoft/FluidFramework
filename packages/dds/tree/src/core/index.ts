@@ -37,6 +37,7 @@ export {
 	JsonableTree,
 	Delta,
 	rootFieldKey,
+	rootField,
 	FieldScope,
 	GlobalFieldKeySymbol,
 	symbolFromKey,
@@ -44,6 +45,7 @@ export {
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
+	castCursorToSynchronous,
 	GenericFieldsNode,
 	AnchorLocator,
 	genericTreeKeys,
@@ -73,6 +75,8 @@ export {
 	PathRootPrefix,
 	isSkipMark,
 	emptyDelta,
+	inCursorField,
+	inCursorNode,
 } from "./tree";
 
 export {
@@ -125,17 +129,17 @@ export {
 } from "./change-family";
 
 export {
-	Rebaser,
 	ChangeRebaser,
 	RevisionTag,
 	TaggedChange,
-	ChangesetFromChangeRebaser,
 	makeAnonChange,
 	tagChange,
 	noFailure,
 	OutputType,
 	verifyChangeRebaser,
 	tagInverse,
+	SessionId,
+	mintRevisionTag,
 } from "./rebase";
 
 export { ICheckout, TransactionResult } from "./checkout";
@@ -152,13 +156,13 @@ export {
 } from "./schema-view";
 
 export {
-	Branch,
 	Commit,
 	EditManager,
-	MutableSummaryData,
-	ReadonlySummaryData,
+	minimumPossibleSequenceNumber,
 	SeqNumber,
-	SessionId,
+	SequencedCommit,
+	SummarySessionBranch as SummaryBranch,
+	SummaryData,
 } from "./edit-manager";
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";

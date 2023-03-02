@@ -23,7 +23,6 @@
         "eslint-comments",
         "import",
         "unicorn",
-        "react",
         "unused-imports",
         "tsdoc",
         "promise",

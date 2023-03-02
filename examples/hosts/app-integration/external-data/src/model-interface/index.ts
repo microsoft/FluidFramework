@@ -7,20 +7,20 @@ import type { IEvent, IEventProvider } from "@fluidframework/common-definitions"
 import { SharedString } from "@fluidframework/sequence";
 
 /**
+ * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.
+ */
+export interface ExternalSnapshotTask {
+	id: string;
+	name: string | undefined;
+	priority: number | undefined;
+	changeType: string | undefined;
+}
+
+/**
  * Events emitted by {@link IAppModel}.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IAppModelEvents extends IEvent {}
-
-/**
- * Mock model for external task data
- */
-export interface TaskData {
-	[key: string]: {
-		name: string;
-		priority: number;
-	};
-}
 
 /**
  * For this simple demo, our app model only needs a single member taskList.
@@ -45,19 +45,23 @@ export interface ITaskEvents extends IEvent {
 	/**
 	 * Emitted when the name has changed.
 	 */
-	(event: "nameChanged", listener: () => void);
+	(event: "draftNameChanged", listener: () => void);
 	/**
-	 * Emitted when the priority has changed to either the incoming value or to the NONE default value.
+	 * Emitted when the priority has changed.
 	 */
-	(event: "priorityChanged", listener: () => void);
+	(event: "draftPriorityChanged", listener: () => void);
 	/**
-	 * Emitted when the incomingName has changed to either the incoming value or to the NONE default value.
+	 * Emitted when the name from the source (the external server) has changed.
 	 */
-	(event: "incomingNameChanged", listener: () => void);
+	(event: "externalNameChanged", listener: () => void);
 	/**
-	 * Emitted when incomingPriority has changed to either the incoming value or to the NONE default value.
+	 * Emitted when priority from the source (the external server) has changed.
 	 */
-	(event: "incomingPriorityChanged", listener: () => void);
+	(event: "externalPriorityChanged", listener: () => void);
+	/**
+	 * Emitted when there are differences between the draft data and external snapshot data.
+	 */
+	(event: "changesAvailable", listener: (value: boolean) => boolean);
 }
 
 /**
@@ -72,35 +76,19 @@ export interface ITask extends IEventProvider<ITaskEvents> {
 	/**
 	 * The task name.  Modifications are persisted in Fluid and shared amongst collaborators.
 	 */
-	readonly name: SharedString;
+	readonly draftName: SharedString;
 	/**
 	 * The task priority.  Modifications are persisted in Fluid and shared amongst collaborators.
 	 */
-	priority: number;
+	draftPriority: number;
 	/**
-	 * The task name coming in from the external server.
+	 * Overwrite the draft data with the external data that's coming in.
 	 */
-	readonly incomingName: string | undefined;
+	readonly overwriteWithExternalData: () => void;
 	/**
-	 * The task priority coming in from the external server.
+	 * The data coming in from the external server.
 	 */
-	readonly incomingPriority: number | undefined;
-	/**
-	 * The type of change to the task coming in from the external server.
-	 */
-	readonly incomingType: string | undefined;
-	/**
-	 * Trigger event to render change to UI.
-	 */
-	readonly incomingNameChanged: (name: string) => void;
-	/**
-	 * Trigger event to render change to UI.
-	 */
-	readonly incomingPriorityChanged: (priority: number) => void;
-	/**
-	 * Save the proposed changes to SavedData.
-	 */
-	readonly overwriteWithIncomingData: () => void;
+	readonly externalDataSnapshot: ExternalSnapshotTask;
 }
 
 /**
@@ -108,9 +96,13 @@ export interface ITask extends IEventProvider<ITaskEvents> {
  */
 export interface ITaskListEvents extends IEvent {
 	/**
-	 * Emitted when a task is added/removed respectively.
+	 * Emitted when a draft task is added.
 	 */
-	(event: "taskAdded" | "taskDeleted", listener: (task: ITask) => void);
+	(event: "draftTaskAdded", listener: (task: ITask) => void);
+	/**
+	 * Emitted when a draft task is removed.
+	 */
+	(event: "draftTaskDeleted", listener: (task: ITask) => void);
 }
 
 /**
@@ -126,25 +118,25 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	 * actually be adding this task to the external data source until a sync happens.  What should the ID be in the
 	 * interim period -- e.g. is there a "Fluid ID" vs. the real ID?
 	 */
-	readonly addTask: (id: string, name: string, priority: number) => void;
+	readonly addDraftTask: (id: string, name: string, priority: number) => void;
 	/**
 	 * Delete the task with the specified ID.
 	 */
-	readonly deleteTask: (id: string) => void;
+	readonly deleteDraftTask: (id: string) => void;
 
 	/**
 	 * Get the full list of tasks.
 	 */
-	readonly getTasks: () => ITask[];
+	readonly getDraftTasks: () => ITask[];
 	/**
 	 * Get the task with the specified ID.
 	 */
-	readonly getTask: (id: string) => ITask | undefined;
+	readonly getDraftTask: (id: string) => ITask | undefined;
 
 	/**
 	 * Persist the current state of the Fluid data back to the external data source.
 	 */
-	readonly saveChanges: () => Promise<void>;
+	readonly writeToExternalServer: () => Promise<void>;
 
 	/**
 	 * Kick off fetching external data directly from the TaskList.
@@ -161,3 +153,5 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// Alternate: inject an EventEmitter that raises the events from external.
 	// readonly handleExternalMessage: (message) => void;
 }
+
+export { assertValidTaskData, TaskData } from "./TaskData";
