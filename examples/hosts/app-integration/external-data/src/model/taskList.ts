@@ -305,6 +305,11 @@ export class TaskList extends DataObject implements ITaskList {
 		// the "save" button case this might be fine (the user saves what they see), but in more-automatic
 		// sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
 		// as what we do for summarization).
+
+		// Force update failures to showcase retry logic.
+		if (Math.random() <= 0.33) {
+			throw new Error("Oops, something went wrong!");
+		}
 		const tasks = this.getDraftTasks();
 		const formattedTasks = {};
 		for (const task of tasks) {
@@ -313,6 +318,7 @@ export class TaskList extends DataObject implements ITaskList {
 				priority: task.draftPriority,
 			};
 		}
+
 		try {
 			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
 				method: "POST",
