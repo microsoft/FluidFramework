@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { brand } from "../../../util";
-import { jsonableTreeFromCursor } from "../../../feature-libraries";
 import { TestChange } from "../../testChange";
 import { deepFreeze, fakeRepair } from "../../utils";
 import { composeAnonChanges, invert as invertChange } from "./utils";
@@ -27,10 +26,6 @@ const childChange3 = TestChange.mint([2], 3);
 const inverseChildChange1 = TestChange.invert(childChange1);
 const inverseChildChange2 = TestChange.invert(childChange2);
 const inverseChildChange3 = TestChange.invert(childChange3);
-
-function createFakeRepairData(tag: RevisionTag, index: number, count: number) {
-	return fakeRepair(tag, index, count).map(jsonableTreeFromCursor);
-}
 
 describe("SequenceField - Invert", () => {
 	it("no changes", () => {
@@ -87,7 +82,7 @@ describe("SequenceField - Invert", () => {
 			},
 			{
 				type: "Revive",
-				content: createFakeRepairData(tag1, 0, 1),
+				content: fakeRepair(tag1, 0, 1),
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 0,

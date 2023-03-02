@@ -67,7 +67,7 @@ export const sequenceFieldEditor = {
 	): Changeset<never> => {
 		const mark: Reattach<never> = {
 			type: "Revive",
-			content: reviver(detachedBy, index, count).map(jsonableTreeFromCursor),
+			content: reviver(detachedBy, index, count),
 			count,
 			detachedBy,
 			// Revives are typically created to undo a delete from the prior revision.

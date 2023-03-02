@@ -43,8 +43,6 @@ import {
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
 
-const fooKey: FieldKey = brand("foo");
-
 describe("ChunkedForest", () => {
 	testForest({
 		suiteName: "ChunkedForest forest suite",
@@ -114,7 +112,7 @@ describe("ChunkedForest", () => {
 			chunk.isShared(),
 			"chunk should be shared after storing as repair data and reinserting",
 		);
-		assert.equal(chunk.referenceCount, 3);
+		assert.equal(chunk.referenceCount, 4);
 
 		const readCursor = forest.allocateCursor();
 		moveToDetachedField(forest, readCursor);

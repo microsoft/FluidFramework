@@ -12,7 +12,7 @@ import {
 	TreeSchemaIdentifier,
 	mintRevisionTag,
 } from "../../../core";
-import { jsonableTreeFromCursor, SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeRepair } from "../../utils";
@@ -26,7 +26,7 @@ const tag3: RevisionTag = mintRevisionTag();
 const tag4: RevisionTag = mintRevisionTag();
 
 function createFakeRepairData(tag: RevisionTag, index: number, count: number) {
-	return fakeRepair(tag, index, count).map(jsonableTreeFromCursor);
+	return fakeRepair(tag, index, count);
 }
 
 describe("SequenceField - Compose", () => {
