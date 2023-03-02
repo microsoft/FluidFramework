@@ -166,7 +166,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 
 		// Initiate message posting of registry updates.
 		// TODO: Only do this after some external request?
-		this.on("debuggerClosed", this.postRegistryChange);
+		this.on("debuggerRegistered", this.postRegistryChange);
 		this.on("debuggerClosed", this.postRegistryChange);
 	}
 
