@@ -72,14 +72,16 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 	}, [container, setIsContainerClosed]);
 
 	// Inner view selection
-	const [viewSelection, setViewSelection] = React.useState<PanelView>(PanelView.ContainerData);
+	const [innerViewSelection, setInnerViewSelection] = React.useState<PanelView>(
+		PanelView.ContainerData,
+	);
 
 	let view: React.ReactElement;
 	if (isContainerClosed) {
 		view = <div>The Container has been closed.</div>;
 	} else {
 		let innerView: React.ReactElement;
-		switch (viewSelection) {
+		switch (innerViewSelection) {
 			case PanelView.ContainerData:
 				innerView = (
 					<DataObjectsView
@@ -97,13 +99,13 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 				);
 				break;
 			default:
-				throw new Error(`Unrecognized PanelView selection value: "${viewSelection}".`);
+				throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 		}
 		view = (
 			<Stack tokens={{ childrenGap: 10 }}>
 				<PanelViewSelectionMenu
-					currentSelection={viewSelection}
-					updateSelection={setViewSelection}
+					currentSelection={innerViewSelection}
+					updateSelection={setInnerViewSelection}
 				/>
 				{innerView}
 			</Stack>
@@ -146,6 +148,7 @@ export enum PanelView {
 	Audience = "Audience",
 
 	// TODOs:
+	// - Container state history
 	// - Network stats
 	// - Telemetry
 	// - Ops/message latency stats
@@ -169,7 +172,7 @@ export interface PanelViewSelectionMenuProps {
 }
 
 /**
- * Menu for selecting the inner app view to be displayed for the debug panel.
+ * Menu for selecting the inner app view to be displayed in the debug panel.
  *
  * @internal
  */
