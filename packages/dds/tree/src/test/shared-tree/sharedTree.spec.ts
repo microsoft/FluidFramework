@@ -826,6 +826,60 @@ describe("SharedTree", () => {
 			assert.equal(opsReceived, 2);
 		});
 
+		it("update anchors after merging into the root checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			pushTestValue(tree, "A");
+			let cursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			const checkout = tree.fork();
+			pushTestValue(checkout, "B");
+			checkout.merge();
+			cursor = tree.forest.allocateCursor();
+			tree.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
+		it("update anchors", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkout = tree.fork();
+			pushTestValue(checkout, "A");
+			let cursor = checkout.forest.allocateCursor();
+			moveToDetachedField(checkout.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			pushTestValue(checkout, "B");
+			cursor = checkout.forest.allocateCursor();
+			checkout.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
+		it("update anchors after merging into a base checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const baseCheckout = tree.fork();
+			pushTestValue(baseCheckout, "A");
+			let cursor = baseCheckout.forest.allocateCursor();
+			moveToDetachedField(baseCheckout.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			const checkout = tree.fork();
+			pushTestValue(checkout, "B");
+			checkout.merge();
+			cursor = baseCheckout.forest.allocateCursor();
+			baseCheckout.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
 		it("are disposed after merging", async () => {
 			const provider = await TestTreeProvider.create(1);
 			const [tree] = provider.trees;
