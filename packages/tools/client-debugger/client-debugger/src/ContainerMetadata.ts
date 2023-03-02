@@ -15,12 +15,20 @@ export interface ContainerMetadata {
 	/**
 	 * The Container ID.
 	 */
-	id: string; // TODO: rename to "containerId"
+	id: string;
 
 	/**
 	 * Optional Container nickname.
+	 *
+	 * @remarks
+	 *
+	 * Associated tooling may take advantage of this to differentiate between container instances using
+	 * semantically meaningful names, rather than GUIDs.
+	 *
+	 * If not provided, the {@link ContainerMetadata.id} will be used for the purpose of distinguising
+	 * container instances.
 	 */
-	nickname?: string; // TODO: rename to "containerNickname"
+	nickname?: string;
 }
 
 /**

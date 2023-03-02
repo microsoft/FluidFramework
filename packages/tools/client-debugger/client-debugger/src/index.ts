@@ -48,6 +48,7 @@
 
 export * from "./AudienceMetadata";
 export { ContainerStateChangeKind } from "./Container";
+export { ContainerMetadata } from "./ContainerMetadata";
 
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 export {

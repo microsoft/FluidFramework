@@ -103,16 +103,19 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			/>
 		);
 
-	const selectionView = (
-		<ContainerSelectionDropdown
-			initialSelection={selectedContainerId}
-			options={clientDebuggers.map((clientDebugger) => ({
-				id: clientDebugger.containerId,
-				nickname: clientDebugger.containerNickname,
-			}))}
-			onChangeSelection={setSelectedContainerId}
-		/>
-	);
+	const selectionView: React.ReactElement =
+		clientDebuggers.length > 1 ? (
+			<ContainerSelectionDropdown
+				initialSelection={selectedContainerId}
+				options={clientDebuggers.map((clientDebugger) => ({
+					id: clientDebugger.containerId,
+					nickname: clientDebugger.containerNickname,
+				}))}
+				onChangeSelection={(containerId): void => setSelectedContainerId(containerId)}
+			/>
+		) : (
+			<></>
+		);
 
 	return (
 		<Resizable

@@ -19,12 +19,12 @@ export interface ContainerSelectionDropdownProps {
 	initialSelection?: string;
 
 	/**
-	 * Drop-down options.
+	 * Full list of drop-down options.
 	 */
 	options: ContainerMetadata[];
 
 	/**
-	 * Take the selected container id to set as current viewed container ID.
+	 * Called when the selection changes.
 	 * @param containerId - The newly selected Container ID.
 	 */
 	onChangeSelection(containerId: string | undefined): void;
@@ -56,7 +56,7 @@ export function ContainerSelectionDropdown(
 	return (
 		<Stack tokens={stackTokens}>
 			<Dropdown
-				placeholder="Select an Fluid Container"
+				placeholder="Select a Fluid Container"
 				selectedKey={initialSelection}
 				options={dropdownOptions}
 				styles={dropdownStyles}
