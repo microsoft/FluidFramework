@@ -1895,6 +1895,11 @@ export class ContainerRuntime
 					this.blobManager.processBlobAttachOp(message, local);
 					break;
 				case ContainerMessageType.IdAllocation:
+					if (this.runtimeOptions.enableRuntimeIdCompressor !== true) {
+						throw new Error(
+							"Received an IdAllocation op without having the compressor enabled",
+						);
+					}
 					this.idCompressor?.finalizeCreationRange(message.contents as IdCreationRange);
 					break;
 				case ContainerMessageType.ChunkedOp:

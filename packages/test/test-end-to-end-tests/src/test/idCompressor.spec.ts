@@ -59,6 +59,22 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 	});
 
+	it("has no compressor if not enabled", async () => {
+		provider.reset();
+		const config: ITestContainerConfig = {
+			registry: [
+				[mapId, SharedMap.getFactory()],
+				[cellId, SharedCell.getFactory()],
+			],
+			fluidDataObjectType: DataObjectFactoryType.Test,
+		};
+		const container1 = await provider.makeTestContainer(config);
+		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const map = await dataObject1.getSharedObject<SharedMap>(mapId);
+
+		assert(map.idCompressor === undefined);
+	});
+
 	it("can normalize session space IDs to op space", async () => {
 		assert(sharedMap1.idCompressor !== undefined);
 		assert(sharedMap2.idCompressor !== undefined);
