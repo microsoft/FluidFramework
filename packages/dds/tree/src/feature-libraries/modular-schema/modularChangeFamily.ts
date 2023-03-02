@@ -140,10 +140,13 @@ export class ModularChangeFamily
 	compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		let maxId = -1;
 		const revInfos: RevisionInfo[] = [];
-		for (const { change } of changes) {
+		for (const taggedChange of changes) {
+			const change = taggedChange.change;
 			maxId = Math.max(change.maxId ?? -1, maxId);
 			if (change.revisions !== undefined) {
 				revInfos.push(...change.revisions);
+			} else if (taggedChange.revision !== undefined) {
+				revInfos.push({ tag: taggedChange.revision });
 			}
 		}
 		const revisionIndexer: RevisionIndexer = (tag: RevisionTag): number => {

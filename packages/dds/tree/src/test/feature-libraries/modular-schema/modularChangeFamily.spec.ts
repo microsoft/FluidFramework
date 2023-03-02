@@ -536,6 +536,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
+				revisions: [{ tag: tag1 }, { tag: tag2 }],
 			};
 
 			assert.deepEqual(composed, expected);
@@ -560,6 +561,7 @@ describe("ModularChangeFamily", () => {
 					[fieldA, { fieldKind: idField.identifier, revision: tag1, change: brand(id0) }],
 					[fieldB, { fieldKind: idField.identifier, revision: tag2, change: brand(id0) }],
 				]),
+				revisions: [{ tag: tag1 }, { tag: tag2 }],
 			};
 
 			const composed1 = family.compose([tagChange(change1, tag1), tagChange(change2, tag2)]);
@@ -568,6 +570,7 @@ describe("ModularChangeFamily", () => {
 			const expected2: ModularChangeset = {
 				maxId: id1,
 				changes: new Map([[fieldA, { fieldKind: idField.identifier, change: brand(id1) }]]),
+				revisions: [{ tag: tag1 }, { tag: tag2 }],
 			};
 
 			const composed2 = family.compose([tagChange(change1, tag1), tagChange(change1, tag2)]);
@@ -631,7 +634,6 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
-				revisions: [{ tag: rev3 }],
 			};
 			const changeC: ModularChangeset = {
 				changes: new Map([
@@ -647,7 +649,7 @@ describe("ModularChangeFamily", () => {
 			};
 			const composed = dummyFamily.compose([
 				makeAnonChange(changeA),
-				makeAnonChange(changeB),
+				tagChange(changeB, rev3),
 				makeAnonChange(changeC),
 			]);
 			assert.deepEqual(composed.revisions, [

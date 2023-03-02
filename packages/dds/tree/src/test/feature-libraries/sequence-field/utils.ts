@@ -46,8 +46,13 @@ export function shallowCompose<T>(
 	);
 }
 
-const failingRevisionIndexer = (tag: RevisionTag) => {
-	fail("Unexpected revision index query");
+export function numberTag(integer: number): RevisionTag {
+	return integer as unknown as RevisionTag;
+}
+
+const integerRevisionIndexer = (tag: RevisionTag): number => {
+	assert(typeof tag === "number", "Unexpected revision index query");
+	return tag;
 };
 
 function composeI<T>(
@@ -62,7 +67,7 @@ function composeI<T>(
 		composer,
 		idAllocator,
 		moveEffects,
-		revisionIndexer ?? failingRevisionIndexer,
+		revisionIndexer ?? integerRevisionIndexer,
 	);
 
 	if (moveEffects.isInvalidated) {
@@ -91,7 +96,7 @@ export function rebase(
 			base,
 			idAllocator,
 			moveEffects,
-			revisionIndexer ?? failingRevisionIndexer,
+			revisionIndexer ?? integerRevisionIndexer,
 		);
 		// assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}

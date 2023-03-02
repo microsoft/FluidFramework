@@ -38,10 +38,13 @@ export class IndexTracker {
 			return;
 		}
 		assert(revision !== undefined, 0x502 /* Compose base mark should carry revision info */);
-		const revisionIndex = this.revisionIndexer(revision);
-		const index = this.contributions.findIndex(
-			({ rev }) => this.revisionIndexer(rev) >= revisionIndex,
-		);
+		let index = -1;
+		if (this.contributions.length > 0) {
+			const revisionIndex = this.revisionIndexer(revision);
+			index = this.contributions.findIndex(
+				({ rev }) => this.revisionIndexer(rev) >= revisionIndex,
+			);
+		}
 		if (index === -1) {
 			this.contributions.push({ rev: revision, netLength });
 		} else {
@@ -93,10 +96,12 @@ export class GapTracker {
 				// Reset the offset for the revisions chronologically after the attach to zero.
 				// This is because for those revisions, the nodes were present in the input context.
 				// In other words, one revision's attach is later revisions' skip.
-				const revisionIndex = this.revisionIndexer(revision);
-				for (const rev of this.map.keys()) {
-					if (this.revisionIndexer(rev) > revisionIndex) {
-						this.map.delete(rev);
+				if (this.map.size > 0) {
+					const revisionIndex = this.revisionIndexer(revision);
+					for (const rev of this.map.keys()) {
+						if (this.revisionIndexer(rev) > revisionIndex) {
+							this.map.delete(rev);
+						}
 					}
 				}
 			} else if (isDetachMark(mark)) {
