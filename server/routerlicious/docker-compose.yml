@@ -125,7 +125,7 @@ services:
     redis:
         image: "redis:alpine"
     mongodb:
-        image: "mongo:4.13.0"
+        image: "mongo:3.4.3"
     rabbitmq:
         image: "rabbitmq:alpine"
 volumes:
