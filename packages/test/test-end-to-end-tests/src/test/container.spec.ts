@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IPendingLocalState,
@@ -23,7 +24,6 @@ import {
 	IDocumentServiceFactory,
 	IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
 import {
 	LocalCodeLoader,
 	TestObjectProvider,

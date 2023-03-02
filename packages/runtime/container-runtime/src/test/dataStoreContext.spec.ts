@@ -48,13 +48,13 @@ import {
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
+import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNode";
 import {
 	dataStoreAttributesBlobName,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
-} from "../summaryFormat";
-import { summarizerClientType } from "../summarizerClientElection";
-import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNode";
+	summarizerClientType,
+} from "../summary";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
@@ -652,7 +652,6 @@ describe("Data Store Context Tests", () => {
 					remoteDataStoreContext = new RemoteFluidDataStoreContext({
 						id: dataStoreId,
 						snapshotTree,
-						getBaseGCDetails: async () => undefined,
 						runtime: containerRuntime,
 						storage: new BlobCacheStorageService(
 							storage as IDocumentStorageService,
@@ -707,8 +706,6 @@ describe("Data Store Context Tests", () => {
 						scope,
 						createSummarizerNodeFn,
 						snapshotTree: undefined,
-						getBaseGCDetails: async () =>
-							undefined as unknown as IGarbageCollectionDetailsBase,
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
@@ -783,7 +780,6 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
 					storage: new BlobCacheStorageService(
 						storage as IDocumentStorageService,
@@ -836,7 +832,6 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
 					storage: new BlobCacheStorageService(
 						storage as IDocumentStorageService,
@@ -889,7 +884,6 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
 					storage: new BlobCacheStorageService(
 						storage as IDocumentStorageService,
@@ -944,7 +938,6 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
 					storage: new BlobCacheStorageService(
 						storage as IDocumentStorageService,
@@ -1020,7 +1013,6 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
 					storage: new BlobCacheStorageService(
 						storage as IDocumentStorageService,
