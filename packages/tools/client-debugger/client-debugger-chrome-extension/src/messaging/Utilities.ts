@@ -50,7 +50,7 @@ export function relayMessageToPort<TMessage extends IDebuggerMessage>(
 ): void {
 	console.log(
 		formatMessageForLogging(
-			`Relaying message from "${messageSource}" to port "${targetPort.name}":`,
+			`Relaying message from "${messageSource}" to port "${targetPort.name ?? "(unnamed)"}":`,
 			loggingOptions,
 		),
 		message,
