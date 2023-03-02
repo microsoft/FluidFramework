@@ -146,51 +146,6 @@
 		"node": ">=14.13.0",
 		"npm": "^6"
 	},
-	"fluidBuild": {
-		"repoPackages": {
-			"build": "common/build",
-			"common-def": "common/lib/common-definitions",
-			"common-utils": "common/lib/common-utils",
-			"protocol-def": "common/lib/protocol-definitions",
-			"azure": "azure",
-			"build-tools": "build-tools",
-			"server": "server/routerlicious",
-			"client": {
-				"directory": "",
-				"ignoredDirs": []
-			},
-			"tools": [
-				"tools/api-markdown-documenter",
-				"tools/benchmark",
-				"tools/getkeys",
-				"tools/test-tools",
-				"server/tinylicious"
-			],
-			"services": {
-				"directory": "server",
-				"ignoredDirs": [
-					"routerlicious",
-					"tinylicious"
-				]
-			}
-		},
-		"policy": {
-			"additionalLockfilePaths": [
-				"common/build/build-common",
-				"common/build/eslint-config-fluid",
-				"docs",
-				"server/gitrest",
-				"server/historian",
-				"tools/telemetry-generator"
-			]
-		},
-		"branchReleaseTypes": {
-			"main": "minor",
-			"lts": "minor",
-			"release/**": "patch",
-			"next": "major"
-		}
-	},
 	"packageManager": "pnpm@7.27.0",
 	"pnpm": {
 		"overrides": {

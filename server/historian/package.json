@@ -74,5 +74,10 @@
     "supertest": "^3.3.0",
     "tslint": "^5.12.0",
     "typescript": "~4.5.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "socket.io-parser": "^4.2.1"
+    }
   }
 }

@@ -33,6 +33,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "npm run test:mocha:coverage",
 		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
