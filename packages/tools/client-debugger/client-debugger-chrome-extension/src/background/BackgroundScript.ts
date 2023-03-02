@@ -23,7 +23,7 @@ import {
  * This script runs as the extension's Background Worker.
  * It has no direct access to the page or any of its resources.
  * It runs automatically in the background, and only a single instance is run by the browser, regardless of how
- * many tabs are open / how many Devtools Script instances are running.
+ * many open tabs are running the extension (i.e. how many instances of the extension's DevtoolsScript are running).
  *
  * While the script itself runs as soon as the Browser is launched (post installation), it will not begin relaying
  * any messages until the Devtools Script sends it a connection request. After connecting, the Devtools Script
