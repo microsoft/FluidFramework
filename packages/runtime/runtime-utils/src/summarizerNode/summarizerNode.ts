@@ -159,7 +159,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		assert(trackState, "is it true?");
 		if (trackState) {
 			assert(
 				this.isSummaryInProgress(),
