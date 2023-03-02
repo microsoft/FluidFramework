@@ -20,13 +20,9 @@ import {
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
-import {
-	createRootSummarizerNode,
-	IFetchSnapshotResult,
-	IRootSummarizerNode,
-} from "../summarizerNode";
+import { createRootSummarizerNode, IFetchSnapshotResult, IRootSummarizerNode } from "../summary";
 // eslint-disable-next-line import/no-internal-modules
-import { SummarizerNode } from "../summarizerNode/summarizerNode";
+import { SummarizerNode } from "../summary/summarizerNode/summarizerNode";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {

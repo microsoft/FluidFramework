@@ -41,8 +41,7 @@ import {
 	disableSweepLogKey,
 	GCVersion,
 } from "../../gc";
-import { RefreshSummaryResult } from "../../summarizerNode";
-import { dataStoreAttributesBlobName } from "../../summary";
+import { dataStoreAttributesBlobName, RefreshSummaryResult } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 
 /** @see - sweepReadyUsageDetectionSetting */

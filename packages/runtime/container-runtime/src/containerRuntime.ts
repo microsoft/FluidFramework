@@ -114,10 +114,13 @@ import {
 	aliasBlobName,
 	blobsTreeName,
 	chunksBlobName,
+	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
+	IFetchSnapshotResult,
+	IRootSummarizerNodeWithGC,
 	ISummaryMetadataMessage,
 	metadataBlobName,
 	Summarizer,
@@ -139,11 +142,6 @@ import {
 	IRefreshSummaryAckOptions,
 	RunWhileConnectedCoordinator,
 } from "./summary";
-import {
-	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
-	IRootSummarizerNodeWithGC,
-} from "./summarizerNode";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
 	GarbageCollector,

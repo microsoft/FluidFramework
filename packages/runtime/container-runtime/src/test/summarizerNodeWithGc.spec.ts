@@ -22,7 +22,7 @@ import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../summarizerNode/summarizerNodeWithGc";
+} from "../summary/summarizerNode/summarizerNodeWithGc";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";

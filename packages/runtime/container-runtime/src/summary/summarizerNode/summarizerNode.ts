@@ -45,10 +45,6 @@ import {
 	SummaryNode,
 } from "./summarizerNodeUtils";
 
-/**
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
- */
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
 /**
@@ -724,9 +720,6 @@ export class SummarizerNode implements IRootSummarizerNode {
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
- *
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
  */
 export const createRootSummarizerNode = (
 	logger: ITelemetryLogger,

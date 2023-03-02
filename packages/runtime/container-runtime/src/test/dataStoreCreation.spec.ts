@@ -21,7 +21,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { createRootSummarizerNodeWithGC } from "../summarizerNode";
+import { createRootSummarizerNodeWithGC } from "../summary";
 
 describe("Data Store Creation Tests", () => {
 	describe("Store creation via local context creation and realize", () => {

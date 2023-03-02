@@ -17,9 +17,6 @@ import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
  *
  * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
  * latest snapshot is fetched and the latest summary state is updated based on it.
- *
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
  */
 export type RefreshSummaryResult =
 	| {
@@ -39,19 +36,12 @@ export type RefreshSummaryResult =
 
 /**
  * Result of snapshot fetch during refreshing latest summary state.
- *
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
  */
 export interface IFetchSnapshotResult {
 	snapshotTree: ISnapshotTree;
 	snapshotRefSeq: number;
 }
 
-/**
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
- */
 export interface ISummarizerNodeRootContract {
 	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 	completeSummary(proposalHandle: string): void;

@@ -48,9 +48,10 @@ import {
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNode";
 import {
+	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
+	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	summarizerClientType,

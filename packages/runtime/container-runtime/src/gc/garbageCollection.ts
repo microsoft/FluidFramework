@@ -24,10 +24,7 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	packagePathToTelemetryProperty,
-	ReadAndParseBlob,
-} from "@fluidframework/runtime-utils";
+import { packagePathToTelemetryProperty, ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
 	generateStack,
@@ -38,8 +35,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 
 import { RuntimeHeaders } from "../containerRuntime";
-import { RefreshSummaryResult } from "../summarizerNode";
-import { ICreateContainerMetadata } from "../summary";
+import { ICreateContainerMetadata, RefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	disableSweepLogKey,
