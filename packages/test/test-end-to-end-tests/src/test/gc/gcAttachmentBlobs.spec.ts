@@ -133,10 +133,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider();
-			if (
-				provider.driver.type === "routerlicious" &&
-				provider.driver.endpointName === "frs"
-			) {
+			if (provider.driver.type !== "local" && provider.driver.type !== "odsp") {
 				this.skip();
 			}
 			const detachedBlobStorage = new MockDetachedBlobStorage();

@@ -38,7 +38,6 @@ export class LocalDocumentService implements IDocumentService {
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
-		private readonly delayedDocumentCreation: boolean,
 		public readonly policies: IDocumentServicePolicies = {},
 		private readonly innerDocumentService?: IDocumentService,
 	) {}
@@ -60,7 +59,6 @@ export class LocalDocumentService implements IDocumentService {
 			},
 			this.localDeltaConnectionServer,
 			this.resolvedUrl,
-			this.delayedDocumentCreation,
 		);
 	}
 
@@ -128,7 +126,6 @@ export function createLocalDocumentService(
 	tenantId: string,
 	documentId: string,
 	documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
-	delayedDocumentCreation: boolean,
 	policies?: IDocumentServicePolicies,
 	innerDocumentService?: IDocumentService,
 ): IDocumentService {
@@ -139,7 +136,6 @@ export function createLocalDocumentService(
 		tenantId,
 		documentId,
 		documentDeltaConnectionsMap,
-		delayedDocumentCreation,
 		policies,
 		innerDocumentService,
 	);

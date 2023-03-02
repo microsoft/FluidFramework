@@ -342,10 +342,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		}
 
 		beforeEach(async function () {
-			if (
-				provider.driver.type === "routerlicious" &&
-				provider.driver.endpointName === "frs"
-			) {
+			if (provider.driver.type !== "local" && provider.driver.type !== "odsp") {
 				this.skip();
 			}
 		});

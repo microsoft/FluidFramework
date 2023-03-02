@@ -12,76 +12,12 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
-import {
-	ILocalDeltaConnectionServer,
-	LocalDeltaConnectionServer,
-} from "@fluidframework/server-local-server";
-import {
-	ensureFluidResolvedUrl,
-	getDocAttributesFromProtocolSummary,
-	getQuorumValuesFromProtocolSummary,
-} from "@fluidframework/driver-utils";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
-import { defaultHash } from "@fluidframework/server-services-client";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
-
-export class CreateDocumentInStorage {
-	private static instance: CreateDocumentInStorage | undefined;
-
-	private constructor(
-		private readonly localDeltaConnectionServer?: ILocalDeltaConnectionServer,
-		private readonly tenantId?: any,
-		private readonly id?: any,
-		private readonly resolvedUrl?: any,
-	) {}
-
-	public static getInstance() {
-		return CreateDocumentInStorage.instance;
-	}
-
-	public static createInstance(
-		localDeltaConnectionServer?: ILocalDeltaConnectionServer,
-		tenantId?,
-		id?,
-		resolvedUrl?,
-	) {
-		CreateDocumentInStorage.instance = new CreateDocumentInStorage(
-			localDeltaConnectionServer,
-			tenantId,
-			id,
-			resolvedUrl,
-		);
-		return CreateDocumentInStorage.instance;
-	}
-
-	public async createDocument(summary: ISummaryTree) {
-		const documentStorage = (this.localDeltaConnectionServer as LocalDeltaConnectionServer)
-			.documentStorage;
-		const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
-		const appSummary = summary.tree[".app"] as ISummaryTree;
-		if (!(protocolSummary && appSummary)) {
-			throw new Error("Protocol and App Summary required in the full summary");
-		}
-		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-		const sequenceNumber = documentAttributes.sequenceNumber;
-		await documentStorage.createDocument(
-			this.tenantId,
-			this.id,
-			appSummary,
-			sequenceNumber,
-			documentAttributes.term ?? 1,
-			defaultHash,
-			this.resolvedUrl.endpoints.ordererUrl ?? "",
-			this.resolvedUrl.endpoints.storageUrl ?? "",
-			this.resolvedUrl.endpoints.deltaStorageUrl ?? "",
-			quorumValues,
-			false /* enableDiscovery */,
-		);
-		CreateDocumentInStorage.instance = undefined;
-	}
-}
+import { createDocument } from "./localCreateDocument";
 
 /**
  * Implementation of document service factory for local use.
@@ -92,7 +28,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	// A map of clientId to LocalDocumentService.
 	private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection> =
 		new Map();
-	private delayedDocumentCreation: boolean = true;
 
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
@@ -109,62 +44,15 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		// ensureFluidResolvedUrl(resolvedUrl);
-		// const pathName = new URL(resolvedUrl.url).pathname;
-		// const pathArr = pathName.split("/");
-		// const tenantId = pathArr[pathArr.length - 2];
-		// const id = pathArr[pathArr.length - 1];
 		if (!this.localDeltaConnectionServer) {
 			throw new Error("Provide the localDeltaConnectionServer!!");
 		}
-		// const createLocalDocumentClass = CreateDocumentInStorage.createInstance(
-		// 	this.localDeltaConnectionServer,
-		// 	tenantId,
-		// 	id,
-		// 	resolvedUrl,
-		// );
 		if (createNewSummary !== undefined) {
-			await this.createDocument(
-				this.localDeltaConnectionServer,
-				resolvedUrl,
-				createNewSummary,
-			);
-			this.delayedDocumentCreation = false;
-			// await createLocalDocumentClass.createDocument(createNewSummary);
+			await createDocument(this.localDeltaConnectionServer, resolvedUrl, createNewSummary);
 		}
 		return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
 	}
 
-	private async createDocument(localDeltaConnectionServer, resolvedUrl, summary: ISummaryTree) {
-		ensureFluidResolvedUrl(resolvedUrl);
-		const pathName = new URL(resolvedUrl.url).pathname;
-		const pathArr = pathName.split("/");
-		const tenantId = pathArr[pathArr.length - 2];
-		const id = pathArr[pathArr.length - 1];
-		const documentStorage = (localDeltaConnectionServer as LocalDeltaConnectionServer)
-			.documentStorage;
-		const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
-		const appSummary = summary.tree[".app"] as ISummaryTree;
-		if (!(protocolSummary && appSummary)) {
-			throw new Error("Protocol and App Summary required in the full summary");
-		}
-		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-		const sequenceNumber = documentAttributes.sequenceNumber;
-		await documentStorage.createDocument(
-			tenantId,
-			id,
-			appSummary,
-			sequenceNumber,
-			documentAttributes.term ?? 1,
-			defaultHash,
-			resolvedUrl.endpoints.ordererUrl ?? "",
-			resolvedUrl.endpoints.storageUrl ?? "",
-			resolvedUrl.endpoints.deltaStorageUrl ?? "",
-			quorumValues,
-			false /* enableDiscovery */,
-		);
-	}
 	/**
 	 * Creates and returns a document service for testing using the given resolved
 	 * URL for the tenant ID, document ID, and token.
@@ -200,7 +88,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 			tenantId,
 			documentId,
 			this.documentDeltaConnectionsMap,
-			this.delayedDocumentCreation,
 			this.policies,
 			this.innerDocumentService,
 		);

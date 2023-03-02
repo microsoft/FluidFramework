@@ -70,10 +70,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			if (
-				provider.driver.type === "routerlicious" &&
-				provider.driver.endpointName === "frs"
-			) {
+			if (provider.driver.type !== "local") {
 				this.skip();
 			}
 
@@ -432,10 +429,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			if (
-				provider.driver.type === "routerlicious" &&
-				provider.driver.endpointName === "frs"
-			) {
+			if (provider.driver.type !== "local" && provider.driver.type !== "odsp") {
 				this.skip();
 			}
 
