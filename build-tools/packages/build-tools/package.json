@@ -22,7 +22,7 @@
 		"fluid-repo-policy-check": "bin/fluid-repo-policy-check",
 		"fluid-run-bundle-analyses": "bin/fluid-run-bundle-analyses",
 		"fluid-type-test-generator": "bin/fluid-type-test-generator",
-		"fluid-type-validator": "bin/fluid-type-validator"
+		"fluid-type-test-configure": "bin/fluid-type-test-configure"
 	},
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",

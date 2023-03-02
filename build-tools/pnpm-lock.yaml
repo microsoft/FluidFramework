@@ -63,6 +63,7 @@ importers:
       '@oclif/test': ^2.3.8
       '@octokit/core': ^4.0.5
       '@rushstack/node-core-library': ^3.51.1
+      '@types/async': ^3.2.18
       '@types/chai': ^4
       '@types/chai-arrays': ^2.0.0
       '@types/fs-extra': ^8.1.0
@@ -74,6 +75,7 @@ importers:
       '@types/sort-json': ^2.0.1
       '@typescript-eslint/eslint-plugin': ~5.9.0
       '@typescript-eslint/parser': ~5.9.0
+      async: ^3.2.4
       chai: ^4.2.0
       chai-arrays: ^2.2.0
       chalk: ^2.4.2
@@ -125,6 +127,7 @@ importers:
       '@oclif/test': 2.3.8
       '@octokit/core': 4.0.5
       '@rushstack/node-core-library': 3.53.0
+      async: 3.2.4
       chalk: 2.4.2
       date-fns: 2.29.3
       fs-extra: 9.1.0
@@ -146,6 +149,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.27.1
+      '@types/async': 3.2.18
       '@types/chai': 4.3.3
       '@types/chai-arrays': 2.0.0
       '@types/fs-extra': 8.1.2
@@ -2785,6 +2789,10 @@ packages:
 
   /@types/async/3.2.15:
     resolution: {integrity: sha512-PAmPfzvFA31mRoqZyTVsgJMsvbynR429UTTxhmfsUCrWGh3/fxOrzqBtaTPJsn4UtzTv4Vb0+/O7CARWb69N4g==}
+    dev: true
+
+  /@types/async/3.2.18:
+    resolution: {integrity: sha512-/IsuXp3B9R//uRLi40VlIYoMp7OzhkunPe2fDu7jGfQXI9y3CDCx6FC4juRLSqrpmLst3vgsiK536AAGJFl4Ww==}
     dev: true
 
   /@types/cacheable-request/6.0.3:
