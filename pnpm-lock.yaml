@@ -8236,7 +8236,6 @@ importers:
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/garbage-collector': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-base': ^0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
@@ -8265,7 +8264,6 @@ importers:
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../datastore-definitions
-      '@fluidframework/garbage-collector': link:../garbage-collector
       '@fluidframework/protocol-base': 0.1038.3000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions

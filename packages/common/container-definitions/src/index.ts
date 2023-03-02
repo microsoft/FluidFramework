@@ -73,4 +73,3 @@ export {
 	IRuntime,
 	IRuntimeFactory,
 } from "./runtime";
-export { IFluidTokenProvider, IProvideFluidTokenProvider } from "./tokenProvider";
