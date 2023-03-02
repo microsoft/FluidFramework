@@ -37,6 +37,7 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
 -   [IFluidTokenProvider removed](#IFluidTokenProvider-removed)
 -   [Summarizer node and related items removed](#Summarizer-node-and-related-items-removed)
+-   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
 
 ### Container and RelativeLoader no longer exported
 
@@ -72,6 +73,10 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `IRootSummarizerNodeWithGC`
 -   `ISummarizerNodeRootContract`
 -   `RefreshSummaryResult`
+
+### web-code-loader and ICodeAllowList removed
+
+The `@fluidframework/web-code-loader` and the `ICodeAllowList` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
 
 # 2.0.0-internal.3.0.0
 
