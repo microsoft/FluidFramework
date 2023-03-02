@@ -119,6 +119,7 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_ContainerRuntime": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}
