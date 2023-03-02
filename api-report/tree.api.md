@@ -79,7 +79,6 @@ export interface ChangeRebaser<TChangeset> {
     rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
-    squash(changes: TaggedChange<TChangeset>[], revision: RevisionTag): TChangeset;
     // (undocumented)
     _typeCheck?: Invariant<TChangeset>;
 }
@@ -779,8 +778,6 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
     rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void;
     // (undocumented)
     get rebaser(): ChangeRebaser<ModularChangeset>;
-    // (undocumented)
-    squash(changes: TaggedChange<ModularChangeset>[], revision: RevisionTag): ModularChangeset;
 }
 
 // @alpha (undocumented)
