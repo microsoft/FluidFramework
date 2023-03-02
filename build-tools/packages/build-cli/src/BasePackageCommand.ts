@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageJson } from "@fluidframework/build-tools";
 import { ux, Flags, Command } from "@oclif/core";
 import async from "async";
+import { readJSONSync } from "fs-extra";
 import assert from "node:assert";
+import path from "node:path";
 
 import { BaseCommand } from "./base";
 import { releaseGroupFlag } from "./flags";
@@ -33,23 +36,73 @@ export abstract class PackageCommand<
 				"Run on all packages within this release group. Cannot be used with --dir or --packages.",
 			exclusive: ["dir", "packages"],
 		}),
+		private: Flags.boolean({
+			description: "Skip packages which are not private",
+			exclusive: ["skipPrivate"],
+		}),
+		skipPrivate: Flags.boolean({
+			description: "Skip packages which are private",
+			exclusive: ["private"],
+		}),
+		scope: Flags.string({
+			description: "Comma separated list of package scopes to filter to.",
+			exclusive: ["skipScope"],
+		}),
+		skipScope: releaseGroupFlag({
+			description: "Comma separated list of package scopes to filter out.",
+			exclusive: ["scope"],
+		}),
 		...BaseCommand.flags,
 	};
 
 	protected abstract processPackage(directory: string): Promise<void>;
 
 	private async processPackages(directories: string[]): Promise<void> {
+		const scopeIn = scopesToPrefix(this.flags.scope);
+		const scopeOut = scopesToPrefix(this.flags.skipScope);
+
+		const packages = directories.filter((directory) => {
+			const json: PackageJson = readJSONSync(path.join(directory, "package.json"));
+			const isPrivate: boolean = json.private ?? false;
+			if (this.flags.private && isPrivate) {
+				return false;
+			}
+			if (this.flags.skipPrivate && !isPrivate) {
+				return false;
+			}
+			if (scopeIn !== undefined) {
+				let found = false;
+				for (const scope of scopeIn) {
+					found ||= json.name?.startsWith(scope) ?? false;
+				}
+				if (!found) return false;
+			}
+			if (scopeOut !== undefined) {
+				for (const scope of scopeOut) {
+					if (json.name?.startsWith(scope) ?? false) {
+						return false;
+					}
+				}
+			}
+			return true;
+		});
+
 		let started = 0;
 		let finished = 0;
 		let succeeded = 0;
 		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
 		// spinner, so we only start the spinner if verbose is false.
 		const verbose = this.flags.verbose;
+
+		if (verbose) {
+			this.info(`Filtered ${listNames(directories)} packages to ${listNames(packages)}`);
+		}
+
 		function updateStatus(): void {
 			if (!verbose) {
 				ux.action.start(
 					"Processing Packages...",
-					`${finished}/${directories.length}: ${started - finished} pending. Errors: ${
+					`${finished}/${packages.length}: ${started - finished} pending. Errors: ${
 						finished - succeeded
 					}`,
 					{
@@ -59,7 +112,7 @@ export abstract class PackageCommand<
 			}
 		}
 		try {
-			await async.mapLimit(directories, 25, async (directory) => {
+			await async.mapLimit(packages, 25, async (directory) => {
 				started += 1;
 				updateStatus();
 				try {
@@ -73,9 +126,7 @@ export abstract class PackageCommand<
 		} finally {
 			// Stop the spinner if needed.
 			if (!verbose) {
-				ux.action.stop(
-					`Done. ${directories.length} Packages. ${finished - succeeded} Errors`,
-				);
+				ux.action.stop(`Done. ${packages.length} Packages. ${finished - succeeded} Errors`);
 			}
 		}
 	}
@@ -106,4 +157,12 @@ export abstract class PackageCommand<
 		this.info(`Finding independent packages`);
 		return this.processPackages(ctx.independentPackages.map((p) => p.directory));
 	}
+}
+
+function scopesToPrefix(scopes: undefined | string): string[] | undefined {
+	return scopes === undefined ? undefined : scopes.split(",").map((s) => `${s}/`);
+}
+
+function listNames(strings: string[]): string {
+	return strings.length > 10 ? `${strings.length}` : `${strings.length} (${strings.join(", ")})`;
 }

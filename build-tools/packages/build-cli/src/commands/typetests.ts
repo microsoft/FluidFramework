@@ -81,7 +81,7 @@ export default class PrepareTypeTestsCommand extends PackageCommand<
 				json.typeValidation ??= { broken: {} };
 				json.typeValidation.disabled = true;
 			} else if (this.flags.enable && json.typeValidation !== undefined) {
-				json.typeValidation.broken = {};
+				delete json.typeValidation.disabled;
 			}
 			// This uses the "disabled" state, so that is set above before this is run.
 			updateTypeTestConfiguration(json, { resetBroken: this.flags.reset, version });

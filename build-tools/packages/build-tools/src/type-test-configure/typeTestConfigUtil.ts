@@ -48,7 +48,7 @@ function previousVersion(version: string): string {
 		const element = parts[index];
 		if (element !== "0") {
 			const numeric = Number(element);
-			if (String(Number) !== element) {
+			if (String(numeric) !== element) {
 				throw new Error(`Unable to lower non-numeric version "${element}" of "${version}"`);
 			}
 			parts[index] = String(numeric - 1);
