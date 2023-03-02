@@ -13,13 +13,25 @@
  * by the Fluid Client Debugger.
  */
 
-// TODO: re-enable this once the API surface has settled
-/* eslint-disable no-restricted-syntax */
-
-export * from "./Constants";
-export * from "./DebuggerMessages";
-export * from "./Messages";
-export * from "./RegistryMessages";
-export * from "./Utilities";
-
-/* eslint-enable no-restricted-syntax */
+export { debuggerMessageSource } from "./Constants";
+export {
+	HasContainerId,
+	ContainerStateChangeMessage,
+	ContainerStateChangeMessageData,
+	GetContainerStateMessage,
+	GetContainerStateMessageData,
+} from "./DebuggerMessages";
+export { IDebuggerMessage } from "./Messages";
+export {
+	GetContainerListMessage,
+	RegistryChangeMessage,
+	RegistryChangeMessageData,
+} from "./RegistryMessages";
+export {
+	handleIncomingMessage,
+	handleIncomingWindowMessage,
+	InboundHandlers,
+	isDebuggerMessage,
+	MessageLoggingOptions,
+	postMessageToWindow,
+} from "./Utilities";
