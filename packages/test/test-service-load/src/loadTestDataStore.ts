@@ -680,7 +680,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		runId: number,
 	) {
 		return (
-			runId <= maxClients &&
+			runId < maxClients &&
 			opSizeinBytes > 0 &&
 			largeOpRate > 0 &&
 			opsSent % largeOpRate === largeOpJitter
