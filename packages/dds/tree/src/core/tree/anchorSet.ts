@@ -75,7 +75,9 @@ export interface AnchorEvents {
 	 * When the anchor node will never get reused by its AnchorSet.
 	 * This means that the content it corresponds to has been deleted, and that if its undeleted it will be treated as a recreation.
 	 *
-	 * This may happen after a delay after the content was removed from the tree, immediately, or never: it depends on how the AnchorSet is being used.
+	 * @remarks
+	 * When this happens depends entirely on how the anchorSet is used.
+	 * It's possible nodes removed from the tree will be kept indefinably, and thus never trigger this event, or they may be discarded immediately.
 	 */
 	afterDelete(anchor: AnchorNode): void;
 }
@@ -102,7 +104,7 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 	 * Gets a child of this node.
 	 *
 	 * @remarks
-	 * This does not return an AnchorNode since there might not be one, and lazily creating one here would have messy lifetime management.
+	 * This does not return an AnchorNode since there might not be one, and lazily creating one here would have messy lifetime management (See {@link getOrCreateChildRef})
 	 * If an AnchorNode is requires, use the AnchorSet to track then locate the returned path.
 	 * TODO:
 	 * Revisit this API.
@@ -112,7 +114,8 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 	child(key: FieldKey, index: number): UpPath<AnchorNode>;
 
 	/**
-	 * Gets a child, adding a ref.
+	 * Gets a child AnchorNode (creating it if needed), and a Anchor owning a ref to it.
+	 * Caller is responsible for freeing the returned Anchor, and should not use the AnchorNode after that.
 	 */
 	getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
 }
