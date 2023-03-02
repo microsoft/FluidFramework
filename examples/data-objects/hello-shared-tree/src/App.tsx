@@ -280,7 +280,10 @@ export interface OperationAdapter {
 export class OperationAdapterSelective implements OperationAdapter {
     constructor(public readonly deriveState: DeriveState<number[][]>) { }
     onDelete(row: number, col: number, count: number): void {
-        // console.log(`DELETE at row:${row} col:${col} ${count} domain  values`);
+        this.onDeleteDispatch(row, col, count);
+    }
+    protected onDeleteDispatch(row: number, col: number, count: number) {
+        console.log(`DELETE at row:${row} col:${col} ${count} domain  values`);
         this.deriveState(
             prevRows => {
                 const nextRows = prevRows.map(
@@ -299,8 +302,12 @@ export class OperationAdapterSelective implements OperationAdapter {
             }
         );
     }
+
     onInsert(row: number, col: number, values: Int32[]): void {
-        // console.log(`INSERT at row:${row}, col:${col} ${values.length} domain values`);
+        this.onInsertDispatch(row, col, values);
+    }
+    protected onInsertDispatch(row: number, col: number, values: Int32[]) {
+        console.log(`INSERT at row:${row}, col:${col} ${values.length} domain values`);
         const numbers: number[] = values.map(value => value[valueSymbol] as number);
         this.deriveState(
             prevRows => prevRows.map(
@@ -312,6 +319,84 @@ export class OperationAdapterSelective implements OperationAdapter {
         );
     }
 }
+
+// Cantor pairing function
+function pair(x: number, y: number): number {
+    return ((x + y) * (x + y + 1)) / 2 + y;
+}
+
+export interface DomainChange {
+    row: number;
+    col: number;
+    hash: () => number;
+}
+
+export class DomainChangeInsert implements DomainChange {
+    constructor(public readonly row: number, public readonly col: number, public readonly values: Int32[]) { }
+    hash() {
+        return pair(this.row, this.col);
+    }
+}
+
+export class DomainChangeDelete implements DomainChange {
+    constructor(public readonly row: number, public readonly col: number, public count: number) { }
+    hash() {
+        return pair(this.row, this.col);
+    }
+}
+
+export class OperationAdapterSelectiveBuffering extends OperationAdapterSelective implements OperationAdapter {
+    protected readonly buffer: DomainChange[] = [];
+
+    constructor(public readonly deriveState: DeriveState<number[][]>, private readonly wrksp: Workspace) {
+        super(deriveState);
+    }
+
+    override onDelete(row: number, col: number, count: number): void {
+        this.buffer.push(new DomainChangeDelete(row, col, count));
+    }
+
+    override onInsert(row: number, col: number, values: Int32[]): void {
+        this.buffer.push(new DomainChangeInsert(row, col, values));
+    }
+
+    dispatch(): () => void {
+        return () => {
+            const collisions: Set<number> = new Set<number>();
+            const squashed: DomainChange[] = [];
+            for (let i = this.buffer.length - 1; i >= 0; i--) {
+                const change: DomainChange = this.buffer[i];
+                const hash = change.hash();
+                if (!collisions.has(hash)) {
+                    squashed.unshift(change);
+                } else {
+                    // skip as overwritten by subsequent change
+                }
+                collisions.add(hash);
+            }
+            // Apply the changes in the sorted order
+            for (const change of squashed) {
+                switch (change.constructor) {
+                    case DomainChangeDelete:
+                        // eslint-disable-next-line no-case-declarations
+                        const del = change as DomainChangeDelete;
+                        super.onDeleteDispatch(del.row, del.col, del.count);
+                        break;
+                    case DomainChangeInsert:
+                        // eslint-disable-next-line no-case-declarations
+                        const ins = change as DomainChangeInsert;
+                        super.onInsertDispatch(ins.row, ins.col, ins.values);
+                        break;
+                    default:
+                        throw new Error("Unknown domain change");
+                }
+            }
+            // Clear the buffer
+            this.buffer.length = 0;
+        };
+    }
+}
+
 
 /**
  * Brute force adapter, simple but has additional overhead
@@ -349,9 +434,19 @@ export default function App() {
                 console.log("Tree error received!");
             });
             const listenPath = buildSchemaPath([drawKeys, valueKeys], appSchema);
-            const operationAdapter: OperationAdapter = new OperationAdapterBruteForce(setDrawValues, myWorkspace);
+            // const operationAdapter: OperationAdapter = new OperationAdapterBruteForce(setDrawValues, myWorkspace);
             // const operationAdapter: OperationAdapter = new OperationAdapterSelective(setDrawValues);
-            registerPathOnIndex(
+            const operationAdapter = new OperationAdapterSelectiveBuffering(
+                setDrawValues,
+                myWorkspace
+            );
+
+            registerBatchComplete(
+                myWorkspace,
+                operationAdapter.dispatch(),
+            );
+            // registerPathOnIndex()
+            registerPathOnEditableTreeContext(
                 myWorkspace,
                 listenPath,
                 operationAdapter,
@@ -388,6 +483,15 @@ export default function App() {
         deleteAllValues(workspace!);
     };
 
+    const registerBatchComplete = (wrksp: Workspace, batchComplete: () => void) => {
+        (wrksp.tree as unknown as SharedTreeCore<DefaultChangeset,
+            DefaultChangeFamily,
+            [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+        >).indexEventEmitter.on("newLocalState", (delta: Delta.Root) => {
+            batchComplete();
+        });
+    };
+
     const registerPathOnIndex =
         (
             wrksp: Workspace,
@@ -416,7 +520,7 @@ export default function App() {
             adapter: OperationAdapter,
         ) => {
             wrksp.tree.context.on("afterDelta", (delta: Delta.Root) => {
-                console.log('Delta');
+                // console.log('Delta');
                 // console.log(JSON.stringify(delta, replacer, 2));
                 visitDelta(delta, new DomainVisitor(
                     appSchema,
