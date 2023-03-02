@@ -205,7 +205,6 @@ async function createWebLoader(
 		addFakeDetailsIfNeeded(codeDetails.package as IFluidPackage, fluidModule),
 	);
 
-	// debugger;
 	return new Loader({
 		urlResolver: testOrderer ? new LocalResolver() : urlResolver,
 		documentServiceFactory,
