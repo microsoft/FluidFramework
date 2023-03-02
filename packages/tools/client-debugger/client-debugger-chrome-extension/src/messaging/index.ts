@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Remove and fix violations
-/* eslint-disable no-restricted-syntax */
-
 export { extensionMessageSource } from "./Constants";
-export * from "./MessageRelay";
-export * from "./Messages";
+export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
+export {
+	devToolsInitMessageType,
+	DevToolsInitMessageData,
+	DevToolsInitMessage,
+	devToolsInitAcknowledgementType,
+	DevToolsInitAcknowledgement,
+} from "./Messages";
 export { TypedPortConnection } from "./TypedPortConnection";
-export * from "./Utilities";
-
-/* eslint-enable no-restricted-syntax */
+export { postMessageToPort, relayMessageToPort, relayMessageToWindow } from "./Utilities";
