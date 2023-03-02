@@ -591,7 +591,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					opsSent,
 					largeOpJitter,
 					maxClientsSendingLargeOps,
-					dataModel.sharedmap,
+					config.runId,
 				)
 			) {
 				const opSize = getOpSizeInBytes();
@@ -599,9 +599,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				config.logger.sendTelemetryEvent({
 					eventName: "LargeTestPayload",
 					runId: config.runId,
-					clientCount: dataModel.sharedmap.size,
 					largeOpJitter,
 					opSize,
+					opsSent,
 				});
 			} else {
 				dataModel.counter.increment(1);
@@ -668,7 +668,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	 * @param opsSent - how many ops (of any type) already sent
 	 * @param largeOpJitter - to avoid clients sending large ops at the same time
 	 * @param maxClients - how many clients should be sending large ops
-	 * @param mapWithLargePayloads - shared map used for sending large ops
+	 * @param runId - run id of the current test
 	 * @returns true if a large op should be sent, false otherwise
 	 */
 	private shouldSendLargeOp(
@@ -677,10 +677,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		opsSent: number,
 		largeOpJitter: number,
 		maxClients: number,
-		mapWithLargePayloads: ISharedMap,
+		runId: number,
 	) {
 		return (
-			mapWithLargePayloads.size < maxClients &&
+			runId <= maxClients &&
 			opSizeinBytes > 0 &&
 			largeOpRate > 0 &&
 			opsSent % largeOpRate === largeOpJitter
