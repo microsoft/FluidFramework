@@ -24,6 +24,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
 -   [Some test packages no longer published](#some-test-packages-no-longer-published)
 -   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
+-   [IFluidTokenProvider removed](#IFluidTokenProvider-removed)
 
 ### Container and RelativeLoader no longer exported
 
@@ -43,6 +44,10 @@ These have been moved to the `@fluid-internal` scope and are no longer published
 ### IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed
 
 `IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
+### IFluidTokenProvider removed
+
+The IFluidTokenProvider interface was deprecated in 2.0.0-internal.3.2.0, and is now removed.
 
 # 2.0.0-internal.3.0.0
 
