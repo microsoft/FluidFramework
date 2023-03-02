@@ -253,7 +253,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 throttleConfig.maxBurst,
                 throttleConfig.minCooldownIntervalInMs,
             );
-            return new services.Throttler(
+            const throttler: core.IThrottler = new services.Throttler(
                 throttlerHelper,
                 throttleConfig.minThrottleIntervalInMs,
                 winston,
@@ -261,6 +261,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 throttleConfig.maxInMemoryCacheAgeInMs,
                 throttleConfig.enableEnhancedTelemetry,
             );
+            return throttler
         };
 
         // Rest API Throttler
