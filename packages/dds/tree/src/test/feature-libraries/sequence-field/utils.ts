@@ -45,7 +45,7 @@ function composeI<T>(
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
 		SF.amendCompose(composed, composer, idAllocator, moveEffects);
-		// assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
+		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
 	}
 	return composed;
 }
@@ -60,7 +60,7 @@ export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>)
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
 		rebasedChange = SF.amendRebase(rebasedChange, base, idAllocator, moveEffects);
-		// assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
+		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;
 }

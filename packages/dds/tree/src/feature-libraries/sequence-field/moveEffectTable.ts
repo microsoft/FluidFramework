@@ -134,11 +134,12 @@ export function getOrAddEffect<T>(
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	resetMerges: boolean = false,
+	invalidate: boolean = true,
 ): MoveEffect<T> {
 	if (resetMerges) {
 		clearMergeability(moveEffects, target, revision, id);
 	}
-	return moveEffects.getOrCreate(target, revision, id, {});
+	return moveEffects.getOrCreate(target, revision, id, {}, invalidate);
 }
 
 export function getMoveEffect<T>(
@@ -146,8 +147,9 @@ export function getMoveEffect<T>(
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
+	addDependency: boolean = true,
 ): MoveEffect<T> {
-	return moveEffects.get(target, revision, id) ?? {};
+	return moveEffects.get(target, revision, id, addDependency) ?? {};
 }
 
 export function clearMergeability<T>(
@@ -158,11 +160,13 @@ export function clearMergeability<T>(
 ): void {
 	const effect = getOrAddEffect(moveEffects, target, revision, id);
 	if (effect.mergeLeft !== undefined) {
-		delete getOrAddEffect(moveEffects, target, revision, effect.mergeLeft).mergeRight;
+		delete getOrAddEffect(moveEffects, target, revision, effect.mergeLeft, false, false)
+			.mergeRight;
 		delete effect.mergeLeft;
 	}
 	if (effect.mergeRight !== undefined) {
-		delete getOrAddEffect(moveEffects, target, revision, effect.mergeRight).mergeLeft;
+		delete getOrAddEffect(moveEffects, target, revision, effect.mergeRight, false, false)
+			.mergeLeft;
 		delete effect.mergeRight;
 	}
 }
@@ -174,8 +178,8 @@ export function makeMergeable<T>(
 	leftId: MoveId,
 	rightId: MoveId,
 ): void {
-	getOrAddEffect(moveEffects, target, revision, leftId).mergeRight = rightId;
-	getOrAddEffect(moveEffects, target, revision, rightId).mergeLeft = leftId;
+	getOrAddEffect(moveEffects, target, revision, leftId, false, false).mergeRight = rightId;
+	getOrAddEffect(moveEffects, target, revision, rightId, false, false).mergeLeft = leftId;
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
