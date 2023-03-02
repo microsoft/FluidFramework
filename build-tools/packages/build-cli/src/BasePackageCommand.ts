@@ -64,10 +64,10 @@ export abstract class PackageCommand<
 		const packages = directories.filter((directory) => {
 			const json: PackageJson = readJSONSync(path.join(directory, "package.json"));
 			const isPrivate: boolean = json.private ?? false;
-			if (this.flags.private && isPrivate) {
+			if (this.flags.private && !isPrivate) {
 				return false;
 			}
-			if (this.flags.skipPrivate && !isPrivate) {
+			if (this.flags.skipPrivate && isPrivate) {
 				return false;
 			}
 			if (scopeIn !== undefined) {
