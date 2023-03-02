@@ -121,7 +121,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // @deprecated (undocumented)
     deleteUnusedNodes(unusedRoutes: string[]): string[];
     // (undocumented)
-    get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)

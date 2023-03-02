@@ -781,12 +781,6 @@ export class ContainerRuntime
 		return this.context.clientDetails;
 	}
 
-	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		// The delta manager proxy is exposed by default and should be used in most cases. If the real delta manager
-		// is needed in container runtime, use it directly.
-		return this.proxyDeltaManager;
-	}
-
 	public get storage(): IDocumentStorageService {
 		return this._storage;
 	}
@@ -834,6 +828,19 @@ export class ContainerRuntime
 		return this.handleContext;
 	}
 	private readonly handleContext: ContainerFluidHandleContext;
+
+	/**
+	 * This is a proxy to the delta manager provided by the container context (innerDeltaManager). It restricts certain
+	 * accesses such as sets "read-only" mode for the summarizer client. This is the default delta manager that should
+	 * be used unless the innerDeltaManager is required.
+	 */
+	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	/**
+	 * The delta manager provided by the container context. By default, using the default delta manager (proxy)
+	 * should be sufficient. This should be used only if necessary. For example, for validating and propagating connected
+	 * events which requires access to the actual real only info, this is needed.
+	 */
+	private readonly innerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -933,18 +940,6 @@ export class ContainerRuntime
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly outbox: Outbox;
-
-	/**
-	 * The real delta manager provided by the container context. In most cases, using the proxy should be sufficient.
-	 * This should be used only if necessary.
-	 */
-	private readonly realDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	/**
-	 * Proxy to the real delta manager with restricted access. This is what is exposed to all usages outside
-	 * container runtime.
-	 */
-	private readonly proxyDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-
 	private readonly garbageCollector: IGarbageCollector;
 
 	private readonly dataStores: DataStores;
@@ -1028,8 +1023,8 @@ export class ContainerRuntime
 	) {
 		super();
 
-		this.realDeltaManager = context.deltaManager;
-		this.proxyDeltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
+		this.innerDeltaManager = context.deltaManager;
+		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1151,7 +1146,9 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			getContainerDiagnosticId: () => this.context.id,
-			activeConnection: () => this.realDeltaManager.active,
+			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
+			// delta manager would always return false for summarizer client.
+			activeConnection: () => this.innerDeltaManager.active,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1322,7 +1319,9 @@ export class ContainerRuntime
 					async (runtime: IConnectableRuntime) =>
 						RunWhileConnectedCoordinator.create(
 							runtime,
-							() => this.realDeltaManager.active,
+							// Summarization runs in summarizer client and needs access to the real (non-proxy) active
+							// information. The proxy delta manager would always return false for summarizer client.
+							() => this.innerDeltaManager.active,
 						),
 				);
 			} else if (
@@ -1373,8 +1372,9 @@ export class ContainerRuntime
 		this.deltaManager.on("readonly", (readonly: boolean) => {
 			// we accumulate ops while being in read-only state.
 			// once user gets write permissions and we have active connection, flush all pending ops.
+			// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
 			assert(
-				readonly === this.realDeltaManager.readOnlyInfo.readonly,
+				readonly === this.innerDeltaManager.readOnlyInfo.readonly,
 				0x124 /* "inconsistent readonly property/event state" */,
 			);
 
@@ -1734,8 +1734,9 @@ export class ContainerRuntime
 		// If attachment blobs were added while disconnected, we need to delay
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
+		// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
 		const connecting =
-			connected && !this._connected && !this.realDeltaManager.readOnlyInfo.readonly;
+			connected && !this._connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 		if (connecting && this.blobManager.hasPendingOfflineUploads) {
 			assert(
 				!this.delayConnectClientId,
@@ -2100,7 +2101,9 @@ export class ContainerRuntime
 	}
 
 	private canSendOps() {
-		return this.connected && !this.realDeltaManager.readOnlyInfo.readonly;
+		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
+		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
+		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 	}
 
 	/**
@@ -2827,7 +2830,9 @@ export class ContainerRuntime
 
 		const serializedContent = JSON.stringify({ type, contents });
 
-		if (this.realDeltaManager.readOnlyInfo.readonly) {
+		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
+		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
+		if (this.innerDeltaManager.readOnlyInfo.readonly) {
 			this.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,

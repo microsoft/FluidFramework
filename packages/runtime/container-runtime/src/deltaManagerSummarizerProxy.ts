@@ -30,7 +30,7 @@ export class DeltaManagerSummarizerProxy
 			return {
 				readonly: true,
 				forced: false,
-				permissions: true,
+				permissions: undefined,
 				storageOnly: false,
 			};
 		}
