@@ -43,10 +43,10 @@ import { ICreateContainerMetadata } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	disableSweepLogKey,
+	GarbageCollectionRuntime,
 	GCNodeType,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
-	IGarbageCollectionRuntime,
 	IGCStats,
 	UnreferencedState,
 	IGCMetadata,
@@ -137,7 +137,7 @@ export class GarbageCollector implements IGarbageCollector {
 	// The number of times GC has successfully completed on this instance of GarbageCollector.
 	private completedRuns = 0;
 
-	private readonly runtime: IGarbageCollectionRuntime;
+	private readonly runtime: GarbageCollectionRuntime;
 	private readonly createContainerMetadata: ICreateContainerMetadata;
 	private readonly isSummarizerClient: boolean;
 

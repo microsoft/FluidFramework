@@ -15,6 +15,7 @@ import {
 import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainerRuntimeMetadata, ICreateContainerMetadata } from "../summary";
+import { ContainerRuntime } from "..";
 
 export type GCVersion = number;
 
@@ -145,7 +146,10 @@ export const GCNodeType = {
 };
 export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 
-/** Defines the APIs for the runtime object to be passed to the garbage collector. */
+/**
+ * @deprecated - Was only to be used internally anyway, no replacement provided.
+ * Defines the APIs for the runtime object to be passed to the garbage collector.
+ */
 export interface IGarbageCollectionRuntime {
 	/** Before GC runs, called to notify the runtime to update any pending GC state. */
 	updateStateBeforeGC(): Promise<void>;
@@ -172,6 +176,35 @@ export interface IGarbageCollectionRuntime {
 	/** If false, loading or using a Tombstoned object should merely log, not fail */
 	gcTombstoneEnforcementAllowed: boolean;
 }
+
+/** Specifies the subset of the ContainerRuntime class required for the Garbage Collector to operate */
+export type GarbageCollectionRuntime = Pick<
+	ContainerRuntime,
+	/** Before GC runs, called to notify the runtime to update any pending GC state. */
+	| "updateStateBeforeGC"
+	/** Returns the garbage collection data of the runtime. */
+	| "getGCData"
+	/** After GC has run, called to notify the runtime of routes that are used in it. */
+	| "updateUsedRoutes"
+	/** After GC has run, called to notify the runtime of routes that are unused in it. */
+	| "updateUnusedRoutes"
+	/**
+	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
+	 * should return the routes of nodes that were deleted.
+	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
+	 */
+	| "deleteSweepReadyNodes"
+	/** Called to notify the runtime of routes that are tombstones. */
+	| "updateTombstonedRoutes"
+	/** Returns a referenced timestamp to be used to track unreferenced nodes. */
+	| "getCurrentReferenceTimestampMs"
+	/** Returns the type of the GC node. */
+	| "getNodeType"
+	/** Called when the runtime should close because of an error. */
+	| "closeFn"
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	| "gcTombstoneEnforcementAllowed"
+>;
 
 /** Defines the contract for the garbage collector. */
 export interface IGarbageCollector {
@@ -224,7 +257,7 @@ export interface IGarbageCollector {
 
 /** Parameters necessary for creating a GarbageCollector. */
 export interface IGarbageCollectorCreateParams {
-	readonly runtime: IGarbageCollectionRuntime;
+	readonly runtime: GarbageCollectionRuntime;
 	readonly gcOptions: IGCRuntimeOptions;
 	readonly baseLogger: ITelemetryLogger;
 	readonly existing: boolean;
