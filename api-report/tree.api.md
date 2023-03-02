@@ -129,8 +129,8 @@ export const createField: unique symbol;
 
 // @alpha
 export interface CrossFieldManager<T = unknown> {
-    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId): T | undefined;
-    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T): T;
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, addDependency: boolean): T | undefined;
+    getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T, invalidateDependents: boolean): T;
 }
 
 // @alpha (undocumented)

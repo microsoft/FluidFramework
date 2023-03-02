@@ -18,7 +18,7 @@ import { DataObjectsView } from "./DataObjectsView";
 // - Move Container action bar (connection / disposal buttons) to summary header, rather than in
 //   the Container data view.
 
-// Ensure FluentUI icons are initialized.
+// Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
 
 /**
@@ -99,7 +99,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 				);
 				break;
 			default:
-				throw new Error(`Unrecognized RootView selection value: "${innerViewSelection}".`);
+				throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 		}
 		view = (
 			<Stack tokens={{ childrenGap: 10 }}>

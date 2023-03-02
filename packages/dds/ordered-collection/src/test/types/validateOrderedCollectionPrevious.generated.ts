@@ -16,30 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_acquireAndComplete": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_acquireAndComplete():
-    TypeOnly<typeof old.acquireAndComplete>;
-declare function use_current_FunctionDeclaration_acquireAndComplete(
-    use: TypeOnly<typeof current.acquireAndComplete>);
-use_current_FunctionDeclaration_acquireAndComplete(
-    get_old_FunctionDeclaration_acquireAndComplete());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_acquireAndComplete": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_acquireAndComplete():
-    TypeOnly<typeof current.acquireAndComplete>;
-declare function use_old_FunctionDeclaration_acquireAndComplete(
-    use: TypeOnly<typeof old.acquireAndComplete>);
-use_old_FunctionDeclaration_acquireAndComplete(
-    get_current_FunctionDeclaration_acquireAndComplete());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ConsensusCallback": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ConsensusCallback():
@@ -254,6 +230,30 @@ declare function use_old_InterfaceDeclaration_ISnapshotable(
     use: TypeOnly<old.ISnapshotable<any>>);
 use_old_InterfaceDeclaration_ISnapshotable(
     get_current_InterfaceDeclaration_ISnapshotable());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_acquireAndComplete": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_acquireAndComplete():
+    TypeOnly<typeof old.acquireAndComplete>;
+declare function use_current_FunctionDeclaration_acquireAndComplete(
+    use: TypeOnly<typeof current.acquireAndComplete>);
+use_current_FunctionDeclaration_acquireAndComplete(
+    get_old_FunctionDeclaration_acquireAndComplete());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_acquireAndComplete": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_acquireAndComplete():
+    TypeOnly<typeof current.acquireAndComplete>;
+declare function use_old_FunctionDeclaration_acquireAndComplete(
+    use: TypeOnly<typeof old.acquireAndComplete>);
+use_old_FunctionDeclaration_acquireAndComplete(
+    get_current_FunctionDeclaration_acquireAndComplete());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -16,30 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_agentSchedulerId": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_agentSchedulerId():
-    TypeOnly<typeof old.agentSchedulerId>;
-declare function use_current_VariableDeclaration_agentSchedulerId(
-    use: TypeOnly<typeof current.agentSchedulerId>);
-use_current_VariableDeclaration_agentSchedulerId(
-    get_old_VariableDeclaration_agentSchedulerId());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_agentSchedulerId": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_agentSchedulerId():
-    TypeOnly<typeof current.agentSchedulerId>;
-declare function use_old_VariableDeclaration_agentSchedulerId(
-    use: TypeOnly<typeof old.agentSchedulerId>);
-use_old_VariableDeclaration_agentSchedulerId(
-    get_current_VariableDeclaration_agentSchedulerId());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_AllowTombstoneRequestHeaderKey": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_AllowTombstoneRequestHeaderKey():
@@ -235,30 +211,6 @@ use_old_ClassDeclaration_FluidDataStoreRegistry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAckedSummary": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IAckedSummary():
-    TypeOnly<old.IAckedSummary>;
-declare function use_current_InterfaceDeclaration_IAckedSummary(
-    use: TypeOnly<current.IAckedSummary>);
-use_current_InterfaceDeclaration_IAckedSummary(
-    get_old_InterfaceDeclaration_IAckedSummary());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAckedSummary": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IAckedSummary():
-    TypeOnly<current.IAckedSummary>;
-declare function use_old_InterfaceDeclaration_IAckedSummary(
-    use: TypeOnly<old.IAckedSummary>);
-use_old_InterfaceDeclaration_IAckedSummary(
-    get_current_InterfaceDeclaration_IAckedSummary());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAckSummaryResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAckSummaryResult():
@@ -279,6 +231,30 @@ declare function use_old_InterfaceDeclaration_IAckSummaryResult(
     use: TypeOnly<old.IAckSummaryResult>);
 use_old_InterfaceDeclaration_IAckSummaryResult(
     get_current_InterfaceDeclaration_IAckSummaryResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAckedSummary": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAckedSummary():
+    TypeOnly<old.IAckedSummary>;
+declare function use_current_InterfaceDeclaration_IAckedSummary(
+    use: TypeOnly<current.IAckedSummary>);
+use_current_InterfaceDeclaration_IAckedSummary(
+    get_old_InterfaceDeclaration_IAckedSummary());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAckedSummary": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAckedSummary():
+    TypeOnly<current.IAckedSummary>;
+declare function use_old_InterfaceDeclaration_IAckedSummary(
+    use: TypeOnly<old.IAckedSummary>);
+use_old_InterfaceDeclaration_IAckedSummary(
+    get_current_InterfaceDeclaration_IAckedSummary());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -572,30 +548,6 @@ use_old_InterfaceDeclaration_IGCStats(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGeneratedSummaryStats": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IGeneratedSummaryStats():
-    TypeOnly<old.IGeneratedSummaryStats>;
-declare function use_current_InterfaceDeclaration_IGeneratedSummaryStats(
-    use: TypeOnly<current.IGeneratedSummaryStats>);
-use_current_InterfaceDeclaration_IGeneratedSummaryStats(
-    get_old_InterfaceDeclaration_IGeneratedSummaryStats());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGeneratedSummaryStats": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IGeneratedSummaryStats():
-    TypeOnly<current.IGeneratedSummaryStats>;
-declare function use_old_InterfaceDeclaration_IGeneratedSummaryStats(
-    use: TypeOnly<old.IGeneratedSummaryStats>);
-use_old_InterfaceDeclaration_IGeneratedSummaryStats(
-    get_current_InterfaceDeclaration_IGeneratedSummaryStats());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGenerateSummaryTreeResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGenerateSummaryTreeResult():
@@ -616,6 +568,30 @@ declare function use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
     use: TypeOnly<old.IGenerateSummaryTreeResult>);
 use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
     get_current_InterfaceDeclaration_IGenerateSummaryTreeResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGeneratedSummaryStats": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IGeneratedSummaryStats():
+    TypeOnly<old.IGeneratedSummaryStats>;
+declare function use_current_InterfaceDeclaration_IGeneratedSummaryStats(
+    use: TypeOnly<current.IGeneratedSummaryStats>);
+use_current_InterfaceDeclaration_IGeneratedSummaryStats(
+    get_old_InterfaceDeclaration_IGeneratedSummaryStats());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGeneratedSummaryStats": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IGeneratedSummaryStats():
+    TypeOnly<current.IGeneratedSummaryStats>;
+declare function use_old_InterfaceDeclaration_IGeneratedSummaryStats(
+    use: TypeOnly<old.IGeneratedSummaryStats>);
+use_old_InterfaceDeclaration_IGeneratedSummaryStats(
+    get_current_InterfaceDeclaration_IGeneratedSummaryStats());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -839,30 +815,6 @@ use_old_InterfaceDeclaration_IRootSummaryTreeWithStats(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_isRuntimeMessage():
-    TypeOnly<typeof old.isRuntimeMessage>;
-declare function use_current_FunctionDeclaration_isRuntimeMessage(
-    use: TypeOnly<typeof current.isRuntimeMessage>);
-use_current_FunctionDeclaration_isRuntimeMessage(
-    get_old_FunctionDeclaration_isRuntimeMessage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isRuntimeMessage": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_isRuntimeMessage():
-    TypeOnly<typeof current.isRuntimeMessage>;
-declare function use_old_FunctionDeclaration_isRuntimeMessage(
-    use: TypeOnly<typeof old.isRuntimeMessage>);
-use_old_FunctionDeclaration_isRuntimeMessage(
-    get_current_FunctionDeclaration_isRuntimeMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISubmitSummaryOpResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISubmitSummaryOpResult():
@@ -935,6 +887,30 @@ use_old_InterfaceDeclaration_ISummarizeOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummarizeResults": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISummarizeResults():
+    TypeOnly<old.ISummarizeResults>;
+declare function use_current_InterfaceDeclaration_ISummarizeResults(
+    use: TypeOnly<current.ISummarizeResults>);
+use_current_InterfaceDeclaration_ISummarizeResults(
+    get_old_InterfaceDeclaration_ISummarizeResults());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummarizeResults": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISummarizeResults():
+    TypeOnly<current.ISummarizeResults>;
+declare function use_old_InterfaceDeclaration_ISummarizeResults(
+    use: TypeOnly<old.ISummarizeResults>);
+use_old_InterfaceDeclaration_ISummarizeResults(
+    get_current_InterfaceDeclaration_ISummarizeResults());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_ISummarizer": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_ISummarizer():
@@ -979,30 +955,6 @@ declare function use_old_InterfaceDeclaration_ISummarizer(
     use: TypeOnly<old.ISummarizer>);
 use_old_InterfaceDeclaration_ISummarizer(
     get_current_InterfaceDeclaration_ISummarizer());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummarizeResults": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ISummarizeResults():
-    TypeOnly<old.ISummarizeResults>;
-declare function use_current_InterfaceDeclaration_ISummarizeResults(
-    use: TypeOnly<current.ISummarizeResults>);
-use_current_InterfaceDeclaration_ISummarizeResults(
-    get_old_InterfaceDeclaration_ISummarizeResults());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummarizeResults": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ISummarizeResults():
-    TypeOnly<current.ISummarizeResults>;
-declare function use_old_InterfaceDeclaration_ISummarizeResults(
-    use: TypeOnly<old.ISummarizeResults>);
-use_old_InterfaceDeclaration_ISummarizeResults(
-    get_current_InterfaceDeclaration_ISummarizeResults());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1415,30 +1367,6 @@ use_old_InterfaceDeclaration_IUploadSummaryResult(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_neverCancelledSummaryToken": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_neverCancelledSummaryToken():
-    TypeOnly<typeof old.neverCancelledSummaryToken>;
-declare function use_current_VariableDeclaration_neverCancelledSummaryToken(
-    use: TypeOnly<typeof current.neverCancelledSummaryToken>);
-use_current_VariableDeclaration_neverCancelledSummaryToken(
-    get_old_VariableDeclaration_neverCancelledSummaryToken());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_neverCancelledSummaryToken": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_neverCancelledSummaryToken():
-    TypeOnly<typeof current.neverCancelledSummaryToken>;
-declare function use_old_VariableDeclaration_neverCancelledSummaryToken(
-    use: TypeOnly<typeof old.neverCancelledSummaryToken>);
-use_old_VariableDeclaration_neverCancelledSummaryToken(
-    get_current_VariableDeclaration_neverCancelledSummaryToken());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_OpActionEventListener": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_OpActionEventListener():
@@ -1560,30 +1488,6 @@ use_old_TypeAliasDeclaration_SubmitSummaryResult(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Summarizer": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_Summarizer():
-    TypeOnly<old.Summarizer>;
-declare function use_current_ClassDeclaration_Summarizer(
-    use: TypeOnly<current.Summarizer>);
-use_current_ClassDeclaration_Summarizer(
-    get_old_ClassDeclaration_Summarizer());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Summarizer": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_Summarizer():
-    TypeOnly<current.Summarizer>;
-declare function use_old_ClassDeclaration_Summarizer(
-    use: TypeOnly<old.Summarizer>);
-use_old_ClassDeclaration_Summarizer(
-    get_current_ClassDeclaration_Summarizer());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummarizeResultPart": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummarizeResultPart():
@@ -1604,6 +1508,30 @@ declare function use_old_TypeAliasDeclaration_SummarizeResultPart(
     use: TypeOnly<old.SummarizeResultPart<any,any>>);
 use_old_TypeAliasDeclaration_SummarizeResultPart(
     get_current_TypeAliasDeclaration_SummarizeResultPart());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_Summarizer": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_Summarizer():
+    TypeOnly<old.Summarizer>;
+declare function use_current_ClassDeclaration_Summarizer(
+    use: TypeOnly<current.Summarizer>);
+use_current_ClassDeclaration_Summarizer(
+    get_old_ClassDeclaration_Summarizer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_Summarizer": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_Summarizer():
+    TypeOnly<current.Summarizer>;
+declare function use_old_ClassDeclaration_Summarizer(
+    use: TypeOnly<old.Summarizer>);
+use_old_ClassDeclaration_Summarizer(
+    get_current_ClassDeclaration_Summarizer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1676,6 +1604,78 @@ declare function use_old_VariableDeclaration_TombstoneResponseHeaderKey(
     use: TypeOnly<typeof old.TombstoneResponseHeaderKey>);
 use_old_VariableDeclaration_TombstoneResponseHeaderKey(
     get_current_VariableDeclaration_TombstoneResponseHeaderKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_agentSchedulerId": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_agentSchedulerId():
+    TypeOnly<typeof old.agentSchedulerId>;
+declare function use_current_VariableDeclaration_agentSchedulerId(
+    use: TypeOnly<typeof current.agentSchedulerId>);
+use_current_VariableDeclaration_agentSchedulerId(
+    get_old_VariableDeclaration_agentSchedulerId());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_agentSchedulerId": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_agentSchedulerId():
+    TypeOnly<typeof current.agentSchedulerId>;
+declare function use_old_VariableDeclaration_agentSchedulerId(
+    use: TypeOnly<typeof old.agentSchedulerId>);
+use_old_VariableDeclaration_agentSchedulerId(
+    get_current_VariableDeclaration_agentSchedulerId());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isRuntimeMessage():
+    TypeOnly<typeof old.isRuntimeMessage>;
+declare function use_current_FunctionDeclaration_isRuntimeMessage(
+    use: TypeOnly<typeof current.isRuntimeMessage>);
+use_current_FunctionDeclaration_isRuntimeMessage(
+    get_old_FunctionDeclaration_isRuntimeMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isRuntimeMessage": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isRuntimeMessage():
+    TypeOnly<typeof current.isRuntimeMessage>;
+declare function use_old_FunctionDeclaration_isRuntimeMessage(
+    use: TypeOnly<typeof old.isRuntimeMessage>);
+use_old_FunctionDeclaration_isRuntimeMessage(
+    get_current_FunctionDeclaration_isRuntimeMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_neverCancelledSummaryToken": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_neverCancelledSummaryToken():
+    TypeOnly<typeof old.neverCancelledSummaryToken>;
+declare function use_current_VariableDeclaration_neverCancelledSummaryToken(
+    use: TypeOnly<typeof current.neverCancelledSummaryToken>);
+use_current_VariableDeclaration_neverCancelledSummaryToken(
+    get_old_VariableDeclaration_neverCancelledSummaryToken());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_neverCancelledSummaryToken": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_neverCancelledSummaryToken():
+    TypeOnly<typeof current.neverCancelledSummaryToken>;
+declare function use_old_VariableDeclaration_neverCancelledSummaryToken(
+    use: TypeOnly<typeof old.neverCancelledSummaryToken>);
+use_old_VariableDeclaration_neverCancelledSummaryToken(
+    get_current_VariableDeclaration_neverCancelledSummaryToken());
 
 /*
 * Validate forward compat by using old type in place of current type

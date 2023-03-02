@@ -57,7 +57,7 @@
 		"test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
 		"tsc": "lerna run tsc --stream",
 		"tsc:fast": "fluid-build  --root .. -s tsc",
-		"typetests:gen": "flub generate typetests --generate --releaseGroup azure",
+		"typetests:gen": "pnpm -r typetests:gen",
 		"typetests:prepare": "flub generate typetests --prepare --releaseGroup azure --pin",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
 		"watch:esnext": "lerna run --parallel build:esnext -- -- --watch",

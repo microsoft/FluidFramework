@@ -2595,6 +2595,97 @@ importers:
       webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
       webpack-merge: 5.8.0
 
+  examples/hosts/app-integration/live-schema-upgrade:
+    specifiers:
+      '@fluid-example/example-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluidframework/aqueduct': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/container-loader': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/counter': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/routerlicious-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/tinylicious-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@rushstack/eslint-config': ^2.5.1
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': ^14.18.36
+      '@types/puppeteer': 1.3.0
+      clean-webpack-plugin: ^4.0.0
+      concurrently: ^6.2.0
+      cross-env: ^7.0.2
+      css-loader: ^1.0.0
+      eslint: ~8.6.0
+      html-webpack-plugin: ^5.5.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^4.3.0
+      prettier: ~2.6.2
+      process: ^0.11.10
+      puppeteer: ^1.20.0
+      rimraf: ^2.6.2
+      style-loader: ^1.0.0
+      ts-jest: ^26.4.4
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+      webpack: ^5.72.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-example/example-utils': link:../../../utils/example-utils
+      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
+      '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
+      '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
+      '@fluidframework/counter': link:../../../../packages/dds/counter
+      '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
+      '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
+      css-loader: 1.0.1_webpack@5.75.0
+      style-loader: 1.3.0_webpack@5.75.0
+    devDependencies:
+      '@fluid-tools/build-cli': 0.11.0-134585_webpack-cli@4.10.0
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/test-tools': 0.2.3074
+      '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': 14.18.36
+      '@types/puppeteer': 1.3.0
+      clean-webpack-plugin: 4.0.0_webpack@5.75.0
+      concurrently: 6.3.0
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      html-webpack-plugin: 5.5.0_webpack@5.75.0
+      jest: 26.6.3
+      jest-junit: 10.0.0
+      jest-puppeteer: 4.4.0_puppeteer@1.20.0
+      prettier: 2.6.2
+      process: 0.11.10
+      puppeteer: 1.20.0
+      rimraf: 2.7.1
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
+      ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
+      typescript: 4.5.5
+      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
+      webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
+      webpack-merge: 5.8.0
+
   examples/hosts/app-integration/schema-upgrade:
     specifiers:
       '@fluid-example/example-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -9568,22 +9659,36 @@ importers:
   packages/tools/client-debugger/client-debugger-chrome-extension:
     specifiers:
       '@fluentui/react': ^8.96.1
+      '@fluentui/react-hooks': ^8.6.12
+      '@fluentui/react-icons-mdl2': ^1.3.22
+      '@fluentui/react-tabs': ^9.1.6
+      '@fluid-tools/client-debugger': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/client-debugger-view': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': 0.11.0-134585
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/container-loader': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.22.2
+      '@testing-library/dom': ^8.2.0
+      '@testing-library/jest-dom': ^5.16.5
+      '@testing-library/react': ^12.0.0
+      '@testing-library/user-event': ^14.4.3
       '@types/chrome': 0.0.200
       '@types/jest': 22.2.3
       '@types/node': ^14.18.36
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
+      '@types/testing-library__jest-dom': ^5.14.5
       concurrently: ^6.2.0
       copy-webpack-plugin: ^11.0.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-jest: ~27.1.5
+      good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
@@ -9592,6 +9697,7 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
+      scheduler: ^0.20.0
       start-server-and-test: ^1.11.7
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -9599,26 +9705,41 @@ importers:
       webpack: ^5.72.0
       webpack-cli: ^4.9.2
     dependencies:
+      '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-icons-mdl2': 1.3.28_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-tabs': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluid-tools/client-debugger': link:../client-debugger
       '@fluid-tools/client-debugger-view': link:../client-debugger-view
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
     devDependencies:
-      '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.11.0-134585_webpack-cli@4.10.0
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.22.2
+      '@testing-library/dom': 8.19.1
+      '@testing-library/jest-dom': 5.16.5
+      '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
+      '@testing-library/user-event': 14.4.3_ua4wuun3fnehcjqtqj2e2ldgpe
       '@types/chrome': 0.0.200
       '@types/jest': 22.2.3
       '@types/node': 14.18.36
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
+      '@types/testing-library__jest-dom': 5.14.5
       concurrently: 6.3.0
       copy-webpack-plugin: 11.0.0_webpack@5.75.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_e7w73bdyuoy63spbnf7wdyrtai
+      good-fences: 1.1.2
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
       jest-junit: 10.0.0
@@ -10708,7 +10829,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-validator-identifier': 7.19.1
-      chalk: 2.4.2
+      chalk: 2.4.1
       js-tokens: 4.0.0
 
   /@babel/parser/7.12.16:
@@ -11965,7 +12086,7 @@ packages:
     engines: {node: ^14 || ^16 || ^17 || ^18 || ^19}
     dependencies:
       comment-parser: 1.3.1
-      esquery: 1.4.0
+      esquery: 1.4.2
       jsdoc-type-pratt-parser: 3.1.0
     dev: true
 
@@ -11998,6 +12119,7 @@ packages:
     dependencies:
       '@fluentui/set-version': 8.2.3
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/dom-utilities/1.1.2:
     resolution: {integrity: sha512-XqPS7l3YoMwxdNlaYF6S2Mp0K3FmVIOIy2K3YkMc+eRxu9wFK6emr2Q/3rBhtG5u/On37NExRT7/5CTLnoi9gw==}
@@ -12011,6 +12133,7 @@ packages:
     dependencies:
       '@fluentui/set-version': 8.2.3
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/font-icons-mdl2/8.5.5_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-mCyQNGT2axvU2M7+dc0HmwQa9vzE33HXxcz32nZJugliy4lA3H2gIrkEt3xfY80DnzCUWz2Wd9RmComGFrei0g==}
@@ -12022,6 +12145,7 @@ packages:
     transitivePeerDependencies:
       - '@types/react'
       - react
+    dev: false
 
   /@fluentui/foundation-legacy/8.2.25_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-yK14cYaviKs7UW8GFB5rR1+2GtLOMzZ71pPw8Od5ilOTYD6VgUTTRZZfUjAidFCJ1+XsocNnzUQXX73q4tSC3Q==}
@@ -12036,6 +12160,7 @@ packages:
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/keyboard-key/0.2.17:
     resolution: {integrity: sha512-iT1bU56rKrKEOfODoW6fScY11qj3iaYrZ+z11T6fo5+TDm84UGkkXjLXJTE57ZJzg0/gbccHQWYv+chY7bJN8Q==}
@@ -12047,6 +12172,7 @@ packages:
     resolution: {integrity: sha512-uLiwx+UyXDN7tShv/s2NzDPtqeT/BZCHvY9yxEeb6LgEkos8TZvT5ep/7G8BpxA/SuBnviZ8xpDB5JObyZikqQ==}
     dependencies:
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/keyboard-keys/9.0.1:
     resolution: {integrity: sha512-I22XoRFvVHSfJ4xiaYRQensHODhPel9KDn4t0FxHPvBH1u04vNYOXIimqSHgIVMRUdOb6221IOcv4XsKBBiG6w==}
@@ -12059,6 +12185,7 @@ packages:
     dependencies:
       '@fluentui/set-version': 8.2.3
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/react-context-selector/9.1.5_7dy3sgqkcy3kjbu4ktqmdo3kpm:
     resolution: {integrity: sha512-3U0d6qOP1IMASLpWK6ek9PLagxdGK0L0EKBhaO7U9Q89k2DJ0JQRzz2kZSrnN0a23yL0BipxtKGZiqhO0u6AHA==}
@@ -12112,6 +12239,7 @@ packages:
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/react-hooks/8.6.14_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-mM2bW7xIRGGx7thBXKDR64SaZB1tYwICdM9qpM/Jfiu0H+VPQhhhtMPJ+ImmG+DM8MxX9n5Su8ePo2QWtz9mYA==}
@@ -12125,6 +12253,7 @@ packages:
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/react-icon-provider/1.3.26_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-WskkrGK9S5uhQnkZDz6AiE1DVIgjRE3V5I/vP9t/Q1cdAn5icUljt5Ncu+kzPIvmCaoy1Cf4C2Yc+h3BgsldaQ==}
@@ -12169,6 +12298,7 @@ packages:
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/react-shared-contexts/9.1.4_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-528QMaG3hmCt8mFFWvfK2eXN3nA+p2bJToxq5HrfHqZ4ua9BwQ6iwGNq0w5s0ymqpfdHsXuezu8m0FmFLbZJDA==}
@@ -12270,6 +12400,7 @@ packages:
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/react/8.104.3_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-XazBjhStkMSDG9tUwX105fEoi7Tl0HcZQCNfqoZUBcXMGHa9DJ/GdiMPPC5DQD5G2bk22XgmXZtVSXE3BHaBmQ==}
@@ -12297,11 +12428,13 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/set-version/8.2.3:
     resolution: {integrity: sha512-/+5vrI1Bq/ZsNDEK9++RClnDOeCILS8RXxZb7OAqmOc8GnPScxKcIN8e/1bosUxTjb2EB1KbVk6XeUpk0WvQIg==}
     dependencies:
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/style-utilities/8.8.4_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-Zu7ddNd9p3rQbeHijCWfMzjCt6aWqpr02HNj8qRa8egGuzb5zmVoOXHiuYcJIbHpMvK+TNCbRK1HjUKkHHCusw==}
@@ -12315,6 +12448,7 @@ packages:
     transitivePeerDependencies:
       - '@types/react'
       - react
+    dev: false
 
   /@fluentui/theme/1.7.13_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-/1ZDHZNzV7Wgohay47DL9TAH4uuib5+B2D6Rxoc3T6ULoWcFzwLeVb+VZB/WOCTUbG+NGTrmsWPBOz5+lbuOxA==}
@@ -12346,6 +12480,7 @@ packages:
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/tokens/1.0.0-alpha.2:
     resolution: {integrity: sha512-Rd3xFE+ynAjpTgXwOWQnbw1jLqRrRvCgFTPtlqFlXK31lkNOz28f4HAHkNSXsFF95r/pM6EvJ+GtEoBhzfkdSw==}
@@ -12365,6 +12500,7 @@ packages:
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
+    dev: false
 
   /@fluid-experimental/property-binder/2.0.0-internal.2.1.0:
     resolution: {integrity: sha512-fYxodOBCeLLI/uBhFCnXObk2rxAGXKCxZ5lcjlzS8X0Ww5DBjjBmkZutVWr3B6Zmf/IfB80EEazQTwRMrOhEfA==}
@@ -16791,6 +16927,7 @@ packages:
 
   /@microsoft/load-themed-styles/1.10.295:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
+    dev: false
 
   /@microsoft/tsdoc-config/0.16.2:
     resolution: {integrity: sha512-OGiIzzoBLgWWR0UdRJX98oYO+XKGf7tiK4Zk6tQ/E4IJqGCe7dvkTvgDZV5cFJUzLGDOjeAXrnZoA6QkVySuxw==}
@@ -22580,7 +22717,7 @@ packages:
     dependencies:
       ansi-align: 2.0.0
       camelcase: 4.1.0
-      chalk: 2.4.2
+      chalk: 2.4.1
       cli-boxes: 1.0.0
       string-width: 2.1.1
       term-size: 1.2.0
@@ -22782,7 +22919,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -22790,7 +22927,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -23214,6 +23351,7 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
+    dev: true
 
   /chalk/3.0.0:
     resolution: {integrity: sha512-4D3B6Wf41KOYRFdszmDqMCGq5VV/uMAB273JILmO+3jAlh8X4qDtdtgCR3fxtbLEMzSx22QdhnDcJvu2u1fVwg==}
@@ -23706,7 +23844,7 @@ packages:
     engines: {node: '>= 4.0'}
     dependencies:
       '@types/q': 1.5.5
-      chalk: 2.4.2
+      chalk: 2.4.1
       q: 1.5.1
     dev: true
 
@@ -24744,7 +24882,7 @@ packages:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2_@octokit+core@4.2.0
       async-retry: 1.2.3
-      chalk: 2.4.2
+      chalk: 2.4.1
       commander: 2.20.3
       debug: 4.3.4
       fast-json-patch: 3.1.1
@@ -27347,7 +27485,7 @@ packages:
         optional: true
     dependencies:
       '@babel/code-frame': 7.18.6
-      chalk: 2.4.2
+      chalk: 2.4.1
       eslint: 8.6.0
       micromatch: 3.1.10
       minimatch: 3.1.2
@@ -29257,7 +29395,7 @@ packages:
     resolution: {integrity: sha512-h+xtnyk4EwKvFWHrUYsWErEVR+igKtLdchu+o0Z1RL7VU/jVMFbYir2bp6bAj8efFNxWqHX0dIss6fJQ+/+qeQ==}
     dependencies:
       ansi-escapes: 3.2.0
-      chalk: 2.4.2
+      chalk: 2.4.1
       cli-cursor: 2.1.0
       cli-width: 2.2.1
       external-editor: 2.2.0
@@ -30696,7 +30834,7 @@ packages:
     dependencies:
       '@jest/types': 24.9.0
       camelcase: 5.3.1
-      chalk: 2.4.2
+      chalk: 2.4.1
       jest-get-type: 24.9.0
       leven: 3.1.0
       pretty-format: 24.9.0
@@ -31710,7 +31848,7 @@ packages:
     resolution: {integrity: sha512-04PDPqSlsqIOaaaGZ+41vq5FejI9auqTInicFRndCBgE3bXG8D6W1I+mWhk+1nqbHmyhla/6BUrd5OSiHwKRXw==}
     engines: {node: '>=4'}
     dependencies:
-      chalk: 2.4.2
+      chalk: 2.4.1
       cli-cursor: 2.1.0
       date-fns: 1.30.1
       figures: 2.0.0
@@ -32745,6 +32883,7 @@ packages:
 
   /minimist/1.2.7:
     resolution: {integrity: sha512-bzfL1YUZsP41gmu/qjrEk0Q6i2ix/cVeAhbCbqH9u3zYutS1cLg00qhrD0M2MVdCcx4Sc0UpP2eBWo9rotpq6g==}
+    dev: true
 
   /minimist/1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
@@ -32894,7 +33033,7 @@ packages:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
     hasBin: true
     dependencies:
-      minimist: 1.2.7
+      minimist: 1.2.8
 
   /mkdirp/1.0.4:
     resolution: {integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==}
@@ -32962,7 +33101,7 @@ packages:
     resolution: {integrity: sha512-/lFmlpY1cPfLXmV/Qb7kprbQS5VYExEaJGRR86rCLYUdLQM5uivIwvulUEt5VV9mbK/GttN2XPb8al7/5VgtOw==}
     hasBin: true
     dependencies:
-      chalk: 2.4.2
+      chalk: 2.4.1
       dateformat: 3.0.3
       fs-extra: 4.0.3
       fsu: 1.1.1
@@ -35224,7 +35363,7 @@ packages:
     resolution: {integrity: sha512-soOk1h6J3VMTZtVeVpv15/Hpdl2cBLX3CAw4TAbkpTJiNPk9YP/zWcD1ND+xEtvyuuvKzbxliTOIyvkSeSJ6ag==}
     engines: {node: '>=4.0.0'}
     dependencies:
-      chalk: 2.4.2
+      chalk: 2.4.1
       source-map: 0.6.1
       supports-color: 5.5.0
 
@@ -35830,7 +35969,7 @@ packages:
     resolution: {integrity: sha512-pB2X5AduTl78J+xRSxQiEmga1jQV0j43jOPs/MTgTLApGFEOn6NgdE2dEjp7nvDtjkIOZbvFIojAiYUx6ep3zg==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      chalk: 2.4.2
+      chalk: 2.4.1
       debug: 4.3.4
       execa: 0.10.0
       fs-extra: 6.0.1
@@ -36475,18 +36614,6 @@ packages:
       inherits: 2.0.4
       isarray: 0.0.1
       string_decoder: 0.10.31
-    dev: true
-
-  /readable-stream/2.3.7:
-    resolution: {integrity: sha512-Ebho8K4jIbHAxnuxi7o42OrZgF/ZTNcsZj6nRKyUmkhLFq8CHItp/fy6hQZuZmP/n3yZ9VBUbp4zz/mX8hmYPw==}
-    dependencies:
-      core-util-is: 1.0.3
-      inherits: 2.0.4
-      isarray: 1.0.0
-      process-nextick-args: 2.0.1
-      safe-buffer: 5.1.2
-      string_decoder: 1.1.1
-      util-deprecate: 1.0.2
     dev: true
 
   /readable-stream/2.3.8:
@@ -38584,7 +38711,7 @@ packages:
       formidable: 1.2.6
       methods: 1.1.2
       mime: 1.6.0
-      qs: 6.11.0
+      qs: 6.7.0
       readable-stream: 2.3.8
     transitivePeerDependencies:
       - supports-color
@@ -39051,7 +39178,7 @@ packages:
   /through2/2.0.5:
     resolution: {integrity: sha512-/mrRod8xqpA+IHSLyGCQ2s8SPHiCDEeQJSep1jqLYeEUClOFG2Qsh+4FU6G9VeqpZnGW/Su8LQGc4YKni5rYSQ==}
     dependencies:
-      readable-stream: 2.3.7
+      readable-stream: 2.3.8
       xtend: 4.0.2
     dev: true
 
@@ -40009,7 +40136,7 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       boxen: 1.3.0
-      chalk: 2.4.2
+      chalk: 2.4.1
       configstore: 3.1.5
       import-lazy: 2.1.0
       is-ci: 1.2.1
