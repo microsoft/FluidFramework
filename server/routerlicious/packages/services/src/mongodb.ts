@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
