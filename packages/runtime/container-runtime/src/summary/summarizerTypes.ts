@@ -80,21 +80,34 @@ export interface ISummarizingWarning extends ContainerWarning {
 	readonly logged: boolean;
 }
 
+/** @deprecated - Was an internally-used subset of ISummarizerRuntime, no other replacement provided */
 export interface IConnectableRuntime {
+	readonly disposed: boolean;
+	readonly connected: boolean;
+	readonly clientId: string | undefined;
+	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>; //* Revert type compat markup
+	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
+}
+
+export interface ISummarizerRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
 	readonly clientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
-}
-
-export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly logger: ITelemetryLogger;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
 	disposeFn?(): void;
 	closeFn(): void;
 }
+
+//* Remove deltaManager
+/** The subset of ISummarizerRuntime required for Summarizer run coordination */
+export type IConnectableRuntime2 = Pick<
+	ISummarizerRuntime,
+	"disposed" | "connected" | "clientId" | "once" | "deltaManager"
+>;
 
 /** Options affecting summarize behavior. */
 export interface ISummarizeOptions {

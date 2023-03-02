@@ -133,7 +133,7 @@ import {
 	SummarizerClientElection,
 	summarizerClientType,
 	SubmitSummaryResult,
-	IConnectableRuntime,
+	IConnectableRuntime2,
 	IGeneratedSummaryStats,
 	ISubmitSummaryOptions,
 	ISummarizer,
@@ -1301,7 +1301,7 @@ export class ContainerRuntime
 					this /* ISummarizerInternalsProvider */,
 					this.handleContext,
 					this.summaryCollection,
-					async (runtime: IConnectableRuntime) =>
+					async (runtime: IConnectableRuntime2) =>
 						RunWhileConnectedCoordinator.create(runtime),
 				);
 			} else if (

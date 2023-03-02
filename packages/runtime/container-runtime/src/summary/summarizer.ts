@@ -29,7 +29,7 @@ import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
-	IConnectableRuntime,
+	IConnectableRuntime2,
 	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
@@ -100,7 +100,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		handleContext: IFluidHandleContext,
 		public readonly summaryCollection: SummaryCollection,
 		private readonly runCoordinatorCreateFn: (
-			runtime: IConnectableRuntime,
+			runtime: IConnectableRuntime2,
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();

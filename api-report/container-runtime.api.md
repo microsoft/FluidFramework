@@ -330,7 +330,7 @@ export interface ICompressionRuntimeOptions {
     readonly minimumBatchSizeInBytes: number;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IConnectableRuntime {
     // (undocumented)
     readonly clientId: string | undefined;
@@ -529,13 +529,23 @@ export interface ISummarizerInternalsProvider {
 }
 
 // @public (undocumented)
-export interface ISummarizerRuntime extends IConnectableRuntime {
+export interface ISummarizerRuntime {
+    // (undocumented)
+    readonly clientId: string | undefined;
     // (undocumented)
     closeFn(): void;
+    // (undocumented)
+    readonly connected: boolean;
+    // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // (undocumented)
+    readonly disposed: boolean;
     // (undocumented)
     disposeFn?(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
     readonly summarizerClientId: string | undefined;
 }
 
@@ -681,9 +691,10 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 
 // @public
 export class Summarizer extends EventEmitter implements ISummarizer {
+    // Warning: (ae-forgotten-export) The symbol "IConnectableRuntime2" needs to be exported by the entry point index.d.ts
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
-    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
+    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime2) => Promise<ICancellableSummarizerController>);
     // (undocumented)
     close(): void;
     static create(loader: ILoader, url: string): Promise<ISummarizer>;
